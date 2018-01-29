@@ -234,15 +234,15 @@ function formataRiscos() {
 	var tabela = $('table', divRegistro);
 	var linha = $('table > tbody > tr', divRegistro);
 
-	divRegistro.css({ 'height': '200px', 'width': '800px' });
+	divRegistro.css({ 'height': '200px', 'width': '700px' });
 
 	var ordemInicial = new Array();
 
 	var arrayLargura = ['140px', '70px', '60px', '40px', '40px', '40px', '40px', '40px', 
-		'40px', '40px', '70px', '40px'];
+		'40px', '40px'];
 
 	var arrayAlinha = ['center', 'right', 'right', 'center', 'center', 'center', 'center',
-		'center', 'center', 'center', 'center', 'center'];
+		'center', 'center', 'center'];
 
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 

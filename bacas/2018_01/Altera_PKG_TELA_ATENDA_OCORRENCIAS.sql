@@ -338,6 +338,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 		 gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Central',
                              pr_posicao  => 0,
+                             pr_tag_nova => 'qtd_dias_risco',
+                             pr_tag_cont => pr_qtd_dias_risco,
+                             pr_des_erro => pr_dscritic);
+														 
+		 gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Central',
+                             pr_posicao  => 0,
                              pr_tag_nova => 'risco_final',
                              pr_tag_cont => pr_ris_final,
                              pr_des_erro => pr_dscritic);

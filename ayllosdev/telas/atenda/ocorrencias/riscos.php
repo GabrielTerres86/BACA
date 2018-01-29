@@ -119,9 +119,7 @@
 					<th><span title="Risco Agravado">R. Agr.</span></th>
 					<th><span title="Risco da Operação">R. Oper.</span></th>
 					<th><span title="Risco do CPF">R. CPF</span></th>
-					<th><span title="Risco do grupo econômico">R. GE</span></th>
-					<th><span title="Data do Risco">Data risco</span></th>
-					<th><span title="Quantidade de dias no risco">Dias risco</span></th>					
+					<th><span title="Risco do grupo econômico">R. GE</span></th>					
 				</tr>
 			</thead>
 			<tbody>				
@@ -139,8 +137,6 @@
 						<td><? echo getByTagName($risco->tags, 'risco_operacao'); ?></td>
 						<td><? echo getByTagName($risco->tags, 'risco_cpf'); ?></td>
 						<td><? echo getByTagName($risco->tags, 'risco_grupo'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'data_risco'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'dias_risco'); ?></td>
 					</tr>
 				<?
 				}
@@ -149,12 +145,13 @@
 		</table>
 	</div>
 	<div id="infoCentral" style="padding-top: 7px;">
-		<div id="infoUltimaCentral" style="float: left; width: 50%; text-align: left;">
+		<div id="infoUltimaCentral" style="float: left; width: 70%; text-align: left;">
 			<label for="riscoUltimaCentral" style="margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Risco Última Central:</label>
 			<input type="text" name="riscoUltimaCentral" id="riscoUltimaCentral" value="<? echo getByTagName($dadosCentral, 'risco_ult_central'); ?>" readonly tabindex="-1" style="width: 40px; text-align: center; outline: 1px solid black; display: block; float: left; position: relative;">
 			<input type="text" name="dataUltimaCentral" id="dataUltimaCentral" value="<? echo getByTagName($dadosCentral, 'data_ult_central'); ?>" readonly tabindex="-1" style="width: 70px; text-align: center; outline: 1px solid black; display: block; float: left; margin-left: 10px; position: relative;">
+			<input type="text" name="dataUltimaCentral" id="dataUltimaCentral" value="<? $diasRisco = getByTagName($dadosCentral, 'qtd_dias_risco'); echo !empty($diasRisco) ? $diasRisco . ' dias' : '' ?>" readonly tabindex="-1" style="width: 70px; text-align: center; outline: 1px solid black; display: block; float: left; margin-left: 10px; position: relative;">			
 		</div>
-		<div id="infoRiscoFinal" style="float: right; width: 50%; text-align: left;">
+		<div id="infoRiscoFinal" style="float: right; width: 30%; text-align: left;">
 			<label for="riscoFinal" style="margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Risco final:</label>
 			<input type="text" name="riscoFinal" id="riscoFinal" value="<? echo getByTagName($dadosCentral, 'risco_final'); ?>" readonly tabindex="-1" style="width: 40px; text-align: center; outline: 1px solid black;">
 		</div>
