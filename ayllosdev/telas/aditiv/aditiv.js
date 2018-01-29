@@ -497,7 +497,7 @@ function formataCabecalho() {
                         // Marca o aditivo
                         $("#cdaditiv option[value='" + cdaditiv_ajax + "']",'#frmCab').prop('selected',true);
 
-                        cdaditiv = $("#cdaditiv","#frmCab").val()[0];
+                        cdaditiv = cdaditiv_ajax > 0 ? $("#cdaditiv","#frmCab").val()[0] : 0;
 
                         // Se for Cobertura de Aplicacao Vinculada a Operacao
                         if (cdaditiv_ajax == 9) {
