@@ -71,7 +71,7 @@ begin
                  VALUES('BUSCA_DADOS_RISCO',
                         'TELA_ATENDA_OCORRENCIAS',
                         'pc_busca_dados_risco',
-                        'pr_cpf_cnpj, pr_cdcooper',
+                        'pr_nrdconta, pr_cdcooper',
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> BUSCA_DADOS_RISCO -> TELA_ATENDA_OCORRENCIAS.pc_busca_dados_risco');
