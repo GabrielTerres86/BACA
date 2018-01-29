@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 25/10/2016
+    Data      : Abril/2012                      Ultima Atualizacao: 11/12/2017
     
     Dados referentes ao programa:
 
@@ -307,6 +307,17 @@
                              para borderos efetuados no IB e com valor menor ou igual a 5 mil.
                              PRJ300 - Desconto de Cheques (Lombardi/Daniel)
                      
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)
+                     
+                31/10/2017 - Ajuste na retirada da mascara do CPF/CNPJ na procedure
+                             requisicao-lista-documentos. Projeto 339 - CRM. (Lombardi)
+                     
+                22/11/2017 - Em alguns documentos não virá mais nrdconta
+                             Tratado consultas e updates. Projeto 339 - CRM. (Lombardi)
+                             
+                11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).                             
+                     
 .............................................................................*/
 
 
@@ -353,6 +364,7 @@ DEF VAR aux_cdagenci  AS INTE                                         NO-UNDO.
 DEF VAR aux_tpdocmto  AS INTE                                         NO-UNDO.
 DEF VAR aux_nraditiv  AS INTE                                         NO-UNDO.
 DEF VAR aux_dtpublic  AS DATE                                         NO-UNDO.
+DEF VAR aux_nrcpfcgc  AS DECI                                         NO-UNDO.
 
 /* Controle de data */
 DEFINE VAR aux_dtinidoc AS DATE                                       NO-UNDO.
@@ -882,7 +894,7 @@ PROCEDURE efetua_batimento_ged_matricula:
    DO  aux_data = par_datainic TO par_datafina:
        
        /*** Leitura de documentos nao digitaliados ***/
-       FOR EACH crapdoc FIELDS(cdcooper nrdconta dtmvtolt)  WHERE 
+       FOR EACH crapdoc FIELDS(cdcooper nrdconta dtmvtolt nrcpfcgc)  WHERE 
                                crapdoc.cdcooper = par_cdcooper AND
                                crapdoc.dtmvtolt = aux_data     AND
                                crapdoc.tpdocmto = 8            AND
@@ -917,7 +929,8 @@ PROCEDURE efetua_batimento_ged_matricula:
                                                           ELSE " PJ"
                           tt-documentos-matric.nmprimtl = crapass.nmprimtl
                           tt-documentos-matric.dtmvtolt = crapdoc.dtmvtolt
-                          tt-documentos-matric.cdoperad = STRING(crapneg.cdoperad).
+                          tt-documentos-matric.cdoperad = STRING(crapneg.cdoperad)
+                          tt-documentos-matric.nrcpfcgc = STRING(crapdoc.nrcpfcgc).
                 END.
        END. /* Fim do FOR crapdoc */
 
@@ -1271,7 +1284,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,131", ENTRY(3,craptab.dstextab,";")) THEN
+        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,131,145,146,147,148,149,150,151,152", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -1329,7 +1342,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                
            /* Adicionar intervalo de data, 3 em 3 meses */
            ASSIGN aux_dtinidoc = ADD-INTERVAL(aux_dtfimdoc,01,'days')               
-                  aux_dtfimdoc = ADD-INTERVAL(aux_dtinidoc,03,'months').
+                  aux_dtfimdoc = ADD-INTERVAL(aux_dtinidoc,02,'months').
                   
            IF  aux_dtfimdoc >= TODAY THEN
                aux_dtfimdoc = TODAY.
@@ -1340,7 +1353,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
             
             /* ZERAR VARIAVEIS DE CONTROLE DE PARAMETROS */ 
             
-            DO aux_contdocs = 1 TO 40:
+            DO aux_contdocs = 1 TO 52:
                 
                 ASSIGN aux_tpdocmto = 0.
     
@@ -1369,8 +1382,26 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 16. /*DOCUMENTO DE IDENTIFICACAO - PJ*/
                     WHEN 12 THEN
                         ASSIGN aux_conttabs = 17. /*DEMONSTRATIVO FINANCEIRO*/
+                    WHEN 22 THEN
+                        ASSIGN aux_conttabs = 22. /*DOCUMENTO CÔNJUGE*/
                     WHEN 40 THEN 
                         ASSIGN aux_conttabs = 40. /*LICENCAS SOCIO AMBIENTAIS*/
+                    WHEN 45 THEN
+                        ASSIGN aux_conttabs = 45. /*CONTRATO ABERTURA DE CONTA PF*/
+                    WHEN 46 THEN
+                        ASSIGN aux_conttabs = 46. /*CONTRATO ABERTURA DE CONTA PJ*/
+                    WHEN 47 THEN
+                        ASSIGN aux_conttabs = 47. /*PROCURAÇAO PF*/
+                    WHEN 48 THEN
+                        ASSIGN aux_conttabs = 48. /*PROCURAÇAO PJ*/
+                    WHEN 49 THEN
+                        ASSIGN aux_conttabs = 49. /*DOCUMENTOS PROCURADORES PJ*/
+                    WHEN 50 THEN
+                        ASSIGN aux_conttabs = 50. /*DOCUMENTOS PROCURADORES PF*/
+                    WHEN 51 THEN
+                        ASSIGN aux_conttabs = 51. /*DOCUMENTOS RESPONSAVEL LEGAL*/
+                    WHEN 52 THEN
+                        ASSIGN aux_conttabs = 52. /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/
                     OTHERWISE
                         NEXT.
                 END CASE.
@@ -1378,14 +1409,14 @@ PROCEDURE efetua_batimento_ged_cadastro:
                 /* Obs: As matriculas tpdocmto = 8, nao sera necessario gerar neste relatorio
                         os documentos pendentes de matriculas, pois somente iram baixar */
 
-                FIND tt-documentos WHERE tt-documentos.idseqite = aux_conttabs 
-                                         NO-LOCK NO-ERROR.
+                FOR FIRST tt-documentos FIELDS(tpdocmto) WHERE tt-documentos.idseqite = aux_conttabs 
+                                         NO-LOCK : END.
                 
                 IF  AVAIL tt-documentos  THEN
                     ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
                     
                 /*Leitura de documentos nao digitaliados*/
-                FOR EACH crapdoc FIELDS(cdcooper nrdconta tpdocmto dtmvtolt idseqttl)
+                FOR EACH crapdoc FIELDS(cdcooper nrdconta tpdocmto dtmvtolt idseqttl nrcpfcgc)
                                  WHERE crapdoc.cdcooper = crapcop.cdcooper AND
                                        crapdoc.dtmvtolt = aux_data         AND
                                        crapdoc.tpdocmto = aux_contdocs     AND
@@ -1393,9 +1424,9 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                        USE-INDEX crapdoc3 NO-LOCK:
 
                     /* Se cooperado estiver demitidos nao gera no relatorio */
-                    FIND FIRST crapass WHERE 
+                    FOR FIRST crapass FIELDS(inpessoa cdagenci dtdemiss) WHERE 
                                crapass.cdcooper = crapdoc.cdcooper AND
-                               crapass.nrdconta = crapdoc.nrdconta NO-LOCK NO-ERROR.
+                               crapass.nrdconta = crapdoc.nrdconta NO-LOCK: END.
 
                    IF  NOT AVAIL crapass THEN 
                        NEXT.
@@ -1403,39 +1434,86 @@ PROCEDURE efetua_batimento_ged_cadastro:
                     IF  crapass.dtdemiss <> ? THEN
                         NEXT.
                  
+                        
                     /* Verifica os documentos de cpf e rg  se foram digitalizados*/
                     IF  CAN-DO("1,2",STRING(crapdoc.tpdocmto)) THEN
-                        FIND FIRST tt-documento-digitalizado WHERE
+                            FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
                                    tt-documento-digitalizado.cdcooper = crapdoc.cdcooper      AND
                                    tt-documento-digitalizado.nrdconta = crapdoc.nrdconta      AND
                                    CAN-DO("90,91",STRING(tt-documento-digitalizado.tpdocmto)) AND
                                    tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
                                    USE-INDEX tt-documento-digitalizado3
-                                   NO-LOCK NO-ERROR NO-WAIT.
+                                       NO-LOCK: END.
                     ELSE /* Verifica se o contrato foi digitalizado */                                    
-                        FIND FIRST tt-documento-digitalizado WHERE
+                            FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
                                    tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
                                    tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
                                    tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
                                    tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
                                    USE-INDEX tt-documento-digitalizado3 
-                                   NO-LOCK NO-ERROR NO-WAIT.
+                                       NO-LOCK: END.
+                  
+                                   
+                  IF  NOT AVAIL tt-documento-digitalizado  THEN
+                      DO:                            
+                        
+                        /* Verifica os documentos de cpf e rg  se foram digitalizados*/
+                        IF  CAN-DO("1,2",STRING(crapdoc.tpdocmto)) THEN
+                                FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
+                                       tt-documento-digitalizado.cdcooper = crapdoc.cdcooper      AND
+                                       CAN-DO("90,91",STRING(tt-documento-digitalizado.tpdocmto)) AND
+                                           tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt     AND
+                                           tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
+                                           USE-INDEX tt-documento-digitalizado4
+                                           NO-LOCK: END.
+                    ELSE /* Verifica se o contrato foi digitalizado */                                    
+                                FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
+                                   tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                                   tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
+                                           tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt AND
+                                           tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
+                                           USE-INDEX tt-documento-digitalizado4
+                                           NO-LOCK: END.
+                      END.
+                 
+                  IF  NOT AVAIL tt-documento-digitalizado  THEN
+                      DO:           
+                         /* Verifica os documentos de cpf e rg  se foram digitalizados*/
+                            IF  CAN-DO("1,2",STRING(crapdoc.tpdocmto)) THEN
+                              FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
+                                           tt-documento-digitalizado.cdcooper = crapdoc.cdcooper      AND
+                                         tt-documento-digitalizado.nrdconta = crapdoc.nrdconta      AND
+                                           CAN-DO("90,91",STRING(tt-documento-digitalizado.tpdocmto)) AND
+                                           tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt     AND
+                                           tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
+                                         USE-INDEX tt-documento-digitalizado5
+                                         NO-LOCK: END.
+                            ELSE /* Verifica se o contrato foi digitalizado */                                    
+                              FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
+                                           tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                                         tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
+                                           tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
+                                           tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt AND
+                                           tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
+                                         USE-INDEX tt-documento-digitalizado5 
+                                         NO-LOCK: END.
+                      
+                      END.
+
 
                     /* Caso encontrar o contrato digitalizado, altera flag e vai para o proximo */
                     IF  AVAIL tt-documento-digitalizado  THEN
                         DO: 
+                        
                             /*Verifica se documento foi digitalizado*/
-                            FIND b-crapdoc WHERE b-crapdoc.cdcooper = crapdoc.cdcooper AND        
-                                                 b-crapdoc.nrdconta = crapdoc.nrdconta AND
-                                                 b-crapdoc.idseqttl = crapdoc.idseqttl AND
-                                                 b-crapdoc.dtmvtolt = crapdoc.dtmvtolt AND
-                                                 b-crapdoc.tpdocmto = crapdoc.tpdocmto AND
-                                                 b-crapdoc.flgdigit = FALSE
-                                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                            FIND FIRST b-crapdoc WHERE RECID(b-crapdoc) = RECID(crapdoc) EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                             
                             /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
                             IF  AVAIL(b-crapdoc)  THEN
+                            DO:
                                 ASSIGN b-crapdoc.flgdigit = TRUE.
+                                RELEASE b-crapdoc NO-ERROR.
+                            END.
 
                             NEXT.
                                 
@@ -1458,7 +1536,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                              FIND tt-contr_ndigi_cadastro WHERE tt-contr_ndigi_cadastro.cdcooper = crapdoc.cdcooper AND
                                                                 tt-contr_ndigi_cadastro.nrdconta = crapdoc.nrdconta AND
                                                                 tt-contr_ndigi_cadastro.idseqttl = crapdoc.idseqttl AND
-                                                                tt-contr_ndigi_cadastro.dtmvtolt = crapdoc.dtmvtolt 
+                                                                tt-contr_ndigi_cadastro.dtmvtolt = crapdoc.dtmvtolt AND
+                                                                tt-contr_ndigi_cadastro.nrcpfcgc = crapdoc.nrcpfcgc
                                                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
                              IF NOT AVAIL tt-contr_ndigi_cadastro THEN
@@ -1470,7 +1549,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                            tt-contr_ndigi_cadastro.nrdconta = crapdoc.nrdconta
                                            tt-contr_ndigi_cadastro.dtmvtolt = crapdoc.dtmvtolt
                                            tt-contr_ndigi_cadastro.idseqttl = crapdoc.idseqttl
-                                           tt-contr_ndigi_cadastro.idseqite = aux_tpdocmto.
+                                           tt-contr_ndigi_cadastro.idseqite = aux_tpdocmto
+                                           tt-contr_ndigi_cadastro.nrcpfcgc = crapdoc.nrcpfcgc.
             
                                     CASE crapdoc.tpdocmto:
                                         WHEN 1 THEN
@@ -1497,6 +1577,22 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                             IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*DEMONSTRATIVO FINANCEIRO*/
                                         WHEN 40 THEN 
 										    IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdoclic = "        X". /*LICENSAS*/
+                                        WHEN 45 THEN
+                                            ASSIGN tt-contr_ndigi_cadastro.tpdocidp = " X". /*CONTRATO ABERTURA DE CONTA PF*/
+                                        WHEN 46 THEN
+                                            IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*CONTRATO ABERTURA DE CONTA PJ*/
+                                        WHEN 47 THEN
+                                            ASSIGN tt-contr_ndigi_cadastro.tpdocidp = " X". /*PROCURAÇAO PF*/
+                                        WHEN 48 THEN
+                                            IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*PROCURAÇAO PJ*/
+                                        WHEN 49 THEN
+                                            IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*DOCUMENTOS PROCURADORES PJ*/
+                                        WHEN 50 THEN
+                                            ASSIGN tt-contr_ndigi_cadastro.tpdocidp = "      X". /*DOCUMENTOS PROCURADORES PF*/
+                                        WHEN 51 THEN
+                                            ASSIGN tt-contr_ndigi_cadastro.tpdocidp = "      X". /*DOCUMENTOS RESPONSAVEL LEGAL*/
+                                        WHEN 52 THEN
+                                            IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/
                                     END CASE.
                                     
                                     IF  crapass.inpessoa = 1 THEN
@@ -1533,6 +1629,22 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                         IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*DEMONSTRATIVO FINANCEIRO*/
                                     WHEN 40 THEN
                                         IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdoclic = "        X". /*LICENSA*/
+                                    WHEN 45 THEN
+                                        ASSIGN tt-contr_ndigi_cadastro.tpdocidp = " X". /*CONTRATO ABERTURA DE CONTA PF*/
+                                    WHEN 46 THEN
+                                        IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*CONTRATO ABERTURA DE CONTA PJ*/
+                                    WHEN 47 THEN
+                                        ASSIGN tt-contr_ndigi_cadastro.tpdocidp = " X". /*PROCURAÇAO PF*/
+                                    WHEN 48 THEN
+                                        IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*PROCURAÇAO PJ*/
+                                    WHEN 49 THEN
+                                        IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*DOCUMENTOS PROCURADORES PJ*/
+                                    WHEN 50 THEN
+                                        ASSIGN tt-contr_ndigi_cadastro.tpdocidp = "      X". /*DOCUMENTOS PROCURADORES PF*/
+                                    WHEN 51 THEN
+                                        ASSIGN tt-contr_ndigi_cadastro.tpdocidp = "      X". /*DOCUMENTOS RESPONSAVEL LEGAL*/
+                                    WHEN 52 THEN
+                                        IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/
                                 END CASE.
                         END.
                 END.
@@ -1905,7 +2017,7 @@ PROCEDURE efetua_batimento_ged_credito:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF CAN-DO("84,85,86,87,88,89,102",ENTRY(3,craptab.dstextab,";")) THEN
+        IF CAN-DO("57,84,85,86,87,88,89,102",ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(4,craptab.dstextab,";"))
@@ -2930,7 +3042,7 @@ PROCEDURE efetua_batimento_ged_termos:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF  CAN-DO("108,109,124,125,126,127", ENTRY(3,craptab.dstextab,";")) THEN DO:
+        IF  CAN-DO("108,109,124,125,126,127,162,163", ENTRY(3,craptab.dstextab,";")) THEN DO:
 
             CREATE tt-documentos.
             ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -3193,9 +3305,34 @@ PROCEDURE efetua_batimento_ged_termos:
         FIND FIRST tt-documento-digitalizado WHERE
                    tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
                    tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
+                       tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc AND
                        tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
                        tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
                    NO-LOCK NO-ERROR NO-WAIT.
+					        
+                       
+        IF NOT AVAIL tt-documento-digitalizado  THEN
+           DO:
+        /* Verifica se a declaracao de pep foi digitalizada */
+        FIND FIRST tt-documento-digitalizado WHERE
+                   tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                   tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
+                       tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
+                       tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
+                   NO-LOCK NO-ERROR NO-WAIT.
+                       
+           END.
+
+       IF NOT AVAIL tt-documento-digitalizado  THEN
+          DO:
+            /* Verifica se a declaracao de pep foi digitalizada */
+            FIND FIRST tt-documento-digitalizado WHERE
+                       tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                       tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc AND
+                       tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
+                       tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
+                   NO-LOCK NO-ERROR NO-WAIT.
+          END.
 
         /*Verifica se registro existe*/
         IF  AVAIL tt-documento-digitalizado  THEN DO:
@@ -3249,6 +3386,150 @@ PROCEDURE efetua_batimento_ged_termos:
     END.
     /* fim tipo de documento 37 */
 
+	/* TIPO DE DOCUMENTO: 55 Termo Declaracao Simples Nacional */
+    ASSIGN aux_tpdocmto = 0
+           aux_conttabs = 55.
+    /* Buscar valor parametrizado p/ digitalizacao de declaracao pep */
+    FIND tt-documentos WHERE 
+         tt-documentos.idseqite = aux_conttabs NO-LOCK NO-ERROR.
+    IF  AVAIL tt-documentos  THEN
+        ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
+    DO  aux_data = par_datainic TO par_datafina:
+    FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
+                               crapdoc.dtmvtolt = aux_data     AND
+                           crapdoc.tpdocmto = aux_conttabs AND
+                           crapdoc.flgdigit = FALSE
+                           NO-LOCK:
+        /* Se cooperado estiver demitido nao gera no relatorio */
+        FIND FIRST crapass WHERE 
+                   crapass.cdcooper = crapdoc.cdcooper AND
+                   crapass.nrdconta = crapdoc.nrdconta NO-LOCK NO-ERROR.
+        IF  NOT AVAIL crapass THEN 
+            NEXT.
+        IF  crapass.dtdemiss <> ? THEN
+            NEXT.
+        /* Verifica se a declaracao de pep foi digitalizada */
+        FIND FIRST tt-documento-digitalizado WHERE
+                   tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                   tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
+                       tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
+                       tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
+                   NO-LOCK NO-ERROR NO-WAIT.
+        /*Verifica se registro existe*/
+        IF  AVAIL tt-documento-digitalizado  THEN DO:
+            /*Verifica se documento foi digitalizado*/
+            FIND FIRST b-crapdoc
+                 WHERE b-crapdoc.cdcooper = crapdoc.cdcooper
+                   AND b-crapdoc.dtmvtolt = crapdoc.dtmvtolt
+                       AND b-crapdoc.tpdocmto = crapdoc.tpdocmto
+                           AND b-crapdoc.nrdconta = crapdoc.nrdconta
+                           AND b-crapdoc.idseqttl = crapdoc.idseqttl
+             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
+            IF  AVAIL b-crapdoc THEN
+                ASSIGN b-crapdoc.flgdigit = TRUE.
+            NEXT.
+        END.
+        ELSE DO:
+            FIND FIRST tt-documentos-termo
+                 WHERE tt-documentos-termo.cdcooper = crapdoc.cdcooper
+                   AND tt-documentos-termo.nrdconta = crapdoc.nrdconta
+                   AND tt-documentos-termo.dstpterm = "SIMPLESNACIONAL"
+               NO-LOCK NO-ERROR.
+            /*Verifica se registro existe*/
+            IF  NOT AVAIL tt-documentos-termo  THEN DO:
+                        /* Buscar agencia em que o operador trabalha */
+                        FIND FIRST crapope WHERE crapope.cdcooper = crapdoc.cdcooper
+                                             AND crapope.cdoperad = crapdoc.cdoperad
+                                             NO-LOCK NO-ERROR.
+                /* Criar registro para listar no relatorio */
+                CREATE tt-documentos-termo.
+                ASSIGN tt-documentos-termo.cdcooper = crapdoc.cdcooper
+                           tt-documentos-termo.cdagenci = crapope.cdpactra WHEN AVAILABLE crapope 
+                       tt-documentos-termo.dstpterm = "SIMPLESNACIONAL"
+                           tt-documentos-termo.dsempres = crapass.nmprimtl
+                       tt-documentos-termo.nrdconta = crapdoc.nrdconta
+                           tt-documentos-termo.nmcontat = " "
+                           tt-documentos-termo.dtincalt = crapdoc.dtmvtolt
+                           tt-documentos-termo.cdoperad = crapdoc.cdoperad 
+                           tt-documentos-termo.idseqite = aux_conttabs. /* Declaracao Simples Nacional */
+            END.
+        END.
+    END. /* fim for each crapdoc */
+    END.
+    /* fim tipo de documento 55 */
+	/* TIPO DE DOCUMENTO: 56 Declaracao Pessoa Juridica Cooperativa */
+    ASSIGN aux_tpdocmto = 0
+           aux_conttabs = 56.
+    /* Buscar valor parametrizado p/ digitalizacao de declaracao PJ Cooperativa */
+    FIND tt-documentos WHERE 
+         tt-documentos.idseqite = aux_conttabs NO-LOCK NO-ERROR.
+    IF  AVAIL tt-documentos  THEN
+        ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
+    DO  aux_data = par_datainic TO par_datafina:
+    FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
+                               crapdoc.dtmvtolt = aux_data     AND
+                           crapdoc.tpdocmto = aux_conttabs AND
+                           crapdoc.flgdigit = FALSE
+                           NO-LOCK:
+        /* Se cooperado estiver demitido nao gera no relatorio */
+        FIND FIRST crapass WHERE 
+                   crapass.cdcooper = crapdoc.cdcooper AND
+                   crapass.nrdconta = crapdoc.nrdconta NO-LOCK NO-ERROR.
+        IF  NOT AVAIL crapass THEN 
+            NEXT.
+        IF  crapass.dtdemiss <> ? THEN
+            NEXT.
+        /* Verifica se a declaracao de pep foi digitalizada */
+        FIND FIRST tt-documento-digitalizado WHERE
+                   tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                   tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
+                       tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
+                       tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
+                   NO-LOCK NO-ERROR NO-WAIT.
+        /*Verifica se registro existe*/
+        IF  AVAIL tt-documento-digitalizado  THEN DO:
+            /*Verifica se documento foi digitalizado*/
+            FIND FIRST b-crapdoc
+                 WHERE b-crapdoc.cdcooper = crapdoc.cdcooper
+                   AND b-crapdoc.dtmvtolt = crapdoc.dtmvtolt
+                       AND b-crapdoc.tpdocmto = crapdoc.tpdocmto
+                           AND b-crapdoc.nrdconta = crapdoc.nrdconta
+                           AND b-crapdoc.idseqttl = crapdoc.idseqttl
+             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
+            IF  AVAIL b-crapdoc THEN
+                ASSIGN b-crapdoc.flgdigit = TRUE.
+            NEXT.
+        END.
+        ELSE DO:
+            FIND FIRST tt-documentos-termo
+                 WHERE tt-documentos-termo.cdcooper = crapdoc.cdcooper
+                   AND tt-documentos-termo.nrdconta = crapdoc.nrdconta
+                   AND tt-documentos-termo.dstpterm = "PJCOOPERATIVA"
+               NO-LOCK NO-ERROR.
+            /*Verifica se registro existe*/
+            IF  NOT AVAIL tt-documentos-termo  THEN DO:
+                        /* Buscar agencia em que o operador trabalha */
+                        FIND FIRST crapope WHERE crapope.cdcooper = crapdoc.cdcooper
+                                             AND crapope.cdoperad = crapdoc.cdoperad
+                                             NO-LOCK NO-ERROR.
+                /* Criar registro para listar no relatorio */
+                CREATE tt-documentos-termo.
+                ASSIGN tt-documentos-termo.cdcooper = crapdoc.cdcooper
+                           tt-documentos-termo.cdagenci = crapope.cdpactra WHEN AVAILABLE crapope 
+                       tt-documentos-termo.dstpterm = "PJCOOPERATIVA"
+                           tt-documentos-termo.dsempres = crapass.nmprimtl
+                       tt-documentos-termo.nrdconta = crapdoc.nrdconta
+                           tt-documentos-termo.nmcontat = " "
+                           tt-documentos-termo.dtincalt = crapdoc.dtmvtolt
+                           tt-documentos-termo.cdoperad = crapdoc.cdoperad 
+                           tt-documentos-termo.idseqite = aux_conttabs. /* Declaracao Pessoa Juridica Cooperativa */
+            END.
+        END.
+    END. /* fim for each crapdoc */
+    END.
+    /* fim tipo de documento 56 */
     /*TIPO DE DOCUMENTO: 39 Termo Adesao*/
     ASSIGN aux_tpdocmto = 0
            aux_conttabs = 39.
@@ -5334,7 +5615,8 @@ PROCEDURE requisicao-lista-documentos PRIVATE:
                        aux_nrctrato = 0
                        aux_nrborder = 0
                        aux_nraditiv = 0
-                       aux_dtpublic = ?.
+                       aux_dtpublic = ?
+                       aux_nrcpfcgc = 0.
 
                 /* Varre as TAGs de dados dos documentos */
                 DO j = 1 TO hXmlTextSoap:NUM-CHILDREN:
@@ -5404,7 +5686,11 @@ PROCEDURE requisicao-lista-documentos PRIVATE:
                                                    SUBSTR(TRIM(hXmlNode2Soap:NODE-VALUE),1,4) + "/")
                                               NO-ERROR.
                     END.
-    
+                    ELSE
+                    IF hXmlNode1Soap:NAME = "NrCpfCnpj" THEN
+                    DO:
+                        ASSIGN aux_nrcpfcgc = DEC(REPLACE(REPLACE(REPLACE(hXmlNode2Soap:NODE-VALUE,".",""),"-",""), "/", "")) NO-ERROR.
+                    END.
                 END.
 
                 CREATE tt-documento-digitalizado.
@@ -5415,7 +5701,8 @@ PROCEDURE requisicao-lista-documentos PRIVATE:
                        tt-documento-digitalizado.nrctrato = aux_nrctrato
                        tt-documento-digitalizado.nrborder = aux_nrborder
                        tt-documento-digitalizado.nraditiv = aux_nraditiv
-                       tt-documento-digitalizado.dtpublic = aux_dtpublic.
+                       tt-documento-digitalizado.dtpublic = aux_dtpublic
+                       tt-documento-digitalizado.nrcpfcgc = aux_nrcpfcgc.
 
             END.
 
