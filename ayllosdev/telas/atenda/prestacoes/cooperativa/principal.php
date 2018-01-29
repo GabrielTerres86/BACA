@@ -326,6 +326,7 @@
 			arrayProposta['vlpreemp'] = '<? echo getByTagName($proposta,'vlpreemp'); ?>';     
 			arrayProposta['qtpreemp'] = '<? echo getByTagName($proposta,'qtpreemp'); ?>';     
 			arrayProposta['nivrisco'] = '<? echo getByTagName($proposta,'nivrisco'); ?>';     
+			arrayProposta['nivriori'] = '<? echo getByTagName($proposta,'nivriori'); ?>'; // nível de risco original
 			arrayProposta['nivcalcu'] = '<? echo getByTagName($proposta,'nivcalcu'); ?>';     
 			arrayProposta['cdlcremp'] = '<? echo getByTagName($proposta,'cdlcremp'); ?>';     
 			arrayProposta['cdfinemp'] = '<? echo getByTagName($proposta,'cdfinemp'); ?>';     

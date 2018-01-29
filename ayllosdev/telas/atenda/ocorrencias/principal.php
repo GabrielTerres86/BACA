@@ -94,7 +94,7 @@
 	}
 	
 ?>
-<form action="" method="post" name="frmOcorrencias" id="frmOcorrencias" class="formulario">
+<form action="" method="post" name="frmOcorrencias" id="frmOcorrencias" class="formulario" style="margin-top: 20px;">
 
 	<label for="campo00">Contra Ordens:</label>
 	<input id="campo00" type="text" value="<?php echo $ocorrencia[0]->cdata; ?>" />
@@ -139,34 +139,17 @@
 	<input id="campo17" type="text" value="<?php echo $ocorrencia[17]->cdata." - ".$ocorrencia[18]->cdata;  ?>" />
 	
 	<br />
-	
-	<label for="campo10">Rating:</label>
-	<input id="campo10" type="text" value="<?php echo $ocorrencia[10]->cdata;  ?>" />
-	
 	<br />
-	
-	<label for="campo11">Risco:</label>
-	<input id="campo11" type="text" value="<?php echo $ocorrencia[11]->cdata;  ?>" />
-	
 	<br />
 	
 	<label for="campo12">Empr&eacute;stimos:</label>
 	<input id="campo12" type="text" value="<?php if ($ocorrencia[12]->cdata == "yes") { echo "SIM"; } else { echo "NAO"; } ?>" />
 	
-	<label for="campo15">Data do Risco:</label>
-	<input id="campo15" type="text" value="<?php if ($ocorrencia[11]->cdata != "A") {echo  $ocorrencia[15]->cdata;} else { echo ""; }  ?>" />
-	
 	<br />
 	
 	<label for="campo13">Conta Corrente:</label>
 	<input id="campo13" type="text" align="left" value="<?php if ($ocorrencia[13]->cdata == "yes") { echo "SIM"; } else { echo "NAO"; } ?>" />
-	
-	<label for="campo16">Dias no Risco:</label>
-	<input id="campo16" type="text" value="<?php if ($ocorrencia[11]->cdata != "A") {echo  $ocorrencia[16]->cdata;} else { echo ""; };  ?>" />		
 	<br />
-	
-	<label for="campo18">Risco Grupo Econ&ocirc;mico:</label>
-	<input id="campo18" type="text" value="<?php echo $ocorrencia[19]->cdata;  ?>" />
 	<br />
 	
 </form>

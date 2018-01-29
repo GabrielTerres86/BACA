@@ -52,6 +52,7 @@
 					 (Adriano - P339).
  * 042: [11/10/2017] Liberacao da melhoria 442 (Heitor - Mouts)
  * 043: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 044: [24/01/2018] Incluído tratamento para o nível de risco original (Reginaldo - AMcom)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -417,10 +418,10 @@ function controlaOperacao(operacao) {
 			return false;
 			break;
 		case 'CON_QUALIFICA':
-		case 'ALT_QUALIFICA':		
-			mostraDivQualificaControle(operacao);			
+		case 'ALT_QUALIFICA':
+			mostraDivQualificaControle(operacao);
 			return false;
-			break;		
+			break;
 		case 'PORTAB_APRV' :
 			if ( nrctremp == '' ) { return false; }
 			mostraDivPortabilidadeAprovar(operacao);
@@ -751,7 +752,7 @@ function controlaLayout(operacao) {
 		var cDsFinali    = $('#dsfinemp','#'+nomeForm);
 		var cQtParc      = $('#qtpreemp','#'+nomeForm);
 		var cQualiParc   = $('#idquapro','#'+nomeForm);
-		var cDsQualiParc = $('#dsquapro','#'+nomeForm);		
+		var cDsQualiParc = $('#dsquapro','#'+nomeForm);
 		var cQualiParcC  = $('#idquaprc', '#' + nomeForm);
 		var cDsQualiParcC = $('#dsquaprc', '#' + nomeForm);
 		var cDebitar     = $('#flgpagto','#'+nomeForm);
@@ -780,7 +781,7 @@ function controlaLayout(operacao) {
         cDsFinali.css('width','108px');
         cQtParc.addClass('rotulo').css('width','50px').setMask('INTEGER','zz9','','');
         cQualiParc.addClass('rotulo').css('width','32px');
-        cDsQualiParc.addClass('').css('width','108');		
+        cDsQualiParc.addClass('').css('width','108');
 		cQualiParcC.addClass('rotulo').css('width', '32px');
 		cDsQualiParcC.addClass('').css('width', '108');		
         cDebitar.addClass('rotulo').css('width','90px');
@@ -1377,7 +1378,7 @@ function controlaLayout(operacao) {
 		cTodos_1.desabilitaCampo();
 		cTodos_2.desabilitaCampo();
 		cTodos_3.desabilitaCampo();
-	
+
 	}else if (in_array(operacao,['C_PAG_PREST'])){
 
 		nomeForm = 'frmVlParc';
@@ -1754,14 +1755,14 @@ function atualizaTela(){
 		
 	}else if (in_array(operacao,['C_NOVA_PROP','C_NOVA_PROP_V'])){
 
-		$('#nivrisco','#frmNovaProp').val( arrayProposta['nivrisco'] );
+		$('#nivrisco','#frmNovaProp').val( arrayProposta['nivriori'] != '' ? arrayProposta['nivriori'] : arrayProposta['nivrisco']);
 		$('#nivcalcu','#frmNovaProp').val( arrayProposta['nivcalcu'] );
 		$('#vlemprst','#frmNovaProp').val( arrayProposta['vlemprst'] );
 		$('#cdlcremp','#frmNovaProp').val( arrayProposta['cdlcremp'] );
 		$('#vlpreemp','#frmNovaProp').val( arrayProposta['vlpreemp'] );
 		$('#cdfinemp','#frmNovaProp').val( arrayProposta['cdfinemp'] );
 		$('#qtpreemp','#frmNovaProp').val( arrayProposta['qtpreemp'] );
-		$('#idquapro','#frmNovaProp').val( arrayProposta['idquapro'] );		
+		$('#idquapro','#frmNovaProp').val( arrayProposta['idquapro'] );
 		$('#idquaprc','#frmNovaProp').val( arrayProposta['idquaprc'] );
 		$('#flgpagto','#frmNovaProp').val( arrayProposta['flgpagto'] );
 		$('#percetop','#frmNovaProp').val( arrayProposta['percetop'] );
@@ -1777,13 +1778,13 @@ function atualizaTela(){
 		$('#dsquapro','#frmNovaProp').val( arrayProposta['dsquapro'] );
 		$('#dsquaprc','#frmNovaProp').val( arrayProposta['dsquaprc'] );
 		$('#dsratpro','#frmNovaProp').val( arrayProposta['dsratpro'] );
-		$('#dsratatu','#frmNovaProp').val( arrayProposta['dsratatu'] );		
+		$('#dsratatu','#frmNovaProp').val( arrayProposta['dsratatu'] );
 
 	} else if (in_array(operacao,['C_COMITE_APROV'])){
 
 		$('#dsobscmt','#frmComiteAprov').html( arrayProposta['dsobscmt'] );
 		$('#dsobserv','#frmComiteAprov').html( arrayProposta['dsobserv'] );
-	
+
 	} else if (in_array(operacao,['C_DADOS_PROP_PJ'])){
 
 		$('#vlmedfat','#frmDadosPropPj').val( arrayRendimento['vlmedfat'] );
@@ -2407,7 +2408,7 @@ function mostraDivQualificaControle(operacao) {
 
 	limpaDivGenerica();
 
-	exibeRotina($('#divUsoGenerico'));	
+	exibeRotina($('#divUsoGenerico'));
 
 	var idquaprc = $('#idquaprc').val();	
 	var idquapro = $('#idquapro').val();	
@@ -2429,7 +2430,7 @@ function mostraDivQualificaControle(operacao) {
 			hideMsgAguardo();
 			showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function (response) {		
+		success: function (response) {
 			$('#divUsoGenerico').html(response);
 			layoutPadrao();
 			hideMsgAguardo();

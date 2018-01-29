@@ -117,7 +117,7 @@
  * 094: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
  * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
  * 096: [01/12/2017] NÃ£o permitir acesso a opÃ§Ã£o de incluir quando conta demitida (Jonata - RKAM P364).
- * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom)   
+ * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom)  
  * 099: [21/12/2017] Alterado para quando a linha de crédito for (6901 - Cessão Cartão Crédito) a 
  *                   qualificação da operação seja (5 - Cessão de Cartão) (Diego Simas - AMcom)
  * ##############################################################################
@@ -1391,7 +1391,6 @@ function manterRotina(operacao) {
 
     geraRegsDinamicos();
 
-    
     var flgcmtlc = (typeof arrayCooperativa['flgcmtlc'] == 'undefined') ? '' : arrayCooperativa['flgcmtlc'];
     var vllimapv = (typeof arrayCooperativa['vllimapv'] == 'undefined') ? '' : arrayCooperativa['vllimapv'];
 
@@ -1842,7 +1841,7 @@ function controlaLayout(operacao) {
         var cQtParc = $('#qtpreemp', '#' + nomeForm);
         var cQualiParc = $('#idquapro', '#' + nomeForm);
         var cDsQualiParc = $('#dsquapro', '#' + nomeForm);
-        
+
         var cDebitar = $('#flgpagto', '#' + nomeForm);
         var cTipoEmpr = $('#tpemprst', '#' + nomeForm);
         var cVliofepr = $('#vliofepr', '#' + nomeForm);
@@ -3392,7 +3391,9 @@ function controlaLayout(operacao) {
 
         cFinalidEmpr.val(arrayStatusApprov['cdfinemp']);
         cLinhaCredit.val(arrayStatusApprov['cdlcremp']);
-        cNivelRisco.val(arrayStatusApprov['nivrisco']);
+        console.log(arrayStatusApprov['nivriori']);
+        console.log(arrayStatusApprov['nivrisco']);
+        cNivelRisco.val(arrayStatusApprov['nivriori'] != '' ? arrayStatusApprov['nivriori'] : arrayStatusApprov['nivriris']);
         cValorEmpr.val(arrayStatusApprov['vlemprst']);
         cValorParc.val(arrayStatusApprov['vlpreemp']);
         cQtdeParc.val(arrayStatusApprov['qtpreemp']);
@@ -3710,6 +3711,7 @@ function atualizaArray(novaOp, cdcooper) {
 
 function copiaProposta(novaOp) {
     arrayProposta['nivrisco'] = $('#nivrisco', '#frmNovaProp').val();
+    arrayProposta['nivriori'] = $('#nivrisco', '#frmNovaProp').val(); // nível de risco original
     arrayProposta['nivcalcu'] = $('#nivcalcu', '#frmNovaProp').val();
     arrayProposta['vlemprst'] = $('#vlemprst', '#frmNovaProp').val();
     arrayProposta['cdlcremp'] = $('#cdlcremp', '#frmNovaProp').val();
@@ -3761,6 +3763,7 @@ function attArray(novaOp, cdcooper) {
         }
 
         arrayProposta['nivrisco'] = $('#nivrisco', '#frmNovaProp').val();
+        arrayProposta['nivriori'] = $('#nivrisco', '#frmNovaProp').val();
         arrayProposta['nivcalcu'] = $('#nivcalcu', '#frmNovaProp').val();
         arrayProposta['vlemprst'] = $('#vlemprst', '#frmNovaProp').val();
         arrayProposta['cdlcremp'] = $('#cdlcremp', '#frmNovaProp').val();
@@ -3952,6 +3955,7 @@ function attArray(novaOp, cdcooper) {
 
     } else if (in_array(operacao, ['V_PARCELAS'])) {
         arrayProposta['nivrisco'] = $('#nivrisco', '#frmNovaProp').val();
+        arrayProposta['nivriori'] = $('#nivriori', '#frmNovaProp').val();
         arrayProposta['nivcalcu'] = $('#nivcalcu', '#frmNovaProp').val();
         arrayProposta['vlemprst'] = $('#vlemprst', '#frmNovaProp').val();
         arrayProposta['cdlcremp'] = $('#cdlcremp', '#frmNovaProp').val();
@@ -4035,7 +4039,7 @@ function atualizaTela() {
     if (in_array(operacao, ['TI', 'TE', 'TC', 'TA', 'CF', 'A_NOVA_PROP', 'A_NUMERO', 'A_VALOR', 'A_AVALISTA', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA', 'A_INICIO', 'I_INICIO'])) {
 
         $('#nivrisco option:selected', '#frmNovaProp').val();
-        $('#nivrisco', '#frmNovaProp').val(arrayProposta['nivrisco']);
+        $('#nivrisco', '#frmNovaProp').val(arrayProposta['nivriori'] != '' ? arrayProposta['nivriori'] : arrayProposta['nivrisco']);
 
         if (operacao == 'TI') {
             arrayProposta['dtdpagto'] = dtdpagt2;
@@ -4057,7 +4061,7 @@ function atualizaTela() {
         $('#flgimpnp', '#frmNovaProp').val(arrayProposta['flgimpnp']);
         $('#dsctrliq', '#frmNovaProp').val(arrayProposta['dsctrliq']);
         $('#dslcremp', '#frmNovaProp').val(arrayProposta['dslcremp']);
-        $('#dsfinemp', '#frmNovaProp').val(arrayProposta['dsfinemp']);        
+        $('#dsfinemp', '#frmNovaProp').val(arrayProposta['dsfinemp']);
         $('#dtlibera', '#frmNovaProp').val(arrayProposta['dtlibera']);
         $('#idfiniof', '#frmNovaProp').val(arrayProposta['idfiniof']);
         $('#vliofepr', '#frmNovaProp').val(arrayProposta['vliofepr']);
@@ -7706,7 +7710,7 @@ function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao){
             $('#idquapro', '#' + nomeForm).val(5);
             $('#dsquapro', '#' + nomeForm).val('CessÃ£o de CrÃ©dito');
         }else{
-            $('#idquapro', '#' + nomeForm).val(1);
+		$('#idquapro', '#' + nomeForm).val(1);
             $('#dsquapro', '#' + nomeForm).val('OperaÃ§Ã£o Normal');        
         }		
 	}

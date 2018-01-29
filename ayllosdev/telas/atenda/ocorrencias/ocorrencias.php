@@ -3,17 +3,19 @@
 	/************************************************************************
         Fonte: ocorrencias.php
     	Autor: Guilherme
-	    Data : Fevereiro/2008                     √öltima Alter√ß√£o: 29/10/2012
+	    Data : Fevereiro/2008                     ⁄ltima AlterÁ„o: 29/10/2012
 
-    	Objetivo  : Mostrar rotina de OCORRENCIAS da tela ATENDA
+    	Objetivo  : Mostrar rotina de OCORR NCIAS da tela ATENDA
 
     	Altera√ß√µes: 13/07/2011 - Alterado para layout padr√£o (Rogerius - DB1). 	
 		
-					29/10/2012 - Inclus√£o da op√ß√£o "Grupo Economico" (Adriano)
+					29/10/2012 - Inclus√£o da opÁ„o "Grupo Economico" (Adriano)
 
-					25/07/2016 - Adicionado classe (SetWindow) - necessaria para nave√ß√£o com teclado - (Evandro - RKAM)
+					25/07/2016 - Adicionado classe (SetWindow) - necessaria para naveÁ„o com teclado - (Evandro - RKAM)
 
-					28/09/2016 - Inclus√£o da op√ß√£o "Acordos", Prj. 302 (Jean Michel)
+					28/09/2016 - Inclus√£o da opÁ„o "Acordos", Prj. 302 (Jean Michel)
+
+					24/01/2018 - Inclus„o da opÁ„o "Riscos" (Reginaldo - AMcom)
 
 	************************************************************************/
 	
@@ -48,7 +50,7 @@
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>
 		<td align="center">		
-			<table cellpadding="0" cellspacing="0" border="0" width="565">
+			<table cellpadding="0" cellspacing="0" border="0" width="610">
 				<tr>
 					<td>
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
@@ -69,45 +71,49 @@
 									<table border="0" cellspacing="0" cellpadding="0">
 										<tr>
            									<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq0"></td>
-											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" class="txtNormalBold" onClick="acessaOpcaoAba(7,0,0);return false;">Principal</a></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" class="txtNormalBold" onClick="acessaOpcaoAba(8,0,0);return false;">Principal</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir0"></td>
 											<td width="1"></td>
 
                                             <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq1"></td>
-											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba1" class="txtNormalBold" onClick="acessaOpcaoAba(7,1,1);return false;">Contra ordens</a></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba1" class="txtNormalBold" onClick="acessaOpcaoAba(8,1,1);return false;">Contra ordens</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir1"></td>
 											<td width="1"></td>
 
                                             <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq2"></td>
-											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen2"><a href="#" id="linkAba2" class="txtNormalBold" onClick="acessaOpcaoAba(7,2,2);return false;">Empr&eacute;stimos</a></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen2"><a href="#" id="linkAba2" class="txtNormalBold" onClick="acessaOpcaoAba(8,2,2);return false;">Empr&eacute;stimos</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir2"></td>
 											<td width="1"></td>
 
                                             <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq3"></td>
-											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen3"><a href="#" id="linkAba3" class="txtNormalBold" onClick="acessaOpcaoAba(7,3,3);return false;">Preju&iacute;zos</a></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen3"><a href="#" id="linkAba3" class="txtNormalBold" onClick="acessaOpcaoAba(8,3,3);return false;">Preju&iacute;zos</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir3"></td>
 											<td width="1"></td>
 
                                             <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq4"></td>
-											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen4"><a href="#" id="linkAba4" class="txtNormalBold" onClick="acessaOpcaoAba(7,4,4);return false;">SPC</a></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen4"><a href="#" id="linkAba4" class="txtNormalBold" onClick="acessaOpcaoAba(8,4,4);return false;">SPC</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir4"></td>
 											<td width="1"></td>
 
                                             <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq5"></td>
-											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen5"><a href="#" id="linkAba5" class="txtNormalBold" onClick="acessaOpcaoAba(7,5,5);return false;">Estouros</a></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen5"><a href="#" id="linkAba5" class="txtNormalBold" onClick="acessaOpcaoAba(8,5,5);return false;">Estouros</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir5"></td>
 											<td width="1"></td>
 											
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq6"></td>
-											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen6"><a href="#" id="linkAba6" class="txtNormalBold" onClick="acessaOpcaoAba(7,6,6);return false;">Grupo Economico</a></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen6"><a href="#" id="linkAba6" class="txtNormalBold" onClick="acessaOpcaoAba(8,6,6);return false;">Grupo Economico</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir6"></td>
 											<td width="1"></td>
 
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq7"></td>
-											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen7"><a href="#" id="linkAba7" class="txtNormalBold" onClick="acessaOpcaoAba(7,7,7);return false;">Acordos</a></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen7"><a href="#" id="linkAba7" class="txtNormalBold" onClick="acessaOpcaoAba(8,7,7);return false;">Acordos</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir7"></td>
 											<td width="1"></td>
 
+											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq8"></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen8"><a href="#" id="linkAba8" class="txtNormalBold" onClick="acessaOpcaoAba(8,8,8);return false;">Riscos</a></td>
+											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir8"></td>
+											<td width="1"></td>
                                         </tr>
 									</table>
 								</td>

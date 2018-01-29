@@ -87,6 +87,7 @@ var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATEN
 var flgMostraAnota = false; // Flag que indica se anotações devem ser mostradas após as mensagens
 
 var nrdconta = ""; // Variável global para armazenar nr. da conta/dv
+var nrcpfcnpj = ""; // Variável global para armazenar cpf/cnpj
 var nrdctitg = ""; // Variável global para armazenar nr. da conta integração
 var inpessoa = ""; // Variável global para armazenar o tipo de pessoa (física/jurídica)
 var cdcooper = ""; // Variável global para armazenar o codigo da cooperativa
@@ -486,6 +487,7 @@ function obtemCabecalho() {
 
     // Armazena conta/dv e conta/itg informadas
     nrdconta = retiraCaracteres($("#nrdconta", "#frmCabAtenda").val(), "0123456789", true);
+    nrcpfcnpj = retiraCaracteres($("#nrcpfcgc", "#frmCabAtenda").val(), "0123456789", true);
     nrdctitg = retiraCaracteres($("#nrdctitg", "#frmCabAtenda").val().toUpperCase(), "0123456789X", true);
     cdcooper = $("#hdnCooper", "#frmCabAtenda").val();
     dscsersm = $("#hdnServSM", "#frmCabAtenda").val();
