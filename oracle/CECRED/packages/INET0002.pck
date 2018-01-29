@@ -7295,7 +7295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     --Valor a somar
                     vr_vlasomar := 0;
                           
-                    vr_dsvltran := ' '; -- Valor
+                    vr_dsvltran := '0,00'; -- Valor
                     vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
                     vr_dsdescri := 'DEBITO AUTOMATICO - ' || vr_nmrescon;-- Descricao
                     vr_dstptran := 'Autorização Débito Automático'; -- Tipo de Transacao
@@ -7395,7 +7395,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                  END IF;
       						
                  vr_vlasomar := 0;
-                 vr_dsvltran := ' '; -- Valor
+                 vr_dsvltran := '0,00'; -- Valor
                  vr_dsdtefet := 'Mes atual'; -- Data Efetivacao
                  vr_dsdescri := 'SERVIÇOS COOPERATIVOS'; -- Descricao
                  vr_dstptran := 'Adesão de Serviços Cooperativos'; -- Tipo de Transacao
@@ -7552,7 +7552,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
               vr_vlasomar := 0;
                        
               --Variaveis do resumo
-              vr_dsvltran := NULL; -- Valor
+              vr_dsvltran := '0,00'; -- Valor
               vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
               vr_dsdescri := rw_sms_trans_pend.dspacote; -- Descricao
               IF vr_tptranpe IN (16) THEN

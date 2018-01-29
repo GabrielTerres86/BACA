@@ -1397,7 +1397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     END IF;
       
     pr_dssrvarq := gene0001.fn_param_sistema('CRED',0,'SRV_DOWNLOAD_ARQUIVO');
-    pr_dsdirarq := '/'||rw_crapcop.dsdircop||'/';      
+    pr_dsdirarq := '/'||rw_crapcop.dsdircop||gene0001.fn_param_sistema('CRED',0,'SUB_PATH_DOWNLOAD_ARQ');      
     
     IF pr_flgcopia = 1 THEN  
       vr_cmdcopia := 'cp '; -- Copiar

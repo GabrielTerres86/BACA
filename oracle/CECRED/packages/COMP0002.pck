@@ -916,11 +916,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE;
       vr_info_sac typ_reg_info_sac;
-      vr_des_erro VARCHAR2(4000);    
-      vr_txminima VARCHAR2(1000);
+      vr_des_erro VARCHAR2(4000);  
+      vr_txminima VARCHAR2(100);
       vr_idxvenct INTEGER;
       vr_dsaplica crapcpc.nmprodut%TYPE;
-      vr_nmdindex VARCHAR2(1000);
+      vr_nmdindex VARCHAR2(100);
     
     BEGIN
     
@@ -966,24 +966,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');              
       
-      FOR vr_ind IN 1..vr_protocolo.count LOOP
-                
-          IF UPPER(to_char(vr_protocolo(vr_ind).dsinform##1)) = 'APLICACAO'     OR
-             UPPER(to_char(vr_protocolo(vr_ind).dsinform##1)) = 'APLICACAO POS' THEN
+      FOR vr_ind IN 1..vr_protocolo.count LOOP          
+          
+          IF TRIM(gene0002.fn_busca_entrada(11, vr_protocolo(vr_ind).dsinform##3,'#')) = 'N' THEN -- Aplicação de nova estrutura 
              vr_txminima := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
-             vr_idxvenct := 5;  -- Posicao do vencimento dentro dentro de dsinform##3
-             vr_dsaplica := 'RDCPOS';
-             vr_nmdindex := 'CDI - Certificado de Deposito Interfinanceiro';
+             vr_idxvenct := 5;  -- Posicao do vencimento dentro dentro de dsinform##3            
+             vr_dsaplica := TRIM(gene0002.fn_busca_entrada(12, vr_protocolo(vr_ind).dsinform##3, '#')); 
+             vr_nmdindex := ' '; 
+          ELSE             
+             vr_nmdindex := 'CDI - Certificado de Deposito Interfinanceiro'; 
              
-             IF UPPER(to_char(vr_protocolo(vr_ind).dsinform##1)) = 'APLICACAO' THEN -- Aplicação de nova estrutura 
-               vr_dsaplica := TRIM(gene0002.fn_busca_entrada(12, vr_protocolo(vr_ind).dsinform##3, '#')); 
-               vr_nmdindex := ''; 
+             IF TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) = '7' THEN -- RDCPRE
+               vr_txminima := ' '; 
+               vr_idxvenct := 4;  -- Posicao do vencimento dentro dentro de dsinform##3
+               vr_dsaplica := 'RDCPRE';
+             ELSE
+               vr_txminima := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
+               vr_idxvenct := 5;  -- Posicao do vencimento dentro dentro de dsinform##3
+               vr_dsaplica := 'RDCPOS';
              END IF;
-          ELSE
-             vr_txminima := ''; 
-             vr_idxvenct := 4;  -- Posicao do vencimento dentro dentro de dsinform##3
-             vr_dsaplica := 'RDCPRE';
-             vr_nmdindex := 'CDI - Certificado de Deposito Interfinanceiro';             
           END IF;
       
           gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -1247,7 +1248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     DECLARE
     
       vr_protocolo gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
-      vr_dsinfor2 VARCHAR2(400);                 --> Descrição do Convenio
+      vr_dslindig VARCHAR2(100);
       vr_dsinstit VARCHAR2(100);                 --> Descrição do Banco
       vr_dscedent VARCHAR2(100);                 --> Descrição do Cedente      
       vr_nmpagado VARCHAR2(100);
@@ -1314,9 +1315,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       FOR vr_ind IN 1..vr_protocolo.count LOOP
       
         -- Verifica se é pagamento de convênio
-        vr_dsinfor2 := TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#')), ':'));
+        vr_dslindig := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
 
-        IF vr_dsinfor2 = 'Convenio'THEN
+        IF LENGTH(vr_dslindig) = 55 THEN -- Convênio
           vr_dsinstit := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#')), ':'));
           vr_dscedent := '';
 					vr_cdtippag := 1;
@@ -1367,7 +1368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                  '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
 																 '<dtdpagto>' || to_char(vr_protocolo(vr_ind).dtmvtolt, 'DD/MM/RRRR')                                                               || '</dtdpagto>' ||
 																 '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
-																 '<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dslinhad>' ||
+																 '<dslinhad>' || vr_dslindig                                                                                                        || '</dslinhad>' ||
 																 '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||                                  
                                  '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                                                                      || '</nmprepos>' ||
                                  '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                                                                      || '</nrcpfpre>' ||

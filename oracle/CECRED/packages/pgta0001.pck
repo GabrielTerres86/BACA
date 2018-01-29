@@ -9847,7 +9847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                            ,pr_cdagenci => 90
                            ,pr_nrdolote => 11900       -- (11000 + nrdcaixa)
                            ,pr_cdbccxlt => 100         -- cdbccxlt
-                           ,pr_dtmvtolt => pr_dtmvtolt
+                           ,pr_dtmvtolt => vr_dtmvtolt
                            ,pr_nrdconta => rw_crapdpt.nrdconta
                            ,pr_cdtiptra => 2           -- PAGAMENTO
                            ,pr_dscodbar => rw_crapdpt.dscodbar
