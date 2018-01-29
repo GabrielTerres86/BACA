@@ -1258,7 +1258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 12/07/2017
+      Data     : Dezembro/2016.                   Ultima atualizacao: 12/01/2018
     
       Dados referentes ao programa:
     
@@ -1267,6 +1267,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Alteração : 12/07/2017 - Alterado parametro de data da procedure fn_valor_calc_titulo_npc
                                para correção de pagamentos DDA, Prj. 340 - NPC (Jean Michel)
         
+                  12/01/2018 - Ajuste para validar o valor do titulo e o valor informado
+                               utilizando ROUND na comparação (Douglas - Chamado 817561)        
     ..........................................................................*/
     -----------> CURSORES <-----------
     --> Buscar dados da consulta
@@ -1398,7 +1400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         IF vr_vltitcal IS NULL THEN
           vr_dscritic := 'Problemas ao buscar valor do titulo.';
           RAISE vr_exc_erro;
-        ELSIF pr_vldpagto < vr_vltitcal THEN
+        ELSIF ROUND(pr_vldpagto, 2) < ROUND(vr_vltitcal, 2) THEN
           vr_dscritic := 'Cob. Reg. - Valor informado '||
                          to_char(pr_vldpagto, 'fm999g999g990d00')||
                          ' menor que valor doc. '|| to_char(vr_vltitcal,'fm999g999g990D00');
