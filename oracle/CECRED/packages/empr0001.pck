@@ -15073,25 +15073,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       ---------->> CURSORES <<--------
       CURSOR cr_consulta_limite_cc (pr_cdcooper IN NUMBER
                                    ,pr_nrdconta IN NUMBER) IS
-        SELECT DISTINCT
-               nvl(a.dtultlcr/*dt_limite_credito*/,s.dtmvtolt/*dt_ADP*/) data_calculada
-             , c.nrctremp contrato
-             , a.vllimcre vl_limite_credito
-             , s.vldepavs vl_ADP
-             , c.vlsdeved vl_saldo_devedor
-          FROM crapass a
-             , crapepr c
-             , crapbnd s
-         WHERE a.nrdconta = c.nrdconta(+)
-           AND a.cdcooper = c.cdcooper(+)
-           AND c.inliquid = 0
-           AND a.nrdconta = s.nrdconta(+)
-           AND a.cdcooper = s.cdcooper(+)
-           AND s.dtmvtolt = (SELECT dtmvtoan FROM crapdat WHERE cdcooper = pr_cdcooper)
-           AND a.tplimcre > 0
-           AND a.nrdconta = pr_nrdconta --916021
-           AND a.cdcooper = pr_cdcooper; --1;
-       rw_consulta_limite_cc cr_consulta_limite_cc%ROWTYPE;
+        SELECT 'LIMITE'   tipo
+             , l.dtrenova data
+             , l.nrctrlim contrato_conta
+             , l.vllimite vl_limite_adp
+          FROM craplim l
+         WHERE l.nrdconta = pr_nrdconta
+           AND l.cdcooper = pr_cdcooper
+           AND l.tpctrlim = 1
+           AND l.insitlim = 2
+        UNION
+        SELECT 'ADP'      tipo
+             , s.dtmvtolt data
+             , s.nrdconta contrato_conta
+             , s.vldepavs vl_limite_adp
+          FROM crapbnd s
+         WHERE s.dtmvtolt = (SELECT dtmvtoan FROM crapdat WHERE cdcooper = pr_cdcooper)
+           AND s.nrdconta = pr_nrdconta
+           AND s.cdcooper = pr_cdcooper;
+        rw_consulta_limite_cc cr_consulta_limite_cc%ROWTYPE;
 
     BEGIN
 
@@ -15139,42 +15139,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
     -- CAMPOS
     -- Busca os dados
-
+            
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_contador,
-                             pr_tag_nova => 'data_calculada',
-                             pr_tag_cont => rw_consulta_limite_cc.data_calculada,
+                             pr_tag_nova => 'tipo',
+                             pr_tag_cont => rw_consulta_limite_cc.tipo,
                              pr_des_erro => vr_dscritic);
-                             
-      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'inf',
-                             pr_posicao  => vr_contador,
-                             pr_tag_nova => 'contrato',
-                             pr_tag_cont => rw_consulta_limite_cc.contrato,
-                             pr_des_erro => vr_dscritic);                             
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_contador,
-                             pr_tag_nova => 'vl_limite_credito',
-                             pr_tag_cont => rw_consulta_limite_cc.vl_limite_credito,
-                             pr_des_erro => vr_dscritic);                             
-
-      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'inf',
-                             pr_posicao  => vr_contador,
-                             pr_tag_nova => 'vl_ADP',
-                             pr_tag_cont => rw_consulta_limite_cc.vl_ADP,
-                             pr_des_erro => vr_dscritic);                                                          
-
-      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'inf',
-                             pr_posicao  => vr_contador,
-                             pr_tag_nova => 'vl_saldo_devedor',
-                             pr_tag_cont => rw_consulta_limite_cc.vl_saldo_devedor,
+                             pr_tag_nova => 'data',
+                             pr_tag_cont => rw_consulta_limite_cc.data,
                              pr_des_erro => vr_dscritic);
-             
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_contador,
+                             pr_tag_nova => 'contrato_conta',
+                             pr_tag_cont => rw_consulta_limite_cc.contrato_conta,
+                             pr_des_erro => vr_dscritic);
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_contador,
+                             pr_tag_nova => 'vl_limite_adp',
+                             pr_tag_cont => rw_consulta_limite_cc.vl_limite_adp,
+                             pr_des_erro => vr_dscritic);
+
       vr_contador := vr_contador + 1;
 
       END LOOP;
