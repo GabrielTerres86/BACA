@@ -15,7 +15,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Jaison
-     Data    : Maio/2014                     Ultima atualizacao: 14/01/2016
+     Data    : Maio/2014                     Ultima atualizacao: 13/12/2017
 
      Dados referentes ao programa:
 
@@ -1027,7 +1027,8 @@ BEGIN
     --IF ((rw_crapdat.inproces = 1) -- Caso seja uma geracao manual (carga ou SPC/Serasa) e o processo esteja on-line
     --If acima retirado, pois quando for geração manual, não roda vom paralelismo.
     
-    IF (rw_crapdat.inproces   > 2 ) --AND TO_CHAR(rw_crapdat.dtmvtolt,'D')= 2)  -- Processo noturno rodando e tbm eh segunda-feira
+    IF rw_crapdat.inproces   > 2 
+      AND TO_CHAR(rw_crapdat.dtmvtolt,'D')= 2  -- Processo noturno rodando e tbm eh segunda-feira
       AND vr_qtdjobs          > 0 
       AND pr_cdagenci         = 0   
       AND pr_flgexpor         = 0   then    
