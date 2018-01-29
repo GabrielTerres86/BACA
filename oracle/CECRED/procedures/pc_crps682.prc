@@ -1028,7 +1028,7 @@ BEGIN
     --If acima retirado, pois quando for geração manual, não roda vom paralelismo.
     
     IF rw_crapdat.inproces   > 2 
-      AND TO_CHAR(rw_crapdat.dtmvtolt,'D')= 2  -- Processo noturno rodando e tbm eh segunda-feira
+    --  AND TO_CHAR(rw_crapdat.dtmvtolt,'D')= 2  -- Processo noturno rodando e tbm eh segunda-feira
       AND vr_qtdjobs          > 0 
       AND pr_cdagenci         = 0   
       AND pr_flgexpor         = 0   then    
@@ -1187,8 +1187,7 @@ BEGIN
        vr_arq_temp := 'crrl682.lst';
     ELSE
        -- Caso seja uma exportacao para SPC/Serasa
-       -- vr_arq_path := GENE0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'CRPS682_EXPORTA');
-       vr_arq_path := '/microsl';
+       vr_arq_path := GENE0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'CRPS682_EXPORTA');
        vr_arq_nome := 'F' || LPAD(rw_crapcop.cdcooper, 2, '0') ||'_'|| TO_CHAR(rw_crapdat.dtmvtolt, 'DDMMRRRR') || '.txt';
        vr_arq_temp := 'F' || LPAD(rw_crapcop.cdcooper, 2, '0') ||'_'|| TO_CHAR(rw_crapdat.dtmvtolt, 'DDMMRRRR') || '.lst';
        vr_arq_nom2 := 'J' || LPAD(rw_crapcop.cdcooper, 2, '0') ||'_'|| TO_CHAR(rw_crapdat.dtmvtolt, 'DDMMRRRR') || '.txt';
@@ -1539,8 +1538,7 @@ BEGIN
            vr_arq_temp := 'crrl682.lst';
         ELSE
            -- Caso seja uma exportacao para SPC/Serasa
-           --        vr_arq_path := GENE0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'CRPS682_EXPORTA');
-           vr_arq_path := '/microsl';
+           vr_arq_path := GENE0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'CRPS682_EXPORTA');
            vr_arq_nome := 'F' || LPAD(rw_crapcop.cdcooper, 2, '0') ||'_'|| TO_CHAR(rw_crapdat.dtmvtolt, 'DDMMRRRR') || '.txt';
            vr_arq_temp := 'F' || LPAD(rw_crapcop.cdcooper, 2, '0') ||'_'|| TO_CHAR(rw_crapdat.dtmvtolt, 'DDMMRRRR') || '.lst';
            vr_arq_nom2 := 'J' || LPAD(rw_crapcop.cdcooper, 2, '0') ||'_'|| TO_CHAR(rw_crapdat.dtmvtolt, 'DDMMRRRR') || '.txt';
