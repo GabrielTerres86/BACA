@@ -807,6 +807,15 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                              ,pr_valoriof OUT craplcm.vllanmto%TYPE
                              ,pr_dscritic OUT VARCHAR2);
 
+ PROCEDURE pc_consultar_limite_cc(pr_cdcooper IN NUMBER --> Número da conta
+                                 ,pr_nrdconta IN NUMBER --> Conta do associado
+                                 ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2);
+
   /* Calcular a quantidade de dias que o emprestimo está em atraso */
   FUNCTION fn_busca_dias_atraso_epr(pr_cdcooper IN crappep.cdcooper%TYPE --> Código da Cooperativa
                                    ,pr_nrdconta IN crappep.nrdconta%TYPE --> Numero da Conta do empréstimo
@@ -15016,6 +15025,189 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro não tratado na EMPR0001.pc_calcula_iof_epr --> ' || SQLERRM;
   END pc_calcula_iof_epr;
+
+   PROCEDURE pc_consultar_limite_cc(pr_cdcooper IN NUMBER             --> Número da conta
+                                 ,pr_nrdconta IN NUMBER             --> Contrato
+                                 ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2) IS      --> Erros do processo
+    /* .............................................................................
+
+        Programa: pc_consultar_limite_cc
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel/AMcom
+        Data    : Janeiro/2018                 Ultima atualizacao:
+
+        Dados referentes ao programa:
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina para consultar informações de limite
+        Observacao: -----
+        Alteracoes:
+      ..............................................................................*/
+----------->>> VARIAVEIS <<<--------
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
+
+      vr_dstextab craptab.dstextab%TYPE;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_contador INTEGER := 0;
+
+      ---------->> CURSORES <<--------
+      CURSOR cr_consulta_limite_cc (pr_cdcooper IN NUMBER
+                                   ,pr_nrdconta IN NUMBER) IS
+        SELECT DISTINCT
+               nvl(a.dtultlcr/*dt_limite_credito*/,s.dtmvtolt/*dt_ADP*/) data_calculada
+             , c.nrctremp contrato
+             , a.vllimcre vl_limite_credito
+             , s.vldepavs vl_ADP
+             , c.vlsdeved vl_saldo_devedor
+          FROM crapass a
+             , crapepr c
+             , crapbnd s
+         WHERE a.nrdconta = c.nrdconta(+)
+           AND a.cdcooper = c.cdcooper(+)
+           AND c.inliquid = 0
+           AND a.nrdconta = s.nrdconta(+)
+           AND a.cdcooper = s.cdcooper(+)
+           AND s.dtmvtolt = (SELECT dtmvtoan FROM crapdat WHERE cdcooper = pr_cdcooper)
+           AND a.tplimcre > 0
+           AND a.nrdconta = pr_nrdconta --916021
+           AND a.cdcooper = pr_cdcooper; --1;
+       rw_consulta_limite_cc cr_consulta_limite_cc%ROWTYPE;
+
+    BEGIN
+
+      pr_des_erro := 'OK';
+      -- Extrai dados do xml
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcooper,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
+
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Root',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'Dados',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => vr_dscritic);
+
+     FOR rw_consulta_limite_cc
+       IN cr_consulta_limite_cc(pr_cdcooper => vr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta) LOOP
+
+
+
+      -- PASSA OS DADOS PARA O XML RETORNO
+      -- Insere as tags
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'inf',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => vr_dscritic);
+
+    -- CAMPOS
+    -- Busca os dados
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_contador,
+                             pr_tag_nova => 'data_calculada',
+                             pr_tag_cont => rw_consulta_limite_cc.data_calculada,
+                             pr_des_erro => vr_dscritic);
+                             
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_contador,
+                             pr_tag_nova => 'contrato',
+                             pr_tag_cont => rw_consulta_limite_cc.contrato,
+                             pr_des_erro => vr_dscritic);                             
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_contador,
+                             pr_tag_nova => 'vl_limite_credito',
+                             pr_tag_cont => rw_consulta_limite_cc.vl_limite_credito,
+                             pr_des_erro => vr_dscritic);                             
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_contador,
+                             pr_tag_nova => 'vl_ADP',
+                             pr_tag_cont => rw_consulta_limite_cc.vl_ADP,
+                             pr_des_erro => vr_dscritic);                                                          
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_contador,
+                             pr_tag_nova => 'vl_saldo_devedor',
+                             pr_tag_cont => rw_consulta_limite_cc.vl_saldo_devedor,
+                             pr_des_erro => vr_dscritic);
+             
+      vr_contador := vr_contador + 1;
+
+      END LOOP;
+
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+  END pc_consultar_limite_cc;
 
 END empr0001;
 /
