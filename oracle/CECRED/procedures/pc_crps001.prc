@@ -215,6 +215,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             registros crapfdc; e alterado o arquivo de log dos mesmos, de 
                             proc_batch para proc_message (Carlos)
 
+               15/01/2018 - #828460 Colocar o valor do IOF com duas casas decimais.
+                            Foi feito round no campo de IOF (Andrino-Mouts)               
+
                19/01/2018 - Corrigido cálculo de saldo bloqueado (Luis Fernando-Gft)
      ............................................................................. */
 
@@ -2217,7 +2220,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            --Valor base iof recebe valor base iof existente + valor base iof calculado
            rw_crapsld.vlbasiof := Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
            --Valor iod no mes recebe valor iof mes + valor base iof multiplicado pela taxa de iof
-           rw_crapsld.vliofmes := Nvl(rw_crapsld.vliofmes,0) + NVL(vr_vliofadi,0) + NVL(vr_vliof_principal,0);
+           rw_crapsld.vliofmes := round(Nvl(rw_crapsld.vliofmes,0) + NVL(vr_vliofadi,0) + NVL(vr_vliof_principal,0),2);
 
             --Se deve calcular cpmf
            IF vr_flgdcpmf THEN  --linha(905)
