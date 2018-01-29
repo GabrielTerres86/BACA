@@ -3,7 +3,7 @@
 	/***************************************************************************
 	 Fonte: principal.php                                             
 	 Autor: David                                                     
-	 Data : Março/2010                   Última Alteração: 30/09/2015
+	 Data : Março/2010                   Última Alteração: 29/01/2018
 	                                                                  
 	 Objetivo  : Mostrar opcao Principal da rotina de Poupanças da    
 	             tela ATENDA                                          
@@ -18,7 +18,9 @@
 						     (Gabriel - Rkam -> Projeto 217).	
                              
                  27/11/2017 - Inclusao do valor de bloqueio em garantia.
-                              PRJ404 - Garantia Empr.(Odirlei-AMcom) 
+                              PRJ404 - Garantia Empr.(Odirlei-AMcom) 	 
+
+                 29/01/2018 - Ajuste no layout dos campos de valor de bloqueio.
 						  
 	***************************************************************************/
 	
@@ -210,12 +212,15 @@
 		</table>
 	</div>
 	
-	<ul class="complemento">
-		<li id="VlBloq" class="txtNormalBold" align="left" >Valor Bloq. Judicial:</li>
-		<li id="VlBloq"><? echo number_format(str_replace(",",".", $vlbloque),2,",","."); ?></li>
-        
-        <li id="VlBloqGar" class="txtNormalBold" style="padding-left:50%"align="right" >Valor Bloq. Garantia:</li>
-		<li id="VlBloqGar"><? echo number_format(str_replace(",",".", $vlblqpou),2,",","."); ?></li>
+	<ul class="complemento" align="left">
+		<div style="float: left; text-align: left; width: 50%;">
+			<label class="txtNormalBold">Valor Bloq. Judicial:</label>
+			<label><? echo number_format(str_replace(",",".", $vlbloque),2,",","."); ?></label>
+		</div>
+		<div style="float: right; text-align: right; width: 50%;">
+			<label class="txtNormalBold">Valor Bloq. Garantia:</label>
+			<label><? echo number_format(str_replace(",",".", $vlblqpou),2,",","."); ?></label>
+		</div>
 	</ul>
 	
 	<div id="divBotoes">
