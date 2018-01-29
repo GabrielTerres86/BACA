@@ -344,21 +344,21 @@ BEGIN
     pc_grava_dados(pr_tab_parc_pep => vr_tab_parc_pep
                   ,pr_tab_parc_epr => vr_tab_parc_epr);
 
-    -- Encerrar o job do processamento paralelo dessa agencia
-    GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-                                ,pr_idprogra => pr_cdagenci
-                                ,pr_des_erro => pr_dscritic);
-    -- Se houve erro
-    IF pr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
-
     -- Finaliza agencia no controle do batch
     GENE0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole
                                        ,pr_cdcritic   => vr_cdcritic
                                        ,pr_dscritic   => vr_dscritic);
     -- Se houve erro
     IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- Encerrar o job do processamento paralelo dessa agencia
+    GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                ,pr_idprogra => pr_cdagenci
+                                ,pr_des_erro => pr_dscritic);
+    -- Se houve erro
+    IF pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
 
