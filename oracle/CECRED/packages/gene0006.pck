@@ -413,6 +413,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                13/03/2017 - Na procedure pc_gera_protocolo foi retirado pr_dscritic 
                             da exception vr_exc_erro pois é um erro tratado 
                             (Lucas Ranghetti #624628)
+                            
+               24/10/2017 - #781206 Nas rotinas pc_gera_protocolo e pc_gera_protocolo_md5, nos inserts da tabela
+                            crappro, restringido o campo dscedent em 50 caracteres. Na rotina pc_busca_protocolo_wt,
+                            no insert da tabela wt_protocolo, restringido o campo dscedent em 40 caracteres (Carlos)
 
                06/12/2017 - Adicionado procedure PC_LISTA_PROTOCOLOS_POR_TIPOS 
                             (P285 - Ricardo Linhares).
@@ -946,7 +950,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
+
       -- Devolver o protocolo que geramos
       pr_dsprotoc := vr_dsprotoc;
 
@@ -986,7 +990,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                              ,nmprepos)
             VALUES(pr_cdcooper
                   ,nvl(pr_cdtippro,0)
-                  ,nvl(upper(pr_dscedent),' ')
+                  ,nvl(upper(substr(pr_dscedent,1,50)),' ')
                   ,nvl(pr_dsinfor1,' ')
                   ,nvl(pr_dsinfor2,' ')
                   ,nvl(pr_dsinfor3,' ')
@@ -1262,7 +1266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                              ,nmprepos)
             VALUES(pr_cdcooper
                   ,nvl(pr_cdtippro,0)
-                  ,nvl(upper(pr_dscedent),' ')
+                  ,nvl(upper(substr(pr_dscedent,1,50)),' ')
                   ,nvl(pr_dsinfor1,' ')
                   ,nvl(pr_dsinfor2,' ')
                   ,nvl(pr_dsinfor3,' ')
@@ -1503,7 +1507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           END IF;
 
           -- Incrementa quantidade de registros
-          pr_qttotreg := pr_qttotreg + 1; 
+          pr_qttotreg := pr_qttotreg + 1;
 
           -- Valida condições sobre o registro
           IF pr_nrregist > 0 AND (pr_qttotreg <= pr_iniconta OR pr_nrregist < (pr_qttotreg - pr_iniconta)) THEN
@@ -1570,7 +1574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
             pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
           END IF;
-		  
+
 		      IF rw_crappro.cdtippro IN (20) THEN
              pr_protocolo(vr_index).nrcelular   := TRIM(gene0002.fn_busca_entrada(3, rw_crappro.dsinform##2, '#'));
              pr_protocolo(vr_index).nmoperadora := TRIM(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'));                      
@@ -2337,7 +2341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             ,vr_tab_protocolo(vr_ind).dsinform##2
             ,vr_tab_protocolo(vr_ind).dsinform##3
             ,vr_tab_protocolo(vr_ind).dsprotoc 
-            ,vr_tab_protocolo(vr_ind).dscedent 
+            ,substr(vr_tab_protocolo(vr_ind).dscedent,1,40)
             ,vr_tab_protocolo(vr_ind).flgagend 
             ,vr_tab_protocolo(vr_ind).nmprepos 
             ,vr_tab_protocolo(vr_ind).nrcpfpre 

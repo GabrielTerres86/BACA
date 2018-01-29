@@ -29,6 +29,12 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --
 --             05/07/2017 - Ajuste nas procedures pc_rejeitar_arq_pgto e pc_gerar_arq_log_pgto
 --                          para buscarem tambem arquivos com extensao .TXT gerados no sistema MATERA (Diego).
+--
+--             11/12/2017 - Ajuste na pc_gerar_arq_ret_pgto para que não escreva no arquivo o CHR(13)
+--                          pois a procedure pc_escreve_linha ja adiciona a quebra de linha
+--                        - Ajuste na validação de retorno quando deve ser enviado para o FTP
+--                        - Ajuste para converter o arquivo de UNIX para WINDOWS
+--                        (Douglas - Chamado 805535) 
 ---------------------------------------------------------------------------------------------------------------
 
     -- Tabela de memoria que ira conter os titulos que foram marcados como retorno
@@ -583,7 +589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Maio/2014.                   Ultima atualizacao: 27/10/2017
+--  Data     : Maio/2014.                   Ultima atualizacao: 18/12/2017
 --
 -- Dados referentes ao programa:
 --
@@ -622,6 +628,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --
 --             27/10/2017 - #781654 Na rotina pc_processar_arq_pgto, alterado o arquivo de log de null (proc_batch)
 --                          para proc_message (Carlos)
+--
+--             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -4131,7 +4139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
     --  Sigla    : PGTA
     --  Autor    : Desconhecido (Nao colocou cabeçalho quando criou a procedure)
-    --  Data     : Desconhecido                     Ultima atualizacao: 16/03/2017
+    --  Data     : Desconhecido                     Ultima atualizacao: 18/12/2017
     --
     -- Dados referentes ao programa:
     --
@@ -4139,6 +4147,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     -- Objetivo  : Cadastrar o agendamento do Pagamento do Titulo
 
     -- Alteracoes: 16/03/2017 - Ajustado a criacao do lote para gravar o codigo do PA (Douglas)
+    --
+    --             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
 
@@ -4189,7 +4199,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            AND craplot.dtmvtolt = pr_dtmvtolt
            AND craplot.cdagenci = pr_cdagenci
            AND craplot.cdbccxlt = 100
-           AND craplot.nrdolote = pr_nrdolote;
+           AND craplot.nrdolote = pr_nrdolote
+           FOR UPDATE NOWAIT;
       rw_craplot cr_craplot%ROWTYPE;
 
       vr_cdcritic_aux crapcri.cdcritic%TYPE;
@@ -4301,35 +4312,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
             END IF;
          END IF;
 
-         -- Verifica se existe capa de lote agendamento
-         OPEN cr_craplot(pr_cdcooper
-                        ,pr_dtmvtolt
-                        ,pr_cdagenci
-                        ,vr_nrdolote);
-         FETCH cr_craplot INTO rw_craplot;
-         IF cr_craplot%NOTFOUND THEN
-            -- Se nao existir cria a capa de lote
-            BEGIN
-               INSERT INTO craplot
-                  (cdcooper,
-                   cdagenci,
-                   dtmvtolt,
-                   cdbccxlt,
-                   nrdolote,
-                   nrdcaixa,
-                   cdoperad,
-                   cdopecxa,
-                   tplotmov)
-                   VALUES
-                  (pr_cdcooper,
-                   pr_cdagenci,
-                   pr_dtmvtolt,
-                   100,          --cdbccxlt
-                   vr_nrdolote,
-                   pr_nrdcaixa,
-                   pr_cdoperad,
-                   pr_cdoperad,
-                   12)           --tplotmov
+         -- Tentar criar registro de lote ate 10 vezes
+         -- senao abortar
+         FOR i IN 1..10 LOOP
+           vr_dscritic := NULL;
+
+           BEGIN
+             --> buscar lote
+             OPEN cr_craplot (pr_cdcooper  => pr_cdcooper ,
+                              pr_dtmvtolt  => pr_dtmvtolt ,
+                              pr_cdagenci  => pr_cdagenci ,
+                              pr_nrdolote  => vr_nrdolote );
+             FETCH cr_craplot INTO rw_craplot;
+             IF cr_craplot%NOTFOUND THEN
+               CLOSE cr_craplot;
+               -- se não localizou, deve criar o registro de lote
+               BEGIN
+                 INSERT INTO craplot
+                            (cdcooper,
+                             cdagenci,
+                             dtmvtolt,
+                             cdbccxlt,
+                             nrdolote,
+                             nrdcaixa,
+                             cdoperad,
+                             cdopecxa,
+                             tplotmov)
+                             VALUES
+                            (pr_cdcooper,
+                             pr_cdagenci,
+                             pr_dtmvtolt,
+                             100,          --cdbccxlt
+                             vr_nrdolote,
+                             pr_nrdcaixa,
+                             pr_cdoperad,
+                             pr_cdoperad,
+                             12)           --tplotmov
                    RETURNING dtmvtolt,
                              cdagenci,
                              cdbccxlt,
@@ -4352,21 +4370,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                          rw_craplot.qtcompln,
                          rw_craplot.nrseqdig,
                          rw_craplot.rowid;
-            EXCEPTION
-               WHEN OTHERS THEN
-                  -- Gerar erro 0 com critica montada com o erro do insert
-                  vr_dscritic := 'Erro ao inserir na CRAPLOT : ' || SQLERRM;
-                  -- Levantar excecao
-                  RAISE vr_exc_saida;
-            END;
+               EXCEPTION
+                 WHEN OTHERS THEN
+                   -- Gerar erro 0 com critica montada com o erro do insert
+                   vr_dscritic := 'Erro ao inserir na CRAPLOT : ' || SQLERRM;
+                   -- Levantar excecao
+           RAISE vr_exc_saida;
+               END;
+ 
+             ELSE
+               CLOSE cr_craplot;
          END IF;
-         -- Fecha o cursor de capas de lote
-         CLOSE cr_craplot;
+             -- se não deu erro, sair do loop
+             EXIT;
+ 
+           EXCEPTION
+             WHEN vr_exc_saida THEN
+               RAISE vr_exc_saida;
+             WHEN OTHERS THEN
+ 
+               vr_dscritic := 'Tabela de lotes esta '||
+                              'sendo alterada. Tente novamente.';
+               -- aguardar um segundo e tentar novamente
+               sys.dbms_lock.sleep(1);
+               continue;
+           END;
 
+         END LOOP;
+        
          vr_nmprepos := ' ';
          vr_nrcpfpre := 0;
-
-
 
          IF (vr_inpessoa = 2 OR vr_inpessoa = 3) AND 
               vr_idastcjt = 1 THEN
@@ -4397,7 +4430,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                 ,pr_tpcptdoc => 2              --> Tipo de captura do documento
                                                 ,pr_idtitdda => 0              --> Identificador do titulo no DDA
                                                 ,pr_idastcjt => vr_idastcjt    --> Indicador de Assinatura Conjunta
-												,pr_cdctrlcs => pr_cdctrlcs	   --> Controle de consulta NPC
+												                        ,pr_cdctrlcs => pr_cdctrlcs	   --> Controle de consulta NPC
                                                 ,pr_cdcritic => vr_cdcritic    --> Codigo de Critica
                                                 ,pr_dscritic => vr_dscritic);  --> Descricao de Critica
 
@@ -4416,7 +4449,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                 RAISE vr_exc_saida;
               END IF;
          ELSE 
-         BEGIN
+           
+           BEGIN
             INSERT INTO craplau
                (cdcooper
                ,nrdconta
@@ -5958,8 +5992,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   '00000'                                                   || -- 21.0 - Densidade de Gravação do Arquivo
                   LPAD(' ',20,' ')                                          || -- 22.0 - Uso Reservado do Banco
                   LPAD(' ',20,' ')                                          || -- 23.0 - Uso Reservado da Empresa
-                  LPAD(' ',29,' ')                                          || -- 24.0 - Uso Exclusivo FEBRABAN
-                  CHR(13);
+                  LPAD(' ',29,' ');                                            -- 24.0 - Uso Exclusivo FEBRABAN
 
     -- Escrever Linha do Header do Arquivo CNAB240 - Item 1.0
     GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -5985,8 +6018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   LPAD(' ',40,' ')                                         || -- 18.1 - Mensagem
                   LPAD(' ',80,' ')                                         || -- 19.1 - Endereço da Empresa
                   LPAD(' ',08,' ')                                         || -- 26.1 - Uso Exclusivo FEBRABAN
-                  LPAD(' ',10,' ')                                         || -- 27.1 - Ocorrencias p/ Retorno
-                  CHR(13);
+                  LPAD(' ',10,' ');                                           -- 27.1 - Ocorrencias p/ Retorno
 
     -- Escreve Linha do header do Lote CNAB240 - Item 1.1
     GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -6026,8 +6058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           RPAD(rw_crapdpt.dsnosnum,20,' ')                                     || -- 18.3J - Nosso Numero - Uso Exclusivo do Banco
           '09'                                                                 || -- 19.3J - Código da Moeda
           LPAD(' ',06,' ')                                                     || -- 20.3J - Uso exclusivo FEBRABAN
-          NVL(vr_aux_cdocorre,'00') || LPAD(' ',08,' ')                        || -- 21.3J - Codigo das Ocorrencias
-          CHR(13);
+          NVL(vr_aux_cdocorre,'00') || LPAD(' ',08,' ');                        -- 21.3J - Codigo das Ocorrencias
 
       -- Escreve Linha do Trailer de Lote CNAB240 - Item 1.5
       GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -6052,16 +6083,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           '3'                                                                                                            || -- 03.4J99 - Tipo Registro
           GENE0002.fn_mask(vr_nr_sequencial,'99999')                                                                     || -- 04.4J99 - Nro. Sequencial Reg. no Lote
           'J'                                                                                                            || -- 05.4J99 - Codigo Segmento Detalhe
- 	        GENE0002.fn_mask(rw_crapdpt.cdtipmvt,'9')                                                                      || -- 06.4J99 - Tipo de Movimento
+ 	      GENE0002.fn_mask(rw_crapdpt.cdtipmvt,'9')                                                                      || -- 06.4J99 - Tipo de Movimento
           GENE0002.fn_mask(rw_crapdpt.cdinsmvt,'99')                                                                     || -- 07.4J99 - Código da Instrução p/ Movimento          
           '99'                                                                                                           || -- 08.4J99 - Codigo de Barra
           GENE0002.fn_mask(rw_crapdpt.nrseqaut,'9999999999')                                                             || -- 09.4J99 - Código de Autenticação
           GENE0002.fn_mask(rw_crapdpt.nrdocmto,'9999999999999999999999999')                                              || -- 10.4J99 - Número do Documento
           NVL(to_char(rw_crapdpt.dtmvtolt,'DDMMRRRR'),to_char(trunc(SYSDATE),'DDMMRRRR'))                                || -- 11.4J99 - Data do Pagamento
           GENE0002.fn_mask(rw_crapdpt.hrautent,'999999')                                                                 || -- 12.4J99 - Hora do Pagamento
-          RPAD(rw_crapdpt.dsprotoc,70,' ')                                                                                 || -- 12.4J99 - Hora do Pagamento
-          LPAD(' ',102,' ')                                                                                              || -- 13.4J99 - CNAB Uso Exclusivo Cecred
-          CHR(13);  
+          RPAD(rw_crapdpt.dsprotoc,70,' ')                                                                               || -- 12.4J99 - Hora do Pagamento
+          LPAD(' ',102,' ');                                                                                                -- 13.4J99 - CNAB Uso Exclusivo Cecred
           
           -- Escreve Linha do Trailer de Lote CNAB240 - Item 1.5
           GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -6088,8 +6118,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   '000000000000000000'                                         || -- 07.5 - Somatoria Quantidade Moeda
                   LPAD('0',06,'0')                                             || -- 08.5 - Numero Aviso de Debito
                   LPAD(' ',165,' ')                                            || -- 09.5 - Uso Exclusivo FEBRABAN
-                  LPAD(' ',10,' ')                                             || -- 10.5 - Ocorrencias Lote
-                  CHR(13);
+                  LPAD(' ',10,' ');                                               -- 10.5 - Ocorrencias Lote
 
     -- Escreve Linha do Trailer de Lote CNAB240 - Item 1.5
     GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -6105,8 +6134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   '000001'                                   || -- 05.9 - Qtd de Lotes do Arquivo
                   GENE0002.fn_mask(vr_qtd_registro,'999999') || -- 06.9 - Qtd Registros do Arquivo
                   '000001'                                   || -- 07.9 - Qtd Contas p/ Conciliar
-                  LPAD(' ',205,' ')                          || -- 08.9 - Uso Exclusivo FEBRABAN
-                  CHR(13);
+                  LPAD(' ',205,' ');                            -- 08.9 - Uso Exclusivo FEBRABAN
 
     -- Escreve Linha do Trailer de Arquivo CNAB240 - Item 1.9
     GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -6114,6 +6142,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
     -- Fechar o arquivo
     GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
+
+    -- UX2DOS
+    GENE0003.pc_converte_arquivo(pr_cdcooper => pr_cdcooper                  --> Cooperativa
+                                ,pr_nmarquiv => vr_utlfileh||'/'||vr_nmarquiv --> Caminho e nome do arquivo a ser convertido
+                                ,pr_nmarqenv => vr_nmarquiv                  --> Nome desejado para o arquivo convertido
+                                ,pr_des_erro => vr_dscritic);                --> Retorno da critica
+
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Apos converte o arquivo, vamos buscar o arquivo convertido e sobrescrever o 
+    -- arquivo que acabamos de gerar
+    vr_comando:= 'mv '||vr_dir_coop||'/converte/'||vr_nmarquiv||' '||
+                 vr_utlfileh||'/'||vr_nmarquiv||' 2> /dev/null';
+    --Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_comando
+                         ,pr_typ_saida   => vr_typ_saida
+                         ,pr_des_saida   => vr_dscritic);
+    --Se ocorreu erro dar RAISE
+    IF vr_typ_saida = 'ERR' THEN
+      vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+      RAISE vr_exc_erro;
+    END IF;
 
     -- Verificar qual Tipo de Retorno o Cooperado Possui
     OPEN cr_crapcpt(pr_cdcooper => pr_cdcooper
@@ -6145,58 +6200,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     --------- SE FOR ORIGEM INTERNET BANKING, ABRE O ARQUIVO, GRAVA NO CLOB E DEVOLVE NO OUT.
     -- Verificamos se o cooperado possui retorno pela Internet
     IF rw_crapcpt.idretorn = 1 THEN -- Retorno Internet
-    IF pr_idorigem = 3 THEN     -- INTERNET
-      -- Define o diretório do arquivo
-      vr_utlfileh := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
-                                          ,pr_cdcooper => pr_cdcooper
-                                          ,pr_nmsubdir => '/arq') ;
+      IF pr_idorigem = 3 THEN     -- INTERNET
+        -- Define o diretório do arquivo
+        vr_utlfileh := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_nmsubdir => '/arq') ;
 
-      -- Abre arquivo em modo de leitura (R)
-      GENE0001.pc_abre_arquivo(pr_nmdireto => vr_utlfileh         --> Diretório do arquivo
-                              ,pr_nmarquiv => vr_nmarquiv         --> Nome do arquivo
-                              ,pr_tipabert => 'R'                 --> Modo de abertura (R,W,A)
-                              ,pr_utlfileh => vr_ind_arquivo      --> Handle do arquivo aberto
-                              ,pr_des_erro => vr_dscritic);       --> Erro
-      IF vr_dscritic IS NOT NULL THEN
-        -- Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
+        -- Abre arquivo em modo de leitura (R)
+        GENE0001.pc_abre_arquivo(pr_nmdireto => vr_utlfileh         --> Diretório do arquivo
+                                ,pr_nmarquiv => vr_nmarquiv         --> Nome do arquivo
+                                ,pr_tipabert => 'R'                 --> Modo de abertura (R,W,A)
+                                ,pr_utlfileh => vr_ind_arquivo      --> Handle do arquivo aberto
+                                ,pr_des_erro => vr_dscritic);       --> Erro
+        IF vr_dscritic IS NOT NULL THEN
+          -- Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
 
-      -- Inicializar o CLOB
-      dbms_lob.createtemporary(pr_dsarquiv, true);
-      dbms_lob.open(pr_dsarquiv, dbms_lob.lob_readwrite);
+        -- Inicializar o CLOB
+        dbms_lob.createtemporary(pr_dsarquiv, true);
+        dbms_lob.open(pr_dsarquiv, dbms_lob.lob_readwrite);
 
-      gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
-                             ,pr_texto_completo => vr_arq_tmp
-                             ,pr_texto_novo     => '<retorno><arquivo>' || vr_nmarquiv || '</arquivo>');
+        gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
+                               ,pr_texto_completo => vr_arq_tmp
+                               ,pr_texto_novo     => '<retorno><arquivo>' || vr_nmarquiv || '</arquivo>');
 
-      --Percorrer cada linha do arquivo
-      LOOP
-        BEGIN
-          -- Verifica se o arquivo está aberto
-          IF  utl_file.IS_OPEN(vr_ind_arquivo) THEN
-            -- Le os dados em pedaços e escreve no Clob
-            gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquivo --> Handle do arquivo aberto
-                                        ,pr_des_text => vr_setlinha); --> Texto lido
+        --Percorrer cada linha do arquivo
+        LOOP
+          BEGIN
+            -- Verifica se o arquivo está aberto
+            IF  utl_file.IS_OPEN(vr_ind_arquivo) THEN
+              -- Le os dados em pedaços e escreve no Clob
+              gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquivo --> Handle do arquivo aberto
+                                          ,pr_des_text => vr_setlinha); --> Texto lido
 
-            gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
-                                   ,pr_texto_completo => vr_arq_tmp
-                                   ,pr_texto_novo     => '<linha>' || vr_setlinha || '</linha>');
-          END IF;
-        EXCEPTION
-          WHEN NO_DATA_FOUND THEN -- Quando chegar na ultima linha do arquivo
-             EXIT;
-        END;
+              gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
+                                     ,pr_texto_completo => vr_arq_tmp
+                                     ,pr_texto_novo     => '<linha>' || vr_setlinha || '</linha>');
+            END IF;
+          EXCEPTION
+            WHEN NO_DATA_FOUND THEN -- Quando chegar na ultima linha do arquivo
+               EXIT;
+          END;
 
-      END LOOP;
+        END LOOP;
 
-      -- Fechar o arquivo
-      GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
+        -- Fechar o arquivo
+        GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
 
-      gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
-                             ,pr_texto_completo => vr_arq_tmp
-                             ,pr_texto_novo     => '</retorno>'
-                             ,pr_fecha_xml      => TRUE);
+        gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
+                               ,pr_texto_completo => vr_arq_tmp
+                               ,pr_texto_novo     => '</retorno>'
+                               ,pr_fecha_xml      => TRUE);
 
         -- Gerar o LOG do erro que aconteceu durante o processamento
         PGTA0001.pc_gera_log_arq_pgto(pr_cdcooper => pr_cdcooper
@@ -6216,7 +6271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       END IF;
     ELSE
       --- Verificamos se o cooperado possui retorno pelo FTP
-      IF rw_crapcpt.idretorn = 1 THEN
+      IF rw_crapcpt.idretorn = 2 THEN
 
         -- Caminho script que envia/recebe arquivos via FTP
         vr_script_pgto := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
@@ -10376,7 +10431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);
-    
+  
     IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino
       CASE gene0001.vr_vet_des_origens(pr_idorigem)
         WHEN 'AYLLOS WEB' THEN
@@ -10447,7 +10502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                   ,pr_iddspscp IN INTEGER               --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo                                                                   
                                   ,pr_tab_agend_rel  IN typ_tab_rel_arq --> PLTABLE com os dados
                                   ,pr_tab_liqui_rel  IN typ_tab_rel_arq --> PLTABLE com os dados
-                                  ,pr_tab_rejei_rel  IN typ_tab_rel_arq --> PLTABLE com os dados                                  
+                                  ,pr_tab_rejei_rel  IN typ_tab_rel_arq --> PLTABLE com os dados
                                   ,pr_nmarquiv OUT VARCHAR2             --> Nome do arquivo gerado
                                   ,pr_dssrvarq OUT VARCHAR2             --> Nome do servidor para download do arquivo
                                   ,pr_dsdirarq OUT VARCHAR2             --> Nome do diretório para download do arquivo                                                                                                                                   
@@ -10678,7 +10733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                          ,pr_dssrvarq => pr_dssrvarq
                                          ,pr_dsdirarq => pr_dsdirarq
                                          ,pr_des_erro => vr_dscritic);
-                                         
+        
       IF TRIM(vr_des_erro) <> '' THEN
         RAISE vr_exc_saida;
       END IF;

@@ -105,14 +105,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
   --
   --  Programa: DSCC0002                        
   --  Autor   : Lombardi
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 19/09/2017
   --
   --  Dados referentes ao programa:
   --
   --  Objetivo  : Package para rotinas envolvendo desconto de cheques para o IB.
   --
   --  Alteracoes: 
-  --  
+  
+      19/09/2017 - #753579 Alterado de vazio para nrdconta o parametro pr_dsiduser da rotina
+                   DSCC0001.pc_gera_impressao_bordero em pc_imprime_bordero_ib pois a rotina
+                   está removendo os relatórios "crrl519_bordero_*" da cooperativa (Carlos)
+  
   --------------------------------------------------------------------------------------------------------------*/
 	
   -- Buscar lista de borderos de cheques
@@ -517,7 +521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                              ,pr_texto_completo => vr_xml_pgto_temp
                              ,pr_texto_novo     =>  '<insitbdc>' || rw_crapbdc.insitbdc || '</insitbdc>'
                              ,pr_fecha_xml      => TRUE);
-                             
+
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_pgto_temp
                              ,pr_texto_novo     =>  '<dssitbdc>' || CASE WHEN rw_crapbdc.rejeitad = 1 THEN 'Não Aprovado' ELSE rw_crapbdc.dssitbdc END || '</dssitbdc>'
@@ -1007,7 +1011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       vr_nmarqpdf      VARCHAR2(1000);
       vr_dssrvarq      VARCHAR2(200);
       vr_dsdirarq      VARCHAR2(200);
-    
+
     BEGIN
       
       -- Monta documento XML
@@ -1033,7 +1037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                         ,pr_idimpres => 7
                                         ,pr_nrctrlim => pr_nrctrlim
                                         ,pr_nrborder => pr_nrborder
-                                        ,pr_dsiduser => ''
+                                        ,pr_dsiduser => to_char(pr_nrdconta)
                                         ,pr_flgemail => 0
                                         ,pr_flgerlog => 0
                                         ,pr_iddspscp => pr_iddspscp
@@ -1651,7 +1655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
     Objetivo  : Verifica se a conta exige assinatura multipla
 
     Alteracoes: 24/08/2017 - Ajuste na busca de emitentes. (Lombardi)
-
+    
 	            19/09/2017 - Ajuste na busta de emitente 085 na crapttl (Daniel)
     
     ............................................................................. */

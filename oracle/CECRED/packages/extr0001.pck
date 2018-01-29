@@ -454,7 +454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para formulários postmix
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 11/09/2017
+    Data     : Dezembro/2012.                   Ultima atualizacao: 03/10/2017
 
    Dados referentes ao programa:
 
@@ -775,7 +775,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 			   21/07/2017 - Incluído histórico 508 na procedure pc_consulta_extrato. (Andrey - Mouts)
          
          11/09/2017 - Reincluída a alteração referente ao chamado #707230 (Carlos)
-
+         
+         03/10/2017 - Corrigi a lista de historicos na pc_obtem_saldo_dia e alterei a consistencia
+                      para resgates considerar resgates automaticos de aplicacoes no saldo do cooperado. 
+                      (SD 768972 - Carlos Rafael Tanholi)
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -2192,7 +2195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 					vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
 				END LOOP;
 
-        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,508,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope; --> Lista com códigos de histórico a retornar         
+        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,508,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope; --> Lista com códigos de histórico a retornar         
         -- Buscar lançamentos no dia apenas dos historicos listados acima
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper    --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
@@ -2203,8 +2206,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           IF NOT((rw_craplcm_olt.cdhistor IN(375,376,377,537,538,539,771,772) AND nvl(SUBSTR(rw_craplcm_olt.cdpesqbb,54,8),' ') = 'AGENDADO')
                  OR
                  (rw_craplcm_olt.cdhistor IN(1009,1011,vr_tab_tarifa_transf(vr_tariidx).cdhisint,vr_tab_tarifa_transf(vr_tariidx).cdhistaa) AND NVL(SUBSTR(rw_craplcm_olt.cdpesqbb,15,8),' ') = 'AGENDADO')
-                 OR
-                 (rw_craplcm_olt.cdhistor = 530 AND rw_craplcm_olt.cdpesqbb <> 'ONLINE')
+                 OR -- resgate on-line e automatico da aplicacao quando for '' vazio sera automatico (CRPS481)
+                 (rw_craplcm_olt.cdhistor = 530 AND rw_craplcm_olt.cdpesqbb <> 'ONLINE' AND TRIM(rw_craplcm_olt.cdpesqbb) <> '')
                 ) THEN
             -- Chama rotina que compõe o saldo do dia
             pc_compor_saldo_dia(pr_vllanmto => rw_craplcm_olt.vllanmto
@@ -3611,7 +3614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- Chama rotina que gera-registro-extrato na temp-table
         pc_gera_registro_extrato(pr_cdcooper     => pr_cdcooper   --> Cooperativa conectada
                                 ,pr_rowid        => rw_craplcm_ign.rowid --> Registro buscado da craplcm
-                                ,pr_flgident     => TRUE          --> Se deve ou não usar o craplcm.dsidenti
+                                ,pr_flgident     => FALSE         --> Se deve ou não usar o craplcm.dsidenti
                                 ,pr_nmdtable     => 'E'           --> Extrato ou Depósito
                                 ,pr_lshistor     => pr_lshistor   --> Lista de históricos de Cheques
                                 ,pr_tab_extr     => vr_tab_extr   --> Tabela Extrato
@@ -3721,7 +3724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             -- Chama rotina que gera-registro-extrato na temp-table
             pc_gera_registro_extrato(pr_cdcooper     => pr_cdcooper   --> Cooperativa conectada
                                     ,pr_rowid        => rw_craplcm_olt.rowid --> Registro buscado da craplcm
-                                    ,pr_flgident     => TRUE          --> Se deve ou não usar o craplcm.dsidenti
+                                    ,pr_flgident     => FALSE         --> Se deve ou não usar o craplcm.dsidenti
                                     ,pr_nmdtable     => 'E'           --> Extrato ou Depósito
                                     ,pr_lshistor     => pr_lshistor   --> Lista de históricos de Cheques
                                     ,pr_tab_extr     => vr_tab_extr   --> Tabela Extrato

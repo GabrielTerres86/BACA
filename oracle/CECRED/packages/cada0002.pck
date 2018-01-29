@@ -3810,8 +3810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   BEGIN
    
     -- Verifica se a cooperativa esta cadastrada
-    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
-      
+    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);      
     FETCH cr_crapcop INTO rw_crapcop;
       
     -- Se não encontrar

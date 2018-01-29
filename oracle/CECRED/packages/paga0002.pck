@@ -307,7 +307,7 @@ create or replace package cecred.PAGA0002 is
                                ,pr_nrcpfope IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
                                ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
-                               ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
+							   ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
                                ,pr_xml_dsmsgerr   OUT VARCHAR2          --> Retorno XML de critica
                                ,pr_xml_operacao26 OUT CLOB              --> Retorno XML da operação 26
                                ,pr_dsretorn       OUT VARCHAR2);        --> Retorno de critica (OK ou NOK)
@@ -624,21 +624,22 @@ create or replace package cecred.PAGA0002 is
                                       ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
                                       ,pr_dscritic OUT VARCHAR2);            --> Descricao critica
 
-PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
-                                            ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo da agencia
-                                            ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Numero do caixa
-                                            ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
-                                            ,pr_nmdatela IN VARCHAR2               --> Nome da tela
-                                            ,pr_idorigem IN INTEGER                --> Id da origem da transação
-                                            ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da conta do cooperado
-                                            ,pr_rowidlcs IN craplcs.progress_recid%TYPE
-                                            ,pr_cdagetrf IN crapccs.cdagetrf%TYPE -- Numero do PA.
-                                            ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
-                                            ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
-                                            ,pr_flgerlog IN BOOLEAN
-                                            /* parametros de saida */
-                                            ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
-                                            ,pr_dscritic OUT VARCHAR2);            --> Descricao critica
+  PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                         ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo da agencia
+                                         ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Numero do caixa
+                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                         ,pr_nmdatela IN VARCHAR2               --> Nome da tela
+                                         ,pr_idorigem IN INTEGER                --> Id da origem da transação
+                                         ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da conta do cooperado
+                                         ,pr_rowidlcs IN craplcs.progress_recid%TYPE
+                                         ,pr_cdagetrf IN crapccs.cdagetrf%TYPE -- Numero do PA.
+                                         ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
+                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
+                                         ,pr_flgerlog IN BOOLEAN
+                                         ,pr_rw_craplot OUT lote0001.cr_craplot%ROWTYPE  --> rowtype saida lote
+                                         /* parametros de saida */
+                                         ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
+                                         ,pr_dscritic OUT VARCHAR2);            --> Descricao critica
 
   /* Procedimento para listar convenios aceitos */
   PROCEDURE pc_convenios_aceitos(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
@@ -691,6 +692,10 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                       /* parametros de saida */
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_dscritic OUT VARCHAR2);           --> Descricao critica
+
+  /* Realizar a apuração diária dos lançamentos dos históricos de pagamento de empréstimos */
+  PROCEDURE pc_apura_lcm_his_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
+                                       ,pr_dtrefere IN DATE   );             -- Data de referencia para processamento
                                       
   PROCEDURE pc_obtem_agendamentos(pr_cdcooper               IN crapcop.cdcooper%TYPE              --> Código da Cooperativa
                                  ,pr_cdagenci               IN crapage.cdagenci%TYPE              --> Código do PA
@@ -708,7 +713,8 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                  ,pr_qttotage              OUT INTEGER                            --> Quantidade Total de Agendamentos
                                  ,pr_tab_dados_agendamento OUT PAGA0002.typ_tab_dados_agendamento --> Tabela com Informacoes de Agendamentos
                                  ,pr_cdcritic              OUT PLS_INTEGER                        --> Código da crítica
-                                 ,pr_dscritic              OUT VARCHAR2);                                      
+                                 ,pr_dscritic              OUT VARCHAR2);                       --> Descrição da crítica
+                                                                       
 end PAGA0002;
 /
 create or replace package body cecred.PAGA0002 is
@@ -806,12 +812,18 @@ create or replace package body cecred.PAGA0002 is
   --                          para evitar possível repetição do problema relatado no chamado (Carlos)
   --
   --             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+  
+                 03/10/2017 - Ajuste da mensagem de erro. (Ricardo Linhares - prj 356.2)
   --
   --             12/06/2017 - Alterar tipo do parametro pr_nrctatrf para varchar2 
   --                          referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
   --
   --             10/07/2017 - Buscar ultimo horario da DEBNET para exibir o horario quando efetuado 
   --                          um agendamento de Transferencia (Lucas Ranghetti #676219)
+  --
+  --             03/10/2017 - #765090 Nas transferências, na mensagem de horário para saldo em conta, 
+  --                          mostrar os minutos em múltiplos de 5 arredondando para baixo. 
+  --                          Ex.: Cadastrado: 21:04 -> Mostrar: 21:00 (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -1456,6 +1468,8 @@ create or replace package body cecred.PAGA0002 is
       END IF;
     END pc_grava_favorito;
 
+
+
   BEGIN
     -- Definir descrição da transação
     SELECT DECODE(pr_flgexecu,1,NULL,'Valida ')||
@@ -1495,7 +1509,6 @@ create or replace package body cecred.PAGA0002 is
        RAISE vr_exc_erro;
     END IF;
 
-   
     /** Agendamento recorrente **/
     IF pr_idagenda = 3 THEN
 
@@ -2082,8 +2095,10 @@ create or replace package body cecred.PAGA0002 is
       IF cr_craphec%FOUND THEN 
         -- Fechar cursor
         CLOSE cr_craphec;    
-        IF pr_cdtiptra IN(1,5) THEN
-          vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'sssss'), 'hh24:mi');
+        IF pr_cdtiptra IN(1,5) THEN          
+          -- Pegar os minutos em múltiplos de 5, arredondando para baixo (ex.: 21:04 -> 21:00)
+          vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'hh24') || ':' ||
+                        to_char(trunc(to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'mi') / 5) * 5, 'fm00');
         ELSE
           vr_hrfimpag:= vr_tab_limite(vr_tab_limite.first).hrfimpag;
         END IF;
@@ -2324,7 +2339,7 @@ create or replace package body cecred.PAGA0002 is
                                ,pr_nrcpfope IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
                                ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
-                               ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
+							   ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
                                ,pr_xml_dsmsgerr   OUT VARCHAR2          --> Retorno XML de critica
                                ,pr_xml_operacao26 OUT CLOB              --> Retorno XML da operação 26
                                ,pr_dsretorn       OUT VARCHAR2) IS      --> Retorno de critica (OK ou NOK)
@@ -2376,6 +2391,12 @@ create or replace package body cecred.PAGA0002 is
 
                   24/09/2015 - Realizado a inclusão do pr_nmdatela (Adriano - SD 328034).
 
+                  03/10/2017 - Ajuste da mensagem de erro. (Ricardo Linhares - prj 356.2).                  
+
+				  01/11/2017 - Adicionada validação de pagamento em lote.
+							   PRJ356.4 - DDA (Ricardo Linhares)
+
+
                   16/01/2018 - Adicionado validação para que não seja permitido realizar agendamento
                                para uma data anterior a data atual do sistema
                                (Douglas - Chamado 829446)
@@ -2424,7 +2445,7 @@ create or replace package body cecred.PAGA0002 is
     vr_vlabatim  NUMBER;
     vr_vloutdeb  NUMBER;
     vr_vloutcre  NUMBER;
-    vr_vlapagar  NUMBER;
+	vr_vlapagar  NUMBER;
 
     vr_assin_conjunta NUMBER(1);
     vr_idastcjt  crapass.idastcjt%TYPE;
@@ -2432,7 +2453,7 @@ create or replace package body cecred.PAGA0002 is
     vr_nrcpfcgc  INTEGER := 0;
     vr_nmprimtl  VARCHAR2(500);
     vr_flcartma  INTEGER(1) := 0;
-    
+
     CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT a.inpessoa
@@ -2457,7 +2478,7 @@ create or replace package body cecred.PAGA0002 is
            ' para '||DECODE(NVL(pr_idagenda,0),1,NULL,'agendamento de ')||'pagamento'
     INTO vr_dstransa
     FROM dual;
-    
+
     -- Buscar tipo de pessoa da conta
     OPEN cr_crapass (pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta);
@@ -2475,13 +2496,12 @@ create or replace package body cecred.PAGA0002 is
     vr_lindigi5 := pr_lindigi5;
     vr_cdbarras := pr_cdbarras;
     vr_dtmvtopg := pr_dtmvtopg;
-    
+
     IF NVL(pr_vlapagar,0) > 0 THEN
 		   vr_vlapagar := pr_vlapagar;
   	ELSE
 	 	   vr_vlapagar := pr_vllanmto;
     END IF;
-
     INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_idseqttl => pr_idseqttl
@@ -2519,7 +2539,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtmvtolt     => pr_dtmvtolt         --> Data Movimento
                          ,pr_idagenda     => pr_idagenda         --> Indicador agenda
                          ,pr_dtmvtopg     => pr_dtmvtopg         --> Data Pagamento
-                         ,pr_vllanmto     => vr_vlapagar         --> Valor Lancamento
+						 ,pr_vllanmto     => vr_vlapagar         --> Valor Lancamento
                          ,pr_cddbanco     => 0                   --> Codigo banco
                          ,pr_cdageban     => 0                   --> Codigo Agencia
                          ,pr_nrctatrf     => 0                   --> Numero Conta Transferencia
@@ -2585,10 +2605,6 @@ create or replace package body cecred.PAGA0002 is
           -- buscar descrição
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
 
-        END IF;
-
-        IF TRIM(pr_dscedent) IS NOT NULL THEN
-          vr_dscritic := vr_dscritic||' - '||pr_dscedent;
         END IF;
 
         -- Se retornou critica , deve abortar
@@ -4194,12 +4210,17 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 05/03/2014
+    --  Data     : Março/2014.                   Ultima atualizacao: 16/11/2017
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar registro de Retorno = 03 - Entrada Rejeitada
+    --
+    --   Alteracoes: 16/11/2017 - Ajustado para que a situação do boleto seja alterada para
+    --                            BAIXADO, ao invés de REJEITADO. Também foi afdicionado a lista
+    --                            de motivos o código '46' Tipo/Numero de Inscricao do Sacado Invalidos
+    --                            (Douglas - Chamado 760923)
     -- ..........................................................................*/
 
     ---------------> VARIAVEIS <-----------------
@@ -4211,7 +4232,7 @@ create or replace package body cecred.PAGA0002 is
 
     vr_cdposini INTEGER := 1;
     vr_cdmotivo VARCHAR2(10);
-    vr_rejeitar BOOLEAN := FALSE;
+    vr_baixar   BOOLEAN := FALSE;
 
   BEGIN
 
@@ -4243,7 +4264,7 @@ create or replace package body cecred.PAGA0002 is
     --Fechar Cursor
     CLOSE cr_crapcob;
 
-    /*  Rejeitar título quando motivo for
+    /*  Baixar título quando motivo for
         '48' = CEP Inválido
         '52' = Unidade da Federação Inválida
         '16' = Data de Vencimento Inválida
@@ -4251,6 +4272,7 @@ create or replace package body cecred.PAGA0002 is
         '24' = Data da Emissão Inválida
         '25' = Data da Emissão Posterior a Data de Entrada
         '51' = CEP incompatível com a Unidade da Federação
+        '46' = Tipo/Numero de Inscricao do Sacado Invalidos
     */
     FOR vr_contador in 1..5 LOOP
       vr_cdmotivo := TRIM(SUBSTR(pr_dsmotivo,vr_cdposini, 2));
@@ -4260,16 +4282,17 @@ create or replace package body cecred.PAGA0002 is
         continue;
       END IF;
 
-      IF vr_cdmotivo in ('48','52','16','17','24','25','51') THEN
-        vr_rejeitar := TRUE;
+      IF vr_cdmotivo in ('48','52','16','17','24','25','51','46') THEN
+        vr_baixar := TRUE;
       END IF;
     END LOOP;
 
-    IF vr_rejeitar THEN
+    IF vr_baixar THEN
       /** Atualiza crapcob */
       BEGIN
         UPDATE CRAPCOB
-           SET crapcob.incobran = 4 /* rejeitado */
+           SET crapcob.incobran = 3 /* Baixado */
+              ,crapcob.dtdbaixa = pr_crapdat.dtmvtolt
          WHERE crapcob.rowid  = pr_idtabcob
         RETURNING crapcob.incobran
              INTO rw_crapcob.incobran;
@@ -7502,6 +7525,7 @@ create or replace package body cecred.PAGA0002 is
                                           ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
                                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
                                           ,pr_flgerlog IN BOOLEAN
+                                          ,pr_rw_craplot OUT lote0001.cr_craplot%ROWTYPE  --> rowtype saida lote
                                           /* parametros de saida */
                                           ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
                                           ,pr_dscritic OUT VARCHAR2) IS          --> Descricao critica
@@ -7512,7 +7536,7 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Vanessa Klein
-    --  Data     : Agosto/2015.                   Ultima atualizacao: 27/01/2016
+    --  Data     : Agosto/2015.                   Ultima atualizacao: 07/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -7524,6 +7548,9 @@ create or replace package body cecred.PAGA0002 is
     --              27/01/2016 - Ajuste no problema que gerava chave duplicada ao inserir
     --                           na craplcm. Problema do chamado 518911 resolvido na melhoria
     --                           342. (Kelvin)
+    --
+    --              07/12/2017 - Gravar lote com autonomous transaction para evitar
+    --                           conflito com as TEDs (Tiago/Adriano #745339)
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -7597,31 +7624,9 @@ create or replace package body cecred.PAGA0002 is
                 lcm.nrdolote = pr_nrdolote AND
                 lcm.nrdctabb = pr_nrdctabb AND
                 lcm.nrdocmto = pr_nrdocmto;
-     rw_craplcm cr_craplcm%ROWTYPE;
-
-     --Verifica se já existe o lote criado
-     CURSOR cr_craplot(pr_cdcooper crapemp.cdcooper%TYPE,
-                       pr_dtmvtolt crapdat.dtmvtolt%TYPE,
-                       pr_nrdolote craplot.nrdolote%TYPE) IS
-        SELECT nrseqdig,
-               qtinfoln,
-               qtcompln,
-               vlinfodb,
-               vlcompdb,
-               ROWID,
-               cdcooper,
-               dtmvtolt,
-               cdagenci,
-               cdbccxlt,
-               nrdolote
-         FROM craplot
-        WHERE craplot.cdcooper = pr_cdcooper
-          AND craplot.dtmvtolt = pr_dtmvtolt
-          AND craplot.cdagenci = 1
-          AND craplot.cdbccxlt = 85
-          AND craplot.nrdolote = pr_nrdolote;
-    rw_craplot cr_craplot%ROWTYPE;
-
+     rw_craplcm cr_craplcm%ROWTYPE;     
+     
+     rw_craplot lote0001.cr_craplot%ROWTYPE;
     ---------------> VARIAVEIS <-----------------
     --Variaveis de erro
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -7759,64 +7764,23 @@ create or replace package body cecred.PAGA0002 is
              RAISE vr_exc_erro;
           END;
 
-        OPEN cr_craplot(pr_cdcooper => rw_crapcop.cdcooper,
-                        pr_dtmvtolt => pr_dtmvtolt,
-                        pr_nrdolote => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_NRLOT_CTASAL_B85'));
-        FETCH cr_craplot INTO rw_craplot;
 
-        --Se não achou o lote cria o mesmo
-        IF cr_craplot%NOTFOUND THEN
-           BEGIN
-               INSERT INTO craplot
-                           (cdcooper
-                           ,dtmvtolt
-                           ,cdagenci
-                           ,cdbccxlt
-                           ,nrdolote
-                           ,tplotmov)
-                     VALUES(rw_crapcop.cdcooper
-                           ,pr_dtmvtolt
-                           ,1   -- cdagenci
-                           ,85 -- cdbccxlt
-                           ,gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_NRLOT_CTASAL_B85')
-                           ,1)
-                   RETURNING craplot.ROWID,
-                             craplot.cdcooper,
-                             craplot.dtmvtolt,
-                             craplot.cdagenci,
-                             craplot.cdbccxlt,
-                             craplot.nrdolote,
-                             craplot.nrseqdig,
-                             craplot.qtcompln,
-                             craplot.qtinfoln,
-                             craplot.vlcompdb,
-                             craplot.vlinfodb
-                        INTO rw_craplot.rowid,
-                             rw_craplot.cdcooper,
-                             rw_craplot.dtmvtolt,
-                             rw_craplot.cdagenci,
-                             rw_craplot.cdbccxlt,
-                             rw_craplot.nrdolote,
-                             rw_craplot.nrseqdig,
-                             rw_craplot.qtcompln,
-                             rw_craplot.qtinfoln,
-                             rw_craplot.vlcompdb,
-                             rw_craplot.vlinfodb;
+        LOTE0001.pc_insere_lote(pr_cdcooper => rw_crapcop.cdcooper
+                               ,pr_dtmvtolt => pr_dtmvtolt
+                               ,pr_cdagenci => 1
+                               ,pr_cdbccxlt => 85
+                               ,pr_nrdolote => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_NRLOT_CTASAL_B85')
+                               ,pr_cdoperad => pr_cdoperad
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_tplotmov => 1
+                               ,pr_cdhistor => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85')
+                               ,pr_craplot  => rw_craplot
+                               ,pr_dscritic => vr_dscritic);
 
-           EXCEPTION
-              WHEN OTHERS THEN
-                 vr_cdcritic := 9999;
-                 vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
-                 -- fecha cursor de lote e da tab
-                 CLOSE cr_craplot;
-                -- Executa a exceção
+        -- se encontrou erro ao buscar lote, abortar programa
+        IF vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-           END;
-
         END IF;
-
-        -- fecha cursor de lote
-        CLOSE cr_craplot;
 
         OPEN cr_craplcm(pr_cdcooper => rw_craplot.cdcooper,
                         pr_dtmvtolt => rw_craplot.dtmvtolt,
@@ -7838,10 +7802,7 @@ create or replace package body cecred.PAGA0002 is
 
        CLOSE cr_craplcm;
 
-       FOR i IN 1..100 LOOP
          vr_flgerror := 0;
-
-         rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
 
        BEGIN
           INSERT INTO craplcm
@@ -7884,44 +7845,19 @@ create or replace package body cecred.PAGA0002 is
                        rw_craplcm.nrdocmto;
 
         EXCEPTION
-            WHEN dup_val_on_index THEN
-              vr_flgerror := 1;
-              CONTINUE;
-
           WHEN OTHERS THEN
             vr_cdcritic := 0;
               vr_dscritic := 'Erro ao inserir craplcm: ' || rw_crapccs.nrdconta || SQLERRM;
             RAISE vr_exc_erro;
-
         END;
 
-          EXIT;
+        --Atualizar dados do lote no rowtype
+        rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+        rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+        rw_craplot.vlcompdb := rw_craplot.vlcompdb + rw_craplcm.vllanmto;
+        rw_craplot.vlinfodb := rw_craplot.vlinfodb + rw_craplcm.vllanmto;
 
-        END LOOP;
-
-        IF vr_flgerror = 1 THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao inserir craplcm: ' || rw_crapccs.nrdconta || SQLERRM;
-          RAISE vr_exc_erro;
-        END IF;
-
-
-        BEGIN
-            UPDATE craplot
-               -- se o numero for maior que o ja existente atualiza
-               SET nrseqdig = rw_craplot.nrseqdig,
-                   qtcompln = rw_craplot.qtcompln + 1,
-                   qtinfoln = rw_craplot.qtinfoln + 1,
-                   vlcompdb = rw_craplot.vlcompdb + rw_craplcm.vllanmto,
-                   vlinfodb = rw_craplot.vlinfodb + rw_craplcm.vllanmto
-             WHERE ROWID = rw_craplot.rowid;
-        EXCEPTION
-            WHEN OTHERS THEN
-              vr_cdcritic := 9999;
-              vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
-              -- Executa a exceção
-              RAISE vr_exc_erro;
-        END;
+        pr_rw_craplot := rw_craplot;
 
         CXON0022.pc_gera_log (pr_cdcooper          --Codigo Cooperativa
                              ,rw_crapccs.cdagenci  --Codigo Agencia
@@ -8115,6 +8051,9 @@ create or replace package body cecred.PAGA0002 is
        Alterações:  28/08/2016 - M360 - Ajustes no continue para verificação do dia util
                                (Marcos-Supero)
 
+                    27/09/2017 - Ajuste no SQL para contagem dos registros de debito automatico
+                                 para nao repetir registros. Inclusao dos historicos de
+                                 pagamento de fatura de cartao de credito (Anderson SD 644304 e 764559).
   ............................................................................. */
     DECLARE
       -- Códigos de operação
@@ -8172,17 +8111,42 @@ create or replace package body cecred.PAGA0002 is
       -- Pagamentos via DEBAUT
       CURSOR cr_debaut(pr_cdcooper crapcop.cdcooper%TYPE
                       ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+    SELECT nrdconta
+          ,sum(qtdregis) qtdregis
+     FROM (
         SELECT lcm.nrdconta
               ,COUNT(1) qtdregis
           FROM craplcm lcm
-              ,crapatr atr
          WHERE lcm.cdcooper = pr_cdcooper /* Cooperativa do Laço */
            AND lcm.cdagenci = 1           /* Debitos Automáticos geram cdagenci = 1 */
            AND lcm.dtmvtolt = pr_dtmvtolt /* Dia anterior*/
-           AND lcm.cdcooper = atr.cdcooper
-           AND lcm.nrdconta = atr.nrdconta
-           AND lcm.cdhistor = atr.cdhistor
-         GROUP BY lcm.nrdconta;
+           /* Caso for necessario recalcular os registros dessa tabela para periodos passados,
+              utilizar os historicos do craphis (inautori = 1), pois a tabela crapatr eh apagada
+              depois de um tempo que a autorizacao for cancelada. */
+           AND lcm.cdhistor IN (SELECT atr.cdhistor
+                                  FROM crapatr atr
+                                 WHERE atr.cdcooper = lcm.cdcooper
+                                   AND atr.nrdconta = lcm.nrdconta)
+      GROUP BY lcm.nrdconta
+     UNION ALL
+        SELECT lcm.nrdconta
+              ,COUNT(1) qtdregis
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.dtmvtolt = pr_dtmvtolt
+           AND lcm.cdhistor = 1545          -- PG.FAT.CARTAO
+      GROUP BY lcm.nrdconta
+     UNION ALL
+        SELECT lcm.nrdconta
+              ,COUNT(1) qtdregis
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.dtmvtolt = pr_dtmvtolt
+           AND lcm.cdhistor = 658          -- PGT.CARTAO BB
+      GROUP BY lcm.nrdconta
+    ) ORIGEM
+    GROUP BY nrdconta;
+    
     BEGIN
       -- A rotina só pode ser executada em dias uteis
       IF gene0005.fn_valida_dia_util(3,trunc(SYSDATE)) <> trunc(SYSDATE) OR to_char(SYSDATE,'d') IN(1,7) THEN
@@ -8215,6 +8179,14 @@ create or replace package body cecred.PAGA0002 is
             -- Utilizar a data do parâmetro
             vr_dtmvtoan := pr_dtmvtoan;
     END IF;
+          
+          -- Chamar rotina para realizar o processamento dos lançamentos
+          -- referentes a Tributacao de Juros ao Capital (22/08/2017 - Renato Darosci)
+          -- A rotina é autonoma e em caso de erro não irá para o processo, irá apenas
+          -- enviar o e-mail de erro.
+          pc_apura_lcm_his_emprestimo(pr_cdcooper => rw_coop.cdcooper
+                                     ,pr_dtrefere => vr_dtmvtoan);
+          
           -- Também devemos garantir que não tenha havido apuração no dia
           OPEN cr_apuracao(rw_coop.cdcooper,vr_dtmvtoan);
           FETCH cr_apuracao
@@ -9255,8 +9227,8 @@ create or replace package body cecred.PAGA0002 is
         
         -- Se for GPS
         IF rw_craplau.nrseqagp > 0 THEN
-        
-          vr_dstiptra := 'GPS';
+                  
+		  vr_dstiptra := 'GPS';
                   
           OPEN cr_gps(pr_cdcooper => rw_craplau.cdcooper
                      ,pr_nrdconta => rw_craplau.nrdconta
@@ -10088,6 +10060,92 @@ create or replace package body cecred.PAGA0002 is
 
   END pc_cancelar_agendamento;
 
+  -- Realizar a apuração diária dos lançamentos dos históricos de pagamento de empréstimos
+  PROCEDURE pc_apura_lcm_his_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
+                                       ,pr_dtrefere IN DATE   ) IS           -- Data de referencia
+    /* ..........................................................................
+    --
+    --  Programa : pc_apura_juros_capital        
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Renato Darosci - Supero
+    --  Data     : Agosto/2017.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Realizar a apuração diária dos lançamentos dos históricos de 
+    --               pagamento de empréstimos e gravar os valores em uma tabela auxiliar
+    -- ..........................................................................*/
+    
+    -- ROTINA CRIADA COM PRAGMA AUTONOMO PARA QUE O COMMIT DA MESMA NÃO AFETE ROTINAS CHAMADORAS.
+    PRAGMA AUTONOMOUS_TRANSACTION;
+    
+    ---------------> VARIAVEIS <-----------------
+    -- Variaveis de erro    
+    vr_cdcritic        crapcri.cdcritic%TYPE;
+    vr_dscritic        VARCHAR2(4000);
+    -- Variáveis de Excecao
+    vr_exc_erro        EXCEPTION;
+    -- Variáveis
+    vr_cdoperac_pagepr   NUMBER;
+    
+  BEGIN
+    
+    -- Buscar o código de operação para os registros
+    vr_cdoperac_pagepr := to_number(gene0001.fn_param_sistema('CRED',0,'CDOPERAC_HIS_PAGTO_EPR'));
+    
+    -- Garantir que em caso de reprocessamento os registros sejam recalculados
+    DELETE TBCC_OPERACOES_DIARIAS  tab
+     WHERE tab.cdcooper   = pr_cdcooper
+       AND tab.cdoperacao = vr_cdoperac_pagepr
+       AND tab.dtoperacao = pr_dtrefere;
+    
+    -- Inserir os regitros referente aos lançamentos do dia
+    INSERT INTO TBCC_OPERACOES_DIARIAS(cdcooper, nrdconta, cdoperacao, dtoperacao, vloperacao)
+       (SELECT pr_cdcooper
+             , lcm.nrdconta
+             , vr_cdoperac_pagepr
+             , pr_dtrefere
+             , SUM(decode(lcm.cdhistor,
+                          108, lcm.vllanmto,
+                          275, lcm.vllanmto,
+                         1539, lcm.vllanmto,
+                          393, lcm.vllanmto,
+                         1706, lcm.vllanmto * -1,
+                           99, lcm.vllanmto * -1,
+                            0)) vllanmto
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.cdhistor IN (108, 275, 1539, 393, 1706, 99)
+           AND lcm.dtmvtolt = pr_dtrefere
+         GROUP BY pr_cdcooper
+               , lcm.nrdconta
+               , vr_cdoperac_pagepr
+               , pr_dtrefere);
+    
+    -- Efetivar os dados gerados
+    COMMIT;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Desfazer alterações pendentes
+      ROLLBACK;
+      -- Efetuar montagem de e-mail
+      gene0003.pc_solicita_email(pr_cdcooper    => pr_cdcooper
+                                ,pr_cdprogra    => 'SOBR0001.pc_apura_juros_capital'
+                                ,pr_des_destino => gene0001.fn_param_sistema('CRED',pr_cdcooper, 'ERRO_EMAIL_JOB')
+                                ,pr_des_assunto => 'Apuração Auto Atendimento – Coop '||pr_cdcooper
+                                ,pr_des_corpo   => 'Olá, <br><br>'
+                                                || 'Foram encontrados problemas durante o processo de apuração '
+                                                || 'dos valores de Históricos dos Lançamentos de Empréstimos. <br> '
+                                                || 'Erro encontrado:<br>'||SQLERRM
+                                ,pr_des_anexo   => ''
+                                ,pr_flg_enviar  => 'N'
+                                ,pr_des_erro    => vr_dscritic);
+      -- Gravar a solictação do e-mail para envio posterior
+      COMMIT;
+  END pc_apura_lcm_his_emprestimo;
 
 END PAGA0002;
 /

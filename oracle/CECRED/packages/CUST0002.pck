@@ -1601,6 +1601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
       -- Verifica se foram encontrados erros durante o processamento
       IF vr_tab_custodia_erro.count > 0 THEN
         vr_xml_erro_custodia := '';
+        
         FOR vr_index_erro IN 1..vr_tab_custodia_erro.count LOOP
           -- Gera o XML com os erros
           vr_xml_erro_custodia := vr_xml_erro_custodia || 
