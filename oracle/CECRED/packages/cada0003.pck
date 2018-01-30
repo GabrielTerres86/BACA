@@ -3870,7 +3870,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           FROM craprda 
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
-           AND insaqtot = 0;
+           AND insaqtot = 0
+        UNION ALL
+        SELECT 1
+          FROM crapaar
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND cdsitaar <> 3;
        rw_aplicacao cr_aplicacao%ROWTYPE;
 
       -- Cursor para verificar se existe limite de titulos/cheque ativo
