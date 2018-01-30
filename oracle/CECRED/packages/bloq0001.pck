@@ -1738,6 +1738,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         pr_dscritic := 'Erro ao verificar bloqueio judicial – Retornando.';
       END IF;
       
+      vr_vlblqjud_apli := nvl(vr_vlblqjud_apli, 0);
+      vr_vlresblq_apli := nvl(vr_vlresblq_apli, 0);
+      
       -- Verificar se há bloqueio judicial de Aplicações na conta
       gene0005.pc_retorna_valor_blqjud(pr_cdcooper => pr_cdcooper -- Cooperativa
                                       ,pr_nrdconta => pr_nrdconta -- Conta Corrente
@@ -1754,6 +1757,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         pr_dscritic := 'Erro ao verificar bloqueio judicial – Retornando.';
       END IF;
       
+      vr_vlblqjud_apli := nvl(vr_vlblqjud_apli, 0);
+      vr_vlresblq_apli := nvl(vr_vlresblq_apli, 0);
+      
       -- Verificar se há bloqueio judicial de Poupança na conta
       gene0005.pc_retorna_valor_blqjud(pr_cdcooper => pr_cdcooper -- Cooperativa
                                       ,pr_nrdconta => pr_nrdconta -- Conta Corrente
@@ -1769,6 +1775,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         -- Retornar a critica
         pr_dscritic := 'Erro ao verificar bloqueio judicial – Retornando.';
       END IF;
+      
+      vr_vlblqjud_poup := nvl(vr_vlblqjud_poup, 0);
+      vr_vlresblq_poup := nvl(vr_vlresblq_poup, 0);
       
       -- Atualizar o saldo de Poupança Programada removendo bloqueio judicial
       vr_vlsaldo_poup := greatest(0,vr_vlsaldo_poup - vr_vlblqjud_poup);
@@ -2674,6 +2683,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           vr_dscritic := 'Erro ao verificar bloqueio judicial – Retornando.';
         END IF;
       END IF;
+      
+      vr_vlblqjud_poup := nvl(vr_vlblqjud_poup, 0);
+      vr_vlresblq_poup := nvl(vr_vlresblq_poup, 0);
       
       -- Atualizar o saldo de Poupança Programada removendo bloqueio judicial
       vr_vlsaldo_poup := GREATEST(0, vr_vlsaldo_poup - vr_vlblqjud_poup);
