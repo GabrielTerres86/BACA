@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Deborah/Edson
- Data    : Maio/92.                            Ultima atualizacao: 24/01/2017
+ Data    : Maio/92.                            Ultima atualizacao: 15/01/2018
 
  Dados referentes ao programa:
 
@@ -312,8 +312,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
   --
   procedure pc_iniciar_amb_paralel is
   begin
-   
-
     -- Gerar o ID para o paralelismo
     vr_idparale := gene0001.fn_gera_id_paralelo;
     -- Se houver algum erro, vr_idparale será 0 (Zero)
@@ -966,26 +964,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
         vr_prtalret := (to_number(rg_wrk_agencia.qttalret) / to_number(rg_wrk_totais.vr_tot_qttalret)) * 100;
         vr_prtalarq := (to_number(rg_wrk_agencia.qttalarq) / to_number(rg_wrk_totais.vr_tot_qttalarq)) * 100;   
       
-        vr_dsmensag := '+++TOTALIZDORES DE TODAS AS AGENCIAS+++'||' Agencia: '||rg_wrk_agencia.cdagenci||
-                       ' vr_prtaluso: '||vr_prtaluso||
-                       ' vr_prtalret: '||vr_prtalret||
-                       ' vr_prtalarq: '||vr_prtalarq||
-                       ' rg_wrk_agencia.qttaluso: '||rg_wrk_agencia.qttaluso||
-                       ' rg_wrk_agencia.qttalret: '||rg_wrk_agencia.qttalret||
-                       ' rg_wrk_agencia.qttalarq: '||rg_wrk_agencia.qttalarq||
-                       ' rg_wrk_totais.vr_tot_qttaluso: '||rg_wrk_totais.vr_tot_qttaluso||
-                       ' rg_wrk_totais.vr_tot_qttalret: '||rg_wrk_totais.vr_tot_qttalret||
-                       ' rg_wrk_totais.vr_tot_qttalarq: '||rg_wrk_totais.vr_tot_qttalarq;
-      
-        pc_log_programa(PR_DSTIPLOG           => 'O',
-                        PR_CDPROGRAMA         => vr_cdprogra ||'_'||pr_cdagenci || '$',
-                        pr_cdcooper           => pr_cdcooper,
-                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                        pr_tpocorrencia       => 4,
-                        pr_dsmensagem         => vr_dsmensag,
-                        PR_IDPRGLOG           => vr_idlog_ini);
-      
-        
         -- Incluir totais por agência
         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<r_agencia>'||
                            '<r_cdagenci>'||rg_wrk_agencia.cdagenci||'</r_cdagenci>'||
@@ -1018,7 +996,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
   end pc_gerar_xml_wrk;
 
   
-  
+  --Limpar todos os dados temporarios gerados por este programa.
   procedure pc_clear_memoria(pr_CDAGENCI in tbgen_batch_relatorio_wrk.CDAGENCI%type) is
   begin
     delete from tbgen_batch_relatorio_wrk wrk
@@ -1161,8 +1139,9 @@ begin
 
   /* Paralelismo visando performance Rodar Somente no processo Noturno */
   if vr_inproces  > 2 and
-    vr_qtdjobs   > 0 and 
-    pr_cdagenci  = 0 then 
+     vr_qtdjobs   > 0 and 
+     pr_cdagenci  = 0 then 
+    
     vr_tpexecucao := 1;
     --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
     pc_log_programa(pr_dstiplog   => 'I',    
@@ -1171,13 +1150,12 @@ begin
                     pr_tpexecucao => 1, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                     pr_idprglog   => vr_idlog_ini); --Out.
     
+    --Gerar o vr_idparale, para ser usado nos jobs.
     pc_iniciar_amb_paralel;
+    --Rotina responsavel em criar os jobs por agencia, considerando a sua cooperativa.
     pc_criar_job_paralelo; 
-    
-    --Fabiano Girardi. 
-    --Chama rotina de aguardo agora passando 0, para esperar
+    --Chamar rotina de aguardo agora passando 0, para esperar
     --até que todos os Jobs tenha finalizado seu processamento
-
     gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
                                 ,pr_qtdproce => 0
                                 ,pr_des_erro => vr_dscritic);
@@ -1189,6 +1167,7 @@ begin
     end if;
     
     vr_qterro := 0;
+    --Verificar a qtde de erro gerado pelos jobs.
     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
                                                   pr_cdprogra    => vr_cdprogra,
                                                   pr_dtmvtolt    => vr_dtmvtolt,
@@ -1239,7 +1218,7 @@ begin
                     pr_tpocorrencia       => 4,
                     pr_dsmensagem         => 'Início - pc_pop_dados_acom_talonarios AGENCIA: ['||pr_cdagenci||'] - INPROCES: '||vr_inproces,
                     PR_IDPRGLOG           => vr_idlog_ini); 
-    
+    --Preencher a pl-table com as informações dos associados.  
     pc_pop_dados_acom_talonarios;  
     
     --Cada Job é responsável em buscar todos os dados da sua agencia na qual foi parametrizada no Job. 
@@ -1252,93 +1231,37 @@ begin
                     PR_IDPRGLOG           => vr_idlog_ini); 
     
     
-    if vr_qtdjobs > 0 then
+    --Quando esta rotina for executada via job criado por paralelismo, o pr_idparale deve ser <> 0
+    if pr_idparale <> 0 then
       --Cada Job é responsável em buscar todos os dados da sua agencia na qual foi parametrizada no Job. 
-      --Gravar na tabela wrk, SOMENTE quando houver paralelismo por Cooperativa.
-      pc_log_programa(PR_DSTIPLOG           => 'O',
-                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                      pr_cdcooper           => pr_cdcooper,
-                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia       => 4,
-                      pr_dsmensagem         => 'Início - pc_popular_tab_agencia_wrk AGENCIA: ['||pr_cdagenci||'] - INPROCES: '||vr_inproces,
-                      PR_IDPRGLOG           => vr_idlog_ini); 
-      
+      --Popular a tabela wrk, com as informações das agencias que estao na pl-table.
       pc_popular_tab_agencia_wrk;
-      
-      pc_log_programa(PR_DSTIPLOG           => 'O',
-                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                      pr_cdcooper           => pr_cdcooper,
-                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia       => 4,
-                      pr_dsmensagem         => 'Fim - pc_popular_tab_agencia_wrk AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
-                      PR_IDPRGLOG           => vr_idlog_ini);
-      
-      
-      pc_log_programa(PR_DSTIPLOG           => 'O',
-                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                      pr_cdcooper           => pr_cdcooper,
-                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia       => 4,
-                      pr_dsmensagem         => 'Início - pc_popular_tab_associado_wrk AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
-                      PR_IDPRGLOG           => vr_idlog_ini); 
-            
-      --Gravar na tabela wrk, quando houver paralelismo
+      --Popular a tabela wrk, com as informações dos associados que estao na pl-table.
       pc_popular_tab_associado_wrk;
-      
-      pc_log_programa(PR_DSTIPLOG           => 'O',
-                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                      pr_cdcooper           => pr_cdcooper,
-                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia       => 4,
-                      pr_dsmensagem         => 'Fim - pc_popular_tab_associado_wrk AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
-                      PR_IDPRGLOG           => vr_idlog_ini);
-      
-      pc_log_programa(PR_DSTIPLOG           => 'O',
-                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                      pr_cdcooper           => pr_cdcooper,
-                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia       => 4,
-                      pr_dsmensagem         => 'Início - pc_popular_tab_totais_wrk AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
-                      PR_IDPRGLOG           => vr_idlog_ini); 
-
-      pc_popular_tab_totais_wrk;
-
-      pc_log_programa(PR_DSTIPLOG           => 'O',
-                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                      pr_cdcooper           => pr_cdcooper,
-                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia       => 4,
-                      pr_dsmensagem         => 'Fim - pc_popular_tab_totais_wrk AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
-                      PR_IDPRGLOG           => vr_idlog_ini);
-                                             
-      -- Encerrar o job do processamento paralelo dessa agência
-      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-                                  ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                  ,pr_des_erro => vr_dscritic);  
+      --Popular a tabela wrk, com as informações dos totais que estao na pl-table.
+      pc_popular_tab_totais_wrk;     
     end if; 
-    -- Atualiza finalização do batch na tabela de controle 
-    gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
-                                       ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
-                                       ,pr_dscritic   => vr_dscritic);
-                                       
+    
+    --Grava data fim para o JOB na tabela de LOG 
     pc_log_programa(pr_dstiplog   => 'F',    
                     pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
                     pr_cdcooper   => pr_cdcooper, 
                     pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                     pr_idprglog   => vr_idlog_ini,
-                    pr_flgsucesso => 1);       
+                    pr_flgsucesso => 1);
+
     
   end if;
   
-  if (pr_idparale = 0 and vr_qterro = 0) then
-    --Nao foi executado por um job paralelo.    
+  --Nao foi executado por um job paralelo.    
+  if (pr_idparale = 0) then
+    
     vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
                                               pr_cdcooper => pr_cdcooper,
                                               pr_nmsubdir => '/rl'); --> Utilizaremos o rl
     -- Nome base do arquivo é crrl025
     vr_nom_arquivo  := 'crrl025';                                              
     
-    --Fabiano Girardi.
     --Apos a finalização de todos os Jobs, é necessário montar o XML.
     pc_log_programa(PR_DSTIPLOG           => 'O',
                     PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
@@ -1348,9 +1271,13 @@ begin
                     pr_dsmensagem         => 'Inicio - pc_gerar_xml AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
                     PR_IDPRGLOG           => vr_idlog_ini);
     
+    --Caso a Cooperativa tiver jobs para o programa, o xml é montado usando a tabela wrk
     if vr_qtdjobs > 0 then
       pc_gerar_xml_wrk;
+      --Limpar a tabela temporaria, todas as agencias.
+      pc_clear_memoria(pr_CDAGENCI => 99999);
     else
+    --Caso a Cooperativa nao tiver jobs para o programa, o xml é montado usando a pl-table
       pc_gerar_xml_pl_table;
     end if;
     
@@ -1392,20 +1319,16 @@ begin
     if vr_dscritic is not null then
       raise vr_exc_saida;
     end if;
-    
-    if vr_qtdjobs > 0 then
-      --Limpar a tabela temporaria.
-      pc_clear_memoria(pr_CDAGENCI => 99999);
+        
+    --Grava data fim para o JOB na tabela de LOG 
+    if vr_inproces > 2 and vr_qtdjobs > 0 then 
+      pc_log_programa(pr_dstiplog   => 'F',    
+                      pr_cdprograma => vr_cdprogra,
+                      pr_cdcooper   => pr_cdcooper, 
+                      pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_idprglog   => vr_idlog_ini,
+                      pr_flgsucesso => 1); 
     end if;
-    
-     --Grava data fim para o JOB na tabela de LOG 
-    pc_log_programa(pr_dstiplog   => 'F',    
-                    pr_cdprograma => vr_cdprogra,
-                    pr_cdcooper   => pr_cdcooper, 
-                    pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                    pr_idprglog   => vr_idlog_ini,
-                    pr_flgsucesso => 1); 
-  
   
     -- Processo OK, devemos chamar a fimprg
     btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
@@ -1413,6 +1336,26 @@ begin
                              ,pr_infimsol => pr_infimsol
                              ,pr_stprogra => pr_stprogra);
 
+                                 
+
+  else
+    -- Foi executado por um job paralelo
+    -- Atualiza finalização do batch na tabela de controle 
+    gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                       ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                       ,pr_dscritic   => vr_dscritic);
+                                       
+    -- Encerrar o job do processamento paralelo dessa agência
+    gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                ,pr_des_erro => vr_dscritic);  
+    
+    pc_log_programa(pr_dstiplog   => 'F',    
+                    pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                    pr_cdcooper   => pr_cdcooper, 
+                    pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                    pr_idprglog   => vr_idlog_ini,
+                    pr_flgsucesso => 1);       
   end if;   
   
   commit;
@@ -1453,11 +1396,11 @@ exception
       pr_dscritic := vr_dscritic;
       -- Efetuar rollback
       rollback;
+      --Limpar a tabela wrk somente para a sua agencia.
       if vr_qtdjobs > 0 then
         pc_clear_memoria(pr_CDAGENCI => pr_cdagenci);
         commit;
       end if;
-      -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
       pc_log_programa(PR_DSTIPLOG           => 'E',
                       PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
                       pr_cdcooper           => pr_cdcooper,
@@ -1490,6 +1433,7 @@ exception
     pr_dscritic := sqlerrm;
     -- Efetuar rollback
     rollback;
+    --Limpar a tabela wrk somente para a sua agencia.
     if vr_qtdjobs > 0 then
       pc_clear_memoria(pr_CDAGENCI => pr_cdagenci);
       commit;
