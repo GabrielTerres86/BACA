@@ -2642,6 +2642,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         vr_dscritic := 'Erro ao verificar bloqueios de garantia Conta ' || pr_nrdconta || '-->'||vr_dscritic;
       END IF;
       
+      vr_vlbloque_aplica := nvl(vr_vlbloque_aplica, 0);
+      vr_vlbloque_poupa := nvl(vr_vlbloque_poupa, 0);
+      vr_vlbloque_ambos := nvl(vr_vlbloque_ambos, 0);
+      
       -- Se já recebemos o valor de bloqueio judicial de aplicação
       IF pr_vlblqapl > 0 THEN
          vr_vlblqjud_apli := pr_vlblqapl;
@@ -2662,6 +2666,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           vr_dscritic := 'Erro ao verificar bloqueio judicial – Retornando.';
         END IF;
       END IF;
+      
+      vr_vlblqjud_apli := nvl(vr_vlblqjud_apli, 0);
+      vr_vlresblq_apli := nvl(vr_vlresblq_apli, 0);
       
       -- Se já recebemos o bloqueio judicial de Poupança
       IF pr_vlblqpou > 0 THEN
