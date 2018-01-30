@@ -11,6 +11,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
       ,vlmrapar     crappep.vlmrapar%TYPE
       ,vlsdvpar     crappep.vlsdvpar%TYPE
       ,vldescto     crappep.vldespar%TYPE
+      ,vlpraven     crappep.vlsdvpar%TYPE
       ,vlatupar     NUMBER(25,2)
       ,vlatrpag     NUMBER(25,2)
       ,flcarenc     PLS_INTEGER
@@ -103,6 +104,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                          ,pr_perjurmo IN  craplcr.perjurmo%TYPE   --> Percentual do Juros de Mora
                                          ,pr_vlpagmta IN  crappep.vlpagmta%TYPE   --> Valor Pago de Mula
                                          ,pr_percmult IN  NUMBER                  --> Percentual de Multa
+                                         ,pr_txmensal IN  crapepr.txmensal%TYPE   --> Taxa mensal do Emprestimo
                                          ,pr_qttolatr IN  crapepr.qttolatr%TYPE   --> Quantidade de Tolerancia para Cobrar Multa/Juros de Mora
                                          ,pr_vlmrapar OUT NUMBER                  --> Juros de Mora Atualizado
                                          ,pr_vlmtapar OUT NUMBER                  --> Multa Atualizado
@@ -145,7 +147,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE     --> Numero do Contrato
                                         ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE     --> Codigo da linha de credito
                                         ,pr_qttolatr  IN crapepr.qttolatr%TYPE     --> Tolerancia para cobranca de multa e mora parcelas atraso
-                                        ,pr_vlpreapg OUT NUMBER                    --> Valor atualizado
+                                        ,pr_vlsdeved OUT NUMBER                    --> Valor atualizado
                                         ,pr_vlprvenc OUT NUMBER                    --> Parcela Vencida
                                         ,pr_vlpraven OUT NUMBER                    --> Parcela EM DIA + Parcela A VENCER
                                         ,pr_vlmtapar OUT NUMBER                    --> Valor da multa por atraso
@@ -367,6 +369,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                          ,pr_vlpagmta IN  crappep.vlpagmta%TYPE     --> Valor pago da multa
                                          ,pr_perjurmo IN  craplcr.perjurmo%TYPE     --> Contem o percentual de juros de mora por atraso
                                          ,pr_percmult IN  NUMBER                    --> Percentual de Multa
+                                         ,pr_txmensal IN  crapepr.txmensal%TYPE     --> Taxa Mensal do Emprestimo
                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                          ,pr_dscritic OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
@@ -1011,14 +1014,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         IF pr_dtvencto = pr_datafinal THEN
           -- Condicao para verificar se estamos calculando o Valor da Parcela Principal ou Valor da Parcela do Juros da Carencia
           IF pr_vlparepr_principal > 0 THEN
-            -- Atualiza o Saldo Projetado
-            pr_tab_saldo_projetado(vr_indice).saldo_projetado := pr_tab_saldo_projetado(vr_indice).saldo_projetado - 
-                                                                 pr_vlparepr_principal;
+            IF pr_dtvencto >= pr_dtdpagto THEN
+              -- Atualiza o Saldo Projetado
+              pr_tab_saldo_projetado(vr_indice).saldo_projetado := pr_tab_saldo_projetado(vr_indice).saldo_projetado - 
+                                                                   pr_vlparepr_principal;
+            END IF;                                                                   
           ELSE
             -- Atualiza o Saldo Projetado
             pr_tab_saldo_projetado(vr_indice).saldo_projetado := pr_tab_saldo_projetado(vr_indice).saldo_projetado - 
-                                                                 pr_tab_total_juros(pr_nrparepr).valor_total_juros;
-            
+                                                                 pr_tab_total_juros(pr_nrparepr).valor_total_juros;            
           END IF;
           
         END IF;
@@ -1338,7 +1342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Data da Carencia
       vr_dtcarenc        := pr_dtcarenc;
       -- Condicao para verificar qual será a data final para fins de calculo (Data do Pagamento ou Ultimo dia do Mes)
-      IF TO_NUMBER(TO_CHAR(pr_dtdpagto,'DD')) >= TO_NUMBER(TO_CHAR(vr_dtmvtolt,'DD')) THEN
+      IF TO_NUMBER(TO_CHAR(pr_dtdpagto,'DD')) > TO_NUMBER(TO_CHAR(vr_dtmvtolt,'DD')) THEN
         vr_datafinal := TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||'/'||TO_CHAR(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR');
       ELSE
         vr_datafinal := LAST_DAY(vr_dtmvtolt);
@@ -1471,6 +1475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                          ,pr_perjurmo IN  craplcr.perjurmo%TYPE   --> Percentual do Juros de Mora
                                          ,pr_vlpagmta IN  crappep.vlpagmta%TYPE   --> Valor Pago de Mula
                                          ,pr_percmult IN  NUMBER                  --> Percentual de Multa
+                                         ,pr_txmensal IN  crapepr.txmensal%TYPE   --> Taxa mensal do Emprestimo
                                          ,pr_qttolatr IN  crapepr.qttolatr%TYPE   --> Quantidade de Tolerancia para Cobrar Multa/Juros de Mora
                                          ,pr_vlmrapar OUT NUMBER                  --> Juros de Mora Atualizado
                                          ,pr_vlmtapar OUT NUMBER                  --> Multa Atualizado
@@ -1542,7 +1547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         pr_vlmrapar := 0;
       ELSE
         -- Taxa de mora recebe o valor da linha de crédito
-        vr_txdiaria := ROUND((100 * (POWER((pr_perjurmo / 100) + 1,(1 / 30)) - 1)),7);
+        vr_txdiaria := ROUND((100 * (POWER(((pr_perjurmo + pr_txmensal) / 100) + 1,(1 / 30)) - 1)),7);
         -- Valor de juros de mora é relativo ao juros sem inadimplencia da parcela + taxa diaria calculada + quantidade de dias de mora
         pr_vlmrapar := round((pr_vlsdvpar * (vr_txdiaria / 100) * vr_qtdiamor),2);
       END IF;		
@@ -1622,11 +1627,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_qtparcel := pr_tab_price.COUNT + 1;
         vr_dtvencto := pr_dtvencto;
       ELSE 
-        vr_qtparcel := TO_CHAR(pr_dtvencto,'RRRRMM') - TO_CHAR(pr_dtcalcul,'RRRRMM') + 1;
+        vr_qtparcel := ROUND(months_between(pr_dtvencto,pr_dtcalcul));
+        IF NVL(vr_qtparcel,0) = 0 THEN
+          vr_qtparcel := 1;          
+        END IF;
+        
         vr_dtvencto := TO_DATE(TO_CHAR(pr_dtvencto,'DD')||'/'||TO_CHAR(pr_dtcalcul,'MM/RRRR'),'DD/MM/RRRR');
         -- Condicao para verificar se o dia atual eh maior que o dia do vencimento
         IF TO_NUMBER(TO_CHAR(pr_dtcalcul,'DD')) >= TO_NUMBER(TO_CHAR(vr_dtvencto,'DD')) THEN
-          vr_qtparcel := vr_qtparcel - 1;
           vr_dtvencto := ADD_MONTHS(vr_dtvencto,1);
         END IF;        
       END IF;
@@ -2102,6 +2110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                        ,pr_perjurmo => vr_perjurmo
                                        ,pr_vlpagmta => rw_crappep.vlpagmta
                                        ,pr_percmult => vr_percmult
+                                       ,pr_txmensal => pr_txmensal
                                        ,pr_qttolatr => pr_qttolatr
                                        ,pr_vlmrapar => pr_tab_parcelas(vr_indice).vlmrapar
                                        ,pr_vlmtapar => pr_tab_parcelas(vr_indice).vlmtapar
@@ -2143,6 +2152,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       
           -- A Vencer
           pr_tab_parcelas(vr_indice).insitpar := 3;
+          
+          -- Somente sera carregado os valores de vencimento a vencer, dentro do mês (LAUTOM)
+          IF (to_char(rw_crappep.dtvencto,'RRRRMM') = to_char(pr_dtmvtolt,'RRRRMM')) THEN
+            pr_tab_parcelas(vr_indice).vlpraven := NVL(rw_crappep.vlsdvpar,0);
+          END IF;         
+          
         END IF;
         -- Valor atual da parcela mais multa e juros de mora
         pr_tab_parcelas(vr_indice).vlatrpag := NVL(pr_tab_parcelas(vr_indice).vlatupar,0)
@@ -2173,7 +2188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE     --> Numero do Contrato
                                         ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE     --> Codigo da linha de credito
                                         ,pr_qttolatr  IN crapepr.qttolatr%TYPE     --> Tolerancia para cobranca de multa e mora parcelas atraso
-                                        ,pr_vlpreapg OUT NUMBER                    --> Valor atualizado
+                                        ,pr_vlsdeved OUT NUMBER                    --> Valor atualizado
                                         ,pr_vlprvenc OUT NUMBER                    --> Parcela Vencida
                                         ,pr_vlpraven OUT NUMBER                    --> Parcela EM DIA + Parcela A VENCER
                                         ,pr_vlmtapar OUT NUMBER                    --> Valor da multa por atraso
@@ -2283,14 +2298,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           -- Em Atraso
           WHEN 2 THEN vr_vlprvenc := vr_vlprvenc + NVL(vr_tab_parcelas(vr_indice).vlatupar,0);
           -- A Vencer
-          WHEN 3 THEN vr_vlpraven := vr_vlpraven + NVL(vr_tab_parcelas(vr_indice).vlsdvpar,0);
+          WHEN 3 THEN vr_vlpraven := vr_vlpraven + NVL(vr_tab_parcelas(vr_indice).vlpraven,0);
         END CASE;
 
         vr_indice   := vr_tab_parcelas.NEXT(vr_indice);
       END LOOP;
 
       -- Retorna valores
-      pr_vlpreapg := vr_vlpreapg;
+      pr_vlsdeved := vr_vlpreapg;
       pr_vlprvenc := vr_vlprvenc;
       pr_vlpraven := vr_vlpraven;
       pr_vlmtapar := vr_vlmtapar;
@@ -2650,7 +2665,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END IF;
       
       -- Condicao para verificar qual será a data final para fins de calculo (Data do Pagamento ou Ultimo dia do Mes)
-      IF TO_NUMBER(TO_CHAR(pr_dtdpagto,'DD')) >= TO_NUMBER(TO_CHAR(vr_dtmvtolt,'DD')) THEN
+      IF TO_NUMBER(TO_CHAR(pr_dtdpagto,'DD')) > TO_NUMBER(TO_CHAR(vr_dtmvtolt,'DD')) THEN
         vr_datafinal := TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||'/'||TO_CHAR(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR');
       ELSE
         vr_datafinal := LAST_DAY(vr_dtmvtolt);
@@ -2663,7 +2678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Loop para calcular o saldo devedor
       WHILE vr_datafinal <= vr_dtultpag LOOP
         -- Somente vamos calcular o Saldo Devedor Projetado caso nao for no periodo da carencia
-        IF vr_tab_parcelas(vr_nrparepr).flcarenc = 0 THEN          
+        IF vr_tab_parcelas(vr_nrparepr).flcarenc = 0 THEN       
           -- Procedure para calcular o saldo projetado
           pc_calcula_saldo_projetado(pr_cdcooper            => pr_cdcooper
                                     ,pr_flgbatch            => FALSE
@@ -2685,7 +2700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           -- Condicao para verificar se houve erro
           IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
-          END IF;          
+          END IF;
         END IF;
         
         -- Caso for no dia do vencimento da parcela iremos avancar para a proxima parcela
@@ -2693,17 +2708,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           -- Condicao para verificar se a parcela eh do Juros da Carencia
           IF vr_tab_parcelas(vr_nrparepr).flcarenc = 0 THEN
             -- Valor Base do IOF
-            vr_vlbase_iof := vr_tab_parcelas(vr_nrparepr).vlparepr - vr_tab_total_juros(vr_nrparepr).valor_total_juros - vr_vlbase_iof;
+            vr_vlbase_iof := vr_tab_parcelas(vr_nrparepr).vlparepr - vr_tab_total_juros(vr_nrparepr).valor_total_juros;
+            IF vr_vlbase_iof < 0 THEN
+              vr_vlbase_iof := 0;
+            END IF;
+            
             -- Quantidade de Dias do IOF
             vr_qtdias_iof := vr_tab_parcelas(vr_nrparepr).dtvencto - vr_dtmvtolt;
+            IF vr_qtdias_iof > 365 THEN
+              vr_qtdias_iof := 365;
+            END IF;
+            
             -- Valor do IOF
             pr_vltariof   := ROUND(NVL(pr_vltariof,0) + (vr_vlbase_iof * vr_qtdias_iof * pr_taxaiof),2);
-            -- Zerar a Variavel
-            vr_vlbase_iof := 0;
-          ELSE
-            -- Valor Base do IOF
-            vr_vlbase_iof := vr_vlbase_iof + vr_tab_parcelas(vr_nrparepr).vlparepr;
-          END IF;
+          END IF;        
           
           vr_nrparepr := vr_nrparepr + 1;          
         END IF;
@@ -3333,7 +3351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison Fernando
-       Data    : Maio/2017                         Ultima atualizacao: 28/11/2017
+       Data    : Maio/2017                         Ultima atualizacao: 
 
        Dados referentes ao programa:
 
@@ -3341,8 +3359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Objetivo  : Procedure para efetuar o credito do emprestimo direto na conta online.
 
-       Alteracoes: Remover o lançamento da tarifa de alienação nas propostas de CDC,
-                   Prj. 402 (Jean Michel).
+       Alteracoes: 
     ............................................................................. */
 
     DECLARE
@@ -3370,8 +3387,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
               ,tpemprst
               ,dtcarenc
               ,idcarenc
-              ,DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => crawepr.cdcooper
-                                                 ,pr_cdfinemp => crawepr.cdfinemp),3,1,0) AS inlcrcdc
           FROM crawepr
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
@@ -3897,13 +3912,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                       ,pr_nrdconta => pr_nrdconta
                                       ,pr_nrctremp => pr_nrctremp) LOOP
             -- Se for carro, moto ou caminhao
-            IF (rw_crapbpr.dscatbem LIKE '%AUTOMOVEL%' 
+            IF rw_crapbpr.dscatbem LIKE '%AUTOMOVEL%' 
             OR rw_crapbpr.dscatbem LIKE '%MOTO%' 
-            OR rw_crapbpr.dscatbem LIKE '%CAMINHAO%') THEN
-
-              IF rw_crawepr.inlcrcdc = 1 THEN -- Se for CDC não gera tarifa de alienação
-                CONTINUE;
-              END IF;
+            OR rw_crapbpr.dscatbem LIKE '%CAMINHAO%' THEN
 
               -- Se possuir saldo
               IF vr_vlsldisp > vr_vlrtarif THEN
@@ -5089,6 +5100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                          ,pr_vlpagmta IN  crappep.vlpagmta%TYPE     --> Valor pago da multa
                                          ,pr_perjurmo IN  craplcr.perjurmo%TYPE     --> Contem o percentual de juros de mora por atraso
                                          ,pr_percmult IN  NUMBER                    --> Percentual de Multa
+                                         ,pr_txmensal IN  crapepr.txmensal%TYPE     --> Taxa Mensal do Emprestimo
                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                          ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
   BEGIN
@@ -5111,24 +5123,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
     DECLARE
       -- Variaveis locais
-      vr_vlmtapar NUMBER;
-      vr_vlmrapar NUMBER;
-      vr_vlminimo NUMBER;
-      vr_cdhistor craphis.cdhistor%TYPE;
-      vr_inliquid crappep.inliquid%TYPE;
-      vr_vljura60 crappep.vljura60%TYPE;
-      vr_vlsdvatu NUMBER;
-      vr_qtprepag NUMBER;
-      vr_qtprecal NUMBER;
-      vr_vlpagpar NUMBER;
-      vr_des_reto VARCHAR2(3);
+      vr_vlmtapar            NUMBER;
+      vr_vlmrapar            NUMBER;
+      vr_vlminimo            NUMBER;
+      vr_cdhistor            craphis.cdhistor%TYPE;
+      vr_inliquid            crappep.inliquid%TYPE;
+      vr_vljura60            crappep.vljura60%TYPE;
+      vr_vlsdvatu            NUMBER;
+      vr_qtprepag            NUMBER;
+      vr_qtprecal            NUMBER;
+      vr_vlpagpar            NUMBER;
+      vr_des_reto            VARCHAR2(3);
+      vr_vljuros_mora_debito craplem.vllanmto%TYPE;
 
       -- Variaveis tratamento de erro
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
       vr_exc_erro EXCEPTION;
       vr_tab_erro GENE0001.typ_tab_erro;
-
+      
+      CURSOR cr_craplem_mora (pr_cdcooper	IN craplem.cdcooper%TYPE
+                             ,pr_nrdconta IN craplem.nrdconta%TYPE
+                             ,pr_nrctremp IN craplem.nrctremp%TYPE
+                             ,pr_nrparepr IN craplem.nrparepr%TYPE) IS
+        SELECT nvl(SUM(decode(cdhistor,
+                              2373, vllanmto,
+                              2371, vllanmto,
+                              2377, vllanmto,
+                              2375, vllanmto,
+                              2347, vllanmto * -1,
+                              2346, vllanmto * -1)), 0) vllanmto
+          FROM craplem
+         WHERE craplem.cdcooper = pr_cdcooper
+           AND craplem.nrdconta = pr_nrdconta
+           AND craplem.nrctremp = pr_nrctremp
+           AND craplem.nrparepr = pr_nrparepr
+           AND craplem.cdhistor IN (2373,2371,2377,2375,2347,2346);
     BEGIN
       -- Calcular o valor do atraso
       pc_calcula_atraso_pos_fixado(pr_dtcalcul => pr_dtcalcul
@@ -5139,6 +5169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                   ,pr_perjurmo => pr_perjurmo
                                   ,pr_vlpagmta => pr_vlpagmta
                                   ,pr_percmult => pr_percmult
+                                  ,pr_txmensal => pr_txmensal
                                   ,pr_qttolatr => pr_qttolatr
                                   ,pr_vlmrapar => vr_vlmrapar
                                   ,pr_vlmtapar => vr_vlmtapar
@@ -5178,7 +5209,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           RAISE vr_exc_erro;
         END IF;
         
-      END IF;      
+      END IF;
+      
+      -- Valor a pagar da parcela precisa diminuir o valor de Juros de Mora + Multa
+      vr_vlpagpar := NVL(vr_vlpagpar,0) - NVL(vr_vlmtapar,0) - NVL(vr_vlmrapar,0);
 
       -- Efetua o Lancamento de Multa do Contrato de Emprestimo
       IF NVL(vr_vlmtapar, 0) > 0 THEN
@@ -5228,7 +5262,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-
+        
+        -- Se for Financiamento
+        IF pr_floperac THEN
+          vr_cdhistor := 2349;
+        ELSE
+          vr_cdhistor := 2348;
+        END IF;
+        
+        -- Efetuar o lancamento da multa
+        EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper   -- Codigo Cooperativa
+                                       ,pr_dtmvtolt => pr_dtcalcul   -- Data Emprestimo
+                                       ,pr_cdagenci => pr_cdagenci   -- Codigo Agencia
+                                       ,pr_cdbccxlt => 100           -- Codigo Caixa
+                                       ,pr_cdoperad => pr_cdoperad   -- Operador
+                                       ,pr_cdpactra => pr_cdpactra   -- Posto Atendimento
+                                       ,pr_tplotmov => 5             -- Tipo movimento
+                                       ,pr_nrdolote => 650004        -- Numero Lote
+                                       ,pr_nrdconta => pr_nrdconta   -- Numero da Conta
+                                       ,pr_cdhistor => vr_cdhistor   -- Codigo Historico
+                                       ,pr_nrctremp => pr_nrctremp   -- Numero Contrato
+                                       ,pr_vllanmto => vr_vlmtapar   -- Valor Lancamento
+                                       ,pr_dtpagemp => pr_dtcalcul   -- Data Pagamento Emprestimo
+                                       ,pr_txjurepr => pr_txjuremp   -- Taxa Juros Emprestimo
+                                       ,pr_vlpreemp => pr_vlpreemp   -- Valor Emprestimo
+                                       ,pr_nrsequni => pr_nrparepr   -- Numero Sequencia
+                                       ,pr_nrparepr => pr_nrparepr   -- Numero Parcelas Emprestimo
+                                       ,pr_flgincre => TRUE          -- Indicador Credito
+                                       ,pr_flgcredi => TRUE          -- Credito
+                                       ,pr_nrseqava => pr_nrseqava   -- Pagamento: Sequencia do avalista
+                                       ,pr_cdorigem => pr_cdorigem   -- Origem do Lancamento
+                                       ,pr_cdcritic => vr_cdcritic   -- Codigo Erro
+                                       ,pr_dscritic => vr_dscritic); -- Descricao Erro
+        -- Se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;        
+        
         -- Verificar se o pagamento foi feito por um avalista
         IF NVL(pr_nrseqava,0) = 0 THEN
           -- Se for Financiamento
@@ -5325,6 +5395,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
+        
+        vr_vljuros_mora_debito := 0;
+        OPEN cr_craplem_mora(pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrctremp => pr_nrctremp
+                            ,pr_nrparepr => pr_nrparepr);
+        FETCH cr_craplem_mora INTO vr_vljuros_mora_debito;
+        CLOSE cr_craplem_mora;
+            
+        IF vr_vljuros_mora_debito > 0 THEN
+          -- Se for Financiamento
+          IF pr_floperac THEN
+            vr_cdhistor := 2347;
+          ELSE
+            vr_cdhistor := 2346;
+          END IF;
+          
+          -- Efetuar o lancamento do juros de mora
+          EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper   -- Codigo Cooperativa
+                                         ,pr_dtmvtolt => pr_dtcalcul   -- Data Emprestimo
+                                         ,pr_cdagenci => pr_cdagenci   -- Codigo Agencia
+                                         ,pr_cdbccxlt => 100           -- Codigo Caixa
+                                         ,pr_cdoperad => pr_cdoperad   -- Operador
+                                         ,pr_cdpactra => pr_cdpactra   -- Posto Atendimento
+                                         ,pr_tplotmov => 5             -- Tipo movimento
+                                         ,pr_nrdolote => 650004        -- Numero Lote
+                                         ,pr_nrdconta => pr_nrdconta   -- Numero da Conta
+                                         ,pr_cdhistor => vr_cdhistor   -- Codigo Historico
+                                         ,pr_nrctremp => pr_nrctremp   -- Numero Contrato
+                                         ,pr_vllanmto => vr_vljuros_mora_debito  -- Valor Lancamento
+                                         ,pr_dtpagemp => pr_dtcalcul   -- Data Pagamento Emprestimo
+                                         ,pr_txjurepr => pr_txjuremp   -- Taxa Juros Emprestimo
+                                         ,pr_vlpreemp => pr_vlpreemp   -- Valor Emprestimo
+                                         ,pr_nrsequni => pr_nrparepr   -- Numero Sequencia
+                                         ,pr_nrparepr => pr_nrparepr   -- Numero Parcelas Emprestimo
+                                         ,pr_flgincre => TRUE          -- Indicador Credito
+                                         ,pr_flgcredi => TRUE          -- Credito
+                                         ,pr_nrseqava => pr_nrseqava   -- Pagamento: Sequencia do avalista
+                                         ,pr_cdorigem => pr_cdorigem   -- Origem do Lancamento
+                                         ,pr_cdcritic => vr_cdcritic   -- Codigo Erro
+                                         ,pr_dscritic => vr_dscritic); -- Descricao Erro
+          -- Se houve erro
+          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+          
+        END IF;   
 
         -- Verificar se o pagamento foi feito por um avalista
         IF NVL(pr_nrseqava,0) = 0 THEN
@@ -5375,7 +5492,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END IF; -- NVL(vr_vlmrapar, 0) > 0
 
       -- Condicao para verificar se a parcela sera liquidada
-      IF NVL(pr_vlsdvpar,0) = NVL(vr_vlpagpar,0) - NVL(vr_vlmtapar, 0) - NVL(vr_vlmrapar, 0) THEN
+      IF NVL(pr_vlsdvpar,0) = NVL(vr_vlpagpar,0) THEN
         vr_inliquid := 1;
         vr_vljura60 := 0;
         -- Saldo Devedor da Parcela
@@ -5399,10 +5516,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       BEGIN
         UPDATE crappep
            SET crappep.dtultpag = pr_dtcalcul
-              ,crappep.vlpagpar = NVL(crappep.vlpagpar,0) + NVL(vr_vlpagpar,0) - NVL(vr_vlmtapar,0) - NVL(vr_vlmrapar,0)
+              ,crappep.vlpagpar = NVL(crappep.vlpagpar,0) + NVL(vr_vlpagpar,0)
 			        ,crappep.vlpagmta = NVL(crappep.vlpagmta,0) + NVL(vr_vlmtapar,0)
 			        ,crappep.vlpagmra = NVL(crappep.vlpagmra,0) + NVL(vr_vlmrapar,0)
-              ,crappep.vlsdvpar = NVL(crappep.vlsdvpar,0) + NVL(vr_vlmtapar,0) + NVL(vr_vlmrapar,0) - NVL(vr_vlpagpar,0)
+              ,crappep.vlsdvpar = NVL(crappep.vlsdvpar,0) - NVL(vr_vlpagpar,0)
               ,crappep.inliquid = vr_inliquid
               ,crappep.vlsdvatu = vr_vlsdvatu
               ,crappep.vljura60 = vr_vljura60              
@@ -5525,7 +5642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
            SET --crapepr.dtultpag = pr_dtcalcul
                crapepr.qtprepag = vr_qtprepag
               ,crapepr.qtprecal = vr_qtprecal
-              ,crapepr.vlsdeved = NVL(crapepr.vlsdeved,0) + NVL(vr_vlmtapar, 0) + NVL(vr_vlmrapar,0) - NVL(vr_vlpagpar,0)
+              ,crapepr.vlsdeved = NVL(crapepr.vlsdeved,0) - NVL(vr_vlpagpar,0)
          WHERE crapepr.cdcooper = pr_cdcooper
            AND crapepr.nrdconta = pr_nrdconta
            AND crapepr.nrctremp = pr_nrctremp;
@@ -6694,6 +6811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                      ,pr_vlpagmta => rw_crappep.vlpagmta
                                      ,pr_perjurmo => rw_craplcr.perjurmo
                                      ,pr_percmult => vr_percmult
+                                     ,pr_txmensal => rw_crapepr.txmensal
                                      ,pr_cdcritic => vr_cdcritic
                                      ,pr_dscritic => vr_dscritic);
         -- Se houve erro
@@ -6705,7 +6823,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Parcela a Vencer --
       ----------------------
       ELSIF rw_crappep.dtvencto > vr_dtmvtolt THEN
-        
+
+        -- NAO permitir antecipar
+        vr_dscritic := 'Antecipacao nao permitida.';
+        RAISE vr_exc_erro;
+
         -- Efetua o pagamento da parcela vencer
         pc_efetua_pagamento_vencer(pr_cdcooper  => pr_cdcooper
                                   ,pr_dtcalcul  => vr_dtmvtolt
@@ -7203,10 +7325,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
            AND craplem.nrdconta = pr_nrdconta
            AND craplem.nrctremp = pr_nrctremp
            AND craplem.cdhistor NOT IN (
-                   2365,2363 -- Multa
-                  ,2367,2369 -- Multa Aval
-                  ,2371,2373 -- Juros de Mora
-                  ,2375,2377 -- Juros de Mora Aval
+                   2365,2363,2349,2348 -- Multa
+                  ,2367,2369           -- Multa Aval
+                  ,2371,2373,2347,2346 -- Juros de Mora
+                  ,2375,2377           -- Juros de Mora Aval
                );
 
       -- Variaveis gerais
@@ -7247,9 +7369,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           
           -- Financiamento
           IF pr_floperac THEN
-            vr_cdhistor := 1043;
+            vr_cdhistor := 2359;
           ELSE
-            vr_cdhistor := 1041;
+            vr_cdhistor := 2472;
           END IF;
           
           -- Inverter sinal para efetuar o lancamento
@@ -7262,9 +7384,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           
           -- Financiamento
           IF pr_floperac THEN
-            vr_cdhistor := 1042;  
+            vr_cdhistor := 2358;  
           ELSE
-            vr_cdhistor := 1040;    
+            vr_cdhistor := 2471;    
           END IF;
           
           vr_flgcredi := FALSE; -- Debita
