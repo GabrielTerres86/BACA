@@ -155,6 +155,8 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --
   --            11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
   --
+  --            30/01/2018 - Ajuste na flgcriar para que faca o update na tabela crapnrc antes da rotina de limpeza de ratings antigos.
+  --                         Heitor (Mouts) - Chamado 839107.
   ---------------------------------------------------------------------------------------------------------------
   -- Tipo de Tabela para dados provisao CL
   TYPE typ_tab_dsdrisco IS TABLE OF VARCHAR2(5) INDEX BY PLS_INTEGER;
@@ -10570,7 +10572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                           ,pr_tpctrato             => pr_tpctrato          --> Tipo Contrato Rating
                           ,pr_nrctrato             => pr_nrctrato          --> Numero Contrato Rating
                           ,pr_rowidnrc             => pr_rowidnrc          --> Registro de rating
-                          ,pr_flgcriar             => 0                    --> Indicado se deve criar o rating
+                          ,pr_flgcriar             => 1                    --> Indicado se deve criar o rating
                           ,pr_idorigem             => pr_idorigem          --> Identificador Origem
                           ,pr_nmdatela             => pr_nmdatela          --> Nome da tela
                           ,pr_inproces             => pr_inproces          --> Situacao do sistema
