@@ -1342,10 +1342,19 @@ BEGIN
                        pr_dsmensagem         => 'Fim - cursor cr_crapage. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
                        PR_IDPRGLOG           => vr_idlog_ini_par);
      
+     
+       --Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 1); 
+     
      end if;
 
      
-
+     --Se for o programa principal - executado no batch
      if pr_idparale = 0 then
        --Executar procedure geração relatorio crrl090 totalizador
        pc_imprime_crrl090_total (pr_des_erro => vr_des_erro);
@@ -1364,49 +1373,48 @@ BEGIN
                                 ,pr_infimsol => pr_infimsol
                                 ,pr_stprogra => pr_stprogra);
        
-       if vr_idcontrole <> 0 then
-         -- Atualiza finalização do batch na tabela de controle 
-         gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
-                                            ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
-                                            ,pr_dscritic   => vr_dscritic);        
-       end if;    
-                                
-       if vr_inproces > 2 then 
-         --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
-         pc_log_programa(pr_dstiplog   => 'F',    
-                         pr_cdprograma => vr_cdprogra,           
-                         pr_cdcooper   => pr_cdcooper, 
-                         pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                         pr_idprglog   => vr_idlog_ini_ger,
-                         pr_flgsucesso => 1);                 
-       end if;
-       
-       --Salvar informacoes no banco de dados
-       COMMIT;
+        if vr_idcontrole <> 0 then
+          -- Atualiza finalização do batch na tabela de controle 
+          gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                             ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                             ,pr_dscritic   => vr_dscritic);
+                                             
+          -- Testar saida com erro
+          if  vr_dscritic is not null then 
+            -- Levantar exceçao
+            raise vr_exc_saida;
+          end if; 
+                                                          
+        end if;    
+        
+        if vr_inproces > 2 and vr_qtdjobs > 0 then 
+          --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
+          pc_log_programa(pr_dstiplog   => 'F',    
+                          pr_cdprograma => vr_cdprogra,           
+                          pr_cdcooper   => pr_cdcooper, 
+                          pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_idprglog   => vr_idlog_ini_ger,
+                          pr_flgsucesso => 1);                 
+        end if;
+
+        --Salvar informacoes no banco de dados
+        commit;
+     
+     --Se for job chamado pelo programa do batch   
      else
-       --Grava data fim para o JOB na tabela de LOG
-       pc_log_programa(pr_dstiplog   => 'F',
-                       pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,
-                       pr_cdcooper   => pr_cdcooper,
-                       pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                       pr_idprglog   => vr_idlog_ini_par,
-                       pr_flgsucesso => 1);
-       
        -- Atualiza finalização do batch na tabela de controle 
        gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
-                                          ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
-                                          ,pr_dscritic   => vr_dscritic);  
-                                          
+                                           ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                           ,pr_dscritic   => vr_dscritic);  
+                                               
        -- Encerrar o job do processamento paralelo dessa agência
        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-                                   ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                   ,pr_des_erro => vr_dscritic);  
-        
-       
+                                    ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);  
+      
        --Salvar informacoes no banco de dados
        commit;
-     end if;
-     
+     end if;   
    EXCEPTION
     WHEN vr_exc_fimprg THEN
       -- Se foi retornado apenas código

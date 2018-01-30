@@ -707,6 +707,15 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
                                  ,pr_tab_dados_rpp OUT APLI0001.typ_tab_dados_rpp --> Poupancas Programadas
                                  ,pr_tab_erro      IN OUT NOCOPY GENE0001.typ_tab_erro);  --> Saida com erros;
 
+  PROCEDURE pc_insere_tab_wrk(pr_cdcooper     in tbgen_batch_relatorio_wrk.cdcooper%type 
+                             ,pr_nrdconta     in tbgen_batch_relatorio_wrk.nrdconta%type
+                             ,pr_cdprogra     in tbgen_batch_relatorio_wrk.cdprograma%type
+                             ,pr_dsrelatorio  in tbgen_batch_relatorio_wrk.dsrelatorio%type
+                             ,pr_dtmvtolt     in tbgen_batch_relatorio_wrk.dtmvtolt%type
+                             ,pr_dschave      in tbgen_batch_relatorio_wrk.dschave%type                           
+                             ,pr_dsinformacao in tbgen_batch_relatorio_wrk.dscritic%type
+                             ,pr_dscritic    out varchar2);
+
 END APLI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
@@ -5391,6 +5400,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_tptaxrda         craptrd.tptaxrda%type;
     vr_dsdchave         crapsqu.dsdchave%type;
     
+    --Variáveis acumulo lote
+    vr_vlinfocr         craplot.vlinfocr%type := 0;
+    vr_vlcompcr         craplot.vlcompcr%type := 0; 
+    vr_vlinfodb         craplot.vlinfodb%type := 0;
+    vr_vlcompdb         craplot.vlcompcr%type := 0;     
+    vr_qtinfoln         craplot.vlcompdb%type := 0;
+    vr_qtcompln         craplot.qtcompln%type := 0;    
+
+
     -- Informações da poupança programada
     cursor cr_craprpp (pr_rowid in varchar2) is
       select craprpp.vlsdrdpp,
@@ -5470,7 +5488,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       fetch cr_craprpp into rw_craprpp;
     close cr_craprpp;
     --
-
     vr_percenir := gene0002.fn_char_para_number(pr_dstextab);
     vr_vlrentot := 0;
     vr_vlrendim := 0;
@@ -5581,7 +5598,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       
       -- Para o programa CRPS148, foi realizado o upate no próprio crps, visto que teríamos problemas
       -- no paralelismo
-      if vr_cdprogra <> 'CRPS148' then 
+      if vr_cdprogra = 'CRPS148' then
+        begin
+
+          apli0001.pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper 
+                                    ,pr_nrdconta     => rw_craprpp.nrdconta
+                                    ,pr_cdprogra     => 'CRPS148'
+                                    ,pr_dsrelatorio  => 'CRAPTRD'
+                                    ,pr_dtmvtolt     => pr_dtmvtolt
+                                    ,pr_dschave      => rw_craptrd.rowid
+                                    ,pr_dsinformacao => null 
+                                    ,pr_dscritic     => vr_des_erro);          
+        
+          if vr_des_erro is not null then
+            raise vr_exc_erro; 
+          end if;
+        
+        exception
+          when others then
+            vr_des_erro := 'Erro ao chamar procedure apli0001.pc_insere_tab_wrk: '||sqlerrm;
+            raise vr_exc_erro;              
+        end;
+      else
         -- Atualiza o indicador de cálculo
         begin
           update craptrd
@@ -5592,7 +5630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_des_erro := 'Erro ao atualizar indicador de calculo na craptrd: '||sqlerrm;
             raise vr_exc_erro;
         end;
-      end if;        
+      end if;
 
     --
     if pr_inproces > 2 and
@@ -5825,44 +5863,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
                                      pr_nmdcampo => 'NRSEQDIG',
                                      pr_dsdchave => vr_dsdchave);
+                                     
         else
-        -- Atualizar o tipo do lote
-        begin
-          update craplot
-             set craplot.tplotmov = 14
-           where craplot.cdcooper = pr_cdcooper
-             and craplot.dtmvtolt = vr_dtdolote
-             and craplot.cdagenci = vr_cdagenci
-             and craplot.cdbccxlt = vr_cdbccxlt
-             and craplot.nrdolote = vr_nrdolote
-          returning craplot.nrseqdig into vr_nrseqdig;
-        exception
-          when others then
-              vr_des_erro := 'Erro ao verificar informações da capa de lote: '||sqlerrm;
-            raise vr_exc_erro;
-        end;
-        
-        if sql%rowcount = 0 then
+          -- Atualizar o tipo do lote
           begin
-            insert into craplot (dtmvtolt,
-                                 cdagenci,
-                                 cdbccxlt,
-                                 nrdolote,
-                                 tplotmov,
-                                 cdcooper)
-            values (vr_dtdolote,
-                    vr_cdagenci,
-                    vr_cdbccxlt,
-                    vr_nrdolote,
-                    14,
-                    pr_cdcooper)
-             returning 0 into vr_nrseqdig;
+            update craplot
+               set craplot.tplotmov = 14
+             where craplot.cdcooper = pr_cdcooper
+               and craplot.dtmvtolt = vr_dtdolote
+               and craplot.cdagenci = vr_cdagenci
+               and craplot.cdbccxlt = vr_cdbccxlt
+               and craplot.nrdolote = vr_nrdolote
+            returning craplot.nrseqdig into vr_nrseqdig;
           exception
             when others then
-              vr_des_erro := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
+              vr_des_erro := 'Erro ao verificar informações da capa de lote: '||sqlerrm;
               raise vr_exc_erro;
           end;
-        end if;
+        
+          if sql%rowcount = 0 then
+            begin
+              insert into craplot (dtmvtolt,
+                                   cdagenci,
+                                   cdbccxlt,
+                                   nrdolote,
+                                   tplotmov,
+                                   cdcooper)
+              values (vr_dtdolote,
+                      vr_cdagenci,
+                      vr_cdbccxlt,
+                      vr_nrdolote,
+                      14,
+                      pr_cdcooper)
+               returning 0 into vr_nrseqdig;
+            exception
+              when others then
+                vr_des_erro := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
+                raise vr_exc_erro;
+            end;
+          end if;
         
         end if;
        
@@ -5910,27 +5949,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_des_erro := 'Erro ao inserir lançamento de poupança programada: '||sqlerrm;
             raise vr_exc_erro;
         end;
-        -- Atualiza a capa do lote
         
-        if vr_cdprogra <> 'CRPS148' then
-        begin
-          update craplot
-             set craplot.vlinfocr = nvl(craplot.vlinfocr, 0) + nvl(vr_vlrentot, 0),
-                 craplot.vlcompcr = nvl(craplot.vlcompcr, 0) + nvl(vr_vlrentot, 0),
-                 craplot.qtinfoln = nvl(craplot.qtinfoln, 0) + 1,
-                 craplot.qtcompln = nvl(craplot.qtcompln, 0) + 1,
+        -- Atualiza a capa do lote
+        if vr_cdprogra = 'CRPS148' then
+        
+          --Se for CRPS148 utilizar chave do lote 8384 para adicionar os lançamentos.
+          vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                                     pr_nmdcampo => 'NRSEQDIG',
+                                     pr_dsdchave => vr_dsdchave);          
+            
+          vr_vlinfocr := vr_vlinfocr + nvl(vr_vlrentot, 0); 
+          vr_vlcompcr := vr_vlcompcr + nvl(vr_vlrentot, 0);   
+          vr_qtinfoln := vr_qtinfoln + 1;    
+          vr_qtcompln := vr_qtcompln + 1;        
+      
+        else
+          begin
+            update craplot
+               set craplot.vlinfocr = nvl(craplot.vlinfocr, 0) + nvl(vr_vlrentot, 0),
+                   craplot.vlcompcr = nvl(craplot.vlcompcr, 0) + nvl(vr_vlrentot, 0),
+                   craplot.qtinfoln = nvl(craplot.qtinfoln, 0) + 1,
+                   craplot.qtcompln = nvl(craplot.qtcompln, 0) + 1,
                    craplot.nrseqdig = vr_nrseqdig
-           where craplot.cdcooper = pr_cdcooper
-             and craplot.dtmvtolt = vr_dtdolote
-             and craplot.cdagenci = vr_cdagenci
-             and craplot.cdbccxlt = vr_cdbccxlt
-             and craplot.nrdolote = vr_nrdolote
-          returning nrseqdig into vr_nrseqdig;
-        exception
-          when others then
-            vr_des_erro := 'Erro ao atualizar a capa de lote (2): '||sqlerrm;
-            raise vr_exc_erro;
-        end;
+             where craplot.cdcooper = pr_cdcooper
+               and craplot.dtmvtolt = vr_dtdolote
+               and craplot.cdagenci = vr_cdagenci
+               and craplot.cdbccxlt = vr_cdbccxlt
+               and craplot.nrdolote = vr_nrdolote
+            returning nrseqdig into vr_nrseqdig;
+          exception
+            when others then
+              vr_des_erro := 'Erro ao atualizar a capa de lote (2): '||sqlerrm;
+              raise vr_exc_erro;
+          end;
         end if;
         --
         IF vr_cdprogra = 'CRPS148' and
@@ -5976,9 +6027,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
               vr_des_erro := 'Erro ao inserir o histórico 863 na poupança programada: '||sqlerrm;
               raise vr_exc_erro;
           end;
+          
+          vr_vlinfocr := vr_vlinfocr + nvl(vr_vlrirrpp, 0); 
+          vr_vlcompcr := vr_vlcompcr + nvl(vr_vlrirrpp, 0);   
+          vr_qtinfoln := vr_qtinfoln + 1;    
+          vr_qtcompln := vr_qtcompln + 1;  
+          
         end if;
       end if;
       --
+      
       IF vr_cdprogra = 'CRPS148' and
          vr_cdhistor = 151 and
          (vr_vlrentot > 0 or
@@ -6193,9 +6251,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
               vr_des_erro := 'Erro ao inserir o histórico 152 nos lançamentos da poupança programada: '||sqlerrm;
               raise vr_exc_erro;
           end;
+          
+          vr_vlinfocr := vr_vlinfocr + nvl(vr_vlrentot - vr_vlprovis, 0); 
+          vr_vlcompcr := vr_vlcompcr + nvl(vr_vlrentot - vr_vlprovis, 0);   
+          vr_qtinfoln := vr_qtinfoln + 1;    
+          vr_qtcompln := vr_qtcompln + 1; 
+          
         end if;
       end if;
       --
+      
       IF vr_cdprogra = 'CRPS148' and
          rw_craprpp.vlabcpmf > 0 then
 
@@ -6239,6 +6304,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_des_erro := 'Erro ao inserir o histórico 866 nos lançamentos da poupança programada: '||sqlerrm;
             raise vr_exc_erro;
         end;
+        
+        vr_vlinfocr := vr_vlinfocr + nvl(rw_craprpp.vlabcpmf, 0); 
+        vr_vlcompcr := vr_vlcompcr + nvl(rw_craprpp.vlabcpmf, 0);   
+        vr_qtinfoln := vr_qtinfoln + 1;    
+        vr_qtcompln := vr_qtcompln + 1; 
+        
         /* IR sobre o abono de cpmf na poupança */
         if trunc((rw_craprpp.vlabcpmf * vr_percenir / 100),2) > 0 then
           
@@ -6282,6 +6353,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
               vr_des_erro := 'Erro ao inserir o histórico 870 nos lançamentos da poupança programada: '||sqlerrm;
               raise vr_exc_erro;
           end;
+          
+          vr_vlinfocr := vr_vlinfocr + nvl(trunc((rw_craprpp.vlabcpmf * vr_percenir / 100),2), 0); 
+          vr_vlcompcr := vr_vlcompcr + nvl(trunc((rw_craprpp.vlabcpmf * vr_percenir / 100),2), 0);   
+          vr_qtinfoln := vr_qtinfoln + 1;    
+          vr_qtcompln := vr_qtcompln + 1; 
+          
           -- Zera o abono de cpfm na poupança programada
           begin
             update craprpp
@@ -6317,63 +6394,72 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                      pr_dsdchave => vr_dsdchave);
 
           
-          if vr_cdprogra <> 'CRPS148' then
-          -- Faz a alteração dos campos necessários na capa do lote
-          begin
-            update craplot
-               set craplot.vlinfocr = nvl(craplot.vlinfocr, 0) + vr_vlajuste_cr,
-                   craplot.vlcompcr = nvl(craplot.vlcompcr, 0) + vr_vlajuste_cr,
-                   craplot.vlinfodb = nvl(craplot.vlinfodb, 0) + vr_vlajuste_db,
-                   craplot.vlcompdb = nvl(craplot.vlcompdb, 0) + vr_vlajuste_db,
-                   craplot.qtinfoln = nvl(craplot.qtinfoln, 0) + 1,
-                   craplot.qtcompln = nvl(craplot.qtcompln, 0) + 1,
-                     craplot.nrseqdig = vr_nrseqdig
-             where craplot.cdcooper = pr_cdcooper
-               and craplot.dtmvtolt = vr_dtdolote
-               and craplot.cdagenci = vr_cdagenci
-               and craplot.cdbccxlt = vr_cdbccxlt
-                 and craplot.nrdolote = 8384;
-          exception
-            when others then
-                vr_des_erro := 'Erro ao atualizar a capa do lote (9): '||sqlerrm;
-              raise vr_exc_erro;
-          end;
+          if vr_cdprogra = 'CRPS148' then
 
-          -- Caso não exista a capa do lote, cria um novo registro
-          if sql%rowcount = 0 then
+            vr_vlinfocr := vr_vlinfocr + nvl(vr_vlajuste_cr, 0); 
+            vr_vlcompcr := vr_vlcompcr + nvl(vr_vlajuste_cr, 0);  
+            vr_vlinfodb := vr_vlinfodb + nvl(vr_vlajuste_db, 0); 
+            vr_vlcompdb := vr_vlcompdb + nvl(vr_vlajuste_db, 0);  
+            vr_qtinfoln := vr_qtinfoln + 1;    
+            vr_qtcompln := vr_qtcompln + 1; 
+          
+          else
+            -- Faz a alteração dos campos necessários na capa do lote
             begin
-              insert into craplot (dtmvtolt,
-                                   cdagenci,
-                                   cdbccxlt,
-                                   nrdolote,
-                                   tplotmov,
-                                   cdcooper,
-                                   vlinfocr,
-                                   vlcompcr,
-                                   vlinfodb,
-                                   vlcompdb,
-                                   qtinfoln,
-                                   qtcompln,
-                                   nrseqdig)
-              values (vr_dtdolote,
-                      vr_cdagenci,
-                      vr_cdbccxlt,
-                      8384, -- Fixado por Renato Darosci conforme update acima - 21/04/2014
-                      14,
-                      pr_cdcooper,
-                      vr_vlajuste_cr,
-                      vr_vlajuste_cr,
-                      vr_vlajuste_db,
-                      vr_vlajuste_db,
-                      1,
-                      1,
-                        vr_nrseqdig);
+              update craplot
+                 set craplot.vlinfocr = nvl(craplot.vlinfocr, 0) + vr_vlajuste_cr,
+                     craplot.vlcompcr = nvl(craplot.vlcompcr, 0) + vr_vlajuste_cr,
+                     craplot.vlinfodb = nvl(craplot.vlinfodb, 0) + vr_vlajuste_db,
+                     craplot.vlcompdb = nvl(craplot.vlcompdb, 0) + vr_vlajuste_db,
+                     craplot.qtinfoln = nvl(craplot.qtinfoln, 0) + 1,
+                     craplot.qtcompln = nvl(craplot.qtcompln, 0) + 1,
+                     craplot.nrseqdig = vr_nrseqdig
+               where craplot.cdcooper = pr_cdcooper
+                 and craplot.dtmvtolt = vr_dtdolote
+                 and craplot.cdagenci = vr_cdagenci
+                 and craplot.cdbccxlt = vr_cdbccxlt
+                 and craplot.nrdolote = 8384;
             exception
               when others then
-                vr_des_erro := 'Erro ao inserir a capa do lote (8): '||sqlerrm;
+                vr_des_erro := 'Erro ao atualizar a capa do lote (9): '||sqlerrm;
                 raise vr_exc_erro;
             end;
-          end if;
+
+            -- Caso não exista a capa do lote, cria um novo registro
+            if sql%rowcount = 0 then
+              begin
+                insert into craplot (dtmvtolt,
+                                     cdagenci,
+                                     cdbccxlt,
+                                     nrdolote,
+                                     tplotmov,
+                                     cdcooper,
+                                     vlinfocr,
+                                     vlcompcr,
+                                     vlinfodb,
+                                     vlcompdb,
+                                     qtinfoln,
+                                     qtcompln,
+                                     nrseqdig)
+                values (vr_dtdolote,
+                        vr_cdagenci,
+                        vr_cdbccxlt,
+                        8384, -- Fixado por Renato Darosci conforme update acima - 21/04/2014
+                        14,
+                        pr_cdcooper,
+                        vr_vlajuste_cr,
+                        vr_vlajuste_cr,
+                        vr_vlajuste_db,
+                        vr_vlajuste_db,
+                        1,
+                        1,
+                        vr_nrseqdig);
+              exception
+                when others then
+                  vr_des_erro := 'Erro ao inserir a capa do lote (8): '||sqlerrm;
+                  raise vr_exc_erro;
+              end;
+            end if;
           end if;
          
           -- Insere histórico de ajuste nos lançamentos da poupança programada
@@ -6414,6 +6500,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         end if;
       end if;
     end if;
+    
+    --Trata geração de informações para a capa do lote quando chamado pelo CRPS148
+    if pr_cdprogra = 'CRPS148' then
+
+      if vr_vlinfocr > 0 or 
+         vr_vlcompcr > 0 or 
+         vr_vlinfodb > 0 or 
+         vr_vlcompdb > 0 or 
+         vr_qtinfoln > 0 or 
+         vr_qtcompln > 0 then 
+        
+        --Rotina para inserir em tabela de trabalho para atualização da crplot no CRPS148
+        apli0001.pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper
+                                  ,pr_nrdconta     => rw_craprpp.nrdconta
+                                  ,pr_cdprogra     => pr_cdprogra
+                                  ,pr_dsrelatorio  => 'CRAPLOT' 
+                                  ,pr_dtmvtolt     => pr_dtmvtolt
+                                  ,pr_dschave      => vr_nrseqdig                                  
+                                  ,pr_dsinformacao => ';'||vr_vlinfocr||';'||     
+                                                           vr_vlcompcr||';'||
+                                                           vr_vlinfodb||';'||
+                                                           vr_vlcompdb||';'||
+                                                           vr_qtinfoln||';'||
+                                                           vr_qtcompln||';'
+                                  ,pr_dscritic     => vr_des_erro);
+       
+      
+        if vr_des_erro is not null then
+          raise vr_exc_erro; 
+        end if;                                  
+
+      end if;
+
+    end if;
+    
   exception
     when vr_exc_erro THEN
       pr_cdcritic := nvl(pr_cdcritic,0);
@@ -12936,6 +13057,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       END LOOP;
     END IF;
   END;
+
+  PROCEDURE pc_insere_tab_wrk(pr_cdcooper     in tbgen_batch_relatorio_wrk.cdcooper%type 
+                             ,pr_nrdconta     in tbgen_batch_relatorio_wrk.nrdconta%type
+                             ,pr_cdprogra     in tbgen_batch_relatorio_wrk.cdprograma%type
+                             ,pr_dsrelatorio  in tbgen_batch_relatorio_wrk.dsrelatorio%type
+                             ,pr_dtmvtolt     in tbgen_batch_relatorio_wrk.dtmvtolt%type
+                             ,pr_dschave      in tbgen_batch_relatorio_wrk.dschave%type
+                             ,pr_dsinformacao in tbgen_batch_relatorio_wrk.dscritic%type
+                             ,pr_dscritic    out varchar2) IS
+    
+  BEGIN
+    
+    begin
+      insert into tbgen_batch_relatorio_wrk(cdcooper,
+                                            cdprograma,
+                                            dsrelatorio,
+                                            dtmvtolt,
+                                            dschave,
+                                            nrdconta,
+                                            dscritic)
+                                     values(pr_cdcooper,
+                                            pr_cdprogra,
+                                            pr_dsrelatorio,
+                                            pr_dtmvtolt,
+                                            pr_dschave,
+                                            pr_nrdconta,
+                                            pr_dsinformacao);
+    exception
+      when others then
+        pr_dscritic := 'Erro ao inserir tbgen_batch_relatorio_wrk: '||sqlerrm;            
+    end;  
+  
+  END pc_insere_tab_wrk;
 
 END APLI0001;
 /
