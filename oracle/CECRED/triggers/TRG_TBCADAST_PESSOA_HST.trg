@@ -1,5 +1,21 @@
 CREATE OR REPLACE TRIGGER CECRED.TRG_TBCADAST_PESSOA_HST
-  AFTER INSERT OR UPDATE ON TBCADAST_PESSOA
+  AFTER INSERT OR UPDATE 
+  OF idpessoa, 
+     nrcpfcgc, 
+     nmpessoa, 
+     nmpessoa_receita, 
+     tppessoa, 
+     dtconsulta_spc, 
+     dtconsulta_rfb, 
+     cdsituacao_rfb, 
+     tpconsulta_rfb, 
+     dtatualiza_telefone, 
+     dtconsulta_scr, 
+     tpcadastro, 
+     cdoperad_altera, 
+     idcorrigido,      
+     dtrevisao_cadastral
+  ON TBCADAST_PESSOA
   FOR EACH ROW  
   /* ..........................................................................
     
@@ -7,14 +23,16 @@ CREATE OR REPLACE TRIGGER CECRED.TRG_TBCADAST_PESSOA_HST
      Sistema  : Conta-Corrente - Cooperativa de Credito
      Sigla    : CRED
      Autor    : Odirlei Busana(Amcom)
-     Data     : Julho/2017.                   Ultima atualizacao: 
+     Data     : Julho/2017.                   Ultima atualizacao: 29/01/2018
     
      Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Trigger para gravar Historico/Auditoria da tabela 
     
-     Alteração :
+     Alteração : 29/01/2018 - Removido campo DTALTERACAO da gravação de historico.
+                              PRJ339-CRM (Odirlei-AMcom)
+     
     
     
   ............................................................................*/
@@ -241,13 +259,6 @@ BEGIN
       Insere_Historico(pr_nmdcampo => 'IDCORRIGIDO',
                        pr_dsvalant => :old.CDOPERAD_ALTERA,
                        pr_dsvalnov => :new.CDOPERAD_ALTERA);
-    END IF;
-    
-    --> DTALTERACAO
-    IF nvl(:new.DTALTERACAO,vr_data) <> nvl(:OLD.DTALTERACAO,vr_data) THEN
-      Insere_Historico(pr_nmdcampo => 'DTALTERACAO',
-                       pr_dsvalant => to_char(:old.DTALTERACAO,'DD/MM/RRRR HH24:MI:SS'),
-                       pr_dsvalnov => to_char(:new.DTALTERACAO,'DD/MM/RRRR HH24:MI:SS'));      
     END IF;
   
   END IF;
