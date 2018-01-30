@@ -5123,6 +5123,14 @@ PROCEDURE proc_operacao80:
            aux_flgexecu = LOGICAL(GET-VALUE("aux_flgexecu")).
            aux_rowidcti = GET-VALUE("aux_rowidcti").
            aux_flexclui = GET-VALUE("aux_flregist").
+           
+    IF  NOT aux_flgcript AND aux_flgexecu AND aux_rowidcti = ""  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END.           
 
     RUN sistema/internet/fontes/InternetBank80.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -5762,6 +5770,14 @@ PROCEDURE proc_operacao97:
            aux_dtdiaaar = INTEGER(GET-VALUE("dtdiaaar"))
            aux_dtvencto = DATE(GET-VALUE("dtvencto"))
            aux_qtdiaven = INTEGER(GET-VALUE("qtdiaven")).
+           
+    IF  NOT aux_flgcript AND aux_flgtipar = 1 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END.
 
     RUN sistema/internet/fontes/InternetBank97.p (INPUT aux_cdcooper,
                                                   INPUT aux_flgtipar,
@@ -6240,6 +6256,14 @@ END PROCEDURE.
 PROCEDURE proc_operacao112:
 
     ASSIGN aux_nrctraar = INTEGER(GET-VALUE("nrctraar")).
+    
+    IF  NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END. 
 
     RUN sistema/internet/fontes/InternetBank112.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
@@ -6470,6 +6494,14 @@ END PROCEDURE.
 PROCEDURE proc_operacao119:
 
     ASSIGN aux_detagend = GET-VALUE("detagend").
+    
+    IF  NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END. 
 
     RUN sistema/internet/fontes/InternetBank119.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
@@ -7902,6 +7934,14 @@ PROCEDURE proc_operacao167:
 		   aux_diadebit = INTE(GET-VALUE("aux_diadebit"))
 		   aux_dtinivig = GET-VALUE("aux_dtinivig")
 		   aux_vlpacote = DECI(GET-VALUE("aux_vlpacote")).
+       
+  IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+      DO:
+          RUN proc_operacao2.
+          
+          IF   RETURN-VALUE = "NOK"   THEN
+               RETURN "NOK".
+      END.
 
 	RUN sistema/internet/fontes/InternetBank167.p (INPUT aux_cdcooper,
                                                  INPUT aux_nrdconta,
@@ -8022,6 +8062,14 @@ PROCEDURE proc_operacao173:
          aux_flgacsms = GET-VALUE("flgacsms")
          aux_nrdddtfc = DECI(GET-VALUE("nrdddtfc"))
          aux_nrtelefo = DECI(GET-VALUE("nrtelefo")).
+         
+  IF  NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "E")  THEN /* Nao possui criptografia no front e autenticao e realizada junto com a propria operacao*/
+      DO:
+          RUN proc_operacao2.
+
+          IF   RETURN-VALUE = "NOK"   THEN
+               RETURN "NOK".
+      END.
 
 	RUN sistema/internet/fontes/InternetBank173.p (INPUT aux_cdcooper,
                                                  INPUT aux_nrdconta,
@@ -8115,7 +8163,7 @@ END PROCEDURE.
 /* Cancelar integralizacao de cotas de capital */
 PROCEDURE proc_operacao177:
 
-    IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticao e realizada junto com a propria operacao*/
+    IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -8151,22 +8199,30 @@ END PROCEDURE.
 /* Custodia de Cheque. */
 PROCEDURE proc_operacao178:        
 
-          ASSIGN aux_operacao =  INT(GET-VALUE("aux_operacao"))
-                 aux_dtiniper = DATE(GET-VALUE("aux_dtiniper"))
-                 aux_dtfimper = DATE(GET-VALUE("aux_dtfimper"))
-                 aux_insithcc =  INT(GET-VALUE("aux_insithcc"))
-                 aux_nrconven =  INT(GET-VALUE("aux_nrconven"))
-                 aux_intipmvt =  INT(GET-VALUE("aux_intipmvt"))
-                 aux_nrremret =  INT(GET-VALUE("aux_nrremret"))
-                 aux_nrseqarq =  INT(GET-VALUE("aux_nrseqarq"))
-                 aux_dscheque =      GET-VALUE("aux_dscheque")
-                 aux_dsemiten =      GET-VALUE("aux_dsemiten")
-                 aux_dtlibchq =      GET-VALUE("aux_dtlibera")
-                 aux_dtcapchq =      GET-VALUE("aux_dtdcaptu")
-                 aux_vlcheque =      GET-VALUE("aux_vlcheque")
-                 aux_dsdocmc7 =      GET-VALUE("aux_dsdocmc7")
-                 aux_nriniseq =  INT(GET-VALUE("aux_nriniseq"))
-                 aux_nrregist =  INT(GET-VALUE("aux_nrregist")).
+    ASSIGN aux_operacao =  INT(GET-VALUE("aux_operacao"))
+           aux_dtiniper = DATE(GET-VALUE("aux_dtiniper"))
+           aux_dtfimper = DATE(GET-VALUE("aux_dtfimper"))
+           aux_insithcc =  INT(GET-VALUE("aux_insithcc"))
+           aux_nrconven =  INT(GET-VALUE("aux_nrconven"))
+           aux_intipmvt =  INT(GET-VALUE("aux_intipmvt"))
+           aux_nrremret =  INT(GET-VALUE("aux_nrremret"))
+           aux_nrseqarq =  INT(GET-VALUE("aux_nrseqarq"))
+           aux_dscheque =      GET-VALUE("aux_dscheque")
+           aux_dsemiten =      GET-VALUE("aux_dsemiten")
+           aux_dtlibchq =      GET-VALUE("aux_dtlibera")
+           aux_dtcapchq =      GET-VALUE("aux_dtdcaptu")
+           aux_vlcheque =      GET-VALUE("aux_vlcheque")
+           aux_dsdocmc7 =      GET-VALUE("aux_dsdocmc7")
+           aux_nriniseq =  INT(GET-VALUE("aux_nriniseq"))
+           aux_nrregist =  INT(GET-VALUE("aux_nrregist")).
+           
+    IF  NOT aux_flgcript AND aux_operacao = 6 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END.           
                               
     RUN sistema/internet/fontes/InternetBank178.p (INPUT aux_operacao,
                                                    INPUT aux_cdcooper,
@@ -8206,22 +8262,30 @@ END PROCEDURE.
 /* Desconto de Cheque. */
 PROCEDURE proc_operacao179:
 
-          ASSIGN aux_operacao =  INT(GET-VALUE("aux_operacao"))
-                 aux_dtiniper = DATE(GET-VALUE("aux_dtiniper"))
-                 aux_dtfimper = DATE(GET-VALUE("aux_dtfimper"))
-                 aux_insitbdc =  INT(GET-VALUE("aux_insitbdc"))
-                 aux_nriniseq =  INT(GET-VALUE("aux_nriniseq"))
-                 aux_nrregist =  INT(GET-VALUE("aux_nrregist"))
-                 aux_nrctrlim =  INT(GET-VALUE("aux_nrctrlim"))
-                 aux_nrborder =  INT(GET-VALUE("aux_nrborder"))
-                 aux_dtlibchq =     (GET-VALUE("aux_dtlibera"))
-                 aux_dtcapchq =     (GET-VALUE("aux_dtdcaptu"))
-                 aux_vlcheque =     (GET-VALUE("aux_vlcheque"))
-                 aux_dtcustod =     (GET-VALUE("aux_dtcustod"))
-                 aux_intipchq =     (GET-VALUE("aux_intipchq"))
-                 aux_dsdocmc7 =     (GET-VALUE("aux_dsdocmc7"))
-                 aux_nrremess =     (GET-VALUE("aux_nrremret"))
-                 aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
+    ASSIGN aux_operacao =  INT(GET-VALUE("aux_operacao"))
+           aux_dtiniper = DATE(GET-VALUE("aux_dtiniper"))
+           aux_dtfimper = DATE(GET-VALUE("aux_dtfimper"))
+           aux_insitbdc =  INT(GET-VALUE("aux_insitbdc"))
+           aux_nriniseq =  INT(GET-VALUE("aux_nriniseq"))
+           aux_nrregist =  INT(GET-VALUE("aux_nrregist"))
+           aux_nrctrlim =  INT(GET-VALUE("aux_nrctrlim"))
+           aux_nrborder =  INT(GET-VALUE("aux_nrborder"))
+           aux_dtlibchq =     (GET-VALUE("aux_dtlibera"))
+           aux_dtcapchq =     (GET-VALUE("aux_dtdcaptu"))
+           aux_vlcheque =     (GET-VALUE("aux_vlcheque"))
+           aux_dtcustod =     (GET-VALUE("aux_dtcustod"))
+           aux_intipchq =     (GET-VALUE("aux_intipchq"))
+           aux_dsdocmc7 =     (GET-VALUE("aux_dsdocmc7"))
+           aux_nrremess =     (GET-VALUE("aux_nrremret"))
+           aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
+           
+    IF  NOT aux_flgcript AND aux_operacao = 5 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END.       
     
     RUN sistema/internet/fontes/InternetBank179.p (INPUT aux_operacao, 
                                                    INPUT aux_cdcooper,
@@ -8446,6 +8510,13 @@ PROCEDURE proc_operacao189:
          aux_idcontrato = INTE(GET-VALUE("idcontrato"))
          aux_idpacote   = INTE(GET-VALUE("idpacote")).
   
+  IF  NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "CA") THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+      DO:
+          RUN proc_operacao2.
+          
+          IF   RETURN-VALUE = "NOK"   THEN
+               RETURN "NOK".
+      END.    
   
 	RUN sistema/internet/fontes/InternetBank189.p (INPUT aux_cdcooper,
                                                  INPUT aux_nrdconta,
