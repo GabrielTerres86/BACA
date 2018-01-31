@@ -156,7 +156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Ricardo Linhares
-     Data    : Julho/17.                    Ultima atualizacao: 18/10/2017
+     Data    : Julho/17.                    Ultima atualizacao: 06/12/2017
 
      Dados referentes ao programa:
 
@@ -167,13 +167,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Observacao: -----
 
      Alteracoes: 18/10/2017 - Alterado o parametro de consulta de recarga de 3 para 5
-                              (IF pr_cdtipmod = 3 -> IF pr_cdtipmod = 3 -- Recarga de Celular), Prj. 285 (Jean Michel).
+                              (IF pr_cdtipmod = 3 -> IF pr_cdtipmod = 3 -- Recarga de Celular), Prj. 285 
+                              (Jean Michel).
+
+                 06/12/2017 - Adicionado filtro por tipo de transação
+                              (p285 - Ricardo Linhares)                              
 
      ..................................................................................*/   
      
    DECLARE
   
-    vr_agendamento PAGA0002.typ_tab_dados_agendamento;    --> PL Table para armazenar registros
 		vr_agendm_fltr PAGA0002.typ_tab_dados_agendamento;    --> PL Table para filtrar registros
 		vr_tab_age_recarga   rcel0001.typ_tab_age_recarga;    --> PL Table para filtrar registros
     vr_exc_erro    EXCEPTION;
@@ -182,10 +185,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
     vr_cdcritic    crapcri.cdcritic%TYPE;
     vr_dscritic    crapcri.dscritic%TYPE;
     vr_qttotage    INTEGER;
+    vr_dstiptra    VARCHAR2(100);
 		
-		TYPE array_t IS TABLE OF craplau.cdtiptra%TYPE;
-    vr_cdtiptra array_t := array_t();
-                
     CURSOR cr_crapdat(pr_cdcooper crapdat.cdcooper%TYPE) IS
       SELECT dtmvtolt
         FROM crapdat
@@ -228,19 +229,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 			ELSE -- Pagamento, Transferências
 				
 			  IF pr_cdtipmod = 1 THEN -- Pagamento
-					
-					vr_cdtiptra.extend(2);
-					vr_cdtiptra(1) := 2;  -- Pagamento
-					vr_cdtiptra(2) := 10; -- DARF/DAS
-
+          vr_dstiptra := '2;10'; -- Pagamento; DARF/DAS
 				ELSIF pr_cdtipmod = 2 THEN -- Transferências 
+          vr_dstiptra := '1;3;4;5'; --Transferencias inter; Credito salario; TED; Transferencias intra
 					
-					vr_cdtiptra.extend(4);
-					vr_cdtiptra(1) := 1; -- Transferencias inter
-					vr_cdtiptra(2) := 3; -- Credito salario
-					vr_cdtiptra(3) := 4; -- TED
-					vr_cdtiptra(4) := 5; -- Transferencias intra
-
 				END IF;
 						
 				PAGA0002.pc_obtem_agendamentos(pr_cdcooper => pr_cdcooper
@@ -252,8 +244,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																			,pr_dtageini => pr_dtageini
 																			,pr_dtagefim => pr_dtagefim
 																			,pr_insitlau => pr_insitlau
-																			,pr_iniconta => pr_iniconta
+																			,pr_iniconta => pr_iniconta - 1 /* Necessário subtrair pois o controle de paginação interno é realizado com posição inicial 0 */
 																			,pr_nrregist => pr_nrregist
+                                      ,pr_cdtiptra => vr_dstiptra
 																			,pr_dstransa => vr_dstransa
 																			,pr_qttotage => vr_qttotage
 																			,pr_tab_dados_agendamento => vr_agendm_fltr
@@ -264,17 +257,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 					RAISE vr_exc_erro;
 				END IF;
 				
-				-- Filtra retorno pelo tipo de protocolo solicitado
-				vr_qttotage := 0;
-				FOR vr_ind IN 1..vr_agendm_fltr.count LOOP				
-					IF vr_agendm_fltr(vr_ind).cdtiptra MEMBER OF vr_cdtiptra THEN
-						vr_agendamento(vr_agendamento.count + 1) := vr_agendm_fltr(vr_ind);
-						vr_qttotage := vr_qttotage + 1;
 					END IF;
-				END LOOP;  
 							
-      END IF;
-			
       -- Verifica se a quantidade de registro é zero
       IF nvl(vr_qttotage, 0) = 0 THEN
         vr_dscritic := 'Agendamento(s) nao encontrado(s).';
@@ -284,7 +268,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
       dbms_lob.createtemporary(pr_retxml, TRUE);
       dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
 			
-			dbms_output.put_line(vr_agendamento.count);
+			dbms_output.put_line(vr_agendm_fltr.count);
 			dbms_output.put_line(vr_tab_age_recarga.count);
        
        -- Criar cabecalho do XML
@@ -292,23 +276,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Agendamentos>');       
 
-      IF vr_agendamento.count > 0 THEN
-				FOR vr_idx IN vr_agendamento.first..vr_agendamento.last LOOP
+      IF vr_agendm_fltr.count > 0 THEN
+				FOR vr_idx IN vr_agendm_fltr.first..vr_agendm_fltr.last LOOP          
 	      
 					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																 ,pr_texto_completo => vr_xml_temp      
 																 ,pr_texto_novo     => 
 																 '<Agendamento>' ||
-																		'<idlancto>' || vr_agendamento(vr_idx).idlancto                                                               || '</idlancto>' ||
-																		'<dtmvtopg>' || TO_CHAR(vr_agendamento(vr_idx).dtmvtopg, 'DD/MM/RRRR')                                        || '</dtmvtopg>' ||
-																		'<cdtiptra>' || vr_agendamento(vr_idx).cdtiptra                                                               || '</cdtiptra>' ||
-																		'<dstiptra>' || vr_agendamento(vr_idx).dstiptra                                                               || '</dstiptra>' ||
-																		'<dsagenda>' || fn_descricao(vr_agendamento(vr_idx))                                                          || '</dsagenda>' ||
-																		'<insitlau>' || vr_agendamento(vr_idx).insitlau                                                               || '</insitlau>' ||
-																		'<dssitlau>' || vr_agendamento(vr_idx).dssitlau                                                               || '</dssitlau>' ||                                  
-																		'<vldocmto>' || to_char(vr_agendamento(vr_idx).vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
-																		'<incancel>' || vr_agendamento(vr_idx).incancel                                                               || '</incancel>' ||
-																		'<dscritic>' || vr_agendamento(vr_idx).dscritic                                                               || '</dscritic>' ||
+																		'<idlancto>' || vr_agendm_fltr(vr_idx).idlancto                                                               || '</idlancto>' ||
+																		'<dtmvtopg>' || TO_CHAR(vr_agendm_fltr(vr_idx).dtmvtopg, 'DD/MM/RRRR')                                        || '</dtmvtopg>' ||
+																		'<cdtiptra>' || vr_agendm_fltr(vr_idx).cdtiptra                                                               || '</cdtiptra>' ||
+																		'<dstiptra>' || vr_agendm_fltr(vr_idx).dstiptra                                                               || '</dstiptra>' ||
+																		'<idlstdom>' || vr_agendm_fltr(vr_idx).idlstdom                                                               || '</idlstdom>' ||                                    
+																		'<dsagenda>' || fn_descricao(vr_agendm_fltr(vr_idx))                                                          || '</dsagenda>' ||
+																		'<insitlau>' || vr_agendm_fltr(vr_idx).insitlau                                                               || '</insitlau>' ||
+																		'<dssitlau>' || vr_agendm_fltr(vr_idx).dssitlau                                                               || '</dssitlau>' ||                                  
+																		'<vldocmto>' || to_char(vr_agendm_fltr(vr_idx).vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
+																		'<incancel>' || vr_agendm_fltr(vr_idx).incancel                                                               || '</incancel>' ||
+																		'<dscritic>' || vr_agendm_fltr(vr_idx).dscritic                                                               || '</dscritic>' ||
 																	'</Agendamento>');																															 
 				END LOOP;
 			END IF;
@@ -324,6 +309,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																		'<dtmvtopg>' || TO_CHAR(vr_tab_age_recarga(vr_idx).dtrecarga, 'DD/MM/RRRR')                                        || '</dtmvtopg>' ||
 																		'<cdtiptra>20</cdtiptra>' ||
 																		'<dstiptra>Recarga de celular</dstiptra>' ||
+                                    '<idlstdom>20</idlstdom>' ||
 																		'<dsagenda>AGENDAMENTO DE RECARGA DE CELULAR</dsagenda>' ||
 																		'<insitlau>' || CASE WHEN vr_tab_age_recarga(vr_idx).insit_operacao = 4 THEN 3
 																												 WHEN vr_tab_age_recarga(vr_idx).insit_operacao = 5 THEN 4
@@ -337,6 +323,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																		'<nmoperad>' || vr_tab_age_recarga(vr_idx).nmoperadora                                                             || '</nmoperad>' ||
 																		'<dscritic>' || vr_tab_age_recarga(vr_idx).dscritic                                                                || '</dscritic>' ||
 																'</Agendamento>');
+                                
+            IF vr_idx > pr_nrregist THEN
+              EXIT;
+            END IF;
+                                
 				END LOOP;
 			END IF;
 			      
@@ -512,6 +503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                              ,pr_texto_novo     => 
 															'<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
 															'<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>' ||
+														  '<idlstdom>4</idlstdom>'                                 ||
                               '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
 															'<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
 															'<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
@@ -596,6 +588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
       vr_exc_erro EXCEPTION;
       vr_xml_temp VARCHAR2(32726) := '';
       vr_des_erro VARCHAR2(4000);
+      vr_idlstdom NUMBER;
       vr_nmoperad crapopi.nmoperad%TYPE := '';
 			vr_info_sac COMP0002.typ_reg_info_sac;
 
@@ -699,6 +692,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				
 				vr_info_sac := COMP0002.fn_info_sac(pr_cdcooper => rw_agendamento.cdcooper);
 
+        IF rw_agendamento.cdtiptra = 1 THEN
+          vr_idlstdom := 5; -- Transf. Intracoop
+        ELSIF rw_agendamento.cdtiptra = 5 THEN
+          vr_idlstdom := 6; -- Transf. Intercoop
+        ELSE
+          vr_idlstdom := 3; -- Crédito Salário
+        END IF;
+
         dbms_lob.createtemporary(pr_retxml, TRUE);
         dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
          
@@ -712,6 +713,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                ,pr_texto_novo     => 
 															  '<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
 																'<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>' ||
+																'<idlstdom>' || TO_CHAR(vr_idlstdom)    || '</idlstdom>' ||                                
                                 '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
 																'<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
 																'<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
@@ -795,6 +797,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
       vr_xml_temp VARCHAR2(32726) := '';
       vr_des_erro VARCHAR2(4000);  
 			vr_nmoperad VARCHAR2(100) := '';
+      vr_idlstdom NUMBER;
 			vr_info_sac COMP0002.typ_reg_info_sac;    
       
       CURSOR cr_agendamento(pr_idlancto IN craplau.idlancto%TYPE) IS
@@ -885,6 +888,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				
 				vr_info_sac := COMP0002.fn_info_sac(pr_cdcooper => rw_agendamento.cdcooper);
         
+        IF LENGTH(NVL(rw_agendamento.dslindig,'')) = 55 THEN
+          vr_idlstdom := 2; -- Convênio
+        ELSE
+          vr_idlstdom := 1; -- Título
+        END IF;
+        
         dbms_lob.createtemporary(pr_retxml, TRUE);
         dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
          
@@ -898,6 +907,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                ,pr_texto_novo     => 
 															  '<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
 																'<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>' ||
+																'<idlstdom>' || TO_CHAR(vr_idlstdom)    || '</idlstdom>' ||                                                                
 															  '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
 																'<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
 																'<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
@@ -1094,6 +1104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                ,pr_texto_novo     => 
 															  '<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
 																'<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>' ||
+																'<idlstdom>7</idlstdom>'                                 ||
 															  '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
 																'<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
 																'<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
@@ -1315,6 +1326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                ,pr_texto_completo => vr_xml_temp
                                ,pr_texto_novo     => '<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
                                                      '<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>' ||
+                      															 '<idlstdom>8</idlstdom>'                                 ||
                                                      '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
                                                      '<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
                                                      '<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
@@ -1522,6 +1534,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                ,pr_texto_novo     => 
 															  '<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>'  ||
 																'<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>'  ||
+   															'<idlstdom>9</idlstdom>'                                  ||                                
 															  '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>'  ||
 																'<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>'  ||
 																'<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>'  ||
@@ -1682,6 +1695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                ,pr_texto_novo     => 
 															  '<cdtiptra>' || rw_agendamento.cdtiptra         || '</cdtiptra>'  ||
 																'<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>'  ||
+   															'<idlstdom>20</idlstdom>'                                  ||                                                                
 															  '<nrdocmto>' || rw_agendamento.idoperacao || '</nrdocmto>'  ||
 																'<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>'  ||
 																'<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>'  ||

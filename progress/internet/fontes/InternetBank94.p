@@ -66,6 +66,8 @@ DEF VAR aux_qtdiaapl LIKE craprda.qtdiaapl                             NO-UNDO.
 DEF VAR aux_qtdiacar LIKE crapttx.qtdiacar                             NO-UNDO.
 DEF VAR aux_dtvencto AS DATE                                           NO-UNDO.
 DEF VAR aux_perirapl AS DEC                                            NO-UNDO.
+DEF VAR aux_dtmvtopr AS CHAR                                           NO-UNDO.
+DEF VAR aux_qtmesage AS INT                                            NO-UNDO.
 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
                              
@@ -185,11 +187,128 @@ FOR EACH wt_carencia_aplicacao NO-LOCK:
                              "<dtcarenc>" + STRING(wt_carencia_aplicacao.dtcarenc,"99/99/9999") +  "</dtcarenc>" +
                              "<perirapl>" + TRIM(STRING(aux_perirapl,"zz9.99")) + "%" + "</perirapl>" +
                           "</CARENCIA>".
-
 END.
 
-CREATE xml_operacao.
 
+
+/* Buscar a data do proximo movimento - IB125 */
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+RUN STORED-PROCEDURE pc_prox_data_mov
+      aux_handproc = PROC-HANDLE NO-ERROR
+                       (INPUT par_cdcooper, 
+                        OUTPUT ?,
+                        OUTPUT 0,
+                        OUTPUT "").
+
+CLOSE STORED-PROC pc_prox_data_mov
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN aux_dtmvtopr = " "
+       aux_dtmvtopr = STRING(pc_prox_data_mov.pr_dtmvtopr,"99/99/9999")
+                            WHEN pc_prox_data_mov.pr_dtmvtopr <> ?.
+
+
+/* Buscar qtd de meses max para agendamento - IB121 */
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+RUN STORED-PROCEDURE pc_cons_mes_age
+    aux_handproc = PROC-HANDLE NO-ERROR
+                     (INPUT par_cdcooper, 
+                      INPUT 90, /* cdagenci - Internet */
+                      INPUT par_nrdconta, 
+                      OUTPUT 0,
+                      OUTPUT 0,
+                      OUTPUT "").
+
+CLOSE STORED-PROC pc_cons_mes_age
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN aux_cdcritic = 0
+       aux_dscritic = ""
+       aux_cdcritic = pc_cons_mes_age.pr_cdcritic 
+                      WHEN pc_cons_mes_age.pr_cdcritic <> ?
+       aux_dscritic = pc_cons_mes_age.pr_dscritic 
+                      WHEN pc_cons_mes_age.pr_dscritic <> ?
+       aux_qtmesage = pc_cons_mes_age.pr_qtmesage
+                      WHEN pc_cons_mes_age.pr_qtmesage <> ?.
+                      
+IF aux_cdcritic <> 0   OR
+   aux_dscritic <> ""  THEN
+   DO:
+       IF aux_dscritic = "" THEN
+          DO:
+             FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                NO-LOCK NO-ERROR.             
+             IF AVAIL crapcri THEN
+                ASSIGN aux_dscritic = crapcri.dscritic.
+             ELSE
+                ASSIGN aux_dscritic = "Nao foi possivel consultar quantidade de meses para agendamento.".
+END.
+
+       ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>". 
+       
+       RETURN "NOK".       
+   END.                      
+
+
+/* Somar data de vencimento - IB107 */
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }     
+
+RUN STORED-PROCEDURE pc_soma_data_vencto
+    aux_handproc = PROC-HANDLE NO-ERROR
+                     (INPUT par_cdcooper, 
+                      INPUT par_qtdiacar,
+                      INPUT aux_dtvencto,
+                      OUTPUT ?,
+                      OUTPUT 0,
+                      OUTPUT "").
+
+CLOSE STORED-PROC pc_soma_data_vencto
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN aux_cdcritic = 0
+       aux_dscritic = ""
+       aux_cdcritic = pc_soma_data_vencto.pr_cdcritic 
+                      WHEN pc_soma_data_vencto.pr_cdcritic <> ?
+       aux_dscritic = pc_soma_data_vencto.pr_dscritic 
+                      WHEN pc_soma_data_vencto.pr_dscritic <> ?
+       aux_dtvencto = pc_soma_data_vencto.pr_dtvencto
+                      WHEN pc_soma_data_vencto.pr_dtvencto <> ?.
+
+IF aux_cdcritic <> 0   OR
+   aux_dscritic <> ""  THEN
+   DO:
+       IF aux_dscritic = "" THEN
+          DO:
+             FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                NO-LOCK NO-ERROR.             
+             IF AVAIL crapcri THEN
+                ASSIGN aux_dscritic = crapcri.dscritic.
+             ELSE
+                ASSIGN aux_dscritic = "Nao foi possivel consultar data de vencimento.".
+          END.
+
+       ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>". 
+       
+       RETURN "NOK".       
+END.
+
+IF  aux_dtvencto = ? THEN 
+    ASSIGN aux_dtvencto = 01/01/2012. 
+    
+ASSIGN aux_dslinxml = aux_dslinxml + 
+                            "<dtmvtolt>"  + STRING(par_dtmvtolt,"99/99/9999")  + "</dtmvtolt>" +
+                            "<dtmvtopr>"  + aux_dtmvtopr                       + "</dtmvtopr>" +
+                            "<qtmesage>"  + STRING(aux_qtmesage)               + "</qtmesage>" + 
+                            "<dtvencto>"  + STRING(aux_dtvencto, "99/99/9999") + "</dtvencto>".
+CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = aux_dslinxml.
 
 RETURN "OK".

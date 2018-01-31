@@ -245,7 +245,8 @@ create or replace package cecred.PAGA0002 is
            ,gps_cdidenti NUMBER
            ,gps_vlrdinss NUMBER
            ,gps_vlrouent NUMBER
-           ,gps_vlrjuros NUMBER);
+           ,gps_vlrjuros NUMBER
+           ,idlstdom NUMBER);
            
   --Tipo de tabela de memoria para dados de agendamentos
   TYPE typ_tab_dados_agendamento IS TABLE OF typ_reg_dados_agendamento INDEX BY PLS_INTEGER;
@@ -691,7 +692,7 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                       /* parametros de saida */
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_dscritic OUT VARCHAR2);           --> Descricao critica
-  
+                                      
   /* Realizar a apuração diária dos lançamentos dos históricos de pagamento de empréstimos */
   PROCEDURE pc_apura_lcm_his_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
                                        ,pr_dtrefere IN DATE   );             -- Data de referencia para processamento
@@ -707,6 +708,7 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                  ,pr_insitlau               IN craplau.insitlau%TYPE              --> Situacao do Lancamento
                                  ,pr_iniconta               IN INTEGER                            --> Numero de Registros da Tela
                                  ,pr_nrregist               IN INTEGER                            --> Numero da Registros
+                                 ,pr_cdtiptra               IN VARCHAR2 DEFAULT NULL              --> Tipo de transação
                                  ,pr_dstransa              OUT VARCHAR2                           --> Descricao da Transacao
                                  ,pr_qttotage              OUT INTEGER                            --> Quantidade Total de Agendamentos
                                  ,pr_tab_dados_agendamento OUT PAGA0002.typ_tab_dados_agendamento --> Tabela com Informacoes de Agendamentos
@@ -2448,7 +2450,7 @@ create or replace package body cecred.PAGA0002 is
     vr_nrcpfcgc  INTEGER := 0;
     vr_nmprimtl  VARCHAR2(500);
     vr_flcartma  INTEGER(1) := 0;
-
+    
     CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT a.inpessoa
@@ -2462,7 +2464,7 @@ create or replace package body cecred.PAGA0002 is
            ' para '||DECODE(NVL(pr_idagenda,0),1,NULL,'agendamento de ')||'pagamento'
     INTO vr_dstransa
     FROM dual;
-
+    
     -- Buscar tipo de pessoa da conta
     OPEN cr_crapass (pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta);
@@ -2480,7 +2482,7 @@ create or replace package body cecred.PAGA0002 is
     vr_lindigi5 := pr_lindigi5;
     vr_cdbarras := pr_cdbarras;
     vr_dtmvtopg := pr_dtmvtopg;
-
+    
     IF NVL(pr_vlapagar,0) > 0 THEN
 		   vr_vlapagar := pr_vlapagar;
   	ELSE
@@ -8547,6 +8549,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_insitlau               IN craplau.insitlau%TYPE              --> Situacao do Lancamento
                                  ,pr_iniconta               IN INTEGER                            --> Numero de Registros da Tela
                                  ,pr_nrregist               IN INTEGER                            --> Numero da Registros
+                                 ,pr_cdtiptra               IN VARCHAR2 DEFAULT NULL              --> Tipo de transação                                 
                                  ,pr_dstransa              OUT VARCHAR2                           --> Descricao da Transacao
                                  ,pr_qttotage              OUT INTEGER                            --> Quantidade Total de Agendamentos
                                  ,pr_tab_dados_agendamento OUT PAGA0002.typ_tab_dados_agendamento --> Tabela com Informacoes de Agendamentos
@@ -8559,14 +8562,15 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Jean Michel
-    --  Data     : Julho/2016.                   Ultima atualizacao: 28/07/2016
+    --  Data     : Julho/2016.                   Ultima atualizacao: 06/12/2017
     --
     --  Dados referentes ao programa:
     --
     --  Frequencia: Sempre que for chamado
     --  Objetivo  : Procedure utilizada para consultar dados de agendamentos
     --
-    --  Alteração  :
+    --  Alteração : 06/12/2017 Adicionado filtro por tipo de transação
+    --                         (p285 - Ricardo Linhares)
     --
     -- ..........................................................................*/
 
@@ -8632,7 +8636,10 @@ create or replace package body cecred.PAGA0002 is
           ,lau.idlancto
           ,lau.nrseqagp
       FROM craplau lau
-    WHERE (lau.cdcooper = pr_cdcooper
+    WHERE (pr_cdtiptra IS NULL OR lau.cdtiptra IN(SELECT regexp_substr(pr_cdtiptra, '[^;]+', 1, LEVEL)
+                                                    FROM dual
+                                        CONNECT BY LEVEL <= regexp_count(pr_cdtiptra, '[^;]+')))
+      AND (lau.cdcooper = pr_cdcooper
       AND  lau.nrdconta = pr_nrdconta
       AND  lau.dsorigem = pr_dsorigem
       AND  lau.cdagenci = pr_cdagenci
@@ -8833,6 +8840,7 @@ create or replace package body cecred.PAGA0002 is
     vr_vlrtotal tbpagto_agend_darf_das.vlprincipal%TYPE := 0;
     vr_vlrrecbr tbpagto_agend_darf_das.vlreceita_bruta%TYPE := 0;
     vr_vlrperce tbpagto_agend_darf_das.vlpercentual%TYPE := 0;
+    vr_idlstdom NUMBER := 0;
 
     -- GPS
     vr_gps_cddpagto craplgp.cddpagto%TYPE; -- 03 - Código de pagamento
@@ -9019,12 +9027,28 @@ create or replace package body cecred.PAGA0002 is
         IF rw_craplau.cdtiptra = 1 OR
            rw_craplau.cdtiptra = 5 THEN
           vr_dstiptra := 'Transferencia';
+          
+          IF rw_craplau.cdtiptra = 1 THEN 
+            vr_idlstdom := 5; -- Transf. Intracooperativa
+          ELSE
+            vr_idlstdom := 6; -- Transf. Intercooperativa
+          END IF;
         ELSIF rw_craplau.cdtiptra = 2 THEN
           vr_dstiptra := 'Pagamento';
+          
+          IF NVL(rw_craplau.nrseqagp,0) <> 0 THEN 
+            vr_idlstdom := 9; -- GPS
+          ELSIF LENGTH(NVL(rw_craplau.dslindig,'')) = 55 THEN
+            vr_idlstdom := 2; -- Convênio
+          ELSE
+            vr_idlstdom := 1; -- Título
+          END IF;
         ELSIF rw_craplau.cdtiptra = 3 THEN
           vr_dstiptra := 'Credito de Salario';
+          vr_idlstdom := 3; -- Crédito Salário
         ELSIF rw_craplau.cdtiptra = 4 THEN
           vr_dstiptra := 'TED';
+          vr_idlstdom := 4; -- TED         
         ELSE
           vr_dstiptra := '';
         END IF;
@@ -9145,6 +9169,7 @@ create or replace package body cecred.PAGA0002 is
           vr_vlrrecbr := rw_darf_das.vlreceita_bruta;
           vr_vlrperce := rw_darf_das.vlpercentual;
           vr_dstiptra := (CASE WHEN rw_darf_das.tppagamento = 1 THEN 'DARF' ELSE 'DAS' END);
+          vr_idlstdom := (CASE WHEN rw_darf_das.tppagamento = 1 THEN 7 ELSE '8' END);
 
         END IF;
 
@@ -9191,7 +9216,7 @@ create or replace package body cecred.PAGA0002 is
             vr_gps_vlrouent := to_number(rw_gps.vlrouent,'9G999D99');
             vr_gps_vlrjuros := to_number(rw_gps.vlrjuros,'9G999D99');
           END IF;
-        
+
         ELSE
           vr_gps_cddpagto := 0;
           vr_gps_dscompet := '';
@@ -9220,6 +9245,7 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).nrctadst := vr_nrctadst;
         vr_tab_dados_agendamento(vr_cdindice).cdtiptra := rw_craplau.cdtiptra;
         vr_tab_dados_agendamento(vr_cdindice).dstiptra := vr_dstiptra;
+        vr_tab_dados_agendamento(vr_cdindice).idlstdom := vr_idlstdom;
         vr_tab_dados_agendamento(vr_cdindice).dtmvtage := rw_craplau.dtmvtolt;
         vr_tab_dados_agendamento(vr_cdindice).incancel := NVL(vr_incancel,0);
         vr_tab_dados_agendamento(vr_cdindice).nmprimtl := vr_nmprimtl;

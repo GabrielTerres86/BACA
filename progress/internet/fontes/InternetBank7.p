@@ -56,12 +56,12 @@
                             (Marcos-Supero)      
 
                24/03/2017 - SD638033 - Envio dos Rendimentos de Cotas Capital 
-			                sem desconto IR (Marcos-Supero) 
+			                      sem desconto IR (Marcos-Supero) 
 
-			   13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-
+			         13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                      crapass, crapttl, crapjur 
+							              (Adriano - P339).
+              
                18/08/2017 - Incluida validacao de IR para pessoa juridica
                             (Rafael Faria-Supero)
                06/11/2017 - Separar telefone do endereco da cooperativa (David)
@@ -572,9 +572,7 @@ PROCEDURE proc_ir_juridica:
                                    STRING(STRING(crapass.nrcpfcgc,
                                          "99999999999999"),
                                          "xx.xxx.xxx/xxxx-xx") + 
-                                   "</nrcpfcgc><nrtelcop>" +
-                                   crapcop.nrtelvoz +
-                                   "</nrtelcop><DADOSIR>".
+                                   "</nrcpfcgc><DADOSIR>".
                      
     /* pegar descricao do codigo retencao 3426 */
     FIND FIRST gnrdirf WHERE gnrdirf.cdretenc = 3426 NO-ERROR.
@@ -966,7 +964,9 @@ PROCEDURE proc_ir_juridica:
            "</vlrendim>".
 
     ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml +
-                                   "</INFOCOMP></IRJURIDICA>".
+                                   "</INFOCOMP><nrtelcop>" +
+                                   crapcop.nrtelvoz +
+                                   "</nrtelcop></IRJURIDICA>".
     
     RETURN "OK".
     

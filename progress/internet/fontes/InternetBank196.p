@@ -28,7 +28,6 @@ DEF VAR aux_dsstatus     AS CHAR     NO-UNDO.
 
 DEF INPUT  PARAM par_cdtiptra  LIKE craplau.cdtiptra NO-UNDO.
 DEF INPUT  PARAM par_idlancto  LIKE craplau.idlancto NO-UNDO.
-DEF OUTPUT PARAM par_dsmsgerr  AS CHAR               NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
 FUNCTION roundUp RETURNS INTEGER ( x as decimal ):
@@ -54,7 +53,8 @@ END.
             ASSIGN aux_msgerora = aux_msgerora + ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
         END.
               
-        ASSIGN par_dsmsgerr = '<Root><Erro>' + aux_msgerora + '</Erro></Root>'.
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = '<Root><Erro>' + aux_msgerora + '</Erro></Root>'.
 
         RETURN "NOK".
           

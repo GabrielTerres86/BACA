@@ -5366,8 +5366,10 @@ PROCEDURE incluir-nova-aplicacao:
                                    INPUT INT(par_flgdebci),
                                    INPUT par_vllanmto,
                                    INPUT INT(par_flgerlog),
+                                   INPUT 'A',
                                    OUTPUT "",
                                    OUTPUT 0,
+                                   OUTPUT "",
                                    OUTPUT 0,
                                    OUTPUT "").
       

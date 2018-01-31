@@ -509,7 +509,7 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
                            xml_operacao38 (Projeto 356.2  - Ricardo Linhares).
                            
               14/09/2017 - Adicionar no campo nrrefere como String (Lucas Ranghetti #756034)
-
+			  
               11/09/2017 - Adicionado campos para consulta de agendamento de GPS
                            xml_operacao38 (Projeto 356.2  - Ricardo Linhares).
 
@@ -650,7 +650,7 @@ PROCEDURE verifica_convenio:
            par_cdbarras =  pc_verifica_convenio_prog.pr_cdbarras       /* IN OUT */ 
            par_dtvencto =  DATE(pc_verifica_convenio_prog.pr_dtvencto) /* IN OUT */
            par_vllanmto =  DECI(pc_verifica_convenio_prog.pr_vllanmto) /* IN OUT */
-                
+
            par_nmextcon = pc_verifica_convenio_prog.pr_nmextcon
                           WHEN pc_verifica_convenio_prog.pr_nmextcon <> ?
            par_cdseqfat = DECI(pc_verifica_convenio_prog.pr_cdseqfat)
@@ -665,11 +665,11 @@ PROCEDURE verifica_convenio:
                           WHEN pc_verifica_convenio_prog.pr_cdcritic <> ?
            par_dscritic = pc_verifica_convenio_prog.pr_dscritic
                           WHEN pc_verifica_convenio_prog.pr_dscritic <> ?.
-                
+
 
     /* Se houveram criticas, retorno NOK */
     IF  aux_cdcritic > 0 OR par_dscritic <> "" THEN
-                     RETURN "NOK".
+             RETURN "NOK".
 
     RETURN "OK".
 
@@ -1391,7 +1391,7 @@ PROCEDURE paga_convenio:
     /* Se houveram criticas, retorno NOK */
     IF  aux_cdcritic > 0 OR par_dscritic <> "" THEN
              RETURN "NOK".
-                                   
+
     RETURN "OK".
 
 END PROCEDURE.
@@ -1414,7 +1414,7 @@ PROCEDURE convenios_aceitos:
     DEF VAR aux_cdhisdeb LIKE crapcon.cdhistor                             NO-UNDO.
     
     EMPTY TEMP-TABLE tt-convenios_aceitos.
-
+    
     ASSIGN aux_dssegmto[1] = "Prefeituras"
            aux_dssegmto[2] = "Saneamento"
            aux_dssegmto[3] = "Energia Elétrica e Gás"
@@ -1460,7 +1460,7 @@ PROCEDURE convenios_aceitos:
     FOR EACH crapcon NO-LOCK WHERE crapcon.cdcooper = par_cdcooper  AND
                                    crapcon.flginter = TRUE 
                                    BY crapcon.nmextcon:
-    
+								   
         ASSIGN aux_cdhisdeb = crapcon.cdhistor.
 
         IF  crapcon.flgcnvsi = TRUE THEN
@@ -1517,7 +1517,7 @@ PROCEDURE convenios_aceitos:
               crapcon.cdsegmto = 2)) THEN 
             tt-convenios_aceitos.hhoracan = "Estorno não permitido para este convênio".
         ELSE
-            tt-convenios_aceitos.hhoracan = IF crapcon.flgcnvsi THEN aux_hhsiccan ELSE aux_hrcancel.
+            tt-convenios_aceitos.hhoracan = IF crapcon.flgcnvsi THEN aux_hhsiccan ELSE aux_hrcancel.			
 
     END. 
 
@@ -2519,16 +2519,16 @@ PROCEDURE cancelar-agendamento:
                 FIND craplau WHERE craplau.idlancto = par_idlancto 
                                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
             ELSE
-            FIND craplau WHERE craplau.cdcooper = par_cdcooper AND
-                               craplau.nrdconta = par_nrdconta AND
-                               craplau.dtmvtolt = par_dtmvtage AND
-                               craplau.cdagenci = par_cdagenci AND
-                               craplau.cdbccxlt = 100          AND
-                               craplau.nrdolote = aux_nrdolote AND
-                               craplau.nrdocmto = par_nrdocmto AND
-                               craplau.dsorigem = par_dsorigem 
-                               USE-INDEX craplau1
-                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                FIND craplau WHERE craplau.cdcooper = par_cdcooper AND
+                                   craplau.nrdconta = par_nrdconta AND
+                                   craplau.dtmvtolt = par_dtmvtage AND
+                                   craplau.cdagenci = par_cdagenci AND
+                                   craplau.cdbccxlt = 100          AND
+                                   craplau.nrdolote = aux_nrdolote AND
+                                   craplau.nrdocmto = par_nrdocmto AND
+                                   craplau.dsorigem = par_dsorigem 
+                                   USE-INDEX craplau1
+                                   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                
             IF  NOT AVAILABLE craplau  THEN
                 DO: 
@@ -8398,6 +8398,7 @@ PROCEDURE aprova_trans_pend:
                                                          ,INPUT par_nmdatela
                                                          ,INPUT par_idorigem
                                                          ,1
+                                                         ,OUTPUT 0
                                                          ,OUTPUT 0
                                                          ,OUTPUT 0
                                                          ,OUTPUT 0

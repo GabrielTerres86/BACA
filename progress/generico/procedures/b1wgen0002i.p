@@ -231,7 +231,7 @@
                17/09/2015 - Ajuste no topico 3.1 da proposta pois estava invertido
                             a linha de credito com a finalidade (Lombardi/Jaison)
 
-                           14/09/2015 - Projeto Reformulacao cadastral
+			   14/09/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
                             
                20/11/2015 - Ajustado para que a seja utilizado a procedure
@@ -244,11 +244,11 @@
                             nao conta como uma pagina nova SD366647 (Odirlei-AMcom)
                                                    
                26/01/2016 - Alteracao da procedure gera-impressao-empr para gerar o
-                                                        relatorio para o InternetBank. (Projeto Pre-Aprovado 
-                                                        Fase 2 - Carlos Rafael Tanholi)
+							relatorio para o InternetBank. (Projeto Pre-Aprovado 
+							Fase 2 - Carlos Rafael Tanholi)
               
-                           10/03/2016 - Ajuste para impressao da proposta para a Esteira
-                                        PRJ207 - Esteira (Odirlei-AMcom)
+			   10/03/2016 - Ajuste para impressao da proposta para a Esteira
+			                PRJ207 - Esteira (Odirlei-AMcom)
 
                23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
                             Correçao deletar o Handle da b1wgen0001 esta gerando erro na geraçao
@@ -257,25 +257,25 @@
                             do PDF para envio da esteira (Oscar).
                                                    
                10/10/2016 - Ajuste sempre gerar o PDF para esteira de credito (Oscar).                                    
-                           
-                           07/03/2017 - Ajuste na rotina impressao-prnf devido a conversao da busca-gncdocp
-                                                    (Adriano - SD 614408).
+			   
+			   07/03/2017 - Ajuste na rotina impressao-prnf devido a conversao da busca-gncdocp
+						    (Adriano - SD 614408).
                
-                                 25/04/2017 - Adicionado chamada para a procedure pc_obrigacao_analise_automatic
-                                                                e novo parametro de saida na procedure valida_impressao. 
-                                                                Projeto 337 - Motor de crédito. (Reinert)
+			         25/04/2017 - Adicionado chamada para a procedure pc_obrigacao_analise_automatic
+						                e novo parametro de saida na procedure valida_impressao. 
+						                Projeto 337 - Motor de crédito. (Reinert)
                             
                27/04/2017 - Alterado rotinas gera_co_responsavel e busca_operacoes
                             para chamar respectiva versao oracle
-                                                                Projeto 337 - Motor de crédito. (Odirlei-AMcom)             
+						                Projeto 337 - Motor de crédito. (Odirlei-AMcom)             
 
 
                19/04/2017 - Removido DSNACION variavel nao utilizada.
                             PRJ339 - CRM (Odirlei-AMcom)  
 
                15/09/2017 - Ajuste na variavel de retorno dos co-responsaveis
-                            pois estourava para conta com muitos AVAIS (Marcos-Supero)   
-
+                            pois estourava para conta com muitos AVAIS (Marcos-Supero)               
+                            
                06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo convertida (Marcos-Supero)                            
                             
 .............................................................................*/
@@ -999,8 +999,11 @@ PROCEDURE gera-impressao-empr:
     DEF VAR  par_vltotccr AS DECI                                   NO-UNDO.
     DEF VAR  par_vltotpre AS DECI                                   NO-UNDO.
     DEF VAR  aux_flimpcet AS LOG                                    NO-UNDO.
-    DEF VAR aux_nmdoarqv AS CHAR                                    NO-UNDO.
-    DEF VAR aux_dtlibera AS DATE                                    NO-UNDO.
+
+    DEF VAR  aux_nmdoarqv AS CHAR                                   NO-UNDO.
+    DEF VAR  aux_dtlibera AS DATE                                   NO-UNDO.
+    DEF VAR  aux_dssrvarq AS CHAR                                   NO-UNDO.
+    DEF VAR  aux_dsdirarq AS CHAR                                   NO-UNDO.
 
     ASSIGN aux_nrpagina = par_nrpagina
            aux_flgentra = par_flgentra
@@ -1430,10 +1433,9 @@ PROCEDURE gera-impressao-empr:
                 
            (par_idorigem = 5 OR     /** Ayllos Web **/
             par_idorigem = 3 OR     /** InternetBank **/
-                        par_idorigem = 9) THEN  /** Esteira de credito **/ 
+			par_idorigem = 9) THEN  /** Esteira de credito **/ 
             DO:
                 Email: DO WHILE TRUE:
-    
                     RUN sistema/generico/procedures/b1wgen0024.p PERSISTENT
                         SET h-b1wgen0024.
     
@@ -1471,7 +1473,7 @@ PROCEDURE gera-impressao-empr:
                             '/temp/" 2>/dev/null').
                         END.
 
-                                        /** Copiar pdf para visualizacao no Internet Bank **/
+					/** Copiar pdf para visualizacao no Internet Bank **/
                     ELSE IF par_idorigem = 3 THEN
                     DO:
             
@@ -1486,6 +1488,9 @@ PROCEDURE gera-impressao-empr:
                             LEAVE Gera.                      
                         END.
               
+                        /* Regra para permitir a liberacao do piloto do novo IB 
+                           Barramento SOA fara o download o PDF */
+                        IF  par_cdprogra = "" THEN DO:              
                         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
                         RUN STORED-PROCEDURE pc_efetua_copia_arq_ib 
@@ -1510,6 +1515,62 @@ PROCEDURE gera-impressao-empr:
                             
                             LEAVE Gera.
                         END.            
+                        END.
+                        ELSE DO:
+                            FOR FIRST crapprm WHERE crapprm.cdcooper = 0              AND
+                                                    crapprm.nmsistem = "CRED"         AND
+                                                    crapprm.cdacesso = "ROOT_DIRCOOP" NO-LOCK. END.
+                                                    
+                            IF  NOT AVAIL crapprm  THEN
+                                DO:
+                                    ASSIGN aux_dscritic = "Diretorio da cooperativa nao parametrizado.".
+                    
+                                    IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                        DELETE PROCEDURE h-b1wgen0024.    
+                                
+                                    LEAVE Gera.
+                    END.
+
+                            /* Separar nome do arquivo do diretorio.
+                               Diretorio ROOT /usr/coop/ deve ser substituido pelo parametrizado pois o comando sera executado em PLSQL. */
+                            ASSIGN aux_dsdirarq = REPLACE(SUBSTR(aux_nmarqpdf,1,R-INDEX(aux_nmarqpdf,"/")),"/usr/coop/",crapprm.dsvlrprm)
+                                   aux_nmdoarqv = SUBSTR(aux_nmarqpdf,R-INDEX(aux_nmarqpdf,"/") + 1).
+                            
+                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }                                                                               
+                            
+                            RUN STORED-PROCEDURE pc_copia_arq_para_download 
+                                aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (INPUT par_cdcooper, /* Cooperativa                       */
+                                                  INPUT aux_dsdirarq, /* Diretorio do arquivo              */
+                                                  INPUT aux_nmdoarqv, /* Nome do arquivo                   */
+                                                  INPUT 0,        /* Mover arquivo para novo diretorio */
+                                                 OUTPUT "",
+                                                 OUTPUT "",
+                                                 OUTPUT "").
+        
+                            CLOSE STORED-PROC pc_copia_arq_para_download 
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+                            ASSIGN aux_dscritic = ""
+                                   aux_dssrvarq = ""
+                                   aux_dsdirarq = ""
+                                   aux_dscritic = pc_copia_arq_para_download.pr_des_erro 
+                                                  WHEN pc_copia_arq_para_download.pr_des_erro <> ?
+                                   aux_dssrvarq = pc_copia_arq_para_download.pr_dssrvarq 
+                                                  WHEN pc_copia_arq_para_download.pr_dssrvarq <> ?
+                                   aux_dsdirarq = pc_copia_arq_para_download.pr_dsdirarq 
+                                                  WHEN pc_copia_arq_para_download.pr_dsdirarq <> ?.
+        
+                            IF  aux_dscritic <> ""  THEN
+                            DO:                                
+                               IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                   DELETE PROCEDURE h-b1wgen0024.    
+                                
+                                LEAVE Gera.
+                            END.                           
+                        END.
                     
                     END.
 
@@ -1569,23 +1630,29 @@ PROCEDURE gera-impressao-empr:
                             UNIX SILENT VALUE ("rm " + aux_nmarquiv + "* 2>/dev/null").
                     END.
                 ELSE
-                                  IF par_idorigem = 9  THEN
-                                    DO:
-                                          UNIX SILENT VALUE ("rm " + aux_nmarqimp + " 2>/dev/null").
-                                    END.
+                IF  par_idorigem = 9  THEN
+				    DO:
+					  UNIX SILENT VALUE ("rm " + aux_nmarqimp + " 2>/dev/null").
+				    END.
                   ELSE
                     UNIX SILENT VALUE ("rm " + aux_nmarqpdf + " 2>/dev/null").
          END. 
          
-                 /* Para esteira deve enviar tambem o caminho */
-                 IF par_idorigem = 9 THEN
-                   ASSIGN par_nmarqpdf = aux_nmarqpdf.
-                 ELSE
-                   ASSIGN par_nmarqpdf = 
-                          ENTRY(NUM-ENTRIES(aux_nmarqpdf,"/"),aux_nmarqpdf,"/").
+		 /* Para esteira deve enviar tambem o caminho */
+        IF  par_idorigem = 3 AND par_cdprogra = "INTERNETBANK"  THEN
+            ASSIGN par_nmarqpdf = aux_dsdirarq + aux_nmdoarqv
+                   par_nmarqimp = aux_dssrvarq
+                   par_flgentrv = aux_flgentra.
+        ELSE
+            DO:
+                IF  par_idorigem = 9 THEN
+		   ASSIGN par_nmarqpdf = aux_nmarqpdf.
+		 ELSE
+                    ASSIGN par_nmarqpdf = ENTRY(NUM-ENTRIES(aux_nmarqpdf,"/"),aux_nmarqpdf,"/").
 
          ASSIGN par_nmarqimp = aux_nmarqimp
                 par_flgentrv = aux_flgentra.
+            END.
 
     END. /* Gera */
 
@@ -4872,119 +4939,119 @@ PROCEDURE impressao-prnf:
 
             IF  AVAIL crapttl THEN
                 DO:
-                                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+				    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
  
-                                          /* Efetuar a chamada da rotina Oracle */ 
-                                                RUN STORED-PROCEDURE pc_busca_gncdocp_car
-                                                        aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapttl.cdocpttl, /*codigo da ocupaca*/                          
-                                                                                                                                INPUT "", /*descricao da ocupacao*/                                                                                            
-                                                                                                                                INPUT 1, /*nrregist*/
-                                                                                                                                INPUT 1, /*nriniseq*/
-                                                                                                                                OUTPUT "", /*Nome do Campo*/                
-                                                                                                                                OUTPUT "", /*Saida OK/NOK*/                          
-                                                                                                                                OUTPUT ?, /*Tabela Regionais*/                       
-                                                                                                                                OUTPUT 0, /*Codigo da critica*/                      
-                                                                                                                                OUTPUT ""). /*Descricao da critica*/ 
+					  /* Efetuar a chamada da rotina Oracle */ 
+						RUN STORED-PROCEDURE pc_busca_gncdocp_car
+							aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapttl.cdocpttl, /*codigo da ocupaca*/                          
+																INPUT "", /*descricao da ocupacao*/                                                                                            
+																INPUT 1, /*nrregist*/
+																INPUT 1, /*nriniseq*/
+																OUTPUT "", /*Nome do Campo*/                
+																OUTPUT "", /*Saida OK/NOK*/                          
+																OUTPUT ?, /*Tabela Regionais*/                       
+																OUTPUT 0, /*Codigo da critica*/                      
+																OUTPUT ""). /*Descricao da critica*/ 
     
-                                                /* Fechar o procedimento para buscarmos o resultado */ 
-                                                CLOSE STORED-PROC pc_busca_gncdocp_car
-                                                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+						/* Fechar o procedimento para buscarmos o resultado */ 
+						CLOSE STORED-PROC pc_busca_gncdocp_car
+								aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
          
-                                                /* Efetuar a chamada da rotina Oracle */ 
-                                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-                                                
-                                                /* Busca possíveis erros */ 
-                                                ASSIGN aux_cdcritic = 0
-                                                           aux_dscritic = ""
-                                                           aux_cdcritic = pc_busca_gncdocp_car.pr_cdcritic 
-                                                                                          WHEN pc_busca_gncdocp_car.pr_cdcritic <> ?
-                                                           aux_dscritic = pc_busca_gncdocp_car.pr_dscritic 
-                                                                                          WHEN pc_busca_gncdocp_car.pr_dscritic <> ?.
+						/* Efetuar a chamada da rotina Oracle */ 
+						{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+						
+						/* Busca possíveis erros */ 
+						ASSIGN aux_cdcritic = 0
+							   aux_dscritic = ""
+							   aux_cdcritic = pc_busca_gncdocp_car.pr_cdcritic 
+											  WHEN pc_busca_gncdocp_car.pr_cdcritic <> ?
+							   aux_dscritic = pc_busca_gncdocp_car.pr_dscritic 
+											  WHEN pc_busca_gncdocp_car.pr_dscritic <> ?.
 
-                                                IF aux_cdcritic <> 0   OR
-                                                   aux_dscritic <> ""  THEN
-                                                DO:
-                                                        IF aux_dscritic = "" THEN
-                                                           DO:
-                                                                  FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
-                                                                                                         NO-LOCK NO-ERROR.
+						IF aux_cdcritic <> 0   OR
+						   aux_dscritic <> ""  THEN
+						DO:
+							IF aux_dscritic = "" THEN
+							   DO:
+								  FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
+													 NO-LOCK NO-ERROR.
     
-                                                                  IF AVAIL crapcri THEN
-                                                                         ASSIGN aux_dscritic = crapcri.dscritic.
+								  IF AVAIL crapcri THEN
+									 ASSIGN aux_dscritic = crapcri.dscritic.
     
-                                                           END.
+							   END.
     
-                                                        CREATE tt-erro.
+							CREATE tt-erro.
     
-                                                        ASSIGN tt-erro.cdcritic = aux_cdcritic
-                                                                   tt-erro.dscritic = aux_dscritic.
+							ASSIGN tt-erro.cdcritic = aux_cdcritic
+								   tt-erro.dscritic = aux_dscritic.
     
-                                                   RETURN "NOK".
+						   RETURN "NOK".
 
-                                                END.
+						END.
 
-                                                /*Leitura do XML de retorno da proc e criacao dos registros na tt-gncdnto
-                                                        para visualizacao dos registros na tela */
+						/*Leitura do XML de retorno da proc e criacao dos registros na tt-gncdnto
+							para visualizacao dos registros na tela */
             
-                                                /* Buscar o XML na tabela de retorno da procedure Progress */ 
-                                                ASSIGN xml_req = pc_busca_gncdocp_car.pr_clob_ret.
+						/* Buscar o XML na tabela de retorno da procedure Progress */ 
+						ASSIGN xml_req = pc_busca_gncdocp_car.pr_clob_ret.
     
-                                                /* Efetuar a leitura do XML*/ 
-                                                SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
-                                                PUT-STRING(ponteiro_xml,1) = xml_req. 
+						/* Efetuar a leitura do XML*/ 
+						SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+						PUT-STRING(ponteiro_xml,1) = xml_req. 
     
-                                                /* Inicializando objetos para leitura do XML */ 
-                                                CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
-                                                CREATE X-NODEREF  xRoot.   /* Vai conter a tag raiz em diante */ 
-                                                CREATE X-NODEREF  xRoot2.  /* Vai conter a tag aplicacao em diante */ 
-                                                CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
-                                                CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */
+						/* Inicializando objetos para leitura do XML */ 
+						CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+						CREATE X-NODEREF  xRoot.   /* Vai conter a tag raiz em diante */ 
+						CREATE X-NODEREF  xRoot2.  /* Vai conter a tag aplicacao em diante */ 
+						CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+						CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */
      
-                                                IF ponteiro_xml <> ? THEN
-                                                        DO:   
-                                                                xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
-                                                                xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+						IF ponteiro_xml <> ? THEN
+							DO:   
+								xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+								xDoc:GET-DOCUMENT-ELEMENT(xRoot).
              
-                                                                DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+								DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
              
-                                                                        xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+									xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
      
-                                                                        IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
-                                                                        NEXT. 
+									IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+									NEXT. 
            
-                                                                        IF xRoot2:NUM-CHILDREN > 0 THEN
-                                                                        DO:
+									IF xRoot2:NUM-CHILDREN > 0 THEN
+									DO:
                 
-                                                                                CREATE tt-gncdocp.
+										CREATE tt-gncdocp.
     
-                                                                        END.
+									END.
      
-                                                                        DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+									DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
                
-                                                                        xRoot2:GET-CHILD(xField,aux_cont).
+									xRoot2:GET-CHILD(xField,aux_cont).
                   
-                                                                        IF xField:SUBTYPE <> "ELEMENT" THEN 
-                                                                                NEXT. 
+									IF xField:SUBTYPE <> "ELEMENT" THEN 
+										NEXT. 
               
-                                                                        xField:GET-CHILD(xText,1).
+									xField:GET-CHILD(xText,1).
                   
-                                                                        ASSIGN tt-gncdocp.cdocupa = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdocupa"
-                                                                                   tt-gncdocp.dsdocupa = xText:NODE-VALUE WHEN xField:NAME = "dsdocupa"
-                                                                                        tt-gncdocp.rsdocupa = xText:NODE-VALUE WHEN xField:NAME = "rsdocupa".                                                           
+									ASSIGN tt-gncdocp.cdocupa = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdocupa"
+										   tt-gncdocp.dsdocupa = xText:NODE-VALUE WHEN xField:NAME = "dsdocupa"
+											tt-gncdocp.rsdocupa = xText:NODE-VALUE WHEN xField:NAME = "rsdocupa".							   
                 
-                                                                        END. 
+									END. 
             
-                                                                END.
+								END.
      
-                                                                SET-SIZE(ponteiro_xml) = 0. 
+								SET-SIZE(ponteiro_xml) = 0. 
     
-                                                        END.
+							END.
                     
-                                                DELETE OBJECT xDoc. 
-                                                DELETE OBJECT xRoot. 
-                                                DELETE OBJECT xRoot2. 
-                                                DELETE OBJECT xField. 
-                                                DELETE OBJECT xText.
+						DELETE OBJECT xDoc. 
+						DELETE OBJECT xRoot. 
+						DELETE OBJECT xRoot2. 
+						DELETE OBJECT xField. 
+						DELETE OBJECT xText.
             
                     FIND tt-gncdocp WHERE tt-gncdocp.cdocupa = crapttl.cdocpttl
                           NO-LOCK NO-ERROR.
@@ -8336,7 +8403,7 @@ PROCEDURE gera_co_responsavel:
                     ASSIGN w-co-responsavel.nmprimtl =    (xText:NODE-VALUE) WHEN xField:NAME = "nmprimtl". 
                     ASSIGN w-co-responsavel.nrctremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp". 
                     ASSIGN w-co-responsavel.vlemprst = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlemprst".
-                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved".
+                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved". 
                     ASSIGN w-co-responsavel.vlpreemp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpreemp".
                     ASSIGN w-co-responsavel.vlprepag = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprepag".
                     ASSIGN w-co-responsavel.vljurmes = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vljurmes".
@@ -8409,14 +8476,14 @@ PROCEDURE gera_co_responsavel:
                     ASSIGN w-co-responsavel.tipoempr =    (xText:NODE-VALUE) WHEN xField:NAME = "tipoempr". 
                     ASSIGN w-co-responsavel.qtimpctr = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtimpctr". 
                     ASSIGN w-co-responsavel.dtapgoib = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtapgoib".
-                    
-                END.
+
+                        END.
 
            END. 
 
-           SET-SIZE(ponteiro_xml) = 0. 
+            SET-SIZE(ponteiro_xml) = 0. 
 
-    END.  
+   END.  
 
     /*Elimina os objetos criados*/
     DELETE OBJECT xDoc. 

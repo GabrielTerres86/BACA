@@ -36,6 +36,7 @@ DEF VAR aux_cdcritic AS INT                                            NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_hrlimini AS INT                                            NO-UNDO.
 DEF VAR aux_hrlimfim AS INT                                            NO-UNDO.
+DEF VAR aux_idesthor AS INT                                            NO-UNDO.
 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
@@ -48,6 +49,7 @@ RUN STORED-PROCEDURE pc_horario_limite
                              INPUT par_nmdatela,
                              INPUT par_idorigem,
                              INPUT 1, /*Valida horario limite*/
+                             OUTPUT 0,
                              OUTPUT 0,
                              OUTPUT 0,
                              OUTPUT 0,
@@ -64,6 +66,8 @@ ASSIGN aux_cdcritic = 0
                           WHEN pc_horario_limite.pr_hrlimini <> ?
        aux_hrlimfim = pc_horario_limite.pr_hrlimfim
                           WHEN pc_horario_limite.pr_hrlimfim <> ?
+       aux_idesthor = pc_horario_limite.pr_idesthor
+                          WHEN pc_horario_limite.pr_idesthor <> ?
        aux_cdcritic = pc_horario_limite.pr_cdcritic 
                           WHEN pc_horario_limite.pr_cdcritic <> ?
        aux_dscritic = pc_horario_limite.pr_dscritic
@@ -101,6 +105,9 @@ ASSIGN xml_operacao.dslinxml = "<HORARIO>" +
                                     "<hrlimfim>" +  
                                            TRIM(STRING(aux_hrlimfim,"HH:MM:SS")) +
                                     "</hrlimfim>" +
+                                    "<idesthor>" +  
+                                           TRIM(STRING(aux_idesthor)) +
+                                    "</idesthor>" +
                                "</HORARIO>".
 
 RETURN "OK".

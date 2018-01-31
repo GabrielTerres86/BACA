@@ -261,6 +261,7 @@ DO:
        ASSIGN aux_dslinxml = aux_dslinxml + 
                              "<APLICACOES>" + 
                                   "<nrdocmto>" + aux_nrdocmto + "</nrdocmto>" +
+                                  "<dsprotoc></dsprotoc>" + /* Implementaçao futura */
                              "</APLICACOES>" +
                              "<dsmsgsuc>Resgate realizado com sucesso.</dsmsgsuc>" +
                              "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>".

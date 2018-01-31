@@ -29,7 +29,7 @@
                              de Débito Fácil (Lucas Lunelli - Out/2014).
                             
                 30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-                            
+                
                 07/11/2017 - Incluir campos nas temp-tables tt-lancamentos e
                              tt-autorizacoes-cadastradas (David).
                             
@@ -110,7 +110,8 @@ DEF TEMP-TABLE tt-autorizacoes-cadastradas NO-UNDO
     FIELD inaltera AS LOGICAL
     FIELD cdhistor AS INTEGER
     FIELD insituac AS INTEGER
-    FIELD dssituac AS CHAR.
+    FIELD dssituac AS CHAR
+    FIELD dssegmto AS CHAR.
 
 DEF TEMP-TABLE tt-autorizacoes-suspensas NO-UNDO
     FIELD nmextcon LIKE crapcon.nmextcon

@@ -2482,10 +2482,20 @@ PROCEDURE busca_autorizacoes_cadastradas:
 
     DEF OUTPUT PARAM TABLE FOR tt-autorizacoes-cadastradas.
 
-    DEF VAR aux_nmempcon         AS CHAR NO-UNDO.
-    DEF VAR aux_inaltera         AS LOGI NO-UNDO.
-    DEF VAR aux_cdempcon         AS INTE NO-UNDO.
-    DEF VAR aux_cdsegmto         AS INTE NO-UNDO.
+    DEF VAR aux_nmempcon         AS CHAR  NO-UNDO.
+    DEF VAR aux_inaltera         AS LOGI  NO-UNDO.
+    DEF VAR aux_cdempcon         AS INTE  NO-UNDO.
+    DEF VAR aux_cdsegmto         AS INTE  NO-UNDO.
+    DEF VAR aux_dssegmto AS CHAR EXTENT 8 NO-UNDO.
+    
+    ASSIGN aux_dssegmto[1] = "Prefeituras"
+           aux_dssegmto[2] = "Saneamento"
+           aux_dssegmto[3] = "Energia Elétrica e Gás"
+           aux_dssegmto[4] = "Telecomunicaçoes"
+           aux_dssegmto[5] = "Órgaos Governamentais"
+           aux_dssegmto[6] = "Órgaos Identificados pelo CNPJ"
+           aux_dssegmto[7] = "Multas de Trânsito"
+           aux_dssegmto[8] = "Uso Exclusivo do Banco".
     
     FOR EACH crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                            crapatr.nrdconta = par_nrdconta AND
@@ -2496,7 +2506,6 @@ PROCEDURE busca_autorizacoes_cadastradas:
                             
         ASSIGN aux_nmempcon = ""
                aux_inaltera = FALSE
-               aux_nmempcon = ""
                aux_cdempcon = 0
                aux_cdsegmto = 0.
         
@@ -2538,12 +2547,13 @@ PROCEDURE busca_autorizacoes_cadastradas:
                            aux_cdsegmto = crapcon.cdsegmto.                                                    
             END.   
 
-            
-            
+        IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
+            ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
+                   aux_nmempcon = REPLACE(aux_nmempcon, "FEBRABAN", "").
             
         CREATE tt-autorizacoes-cadastradas.
         ASSIGN tt-autorizacoes-cadastradas.nmextcon = aux_nmempcon
-               tt-autorizacoes-cadastradas.nmrescon = ""
+               tt-autorizacoes-cadastradas.nmrescon = IF AVAIL crapcon AND TRIM(crapcon.nmrescon) <> '' THEN crapcon.nmrescon ELSE aux_nmempcon
                tt-autorizacoes-cadastradas.cdempcon = IF crapatr.cdhistor = 1019 THEN crapatr.cdempcon ELSE aux_cdempcon
                tt-autorizacoes-cadastradas.cdsegmto = IF crapatr.cdhistor = 1019 THEN crapatr.cdsegmto ELSE aux_cdsegmto
                tt-autorizacoes-cadastradas.cdrefere = crapatr.cdrefere
@@ -2552,7 +2562,8 @@ PROCEDURE busca_autorizacoes_cadastradas:
                tt-autorizacoes-cadastradas.inaltera = aux_inaltera
                tt-autorizacoes-cadastradas.cdhistor = crapatr.cdhistor
                tt-autorizacoes-cadastradas.insituac = IF crapatr.dtfimsus <> ? AND crapatr.dtfimsus > par_dtmvtolt THEN 2 ELSE 1
-               tt-autorizacoes-cadastradas.dssituac = IF tt-autorizacoes-cadastradas.insituac = 1 THEN 'ATIVO' ELSE 'SUSPENSO'.
+               tt-autorizacoes-cadastradas.dssituac = IF tt-autorizacoes-cadastradas.insituac = 1 THEN 'ATIVO' ELSE 'SUSPENSO'
+               tt-autorizacoes-cadastradas.dssegmto = aux_dssegmto[tt-autorizacoes-cadastradas.cdsegmto].
                
         RELEASE crapscn.
         RELEASE gnconve.
@@ -3935,7 +3946,7 @@ PROCEDURE busca_lancamentos:
                                      (crapscn.cddmoden = 'A'                       OR
                                       crapscn.cddmoden = 'C') 
                                       NO-LOCK NO-ERROR NO-WAIT.
-
+                                      
         IF  NOT AVAIL gnconve  AND
             NOT AVAIL crapscn  THEN
             NEXT.
@@ -3981,7 +3992,7 @@ PROCEDURE busca_lancamentos:
                                              (crapscn.cddmoden = 'A'                       OR
                                               crapscn.cddmoden = 'C') 
                                               NO-LOCK NO-ERROR NO-WAIT.
-        
+                          
                 IF  NOT AVAIL gnconve  AND
                     NOT AVAIL crapscn  THEN
                     NEXT.
