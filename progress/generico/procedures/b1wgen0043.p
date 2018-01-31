@@ -65,7 +65,7 @@
 
   Programa: b1wgen0043.p
   Autor   : Gabriel
-  Data    : Setembro/2009                       Ultima Atualizacao: 21/03/2017
+  Data    : Setembro/2009                       Ultima Atualizacao: 31/01/2018
                                                                       
   Dados referentes ao programa:
   

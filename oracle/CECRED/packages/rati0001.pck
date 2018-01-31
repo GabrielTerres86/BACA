@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --  Sistema  : Rotinas para Rating dos Cooperados
   --  Sigla    : RATI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Maio/2013.                   Ultima atualizacao: 28/06/2017
+  --  Data     : Maio/2013.                   Ultima atualizacao: 31/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -154,6 +154,10 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --                         fatura de cartao de credito (Anderson).
   --
   --            11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
+  --            
+  --			31/01/2018 - Criado função nova para qualificação da operação. 
+  --			             Alterado pc_natureza_operacao para demais parâmetros. 
+  --						 (Diego Simas - AMcom) 
   --
   ---------------------------------------------------------------------------------------------------------------
   -- Tipo de Tabela para dados provisao CL
@@ -714,7 +718,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                             RETURN INTEGER;
     
 END RATI0001;
-
+/
 CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -722,7 +726,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   --  Sistema  : Rotinas para Rating dos Cooperados
   --  Sigla    : RATI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Maio/2013.                   Ultima atualizacao: 28/06/2017
+  --  Data     : Maio/2013.                   Ultima atualizacao: 31/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -738,6 +742,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   --                       - Inclusão para setar o modulo de todas procedures da Package
   --                         ( Belli - Envolti - 28/06/2017 - Chamado 660306).
   --
+  --            31/01/2018 - Criado função nova para qualificação da operação. 
+  --				         Alterado pc_natureza_operacao para demais parâmetros. 
+  --						 (Diego Simas - AMcom) 
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo que compreende o vetor com valor do rating da TAB036 por coop */
