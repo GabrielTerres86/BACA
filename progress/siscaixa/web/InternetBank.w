@@ -2648,7 +2648,7 @@ PROCEDURE proc_operacao4:
                                                  INPUT aux_flgregon,
                                                  INPUT aux_inpagdiv,
                                                  INPUT aux_vlminimo,
-
+                                                 
                                                  INPUT aux_idrazfan,
                                                   
                                                 OUTPUT aux_dsmsgerr,
@@ -5719,12 +5719,15 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao96:
 
+    ASSIGN aux_idvalida = INTE(GET-VALUE("tpvalida")).
+    
     RUN sistema/internet/fontes/InternetBank96.p (INPUT aux_cdcooper,
                                                   INPUT 90, /*cdagenci*/
                                                   INPUT 900, /*nrdcaixa*/
                                                   INPUT "996", /*cdoperad*/
                                                   INPUT "INTERNETBANK",
                                                   INPUT 3, /*idorigem*/
+                                                  INPUT aux_idvalida,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
     
@@ -8202,7 +8205,8 @@ PROCEDURE proc_operacao179:
                  aux_dtcustod =     (GET-VALUE("aux_dtcustod"))
                  aux_intipchq =     (GET-VALUE("aux_intipchq"))
                  aux_dsdocmc7 =     (GET-VALUE("aux_dsdocmc7"))
-                 aux_nrremess =     (GET-VALUE("aux_nrremret")).
+                 aux_nrremess =     (GET-VALUE("aux_nrremret"))
+                 aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
     
     RUN sistema/internet/fontes/InternetBank179.p (INPUT aux_operacao, 
                                                    INPUT aux_cdcooper,
@@ -8223,6 +8227,7 @@ PROCEDURE proc_operacao179:
                                                    INPUT aux_intipchq,
                                                    INPUT aux_dsdocmc7,
                                                    INPUT aux_nrremess,
+                                                   INPUT aux_iddspscp,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 
@@ -8640,7 +8645,7 @@ PROCEDURE proc_operacao204:
         {&out} xml_operacao.dslinxml.
                                                 
     END.
-    
+
     {&out} aux_tgfimprg.
 
 END PROCEDURE.
@@ -8849,7 +8854,7 @@ PROCEDURE proc_operacao197:
     ELSE
       FOR EACH xml_operacao NO-LOCK:
         {&out} xml_operacao.dslinxml.
-        END.
+    END.
     {&out} aux_tgfimprg.
 
 END PROCEDURE.

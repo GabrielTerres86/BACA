@@ -16,6 +16,7 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
                              ,pr_des_erro         OUT VARCHAR2);                                                   --> Erros do processo
  
 PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcooper%TYPE           --> codigo da cooperativa
+                                ,pr_nrdconta       IN tbcc_provisao_especie.nrdconta%TYPE           --> Número da conta do cooperado
                                 ,pr_cdcoptel       IN VARCHAR2                                      --> Codigo da cooperativa escolhida pela cecred
                                 ,pr_peri_ini       IN VARCHAR2                                      --> DATA INICIAL
                                 ,pr_peri_fim       IN VARCHAR2                                      --> DATA FINAL
@@ -553,6 +554,7 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
 END pc_alterar_provisao;
 
 PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcooper%TYPE          --> codigo da cooperativa
+                                ,pr_nrdconta       IN tbcc_provisao_especie.nrdconta%TYPE          --> Número da conta do cooperado
                                 ,pr_cdcoptel       IN VARCHAR2                                     --> Codigo da cooperativa escolhida pela cecred
                                 ,pr_peri_ini       IN VARCHAR2                                     --> DATA INICIAL
                                 ,pr_peri_fim       IN VARCHAR2                                     --> DATA FINAL
@@ -645,6 +647,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
          SELECT ROWNUM rnum, p.*, (SELECT c.nmrescop FROM crapcop c WHERE c.cdcooper = p.cdcooper) nmrescop
          FROM tbcc_provisao_especie p
          WHERE (pr_cdcooper       IS NULL OR p.cdcooper = pr_cdcooper)                                                        AND
+               (pr_nrdconta       IS NULL OR p.nrdconta = pr_nrdconta)                                                        AND         
                (pr_peri_ini       IS NULL OR TRUNC(p.dhprevisao_operacao) >= TO_DATE(pr_peri_ini,'DD/MM/YYYY'))               AND
                (pr_peri_fim       IS NULL OR TRUNC(p.dhprevisao_operacao) <= TO_DATE(pr_peri_fim,'DD/MM/YYYY'))               AND
                (pr_cdagenci_saque IS NULL OR p.cdagenci_saque = pr_cdagenci_saque)                                            AND
@@ -2428,7 +2431,7 @@ PROCEDURE pc_dados_tela_pvrsaq(pr_cdcooper        IN tbcc_provisao_especie.cdcoo
                                pr_tag_nova => 'nmextttl',
                                pr_tag_cont => rw_crapttl.nmextttl,
                                pr_des_erro => vr_dscritic);
-      END IF;                                                                      
+      END IF; 
                             
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -3355,7 +3358,7 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE) IS
           
       ROLLBACK;
   END pc_job_cancela_provisao;
-  
+
   FUNCTION fn_retorna_data_util(pr_cdcooper IN crapcop.cdcooper%TYPE        --> Cooperativa
                                ,pr_dtiniper IN DATE                        --> Data de Inicio do Periodo
                                ,pr_qtdialib IN PLS_INTEGER) RETURN DATE IS --> Quantidade de dias para acrescentar

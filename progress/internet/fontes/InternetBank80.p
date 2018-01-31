@@ -42,6 +42,8 @@ DEF VAR aux_dscpfcgc AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmdcampo AS CHAR                                           NO-UNDO.
 DEF VAR aux_msgaviso AS CHAR                                           NO-UNDO.
 
+DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
+
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 
 DEF  INPUT PARAM par_cdcooper LIKE crapcop.cdcooper                    NO-UNDO.
@@ -103,7 +105,7 @@ IF  par_rowidcti <> "" AND
         RETURN "NOK". /* Finaliza a operacao */
     END.
 
-   RETURN "OK". /* Finaliza a operacao */
+    RETURN "OK". /* Finaliza a operacao */
 END.
 
 
@@ -118,104 +120,112 @@ IF  NOT VALID-HANDLE(h-b1wgen0015)  THEN
         RETURN "NOK".
     END.
 
-FOR FIRST crapcti FIELDS(cdcooper) WHERE crapcti.cdcooper = par_cdcooper
-                                     AND crapcti.nrdconta = par_nrdconta
-                                     AND crapcti.cddbanco = par_cddbanco
-                                     AND crapcti.cdageban = par_cdageban
-                                     AND crapcti.nrcpfcgc = par_nrcpfcgc
-                                     AND crapcti.nrctatrf = par_nrctatrf NO-LOCK. END.
-
-IF  NOT AVAIL crapcti  THEN
-    DO:
-RUN valida-inclusao-conta-transferencia IN h-b1wgen0015 
-                                       (INPUT par_cdcooper,
-                                        INPUT 90,
-                                        INPUT 900,
-                                        INPUT "996",
-                                        INPUT "INTERNETBANK",
-                                        INPUT 3,
-                                        INPUT par_nrdconta,
-                                        INPUT par_idseqttl,
-                                        INPUT par_dtmvtolt,
-                                        INPUT TRUE,
-                                        INPUT par_cddbanco,
-                                        INPUT par_cdispbif,
-                                        INPUT par_cdageban,
-                                        INPUT par_nrctatrf,
-                                        INPUT par_intipdif,
+        RUN valida-inclusao-conta-transferencia IN h-b1wgen0015 
+                                               (INPUT par_cdcooper,
+                                                INPUT 90,
+                                                INPUT 900,
+                                                INPUT "996",
+                                                INPUT "INTERNETBANK",
+                                                INPUT 3,
+                                                INPUT par_nrdconta,
+                                                INPUT par_idseqttl,
+                                                INPUT par_dtmvtolt,
+                                                INPUT TRUE,
+                                                INPUT par_cddbanco,
+                                                INPUT par_cdispbif,
+                                                INPUT par_cdageban,
+                                                INPUT par_nrctatrf,
+                                                INPUT par_intipdif,
                                                 INPUT-OUTPUT par_intipcta,
-                                        INPUT par_insitcta,
+                                                INPUT par_insitcta,
                                                 INPUT-OUTPUT par_inpessoa,
                                                 INPUT-OUTPUT par_nrcpfcgc,
-                                        INPUT TRUE,
-                                        INPUT par_rowidcti, /* Validacao de Registro */
+                                                INPUT TRUE,
+                                                INPUT par_rowidcti, /* Validacao de Registro */
                                                 INPUT-OUTPUT par_nmtitula,
-                                       OUTPUT aux_dscpfcgc,
-                                       OUTPUT aux_nmdcampo,
-                                       OUTPUT TABLE tt-erro).
-
-IF  RETURN-VALUE <> "OK"  THEN
-    DO: 
-        DELETE PROCEDURE h-b1wgen0015.
-
-        FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-        IF  AVAIL tt-erro  THEN
-            ASSIGN aux_dscritic = tt-erro.dscritic.
-        ELSE
-            ASSIGN aux_dscritic = "Nao foi possivel validar o cadastro.".
-
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>" +
-                              "<nmdcampo>" + aux_nmdcampo + "</nmdcampo>".
-        
-        RETURN "NOK".
-    END.
-
-/** Executar cadastramento do favorecido **/
-IF  par_flgexecu  THEN
-    DO: 
-        RUN inclui-conta-transferencia IN h-b1wgen0015 
-                                      (INPUT par_cdcooper,
-                                       INPUT 90,              /* cdagenci */
-                                       INPUT 900,             /* nrdcaixa */
-                                       INPUT "996",           /* cdoperad */
-                                       INPUT "INTERNETBANK",  /* nmdatela */
-                                       INPUT 3,               /* idorigem */
-                                       INPUT par_nrdconta,
-                                       INPUT par_idseqttl,
-                                       INPUT par_dtmvtolt,
-                                       INPUT par_nrcpfope,
-                                       INPUT TRUE,            /* flgerlog */
-                                       INPUT par_cddbanco,
-                                       INPUT par_cdageban,
-                                       INPUT par_nrctatrf,
-                                       INPUT par_nmtitula,
-                                       INPUT par_nrcpfcgc,
-                                       INPUT par_inpessoa,
-                                       INPUT par_intipcta,
-                                       INPUT par_intipdif,
-                                       INPUT par_rowidcti,
-                                       INPUT par_cdispbif,
-                                      OUTPUT aux_msgaviso,
-                                      OUTPUT TABLE tt-erro).
-    
+                                               OUTPUT aux_dscpfcgc,
+                                               OUTPUT aux_nmdcampo,
+                                               OUTPUT TABLE tt-erro).
+                                       
         IF  RETURN-VALUE <> "OK"  THEN
             DO: 
-                DELETE PROCEDURE h-b1wgen0015.
-        
                 FIND FIRST tt-erro NO-LOCK NO-ERROR.
-        
+
                 IF  AVAIL tt-erro  THEN
-                    ASSIGN aux_dscritic = tt-erro.dscritic.
+            ASSIGN aux_cdcritic = tt-erro.cdcritic
+                   aux_dscritic = tt-erro.dscritic.
                 ELSE
-                    ASSIGN aux_dscritic = "Nao foi possivel efetuar o cadastro.".
-        
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Nao foi possivel validar o cadastro.".
+
+        /* Nao retorna erro de conta ja cadastrada no processo de validacao */
+        IF  par_flgexecu OR aux_cdcritic <> 979 THEN
+            DO:
+                DELETE PROCEDURE h-b1wgen0015.
+
                 ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>" +
                                       "<nmdcampo>" + aux_nmdcampo + "</nmdcampo>".
                 
                 RETURN "NOK".
             END.
-    END.
+    END.    
+
+        /** Executar cadastramento do favorecido **/
+        IF  par_flgexecu  THEN
+            DO:               
+                RUN inclui-conta-transferencia IN h-b1wgen0015 
+                                              (INPUT par_cdcooper,
+                                               INPUT 90,              /* cdagenci */
+                                               INPUT 900,             /* nrdcaixa */
+                                               INPUT "996",           /* cdoperad */
+                                               INPUT "INTERNETBANK",  /* nmdatela */
+                                               INPUT 3,               /* idorigem */
+                                               INPUT par_nrdconta,
+                                               INPUT par_idseqttl,
+                                               INPUT par_dtmvtolt,
+                                               INPUT par_nrcpfope,
+                                               INPUT TRUE,            /* flgerlog */
+                                               INPUT par_cddbanco,
+                                               INPUT par_cdageban,
+                                               INPUT par_nrctatrf,
+                                               INPUT par_nmtitula,
+                                               INPUT par_nrcpfcgc,
+                                               INPUT par_inpessoa,
+                                               INPUT par_intipcta,
+                                               INPUT par_intipdif,
+                                               INPUT par_rowidcti,
+                                               INPUT par_cdispbif,
+                                              OUTPUT aux_msgaviso,
+                                              OUTPUT TABLE tt-erro).
+            
+                IF  RETURN-VALUE <> "OK"  THEN
+                    DO: 
+                        DELETE PROCEDURE h-b1wgen0015.
+                
+                        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+                
+                        IF  AVAIL tt-erro  THEN
+                            ASSIGN aux_dscritic = tt-erro.dscritic.
+                        ELSE
+                            ASSIGN aux_dscritic = "Nao foi possivel efetuar o cadastro.".
+                
+                        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>" +
+                                              "<nmdcampo>" + aux_nmdcampo + "</nmdcampo>".
+                        
+                        RETURN "NOK".
+                    END.
+            END.
+        ELSE
+            DO:
+        IF  aux_cdcritic = 979  THEN /* Conta ja cadastrada */
+            DO:
+                CREATE xml_operacao.
+                ASSIGN xml_operacao.dslinxml = '<gravafav>0</gravafav>' + 
+                                               '<nmtitula>' + par_nmtitula + '</nmtitula>' +
+                                               '<nrcpfcgc>' + STRING(par_nrcpfcgc,(IF par_inpessoa = 1 THEN '99999999999' ELSE '99999999999999')) + '</nrcpfcgc>' +
+                                               '<inpessoa>' + STRING(par_inpessoa) + '</inpessoa>' +
+                                               '<intipcta>' + STRING(par_intipcta) + '</intipcta>'.
+            END.
         ELSE
             DO:
                 CREATE xml_operacao.
@@ -225,18 +235,9 @@ IF  par_flgexecu  THEN
                                                '<inpessoa>' + STRING(par_inpessoa) + '</inpessoa>' +
                                                '<intipcta>' + STRING(par_intipcta) + '</intipcta>'.
             END.
+    END.
 
-DELETE PROCEDURE h-b1wgen0015.
-    END.
-ELSE IF NOT par_flgexecu THEN
-    DO:
-        CREATE xml_operacao.
-        ASSIGN xml_operacao.dslinxml = '<gravafav>0</gravafav>' + 
-                                       '<nmtitula></nmtitula>' +
-                                       '<nrcpfcgc>0</nrcpfcgc>' +
-                                       '<inpessoa>0</inpessoa>' +
-                                       '<intipcta>0</intipcta>'.
-    END.
+        DELETE PROCEDURE h-b1wgen0015.
 
 RETURN "OK".
             

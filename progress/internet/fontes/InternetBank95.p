@@ -202,7 +202,7 @@ DO:
 
             
             /* Verificar se existe valor para resgate*/
-            IF aux_vlresgat = 0 THEN
+            IF  aux_vlresgat = aux_vlrgttot  THEN
                 /* Valor solicitado para resgate = VALOR TOTAL */
                 ASSIGN aux_vlsolrgt = aux_vlrgttot
                        aux_tpresgat = 2.
@@ -343,11 +343,8 @@ DO:
                                                "</dtcarencia>" + 
                                                /* Novo IB */
                                                "<dtresgat>" +
-                                                   (IF par_dtmvtolt = ? THEN
-                                                       " "
-                                                    ELSE
-                                                       STRING(par_dtmvtolt,"99/99/9999")) +
-                                               "</dtresgat>" + 
+                                                   STRING(par_dtmvtolt,"99/99/9999") +
+                                               "</dtresgat>" +  
                                                "<dtcarenc>" +
                                                    STRING(tt-saldo-rdca.dtmvtolt + tt-saldo-rdca.qtdiacar,"99/99/9999") +
                                                "</dtcarenc>" + 

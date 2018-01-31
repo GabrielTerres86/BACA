@@ -9678,9 +9678,9 @@ PROCEDURE valida-inclusao-conta-transferencia:
                                             INPUT par_insitcta,
                                             INPUT par_inpessoa,
                                             INPUT DEC(par_nrcpfcgc),
-                                            INPUT INT(pr_flvldinc),
+                                            INPUT INT(par_flvldinc),
                                             INPUT INT(par_rowidcti),
-                                                  INPUT par_nmtitula,
+                                            INPUT par_nmtitula,
                                            OUTPUT "",
                                            OUTPUT "",
                                            OUTPUT 0,
@@ -9704,7 +9704,7 @@ PROCEDURE valida-inclusao-conta-transferencia:
            par_nmdcampo = pc_val_inclui_conta_transf.pr_nmdcampo 
                           WHEN pc_val_inclui_conta_transf.pr_nmdcampo <> ?
            par_nmtitula = pc_val_inclui_conta_transf.pr_nmtitula 
-                          WHEN pc_val_inclui_conta_transf.pr_nmtitula <> ?
+                          WHEN pc_val_inclui_conta_transf.pr_nmtitula <> ?                          
            par_nrcpfcgc = pc_val_inclui_conta_transf.pr_nrcpfcgc 
                           WHEN pc_val_inclui_conta_transf.pr_nrcpfcgc <> ?                          
            par_inpessoa = pc_val_inclui_conta_transf.pr_inpessoa 

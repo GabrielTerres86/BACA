@@ -273,8 +273,11 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                      ,pr_flgrestr IN INTEGER DEFAULT 1      --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
+                                     ,pr_iddspscp IN INTEGER                --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                                      --------> OUT <--------                                   
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Retornar nome do relatorio PDF
+                                     ,pr_dssrvarq OUT VARCHAR2              --> Nome do servidor para download do arquivo
+                                     ,pr_dsdirarq OUT VARCHAR2              --> Nome do diretório para download do arquivo                                                                                                                                   
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
 
@@ -1313,12 +1316,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		vr_inpessoa        NUMBER;
     vr_dtjurtab        DATE;
     vr_vlliquid        NUMBER;
-    
+
   BEGIN
     -- Limpa a PLTABLE
     pr_tab_chq_bordero.DELETE;
     pr_tab_bordero_restri.DELETE;
-    
+
     BEGIN
       -- Buscar data parametro de referencia para calculo de juros
       vr_dtjurtab :=	to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
@@ -1835,8 +1838,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                      ,pr_flgrestr IN INTEGER DEFAULT 1      --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
+                                     ,pr_iddspscp IN INTEGER                --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                                      --------> OUT <--------                                   
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Retornar nome do relatorio PDF
+                                     ,pr_dssrvarq OUT VARCHAR2              --> Nome do servidor para download do arquivo
+                                     ,pr_dsdirarq OUT VARCHAR2              --> Nome do diretório para download do arquivo                                                                                                                                   
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
     /* .........................................................................
@@ -2444,7 +2450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                         '<nmcheque></nmcheque>'||
                         '<dscpfcgc></dscpfcgc>');
         pc_escreve_xml( '</cheque>');
-        
+
         
       END IF;
 
@@ -2545,6 +2551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
       ELSIF pr_idorigem = 3 THEN
         
+        IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino
         GENE0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper
                                        ,pr_nmarqpdf => vr_dsdireto ||'/'|| pr_nmarqpdf
                                        ,pr_des_erro => vr_dscritic);
@@ -2565,7 +2572,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           vr_cdcritic := 0;
           RAISE vr_exc_erro;
         END IF;
+        ELSE
+          gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
+                                             ,pr_dsdirecp => vr_dsdireto||'/'
+                                             ,pr_nmarqucp => pr_nmarqpdf
+                                             ,pr_flgcopia => 0
+                                             ,pr_dssrvarq => pr_dssrvarq
+                                             ,pr_dsdirarq => pr_dsdirarq
+                                             ,pr_des_erro => vr_dscritic);
 
+          IF TRIM(vr_dscritic) <> '' THEN
+            vr_cdcritic := 0;
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
       END IF; -- pr_idorigem
 
     END IF; -- pr_idimpres = 7
@@ -2684,6 +2704,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
       -- Variaveis gerais
       vr_nmarqpdf VARCHAR2(1000);
+      vr_dssrvarq VARCHAR2(200);
+      vr_dsdirarq VARCHAR2(200);
 
     BEGIN
       -- Incluir nome do modulo logado
@@ -2730,7 +2752,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                              pr_flgemail => pr_flgemail,
                                              pr_flgerlog => pr_flgerlog,
                                              pr_flgrestr => pr_flgrestr,
+                                             pr_iddspscp => 0,
                                              pr_nmarqpdf => vr_nmarqpdf,
+                                             pr_dssrvarq => vr_dssrvarq,
+                                             pr_dsdirarq => vr_dsdirarq,                                           
                                              pr_cdcritic => vr_cdcritic,
                                              pr_dscritic => vr_dscritic);
         -- Se for titulo
@@ -7330,7 +7355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                              
                 26/07/2017 - Criada verificação de cheques com data de liberacao fora do limite.
                              PRJ300-Desconto de cheque(Lombardi) 
-                             
+
                 27/07/2017 - Ajuste para verificar custódia também para cheques que não são 
                              da cooperativa. PRJ300-Desconto de cheque(Lombardi)
 
@@ -7716,7 +7741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       vr_dscritic := 'Registro de parametros de desconto de cheques nao encontrado.';
       RAISE vr_exc_erro;    
     END IF;
-    
+
     -- Percorrer todos os cheques do bordero
     vr_vltotoperacao := 0;
     FOR rw_crapcdb IN cr_crapcdb(pr_cdcooper => pr_cdcooper
