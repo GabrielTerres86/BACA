@@ -21,6 +21,7 @@
                             corretamente a busca de empresas por
                             descricao
                             (Adriano).
+               18/01/2018 - Alteraçoes referente ao PJ406
 ..............................................................................*/
 
 DEF VAR aux_cdcooper AS INT                                     NO-UNDO.
@@ -48,6 +49,11 @@ DEF var aux_nrdolote AS INT                                     NO-UNDO.
 DEF var aux_cdempcon AS INT                                     NO-UNDO.
 DEF var aux_cdsegmto AS INT                                     NO-UNDO.
 DEF VAR aux_vlrtotal AS DEC                                     NO-UNDO.
+/* PJ406 */
+DEF VAR aux_dtipagto AS DATE                                    NO-UNDO.
+DEF VAR aux_dtfpagto AS DATE                                    NO-UNDO.
+DEF VAR aux_nrdconta AS INT                                     NO-UNDO.
+DEF VAR aux_nrautdoc AS CHAR                                    NO-UNDO.
 
 { sistema/generico/includes/b1wgen0101tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -87,6 +93,11 @@ PROCEDURE valores_entrada:
             WHEN "cdempcon" THEN aux_cdempcon = INTE(tt-param.valorCampo).
             WHEN "cdsegmto" THEN aux_cdsegmto = INTE(tt-param.valorCampo).
             WHEN "nmextcon" THEN aux_nmextcon = tt-param.valorCampo.
+            /* PJ406 */
+            WHEN "dtipagto" THEN aux_dtipagto = DATE(tt-param.valorCampo).
+            WHEN "dtfpagto" THEN aux_dtfpagto = DATE(tt-param.valorCampo).
+            WHEN "nrdconta" THEN aux_nrdconta = INTE(tt-param.valorCampo).
+            WHEN "nrautdoc" THEN aux_nrautdoc = tt-param.valorCampo.
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -130,13 +141,18 @@ PROCEDURE consulta_faturas:
                                  INPUT aux_dtdpagto,
                                  INPUT aux_vldpagto,
                                  INPUT aux_cdagenci,
-                                 INPUT aux_cdhistor,
                                  INPUT aux_flgpagin,
                                  INPUT aux_nrregist,
                                  INPUT aux_nriniseq,
                                  INPUT aux_cdempcon,
                                  INPUT aux_cdsegmto,
-                                 INPUT aux_flgcnvsi,
+                                 
+                                 /* PJ406 */
+                                 INPUT aux_dtipagto,
+                                 INPUT aux_dtfpagto,
+                                 INPUT aux_nrdconta,
+                                 INPUT aux_nrautdoc,
+                                 
                                  OUTPUT aux_qtregist,
                                  OUTPUT aux_vlrtotal,
                                  OUTPUT TABLE tt-dados-pesqti,
