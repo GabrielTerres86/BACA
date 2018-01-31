@@ -46,6 +46,7 @@
 |   gera_rating                          | RATI0001.pc_gera_rating             |
 |   obtem_emprestimo_risco               | RATI0002.pc_obtem_emprestimo_risco  |
 |   grava_rating                         | RATI0001.pc_grava_rating            |
+|	verificaQualificacao     		     | RATI0001.pc_verifica_qualificacao   |		
 +----------------------------------------+-------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -244,8 +245,8 @@
 
               11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
 
-                          26/01/2018 - Criada funcao para posicionar o contrato para pegar a Qualificacao
-                                                   da Operacao (Controle). (Diego Simas - AMcom)
+              26/01/2018 - Criada funcao para posicionar o contrato para pegar a Qualificacao
+                           da Operacao (Controle). (Diego Simas - AMcom)
 .............................................................................*/
   
   

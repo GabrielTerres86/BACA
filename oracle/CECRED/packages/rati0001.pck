@@ -692,35 +692,27 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                                       ,pr_tab_erro             OUT gene0001.typ_tab_erro --> Tabela de retorno de erro
                                       ,pr_des_reto             OUT VARCHAR2);
 
-  /* ***************************************************************************
+  /****************************************************************************
      
      Procedimento para atualização das perguntas de Garantia e Liquidez após 
      alteração dos avalistas na proposta de Empréstimo 
                                        
-     *************************************************************************** */
+  ****************************************************************************/
   PROCEDURE pc_atuali_garant_liquid_epr(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Conta do associado
                                        ,pr_nrctrato     IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
                                        ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro               
 
-  /* ***************************************************************************
-     
-     Procedimento para atualização das perguntas de Garantia e Liquidez após 
-     alteração dos avalistas na proposta de Empréstimo 
-                                       
-     *************************************************************************** */       
-  
-                  
-  PROCEDURE pc_verifica_qualificacao(pr_nrdconta IN NUMBER --> Número da conta
-                                    ,pr_nrctremp IN NUMBER --> Contrato
-                                    ,pr_cdcooper IN NUMBER --> Código da Cooperativa
-                                    ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
-                                    ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
-                                    ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
-                                    ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
-                                    ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-                                    ,pr_des_erro OUT VARCHAR2);           --Descricao do erro
-               
+  /***************************************************************************     
+    Função para retornar ID Qualificação quando alterado pelo controle.                                       
+  ****************************************************************************/       
+                    
+  FUNCTION fn_verifica_qualificacao(pr_nrdconta IN NUMBER  --> Número da conta
+                                   ,pr_nrctremp IN NUMBER  --> Contrato
+                                   ,pr_idquapro IN NUMBER  --> Id Qualif Operacao
+                                   ,pr_cdcooper IN NUMBER) --> Código da Cooperativa
+                            RETURN INTEGER;
+    
 END RATI0001;
 
 CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
@@ -7217,6 +7209,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   PROCEDURE pc_natureza_operacao(pr_tpctrato IN crapnrc.tpctrrat%TYPE --> Tipo Contrato Rating
                                 ,pr_idquapro IN INTEGER       --> Numero Contrato Rating
                                 ,pr_dsoperac IN VARCHAR2      --> Indicado se deve criar o rating
+                                ,pr_cdcooper IN INTEGER       --> Código da cooperativa
+                                ,pr_nrctrato IN INTEGER       --> Número do Contrato
+                                ,pr_nrdconta IN INTEGER       --> Número da Conta
                                 ,pr_nrseqite OUT NUMBER       --> Valor da dívida
                                 ,pr_dscritic OUT VARCHAR2) IS --> Descricao do erro
 
@@ -7237,15 +7232,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
                  28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                               ( Belli - Envolti - 28/06/2017 - Chamado 660306).
-
+                 
+                 31/01/2018 - Alteração para novos parâmetros de entrada 
+                              (Atendendo a qualificação da Oper. Controle)
+                              (Diego Simas - AMcom)  
 
   ............................................................................. */
   --------------- VARIAVEIS ----------------
+  
+  aux_idqualif INTEGER := 0; -- Id da Qualificação da Operação 
+                             --(alterada ou não pelo controle)
+  
   BEGIN
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_natureza_operacao');
-      
+    
     IF pr_tpctrato = 90 THEN  -- Emprestimo / Financiamento
       IF pr_idquapro > 2 THEN
         -- Renegociacao / Composicao de divida
@@ -8951,8 +8953,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         rat_dstpoper := rw_craplcr6.dsoperac;
 
         pc_natureza_operacao ( pr_tpctrato => pr_tpctrato          --> Tipo Contrato Rating
-                              ,pr_idquapro => rw_crawepr9.idquapro  --> Numero Contrato Rating
-                              ,pr_dsoperac => rw_craplcr6.dsoperac  --> Indicado se deve criar o rating
+                              ,pr_idquapro => rw_crawepr9.idquapro --> Numero Contrato Rating
+                              ,pr_dsoperac => rw_craplcr6.dsoperac --> Indicado se deve criar o rating
+                              ,pr_cdcooper => pr_cdcooper          --> Código da cooperativa
+                              ,pr_nrctrato => pr_nrctrato          --> Número do Contrato
+                              ,pr_nrdconta => pr_nrdconta          --> Número da Conta      
                               ,pr_nrseqite => vr_nrseqite          --> Valor da dívida
                               ,pr_dscritic => vr_dscritic);        --> Descricao do erro
 
@@ -8973,7 +8978,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         pc_natureza_operacao ( pr_tpctrato => pr_tpctrato          --> Tipo Contrato Rating
                               ,pr_idquapro => 1  /* Normal */      --> Numero Contrato Rating
                               ,pr_dsoperac => 'FINANCIAMENTO'      --> Indicado se deve criar o rating
-                              ,pr_nrseqite => vr_nrseqite          --> Valor da dívida
+                              ,pr_cdcooper => pr_cdcooper          --> Código da Cooperativa 
+                              ,pr_nrctrato => pr_nrctrato          --> Número do Contrato
+                              ,pr_nrdconta => pr_nrdconta          --> Número da Conta
+                              ,pr_nrseqite => vr_nrseqite          --> Valor da dívida                              
                               ,pr_dscritic => vr_dscritic);        --> Descricao do erro
         -- Se retornou erro
         IF vr_dscritic IS NOT NULL THEN
@@ -8996,6 +9004,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       pc_natureza_operacao ( pr_tpctrato => pr_tpctrato          --> Tipo Contrato Rating
                             ,pr_idquapro => 0                    --> Numero Contrato Rating
                             ,pr_dsoperac => null                 --> Indicado se deve criar o rating
+                            ,pr_cdcooper => pr_cdcooper          --> Código da Cooperativa
+                            ,pr_nrctrato => pr_nrctrato          --> Número do Contrato
+                            ,pr_nrdconta => pr_nrdconta          --> Número da Conta
                             ,pr_nrseqite => vr_nrseqite          --> Valor da dívida
                             ,pr_dscritic => vr_dscritic);        --> Descricao do erro
 
@@ -13107,143 +13118,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                      SQLERRM;
   END pc_grava_his_crapras;
   
-  PROCEDURE pc_verifica_qualificacao(pr_nrdconta IN NUMBER --> Número da conta
-                                    ,pr_nrctremp IN NUMBER --> Contrato
-                                    ,pr_cdcooper IN NUMBER --> Código da Cooperativa
-                                    ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
-                                    ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
-                                    ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
-                                    ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
-                                    ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-                                    ,pr_des_erro OUT VARCHAR2) IS      --> Erros do processo
-    /* .............................................................................
+  
+  /* Rotina responsavel por buscar a qualificacao da operacao alterada pelo controle */
+  FUNCTION fn_verifica_qualificacao (pr_nrdconta IN NUMBER  --> Número da conta
+                                    ,pr_nrctremp IN NUMBER  --> Contrato
+                                    ,pr_idquapro IN NUMBER  --> Id Qualif Operacao
+                                    ,pr_cdcooper IN NUMBER) RETURN INTEGER IS
+  BEGIN
+  /* ..........................................................................
 
-        Programa: pc_consultar_controle
-        Sistema : CECRED
-        Sigla   : EMPR
-        Autor   : Daniel/AMcom
-        Data    : Janeiro/2018                 Ultima atualizacao:
+     Programa: pc_verifica_qualificacao         Antigo: b1wgen0043.p/verificaQualificacao
+     Sistema : Conta-Corrente - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Diego Simas (AMcom)
+     Data    : Janeiro/2018.                          Ultima Atualizacao:
 
-        Dados referentes ao programa:
-        Frequencia: Sempre que for chamado
-        Objetivo  : Rotina para consultar Qualificacao
-        Observacao: -----
-        Alteracoes:
-      ..............................................................................*/
-      ----------->>> VARIAVEIS <<<--------
-      -- Variável de críticas
-      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
-      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+     Dados referentes ao programa:
 
-      -- Tratamento de erros
-      vr_exc_saida EXCEPTION;
+     Frequencia: Sempre que chamado por outros programas.
+     Objetivo  : Buscar o id da qualificação da operação
+                 quando alterada pelo Controle.
 
-      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
+     Alteracoes: 
 
-      vr_dstextab craptab.dstextab%TYPE;
+  ............................................................................. */
+    DECLARE
 
-      -- Variaveis retornadas da gene0004.pc_extrai_dados
-      vr_cdcooper INTEGER;
-      vr_cdoperad VARCHAR2(100);
-      vr_nmdatela VARCHAR2(100);
-      vr_nmeacao  VARCHAR2(100);
-      vr_cdagenci VARCHAR2(100);
-      vr_nrdcaixa VARCHAR2(100);
-      vr_idorigem VARCHAR2(100);
-
-      ---------->> CURSORES <<--------      
-      CURSOR cr_consulta_controle (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-				select nvl(crapepr.idquaprc
-             , crawepr.idquapro) idqua
+    CURSOR cr_consulta_qualificacao (pr_nrdconta IN crapepr.nrdconta%TYPE
+                                    ,pr_nrctremp IN crapepr.nrctremp%TYPE                                                 
+                                    ,pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+				select crapepr.idquaprc
           from crapepr
-             , crawepr
-         where crawepr.cdcooper = crapepr.cdcooper
-           and crawepr.nrdconta = crapepr.nrdconta
-           and crawepr.nrctremp = crapepr.nrctremp
-           and crapepr.cdcooper = pr_cdcooper
+         where crapepr.cdcooper = pr_cdcooper
            and crapepr.nrdconta = pr_nrdconta
            and crapepr.nrctremp = pr_nrctremp;
-         rw_consulta_controle cr_consulta_controle%ROWTYPE;
-
+           rw_consulta_qualificacao cr_consulta_qualificacao%ROWTYPE;      
     BEGIN
-
-      pr_des_erro := 'OK';
-      -- Extrai dados do xml
-      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
-                               pr_cdcooper => vr_cdcooper,
-                               pr_nmdatela => vr_nmdatela,
-                               pr_nmeacao  => vr_nmeacao,
-                               pr_cdagenci => vr_cdagenci,
-                               pr_nrdcaixa => vr_nrdcaixa,
-                               pr_idorigem => vr_idorigem,
-                               pr_cdoperad => vr_cdoperad,
-                               pr_dscritic => vr_dscritic);
-
-      -- Se retornou alguma crítica
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        -- Levanta exceção
-        RAISE vr_exc_saida;
-      END IF;
-
-      -- PASSA OS DADOS PARA O XML RETORNO
-      -- Criar cabeçalho do XML
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'Root',
-                             pr_posicao  => 0,
-                             pr_tag_nova => 'Dados',
-                             pr_tag_cont => NULL,
-                             pr_des_erro => vr_dscritic);
-      -- Insere as tags
-      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'Dados',
-                             pr_posicao  => 0,
-                             pr_tag_nova => 'inf',
-                             pr_tag_cont => NULL,
-                             pr_des_erro => vr_dscritic);
-
-      -- CAMPOS
-      -- Busca os dados
-      OPEN cr_consulta_controle(vr_cdcooper);
-     FETCH cr_consulta_controle
-      INTO rw_consulta_controle;
-     CLOSE cr_consulta_controle;
-
-      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'inf',
-                             pr_posicao  => vr_auxconta,
-                             pr_tag_nova => 'idqua',
-                             pr_tag_cont => rw_consulta_controle.idqua,
-                             pr_des_erro => vr_dscritic);
-
-     
-  EXCEPTION
-    WHEN vr_exc_saida THEN
-
-      IF vr_cdcritic <> 0 THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      OPEN cr_consulta_qualificacao(pr_nrdconta => pr_nrdconta  --> Número da conta
+                                   ,pr_nrctremp => pr_nrctremp  --> Contrato
+                                   ,pr_cdcooper => pr_cdcooper);
+                     
+      FETCH cr_consulta_qualificacao INTO rw_consulta_qualificacao;
+      
+      IF cr_consulta_qualificacao%NOTFOUND THEN
+         
+        --Fechar o cursor
+        CLOSE cr_consulta_qualificacao;
+        
+        RETURN pr_idquapro;
+      
       ELSE
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-      END IF;
-
-      pr_des_erro := 'NOK';
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;
-    WHEN OTHERS THEN
-
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
-      pr_des_erro := 'NOK';
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;
-  END pc_verifica_qualificacao;
+        --Fechar o cursor
+        CLOSE cr_consulta_qualificacao;
+        
+        RETURN rw_consulta_qualificacao.idquaprc;        
+      END IF;    
+    EXCEPTION
+      WHEN OTHERS THEN
+        RETURN NULL;
+    END;
+  END;  
   
 END RATI0001;
+
+
