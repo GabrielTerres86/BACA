@@ -934,6 +934,7 @@ DEF VAR aux_dtdiadeb AS CHAR                                           NO-UNDO.
 DEF VAR aux_tpvalida AS CHAR                                           NO-UNDO.
 DEF VAR aux_dstpcons AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsprotoc AS CHAR                                           NO-UNDO.
+DEF VAR aux_idtipapl AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_nrcpfapr AS DECI                                           NO-UNDO.
 DEF VAR aux_vltitulo AS DECI                                           NO-UNDO.
@@ -2373,24 +2374,6 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 214 THEN /* Obter quantidade de notificações não visualizadas do cooperado */
                 RUN proc_operacao214.
-        ELSE
-            IF  aux_operacao = 204 THEN /* Carregar os dados do upload do arquivo de pagamento */
-                RUN proc_operacao204.         
-        ELSE
-            IF  aux_operacao = 205 THEN /* Gravar a validaçao do upload do arquivo de pagamento */
-                RUN proc_operacao205. 
-        ELSE
-            IF  aux_operacao = 210 THEN /* Consultar o LOG de upload do arquivo de pagamento */
-                RUN proc_operacao210. 
-        ELSE
-            IF  aux_operacao = 211 THEN /* Consultar os titulos agendados pelo arquivo de pagamento */
-                RUN proc_operacao211. 
-        ELSE
-            IF  aux_operacao = 212 THEN /* Cancelar agendamento de pagamento feito por arquivo de pagamento*/
-                RUN proc_operacao212. 
-        ELSE
-            IF  aux_operacao = 213 THEN /* Relatorio dos titulos agendados pelo arquivo de pagamento */
-                RUN proc_operacao213. 
     END.
 /*....................................................................*/
     
@@ -2607,7 +2590,10 @@ PROCEDURE proc_operacao4:
            /* NPC */
            aux_flgregon = INTE(GET-VALUE("flgregon"))
            aux_inpagdiv = INTE(GET-VALUE("inpagdiv"))
-           aux_vlminimo = DECI(GET-VALUE("vlminimo")).
+           aux_vlminimo = DECI(GET-VALUE("vlminimo"))
+           
+           /* Configuracao do nome de emissao */
+           aux_idrazfan = INTE(GET-VALUE("aux_idrazfan")).
     
     RUN sistema/internet/fontes/InternetBank4.p (INPUT aux_cdcooper,
                                                  INPUT aux_nrdconta,
@@ -2663,6 +2649,7 @@ PROCEDURE proc_operacao4:
                                                  INPUT aux_inpagdiv,
                                                  INPUT aux_vlminimo,
 
+                                                 INPUT aux_idrazfan,
                                                   
                                                 OUTPUT aux_dsmsgerr,
                                                 OUTPUT TABLE xml_operacao).
@@ -5274,7 +5261,7 @@ PROCEDURE proc_operacao84:
            aux_qtdiacar = INTE(GET-VALUE("qtdiacar"))
            aux_cdperapl = INTE(GET-VALUE("cdperapl"))
            aux_flgvalid = LOGICAL(GET-VALUE("flgvalid")).
-
+           
     IF  GET-VALUE("idtipapl") <> '' THEN
         aux_idtipapl = GET-VALUE("idtipapl").
     ELSE
@@ -8862,7 +8849,7 @@ PROCEDURE proc_operacao197:
     ELSE
       FOR EACH xml_operacao NO-LOCK:
         {&out} xml_operacao.dslinxml.
-    END.
+        END.
     {&out} aux_tgfimprg.
 
 END PROCEDURE.
@@ -8957,6 +8944,7 @@ PROCEDURE proc_operacao213:
     ASSIGN aux_idstatus = INTE(GET-VALUE("aux_idstatus"))
            aux_tpdata   = INTE(GET-VALUE("aux_tpdata"))
            aux_tprelato = INTE(GET-VALUE("aux_tprelato"))
+           aux_iddspscp = INTE(GET-VALUE("aux_iddspscp"))
            aux_nrremret = ?
            aux_nmarquiv = ?
            aux_nmbenefi = ?
@@ -8999,6 +8987,7 @@ PROCEDURE proc_operacao213:
                                                    INPUT aux_dtiniper,
                                                    INPUT aux_dtfimper,
                                                    INPUT aux_tprelato,
+                                                   INPUT aux_iddspscp,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
                                                   

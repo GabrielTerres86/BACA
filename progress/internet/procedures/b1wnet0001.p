@@ -2347,6 +2347,8 @@ PROCEDURE gera-dados:
             RETURN "NOK".
         END.*/
         
+    IF  par_vldsacad < 2 THEN /* Quando receber valor 2 nao deve consultar sacados */
+        DO:
     RUN seleciona-sacados (INPUT par_cdcooper,
                            INPUT par_cdagenci,
                            INPUT par_nrdcaixa,
@@ -2387,7 +2389,6 @@ PROCEDURE gera-dados:
 
         IF  par_vldsacad = 1  THEN
         DO:
-        
             FIND FIRST tt-sacados-blt NO-LOCK NO-ERROR.
     
             IF  NOT AVAILABLE tt-sacados-blt  THEN
@@ -2420,6 +2421,7 @@ PROCEDURE gera-dados:
                                    
                     RETURN "NOK".
                 END.
+        END.
         END.
          
     FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND
