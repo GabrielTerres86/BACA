@@ -1008,6 +1008,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                                                          INPUT 0,
                                                                          INPUT tbcapt_trans_pend.nrdocto_agendamento,
                                                                          INPUT 2,
+                                                                         INPUT 0,
                                                                          INPUT "INTERNETBANK",    
                                                                          INPUT 3,
                                                                         OUTPUT TABLE tt-erro,

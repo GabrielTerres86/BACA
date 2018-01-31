@@ -5938,6 +5938,7 @@ PROCEDURE consulta-agendamento:
     DEF INPUT  PARAM p-id-seqttl     AS INTE                        NO-UNDO.
     DEF INPUT  PARAM p-nro-aplicacao AS INTE                        NO-UNDO.
     DEF INPUT  PARAM p-tip-aplicacao AS INTE                        NO-UNDO.
+    DEF INPUT  PARAM par_cdsitaar    LIKE crapaar.cdsitaar          NO-UNDO.
     DEF INPUT  PARAM p-cdprogra      AS CHAR                        NO-UNDO.    
     DEF INPUT  PARAM p-origem        AS INTE                        NO-UNDO.
                                        
@@ -5983,6 +5984,9 @@ PROCEDURE consulta-agendamento:
     DEF VAR aux_nrmesaar  LIKE crapaar.nrmesaar NO-UNDO.
     DEF VAR aux_qtmesaar  LIKE crapaar.qtmesaar NO-UNDO.
     DEF VAR aux_vlparaar  LIKE crapaar.vlparaar NO-UNDO.
+    DEF VAR aux_incancel  AS INTEGER            NO-UNDO.
+    DEF VAR aux_dssitaar  AS CHAR               NO-UNDO.
+    DEF VAR aux_dstipaar  AS CHAR               NO-UNDO.
                                       
     /* Inicializando objetos para leitura do XML */ 
     CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
@@ -6001,6 +6005,7 @@ PROCEDURE consulta-agendamento:
                           INPUT p-nro-conta,     
                           INPUT p-id-seqttl,
                           INPUT p-nro-aplicacao, 
+                          INPUT par_cdsitaar,
                           OUTPUT "",
                           OUTPUT 0,               
                           OUTPUT "").
@@ -6073,7 +6078,10 @@ PROCEDURE consulta-agendamento:
                aux_nrmesaar = 0
                aux_qtdiacar = 0
                aux_qtmesaar = 0
-               aux_vlparaar = 0.                                           
+               aux_vlparaar = 0
+               aux_incancel = 0
+               aux_dssitaar = ""
+               aux_dstipaar = "".
 
         DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
 
@@ -6111,46 +6119,53 @@ PROCEDURE consulta-agendamento:
                    aux_nrmesaar = INT(xText:NODE-VALUE)  WHEN xField:NAME = "nrmesaar"
                    aux_qtdiacar = INT(xText:NODE-VALUE)  WHEN xField:NAME = "qtdiacar"
                    aux_qtmesaar = INT(xText:NODE-VALUE)  WHEN xField:NAME = "qtmesaar"
-                   aux_vlparaar = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlparaar".
+                   aux_vlparaar = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlparaar"
+                   aux_incancel = INT(xText:NODE-VALUE)  WHEN xField:NAME = "incancel"
+                   aux_dssitaar = xText:NODE-VALUE       WHEN xField:NAME = "dssitaar"
+                   aux_dstipaar = xText:NODE-VALUE       WHEN xField:NAME = "dstipaar".
+            
             
         END. 
 
         CREATE tt-agendamento.
-        ASSIGN tt-agendamento.cdcooper = aux_cdcooper.
-               tt-agendamento.cdageass = aux_cdageass.
-               tt-agendamento.cdagenci = aux_cdagenci.
-               tt-agendamento.cdoperad = aux_cdoperad.
-               tt-agendamento.cdsitaar = aux_cdsitaar.
-               tt-agendamento.dtcancel = aux_dtcancel.
-               tt-agendamento.dtcarenc = aux_dtcarenc.
-               tt-agendamento.dtiniaar = aux_dtiniaar.
-               tt-agendamento.dtvencto = aux_dtvencto.
-               tt-agendamento.dtmvtolt = aux_dtmvtolt.
+        ASSIGN tt-agendamento.cdcooper = aux_cdcooper
+               tt-agendamento.cdageass = aux_cdageass
+               tt-agendamento.cdagenci = aux_cdagenci
+               tt-agendamento.cdoperad = aux_cdoperad
+               tt-agendamento.cdsitaar = aux_cdsitaar
+               tt-agendamento.dtcancel = aux_dtcancel
+               tt-agendamento.dtcarenc = aux_dtcarenc
+               tt-agendamento.dtiniaar = aux_dtiniaar
+               tt-agendamento.dtvencto = aux_dtvencto
+               tt-agendamento.dtmvtolt = aux_dtmvtolt
                tt-agendamento.flgctain = IF aux_flgctain = 0 THEN
                                             FALSE
                                          ELSE
-                                            TRUE.
+                                            TRUE
                tt-agendamento.flgresin = IF aux_flgresin = 0 THEN
                                             FALSE
                                          ELSE 
-                                            TRUE.
+                                            TRUE
                tt-agendamento.flgtipar = IF aux_flgtipar = 0 THEN
                                             FALSE
                                          ELSE 
-                                            TRUE.
+                                            TRUE
                tt-agendamento.flgtipin = IF aux_flgtipin = 0 THEN
                                             FALSE
                                          ELSE
-                                            TRUE.
-               tt-agendamento.hrtransa = aux_hrtransa.
-               tt-agendamento.idseqttl = aux_idseqttl.
-               tt-agendamento.nrctraar = aux_nrctraar.
-               tt-agendamento.nrdconta = aux_nrdconta.
-               tt-agendamento.nrdocmto = aux_nrdocmto.
-               tt-agendamento.nrmesaar = aux_nrmesaar.
-               tt-agendamento.qtdiacar = aux_qtdiacar.
-               tt-agendamento.qtmesaar = aux_qtmesaar.
-               tt-agendamento.vlparaar = aux_vlparaar.
+                                            TRUE
+               tt-agendamento.hrtransa = aux_hrtransa
+               tt-agendamento.idseqttl = aux_idseqttl
+               tt-agendamento.nrctraar = aux_nrctraar
+               tt-agendamento.nrdconta = aux_nrdconta
+               tt-agendamento.nrdocmto = aux_nrdocmto
+               tt-agendamento.nrmesaar = aux_nrmesaar
+               tt-agendamento.qtdiacar = aux_qtdiacar
+               tt-agendamento.qtmesaar = aux_qtmesaar
+               tt-agendamento.vlparaar = aux_vlparaar
+               tt-agendamento.incancel = aux_incancel
+               tt-agendamento.dssitaar = aux_dssitaar
+               tt-agendamento.dstipaar = aux_dstipaar.
 
                VALIDATE tt-agendamento.
     END.
@@ -6213,6 +6228,14 @@ PROCEDURE consulta-agendamento-det:
     DEF VAR aux_tpdvalor  LIKE craplau.tpdvalor NO-UNDO.
     DEF VAR aux_vllanaut  LIKE craplau.vllanaut NO-UNDO.
     DEF VAR aux_nrdocmto  AS   CHAR             NO-UNDO.
+    DEF VAR aux_flgtipar  AS   INTE             NO-UNDO.
+    DEF VAR aux_dstipaar  AS   CHAR             NO-UNDO.
+    DEF VAR aux_flgtipin  AS   INTE             NO-UNDO.
+    DEF VAR aux_dstipinv  AS   CHAR             NO-UNDO.
+    DEF VAR aux_qtdiacar  LIKE crapaar.qtdiacar NO-UNDO.
+    DEF VAR aux_dssitlau  AS   CHAR             NO-UNDO.
+    DEF VAR aux_vlsolaar  AS   DECI             NO-UNDO.
+    DEF VAR aux_dsprotoc  LIKE crappro.dsprotoc NO-UNDO. 
  
     /* Inicializando objetos para leitura do XML */ 
     CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
@@ -6327,7 +6350,15 @@ PROCEDURE consulta-agendamento-det:
                    aux_nrseqlan = INT(xText:NODE-VALUE)  WHEN xField:NAME = "nrseqlan"
                    aux_tpdvalor = INT(xText:NODE-VALUE)  WHEN xField:NAME = "tpdvalor"
                    aux_vllanaut = DEC(xText:NODE-VALUE)  WHEN xField:NAME = "vllanaut"
-                   aux_nrdocmto = xText:NODE-VALUE       WHEN xField:NAME = "nrdocmto".
+                   aux_nrdocmto = xText:NODE-VALUE       WHEN xField:NAME = "nrdocmto"
+                   aux_flgtipar = INTE(xText:NODE-VALUE) WHEN xField:NAME = "flgtipar"
+                   aux_dstipaar = xText:NODE-VALUE       WHEN xField:NAME = "dstipaar"
+                   aux_flgtipin = INTE(xText:NODE-VALUE) WHEN xField:NAME = "flgtipin"
+                   aux_dstipinv = xText:NODE-VALUE       WHEN xField:NAME = "dstipinv"
+                   aux_qtdiacar = INT(xText:NODE-VALUE)  WHEN xField:NAME = "qtdiacar"
+                   aux_dssitlau = xText:NODE-VALUE       WHEN xField:NAME = "dssitlau"
+                   aux_vlsolaar = DEC(xText:NODE-VALUE)  WHEN xField:NAME = "vlsolaar"
+                   aux_dsprotoc = xText:NODE-VALUE       WHEN xField:NAME = "dsprotoc".
 
         END. 
 
@@ -6348,7 +6379,15 @@ PROCEDURE consulta-agendamento-det:
                tt-agen-det.tpdvalor = aux_tpdvalor
                tt-agen-det.vllanaut = aux_vllanaut
                tt-agen-det.cdcooper = aux_cdcooper
-               tt-agen-det.nrdocmto = aux_nrdocmto.
+               tt-agen-det.nrdocmto = aux_nrdocmto
+               tt-agen-det.flgtipar = aux_flgtipar
+               tt-agen-det.dstipaar = aux_dstipaar
+               tt-agen-det.flgtipin = aux_flgtipin
+               tt-agen-det.dstipinv = aux_dstipinv
+               tt-agen-det.qtdiacar = aux_qtdiacar
+               tt-agen-det.dssitlau = aux_dssitlau
+               tt-agen-det.vlsolaar = aux_vlsolaar
+               tt-agen-det.dsprotoc = aux_dsprotoc.
 
         VALIDATE tt-agen-det.
     END.
