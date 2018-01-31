@@ -5,22 +5,22 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0015 is
   --  Sistema  : Rotinas para leitura das tabelas Ayllos e atualizacao das tabelas do cadastro unificado
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior (Mouts)
-  --  Data     : Agosto/2017.                   Ultima atualizacao: 
+  --  Data     : Agosto/2017.                   Ultima atualizacao:
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: OnLine
-  -- Objetivo  : 
+  -- Objetivo  :
   --
   ---------------------------------------------------------------------------------------------------------------
 
-   -- Funcao que recebera a conta e retornara o IDPESSOA 
+   -- Funcao que recebera a conta e retornara o IDPESSOA
   FUNCTION fn_busca_pessoa(pr_cdcooper crapass.cdcooper%TYPE  --> Codigo da cooperativa
                           ,pr_nrdconta crapass.nrdconta%TYPE  --> Numero da conta
                           ,pr_idseqttl crapttl.idseqttl%TYPE  --> Sequencia do titular
                           ,pr_nrcpfcgc crapass.nrcpfcgc%TYPE DEFAULT NULL ) --> CPF/CNPJ da pessoa
              RETURN NUMBER ;
-             
+
   -- Rotina para atualizacao da tabela de enderecos (CRAPENC)
   PROCEDURE pc_crapenc(pr_crapenc     IN crapenc%ROWTYPE  --> Tabela de Endereco atual
                       ,pr_tpoperacao  IN INTEGER          --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
@@ -33,13 +33,13 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0015 is
                                pr_cdestado  IN crapmun.cdestado%TYPE, -- Sigla de estado
                                pr_idcidade OUT crapmun.idcidade%TYPE, -- Identificador de cidade
                                pr_dscritic OUT VARCHAR2); -- Erro de execucao
-                  
+
   -- Rotina para atualizacao da tabela de telefones (CRAPTFC)
   PROCEDURE pc_craptfc(pr_craptfc     IN craptfc%ROWTYPE            --> Tabela de telefone atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
-                      ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro                      
+                      ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro
 
 
   -- Rotina para atualizacao da tabela de emails (CRAPCEM)
@@ -47,8 +47,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0015 is
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
-                      ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro                      
-  
+                      ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro
+
   -- Rotina para atualizacao da tabela de bens (CRAPBEM)
   PROCEDURE pc_crapbem(pr_crapbem     IN crapbem%ROWTYPE            --> Tabela de bem atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
@@ -61,8 +61,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0015 is
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
-                      ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro                      
-                      
+                      ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro
+
   -- Rotina para atualizacao da tabela de responsavel legal (CRAPCRL)
   PROCEDURE pc_crapcrl(pr_crapcrl     IN crapcrl%ROWTYPE            --> Tabela de responsavel legal atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
@@ -76,126 +76,126 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0015 is
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro
-  
+
   -- Rotina para atualizacao da tabela de conjuge (CRAPCJE)
   PROCEDURE pc_crapcje(pr_crapcje     IN crapcje%ROWTYPE            --> Tabela de conjuge atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
-                      ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro 
-  
+                      ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro
+
   -- Rotina para atualizacao da tabela de avalista (CRAPAVT)
   PROCEDURE pc_crapavt(pr_crapavt     IN crapavt%ROWTYPE            --> Tabela de avalista atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro
-                      
+
   -- Rotina para atualizacao da tabela de politico exposto (tbcadast_politico_exposto)
   PROCEDURE pc_politico_exposto( pr_politico_exposto  IN tbcadast_politico_exposto%ROWTYPE            --> Tabela de avalista atual
                                 ,pr_tpoperacao        IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                                 ,pr_idpessoa          IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                                 ,pr_cdoperad          IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
-                                ,pr_dscritic         OUT VARCHAR2);                 --> Retorno de Erro 
-  
+                                ,pr_dscritic         OUT VARCHAR2);                 --> Retorno de Erro
+
   -- Rotina para atualizacao da tabela de dados financeiros (CRAPJFN)
   PROCEDURE pc_crapjfn(pr_crapjfn     IN crapjfn%ROWTYPE            --> Tabela de email atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
-                      ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro                  
-                      
+                      ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro
+
   -- Rotina para atualizacao da tabela de dados titulares (CRAPTTL)
   PROCEDURE pc_crapttl(pr_crapttl     IN crapttl%ROWTYPE            --> Tabela de titular atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro
-                      
+
   -- Rotina para atualizacao da tabela de dados pessoa juridica (CRAPJUR)
   PROCEDURE pc_crapjur(pr_crapjur     IN crapjur%ROWTYPE            --> Tabela de juridica atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro
-  
+
   -- Rotina para atualizacao da tabela de dados pessoa (CRAPASS)
   PROCEDURE pc_crapass(pr_crapass     IN crapass%ROWTYPE            --> Tabela de associado atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro
-                      
+
   -- Rotina para processar registros pendentes de atualização
   PROCEDURE pc_processa_pessoa_atlz( pr_cdcooper  IN INTEGER DEFAULT NULL, --> Codigo da coperativa quando processo de replic. online
-                                     pr_nrdconta  IN INTEGER DEFAULT NULL, --> Nr. da conta quando processo de replic. online 
-                                     pr_dscritic   OUT VARCHAR2);          --> Retorno de Erro                    
+                                     pr_nrdconta  IN INTEGER DEFAULT NULL, --> Nr. da conta quando processo de replic. online
+                                     pr_dscritic   OUT VARCHAR2);          --> Retorno de Erro
 END CADA0015;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
-  
+
   -- Busca os dados da conta
   CURSOR cr_crapass( pr_cdcooper crapass.cdcooper%TYPE,
                      pr_nrdconta crapass.nrdconta%TYPE) IS
     SELECT nrcpfcgc
       FROM crapass
      WHERE cdcooper = pr_cdcooper
-       AND nrdconta = pr_nrdconta; 
-  
+       AND nrdconta = pr_nrdconta;
+
   -- Verifica se a pessoa ja possui cadastro de pessoa
   CURSOR cr_pessoa(pr_nrcpfcgc tbcadast_pessoa.nrcpfcgc%TYPE) IS
     SELECT *
       FROM tbcadast_pessoa
-     WHERE nrcpfcgc = pr_nrcpfcgc;  
-     
+     WHERE nrcpfcgc = pr_nrcpfcgc;
+
   -- Retornar todos os dados da pessoa fisica
   CURSOR cr_pessoa_fis (pr_idpessoa tbcadast_pessoa.idpessoa%TYPE) IS
     SELECT *
       FROM vwcadast_pessoa_fisica
-     WHERE idpessoa = pr_idpessoa;     
-  
+     WHERE idpessoa = pr_idpessoa;
+
   -- Retornar todos os dados da pessoa juridica
   CURSOR cr_pessoa_jur (pr_idpessoa tbcadast_pessoa.idpessoa%TYPE) IS
     SELECT *
       FROM vwcadast_pessoa_juridica
-     WHERE idpessoa = pr_idpessoa;     
-     
-  
+     WHERE idpessoa = pr_idpessoa;
+
+
   vr_exc_saida EXCEPTION;
-  
-  -- Rotina para gerar alerta de inconsistencia de cadastro de pessoa 
+
+  -- Rotina para gerar alerta de inconsistencia de cadastro de pessoa
   -- que não precisam ser enviados aos usuarios
   PROCEDURE pc_gerar_alerta_pessoa(pr_cdcooper    IN NUMBER                    --> Codigo da cooperativa
                                   ,pr_nrdconta    IN NUMBER                    --> Numero da conta  do cooperado
                                   ,pr_idseqttl    IN INTEGER                   --> Sequencial do titular
                                   ,pr_nmtabela    IN VARCHAR2                  --> Nome da tabela
                                   ,pr_dsalerta    IN VARCHAR2 ) IS             --> Descrição do alerta
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_gerar_alerta_pessoa
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Setembro/2017.                   Ultima atualizacao: 
+    --  Data     : Setembro/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Rotina para gerar alerta de inconsistencia de cadastro de pessoa 
+    --   Objetivo  : Rotina para gerar alerta de inconsistencia de cadastro de pessoa
     --               que não precisam ser enviados aos usuarios
     --
     --  Alteração :
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
+
+    ---------------> CURSORES <-----------------
     -- Cursor sobre os email da pessoa
-    
-    
-    ---------------> VARIAVEIS <----------------- 
+
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic crapcri.dscritic%TYPE;
@@ -203,14 +203,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     vr_exc_erro EXCEPTION;
 
   BEGIN
-    
+
     /* Ex. Pessoa nao encontrada - erro ocorre qnd é excluido o segundo titular,
            nessa situação, todos os dados como email, endereço também são excluidos, porém
            como a pessoa nao é encontrada gera alerta, mas nesse caso nao deve excluir mesmo
-           pois a pessoa continua a existir, podendo até ser de outras contas, 
+           pois a pessoa continua a existir, podendo até ser de outras contas,
            só perde o vinculo com a conta
     */
-    
+
     -- Insere na inconsistencia
     gene0005.pc_gera_inconsistencia(pr_cdcooper => nvl(pr_cdcooper,3)
                                    ,pr_iddgrupo => 3 -- CRM
@@ -223,7 +223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                    ': '||pr_dsalerta,1,500)
                                    ,pr_des_erro => vr_des_erro
                                    ,pr_dscritic => vr_dscritic);
-                        
+
 	  IF vr_des_erro <> 'OK' THEN
       RAISE vr_exc_erro;
     END IF;
@@ -233,10 +233,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       vr_dscritic := 'Erro nao tratado na pc_gerar_alerta_pessoa: '||SQLERRM;
-  END pc_gerar_alerta_pessoa;  
-  
-  
-  -- Funcao que recebera a conta e retornara o IDPESSOA 
+  END pc_gerar_alerta_pessoa;
+
+
+  -- Funcao que recebera a conta e retornara o IDPESSOA
   FUNCTION fn_busca_pessoa(pr_cdcooper crapass.cdcooper%TYPE  --> Codigo da cooperativa
                           ,pr_nrdconta crapass.nrdconta%TYPE  --> Numero da conta
                           ,pr_idseqttl crapttl.idseqttl%TYPE  --> Sequencia do titular
@@ -245,10 +245,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     -- Cursor para buscar o CPF/CNPJ do titular da conta
     CURSOR cr_crapass IS
       SELECT nrcpfcgc
-        FROM crapass 
+        FROM crapass
        WHERE cdcooper = pr_cdcooper
-         AND nrdconta = pr_nrdconta;             
-         
+         AND nrdconta = pr_nrdconta;
+
     -- Cursor para buscar o CPF para quando nao for o primeiro titular
     CURSOR cr_crapttl IS
       SELECT nrcpfcgc
@@ -262,7 +262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       SELECT idpessoa
         FROM tbcadast_pessoa
        WHERE nrcpfcgc = pr_nrcpfcgc;
-         
+
     -- Variaveis gerais
     vr_nrcpfcgc tbcadast_pessoa.nrcpfcgc%TYPE; -- Numero do CPF / CNPJ da pessoa
     vr_idpessoa tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa
@@ -279,25 +279,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       FETCH cr_crapttl INTO vr_nrcpfcgc;
       CLOSE cr_crapttl;
     END IF;
-    
+
     IF nvl(pr_nrdconta,0) = 0 AND
        nvl(pr_nrcpfcgc,0) > 0 THEN
       vr_nrcpfcgc := pr_nrcpfcgc;
-    END IF;   
-    
+    END IF;
+
     -- Busca o IDPESSOA
     OPEN cr_pessoa(pr_nrcpfcgc => vr_nrcpfcgc);
     FETCH cr_pessoa INTO vr_idpessoa;
     CLOSE cr_pessoa;
-    
+
     -- Retorna o ID da pessoa
     RETURN vr_idpessoa;
-    
+
   EXCEPTION
     WHEN OTHERS THEN
       RETURN NULL;
   END;
-  
+
   -- Rotina para buscar o municipio com base no nome
   PROCEDURE pc_trata_municipio(pr_dscidade  IN crapmun.dscidade%TYPE, -- Descricao da cidade
                                pr_cdestado  IN crapmun.cdestado%TYPE, -- Sigla de estado
@@ -320,25 +320,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                    'PR',3,4), a.cdestado;
 
   BEGIN
-    -- Se nao vier o ESTADO, deve-se priorizar SC, PR e RS. 
+    -- Se nao vier o ESTADO, deve-se priorizar SC, PR e RS.
     -- Foi feito cursor separado para nao perder performance para quando vier CIDADE e ESTADO
     IF pr_cdestado IS NULL THEN
       -- Busca o municipio
       OPEN cr_crapmun_sem_uf;
       FETCH cr_crapmun_sem_uf INTO pr_idcidade;
-      CLOSE cr_crapmun_sem_uf;      
+      CLOSE cr_crapmun_sem_uf;
     ELSE
       -- Busca o municipio
       OPEN cr_crapmun;
       FETCH cr_crapmun INTO pr_idcidade;
       CLOSE cr_crapmun;
-    END IF; 
+    END IF;
   EXCEPTION
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro não tratado na pc_trata_municipio: ' ||SQLERRM;
   END;
-  
+
   -- Rotina para atualizacao da tabela de enderecos (CRAPENC)
   PROCEDURE pc_crapenc(pr_crapenc     IN crapenc%ROWTYPE  --> Tabela de Endereco atual
                       ,pr_tpoperacao  IN INTEGER          --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
@@ -353,14 +353,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE enc.idpessoa   = pr_idpessoa
          AND enc.tpendereco = pr_tpendereco;
     rw_endereco cr_endereco%ROWTYPE;
-    
+
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa                      
+    vr_idpessoa tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa
     vr_pessoa_endereco tbcadast_pessoa_endereco%ROWTYPE; -- Registro de endereco
   BEGIN
     -- Se nao for informado o IDPESSOA, deve-se buscar
@@ -372,18 +372,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao de endereco';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
 
-    -- Busca os dados do tipo de endereco                                   
+    -- Busca os dados do tipo de endereco
     OPEN cr_endereco(pr_idpessoa   => vr_idpessoa,
                      pr_tpendereco => pr_crapenc.tpendass);
-    
+
     FETCH cr_endereco INTO rw_endereco;
     CLOSE cr_endereco;
-    
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       -- Se encontrou registro na busca
@@ -398,15 +398,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           RAISE vr_exc_erro;
         END IF;
       END IF;
-    ELSE -- Se for alteracao ou inclusao      
+    ELSE -- Se for alteracao ou inclusao
 
       --> carregar informações existentes, para garantir que informações
       --> que não existam nesta estrutura sejam perdidas.
       vr_pessoa_endereco := rw_endereco;
 
       -- Utilizar a sequencia que ja existe da alteracao. Se for inclusao sera vazio
-      vr_pessoa_endereco.nrseq_endereco         := rw_endereco.nrseq_endereco; 
-      
+      vr_pessoa_endereco.nrseq_endereco         := rw_endereco.nrseq_endereco;
+
       -- Busca o municipio
       pc_trata_municipio(pr_dscidade => pr_crapenc.nmcidade,
                          pr_cdestado => TRIM(pr_crapenc.cdufende),
@@ -425,12 +425,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       vr_pessoa_endereco.nmbairro               := pr_crapenc.nmbairro;
       vr_pessoa_endereco.nrcep                  := pr_crapenc.nrcepend;
       vr_pessoa_endereco.tpimovel               := pr_crapenc.incasprp;
-      vr_pessoa_endereco.vldeclarado            := pr_crapenc.vlalugue;     
+      vr_pessoa_endereco.vldeclarado            := pr_crapenc.vlalugue;
       vr_pessoa_endereco.dtalteracao            := pr_crapenc.dtaltenc;
       vr_pessoa_endereco.dtinicio_residencia    := pr_crapenc.dtinires;
       vr_pessoa_endereco.tporigem_cadastro      := pr_crapenc.idorigem;
       vr_pessoa_endereco.cdoperad_altera        := pr_cdoperad;
-      
+
       -- Efetua a inclusao
       cada0010.pc_cadast_pessoa_endereco(pr_pessoa_endereco => vr_pessoa_endereco
                                         ,pr_cdcritic => vr_cdcritic
@@ -438,9 +438,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
+
     END IF;
-                        
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -449,29 +449,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => pr_crapenc.idseqttl
                             ,pr_nmtabela => 'CRAPENC'
                             ,pr_dsalerta => vr_dscritic);
-    
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapenc: '||SQLERRM;
-  END;    
-  
+  END;
+
   -- Rotina para atualizacao da tabela de emails (CRAPCEM)
   PROCEDURE pc_crapcem(pr_crapcem     IN crapcem%ROWTYPE            --> Tabela de email atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_crapcem
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -482,8 +482,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
+
+    ---------------> CURSORES <-----------------
     -- Cursor sobre os email da pessoa
     CURSOR cr_email(pr_idpessoa    tbcadast_pessoa.idpessoa%TYPE,
                     pr_nrseq_email tbcadast_pessoa_email.nrseq_email%TYPE) IS
@@ -492,18 +492,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE idpessoa     = pr_idpessoa
          AND nrseq_email  = pr_nrseq_email;
     rw_email cr_email%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa                      
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa
     vr_pessoa_email    tbcadast_pessoa_email%ROWTYPE; -- Registro de email
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA do email
@@ -513,18 +513,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao do email';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
 
     -- Busca os dados do email
     OPEN cr_email(pr_idpessoa    => vr_idpessoa,
                   pr_nrseq_email => pr_crapcem.cddemail);
-    
+
     FETCH cr_email INTO rw_email;
     CLOSE cr_email;
-    
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       -- Se encontrou registro na busca
@@ -541,11 +541,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       END IF;
     ELSE -- Se for alteracao ou inclusao
       --> carregar informações existentes, para garantir que informações
-      --> que não existam nesta estrutura sejam perdidas.  
+      --> que não existam nesta estrutura sejam perdidas.
       vr_pessoa_email  := rw_email;
-    
+
       -- Utilizar a sequencia que ja existe da alteracao. Se for inclusao sera vazio
-      vr_pessoa_email.nrseq_email         := rw_email.nrseq_email; 
+      vr_pessoa_email.nrseq_email         := rw_email.nrseq_email;
 
       -- Popula os campos para inserir o registro
       vr_pessoa_email.idpessoa                := vr_idpessoa;
@@ -553,7 +553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       vr_pessoa_email.nmpessoa_contato        := pr_crapcem.nmpescto;
       vr_pessoa_email.nmsetor_pessoa_contato  := pr_crapcem.secpscto;
       vr_pessoa_email.cdoperad_altera         := pr_cdoperad;
-      
+
       -- Efetua a inclusao
       cada0010.pc_cadast_pessoa_email (pr_pessoa_email => vr_pessoa_email
                                       ,pr_cdcritic => vr_cdcritic
@@ -561,9 +561,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
+
     END IF;
-                        
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -572,29 +572,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => pr_crapcem.idseqttl
                             ,pr_nmtabela => 'CRAPCEM'
                             ,pr_dsalerta => vr_dscritic);
-    
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapcem: '||SQLERRM;
-  END pc_crapcem;  
-  
+  END pc_crapcem;
+
   -- Rotina para atualizacao da tabela de telefones (CRAPTFC)
   PROCEDURE pc_craptfc(pr_craptfc     IN craptfc%ROWTYPE            --> Tabela de telefone atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_craptfc
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -605,8 +605,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
+
+    ---------------> CURSORES <-----------------
     -- Buscar dados do telefone
     CURSOR cr_telefone( pr_idpessoa    tbcadast_pessoa.idpessoa%TYPE,
                         pr_nrseq_telefone tbcadast_pessoa_telefone.nrseq_telefone%TYPE) IS
@@ -615,18 +615,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE idpessoa     = pr_idpessoa
          AND nrseq_telefone  = pr_nrseq_telefone;
     rw_telefone cr_telefone%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;    -- Identificador de pessoa                      
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;    -- Identificador de pessoa
     vr_pessoa_telefone tbcadast_pessoa_telefone%ROWTYPE; -- Registro de telefone
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA do telefone
@@ -636,18 +636,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao do telefone';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
 
     -- Busca os dados do telefone
     OPEN cr_telefone(pr_idpessoa       => vr_idpessoa,
                      pr_nrseq_telefone => pr_craptfc.cdseqtfc);
-    
+
     FETCH cr_telefone INTO rw_telefone;
     CLOSE cr_telefone;
-    
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       -- Se encontrou registro na busca
@@ -663,13 +663,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         END IF;
       END IF;
     ELSE -- Se for alteracao ou inclusao
-      
+
       --> Carregar informações existentes, para garantir que informações
-      --> que não existam nesta estrutura sejam perdidas.  
+      --> que não existam nesta estrutura sejam perdidas.
       vr_pessoa_telefone := rw_telefone;
-      
+
       -- Utilizar a sequencia que ja existe da alteracao. Se for inclusao sera vazio
-      vr_pessoa_telefone.nrseq_telefone        := rw_telefone.nrseq_telefone; 
+      vr_pessoa_telefone.nrseq_telefone        := rw_telefone.nrseq_telefone;
 
       -- Popula os campos para inserir o registro
       vr_pessoa_telefone.idpessoa              := vr_idpessoa;
@@ -677,15 +677,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       vr_pessoa_telefone.tptelefone            := pr_craptfc.tptelefo ;
       vr_pessoa_telefone.nmpessoa_contato      := pr_craptfc.nmpescto ;
       vr_pessoa_telefone.nmsetor_pessoa_contato:= pr_craptfc.secpscto ;
-      vr_pessoa_telefone.nrddd                 := pr_craptfc.nrdddtfc ;   
+      vr_pessoa_telefone.nrddd                 := pr_craptfc.nrdddtfc ;
       vr_pessoa_telefone.nrtelefone            := pr_craptfc.nrtelefo ;
       vr_pessoa_telefone.nrramal               := pr_craptfc.nrdramal ;
       vr_pessoa_telefone.insituacao            := pr_craptfc.idsittfc ;
       vr_pessoa_telefone.tporigem_cadastro     := pr_craptfc.idorigem ;
       vr_pessoa_telefone.flgaceita_sms         := pr_craptfc.flgacsms ;
-      
+
       vr_pessoa_telefone.cdoperad_altera       := pr_cdoperad;
-      
+
       -- Efetua a inclusao
       cada0010.pc_cadast_pessoa_telefone (pr_pessoa_telefone => vr_pessoa_telefone
                                          ,pr_cdcritic => vr_cdcritic
@@ -693,9 +693,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
+
     END IF;
-                        
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -704,29 +704,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => pr_craptfc.idseqttl
                             ,pr_nmtabela => 'CRATFC'
                             ,pr_dsalerta => vr_dscritic);
-    
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_craptfc: '||SQLERRM;
-  END pc_craptfc;       
-  
+  END pc_craptfc;
+
   -- Rotina para atualizacao da tabela de bens (CRAPBEM)
   PROCEDURE pc_crapbem(pr_crapbem     IN crapbem%ROWTYPE            --> Tabela de bem atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_crapbem
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -737,28 +737,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
+
+    ---------------> CURSORES <-----------------
     -- Buscar dados do bem
     CURSOR cr_bem(pr_idpessoa   tbcadast_pessoa.idpessoa%TYPE,
                   pr_nrseq_bem  tbcadast_pessoa_bem.nrseq_bem%TYPE) IS
       SELECT *
-        FROM tbcadast_pessoa_bem 
+        FROM tbcadast_pessoa_bem
        WHERE idpessoa   = pr_idpessoa
          AND nrseq_bem  = pr_nrseq_bem;
     rw_bem cr_bem%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa                      
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa
     vr_pessoa_bem      tbcadast_pessoa_bem%ROWTYPE;   -- Registro de bem
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA do endereco
@@ -768,18 +768,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao do bem';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
 
     -- Busca os dados do bem
     OPEN cr_bem( pr_idpessoa  => vr_idpessoa,
                  pr_nrseq_bem => pr_crapbem.idseqbem);
-    
+
     FETCH cr_bem INTO rw_bem;
     CLOSE cr_bem;
-    
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       -- Se encontrou registro na busca
@@ -795,27 +795,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         END IF;
       END IF;
     ELSE -- Se for alteracao ou inclusao
-      
+
       --> Carregar informações existentes, para garantir que informações
-      --> que não existam nesta estrutura sejam perdidas.  
-      vr_pessoa_bem         := rw_bem; 
-      
+      --> que não existam nesta estrutura sejam perdidas.
+      vr_pessoa_bem         := rw_bem;
+
       -- Utilizar a sequencia que ja existe da alteracao. Se for inclusao sera vazio
-      vr_pessoa_bem.nrseq_bem         := nvl(rw_bem.nrseq_bem,pr_crapbem.idseqbem); 
+      vr_pessoa_bem.nrseq_bem         := nvl(rw_bem.nrseq_bem,pr_crapbem.idseqbem);
 
       -- Popula os campos para inserir o registro
       vr_pessoa_bem.idpessoa                := vr_idpessoa;
-      
-      
+
+
       vr_pessoa_bem.dsbem                   := pr_crapbem.dsrelbem;
       vr_pessoa_bem.pebem                   := greatest(pr_crapbem.persemon,0);
       vr_pessoa_bem.qtparcela_bem           := pr_crapbem.qtprebem;
       vr_pessoa_bem.vlbem                   := pr_crapbem.vlrdobem;
       vr_pessoa_bem.vlparcela_bem           := pr_crapbem.vlprebem;
       vr_pessoa_bem.dtalteracao             := pr_crapbem.dtaltbem;
-      
+
       vr_pessoa_bem.cdoperad_altera         := pr_cdoperad;
-      
+
       -- Efetua a inclusao
       cada0010.pc_cadast_pessoa_bem (pr_pessoa_bem => vr_pessoa_bem
                                     ,pr_cdcritic => vr_cdcritic
@@ -823,9 +823,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
+
     END IF;
-                        
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -834,29 +834,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => pr_crapbem.idseqttl
                             ,pr_nmtabela => 'CRAPBEM'
                             ,pr_dsalerta => vr_dscritic);
-    
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapbem: '||SQLERRM;
-  END pc_crapbem; 
-  
+  END pc_crapbem;
+
   -- Rotina para atualizacao da tabela de empresa participacao societaria (CRAPEPA)
   PROCEDURE pc_crapepa(pr_crapepa     IN crapepa%ROWTYPE            --> Tabela de empresa participacao societaria atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_crapepa
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -867,8 +867,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
+
+    ---------------> CURSORES <-----------------
     -- Buscar dados do empresa participacao societaria
     CURSOR cr_juridica_ptp( pr_idpessoa      tbcadast_pessoa.idpessoa%TYPE,
                             pr_idpessoa_par  tbcadast_pessoa_juridica_ptp.idpessoa_participacao%TYPE) IS
@@ -877,22 +877,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE ptp.idpessoa              = pr_idpessoa
          AND ptp.idpessoa_participacao = pr_idpessoa_par;
     rw_juridica_ptp cr_juridica_ptp%ROWTYPE;
-    
+
     rw_pessoa_par cr_pessoa%ROWTYPE;
     rw_crapass    cr_crapass%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa                      
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa
     vr_pessoa_ptp      tbcadast_pessoa_juridica_ptp%ROWTYPE;    -- Registro de bem
     vr_pessoa          vwcadast_pessoa_juridica%ROWTYPE;        -- Registro de pessoa juridica
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA do endereco
@@ -902,12 +902,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao da participação societaria';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
 
-    
+
     -- Se a empresa participante possui conta, busca os dados da conta dela
     IF pr_crapepa.nrctasoc > 0 THEN
       rw_crapass := NULL;
@@ -920,7 +920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         RAISE vr_exc_erro;
       END IF;
       CLOSE cr_crapass;
-      
+
       -- Verifica se esta empresa ja possui cadastro de pessoa
       rw_pessoa_par := NULL;
       OPEN cr_pessoa(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
@@ -945,13 +945,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         OPEN cr_pessoa(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
         FETCH cr_pessoa INTO rw_pessoa_par;
         CLOSE cr_pessoa;
-          
-      ELSE 
+
+      ELSE
         CLOSE cr_pessoa;
       END IF;
-    
+
     ELSE
-    
+
       -- Verifica se a empresa participante ja possui cadastro de pessoa
       rw_pessoa_par := NULL;
       OPEN cr_pessoa(pr_nrcpfcgc => pr_crapepa.nrdocsoc);
@@ -965,17 +965,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         vr_pessoa.cdoperad_altera     := pr_cdoperad;
         vr_pessoa.tpcadastro          := 1; -- Prospect
         vr_pessoa.tppessoa            := 2; -- Juridico
-        vr_pessoa.nmfantasia           := pr_crapepa.nmfansia; 
+        vr_pessoa.nmfantasia           := pr_crapepa.nmfansia;
         vr_pessoa.nrinscricao_estadual := pr_crapepa.nrinsest;
         IF nvl(pr_crapepa.natjurid,0) > 0 THEN
           vr_pessoa.cdnatureza_juridica  := pr_crapepa.natjurid;
         END IF;
         vr_pessoa.dtinicio_atividade   := pr_crapepa.dtiniatv;
-        vr_pessoa.qtfilial             := pr_crapepa.qtfilial; 
-        vr_pessoa.qtfuncionario        := pr_crapepa.qtfuncio; 
-        vr_pessoa.dssite               := pr_crapepa.dsendweb; 
-        vr_pessoa.cdsetor_economico    := pr_crapepa.cdseteco; 
-        vr_pessoa.cdramo_atividade     := pr_crapepa.cdrmativ; 
+        vr_pessoa.qtfilial             := pr_crapepa.qtfilial;
+        vr_pessoa.qtfuncionario        := pr_crapepa.qtfuncio;
+        vr_pessoa.dssite               := pr_crapepa.dsendweb;
+        vr_pessoa.cdsetor_economico    := pr_crapepa.cdseteco;
+        vr_pessoa.cdramo_atividade     := pr_crapepa.cdrmativ;
         vr_pessoa.nmpessoa             := pr_crapepa.nmprimtl;
 
         -- Insere o Cadastro de pessoa fisica
@@ -991,16 +991,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       ELSE
         CLOSE cr_pessoa;
       END IF;
-    END IF;  
-        
-    
+    END IF;
+
+
     -- Busca os dados empresa participacao societaria
     OPEN cr_juridica_ptp( pr_idpessoa     => vr_idpessoa,
                           pr_idpessoa_par => rw_pessoa_par.idpessoa);
-    
+
     FETCH cr_juridica_ptp INTO rw_juridica_ptp;
     CLOSE cr_juridica_ptp;
-        
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       -- Se encontrou registro na busca
@@ -1016,34 +1016,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         END IF;
       END IF;
     ELSE -- Se for alteracao ou inclusao
-      
+
       --> Carregar informações existentes, para garantir que informações
-      --> que não existam nesta estrutura sejam perdidas.  
-      vr_pessoa_ptp         := rw_juridica_ptp; 
-      
+      --> que não existam nesta estrutura sejam perdidas.
+      vr_pessoa_ptp         := rw_juridica_ptp;
+
       -- Utilizar a sequencia que ja existe da alteracao. Se for inclusao sera vazio
-      vr_pessoa_ptp.nrseq_participacao         := rw_juridica_ptp.nrseq_participacao; 
+      vr_pessoa_ptp.nrseq_participacao         := rw_juridica_ptp.nrseq_participacao;
 
       -- Popula os campos para inserir o registro
       vr_pessoa_ptp.idpessoa                   := vr_idpessoa;
-            
+
       vr_pessoa_ptp.idpessoa_participacao      := rw_pessoa_par.idpessoa;
       vr_pessoa_ptp.persocio                   := pr_crapepa.persocio;
       vr_pessoa_ptp.dtadmissao                 := pr_crapepa.dtadmiss;
-      
+
       vr_pessoa_ptp.cdoperad_altera         := pr_cdoperad;
-      
+
       -- Efetua a inclusao
-      cada0010.pc_cadast_pessoa_juridica_ptp 
+      cada0010.pc_cadast_pessoa_juridica_ptp
                                     (pr_pessoa_juridica_ptp => vr_pessoa_ptp
                                     ,pr_cdcritic => vr_cdcritic
                                     ,pr_dscritic => vr_dscritic);
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
+
     END IF;
-                        
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -1052,29 +1052,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => 1
                             ,pr_nmtabela => 'CRAPEPA'
                             ,pr_dsalerta => vr_dscritic);
-    
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapepa: '||SQLERRM;
-  END pc_crapepa;                                   
-  
+  END pc_crapepa;
+
   -- Rotina para atualizacao da tabela de responsavel legal (CRAPCRL)
   PROCEDURE pc_crapcrl(pr_crapcrl     IN crapcrl%ROWTYPE            --> Tabela de responsavel legal atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_crapcrl
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -1085,8 +1085,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
+
+    ---------------> CURSORES <-----------------
     -- Buscar dados do respponsavel legal
     CURSOR cr_fisica_resp( pr_idpessoa       tbcadast_pessoa.idpessoa%TYPE,
                            pr_idpessoa_resp  tbcadast_pessoa_fisica_resp.idpessoa_resp_legal%TYPE) IS
@@ -1095,14 +1095,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE res.idpessoa            = pr_idpessoa
          AND res.idpessoa_resp_legal = pr_idpessoa_resp;
     rw_fisica_resp cr_fisica_resp%ROWTYPE;
-    
+
     -- Verificar se existe a pessoa fisica
     CURSOR cr_pessoa_fisica(pr_nrcpf vwcadast_pessoa_fisica.nrcpf%TYPE) IS
       SELECT *
         FROM vwcadast_pessoa_fisica
        WHERE nrcpf   = pr_nrcpf;
     rw_pessoa_fisica  cr_pessoa_fisica%ROWTYPE;
-    
+
     -- Buscar dados da pessoa de relacao
     CURSOR cr_pessoa_rel ( pr_idpessoa   tbcadast_pessoa.idpessoa%TYPE,
                            pr_tprelacao  tbcadast_pessoa_relacao.tprelacao%TYPE) IS
@@ -1113,9 +1113,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
              tbcadast_pessoa pes
        WHERE rel.idpessoa         = pr_idpessoa
          AND rel.tprelacao        = pr_tprelacao
-         AND rel.idpessoa_relacao = pes.idpessoa; 
-    rw_pessoa_rel cr_pessoa_rel%ROWTYPE;  
-    
+         AND rel.idpessoa_relacao = pes.idpessoa;
+    rw_pessoa_rel cr_pessoa_rel%ROWTYPE;
+
     -- Verificar se existe endereco
     CURSOR cr_pessoa_endereco(pr_idpessoa   tbcadast_pessoa_endereco.idpessoa%TYPE,
                               pr_tpendereco tbcadast_pessoa_endereco.tpendereco%TYPE) IS
@@ -1124,24 +1124,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE enc.idpessoa   = pr_idpessoa
          AND enc.tpendereco = pr_tpendereco;
     rw_pessoa_endereco cr_pessoa_endereco%ROWTYPE;
-    
-    
+
+
     rw_pessoa_resp cr_pessoa%ROWTYPE;
     rw_crapass     cr_crapass%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa                      
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa
     vr_pessoa_resp     tbcadast_pessoa_fisica_resp%ROWTYPE;     -- Registro de responsavel legal
     vr_pessoa          vwcadast_pessoa_fisica%ROWTYPE;          -- Registro de pessoa
     vr_pessoa_endereco tbcadast_pessoa_endereco%ROWTYPE;        -- Registro de endereço
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA do endereco
@@ -1151,16 +1151,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao do responsavel legal';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
 
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
-    
+
       IF pr_crapcrl.nrdconta > 0 THEN
-        rw_crapass := NULL; 
+        rw_crapass := NULL;
         OPEN cr_crapass( pr_cdcooper => pr_crapcrl.cdcooper,
                          pr_nrdconta => pr_crapcrl.nrdconta);
         FETCH cr_crapass INTO rw_crapass;
@@ -1170,34 +1170,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           RAISE vr_exc_erro;
         END IF;
         CLOSE cr_crapass;
-          
+
         -- Verifica se este responsavel ja possui cadastro de pessoa
         rw_pessoa_resp := NULL;
         OPEN cr_pessoa(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
-        FETCH cr_pessoa INTO rw_pessoa_resp;        
-        CLOSE cr_pessoa;
-          
+        FETCH cr_pessoa INTO rw_pessoa_resp;
+        -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
+        IF cr_pessoa%NOTFOUND THEN
+          CLOSE cr_pessoa;
+        END IF;
+
       ELSE
-      
+
         -- Verifica se este responsavel ja possui cadastro de pessoa
         rw_pessoa_resp := NULL;
         OPEN cr_pessoa(pr_nrcpfcgc => pr_crapcrl.nrcpfcgc);
         FETCH cr_pessoa INTO rw_pessoa_resp;
-        CLOSE cr_pessoa;
-        
-      END IF;      
-      
+        -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
+        IF cr_pessoa%NOTFOUND THEN
+          CLOSE cr_pessoa;
+        END IF;
+
+      END IF;
+
       --> se localizou pessoa, deve excluir registro
       IF nvl(rw_pessoa_resp.idpessoa,0) > 0  THEN
-      
+
         -- Busca os dados responsavel legal
         rw_fisica_resp := NULL;
         OPEN cr_fisica_resp( pr_idpessoa      => vr_idpessoa,
                              pr_idpessoa_resp => rw_pessoa_resp.idpessoa);
-        
+
         FETCH cr_fisica_resp INTO rw_fisica_resp;
-        CLOSE cr_fisica_resp;    
-      
+        CLOSE cr_fisica_resp;
+
         -- Se encontrou registro na busca
         IF rw_fisica_resp.nrseq_resp_legal IS NOT NULL THEN
           -- Efetua a exclusao do registro
@@ -1211,12 +1217,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           END IF;
         END IF;
       END IF;
-   
+
     ELSE -- Se for alteracao ou inclusao
 
       -- Se o responsavel legal possui conta, busca os dados da conta dele
       IF pr_crapcrl.nrdconta > 0 THEN
-        rw_crapass := NULL; 
+        rw_crapass := NULL;
         OPEN cr_crapass( pr_cdcooper => pr_crapcrl.cdcooper,
                          pr_nrdconta => pr_crapcrl.nrdconta);
         FETCH cr_crapass INTO rw_crapass;
@@ -1226,7 +1232,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           RAISE vr_exc_erro;
         END IF;
         CLOSE cr_crapass;
-        
+
         -- Verifica se este responsavel ja possui cadastro de pessoa
         rw_pessoa_resp := NULL;
         OPEN cr_pessoa(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
@@ -1245,23 +1251,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
-          
+
           -- Busca a pessoa que foi cadastrada
           rw_pessoa_resp := NULL;
           OPEN cr_pessoa(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
           FETCH cr_pessoa INTO rw_pessoa_resp;
-          
+
         END IF;
         CLOSE cr_pessoa;
-    
+
       ELSE
-    
+
         -- Verifica se este responsavel ja possui cadastro de pessoa
         rw_pessoa_resp := NULL;
         OPEN cr_pessoa_fisica(pr_nrcpf => pr_crapcrl.nrcpfcgc);
         FETCH cr_pessoa_fisica INTO rw_pessoa_fisica;
         CLOSE cr_pessoa_fisica;
-      
+
         -- Efetua a inclusao de pessoa
         vr_pessoa := rw_pessoa_fisica;
         vr_pessoa.nrcpf                := pr_crapcrl.nrcpfcgc;
@@ -1269,15 +1275,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         vr_pessoa.idorgao_expedidor    := pr_crapcrl.idorgexp;
         vr_pessoa.cduf_orgao_expedidor := TRIM(pr_crapcrl.cdufiden);
         vr_pessoa.dtemissao_documento  := pr_crapcrl.dtemiden;
-        vr_pessoa.dtnascimento         := pr_crapcrl.dtnascin; 
-        vr_pessoa.tpsexo               := pr_crapcrl.cddosexo; 
+        vr_pessoa.dtnascimento         := pr_crapcrl.dtnascin;
+        vr_pessoa.tpsexo               := pr_crapcrl.cddosexo;
         IF nvl(pr_crapcrl.cdestciv,0) > 0 THEN
-          vr_pessoa.cdestado_civil     := pr_crapcrl.cdestciv; 
+          vr_pessoa.cdestado_civil     := pr_crapcrl.cdestciv;
         END IF;
-        vr_pessoa.nrdocumento          := pr_crapcrl.nridenti; 
-        vr_pessoa.tpdocumento          := pr_crapcrl.tpdeiden; 
+        vr_pessoa.nrdocumento          := pr_crapcrl.nridenti;
+        vr_pessoa.tpdocumento          := pr_crapcrl.tpdeiden;
         IF nvl(pr_crapcrl.cdnacion,0) > 0 THEN
-          vr_pessoa.cdnacionalidade    := pr_crapcrl.cdnacion; 
+          vr_pessoa.cdnacionalidade    := pr_crapcrl.cdnacion;
         END IF;
         vr_pessoa.tppessoa            := nvl(vr_pessoa.tppessoa  ,1); -- Fisica
         vr_pessoa.tpcadastro          := nvl(vr_pessoa.tpcadastro,2); -- Basico
@@ -1295,7 +1301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             RAISE vr_exc_erro;
           END IF;
         END IF;
-          
+
         -- Insere o Cadastro de pessoa fisica
         cada0010.pc_cadast_pessoa_fisica(pr_pessoa_fisica => vr_pessoa,
                                          pr_cdcritic      => vr_cdcritic,
@@ -1303,7 +1309,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-          
+
         -- Atualiza o IDPESSOA na variavel de uso
         rw_pessoa_resp.idpessoa := vr_pessoa.idpessoa;
 
@@ -1312,9 +1318,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                              pr_tprelacao => 3); -- Pai
         FETCH cr_pessoa_rel INTO rw_pessoa_rel;
         CLOSE cr_pessoa_rel;
-      
+
         --> se possia inf do pai, porém agora o campo esta vazio, deve deletar
-        IF rw_pessoa_rel.nrseq_relacao > 0 AND 
+        IF rw_pessoa_rel.nrseq_relacao > 0 AND
            ( TRIM(pr_crapcrl.nmpairsp) IS NULL OR
              pr_crapcrl.nmpairsp <> rw_pessoa_rel.nmpessoa ) THEN
           -- Efetua a exclusao do registro
@@ -1325,13 +1331,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                               pr_dscritic           => vr_dscritic);
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
-          END IF; 
-        END IF;         
-      
+          END IF;
+        END IF;
+
         -- se possui nome do pai, e é diferente do atual
         IF TRIM(pr_crapcrl.nmpairsp) IS NOT NULL AND
-           nvl(pr_crapcrl.nmpairsp,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN      
-        
+           nvl(pr_crapcrl.nmpairsp,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN
+
           CADA0011.pc_trata_pessoa_relacao( pr_idpessoa => vr_pessoa.idpessoa,
                                             pr_tprelacao=> 3, -- Pai
                                             pr_nmpessoa => pr_crapcrl.nmpairsp,
@@ -1349,9 +1355,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                              pr_tprelacao => 4); -- Mae
         FETCH cr_pessoa_rel INTO rw_pessoa_rel;
         CLOSE cr_pessoa_rel;
-      
+
         --> se possia inf do mae, porém agora o campo esta vazio, deve deletar
-        IF rw_pessoa_rel.nrseq_relacao > 0 AND 
+        IF rw_pessoa_rel.nrseq_relacao > 0 AND
            ( TRIM(pr_crapcrl.nmmaersp) IS  NULL OR
              pr_crapcrl.nmmaersp <> rw_pessoa_rel.nmpessoa ) THEN
           -- Efetua a exclusao do registro
@@ -1362,13 +1368,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                               pr_dscritic           => vr_dscritic);
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
-          END IF; 
-        END IF;    
-      
+          END IF;
+        END IF;
+
         -- se possui nome do mae, e é diferente do atual
         IF TRIM(pr_crapcrl.nmmaersp) IS NOT NULL AND
-           nvl(pr_crapcrl.nmmaersp,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN      
-        
+           nvl(pr_crapcrl.nmmaersp,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN
+
           CADA0011.pc_trata_pessoa_relacao( pr_idpessoa => vr_pessoa.idpessoa,
                                             pr_tprelacao=> 4, -- Mae
                                             pr_nmpessoa => pr_crapcrl.nmmaersp,
@@ -1382,19 +1388,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
         -- Efetua a tratativa de endereco
         -- Verificar se existe endereco
-          OPEN cr_pessoa_endereco(pr_idpessoa   => vr_pessoa.idpessoa,
+        OPEN cr_pessoa_endereco(pr_idpessoa   => vr_pessoa.idpessoa,
                                 pr_tpendereco => 10); --Residencial
         FETCH cr_pessoa_endereco INTO rw_pessoa_endereco;
         CLOSE cr_pessoa_endereco;
-        
+
         vr_pessoa_endereco                 := rw_pessoa_endereco;
         vr_pessoa_endereco.idpessoa        := vr_pessoa.idpessoa;
         vr_pessoa_endereco.tpendereco      := 10; --Residencial
-        vr_pessoa_endereco.nrcep           := pr_crapcrl.cdcepres; 
-        vr_pessoa_endereco.nmlogradouro    := pr_crapcrl.dsendres; 
-        vr_pessoa_endereco.nrlogradouro    := pr_crapcrl.nrendres; 
-        vr_pessoa_endereco.dscomplemento   := pr_crapcrl.dscomres; 
-        vr_pessoa_endereco.nmbairro        := pr_crapcrl.dsbaires; 
+        vr_pessoa_endereco.nrcep           := pr_crapcrl.cdcepres;
+        vr_pessoa_endereco.nmlogradouro    := pr_crapcrl.dsendres;
+        vr_pessoa_endereco.nrlogradouro    := pr_crapcrl.nrendres;
+        vr_pessoa_endereco.dscomplemento   := pr_crapcrl.dscomres;
+        vr_pessoa_endereco.nmbairro        := pr_crapcrl.dsbaires;
         vr_pessoa_endereco.cdoperad_altera := pr_cdoperad;
 
         -- Trata o municipio
@@ -1409,7 +1415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             RAISE vr_exc_erro;
           END IF;
         END IF;
-            
+
         -- Efetua a inclusao
         cada0010.pc_cadast_pessoa_endereco(pr_pessoa_endereco => vr_pessoa_endereco
                                           ,pr_cdcritic => vr_cdcritic
@@ -1417,30 +1423,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-      END IF; -- Fim da verificacao se o responsavel legal ja possui cadastro como pessoa         ;        
-    
+      END IF; -- Fim da verificacao se o responsavel legal ja possui cadastro como pessoa         ;
+
       -- Busca os dados responsavel legal
       OPEN cr_fisica_resp( pr_idpessoa      => vr_idpessoa,
                            pr_idpessoa_resp => rw_pessoa_resp.idpessoa);
-      
+
       FETCH cr_fisica_resp INTO rw_fisica_resp;
       CLOSE cr_fisica_resp;
-        
+
       --> Carregar informações existentes, para garantir que informações
-      --> que não existam nesta estrutura sejam perdidas.  
-      vr_pessoa_resp     := rw_fisica_resp; 
-        
+      --> que não existam nesta estrutura sejam perdidas.
+      vr_pessoa_resp     := rw_fisica_resp;
+
       -- Utilizar a sequencia que ja existe da alteracao. Se for inclusao sera vazio
-      vr_pessoa_resp.nrseq_resp_legal     := rw_fisica_resp.nrseq_resp_legal; 
+      vr_pessoa_resp.nrseq_resp_legal     := rw_fisica_resp.nrseq_resp_legal;
 
       -- Popula os campos para inserir o registro
       vr_pessoa_resp.idpessoa               := vr_idpessoa;
-            
+
       vr_pessoa_resp.idpessoa_resp_legal    := rw_pessoa_resp.idpessoa;
       vr_pessoa_resp.cdrelacionamento       := pr_crapcrl.cdrlcrsp;
-      
+
       vr_pessoa_resp.cdoperad_altera        := pr_cdoperad;
-      
+
       -- Efetua a inclusao
       cada0010.pc_cadast_pessoa_fisica_resp (pr_pessoa_fisica_resp => vr_pessoa_resp
                                             ,pr_cdcritic => vr_cdcritic
@@ -1448,9 +1454,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
+
     END IF;
-                       
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -1459,29 +1465,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => pr_crapcrl.idseqmen
                             ,pr_nmtabela => 'CRAPCRL'
                             ,pr_dsalerta => vr_dscritic);
-    
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapcrl: '||SQLERRM;
-  END pc_crapcrl;                                   
-                                              
+  END pc_crapcrl;
+
   -- Rotina para atualizacao da tabela de dependentes(CRAPDEP)
   PROCEDURE pc_crapdep(pr_crapdep     IN crapdep%ROWTYPE            --> Tabela de responsavel legal atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_crapdep
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -1492,8 +1498,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
+
+    ---------------> CURSORES <-----------------
     -- Buscar dados do dependente
     CURSOR cr_fisica_dep( pr_idpessoa  tbcadast_pessoa.idpessoa%TYPE,
                           pr_nmpessoa  tbcadast_pessoa.nmpessoa%TYPE) IS
@@ -1504,22 +1510,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
          AND dep.idpessoa_dependente = pes.idpessoa
          AND pes.nmpessoa            = pr_nmpessoa;
     rw_fisica_dep cr_fisica_dep%ROWTYPE;
-    
+
     rw_pessoa_dep  cr_pessoa_fis%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa          tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa                      
+    vr_idpessoa          tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa
     vr_pessoa_fisica_dep tbcadast_pessoa_fisica_dep%ROWTYPE;      -- Registro de dependete
     vr_pessoa            vwcadast_pessoa_fisica%ROWTYPE;          -- Registro de pessoa
 
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA do dependente
@@ -1529,18 +1535,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao do dependente';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
-    
+
     -- Busca os dados do dependente
     OPEN cr_fisica_dep(pr_idpessoa  => vr_idpessoa,
                        pr_nmpessoa  => pr_crapdep.nmdepend);
-    
+
     FETCH cr_fisica_dep INTO rw_fisica_dep;
     CLOSE cr_fisica_dep;
-    
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       -- Se encontrou registro na busca
@@ -1556,13 +1562,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         END IF;
       END IF;
     ELSE -- Se for alteracao ou inclusao
-      
+
       -- buscar dados pessoa fisica
       rw_pessoa_dep := NULL;
       OPEN cr_pessoa_fis(pr_idpessoa => rw_fisica_dep.idpessoa_dependente);
       FETCH cr_pessoa_fis INTO rw_pessoa_dep;
       CLOSE cr_pessoa_fis;
-      
+
       -- se nao encontrou a pessoa ou o nome é diferente, deve criar a pessoa
       IF nvl(rw_pessoa_dep.nmpessoa,' ') <> nvl(pr_crapdep.nmdepend,' ') THEN
         -- Cria o prospect de dependente
@@ -1570,8 +1576,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       ELSE
         --> se é o mesmo nome carrega dados
         vr_pessoa := rw_pessoa_dep;
-      END IF;  
-      
+      END IF;
+
       vr_pessoa.cdoperad_altera     := pr_cdoperad;
       vr_pessoa.tpcadastro          := nvl(vr_pessoa.tpcadastro,1); -- Prospect
       vr_pessoa.tppessoa            := nvl(vr_pessoa.tppessoa  ,1); -- Fisico
@@ -1585,11 +1591,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-                  
+
       --> Carregar informações existentes, para garantir que informações
-      --> que não existam nesta estrutura sejam perdidas.  
+      --> que não existam nesta estrutura sejam perdidas.
       vr_pessoa_fisica_dep := rw_fisica_dep;
-            
+
       -- Atualiza a pessoa dependente
       vr_pessoa_fisica_dep.idpessoa_dependente := vr_pessoa.idpessoa;
       vr_pessoa_fisica_dep.idpessoa            := vr_idpessoa;
@@ -1602,12 +1608,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                           ,pr_dscritic          => vr_dscritic);
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-      END IF;      
-    
-    END IF;  
-    
-  
-                       
+      END IF;
+
+    END IF;
+
+
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -1616,7 +1622,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => 1
                             ,pr_nmtabela => 'CRAPDEP'
                             ,pr_dsalerta => vr_dscritic);
-    
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
@@ -1624,20 +1630,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapdep: '||SQLERRM;
   END pc_crapdep;
-  
+
   -- Rotina para cadastrar/atualizar pessoa conjuge
-  PROCEDURE pc_pessoa_cje( pr_crapcje     IN crapcje%ROWTYPE                   --> Tabela de conjuge atual                      
+  PROCEDURE pc_pessoa_cje( pr_crapcje     IN crapcje%ROWTYPE                   --> Tabela de conjuge atual
                           ,pr_idpessoa    IN OUT tbcadast_pessoa.idpessoa%TYPE --> Identificador de pessoa
                           ,pr_cdoperad    IN crapope.cdoperad%TYPE             --> Operador que esta efetuando a operacao
                           ,pr_dscritic   OUT VARCHAR2) IS                      --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_pessoa_cje
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -1648,36 +1654,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
-    
+
+    ---------------> CURSORES <-----------------
+
     --> Retornar dados pessoa renda
     CURSOR cr_pessoa_renda (pr_idpessoa tbcadast_pessoa.idpessoa%TYPE) IS
       SELECT *
         FROM tbcadast_pessoa_renda ren
        WHERE ren.idpessoa = pr_idpessoa;
     rw_pessoa_renda cr_pessoa_renda%ROWTYPE;
-    
+
     --> Retornar dados pessoa pelo id
     CURSOR cr_pessoa_id (pr_idpessoa tbcadast_pessoa.idpessoa%TYPE) IS
       SELECT *
         FROM tbcadast_pessoa pes
        WHERE pes.idpessoa = pr_idpessoa;
-       
+
     -- Cursor para verificar se existe a pessoa juridica
     CURSOR cr_pessoa_juridica(pr_nrcnpj vwcadast_pessoa_juridica.nrcnpj%TYPE) IS
       SELECT *
         FROM vwcadast_pessoa_juridica
        WHERE nrcnpj   = pr_nrcnpj;
     rw_pessoa_juridica  cr_pessoa_juridica%ROWTYPE;
-    
+
     -- Verificar se existe a pessoa fisica
     CURSOR cr_pessoa_fisica(pr_nrcpf vwcadast_pessoa_fisica.nrcpf%TYPE) IS
       SELECT *
         FROM vwcadast_pessoa_fisica
        WHERE nrcpf   = pr_nrcpf;
     rw_pessoa_fisica  cr_pessoa_fisica%ROWTYPE;
-    
+
     -- Cursor para verificar se existe telefone para o conjuge
     CURSOR cr_pessoa_telefone(pr_idpessoa   tbcadast_pessoa_telefone.idpessoa%TYPE,
                               pr_tptelefone tbcadast_pessoa_telefone.tptelefone%TYPE) IS
@@ -1686,31 +1692,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE idpessoa   = pr_idpessoa
          AND tptelefone = pr_tptelefone;
     rw_pessoa_telefone cr_pessoa_telefone%ROWTYPE;
-    
-    
+
+
     rw_pessoa_jur_fonte cr_pessoa_jur%ROWTYPE;
     rw_pessoa           cr_pessoa%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
-    -- Variaveis auxiliares       
-    vr_pessoa_fis      vwcadast_pessoa_fisica%ROWTYPE;          -- Registro de pessoa    
+    -- Variaveis auxiliares
+    vr_pessoa_fis      vwcadast_pessoa_fisica%ROWTYPE;          -- Registro de pessoa
     vr_flcria_empresa  BOOLEAN;                                 -- Indicador se deve criar a empresa de trabalho do conjuge
     vr_nrddd           tbcadast_pessoa_telefone.nrddd%TYPE;     -- Numero do DDD
     vr_nrtelefone      tbcadast_pessoa_telefone.nrtelefone%TYPE;-- Numero do telefone
-    vr_nrramal         tbcadast_pessoa_telefone.nrramal%TYPE;   -- Numero do Ramal                             
-    
+    vr_nrramal         tbcadast_pessoa_telefone.nrramal%TYPE;   -- Numero do Ramal
+
   BEGIN
-  
+
     -- Se possuir conta
-    IF pr_crapcje.nrctacje > 0 THEN     
+    IF pr_crapcje.nrctacje > 0 THEN
       -- Se nao existe a pessoa, deve-se criar
       IF nvl(pr_idpessoa,0) = 0 THEN
-        
+
         -- Efetua a inclusao de pessoa
         cada0011.pc_insere_pessoa_crapass(pr_cdcooper => pr_crapcje.cdcooper,
                                           pr_nrdconta => pr_crapcje.nrctacje,
@@ -1722,7 +1728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
         -- Busca o ID PESSOA
         pr_idpessoa := fn_busca_pessoa(pr_cdcooper => pr_crapcje.cdcooper,
                                        pr_nrdconta => pr_crapcje.nrctacje,
@@ -1730,24 +1736,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF pr_idpessoa IS NULL THEN
           vr_dscritic := 'Nao encontrado pessoa Conjuge';
           RAISE vr_exc_erro;
-        END IF;  
-                    
+        END IF;
+
       END IF;
-        
+
     ELSE
       --> Validar dado
-      IF nvl(pr_crapcje.nrcpfcjg,0) = 0 AND 
+      IF nvl(pr_crapcje.nrcpfcjg,0) = 0 AND
          TRIM(pr_crapcje.nmconjug) IS NULL THEN
         vr_dscritic := 'Conjuge sem CPF e nome.';
         RAISE vr_exc_erro;
-        
+
       ELSE
-      
+
         --> Inserir/atualizar pessoa
         OPEN cr_pessoa_fis(pr_idpessoa => pr_idpessoa);
         FETCH cr_pessoa_fis INTO vr_pessoa_fis;
         CLOSE cr_pessoa_fis;
-        
+
         IF nvl(pr_crapcje.nrcpfcjg,0) > 0 THEN
           vr_pessoa_fis.nrcpf                := pr_crapcje.nrcpfcjg;
         END IF;
@@ -1758,12 +1764,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         vr_pessoa_fis.tpdocumento          := pr_crapcje.tpdoccje;
         vr_pessoa_fis.nrdocumento          := pr_crapcje.nrdoccje;
         IF pr_crapcje.idorgexp <> 0 THEN
-          vr_pessoa_fis.idorgao_expedidor    := pr_crapcje.idorgexp; 
+          vr_pessoa_fis.idorgao_expedidor    := pr_crapcje.idorgexp;
         END IF;
         vr_pessoa_fis.cduf_orgao_expedidor := trim(pr_crapcje.cdufdcje);
         vr_pessoa_fis.dtemissao_documento  := pr_crapcje.dtemdcje;
         IF nvl(pr_crapcje.grescola,0) > 0 THEN
-          vr_pessoa_fis.cdgrau_escolaridade  := pr_crapcje.grescola; 
+          vr_pessoa_fis.cdgrau_escolaridade  := pr_crapcje.grescola;
         END IF;
         vr_pessoa_fis.cdcurso_superior     := pr_crapcje.cdfrmttl;
         IF pr_crapcje.cdnatopc <> 0 THEN
@@ -1779,10 +1785,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
         --> retornar idpessoa gerado
         pr_idpessoa := vr_pessoa_fis.idpessoa;
-        
+
         -- Verifica se possui informacoes da renda do conjuge
         IF nvl(pr_crapcje.tpcttrab,0) <> 0 OR
            nvl(pr_crapcje.cdnvlcgo,0) <> 0 OR
@@ -1791,15 +1797,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
            nvl(pr_crapcje.vlsalari,0) <> 0 OR
            nvl(pr_crapcje.nrdocnpj,0) <> 0 OR
            TRIM(pr_crapcje.nmextemp) IS NOT NULL THEN
-          
+
           --> Retornar dados pessoa renda
           OPEN cr_pessoa_renda (pr_idpessoa => pr_idpessoa);
           FETCH cr_pessoa_renda INTO rw_pessoa_renda;
           CLOSE cr_pessoa_renda;
-          
+
           -- Se possuir CNPJ, verifica se esta cadastrado
           IF nvl(pr_crapcje.nrdocnpj,0) > 0 THEN
-                        
+
             -- Verifica se existe pessoa
             OPEN cr_pessoa(pr_nrcpfcgc => pr_crapcje.nrdocnpj);
             FETCH cr_pessoa INTO rw_pessoa;
@@ -1807,7 +1813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             IF cr_pessoa%NOTFOUND THEN
               -- Atualiza o indicador para criar o CNPJ
               vr_flcria_empresa := TRUE;
-              
+
             ELSE -- Se encontrou a pessoa juridica
               --> se o nome estiver diferente, é necessario atualizar pessoa
               IF substr(pr_crapcje.nmextemp,1,40) <> substr(rw_pessoa.nmpessoa,1,40) THEN
@@ -1818,31 +1824,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             END IF;
             CLOSE cr_pessoa;
 
-          ELSE 
-                      
+          ELSE
+
             -- Verifica se existe PJ
             OPEN cr_pessoa_id(pr_idpessoa => rw_pessoa_renda.idpessoa_fonte_renda);
             FETCH cr_pessoa_id INTO rw_pessoa;
             CLOSE cr_pessoa_id;
-            
+
             IF substr(nvl(pr_crapcje.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
               -- Atualiza o indicador para criar o CNPJ
-              vr_flcria_empresa := TRUE;          
+              vr_flcria_empresa := TRUE;
             END IF;
           END IF;
-          
+
           -- Se o indicador de criacao/atualizacao de empresa estiver ligado
           IF vr_flcria_empresa THEN
             -- Verifica se a empresa de trabalho eh um CPF ou CNPJ
             -- Se for um CPF
             IF nvl(pr_crapcje.nrdocnpj,0) > 0 AND
                SUBSTR(pr_crapcje.nrdocnpj,LENGTH(pr_crapcje.nrdocnpj)-1) <> gene0005.fn_retorna_digito_cnpj(pr_nrcalcul => SUBSTR(pr_crapcje.nrdocnpj,1,LENGTH(pr_crapcje.nrdocnpj)-2)) THEN
-               
+
               rw_pessoa_fisica := NULL;
               OPEN cr_pessoa_fisica(pr_nrcpf => pr_crapcje.nrdocnpj);
               FETCH cr_pessoa_fisica INTO rw_pessoa_fisica;
               CLOSE cr_pessoa_fisica;
-        
+
               -- Popula os dados de pessoa fisica
               rw_pessoa_fisica.nrcpf                := pr_crapcje.nrdocnpj;
               
@@ -1852,7 +1858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               END IF;
               
               rw_pessoa_fisica.tppessoa             := 1; -- Fisica
-              rw_pessoa_fisica.tpcadastro           := 1; -- Prospect
+              rw_pessoa_fisica.tpcadastro           := nvl(rw_pessoa_fisica.tpcadastro,1); -- Prospect
               rw_pessoa_fisica.cdoperad_altera      := pr_cdoperad;
               -- Cria a pessoa fisica
               cada0010.pc_cadast_pessoa_fisica(pr_pessoa_fisica => rw_pessoa_fisica,
@@ -1863,13 +1869,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               END IF;
               -- Atualiza com o ID pessoa que foi criado
               rw_pessoa_renda.idpessoa_fonte_renda := rw_pessoa_fisica.idpessoa;
-              
+
             ELSE -- Se for PJ
               rw_pessoa_juridica := NULL;
               OPEN cr_pessoa_juridica(pr_nrcnpj => pr_crapcje.nrdocnpj);
               FETCH cr_pessoa_juridica INTO rw_pessoa_juridica;
               CLOSE cr_pessoa_juridica;
-              
+
               -- Popula os dados de pessoa juridica
               IF pr_crapcje.nrdocnpj <> 0 THEN
                 rw_pessoa_juridica.nrcnpj               := pr_crapcje.nrdocnpj;
@@ -1894,9 +1900,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               END IF;
               -- Atualiza com o ID pessoa que foi criado
               rw_pessoa_renda.idpessoa_fonte_renda := rw_pessoa_juridica.idpessoa;
-            END IF;  
+            END IF;
           END IF;
-          
+
           -- Atualiza a tabela de renda
           rw_pessoa_renda.idpessoa            := pr_idpessoa;
           IF pr_crapcje.cdocpcje <> 0 THEN
@@ -1908,7 +1914,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           rw_pessoa_renda.dtadmissao          := pr_crapcje.dtadmemp;
           rw_pessoa_renda.vlrenda             := pr_crapcje.vlsalari;
           rw_pessoa_renda.cdoperad_altera     := pr_cdoperad;
-         
+
           -- Cria/atualiza o registro de renda
           cada0010.pc_cadast_pessoa_renda(pr_pessoa_renda => rw_pessoa_renda,
                                           pr_cdcritic      => vr_cdcritic,
@@ -1916,27 +1922,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
-          
-        END IF;  
-          
+
+        END IF;
+
         -- Se possui telefone
-        IF TRIM(pr_crapcje.nrfonemp) IS NOT NULL AND 
+        IF TRIM(pr_crapcje.nrfonemp) IS NOT NULL AND
            TRIM(pr_crapcje.nrfonemp) <> '0' THEN
           -- Estrutura o telefone
           CADA0011.pc_trata_telefone( pr_nrtelefone_org => pr_crapcje.nrfonemp,
-                                      pr_nrramal_org    => pr_crapcje.nrramemp, 
+                                      pr_nrramal_org    => pr_crapcje.nrramemp,
                                       pr_nrddd          => vr_nrddd,
                                       pr_nrtelefone     => vr_nrtelefone,
                                       pr_nrramal        => vr_nrramal,
                                       pr_dscritic       => vr_dscritic);
-                              
+
           -- Verifica se este telefone ja nao existe para a pessoa
           OPEN cr_pessoa_telefone(pr_idpessoa   => pr_idpessoa,
                                   pr_tptelefone => 3);
           FETCH cr_pessoa_telefone INTO rw_pessoa_telefone;
           CLOSE cr_pessoa_telefone;
-          
-          
+
+
           rw_pessoa_telefone.idpessoa   := pr_idpessoa;
           rw_pessoa_telefone.tptelefone := 3; -- Comercial
           rw_pessoa_telefone.nrddd      := vr_nrddd;
@@ -1945,7 +1951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           rw_pessoa_telefone.insituacao := 1; -- Ativo
           rw_pessoa_telefone.cdoperad_altera   := pr_cdoperad;
           rw_pessoa_telefone.tporigem_cadastro := nvl(rw_pessoa_telefone.tporigem_cadastro,2);
-              
+
           -- Insere o telefone
           cada0010.pc_cadast_pessoa_telefone(pr_pessoa_telefone => rw_pessoa_telefone,
                                              pr_cdcritic        => vr_cdcritic,
@@ -1954,14 +1960,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             CLOSE cr_pessoa_telefone;
             RAISE vr_exc_erro;
           END IF;
-          
-        END IF; -- Fim da verificacao se possui telefone da empresa        
-        
-      END IF;   
-      
+
+        END IF; -- Fim da verificacao se possui telefone da empresa
+
+      END IF;
+
     END IF;  --> pr_crapcje.nrctacje
-   
-                       
+
+
 	EXCEPTION
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
@@ -1969,22 +1975,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_pessoa_cje: '||SQLERRM;
-  END pc_pessoa_cje;                                   
-    
+  END pc_pessoa_cje;
+
   -- Rotina para atualizacao da tabela de conjuge (CRAPCJE)
   PROCEDURE pc_crapcje(pr_crapcje     IN crapcje%ROWTYPE            --> Tabela de conjuge atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_crapcje
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -1995,30 +2001,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
+
+    ---------------> CURSORES <-----------------
     -- Buscar dados do conjuge
     CURSOR cr_pessoa_rel ( pr_idpessoa       tbcadast_pessoa.idpessoa%TYPE) IS
       SELECT *
         FROM tbcadast_pessoa_relacao rel
        WHERE rel.idpessoa         = pr_idpessoa
          AND rel.tprelacao        = 1; --> conjuge
-    rw_pessoa_rel cr_pessoa_rel%ROWTYPE;        
-    
-    rw_pessoa_cje  cr_pessoa_fis%ROWTYPE;    
-    
-    ---------------> VARIAVEIS <----------------- 
+    rw_pessoa_rel cr_pessoa_rel%ROWTYPE;
+
+    rw_pessoa_cje  cr_pessoa_fis%ROWTYPE;
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa       
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa
     vr_idpessoa_cje    tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa conjuge
-    
+
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA
@@ -2028,24 +2034,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao do conjuge';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
-        
+
     -- Busca o ID PESSOA do conjuge
     vr_idpessoa_cje := fn_busca_pessoa(pr_cdcooper => pr_crapcje.cdcooper,
                                        pr_nrdconta => pr_crapcje.nrctacje,
                                        pr_idseqttl => 1,
-                                       pr_nrcpfcgc => pr_crapcje.nrcpfcjg);        
-    
-    
+                                       pr_nrcpfcgc => pr_crapcje.nrcpfcjg);
+
+
     -- Buscar dados do conjuge
     rw_pessoa_rel := NULL;
     OPEN cr_pessoa_rel( pr_idpessoa       => vr_idpessoa);
     FETCH cr_pessoa_rel INTO rw_pessoa_rel;
     CLOSE cr_pessoa_rel;
-    
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       -- Se encontrou registro na busca
@@ -2060,9 +2066,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           RAISE vr_exc_erro;
         END IF;
       END IF;
-          
+
     ELSE -- Se for alteracao ou inclusao
-      
+
       --> Se nao localizou a pessoa e não possui numero de cpf
       --> tentar identificar se possui conjuge atual
       IF nvl(vr_idpessoa_cje,0) = 0 AND nvl(pr_crapcje.nrcpfcjg,0) = 0 THEN
@@ -2071,28 +2077,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         OPEN cr_pessoa_fis(pr_idpessoa => rw_pessoa_rel.idpessoa_relacao);
         FETCH cr_pessoa_fis INTO rw_pessoa_cje;
         CLOSE cr_pessoa_fis;
-        
+
         IF nvl(pr_crapcje.nmconjug,'XXX') <> nvl(rw_pessoa_cje.nmpessoa,'XXX') THEN
           vr_idpessoa_cje := NULL;
         ELSE
-          vr_idpessoa_cje := rw_pessoa_rel.idpessoa_relacao;  
-          
+          vr_idpessoa_cje := rw_pessoa_rel.idpessoa_relacao;
+
           --> Tratativa para não levar para o cadastro unico os dados do cadastro temporario do conjuge
           --> gerado na tela matric
-          IF nvl(pr_crapcje.nrcpfcjg,0) = 0 AND 
+          IF nvl(pr_crapcje.nrcpfcjg,0) = 0 AND
              nvl(rw_pessoa_cje.nrcpf,0) <> nvl(pr_crapcje.nrcpfcjg,0) THEN
-            vr_dscritic := 'Cadastro Temporario, não atualizar.'; 
-            RAISE vr_exc_saida;             
-          END IF;   
-          
+            vr_dscritic := 'Cadastro Temporario, não atualizar.';
+            RAISE vr_exc_saida;
+          END IF;
+
         END IF;
-        
-       
+
+
       END IF;
-    
-    
+
+
       -- Cadastrar/atualizar pessoa conjuge
-      pc_pessoa_cje( pr_crapcje     => pr_crapcje              --> Tabela de conjuge atual                      
+      pc_pessoa_cje( pr_crapcje     => pr_crapcje              --> Tabela de conjuge atual
                     ,pr_idpessoa    => vr_idpessoa_cje         --> Identificador de pessoa
                     ,pr_cdoperad    => pr_cdoperad             --> Operador que esta efetuando a operacao
                     ,pr_dscritic    => vr_dscritic);           --> Retorno de Erro
@@ -2100,8 +2106,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
-      
+
+
       -- Se a pessoa da relacao for diferente do que esta cadastrado
       IF nvl(vr_idpessoa_cje,0) <> vr_idpessoa THEN
         -- Atualiza os dados da relacao
@@ -2109,7 +2115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_rel.idpessoa_relacao  := vr_idpessoa_cje;
         rw_pessoa_rel.tprelacao         := 1; -- Conjuge
         rw_pessoa_rel.cdoperad_altera   := pr_cdoperad;
-        
+
         -- Cria o relacionamento
         cada0010.pc_cadast_pessoa_relacao(pr_pessoa_relacao => rw_pessoa_rel,
                                           pr_cdcritic       => vr_cdcritic,
@@ -2118,9 +2124,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-      END IF;       
-    END IF;--> tpoperac    
-                       
+      END IF;
+    END IF;--> tpoperac
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -2129,28 +2135,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => pr_crapcje.idseqttl
                             ,pr_nmtabela => 'CRAPCJE'
                             ,pr_dsalerta => vr_dscritic);
-    
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapcje: '||SQLERRM;
-  END pc_crapcje;       
-  
+  END pc_crapcje;
+
   -- Rotina para cadastrar/atualizar pessoa de referencia
-  PROCEDURE pc_pessoa_referencia ( pr_crapavt     IN crapavt%ROWTYPE                   --> Tabela de avalista atual                      
+  PROCEDURE pc_pessoa_referencia ( pr_crapavt     IN crapavt%ROWTYPE                   --> Tabela de avalista atual
                                   ,pr_idpessoa    IN OUT tbcadast_pessoa.idpessoa%TYPE --> Identificador de pessoa
                                   ,pr_cdoperad    IN crapope.cdoperad%TYPE             --> Operador que esta efetuando a operacao
                                   ,pr_dscritic   OUT VARCHAR2) IS                      --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_pessoa_referencia
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -2161,9 +2167,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
-    
+
+    ---------------> CURSORES <-----------------
+
     -- Verificar se existe endereco
     CURSOR cr_pessoa_endereco(pr_idpessoa   tbcadast_pessoa_endereco.idpessoa%TYPE,
                               pr_tpendereco tbcadast_pessoa_endereco.tpendereco%TYPE) IS
@@ -2172,7 +2178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE enc.idpessoa   = pr_idpessoa
          AND enc.tpendereco = pr_tpendereco;
     rw_pessoa_endereco cr_pessoa_endereco%ROWTYPE;
-    
+
     -- Cursor para verificar se existe telefone para o conjuge
     CURSOR cr_pessoa_telefone(pr_idpessoa   tbcadast_pessoa_telefone.idpessoa%TYPE,
                               pr_tptelefone tbcadast_pessoa_telefone.tptelefone%TYPE) IS
@@ -2181,7 +2187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE idpessoa   = pr_idpessoa
          AND tptelefone = pr_tptelefone;
     rw_pessoa_telefone cr_pessoa_telefone%ROWTYPE;
-    
+
     CURSOR cr_email(pr_idpessoa    tbcadast_pessoa.idpessoa%TYPE,
                     pr_nrseq_email tbcadast_pessoa_email.nrseq_email%TYPE) IS
       SELECT *
@@ -2189,25 +2195,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE idpessoa     = pr_idpessoa
          AND nrseq_email  = pr_nrseq_email;
     rw_email cr_email%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
-    -- Variaveis auxiliares        
+    -- Variaveis auxiliares
     vr_pessoa_fis      vwcadast_pessoa_fisica%ROWTYPE;          -- Registro de pessoa
     vr_nrddd           tbcadast_pessoa_telefone.nrddd%TYPE;     -- Numero do DDD
     vr_nrtelefone      tbcadast_pessoa_telefone.nrtelefone%TYPE;-- Numero do telefone
-    vr_nrramal         tbcadast_pessoa_telefone.nrramal%TYPE;   -- Numero do Ramal                             
-    
+    vr_nrramal         tbcadast_pessoa_telefone.nrramal%TYPE;   -- Numero do Ramal
+
   BEGIN
-  
+
     -- Se possui conta, busca os dados da conta dela
     IF pr_crapavt.nrdctato > 0 THEN
-    
-      IF nvl(pr_idpessoa,0) = 0 THEN            
+
+      IF nvl(pr_idpessoa,0) = 0 THEN
         -- Efetua a inclusao de pessoa
         cada0011.pc_insere_pessoa_crapass(pr_cdcooper => pr_crapavt.cdcooper,
                                           pr_nrdconta => pr_crapavt.nrdctato,
@@ -2228,11 +2234,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           vr_dscritic := 'Nao encontrado pessoa referencia';
           RAISE vr_exc_erro;
         END IF;
-        
+
       END IF;
     ELSE -- Se nao possui conta
       --> Inserir/atualizar pessoa
-      IF nvl(pr_idpessoa,0) > 0 THEN        
+      IF nvl(pr_idpessoa,0) > 0 THEN
         OPEN cr_pessoa_fis(pr_idpessoa => pr_idpessoa);
         FETCH cr_pessoa_fis INTO vr_pessoa_fis;
         CLOSE cr_pessoa_fis;
@@ -2252,28 +2258,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-          
+
       -- Atualiza o IDPESSOA na variavel de uso
       pr_idpessoa := vr_pessoa_fis.idpessoa;
-      
+
       -- Se possui endereco cadastrado
       IF TRIM(pr_crapavt.dsendres##1) IS NOT NULL THEN
-      
+
         -- Verificar se existe endereco
         OPEN cr_pessoa_endereco(pr_idpessoa   => pr_idpessoa,
                                 pr_tpendereco => 10); --Residencial
         FETCH cr_pessoa_endereco INTO rw_pessoa_endereco;
         CLOSE cr_pessoa_endereco;
-                              
-      
-        -- Efetua a tratativa de endereco        
+
+
+        -- Efetua a tratativa de endereco
         rw_pessoa_endereco.idpessoa        := pr_idpessoa;
         rw_pessoa_endereco.tpendereco      := 10; --Residencial
         rw_pessoa_endereco.nrcep           := pr_crapavt.nrcepend;
-        rw_pessoa_endereco.nmlogradouro    := pr_crapavt.dsendres##1; 
-        rw_pessoa_endereco.nrlogradouro    := pr_crapavt.nrendere; 
-        rw_pessoa_endereco.dscomplemento   := pr_crapavt.complend; 
-        rw_pessoa_endereco.nmbairro        := pr_crapavt.nmbairro; 
+        rw_pessoa_endereco.nmlogradouro    := pr_crapavt.dsendres##1;
+        rw_pessoa_endereco.nrlogradouro    := pr_crapavt.nrendere;
+        rw_pessoa_endereco.dscomplemento   := pr_crapavt.complend;
+        rw_pessoa_endereco.nmbairro        := pr_crapavt.nmbairro;
         rw_pessoa_endereco.cdoperad_altera := pr_cdoperad;
         -- Trata o municipio
         IF TRIM(pr_crapavt.nmcidade) IS NOT NULL THEN
@@ -2286,31 +2292,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             RAISE vr_exc_erro;
           END IF;
         END IF;
-            
+
         -- Efetua a inclusao
         cada0010.pc_cadast_pessoa_endereco(pr_pessoa_endereco => rw_pessoa_endereco
                                           ,pr_cdcritic => vr_cdcritic
                                           ,pr_dscritic => vr_dscritic);
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
-        END IF; 
+        END IF;
       END IF; -- Fim da verificacao se possui endereco
-      
+
       -- Busca os dados do email -> Sempre será o 1 email
       OPEN cr_email(pr_idpessoa    => pr_idpessoa,
                     pr_nrseq_email => 1);
-        
+
       FETCH cr_email INTO rw_email;
-      CLOSE cr_email;  
-      
+      CLOSE cr_email;
+
       -- Verifica se possui email
       IF TRIM(pr_crapavt.dsdemail) IS NOT NULL THEN
-      
+
         rw_email.idpessoa        := pr_idpessoa;
         rw_email.dsemail         := pr_crapavt.dsdemail;
         rw_email.nrseq_email     := 1;
         rw_email.cdoperad_altera := pr_cdoperad;
-            
+
         -- Efetua a inclusao
         cada0010.pc_cadast_pessoa_email(pr_pessoa_email => rw_email
                                        ,pr_cdcritic     => vr_cdcritic
@@ -2329,9 +2335,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-      
+
       END IF;
-      
+
       -- Verifica se possui telefone
       IF TRIM(pr_crapavt.nrtelefo) IS NOT NULL THEN
 
@@ -2345,7 +2351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
         -- Estrutura o telefone
         CADA0011.pc_trata_telefone( pr_nrtelefone_org => substr(pr_crapavt.nrtelefo,1,50),
-                                    pr_nrramal_org    => NULL, 
+                                    pr_nrramal_org    => NULL,
                                     pr_nrddd          => vr_nrddd,
                                     pr_nrtelefone     => vr_nrtelefone,
                                     pr_nrramal        => vr_nrramal,
@@ -2353,14 +2359,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-            
+
         -- Atualiza os dados do telefone
         rw_pessoa_telefone.idpessoa               := pr_idpessoa;
         rw_pessoa_telefone.tptelefone             := 1; -- Residencial
         rw_pessoa_telefone.nrddd                  := vr_nrddd;
         rw_pessoa_telefone.nrtelefone             := vr_nrtelefone;
         rw_pessoa_telefone.cdoperad_altera        := pr_cdoperad;
-            
+
         -- Efetua a inclusao
         cada0010.pc_cadast_pessoa_telefone(pr_pessoa_telefone => rw_pessoa_telefone
                                           ,pr_cdcritic => vr_cdcritic
@@ -2369,10 +2375,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           RAISE vr_exc_erro;
         END IF;
       END IF; -- Fim da verificacao se possui telefone
-        
-      
+
+
     END IF;
-                       
+
 	EXCEPTION
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
@@ -2380,21 +2386,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_pessoa_referencia: '||SQLERRM;
-  END pc_pessoa_referencia;      
-  
+  END pc_pessoa_referencia;
+
   -- Rotina para cadastrar/atualizar pessoa representante
-  PROCEDURE pc_pessoa_juridica_rep ( pr_crapavt     IN crapavt%ROWTYPE                   --> Tabela de avalista atual                      
+  PROCEDURE pc_pessoa_juridica_rep ( pr_crapavt     IN crapavt%ROWTYPE                   --> Tabela de avalista atual
                                     ,pr_idpessoa    IN OUT tbcadast_pessoa.idpessoa%TYPE --> Identificador de pessoa
                                     ,pr_cdoperad    IN crapope.cdoperad%TYPE             --> Operador que esta efetuando a operacao
                                     ,pr_dscritic   OUT VARCHAR2) IS                      --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_pessoa_juridica_rep
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -2405,9 +2411,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
-    
+
+    ---------------> CURSORES <-----------------
+
     -- Buscar dados da pessoa de relacao
     CURSOR cr_pessoa_rel ( pr_idpessoa   tbcadast_pessoa.idpessoa%TYPE,
                            pr_tprelacao  tbcadast_pessoa_relacao.tprelacao%TYPE) IS
@@ -2418,9 +2424,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
              tbcadast_pessoa pes
        WHERE rel.idpessoa         = pr_idpessoa
          AND rel.tprelacao        = pr_tprelacao
-         AND rel.idpessoa_relacao = pes.idpessoa; 
-    rw_pessoa_rel cr_pessoa_rel%ROWTYPE;   
-    
+         AND rel.idpessoa_relacao = pes.idpessoa;
+    rw_pessoa_rel cr_pessoa_rel%ROWTYPE;
+
     -- Verificar se existe endereco
     CURSOR cr_pessoa_endereco(pr_idpessoa   tbcadast_pessoa_endereco.idpessoa%TYPE,
                               pr_tpendereco tbcadast_pessoa_endereco.tpendereco%TYPE) IS
@@ -2429,16 +2435,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE enc.idpessoa   = pr_idpessoa
          AND enc.tpendereco = pr_tpendereco;
     rw_pessoa_endereco cr_pessoa_endereco%ROWTYPE;
-        
-    --> buscar dados do bem 
-    CURSOR cr_pessoa_bem (pr_idpessa   tbcadast_pessoa_bem.idpessoa%TYPE, 
+
+    --> buscar dados do bem
+    CURSOR cr_pessoa_bem (pr_idpessa   tbcadast_pessoa_bem.idpessoa%TYPE,
                           pr_nrseq_bem tbcadast_pessoa_bem.nrseq_bem%TYPE) IS
       SELECT *
         FROM tbcadast_pessoa_bem bem
        WHERE bem.idpessoa  = pr_idpessa
          AND bem.nrseq_bem = pr_nrseq_bem;
     rw_pessoa_bem cr_pessoa_bem%ROWTYPE;
-    
+
     -- Cursor para verificar se existe telefone para o conjuge
     CURSOR cr_pessoa_telefone(pr_idpessoa   tbcadast_pessoa_telefone.idpessoa%TYPE,
                               pr_tptelefone tbcadast_pessoa_telefone.tptelefone%TYPE) IS
@@ -2446,22 +2452,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         FROM tbcadast_pessoa_telefone
        WHERE idpessoa   = pr_idpessoa
          AND tptelefone = pr_tptelefone;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
-    -- Variaveis auxiliares    
-    vr_pessoa_fis      vwcadast_pessoa_fisica%ROWTYPE;          -- Registro de pessoa    
-    
+    -- Variaveis auxiliares
+    vr_pessoa_fis      vwcadast_pessoa_fisica%ROWTYPE;          -- Registro de pessoa
+
   BEGIN
-  
+
     -- Se possui conta, busca os dados da conta dela
     IF pr_crapavt.nrdctato > 0 THEN
-    
-      IF nvl(pr_idpessoa,0) = 0 THEN            
+
+      IF nvl(pr_idpessoa,0) = 0 THEN
         -- Efetua a inclusao de pessoa
         cada0011.pc_insere_pessoa_crapass(pr_cdcooper => pr_crapavt.cdcooper,
                                           pr_nrdconta => pr_crapavt.nrdctato,
@@ -2482,22 +2488,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           vr_dscritic := 'Nao encontrado pessoa representante';
           RAISE vr_exc_erro;
         END IF;
-        
+
       END IF;
     ELSE -- Se nao possui conta
       --> Inserir/atualizar pessoa
-      IF nvl(pr_idpessoa,0) > 0 THEN        
+      IF nvl(pr_idpessoa,0) > 0 THEN
         OPEN cr_pessoa_fis(pr_idpessoa => pr_idpessoa);
         FETCH cr_pessoa_fis INTO vr_pessoa_fis;
         CLOSE cr_pessoa_fis;
       ELSE
         vr_pessoa_fis := NULL;
       END IF;
-      
+
       -- Efetua a inclusao/alteracao de pessoa
       vr_pessoa_fis.nrcpf               := pr_crapavt.nrcpfcgc;
       vr_pessoa_fis.cdoperad_altera     := pr_cdoperad;
-      vr_pessoa_fis.tpcadastro          := 2; -- Basico
+      vr_pessoa_fis.tpcadastro          := nvl(vr_pessoa_fis.tpcadastro, 2); -- Basico
       vr_pessoa_fis.tppessoa            := 1; -- Fisica
       vr_pessoa_fis.nmpessoa            := pr_crapavt.nmdavali;
       vr_pessoa_fis.tpdocumento         := pr_crapavt.tpdocava;
@@ -2517,7 +2523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF nvl(pr_crapavt.cdnacion,0) <> 0 THEN
         vr_pessoa_fis.cdnacionalidade  := pr_crapavt.cdnacion;
       END IF;
-          
+
       -- Busca o municipio da naturalidade
       CADA0015.pc_trata_municipio(pr_dscidade => pr_crapavt.dsnatura,
                                   pr_cdestado => NULL,
@@ -2534,18 +2540,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-          
+
       -- Atualiza o IDPESSOA na variavel de uso
       pr_idpessoa := vr_pessoa_fis.idpessoa;
-      
+
       -- Buscar dados da pessoa de relacao
       OPEN cr_pessoa_rel ( pr_idpessoa  => pr_idpessoa,
                            pr_tprelacao => 3); -- Pai
       FETCH cr_pessoa_rel INTO rw_pessoa_rel;
       CLOSE cr_pessoa_rel;
-      
+
       --> se possia inf do pai, porém agora o campo esta vazio, deve deletar
-      IF rw_pessoa_rel.nrseq_relacao > 0 AND 
+      IF rw_pessoa_rel.nrseq_relacao > 0 AND
          ( TRIM(pr_crapavt.nmpaicto) IS NULL OR
            pr_crapavt.nmpaicto <> rw_pessoa_rel.nmpessoa ) THEN
         -- Efetua a exclusao do registro
@@ -2556,13 +2562,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                             pr_dscritic           => vr_dscritic);
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
-        END IF; 
-      END IF;         
-      
+        END IF;
+      END IF;
+
       -- se possui nome do pai, e é diferente do atual
       IF TRIM(pr_crapavt.nmpaicto) IS NOT NULL AND
-         nvl(pr_crapavt.nmpaicto,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN      
-      
+         nvl(pr_crapavt.nmpaicto,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN
+
         CADA0011.pc_trata_pessoa_relacao( pr_idpessoa => pr_idpessoa,
                                           pr_tprelacao=> 3, -- Pai
                                           pr_nmpessoa => pr_crapavt.nmpaicto,
@@ -2573,16 +2579,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           RAISE vr_exc_erro;
         END IF;
       END IF;
-      
+
       -- Buscar dados da pessoa de relacao
       rw_pessoa_rel := NULL;
       OPEN cr_pessoa_rel ( pr_idpessoa  => pr_idpessoa,
                            pr_tprelacao => 4); -- Mae
       FETCH cr_pessoa_rel INTO rw_pessoa_rel;
       CLOSE cr_pessoa_rel;
-      
+
       --> se possia inf do mae, porém agora o campo esta vazio, deve deletar
-      IF rw_pessoa_rel.nrseq_relacao > 0 AND 
+      IF rw_pessoa_rel.nrseq_relacao > 0 AND
          ( TRIM(pr_crapavt.nmmaecto) IS NULL OR
            pr_crapavt.nmmaecto <> rw_pessoa_rel.nmpessoa ) THEN
         -- Efetua a exclusao do registro
@@ -2593,13 +2599,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                             pr_dscritic           => vr_dscritic);
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
-        END IF; 
-      END IF;    
-      
+        END IF;
+      END IF;
+
       -- se possui nome do pai, e é diferente do atual
       IF TRIM(pr_crapavt.nmmaecto) IS NOT NULL AND
-         nvl(pr_crapavt.nmmaecto,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN      
-      
+         nvl(pr_crapavt.nmmaecto,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN
+
         CADA0011.pc_trata_pessoa_relacao( pr_idpessoa => pr_idpessoa,
                                           pr_tprelacao=> 4, -- Mae
                                           pr_nmpessoa => pr_crapavt.nmmaecto,
@@ -2610,26 +2616,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           RAISE vr_exc_erro;
         END IF;
       END IF;
-      
-      
+
+
       -- Se possui endereco cadastrado
       IF TRIM(pr_crapavt.dsendres##1) IS NOT NULL THEN
-      
+
         -- Verificar se existe endereco
         OPEN cr_pessoa_endereco(pr_idpessoa   => pr_idpessoa,
                                 pr_tpendereco => 10); --Residencial
         FETCH cr_pessoa_endereco INTO rw_pessoa_endereco;
         CLOSE cr_pessoa_endereco;
-                              
-      
-        -- Efetua a tratativa de endereco        
+
+
+        -- Efetua a tratativa de endereco
         rw_pessoa_endereco.idpessoa        := pr_idpessoa;
         rw_pessoa_endereco.tpendereco      := 10; --Residencial
         rw_pessoa_endereco.nrcep           := pr_crapavt.nrcepend;
-        rw_pessoa_endereco.nmlogradouro    := pr_crapavt.dsendres##1; 
-        rw_pessoa_endereco.nrlogradouro    := pr_crapavt.nrendere; 
-        rw_pessoa_endereco.dscomplemento   := pr_crapavt.complend; 
-        rw_pessoa_endereco.nmbairro        := pr_crapavt.nmbairro; 
+        rw_pessoa_endereco.nmlogradouro    := pr_crapavt.dsendres##1;
+        rw_pessoa_endereco.nrlogradouro    := pr_crapavt.nrendere;
+        rw_pessoa_endereco.dscomplemento   := pr_crapavt.complend;
+        rw_pessoa_endereco.nmbairro        := pr_crapavt.nmbairro;
         rw_pessoa_endereco.cdoperad_altera := pr_cdoperad;
         -- Trata o municipio
         IF TRIM(pr_crapavt.nmcidade) IS NOT NULL THEN
@@ -2642,27 +2648,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             RAISE vr_exc_erro;
           END IF;
         END IF;
-            
+
         -- Efetua a inclusao
         cada0010.pc_cadast_pessoa_endereco(pr_pessoa_endereco => rw_pessoa_endereco
                                           ,pr_cdcritic => vr_cdcritic
                                           ,pr_dscritic => vr_dscritic);
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
-        END IF; 
+        END IF;
       END IF; -- Fim da verificacao se possui endereco
-      
+
       -- Efetua a tratativa de bens
       -- Efetua loop sobre os bens
       FOR x IN 1..6 LOOP
-      
-        --> Buscar dados do bem 
+
+        --> Buscar dados do bem
         rw_pessoa_bem := NULL;
-        OPEN cr_pessoa_bem (pr_idpessa   => pr_idpessoa, 
+        OPEN cr_pessoa_bem (pr_idpessa   => pr_idpessoa,
                             pr_nrseq_bem => x);
         FETCH cr_pessoa_bem INTO rw_pessoa_bem;
         CLOSE cr_pessoa_bem;
-        
+
         rw_pessoa_bem.idpessoa        := pr_idpessoa;
         rw_pessoa_bem.cdoperad_altera := pr_cdoperad;
         rw_pessoa_bem.dtalteracao     := pr_crapavt.dtmvtolt;
@@ -2680,11 +2686,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-              END IF;              
+              END IF;
             END IF;
             continue;
           END IF;
-          
+
           -- Popula os campos para inserir o registro
           rw_pessoa_bem.nrseq_bem       := 1;
           rw_pessoa_bem.dsbem           := pr_crapavt.dsrelbem##1;
@@ -2705,7 +2711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-              END IF;              
+              END IF;
             END IF;
             continue;
           END IF;
@@ -2729,7 +2735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-              END IF;              
+              END IF;
             END IF;
             continue;
           END IF;
@@ -2753,7 +2759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-              END IF;              
+              END IF;
             END IF;
             continue;
           END IF;
@@ -2777,7 +2783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-              END IF;              
+              END IF;
             END IF;
             continue;
           END IF;
@@ -2801,7 +2807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-              END IF;              
+              END IF;
             END IF;
             continue;
           END IF;
@@ -2822,7 +2828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         END IF;
       END LOOP;
     END IF;
-                       
+
 	EXCEPTION
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
@@ -2830,22 +2836,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_pessoa_juridica_rep: '||SQLERRM;
-  END pc_pessoa_juridica_rep;      
-  
+  END pc_pessoa_juridica_rep;
+
   -- Rotina para atualizacao da tabela de avalista (CRAPAVT)
   PROCEDURE pc_crapavt(pr_crapavt     IN crapavt%ROWTYPE            --> Tabela de avalista atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pr_crapavt
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -2856,63 +2862,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
+
+    ---------------> CURSORES <-----------------
     -- Buscar dados de pesso de referencia
     CURSOR cr_pessoa_referencia ( pr_idpessoa         tbcadast_pessoa.idpessoa%TYPE,
                                   pr_nrseq_referencia tbcadast_pessoa_referencia.nrseq_referencia%TYPE) IS
       SELECT *
         FROM tbcadast_pessoa_referencia rfe
        WHERE rfe.idpessoa         = pr_idpessoa
-         AND rfe.nrseq_referencia = pr_nrseq_referencia; 
-    rw_pessoa_referencia cr_pessoa_referencia%ROWTYPE;        
-    
+         AND rfe.nrseq_referencia = pr_nrseq_referencia;
+    rw_pessoa_referencia cr_pessoa_referencia%ROWTYPE;
+
     -- Buscar dados de pessoa de representante
     CURSOR cr_pessoa_fisica_rep ( pr_idpessoa               tbcadast_pessoa.idpessoa%TYPE,
                                   pr_idpessoa_representante tbcadast_pessoa_juridica_rep.idpessoa_representante%TYPE) IS
       SELECT *
         FROM tbcadast_pessoa_juridica_rep rep
        WHERE rep.idpessoa               = pr_idpessoa
-         AND rep.idpessoa_representante = pr_idpessoa_representante; 
+         AND rep.idpessoa_representante = pr_idpessoa_representante;
     rw_pessoa_fisica_rep cr_pessoa_fisica_rep%ROWTYPE;
-        
+
     --> Identificar pessoa referencia pelo nome
     CURSOR cr_pessoa_ref (pr_idpessoa  tbcadast_pessoa.idpessoa%TYPE,
                                pr_nrseq_ref tbcadast_pessoa_referencia.nrseq_referencia%TYPE) IS
       SELECT rfe.idpessoa_referencia
         FROM tbcadast_pessoa_referencia rfe
-       WHERE rfe.idpessoa         = pr_idpessoa 
+       WHERE rfe.idpessoa         = pr_idpessoa
          AND rfe.nrseq_referencia = pr_nrseq_ref;
-    
+
     --> Identificar pessoa referencia pelo nome
     CURSOR cr_pessoa_ref_nome (pr_idpessoa  tbcadast_pessoa.idpessoa%TYPE,
                                pr_nmpessoa  tbcadast_pessoa.nmpessoa%TYPE) IS
       SELECT rfe.idpessoa_referencia
         FROM tbcadast_pessoa_referencia rfe,
              tbcadast_pessoa pes
-       WHERE rfe.idpessoa = pr_idpessoa 
+       WHERE rfe.idpessoa = pr_idpessoa
          AND rfe.idpessoa_referencia = pes.idpessoa
          AND pes.nmpessoa = pr_nmpessoa;
-    
+
     --> Identificar pessoa representante pelo nome
     CURSOR cr_pessoa_rep_nome (pr_idpessoa tbcadast_pessoa.idpessoa%TYPE,
                                pr_nmpessoa tbcadast_pessoa.nmpessoa%TYPE) IS
       SELECT rep.idpessoa_representante
         FROM tbcadast_pessoa_juridica_rep rep,
              tbcadast_pessoa pes
-       WHERE rep.idpessoa = pr_idpessoa 
+       WHERE rep.idpessoa = pr_idpessoa
          AND rep.idpessoa_representante = pes.idpessoa
          AND pes.nmpessoa = pr_nmpessoa;
-    
+
     --> Identificar tipo de pessoa
     CURSOR cr_crapass(pr_cdcooper  crapass.cdcooper%TYPE,
                       pr_nrdconta  crapass.nrdconta%TYPE)IS
       SELECT ass.inpessoa
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
-         AND ass.nrdconta = pr_nrdconta;  
+         AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
-        
+    
     --> buscar pessoa pelo id
     CURSOR cr_pessoa_id(pr_idpessoa tbcadast_pessoa.idpessoa%TYPE) IS
       SELECT pes.tppessoa
@@ -2920,18 +2926,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE pes.idpessoa = pr_idpessoa;
     rw_pessoa_id cr_pessoa_id%ROWTYPE;    
 
-    ---------------> VARIAVEIS <----------------- 
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa       
-    vr_idpessoa_avt    tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa avt    
-    
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa
+    vr_idpessoa_avt    tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa avt
+
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA
@@ -2941,47 +2947,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao do avalista';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
-    
+
     -- pessoa de referencia
     IF pr_crapavt.tpctrato = 5 THEN
       IF nvl(pr_crapavt.nrdctato,0) > 0 THEN
         -- Busca o ID PESSOA do avalista
         vr_idpessoa_avt := fn_busca_pessoa ( pr_cdcooper => pr_crapavt.cdcooper,
                                              pr_nrdconta => pr_crapavt.nrdctato,
-                                             pr_idseqttl => 1); 
-      
-      ELSE      
+                                             pr_idseqttl => 1);
+
+      ELSE
         --> Identificar pessoa pelo nome
         OPEN cr_pessoa_ref_nome (pr_idpessoa  => vr_idpessoa,
                                  pr_nmpessoa  => pr_crapavt.nmdavali);
-        FETCH cr_pessoa_ref_nome INTO vr_idpessoa_avt;                         
-        CLOSE cr_pessoa_ref_nome;   
+        FETCH cr_pessoa_ref_nome INTO vr_idpessoa_avt;
+        CLOSE cr_pessoa_ref_nome;
       END IF;
-    
-    --> se for representante  
+
+    --> se for representante
     ELSIF pr_crapavt.tpctrato = 6 AND
           nvl(pr_crapavt.dsproftl,' ') <> 'PROCURADOR' THEN -- Nao sera levado procuradores
       -- Busca o ID PESSOA do avalista
       vr_idpessoa_avt := fn_busca_pessoa(pr_cdcooper => pr_crapavt.cdcooper,
                                          pr_nrdconta => pr_crapavt.nrdctato,
                                          pr_idseqttl => 1,
-                                         pr_nrcpfcgc => pr_crapavt.nrcpfcgc);      
-      
+                                         pr_nrcpfcgc => pr_crapavt.nrcpfcgc);
+
       --> Deve tentar pela pessoa que ja esta atrelada se possuir mesmo nome
       IF nvl(vr_idpessoa_avt,0) = 0 AND pr_crapavt.nrcpfcgc = 0 THEN
         --> Identificar pessoa representante pelo nome
         OPEN cr_pessoa_rep_nome (pr_idpessoa => vr_idpessoa,
                                  pr_nmpessoa => pr_crapavt.nmdavali);
-        FETCH cr_pessoa_rep_nome INTO vr_idpessoa_avt;                         
+        FETCH cr_pessoa_rep_nome INTO vr_idpessoa_avt;
         CLOSE cr_pessoa_rep_nome;
       END IF;
-    END IF; 
-    
-    
+    END IF;
+
+
     --> se for pessoa de referencia
     IF pr_crapavt.tpctrato = 5 THEN
     
@@ -3000,7 +3006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                           END)); 
       FETCH cr_pessoa_referencia INTO rw_pessoa_referencia;
       CLOSE cr_pessoa_referencia;
-     
+
       -- Se for uma exclusao
       IF pr_tpoperacao = 3 THEN
         -- Se encontrou registro na busca
@@ -3015,39 +3021,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             RAISE vr_exc_erro;
           END IF;
         END IF;
-            
+
       ELSE -- Se for alteracao ou inclusao
-              
+
         -- Cadastrar/atualizar pessoa de referencia
-        pc_pessoa_referencia ( pr_crapavt     => pr_crapavt      --> Tabela de avalista atual                      
+        pc_pessoa_referencia ( pr_crapavt     => pr_crapavt      --> Tabela de avalista atual
                               ,pr_idpessoa    => vr_idpessoa_avt --> Identificador de pessoa
                               ,pr_cdoperad    => pr_cdoperad     --> Operador que esta efetuando a operacao
                               ,pr_dscritic    => vr_dscritic);   --> Retorno de Erro
-      
+
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
-        
+
+
         --> Identificar tipo de pessoa
         rw_crapass := NULL;
         OPEN cr_crapass(pr_cdcooper => pr_crapavt.cdcooper,
                         pr_nrdconta => pr_crapavt.nrdconta);
         FETCH cr_crapass INTO rw_crapass;
         CLOSE cr_crapass;
-                      
-        -- Sera necessario colocar a linha abaixo porque para a pessoa de referencia 
+
+        -- Sera necessario colocar a linha abaixo porque para a pessoa de referencia
         -- nao eh gravado o CPF / CNPJ quando a mesma nao possui conta
         IF rw_crapass.inpessoa > 1 THEN -- Se for um PJ
-          rw_pessoa_referencia.nrseq_referencia := pr_crapavt.nrctremp; 
+          rw_pessoa_referencia.nrseq_referencia := pr_crapavt.nrctremp;
         ELSE
           rw_pessoa_referencia.nrseq_referencia := pr_crapavt.nrcpfcgc; -- Para PF, o CPF/CGC eh o sequencial
         END IF;
-        
+
         rw_pessoa_referencia.idpessoa             := vr_idpessoa;
         rw_pessoa_referencia.idpessoa_referencia  := vr_idpessoa_avt;
         rw_pessoa_referencia.cdoperad_altera      := pr_cdoperad;
-        
+
         -- Efetua a inclusao
         cada0010.pc_cadast_pessoa_referencia(pr_pessoa_referencia => rw_pessoa_referencia
                                             ,pr_cdcritic          => vr_cdcritic
@@ -3055,20 +3061,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
       END IF;
-    
+
     --> se for pessoa representante
     ELSIF pr_crapavt.tpctrato = 6 AND
           nvl(pr_crapavt.dsproftl,' ') <> 'PROCURADOR' THEN -- Nao sera levado procuradores
-    
+
       -- Buscar dados de pessoa de representante
       rw_pessoa_fisica_rep := NULL;
       OPEN cr_pessoa_fisica_rep ( pr_idpessoa               => vr_idpessoa,
                                   pr_idpessoa_representante => vr_idpessoa_avt);
       FETCH cr_pessoa_fisica_rep INTO rw_pessoa_fisica_rep;
       CLOSE cr_pessoa_fisica_rep;
-    
+
       -- Se for uma exclusao
       IF pr_tpoperacao = 3 THEN
         -- Se encontrou registro na busca
@@ -3083,21 +3089,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             RAISE vr_exc_erro;
           END IF;
         END IF;
-            
+
       ELSE -- Se for alteracao ou inclusao
-      
+
         -- Cadastrar/atualizar pessoa representante
-        pc_pessoa_juridica_rep ( pr_crapavt     => pr_crapavt      --> Tabela de avalista atual                      
+        pc_pessoa_juridica_rep ( pr_crapavt     => pr_crapavt      --> Tabela de avalista atual
                                 ,pr_idpessoa    => vr_idpessoa_avt --> Identificador de pessoa
                                 ,pr_cdoperad    => pr_cdoperad     --> Operador que esta efetuando a operacao
                                 ,pr_dscritic    => vr_dscritic);   --> Retorno de Erro
-      
+
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
         rw_pessoa_fisica_rep.idpessoa := vr_idpessoa;
-        rw_pessoa_fisica_rep.idpessoa_representante := vr_idpessoa_avt;        
+        rw_pessoa_fisica_rep.idpessoa_representante := vr_idpessoa_avt;
         rw_pessoa_fisica_rep.persocio := pr_crapavt.persocio;
         CADA0011.pc_trata_representante( pr_dsproftl              => pr_crapavt.dsproftl,
                                          pt_tpcargo_representante => rw_pessoa_fisica_rep.tpcargo_representante,
@@ -3105,8 +3111,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_fisica_rep.dtvigencia := pr_crapavt.dtvalida;
         rw_pessoa_fisica_rep.dtadmissao := pr_crapavt.dtadmsoc;
         rw_pessoa_fisica_rep.flgdependencia_economica := pr_crapavt.flgdepec;
-        rw_pessoa_fisica_rep.cdoperad_altera := pr_cdoperad;        
-        
+        rw_pessoa_fisica_rep.cdoperad_altera := pr_cdoperad;
+
         -- Efetua a inclusao
         cada0010.pc_cadast_pessoa_juridica_rep(pr_pessoa_juridica_rep => rw_pessoa_fisica_rep
                                               ,pr_cdcritic            => vr_cdcritic
@@ -3114,11 +3120,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-          
-      END IF; 
+
+      END IF;
     END IF;
-    
-    
+
+
   EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -3127,7 +3133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => pr_crapavt.nrctremp
                             ,pr_nmtabela => 'CRAPAVT'
                             ,pr_dsalerta => vr_dscritic);
-    
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
@@ -3135,21 +3141,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapavt: '||SQLERRM;
   END pc_crapavt;
-  
+
   -- Rotina para atualizacao da tabela de politico exposto (tbcadast_politico_exposto)
   PROCEDURE pc_politico_exposto( pr_politico_exposto  IN tbcadast_politico_exposto%ROWTYPE            --> Tabela de avalista atual
                                 ,pr_tpoperacao        IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                                 ,pr_idpessoa          IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                                 ,pr_cdoperad          IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                                 ,pr_dscritic         OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_politico_exposto
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -3160,46 +3166,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
+
+    ---------------> CURSORES <-----------------
     -- Buscar dados de pessoa politicamente exposta
     CURSOR cr_pessoa_polexp ( pr_idpessoa   tbcadast_pessoa.idpessoa%TYPE) IS
       SELECT *
         FROM tbcadast_pessoa_polexp pol
-       WHERE pol.idpessoa  = pr_idpessoa; 
-    rw_pessoa_polexp cr_pessoa_polexp%ROWTYPE;        
-    
+       WHERE pol.idpessoa  = pr_idpessoa;
+    rw_pessoa_polexp cr_pessoa_polexp%ROWTYPE;
+
     -- Verificar se existe a pessoa juridica
     CURSOR cr_pessoa_juridica(pr_nrcnpj vwcadast_pessoa_juridica.nrcnpj%TYPE) IS
       SELECT *
         FROM vwcadast_pessoa_juridica
        WHERE nrcnpj   = pr_nrcnpj;
     rw_pessoa_juridica  cr_pessoa_juridica%ROWTYPE;
-    
+
     -- Verificar se existe a pessoa fisica
     CURSOR cr_pessoa_fisica(pr_nrcpf vwcadast_pessoa_fisica.nrcpf%TYPE) IS
       SELECT *
         FROM vwcadast_pessoa_fisica
        WHERE nrcpf   = pr_nrcpf;
     rw_pessoa_fisica  cr_pessoa_fisica%ROWTYPE;
-    
-    
+
+
     rw_pessoa_jur cr_pessoa_jur%ROWTYPE;
     rw_pessoa_fis cr_pessoa_fis%ROWTYPE;
-    ---------------> VARIAVEIS <----------------- 
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa       
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa
     vr_idpessoa_emp    tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa emp
     vr_idpessoa_poli    tbcadast_pessoa.idpessoa%TYPE;           -- Identificador de pessoa pol
     vr_flgcriar         BOOLEAN;
-    
+
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA
@@ -3209,24 +3215,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao do politico exposto';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
-    
-    
+
+
     -- Buscar dados de pessoa politicamente exposta
     rw_pessoa_polexp := NULL;
     OPEN cr_pessoa_polexp ( pr_idpessoa   => vr_idpessoa);
     FETCH cr_pessoa_polexp INTO rw_pessoa_polexp;
     CLOSE cr_pessoa_polexp;
-        
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       -- Se encontrou registro na busca
       IF rw_pessoa_polexp.idpessoa IS NOT NULL THEN
         -- Efetua a exclusao do registro
-        cada0010.pc_exclui_pessoa_polexp (pr_idpessoa         => vr_idpessoa,                                              
+        cada0010.pc_exclui_pessoa_polexp (pr_idpessoa         => vr_idpessoa,
                                           pr_cdoperad_altera  => pr_cdoperad,
                                           pr_cdcritic         => vr_cdcritic,
                                           pr_dscritic         => vr_dscritic);
@@ -3234,45 +3240,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           RAISE vr_exc_erro;
         END IF;
       END IF;
-            
+
     ELSE -- Se for alteracao ou inclusao
-    
+
       vr_idpessoa_emp := NULL;
       vr_flgcriar     := FALSE;
       rw_pessoa_juridica := NULL;
       vr_idpessoa_emp    := rw_pessoa_polexp.idpessoa_empresa;
-      
-      IF nvl(pr_politico_exposto.nrcnpj_empresa,0) > 0 THEN    
+
+      IF nvl(pr_politico_exposto.nrcnpj_empresa,0) > 0 THEN
         -- Busca o ID PESSOA da empresa politicamente exposta
         rw_pessoa_juridica := NULL;
         OPEN cr_pessoa_juridica (pr_nrcnpj => pr_politico_exposto.nrcnpj_empresa);
         FETCH cr_pessoa_juridica INTO rw_pessoa_juridica;
         CLOSE cr_pessoa_juridica;
-        
+
         --> marcar para criar a pessoa juridica
         vr_flgcriar := TRUE;
-      
-      --> se possuir nome  
-      ELSIF TRIM(pr_politico_exposto.nmempresa) IS NOT NULL THEN     
-      
-        --> Verificar a informação que ja esta cadastrada 
-        IF rw_pessoa_polexp.idpessoa_empresa > 0 THEN 
+
+      --> se possuir nome
+      ELSIF TRIM(pr_politico_exposto.nmempresa) IS NOT NULL THEN
+
+        --> Verificar a informação que ja esta cadastrada
+        IF rw_pessoa_polexp.idpessoa_empresa > 0 THEN
           -- Buscar dados pessoa juridica
           OPEN cr_pessoa_jur(pr_idpessoa => rw_pessoa_polexp.idpessoa_empresa);
           FETCH cr_pessoa_jur INTO rw_pessoa_jur;
           CLOSE cr_pessoa_jur;
-          
+
           --> se é outra pessoa deve criar
           IF nvl(pr_politico_exposto.nmempresa,' ') <> nvl(rw_pessoa_jur.nmpessoa,' ') THEN
-            vr_flgcriar := TRUE;  
+            vr_flgcriar := TRUE;
           END IF;
-        --> ou se nao tinha pessoa ainda cadastrada            
+        --> ou se nao tinha pessoa ainda cadastrada
         ELSE
           vr_flgcriar := TRUE;
-        END IF;      
-        
+        END IF;
+
       END IF;
-      
+
       --> Verificar se deve criar
       IF vr_flgcriar = TRUE THEN
         IF pr_politico_exposto.nrcnpj_empresa <> 0 THEN
@@ -3282,7 +3288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_juridica.tppessoa         := nvl(rw_pessoa_juridica.tppessoa  ,2); -- Juridica
         rw_pessoa_juridica.tpcadastro       := nvl(rw_pessoa_juridica.tpcadastro,1); -- Prospect
         rw_pessoa_juridica.cdoperad_altera  := pr_cdoperad;
-              
+
         -- Cria a pessoa juridica
         cada0010.pc_cadast_pessoa_juridica(pr_pessoa_juridica => rw_pessoa_juridica,
                                            pr_cdcritic      => vr_cdcritic,
@@ -3290,47 +3296,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-              
+
         -- Atualiza o ID da pesssoa juridica
-        vr_idpessoa_emp := rw_pessoa_juridica.idpessoa;  
-        
+        vr_idpessoa_emp := rw_pessoa_juridica.idpessoa;
+
       END IF;
-      
+
       vr_idpessoa_poli := NULL;
       vr_flgcriar      := FALSE;
       rw_pessoa_fisica := NULL;
       vr_idpessoa_poli := rw_pessoa_polexp.idpessoa_politico;
-      
-      IF nvl(pr_politico_exposto.nrcpf_politico,0) > 0 THEN            
-      
+
+      IF nvl(pr_politico_exposto.nrcpf_politico,0) > 0 THEN
+
         -- Busca o ID PESSOA da pessoa politicamente exposta
         rw_pessoa_fisica := NULL;
         OPEN cr_pessoa_fisica (pr_nrcpf => pr_politico_exposto.nrcpf_politico);
         FETCH cr_pessoa_fisica INTO rw_pessoa_fisica;
         CLOSE cr_pessoa_fisica;
-        
-        vr_flgcriar := TRUE; 
-        
-      --> se possuir nome  
-      ELSIF TRIM(pr_politico_exposto.nmpolitico) IS NOT NULL THEN     
-      
-        --> Verificar a informação que ja esta cadastrada 
-        IF rw_pessoa_polexp.idpessoa_politico > 0 THEN 
+
+        vr_flgcriar := TRUE;
+
+      --> se possuir nome
+      ELSIF TRIM(pr_politico_exposto.nmpolitico) IS NOT NULL THEN
+
+        --> Verificar a informação que ja esta cadastrada
+        IF rw_pessoa_polexp.idpessoa_politico > 0 THEN
           -- Buscar dados pessoa fisica
           OPEN cr_pessoa_fis(pr_idpessoa => rw_pessoa_polexp.idpessoa_politico);
           FETCH cr_pessoa_fis INTO rw_pessoa_fis;
           CLOSE cr_pessoa_fis;
-          
+
           --> se é outra pessoa deve criar
           IF nvl(pr_politico_exposto.nmpolitico,' ') <> nvl(rw_pessoa_fis.nmpessoa,' ') THEN
-            vr_flgcriar := TRUE;  
+            vr_flgcriar := TRUE;
           END IF;
-        --> ou se nao tinha pessoa ainda cadastrada            
+        --> ou se nao tinha pessoa ainda cadastrada
         ELSE
           vr_flgcriar := TRUE;
-        END IF;      
+        END IF;
       END IF;
-      
+
       --> Verificar se deve criar
       IF vr_flgcriar = TRUE THEN
         IF pr_politico_exposto.nrcpf_politico <> 0 THEN
@@ -3340,7 +3346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_fisica.tppessoa         := nvl(rw_pessoa_fisica.tppessoa  ,1); -- Juridica
         rw_pessoa_fisica.tpcadastro       := nvl(rw_pessoa_fisica.tpcadastro,1); -- Prospect
         rw_pessoa_fisica.cdoperad_altera  := pr_cdoperad;
-        
+
         -- Cria a pessoa fisica
         cada0010.pc_cadast_pessoa_fisica(pr_pessoa_fisica => rw_pessoa_fisica,
                                            pr_cdcritic      => vr_cdcritic,
@@ -3348,11 +3354,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-          
+
         -- Atualiza o ID da pesssoa fisica
         vr_idpessoa_poli := rw_pessoa_fisica.idpessoa;
       END IF;
-      
+
       rw_pessoa_polexp.idpessoa          := vr_idpessoa;
       rw_pessoa_polexp.tpexposto         := pr_politico_exposto.tpexposto;
       rw_pessoa_polexp.dtinicio          := pr_politico_exposto.dtinicio;
@@ -3370,10 +3376,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
+
     END IF;
-        
-    
+
+
   EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -3382,8 +3388,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => pr_politico_exposto.idseqttl
                             ,pr_nmtabela => 'tbcadast_politico_exposto'
                             ,pr_dsalerta => vr_dscritic);
-    
-    
+
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
@@ -3393,19 +3399,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
   END pc_politico_exposto;
 
   -- Rotina para atualizacao da tabela de dados financeiros banco(CRAPJFN)
-  PROCEDURE pc_pessoa_jur_bco( pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa 
+  PROCEDURE pc_pessoa_jur_bco( pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                               ,pr_crapjfn     IN crapjfn%ROWTYPE            --> Tabela de email atual
-                              ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)                              
+                              ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                               ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                               ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_pessoa_jur_bco
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -3416,28 +3422,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <----------------- 
+
+    ---------------> CURSORES <-----------------
     --> buscar dados financeiros de pessoa juridica em outros bancos.
     CURSOR cr_pessoa_bco (pr_idpessoa    tbcadast_pessoa.idpessoa%TYPE,
                           pr_nrseq_banco tbcadast_pessoa_juridica_bco.nrseq_banco%TYPE)IS
       SELECT *
         FROM tbcadast_pessoa_juridica_bco bco
        WHERE bco.idpessoa    = pr_idpessoa
-         AND bco.nrseq_banco = decode(pr_nrseq_banco,0,bco.nrseq_banco,pr_nrseq_banco);  
+         AND bco.nrseq_banco = decode(pr_nrseq_banco,0,bco.nrseq_banco,pr_nrseq_banco);
     rw_pessoa_bco cr_pessoa_bco%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa                      
-    
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa
+
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA do email
@@ -3447,18 +3453,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao de dados financeiros';
         RAISE vr_exc_erro;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
-    
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
-    
+
       --> buscar dados financeiros de pessoa juridica em outros bancos.
       FOR rw_pessoa_bco IN cr_pessoa_bco (pr_idpessoa    => vr_idpessoa,
-                                          pr_nrseq_banco => 0) LOOP 
-                    
+                                          pr_nrseq_banco => 0) LOOP
+
         -- Excluir registro
         cada0010.pc_exclui_pessoa_juridica_bco (pr_idpessoa    => vr_idpessoa,
                                                 pr_nrseq_banco => rw_pessoa_bco.nrseq_banco,
@@ -3469,25 +3475,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           RAISE vr_exc_erro;
         END IF;
       END LOOP;
-             
+
     ELSE -- Se for alteracao ou inclusao
-    
+
       -- efetua loop sobre os registros
       FOR x IN 1..5 LOOP
-        
+
         -- Inicializa a variavel
         OPEN cr_pessoa_bco (pr_idpessoa    => vr_idpessoa,
                             pr_nrseq_banco => x);
         FETCH cr_pessoa_bco INTO rw_pessoa_bco;
         CLOSE cr_pessoa_bco;
-                
+
         rw_pessoa_bco.idpessoa := pr_idpessoa;
         rw_pessoa_bco.cdoperad_altera := pr_cdoperad;
         rw_pessoa_bco.nrseq_banco := x;
 
         -- Verifica qual o banco devera ser utilizado
-        IF x = 1 THEN          
-        
+        IF x = 1 THEN
+
           rw_pessoa_bco.cdbanco      := pr_crapjfn.cddbanco##1;
           rw_pessoa_bco.dsoperacao   := pr_crapjfn.dstipope##1;
           rw_pessoa_bco.vloperacao   := pr_crapjfn.vlropera##1;
@@ -3548,7 +3554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               NULL;
           END;
         END IF;
-        
+
         -- Verifica se existe informacao
         IF nvl(rw_pessoa_bco.cdbanco,0) <> 0 THEN
           -- Efetua a inclusao
@@ -3558,9 +3564,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
-        
-        --> se banco esta zerado, porém possuia dados, é necessario exluir informação  
-        ELSIF rw_pessoa_bco.nrseq_banco > 0 THEN 
+
+        --> se banco esta zerado, porém possuia dados, é necessario exluir informação
+        ELSIF rw_pessoa_bco.nrseq_banco > 0 THEN
           -- Excluir registro
           cada0010.pc_exclui_pessoa_juridica_bco (pr_idpessoa    => vr_idpessoa,
                                                   pr_nrseq_banco => rw_pessoa_bco.nrseq_banco,
@@ -3571,11 +3577,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             RAISE vr_exc_erro;
           END IF;
         END IF;
-        
+
       END LOOP;
-      
+
     END IF;
-                        
+
 	EXCEPTION
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
@@ -3583,22 +3589,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_pessoa_jur_bco: '||SQLERRM;
-  END pc_pessoa_jur_bco;  
-  
+  END pc_pessoa_jur_bco;
+
   -- Rotina para atualizacao da tabela de dados de faturamento(CRAPJFN)
-  PROCEDURE pc_pessoa_jur_fat( pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa 
+  PROCEDURE pc_pessoa_jur_fat( pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                               ,pr_crapjfn     IN crapjfn%ROWTYPE            --> Tabela de email atual
-                              ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)                              
+                              ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                               ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                               ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_pessoa_jur_fat
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -3609,28 +3615,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <----------------- 
+
+    ---------------> CURSORES <-----------------
     --> buscar dados de faturamento mensal de Pessoas Juridica
     CURSOR cr_pessoa_fat (pr_idpessoa    tbcadast_pessoa.idpessoa%TYPE,
                           pr_nrseq_fat   tbcadast_pessoa_juridica_fat.nrseq_faturamento%TYPE)IS
       SELECT *
         FROM tbcadast_pessoa_juridica_fat fat
        WHERE fat.idpessoa          = pr_idpessoa
-         AND fat.nrseq_faturamento = decode(pr_nrseq_fat,0,fat.nrseq_faturamento,pr_nrseq_fat);  
+         AND fat.nrseq_faturamento = decode(pr_nrseq_fat,0,fat.nrseq_faturamento,pr_nrseq_fat);
     rw_pessoa_fat cr_pessoa_fat%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa                      
-    
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa
+
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA do email
@@ -3640,18 +3646,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao de dados financeiros';
         RAISE vr_exc_erro;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
-    
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
-    
+
       --> buscar dados de faturamento mensal de Pessoas Juridica
       FOR rw_pessoa_fat IN cr_pessoa_fat (pr_idpessoa  => vr_idpessoa,
-                                          pr_nrseq_fat => 0) LOOP 
-                    
+                                          pr_nrseq_fat => 0) LOOP
+
         -- Excluir registro
         cada0010.pc_exclui_pessoa_juridica_fat (pr_idpessoa    => vr_idpessoa,
                                                 pr_nrseq_faturamento  => rw_pessoa_fat.nrseq_faturamento,
@@ -3662,9 +3668,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           RAISE vr_exc_erro;
         END IF;
       END LOOP;
-             
+
     ELSE -- Se for alteracao ou inclusao
-    
+
       -- Efetua loop sobre os registros
       FOR x IN 1..12 LOOP
         rw_pessoa_fat := NULL;
@@ -3673,7 +3679,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             pr_nrseq_fat => x);
         FETCH cr_pessoa_fat INTO rw_pessoa_fat;
         CLOSE cr_pessoa_fat;
-      
+
         -- Inicializa a variavel
         rw_pessoa_fat.idpessoa          := pr_idpessoa;
         rw_pessoa_fat.cdoperad_altera   := pr_cdoperad;
@@ -3684,7 +3690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##1,'fm00')||
-                                                      pr_crapjfn.anoftbru##1,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##1,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
@@ -3695,7 +3701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##2,'fm00')||
-                                                      pr_crapjfn.anoftbru##2,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##2,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
@@ -3707,7 +3713,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##3,'fm00')||
-                                                      pr_crapjfn.anoftbru##3,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##3,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
@@ -3718,7 +3724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##4,'fm00')||
-                                                      pr_crapjfn.anoftbru##4,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##4,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
@@ -3729,7 +3735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##5,'fm00')||
-                                                      pr_crapjfn.anoftbru##5,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##5,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
@@ -3740,7 +3746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##6,'fm00')||
-                                                      pr_crapjfn.anoftbru##6,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##6,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
@@ -3751,7 +3757,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##7,'fm00')||
-                                                      pr_crapjfn.anoftbru##7,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##7,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
@@ -3762,7 +3768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##8,'fm00')||
-                                                      pr_crapjfn.anoftbru##8,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##8,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
@@ -3773,7 +3779,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##9,'fm00')||
-                                                      pr_crapjfn.anoftbru##9,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##9,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
@@ -3784,7 +3790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##10,'fm00')||
-                                                      pr_crapjfn.anoftbru##10,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##10,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
@@ -3795,7 +3801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##11,'fm00')||
-                                                      pr_crapjfn.anoftbru##11,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##11,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
@@ -3806,14 +3812,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           -- Feito o processo abaixo, pois pode gerar uma data invalida
           BEGIN
             rw_pessoa_fat.dtmes_referencia := to_date(to_char(pr_crapjfn.mesftbru##12,'fm00')||
-                                                      pr_crapjfn.anoftbru##12,'MMYYYY'); 
+                                                      pr_crapjfn.anoftbru##12,'MMYYYY');
           EXCEPTION
             WHEN OTHERS THEN
               rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##12;
         END IF;
-      
+
         -- Verifica se existe informacao
         IF rw_pessoa_fat.dtmes_referencia IS NOT NULL THEN
           -- Efetua a inclusao
@@ -3824,8 +3830,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             RAISE vr_exc_erro;
           END IF;
 
-        --> se data esta vazia, porém possuia dados, é necessario exluir informação  
-        ELSIF rw_pessoa_fat.nrseq_faturamento > 0 THEN 
+        --> se data esta vazia, porém possuia dados, é necessario exluir informação
+        ELSIF rw_pessoa_fat.nrseq_faturamento > 0 THEN
           -- Excluir registro
           cada0010.pc_exclui_pessoa_juridica_fat (pr_idpessoa    => vr_idpessoa,
                                                   pr_nrseq_faturamento => rw_pessoa_fat.nrseq_faturamento,
@@ -3838,9 +3844,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         END IF;
 
       END LOOP;
-     
+
     END IF;
-                        
+
 	EXCEPTION
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
@@ -3848,23 +3854,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_pessoa_jur_fat: '||SQLERRM;
-  END pc_pessoa_jur_fat;  
-  
-  
+  END pc_pessoa_jur_fat;
+
+
   -- Rotina para atualizacao da tabela de dados financeiros (CRAPJFN)
   PROCEDURE pc_crapjfn(pr_crapjfn     IN crapjfn%ROWTYPE            --> Tabela de email atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_crapjfn
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -3875,21 +3881,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
-    rw_pessoa_jur  cr_pessoa_jur%ROWTYPE;     
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> CURSORES <-----------------
+    rw_pessoa_jur  cr_pessoa_jur%ROWTYPE;
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa                      
-    
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa
+
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA do email
@@ -3899,36 +3905,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao de dados financeiros';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
 
     -- Buscar dados pessoa juridica
     OPEN cr_pessoa_jur(pr_idpessoa => vr_idpessoa);
     FETCH cr_pessoa_jur INTO rw_pessoa_jur;
     CLOSE cr_pessoa_jur;
-    
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
-    
+
       --> limpar dados
       rw_pessoa_jur.peunico_cliente          := 0;
-      rw_pessoa_jur.vlreceita_bruta          := 0; 
+      rw_pessoa_jur.vlreceita_bruta          := 0;
       rw_pessoa_jur.vlcusto_despesa_adm      := 0;
       rw_pessoa_jur.vldespesa_administrativa := 0;
-      rw_pessoa_jur.qtdias_recebimento       := 0; 
-      rw_pessoa_jur.qtdias_pagamento         := 0; 
-      rw_pessoa_jur.vlativo_caixa_banco_apl  := 0; 
-      rw_pessoa_jur.vlativo_contas_receber   := 0; 
-      rw_pessoa_jur.vlativo_estoque          := 0; 
-      rw_pessoa_jur.vlativo_imobilizado      := 0; 
-      rw_pessoa_jur.vlativo_outros           := 0; 
-      rw_pessoa_jur.vlpassivo_fornecedor     := 0; 
-      rw_pessoa_jur.vlpassivo_divida_bancaria:= 0; 
-      rw_pessoa_jur.vlpassivo_outros         := 0; 
-      rw_pessoa_jur.dtmes_base               := NULL; 
-                    
+      rw_pessoa_jur.qtdias_recebimento       := 0;
+      rw_pessoa_jur.qtdias_pagamento         := 0;
+      rw_pessoa_jur.vlativo_caixa_banco_apl  := 0;
+      rw_pessoa_jur.vlativo_contas_receber   := 0;
+      rw_pessoa_jur.vlativo_estoque          := 0;
+      rw_pessoa_jur.vlativo_imobilizado      := 0;
+      rw_pessoa_jur.vlativo_outros           := 0;
+      rw_pessoa_jur.vlpassivo_fornecedor     := 0;
+      rw_pessoa_jur.vlpassivo_divida_bancaria:= 0;
+      rw_pessoa_jur.vlpassivo_outros         := 0;
+      rw_pessoa_jur.dtmes_base               := NULL;
+
       -- Insere o Cadastro de pessoa fisica
       cada0010.pc_cadast_pessoa_juridica(pr_pessoa_juridica => rw_pessoa_jur,
                                          pr_cdcritic        => vr_cdcritic,
@@ -3936,29 +3942,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-             
+
     ELSE -- Se for alteracao ou inclusao
-      
+
       rw_pessoa_jur.peunico_cliente          := pr_crapjfn.perfatcl;
-      rw_pessoa_jur.vlreceita_bruta          := pr_crapjfn.vlrctbru; 
+      rw_pessoa_jur.vlreceita_bruta          := pr_crapjfn.vlrctbru;
       rw_pessoa_jur.vlcusto_despesa_adm      := pr_crapjfn.vlctdpad;
       rw_pessoa_jur.vldespesa_administrativa := pr_crapjfn.vldspfin;
-      rw_pessoa_jur.qtdias_recebimento       := pr_crapjfn.ddprzrec; 
-      rw_pessoa_jur.qtdias_pagamento         := pr_crapjfn.ddprzpag; 
-      rw_pessoa_jur.vlativo_caixa_banco_apl  := pr_crapjfn.vlcxbcaf; 
-      rw_pessoa_jur.vlativo_contas_receber   := pr_crapjfn.vlctarcb; 
-      rw_pessoa_jur.vlativo_estoque          := pr_crapjfn.vlrestoq; 
-      rw_pessoa_jur.vlativo_imobilizado      := pr_crapjfn.vlrimobi; 
-      rw_pessoa_jur.vlativo_outros           := pr_crapjfn.vloutatv; 
-      rw_pessoa_jur.vlpassivo_fornecedor     := pr_crapjfn.vlfornec; 
-      rw_pessoa_jur.vlpassivo_divida_bancaria:= pr_crapjfn.vldivbco; 
-      rw_pessoa_jur.vlpassivo_outros         := pr_crapjfn.vloutpas; 
+      rw_pessoa_jur.qtdias_recebimento       := pr_crapjfn.ddprzrec;
+      rw_pessoa_jur.qtdias_pagamento         := pr_crapjfn.ddprzpag;
+      rw_pessoa_jur.vlativo_caixa_banco_apl  := pr_crapjfn.vlcxbcaf;
+      rw_pessoa_jur.vlativo_contas_receber   := pr_crapjfn.vlctarcb;
+      rw_pessoa_jur.vlativo_estoque          := pr_crapjfn.vlrestoq;
+      rw_pessoa_jur.vlativo_imobilizado      := pr_crapjfn.vlrimobi;
+      rw_pessoa_jur.vlativo_outros           := pr_crapjfn.vloutatv;
+      rw_pessoa_jur.vlpassivo_fornecedor     := pr_crapjfn.vlfornec;
+      rw_pessoa_jur.vlpassivo_divida_bancaria:= pr_crapjfn.vldivbco;
+      rw_pessoa_jur.vlpassivo_outros         := pr_crapjfn.vloutpas;
       IF pr_crapjfn.mesdbase BETWEEN 1 AND 12 AND
          pr_crapjfn.anodbase BETWEEN 1900 AND (to_char(SYSDATE,'YYYY')+1) THEN
         rw_pessoa_jur.dtmes_base             := to_date(to_char(pr_crapjfn.mesdbase,'fm00')||
-                                                        pr_crapjfn.anodbase,'MMYYYY'); 
+                                                        pr_crapjfn.anodbase,'MMYYYY');
       END IF;
-                    
+
       -- Insere o Cadastro de pessoa fisica
       cada0010.pc_cadast_pessoa_juridica(pr_pessoa_juridica => rw_pessoa_jur,
                                          pr_cdcritic        => vr_cdcritic,
@@ -3967,29 +3973,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         RAISE vr_exc_erro;
       END IF;
     END IF;
-    
+
     --> Atualizacao da tabela de dados financeiros banco(CRAPJFN)
-    pc_pessoa_jur_bco( pr_idpessoa    => vr_idpessoa     --> Identificador de pessoa 
+    pc_pessoa_jur_bco( pr_idpessoa    => vr_idpessoa     --> Identificador de pessoa
                       ,pr_crapjfn     => pr_crapjfn      --> Tabela de email atual
-                      ,pr_tpoperacao  => pr_tpoperacao   --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)                              
+                      ,pr_tpoperacao  => pr_tpoperacao   --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_cdoperad    => pr_cdoperad     --> Operador que esta efetuando a operacao
                       ,pr_dscritic    => vr_dscritic  ); --> Retorno de Erro
-    
+
     IF  TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-    
+
     --> Atualizacao da tabela de dados de faturamento(CRAPJFN)
-    pc_pessoa_jur_fat( pr_idpessoa    => vr_idpessoa     --> Identificador de pessoa 
+    pc_pessoa_jur_fat( pr_idpessoa    => vr_idpessoa     --> Identificador de pessoa
                       ,pr_crapjfn     => pr_crapjfn      --> Tabela de email atual
-                      ,pr_tpoperacao  => pr_tpoperacao   --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)                              
+                      ,pr_tpoperacao  => pr_tpoperacao   --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_cdoperad    => pr_cdoperad     --> Operador que esta efetuando a operacao
                       ,pr_dscritic    => vr_dscritic  ); --> Retorno de Erro
-    
+
     IF  TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-                        
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -3998,28 +4004,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => 1
                             ,pr_nmtabela => 'CRAPJFN'
                             ,pr_dsalerta => vr_dscritic);
-    
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapjfn: '||SQLERRM;
-  END pc_crapjfn;  
-  
+  END pc_crapjfn;
+
   -- Rotina para atualizacao da tabela renda do titular (CRAPTTL)
-  PROCEDURE pc_pessoa_renda( pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa 
-                            ,pr_crapttl     IN crapttl%ROWTYPE            --> Tabela de titular atual                                                     
+  PROCEDURE pc_pessoa_renda( pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
+                            ,pr_crapttl     IN crapttl%ROWTYPE            --> Tabela de titular atual
                             ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                             ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_pessoa_renda
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -4030,21 +4036,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------           
+
+    ---------------> CURSORES <-----------------
     --> Retornar dados pessoa renda
     CURSOR cr_pessoa_renda (pr_idpessoa tbcadast_pessoa.idpessoa%TYPE) IS
       SELECT *
         FROM tbcadast_pessoa_renda ren
        WHERE ren.idpessoa = pr_idpessoa;
     rw_pessoa_renda cr_pessoa_renda%ROWTYPE;
-    
+
     --> Retornar dados pessoa pelo id
     CURSOR cr_pessoa_id (pr_idpessoa tbcadast_pessoa.idpessoa%TYPE) IS
       SELECT *
         FROM tbcadast_pessoa pes
        WHERE pes.idpessoa = pr_idpessoa;
-    
+
     -- Cursor para verificar se existe a pessoa juridica
     CURSOR cr_pessoa_juridica(pr_nrcnpj vwcadast_pessoa_juridica.nrcnpj%TYPE) IS
       SELECT *
@@ -4052,14 +4058,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE nrcnpj   = pr_nrcnpj;
     rw_pessoa_juridica  cr_pessoa_juridica%ROWTYPE;
     rw_pessoa_jur_fonte cr_pessoa_juridica%ROWTYPE;
-    
+
     -- Verificar se existe a pessoa fisica
     CURSOR cr_pessoa_fisica(pr_nrcpf vwcadast_pessoa_fisica.nrcpf%TYPE) IS
       SELECT *
         FROM vwcadast_pessoa_fisica
        WHERE nrcpf   = pr_nrcpf;
     rw_pessoa_fisica  cr_pessoa_fisica%ROWTYPE;
-    
+
     --> Retornar dados pessoa renda complementar
     CURSOR cr_pessoa_rendacompl ( pr_idpessoa    tbcadast_pessoa.idpessoa%TYPE,
                                   pr_nrseq_renda tbcadast_pessoa_rendacompl.nrseq_renda%TYPE) IS
@@ -4068,28 +4074,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE ren.idpessoa    = pr_idpessoa
          AND ren.nrseq_renda = pr_nrseq_renda;
     rw_pessoa_rendacompl cr_pessoa_rendacompl%ROWTYPE;
-    
-    
+
+
     rw_pessoa cr_pessoa%ROWTYPE;
-    ---------------> VARIAVEIS <----------------- 
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
-  
+
     -- Variaveis auxiliares
     vr_flcria_empresa  BOOLEAN := FALSE;
   BEGIN
-  
+
     --> Retornar dados pessoa renda
     rw_pessoa_renda := NULL;
     OPEN cr_pessoa_renda (pr_idpessoa => pr_idpessoa);
     FETCH cr_pessoa_renda INTO rw_pessoa_renda;
     CLOSE cr_pessoa_renda;
-          
+
     -- Se possuir CNPJ, verifica se esta cadastrado
     IF nvl(pr_crapttl.nrcpfemp,0) > 0 THEN
-                        
+
       -- Verifica se existe a pessoaPJ
       OPEN cr_pessoa(pr_nrcpfcgc => pr_crapttl.nrcpfemp);
       FETCH cr_pessoa INTO rw_pessoa;
@@ -4097,7 +4103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF cr_pessoa%NOTFOUND THEN
         -- Atualiza o indicador para criar o CNPJ
         vr_flcria_empresa := TRUE;
-        
+
       ELSE -- Se encontrou a pessoa juridica
         --> se o nome estiver diferente, é necessario atualizar pessoa
         IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
@@ -4108,33 +4114,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       END IF;
       CLOSE cr_pessoa;
 
-    ELSE 
-                      
+    ELSE
+
       -- Verifica se existe PJ
       OPEN cr_pessoa_id(pr_idpessoa => rw_pessoa_renda.idpessoa_fonte_renda);
       FETCH cr_pessoa_id INTO rw_pessoa;
       CLOSE cr_pessoa_id;
-            
+
       -- Feito a validacao abaixo para nao cortar o final do nome da pessoa
       IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
         -- Atualiza o indicador para criar o CNPJ
-        vr_flcria_empresa := TRUE;          
+        vr_flcria_empresa := TRUE;
       END IF;
     END IF;
-          
+
     -- Se o indicador de criacao/atualizacao de empresa estiver ligado
     IF vr_flcria_empresa THEN
-          
+
       -- Verifica se a empresa eh uma pessoa fisica ou juridica
       -- Se o CNPJ nao bater com o calculado
       IF nvl(pr_crapttl.nrcpfemp,0) > 0 AND
          SUBSTR(pr_crapttl.nrcpfemp,LENGTH(pr_crapttl.nrcpfemp)-1) <> gene0005.fn_retorna_digito_cnpj(pr_nrcalcul => SUBSTR(pr_crapttl.nrcpfemp,1,LENGTH(pr_crapttl.nrcpfemp)-2)) THEN
-        
+
         rw_pessoa_fisica := NULL;
         OPEN cr_pessoa_fisica(pr_nrcpf => pr_crapttl.nrcpfemp);
         FETCH cr_pessoa_fisica INTO rw_pessoa_fisica;
         CLOSE cr_pessoa_fisica;
-        
+
         -- Popula os dados para PF
         rw_pessoa_fisica.nrcpf                := pr_crapttl.nrcpfemp;
         
@@ -4168,12 +4174,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_renda.idpessoa_fonte_renda := rw_pessoa_fisica.idpessoa;
 
       ELSE
-        
+
         rw_pessoa_juridica := NULL;
         OPEN cr_pessoa_juridica(pr_nrcnpj => pr_crapttl.nrcpfemp);
         FETCH cr_pessoa_juridica INTO rw_pessoa_juridica;
         CLOSE cr_pessoa_juridica;
-      
+
         -- Popula os dados de pessoa juridica
         -- Feito a validacao abaixo para nao cortar o final do nome da pessoa
         IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa_juridica.nmpessoa,' '),1,40) THEN
@@ -4195,7 +4201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         END IF;
         -- Atualiza com o ID pessoa que foi criado
         rw_pessoa_renda.idpessoa_fonte_renda := rw_pessoa_juridica.idpessoa;
-      END IF;        
+      END IF;
     END IF;
 
     -- Popula os campos para inserir o registro
@@ -4211,7 +4217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     rw_pessoa_renda.nrcadastro           := pr_crapttl.nrcadast;
     rw_pessoa_renda.vlrenda              := pr_crapttl.vlsalari;
     rw_pessoa_renda.cdoperad_altera      := pr_cdoperad;
-           
+
     -- Efetua a inclusao
     cada0010.pc_cadast_pessoa_renda(pr_pessoa_renda => rw_pessoa_renda
                                    ,pr_cdcritic     => vr_cdcritic
@@ -4219,19 +4225,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-    
+
     -- Loop sobre o total de rendimentos possiveis
     FOR x IN 1..6 LOOP
-      
+
       -- Inicializa a variavel
       rw_pessoa_rendacompl := NULL;
-      
+
       --> Retornar dados pessoa renda complementar
       OPEN cr_pessoa_rendacompl ( pr_idpessoa    => pr_idpessoa,
                                   pr_nrseq_renda => x);
       FETCH cr_pessoa_rendacompl INTO rw_pessoa_rendacompl;
       CLOSE cr_pessoa_rendacompl;
-      
+
       -- Verifica qual o rendimento devera ser utilizado
       IF x = 1 THEN
         rw_pessoa_rendacompl.tprenda := pr_crapttl.tpdrendi##1;
@@ -4252,14 +4258,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_rendacompl.tprenda := pr_crapttl.tpdrendi##6;
         rw_pessoa_rendacompl.vlrenda := pr_crapttl.vldrendi##6;
       END IF;
-              
+
       -- somente efetua a inclusao se o valor for superior a zeros
       IF rw_pessoa_rendacompl.vlrenda > 0 THEN
         -- Popula os campos para inserir o registro
         rw_pessoa_rendacompl.idpessoa        := pr_idpessoa;
         rw_pessoa_rendacompl.nrseq_renda     := x;
         rw_pessoa_rendacompl.cdoperad_altera := pr_cdoperad;
-        
+
         -- Efetua a inclusao
         cada0010.pc_cadast_pessoa_renda_compl(pr_pessoa_renda_compl => rw_pessoa_rendacompl
                                              ,pr_cdcritic => vr_cdcritic
@@ -4267,9 +4273,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
       --> Se nao possui informacao, deve-se excluir
-      ELSE 
+      ELSE
         -- Excluir registro
         cada0010.pc_exclui_pessoa_renda_compl ( pr_idpessoa    => pr_idpessoa,
                                                 pr_nrseq_renda => x,
@@ -4279,12 +4285,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-      
+
       END IF;
-      
+
     END LOOP; -- Fim do loop renda compl
-    
-                        
+
+
 	EXCEPTION
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
@@ -4292,22 +4298,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_pessoa_renda: '||SQLERRM;
-  END pc_pessoa_renda;  
-      
+  END pc_pessoa_renda;
+
   -- Rotina para atualizacao da tabela de dados titulares (CRAPTTL)
   PROCEDURE pc_crapttl(pr_crapttl     IN crapttl%ROWTYPE            --> Tabela de titular atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_crapttl
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -4318,10 +4324,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
-    rw_pessoa_fis  cr_pessoa_fis%ROWTYPE;     
-    
+
+    ---------------> CURSORES <-----------------
+    rw_pessoa_fis  cr_pessoa_fis%ROWTYPE;
+
     -- Buscar dados da pessoa de relacao
     CURSOR cr_pessoa_rel ( pr_idpessoa   tbcadast_pessoa.idpessoa%TYPE,
                            pr_tprelacao  tbcadast_pessoa_relacao.tprelacao%TYPE) IS
@@ -4332,44 +4338,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
              tbcadast_pessoa pes
        WHERE rel.idpessoa         = pr_idpessoa
          AND rel.tprelacao        = pr_tprelacao
-         AND rel.idpessoa_relacao = pes.idpessoa; 
+         AND rel.idpessoa_relacao = pes.idpessoa;
     rw_pessoa_rel cr_pessoa_rel%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa                      
-    
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa
+
   BEGIN
-  
-    
+
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       --> Tabela nao permite exclusão, nao é necessario tratar
       NULL;
     ELSE -- Se for alteracao ou inclusao
-    
+
       -- Se nao for informado o IDPESSOA, deve-se buscar
       IF pr_idpessoa IS NULL THEN
         -- Busca o ID PESSOA do email
         vr_idpessoa := fn_busca_pessoa(pr_cdcooper => pr_crapttl.cdcooper,
                                        pr_nrdconta => pr_crapttl.nrdconta,
                                        pr_idseqttl => pr_crapttl.idseqttl);
-        --> Caso não encontre irá criar    
+        --> Caso não encontre irá criar
       ELSE
-        vr_idpessoa := pr_idpessoa;                           
+        vr_idpessoa := pr_idpessoa;
       END IF;
 
       -- Buscar dados pessoa fisica
       OPEN cr_pessoa_fis(pr_idpessoa => vr_idpessoa);
       FETCH cr_pessoa_fis INTO rw_pessoa_fis;
       CLOSE cr_pessoa_fis;
-    
-      --> Caso ainda nao exista cadastro de pessoa 
+
+      --> Caso ainda nao exista cadastro de pessoa
       IF nvl(vr_idpessoa,0) = 0 THEN
         -- Efetua a inclusao de pessoa
         cada0011.pc_insere_pessoa_crapass(pr_cdcooper => pr_crapttl.cdcooper,
@@ -4382,7 +4388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
         vr_idpessoa := fn_busca_pessoa(pr_cdcooper => pr_crapttl.cdcooper,
                                        pr_nrdconta => pr_crapttl.nrdconta,
                                        pr_idseqttl => pr_crapttl.idseqttl);
@@ -4390,11 +4396,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           vr_dscritic := 'Nao encontrado PESSOA para alteracao de dados do titular';
           RAISE vr_exc_erro;
         END IF;
-      
+
       ELSE
         -- Se for uma naturalidade estrangeira, gera no campo de estrangeiros
         IF pr_crapttl.cdufnatu = 'EX' THEN
-          rw_pessoa_fis.dsnaturalidade := pr_crapttl.dsnatura; 
+          rw_pessoa_fis.dsnaturalidade := pr_crapttl.dsnatura;
           rw_pessoa_fis.cdpais         := pr_crapttl.cdnacion;
         ELSE
           -- Busca o municipio da naturalidade
@@ -4405,7 +4411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
-        END IF;      
+        END IF;
 
         -- Atualiza os dados de pessoa fisica
         rw_pessoa_fis.nrcpf                  := pr_crapttl.nrcpfcgc;
@@ -4429,7 +4435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_fis.nrdocumento            := pr_crapttl.nrdocttl;
         rw_pessoa_fis.dtemissao_documento    := pr_crapttl.dtemdttl;
         IF pr_crapttl.idorgexp <> 0 THEN
-          rw_pessoa_fis.idorgao_expedidor    := pr_crapttl.idorgexp; 
+          rw_pessoa_fis.idorgao_expedidor    := pr_crapttl.idorgexp;
         END IF;
         rw_pessoa_fis.cduf_orgao_expedidor   := TRIM(pr_crapttl.cdufdttl);
         rw_pessoa_fis.inhabilitacao_menor    := pr_crapttl.inhabmen;
@@ -4443,7 +4449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         END IF;
         rw_pessoa_fis.dsprofissao            := pr_crapttl.dsproftl;
         rw_pessoa_fis.dsjustific_outros_rend := pr_crapttl.dsjusren;
-        
+
         -- Insere o Cadastro de pessoa fisica
         cada0010.pc_cadast_pessoa_fisica(pr_pessoa_fisica => rw_pessoa_fis,
                                          pr_cdcritic      => vr_cdcritic,
@@ -4451,18 +4457,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
         -- Atualiza o ID PESSOA
         vr_idpessoa := rw_pessoa_fis.idpessoa;
-        
+
         -- Buscar dados da pessoa de relacao
         OPEN cr_pessoa_rel ( pr_idpessoa  => vr_idpessoa,
                              pr_tprelacao => 3); -- Pai
         FETCH cr_pessoa_rel INTO rw_pessoa_rel;
         CLOSE cr_pessoa_rel;
-        
+
         --> se possia inf do pai, porém agora o campo esta vazio, deve deletar
-        IF rw_pessoa_rel.nrseq_relacao > 0 AND 
+        IF rw_pessoa_rel.nrseq_relacao > 0 AND
            ( TRIM(pr_crapttl.nmpaittl) IS NULL OR
              pr_crapttl.nmpaittl <> rw_pessoa_rel.nmpessoa ) THEN
           -- Efetua a exclusao do registro
@@ -4473,13 +4479,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                               pr_dscritic           => vr_dscritic);
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
-          END IF; 
-        END IF;         
-        
+          END IF;
+        END IF;
+
         -- se possui nome do pai, e é diferente do atual
         IF TRIM(pr_crapttl.nmpaittl) IS NOT NULL AND
-           nvl(pr_crapttl.nmpaittl,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN      
-        
+           nvl(pr_crapttl.nmpaittl,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN
+
           CADA0011.pc_trata_pessoa_relacao( pr_idpessoa => vr_idpessoa,
                                             pr_tprelacao=> 3, -- Pai
                                             pr_nmpessoa => pr_crapttl.nmpaittl,
@@ -4490,16 +4496,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             RAISE vr_exc_erro;
           END IF;
         END IF;
-        
+
         -- Buscar dados da pessoa de relacao
         rw_pessoa_rel := NULL;
         OPEN cr_pessoa_rel ( pr_idpessoa  => vr_idpessoa,
                              pr_tprelacao => 4); -- Mae
         FETCH cr_pessoa_rel INTO rw_pessoa_rel;
         CLOSE cr_pessoa_rel;
-        
+
         --> se possia inf do mae, porém agora o campo esta vazio, deve deletar
-        IF rw_pessoa_rel.nrseq_relacao > 0 AND 
+        IF rw_pessoa_rel.nrseq_relacao > 0 AND
            ( TRIM(pr_crapttl.nmmaettl) IS NULL OR
              pr_crapttl.nmmaettl <> rw_pessoa_rel.nmpessoa ) THEN
           -- Efetua a exclusao do registro
@@ -4510,13 +4516,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                               pr_dscritic           => vr_dscritic);
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
-          END IF; 
-        END IF;    
-        
+          END IF;
+        END IF;
+
         -- se possui nome do mae, e é diferente do atual
         IF TRIM(pr_crapttl.nmmaettl) IS NOT NULL AND
-           nvl(pr_crapttl.nmmaettl,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN      
-        
+           nvl(pr_crapttl.nmmaettl,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN
+
           CADA0011.pc_trata_pessoa_relacao( pr_idpessoa => vr_idpessoa,
                                             pr_tprelacao=> 4, -- Mae
                                             pr_nmpessoa => pr_crapttl.nmmaettl,
@@ -4527,21 +4533,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             RAISE vr_exc_erro;
           END IF;
         END IF;
-      
+
         -- Atualizacao da tabela renda do titular (CRAPTTL)
-        pc_pessoa_renda( pr_idpessoa   => vr_idpessoa  --> Identificador de pessoa 
-                        ,pr_crapttl    => pr_crapttl   --> Tabela de titular atual                                                     
+        pc_pessoa_renda( pr_idpessoa   => vr_idpessoa  --> Identificador de pessoa
+                        ,pr_crapttl    => pr_crapttl   --> Tabela de titular atual
                         ,pr_cdoperad   => pr_cdoperad  --> Operador que esta efetuando a operacao
                         ,pr_dscritic   => vr_dscritic);   --> Retorno de Erro
-      
+
         IF TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
       END IF;
-      
+
     END IF;
-    
-                        
+
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -4550,30 +4556,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => pr_crapttl.idseqttl
                             ,pr_nmtabela => 'CRAPTTL'
                             ,pr_dsalerta => vr_dscritic);
-    
-    
+
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapttl: '||SQLERRM;
-  END pc_crapttl;    
-  
+  END pc_crapttl;
+
   -- Rotina para atualizacao da tabela de dados pessoa juridica (CRAPJUR)
   PROCEDURE pc_crapjur(pr_crapjur     IN crapjur%ROWTYPE            --> Tabela de juridica atual
                       ,pr_tpoperacao  IN INTEGER                    --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pc_crapjur
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -4584,10 +4590,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
-    rw_pessoa_jur  cr_pessoa_jur%ROWTYPE;     
-       
+
+    ---------------> CURSORES <-----------------
+    rw_pessoa_jur  cr_pessoa_jur%ROWTYPE;
+
     -- Cursor sobre a tabela de associados
     CURSOR cr_crapass IS
       SELECT nmttlrfb,
@@ -4601,18 +4607,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
        WHERE cdcooper = pr_crapjur.cdcooper
          AND nrdconta = pr_crapjur.nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
-       
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa                      
-    
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa
+
   BEGIN
-  
+
     -- Se nao for informado o IDPESSOA, deve-se buscar
     IF pr_idpessoa IS NULL THEN
       -- Busca o ID PESSOA do email
@@ -4622,22 +4628,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_idpessoa IS NULL THEN
         vr_dscritic := 'Nao encontrado PESSOA para alteracao de dados pessoa juridica';
         RAISE vr_exc_saida;
-      END IF;    
+      END IF;
     ELSE
-      vr_idpessoa := pr_idpessoa;                           
+      vr_idpessoa := pr_idpessoa;
     END IF;
 
     -- Buscar dados pessoa juridica
     OPEN cr_pessoa_jur(pr_idpessoa => vr_idpessoa);
     FETCH cr_pessoa_jur INTO rw_pessoa_jur;
     CLOSE cr_pessoa_jur;
-    
+
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       --> Tabela nao permite exclusão, nao é necessario tratar
       NULL;
     ELSE -- Se for alteracao ou inclusao
-      --> Caso ainda nao exista cadastro de pessoa 
+      --> Caso ainda nao exista cadastro de pessoa
       IF nvl(vr_idpessoa,0) = 0 THEN
         -- Efetua a inclusao de pessoa
         cada0011.pc_insere_pessoa_crapass(pr_cdcooper => pr_crapjur.cdcooper,
@@ -4650,7 +4656,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
         vr_idpessoa := fn_busca_pessoa(pr_cdcooper => pr_crapjur.cdcooper,
                                        pr_nrdconta => pr_crapjur.nrdconta,
                                        pr_idseqttl => 1);
@@ -4658,14 +4664,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           vr_dscritic := 'Nao encontrado PESSOA para alteracao de dados pessoa juridica';
           RAISE vr_exc_erro;
         END IF;
-      
+
       ELSE
-        
+
         -- Busca os dados na tabela de associado
         OPEN cr_crapass;
         FETCH cr_crapass INTO rw_crapass;
         CLOSE cr_crapass;
-      
+
         -- Atualiza os dados de pessoa juridica
         rw_pessoa_jur.nmpessoa               := pr_crapjur.nmextttl;
         rw_pessoa_jur.dtatualiza_telefone    := pr_crapjur.dtatutel;
@@ -4675,19 +4681,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(pr_crapjur.natjurid,0) > 0 THEN
           rw_pessoa_jur.cdnatureza_juridica    := pr_crapjur.natjurid;
         END IF;
-        
+
         IF nvl(pr_crapjur.vlfatano,0) > 360000  THEN
           rw_pessoa_jur.tpcadastro     := 4; -- completo
         ELSE
           rw_pessoa_jur.tpcadastro     := 3; -- Cadastro Intermediario
-        END IF;        
-        
+        END IF;
+
         rw_pessoa_jur.dtinicio_atividade     := pr_crapjur.dtiniatv;
         rw_pessoa_jur.qtfilial               := pr_crapjur.qtfilial;
         rw_pessoa_jur.qtfuncionario          := pr_crapjur.qtfuncio;
         rw_pessoa_jur.vlcapital              := pr_crapjur.vlcaprea;
         rw_pessoa_jur.dtregistro             := pr_crapjur.dtregemp;
-        rw_pessoa_jur.nrregistro             := pr_crapjur.nrregemp;        
+        rw_pessoa_jur.nrregistro             := pr_crapjur.nrregemp;
         rw_pessoa_jur.dtinscricao_municipal  := pr_crapjur.dtinsnum;
         rw_pessoa_jur.nrnire                 := pr_crapjur.nrcdnire;
         rw_pessoa_jur.inrefis                := pr_crapjur.flgrefis;
@@ -4700,9 +4706,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_jur.dtvalidade_licenca_amb := pr_crapjur.dtvallic;
         rw_pessoa_jur.dsorgao_registro       := pr_crapjur.orregemp;
         rw_pessoa_jur.tpregime_tributacao    := pr_crapjur.tpregtrb;
-        
+
         -- Atualiza tambem os dados que estao na CRAPASS
-        rw_pessoa_jur.nmpessoa_receita       := rw_crapass.nmttlrfb;          
+        rw_pessoa_jur.nmpessoa_receita       := rw_crapass.nmttlrfb;
         rw_pessoa_jur.dtconsulta_spc         := rw_crapass.dtcnsspc;
         rw_pessoa_jur.dtconsulta_rfb         := rw_crapass.dtcnscpf;
         rw_pessoa_jur.cdsituacao_rfb         := rw_crapass.cdsitcpf;
@@ -4711,12 +4717,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         ELSE
           rw_pessoa_jur.tpconsulta_rfb       := 1; -- Automatica
         END IF;
-        rw_pessoa_jur.dtconsulta_scr         := rw_crapass.dtcnsscr;          
+        rw_pessoa_jur.dtconsulta_scr         := rw_crapass.dtcnsscr;
         IF rw_crapass.cdclcnae > 0 THEN
           rw_pessoa_jur.cdcnae               := rw_crapass.cdclcnae;
         END IF;
 
-        
+
         -- Insere o Cadastro de pessoa juridica
         cada0010.pc_cadast_pessoa_juridica(pr_pessoa_juridica => rw_pessoa_jur,
                                            pr_cdcritic        => vr_cdcritic,
@@ -4724,14 +4730,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
         -- Atualiza o ID PESSOA
         vr_idpessoa := rw_pessoa_jur.idpessoa;
-              
-      END IF;      
+
+      END IF;
     END IF;
-    
-                        
+
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -4740,16 +4746,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => 1
                             ,pr_nmtabela => 'CRAPJUR'
                             ,pr_dsalerta => vr_dscritic);
-    
-    
+
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapjur: '||SQLERRM;
-  END pc_crapjur;  
-  
+  END pc_crapjur;
+
 
   -- Rotina para atualizacao da tabela de dados pessoa (CRAPASS)
   PROCEDURE pc_crapass(pr_crapass     IN crapass%ROWTYPE            --> Tabela de associado atual
@@ -4757,14 +4763,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                       ,pr_idpessoa    IN tbcadast_pessoa.idpessoa%TYPE DEFAULT NULL --> Identificador de pessoa
                       ,pr_cdoperad    IN crapope.cdoperad%TYPE      --> Operador que esta efetuando a operacao
                       ,pr_dscritic   OUT VARCHAR2) IS               --> Retorno de Erro
-    
+
     /* ..........................................................................
     --
     --  Programa : pr_crapass
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -4775,43 +4781,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------       
-    rw_pessoa_jur  cr_pessoa_jur%ROWTYPE;        
-    rw_pessoa_fis  cr_pessoa_fis%ROWTYPE;    
-    
+
+    ---------------> CURSORES <-----------------
+    rw_pessoa_jur  cr_pessoa_jur%ROWTYPE;
+    rw_pessoa_fis  cr_pessoa_fis%ROWTYPE;
+
     --> Verificar pessoa
     CURSOR cr_pessoa (pr_nrcpfcgc tbcadast_pessoa.nrcpfcgc%TYPE) IS
       SELECT pes.idpessoa,
              pes.tppessoa
         FROM tbcadast_pessoa pes
-       WHERE pes.nrcpfcgc = pr_nrcpfcgc; 
-    rw_pessoa cr_pessoa%ROWTYPE; 
-       
-    ---------------> VARIAVEIS <----------------- 
+       WHERE pes.nrcpfcgc = pr_nrcpfcgc;
+    rw_pessoa cr_pessoa%ROWTYPE;
+
+    ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa                      
-    
+    vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE; -- Identificador de pessoa
+
   BEGIN
-  
+
     --> Verificar pessoa
     OPEN cr_pessoa (pr_nrcpfcgc => pr_crapass.nrcpfcgc);
     FETCH cr_pessoa INTO rw_pessoa;
     CLOSE cr_pessoa;
-    
-    vr_idpessoa := rw_pessoa.idpessoa;    
+
+    vr_idpessoa := rw_pessoa.idpessoa;
 
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       --> Tabela nao permite exclusão, nao é necessario tratar
       NULL;
     ELSE -- Se for alteracao ou inclusao
-      --> Caso ainda nao exista cadastro de pessoa 
+      --> Caso ainda nao exista cadastro de pessoa
       IF nvl(vr_idpessoa,0) = 0 THEN
         -- Efetua a inclusao de pessoa
         cada0011.pc_insere_pessoa_crapass(pr_cdcooper => pr_crapass.cdcooper,
@@ -4824,7 +4830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
         vr_idpessoa := fn_busca_pessoa(pr_cdcooper => pr_crapass.cdcooper,
                                        pr_nrdconta => pr_crapass.nrdconta,
                                        pr_idseqttl => 1);
@@ -4832,17 +4838,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           vr_dscritic := 'Nao encontrado PESSOA para alteracao de dados associado';
           RAISE vr_exc_erro;
         END IF;
-      
+
       ELSE
-      
+
         --> Pessoa fisica
         IF pr_crapass.inpessoa = 1  THEN
-        
+
           -- Buscar dados pessoa fisica
           OPEN cr_pessoa_fis(pr_idpessoa => vr_idpessoa);
           FETCH cr_pessoa_fis INTO rw_pessoa_fis;
           CLOSE cr_pessoa_fis;
-                
+
           rw_pessoa_fis.dtconsulta_scr         := pr_crapass.dtcnsscr;
           rw_pessoa_fis.dtconsulta_spc         := pr_crapass.dtcnsspc;
           rw_pessoa_fis.nmpessoa_receita       := pr_crapass.nmttlrfb;
@@ -4860,16 +4866,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
-        
+
         --> Pessoa Juridica
         ELSE
-        
+
           -- Buscar dados pessoa juridica
           OPEN cr_pessoa_jur(pr_idpessoa => vr_idpessoa);
           FETCH cr_pessoa_jur INTO rw_pessoa_jur;
           CLOSE cr_pessoa_jur;
-        
-          rw_pessoa_jur.nmpessoa_receita       := pr_crapass.nmttlrfb;          
+
+          rw_pessoa_jur.nmpessoa_receita       := pr_crapass.nmttlrfb;
           rw_pessoa_jur.dtconsulta_spc         := pr_crapass.dtcnsspc;
           rw_pessoa_jur.dtconsulta_rfb         := pr_crapass.dtcnscpf;
           rw_pessoa_jur.cdsituacao_rfb         := pr_crapass.cdsitcpf;
@@ -4878,12 +4884,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           ELSE
             rw_pessoa_jur.tpconsulta_rfb       := 1; -- Automatica
           END IF;
-          rw_pessoa_jur.dtconsulta_scr         := pr_crapass.dtcnsscr;          
+          rw_pessoa_jur.dtconsulta_scr         := pr_crapass.dtcnsscr;
           rw_pessoa_jur.cdoperad_altera        := pr_cdoperad;
           IF pr_crapass.cdclcnae > 0 THEN
             rw_pessoa_jur.cdcnae               := pr_crapass.cdclcnae;
           END IF;
-          
+
           -- Insere o Cadastro de pessoa juridica
           cada0010.pc_cadast_pessoa_juridica(pr_pessoa_juridica => rw_pessoa_jur,
                                              pr_cdcritic        => vr_cdcritic,
@@ -4891,13 +4897,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
-        
+
         END IF; --> Fim inpessoa
-        
-      END IF;      
+
+      END IF;
     END IF;
-    
-                        
+
+
 	EXCEPTION
     WHEN vr_exc_saida THEN
       --> Apenas gerar alerta
@@ -4906,19 +4912,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                             ,pr_idseqttl => 1
                             ,pr_nmtabela => 'CRAPASS'
                             ,pr_dsalerta => vr_dscritic);
-    
-    
+
+
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_crapass: '||SQLERRM;
-  END pc_crapass;  
-  
+  END pc_crapass;
+
+  -- Rotina para envio do CPF / CNPJ de um cooperado novo
+  PROCEDURE pc_envia_cooperado_crm(pr_nrcpfcgc tbcadast_pessoa.nrcpfcgc%TYPE) IS
+    vr_requisicao WRES0001.typ_http_request;
+    vr_resposta   WRES0001.typ_http_response;
+    vr_dscritic   crapcri.dscritic%TYPE;
+    vr_cdcritic   crapcri.cdcritic%TYPE;
+    vr_parametros WRES0001.typ_tab_http_parametros;
+  BEGIN
+    -- Endereço Base 'http://apiaymaruhml.cecred.coop.br'
+    vr_requisicao.endereco := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                        pr_cdacesso => 'AYMARU_CRM');
+
+    vr_requisicao.rota := '/CRM/api/Incremental'; -- Rota para a aplicação / serviço solicitado
+    vr_requisicao.verbo := CECRED.WRES0001.GET; -- Verbo HTTP (PUT/POST/GET/DELETE)
+
+    -- Parâmetros da URL, ex: "http://apiaymaruhml.cecred.coop.br/CRM/api/Incremental?SCpf=11870846389"
+    vr_parametros(1).chave := 'SCpf';
+    vr_parametros(1).valor := pr_nrcpfcgc;
+
+    vr_requisicao.parametros := vr_parametros;
+
+    vr_requisicao.timeout := 30; -- Timeout da Requisição HTTP
+    
+    WRES0001.pc_consumir_rest(pr_requisicao => vr_requisicao
+                             ,pr_resposta   => vr_resposta
+                             ,pr_dscritic   => vr_dscritic
+                             ,pr_cdcritic   => vr_cdcritic);
+                                  
+    /*
+    DBMS_OUTPUT.put_line('HTTP Status Code: ' ||   vr_resposta.status_code); -- HTTP Status Code (200 - OK; 400 Bad Request; 500 Internal Server Error)
+    DBMS_OUTPUT.put_line('HTTP Status Message: ' ||   vr_resposta.status_message);
+    DBMS_OUTPUT.put_line('Dscritic: ' ||   vr_dscritic);
+    */
+  EXCEPTION
+    WHEN OTHERS THEN
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                  ,pr_ind_tipo_log => 2 -- Erro tratado
+                                  ,pr_nmarqlog => 'CRM' 
+                                  ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
+                                     'Erro no envio do CPF / CNPJ '||pr_nrcpfcgc|| ' para o CRM: '||SQLERRM);
+  end;  
+
   -- Rotina para processar registros pendentes de atualização
   PROCEDURE pc_processa_pessoa_atlz( pr_cdcooper  IN INTEGER DEFAULT NULL, --> Codigo da coperativa quando processo de replic. online
-                                     pr_nrdconta  IN INTEGER DEFAULT NULL, --> Nr. da conta quando processo de replic. online 
+                                     pr_nrdconta  IN INTEGER DEFAULT NULL, --> Nr. da conta quando processo de replic. online
                                      pr_dscritic OUT VARCHAR2) IS     --> Retorno de Erro
   /* ..........................................................................
     --
@@ -4926,7 +4974,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao:
     --
     --  Dados referentes ao programa:
     --
@@ -4937,23 +4985,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------           
+
+    ---------------> CURSORES <-----------------
     -- Cursor sobre as pessoas à atualizarem os dados cadastrais
     CURSOR cr_pessoa_atlz IS
       SELECT atl.*,
              atl.rowid
         FROM tbcadast_pessoa_atualiza atl
        WHERE (atl.insit_atualiza = 1 AND --> pendente job
-              nvl(pr_nrdconta,0) = 0  ) 
+              nvl(pr_nrdconta,0) = 0  )
           OR (atl.cdcooper = pr_cdcooper AND
               atl.nrdconta = pr_nrdconta AND
               atl.insit_atualiza = 4  --> pendente processo online
               )
        ORDER BY trunc(atl.dhatualiza,'MI'),
-                --> Ordenacao priorizando as tabelas jur, ass e ttl 
-                decode(atl.nmtabela,'CRAPJUR',0,'CRAPASS',1,'CRAPTTL',2,3); 
-       
+                --> Ordenacao priorizando as tabelas ass e ttl
+                decode(atl.nmtabela,'CRAPASS',0,'CRAPTTL',1,2);
+
     --> dados do conjuge
     CURSOR cr_crapcje( pr_cdcooper crapcje.cdcooper%TYPE,
                        pr_nrdconta crapcje.nrdconta%TYPE,
@@ -4964,7 +5012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
          AND cje.nrdconta = pr_nrdconta
          AND cje.idseqttl = pr_idseqttl;
     rw_crapcje cr_crapcje%ROWTYPE;
-    
+
     --> Buscar dados do telefone
     CURSOR cr_craptfc( pr_cdcooper craptfc.cdcooper%TYPE,
                        pr_nrdconta craptfc.nrdconta%TYPE,
@@ -4976,8 +5024,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
          AND tfc.nrdconta = pr_nrdconta
          AND tfc.idseqttl = pr_idseqttl
          AND tfc.cdseqtfc = pr_cdseqtfc;
-    rw_craptfc cr_craptfc%ROWTYPE;    
-    
+    rw_craptfc cr_craptfc%ROWTYPE;
+
 		--> Buscar dados do e-mail
 		CURSOR cr_crapcem( pr_cdcooper crapcem.cdcooper%TYPE,
                        pr_nrdconta crapcem.nrdconta%TYPE,
@@ -4990,7 +5038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 				 AND cem.idseqttl = pr_idseqttl
 				 AND cem.cddemail = pr_cddemail;
 		rw_crapcem cr_crapcem%ROWTYPE;
-		
+
 		--> Buscar dados do bem
 		CURSOR cr_crapbem( pr_cdcooper crapbem.cdcooper%TYPE,
                        pr_nrdconta crapbem.nrdconta%TYPE,
@@ -5003,7 +5051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 				 AND bem.idseqttl = pr_idseqttl
 				 AND bem.idseqbem = pr_idseqbem;
 		rw_crapbem cr_crapbem%ROWTYPE;
-		
+
 		--> Buscar empresa com participação societaria em outras empresas
 		CURSOR cr_crapepa( pr_cdcooper crapepa.cdcooper%TYPE,
 		                   pr_nrdocsoc crapepa.nrdocsoc%TYPE,
@@ -5014,14 +5062,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 			   AND epa.nrdocsoc = pr_nrdocsoc
 			   AND epa.nrdconta = pr_nrdconta;
 		rw_crapepa cr_crapepa%ROWTYPE;
-		
+
 		--> Buscar avalistas terceiros, contatos (PF) ou referencias comerciais/bancarias (PJ)
 		CURSOR cr_crapavt( pr_cdcooper crapavt.cdcooper%TYPE
 		                  ,pr_tpctrato crapavt.tpctrato%TYPE
 											,pr_nrdconta crapavt.nrdconta%TYPE
 											,pr_nrctremp crapavt.nrctremp%TYPE
 											,pr_nrcpfcgc crapavt.nrcpfcgc%TYPE) IS
-		  SELECT * 
+		  SELECT *
 			  FROM crapavt avt
 			 WHERE avt.cdcooper = pr_cdcooper
 			   AND avt.tpctrato = pr_tpctrato
@@ -5029,7 +5077,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 				 AND avt.nrctremp = pr_nrctremp
 				 AND avt.nrcpfcgc = pr_nrcpfcgc;
 		rw_crapavt cr_crapavt%ROWTYPE;
-		
+
 		--> Buscar representante legal
 		CURSOR cr_crapcrl( pr_cdcooper crapcrl.cdcooper%TYPE
 		                  ,pr_nrctamen crapcrl.nrctamen%TYPE
@@ -5038,15 +5086,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 											,pr_nrdconta crapcrl.nrdconta%TYPE
 											,pr_nrcpfcgc crapcrl.nrcpfcgc%TYPE) IS
 		  SELECT *
-			  FROM crapcrl crl 
+			  FROM crapcrl crl
 			 WHERE crl.cdcooper = pr_cdcooper
 			   AND crl.nrctamen = pr_nrctamen
 				 AND crl.nrcpfmen = pr_nrcpfmen
 				 AND crl.idseqmen = pr_idseqmen
 				 AND crl.nrdconta = pr_nrdconta
 				 AND crl.nrcpfcgc = pr_nrcpfcgc;
-		rw_crapcrl cr_crapcrl%ROWTYPE;		 
-		
+		rw_crapcrl cr_crapcrl%ROWTYPE;
+
     --> Buscar o dependente do titular da conta
 		CURSOR cr_crapdep( pr_cdcooper crapdep.cdcooper%TYPE
 		                  ,pr_nrdconta crapdep.nrdconta%TYPE
@@ -5059,7 +5107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 				 AND dep.idseqdep = pr_idseqdep
 				 AND upper(dep.nmdepend) = upper(pr_nmdepend);
 		rw_crapdep cr_crapdep%ROWTYPE;
-		
+
 		--> Buscar titulares politicamente expostos
 		CURSOR cr_politico_exposto( pr_cdcooper tbcadast_politico_exposto.cdcooper%TYPE
 		                           ,pr_nrdconta tbcadast_politico_exposto.nrdconta%TYPE
@@ -5070,18 +5118,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 			   AND pexp.nrdconta = pr_nrdconta
 				 AND pexp.idseqttl = pr_idseqttl;
 		rw_politico_exposto cr_politico_exposto%ROWTYPE;
-		
+
 		--> Buscar titular da conta (PF)
 		CURSOR cr_crapttl( pr_cdcooper crapttl.cdcooper%TYPE
 										  ,pr_nrdconta crapttl.nrdconta%TYPE
 										  ,pr_idseqttl crapttl.idseqttl%TYPE) IS
-		  SELECT * 
+		  SELECT *
 			  FROM crapttl ttl
 			 WHERE ttl.cdcooper = pr_cdcooper
 			   AND ttl.nrdconta = pr_nrdconta
 				 AND ttl.idseqttl = pr_idseqttl;
 		rw_crapttl cr_crapttl%ROWTYPE;
-		
+
 		--> Buscar endereço do cooperado
 		CURSOR cr_crapenc( pr_cdcooper crapenc.cdcooper%TYPE
 		                  ,pr_nrdconta crapenc.nrdconta%TYPE
@@ -5094,162 +5142,163 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 				 AND enc.idseqttl = pr_idseqttl
 				 AND enc.cdseqinc = pr_cdseqinc;
 		rw_crapenc cr_crapenc%ROWTYPE;
-		
+
 		--> Buscar conta do cooperado
 		CURSOR cr_crapass( pr_cdcooper crapass.cdcooper%TYPE
 		                  ,pr_nrdconta crapass.nrdconta%TYPE) IS
-			SELECT * 
+			SELECT ass.*
 			  FROM crapass ass
 			 WHERE ass.cdcooper = pr_cdcooper
 			   AND ass.nrdconta = pr_nrdconta;
 		rw_crapass cr_crapass%ROWTYPE;
-		
+
 		--> Buscar conta PJ
 		CURSOR cr_crapjur( pr_cdcooper crapjur.cdcooper%TYPE
 		                  ,pr_nrdconta crapjur.nrdconta%TYPE) IS
-		  SELECT * 
+		  SELECT *
 			  FROM crapjur jur
 			 WHERE jur.cdcooper = pr_cdcooper
 			   AND jur.nrdconta = pr_nrdconta;
 		rw_crapjur cr_crapjur%ROWTYPE;
-		
+
 		--> Buscar dados financeiros dos cooperados com tipo de pessoa juridica
 		CURSOR cr_crapjfn ( pr_cdcooper crapjfn.cdcooper%TYPE
 		                   ,pr_nrdconta crapjfn.nrdconta%TYPE) IS
-		  SELECT * 
+		  SELECT *
 			  FROM crapjfn jfn
 			 WHERE jfn.cdcooper = pr_cdcooper
 			   AND jfn.nrdconta = pr_nrdconta;
 		rw_crapjfn cr_crapjfn%ROWTYPE;
-    
-    ---------------> VARIAVEIS <----------------- 
+
+    ---------------> VARIAVEIS <-----------------
+
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
     vr_des_erro VARCHAR2(10);
 		vr_exc_erro EXCEPTION;
 
-    -- Variaveis auxiliares    
-    vr_tpoperac   INTEGER; 
+    -- Variaveis auxiliares
+    vr_tpoperac   INTEGER;
     vr_nmtabela   VARCHAR2(80);
     vr_tab_campos gene0002.typ_split;
     vr_insit_atualiza INTEGER;
-    
+
   BEGIN
-  
+
 	  -- Percorrer pessoas com status 'Pendente' a atualizar os dados cadastrais
     FOR rw_pessoa_atlz IN cr_pessoa_atlz LOOP
       -- Inicializar variáveis
       vr_tpoperac   := 0;
-      vr_tab_campos := NULL;   
-      vr_nmtabela   := rw_pessoa_atlz.nmtabela;   
-       
+      vr_tab_campos := NULL;
+      vr_nmtabela   := rw_pessoa_atlz.nmtabela;
+
 			-- Verificar a tabela a ser atualizada
-      CASE UPPER(rw_pessoa_atlz.nmtabela) 
-				
+      CASE UPPER(rw_pessoa_atlz.nmtabela)
+
         WHEN 'CRAPCJE' THEN
           -- Buscar conjuge
           OPEN cr_crapcje( pr_cdcooper => rw_pessoa_atlz.cdcooper,
-                           pr_nrdconta => rw_pessoa_atlz.nrdconta,                           
-                           pr_idseqttl => rw_pessoa_atlz.idseqttl); 
+                           pr_nrdconta => rw_pessoa_atlz.nrdconta,
+                           pr_idseqttl => rw_pessoa_atlz.idseqttl);
           FETCH cr_crapcje INTO rw_crapcje;
-					
+
 					-- Se não encontrar registro
           IF cr_crapcje%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapcje; 
+            CLOSE cr_crapcje;
             vr_tpoperac := 3; --> exclusao
 						-- Atribuir registro da tabela de pessoa a atualizar
-            rw_crapcje.cdcooper := rw_pessoa_atlz.cdcooper; 
+            rw_crapcje.cdcooper := rw_pessoa_atlz.cdcooper;
             rw_crapcje.nrdconta := rw_pessoa_atlz.nrdconta;
-            rw_crapcje.idseqttl := rw_pessoa_atlz.idseqttl;            
-            
+            rw_crapcje.idseqttl := rw_pessoa_atlz.idseqttl;
+
           ELSE
             -- Fechar cursor
-            CLOSE cr_crapcje; 
-            
-            --> caso não tenha informações preenchidas, 
+            CLOSE cr_crapcje;
+
+            --> caso não tenha informações preenchidas,
             --> deve considerar como excluido
-            IF nvl(rw_crapcje.nrctacje,0) = 0 AND 
-               nvl(rw_crapcje.nrcpfcjg,0) = 0  AND 
-               nvl(rw_crapcje.nmconjug,0) = ' ' THEN 
+            IF nvl(rw_crapcje.nrctacje,0) = 0 AND
+               nvl(rw_crapcje.nrcpfcjg,0) = 0  AND
+               nvl(rw_crapcje.nmconjug,0) = ' ' THEN
               vr_tpoperac := 3; --> exclusao
             ELSE
               vr_tpoperac := 1; --> inserção/alteração
             END IF;
-						            
+
           END IF;
-          
+
           -- Rotina para atualizacao da tabela de conjuge (CRAPCJE)
           cada0015.pc_crapcje( pr_crapcje     => rw_crapcje            --> Tabela de conjuge atual
                               ,pr_tpoperacao  => vr_tpoperac           --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                               ,pr_idpessoa    => NULL                  --> Identificador de pessoa
                               ,pr_cdoperad    => 1                     --> Operador que esta efetuando a operacao
                               ,pr_dscritic    => vr_dscritic);         --> Retorno de Erro
-          
+
         WHEN 'CRAPTFC' THEN
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
-        
+
           --> Buscar dados do telefone
-          OPEN cr_craptfc( pr_cdcooper => vr_tab_campos(1) ,                 
-													 pr_nrdconta => vr_tab_campos(2),                 
+          OPEN cr_craptfc( pr_cdcooper => vr_tab_campos(1) ,
+													 pr_nrdconta => vr_tab_campos(2),
 													 pr_idseqttl => vr_tab_campos(3),
 													 pr_cdseqtfc => vr_tab_campos(4));
-                           
+
           FETCH cr_craptfc INTO rw_craptfc;
 					-- Se não encontrou registro
           IF cr_craptfc%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_craptfc; 
+            CLOSE cr_craptfc;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
-            rw_craptfc.cdcooper := vr_tab_campos(1); 
+						-- Atribuir registro da tabela de pessoa a atualizar
+            rw_craptfc.cdcooper := vr_tab_campos(1);
             rw_craptfc.nrdconta := vr_tab_campos(2);
-            rw_craptfc.idseqttl := vr_tab_campos(3);  
+            rw_craptfc.idseqttl := vr_tab_campos(3);
             rw_craptfc.cdseqtfc := vr_tab_campos(4);
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_craptfc; 
+            CLOSE cr_craptfc;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-          
+
           -- Rotina para atualizacao da tabela de telefones (CRAPTFC)
           cada0015.pc_craptfc( pr_craptfc     => rw_craptfc            --> Tabela de telefone atual
                               ,pr_tpoperacao  => vr_tpoperac           --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                               ,pr_idpessoa    => NULL                  --> Identificador de pessoa
                               ,pr_cdoperad    => 1                     --> Operador que esta efetuando a operacao
                               ,pr_dscritic    => vr_dscritic);         --> Retorno de Erro
-                  
+
 				WHEN 'CRAPCEM' THEN
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
           -- Buscar registro de e-mail
-          OPEN cr_crapcem( pr_cdcooper => vr_tab_campos(1),                 
-													 pr_nrdconta => vr_tab_campos(2),                 
+          OPEN cr_crapcem( pr_cdcooper => vr_tab_campos(1),
+													 pr_nrdconta => vr_tab_campos(2),
 													 pr_idseqttl => vr_tab_campos(3),
 													 pr_cddemail => vr_tab_campos(4));
-                           
+
           FETCH cr_crapcem INTO rw_crapcem;
 					-- Se não encontrou registro
           IF cr_crapcem%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapcem; 
+            CLOSE cr_crapcem;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
-            rw_crapcem.cdcooper := vr_tab_campos(1); 
+						-- Atribuir registro da tabela de pessoa a atualizar
+            rw_crapcem.cdcooper := vr_tab_campos(1);
             rw_crapcem.nrdconta := vr_tab_campos(2);
-            rw_crapcem.idseqttl := vr_tab_campos(3);  
+            rw_crapcem.idseqttl := vr_tab_campos(3);
             rw_crapcem.cddemail := vr_tab_campos(4);
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_crapcem; 
+            CLOSE cr_crapcem;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de e-mails (CRAPCEM)
 					cada0015.pc_crapcem( pr_crapcem => rw_crapcem                --> Tabela de telefone atual
                               ,pr_tpoperacao => vr_tpoperac            --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
@@ -5261,36 +5310,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
           -- Buscar registro de bem
-          OPEN cr_crapbem( pr_cdcooper => vr_tab_campos(1),                 
-													 pr_nrdconta => vr_tab_campos(2),                 
+          OPEN cr_crapbem( pr_cdcooper => vr_tab_campos(1),
+													 pr_nrdconta => vr_tab_campos(2),
 													 pr_idseqttl => vr_tab_campos(3),
 													 pr_idseqbem => vr_tab_campos(4));
-                           
+
           FETCH cr_crapbem INTO rw_crapbem;
 					-- Se não encontrou registro
           IF cr_crapbem%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapbem; 
+            CLOSE cr_crapbem;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
-            rw_crapbem.cdcooper := vr_tab_campos(1); 
+						-- Atribuir registro da tabela de pessoa a atualizar
+            rw_crapbem.cdcooper := vr_tab_campos(1);
             rw_crapbem.nrdconta := vr_tab_campos(2);
-            rw_crapbem.idseqttl := vr_tab_campos(3);  
+            rw_crapbem.idseqttl := vr_tab_campos(3);
             rw_crapbem.idseqbem := vr_tab_campos(4);
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_crapbem; 
+            CLOSE cr_crapbem;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de bens (CRAPBEM)
 					cada0015.pc_crapbem( pr_crapbem => rw_crapbem                --> Tabela de telefone atual
                               ,pr_tpoperacao => vr_tpoperac            --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                               ,pr_idpessoa => NULL                     --> Identificador de pessoa
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
-				
+
 				WHEN 'CRAPEPA' THEN
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
@@ -5299,31 +5348,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           OPEN cr_crapepa( pr_cdcooper => vr_tab_campos(1),
 					                 pr_nrdocsoc => vr_tab_campos(2),
 													 pr_nrdconta => vr_tab_campos(3));
-                           
+
           FETCH cr_crapepa INTO rw_crapepa;
 					-- Se não encontrou registro
           IF cr_crapepa%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapepa; 
+            CLOSE cr_crapepa;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
-            rw_crapepa.cdcooper := vr_tab_campos(1); 
-            rw_crapepa.nrdocsoc := vr_tab_campos(2); 						
+						-- Atribuir registro da tabela de pessoa a atualizar
+            rw_crapepa.cdcooper := vr_tab_campos(1);
+            rw_crapepa.nrdocsoc := vr_tab_campos(2);
             rw_crapepa.nrdconta := vr_tab_campos(3);
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_crapepa; 
+            CLOSE cr_crapepa;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de empresas com participação societária em outras empresas (CRAPEPA)
 					cada0015.pc_crapepa( pr_crapepa => rw_crapepa                --> Tabela de telefone atual
                               ,pr_tpoperacao => vr_tpoperac            --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                               ,pr_idpessoa => NULL                     --> Identificador de pessoa
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
-																				
+
 				WHEN 'CRAPAVT' THEN
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
@@ -5334,33 +5383,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 													 pr_nrdconta => vr_tab_campos(3),
 													 pr_nrctremp => vr_tab_campos(4),
 													 pr_nrcpfcgc => vr_tab_campos(5));
-                           
+
           FETCH cr_crapavt INTO rw_crapavt;
 					-- Se não encontrou registro
           IF cr_crapavt%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapavt; 
+            CLOSE cr_crapavt;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
+						-- Atribuir registro da tabela de pessoa a atualizar
             rw_crapavt.cdcooper := vr_tab_campos(1);
             rw_crapavt.tpctrato := vr_tab_campos(2);
             rw_crapavt.nrdconta := vr_tab_campos(3);
             rw_crapavt.nrctremp := vr_tab_campos(4);
             rw_crapavt.nrcpfcgc := vr_tab_campos(5);
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_crapavt; 
+            CLOSE cr_crapavt;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de avalistas terceiros, contatos (PF) ou referencias comerciais/bancarias (PJ) (CRAPAVT)
 					cada0015.pc_crapavt( pr_crapavt => rw_crapavt                --> Tabela de telefone atual
                               ,pr_tpoperacao => vr_tpoperac            --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                               ,pr_idpessoa => NULL                     --> Identificador de pessoa
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
-					
+
 				WHEN 'CRAPCRL' THEN
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
@@ -5372,34 +5421,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 													,pr_idseqmen => vr_tab_campos(4)
 													,pr_nrdconta => vr_tab_campos(5)
 													,pr_nrcpfcgc => vr_tab_campos(6));
-                           
+
           FETCH cr_crapcrl INTO rw_crapcrl;
 					-- Se não encontrou registro
           IF cr_crapcrl%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapcrl; 
+            CLOSE cr_crapcrl;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
+						-- Atribuir registro da tabela de pessoa a atualizar
             rw_crapcrl.cdcooper := vr_tab_campos(1);
             rw_crapcrl.nrctamen := vr_tab_campos(2);
             rw_crapcrl.nrcpfmen := vr_tab_campos(3);
             rw_crapcrl.idseqmen := vr_tab_campos(4);
             rw_crapcrl.nrdconta := vr_tab_campos(5);
-            rw_crapcrl.nrcpfcgc := vr_tab_campos(6);						
-            
+            rw_crapcrl.nrcpfcgc := vr_tab_campos(6);
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_crapcrl; 
+            CLOSE cr_crapcrl;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de representante legal
 					cada0015.pc_crapcrl( pr_crapcrl => rw_crapcrl                --> Tabela de telefone atual
                               ,pr_tpoperacao => vr_tpoperac            --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                               ,pr_idpessoa => NULL                     --> Identificador de pessoa
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
-					
+
         WHEN 'CRAPDEP' THEN
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
@@ -5410,222 +5459,232 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 													,pr_idseqdep => vr_tab_campos(3)
 													,pr_nmdepend => vr_tab_campos(4));
           FETCH cr_crapdep INTO rw_crapdep;
-					
+
 					-- Se não encontrou registro
           IF cr_crapdep%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapdep; 
+            CLOSE cr_crapdep;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
+						-- Atribuir registro da tabela de pessoa a atualizar
             rw_crapdep.cdcooper := vr_tab_campos(1);
             rw_crapdep.nrdconta := vr_tab_campos(2);
             rw_crapdep.idseqdep := vr_tab_campos(3);
             rw_crapdep.nmdepend := UPPER(vr_tab_campos(4));
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_crapdep; 
+            CLOSE cr_crapdep;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de dependentes dos titulares da conta
 					cada0015.pc_crapdep( pr_crapdep => rw_crapdep                --> Tabela de dependentes do titular atual
                               ,pr_tpoperacao => vr_tpoperac            --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
                               ,pr_idpessoa => NULL                     --> Identificador de pessoa
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
-					
+
 				WHEN 'TBCADAST_POLITICO_EXPOSTO' THEN
           -- Buscar titular politicamento exposto
           OPEN cr_politico_exposto( pr_cdcooper => rw_pessoa_atlz.cdcooper
 																	 ,pr_nrdconta => rw_pessoa_atlz.nrdconta
 																	 ,pr_idseqttl => rw_pessoa_atlz.idseqttl);
           FETCH cr_politico_exposto INTO rw_politico_exposto;
-					
+
 					-- Se não encontrou registro
           IF cr_politico_exposto%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_politico_exposto; 
+            CLOSE cr_politico_exposto;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
+						-- Atribuir registro da tabela de pessoa a atualizar
             rw_politico_exposto.cdcooper := rw_pessoa_atlz.cdcooper;
             rw_politico_exposto.nrdconta := rw_pessoa_atlz.nrdconta;
             rw_politico_exposto.idseqttl := rw_pessoa_atlz.idseqttl;
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_politico_exposto; 
+            CLOSE cr_politico_exposto;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de titular politicamento exposto
 					cada0015.pc_politico_exposto( pr_politico_exposto => rw_politico_exposto  --> Tabela de titular politicamento exposto atual
 																			 ,pr_tpoperacao => vr_tpoperac                --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
 																			 ,pr_idpessoa => NULL                         --> Identificador de pessoa
 																			 ,pr_cdoperad => 1                            --> Operador que esta efetuando a operacao
 																			 ,pr_dscritic => vr_dscritic);                --> Retorno de Erro
-																			 
+
 				WHEN 'CRAPTTL' THEN
           -- Buscar titular da conta
           OPEN cr_crapttl( pr_cdcooper => rw_pessoa_atlz.cdcooper
 												  ,pr_nrdconta => rw_pessoa_atlz.nrdconta
 												  ,pr_idseqttl => rw_pessoa_atlz.idseqttl);
           FETCH cr_crapttl INTO rw_crapttl;
-					
+
 					-- Se não encontrou registro
           IF cr_crapttl%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapttl; 
+            CLOSE cr_crapttl;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
+						-- Atribuir registro da tabela de pessoa a atualizar
             rw_crapttl.cdcooper := rw_pessoa_atlz.cdcooper;
             rw_crapttl.nrdconta := rw_pessoa_atlz.nrdconta;
             rw_crapttl.idseqttl := rw_pessoa_atlz.idseqttl;
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_crapttl; 
+            CLOSE cr_crapttl;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de titulares da conta
 					cada0015.pc_crapttl( pr_crapttl => rw_crapttl           --> Tabela de titular da conta atual
 														  ,pr_tpoperacao => vr_tpoperac       --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
 														  ,pr_idpessoa => NULL                --> Identificador de pessoa
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
-														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro					
-																			 
-				WHEN 'CRAPENC' THEN					
+														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
+
+          -- Se for um cadastro novo, deve-se enviar para o CRM
+          IF nvl(rw_pessoa_atlz.dschave,' ') = 'S' THEN
+            pc_envia_cooperado_crm(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+          END IF;
+
+				WHEN 'CRAPENC' THEN
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
-				
+
           -- Buscar endereço do cooperado
           OPEN cr_crapenc( pr_cdcooper => vr_tab_campos(1)
 												  ,pr_nrdconta => vr_tab_campos(2)
 												  ,pr_idseqttl => vr_tab_campos(3)
 													,pr_cdseqinc => vr_tab_campos(4));
           FETCH cr_crapenc INTO rw_crapenc;
-					
+
 					-- Se não encontrou registro
           IF cr_crapenc%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapenc; 
+            CLOSE cr_crapenc;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
+						-- Atribuir registro da tabela de pessoa a atualizar
             rw_crapenc.cdcooper := vr_tab_campos(1);
             rw_crapenc.nrdconta := vr_tab_campos(2);
             rw_crapenc.idseqttl := vr_tab_campos(3);
             rw_crapenc.cdseqinc := vr_tab_campos(4);
             rw_crapenc.tpendass := vr_tab_campos(5);
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_crapenc; 
+            CLOSE cr_crapenc;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de endereços do cooperado
 					CADA0015.pc_crapenc( pr_crapenc => rw_crapenc           --> Tabela de endereço atual
 														  ,pr_tpoperacao => vr_tpoperac       --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
 														  ,pr_idpessoa => NULL                --> Identificador de pessoa
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
-														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro																				
+														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
 
         WHEN 'CRAPASS' THEN
           -- Buscar conta do cooperado
           OPEN cr_crapass( pr_cdcooper => rw_pessoa_atlz.cdcooper
 												  ,pr_nrdconta => rw_pessoa_atlz.nrdconta);
           FETCH cr_crapass INTO rw_crapass;
-					
+
 					-- Se não encontrou registro
           IF cr_crapass%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapass; 
+            CLOSE cr_crapass;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
+						-- Atribuir registro da tabela de pessoa a atualizar
             rw_crapass.cdcooper := rw_pessoa_atlz.cdcooper;
             rw_crapass.nrdconta := rw_pessoa_atlz.nrdconta;
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_crapass; 
+            CLOSE cr_crapass;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de associados
 					cada0015.pc_crapass( pr_crapass => rw_crapass           --> Tabela de associados atual
 														  ,pr_tpoperacao => vr_tpoperac       --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
 														  ,pr_idpessoa => NULL                --> Identificador de pessoa
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
-														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro					
-															
+														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
+
+          -- Se for um cadastro novo, deve-se enviar para o CRM
+          IF nvl(rw_pessoa_atlz.dschave,' ') = 'S' THEN
+            pc_envia_cooperado_crm(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+          END IF;
+
 			  WHEN 'CRAPJUR' THEN
           -- Buscar conta PJ
           OPEN cr_crapjur( pr_cdcooper => rw_pessoa_atlz.cdcooper
 												  ,pr_nrdconta => rw_pessoa_atlz.nrdconta);
           FETCH cr_crapjur INTO rw_crapjur;
-					
+
 					-- Se não encontrou registro
           IF cr_crapjur%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapjur; 
+            CLOSE cr_crapjur;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
+						-- Atribuir registro da tabela de pessoa a atualizar
             rw_crapjur.cdcooper := rw_pessoa_atlz.cdcooper;
             rw_crapjur.nrdconta := rw_pessoa_atlz.nrdconta;
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_crapjur; 
+            CLOSE cr_crapjur;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de contas PJ
 					cada0015.pc_crapjur( pr_crapjur => rw_crapjur           --> Tabela de conta PJ atual
 														  ,pr_tpoperacao => vr_tpoperac       --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
 														  ,pr_idpessoa => NULL                --> Identificador de pessoa
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
-														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro					
-															
+														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
+
 			  WHEN 'CRAPJFN' THEN
           -- Buscar dados financeiros dos cooperados PJ
           OPEN cr_crapjfn( pr_cdcooper => rw_pessoa_atlz.cdcooper
 												  ,pr_nrdconta => rw_pessoa_atlz.nrdconta);
           FETCH cr_crapjfn INTO rw_crapjfn;
-					
+
 					-- Se não encontrou registro
           IF cr_crapjfn%NOTFOUND THEN
 						-- Fechar cursor
-            CLOSE cr_crapjfn; 
+            CLOSE cr_crapjfn;
             vr_tpoperac := 3; --> exclusao
-						-- Atribuir registro da tabela de pessoa a atualizar						
+						-- Atribuir registro da tabela de pessoa a atualizar
             rw_crapjfn.cdcooper := rw_pessoa_atlz.cdcooper;
             rw_crapjfn.nrdconta := rw_pessoa_atlz.nrdconta;
-            
+
           ELSE
 						-- Fechar cursor
-            CLOSE cr_crapjfn; 
+            CLOSE cr_crapjfn;
             vr_tpoperac := 1; --> inserção/alteração
           END IF;
-					
+
 					-- Rotina para atualização da tabela de dados financeiros de contas PJ
 					cada0015.pc_crapjfn( pr_crapjfn => rw_crapjfn           --> Tabela de dados financeiros de contas PJ atual
 														  ,pr_tpoperacao => vr_tpoperac       --> Indicador de operacao (1-Inclusao, 2-Alteração, 3-Exclusão)
 														  ,pr_idpessoa => NULL                --> Identificador de pessoa
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
-														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro					
-										
+														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
+
         ELSE
           vr_dscritic := 'Tabela nao configurada.';
-          
-      END CASE;  
-      
+
+      END CASE;
+
       --> Verificar se gerou critica
       IF vr_dscritic IS NOT NULL THEN
 				-- Efetuar rollback
         ROLLBACK;
         vr_insit_atualiza := 3; --> Com erro
-        
+
         -- Insere na inconsistencia
         gene0005.pc_gera_inconsistencia(pr_cdcooper => nvl(rw_pessoa_atlz.cdcooper,3)
                                        ,pr_iddgrupo => 3 -- Erros de Script CRM
@@ -5638,37 +5697,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                        ': '||vr_dscritic,1,500)
                                        ,pr_des_erro => vr_des_erro
                                        ,pr_dscritic => vr_dscritic);
-        
+
         IF vr_des_erro <> 'OK' THEN
           RAISE vr_exc_erro;
         END IF;
       ELSE
         vr_insit_atualiza := 2; --> Processado
       END IF;
-      
+
       --> Atualizar tabela de controle
       BEGIN
         UPDATE tbcadast_pessoa_atualiza atl
            SET atl.insit_atualiza = vr_insit_atualiza,
                atl.dhprocessa     =  SYSDATE
-          WHERE atl.rowid         =  rw_pessoa_atlz.rowid;    
-      EXCEPTION 
+          WHERE atl.rowid         =  rw_pessoa_atlz.rowid;
+      EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar :'||SQLERRM;
-          RAISE vr_exc_erro;     
+          RAISE vr_exc_erro;
       END;
-      
+
 			-- Efetuar commit
       COMMIT;
-      
+
     END LOOP;
-    
-                        
+
+
 	EXCEPTION
     WHEN vr_exc_erro THEN
       --Variavel de erro recebe erro ocorrido
       pr_dscritic := vr_dscritic;
-      
+
       -- Insere na inconsistencia
       gene0005.pc_gera_inconsistencia(pr_cdcooper => 3
                                      ,pr_iddgrupo => 3 -- Erros de Script CRM
@@ -5678,15 +5737,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                      ': '||pr_dscritic,1,500)
                                      ,pr_des_erro => vr_des_erro
                                      ,pr_dscritic => vr_dscritic);
-        
+
       IF vr_des_erro <> 'OK' THEN
         raise_application_error(-20500,vr_dscritic||': '||pr_dscritic);
       END IF;
-      
+
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro nao tratado na pc_processa_pessoa_atlz: '||SQLERRM;
-      
+
       -- Insere na inconsistencia
       gene0005.pc_gera_inconsistencia(pr_cdcooper => 3
                                      ,pr_iddgrupo => 3 -- Erros de Script CRM
@@ -5696,13 +5755,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                      ': '||pr_dscritic,1,500)
                                      ,pr_des_erro => vr_des_erro
                                      ,pr_dscritic => vr_dscritic);
-        
+
       IF vr_des_erro <> 'OK' THEN
         raise_application_error(-20500,vr_dscritic||': '||pr_dscritic);
       END IF;
-      
-  END pc_processa_pessoa_atlz;     
-  
-  
+
+  END pc_processa_pessoa_atlz;
+
+
 END CADA0015;
 /
