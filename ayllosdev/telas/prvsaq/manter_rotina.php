@@ -94,7 +94,7 @@
 			$vlSaqPagto  = (isset($_POST['vlSaqPagto'])) ? $_POST['vlSaqPagto'] : '' ;		
 			$nrCpfCnpj   = (isset($_POST['nrCpfCnpj'])) ? $_POST['nrCpfCnpj'] : '' ;
 			$hrSaqPagto  = (isset($_POST['hrSaqPagto'])) ? $_POST['hrSaqPagto'] : '' ;
-
+			$nrContTit   = (isset($_POST['nrContTit'])) ? $_POST['nrContTit'] : 0 ;
 			$dtperiini 	  = (isset($_POST['dtPeriodoIni'])) ? $_POST['dtPeriodoIni'] : '' ;
 			$dtperifim 	  = (isset($_POST['dtPeriodoFim'])) ? $_POST['dtPeriodoFim'] : '' ;
 			$tpoperacao   = (isset($_POST['tpOperacao'])) ? $_POST['tpOperacao'] : '' ;
@@ -342,6 +342,7 @@
 		$dtSaqPagto	 	= str_replace('-','',str_replace(',','.',str_replace('.','',$dtSaqPagto)));		
 		$vlSaqPagto 	= str_replace('-','',str_replace(',','.',str_replace('.','',$vlSaqPagto)));		
 		$nrCpfCnpj  	= str_replace('/','',str_replace('-','',str_replace(',','.',str_replace('.','',$nrCpfCnpj ))));
+		$nrContTit  	= str_replace('-','',str_replace(',','.',str_replace('.','',$nrContTit)));
 
 		if($nrCpfCnpj == 0){
 			$nrCpfCnpj = '';
@@ -383,7 +384,7 @@
 		$xml .= "   <insit_prov>".($realopcao == 'E' || $realopcao == 'A' ?1:$tpsituacao)."</insit_prov>";		
 		$xml .= "   <dtsaqpagto>".trim($dtSaqPagto.' '.$hrSaqPagto)."</dtsaqpagto>";		
 		$xml .= "   <idorigem>".$tporigem."</idorigem>";		
-		$xml .= "   <vlsaqpagto>".$vlSaqPagto."</vlsaqpagto>";
+		$xml .= "   <vlsaqpagto>".($realopcao == 'I!'?'':$vlSaqPagto)."</vlsaqpagto>";
 		$xml .= "   <nrcpfcnpj>".$nrCpfCnpj ."</nrcpfcnpj>";
 		$xml .= "   <dsprotocolo>".$dsprotocolo."</dsprotocolo>";
 		$xml .= "   <cdopcao>".$realopcao."</cdopcao>";
@@ -391,6 +392,7 @@
 		$xml .= "   <nrregist>".$nrregist."</nrregist>";		
 		$xml .= " </Dados>";
 		$xml .= "</Root>";	
+		#echo 'console.log("'.$realopcao.'");';
 		#echo 'console.log("'.$procedure.'");';	
 		#echo 'console.log("'.$xml.'");';
 		$xmlResult = mensageria($xml, "TELA_PRVSAQ", $procedure, $glbvars['cdcooper'],1, 1, $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
@@ -426,9 +428,22 @@
 		}		
 		exit();
 	}else if($cddopcao == 'I!'){
-		$vlSaqPagto = empty($xmlObj->Dados->inf->vlsaque)?-1:$xmlObj->Dados->inf->vlsaque;		
-		if($vlSaqPagto >0){			
-			echo 'showConfirmacao("Aten&ccedil;&atilde;o, Provis&atilde;o de saque j&aacute; cadastrado, deseja realizar novo cadastro?","Confirma&ccedil;&atilde;o - Ayllos","manter_rotina(\'I!!\')","estadoInicial()","sim.gif","nao.gif");';
+		$tot = count($xmlObj->Dados->inf);			
+		if($tot > 0){
+			$exibeMsg = true;						
+
+			for($i = 0; $i < $tot; $i++){								
+				if($xmlObj->Dados->inf[$i]->nrdconta == $nrContTit){					
+					$exibeMsg = false;
+					break;
+				}
+			}			
+			
+			if($exibeMsg){			
+				echo 'showConfirmacao("Aten&ccedil;&atilde;o! Provis&atilde;o de saque j&aacute; cadastrado, deseja realizar novo cadastro?","Confirma&ccedil;&atilde;o - Ayllos","manter_rotina(\'I!!\')","","sim.gif","nao.gif");';
+			}else{
+				echo "manter_rotina('I!!');";
+			}
 		}else{
 			echo "manter_rotina('I!!');";
 		}

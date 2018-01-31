@@ -129,6 +129,7 @@ function doubleClick(tr) {
         $('#cdopercanc', '#frmConsulta').val($('#hcdopercanc', tr).val());
         $('#dthoracanc', '#frmConsulta').val($('#hdthoracanc', tr).val());
         $('#txtFinPagto', '#frmConsulta').val($('#htxtfinpagto', tr).val());
+        $('#txtObservacao', '#frmConsulta').val($('#htxtobservacao', tr).val());
 
         $('#divDadosExc', '#frmConsulta').css({ 'display': 'block' });
         nvVoltar = 'C'
@@ -216,7 +217,7 @@ function formataConsulta() {
     var arrayLargura = new Array();
     if (cddopcao == 'E') {
         arrayLargura[0] = '5px';
-        arrayLargura[1] = '78px';
+        arrayLargura[1] = '95px';
         arrayLargura[2] = '88px';
         arrayLargura[3] = '70px';
         arrayLargura[4] = '100px';
@@ -225,7 +226,7 @@ function formataConsulta() {
         arrayLargura[7] = '70px';
         arrayLargura[8] = '79px';
     } else if (cddopcao == 'C') {
-        arrayLargura[0] = '88px';
+        arrayLargura[0] = '95px';
         arrayLargura[1] = '80px';
         arrayLargura[2] = '60px';
         arrayLargura[3] = '100px';
@@ -235,7 +236,7 @@ function formataConsulta() {
         arrayLargura[7] = '80px';
 
     } else if (cddopcao == 'A') {
-        arrayLargura[0] = '88px';
+        arrayLargura[0] = '95px';
         arrayLargura[1] = '19px';
         arrayLargura[2] = '62px';
         arrayLargura[3] = '70px';
@@ -284,6 +285,7 @@ function formataConsulta() {
 
     $('label', '#frmConsulta').addClass('rotulo').css({ 'width': '25%', 'margin-left': '5px' });
     $('#lbTxtFinPgtoCons', '#frmConsulta').css({ 'width': '28%', 'margin-left': '10px', 'text-align': 'left' });
+    $('#lbtxtObservacaoCons', '#frmConsulta').css({ 'width': '28%', 'margin-left': '10px', 'text-align': 'left' });
 
     if (cddopcao == 'A') {
         $('#lbDtSaqPagtoAlt', '#frmConsulta').removeClass('rotulo').css({ 'width': '25%', 'margin-left': '5px' });
@@ -745,7 +747,7 @@ function manter_rotina(rotina, nriniseq, nrregist) {
                 }
             }
 
-            if (!nrCpfSacPag || parseInt(nrCpfSacPag.replace('.', '').replace('.', '').replace('.', '').replace('.', '').replace('-', '')) == 0) {
+            if (!nrCpfSacPag || parseInt(nrCpfSacPag.replace('.','').replace('.','').replace('.','').replace('.','').replace('-',''))==0) {
                 showError("error", "CPF do sacador deve ser informado.", "Alerta - Ayllos", "$('#nrCpfSacPag','#frmInclusao').focus();");
                 return false;
             }

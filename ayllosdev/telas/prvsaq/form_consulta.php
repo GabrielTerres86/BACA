@@ -84,6 +84,7 @@
 											<input type="hidden" id="hcdopercanc"  name="hcdopercanc"  value="<? echo $registros->inf[$i]->cdoperad_cancelamento; ?>"/>
 											<input type="hidden" id="hdthoracanc" name="hdthoracanc"   value="<? echo $registros->inf[$i]->dhcancelamento; ?>"/>
 											<input type="hidden" id="htxtfinpagto" name="htxtfinpagto" value="<? echo $registros->inf[$i]->dsfinalidade; ?>"/>
+											<input type="hidden" id="htxtobservacao" name="htxtobservacao" value="<? echo $registros->inf[$i]->dsobervacao; ?>"/>
 											
 											<?
 												
@@ -218,6 +219,9 @@
 
 					<label for="lbtxtFinPagto" id="lbTxtFinPgtoCons"><? echo utf8ToHtml('Finalidade do saque:') ?></label>
 					<textarea name="txtFinPagto" id="txtFinPagto" disabled class="campo alphanum" style="overflow-y: scroll; overflow-x: hidden; width: 665px; height: 100px; margin-left:10px;margin-right:10px;" ><?php echo trim($txtFinPagto) ?></textarea>
+
+					<label for="lbtxtObservacao" id="lbtxtObservacaoCons"><? echo utf8ToHtml('Observação:') ?></label>
+					<textarea name="txtObservacao" id="txtObservacao" disabled class="campo alphanum" style="overflow-y: scroll; overflow-x: hidden; width: 665px; height: 100px; margin-left:10px;margin-right:10px;" ><?php echo trim($txtObservacao) ?></textarea>
 				</fieldset>
 			</div>
 			<div id="divDadosAlt" style="display:none">				

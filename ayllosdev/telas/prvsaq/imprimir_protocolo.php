@@ -49,7 +49,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 	$xmlObj = simplexml_load_string($xmlResult);
 	
-	$pdfGerado = $nrPA . $nrContTit;
+	$pdfGerado = $nrPA .'_'. $nrContTit;
 	$pdfGerado = "TELA_PRVSAQ_PROTOCOLO_" . $pdfGerado . ".pdf";
 
 	visualizaPDF($pdfGerado);
