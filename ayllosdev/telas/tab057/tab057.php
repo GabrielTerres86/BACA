@@ -103,8 +103,10 @@ var dtmvtglb = '<?php echo ( isset($glbvars['dtmvtolt']) ) ? $glbvars['dtmvtolt'
 																			<!-- Formulario para editar os dados Sicredi -->
 																			<? include('form_sicredi.php'); ?>
                                       
-                                      <!-- Formulario para editar os dados Bancoob -->
-																			<? include('form_bancoob.php'); ?>
+																			<!-- Formulario para editar os dados Bancoob -->
+																			<? //include('form_bancoob.php'); ?>
+																			
+																			<div id="divConsulta"></div>
 																			
 																			<div id="divBotoes" style="margin-top:5px; margin-bottom :10px;display:none">
 																				<a href="#" class="botao" id="btVoltar">Voltar</a>

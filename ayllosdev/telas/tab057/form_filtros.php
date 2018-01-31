@@ -11,6 +11,8 @@
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
+	
+  $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
   
   $xml = "<Root>";
   $xml .= " <Dados>";
@@ -53,8 +55,11 @@
         <td>
         <label for="tlcooper"><? echo utf8ToHtml('Cooperativa:') ?></label>
         <select id="tlcooper" name="tlcooper">
-        <option value="0"><? echo utf8ToHtml(' Todas') ?></option> 
+		<?php
+		  if ($cddopcao == 'C') { ?>
+			<option value="0"><? echo utf8ToHtml(' Todas') ?></option> 
         <?php
+		  }
         foreach ($registros as $r) {
           
           if ( getByTagName($r->tags, 'cdcooper') <> '' ) {

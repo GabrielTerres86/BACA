@@ -23,19 +23,19 @@ function estadoInicial() {
 	$('#divTela').css({'display':'inline'}).fadeTo(0,0.1);
 	
 	// Formatar o layout da tela
-  formataBotoes();
+	formataBotoes();
 	formataCabecalho();
-  formataFormularioSicredi();
-  controlaNavegacaoFrmSicredi();
-  formataFiltros();
-  //formataFormularioBancoob();
+	formataFormularioSicredi();
+	controlaNavegacaoFrmSicredi();
+	formataFiltros();
 
 	removeOpacidade('divTela');
 	highlightObjFocus( $('#frmCab') ); 
 	
-  // esconder os formulários da tela
-  $('#frmFiltros').css({'display':'none'});
-  $('#frmDadosSicredi').css({'display':'none'});
+	// esconder os formulários da tela
+	$('#frmFiltros').css({'display':'none'});
+	$('#frmDadosSicredi').css({'display':'none'});
+	$('#divConsulta').css({'display':'none'});
   
 	// esconder os botoes da tela
 	$('#divBotoes').css({'display':'none'});
@@ -44,6 +44,8 @@ function estadoInicial() {
 	
 	// Ajustar o label do botao "Prosseguir"
 	trocaBotao("Prosseguir");
+	$('a', '#frmFiltros').css({'display':'block'});
+	$('#cdempres').habilitaCampo();
 	
 	// Adicionar o foco no campo de OPCAO 
 	$("#cddopcao","#frmCab").focus();
@@ -103,12 +105,6 @@ function formataFiltros(){
   $('label[for="nrsequen"]','#frmFiltros').addClass('rotulo').css({'width':'75'});
    
   // CAMPOS - Filtro
-  if ($('#glcooper','#frmCab').val() == '3') {
-    $('#tlcooper','#frmFiltros').habilitaCampo();
-  } else {
-    document.getElementById('tlcooper').value = $('#glcooper','#frmCab').val();
-    $('#tlcooper','#frmFiltros').desabilitaCampo();
-  }
   $('#tlcooper','#frmFiltros').css({'width':'100px'});
   $('#cdempres','#frmFiltros').addClass('inteiro').css({'width':'100px'}).habilitaCampo();
   $('#nmextcon','#frmFiltros').css({'width':'300'}).desabilitaCampo();
@@ -119,6 +115,35 @@ function formataFiltros(){
   $('#nmarquiv','#frmFiltros').css({'width':'245px','text-align':'left'}).desabilitaCampo().addClass('alphanum').attr('maxlength','24');
   $('#nrsequen','#frmFiltros').addClass('inteiro').css({'width':'100px'}).desabilitaCampo();
   
+  //Alteração
+  if ($('#cddopcao','#frmCab').val() == 'A') {
+	  
+	  $('label[for="dtiniper"]','#frmFiltros').css({'display':'none'});
+	  $('label[for="dtfimper"]','#frmFiltros').css({'display':'none'});
+	  $('label[for="nmarquiv"]','#frmFiltros').css({'display':'none'});
+	  $('label[for="nrsequen"]','#frmFiltros').css({'display':'none'});
+	  
+	  $('#dtiniper','#frmFiltros').css({'display':'none'});
+	  $('#dtfimper','#frmFiltros').css({'display':'none'});
+	  $('#nmarquiv','#frmFiltros').css({'display':'none'});
+	  $('#nrsequen','#frmFiltros').css({'display':'none'});
+	  
+  }
+  
+  
+  if ($('#glcooper','#frmCab').val() == '3') {
+	  if ($('#cddopcao','#frmCab').val() == 'A') {
+		  document.getElementById('tlcooper').value = $('#glcooper','#frmCab').val();
+		  $('#tlcooper','#frmFiltros').desabilitaCampo();
+	  } else {
+		  $('#tlcooper','#frmFiltros').habilitaCampo();
+		  document.getElementById('tlcooper').value = $('#glcooper','#frmCab').val();
+	  }
+    
+  } else {
+    document.getElementById('tlcooper').value = $('#glcooper','#frmCab').val();
+    $('#tlcooper','#frmFiltros').desabilitaCampo();
+  }
    
   $('a','#frmFiltros').addClass('lupa').css('cursor', 'pointer').css({'width':'15','text-align':'center'});
   $('a','#frmFiltros').unbind('click').bind('click', function() {
@@ -169,6 +194,21 @@ function formataFiltros(){
     }
     return true;
  }
+ 
+/**
+ * Formatação dos campos quando selecionado a opção Bancoob
+ */
+ function formataFormularioBancoob() {
+   // LABEL
+   $('label[for="seqarnsa"]','#frmDadosBancoob').addClass('rotulo').css({'width':'200px'});
+   
+   // CAMPOS - Dados Gerais
+   $('#seqarnsa','#frmDadosBancoob').addClass('inteiro').css({'width':'60px'}).habilitaCampo();
+   
+   layoutPadrao();
+   
+   return false;
+ }
 
 /**
  * Formatação dos campos quando selecionado a opção Sicredi
@@ -180,21 +220,13 @@ function formataFiltros(){
    $('label[for="seqconso"]','#frmDadosSicredi').addClass('rotulo').css({'width':'200px'});
    
    // CAMPOS - Dados Gerais
-	$('#seqarfat','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'});
-  $('#seqtrife','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'});
-  $('#seqconso','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'});
+   $('#seqarfat','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'});
+   $('#seqtrife','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'});
+   $('#seqconso','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'});
    
    layoutPadrao();
    
    return false;
- }
- 
-/**
- * Formatação dos campos quando selecionado a opção Bancoob
- */
- function formataFormularioBancoob() {
-   
-   
  }
  
 /**
@@ -269,20 +301,25 @@ function exibeFormulario() {
     } else {
       $("#seqarfat","#frmDadosSicredi").focus();
       $("#btSalvar", "#divBotoes").show();
+	  trocaBotao("Alterar");
     }
   //Bancoob
   } else {
-    $('#frmFiltros').css({'display':'block'});
     //Consulta
-    if ($('#cddopcao','#frmBab').val() == 'C') {
-      $("#tlcooper","#fsetFiltroConsultar").focus();
+    if ($('#cddopcao','#frmCab').val() == 'C') {
+	  formataFiltros();
+	  $('#frmFiltros').css({'display':'block'});
+      $("#tlcooper","#frmFiltros").focus();
     //Alteração
     } else {
+		formataFiltros();
+		$('#frmFiltros').css({'display':'block'});
+		trocaBotao('Prosseguir');
     }
   }
   
   // Desabilitar a opção e agente
-	$("#cddopcao","#frmCab").desabilitaCampo();
+  $("#cddopcao","#frmCab").desabilitaCampo();
   $("#cdagente","#frmCab").desabilitaCampo();
   
   if ($("#cddopcao","#frmCab").val() == 'C') {
@@ -293,7 +330,6 @@ function exibeFormulario() {
     $("#seqarfat","#frmDadosSicredi").habilitaCampo();
     $("#seqtrife","#frmDadosSicredi").habilitaCampo();
     $("#seqconso","#frmDadosSicredi").habilitaCampo();
-    trocaBotao("Alterar");
   }
   
   $('#divBotoes').css({'display':'block','padding-bottom':'15px'});
@@ -342,20 +378,24 @@ function liberaFiltrosConsultar(){
 
 	// Desabilitar a opção
 	$("#cddopcao","#frmCab").desabilitaCampo();
-  $("#cdagente","#frmCab").desabilitaCampo();
+	$("#cdagente","#frmCab").desabilitaCampo();
 
 	// Limpar formulário
 	$('input[type="text"],select','#frmFiltros').limpaFormulario().removeClass('campoErro').habilitaCampo();
 
 	// Mostrar a tela
 	$('#frmFiltros').css({'display':'block'});
+	//Consulta
+    if ($('#cddopcao','#frmBab').val() == 'C') {
+      $("#tlcooper","#frmFiltros").focus();
+	}
 	$('#fsetFiltroConsultar','#frmFiltros').css({'display':'block'});
 	$('#divBotoes').css({'display':'block','padding-bottom':'15px'});
 	$('#btVoltar','#divBotoes').css({'display':'inline'});
 	$('#btSalvar','#divBotoes').css({'display':'inline'});
 	
 	// Adicionar foco no primeiro campo
-	//$("#tlcooper","#fsetFiltroConsultar").val("").focus();
+	//$("#tlcooper","#frmFiltros").val("").focus();
 }
 
 /**
@@ -374,13 +414,21 @@ function controlaCamposFiltroConsulta(){
 	// Validacao do campo cdempres para quando executar o TAB ou ENTER
 	$('#cdempres','#frmFiltros').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
-      if (!$('#cdempres','#frmFiltros').val()){
-        $('#nmextcon','#frmFiltros').val('Todos');
-      }
-      // Setar foco no campo dtiniper
-      $('#dtiniper','#frmFiltros').focus();
+		  if (!$('#cdempres','#frmFiltros').val() && $('#cddopcao','#frmCab').val() == 'C'){
+			$('#nmextcon','#frmFiltros').val('Todos');
+			// Setar foco no campo dtiniper
+			$('#dtiniper','#frmFiltros').focus();
 			return false;
-		}	
+		  } else {
+			  if ($('#cddopcao','#frmCab').val() == 'A') {
+				  if (!$('#cdempres','#frmFiltros').val()) {
+					  showError("error","Convênio é obrigatório.","Alerta - Ayllos","");
+					} else {
+						prosseguir();
+					}
+				}
+			}	
+		}
 	});
   
   // Validacao do campo dtiniper para quando executar o TAB ou ENTER
@@ -449,24 +497,40 @@ function focoBtVoltar() {
  * Funcao para controlar a execucao do botao PROSSEGUIR
  */
 function prosseguir() {
-   alert('prosseguir'); 
 	if ( divError.css('display') == 'block' ) { return false; }		
 
 	// Validar a opcao selecionada em tela
 	switch($("#cddopcao","#frmCab").val()) {
 		
 		case "C": // Consultar
-      //Sicredi
-      if ($('#cdagente','#frmCab').val() == 'S') {
-        showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','focoBtVoltar();','','sim.gif','nao.gif');
-      //Bancoob
-      } else {
-        
-      }
+		  //Sicredi
+		  if ($('#cdagente','#frmCab').val() == 'S') {
+			showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','focoBtVoltar();','','sim.gif','nao.gif');
+		  //Bancoob
+		  } else {
+			showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','consultaBancoob(1,50);','','sim.gif','nao.gif');
+		  }
 		break;
 		
 		case "A": // Alterar
-			showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina();','','sim.gif','nao.gif');
+			//Sicredi
+			if ($('#cdagente','#frmCab').val() == 'S') {
+				showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','alterarSicredi();','','sim.gif','nao.gif');
+			//Bancoob
+			} else {
+				//if ( $("#frmDadosBancoob").css("display") == 'none') {
+				if ($("#tlcooper","#frmFiltros").val() != '' && $("#cdempres","#frmFiltros").val() != '') {
+					if ( $("#frmDadosBancoob").css("display") != 'block' || $('#btSalvar').html() == 'Prosseguir') {
+						trocaBotao('Alterar');
+						consultaSeqBancoob();
+						$("#divConsulta").css({'display':'block'});
+						$('a', '#frmFiltros').css({'display':'none'});
+						$('#cdempres').desabilitaCampo();
+					} else {
+						showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','alterarBancoob();','','sim.gif','nao.gif');
+					}
+				}
+			}
 		break;
 	}
 
@@ -482,16 +546,312 @@ function trocaBotao(labelBotao){
 }
 
 /**
- * Funcao para realizar a gravacao dos dados do historico (Alterar/Incluir/Replicar)
+ *  Função para seleção de faturas
  */
-function manterRotina(){
+function selecionaFaturas(tr){
+		
+	document.getElementById("nmarquiv").value =$('#nmarquiv', tr ).val();
+	document.getElementById("nrsequen").value =$('#nrsequen', tr ).val();
+
+	return false;		
+}
+
+/**
+ * Função para akustar o layout da tabela com os dados
+ */
+ function controlaLayout(operacao) {
+
+	$('fieldset').css({'clear':'both','border':'1px solid #777','margin':'3px 0px','padding':'0 3px 5px 3px'});
+	$('fieldset > legend').css({'font-size':'11px','color':'#777','margin-left':'5px','padding':'0px 2px'});
+	
+	var nmForm;
+	
+	switch(operacao) {		
+	
+		case '1':	
+
+			var divRegistro = $('div.divRegistros');
+			var tabela      = $('table',divRegistro );	
+			var linha		= $('table > tbody > tr', divRegistro );
+
+			cTodos = $('input,select','#frmFiltros');
+			cTodos.desabilitaCampo();
+
+			divRegistro.css({'height':'150px'});
+
+			var ordemInicial = new Array();
+				ordemInicial = [[1,0]];		
+
+			var arrayLargura = new Array(); 
+				arrayLargura[0] = '100px';
+				arrayLargura[1] = '60px';
+				arrayLargura[2] = '60px';
+				arrayLargura[3] = '50px';
+				arrayLargura[4] = '65px';
+				arrayLargura[5] = '65px';
+				arrayLargura[6] = '65px';
+
+
+			var arrayAlinha = new Array();
+				arrayAlinha[0] = 'left';
+				arrayAlinha[1] = 'right';
+				arrayAlinha[2] = 'right';
+				arrayAlinha[3] = 'right';
+				arrayAlinha[4] = 'right';
+				arrayAlinha[5] = 'right';
+				arrayAlinha[6] = 'right';
+
+			arrayAlinha[2] = 'center';
+
+			var metodoTabela = '';
+
+			tabela.formataTabela(ordemInicial,arrayLargura,arrayAlinha,metodoTabela);			
+
+			//Deixa o primeiro registro já selecionado
+			$('table > tbody > tr', divRegistro).each( function(i) {
+
+				if ( $(this).hasClass( 'corSelecao' ) ) {
+					selecionaFaturas($(this));
+				}	
+
+			});	
+
+			//seleciona a fatura que tiver foco
+			$('table > tbody > tr', divRegistro).focus( function() {
+				selecionaFaturas($(this));
+			});	
+			
+			//seleciona a fatura que é clicada
+			$('table > tbody > tr', divRegistro).click( function() {
+				selecionaFaturas($(this));
+			});
+								
+			
+			$('#divConsulta').css('display','block');
+			$('#divRegistros').css('display','block');
+			$('#divRegistrosRodape','#divConsulta').formataRodapePesquisa();	
+			
+			$("input","#frmTotal").desabilitaCampo();
+			$("select","#frmTotal").desabilitaCampo();
+			
+			// Se clicar no btVoltar
+			$('#btVoltar','#divBotoes').unbind('click').bind('click', function() { 		
+				
+				controlaLayout('2');
+						
+				return false;
+
+			});	
+			
+			layoutPadrao();
+			
+		break;			
+		//Voltar
+		case '2':
+		
+			$('#divConsulta').html('');
+			$('#divConsulta').css({'display':'none'});
+			
+			$('#btSalvar','#divBotoes').css('display','inline');
+			$('#btVoltar','#divBotoes').css('display','inline');
+			
+			cTodos = $('input,select','#frmFiltros');
+			cTodos.habilitaCampo();
+			
+			formataFiltros();
+			
+			$('#frmFiltros').css({'display':'block'});
+			
+			$('#tlcooper','#frmFiltros').focus();
+			
+			// Se clicar no btVoltar
+			$('#btVoltar','#divBotoes').unbind('click').bind('click', function() { 		
+				
+				estadoInicial();
+						
+				return false;
+
+			});	
+			
+		break;					
+	}
+	
+	layoutPadrao();
+	return false;	
+	
+}
+
+/**
+ * Função para consultar a sequencia Bancoob
+ */
+function consultaSeqBancoob() {
+	showMsgAguardo('Aguarde efetuando operacao...');
+	
+	var cdcooper = $('#tlcooper','#frmFiltros').val();
+	var cdempres = $('#cdempres','#frmFiltros').val();
+	
+	$.ajax({		
+		type	: 'POST',
+		dataType: 'html',
+		url		: UrlSite + 'telas/tab057/form_bancoob.php', 
+		data    :
+				{ 
+				  cdcooper : cdcooper,
+				  cdempres : cdempres,
+				  redirect : 'script_ajax'
+				  
+				},
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o(cod.01).', 'Alerta - Ayllos', 'estadoInicial();');
+        },
+		success: function(response) {
+			hideMsgAguardo();
+				if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+					try {
+						$('#divConsulta').html(response);
+						return false;
+					} catch(error) {						
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.(cod.02)','Alerta - Ayllos','estadoInicial();');
+					}
+				} else {
+					try {
+						eval( response );						
+					} catch(error) {
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.(cod.03)','Alerta - Ayllos','estadoInicial();');
+					}
+				}
+        }
+        /*success: function(response) {
+            try {
+                eval(response);	
+                return false;
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.(cod.02)', 'Alerta - Ayllos', 'estadoInicial();');
+            }
+        }*/
+	});
+}
+
+/**
+ * Função para consultar os dados Bancoob
+ */
+function consultaBancoob(nriniseq, nrregist) {
+	
+	showMsgAguardo('Aguarde efetuando operacao...');
+
+	var cddopcao = $('#cddopcao','#frmCab').val();
+	var cdagente = $('#cdagente','#frmCab').val();
+	var cdcooper = $('#tlcooper','#frmFiltros').val();
+	var cdempres = $('#cdempres','#frmFiltros').val();
+	var dtiniper = $('#dtiniper','#frmFiltros').val();
+	var dtfimper = $('#dtfimper','#frmFiltros').val();
+	
+	if (cdempres == '') {
+		cdempres = 0;
+	}
+	
+	$.ajax({		
+		type	: 'POST',
+		dataType: 'html',
+		url		: UrlSite + 'telas/tab057/manter_rotina.php', 
+		data    :
+				{ 
+				  cddopcao : cddopcao,
+				  cdagente : cdagente,
+				  cdcooper : cdcooper,
+				  cdempres : cdempres,
+				  dtiniper : dtiniper,
+				  dtfimper : dtfimper,
+				  nriniseq : nriniseq,
+				  nrregist : nrregist,
+				  redirect : 'script_ajax'
+				  
+				},
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o(1).', 'Alerta - Ayllos', 'estadoInicial();');
+        },
+        success: function(response) {
+			hideMsgAguardo();
+				if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+					try {
+				
+						$('#divConsulta').html(response);
+						return false;
+					} catch(error) {						
+				
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.(cod.02)','Alerta - Ayllos','estadoInicial();');
+					}
+				} else {
+					try {
+				
+						eval( response );						
+					} catch(error) {
+				
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.(cod.03)','Alerta - Ayllos','estadoInicial();');
+					}
+				}
+        }
+	});
+}
+
+/**
+ * Funcao para realizar a gravacao dos dados do formulário Sicredi
+ */
+function alterarBancoob() {
+	
+	showMsgAguardo('Aguarde efetuando operacao...');
+
+	var cddopcao = $('#cddopcao','#frmCab').val();
+	var cdagente = $('#cdagente','#frmCab').val();
+	var cdcooper = $('#tlcooper','#frmFiltros').val();
+	var cdempres = $('#cdempres','#frmFiltros').val();
+	var seqarnsa = $('#seqarnsa','#frmDadosBancoob').val();
+	
+	$.ajax({		
+		type	: 'POST',
+		dataType: 'html',
+		url		: UrlSite + 'telas/tab057/manter_rotina.php', 
+		data    :
+				{ 
+				  cddopcao : cddopcao,
+				  cdagente : cdagente,
+				  cdcooper : cdcooper,
+				  cdempres : cdempres,
+				  seqarnsa : seqarnsa,
+				  redirect : 'script_ajax'
+				  
+				},
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o(1).', 'Alerta - Ayllos', 'estadoInicial();');
+        },
+        success: function(response) {
+            try {
+                eval(response);	
+                return false;
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.(2)', 'Alerta - Ayllos', 'estadoInicial();');
+            }
+        }
+	});
+}
+
+/**
+ * Funcao para realizar a gravacao dos dados do formulário Sicredi
+ */
+function alterarSicredi() {
 	
 	showMsgAguardo('Aguarde efetuando operacao...');
 
 	var cddopcao  = $('#cddopcao','#frmCab').val();
+	var cdagente  = $('#cdagente','#frmCab').val();
 	var seqarfat  = $('#seqarfat','#frmDadosSicredi').val();
-  var seqtrife  = $('#seqtrife','#frmDadosSicredi').val();
-  var seqconso  = $('#seqconso','#frmDadosSicredi').val();
+	var seqtrife  = $('#seqtrife','#frmDadosSicredi').val();
+	var seqconso  = $('#seqconso','#frmDadosSicredi').val();
 	
 	
 	$.ajax({		
@@ -500,7 +860,8 @@ function manterRotina(){
 		url		: UrlSite + 'telas/tab057/manter_rotina.php', 
 		data    :
 				{ 
-				  cddopcao : cddopcao,	
+				  cddopcao : cddopcao,
+				  cdagente : cdagente,
 				  seqarfat : seqarfat,
 				  seqtrife : seqtrife,
 				  seqconso : seqconso,
@@ -509,7 +870,7 @@ function manterRotina(){
 				},
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o(1).', 'Alerta - Ayllos', 'estadoInicial();');
         },
         success: function(response) {
             try {
@@ -517,7 +878,7 @@ function manterRotina(){
                 return false;
             } catch (error) {
                 hideMsgAguardo();
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.(2)', 'Alerta - Ayllos', 'estadoInicial();');
             }
         }
 	});
