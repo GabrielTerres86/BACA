@@ -7220,8 +7220,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_vltrftot   NUMBER;
       --
       vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_nmrescop crapcop.nmrescop%TYPE;
       vr_cdagectl crapcop.cdagectl%TYPE;
       vr_cdconven tbconv_arrecadacao.cdempres%TYPE;
+      vr_cdempcon tbconv_arrecadacao.cdempcon%TYPE;
       vr_trocaarq BOOLEAN;
       vr_procearq BOOLEAN;
       vr_linha    VARCHAR2(400);
@@ -7693,7 +7695,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_vltotrec := 0;
       vr_vltrftot := 0;
       vr_cdcooper := 0;
+      vr_nmrescop := NULL;
       vr_cdconven := 0;
+      vr_cdempcon := 0;
       vr_trocaarq := FALSE;
       vr_linha    := NULL;
       vr_procearq := TRUE;
@@ -7762,7 +7766,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                     IF vr_dscritic IS NOT NULL THEN
                       -- Escrever o log no arquivo
                       gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
-                                                    ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> ' || rw_cooper.nmrescop || ' - Convênio ' || lpad(rw_conven.cdempcon, 10, '0') || ' não processado devido ao ERRO: ' || vr_dscritic -- Texto para escrita
+                                                    ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> ' || vr_nmrescop || ' - Convênio ' || lpad(vr_cdconven, 10, '0') || '/' || lpad(vr_cdempcon, 4, '0') || ' não processado devido ao ERRO: ' || vr_dscritic -- Texto para escrita
                                                     );
                       --
                     ELSE
@@ -7786,7 +7790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                       IF vr_dscritic IS NOT NULL THEN
                         -- Escrever o log no arquivo
                         gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
-                                                      ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> ' || rw_cooper.nmrescop || ' - Convênio ' || lpad(rw_conven.cdempcon, 10, '0') || ' não processado devido ao ERRO: ' || vr_dscritic -- Texto para escrita
+                                                      ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> ' || vr_nmrescop || ' - Convênio ' || lpad(vr_cdconven, 10, '0') || '/' || lpad(vr_cdempcon, 4, '0') || ' não processado devido ao ERRO: ' || vr_dscritic -- Texto para escrita
                                                       );
                         --
                       ELSE
@@ -7794,7 +7798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                         IF vr_nmarqtxt IS NOT NULL THEN
                           -- Escrever o log no arquivo
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
-                                                        ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> ' || rw_cooper.nmrescop || ' - Gerado o arquivo ' || vr_nmarqtxt || ' com sucesso.' -- Texto para escrita
+                                                        ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> ' || vr_nmrescop || ' - Gerado o arquivo ' || vr_nmarqtxt || ' com sucesso.' -- Texto para escrita
                                                         );
                           --
                         END IF;
@@ -7810,7 +7814,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                     vr_vltotrec := 0;
                     vr_vltrftot := 0;
                     vr_cdcooper := 0;
+                    vr_nmrescop := NULL;
                     vr_cdconven := 0;
+                    vr_cdempcon := 0;
                     vr_trocaarq := FALSE;
                     vr_trocaarq := FALSE;
                     --
@@ -7819,8 +7825,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                 END IF;
                 --
                 vr_cdcooper := rw_cooper.cdcooper;
+                vr_nmrescop := rw_cooper.nmrescop;
                 vr_cdagectl := rw_cooper.cdagectl;
                 vr_cdconven := rw_conven.cdempres;
+                vr_cdempcon := rw_conven.cdempcon;
                 vr_trocaarq := TRUE;
                 vr_procearq := TRUE;
                 --
@@ -7926,11 +7934,80 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
               WHEN vr_exc_errcon THEN
                 -- Escrever o log no arquivo
                 gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
-                                              ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> ' || rw_cooper.nmrescop || ' - Convênio ' || lpad(rw_conven.cdempcon, 10, '0') || ' não processado devido ao ERRO: ' || vr_dscritic -- Texto para escrita
+                                              ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> ' || rw_cooper.nmrescop || ' - Convênio ' || lpad(rw_conven.cdempres, 10, '0') || '/' ||lpad(rw_conven.cdempcon, 4, '0') || ' não processado devido ao ERRO: ' || vr_dscritic -- Texto para escrita
                                               );
             END;
             --
           END LOOP;
+          --
+          IF vr_qtregist > 0 THEN
+            --
+            vr_linha := NULL;
+            -- Gera a linha de trailler
+            pc_gera_trailler(pr_nrseqreg => vr_qtregist -- IN
+                            ,pr_vltotreg => vr_vltotrec -- IN
+                            ,pr_trailler => vr_linha    -- OUT
+                            ,pr_dscritic => vr_dscritic -- OUT
+                            );
+            --	
+            IF vr_dscritic IS NOT NULL THEN
+              -- Escrever o log no arquivo
+              gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
+                                            ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> ' || vr_nmrescop || ' - Convênio ' || lpad(rw_conven.cdempres, 10, '0') || '/' ||lpad(rw_conven.cdempcon, 4, '0') || ' não processado devido ao ERRO: ' || vr_dscritic -- Texto para escrita
+                                            );
+              --
+            ELSE
+              --
+              pc_insere_linha(pr_linha => vr_linha -- IN
+                             ,pr_rowid => NULL     -- IN
+                             );
+              -- Se não ocorreu nenhum erro durante o processamento dos movimentos, grava o arquivo nos diretórios
+              pc_grava_arquivo(pr_cdagectl => vr_cdagectl          -- IN
+                              ,pr_cdempres => vr_cdconven          -- IN
+                              ,pr_dtmvtolt => rw_dtmvtolt.dtmvtolt -- IN
+                              ,pr_cdcooper => vr_cdcooper          -- IN
+                              ,pr_dtvencto => rw_dtmvtolt.dtmvtolt -- IN
+                              ,pr_qtregist => vr_qtregist          -- IN
+                              ,pr_vltotrec => vr_vltotrec          -- IN
+                              ,pr_vltrftot => vr_vltrftot          -- IN
+                              ,pr_nmarqtxt => vr_nmarqtxt          -- OUT
+                              ,pr_dscritic => vr_dscritic          -- OUT
+                              );
+              --
+              IF vr_dscritic IS NOT NULL THEN
+                -- Escrever o log no arquivo
+                gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
+                                              ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> ' || vr_nmrescop || ' - Convênio ' || lpad(rw_conven.cdempres, 10, '0') || '/' ||lpad(rw_conven.cdempcon, 4, '0') || ' não processado devido ao ERRO: ' || vr_dscritic -- Texto para escrita
+                                              );
+                --
+              ELSE
+                -- Verifica se deve finalizar o arquivo
+                IF vr_nmarqtxt IS NOT NULL THEN
+                  -- Escrever o log no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
+                                                ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> ' || vr_nmrescop || ' - Gerado o arquivo ' || vr_nmarqtxt || ' com sucesso.' -- Texto para escrita
+                                                );
+                  --
+                END IF;
+                --
+              END IF;
+              --
+            END IF;
+            --
+            vr_index_arq   := 0;
+            vr_tab_arquivo.delete;
+            --
+            vr_qtregist := 0;
+            vr_vltotrec := 0;
+            vr_vltrftot := 0;
+            vr_cdcooper := 0;
+            vr_nmrescop := NULL;
+            vr_cdconven := 0;
+            vr_cdempcon := 0;
+            vr_trocaarq := FALSE;
+            vr_trocaarq := FALSE;
+            --
+          END IF;
           --
           CLOSE cr_conven;
           --
