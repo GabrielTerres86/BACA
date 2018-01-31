@@ -119,6 +119,7 @@ create or replace package body cecred.tela_tab057 is
     --  Objetivo  : Retornar a lista de cooperativas no sistema.
     --
     --  Alteracoes: 
+    --
     -- .............................................................................
   BEGIN
     --

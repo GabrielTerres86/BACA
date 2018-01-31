@@ -3,6 +3,7 @@
 	* FONTE        : form_sicredi.php
 	* DATA CRIAÇÃO : 22/01/2018
 	* OBJETIVO     : Formulario de consulta e alteração de dados
+	*
 	* --------------
 	* ALTERAÇÕES   : 
 	* --------------

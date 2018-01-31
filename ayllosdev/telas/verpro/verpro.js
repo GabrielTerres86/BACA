@@ -15,7 +15,7 @@
  * 008: 05/07/2016 - Odirlei (AMcom) : Exibir protocolo 15 - pagamento debaut - PRJ320 - Oferta Debaut
  * 009: 19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo InternetBanking (Projeto 338 - Lucas Lunelli)
  * 010: 23/03/2017 - Alterações referente a recarga de celular. (PRJ321 - Reinert)
- * 011: 02/01/2018 - Alterações referente a inclusão das opções 24 - FGTS e 23 - DAE
+ * 011: 02/01/2018 - Alterações referente a inclusão das opções 24 - FGTS e 23 - DAE.
  * --------------
  */
 

@@ -15,7 +15,7 @@
 							  		   
 				  23/03/2017 - Alterações referente a Recarga de celular (PRJ321 - Reinert)
 				  
-				  11/01/2017 - Alterações referente ao projeto PJ406
+				  11/01/2017 - Alterações referente ao projeto PJ406.
  */ 
 ?>
 

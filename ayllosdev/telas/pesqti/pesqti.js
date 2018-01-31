@@ -34,7 +34,7 @@
 			 19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
 						  pelo InternetBanking (Projeto 338 - Lucas Lunelli)
         
-        12/01/2018 - Alteracoes refrente ao PJ406
+        12/01/2018 - Alteracoes refrente ao PJ406.
 							  
 ****************************************************************************/
 

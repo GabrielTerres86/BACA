@@ -21,7 +21,7 @@
                             corretamente a busca de empresas por
                             descricao
                             (Adriano).
-               18/01/2018 - Alteraçoes referente ao PJ406
+               18/01/2018 - Alteraçoes referente ao PJ406.
 ..............................................................................*/
 
 DEF VAR aux_cdcooper AS INT                                     NO-UNDO.

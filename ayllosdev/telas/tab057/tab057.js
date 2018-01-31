@@ -2,6 +2,7 @@
  * FONTE        : tab057.js
  * DATA CRIAÇÃO : 19/01/2018
  * OBJETIVO     : Biblioteca de funções da tela TAB057
+ *
  * --------------
  * ALTERAÇÕES   : 
  * --------------

@@ -5,7 +5,7 @@
   Data criação : Junho/2014
   Objetivo     : Cabeçalho para a tela PESQTI
   --------------
-  Alterações   : 17/01/2018 - Alterações para atender o PJ406
+  Alterações   : 17/01/2018 - Alterações para atender o PJ406.
   --------------
  ****************************************************************/ 
 

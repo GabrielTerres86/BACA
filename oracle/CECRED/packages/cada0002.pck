@@ -2674,14 +2674,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
      Observacao: -----
 
      Alteracoes: 09/12/2014 - Alterado procedure que busca diretorio do arquivo.
-                              utilizando proc. fn_diretorio. (Jorge/Rodrigo) SD 229515
+                              utilizando proc. fn_diretorio. (Jorge/Rodrigo) SD 229515.
                               
                  05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
                              (Adriano).             
                              
                  09/03/2017 - Ajuste para incluir informações referentes a comprovante
                               de pagamento em debito automatico (Aline).                      
-                 09/01/2018 - Incluido tratamento para FGTS e DAE - PRJ406.                      
+                 09/01/2018 - Incluido tratamento para FGTS e DAE - PRJ406.
     ..............................................................................*/ 
     -- CURSORES
     -- Buscar as informações da cooperativa

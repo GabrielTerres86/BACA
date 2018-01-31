@@ -22,7 +22,7 @@
  * 013: [23/03/2017] - Inclusão do protocolo de Recarga de celular (PRJ321 - Reinert)
  * 014: [29/05/2017] - Ajuste para apresentar valores corretamente - Adriano SD 679022.
  * 015: [05/09/2017] - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
- * 016: [03/01/2018] - Alteração para tratar os tipos 24-FGTS e 23-DAE (Proj 406)
+ * 016: [03/01/2018] - Alteração para tratar os tipos 24-FGTS e 23-DAE (Proj 406).
 
  */
 

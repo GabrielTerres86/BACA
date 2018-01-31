@@ -3,9 +3,9 @@
  * FONTE        : tab_registros.php
  * DATA CRIAÇÃO : 26/01/2017
  * OBJETIVO     : Tabela que apresenta a consulta TAB057
+ *
  * --------------
  * ALTERAÇÕES   : 
- *
  * --------------
  */ 
 

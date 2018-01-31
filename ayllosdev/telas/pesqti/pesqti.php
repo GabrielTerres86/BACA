@@ -21,7 +21,7 @@
 					  17/06/2015 - Ajuste decorrente a melhoria no layout da tela
  							      (Adriano).
             
-            17/01/2018 - Alterações para atender o PJ406
+            17/01/2018 - Alterações para atender o PJ406.
 	                                                                  
 	***************************************************************************/
 	

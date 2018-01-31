@@ -3,9 +3,10 @@
  * FONTE        : form_total.php
  * DATA CRIAÇÃO : Jsneiro/2018							 Última Alteração: 
  * OBJETIVO     : Formulário de exibição
+ *
  * --------------
  * ALTERAÇÕES   : 
-				  
+ * --------------			  
  */	
 ?>
 

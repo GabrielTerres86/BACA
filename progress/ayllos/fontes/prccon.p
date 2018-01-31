@@ -18,7 +18,7 @@
                
                17/12/2013 - Inclusao de VALIDATE crapsol (Carlos)
                
-               09/01/2018 - Inclusao do processamento de convenios Bancoob - PRJ406
+               09/01/2018 - Inclusao do processamento de convenios Bancoob - PRJ406.
                             
 ............................................................................ */
 

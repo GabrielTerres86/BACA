@@ -476,7 +476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             10/07/2017 - Adicionar tratamento para o convenio SANEPAR 8 posicoes
   --                          na pc_gerandb (Tiago/Fabricio #673343)  
   --
-  --             18/01/2018 - Alterações referentes ao PJ406
+  --             18/01/2018 - Alterações referentes ao PJ406.
   --
   --             31/01/2018 - Ajustar para buscar critica do arquivo baseado no pr_codcriti
   --                          (Lucas Ranghetti #840602)

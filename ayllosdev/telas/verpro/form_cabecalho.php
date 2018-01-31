@@ -21,7 +21,7 @@
 					
 					23/03/2017 - Inclusão protocolo 20. (PRJ321 - Reinert)
           
-          02/01/2018 - Inclusão protocolos 24 - FGTS e 23 - DAE (PRJ406)
+					02/01/2018 - Inclusão protocolos 24 - FGTS e 23 - DAE (PRJ406).
  *********************************************************************************************/
 ?>
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;" style="display:none" >

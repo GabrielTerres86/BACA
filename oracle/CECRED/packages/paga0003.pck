@@ -396,7 +396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                     e também validar data do pagamento menor que o dia atual (Lucas Ranghetti #775900)
 
        05/01/2018 - Inclusão da rotina pc_gera_arrecadacao_bancoob
-                    PRJ406-FGTS
+                    PRJ406-FGTS.
   
   ---------------------------------------------------------------------------------------------------------------*/
 

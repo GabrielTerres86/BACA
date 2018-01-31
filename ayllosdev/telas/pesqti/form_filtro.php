@@ -5,7 +5,7 @@
   Data criação : Junho/2015
   Objetivo     : Form responsável por apresentar as opções de filtro para consulta
   --------------
-  Alterações   : 12/01/2018 - Alterações refrente ao PJ406
+  Alterações   : 12/01/2018 - Alterações refrente ao PJ406.
   --------------
  ****************************************************************/
 

@@ -67,7 +67,7 @@
                14/12/2017 - Incluido campo na tt-empr-conve.
                              PRJ406-FGTS(Odirlei-AMcom)      
                                      
-               17/01/2018 - Alteraçoes referente ao PJ406
+               17/01/2018 - Alteraçoes referente ao PJ406.
 ..............................................................................*/
 
 { sistema/generico/includes/var_internet.i } 
