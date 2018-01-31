@@ -51,7 +51,7 @@
 						<input type="hidden" id="cdbandst" name="cdbandst" value="<? echo getByTagName($result->tags,'cdbandst')." - ".getByTagName($result->tags,'nmextbcc') ?>" />								  
 						<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo formataNumericos('zzzz.zzz-9',getByTagName($result->tags,'nrdconta'),'.-') ?>" />								  
 						<input type="hidden" id="nmresage" name="nmresage" value="<? echo getByTagName($result->tags,'nmresage') ?>" />
-            <input type="hidden" id="dscodbar" name="dscodbar" value="<? echo getByTagName($result->tags,'dscodbar') ?>" />
+						<input type="hidden" id="dscodbar" name="dscodbar" value="<? echo getByTagName($result->tags,'dscodbar') ?>" />
 						<input type="hidden" id="dslindig" name="dslindig" value="<? echo getByTagName($result->tags,'dslindig') ?>" />
 						<input type="hidden" id="nmextbcc" name="nmextbcc" value="<? echo getByTagName($result->tags,'nmextbcc') ?>" />								  															  						
 						<input type="hidden" id="dspactaa" name="dspactaa" value="<? echo getByTagName($result->tags,'dspactaa') ?>" />	
@@ -61,7 +61,7 @@
 						<input type="hidden" id="cdagenci" name="cdagenci" value="<? echo getByTagName($result->tags,'cdagenci') ?>" />	
 						<input type="hidden" id="cdbccxlt" name="cdbccxlt" value="<? echo getByTagName($result->tags,'cdbandst') ?>" />
 						<input type="hidden" id="dtdpagto" name="dtdpagto" value="<? echo $dtdpagto?>" />	
-						<input type="hidden" id="cdhiscxa" name="cdhiscxa" value="<? echo $cdhiscxa ?>" />	
+						<input type="hidden" id="cdhiscxa" name="cdhiscxa" value="<? echo $cdhiscxa ?>" />
 						
 						<input type="hidden" id="dtapurac" name="dtapurac" value="<? echo getByTagName($result->tags,'dtapurac') ?>" />
 						<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" value="<? echo getByTagName($result->tags,'nrcpfcgc') ?>" />

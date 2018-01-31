@@ -1360,9 +1360,6 @@ function selecionaTitulos(tr){
 	
 function selecionaFaturas(tr){
 
-	var dspactaa = $('#dspactaa', tr ).val();
-	var cdhiscxa = $('#cdhiscxa', tr ).val();
-		
 	$('#insitfat','#'+frmFaturas).val( $('#insitfat', tr ).val() );
 	$('#vlconfoz','#'+frmFaturas).val( $('#vlconfoz', tr ).val() );
 	$('#nrautdoc','#'+frmFaturas).val( $('#nrautdoc', tr ).val() );
@@ -1370,32 +1367,16 @@ function selecionaFaturas(tr){
 	$('#cdbandst','#'+frmFaturas).val( $('#cdbandst', tr ).val() );
 	$('#nrdconta','#'+frmFaturas).val( $('#nrdconta', tr ).val() );
 	$('#dscodbar','#'+frmFaturas).val( $('#dscodbar', tr ).val() );
-  $('#nmresage','#'+frmFaturas).val( $('#nmresage', tr ).val() );
-  $('#dslindig','#'+frmFaturas).val( $('#dslindig', tr ).val() );
+    $('#nmresage','#'+frmFaturas).val( $('#nmresage', tr ).val() );
+    $('#dslindig','#'+frmFaturas).val( $('#dslindig', tr ).val() );
 	$('#dscptdoc','#'+frmFaturas).val( $('#dscptdoc', tr ).val() );
 	$('#dsnomfon','#'+frmFaturas).val( $('#dsnomfon', tr ).val() );
-	
-	if (dspactaa == "") {
-		
-		$('#dspactaa','#'+frmFaturas).css('display','none');
-		$('label[for="dspactaa"]','#'+frmFaturas).css('display','none');
-		
-	}else{
-		
-		$('#dspactaa','#'+frmFaturas).val( $('#dspactaa', tr ).val() );
-		$('#dspactaa','#'+frmFaturas).css('display','block');
-		$('label[for="dspactaa"]','#'+frmFaturas).css('display','block');
-		
-	}
 	
 	$('#cdagenci','#'+frmFaturas).val( $('#cdagenci', tr ).val() );
 	$('#nrdolote','#'+frmFaturas).val( $('#nrdolote', tr ).val() );
 	$('#dtdpagto','#'+frmFaturas).val( $('#dtdpagto', tr ).val() );
 	$('#cdbccxlt','#'+frmFaturas).val( $('#cdbccxlt', tr ).val() );
 	$('#nmempres','#'+frmFaturas).val( $('#nmempres', tr ).val() );
-			
-	$('#frmFaturas').css('display','block');
-	$("#frmTitulos").css("display","none");
 		
 	/* Exibe o campo Vl.FOZ de o Historico for 963 */
 	if (cdhiscxa == 963){ /* FOZ DO BRASIL */
@@ -1421,6 +1402,9 @@ function selecionaFaturas(tr){
 	vlrtotal = $('#vlrtotal', tr ).val();
 	vlrecbru = $('#vlrecbru', tr ).val();
 	vlpercen = $('#vlpercen', tr ).val();
+	
+	$('#frmFaturas').css('display','block');
+	$("#frmTitulos").css("display","none");
 
 	return false;		
 }
