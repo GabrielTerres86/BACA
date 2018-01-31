@@ -178,7 +178,9 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
           ,nmextbcc crapban.nmextbcc%type
           ,dspactaa VARCHAR2(30)
           ,vlconfoz NUMBER
-          ,insitfat INTEGER);
+          ,insitfat INTEGER
+          ,nmresage crapage.nmresage%TYPE
+          ,nmempres crapcon.nmextcon%TYPE);
 
   TYPE typ_tab_dados_pesqti IS TABLE OF typ_reg_dados_pesqti INDEX BY PLS_INTEGER;
 
@@ -240,7 +242,10 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
                                ,pr_nriniseq  IN INTEGER      -- Número de controle de inicio de registro
                                ,pr_cdempcon  IN VARCHAR2     -- Codigo da empresa a ser conveniada.
                                ,pr_cdsegmto  IN INTEGER      -- Identificacao do segmento da empresa/orgao
-                               ,pr_flgcnvsi  IN BOOLEAN      -- Indicador SICREDI associa ao historico específico
+                               ,pr_dtipagto  IN DATE         -- Data de início
+                               ,pr_dtfpagto  IN DATE         -- Data do fim
+                               ,pr_nrdconta  IN INTEGER      -- Número da conta
+                               ,pr_nrautdoc  IN VARCHAR2     -- Código da autenticação
                                ,pr_qtregist OUT INTEGER      -- Retorna a quantidade de registro
                                ,pr_dscritic OUT VARCHAR2     -- Descricao da critica
                                ,pr_vlrtotal OUT NUMBER       -- Valor total
@@ -470,6 +475,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --
   --             10/07/2017 - Adicionar tratamento para o convenio SANEPAR 8 posicoes
   --                          na pc_gerandb (Tiago/Fabricio #673343)  
+  --
+  --             18/01/2018 - Alterações referentes ao PJ406
+  --
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1124,7 +1132,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana (AMcom)
-  --  Data     : Novembro/2013.                Ultima atualizacao: 21/11/2013
+  --  Data     : Novembro/2013.                Ultima atualizacao: 18/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1204,7 +1212,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
                                ,pr_nriniseq  IN INTEGER      -- Número de controle de inicio de registro
                                ,pr_cdempcon  IN VARCHAR2     -- Codigo da empresa a ser conveniada.
                                ,pr_cdsegmto  IN INTEGER      -- Identificacao do segmento da empresa/orgao
-                               ,pr_flgcnvsi  IN BOOLEAN      -- Indicador SICREDI associa ao historico específico
+                               ,pr_dtipagto  IN DATE         -- Data de início
+                               ,pr_dtfpagto  IN DATE         -- Data do fim
+                               ,pr_nrdconta  IN INTEGER      -- Número da conta
+                               ,pr_nrautdoc  IN VARCHAR2     -- Código da autenticação
                                ,pr_qtregist OUT INTEGER      -- Retorna a quantidade de registro
                                ,pr_dscritic OUT VARCHAR2     -- Descricao da critica
                                ,pr_vlrtotal OUT NUMBER       -- Valor total
@@ -1216,7 +1227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana (AMcom)
-  --  Data     : Novembro/2013.                Ultima atualizacao: 21/11/2013
+  --  Data     : Novembro/2013.                Ultima atualizacao: 18/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1236,9 +1247,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
     vr_qtregist number;
 
     -- Buscar Lancamentos de faturas.
-    CURSOR cr_craplft (pr_dtdpagto IN DATE ,
-                       pr_cdhistor IN NUMBER,
-                       pr_flgcnvsi IN INTEGER) IS
+    CURSOR cr_craplft IS
       SELECT cdagetfn,
              nrterfin,
              cdcoptfn,
@@ -1252,19 +1261,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
              nrdolote,
              nrdconta,
              cdseqfat,
-             nrautdoc
+             nrautdoc,
+             cdhistor,
+             cdcooper,
+             cdempcon,
+             cdsegmto,
+             tpfatura,
+             cdtribut
         FROM craplft
        WHERE craplft.cdcooper = pr_cdcooper
-         AND craplft.dtmvtolt = pr_dtdpagto
+         AND craplft.dtmvtolt >= pr_dtipagto
+         AND craplft.dtmvtolt <= pr_dtfpagto
          AND ((pr_cdagenci <> 0 AND
                craplft.cdagenci = pr_cdagenci) OR
                craplft.cdagenci > 0
-              )
-         AND (
-              (pr_cdhistor <> 0 AND craplft.cdhistor = pr_cdhistor) OR
-              (( pr_flgcnvsi = 0 AND craplft.cdhistor <> 1154) OR /* PGTO.CONVENIO */
-               (craplft.cdhistor = pr_cdhistor)
-               )
               )
          AND ((pr_cdempcon <> 0 AND
                craplft.cdempcon = pr_cdempcon) OR
@@ -1272,6 +1282,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
               )
          AND ((pr_cdsegmto <> 0 AND
                craplft.cdsegmto = pr_cdsegmto) OR
+               1 = 1 -- True, para desconsiderar a clausula acima
+             )
+         AND ((pr_nrdconta <> 0 AND
+               craplft.nrdconta = pr_nrdconta) OR
+               1 = 1 -- True, para desconsiderar a clausula acima
+             )
+         AND ((pr_nrautdoc IS NOT NULL AND
+               craplft.nrautdoc = pr_nrautdoc) OR
                1 = 1 -- True, para desconsiderar a clausula acima
               );
 
@@ -1288,6 +1306,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         FROM crapcop cop
        WHERE cop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
+
+    /* Busca dados agência */
+    CURSOR cr_crapage(pr_cdcooper crapage.cdcooper%TYPE
+                     ,pr_cdagenci crapage.cdagenci%TYPE
+                     ) IS
+      SELECT crapage.nmresage
+        FROM crapage
+       WHERE crapage.cdcooper = pr_cdcooper
+         AND crapage.cdagenci = pr_cdagenci;
+    rw_crapage cr_crapage%ROWTYPE;
+    
+    /* Busca dados convenio */
+    CURSOR cr_crapcon(pr_cdcooper crapcon.cdcooper%TYPE
+                     ,pr_cdempcon crapcon.cdempcon%TYPE
+                     ,pr_cdsegmto crapcon.cdsegmto%TYPE
+                     ) IS
+      SELECT crapcon.nmextcon
+            ,crapcon.tparrecd
+        FROM crapcon
+       WHERE crapcon.cdcooper = pr_cdcooper
+         AND crapcon.cdempcon = pr_cdempcon
+         AND crapcon.cdsegmto = pr_cdsegmto;
+    rw_crapcon cr_crapcon%ROWTYPE;
+    
+    /* Busca convenio2 */
+    CURSOR cr_gnconve(pr_cdhiscxa gnconve.cdhiscxa%TYPE
+                     ) IS
+      SELECT gnconve.nmempres
+        FROM gnconve
+       WHERE gnconve.cdhiscxa = pr_cdhiscxa;
+    rw_gnconve cr_gnconve%ROWTYPE;
+
+    /* Busca tributos */
+    CURSOR cr_crapscn(pr_cdempcon crapscn.cdempcon%TYPE
+                     ,pr_cdsegmto crapscn.cdsegmto%TYPE
+                     ,pr_tpfatura craplft.tpfatura%TYPE
+                     ,pr_cdtribut craplft.cdtribut%TYPE
+                     ) IS
+      SELECT crapscn.dsnomcnv
+        FROM crapscn
+       WHERE ((crapscn.cdempco2 = pr_cdempcon OR
+               crapscn.cdempcon = pr_cdempcon) AND
+              crapscn.cdsegmto = pr_cdsegmto AND
+              crapscn.dsoparre <> 'E' AND
+              (pr_cdempcon <> 0 OR
+               pr_cdtribut <> 2))
+         AND ((pr_cdtribut = 6106 AND
+               crapscn.cdempres = 'DO') OR
+              (pr_cdtribut <> 6106 AND
+               crapscn.cdempres = 'AO') AND
+              (pr_cdempcon = 0 AND
+               pr_cdtribut = 2));
+    rw_crapscn cr_crapscn%ROWTYPE;
 
     -- Verificar se o valor do campo esta contido na temptable
     FUNCTION pc_verif_tab_empr( pr_tab_empr_conve IN CONV0001.typ_tab_empr_conve --> TempTable contendo os registros
@@ -1317,37 +1388,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
     vr_nrregist := nvl(pr_nrregist,0);
     vr_dtdpagto := nvl(pr_dtdpagto,pr_dtmvtolt);
 
-
-    /* Verifica o hist. informado */
-    IF nvl(pr_cdhistor,0) <> 0 THEN
-      CONV0001.pc_lista_historicos ( pr_cdhiscxa => 0     -- Codigo do hist do caixa
-                                    ,pr_nmempres => null  -- Nome da Empresa
-                                    ,pr_nrregist => 999   -- Número de controle de registros
-                                    ,pr_nriniseq => 0     -- Número de controle de inicio de registro
-                                    ,pr_qtregist => vr_qtregist  -- Retorna a quantidade de registro
-                                    ,pr_dscritic => pr_dscritic  -- Descricao da critica
-                                    ,pr_tab_historicos => vr_tab_historicos);
-      IF pr_dscritic <> 'OK' then
-        RETURN;
-      END IF;
-      -- SE não encontrou o historico, gerar erro
-      IF NOT vr_tab_historicos.EXISTS(pr_cdhistor) THEN
-
-        vr_dscritic := 'Historico nao encontrado.';
-
-        GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
-                              pr_cdagenci => pr_cdagenci,
-                              pr_nrdcaixa => pr_nrdcaixa,
-                              pr_nrsequen => 1,
-                              pr_cdcritic => 0,
-                              pr_dscritic => vr_dscritic,
-                              pr_tab_erro => pr_tab_erro);
-        pr_dscritic := 'NOK';
-        RETURN;
-
-      END IF;
-    END IF;
-
     /* Verifica Empr. e Segmto. */
     IF  pr_cdempcon <> 0 AND
         pr_cdsegmto <> 0 THEN
@@ -1369,8 +1409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       IF NOT pc_verif_tab_empr( vr_tab_empr_conve,'CDEMPCON',pr_cdempcon) OR
          NOT pc_verif_tab_empr( vr_tab_empr_conve,'CDSEGMTO',pr_cdsegmto) THEN
 
-        vr_dscritic := 'Empresa e Segmento nao conferem ou '||
-                       'nao sao SICREDI.';
+        vr_dscritic := 'Empresa e Segmento nao conferem.';
 
         GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
                               pr_cdagenci => pr_cdagenci,
@@ -1386,19 +1425,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
 
     END IF;
 
-    /* Se for Conv. SICREDI associa ao historico específico */
-    IF pr_flgcnvsi THEN
-      vr_cdhistor := 1154;
-    ELSE
-      vr_cdhistor := pr_cdhistor;
-    END IF;
-
     -- Loopr para lancamentos de faturas
-    FOR rw_craplft IN cr_craplft (pr_dtdpagto => vr_dtdpagto,
-                                  pr_cdhistor => vr_cdhistor,
-                                  pr_flgcnvsi => (case pr_flgcnvsi
-                                                  when true then 1
-                                                  else 0 end )) LOOP
+    FOR rw_craplft IN cr_craplft LOOP
 
       IF pr_vldpagto <> 0 THEN
         IF (rw_craplft.vllanmto + rw_craplft.vlrmulta + rw_craplft.vlrjuros) < pr_vldpagto THEN
@@ -1433,6 +1461,66 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         pr_tab_dados_pesqti(vr_idx).vlconfoz := TO_NUMBER(SUBSTR(rw_craplft.cdbarras,24,10)) / 100;
         pr_tab_dados_pesqti(vr_idx).insitfat := rw_craplft.insitfat;
 
+        -- Busca agencia
+        OPEN cr_crapage(rw_craplft.cdcooper
+                       ,rw_craplft.cdagenci
+                       );
+        FETCH cr_crapage INTO rw_crapage;
+        --
+        IF cr_crapage%NOTFOUND THEN
+          --
+          pr_tab_dados_pesqti(vr_idx).nmresage := '** AGENCIA NAO CADASTRADA **';
+          --
+        ELSE
+          --
+          pr_tab_dados_pesqti(vr_idx).nmresage := rw_crapage.nmresage;
+          --
+        END IF;
+        
+        -- Busca convenios
+        OPEN cr_crapcon(rw_craplft.cdcooper
+                       ,rw_craplft.cdempcon
+                       ,rw_craplft.cdsegmto
+                       );
+        --
+        FETCH cr_crapcon INTO rw_crapcon;
+        --
+        IF cr_crapcon%FOUND THEN
+          --
+          IF rw_crapcon.tparrecd = 2 THEN
+            --
+            pr_tab_dados_pesqti(vr_idx).nmempres := rw_crapcon.nmextcon;
+            --
+          ELSIF rw_crapcon.tparrecd = 3 THEN
+            --
+            OPEN cr_gnconve(rw_craplft.cdhistor
+                           );
+            FETCH cr_gnconve INTO rw_gnconve;
+            --
+            pr_tab_dados_pesqti(vr_idx).nmempres := rw_gnconve.nmempres;
+            --
+            CLOSE cr_gnconve;
+            --
+          ELSE
+            --
+            OPEN cr_crapscn(rw_craplft.cdempcon
+                           ,rw_craplft.cdsegmto
+                           ,rw_craplft.tpfatura
+                           ,rw_craplft.cdtribut
+                           );
+            --
+            FETCH cr_crapscn INTO rw_crapscn;
+            --
+            pr_tab_dados_pesqti(vr_idx).nmempres := rw_crapscn.dsnomcnv;
+            --
+            CLOSE cr_crapscn;
+            --
+          END IF;
+          --
+        END IF;
+        --
+        CLOSE cr_crapcon;
+        
         -- Ler cadastro de banco
         OPEN cr_crapban(pr_cdbccxlt => rw_craplft.cdbccxlt);
         FETCH cr_crapban
