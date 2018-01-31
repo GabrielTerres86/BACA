@@ -2,7 +2,7 @@
 
     Programa: b1wgen0057.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 19/07/2017
+    Data    : Marco/2010                   Ultima atualizacao: 22/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONJUGE
 
@@ -37,6 +37,17 @@
                  19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                               PRJ339 - CRM (Odirlei-AMcom)  
                               
+				 28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							  CH, RE, PP E CT. (PRJ339 - Reinert)                              
+
+                 22/09/2017 - Ajuste realizado na tela Contas/Dados Pessoais/Conjuge
+						      onde o telefone comercial do conjugue estava sendo
+							  carregado errado. PRJ339 (Kelvin).
+
+				 28/09/2017 - Alterado para buscar nome da empresa do conjuge pelo
+							  registro da crapttl. (PRJ339 - Reinert)
+                
+				 09/11/2017 - Criaçao do documento de conjuge (codigo 22). (PRJ339 - Lombardi)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -165,7 +176,6 @@ PROCEDURE Busca_Dados:
                     INPUT par_cddopcao,
                    OUTPUT aux_cdcritic,
                    OUTPUT aux_dscritic ). 
-
         ELSE
             DO:
                 ASSIGN aux_dscritic = "Registro de conjuge nao encontrado. " + 
@@ -433,7 +443,8 @@ PROCEDURE Busca_Dados_Id:
                /* Telefone Comercial*/
                FOR FIRST craptfc WHERE craptfc.cdcooper = crabttl.cdcooper  AND
                                        craptfc.nrdconta = crabttl.nrdconta AND
-                                       craptfc.tptelefo = 3 NO-LOCK:
+                                       craptfc.tptelefo = 3				   AND
+									   craptfc.idseqttl = 1  NO-LOCK:
                    ASSIGN tt-crapcje.nrfonemp = string(craptfc.nrtelefo)
 				          tt-crapcje.nrramemp = craptfc.nrdramal.
                END.
@@ -582,7 +593,7 @@ PROCEDURE Busca_Dados_Cje:
                                  tpcttrab dsproftl cdnvlcgo cdturnos
                                  dtadmemp vlsalari cdcooper cdempres inpessoa
                                  idseqttl nrdconta grescola nrcpfemp cdocpttl
-                                 cdgraupr)
+                                 cdgraupr nmextemp)
                           WHERE crapttl.cdcooper = crapass.cdcooper AND
                                 crapttl.nrdconta = crapass.nrdconta AND 
                                 crapttl.nrcpfcgc = crapass.nrcpfcgc NO-LOCK:
@@ -667,11 +678,15 @@ PROCEDURE Busca_Dados_Cje:
                                 NO-LOCK:
         END.
 
+        IF  crapttl.nmextemp <> "" THEN
+            ASSIGN tt-crapcje.nmextemp = crapttl.nmextemp.
+        ELSE
+          DO:
         IF  AVAILABLE crapemp THEN
             ASSIGN tt-crapcje.nmextemp = crapemp.nmextemp.
         ELSE
             ASSIGN tt-crapcje.nmextemp = "NAO CADASTRADO".
-
+          END.
 
         /* Telefone Comercial*/
         FOR FIRST craptfc WHERE craptfc.cdcooper = crapttl.cdcooper AND
@@ -896,7 +911,7 @@ PROCEDURE Valida_Dados:
            DO:
                
                /* tipo de documento - ultima posicao eh o vazio */
-               IF  LOOKUP(par_tpdoccje,"CI,CH,CP,CT,") = 0 THEN
+               IF  LOOKUP(par_tpdoccje,"CI,CN,CH,RE,PP,CT,") = 0 THEN
                    DO:
                       ASSIGN aux_cdcritic = 21.
                       LEAVE Valida.
@@ -1098,6 +1113,8 @@ PROCEDURE Grava_Dados:
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
     DEF VAR aux_idorgexp AS INT                                     NO-UNDO.
+    DEF VAR aux_nmconjug AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrcpfcjg AS DECIMAL                                 NO-UNDO.
 
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -1193,7 +1210,11 @@ PROCEDURE Grava_Dados:
                        END.
                 END.
             ELSE
+                DO:
+                    ASSIGN aux_nmconjug = crapcje.nmconjug
+                           aux_nrcpfcjg = crapcje.nrcpfcjg.
                 LEAVE ContadorCje.
+                END.
 
         END.
 
@@ -1231,6 +1252,68 @@ PROCEDURE Grava_Dados:
                 END.
             ELSE 
                 LEAVE ContadorTtl.
+            
+        END.
+
+        IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
+            UNDO Grava, LEAVE Grava.  
+        
+        IF aux_nmconjug = ? THEN
+            ASSIGN aux_nmconjug = "".
+        IF aux_nrcpfcjg = ? THEN
+            ASSIGN aux_nrcpfcjg = 0.
+            
+        IF par_cddopcao = "I"                  OR 
+           aux_nmconjug <> UPPER(par_nmconjug) OR 
+           aux_nrcpfcjg <> par_nrcpfcjg        THEN 
+            DO:
+              
+              ContadorDoc22: DO aux_contador = 1 TO 10:
+          
+                  FIND FIRST crapdoc WHERE 
+                                     crapdoc.cdcooper = par_cdcooper AND
+                                     crapdoc.nrdconta = par_nrdconta AND
+                                     crapdoc.tpdocmto = 22            AND
+                                     crapdoc.dtmvtolt = par_dtmvtolt AND
+                                     crapdoc.idseqttl = par_idseqttl AND
+                                     crapdoc.nrcpfcgc = crapttl.nrcpfcgc
+                                     EXCLUSIVE NO-ERROR.
+
+                  IF NOT AVAILABLE crapdoc THEN
+                      DO:
+                          IF LOCKED(crapdoc) THEN
+                              DO:
+                                  IF aux_contador = 10 THEN
+                                      DO:
+                                          ASSIGN aux_cdcritic = 341.
+                                          LEAVE ContadorDoc22.
+                                      END.
+                                  ELSE 
+                                      DO: 
+                                          PAUSE 1 NO-MESSAGE.
+                                          NEXT ContadorDoc22.
+                                      END.
+                              END.
+                          ELSE        
+                              DO:
+                                  CREATE crapdoc.
+                                  ASSIGN crapdoc.cdcooper = par_cdcooper
+                                         crapdoc.nrdconta = par_nrdconta
+                                         crapdoc.flgdigit = FALSE
+                                         crapdoc.dtmvtolt = par_dtmvtolt
+                                         crapdoc.tpdocmto = 22
+                                         crapdoc.idseqttl = par_idseqttl
+                                         crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
+                                  VALIDATE crapdoc.
+                              END.
+                      END.
+                  ELSE
+                      DO:
+                          ASSIGN crapdoc.flgdigit = FALSE.
+          
+                          LEAVE ContadorDoc22.
+                      END.
+              END.
             
         END.
 
