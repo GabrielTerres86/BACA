@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                       Ultima atualizacao: 23/10/2017
+   Data    : Julho/2013                       Ultima atualizacao: 29/01/2018
 
    Dados referentes ao programa:
 
@@ -40,6 +40,9 @@
                             
                23/10/2017 - Ajustes para lançamentos duplicados e tambem para que 
                             tenhamos uma execucao matutina (Lucas Ranghetti #739738)
+                            
+               29/01/2018 - Ajustar DEBCNS conforme solicitaçao do chamado (Lucas Ranghetti #837834) 
+                           
 .............................................................................*/
 
 
@@ -80,7 +83,7 @@ PROCEDURE obtem-consorcio:
          IF  craplau.nrcrcard <> 0 THEN
              aux_nrdoc = STRING(craplau.nrcrcard,"9999999999999999999999").
          ELSE
-         aux_nrdoc = STRING(craplau.nrdocmto,"9999999999999999999999").
+             aux_nrdoc = STRING(craplau.nrdocmto,"9999999999999999999999").
          
          FOR EACH crapcns WHERE crapcns.cdcooper = craplau.cdcooper      AND
                                 crapcns.tpconsor = aux_tpconsor          AND
@@ -100,7 +103,8 @@ PROCEDURE obtem-consorcio:
                     tt-obtem-consorcio.fldebito = TRUE
                     tt-obtem-consorcio.nrdocmto = craplau.nrdocmto
                     tt-obtem-consorcio.nrdgrupo = crapcns.nrdgrupo
-                    tt-obtem-consorcio.nrctrato = crapcns.nrctrato.
+                    tt-obtem-consorcio.nrctrato = crapcns.nrctrato
+                    tt-obtem-consorcio.tpconsor = crapcns.tpconsor.
      
              /*** busca tipo de consorcio ***/
              CASE crapcns.tpconsor:
@@ -139,10 +143,10 @@ PROCEDURE efetua-debito-consorcio:
     DEF INPUT PARAM par_flmanual AS LOGICAL NO-UNDO.
     DEF INPUT PARAM par_nrseqexe AS INTEGER NO-UNDO.
 
-
-    DEF VAR aux_cdcritic AS INTE NO-UNDO.
-    DEF VAR aux_dscritic AS CHAR NO-UNDO.
-
+    DEF VAR aux_cdcritic AS INTE    NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR    NO-UNDO.
+    DEF VAR aux_mudalote AS LOGICAL NO-UNDO. 
+     
     IF  glb_inproces = 1  THEN
          ASSIGN aux_dtrefere = glb_dtmvtolt.
      ELSE
@@ -151,7 +155,8 @@ PROCEDURE efetua-debito-consorcio:
     TRANS_1:
     
     FOR EACH tt-obtem-consorcio NO-LOCK 
-        BREAK BY tt-obtem-consorcio.cdcooper :  
+        BREAK BY tt-obtem-consorcio.cdcooper 
+              BY tt-obtem-consorcio.tpconsor:  
                    
         IF  FIRST-OF(tt-obtem-consorcio.cdcooper) AND par_flmanual THEN
             DO:
@@ -175,6 +180,12 @@ PROCEDURE efetua-debito-consorcio:
                 ELSE
                     ASSIGN aux_nrdolot1 = craplot.nrdolote.
             END.
+    
+        /* Somar o lote somente quando mudar o historico */
+        IF  FIRST-OF(tt-obtem-consorcio.tpconsor) THEN
+            ASSIGN aux_mudalote = TRUE.
+        ELSE
+            ASSIGN aux_mudalote = FALSE.
     
         FOR EACH craplau WHERE craplau.cdcooper = tt-obtem-consorcio.cdcooper AND 
                                craplau.dtmvtopg = aux_dtrefere                AND
@@ -205,7 +216,8 @@ PROCEDURE efetua-debito-consorcio:
                     glb_cdcritic = 0
                     glb_dscritic = "". 
                     
-            ASSIGN aux_nrdolote = aux_nrdolot1 + 1. 
+            IF  aux_mudalote THEN
+                ASSIGN aux_nrdolote = aux_nrdolot1 + 1. 
             
             DO  WHILE TRUE:
                 
@@ -278,38 +290,39 @@ PROCEDURE efetua-debito-consorcio:
                    aux_dscritic = pc_obtem_saldo_dia_prog.pr_dscritic
                                       WHEN pc_obtem_saldo_dia_prog.pr_dscritic <> ?. 
                 
-            IF aux_cdcritic <> 0  OR 
-               aux_dscritic <> "" THEN
-               DO: 
+            IF  aux_cdcritic <> 0  OR 
+                aux_dscritic <> "" THEN
+                DO: 
                    IF  aux_dscritic = "" THEN
                        ASSIGN aux_dscritic =  "Nao foi possivel carregar os saldos.".
 
                    ASSIGN glb_dscritic = aux_dscritic.
 
                    IF  par_nrseqexe = 3 THEN /* Ultima execucao dia */
-                   RUN cria-crapndb.
+                       RUN cria-crapndb.
                    ELSE
                        ASSIGN tt-obtem-consorcio.fldebito = FALSE
                               tt-obtem-consorcio.dscritic = glb_dscritic.
 
                    NEXT.
-               END.
+                END.
 
             /* cria lancamento apenas se saldo em CC for maior que zero */
             FIND FIRST wt_saldos NO-LOCK NO-ERROR.
+            
             IF  NOT AVAILABLE wt_saldos  THEN
-            DO:
-                ASSIGN glb_dscritic = "Nao foi possivel consultar saldo para " +
-                                      "operacao.".
-                    
+                DO:
+                    ASSIGN glb_dscritic = "Nao foi possivel consultar saldo para " +
+                                          "operacao.".
+                        
                     IF  par_nrseqexe = 3 THEN /* Ultima execucao dia */
-                RUN cria-crapndb.
+                        RUN cria-crapndb.
                     ELSE
                         ASSIGN tt-obtem-consorcio.fldebito = FALSE
                                tt-obtem-consorcio.dscritic = glb_dscritic.
-    
-                NEXT.
-            END.
+                               
+                    NEXT.
+                END.
 
             ASSIGN aux_nrdocmto = craplau.nrdocmto.
 
@@ -373,7 +386,7 @@ PROCEDURE efetua-debito-consorcio:
                            glb_cdcritic = 717.
     
                     IF  par_nrseqexe = 3 THEN /* Ultima execucao dia */
-                    RUN cria-crapndb.
+                        RUN cria-crapndb.
                     ELSE
                         ASSIGN tt-obtem-consorcio.fldebito = FALSE
                                tt-obtem-consorcio.dscritic = glb_dscritic.
@@ -441,10 +454,8 @@ PROCEDURE efetua-debito-consorcio:
                 
                 /* Para aparecer na debcon devemos gravar a critica */
                 IF  glb_cdcritic = 717 THEN
-                    ASSIGN craplau.cdcritic = glb_cdcritic
-                           craplau.dtdebito = aux_dtrefere.
+                    ASSIGN craplau.cdcritic = glb_cdcritic.
         END. /* fim for each craplau */
-
                                      
         IF  LAST-OF(tt-obtem-consorcio.cdcooper) AND par_flmanual THEN
             DO:
@@ -453,7 +464,6 @@ PROCEDURE efetua-debito-consorcio:
                                       INPUT tt-obtem-consorcio.cdcooper,
                                       INPUT "").                        
             END.          
-
 
     END. /* fim for each tt-obtem-consorcio */
 
@@ -481,11 +491,11 @@ PROCEDURE imprime-consorcios:
     ELSE
         ASSIGN aux_dtrefere = glb_dtmvtopr.
                              
-    { includes/cabrel132_1.i }
+    { includes/cabrel234_1.i }
 
-    OUTPUT STREAM str_1 TO VALUE(aux_nmarqimp) PAGED PAGE-SIZE 84.
+    OUTPUT STREAM str_1 TO VALUE(aux_nmarqimp) PAGED PAGE-SIZE 62.
         
-    VIEW STREAM str_1 FRAME f_cabrel132_1.
+    VIEW STREAM str_1 FRAME f_cabrel234_1.
  
     FOR EACH tt-obtem-consorcio WHERE 
              par_cdcooper = 0   OR 
@@ -522,7 +532,8 @@ PROCEDURE imprime-consorcios:
             END.
   
         IF  FIRST-OF(tt-obtem-consorcio.fldebito) THEN
-            DO:
+            DO:              
+                
                 ASSIGN aux_dstitulo = IF tt-obtem-consorcio.fldebito THEN
                                          " EFETUADOS "
                                       ELSE
@@ -544,6 +555,7 @@ PROCEDURE imprime-consorcios:
             DO:                               
                 DISP STREAM str_1 tt-obtem-consorcio.cdagenci
                                   tt-obtem-consorcio.nrdconta
+                                  tt-obtem-consorcio.nrdocmto
                                   tt-obtem-consorcio.nrctacns
                                   tt-obtem-consorcio.nmprimtl               
                                   tt-obtem-consorcio.dsconsor
@@ -558,6 +570,7 @@ PROCEDURE imprime-consorcios:
             DO:
                 DISP STREAM str_1 tt-obtem-consorcio.cdagenci
                                   tt-obtem-consorcio.nrdconta
+                                  tt-obtem-consorcio.nrdocmto
                                   tt-obtem-consorcio.nrctacns
                                   tt-obtem-consorcio.nmprimtl               
                                   tt-obtem-consorcio.dsconsor
@@ -570,7 +583,7 @@ PROCEDURE imprime-consorcios:
                 DOWN STREAM str_1 WITH FRAME f_nao_efetuados.
             END.
 
-        IF  LINE-COUNTER(str_1) > PAGE-SIZE(str_1)  THEN 
+        IF  LINE-COUNTER(str_1) > PAGE-SIZE(str_1) THEN 
             DO:
                 PAGE STREAM str_1.
         
@@ -599,7 +612,7 @@ PROCEDURE imprime-consorcios:
         END.
 
     ASSIGN glb_nrcopias = 1            
-           glb_nmformul = "132col"     
+           glb_nmformul = "234dh"     
            glb_nmarqimp = aux_nmarqimp.
 
     IF  par_cdcooper = 0 THEN /* PROCESSO */
