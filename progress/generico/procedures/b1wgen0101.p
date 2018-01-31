@@ -58,8 +58,10 @@
                19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
                             pelo InternetBanking (Projeto 338 - Lucas Lunelli)
 				
-			   27/07/2017 - Ajuste realizado na ordenacao da consulta das faturas, conforme
-							solicitado no chamado 684865. (Kelvin)
+               27/07/2017 - Ajuste realizado na ordenacao da consulta das faturas, conforme
+                    solicitado no chamado 684865. (Kelvin)
+                    
+               17/01/2018 - Alteraçoes referente ao PJ406
 ..............................................................................*/
 
 { sistema/generico/includes/var_internet.i } 
@@ -215,13 +217,17 @@ PROCEDURE consulta_faturas:
     DEF INPUT PARAM par_dtdpagto AS DATE                              NO-UNDO.
     DEF INPUT PARAM par_vldpagto AS DECI                              NO-UNDO.
     DEF INPUT PARAM par_cdagenci AS INTE                              NO-UNDO.
-    DEF INPUT PARAM par_cdhistor AS INTE                              NO-UNDO.
     DEF INPUT PARAM par_flgpagin AS LOGI                              NO-UNDO.
     DEF INPUT PARAM par_nrregist AS INTE                              NO-UNDO.
     DEF INPUT PARAM par_nriniseq AS INTE                              NO-UNDO.
     DEF INPUT PARAM par_cdempcon AS INTE                              NO-UNDO.
     DEF INPUT PARAM par_cdsegmto AS INTE                              NO-UNDO.
-    DEF INPUT PARAM par_flgcnvsi AS LOGI                              NO-UNDO.
+    
+    /* PJ406 */
+    DEF INPUT PARAM par_dtipagto AS DATE NO-UNDO.
+    DEF INPUT PARAM par_dtfpagto AS DATE NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INT  NO-UNDO.
+    DEF INPUT PARAM par_nrautdoc AS CHAR NO-UNDO.
     
     DEF OUTPUT PARAM par_qtregist AS INT NO-UNDO.
     DEF OUTPUT PARAM par_vlrtotal AS DEC NO-UNDO.
@@ -249,36 +255,6 @@ PROCEDURE consulta_faturas:
     IF  par_dtdpagto = ?  THEN
         ASSIGN par_dtdpagto = par_dtmvtolt.
 
-    /* Verifica o hist. informado */
-    IF  par_cdhistor <> 0 THEN
-        DO:
-            RUN lista-historicos (INPUT 0,
-                                  INPUT "",
-                                  INPUT 999,
-                                  INPUT 0,
-                                  OUTPUT aux_qtregist,
-                                  OUTPUT TABLE tt-historicos).
-
-            IF  RETURN-VALUE = "NOK"  THEN
-                RETURN "NOK".
-
-            IF  NOT CAN-FIND(tt-historicos WHERE tt-historicos.cdhiscxa = par_cdhistor) THEN
-                DO:
-                    ASSIGN aux_dscritic = "Historico nao encontrado."
-                           aux_cdcritic = 0.
-
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-                    
-                    RETURN "NOK".
-                    
-                END.
-        END.
-
     /* Verifica Empr. e Segmto. */
     IF  par_cdempcon <> 0 AND
         par_cdsegmto <> 0 THEN
@@ -298,8 +274,8 @@ PROCEDURE consulta_faturas:
             IF  NOT CAN-FIND(tt-empr-conve WHERE tt-empr-conve.cdempcon = par_cdempcon) OR
                 NOT CAN-FIND(tt-empr-conve WHERE tt-empr-conve.cdsegmto = par_cdsegmto) THEN
                 DO:
-                    ASSIGN aux_dscritic = "Empresa e Segmento nao conferem ou " +
-                                          "nao sao SICREDI."
+                    /* PJ406 */
+                    ASSIGN aux_dscritic = "Empresa e Segmento nao conferem"
                            aux_cdcritic = 0.
 
                     RUN gera_erro (INPUT par_cdcooper,
@@ -314,22 +290,12 @@ PROCEDURE consulta_faturas:
                 END.
         END.
 
-    /* Se for Conv. SICREDI associa ao historico específico */
-    IF  par_flgcnvsi THEN
-        ASSIGN par_cdhistor = 1154.
-
-    FOR EACH craplft WHERE craplft.cdcooper = par_cdcooper    AND
-                           craplft.dtmvtolt = par_dtdpagto    AND
+    FOR EACH craplft WHERE craplft.cdcooper =  par_cdcooper    AND
+                           craplft.dtmvtolt >= par_dtipagto    AND
+                           craplft.dtmvtolt <= par_dtfpagto    AND
                           (IF par_cdagenci > 0 THEN           
                            craplft.cdagenci = par_cdagenci    
                            ELSE craplft.cdagenci > 0)         AND
-                          (IF par_cdhistor > 0 THEN
-                              craplft.cdhistor = par_cdhistor
-                           ELSE 
-                              IF NOT par_flgcnvsi THEN
-                                 craplft.cdhistor <> 1154
-                               ELSE 
-                                 craplft.cdhistor = par_cdhistor) AND
                           (IF par_cdempcon > 0 THEN           
                               craplft.cdempcon = par_cdempcon    
                            ELSE 
@@ -337,7 +303,15 @@ PROCEDURE consulta_faturas:
                           (IF par_cdsegmto > 0 THEN           
                               craplft.cdsegmto = par_cdsegmto    
                            ELSE 
-                              TRUE)            
+                              TRUE) AND
+                          (IF par_nrdconta > 0 THEN           
+                              craplft.nrdconta = par_nrdconta    
+                           ELSE 
+                              TRUE) AND
+                          (IF par_nrautdoc <> "" THEN           
+                              craplft.cdbarras = par_nrautdoc    
+                           ELSE 
+                              TRUE)
                            NO-LOCK BY (craplft.vllanmto + craplft.vlrmulta + craplft.vlrjuros):
 
         IF  par_vldpagto <> 0 THEN
@@ -394,13 +368,26 @@ PROCEDURE consulta_faturas:
                             tt-dados-pesqti.dscptdoc = "".
                     END.
 
-                /* Se nao for convenio sicredi, pegar nome do convenio da gnconve */
-                IF  NOT par_flgcnvsi THEN
+                
+                FIND crapage WHERE crapage.cdagenci = craplft.cdagenci AND
+                                   crapage.cdcooper = craplft.cdcooper
+                                   NO-LOCK NO-ERROR.
+                
+                ASSIGN tt-dados-pesqti.nmresage = crapage.nmresage.
+                
+                FIND crapcon WHERE crapcon.cdcooper = craplft.cdcooper AND
+                                   crapcon.cdempcon = craplft.cdempcon AND
+                                   crapcon.cdsegmto = craplft.cdsegmto
+                                   NO-LOCK NO-ERROR.
+                
+                IF crapcon.tparrecd = 2 THEN
+                  ASSIGN tt-dados-pesqti.nmempres = crapcon.nmextcon.
+                ELSE IF crapcon.tparrecd = 3 THEN /* Convenios CECRED */ 
                 DO:
                     FIND FIRST gnconve WHERE gnconve.cdhiscxa = craplft.cdhistor NO-LOCK NO-ERROR.
                     ASSIGN tt-dados-pesqti.nmempres = gnconve.nmempres.
                 END.
-                ELSE
+                ELSE /* Convenios SICREDI */
                 DO: 
                     IF craplft.tpfatura <> 2 OR 
                        craplft.cdempcon <> 0 THEN  
@@ -635,7 +622,7 @@ PROCEDURE lista-empresas-conv:
     ASSIGN aux_nrregist = par_nrregist.
 
     FOR EACH crapcon WHERE crapcon.cdcooper = par_cdcooper AND
-                           crapcon.flgcnvsi = TRUE         AND /* SCIREDI */
+                           /* crapcon.flgcnvsi = TRUE         AND \* SCIREDI *\  PJ406 */
                           (IF par_cdempcon <> 0 THEN
                            crapcon.cdempcon = par_cdempcon ELSE 
                            crapcon.cdempcon > 0)           AND
@@ -765,6 +752,40 @@ PROCEDURE grava-dados-fatura:
            LEAVE Contador.
 
        END. /* FIM do DO ... TO */
+       
+       /* PJ406 */
+       FIND crapcon WHERE crapcon.cdcooper = craplft.cdcooper AND
+                          crapcon.cdsegmto = craplft.cdsegmto AND 
+                          crapcon.cdempcon = craplft.cdempcon
+                          NO-LOCK NO-ERROR.
+       
+       IF crapcon.tparrecd = 2 THEN /* BANCOOB */
+         DO:
+           FIND FIRST craptab WHERE craptab.cdcooper = par_cdcooper  AND
+                                    craptab.nmsistem = 'CRED'        AND
+                                    craptab.tptabela = 'GENERI'      AND
+                                    craptab.cdempres = 0             AND
+                                    craptab.cdacesso = 'HRPGBANCOOB' AND
+                                    craptab.tpregist = par_cdagenci
+                                    NO-LOCK NO-ERROR.
+          
+           IF TIME < INT(ENTRY(1, craptab.dstextab, " ")) OR /* hora inicial */
+              TIME > INT(ENTRY(2, craptab.dstextab, " "))    /* hora final */ THEN
+             ASSIGN aux_dscritic = "Horario p/ inclusao BANCOOB esta " + 
+                                   "fora do estabelecido na tela CADPAC".
+
+           IF (aux_dscritic <> "") THEN
+             DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,            /** Sequencia **/
+                              INPUT 0,
+                              INPUT-OUTPUT aux_dscritic).
+               RETURN "NOK".
+               UNDO TRANS_FAT, LEAVE TRANS_FAT.
+             END.
+         END.
 
        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
           UNDO TRANS_FAT, LEAVE TRANS_FAT.
