@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2008.                      Ultima atualizacao: 23/11/2015
+   Data    : Marco/2008.                      Ultima atualizacao: 08/11/2017
 
    Dados referentes ao programa:
 
@@ -37,6 +37,9 @@
                             tela, utilizado em gera-impressao-empr da b1wgen0002i.p
                             (Carlos Rafael Tanholi - Prj 261 - Pre-Aprovado Fase 2)
                
+               08/11/2017 - Retornar nome do produto e separar codigo e descricao
+                            da linha de credito e finalidade (David).
+               
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -59,7 +62,7 @@ DEF INPUT  PARAM par_inproces LIKE crapdat.inproces                    NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
-DEF OUTPUT PARAM TABLE FOR xml_operacao13.
+DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
 RUN sistema/generico/procedures/b1wgen0002.p PERSISTENT 
     SET h-b1wgen0002.
@@ -115,63 +118,52 @@ IF  VALID-HANDLE(h-b1wgen0002)  THEN
          
         FOR EACH tt-dados-epr NO-LOCK:
                  
-            CREATE xml_operacao13.         
-            ASSIGN xml_operacao13.dscabini = "<EMPRESTIMO>"
-                   xml_operacao13.dtmvtolt = "<dtmvtolt>" +
+            CREATE xml_operacao.         
+            ASSIGN xml_operacao.dslinxml = "<EMPRESTIMO><dtmvtolt>" +
                                    STRING(tt-dados-epr.dtmvtolt,"99/99/9999") +
-                                             "</dtmvtolt>"     
-                   xml_operacao13.nmprimtl = "<nmprimtl>" +
-                                             TRIM(tt-dados-epr.nmprimtl) +
-                                             "</nmprimtl>"       
-                   xml_operacao13.nrctremp = "<nrctremp>" +
+                                           "</dtmvtolt><nrctremp>" +
                               TRIM(STRING(tt-dados-epr.nrctremp,"zz,zzz,zz9")) +
-                                             "</nrctremp>"
-                   xml_operacao13.vlemprst = "<vlemprst>" +
+                                           "</nrctremp><vlemprst>" +
                      TRIM(STRING(tt-dados-epr.vlemprst,"zzz,zzz,zzz,zz9.99")) +
-                                             "</vlemprst>"
-                   xml_operacao13.qtpreemp = "<qtpreemp>" +
+                                           "</vlemprst><qtpreemp>" +
                                           STRING(tt-dados-epr.qtpreemp,"zz9") +
-                                             "</qtpreemp>"
-                   xml_operacao13.qtprecal = "<qtprecal>" +
+                                           "</qtpreemp><qtprecal>" +
                           TRIM(STRING(tt-dados-epr.qtprecal,"zzz,zz9.9999-")) +
-                                             "</qtprecal>"
-                   xml_operacao13.vlpreemp = "<vlpreemp>" +
+                                           "</qtprecal><vlpreemp>" +
                            STRING(tt-dados-epr.vlpreemp,"zzz,zzz,zzz,zz9.99") +
-                                             "</vlpreemp>"
-                   xml_operacao13.vlsdeved = "<vlsdeved>" +
+                                           "</vlpreemp><vlsdeved>" +
                      TRIM(STRING(tt-dados-epr.vlsdeved,"zzz,zzz,zzz,zz9.99")) +
-                                             "</vlsdeved>"
-                   xml_operacao13.dslcremp = "<dslcremp>" +
+                                           "</vlsdeved><dslcremp>" +
                                              TRIM(tt-dados-epr.dslcremp) +
-                                             "</dslcremp>"
-                   xml_operacao13.dsfinemp = "<dsfinemp>" +
+                                           "</dslcremp><dsfinemp>" +
                                              TRIM(tt-dados-epr.dsfinemp) +
-                                             "</dsfinemp>"
-
-                   xml_operacao13.tpemprst = "<tpemprst>" +
+                                           "</dsfinemp><nmprimtl>" +
+                                           TRIM(tt-dados-epr.nmprimtl) +
+                                           "</nmprimtl><tpemprst>" +
                                               STRING(tt-dados-epr.tpemprst,"9") +
-                                             "</tpemprst>"
-
-                   xml_operacao13.flgpreap = "<flgpreap>" +
+                                           "</tpemprst><flgpreap>" +
                                               STRING(tt-dados-epr.flgpreap) +
-                                             "</flgpreap>"
-
-                   xml_operacao13.cdorigem = "<cdorigem>" +
+                                           "</flgpreap><cdorigem>" +
                                               STRING(tt-dados-epr.cdorigem) +
-                                             "</cdorigem>"
-
-				   xml_operacao13.dtapgoib = if tt-dados-epr.dtapgoib = ? then
-				                                "<dtapgoib></dtapgoib>"
-											 else
-				                                "<dtapgoib>" +
-                                                STRING(tt-dados-epr.dtapgoib,"99/99/9999") +
-                                                "</dtapgoib>"
-                                             
-                   xml_operacao13.nrdrecid = "<nrdrecid>" +
+                                           "</cdorigem><dtapgoib>" +
+                                           (IF tt-dados-epr.dtapgoib = ? THEN "" ELSE STRING(tt-dados-epr.dtapgoib,"99/99/9999")) + 
+                                           "</dtapgoib><nrdrecid>" +
                                              TRIM(STRING(tt-dados-epr.nrdrecid)) +
-                                             "</nrdrecid>"                                             
-
-                   xml_operacao13.dscabfim = "</EMPRESTIMO>".
+                                           "</nrdrecid><qtpreres>" +
+                                           TRIM(STRING(tt-dados-epr.qtpreemp - tt-dados-epr.qtprecal)) +
+                                           "</qtpreres><dsprodut>" +
+                                           (IF tt-dados-epr.tpemprst = 1 THEN "Price Pré-Fixado" ELSE IF tt-dados-epr.tpemprst = 2 THEN "Price Pós-Fixado" ELSE "Price TR") +
+                                           "</dsprodut><cddlinha>" +
+                                           STRING(tt-dados-epr.cdlcremp) +
+                                           "</cddlinha><dsdlinha>" +
+                                           TRIM(SUBSTR(tt-dados-epr.dslcremp,INDEX(tt-dados-epr.dslcremp,"-",1) + 1)) +
+                                           "</dsdlinha><cdfinali>" +
+                                           STRING(tt-dados-epr.cdfinemp) +
+                                           "</cdfinali><dsfinali>" +
+                                           TRIM(SUBSTR(tt-dados-epr.dsfinemp,INDEX(tt-dados-epr.dsfinemp,"-",1) + 1)) +
+                                           "</dsfinali><flgrelat>" +
+                                           (IF tt-dados-epr.flgpreap AND (tt-dados-epr.cdorigem = 3 OR tt-dados-epr.cdorigem = 4) THEN "1" ELSE "0") +
+                                           "</flgrelat></EMPRESTIMO>".
                         
         END. 
                                 

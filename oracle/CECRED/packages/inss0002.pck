@@ -353,7 +353,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
    Autor    : Ricardo Linhares
    Objetivo : GPS - Validar código de barras
   ---------------------------------------------------------------------------------------------------------------*/                                        
-                               
+
       PROCEDURE pc_gps_validar(pr_cdcooper IN crapcop.cdcooper%TYPE
                               ,pr_nrdconta IN crapass.nrdconta%TYPE
                               ,pr_cdagenci IN NUMBER        
@@ -369,6 +369,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                               ,pr_tpdpagto IN NUMBER -- (1 - com cod.barra, 2 - sem cod.barra)                            
                               ,pr_cdlindig IN VARCHAR2
                               ,pr_cdbarras IN VARCHAR2
+                              ,pr_dtcompet IN VARCHAR2
                               ,pr_vldoinss IN NUMBER
                               ,pr_vloutent IN NUMBER
                               ,pr_vlatmjur IN NUMBER
@@ -4976,7 +4977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       END IF;
        
      END IF;
-     
+
      -- Atribui o histórico
      IF TRIM(pr_dshistor) IS NULL THEN
        vr_dshistor := UPPER('GPS - Identificador ') || pr_dsidenti;
@@ -6355,6 +6356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     vr_dsprotoc VARCHAR2(300);
 
 
+
   BEGIN
 
     -- Carregar os dados de lançamentos de guias
@@ -7133,6 +7135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                               ,pr_tpdpagto IN NUMBER -- (1 - com cod.barra, 2 - sem cod.barra)                            
                               ,pr_cdlindig IN VARCHAR2
                               ,pr_cdbarras IN VARCHAR2
+                              ,pr_dtcompet IN VARCHAR2
                               ,pr_vldoinss IN NUMBER
                               ,pr_vloutent IN NUMBER
                               ,pr_vlatmjur IN NUMBER
@@ -7244,7 +7247,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                           ,pr_dtvencto => pr_dtdebito 
                                           ,pr_cdbarras => pr_cdbarras
                                           ,pr_dslindig => pr_cdlindig
-                                          ,pr_mmaacomp => vr_dtcompet
+                                          ,pr_mmaacomp => pr_dtcompet
                                           ,pr_vlrdinss => pr_vldoinss
                                           ,pr_vlrouent => pr_vloutent
                                           ,pr_vlrjuros => pr_vlatmjur

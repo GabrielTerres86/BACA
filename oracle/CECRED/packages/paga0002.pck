@@ -206,6 +206,7 @@ create or replace package cecred.PAGA0002 is
            ,dttransa DATE
            ,hrtransa INTEGER
            ,nrdocmto INTEGER
+					 ,insitlau INTEGER
            ,dssitlau VARCHAR2(100)
            ,dslindig VARCHAR2(300)
            ,dscedent VARCHAR2(300)
@@ -238,6 +239,7 @@ create or replace package cecred.PAGA0002 is
            ,vlrrecbr NUMBER
            ,vlrperce NUMBER
            ,idlancto NUMBER(15)
+					 ,dscritic VARCHAR2(100)
            ,gps_cddpagto NUMBER
            ,gps_dscompet VARCHAR2(7)
            ,gps_cdidenti NUMBER
@@ -304,7 +306,7 @@ create or replace package cecred.PAGA0002 is
                                ,pr_nrcpfope IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
                                ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
-							   ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
+                               ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
                                ,pr_xml_dsmsgerr   OUT VARCHAR2          --> Retorno XML de critica
                                ,pr_xml_operacao26 OUT CLOB              --> Retorno XML da operação 26
                                ,pr_dsretorn       OUT VARCHAR2);        --> Retorno de critica (OK ou NOK)
@@ -621,22 +623,22 @@ create or replace package cecred.PAGA0002 is
                                       ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
                                       ,pr_dscritic OUT VARCHAR2);            --> Descricao critica
 
-  PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
-                                         ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo da agencia
-                                         ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Numero do caixa
-                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
-                                         ,pr_nmdatela IN VARCHAR2               --> Nome da tela
-                                         ,pr_idorigem IN INTEGER                --> Id da origem da transação
-                                         ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da conta do cooperado
-                                         ,pr_rowidlcs IN craplcs.progress_recid%TYPE
-                                         ,pr_cdagetrf IN crapccs.cdagetrf%TYPE -- Numero do PA.
-                                         ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
-                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
-                                         ,pr_flgerlog IN BOOLEAN
+PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                            ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo da agencia
+                                            ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Numero do caixa
+                                            ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                            ,pr_nmdatela IN VARCHAR2               --> Nome da tela
+                                            ,pr_idorigem IN INTEGER                --> Id da origem da transação
+                                            ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da conta do cooperado
+                                            ,pr_rowidlcs IN craplcs.progress_recid%TYPE
+                                            ,pr_cdagetrf IN crapccs.cdagetrf%TYPE -- Numero do PA.
+                                            ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
+                                            ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
+                                            ,pr_flgerlog IN BOOLEAN
                                          ,pr_rw_craplot OUT lote0001.cr_craplot%ROWTYPE  --> rowtype saida lote
-                                         /* parametros de saida */
-                                         ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
-                                         ,pr_dscritic OUT VARCHAR2);            --> Descricao critica
+                                            /* parametros de saida */
+                                            ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
+                                            ,pr_dscritic OUT VARCHAR2);            --> Descricao critica
 
   /* Procedimento para listar convenios aceitos */
   PROCEDURE pc_convenios_aceitos(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
@@ -1045,6 +1047,10 @@ create or replace package body cecred.PAGA0002 is
     vr_flgctafa   BOOLEAN;
     vr_nmtitula   VARCHAR2(500);
     vr_nmtitul2   VARCHAR2(500);
+    vr_intipcta   crapcti.intipcta%TYPE;
+    vr_insitcta   crapcti.insitcta%TYPE;
+    vr_inpessoa   crapcti.inpessoa%TYPE;
+    vr_nrcpffav   crapcti.nrcpfcgc%TYPE;
     vr_cddbanco   INTEGER;
     vr_idastcjt   INTEGER(1);
     vr_nrcpfcgc   INTEGER;
@@ -1304,6 +1310,9 @@ create or replace package body cecred.PAGA0002 is
       IF pr_tpoperac = 4  THEN /** TED **/
 
         vr_nmtitula := pr_nmtitula;
+        vr_intipcta := pr_intipcta;
+        vr_inpessoa := pr_inpessoa;
+        vr_nrcpffav := pr_nrcpfcgc;
 
         -- Chamar a rotina valida-inclusao-conta-transferencia convertida da Bo15
         CADA0002.pc_val_inclui_conta_transf(pr_cdcooper => pr_cdcooper
@@ -1321,10 +1330,10 @@ create or replace package body cecred.PAGA0002 is
                                            ,pr_cdageban => pr_cdageban
                                            ,pr_nrctatrf => pr_nrctatrf
                                            ,pr_intipdif => 2
-                                           ,pr_intipcta => pr_intipcta
+                                           ,pr_intipcta => vr_intipcta
                                            ,pr_insitcta => 2
-                                           ,pr_inpessoa => pr_inpessoa
-                                           ,pr_nrcpfcgc => pr_nrcpfcgc
+                                           ,pr_inpessoa => vr_inpessoa
+                                           ,pr_nrcpfcgc => vr_nrcpffav
                                            ,pr_flvldinc => 1
                                            ,pr_rowidcti => NULL
                                            ,pr_nmtitula => vr_nmtitula
@@ -1538,6 +1547,7 @@ create or replace package body cecred.PAGA0002 is
       IF pr_flgexecu = 0 THEN
         FOR vr_idxp IN vr_tab_agenda_recorrente.first..vr_tab_agenda_recorrente.last LOOP
           vr_vltarifa := vr_vltarifa + vr_tab_agenda_recorrente(vr_idxp).vltarifa;
+          EXIT;
         END LOOP;
       END IF;
 
@@ -2083,7 +2093,7 @@ create or replace package body cecred.PAGA0002 is
       IF cr_craphec%FOUND THEN 
         -- Fechar cursor
         CLOSE cr_craphec;    
-        IF pr_cdtiptra IN(1,5) THEN          
+        IF pr_cdtiptra IN(1,5) THEN
           -- Pegar os minutos em múltiplos de 5, arredondando para baixo (ex.: 21:04 -> 21:00)
           vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'hh24') || ':' ||
                         to_char(trunc(to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'mi') / 5) * 5, 'fm00');
@@ -2327,7 +2337,7 @@ create or replace package body cecred.PAGA0002 is
                                ,pr_nrcpfope IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
                                ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
-							   ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
+                               ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
                                ,pr_xml_dsmsgerr   OUT VARCHAR2          --> Retorno XML de critica
                                ,pr_xml_operacao26 OUT CLOB              --> Retorno XML da operação 26
                                ,pr_dsretorn       OUT VARCHAR2) IS      --> Retorno de critica (OK ou NOK)
@@ -2430,13 +2440,21 @@ create or replace package body cecred.PAGA0002 is
     vr_vlabatim  NUMBER;
     vr_vloutdeb  NUMBER;
     vr_vloutcre  NUMBER;
-	vr_vlapagar  NUMBER;
+    vr_vlapagar  NUMBER;
 
     vr_assin_conjunta NUMBER(1);
     vr_idastcjt  crapass.idastcjt%TYPE;
+    vr_inpessoa  crapass.inpessoa%TYPE;
     vr_nrcpfcgc  INTEGER := 0;
     vr_nmprimtl  VARCHAR2(500);
     vr_flcartma  INTEGER(1) := 0;
+
+    CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT a.inpessoa
+      FROM crapass a
+     WHERE a.cdcooper = pr_cdcooper     
+       AND a.nrdconta = pr_nrdconta;
 
   BEGIN
     -- Definir descrição da transação
@@ -2444,6 +2462,15 @@ create or replace package body cecred.PAGA0002 is
            ' para '||DECODE(NVL(pr_idagenda,0),1,NULL,'agendamento de ')||'pagamento'
     INTO vr_dstransa
     FROM dual;
+
+    -- Buscar tipo de pessoa da conta
+    OPEN cr_crapass (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO vr_inpessoa;
+    IF cr_crapass%NOTFOUND THEN
+      vr_inpessoa := 0;
+    END IF;    
+    CLOSE cr_crapass;
 
     -- inicializar variaveis
     vr_lindigi1 := pr_lindigi1;
@@ -2454,11 +2481,11 @@ create or replace package body cecred.PAGA0002 is
     vr_cdbarras := pr_cdbarras;
     vr_dtmvtopg := pr_dtmvtopg;
 
-	IF (pr_vlapagar > 0) THEN
-		vr_vlapagar := pr_vlapagar;
-	ELSE
-		vr_vlapagar := pr_vllanmto;
-	END IF;
+    IF NVL(pr_vlapagar,0) > 0 THEN
+		   vr_vlapagar := pr_vlapagar;
+  	ELSE
+	 	   vr_vlapagar := pr_vllanmto;
+    END IF;
 
     INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
@@ -2498,7 +2525,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtmvtolt     => pr_dtmvtolt         --> Data Movimento
                          ,pr_idagenda     => pr_idagenda         --> Indicador agenda
                          ,pr_dtmvtopg     => pr_dtmvtopg         --> Data Pagamento
-						 ,pr_vllanmto     => vr_vlapagar         --> Valor Lancamento
+                         ,pr_vllanmto     => vr_vlapagar         --> Valor Lancamento
                          ,pr_cddbanco     => 0                   --> Codigo banco
                          ,pr_cdageban     => 0                   --> Codigo Agencia
                          ,pr_nrctatrf     => 0                   --> Numero Conta Transferencia
@@ -2679,6 +2706,7 @@ create or replace package body cecred.PAGA0002 is
                                                       <intitcop>'|| vr_intitcop            ||'</intitcop>
                                                       <nrdctabb>'|| vr_nrdctabb            ||'</nrdctabb>
                                                       <dttransa>'|| to_char(SYSDATE,'DD/MM/RRRR') ||'</dttransa>
+                                                      <inpessoa>'|| to_char(vr_inpessoa)   ||'</inpessoa>
                                                     </DADOS_PAGAMENTO>');
     -- Encerrar a tag raiz
     gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao26
@@ -7567,8 +7595,8 @@ create or replace package body cecred.PAGA0002 is
                 lcm.nrdolote = pr_nrdolote AND
                 lcm.nrdctabb = pr_nrdctabb AND
                 lcm.nrdocmto = pr_nrdocmto;
-     rw_craplcm cr_craplcm%ROWTYPE;     
-     
+     rw_craplcm cr_craplcm%ROWTYPE;
+
      rw_craplot lote0001.cr_craplot%ROWTYPE;
     ---------------> VARIAVEIS <-----------------
     --Variaveis de erro
@@ -7801,7 +7829,7 @@ create or replace package body cecred.PAGA0002 is
         rw_craplot.vlinfodb := rw_craplot.vlinfodb + rw_craplcm.vllanmto;
 
         pr_rw_craplot := rw_craplot;
-         
+
         CXON0022.pc_gera_log (pr_cdcooper          --Codigo Cooperativa
                              ,rw_crapccs.cdagenci  --Codigo Agencia
                              ,pr_nrdcaixa          --Numero do caixa
@@ -9139,8 +9167,8 @@ create or replace package body cecred.PAGA0002 is
         
         -- Se for GPS
         IF rw_craplau.nrseqagp > 0 THEN
-
-		  vr_dstiptra := 'GPS';
+        
+          vr_dstiptra := 'GPS';
                   
           OPEN cr_gps(pr_cdcooper => rw_craplau.cdcooper
                      ,pr_nrdconta => rw_craplau.nrdconta
@@ -9163,7 +9191,7 @@ create or replace package body cecred.PAGA0002 is
             vr_gps_vlrouent := to_number(rw_gps.vlrouent,'9G999D99');
             vr_gps_vlrjuros := to_number(rw_gps.vlrjuros,'9G999D99');
           END IF;
-
+        
         ELSE
           vr_gps_cddpagto := 0;
           vr_gps_dscompet := '';
@@ -9183,6 +9211,7 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).dttransa := rw_craplau.dttransa;
         vr_tab_dados_agendamento(vr_cdindice).hrtransa := rw_craplau.hrtransa;
         vr_tab_dados_agendamento(vr_cdindice).nrdocmto := rw_craplau.nrdocmto;
+				vr_tab_dados_agendamento(vr_cdindice).insitlau := rw_craplau.insitlau;
         vr_tab_dados_agendamento(vr_cdindice).dssitlau := vr_dssitlau;
         vr_tab_dados_agendamento(vr_cdindice).dscedent := rw_craplau.dscedent;
         vr_tab_dados_agendamento(vr_cdindice).dtvencto := rw_craplau.dtvencto;
@@ -9217,6 +9246,7 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).vlrrecbr := vr_vlrrecbr;
         vr_tab_dados_agendamento(vr_cdindice).vlrperce := vr_vlrperce;
         vr_tab_dados_agendamento(vr_cdindice).idlancto := rw_craplau.idlancto;
+		vr_tab_dados_agendamento(vr_cdindice).dscritic := ''; -- Alimentar DSCRITIC - P.285 Novo InternetBanking
         -- GPS
         vr_tab_dados_agendamento(vr_cdindice).gps_cddpagto := vr_gps_cddpagto;
         vr_tab_dados_agendamento(vr_cdindice).gps_dscompet := vr_gps_dscompet;

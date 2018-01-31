@@ -186,10 +186,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
                                       ,pr_cdageban IN INTEGER
                                       ,pr_nrctatrf IN crapcti.nrctatrf%TYPE
                                       ,pr_intipdif IN INTEGER
-                                      ,pr_intipcta IN INTEGER
+                                      ,pr_intipcta IN OUT INTEGER
                                       ,pr_insitcta IN INTEGER
-                                      ,pr_inpessoa IN INTEGER
-                                      ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE             
+                                      ,pr_inpessoa IN OUT INTEGER
+                                      ,pr_nrcpfcgc IN OUT crapass.nrcpfcgc%TYPE             
                                       ,pr_flvldinc IN INTEGER                
                                       ,pr_rowidcti IN crapcti.progress_recid%TYPE
                                       ,pr_nmtitula IN OUT VARCHAR2
@@ -3420,10 +3420,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                                       ,pr_cdageban IN INTEGER
                                       ,pr_nrctatrf IN crapcti.nrctatrf%TYPE
                                       ,pr_intipdif IN INTEGER
-                                      ,pr_intipcta IN INTEGER
+                                      ,pr_intipcta IN OUT INTEGER
                                       ,pr_insitcta IN INTEGER
-                                      ,pr_inpessoa IN INTEGER
-                                      ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE             
+                                      ,pr_inpessoa IN OUT INTEGER
+                                      ,pr_nrcpfcgc IN OUT crapass.nrcpfcgc%TYPE             
                                       ,pr_flvldinc IN INTEGER                
                                       ,pr_rowidcti IN crapcti.progress_recid%TYPE
                                       ,pr_nmtitula IN OUT VARCHAR2
@@ -3680,6 +3680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           pr_nmdcampo := 'nrctatrf';
           CLOSE cr_crapcti_2;
+          CLOSE cr_crapcti;
           RAISE vr_exc_saida;
         
         ELSE
@@ -3693,6 +3694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
             pr_nmdcampo := 'nrctatrf';
             CLOSE cr_crapcti_2;
+            CLOSE cr_crapcti;
             RAISE vr_exc_saida;
 
           END IF;
@@ -3922,6 +3924,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         RAISE vr_exc_saida;
       END IF;
 
+      CLOSE cr_crapass;
+
       -- Verifica se cooperado e demitido
       IF rw_crapass.dtdemiss IS NOT NULL THEN
         vr_cdcritic := 75;
@@ -3932,20 +3936,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       -- Verifica tipo de pessoa
       IF rw_crapass.inpessoa = 1 THEN
                   
+        pr_inpessoa := 1;
+        pr_intipcta := 1;
+                  
         OPEN cr_crapttl(pr_cdcooper => rw_crapcop_2.cdcooper
                        ,pr_nrdconta => pr_nrctatrf
                        ,pr_idseqttl => 1);
                 
+        FETCH cr_crapttl INTO rw_crapttl;        
+        
         IF cr_crapttl%FOUND THEN
           pr_nmtitula := rw_crapttl.nmextttl;
+          pr_nrcpfcgc := rw_crapttl.nrcpfcgc;
           pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapttl.nrcpfcgc,1);
         ELSE
           pr_nmtitula := rw_crapass.nmprimtl;
+          pr_nrcpfcgc := rw_crapass.nrcpfcgc;
           pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,1);
         END IF;
 
+        CLOSE cr_crapttl;
       ELSE
+        pr_inpessoa := 2;
+        pr_intipcta := 1;
         pr_nmtitula := rw_crapass.nmprimtl;  
+        pr_nrcpfcgc := rw_crapass.nrcpfcgc;  
         pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,2);  
       END IF;                                 
 

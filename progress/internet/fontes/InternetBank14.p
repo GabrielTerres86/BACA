@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2008.                      Ultima atualizacao: 21/08/2017
+   Data    : Marco/2008.                      Ultima atualizacao: 09/11/2017
 
    Dados referentes ao programa:
 
@@ -29,9 +29,12 @@
                             caracters (Kelvin - 233714) 
                             
                16/11/2015 - Incluso campo cdorigem na montagem do xml_operacao14b.
-                            (Daniel)
+                            (Daniel)           
 
                21/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+                            
+               09/11/2017 - Separar codigo e descricao da linha de credito e 
+                            finalidade (David).
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -144,6 +147,30 @@ IF  VALID-HANDLE(h-b1wgen0002)  THEN
                        xml_operacao14a.dsfinemp = "<dsfinemp>" +
                                                   tt-dados-epr.dsfinemp +
                                                   "</dsfinemp>"
+                                                  
+                       xml_operacao14a.qtpreres = "<qtpreres>" +
+                                                  TRIM(STRING(tt-dados-epr.qtpreemp - tt-dados-epr.qtprecal)) +
+                                                  "</qtpreres>"
+                       xml_operacao14a.dsprodut = "<dsprodut>" +
+                                                  (IF tt-dados-epr.tpemprst = 1 THEN "Price Pré-Fixado" ELSE IF tt-dados-epr.tpemprst = 2 THEN "Price Pós-Fixado" ELSE "Price TR") +
+                                                  "</dsprodut>"
+                       xml_operacao14a.cddlinha = "<cddlinha>" +
+                                                  STRING(tt-dados-epr.cdlcremp) +
+                                                  "</cddlinha>"
+                       xml_operacao14a.dsdlinha = "<dsdlinha>" +
+                                                  TRIM(SUBSTR(tt-dados-epr.dslcremp,INDEX(tt-dados-epr.dslcremp,"-",1) + 1)) +
+                                                  "</dsdlinha>"
+                       xml_operacao14a.cdfinali = "<cdfinali>" +
+                                                  STRING(tt-dados-epr.cdfinemp) +
+                                                  "</cdfinali>"
+                       xml_operacao14a.dsfinali = "<dsfinali>" +
+                                                  TRIM(SUBSTR(tt-dados-epr.dsfinemp,INDEX(tt-dados-epr.dsfinemp,"-",1) + 1)) +
+                                                  "</dsfinali>"
+                                                  
+                       xml_operacao14a.tpemprst = "<tpemprst>" +
+                                                  STRING(tt-dados-epr.tpemprst,"9") +
+                                                  "</tpemprst>"
+                                                  
                        xml_operacao14a.dscabfim = "</EMPRESTIMO>".
             END.         
         
@@ -199,7 +226,7 @@ IF  VALID-HANDLE(h-b1wgen0002)  THEN
              DO:
                  RUN sistema/generico/procedures/b1wgen0112.p
                      PERSISTENT SET h-b1wgen0112.
-
+                                        
                  RUN extrato_pos_fixado IN h-b1wgen0112 ( 
                                               INPUT par_cdcooper,
                                               INPUT 90,

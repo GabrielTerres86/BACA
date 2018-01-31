@@ -39,7 +39,6 @@ DEF VAR h-b1wgen0015 AS HANDLE                                         NO-UNDO.
 
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_dscpfcgc AS CHAR                                           NO-UNDO.
-DEF VAR aux_nmtitula AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmdcampo AS CHAR                                           NO-UNDO.
 DEF VAR aux_msgaviso AS CHAR                                           NO-UNDO.
 
@@ -119,8 +118,6 @@ IF  NOT VALID-HANDLE(h-b1wgen0015)  THEN
         RETURN "NOK".
     END.
 
-ASSIGN aux_nmtitula = par_nmtitula.
-
 FOR FIRST crapcti FIELDS(cdcooper) WHERE crapcti.cdcooper = par_cdcooper
                                      AND crapcti.nrdconta = par_nrdconta
                                      AND crapcti.cddbanco = par_cddbanco
@@ -128,9 +125,8 @@ FOR FIRST crapcti FIELDS(cdcooper) WHERE crapcti.cdcooper = par_cdcooper
                                      AND crapcti.nrcpfcgc = par_nrcpfcgc
                                      AND crapcti.nrctatrf = par_nrctatrf NO-LOCK. END.
 
-IF NOT AVAIL crapcti THEN
+IF  NOT AVAIL crapcti  THEN
     DO:
-
 RUN valida-inclusao-conta-transferencia IN h-b1wgen0015 
                                        (INPUT par_cdcooper,
                                         INPUT 90,
@@ -147,19 +143,17 @@ RUN valida-inclusao-conta-transferencia IN h-b1wgen0015
                                         INPUT par_cdageban,
                                         INPUT par_nrctatrf,
                                         INPUT par_intipdif,
-                                        INPUT par_intipcta,
+                                                INPUT-OUTPUT par_intipcta,
                                         INPUT par_insitcta,
-                                        INPUT par_inpessoa,
-                                        INPUT par_nrcpfcgc,
+                                                INPUT-OUTPUT par_inpessoa,
+                                                INPUT-OUTPUT par_nrcpfcgc,
                                         INPUT TRUE,
                                         INPUT par_rowidcti, /* Validacao de Registro */
-                                        INPUT-OUTPUT aux_nmtitula,
+                                                INPUT-OUTPUT par_nmtitula,
                                        OUTPUT aux_dscpfcgc,
                                        OUTPUT aux_nmdcampo,
                                        OUTPUT TABLE tt-erro).
 
-
-                               
 IF  RETURN-VALUE <> "OK"  THEN
     DO: 
         DELETE PROCEDURE h-b1wgen0015.
@@ -180,7 +174,6 @@ IF  RETURN-VALUE <> "OK"  THEN
 /** Executar cadastramento do favorecido **/
 IF  par_flgexecu  THEN
     DO: 
-       
         RUN inclui-conta-transferencia IN h-b1wgen0015 
                                       (INPUT par_cdcooper,
                                        INPUT 90,              /* cdagenci */
@@ -226,7 +219,11 @@ IF  par_flgexecu  THEN
         ELSE
             DO:
                 CREATE xml_operacao.
-                ASSIGN xml_operacao.dslinxml = '<gravafav>1</gravafav>'.
+                ASSIGN xml_operacao.dslinxml = '<gravafav>1</gravafav>' + 
+                                               '<nmtitula>' + par_nmtitula + '</nmtitula>' +
+                                               '<nrcpfcgc>' + STRING(par_nrcpfcgc,(IF par_inpessoa = 1 THEN '99999999999' ELSE '99999999999999')) + '</nrcpfcgc>' +
+                                               '<inpessoa>' + STRING(par_inpessoa) + '</inpessoa>' +
+                                               '<intipcta>' + STRING(par_intipcta) + '</intipcta>'.
             END.
 
 DELETE PROCEDURE h-b1wgen0015.
@@ -234,7 +231,11 @@ DELETE PROCEDURE h-b1wgen0015.
 ELSE IF NOT par_flgexecu THEN
     DO:
         CREATE xml_operacao.
-        ASSIGN xml_operacao.dslinxml = '<gravafav>0</gravafav>'.
+        ASSIGN xml_operacao.dslinxml = '<gravafav>0</gravafav>' + 
+                                       '<nmtitula></nmtitula>' +
+                                       '<nrcpfcgc>0</nrcpfcgc>' +
+                                       '<inpessoa>0</inpessoa>' +
+                                       '<intipcta>0</intipcta>'.
     END.
 
 RETURN "OK".

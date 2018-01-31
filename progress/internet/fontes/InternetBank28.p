@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Junho/2007.                       Ultima atualizacao: 31/03/2015
+   Data    : Junho/2007.                       Ultima atualizacao: 21/09/2017
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -47,6 +47,9 @@
                             
                28/07/2015 - Adição de parâmetro flmobile para indicar que a origem
                             da chamada é do mobile (Dionathan)
+               
+               21/09/2017 - Retornar tag indicando se o convenio pode ser 
+			                      cadastrado em debaut (David).
                
 ..............................................................................*/
  
@@ -236,6 +239,9 @@ IF  VALID-HANDLE(h-b1wgen0015)  THEN
                                            "<hhoraini>" + STRING(tt-convenios_aceitos.hhoraini) + "</hhoraini>" +
                                            "<hhorafim>" + STRING(tt-convenios_aceitos.hhorafim) + "</hhorafim>" +
                                            "<hhoracan>" + STRING(tt-convenios_aceitos.hhoracan) + "</hhoracan>" +
+                                           "<fldebaut>" + STRING(tt-convenios_aceitos.fldebaut) + "</fldebaut>" +
+                                           "<cdhisdeb>" + STRING(tt-convenios_aceitos.cdhisdeb) + "</cdhisdeb>" +
+                                           "<dssegmto>" + tt-convenios_aceitos.dssegmto + "</dssegmto>" +
                                            "</CONVENIO>".
         
         END.
