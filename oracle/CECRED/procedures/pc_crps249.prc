@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 16/01/2018
+   Data    : Novembro/98                     Ultima atualizacao: 24/01/2017
 
    Dados referentes ao programa:
 
@@ -598,6 +598,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                           - Troca de return por raise
                             (Belli - Envolti - Chamado 832035)
                             
+			   11/12/2017 - Alterar campo flgcnvsi por tparrecd.
+                            PRJ406-FGTS (Odirlei-AMcom)                 
+				
+               24/01/2018 - Ajustes devido a arrecadação de ocnvenios bancoob.
+                            PRJ406 - FGTS (Odirlei-AMcom)             
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -620,7 +625,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            dsdircop,
            nrctactl,
            nmrescop,
-           vltardrf
+           vltardrf,
+           vltarbcb
       from crapcop
      where crapcop.cdcooper = pr_cdcooper;
   rw_crapcop    cr_crapcop%rowtype;
@@ -2173,7 +2179,55 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     order by crapass.inpessoa,
              crapass.cdagenci;
                           
+  --> Buscar convenios Bancoob                        
+  CURSOR cr_crapcon_bancoob (pr_cdcooper in crapcon.cdcooper%type) is
+    SELECT con.cdempcon,
+           con.cdsegmto,
+           con.cdhistor,
+           con.nmextcon,
+           con.nmrescon,
+           arr.cdempres,
+           his.nrctacrd,
+           his.cdhstctb,
+           arr.vltarifa_caixa,
+           arr.vltarifa_internet,
+           arr.vltarifa_taa
+      FROM crapcon con,
+           craphis his,
+           tbconv_arrecadacao arr
+     WHERE con.cdcooper = his.cdcooper
+       AND con.cdhistor = his.cdhistor
+       AND con.cdempcon = arr.cdempcon
+       AND con.cdsegmto = arr.cdsegmto
+       AND con.cdcooper = pr_cdcooper     
+       AND con.tparrecd = 2 -- Contem convenio bancoob
+     order by con.cdempcon,con.cdsegmto;
              
+  -- Lançamento de faturas do convênio bancoob
+  cursor cr_craplft_bancoob 
+                     (pr_cdcooper in craplft.cdcooper%type,
+                      pr_dtmvtolt in craplft.dtmvtolt%type,
+                      pr_cdempcon in craplft.cdempcon%type,
+                      pr_cdsegmto in craplft.cdsegmto%TYPE) is
+    SELECT craplft.cdagenci,
+           lead (craplft.cdagenci,1) OVER (ORDER BY craplft.cdagenci) AS proxima_agencia,
+           decode(craplft.cdagenci,
+                  90, nvl(crapass.cdagenci, craplft.cdagenci),
+                  91, nvl(crapass.cdagenci, craplft.cdagenci),
+                  craplft.cdagenci) cdagenci_fatura,
+           COUNT(craplft.vllanmto) qtlanmto,
+           SUM(craplft.vllanmto) vllanmto
+      FROM crapass,
+           craplft
+     WHERE craplft.cdcooper = pr_cdcooper
+       AND craplft.dtmvtolt = pr_dtmvtolt
+       AND craplft.cdempcon = pr_cdempcon
+       and craplft.cdsegmto = pr_cdsegmto
+       and crapass.cdcooper (+) = craplft.cdcooper
+       and crapass.nrdconta (+) = craplft.nrdconta
+     group BY craplft.cdagenci,
+              nvl(crapass.cdagenci, craplft.cdagenci)              
+     order by 1, 3;
              
   -- PL/Table contendo informações por agencia e segregadas em PF e PJ
   TYPE typ_pf_pj_op_cred IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
@@ -2257,6 +2311,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
   
   
+  -- Armazenar fatura bancoob
+  TYPE typ_rec_valores_age 
+       IS RECORD (cdagenci  NUMBER,
+                  qtlanmto  NUMBER,
+                  vltarifa  NUMBER);
+  TYPE typ_tab_valores_age IS TABLE OF typ_rec_valores_age
+       INDEX BY PLS_INTEGER;
+       
+  vr_valores_age typ_tab_valores_age;
+  type typ_faturas_bancoob 
+       IS RECORD ( cdempres  VARCHAR2(10),
+                   nmextcon  VARCHAR2(100),
+                   cdhistor  NUMBER,
+                   cdhstctb  NUMBER,
+                   cdagenci  NUMBER,
+                   qtdtotal  NUMBER,
+                   vltottar  NUMBER,
+                   agencias  typ_tab_valores_age);
+  -- Definição da tabela
+  type typ_tab_faturas_bancoob is table of typ_faturas_bancoob 
+       index by varchar2(30);
+  vr_tab_fat_bancoob typ_tab_faturas_bancoob;
+
+  
+  
   -- Registro para inicializar dados por histórico
   TYPE typ_reg_historico
     IS RECORD (nrctaori_fis NUMBER          --> Conta Origem  PF
@@ -2326,8 +2405,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   
 
   -- Índice para a pl/table
-  vr_indice_faturas      varchar2(4);
+  vr_indice_faturas      varchar2(30);
   vr_indice_hist_cob     varchar2(30);
+  vr_idx_age             varchar2(30);
+  vr_idx_age_2           varchar2(30);
   
   -- Código do programa
   vr_cdprogra            crapprg.cdprogra%type;
@@ -2465,6 +2546,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   vr_nmarqdat_tarifasbb_nov VARCHAR2(100);
   vr_contador               NUMBER := 0;
   --
+  vr_vltardes               NUMBER := 0;
+  
   function fn_calcula_data (pr_cdcooper in craptab.cdcooper%type,
                             pr_dtmvtoan in date) return date is
     --
@@ -8446,6 +8529,165 @@ BEGIN
   END LOOP;
 
   --*************************--
+  ----->>> INICIO Convenio BANCOOB <<<-----
+  
+  vr_cdestrut := '50';
+  FOR rw_crapcon IN cr_crapcon_bancoob(pr_cdcooper => pr_cdcooper) LOOP
+  
+    vr_vllanmto_fat := 0;
+    vr_qtlanmto_fat := 0;
+      
+    -- Lançamento de faturas do convênio bancoob
+    FOR rw_craplft IN cr_craplft_bancoob (pr_cdcooper => pr_cdcooper,
+                                          pr_dtmvtolt => vr_dtmvtolt,
+                                          pr_cdempcon => rw_crapcon.cdempcon,
+                                          pr_cdsegmto => rw_crapcon.cdsegmto) LOOP 
+  
+      -- Faz a soma dos valores, pois é possível existir mais de uma fatura com agencia 90 ou 91
+      vr_vllanmto_fat := vr_vllanmto_fat + rw_craplft.vllanmto;
+      vr_qtlanmto_fat := vr_qtlanmto_fat + rw_craplft.qtlanmto;
+      
+      -- Incrementa o contador na pl/table de faturas
+      vr_indice_faturas := lpad(rw_crapcon.cdempcon,5,0) ||
+                           lpad(rw_crapcon.cdsegmto,5,0) ||
+                           lpad(rw_crapcon.cdempres,10,0);
+                           
+                           
+      vr_tab_fat_bancoob(vr_indice_faturas).cdempres := rw_crapcon.cdempres;
+      vr_tab_fat_bancoob(vr_indice_faturas).nmextcon := rw_crapcon.nmextcon;
+      vr_tab_fat_bancoob(vr_indice_faturas).nmextcon := rw_crapcon.nmextcon;
+      vr_tab_fat_bancoob(vr_indice_faturas).cdhistor := rw_crapcon.cdhistor;
+      vr_tab_fat_bancoob(vr_indice_faturas).cdhstctb := rw_crapcon.cdhstctb;
+      vr_tab_fat_bancoob(vr_indice_faturas).qtdtotal := nvl(vr_tab_fat_bancoob(vr_indice_faturas).qtdtotal, 0) + rw_craplft.qtlanmto;
+      
+      vr_idx_age := lpad(rw_craplft.cdagenci_fatura,5,'0');     
+      vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).cdagenci := rw_craplft.cdagenci_fatura;  
+      vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).qtlanmto := nvl(vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).qtlanmto, 0) + rw_craplft.qtlanmto;
+      
+      --> Calcular total de tarifas por cada canal, e será agrupado o valor pelo PA do cooperado ou PA do caixa     
+      vr_vltarifa := 0;
+      IF rw_craplft.cdagenci = 90 THEN
+        vr_vltarifa := rw_craplft.qtlanmto * rw_crapcon.vltarifa_internet;
+      ELSIF rw_craplft.cdagenci = 91 THEN
+        vr_vltarifa := rw_craplft.qtlanmto * rw_crapcon.vltarifa_taa;
+      ELSE  
+        vr_vltarifa := rw_craplft.qtlanmto * rw_crapcon.vltarifa_caixa;
+      END IF;
+      
+      
+      vr_tab_fat_bancoob(vr_indice_faturas).vltottar := nvl(vr_tab_fat_bancoob(vr_indice_faturas).vltottar, 0) + vr_vltarifa;      
+      vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).vltarifa := nvl(vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).vltarifa, 0) + vr_vltarifa;      
+      
+      IF rw_craplft.cdagenci = rw_craplft.proxima_agencia THEN
+        continue;      
+      END IF;
+      
+      
+      -- Antes de ir para proxima agencia, deve gerar linha no arquivo
+      vr_linhadet := trim(vr_cdestrut)||
+                     trim(vr_dtmvtolt_yymmdd)||','||
+                     trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                     trim(to_char(vr_tab_agencia2(rw_craplft.cdagenci).vr_cdcxaage,'fm0000'))||','||
+                     trim(to_char(rw_crapcon.nrctacrd))||','||
+                     trim(to_char(vr_vllanmto_fat, '99999999999990.00'))||','||
+                     trim(to_char(rw_crapcon.cdhstctb))||','||
+                     '"('||trim(to_char(rw_crapcon.cdhistor,'0000'))||
+                     ') '||trim(rw_crapcon.cdempres)||' - '||
+                     trim(rw_crapcon.nmextcon)||'"';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      --
+      vr_linhadet := to_char(rw_craplft.cdagenci,'fm000')||','||
+                     trim(to_char(vr_vllanmto_fat, '999999990.00'));
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      --
+      vr_vllanmto_fat := 0;
+      vr_qtlanmto_fat := 0;
+    
+    END LOOP; --> Fim loop craplft
+  END LOOP; --Fim loop crapcon
+  
+  -- Listar Valores de tarifa
+  vr_cdestrut := '55';
+  vr_indice_faturas := vr_tab_fat_bancoob.first;
+  WHILE vr_indice_faturas IS NOT NULL LOOP
+    
+    --> gerar registro cabecalho
+    vr_linhadet := trim(vr_cdestrut)||
+                   trim(vr_dtmvtolt_yymmdd)||','||
+                   trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '1764,' || /* conta débito */ 
+                   '7613,' || /* conta crédito */ 
+                   trim(to_char(vr_tab_fat_bancoob(vr_indice_faturas).vltottar, '99999999999990.00'))||','||
+                   trim(to_char(vr_tab_fat_bancoob(vr_indice_faturas).cdhstctb))||','||
+                   '"('||trim(to_char(vr_tab_fat_bancoob(vr_indice_faturas).cdhistor,'0000'))||
+                   ') '||trim(vr_tab_fat_bancoob(vr_indice_faturas).cdempres)||' - '||
+                   trim(vr_tab_fat_bancoob(vr_indice_faturas).nmextcon)||'(tarifa)"';
+    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+    
+    
+    vr_idx_age := vr_tab_fat_bancoob(vr_indice_faturas).agencias.first;
+    WHILE vr_idx_age IS NOT NULL LOOP
+      IF vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).vltarifa > 0 THEN 
+        vr_linhadet := to_char(vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).cdagenci,'fm000')||','||
+                       to_char(vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).vltarifa,'fm999999990.00');
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      END IF;
+      --> Agrupar valores por agencia
+      vr_idx_age_2 := lpad(vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).cdagenci,5,'0');
+      vr_valores_age(vr_idx_age_2).cdagenci := vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).cdagenci;
+      vr_valores_age(vr_idx_age_2).vltarifa := nvl(vr_valores_age(vr_idx_age_2).vltarifa,0) + vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).vltarifa;
+      vr_valores_age(vr_idx_age_2).qtlanmto := nvl(vr_valores_age(vr_idx_age_2).qtlanmto,0) + vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).qtlanmto;
+  
+      vr_idx_age := vr_tab_fat_bancoob(vr_indice_faturas).agencias.next(vr_idx_age);
+    END LOOP;
+    
+    vr_indice_faturas := vr_tab_fat_bancoob.next(vr_indice_faturas);
+  END LOOP;
+  
+  --> Valor individual da despesa/tarifa por arrecadação
+  OPEN cr_craphis2 (pr_cdcooper, 2515);
+  FETCH cr_craphis2 INTO rw_craphis2;
+  IF cr_craphis2%NOTFOUND THEN
+    CLOSE cr_craphis2;
+    vr_cdcritic := 526;
+    vr_dscritic := '2515 - '||gene0001.fn_busca_critica(526);
+    RAISE vr_exc_saida;
+  END IF;
+  CLOSE cr_craphis2;
+  
+  vr_cdestrut := '55';  
+  IF vr_valores_age.count > 0 THEN
+    vr_idx_age := vr_valores_age.first;
+    WHILE vr_idx_age IS NOT NULL LOOP
+      
+      vr_vltardes := nvl(vr_valores_age(vr_idx_age).qtlanmto,0) * nvl(rw_crapcop.vltarbcb,0);
+      IF nvl(vr_vltardes,0) > 0 THEN
+        --> gerar registro cabecalho
+        vr_linhadet := trim(vr_cdestrut)||
+                       trim(vr_dtmvtolt_yymmdd)||','||
+                       trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                       trim(to_char(rw_craphis2.nrctatrd,'fm0000'))||','||
+                       trim(to_char(rw_craphis2.nrctacrd))||','||
+                       trim(to_char(vr_vltardes, '99999999999990.00'))||','||
+                       trim(to_char(rw_craphis2.cdhstctb))||','||
+                       '"('||trim(to_char(rw_craphis2.cdhistor,'0000'))||
+                       ') CONTABILIZACAO DESPESA BANCOOB"';
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+          
+        -- Registro detalhe age
+        vr_linhadet := to_char(vr_valores_age(vr_idx_age).cdagenci,'fm000')||','||
+                       to_char(vr_vltardes,'fm999999990.00');
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      END IF;
+      vr_idx_age := vr_valores_age.next(vr_idx_age);
+    END LOOP;
+  END IF;
+    
+    
+  
+  ----->>> FIM Convenio BANCOOB <<<-----
+  
+  
   vr_cdestrut := '51';
   -- Subscricao de capital para novos socios .................................
   vr_vlcapsub := 0;

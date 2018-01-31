@@ -98,6 +98,9 @@
                              relatorio crrl262 nao estava sendo gerado (Douglas - Chamado 832279)
                              
                 29/01/2018 - Ajustar DEBCNS conforme solicitaçao do chamado (Lucas Ranghetti #837834)
+                22/01/2018 - Incluido tratamento para geraçao de arquivos para o bancoob
+                             (craphec ARQUIVOS BANCOOB) PRJ406-FGTS(Odirlei-Busana).
+
 .............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -276,7 +279,7 @@ FORM SKIP(1)
      WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_transacao1.    
 
 FORM SKIP(1)
-      " PA  "
+     " PA  "
      "CONTA/DV"
      "DOCUMENTO"
      "             CTA.CONSOR"
@@ -307,7 +310,7 @@ FORM tt-obtem-consorcio.cdagenci FORMAT "zz9"
 FORM tt-obtem-consorcio.cdagenci FORMAT "zz9"          
      tt-obtem-consorcio.nrdconta FORMAT "zzzz,zzz,9"   
      tt-obtem-consorcio.nrdocmto FORMAT "9999999999999999999999"
-     tt-obtem-consorcio.nrctacns FORMAT "zzzz,zzz,9"        
+     tt-obtem-consorcio.nrctacns FORMAT "zzzz,zzz,9"   
      tt-obtem-consorcio.nmprimtl FORMAT "x(27)"        
      tt-obtem-consorcio.dsconsor FORMAT "x(9)"         
      tt-obtem-consorcio.nrdgrupo FORMAT "999999"
@@ -1167,7 +1170,7 @@ PROCEDURE gera_arq:
                                    INPUT par_cdcooper,
                                    INPUT "").
 
-        END.
+        END.                  
         
         WHEN "DEBCNS VESPERTINA" THEN DO:
 
@@ -1277,6 +1280,32 @@ PROCEDURE gera_arq:
              END.
           END.
 
+        WHEN "ARQUIVOS BANCOOB" THEN 
+          DO:          
+            RUN atualiza_status_execucao (INPUT par_nmprgexe,
+                                          INPUT par_dtmvtolt,
+                                          INPUT par_cdcooper).
+
+            IF   RETURN-VALUE = "NOK" THEN  DO:          
+               /* Grava Data e Hora da execucao */ 
+               RUN grava_dthr_proc(INPUT par_cdcooper,
+                                   INPUT par_dtmvtolt,
+                                   INPUT TIME,
+                                   INPUT TRIM(par_nmprgexe)). 
+
+               RUN gera_log_execucao (INPUT par_nmprgexe,
+                                      INPUT "Inicio execucao", 
+                                      INPUT 3,
+                                      INPUT "TODAS").              
+            
+               RUN gera_arrecadacao_bancoob(par_cdcooper).                      
+                                            
+               RUN gera_log_execucao (INPUT par_nmprgexe,
+                                      INPUT "Fim execucao", 
+                                      INPUT 3,
+                                      INPUT "TODAS").               
+             END.  
+          END.
     END CASE.
 
     RETURN "OK".
@@ -3916,6 +3945,48 @@ PROCEDURE proc_retorno_tit_pg:
 
     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    + 
                       " - "   + glb_cdprogra + "' --> '"   +
+                      "Stored Procedure rodou em "         + 
+                      STRING(INT(ETIME / 1000),"HH:MM:SS") + 
+                      " >> log/proc_batch.log").
+
+    RETURN "OK".
+
+END PROCEDURE.
+
+
+PROCEDURE gera_arrecadacao_bancoob:
+         
+    DEF INPUT PARAM par_cdcooper    AS  INTE                        NO-UNDO.
+
+
+    ETIME(TRUE).
+
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_gera_arrecadacao_bancoob 
+        aux_handproc = PROC-HANDLE NO-ERROR
+           (INPUT par_cdcooper,
+            INPUT '0').
+
+    IF  ERROR-STATUS:ERROR  THEN DO:
+        DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+            ASSIGN aux_msgerora = aux_msgerora + 
+                                  ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
+        END.
+
+        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                          " - ARQUIVOS BANCOOB' --> '"  +
+                          "Erro ao executar Stored Procedure: '" +
+                          aux_msgerora + "' >> log/proc_batch.log").
+        RETURN.
+    END.
+
+    CLOSE STORED-PROCEDURE pc_gera_arrecadacao_bancoob WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    + 
+                      " - ARQUIVOS BANCOOB ' --> '"   +
                       "Stored Procedure rodou em "         + 
                       STRING(INT(ETIME / 1000),"HH:MM:SS") + 
                       " >> log/proc_batch.log").

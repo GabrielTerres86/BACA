@@ -170,6 +170,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCOP is
                                   ,pr_taamaxer IN crapcop.taamaxer%TYPE --> Qtd. Max. de tentivas da senha no TAA
                                   ,pr_vllimapv IN crapcop.vllimapv%TYPE --> Limite necessita de aprovacao
                                   ,pr_qtmeatel IN crapcop.qtmeatel%TYPE --> Quantidade de Meses para atualizacao Telefone
+                                  ,pr_nrctabcb IN crapcop.nrctabcb%TYPE --> Conta convenio no Bancoob
+                                  ,pr_vltarbcb IN crapcop.vltarbcb%TYPE --> Valor de tarida Bancoob
+                                  ,pr_vlgarbcb IN crapcop.vlgarbcb%TYPE --> Valor Garantia Bancoob
                                   ,pr_vllimpag IN crapcop.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
@@ -187,7 +190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --  Sistema  : Rotina acessada pela tela CADCOP
   --  Sigla    : TELA_CADCOP
   --  Autor    : Andrei - RKAM
-  --  Data     : Agosto/2016.                   Ultima atualizacao: 15/09/2017
+  --  Data     : Agosto/2016.                   Ultima atualizacao: 21/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -208,6 +211,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --                          (Adriano - SD 582204).
   --
   --             15/09/2017 - Alteracao na mascara da Agencia do Banco do Brasil. (Jaison/Elton - M459)
+  --
+  --             21/12/2017 - Incluido campos bancoob. PRJ406-FGTS(Odirlei-AMcom)
   --
   --             03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
   ---------------------------------------------------------------------------------------------------------------
@@ -634,6 +639,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.flrecpct
           ,crapcop.dsdempst
           ,crapcop.qtmeatel
+          ,crapcop.nrctabcb
+          ,crapcop.vltarbcb
+          ,crapcop.vlgarbcb
           ,crapcop.vllimpag
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
@@ -946,6 +954,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hrfimgps', pr_tag_cont => to_char(to_date(rw_crapcop.hrfimgps,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hrlimsic', pr_tag_cont => to_char(to_date(rw_crapcop.hrlimsic,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
 
+    --> Bancoob
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'nrctabcb', pr_tag_cont => to_char(rw_crapcop.nrctabcb,'fm9g999g990'), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'vltarbcb', pr_tag_cont => to_char(rw_crapcop.vltarbcb,'fm990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'vlgarbcb', pr_tag_cont => to_char(rw_crapcop.vlgarbcb,'fm999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);    
+    
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'qttmpsgr', pr_tag_cont => to_char(to_date(rw_crapcop.qttmpsgr,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'flgkitbv', pr_tag_cont => rw_crapcop.flgkitbv, pr_des_erro => vr_dscritic);
 
@@ -1129,6 +1142,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
                                   ,pr_taamaxer IN crapcop.taamaxer%TYPE --> Qtd. Max. de tentivas da senha no TAA
                                   ,pr_vllimapv IN crapcop.vllimapv%TYPE --> Limite necessita de aprovacao
                                   ,pr_qtmeatel IN crapcop.qtmeatel%TYPE --> Quantidade de Meses para atualizacao Telefone
+                                  ,pr_nrctabcb IN crapcop.nrctabcb%TYPE --> Conta convenio no Bancoob
+                                  ,pr_vltarbcb IN crapcop.vltarbcb%TYPE --> Valor de tarida Bancoob
+                                  ,pr_vlgarbcb IN crapcop.vlgarbcb%TYPE --> Valor Garantia Bancoob
                                   ,pr_vllimpag IN crapcop.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
@@ -1225,6 +1241,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.flgargps
           ,crapcop.qtdiaenl
           ,crapcop.qtmeatel
+          ,crapcop.nrctabcb
+          ,crapcop.vltarbcb
+          ,crapcop.vlgarbcb
+          
           ,crapcop.vllimpag
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
@@ -2608,6 +2628,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
             ,crapcop.hriniouv = to_number(to_char(to_date(pr_hriniouv,'hh24:mi'),'sssss'))
             ,crapcop.hrfimouv = to_number(to_char(to_date(pr_hrfimouv,'hh24:mi'),'sssss'))
             ,crapcop.flgargps = pr_flgargps
+            ,crapcop.nrctabcb = pr_nrctabcb
+            ,crapcop.vltarbcb = pr_vltarbcb
+            ,crapcop.vlgarbcb = pr_vlgarbcb
+            
             ,crapcop.vllimpag = pr_vllimpag
        WHERE crapcop.cdcooper = vr_cdcooper;
 
@@ -4214,6 +4238,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
 
     END IF;
 
+    pc_gera_log(pr_cdcooper => vr_cdcooper -- Código da cooperativa
+               ,pr_cdoperad => vr_cdoperad -- Operador
+               ,pr_dsdcampo => 'Conta Bancoob'  --Descrição do campo
+               ,pr_vlrcampo => to_char(rw_crapcop.nrctabcb,'999999900') --Valor antigo
+               ,pr_vlcampo2 => to_char(pr_nrctabcb,'999999900') --Valor atual
+               ,pr_des_erro => vr_des_erro); --Erro
+
+    IF vr_des_erro <> 'OK' THEN
+
+      -- Montar mensagem de critica
+      vr_cdcritic := 0;
+      vr_dscritic := 'Erro ao registar no log.';
+      -- volta para o programa chamador
+      RAISE vr_exc_saida;
+
+    END IF;
+    
+    pc_gera_log(pr_cdcooper => vr_cdcooper -- Código da cooperativa
+               ,pr_cdoperad => vr_cdoperad -- Operador
+               ,pr_dsdcampo => 'Tarifa Bancoob'  --Descrição do campo
+               ,pr_vlrcampo => to_char(rw_crapcop.vltarbcb,'fm990d00') --Valor antigo
+               ,pr_vlcampo2 => to_char(pr_vltarbcb,'fm990d00') --Valor atual
+               ,pr_des_erro => vr_des_erro); --Erro
+
+    IF vr_des_erro <> 'OK' THEN
+
+      -- Montar mensagem de critica
+      vr_cdcritic := 0;
+      vr_dscritic := 'Erro ao registar no log.';
+      -- volta para o programa chamador
+      RAISE vr_exc_saida;
+
+    END IF;
+
+    pc_gera_log(pr_cdcooper => vr_cdcooper -- Código da cooperativa
+               ,pr_cdoperad => vr_cdoperad -- Operador
+               ,pr_dsdcampo => 'Garantia para arrecadacao de convenios Bancoob'  --Descrição do campo
+               ,pr_vlrcampo => to_char(rw_crapcop.vlgarbcb,'fm999g999g999g990d00') --Valor antigo
+               ,pr_vlcampo2 => to_char(pr_vlgarbcb,'fm999g999g999g990d00') --Valor atual
+               ,pr_des_erro => vr_des_erro); --Erro
+
+    IF vr_des_erro <> 'OK' THEN
+
+      -- Montar mensagem de critica
+      vr_cdcritic := 0;
+      vr_dscritic := 'Erro ao registar no log.';
+      -- volta para o programa chamador
+      RAISE vr_exc_saida;
+
+    END IF;    
 
     --Realiza commit das alterações
     COMMIT;

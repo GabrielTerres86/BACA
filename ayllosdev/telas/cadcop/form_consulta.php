@@ -603,6 +603,30 @@
 
     </fieldset>
 
+    <fieldset id="fsetBancoob" name="fsetBancoob" style="padding:0px; margin:0px; padding-bottom:10px;">
+
+        <legend>BANCOOB</legend>
+
+        <label for="nrctabcb"><?php echo utf8ToHtml("Conta Bancoob:"); ?></label>
+        <input type="text" id="nrctabcb" name="nrctabcb" value="<?php echo getByTagName($cooperativa->tags,'nrctabcb');?>" >
+        
+        <br />
+        <label for="vltarbcb"><?php echo utf8ToHtml("Tarifa Bancoob:"); ?></label>
+        <input type="text" id="vltarbcb" name="vltarbcb" value="<?php echo getByTagName($cooperativa->tags,'vltarbcb');?>" >
+        
+        <br />
+        
+        <?php // campo vlgarbcb será exibido apenas na cecred 
+        if (getByTagName($cooperativa->tags,'cdcooper') == 3 ){ ?>
+            
+            <label for="vlgarbcb"><?php echo utf8ToHtml("Garantia para arrecadação de convênios:"); ?></label>
+            <input type="text" id="vlgarbcb" name="vlgarbcb" value="<?php echo getByTagName($cooperativa->tags,'vlgarbcb');?>" >
+            
+            <br />
+        <?php }?>
+
+    </fieldset> 
+    
     <fieldset id="fsetSangria" name="fsetSangria" style="padding:0px; margin:0px; padding-bottom:10px;">
 
         <legend>Sangria de CAIXA</legend>

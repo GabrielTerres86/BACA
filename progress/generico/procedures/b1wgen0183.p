@@ -46,6 +46,9 @@
                          nao estava encontrando o job fazendo com que as 
                          alteracoes na HRCOMP nao surtissem o efeito desejado
                          (Tiago #753784).
+                         
+            22/01/2018 - Ajustado para aplicar as mesmas regras da DEBSIC ao procedimento
+                         DEBBAN. PRJ406 - FGTS(Odirlei-AMcom)
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0183tt.i }
@@ -416,7 +419,8 @@ PROCEDURE grava_dados:
 
 						IF (craphec.cdprogra = "CRPS688" OR 
 						    craphec.cdprogra = "DEBNET"  OR 
-						    craphec.cdprogra = "DEBSIC") AND
+						    craphec.cdprogra = "DEBSIC"  OR 
+						    craphec.cdprogra = "DEBBAN") AND
 						    aux_hriniexe < TIME THEN
 						   DO:
 								ASSIGN aux_cdcritic = 0
@@ -443,7 +447,8 @@ PROCEDURE grava_dados:
 
     					IF  craphec.cdprogra = "CRPS688" OR 
 						    craphec.cdprogra = "DEBNET"  OR 
-						    craphec.cdprogra = "DEBSIC"  THEN
+						    craphec.cdprogra = "DEBSIC"  OR 
+						    craphec.cdprogra = "DEBBAN" THEN
     						DO:                                
                                 RUN reagenda_job(INPUT crapcop.cdcooper
                 								                ,INPUT craphec.cdprogra
@@ -578,7 +583,8 @@ PROCEDURE grava_dados:
     
 					IF (craphec.cdprogra = "CRPS688" OR 
 						craphec.cdprogra = "DEBNET"  OR 
-						craphec.cdprogra = "DEBSIC") AND
+						craphec.cdprogra = "DEBSIC"  OR 
+						craphec.cdprogra = "DEBBAN") AND
 						aux_hriniexe < TIME THEN
 						DO:
 							ASSIGN aux_cdcritic = 0
@@ -605,7 +611,8 @@ PROCEDURE grava_dados:
     
     					IF craphec.cdprogra = "CRPS688" OR 
 						   craphec.cdprogra = "DEBNET"  OR 
-						   craphec.cdprogra = "DEBSIC"  THEN
+						   craphec.cdprogra = "DEBSIC"  OR 
+						   craphec.cdprogra = "DEBBAN"  THEN
     					DO:                           
 
                             RUN reagenda_job(INPUT craphec.cdcooper
@@ -1011,16 +1018,25 @@ PROCEDURE reagenda_job:
     /*M349 DEBNET e DEBSIC Passam a ter 3 execucoes diarias
       uma logo apos o processo uma durante a tarde e uma a noite
       por este motivo o JOB que se chamava apenas _DIA agora foi 
-      criado mais um com _NOT pra noite*/      
+      criado mais um com _NOT pra noite*/    
+      
+    /* 23/01/2017 - PRJ406 - Alterado pois DEBNET E DEBSIC nao rodaram assim 
+       que concluir o processo, ira respeitar os horarios configurados da craphec 
+       para isso utilizara o nome diurna(1-execucao),vespertino e noturno */  
+       
     IF  par_dsprogra MATCHES '*VESPERTINA*' THEN
     DO:
-      ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"99")) + "\_DIA". 
+      ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"99")) + "\_VES". 
     END.
     ELSE     
     DO:
       IF  par_dsprogra MATCHES '*NOTURNA*' THEN
           DO:
             ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"99")) + "\_NOT". 
+          END.
+      ELSE IF  par_dsprogra MATCHES '*DIURNA*' THEN
+          DO:
+            ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"99")) + "\_DIA". 
           END.
       ELSE
           DO:

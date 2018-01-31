@@ -215,6 +215,8 @@
                           e FMS TROMBUDO CENTRAL (Tiago/Fabricio SD653830)
 
 	         26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA (Tiago/Fabricio #647174)
+           
+             12/12/2017 - Alterar campo flgcnvsi por tparrecd. PRJ406-FGTS (Odirlei-AMcom)       
 			 
 			 03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
 ............................................................................ */
@@ -593,7 +595,7 @@ PROCEDURE retorna-valores-fatura.
         END.
      
     /* validacoes relativas aos convenios SICREDI */
-    IF  crapcon.flgcnvsi THEN
+    IF  crapcon.tparrecd = 1 THEN
         DO:
             RUN validacoes-sicredi (INPUT p-cooper,
                                     INPUT p-cod-agencia,
@@ -606,6 +608,14 @@ PROCEDURE retorna-valores-fatura.
 
             IF  RETURN-VALUE = "NOK" THEN
                 RETURN "NOK".
+        END.
+    ELSE
+      /* Bancoob */
+      IF  crapcon.tparrecd = 2 THEN
+        DO:
+            ASSIGN i-cod-erro  = 0.
+                   c-desc-erro = 'Convenio nao disponivel para esse meio de arrecadacao.'.
+            RETURN "NOK".
         END.
 
     IF   crapcon.cdempcon = 8359 AND crapcon.cdsegmto = 6   THEN /* CASA FELIZ */
@@ -1241,7 +1251,7 @@ PROCEDURE gera-faturas.
             RETURN "NOK".
         END.
 
-    IF  crapcon.flgcnvsi THEN
+    IF  crapcon.tparrecd = 1 THEN
         DO:
             /* Procura cod. da empresa do convenio SICREDI em cada campo de Num. do Cod. Barras */
             FIND FIRST crapscn WHERE crapscn.cdempcon  = crapcon.cdempcon         AND

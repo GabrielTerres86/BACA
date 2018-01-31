@@ -50,6 +50,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
                             gene0004.pc_executa_job, pois a mesma utiliza apenas 13 caracteres, não 
                             atendendo o novo padrão de nome dos jobs. Uso de formato de 2 dígitos 
                             para o cdcooper (Carlos)
+                            
+               11/01/2018 - Ajustado rotina para executar debitos agendados do bancoob DEBBAN.
+                            PRJ406 - FGTS (Odirlei-AMcom)
+                            
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
     vr_cdprogra    VARCHAR2(40) := 'PC_JOB_AGENDEB';
@@ -83,8 +87,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
              hec.cdprogra
         FROM craphec hec, 
              crapcop cop
-       WHERE hec.dsprogra IN  ('DEBNET VESPERTINA','DEBSIC VESPERTINA'
-                              ,'DEBNET NOTURNA','DEBSIC NOTURNA', 'AGENDAMENTO APLICACAO/RESGATE')
+       WHERE hec.dsprogra IN  ('AGENDAMENTO APLICACAO/RESGATE')
          AND hec.cdcooper = cop.cdcooper
          AND cop.flgativo = 1   
        GROUP BY hec.cdcooper,
@@ -101,8 +104,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
              to_date(hec.hriniexe,'SSSSS') dtiniexe 
         FROM craphec hec, 
              crapcop cop
-       WHERE hec.dsprogra IN  ('DEBNET VESPERTINA','DEBSIC VESPERTINA'
-                              ,'DEBNET NOTURNA','DEBSIC NOTURNA', 'AGENDAMENTO APLICACAO/RESGATE')
+       WHERE hec.cdprogra IN  ('DEBNET','DEBSIC','CRPS688','DEBBAN')
          AND hec.cdcooper = cop.cdcooper
          AND cop.flgativo = 1
        ORDER BY hec.cdcooper,
@@ -327,13 +329,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
         IF vr_qtdexec = 1 THEN
           
           vr_minuto := (1/24/60); --> 1 - minuto
+          
+          /*  ***** Não sera mais gerado DEBSIC e DEBNET de forma aut. como primeira execucao, será criada na craphec um horario fixo ****
           -- Se for DEBNET, incrementar para rodar depois de 5 minutos
           -- Para DEBSIC será em 31 min, pra ficar após o horario liberado de uso do Webservice Sicredi (07:30h)
+          
           IF rw_craphec.cdprogra LIKE '%DEBSIC%' THEN
             vr_minuto := vr_minuto * 31; 
           ELSIF rw_craphec.cdprogra LIKE '%DEBNET%' THEN
             vr_minuto := vr_minuto * 5;
-          END IF;
+          END IF;*/
           
           -- Faz a chamada ao programa paralelo atraves de JOB
           gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper       --> Código da cooperativa
@@ -378,12 +383,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
         END IF;  
         
         /*M349 Tratamento para mais de uma execucao diaria dos programas
-          DEBSIC e DEBNET que terao um processo vespertino e um noturno alem
+          DEBSIC, DEBNET, DEBBAN que terao um processo vespertino e um noturno alem
           do primeiro que roda logo apos o termino do processo da cooperativa*/
         IF rw_craphec.cdprogra <> 'CRPS688' THEN
-           IF rw_craphec.dsprogra LIKE '%VESPERTINA%' THEN
+           
+           IF rw_craphec.dsprogra LIKE '%DIURNA%' THEN
               -- JBP_DEBNET_16_DIA1234567
               vr_jobname := 'JBP_'||rw_craphec.cdprogra||'_'||to_char(rw_craphec.cdcooper, 'fm00')||'_'||'DIA'; 
+           
+           ELSIF rw_craphec.dsprogra LIKE '%VESPERTINA%' THEN
+              -- JBP_DEBNET_16_VES1234567
+              vr_jobname := 'JBP_'||rw_craphec.cdprogra||'_'||to_char(rw_craphec.cdcooper, 'fm00')||'_'||'VES'; 
            ELSE
               vr_jobname := 'JBP_'||rw_craphec.cdprogra||'_'||to_char(rw_craphec.cdcooper, 'fm00')||'_'||'NOT'; 
            END IF;   
@@ -716,6 +726,64 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
                                pr_tpexecuc  => NULL,
                                pr_dtmvtolt  => rw_crapdat.dtmvtolt,
                                pr_idtiplog  => 'F');
+
+        --> Executar DEBBAN/PAGA0003.pc_processa_agend_bancoob  
+        ELSIF upper(pr_cdprogra) = 'DEBBAN' THEN  
+          
+          --> Verificar se CRPS688 ja rodou neste dia
+          OPEN cr_craphec_2(pr_dtmvtolt => rw_crapdat.dtmvtolt);
+          FETCH cr_craphec_2 INTO rw_craphec_2;
+          IF cr_craphec_2%NOTFOUND THEN                                           
+            CLOSE cr_craphec_2;
+            /*caso ainda não tenha rodado, deve reagendar para daqui a 5 minutos */
+            pc_reprograma_job(pr_job_name => pr_dsjobnam,
+                              pr_dtreagen => SYSDATE + ((1/24/60)* 5), --> reagendar para daqui a 5 min.
+                              pr_dscritic => vr_dscritic); 
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_email;
+            END IF;        
+            
+            vr_dscritic := 'CRPS688 ainda executando, job reagendado para '||to_char((SYSDATE + ((1/24/60)* 5)),'DD/MM/RRRR HH24:MI');
+            RAISE vr_exc_email;
+          END IF;
+          CLOSE cr_craphec_2;  
+          
+        
+          vr_cdprogra := 'DEBBAN';
+          -- Log de inicio de execucao
+          pc_gera_log_execucao(pr_nmprgexe  => vr_cdprogra,
+                               pr_indexecu  => 'Inicio execucao',
+                               pr_cdcooper  => pr_cdcooper, 
+                               pr_tpexecuc  => NULL,
+                               pr_dtmvtolt  => rw_crapdat.dtmvtolt,
+                               pr_idtiplog  => 'I');
+          
+          --> Executar programa
+          PAGA0003.pc_processa_agend_bancoob   
+                     (pr_cdcooper => pr_cdcooper, 
+                      pr_cdcritic => vr_cdcritic, 
+                      pr_dscritic => vr_dscritic);
+                      
+          --> Tratamento de erro                         
+          IF vr_cdcritic > 0 OR
+             vr_dscritic IS NOT NULL THEN 
+            pc_gera_log_execucao(pr_nmprgexe  => vr_cdprogra,
+                                 pr_indexecu  => 'Fim execucao com critica: '||vr_dscritic ,
+                                 pr_cdcooper  => pr_cdcooper, 
+                                 pr_tpexecuc  => NULL,
+                                 pr_dtmvtolt  => rw_crapdat.dtmvtolt,
+                                 pr_idtiplog  => 'E'); 
+            RAISE vr_exc_email;              
+          END IF;
+          
+          --> Log de fim de execucao
+          pc_gera_log_execucao(pr_nmprgexe  => vr_cdprogra,
+                               pr_indexecu  => 'Fim execucao',
+                               pr_cdcooper  => pr_cdcooper, 
+                               pr_tpexecuc  => NULL,
+                               pr_dtmvtolt  => rw_crapdat.dtmvtolt,
+                               pr_idtiplog  => 'F');
+                               
 
         END IF;
         

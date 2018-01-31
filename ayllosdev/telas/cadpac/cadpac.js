@@ -6,6 +6,7 @@
  * --------------
  * ALTERAÇÕES   : 08/08/2017 - Adicionado novo campo Habilitar Acesso CRM. (Reinert - Projeto 339)
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ *                19/12/2017 - Incluido campos FGTS. PRJ406 -FGTS(Odirlei-AMcom)
  *                03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  * --------------
  */
@@ -155,6 +156,7 @@ function formataCamposTela(cddopcao){
         var rCdagepac = $('label[for="cdagepac"]', '#frmCadpac');
 		var rFlmajora = $('label[for="flmajora"]', '#frmCadpac');
         var rFlgutcrm = $('label[for="flgutcrm"]', '#frmCadpac');
+        var rCdagefgt = $('label[for="cdagefgt"]', '#frmCadpac');
 
         var rDsendcop = $('label[for="dsendcop"]', '#frmCadpac');
         var rNrendere = $('label[for="nrendere"]', '#frmCadpac');
@@ -172,6 +174,8 @@ function formataCamposTela(cddopcao){
         var rRotulo_h = $('label[for="rotulo_h"]', '#frmCadpac');
         var rHhsicini = $('label[for="hhsicini"]', '#frmCadpac');
         var rHhsicfim = $('label[for="hhsicfim"]', '#frmCadpac');
+        var rHhini_bancoob = $('label[for="hhini_bancoob"]', '#frmCadpac');
+        var rHhfim_bancoob = $('label[for="hhfim_bancoob"]', '#frmCadpac');        
         var rHhtitini = $('label[for="hhtitini"]', '#frmCadpac');
         var rHhtitfim = $('label[for="hhtitfim"]', '#frmCadpac');
         var rHhcompel = $('label[for="hhcompel"]', '#frmCadpac');
@@ -188,6 +192,7 @@ function formataCamposTela(cddopcao){
         var rHhcpafim = $('label[for="hhcpafim"]', '#frmCadpac');
         var rHhlimcan = $('label[for="hhlimcan"]', '#frmCadpac');
         var rHhsiccan = $('label[for="hhsiccan"]', '#frmCadpac');
+        var rHhcan_bancoob = $('label[for="hhcan_bancoob"]', '#frmCadpac');        
         var rNrtelvoz = $('label[for="nrtelvoz"]', '#frmCadpac');
         var rNrtelfax = $('label[for="nrtelfax"]', '#frmCadpac');
         var rRotulopr = $('label[for="rotulopr"]', '#frmCadpac');
@@ -226,6 +231,8 @@ function formataCamposTela(cddopcao){
         var cCdagepac = $('#cdagepac', '#frmCadpac');
 		var cFlmajora = $('#flmajora', '#frmCadpac');
         var cFlgutcrm = $('#flgutcrm', '#frmCadpac');
+        var cCdagefgt = $('#cdagefgt', '#frmCadpac');
+
 
         var cDsendcop = $('#dsendcop', '#frmCadpac');
         var cNrendere = $('#nrendere', '#frmCadpac');
@@ -243,6 +250,9 @@ function formataCamposTela(cddopcao){
 
         var cHhsicini = $('#hhsicini', '#frmCadpac');
         var cHhsicfim = $('#hhsicfim', '#frmCadpac');
+        var cHhini_bancoob = $('#hhini_bancoob', '#frmCadpac');
+        var cHhfim_bancoob = $('#hhfim_bancoob', '#frmCadpac');        
+        
         var cHhtitini = $('#hhtitini', '#frmCadpac');
         var cHhtitfim = $('#hhtitfim', '#frmCadpac');
         var cHhcompel = $('#hhcompel', '#frmCadpac');
@@ -259,6 +269,7 @@ function formataCamposTela(cddopcao){
         var cHhcpafim = $('#hhcpafim', '#frmCadpac');
         var cHhlimcan = $('#hhlimcan', '#frmCadpac');
         var cHhsiccan = $('#hhsiccan', '#frmCadpac');
+        var cHhcan_bancoob = $('#hhcan_bancoob', '#frmCadpac');
         var cNrtelvoz = $('#nrtelvoz', '#frmCadpac');
         var cNrtelfax = $('#nrtelfax', '#frmCadpac');
         var cRotulopr = $('#rotulopr', '#frmCadpac');
@@ -298,6 +309,8 @@ function formataCamposTela(cddopcao){
         rCdagepac.addClass('rotulo-linha').css({'width': '285px'});
 		rFlmajora.addClass('rotulo').css({'width': '130px'});
         rFlgutcrm.addClass('rotulo-linha').css({'width': '285px'});
+        rCdagefgt.addClass('rotulo').css({'width': '130px'});
+
 
         rDsendcop.addClass('rotulo').css({'width': '130px'});
         rNrendere.addClass('rotulo').css({'width': '130px'});
@@ -315,6 +328,8 @@ function formataCamposTela(cddopcao){
         rRotulo_h.addClass('rotulo-linha').css({'width': '10px','text-align':'center'});
         rHhsicini.addClass('rotulo').css({'width': '230px'});
         rHhsicfim.addClass('rotulo-linha').css({'width': '25px','text-align':'center'});
+        rHhini_bancoob.addClass('rotulo').css({'width': '230px'});
+        rHhfim_bancoob.addClass('rotulo-linha').css({'width': '25px','text-align':'center'});        
         rHhtitini.addClass('rotulo').css({'width': '230px'});
         rHhtitfim.addClass('rotulo-linha').css({'width': '25px','text-align':'center'});
         rHhcompel.addClass('rotulo-linha').css({'width': '120px'});
@@ -331,6 +346,7 @@ function formataCamposTela(cddopcao){
         rHhcpafim.addClass('rotulo-linha').css({'width': '25px','text-align':'center'});
         rHhlimcan.addClass('rotulo').css({'width': '230px'});
         rHhsiccan.addClass('rotulo').css({'width': '230px'});
+        rHhcan_bancoob.addClass('rotulo').css({'width': '230px'});
         rNrtelvoz.addClass('rotulo-linha').css({'width': '101px'});
         rNrtelfax.addClass('rotulo-linha').css({'width': '101px'});
         rRotulopr.addClass('rotulo').css({'width': '230px'});
@@ -370,6 +386,7 @@ function formataCamposTela(cddopcao){
 		cFlmajora.addClass('campo').css({'width':'60px'});
 		
 		cFlgutcrm.addClass('campo').css({'width':'60px'});
+        cCdagefgt.addClass('campo').css({'width':'60px'});
 
         cDsendcop.addClass('campo').css({'width':'411px'}).attr('maxlength','40');
         cNrendere.addClass('campo').css({'width':'80px'}).attr('maxlength','10').setMask('INTEGER','zzzzzzzzzz','','');
@@ -387,6 +404,8 @@ function formataCamposTela(cddopcao){
 
         cHhsicini.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
         cHhsicfim.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
+        cHhini_bancoob.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
+        cHhfim_bancoob.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');        
         cHhtitini.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
         cHhtitfim.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
         cHhcompel.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
@@ -403,6 +422,7 @@ function formataCamposTela(cddopcao){
         cHhcpafim.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
         cHhlimcan.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
         cHhsiccan.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
+        cHhcan_bancoob.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
         cNrtelvoz.addClass('campo').css({'width':'150px'}).attr('maxlength','15');
         cNrtelfax.addClass('campo').css({'width':'150px'}).attr('maxlength','15');
         cQtddaglf.addClass('campo').css({'width':'60px'}).attr('maxlength','3').setMask('INTEGER','zzz','','');
@@ -413,6 +433,8 @@ function formataCamposTela(cddopcao){
 
         cHhsicini.mask('00:00');
         cHhsicfim.mask('00:00');
+        cHhini_bancoob.mask('00:00');
+        cHhfim_bancoob.mask('00:00');
         cHhtitini.mask('00:00');
         cHhtitfim.mask('00:00');
         cHhcompel.mask('00:00');
@@ -429,6 +451,7 @@ function formataCamposTela(cddopcao){
         cHhcpafim.mask('00:00');
         cHhlimcan.mask('00:00');
         cHhsiccan.mask('00:00');
+        cHhcan_bancoob.mask('00:00');
 
         cVllimapv.addClass('campo').css({'width':'120px','text-align':'right'}).setMask("DECIMAL","zzz.zzz.zz9,99","","");
         cQtchqprv.addClass('campo').css({'width':'60px'}).attr('maxlength','3').setMask('INTEGER','zzz','','');
@@ -1542,6 +1565,7 @@ function gravarPAC() {
     var flgdsede = $('#flgdsede','#frmCadpac').val();
     var cdagepac = $('#cdagepac','#frmCadpac').val();
     var flgutcrm = $('#flgutcrm','#frmCadpac').val();
+    var cdagefgt = $('#cdagefgt','#frmCadpac').val();
     var dsendcop = $('#dsendcop','#frmCadpac').val();
     var nrendere = $('#nrendere','#frmCadpac').val();
     var nmbairro = $('#nmbairro','#frmCadpac').val();
@@ -1557,6 +1581,8 @@ function gravarPAC() {
     var dsinform3 = $('#dsinform3','#frmCadpac').val();
     var hhsicini = $('#hhsicini','#frmCadpac').val();
     var hhsicfim = $('#hhsicfim','#frmCadpac').val();
+    var hhini_bancoob = $('#hhini_bancoob','#frmCadpac').val();
+    var hhfim_bancoob = $('#hhfim_bancoob','#frmCadpac').val();
     var hhtitini = $('#hhtitini','#frmCadpac').val();
     var hhtitfim = $('#hhtitfim','#frmCadpac').val();
     var hhcompel = $('#hhcompel','#frmCadpac').val();
@@ -1573,6 +1599,7 @@ function gravarPAC() {
     var hhcpafim = $('#hhcpafim','#frmCadpac').val();
     var hhlimcan = $('#hhlimcan','#frmCadpac').val();
     var hhsiccan = $('#hhsiccan','#frmCadpac').val();
+    var hhcan_bancoob = $('#hhcan_bancoob','#frmCadpac').val();
     var nrtelvoz = $('#nrtelvoz','#frmCadpac').val();
     var nrtelfax = $('#nrtelfax','#frmCadpac').val();
     var qtddaglf = $('#qtddaglf','#frmCadpac').val();
@@ -1619,6 +1646,7 @@ function gravarPAC() {
             flgdsede: normalizaNumero(flgdsede),
             cdagepac: normalizaNumero(cdagepac),
             flgutcrm: normalizaNumero(flgutcrm),
+            cdagefgt: normalizaNumero(cdagefgt),
             dsendcop: dsendcop,
             nrendere: normalizaNumero(nrendere),
             nmbairro: nmbairro,
@@ -1634,6 +1662,8 @@ function gravarPAC() {
             dsinform3: dsinform3,
             hhsicini: hhsicini,
             hhsicfim: hhsicfim,
+            hhini_bancoob: hhini_bancoob,
+            hhfim_bancoob: hhfim_bancoob,
             hhtitini: hhtitini,
             hhtitfim: hhtitfim,
             hhcompel: hhcompel,
@@ -1650,6 +1680,7 @@ function gravarPAC() {
             hhcpafim: hhcpafim,
             hhlimcan: hhlimcan,
             hhsiccan: hhsiccan,
+            hhcan_bancoob: hhcan_bancoob,
             nrtelvoz: nrtelvoz,
             nrtelfax: nrtelfax,
             qtddaglf: normalizaNumero(qtddaglf),

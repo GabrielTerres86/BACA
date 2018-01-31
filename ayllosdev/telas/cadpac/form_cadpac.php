@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  *				  08/08/2017 - Adicionado novo campo Habilitar Acesso CRM. (Reinert - Projeto 339)
+ *                19/12/2017 - Incluido campos FGTS. PRJ406 -FGTS(Odirlei-AMcom)
  *                03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  * --------------
  */	
@@ -169,6 +170,10 @@
                             <option value="1">SIM</option>
                         </select>
                         <br clear="all" />
+                        <label for="cdagefgt">CAF/FGTS:</label>
+                        <input type="text" id="cdagefgt" name="cdagefgt" />
+                        
+                        <br clear="all" />
                         <br clear="all" />
                     </div>
 
@@ -211,6 +216,13 @@
                         <label for="hhsicfim">até</label>
                         <input type="text" id="hhsicfim" name="hhsicfim" value="00:00" />
                         <label for="rotulo_h">h</label>
+                        
+                        <label for="hhini_bancoob">Pagamentos Faturas Bancoob:</label>
+                        <input type="text" id="hhini_bancoob" name="hhini_bancoob" value="00:00" />
+                        <label for="hhfim_bancoob">até</label>
+                        <input type="text" id="hhfim_bancoob" name="hhfim_bancoob" value="00:00" />
+                        <label for="rotulo_h">h</label>
+                        
                         <label for="hhtitini">Pagamentos Titulos/Faturas:</label>
                         <input type="text" id="hhtitini" name="hhtitini" value="00:00" />
                         <label for="hhtitfim">até</label>
@@ -261,10 +273,18 @@
                         <label for="nrtelfax">FAX:</label>
                         <input type="text" id="nrtelfax" name="nrtelfax" />
                         <br clear="all" />
+                        
+                        <label for="hhcan_bancoob">Cancelamento pagamento BANCOOB:</label>
+                        <input type="text" id="hhcan_bancoob" name="hhcan_bancoob" value="00:00" />
+                        <label for="rotulo_h">h</label>
+						<br clear="all" />
+                        <br clear="all" />
+
                         <label for="vllimpag">Limite m&aacute;x. - pgto sem autor.</label>
                         <input type="text" id="vllimpag" name="vllimpag" />
                         <br clear="all" />
                         <br clear="all" />
+                        
                         <label for="rotulopr">Parâmetros de Agendamentos:</label>
                         <label for="qtddaglf">Dias Limite para Agendamento:</label>
                         <input type="text" id="qtddaglf" name="qtddaglf" />

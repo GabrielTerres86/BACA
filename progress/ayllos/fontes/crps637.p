@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 22/02/2017
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 12/12/2017
     
     Dados referente ao programa:
     
@@ -48,6 +48,10 @@
                               
                 22/02/2017 - Atualizar somente o segmento para a planilha CCROCONV
                              (Lucas Ranghetti #618741)
+                             
+                11/12/2017 - Alterar campo flgcnvsi por tparrecd.
+                             PRJ406-FGTS (Odirlei-AMcom)    
+                             
 ..............................................................................*/
 
 DEF STREAM str_1.  /* ARQ. IMPORTAÇÃO       */
@@ -644,15 +648,15 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                         END.
                     ELSE
                         DO:
-                            IF  crapcon.flgcnvsi = TRUE THEN /* Conv. SICREDI já existente, atualiza dados */
+                            ASSIGN crapcon.flgacsic = TRUE.
+                            
+                            IF  crapcon.tparrecd = 1 THEN /* Conv. SICREDI já existente, atualiza dados */
                                 DO:
                                     
                                     ASSIGN crapcon.nmrescon = CAPS(crapscn.dssigemp)
                                            crapcon.nmextcon = CAPS(crapscn.dsnomcnv)
                                            crapcon.cdhistor = 1154        /* Fixo */
                                            crapcon.nrdolote = 15000       /* Fixo */
-                                           crapcon.cdagercb = crapscn.cdagenci
-                                           crapcon.dspescto = ""
                                            crapcon.cdempcon = crapscn.cdempcon
                                            crapcon.cdsegmto = INT(crapscn.cdsegmto).
 
@@ -780,32 +784,72 @@ PROCEDURE cria-registro-cancelamento:
         /* Procura o Cód da Emp (cdempcon) no fcnumbarra */
         FIND crapcon WHERE crapcon.cdcooper = crapcop.cdcooper                              AND
                            crapcon.cdempcon = INTE(TRIM(ENTRY(38, aux_setlinha, "|"),'"'))  AND
-                           crapcon.cdsegmto = INTE(TRIM(ENTRY(39, aux_setlinha, "|"),'"'))  AND
-                           crapcon.flgcnvsi = TRUE /* SICREDI */
+                           crapcon.cdsegmto = INTE(TRIM(ENTRY(39, aux_setlinha, "|"),'"'))  
                            EXCLUSIVE-LOCK NO-ERROR.
         
         IF  AVAIL crapcon THEN
-            DELETE crapcon.
+        DO:
+           /* SICREDI */
+           IF crapcon.tparrecd = 1 THEN
+             DO:
+               /* Caso for arrecadado pelo Sicredi deve excluir registro*/
+               DELETE crapcon.
+             END.
+           /* Caso nao for arrecadado, 
+              apenas muda para nao permitir */  
+           ELSE IF crapcon.tparrecd <> 1 THEN
+             DO:
+               crapcon.flgacsic = FALSE.              
+             END.  
+        
+        END. 
+        
 
         /* Procura o Cód da Emp (cdempcon) no fcnumbarr2 */
         FIND crapcon WHERE crapcon.cdcooper = crapcop.cdcooper                              AND
                            crapcon.cdempcon = INTE(TRIM(ENTRY(85, aux_setlinha, "|"),'"'))  AND
-                           crapcon.cdsegmto = INTE(TRIM(ENTRY(39, aux_setlinha, "|"),'"'))  AND
-                           crapcon.flgcnvsi = TRUE /* SICREDI */
+                           crapcon.cdsegmto = INTE(TRIM(ENTRY(39, aux_setlinha, "|"),'"'))  
                            EXCLUSIVE-LOCK NO-ERROR.
         
         IF  AVAIL crapcon THEN
-            DELETE crapcon.
+        DO:
+           /* SICREDI */
+           IF crapcon.tparrecd = 1 THEN
+             DO:
+               /* Caso for arrecadado pelo Sicredi deve excluir registro*/
+               DELETE crapcon.
+             
+             END.
+           /* Caso nao for arrecadado, 
+              apenas muda para nao permitir */  
+           ELSE IF crapcon.tparrecd <> 1 THEN
+             DO:
+               crapcon.flgacsic = FALSE.              
+             END.  
+        END. 
 
         /* Procura o Cód da Emp (cdempcon) no fcnumbarr3 */
         FIND crapcon WHERE crapcon.cdcooper = crapcop.cdcooper                              AND
                            crapcon.cdempcon = INTE(TRIM(ENTRY(86, aux_setlinha, "|"),'"'))  AND
-                           crapcon.cdsegmto = INTE(TRIM(ENTRY(39, aux_setlinha, "|"),'"'))  AND
-                           crapcon.flgcnvsi = TRUE /* SICREDI */
+                           crapcon.cdsegmto = INTE(TRIM(ENTRY(39, aux_setlinha, "|"),'"'))  
                            EXCLUSIVE-LOCK NO-ERROR.
         
         IF  AVAIL crapcon THEN
-            DELETE crapcon.
+        DO:
+           /* SICREDI */
+           IF crapcon.tparrecd = 1 THEN
+             DO:
+               /* Caso for arrecadado pelo Sicredi deve excluir registro*/
+               DELETE crapcon. 
+             
+             END.
+           /* Caso nao for arrecadado, 
+              apenas muda para nao permitir */  
+           ELSE IF crapcon.tparrecd <> 1 THEN
+             DO:
+               crapcon.flgacsic = false.              
+             END.  
+        END. 
 
     END.
 
@@ -1033,11 +1077,10 @@ PROCEDURE cria-reg-crapcon:
            crapcon.cdsegmto = INT(crapscn.cdsegmto)
            crapcon.nmrescon = CAPS(crapscn.dssigemp)
            crapcon.nmextcon = CAPS(crapscn.dsnomcnv)
-           crapcon.cpfcgrcb = 0            
            crapcon.cdhistor = 1154        /* Fixo */
            crapcon.nrdolote = 15000       /* Fixo */
-           crapcon.cdagercb = crapscn.cdagenci
-           crapcon.flgcnvsi = TRUE
+           crapcon.tparrecd = 1
+           crapcon.flgacsic = TRUE
            crapcon.flginter = par_flginter.
     VALIDATE crapcon.
 

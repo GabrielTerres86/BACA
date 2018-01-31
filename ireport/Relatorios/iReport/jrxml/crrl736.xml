@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<crrl736>
+    <chave nrchave="INTERNET0#################000160030002037416AAATAAABvAAAXQwAAn">
+        <cdcooper>16</cdcooper>
+        <dscooper>VIACREDI AV</dscooper>
+        <nrdconta> 203.741.6</nrdconta>
+        <nmprimtl>NILCELIO MARCELINO</nmprimtl>
+        <cdagenci>3</cdagenci>
+        <cdtiptra>2</cdtiptra>
+        <dstiptra/>
+        <fltipdoc/>
+        <dstransa/>
+        <vllanaut>68,1</vllanaut>
+        <dttransa>31/10/17</dttransa>
+        <hrtransa>80455</hrtransa>
+        <nrdocmto>237</nrdocmto>
+        <dslindig>86680000000-6 68100924860-7 80005963348-0 85102111725-0</dslindig>
+        <dscritic>
+            <![CDATA[FATURA JA ARRECADADA DIA 01/11/2017.]]>
+        </dscritic>
+        <nrdrecid>AAATAAABvAAAXQwAAn</nrdrecid>
+        <fldebito>0</fldebito>
+        <dsorigem>INTERNET</dsorigem>
+        <idseqttl>1</idseqttl>
+        <dtagenda>01/11/2017</dtagenda>
+        <dsdebito>NAO EFETUADOS</dsdebito>
+        <dtmvtolt>31/10/2017</dtmvtolt>
+        <nrseqdig>237</nrseqdig>
+        <dshistor>508-PG.P/INTERNET</dshistor>
+    </chave>
+    <chave nrchave="INTERNET0#################000160030002459507AAATAAABvAAAXg3AAZ">
+        <cdcooper>16</cdcooper>
+        <dscooper>VIACREDI AV</dscooper>
+        <nrdconta> 245.950.7</nrdconta>
+        <nmprimtl>JAQUELINE CONZATTI</nmprimtl>
+        <cdagenci>3</cdagenci>
+        <cdtiptra>10</cdtiptra>
+        <dstiptra/>
+        <fltipdoc/>
+        <dstransa/>
+        <vllanaut>52,85</vllanaut>
+        <dttransa>31/10/17</dttransa>
+        <hrtransa>68752</hrtransa>
+        <nrdocmto>177</nrdocmto>
+        <dslindig>85880000000-8 52850328173-7 24070817010-4 50343525825-3</dslindig>
+        <dscritic>
+            <![CDATA[CONVENIO DEVE SER PAGO NA OPCAO  TRANSACOES - PAGAMENTOS  DO MENU DE SERVICOS]]>
+        </dscritic>
+        <nrdrecid>AAATAAABvAAAXg3AAZ</nrdrecid>
+        <fldebito>0</fldebito>
+        <dsorigem>INTERNET</dsorigem>
+        <idseqttl>1</idseqttl>
+        <dtagenda>01/11/2017</dtagenda>
+        <dsdebito>NAO EFETUADOS</dsdebito>
+        <dtmvtolt>31/10/2017</dtmvtolt>
+        <nrseqdig>177</nrseqdig>
+        <dshistor>508-PG.P/INTERNET</dshistor>
+    </chave>
+    <chave nrchave="INTERNET0#################000160030003679446AAATAAABvAAAXk6AAr">
+        <cdcooper>16</cdcooper>
+        <dscooper>VIACREDI AV</dscooper>
+        <nrdconta> 367.944.6</nrdconta>
+        <nmprimtl>COSME DOS SANTOS</nmprimtl>
+        <cdagenci>3</cdagenci>
+        <cdtiptra>2</cdtiptra>
+        <dstiptra/>
+        <fltipdoc/>
+        <dstransa/>
+        <vllanaut>68,1</vllanaut>
+        <dttransa>31/10/17</dttransa>
+        <hrtransa>69833</hrtransa>
+        <nrdocmto>180</nrdocmto>
+        <dslindig>86650000000-9 68100924860-7 80008900532-9 00102111725-2</dslindig>
+        <dscritic>
+            <![CDATA[FATURA JA ARRECADADA DIA 01/11/2017.]]>
+        </dscritic>
+        <nrdrecid>AAATAAABvAAAXk6AAr</nrdrecid>
+        <fldebito>0</fldebito>
+        <dsorigem>INTERNET</dsorigem>
+        <idseqttl>1</idseqttl>
+        <dtagenda>01/11/2017</dtagenda>
+        <dsdebito>NAO EFETUADOS</dsdebito>
+        <dtmvtolt>31/10/2017</dtmvtolt>
+        <nrseqdig>180</nrseqdig>
+        <dshistor>508-PG.P/INTERNET</dshistor>
+    </chave>
+    <chave nrchave="INTERNET0#################000160090003038920AAATAAABvAAAWBKAAO">
+        <cdcooper>16</cdcooper>
+        <dscooper>VIACREDI AV</dscooper>
+        <nrdconta> 303.892.0</nrdconta>
+        <nmprimtl>FABIANA RIEG BOSSE</nmprimtl>
+        <cdagenci>9</cdagenci>
+        <cdtiptra>2</cdtiptra>
+        <dstiptra/>
+        <fltipdoc/>
+        <dstransa/>
+        <vllanaut>71,08</vllanaut>
+        <dttransa>31/10/17</dttransa>
+        <hrtransa>73865</hrtransa>
+        <nrdocmto>199</nrdocmto>
+        <dslindig>86640000000-0 71080924860-6 80010176612-2 16002111725-6</dslindig>
+        <dscritic>
+            <![CDATA[FATURA JA ARRECADADA DIA 01/11/2017.]]>
+        </dscritic>
+        <nrdrecid>AAATAAABvAAAWBKAAO</nrdrecid>
+        <fldebito>0</fldebito>
+        <dsorigem>INTERNET</dsorigem>
+        <idseqttl>1</idseqttl>
+        <dtagenda>01/11/2017</dtagenda>
+        <dsdebito>NAO EFETUADOS</dsdebito>
+        <dtmvtolt>31/10/2017</dtmvtolt>
+        <nrseqdig>199</nrseqdig>
+        <dshistor>508-PG.P/INTERNET</dshistor>
+    </chave>
+    <chave nrchave="INTERNET0#################000160120000194751AAATAAABvAAAWGzAAC">
+        <cdcooper>16</cdcooper>
+        <dscooper>VIACREDI AV</dscooper>
+        <nrdconta>  19.475.1</nrdconta>
+        <nmprimtl>VILMAR MARTINS PIZZARIA ME</nmprimtl>
+        <cdagenci>12</cdagenci>
+        <cdtiptra>10</cdtiptra>
+        <dstiptra/>
+        <fltipdoc/>
+        <dstransa/>
+        <vllanaut>833,59</vllanaut>
+        <dttransa>31/10/17</dttransa>
+        <hrtransa>69974</hrtransa>
+        <nrdocmto>183</nrdocmto>
+        <dslindig>85800000008-9 33590328173-4 05072017304-0 35740251020-0</dslindig>
+        <dscritic>
+            <![CDATA[CONVENIO DEVE SER PAGO NA OPCAO  TRANSACOES - PAGAMENTOS  DO MENU DE SERVICOS]]>
+        </dscritic>
+        <nrdrecid>AAATAAABvAAAWGzAAC</nrdrecid>
+        <fldebito>0</fldebito>
+        <dsorigem>INTERNET</dsorigem>
+        <idseqttl>1</idseqttl>
+        <dtagenda>01/11/2017</dtagenda>
+        <dsdebito>NAO EFETUADOS</dsdebito>
+        <dtmvtolt>31/10/2017</dtmvtolt>
+        <nrseqdig>183</nrseqdig>
+        <dshistor>508-PG.P/INTERNET</dshistor>
+    </chave>
+</crrl736>

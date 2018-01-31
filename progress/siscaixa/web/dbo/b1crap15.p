@@ -87,6 +87,8 @@
                05/10/2015 - Adicionado condicao (crapscn.dtencemp  = ?) na leitura
                             da crapscn pois estava permitindo estornar alguns
                             tipos de DARF (Tiago/Elton #337771).
+                            
+               12/12/2017 - Alterar campo flgcnvsi por tparrecd. PRJ406-FGTS (Odirlei-AMcom)                    
 .............................................................................*/
    
 /*------------------------------------------------------------*/
@@ -244,7 +246,7 @@ PROCEDURE retorna-valores-fatura.
         END.
     
     /* Se for conv. SICREDI */
-    IF  crapcon.flgcnvsi THEN
+    IF  crapcon.tparrecd = 1 THEN
         DO:
             FIND FIRST crapscn WHERE crapscn.cdempcon  = crapcon.cdempcon         AND
                                      crapscn.cdsegmto  = STRING(crapcon.cdsegmto) AND

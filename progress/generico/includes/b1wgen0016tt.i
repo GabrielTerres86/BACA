@@ -2,7 +2,7 @@
 
    Programa: b1wgen0016tt.i                  
    Autor   : David
-   Data    : Abril/2008                         Ultima atualizacao: 21/09/2017
+   Data    : Abril/2008                         Ultima atualizacao: 04/01/2018
    Dados referentes ao programa:
 
    Objetivo  : Arquivo com variaveis utlizadas na BO b1wgen0016.p
@@ -49,6 +49,9 @@
 							
                21/09/2017 - Incluir campos referente a debaut na temp-table
                             tt-convenios_aceitos (David).
+
+               04/01/2018 - Incluido tt-tbpagto_tributos_trans_pend.
+                            PRJ406-FGTS(Odirlei-AMcom)   
 
 ..............................................................................*/
 
@@ -207,5 +210,26 @@ DEF TEMP-TABLE tt-tbpagto_darf_das_trans_pend NO-UNDO
   FIELD dtdebito             AS DATE
   FIELD idagendamento        AS DECIMAL
   FIELD idrowid              AS CHAR.  
+
+
+DEF TEMP-TABLE tt-tbpagto_tributos_trans_pend NO-UNDO
+  FIELD cdtransacao_pendente AS DECIMAL
+  FIELD cdcooper             AS DECIMAL
+  FIELD nrdconta             AS DECIMAL
+  FIELD tppagamento          AS DECIMAL     
+  FIELD dscod_barras         AS CHAR
+  FIELD dslinha_digitavel    AS CHAR
+  FIELD nridentificacao      AS CHAR
+  FIELD cdtributo            AS CHAR 
+  FIELD dtvalidade           AS DATE 
+  FIELD dtcompetencia        AS DATE 
+  FIELD nrseqgrde            AS DECIMAL  
+  FIELD nridentificador      AS CHAR
+  FIELD dsidenti_pagto       AS CHAR
+  FIELD vlpagamento          AS DECIMAL
+  FIELD dtdebito             AS DATE 
+  FIELD idagendamento        AS INTEGER
+  FIELD idrowid              AS CHAR.  
+
 
 /*............................................................................*/

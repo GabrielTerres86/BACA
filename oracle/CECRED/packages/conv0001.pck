@@ -159,7 +159,7 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
     RECORD(nmextcon VARCHAR2(25),
            cdempcon crapcon.cdempcon%type,
            cdsegmto crapcon.cdsegmto%type,
-           flgcnvsi VARCHAR2(3));
+           tparrecd crapcon.tparrecd%TYPE);
 
   TYPE typ_tab_empr_conve IS TABLE OF typ_reg_empr_conve INDEX BY PLS_INTEGER;
 
@@ -1140,10 +1140,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       SELECT nmextcon,
              cdempcon,
              cdsegmto,
-             flgcnvsi
+             tparrecd
         FROM crapcon
        WHERE crapcon.cdcooper = pr_cdcooper
-         AND crapcon.flgcnvsi = 1    /* TRUE =SCIREDI */
+         AND crapcon.tparrecd IN( 1,2) /* 1- SCIREDI, 2-BANCOOB */
          AND ((pr_cdempcon <> 0 AND
                crapcon.cdempcon = pr_cdempcon) OR
                crapcon.cdempcon > 0
@@ -1179,10 +1179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         pr_tab_empr_conve(vr_idx).nmextcon := rw_crapcon.nmextcon;
         pr_tab_empr_conve(vr_idx).cdempcon := rw_crapcon.cdempcon;
         pr_tab_empr_conve(vr_idx).cdsegmto := rw_crapcon.cdsegmto;
-        pr_tab_empr_conve(vr_idx).flgcnvsi := (CASE rw_crapcon.flgcnvsi
-                                                WHEN 1 THEN 'SIM'
-                                                WHEN 0 THEN 'NAO'
-                                               END);
+        pr_tab_empr_conve(vr_idx).tparrecd := rw_crapcon.tparrecd;
 
       END IF;
 

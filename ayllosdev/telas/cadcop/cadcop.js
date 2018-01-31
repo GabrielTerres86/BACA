@@ -334,6 +334,12 @@ function formataFormularioConsulta() {
     $('label[for="hrfimgps"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "35px" });
     $('label[for="hrlimsic"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
 
+    //Bancoob  
+    $('label[for="nrctabcb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" }); 
+    $('label[for="vltarbcb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" }); 
+    $('label[for="vlgarbcb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "240px" }); 
+    
+    
     $('label[for="qttmpsgr"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
     $('label[for="flgkitbv"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "180px" });
 
@@ -493,6 +499,11 @@ function formataFormularioConsulta() {
     $('#hrfimgps', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#hrlimsic', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
 
+    //Bancoob
+    $('#nrctabcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '10').setMask("INTEGER", "zz.zzz.zzz", "", "");
+    $('#vltarbcb', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '4').desabilitaCampo();    
+    $('#vlgarbcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '18').setMask("DECIMAL", "zzz.zzz.zzz.zz9,99", "", "");
+    
     $('#qttmpsgr', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
 
     $('#flgkitbv', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
@@ -2520,7 +2531,6 @@ function formataFormularioConsulta() {
         if (e.keyCode == 13 || e.keyCode == 9) {
 
             $(this).nextAll('.campo:first').focus();
-
             return false;
         }
 
@@ -2545,6 +2555,61 @@ function formataFormularioConsulta() {
 
     //Define ação para o campo hrlimsic
     $("#hrlimsic", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        $('input,select').removeClass('campoErro');
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $("#nrctabcb", "#frmConsulta5").focus();
+
+            return false;
+        }
+
+    });
+    
+    //Define ação para o campo nrctabcb
+    $("#nrctabcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        $('input,select').removeClass('campoErro');
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $("#vltarbcb", "#frmConsulta5").focus();
+
+            return false;
+        }
+
+    });
+    
+    //Define ação para o campo vltarbcb
+    $("#vltarbcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        $('input,select').removeClass('campoErro');
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+            // campo vlgarbcb será exibido apenas na cecred
+            if ($("#cdcooper", "#frmConsulta").val() == 3) {
+              $("#vlgarbcb", "#frmConsulta5").focus();
+            }else{
+              $("#qttmpsgr", "#frmConsulta5").focus();
+            }
+
+            return false;
+        }
+
+    });
+    
+    //Define ação para o campo vlgarbcb
+    $("#vlgarbcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
@@ -3405,6 +3470,12 @@ function alterarCooperativa() {
     var vltardrf = isNaN(parseFloat($('#vltardrf', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltardrf', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var qttmpsgr = $("#qttmpsgr", "#frmConsulta5").val();
 
+    //Bancoob
+    var nrctabcb = normalizaNumero($("#nrctabcb", "#frmConsulta5").val());
+    var vltarbcb = isNaN(parseFloat($('#vltarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
+    var vlgarbcb = isNaN(parseFloat($('#vlgarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlgarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
+    
+
     showMsgAguardo("Aguarde, alterando cooperativa ...");
 
     //Requisição para montar o form correspondente a opção escolhida
@@ -3537,6 +3608,9 @@ function alterarCooperativa() {
             taamaxer: taamaxer,
             vllimapv: vllimapv,
             vllimpag: vllimpag,
+            nrctabcb: nrctabcb,
+            vltarbcb: vltarbcb,
+            vlgarbcb: vlgarbcb,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {

@@ -4,9 +4,9 @@
  * CRIAÇÃO      	: Jaison Fernando
  * DATA CRIAÇÃO 	: Outubro/2016
  * OBJETIVO     	: Form da opcao F
- * ÚLTIMA ALTERAÇÃO : --/--/----
+ * ÚLTIMA ALTERAÇÃO : 25/01/2018
  * --------------
- * ALTERAÇÕES   	: 
+ * ALTERAÇÕES   	: 25/01/2018 - Incluido convenio de Bancoob. PRJ-406 FGTS (Odirlei-AMcom)
  * --------------
  */
 ?>
@@ -330,7 +330,16 @@
                     <td><input type="text" value="<?php echo $arrRegist['7562']['VLTTINSS']; ?>" <?php echo ($arrRegist['7562']['BG_GPS'] == 2 ? 'class="clsDestacar"' : ''); ?> /></td>
                     <td><input type="text" value="<?php echo $arrRegist['7564']['DIF_RS_VLTTINSS']; ?>" /></td>
                     <td><input type="text" value="<?php echo $arrRegist['7564']['DIF_PC_VLTTINSS']; ?>" /></td>
+                </tr>                
+                <tr><!-- PRJ406-FGTS Odirlei(AMcom) -->
+                    <td>CONVÊNIOS</td>
+                    <td><input type="text" value="<?php echo $arrRegist['7564']['VLCONVEN']; ?>" <?php echo ($arrRegist['7564']['BG_CONVENIOS'] == 4 ? 'class="clsDestacar"' : ''); ?> /></td>
+                    <td><input type="text" value="<?php echo $arrRegist['7562']['VLCONVEN']; ?>" <?php echo ($arrRegist['7562']['BG_CONVENIOS'] == 2 ? 'class="clsDestacar"' : ''); ?> /></td>
+                    <td><input type="text" value="<?php echo $arrRegist['7564']['DIF_RS_VLCONVEN']; ?>" /></td>
+                    <td><input type="text" value="<?php echo $arrRegist['7564']['DIF_PC_VLCONVEN']; ?>" /></td>
                 </tr>
+                
+                
                 <?php
             // RESULTADO
             } else {

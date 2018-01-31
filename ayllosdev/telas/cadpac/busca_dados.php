@@ -9,6 +9,8 @@
  * --------------
  *				  08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  *
+ *                19/12/2017 - Incluido campos FGTS. PRJ406 -FGTS(Odirlei-AMcom)
+ *
  *                03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  */
 
@@ -66,6 +68,7 @@
         echo "$('#flgdsede', '#frmCadpac').val('".getByTagName($registros->tags,'FLGDSEDE')."');";
         echo "$('#cdagepac', '#frmCadpac').val('".getByTagName($registros->tags,'CDAGEPAC')."');";
         echo "$('#flgutcrm', '#frmCadpac').val('".getByTagName($registros->tags,'FLGUTCRM')."');";
+        echo "$('#cdagefgt', '#frmCadpac').val('".getByTagName($registros->tags,'CDAGEFGT')."');";
         echo "$('#dsendcop', '#frmCadpac').val('".getByTagName($registros->tags,'DSENDCOP')."');";
         echo "$('#nrendere', '#frmCadpac').val('".getByTagName($registros->tags,'NRENDERE')."');";
         echo "$('#nmbairro', '#frmCadpac').val('".getByTagName($registros->tags,'NMBAIRRO')."');";
@@ -81,6 +84,8 @@
         echo "$('#dsinform3', '#frmCadpac').val('".getByTagName($registros->tags,'DSINFORM3')."');";
         echo "$('#hhsicini', '#frmCadpac').val('".getByTagName($registros->tags,'HHSICINI')."');";
         echo "$('#hhsicfim', '#frmCadpac').val('".getByTagName($registros->tags,'HHSICFIM')."');";
+        echo "$('#hhini_bancoob', '#frmCadpac').val('".getByTagName($registros->tags,'HHINI_BANCOOB')."');";
+        echo "$('#hhfim_bancoob', '#frmCadpac').val('".getByTagName($registros->tags,'HHFIM_BANCOOB')."');";
         echo "$('#hhtitini', '#frmCadpac').val('".getByTagName($registros->tags,'HHTITINI')."');";
         echo "$('#hhtitfim', '#frmCadpac').val('".getByTagName($registros->tags,'HHTITFIM')."');";
         echo "$('#hhcompel', '#frmCadpac').val('".getByTagName($registros->tags,'HHCOMPEL')."');";
@@ -97,6 +102,7 @@
         echo "$('#hhcpafim', '#frmCadpac').val('".getByTagName($registros->tags,'HHCPAFIM')."');";
         echo "$('#hhlimcan', '#frmCadpac').val('".getByTagName($registros->tags,'HHLIMCAN')."');";
         echo "$('#hhsiccan', '#frmCadpac').val('".getByTagName($registros->tags,'HHSICCAN')."');";
+        echo "$('#hhcan_bancoob', '#frmCadpac').val('".getByTagName($registros->tags,'HHCAN_BANCOOB')."');";
         echo "$('#nrtelvoz', '#frmCadpac').val('".getByTagName($registros->tags,'NRTELVOZ')."');";
         echo "$('#nrtelfax', '#frmCadpac').val('".getByTagName($registros->tags,'NRTELFAX')."');";
         echo "$('#qtddaglf', '#frmCadpac').val('".getByTagName($registros->tags,'QTDDAGLF')."');";

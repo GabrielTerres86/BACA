@@ -155,6 +155,9 @@
     $taamaxer = (isset($_POST["taamaxer"])) ? $_POST["taamaxer"] : 0;
     $vllimapv = (isset($_POST["vllimapv"])) ? $_POST["vllimapv"] : 0;
     $vllimpag = (isset($_POST["vllimpag"])) ? $_POST["vllimpag"] : 0;
+    $nrctabcb = (isset($_POST["nrctabcb"])) ? $_POST["nrctabcb"] : 0;
+    $vltarbcb = (isset($_POST["vltarbcb"])) ? $_POST["vltarbcb"] : 0;
+    $vlgarbcb = (isset($_POST["vlgarbcb"])) ? $_POST["vlgarbcb"] : 0;
 
     validaDados();
 
@@ -288,6 +291,9 @@
     $xml     .="       <cdsinfmg>".$cdsinfmg."</cdsinfmg>";
     $xml     .="       <taamaxer>".$taamaxer."</taamaxer>";
     $xml     .="       <vllimapv>".$vllimapv."</vllimapv>";
+    $xml     .="       <nrctabcb>".$nrctabcb."</nrctabcb>";
+    $xml     .="       <vltarbcb>".$vltarbcb."</vltarbcb>";
+    $xml     .="       <vlgarbcb>".$vlgarbcb."</vlgarbcb>";    
     $xml     .="       <vllimpag>".$vllimpag."</vllimpag>";    
     $xml       .= "  </Dados>";
     $xml       .= "</Root>";

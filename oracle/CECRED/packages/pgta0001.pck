@@ -630,6 +630,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --                          para proc_message (Carlos)
 --
 --             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
+--
+--             11/12/2017 - Alterar campo flgcnvsi por tparrecd.
+--                          PRJ406-FGTS (Odirlei-AMcom)   
+--
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -2660,7 +2664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            IF TRIM(vr_des_linha) IS NULL THEN
              CONTINUE;
            END IF;
-           
+
            -- Tamanho da linha fora do padrão
            IF LENGTH(vr_des_linha) <> 241 THEN
              vr_des_erro := 'Tamanho da linha divergente do padrao CNAB240! Linha: ' || vr_idlinha;
@@ -3311,8 +3315,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
        -- Se o arquivo estiver aberto
        IF  utl_file.IS_OPEN(vr_ind_arquivo) THEN
-         -- Fechar o arquivo
-         GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo); --> Handle do arquivo aberto;
+       -- Fechar o arquivo
+       GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo); --> Handle do arquivo aberto;
        END  IF;
 
        -- Caso não tenha Detalhe Rejeita Arquivo
@@ -3335,9 +3339,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        
        -- Verificar se houve erro nas validações do arquivo
        IF vr_tab_err_arq.COUNT > 0 THEN
-         RAISE vr_exc_saida;
+           RAISE vr_exc_saida;
        END IF;
-       
+
        -- Rotina para mover o arquivo processado para a pasta
        -- <cooperativa>/salvar
 
@@ -3873,7 +3877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                  END IF;
               ELSE
                 
-                  CASE nvl(vr_dscritic,' ')
+                 CASE nvl(vr_dscritic,' ')
                    WHEN 'Data do agendamento deve ser um dia util.'     THEN vr_cdocorre := '0B';
                    WHEN 'Titulo vencido.'                               THEN vr_cdocorre := '0C';
                    WHEN 'Agendamento nao permitido apos vencimento.'    THEN vr_cdocorre := '0D';
@@ -3888,7 +3892,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                    WHEN 'Valor nao permitido para agendamento.'         THEN vr_cdocorre := '0J'; /* VR Boleto */
                    WHEN '592 - Bloqueto nao encontrado.'                THEN vr_cdocorre := '0K'; /* bloqueto não encontrado */
                    WHEN '594 - Bloqueto ja processado.'                 THEN vr_cdocorre := '0L'; /* bloqueto já pago */
-                   WHEN 'Dados incompativeis. Pagamento nao realizado!' THEN vr_cdocorre := '0M'; /* codigo de barras fraudulento */
+                    WHEN 'Dados incompativeis. Pagamento nao realizado!' THEN vr_cdocorre := '0M'; /* codigo de barras fraudulento */
                    ELSE vr_cdocorre := '99';
                  END CASE;
                  
@@ -3997,7 +4001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   vr_dscritic := 'Erro ao inserir crapdpt: '||SQLERRM;
                   RAISE vr_exc_critico;
             END;
-            
+
             -- Atualizar crapdpt original com o mesmo IDLANCTO
             BEGIN
               UPDATE crapdpt dpt
@@ -4176,7 +4180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        WHERE crapcon.cdcooper = pr_cdcooper
          AND crapcon.cdempcon = pr_cdempcon
          AND crapcon.cdsegmto = pr_cdsegmto
-         AND crapcon.flgcnvsi = 0; -- True
+         AND crapcon.tparrecd = 1; -- Sicredi
 
       -- Buscas dados da capa de lote
       CURSOR cr_craplot(pr_cdcooper craplot.cdcooper%TYPE,
@@ -4323,31 +4327,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                               pr_dtmvtolt  => pr_dtmvtolt ,
                               pr_cdagenci  => pr_cdagenci ,
                               pr_nrdolote  => vr_nrdolote );
-             FETCH cr_craplot INTO rw_craplot;
-             IF cr_craplot%NOTFOUND THEN
+         FETCH cr_craplot INTO rw_craplot;
+         IF cr_craplot%NOTFOUND THEN
                CLOSE cr_craplot;
                -- se não localizou, deve criar o registro de lote
-               BEGIN
-                 INSERT INTO craplot
-                            (cdcooper,
-                             cdagenci,
-                             dtmvtolt,
-                             cdbccxlt,
-                             nrdolote,
-                             nrdcaixa,
-                             cdoperad,
-                             cdopecxa,
-                             tplotmov)
-                             VALUES
-                            (pr_cdcooper,
-                             pr_cdagenci,
-                             pr_dtmvtolt,
-                             100,          --cdbccxlt
-                             vr_nrdolote,
-                             pr_nrdcaixa,
-                             pr_cdoperad,
-                             pr_cdoperad,
-                             12)           --tplotmov
+            BEGIN
+               INSERT INTO craplot
+                  (cdcooper,
+                   cdagenci,
+                   dtmvtolt,
+                   cdbccxlt,
+                   nrdolote,
+                   nrdcaixa,
+                   cdoperad,
+                   cdopecxa,
+                   tplotmov)
+                   VALUES
+                  (pr_cdcooper,
+                   pr_cdagenci,
+                   pr_dtmvtolt,
+                   100,          --cdbccxlt
+                   vr_nrdolote,
+                   pr_nrdcaixa,
+                   pr_cdoperad,
+                   pr_cdoperad,
+                   12)           --tplotmov
                    RETURNING dtmvtolt,
                              cdagenci,
                              cdbccxlt,
@@ -4370,13 +4374,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                          rw_craplot.qtcompln,
                          rw_craplot.nrseqdig,
                          rw_craplot.rowid;
-               EXCEPTION
-                 WHEN OTHERS THEN
-                   -- Gerar erro 0 com critica montada com o erro do insert
-                   vr_dscritic := 'Erro ao inserir na CRAPLOT : ' || SQLERRM;
-                   -- Levantar excecao
-           RAISE vr_exc_saida;
-               END;
+            EXCEPTION
+               WHEN OTHERS THEN
+                  -- Gerar erro 0 com critica montada com o erro do insert
+                  vr_dscritic := 'Erro ao inserir na CRAPLOT : ' || SQLERRM;
+                  -- Levantar excecao
+                  RAISE vr_exc_saida;
+            END;
  
              ELSE
                CLOSE cr_craplot;
@@ -4397,7 +4401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            END;
 
          END LOOP;
-        
+
          vr_nmprepos := ' ';
          vr_nrcpfpre := 0;
 
@@ -4430,7 +4434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                 ,pr_tpcptdoc => 2              --> Tipo de captura do documento
                                                 ,pr_idtitdda => 0              --> Identificador do titulo no DDA
                                                 ,pr_idastcjt => vr_idastcjt    --> Indicador de Assinatura Conjunta
-												                        ,pr_cdctrlcs => pr_cdctrlcs	   --> Controle de consulta NPC
+												,pr_cdctrlcs => pr_cdctrlcs	   --> Controle de consulta NPC
                                                 ,pr_cdcritic => vr_cdcritic    --> Codigo de Critica
                                                 ,pr_dscritic => vr_dscritic);  --> Descricao de Critica
 
@@ -4450,7 +4454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
               END IF;
          ELSE 
            
-           BEGIN
+         BEGIN
             INSERT INTO craplau
                (cdcooper
                ,nrdconta
@@ -5080,7 +5084,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
-      END IF;
+        END IF;
       --Fechar Cursor
       IF cr_email%ISOPEN THEN
         CLOSE cr_email;
@@ -5655,7 +5659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
       -- Escrever Erro Apresentado no Arquivo
       GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
-      
+
       -- Gerar o LOG de arquivo processado com sucesso
       PGTA0001.pc_gera_log_arq_pgto(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
@@ -6083,7 +6087,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           '3'                                                                                                            || -- 03.4J99 - Tipo Registro
           GENE0002.fn_mask(vr_nr_sequencial,'99999')                                                                     || -- 04.4J99 - Nro. Sequencial Reg. no Lote
           'J'                                                                                                            || -- 05.4J99 - Codigo Segmento Detalhe
- 	      GENE0002.fn_mask(rw_crapdpt.cdtipmvt,'9')                                                                      || -- 06.4J99 - Tipo de Movimento
+ 	        GENE0002.fn_mask(rw_crapdpt.cdtipmvt,'9')                                                                      || -- 06.4J99 - Tipo de Movimento
           GENE0002.fn_mask(rw_crapdpt.cdinsmvt,'99')                                                                     || -- 07.4J99 - Código da Instrução p/ Movimento          
           '99'                                                                                                           || -- 08.4J99 - Codigo de Barra
           GENE0002.fn_mask(rw_crapdpt.nrseqaut,'9999999999')                                                             || -- 09.4J99 - Código de Autenticação
@@ -6200,58 +6204,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     --------- SE FOR ORIGEM INTERNET BANKING, ABRE O ARQUIVO, GRAVA NO CLOB E DEVOLVE NO OUT.
     -- Verificamos se o cooperado possui retorno pela Internet
     IF rw_crapcpt.idretorn = 1 THEN -- Retorno Internet
-      IF pr_idorigem = 3 THEN     -- INTERNET
-        -- Define o diretório do arquivo
-        vr_utlfileh := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
-                                            ,pr_cdcooper => pr_cdcooper
-                                            ,pr_nmsubdir => '/arq') ;
+    IF pr_idorigem = 3 THEN     -- INTERNET
+      -- Define o diretório do arquivo
+      vr_utlfileh := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+                                          ,pr_cdcooper => pr_cdcooper
+                                          ,pr_nmsubdir => '/arq') ;
 
-        -- Abre arquivo em modo de leitura (R)
-        GENE0001.pc_abre_arquivo(pr_nmdireto => vr_utlfileh         --> Diretório do arquivo
-                                ,pr_nmarquiv => vr_nmarquiv         --> Nome do arquivo
-                                ,pr_tipabert => 'R'                 --> Modo de abertura (R,W,A)
-                                ,pr_utlfileh => vr_ind_arquivo      --> Handle do arquivo aberto
-                                ,pr_des_erro => vr_dscritic);       --> Erro
-        IF vr_dscritic IS NOT NULL THEN
-          -- Levantar Excecao
-          RAISE vr_exc_erro;
-        END IF;
+      -- Abre arquivo em modo de leitura (R)
+      GENE0001.pc_abre_arquivo(pr_nmdireto => vr_utlfileh         --> Diretório do arquivo
+                              ,pr_nmarquiv => vr_nmarquiv         --> Nome do arquivo
+                              ,pr_tipabert => 'R'                 --> Modo de abertura (R,W,A)
+                              ,pr_utlfileh => vr_ind_arquivo      --> Handle do arquivo aberto
+                              ,pr_des_erro => vr_dscritic);       --> Erro
+      IF vr_dscritic IS NOT NULL THEN
+        -- Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
 
-        -- Inicializar o CLOB
-        dbms_lob.createtemporary(pr_dsarquiv, true);
-        dbms_lob.open(pr_dsarquiv, dbms_lob.lob_readwrite);
+      -- Inicializar o CLOB
+      dbms_lob.createtemporary(pr_dsarquiv, true);
+      dbms_lob.open(pr_dsarquiv, dbms_lob.lob_readwrite);
 
-        gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
-                               ,pr_texto_completo => vr_arq_tmp
-                               ,pr_texto_novo     => '<retorno><arquivo>' || vr_nmarquiv || '</arquivo>');
+      gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
+                             ,pr_texto_completo => vr_arq_tmp
+                             ,pr_texto_novo     => '<retorno><arquivo>' || vr_nmarquiv || '</arquivo>');
 
-        --Percorrer cada linha do arquivo
-        LOOP
-          BEGIN
-            -- Verifica se o arquivo está aberto
-            IF  utl_file.IS_OPEN(vr_ind_arquivo) THEN
-              -- Le os dados em pedaços e escreve no Clob
-              gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquivo --> Handle do arquivo aberto
-                                          ,pr_des_text => vr_setlinha); --> Texto lido
+      --Percorrer cada linha do arquivo
+      LOOP
+        BEGIN
+          -- Verifica se o arquivo está aberto
+          IF  utl_file.IS_OPEN(vr_ind_arquivo) THEN
+            -- Le os dados em pedaços e escreve no Clob
+            gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquivo --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto lido
 
-              gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
-                                     ,pr_texto_completo => vr_arq_tmp
-                                     ,pr_texto_novo     => '<linha>' || vr_setlinha || '</linha>');
-            END IF;
-          EXCEPTION
-            WHEN NO_DATA_FOUND THEN -- Quando chegar na ultima linha do arquivo
-               EXIT;
-          END;
+            gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
+                                   ,pr_texto_completo => vr_arq_tmp
+                                   ,pr_texto_novo     => '<linha>' || vr_setlinha || '</linha>');
+          END IF;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN -- Quando chegar na ultima linha do arquivo
+             EXIT;
+        END;
 
-        END LOOP;
+      END LOOP;
 
-        -- Fechar o arquivo
-        GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
+      -- Fechar o arquivo
+      GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
 
-        gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
-                               ,pr_texto_completo => vr_arq_tmp
-                               ,pr_texto_novo     => '</retorno>'
-                               ,pr_fecha_xml      => TRUE);
+      gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
+                             ,pr_texto_completo => vr_arq_tmp
+                             ,pr_texto_novo     => '</retorno>'
+                             ,pr_fecha_xml      => TRUE);
 
         -- Gerar o LOG do erro que aconteceu durante o processamento
         PGTA0001.pc_gera_log_arq_pgto(pr_cdcooper => pr_cdcooper
@@ -6315,13 +6319,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
           RAISE vr_exc_erro;
-        END IF;
-        
+    END IF;
+
         pr_dsinform := gene0007.fn_caract_acento('O arquivo de retorno foi disponibilizado no FTP.');
         
         -- Gerar o LOG do erro que aconteceu durante o processamento
         PGTA0001.pc_gera_log_arq_pgto(pr_cdcooper => pr_cdcooper
-                                     ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrdconta => pr_nrdconta
                                      ,pr_nrconven => pr_nrconven
                                      ,pr_tpmovimento => 2 -- Movimento de RETORNO
                                      ,pr_nrremret => pr_nrremret -- Numero da Remessa do Cooperado

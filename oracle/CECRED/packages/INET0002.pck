@@ -69,6 +69,29 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
 	  TABLE OF typ_reg_darf_das
 		INDEX BY BINARY_INTEGER;
 
+  -- PL/TABLE que contem os dados de pagamentos de tributos
+  TYPE typ_reg_tributos IS
+    RECORD(cdtransacao_pendente tbpagto_tributos_trans_pend.cdtransacao_pendente%TYPE, 
+           cdcooper             tbpagto_tributos_trans_pend.cdcooper%TYPE, 
+           nrdconta             tbpagto_tributos_trans_pend.nrdconta%TYPE, 
+           tppagamento          tbpagto_tributos_trans_pend.tppagamento%TYPE, 
+           dscod_barras         tbpagto_tributos_trans_pend.dscod_barras%TYPE, 
+           dslinha_digitavel    tbpagto_tributos_trans_pend.dslinha_digitavel%TYPE, 
+           nridentificacao      tbpagto_tributos_trans_pend.nridentificacao%TYPE, 
+           cdtributo            tbpagto_tributos_trans_pend.cdtributo%TYPE, 
+           dtvalidade           tbpagto_tributos_trans_pend.dtvalidade%TYPE, 
+           dtcompetencia        tbpagto_tributos_trans_pend.dtcompetencia%TYPE, 
+           nrseqgrde            tbpagto_tributos_trans_pend.nrseqgrde%TYPE, 
+           nridentificador      tbpagto_tributos_trans_pend.nridentificador%TYPE, 
+           dsidenti_pagto       tbpagto_tributos_trans_pend.dsidenti_pagto%TYPE, 
+           vlpagamento          tbpagto_tributos_trans_pend.vlpagamento%TYPE, 
+           dtdebito             tbpagto_tributos_trans_pend.dtdebito%TYPE, 
+           idagendamento        tbpagto_tributos_trans_pend.idagendamento%TYPE,
+           idrowid              VARCHAR2(200));
+    
+  TYPE typ_tab_tributos IS
+	  TABLE OF typ_reg_tributos
+		INDEX BY BINARY_INTEGER;  
     
     --> Temptable para armazenar titulares com acesso ao internet bank - antigo b1wnet0002.i-tt-titulares.
     TYPE typ_rec_titulares
@@ -732,6 +755,67 @@ PROCEDURE pc_corrigi_limite_preposto(pr_cdcooper IN VARCHAR2
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);    
                                                                                               
+                                 
+--> Rotina responsavel pela criacao de transacoes pendentes de pagamentos de tributos
+  PROCEDURE pc_cria_trans_pend_tributos(pr_cdcooper  IN crapcop.cdcooper%TYPE                 --> Código da cooperativa
+                                       ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                 --> Numero do Caixa
+                                       ,pr_cdoperad  IN crapope.cdoperad%TYPE                 --> Codigo do Operados
+                                       ,pr_nmdatela  IN craptel.nmdatela%TYPE                 --> Nome da Tela
+                                       ,pr_cdagenci  IN crapage.cdagenci%TYPE                 --> Código do PA
+                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE                 --> Número da conta
+                                       ,pr_idseqttl  IN crapttl.idseqttl%TYPE                 --> Sequencial de titularidade
+                                       ,pr_nrcpfrep  IN crapopi.nrcpfope%TYPE                 --> Numero do cpf do representante legal
+                                       ,pr_cdcoptfn  IN tbgen_trans_pend.cdcoptfn%TYPE        --> Cooperativa do Terminal
+                                       ,pr_cdagetfn  IN tbgen_trans_pend.cdagetfn%TYPE        --> Agencia do Terminal
+                                       ,pr_nrterfin  IN tbgen_trans_pend.nrterfin%TYPE        --> Numero do Terminal Financeiro
+                                       ,pr_nrcpfope  IN NUMBER								                --> CPF do operador PJ
+                                       ,pr_idorigem  IN INTEGER							                  --> Canal de origem da operação
+                                       ,pr_dtmvtolt  IN DATE                                  --> Data de Movimento Atual
+                                       ,pr_tpdaguia  IN INTEGER							                  --> Tipo da guia (3 – FGTS / 4 – DAE)
+                                       ,pr_tpcaptur  IN INTEGER							                  --> Tipo de captura da guia (1 – Código Barras / 2 – Manual)
+                                       ,pr_lindigi1  IN NUMBER							                  --> Primeiro campo da linha digitável da guia
+                                       ,pr_lindigi2  IN NUMBER							                  --> Segundo campo da linha digitável da guia
+                                       ,pr_lindigi3  IN NUMBER							                  --> Terceiro campo da linha digitável da guia
+                                       ,pr_lindigi4  IN NUMBER 							                  --> Quarto campo da linha digitável da guia
+                                       ,pr_cdbarras  IN VARCHAR2 						                  --> Código de barras da guia
+                                       ,pr_dsidepag  IN VARCHAR2 						                  --> Descrição da identificação do pagamento
+                                       ,pr_vlrtotal  IN NUMBER 							                  --> Valor total do pagamento da guia                                      
+                                       ,pr_dtapurac  IN DATE 								                  --> Período de apuração da guia
+                                       ,pr_nrsqgrde  IN NUMBER                                --> Numero da guia GRDE
+                                       ,pr_nrcpfcgc  IN VARCHAR2 						                  --> CPF/CNPJ da guia
+                                       ,pr_cdtribut  IN VARCHAR2 						                  --> Código de tributação da guia
+                                       ,pr_identifi  IN VARCHAR2 						                  --> Número de identificacao CNPJ/CPF/CEI
+                                       ,pr_dtvencto  IN DATE 								                  --> Data de vencimento da guia
+                                       ,pr_identificador IN VARCHAR2                          --> Identificador                                       
+                                       ,pr_dtagenda  IN DATE 								                  --> Data de agendamento
+                                       ,pr_idastcjt  IN crapass.idastcjt%TYPE                 --> Indicador de Assinatura Conjunta
+                                       ,pr_idagenda  IN tbpagto_trans_pend.idagendamento%TYPE --> Indica se o pagamento foi agendado (1 – Online / 2 – Agendamento)
+                                       ,pr_tpleitur  IN NUMBER                                --> Tipo da leitura do documento (1 – Leitora de Código de Barras / 2 - Manual)
+                                       ,pr_cdcritic OUT INTEGER 						                  --> Código do erro
+                                       ,pr_dscritic OUT VARCHAR2);   			                    --> Descriçao do erro                                        
+                                       
+
+  PROCEDURE pc_ret_trans_pend_trib( pr_cdcooper IN crapcop.cdcooper%TYPE              --> Código da Cooperativa
+                                   ,pr_cdoperad IN crapope.cdoperad%TYPE              --> Código do Operador
+                                   ,pr_nmdatela IN craptel.nmdatela%TYPE              --> Nome da Tela
+                                   ,pr_idorigem IN INTEGER                            --> Identificador de Origem 
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE              --> Número da Conta
+                                   ,pr_idseqttl IN crapttl.idseqttl%TYPE              --> Titular da Conta
+                                   ,pr_cdtrapen IN VARCHAR2                           --> Codigo da Transacao
+                                   ,pr_cdcritic OUT INTEGER                           --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2                          --> Descrição da crítica
+                                   ,pr_tab_tributos OUT INET0002.typ_tab_tributos);   --> Tabela com os dados de tributos
+                                   
+  PROCEDURE pc_ret_trans_pend_trib_car( pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                       ,pr_cdoperad IN crapope.cdoperad%TYPE --> Código do Operador
+                                       ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da Tela
+                                       ,pr_idorigem IN INTEGER               --> Identificador de Origem 
+                                       ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                                       ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Titular da Conta
+                                       ,pr_cdtrapen IN VARCHAR2              --> Codigo da Transacao
+                                       ,pr_clobxmlc OUT CLOB                 --> XML com informações de LOG
+                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+														 		       ,pr_dscritic OUT VARCHAR2);         --> Descrição da crítica                                       
                                  
 END INET0002;
 /
@@ -2006,6 +2090,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       WHERE  tbpagto_darf_das_trans_pend.cdtransacao_pendente = pr_cddoitem;
       rw_tbpagto_darf_das_trans_pend cr_tbpagto_darf_das_trans_pend%ROWTYPE;
 			
+      --Tipo Transacao 14/15 - FGTS/DAE
+      CURSOR cr_tbtrib_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+      SELECT trib.tppagamento
+            ,trib.dsidenti_pagto
+            ,trib.idagendamento
+            ,trib.dtdebito
+            ,trib.vlpagamento
+      FROM   tbpagto_tributos_trans_pend trib
+      WHERE  trib.cdtransacao_pendente = pr_cddoitem;
+      rw_tbtrib_trans_pend cr_tbtrib_trans_pend%ROWTYPE;
+      
       --Tipo Transacao 12 (Desconto de Cheque)
       CURSOR cr_tbdscc_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
         SELECT SUM(dscc.vlcheque) vltotchq
@@ -2100,6 +2195,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_cdcooper crapcop.cdcooper%TYPE;
       vr_vlresgat VARCHAR2(100);      
       vr_saldo_rdca APLI0001.typ_tab_saldo_rdca; --Tabela para o saldo da aplicação
+      vr_dstransa   VARCHAR2(80);
+
 
       --Variaveis de Erro
       vr_cdcritic crapcri.cdcritic%type;
@@ -2653,6 +2750,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 											TO_CHAR(rw_tbrecarga_trans_pend.vlrecarga,'fm9g999g990d00') || 
 											'</b>.<br>';
 											
+			  WHEN pr_tptransa IN(14,15) THEN -- Pagamento FGTS/DAE
+          
+          --> definir descricao
+          vr_dstransa := NULL;
+          IF pr_tptransa = 14 THEN
+            vr_dstransa := 'FGTS';
+          ELSIF pr_tptransa = 15 THEN
+            vr_dstransa := 'DAE';
+          END IF;
+          OPEN cr_tbtrib_trans_pend(pr_cddoitem => pr_cdtranpe);
+          FETCH cr_tbtrib_trans_pend INTO rw_tbtrib_trans_pend;
+          IF cr_tbtrib_trans_pend%NOTFOUND THEN
+            --Fechar Cursor
+            CLOSE cr_tbtrib_trans_pend;      
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Registro de Pagamento de '||vr_dstransa||' pendente nao encontrado.';
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          ELSE
+            --Fechar Cursor
+            CLOSE cr_tbtrib_trans_pend;
+          END IF;
+
+          pr_dsdmensg := pr_dsdmensg || 
+                        '<b>Pagamento de ' || vr_dstransa || '</b>' ||
+                        (CASE WHEN TRIM(rw_tbtrib_trans_pend.dsidenti_pagto) IS NOT NULL THEN
+                         ' para ' || '<b>' || rw_tbtrib_trans_pend.dsidenti_pagto || '</b>' ELSE '' END) ||
+                        (CASE WHEN rw_tbtrib_trans_pend.idagendamento = 1 THEN ' com débito em ' ELSE ' agendado para ' END) ||
+                        '<b>' || TO_CHAR(rw_tbtrib_trans_pend.dtdebito,'DD/MM/RRRR') || '</b>' || ' no valor de <b>R$ ' ||
+                        TO_CHAR(rw_tbtrib_trans_pend.vlpagamento,'fm999g999g990d00') || '</b>.<br>';
+             
 			  WHEN pr_tptransa = 16 THEN -- SMS cobrança          
           pr_dsdmensg := pr_dsdmensg || 'Adesão ao serviço de SMS de Cobrança';
         WHEN pr_tptransa = 17 THEN -- Cancelamento SMS cobrança          
@@ -5290,9 +5418,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --            17 - Cancelamento de Contrato SMS Cobrança
   --            18 - Desconto de Cheque
   --            19 - Folha Pagamento (Cooperativa)
+  --            20 - Pagamento de tributos FGTS
+  --            21 - Pagamento de tributos DAE
   --
   -- Alteração : 10/10/2017 - Adicionar o horario Folha Pagamento (Coop) - 19
   --                          (Douglas - Chamado 707072)
+  --
+  --             26/12/2017 - Adicionar validação FGTS/DAE. PRJ406 - FGTS(Odirlei-AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -5881,6 +6013,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         FROM tbdscc_trans_pend
        WHERE cdtransacao_pendente = pr_cddoitem;
       
+      --Tipo Transacao 14/15 (FGTS/DAE)
+      CURSOR cr_tbtrib_pend (pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+      SELECT trib.*
+      FROM   tbpagto_tributos_trans_pend trib
+      WHERE  trib.cdtransacao_pendente = pr_cddoitem
+        AND  trib.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+      rw_tbtrib_pend cr_tbtrib_pend%ROWTYPE;
+      
       --Cadastro de Transferencias pela Internet.
       CURSOR cr_crapcti( pr_cdcooper IN crapcti.cdcooper%TYPE,
                          pr_nrdconta IN crapcti.nrdconta%TYPE,
@@ -6202,6 +6342,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_dtrecarga VARCHAR2(200);
       vr_dttransa  VARCHAR2(200);
       vr_nmproduto VARCHAR2(200);
+      
+      --> Tributos
+      vr_dsidenti_pagto   tbpagto_tributos_trans_pend.dsidenti_pagto%TYPE;
+      vr_nridentificacao  tbpagto_tributos_trans_pend.nridentificacao%TYPE;
+      vr_nridentificador  tbpagto_tributos_trans_pend.nridentificador%TYPE;
+      vr_nrseqgrde        tbpagto_tributos_trans_pend.nrseqgrde%TYPE;            
+      vr_nrdocdae         tbpagto_tributos_trans_pend.nridentificador%TYPE;
       
       --Variavel de indice
       vr_ind NUMBER := 0;
@@ -7534,6 +7681,66 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
               vr_nmproduto := rw_tbrecarga_trans_pend.nmproduto;
               vr_vlasomar := rw_tbrecarga_trans_pend.vlrecarga;
               
+            WHEN vr_tptranpe IN(14,15) THEN -- FGTS/DAE
+               --> Buscar detalhes transacoes pendente
+               OPEN cr_tbtrib_pend (pr_cddoitem => vr_cdtranpe);
+               FETCH cr_tbtrib_pend INTO rw_tbtrib_pend;
+               IF cr_tbtrib_pend%NOTFOUND THEN
+                  --Fechar Cursor
+                  CLOSE cr_tbtrib_pend;
+                  CONTINUE;
+               ELSE
+                  --Fechar Cursor
+                  CLOSE cr_tbtrib_pend;
+				          --Controle de paginação
+                  vr_qttotpen := vr_qttotpen + 1;
+                  IF ((vr_qttotpen <= pr_nriniseq) OR
+                    (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    CONTINUE;
+                  END IF;	
+               END IF;
+               
+               --Valor a somar  
+               vr_vlasomar := rw_tbtrib_pend.vlpagamento;
+               --Variaveis do resumo                   
+               vr_dsvltran := TO_CHAR(rw_tbtrib_pend.vlpagamento,'fm999g999g990d00');                   
+               vr_dsdtefet := CASE 
+                                WHEN rw_tbtrib_pend.idagendamento = 1 THEN 'Nesta Data' 
+                                ELSE TO_CHAR(rw_tbtrib_pend.dtdebito,'DD/MM/RRRR')  -- Data Efetivacao     
+                              END;             
+               IF vr_tptranpe = 14 THEN
+                 vr_dsdescri := 'Pagamento de FGTS';
+                 vr_dstptran := 'Pagamento de FGTS';
+               ELSIF vr_tptranpe = 15 THEN  
+                 
+                 vr_dsdescri := 'Pagamento de DAE';
+                 vr_dstptran := 'Pagamento de DAE';
+               END IF;
+               
+               -- Agendamento
+               vr_dsagenda := CASE 
+                                WHEN rw_tbtrib_pend.idagendamento = 1 THEN 'NÃO' 
+                                ELSE 'SIM' 
+                              END; 
+               
+               vr_dsidenti_pagto    := rw_tbtrib_pend.dsidenti_pagto;     -- Identificação do Pagamento 
+               vr_dscod_barras      := rw_tbtrib_pend.dscod_barras  ;     -- Código de Barras    
+               vr_dslinha_digitavel := rw_tbtrib_pend.dslinha_digitavel ; -- Linha Digitável    
+               vr_vlrtotal          := rw_tbtrib_pend.vlpagamento  ;      -- Valor Total   
+               vr_dtdebito          := rw_tbtrib_pend.dtdebito ;          -- Débito Em   
+               vr_idagendamento     := NVL(rw_tbtrib_pend.idagendamento,0);   
+               
+               --Variaveis especificas FGTS: tipo 14                              
+               vr_nridentificacao   := rw_tbtrib_pend.nridentificacao;    -- CNPJ / CEI Empresa / CPF  
+               vr_cdtributo         := rw_tbtrib_pend.cdtributo  ;        -- Cod. Convênio  
+               vr_dtvencto          := rw_tbtrib_pend.dtvalidade  ;       -- Data da Validade   
+               vr_dtapuracao        := rw_tbtrib_pend.dtcompetencia  ;    -- Competência      
+               vr_nrseqgrde         := rw_tbtrib_pend.nrseqgrde  ;        -- Sequencial da GRDE                 
+               vr_nridentificador   := rw_tbtrib_pend.nridentificador  ;  -- Identificador   
+               
+               --Variaveis especificas DAE: tipo 15 
+               vr_nrdocdae          := rw_tbtrib_pend.nridentificador  ;  -- Número Documento (DAE)                     
+               
             --> CONTRATO DE SMS
             WHEN vr_tptranpe IN (16,17) THEN
             
@@ -7822,6 +8029,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             || '<dados_campo><label>Data da Recarga</label><valor>'         ||vr_dtrecarga||'</valor></dados_campo>'
             || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_dsagenda ||'</valor></dados_campo>';
             
+         ELSIF vr_tptranpe = 14 THEN --FGTS
+         
+             vr_xml_auxi := vr_xml_auxi ||
+                            '<dados_campo><label>Identificação do Pagamento </label><valor>'   || vr_dsidenti_pagto      ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Código de Barras           </label><valor>'   || vr_dscod_barras        ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Linha Digitável            </label><valor>'   || vr_dslinha_digitavel   ||'</valor></dados_campo>' ;
+                            
+             --> Nao exibir para convenios 239 e 451
+             IF vr_cdtributo NOT IN (0239,0451) THEN
+               vr_xml_auxi := vr_xml_auxi ||
+                            '<dados_campo><label>CNPJ/CEI Empresa/CPF       </label><valor>'   || vr_nridentificacao     ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Cod. Convênio              </label><valor>'   || vr_cdtributo           ||'</valor></dados_campo>';
+             END IF;  
+                          
+             vr_xml_auxi := vr_xml_auxi ||
+                            '<dados_campo><label>Data da Validade           </label><valor>'   || vr_dtvencto            ||'</valor></dados_campo>';
+                            
+             IF vr_cdtributo IN (0178,0240) THEN
+               vr_xml_auxi := vr_xml_auxi ||
+                            '<dados_campo><label>Sequencial da GRDE         </label><valor>'   || vr_nrseqgrde           ||'</valor></dados_campo>';
+                            
+             --> Mostrar para convenios 239 e 451
+             ELSIF vr_cdtributo IN (0239,0451) THEN
+               vr_xml_auxi := vr_xml_auxi ||
+                            '<dados_campo><label>Identificador              </label><valor>'   || vr_nridentificador     ||'</valor></dados_campo>';
+             ELSE
+               vr_xml_auxi := vr_xml_auxi ||
+                            '<dados_campo><label>Competência                </label><valor>'   || vr_dtapuracao          ||'</valor></dados_campo>';
+             END IF;
+             
+             vr_xml_auxi := vr_xml_auxi ||
+                            '<dados_campo><label>Valor Total                </label><valor>'   || vr_vlrtotal            ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Débito Em                  </label><valor>'   || vr_dtdebito            ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Indicador de Agendamento   </label><valor>'   || vr_idagendamento       ||'</valor></dados_campo>';
+                            
+    
+         ELSIF vr_tptranpe = 15 THEN --DAE
+         
+             vr_xml_auxi := vr_xml_auxi ||
+                            '<dados_campo><label>Identificação do Pagamento </label><valor>'   || vr_dsidenti_pagto      ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Código de Barras           </label><valor>'   || vr_dscod_barras        ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Linha Digitável            </label><valor>'   || vr_dslinha_digitavel   ||'</valor></dados_campo>' ;
+                      
+             vr_xml_auxi := vr_xml_auxi ||
+                            '<dados_campo><label>Número Documento (DAE)     </label><valor>'   || vr_nrdocdae            ||'</valor></dados_campo>';
+                                                      
+             vr_xml_auxi := vr_xml_auxi ||
+                            '<dados_campo><label>Valor Total                </label><valor>'   || vr_vlrtotal            ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Débito Em                  </label><valor>'   || vr_dtdebito            ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Indicador de Agendamento   </label><valor>'   || vr_idagendamento       ||'</valor></dados_campo>';
+                            
+    
          ELSIF vr_tptranpe IN (16,17) THEN --> Contrato de SMS
             vr_xml_auxi := vr_xml_auxi            
             || '<dados_campo><label>Serviço</label><valor>'  || rw_sms_trans_pend.dspacote ||'</valor></dados_campo>'
@@ -11043,6 +11302,475 @@ PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2
 
                                         
   END pc_corrigi_limite_preposto;
+    --> Rotina responsavel pela criacao de transacoes pendentes de pagamentos de tributos
+  PROCEDURE pc_cria_trans_pend_tributos(pr_cdcooper  IN crapcop.cdcooper%TYPE                 --> Código da cooperativa
+                                       ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                 --> Numero do Caixa
+                                       ,pr_cdoperad  IN crapope.cdoperad%TYPE                 --> Codigo do Operados
+                                       ,pr_nmdatela  IN craptel.nmdatela%TYPE                 --> Nome da Tela
+                                       ,pr_cdagenci  IN crapage.cdagenci%TYPE                 --> Código do PA
+                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE                 --> Número da conta
+                                       ,pr_idseqttl  IN crapttl.idseqttl%TYPE                 --> Sequencial de titularidade
+                                       ,pr_nrcpfrep  IN crapopi.nrcpfope%TYPE                 --> Numero do cpf do representante legal
+                                       ,pr_cdcoptfn  IN tbgen_trans_pend.cdcoptfn%TYPE        --> Cooperativa do Terminal
+                                       ,pr_cdagetfn  IN tbgen_trans_pend.cdagetfn%TYPE        --> Agencia do Terminal
+                                       ,pr_nrterfin  IN tbgen_trans_pend.nrterfin%TYPE        --> Numero do Terminal Financeiro
+                                       ,pr_nrcpfope  IN NUMBER								                --> CPF do operador PJ
+                                       ,pr_idorigem  IN INTEGER							                  --> Canal de origem da operação
+                                       ,pr_dtmvtolt  IN DATE                                  --> Data de Movimento Atual
+                                       ,pr_tpdaguia  IN INTEGER							                  --> Tipo da guia (3 – FGTS / 4 – DAE)
+                                       ,pr_tpcaptur  IN INTEGER							                  --> Tipo de captura da guia (1 – Código Barras / 2 – Manual)
+                                       ,pr_lindigi1  IN NUMBER							                  --> Primeiro campo da linha digitável da guia
+                                       ,pr_lindigi2  IN NUMBER							                  --> Segundo campo da linha digitável da guia
+                                       ,pr_lindigi3  IN NUMBER							                  --> Terceiro campo da linha digitável da guia
+                                       ,pr_lindigi4  IN NUMBER 							                  --> Quarto campo da linha digitável da guia
+                                       ,pr_cdbarras  IN VARCHAR2 						                  --> Código de barras da guia
+                                       ,pr_dsidepag  IN VARCHAR2 						                  --> Descrição da identificação do pagamento
+                                       ,pr_vlrtotal  IN NUMBER 							                  --> Valor total do pagamento da guia                                      
+                                       ,pr_dtapurac  IN DATE 								                  --> Período de apuração da guia
+                                       ,pr_nrsqgrde  IN NUMBER                                --> Numero da guia GRDE
+                                       ,pr_nrcpfcgc  IN VARCHAR2 						                  --> CPF/CNPJ da guia
+                                       ,pr_cdtribut  IN VARCHAR2 						                  --> Código de tributação da guia
+                                       ,pr_identifi  IN VARCHAR2 						                  --> Número de identificacao CNPJ/CPF/CEI
+                                       ,pr_dtvencto  IN DATE 								                  --> Data de vencimento da guia
+                                       ,pr_identificador IN VARCHAR2                          --> Identificador                                       
+                                       ,pr_dtagenda  IN DATE 								                  --> Data de agendamento
+                                       ,pr_idastcjt  IN crapass.idastcjt%TYPE                 --> Indicador de Assinatura Conjunta
+                                       ,pr_idagenda  IN tbpagto_trans_pend.idagendamento%TYPE --> Indica se o pagamento foi agendado (1 – Online / 2 – Agendamento)
+                                       ,pr_tpleitur  IN NUMBER                                --> Tipo da leitura do documento (1 – Leitora de Código de Barras / 2 - Manual)
+                                       ,pr_cdcritic OUT INTEGER 						                  --> Código do erro
+                                       ,pr_dscritic OUT VARCHAR2) IS 			                    --> Descriçao do erro 
+  
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_cria_trans_pend_tributos
+  --  Sistema  : Rotina responsavel pela criacao de transacoes pendentes de pagamentos de tributos
+  --  Sigla    : CRED
+  --  Autor    : Odirlei Busana - AMcom
+  --  Data     : Janeiro/2018                   Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Rotina responsavel pela criacao de transacoes pendentes de pagamentos de tributos
+  --
+  -- Alteração : 
+  --
+  ---------------------------------------------------------------------------------------------------------------   
+    -- Variáveis
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic crapcri.dscritic%TYPE := '';
+    vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
+    vr_tab_crapavt CADA0001.typ_tab_crapavt_58; -- Tabela Avalistas 
+    vr_lindigit VARCHAR2(500) := '';
+    -- log verlog
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR2(100);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
+
+    -- Variaveis de Excecao
+    vr_exc_erro EXCEPTION;
+
+  BEGIN
+  
+    INET0002.pc_cria_transacao_operador(pr_cdagenci => pr_cdagenci
+                                       ,pr_nrdcaixa => pr_nrdcaixa
+                                       ,pr_cdoperad => pr_cdoperad
+                                       ,pr_nmdatela => pr_nmdatela
+                                       ,pr_idorigem => pr_idorigem
+                                       ,pr_idseqttl => pr_idseqttl
+                                       ,pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrcpfope => pr_nrcpfope
+                                       ,pr_nrcpfrep => pr_nrcpfrep
+                                       ,pr_cdcoptfn => pr_cdcoptfn
+                                       ,pr_cdagetfn => pr_cdagetfn
+                                       ,pr_nrterfin => pr_nrterfin
+                                       ,pr_dtmvtolt => pr_dtmvtolt
+                                       ,pr_cdtiptra => ( CASE pr_tpdaguia
+                                                           WHEN 3 THEN 14 -- FGTS
+                                                           WHEN 4 THEN 15 -- DAE
+                                                           ELSE 14
+                                                         END )
+                                       ,pr_idastcjt => pr_idastcjt
+                                       ,pr_tab_crapavt => vr_tab_crapavt
+                                       ,pr_cdtranpe => vr_cdtranpe
+                                       ,pr_dscritic => vr_dscritic);
+                                         
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    vr_lindigit := SUBSTR(TO_CHAR(pr_lindigi1,'fm000000000000'),1,11) ||'-'||
+                   SUBSTR(TO_CHAR(pr_lindigi1,'fm000000000000'),12,1) ||' '||
+                   SUBSTR(TO_CHAR(pr_lindigi2,'fm000000000000'),1,11) ||'-'||
+                   SUBSTR(TO_CHAR(pr_lindigi2,'fm000000000000'),12,1) ||' '||
+                   SUBSTR(TO_CHAR(pr_lindigi3,'fm000000000000'),1,11) ||'-'||
+                   SUBSTR(TO_CHAR(pr_lindigi3,'fm000000000000'),12,1) ||' '||
+                   SUBSTR(TO_CHAR(pr_lindigi4,'fm000000000000'),1,11) ||'-'||
+                   SUBSTR(TO_CHAR(pr_lindigi4,'fm000000000000'),12,1);
+
+    BEGIN
+      INSERT INTO
+        tbpagto_tributos_trans_pend(
+                  cdtransacao_pendente, 
+                  cdcooper, 
+                  nrdconta, 
+                  tppagamento, 
+                  dscod_barras, 
+                  dslinha_digitavel, 
+                  nridentificacao, 
+                  cdtributo, 
+                  dtvalidade, 
+                  dtcompetencia, 
+                  nrseqgrde, 
+                  nridentificador, 
+                  dsidenti_pagto, 
+                  vlpagamento, 
+                  dtdebito, 
+                  idagendamento)
+                  
+        VALUES(  vr_cdtranpe       -- cdtransacao_pendente
+                ,pr_cdcooper       -- cdcooper
+                ,pr_nrdconta       -- nrdconta
+                ,pr_tpdaguia       -- tppagamento
+                ,pr_cdbarras       -- dscod_barras
+                ,vr_lindigit       -- dslinha_digitavel
+                ,pr_identifi       -- nridentificacao
+                ,pr_cdtribut       -- cdtributo
+                ,pr_dtvencto       -- dtvalidade
+                ,pr_dtapurac       -- dtcompetencia
+                ,pr_nrsqgrde       -- nrseqgrde
+                ,pr_identificador  -- nridentificador
+                ,pr_dsidepag       -- dsidenti_pagto
+                ,pr_vlrtotal       -- vlpagamento
+                ,pr_dtagenda       -- dtdebito
+                ,pr_idagenda       -- idagendamento
+                );
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao incluir registro tbpagto_tributos_trans_pend. Erro: ' || SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+
+    pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
+                            ,pr_nrdcaixa => pr_nrdcaixa
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_nmdatela => pr_nmdatela
+                            ,pr_idorigem => pr_idorigem
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrcpfrep => pr_nrcpfrep
+                            ,pr_dtmvtolt => pr_dtmvtolt
+                            ,pr_cdtiptra => ( CASE pr_tpdaguia
+                                                WHEN 3 THEN 14 -- FGTS
+                                                WHEN 4 THEN 15 -- DAE
+                                                ELSE 14
+                                              END )
+                            ,pr_tab_crapavt => vr_tab_crapavt
+                            ,pr_cdtranpe => vr_cdtranpe
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic);
+
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    vr_nrdrowid := NULL;
+    CASE pr_tpdaguia
+      WHEN 3 THEN -- FGTS
+        vr_dstransa := '14 - Transacao de FGTS pendente de aprovacao de assinatura conjunta';
+      WHEN 4 THEN -- DAE
+        vr_dstransa := '15 - Transacao de DAE pendente de aprovacao de assinatura conjunta';
+      ELSE vr_dstransa := ' ';
+    END CASE;
+    
+    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ''
+                        ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1 --> TRUE
+                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                        ,pr_idseqttl => pr_idseqttl
+                        ,pr_nmdatela => pr_nmdatela
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'VLRTOTAL'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_vlrtotal);
+                             
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'NRCPFREP'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_nrcpfrep);                             
+    COMMIT;
+
+  EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+    WHEN OTHERS THEN
+      -- Erro
+      pr_dscritic:= 'Erro na rotina INET002.pc_cria_trans_pend_tributos. '||sqlerrm; 
+  END pc_cria_trans_pend_tributos;  
+  
+  --
+  PROCEDURE pc_ret_trans_pend_trib( pr_cdcooper IN crapcop.cdcooper%TYPE              --> Código da Cooperativa
+                                   ,pr_cdoperad IN crapope.cdoperad%TYPE              --> Código do Operador
+                                   ,pr_nmdatela IN craptel.nmdatela%TYPE              --> Nome da Tela
+                                   ,pr_idorigem IN INTEGER                            --> Identificador de Origem 
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE              --> Número da Conta
+                                   ,pr_idseqttl IN crapttl.idseqttl%TYPE              --> Titular da Conta
+                                   ,pr_cdtrapen IN VARCHAR2                           --> Codigo da Transacao
+                                   ,pr_cdcritic OUT INTEGER                           --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2                          --> Descrição da crítica
+                                   ,pr_tab_tributos OUT INET0002.typ_tab_tributos) IS --> Tabela com os dados de tributos
+
+   BEGIN															 
+	 /* .............................................................................
+
+     Programa: pc_ret_trans_pend_trib
+     Sistema : 
+     Sigla   : CRED
+     Autor   : Odirlei Busana - AMcom
+     Data    : Janeiro/2018.                    Ultima atualizacao: --/--/----
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina referente a busca de registros de transacao pendente de tributos.
+
+     Observacao: -----
+
+     Alteracoes: -----
+    ..............................................................................*/												
+		
+		DECLARE
+	
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+			vr_exc_saida EXCEPTION;
+            
+			-- Declaração da tabela que conterá os dados de DARF/DAS
+			vr_tab_tributos INET0002.typ_tab_tributos;
+			vr_ind          PLS_INTEGER := 0;
+
+      -- Seleciona registro de trans. pend.
+	    CURSOR cr_tbtrib_pend(pr_cdcooper IN crapass.cdcooper%TYPE
+                           ,pr_nrdconta IN crapass.nrdconta%TYPE
+                           ,pr_cdtrapen IN VARCHAR2) IS 
+			  SELECT trib.cdtransacao_pendente, 
+               trib.cdcooper, 
+               trib.nrdconta, 
+               trib.tppagamento, 
+               trib.dscod_barras, 
+               trib.dslinha_digitavel, 
+               trib.nridentificacao, 
+               trib.cdtributo, 
+               trib.dtvalidade, 
+               trib.dtcompetencia, 
+               trib.nrseqgrde, 
+               trib.nridentificador, 
+               trib.dsidenti_pagto, 
+               trib.vlpagamento, 
+               trib.dtdebito, 
+               trib.idagendamento,
+               trib.ROWID
+				  FROM tbpagto_tributos_trans_pend trib
+         WHERE (trib.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
+           AND (trib.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
+           AND (pr_cdtrapen IS NULL OR (trib.cdtransacao_pendente IN (SELECT regexp_substr(pr_cdtrapen, '[^;]+', 1, ROWNUM) parametro
+               FROM dual CONNECT BY LEVEL <= LENGTH(regexp_replace(pr_cdtrapen ,'[^;]+','')) + 1)));
+
+			rw_tbtrib_pend cr_tbtrib_pend%ROWTYPE;
+			
+			-- Cursor genérico de calendário
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      
+	  BEGIN
+			
+			-- Listar reg. trans pend
+			FOR rw_tbtrib_pend IN cr_tbtrib_pend(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_cdtrapen => pr_cdtrapen) LOOP      
+
+	      -- Buscar qual a quantidade atual de registros na tabela para posicionar na próxima
+	      vr_ind := vr_tab_tributos.COUNT() + 1;
+        
+        vr_tab_tributos(vr_ind).cdtransacao_pendente := rw_tbtrib_pend.cdtransacao_pendente;
+        vr_tab_tributos(vr_ind).cdcooper             := rw_tbtrib_pend.cdcooper         ;
+        vr_tab_tributos(vr_ind).nrdconta             := rw_tbtrib_pend.nrdconta         ;
+        vr_tab_tributos(vr_ind).tppagamento          := rw_tbtrib_pend.tppagamento      ;
+        vr_tab_tributos(vr_ind).dscod_barras         := rw_tbtrib_pend.dscod_barras     ;
+        vr_tab_tributos(vr_ind).dslinha_digitavel    := rw_tbtrib_pend.dslinha_digitavel;
+        vr_tab_tributos(vr_ind).nridentificacao      := rw_tbtrib_pend.nridentificacao  ;
+        vr_tab_tributos(vr_ind).cdtributo            := rw_tbtrib_pend.cdtributo        ;
+        vr_tab_tributos(vr_ind).dtvalidade           := rw_tbtrib_pend.dtvalidade       ;
+        vr_tab_tributos(vr_ind).dtcompetencia        := rw_tbtrib_pend.dtcompetencia    ;
+        vr_tab_tributos(vr_ind).nrseqgrde            := rw_tbtrib_pend.nrseqgrde        ;
+        vr_tab_tributos(vr_ind).nridentificador      := rw_tbtrib_pend.nridentificador  ;
+        vr_tab_tributos(vr_ind).dsidenti_pagto       := rw_tbtrib_pend.dsidenti_pagto   ;
+        vr_tab_tributos(vr_ind).vlpagamento          := rw_tbtrib_pend.vlpagamento      ;
+        vr_tab_tributos(vr_ind).dtdebito             := rw_tbtrib_pend.dtdebito         ;
+        vr_tab_tributos(vr_ind).idagendamento        := rw_tbtrib_pend.idagendamento    ;
+        
+        vr_tab_tributos(vr_ind).idrowid              := rw_tbtrib_pend.ROWID;				
+			END LOOP; -- FOR rw_darfdas
+
+			-- Alimenta parâmetro com a PL/Table gerada
+			pr_tab_tributos := vr_tab_tributos;
+						
+		EXCEPTION
+			WHEN vr_exc_saida THEN
+				
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
+
+			  -- Alimenta parametros com as críticas
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro nao tratado na INET0002.pc_ret_trans_pend_trib: ' || SQLERRM;
+		END;
+	END pc_ret_trans_pend_trib;
+
+  PROCEDURE pc_ret_trans_pend_trib_car( pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                       ,pr_cdoperad IN crapope.cdoperad%TYPE --> Código do Operador
+                                       ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da Tela
+                                       ,pr_idorigem IN INTEGER               --> Identificador de Origem 
+                                       ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                                       ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Titular da Conta
+                                       ,pr_cdtrapen IN VARCHAR2              --> Codigo da Transacao
+                                       ,pr_clobxmlc OUT CLOB                 --> XML com informações de LOG
+                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+														 		       ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
+
+		BEGIN
+	 /* .............................................................................
+
+     Programa: pc_ret_trans_pend_trib_car
+     Sistema : 
+     Sigla   : CRED
+     Autor   : Odirlei Busana - AMcom
+     Data    : Janeiro/2018.                    Ultima atualizacao: --/--/----
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina referente a busca de registros de transacao pendente de tributos.
+
+     Observacao: -----
+
+     Alteracoes: -----
+    ..............................................................................*/												
+		DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Declaração da tabela que conterá os dados de tributos
+			vr_tab_tributos INET0002.typ_tab_tributos;
+			vr_ind          PLS_INTEGER := 0;
+
+      -- Variaveis de XML 
+      vr_xml_temp VARCHAR2(32767);
+ 
+    BEGIN
+      
+		  -- Procedure para buscar informações tributos
+      INET0002.pc_ret_trans_pend_trib( pr_cdcooper => pr_cdcooper           --> Código da Cooperativa
+                                      ,pr_cdoperad => pr_cdoperad           --> Código do Operador
+                                      ,pr_nmdatela => pr_nmdatela           --> Nome da Tela
+                                      ,pr_idorigem => pr_idorigem           --> Identificador de Origem 
+                                      ,pr_nrdconta => pr_nrdconta           --> Número da Conta
+                                      ,pr_idseqttl => pr_idseqttl           --> Titular da Conta 		
+                                      ,pr_cdtrapen => pr_cdtrapen           --> Codigo da Transacao														 
+                                      ,pr_cdcritic => vr_cdcritic           --> Código da crítica
+                                      ,pr_dscritic => vr_dscritic           --> Descrição da crítica
+                                      ,pr_tab_tributos => vr_tab_tributos); --> Tabela com os dados
+																					
+			-- Se retornou alguma critica
+			IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+				RAISE vr_exc_saida;
+			END IF;
+			
+			-- Criar documento XML
+      dbms_lob.createtemporary(pr_clobxmlc, TRUE); 
+      dbms_lob.open(pr_clobxmlc, dbms_lob.lob_readwrite);       
+
+      -- Insere o cabeçalho do XML 
+      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                             ,pr_texto_completo => vr_xml_temp 
+                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>');
+			
+			IF vr_tab_tributos.count() > 0 THEN
+				-- Percorre dados
+				FOR vr_contador IN vr_tab_tributos.FIRST..vr_tab_tributos.LAST LOOP
+        
+					-- Montar XML com registros
+					gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+																 ,pr_texto_completo => vr_xml_temp 
+																 ,pr_texto_novo     => '<registro>' ||
+                                                          '<cdtransacao_pendente>' || NVL(vr_tab_tributos(vr_contador).cdtransacao_pendente,0)         || '<cdtransacao_pendente>' || 
+                                                          '<cdcooper>            ' || NVL(vr_tab_tributos(vr_contador).cdcooper,0)                     || '<cdcooper>            ' || 
+                                                          '<nrdconta>            ' || NVL(vr_tab_tributos(vr_contador).nrdconta,0)                     || '<nrdconta>            ' || 
+                                                          '<tppagamento>         ' || NVL(vr_tab_tributos(vr_contador).tppagamento,0)                  || '<tppagamento>         ' || 
+                                                          '<dscod_barras>        ' || NVL(vr_tab_tributos(vr_contador).dscod_barras,' ')               || '<dscod_barras>        ' || 
+                                                          '<dslinha_digitavel>   ' || NVL(vr_tab_tributos(vr_contador).dslinha_digitavel,' ')          || '<dslinha_digitavel>   ' || 
+                                                          '<nridentificacao>     ' || NVL(vr_tab_tributos(vr_contador).nridentificacao,' ')            || '<nridentificacao>     ' || 
+                                                          '<cdtributo>           ' || NVL(vr_tab_tributos(vr_contador).cdtributo,' ')                  || '<cdtributo>           ' || 
+                                                          '<dtvalidade>          ' || to_char(vr_tab_tributos(vr_contador).dtvalidade,'DD/MM/RRRR')    || '<dtvalidade>          ' || 
+                                                          '<dtcompetencia>       ' || to_char(vr_tab_tributos(vr_contador).dtcompetencia,'DD/MM/RRRR') || '<dtcompetencia>       ' || 
+                                                          '<nrseqgrde>           ' || NVL(vr_tab_tributos(vr_contador).nrseqgrde,0)                    || '<nrseqgrde>           ' || 
+                                                          '<nridentificador>     ' || NVL(vr_tab_tributos(vr_contador).nridentificador,' ')            || '<nridentificador>     ' || 
+                                                          '<dsidenti_pagto>      ' || NVL(vr_tab_tributos(vr_contador).dsidenti_pagto,' ')             || '<dsidenti_pagto>      ' || 
+                                                          '<vlpagamento>         ' || NVL(vr_tab_tributos(vr_contador).vlpagamento,0)                  || '<vlpagamento>         ' || 
+                                                          '<dtdebito>            ' || to_char(vr_tab_tributos(vr_contador).dtdebito,'DD/MM/RRRR')      || '<dtdebito>            ' || 
+                                                          '<idagendamento>       ' || NVL(vr_tab_tributos(vr_contador).idagendamento,0)                || '<idagendamento>       ' || 
+                                                          '<idrowid>'              || NVL(vr_tab_tributos(vr_contador).idrowid,'0')                    || '</idrowid>            ' ||
+																										   '</registro>');
+        END LOOP;
+
+			END IF;
+
+			-- Encerrar a tag raiz 
+      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                             ,pr_texto_completo => vr_xml_temp 
+                             ,pr_texto_novo     => '</raiz>' 
+                             ,pr_fecha_xml      => TRUE);
+			
+		EXCEPTION
+			WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro nao tratado na busca de aplicacoes INET0002.pc_ret_trans_pend_trib_car: ' || SQLERRM;
+
+    END;
+  END pc_ret_trans_pend_trib_car;
+
 
 END INET0002;
 /

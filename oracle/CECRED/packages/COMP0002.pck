@@ -252,6 +252,23 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0002 is
                                       ,pr_protocolo OUT GENE0006.typ_tab_protocolo  --> PL Table de registros
                                       ,pr_dsretorn  OUT VARCHAR2);                                                                                                                    
                                                                   
+  -- Pagamento FGTS
+  PROCEDURE pc_detalhe_compr_pag_fgts( pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                      ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                      ,pr_dsprotoc IN crappro.dsprotoc%TYPE  --> Protocolo
+                                      ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAA
+                                      ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                      ,pr_dsretorn OUT VARCHAR2);            -- OK/NOK
+
+  -- Pagamento DAE
+  PROCEDURE pc_detalhe_compr_pag_dae ( pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                      ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                      ,pr_dsprotoc IN crappro.dsprotoc%TYPE  --> Protocolo
+                                      ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAA
+                                      ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                      ,pr_dsretorn OUT VARCHAR2);            -- OK/NOK                                      
+                                                                                                                                                        
+                                                                  
 END COMP0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
@@ -429,6 +446,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Alteracoes: 06/12/2017 - Alterado chamada da procedure GENE006.pc_lista_protocolos_por_tipos
                               (P285 - Ricardo Linhares)
 
+                 03/01/2017 - Incluido tratativas para arrecadação de FGTS.
+                              PRJ406-FGTS(Odirlei-AMcom)
      ..................................................................................*/  
     
     DECLARE
@@ -464,7 +483,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       ELSE
         IF pr_cdtipmod = 1 THEN -- Pagamento
           -- Pagamento (Tit/Cnv); Operações DebAut; Pagamento/Agendamento GPS; Pagamento DebAut; Pagamento DARF; Agendamento DARF; Pagamento DAS; Agendamento DAS
-          vr_dstippro := '2;11;13;15;16;17;18;19'; 
+          vr_dstippro := '2;11;13;15;16;17;18;19'||
+                         --;Pagamento FGTS;Pagamento DAE
+                         ';22;23'; 
   			
         ELSIF pr_cdtipmod = 2 THEN -- Transferências Realizadas
   				
@@ -1177,7 +1198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<aliquota>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</aliquota>' ||
                                   '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||
-                                  '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||                                  
+                                  '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
                                   '<nmextcop>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmextcop>' ||
                                   '<infosac>' ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
@@ -3621,7 +3642,8 @@ PROCEDURE pc_detalhe_comprovante(pr_cdcooper IN crappro.cdcooper%TYPE  --> Códig
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 03/01/2017 - Incluido tratativas para arrecadação de FGTS.
+                              PRJ406-FGTS(Odirlei-AMcom)
 
      ..................................................................................*/  
     
@@ -3738,7 +3760,22 @@ PROCEDURE pc_detalhe_comprovante(pr_cdcooper IN crappro.cdcooper%TYPE  --> Códig
                                   ,pr_retxml =>   pr_retxml
                                   ,pr_dsretorn => pr_dsretorn);                                  
                                   
+        WHEN pr_cdtippro = 23 THEN
+          pc_detalhe_compr_pag_das(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_dsprotoc => pr_dsprotoc
+                                  ,pr_cdorigem => pr_cdorigem
+                                  ,pr_retxml =>   pr_retxml
+                                  ,pr_dsretorn => pr_dsretorn);                                  
                                            
+        WHEN pr_cdtippro = 24 THEN
+          pc_detalhe_compr_pag_fgts(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_dsprotoc => pr_dsprotoc
+                                  ,pr_cdorigem => pr_cdorigem
+                                  ,pr_retxml =>   pr_retxml
+                                  ,pr_dsretorn => pr_dsretorn);                                  
+      
       
        END CASE;
  
@@ -4496,6 +4533,490 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
     END;
     
 END pc_comprovantes_recebidos;    
+
+  -- Pagamento FGTS
+  PROCEDURE pc_detalhe_compr_pag_fgts( pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                      ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                      ,pr_dsprotoc IN crappro.dsprotoc%TYPE  --> Protocolo
+                                      ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                                      ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                      ,pr_dsretorn OUT VARCHAR2) IS          -- OK/NOK
+    
+    /* ................................................................................
+
+     Programa: pc_detalhe_compr_pag_fgts
+     Sistema : Internet Banking
+     Sigla   : COMP
+     Autor   : Odirlei Busana -  AMcom
+     Data    : Janeiro/2018.                    Ultima atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina de consulta comprovantes de Pagamento FGTS.
+
+     Observacao: -----
+
+     Alteracoes: 
+
+     ..................................................................................*/  
+    
+    
+      vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
+      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_xml_temp    VARCHAR2(32726) := '';
+      vr_dsdlinha    VARCHAR2(32726) := '';
+      vr_cdempcon    INTEGER;
+      vr_dscritic    VARCHAR2(4000);
+      vr_cdcritic    crapcri.cdcritic%TYPE;
+      vr_info_sac    typ_reg_info_sac;
+      vr_des_erro    VARCHAR2(4000);
+      
+      TYPE typ_tab_campos IS TABLE OF VARCHAR2(2000)
+           INDEX BY VARCHAR2(40);
+      vr_tab_campos typ_tab_campos;
+      vr_idx VARCHAR2(40);
+      vr_split_reg   gene0002.typ_split;
+      vr_split_campo gene0002.typ_split;
+            
+    
+  BEGIN
+    
+    pr_dsretorn := 'NOK';
+			
+    -- Buscar dados do associado
+    OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+                     pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+			        
+      vr_dscritic := 'Associado nao cadastrado.';
+      vr_des_erro := 'Erro em pc_detalhe_compr_pag_fgts:' || vr_dscritic;
+				
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapass;
+    END IF;
+			
+    gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_dsprotoc => pr_dsprotoc
+                                          ,pr_cdorigem => pr_cdorigem
+                                          ,pr_protocolo => vr_protocolo
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se retornou erro
+    IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+      vr_des_erro := 'Erro em pc_detalhe_compr_pag_fgts:' || vr_dscritic;
+      RAISE vr_exc_erro;
+    END IF;
+                      
+    vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
+      
+    dbms_lob.createtemporary(pr_retxml, TRUE);
+    dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+       
+     -- Criar cabecalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<Comprovante>');        
+      
+    FOR vr_ind IN 1..vr_protocolo.count LOOP
+				
+      vr_tab_campos.delete;
+    
+      --> Quebrar registros para não pegar posicional, evitando que se mudem a ordem ou incluam campo e prejudique o programa
+      vr_split_reg := gene0002.fn_quebra_string(vr_protocolo(vr_ind).dsinform##3,'#');
+      
+      --> Varrer dados
+      IF vr_split_reg.count > 0 THEN
+        FOR i IN vr_split_reg.first..vr_split_reg.last LOOP
+          vr_split_campo := NULL;
+          vr_split_campo := gene0002.fn_quebra_string(vr_split_reg(i),':');
+          
+          IF vr_split_campo.count > 0 THEN
+          
+            --> Montar index, conforme label do campo
+            vr_split_campo(1) := upper(REPLACE(vr_split_campo(1),':'));        
+            CASE vr_split_campo(1)
+              WHEN 'TIPO DE DOCUMENTO' THEN
+                vr_idx := 'DSTIPDOC';            
+              WHEN 'CÓDIGO DE BARRAS' THEN
+                vr_idx := 'CDBARRAS';
+              WHEN 'LINHA DIGITÁVEL' THEN
+                vr_idx := 'DSLINHAD';
+              WHEN 'CNPJ/CEI EMPRESA' THEN
+                vr_idx := 'NRIDENTIFICACAO';
+              WHEN 'COD. CONVÊNIO' THEN
+                vr_idx := 'CDEMPCON';
+              WHEN 'DATA DA VALIDADE' THEN
+                vr_idx := 'DTVENCTO';
+              WHEN 'COMPETÊNCIA' THEN
+                vr_idx := 'COMPETENCIA';
+              WHEN 'IDENTIFICADOR' THEN
+                vr_idx := 'IDENTIFICADOR';
+              WHEN 'VALOR TOTAL' THEN
+                vr_idx := 'VLDOCMTO';
+              WHEN 'DESCRIÇÃO DO PAGAMENTO' THEN
+                vr_idx := 'DSDPAGTO';
+              WHEN '#DATA DO PAGAMENTO' THEN
+                vr_idx := 'DTTRANSA';
+              WHEN '#HORARIO DO PAGAMENTO' THEN
+                vr_idx := 'HRAUTENT';
+              ELSE
+                vr_idx := NULL;
+            END CASE;  
+          
+            IF vr_idx IS NOT NULL THEN
+              vr_tab_campos(vr_idx) := vr_split_campo(2);          
+            END IF;
+             
+          END IF;
+        END LOOP;
+      END IF;
+      
+      vr_dsdlinha := '';
+      vr_dsdlinha := '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                  || '</cdtippro>' ||
+                     '<dstippro>' || to_char(vr_protocolo(vr_ind).dsinform##1)        || '</dstippro>' ||
+                     '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)           || '</nrdocmto>' ||
+                     '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)           || '</cdbcoctl>' ||
+                     '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)           || '</cdagectl>' ||
+                     '<nrdconta>' || to_char(pr_nrdconta)                             || '</nrdconta>' ||
+                     '<nmtitula>' || to_char(rw_crapass.nmextttl)                     || '</nmtitula>' ||
+                     '<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)           || '</nmprepos>' ||
+                     '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)           || '</nrcpfpre>' ||
+                     '<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)           || '</nmoperad>' ||
+                     '<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)           || '</nrcpfope>' ;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha); 
+                                    
+      vr_dsdlinha := '';
+      IF vr_tab_campos.exists(UPPER('dstipdoc')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<dstipdoc>' || vr_tab_campos(UPPER('dstipdoc')) || '</dstipdoc>';
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('cdbarras')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<cdbarras>' || vr_tab_campos(UPPER('cdbarras')) || '</cdbarras>';
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('dslinhad')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<dslinhad>' || vr_tab_campos(UPPER('dslinhad')) || '</dslinhad>';
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('nridentificacao')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<nridentificacao>' || vr_tab_campos(UPPER('nridentificacao')) || '</nridentificacao>';
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('cdempcon')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<cdempcon>' || vr_tab_campos(UPPER('cdempcon')) || '</cdempcon>';
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('dtvencto')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<dtvencto>' || vr_tab_campos(UPPER('dtvencto')) || '</dtvencto>';
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('competencia')) THEN
+      
+        IF vr_tab_campos.exists(UPPER('cdempcon')) AND 
+           vr_tab_campos(UPPER('cdempcon')) IN (0178,0240) THEN
+          vr_dsdlinha := vr_dsdlinha || '<nrseqgrde>' || vr_tab_campos(UPPER('competencia')) || '</nrseqgrde>';
+        ELSE
+          vr_dsdlinha := vr_dsdlinha || '<competencia>' || vr_tab_campos(UPPER('competencia')) || '</competencia>';
+        END IF;
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('identificador')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<identificador>' || vr_tab_campos(UPPER('identificador')) || '</identificador>';
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('identificador')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<identificador>' || vr_tab_campos(UPPER('identificador')) || '</identificador>';
+      END IF;
+      
+      vr_dsdlinha := vr_dsdlinha ||'<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>';
+      
+      IF vr_tab_campos.exists(UPPER('dsdpagto')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<dsdpagto>' || vr_tab_campos(UPPER('dsdpagto')) || '</dsdpagto>';
+      END IF;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha);
+      
+      vr_dsdlinha := NULL;      
+      vr_dsdlinha := '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                          || '</dttransa>' ||
+                     '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')          || '</hrautent>' ||
+                     '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                 || '</nrseqaut>' ||
+                     '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                 || '</dsprotoc>' ||
+                     '<infosac>' ||
+                         '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                         '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                         '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                         '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                         '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                         '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                     '</infosac>';
+                     
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha);               
+                     
+    END LOOP;
+      
+    gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</Comprovante>'
+                           ,pr_fecha_xml      => TRUE);      
+			
+    pr_dsretorn := 'OK';   
+       
+  EXCEPTION								
+    WHEN vr_exc_erro THEN  							
+					
+      pr_retxml := '<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>';
+      pr_dsretorn := 'NOK';
+																 
+    WHEN OTHERS THEN
+								
+      vr_des_erro := 'Erro ao criar XML(FGTS): ' || SQLERRM;
+      pr_retxml :=   '<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>';
+      pr_dsretorn := 'NOK';
+			    
+  END pc_detalhe_compr_pag_fgts;
+
+  -- Pagamento DAE
+  PROCEDURE pc_detalhe_compr_pag_dae ( pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                      ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                      ,pr_dsprotoc IN crappro.dsprotoc%TYPE  --> Protocolo
+                                      ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                                      ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                      ,pr_dsretorn OUT VARCHAR2) IS          -- OK/NOK
+    
+    /* ................................................................................
+
+     Programa: pc_detalhe_compr_pag_dae
+     Sistema : Internet Banking
+     Sigla   : COMP
+     Autor   : Odirlei Busana -  AMcom
+     Data    : Janeiro/2018.                    Ultima atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina de consulta comprovantes de Pagamento DAE.
+
+     Observacao: -----
+
+     Alteracoes: 
+
+     ..................................................................................*/  
+    
+    
+      vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
+      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_xml_temp    VARCHAR2(32726) := '';
+      vr_dsdlinha    VARCHAR2(32726) := '';
+      vr_cdempcon    INTEGER;
+      vr_dscritic    VARCHAR2(4000);
+      vr_cdcritic    crapcri.cdcritic%TYPE;
+      vr_info_sac    typ_reg_info_sac;
+      vr_des_erro    VARCHAR2(4000);
+      
+      TYPE typ_tab_campos IS TABLE OF VARCHAR2(2000)
+           INDEX BY VARCHAR2(40);
+      vr_tab_campos typ_tab_campos;
+      vr_idx VARCHAR2(40);
+      vr_split_reg   gene0002.typ_split;
+      vr_split_campo gene0002.typ_split;
+            
+    
+  BEGIN
+    
+    pr_dsretorn := 'NOK';
+			
+    -- Buscar dados do associado
+    OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+                     pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+			        
+      vr_dscritic := 'Associado nao cadastrado.';
+      vr_des_erro := 'Erro em pc_detalhe_compr_pag_dae:' || vr_dscritic;
+				
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapass;
+    END IF;
+			
+    gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_dsprotoc => pr_dsprotoc
+                                          ,pr_cdorigem => pr_cdorigem
+                                          ,pr_protocolo => vr_protocolo
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se retornou erro
+    IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+      vr_des_erro := 'Erro em pc_detalhe_compr_pag_dae:' || vr_dscritic;
+      RAISE vr_exc_erro;
+    END IF;
+      
+    vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
+      
+    dbms_lob.createtemporary(pr_retxml, TRUE);
+    dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+       
+     -- Criar cabecalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<Comprovante>');        
+      
+    FOR vr_ind IN 1..vr_protocolo.count LOOP
+			
+      --> Quebrar registros para não pegar posicional, evitando que se mudem a ordem ou incluam campo e prejudique o programa
+      vr_split_reg := gene0002.fn_quebra_string(vr_protocolo(vr_ind).dsinform##3,'#');
+      
+      --> Varrer dados
+      IF vr_split_reg.count > 0 THEN
+        FOR i IN vr_split_reg.first..vr_split_reg.last LOOP
+        
+          vr_split_campo := NULL;
+          vr_split_campo := gene0002.fn_quebra_string(vr_split_reg(i),':');
+          
+          IF vr_split_campo.count > 0 THEN
+    
+            --> Montar index, conforme label do campo
+            vr_split_campo(1) := upper(REPLACE(vr_split_campo(1),':'));        
+            CASE vr_split_campo(1)
+              WHEN 'TIPO DE DOCUMENTO' THEN
+                vr_idx := 'DSTIPDOC';    
+              WHEN 'AGENTE ARRECADADOR' THEN
+                vr_IDX := 'NMAGEARR';                              
+              WHEN 'CÓDIGO DE BARRAS' THEN
+                vr_idx := 'CDBARRAS';
+              WHEN 'LINHA DIGITÁVEL' THEN
+                VR_IDX := 'DSLINHAD';
+              WHEN 'NÚMERO DE DOCUMENTO(DAE)' THEN
+                VR_IDX := 'NRDOCDAE';
+              WHEN 'VALOR TOTAL' THEN
+                vr_idx := 'VLDOCMTO';
+              WHEN 'DESCRIÇÃO DO PAGAMENTO' THEN
+                vr_idx := 'DSDPAGTO';
+              WHEN '#DATA DO PAGAMENTO' THEN
+                vr_idx := 'DTTRANSA';
+              WHEN '#HORARIO DO PAGAMENTO' THEN
+                vr_idx := 'HRAUTENT';
+              ELSE
+                vr_idx := NULL;
+            END CASE;  
+          
+            IF vr_idx IS NOT NULL THEN
+              vr_tab_campos(vr_idx) := vr_split_campo(2);          
+            END IF;
+             
+          END IF;
+        END LOOP;
+      END IF;
+      
+      vr_dsdlinha := '';
+      vr_dsdlinha := '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                  || '</cdtippro>' ||
+                     '<dstippro>' || to_char(vr_protocolo(vr_ind).dsinform##1)        || '</dstippro>' ||
+                     '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)           || '</nrdocmto>' ||
+                     '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)           || '</cdbcoctl>' ||
+                     '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)           || '</cdagectl>' ||
+                     '<nrdconta>' || to_char(pr_nrdconta)                             || '</nrdconta>' ||
+                     '<nmtitula>' || to_char(rw_crapass.nmextttl)                     || '</nmtitula>' ||
+                     '<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)           || '</nmprepos>' ||
+                     '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)           || '</nrcpfpre>' ||
+                     '<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)           || '</nmoperad>' ||
+                     '<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)           || '</nrcpfope>' ;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha); 
+                                    
+      vr_dsdlinha := '';
+      IF vr_tab_campos.exists(UPPER('dstipdoc')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<dstipdoc>' || vr_tab_campos(UPPER('dstipdoc')) || '</dstipdoc>';
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('nmagearr')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<nmagearr>' || vr_tab_campos(UPPER('nmagearr')) || '</nmagearr>';
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('cdbarras')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<cdbarras>' || vr_tab_campos(UPPER('cdbarras')) || '</cdbarras>';
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('dslinhad')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<dslinhad>' || vr_tab_campos(UPPER('dslinhad')) || '</dslinhad>';
+      END IF;
+      
+      IF vr_tab_campos.exists(UPPER('nrdocdae')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<nrdocdae>' || vr_tab_campos(UPPER('nrdocdae')) || '</nrdocdae>';
+      END IF;
+      
+      vr_dsdlinha := vr_dsdlinha ||'<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>';
+      
+      IF vr_tab_campos.exists(UPPER('dsdpagto')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<dsdpagto>' || vr_tab_campos(UPPER('dsdpagto')) || '</dsdpagto>';
+      END IF;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha);
+      
+      vr_dsdlinha := NULL;      
+      vr_dsdlinha := '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                          || '</dttransa>' ||
+                     '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')          || '</hrautent>' ||
+                     '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                 || '</nrseqaut>' ||
+                     '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                 || '</dsprotoc>' ||
+                     '<infosac>' ||
+                         '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                         '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                         '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                         '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                         '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                         '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                     '</infosac>';
+                     
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha);               
+                     
+    END LOOP;
+      
+    gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</Comprovante>'
+                           ,pr_fecha_xml      => TRUE);      
+			
+    pr_dsretorn := 'OK';   
+       
+  EXCEPTION								
+    WHEN vr_exc_erro THEN  							
+					
+      pr_retxml := '<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>';
+      pr_dsretorn := 'NOK';
+																 
+    WHEN OTHERS THEN
+								
+      vr_des_erro := 'Erro ao criar XML(DAE): ' || SQLERRM;
+      pr_retxml :=   '<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>';
+      pr_dsretorn := 'NOK';
+			    
+  END pc_detalhe_compr_pag_dae;
+
 
 END;
 /

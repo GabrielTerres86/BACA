@@ -194,6 +194,9 @@
               07/11/2017 - Retornar indicador de situacao e descricao de protocolo
                            na consulta de autorizacoes e lancamentos (David).
                          
+              12/12/2017 - Alterar campo flgcnvsi por tparrecd.
+                           PRJ406-FGTS (Odirlei-AMcom)                 
+                           
               20/12/2017 - Gravar dtiniatr e dtfimsus ou dtinisus como proximo dia util para convenios
                            sicredi no ultimo dia nao util do ano (Lucas Ranghetti #809954)
 .............................................................................*/
@@ -1635,7 +1638,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_cdhistor AS INTE                                    NO-UNDO.
     DEF VAR aux_tpautori AS INTE                                    NO-UNDO.
     DEF VAR aux_flgmaxdb AS LOGI                                    NO-UNDO.
-    DEF VAR aux_flgsicre AS LOGI                                    NO-UNDO.
+    DEF VAR aux_tparrecd AS INTE                                    NO-UNDO.
     DEF VAR aux_flgachtr AS LOGI                                    NO-UNDO.
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.   
     DEF VAR aux_dsnomcnv AS CHAR                                    NO-UNDO.    
@@ -1756,10 +1759,10 @@ PROCEDURE grava-dados:
         /* Associa corretamente ao histórico SICREDI */
         IF  par_flgsicre = "S" THEN
             ASSIGN aux_cdhistor = 1019
-                   aux_flgsicre = TRUE.
+                   aux_tparrecd = 1.
         ELSE 
             ASSIGN aux_cdhistor = INT(par_cdhistor)
-                   aux_flgsicre = FALSE.
+                   aux_tparrecd = 3.
             
         IF  aux_cdhistor = 1019 THEN
             DO:
@@ -1841,7 +1844,7 @@ PROCEDURE grava-dados:
                             DO:
                                 ASSIGN aux_cdempcon = crapcon.cdempcon 
                                        aux_cdsegmto = STRING(crapcon.cdsegmto)
-                                       aux_flgsicre = crapcon.flgcnvsi
+                                       aux_tparrecd = crapcon.tparrecd
                                        aux_cdhistor = IF crapcon.cdhistor = 1154 THEN 1019 ELSE aux_cdhistor.
                             END.
                     END.    
@@ -1868,7 +1871,7 @@ PROCEDURE grava-dados:
                     END.
                     
                 /* Se for SICREDI... */
-                IF  aux_flgsicre = TRUE THEN
+                IF  aux_tparrecd = 1 THEN
                     DO:
                         /* Caso a empresa e segmento estejam zerados */
                         IF  INT(aux_cdempcon) = 0 AND 
@@ -1900,7 +1903,8 @@ PROCEDURE grava-dados:
                                 UNDO Grava, LEAVE Grava.
                             END.                           
                     END.
-                ELSE
+                /* Se for CECRED... */    
+                ELSE IF  aux_tparrecd = 3 THEN
                     DO:
                         FIND FIRST gnconve WHERE gnconve.flgativo = TRUE            AND
                                                 (gnconve.cdhisdeb = aux_cdhistor    AND
@@ -1922,6 +1926,14 @@ PROCEDURE grava-dados:
                             END.
 
                     END.
+                /* Se for Bancoob... */    
+                ELSE IF aux_tparrecd = 2 THEN
+                    DO:
+                        /* Bancoob nao permite deb.aut. */                                            
+                        ASSIGN aux_dscritic = "Convenio indisponivel para Debito Automatico.".
+                        UNDO Grava, LEAVE Grava.
+                    
+                    END.    
                     
                 /* registra tp com base no idorigem, AUTORI = 0. Assim, se <> 0 entao é Debito Fácil */
                 IF  par_idorigem = 3 /* IBANK */    OR 
@@ -2010,7 +2022,7 @@ PROCEDURE grava-dados:
                     aux_cdhistor = 31     THEN 
                     DO:
                         /* Se for SICREDI... */
-                        IF  aux_flgsicre = TRUE THEN
+                        IF  aux_tparrecd = 1 THEN
                             DO:
                                 /* Caso a empresa e segmento estejam zerados */
                                 IF  INT(aux_cdempcon) = 0 OR 
@@ -2048,7 +2060,7 @@ PROCEDURE grava-dados:
                 BUFFER-COPY crapatr TO tt-autori-atl.
                     
                 /* Verificar se ja possui conta sicredi*/
-                IF  aux_flgsicre = TRUE  AND
+                IF  aux_tparrecd = 1  AND
                     crapass.nrctacns = 0 THEN
                     DO:
                         /* Caso nao possua deve gerar */
@@ -2370,7 +2382,8 @@ PROCEDURE busca_convenios_codbarras:
         ASSIGN aux_nmempcon = ""
                aux_nmresumi = "".
                            
-        IF  crapcon.flgcnvsi = TRUE THEN
+        /* Sicredi */                   
+        IF  crapcon.tparrecd = 1 THEN
             DO:
                 FIND FIRST crapscn WHERE (crapscn.cdempcon = crapcon.cdempcon          AND
                                           crapscn.cdempcon <> 0)                       AND
@@ -2386,7 +2399,9 @@ PROCEDURE busca_convenios_codbarras:
                   ELSE
                       ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
-        ELSE
+        
+        /* Cecred */
+        ELSE IF  crapcon.tparrecd = 3 THEN
             DO:                
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    busca anterior nao funciona */
@@ -2416,6 +2431,14 @@ PROCEDURE busca_convenios_codbarras:
 					   gnconve.cdconven <> 108 THEN
 						ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
+         /* Bancoob */
+        ELSE IF crapcon.tparrecd = 2 THEN
+            DO:                
+                /* No caso do bancoob deve utilizar dados da crapcon,
+                   pois na tabela nao existe esses dados */
+                ASSIGN aux_nmresumi = ""
+                       aux_nmempcon = "".                
+            END.   
 
          IF aux_nmresumi <> "" THEN
           ASSIGN aux_nmempcon = aux_nmresumi.    
@@ -2430,7 +2453,7 @@ PROCEDURE busca_convenios_codbarras:
                tt-convenios-codbarras.cdempcon = crapcon.cdempcon
                tt-convenios-codbarras.cdsegmto = crapcon.cdsegmto
                tt-convenios-codbarras.cdhistor = IF AVAIL gnconve THEN gnconve.cdhisdeb ELSE crapcon.cdhistor
-               tt-convenios-codbarras.flgcnvsi = crapcon.flgcnvsi.
+               tt-convenios-codbarras.flgcnvsi = IF crapcon.tparrecd = 1 THEN TRUE ELSE FALSE.
                
        RELEASE crapcon.
        RELEASE gnconve.
@@ -3353,10 +3376,10 @@ PROCEDURE cadastra_suspensao_autorizacao:
                                 INPUT TRUE, /* Ultimo dia do ano */
                                 INPUT "A",
                                 OUTPUT aux_dtmvtolt). 
-                    
+                                
             /* Entrar somente se for o ultimo dia util do ano */
             IF  par_dtinisus = aux_dtmvtolt THEN
-                DO:                                    
+                DO:                
                     RUN valida_dia_util(INPUT par_cdcooper,
                                         INPUT par_dtinisus,
                                         INPUT TRUE, /* primeiro dia util do ano*/
@@ -3371,7 +3394,7 @@ PROCEDURE cadastra_suspensao_autorizacao:
                                 INPUT TRUE, /* Ultimo dia do ano */
                                 INPUT "A",
                                 OUTPUT aux_dtmvtolt). 
-            
+                                
             /* Entrar somente se for o ultimo dia util do ano */                    
             IF  par_dtfimsus = aux_dtmvtolt THEN
                 DO:                
@@ -3944,7 +3967,7 @@ PROCEDURE busca_lancamentos:
                             crapatr.nrdconta = craplau.nrdconta AND
                             crapatr.cdhistor = craplau.cdhistor AND
                             crapatr.cdrefere = craplau.nrdocmto NO-LOCK:
-                     
+                            
         ASSIGN aux_dsprotoc = "".
         
         IF  crapatr.cdhistor <> 1019 THEN
@@ -4011,7 +4034,7 @@ PROCEDURE busca_lancamentos:
                                     crapatr.nrdconta = craplcm.nrdconta AND
                                     crapatr.cdhistor = craplcm.cdhistor AND
                                     crapatr.cdrefere = craplcm.nrdocmto NO-LOCK:
-                              
+                                    
                 ASSIGN aux_dsprotoc = "".
                 
                 IF  crapatr.cdhistor <> 1019 THEN
@@ -4039,7 +4062,7 @@ PROCEDURE busca_lancamentos:
                                         crappro.dtmvtolt = craplcm.dtmvtolt AND
                                         crappro.nrdocmto = craplcm.nrdocmto AND
                                         crappro.nrseqaut = craplcm.nrautdoc NO-LOCK. END.
-                                        
+        
                 IF  AVAIL crappro  THEN
                     ASSIGN aux_dsprotoc = crappro.dsprotoc.
         

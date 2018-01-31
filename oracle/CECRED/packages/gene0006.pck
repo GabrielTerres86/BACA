@@ -413,7 +413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                13/03/2017 - Na procedure pc_gera_protocolo foi retirado pr_dscritic 
                             da exception vr_exc_erro pois é um erro tratado 
                             (Lucas Ranghetti #624628)
-                            
+
                24/10/2017 - #781206 Nas rotinas pc_gera_protocolo e pc_gera_protocolo_md5, nos inserts da tabela
                             crappro, restringido o campo dscedent em 50 caracteres. Na rotina pc_busca_protocolo_wt,
                             no insert da tabela wt_protocolo, restringido o campo dscedent em 40 caracteres (Carlos)
@@ -950,7 +950,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-
+      
       -- Devolver o protocolo que geramos
       pr_dsprotoc := vr_dsprotoc;
 
@@ -1363,7 +1363,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --
     --  Frequencia: ---
     --  Objetivo  : Gera listagem de protocolos podendo filtrar por vários Tipos Protocolos.
-
+    --
+    --  Alteração : 03/01/2017 - Incluido tratativas para arrecadação de FGTS.
+    --                           PRJ406-FGTS(Odirlei-AMcom) 
+    --
     -- .............................................................................
   BEGIN
     DECLARE
@@ -1507,7 +1510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           END IF;
 
           -- Incrementa quantidade de registros
-          pr_qttotreg := pr_qttotreg + 1;
+          pr_qttotreg := pr_qttotreg + 1; 
 
           -- Valida condições sobre o registro
           IF pr_nrregist > 0 AND (pr_qttotreg <= pr_iniconta OR pr_nrregist < (pr_qttotreg - pr_iniconta)) THEN
@@ -1570,11 +1573,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
           pr_protocolo(vr_index).cdagesic := rw_crapcop.cdagesic;
 
-          IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,6,9,10,11,12,13,15,16,17,18,19,20) THEN
+          IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,6,9,10,11,12,13,15,16,17,18,19,20,23,24) THEN
             pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
             pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
           END IF;
-
+		  
 		      IF rw_crappro.cdtippro IN (20) THEN
              pr_protocolo(vr_index).nrcelular   := TRIM(gene0002.fn_busca_entrada(3, rw_crappro.dsinform##2, '#'));
              pr_protocolo(vr_index).nmoperadora := TRIM(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'));                      
@@ -2080,6 +2083,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                                           ,pr_protocolo OUT typ_tab_protocolo    --> PL Table de registros
                                           ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código do erro
                                           ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descrição do erro    
+  
+    -- ..........................................................................
+    --
+    --  Sistema  : Processos Genéricos
+    --  Sigla    : GENE
+    --  Autor    : 
+    --  Data     : Dezembro/2017.                   Ultima atualização: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: ---
+    --  Objetivo  : Gera listagem de protocolos podendo filtrar 
+    --
+    --  Alteração : 03/01/2017 - Incluido tratativas para arrecadação de FGTS.
+    --                           PRJ406-FGTS(Odirlei-AMcom) 
+    --
+    -- .............................................................................
   BEGIN
     DECLARE     
 
@@ -2214,7 +2234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         pr_protocolo(vr_index).nmoperad := vr_nmoperad;
         pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
 
-        IF rw_crappro.cdtippro IN (1,2,6,9,10,11,12,13,15,20) THEN
+        IF rw_crappro.cdtippro IN (1,2,6,9,10,11,12,13,15,20,23,24) THEN
           pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
           pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
 				ELSIF rw_crappro.cdtippro IN (16,17,18,19) THEN

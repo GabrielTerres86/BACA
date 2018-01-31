@@ -767,19 +767,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         01/03/2017 - Adicionar origem ADIOFJUROS para podermos debitar estes agendamentos
                      na procedure pc_consulta_lancamento (Lucas Ranghetti M338.1) 
 					 
-		22/03/2017 - Adicionado tratamento na pc_consulta_lancamento para listar
-				     reacarga de celular. (PRJ321 Reinert)                   
+        22/03/2017 - Adicionado tratamento na pc_consulta_lancamento para listar
+                     reacarga de celular. (PRJ321 Reinert)                   
 
         05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa
                      e nrcpfcgc para não consultar novamente o associado nos packages 
                      apli0001 e imut0001 (Carlos)
 
         26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			         crapass, crapttl, crapjur 
-					(Adriano - P339).
-                     
+                     crapass, crapttl, crapjur 
+                     (Adriano - P339).
+                   
         11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
-      
+        
         28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40 pois estava estourando (Tiago #724513).      
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -1093,34 +1093,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           IF rw_crapass.inpessoa = 1 THEN /* Fisica */
             vr_cdbattar:= 'EXTPETAAPF';
           ELSE
-              vr_cdbattar:= 'EXTPETAAPJ';
+            vr_cdbattar:= 'EXTPETAAPJ';
           END IF;
         ELSE
-            vr_tipotari := 8;
-            --Se for pessoa fisica
-            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-              vr_cdbattar:= 'EXTPEPREPF';          
+          vr_tipotari := 8;
+          --Se for pessoa fisica
+          IF rw_crapass.inpessoa = 1 THEN /* Fisica */
+            vr_cdbattar:= 'EXTPEPREPF';
           ELSE
-              vr_cdbattar:= 'EXTPEPREPJ';
+            vr_cdbattar:= 'EXTPEPREPJ';
           END IF;
         END IF;
       ELSE
-          --Se terminal for TAA
-          IF pr_nrterfin <> 0 THEN /* TAA */ 
-            vr_tipotari := 7;
-            --Se for pessoa fisica
-            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-              vr_cdbattar:= 'EXTMETAAPF';
+        --Se terminal for TAA
+        IF pr_nrterfin <> 0 THEN /* TAA */ 
+          vr_tipotari := 7;
+          --Se for pessoa fisica
+          IF rw_crapass.inpessoa = 1 THEN /* Fisica */
+            vr_cdbattar:= 'EXTMETAAPF';
           ELSE
-              vr_cdbattar:= 'EXTMETAAPJ';
+            vr_cdbattar:= 'EXTMETAAPJ';
           END IF;
         ELSE
-            vr_tipotari := 6;
-            --Se for pessoa fisica
-            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-              vr_cdbattar:= 'EXTMEPREPF';
+          vr_tipotari := 6;
+          --Se for pessoa fisica
+          IF rw_crapass.inpessoa = 1 THEN /* Fisica */
+            vr_cdbattar:= 'EXTMEPREPF';
           ELSE
-              vr_cdbattar:= 'EXTMEPREPJ';
+            vr_cdbattar:= 'EXTMEPREPJ';
           END IF;
         END IF;
       END IF;         
@@ -3090,7 +3090,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1619; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1620; /* Aval */                 
+                 vr_cdhistor := 1620; /* Aval */ 
             ELSE     
                  vr_cdhistor := 1078; /* Devedor */
             END CASE;
@@ -3117,7 +3117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1540; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1618; /* Aval */                 
+                 vr_cdhistor := 1618; /* Aval */ 
             ELSE     
                  vr_cdhistor := 1076; /* Devedor */
             END CASE;
@@ -3188,7 +3188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_extrato_epr(vr_index).txjurepr:= rw_craplem.txjurepr;
         pr_extrato_epr(vr_index).tpemprst:= rw_crapepr.tpemprst;
         pr_extrato_epr(vr_index).qtdiacal:= rw_craplem.qtdiacal;
-
+        
         IF rw_craplem.cdhistor IN(1039,1044,1045,1057 /* PP */
                                  ,2331,2330,2336,2335 /* POS */) THEN
           pr_extrato_epr(vr_index).cdorigem:= rw_craplem.cdorigem;
@@ -3659,6 +3659,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --                           registro deve ser igonardo. Será exibido somente no cursor cr_crapret
   --                           (SD793999 e SD795994 - AJFink)
   -- 
+  --              23/01/2017 - Ajustes para arrecadacao de FGTS/DAE. PRJ406 - FGTS
+  --                           (Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4266,6 +4268,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,t.flgbaixa_efetiva;
       rw_cred_npc cr_cred_npc%ROWTYPE;          
            
+      --Busca dados de agendamento de tributos
+      CURSOR cr_agen_trib(pr_idlancto craplau.idlancto%TYPE) IS
+      SELECT trib.tppagamento
+            ,NVL(trib.dsidenti_pagto, 
+                          DECODE(trib.tppagamento,3,'FGTS',4,'DAE','')) dsidentif_pagto
+        FROM cecred.tbpagto_agend_tributos trib
+       WHERE trib.idlancto = pr_idlancto;
+      rw_agen_trib cr_agen_trib%ROWTYPE;
+      
       --Variaveis Locais
       vr_cdhistaa INTEGER;
       vr_cdhsetaa INTEGER;
@@ -4696,6 +4707,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             CLOSE cr_darf_das;
             
             vr_dscedent := rw_darf_das.dsidentif_pagto;
+            
+          ELSIF rw_craplau.cdtiptra IN (12,13) THEN --FGTS, DAE
+            OPEN cr_agen_trib(pr_idlancto => rw_craplau.idlancto);
+            FETCH cr_agen_trib INTO rw_agen_trib;
+            CLOSE cr_agen_trib;
+
+            vr_dscedent := rw_agen_trib.dsidentif_pagto;          
           END IF;
           
           --Chamado 376432
@@ -9369,7 +9387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
     vr_vlmoefix     NUMBER(35,8);
     vr_vlmoefi1     NUMBER(35,8);
     vr_nmcidade     VARCHAR2(100);
-	vr_nmsegntl     crapttl.nmextttl%TYPE;
+	  vr_nmsegntl     crapttl.nmextttl%TYPE;
 
     vr_ant_vlirfcot NUMBER;
     vr_ant_vlprepag NUMBER;
@@ -11265,7 +11283,7 @@ END pc_consulta_ir_pj_trim;
       vr_rel_nrtelcop VARCHAR2(100);
       vr_ant_dtrefere DATE;
       vr_sol_dtrefere DATE;
-	  vr_nmsegntl     crapttl.nmextttl%TYPE;
+	    vr_nmsegntl     crapttl.nmextttl%TYPE;
 
 
       vr_dsdomes1     VARCHAR(10);
@@ -12846,7 +12864,7 @@ END pc_consulta_ir_pj_trim;
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_erro => pr_tab_erro);
       END;
-    END pc_imprime_extrato;
+    END pc_imprime_extrato;  
 
     -- Subrotina para Imprimir Extrato Emprestimo
     PROCEDURE pc_extrato_pos_fixado(pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
@@ -13912,7 +13930,7 @@ END pc_consulta_ir_pj_trim;
 
                 --Levantar Excecao
                 RAISE vr_exc_sair;
-               END IF;
+               END IF;            
 
             ELSIF vr_tab_dados_epr(vr_index).tpemprst = 2 THEN -- POS-FIXADO
 
@@ -13945,7 +13963,7 @@ END pc_consulta_ir_pj_trim;
                 --se tem erro na tabela 
                 IF pr_tab_erro.COUNT > 0 THEN
                   vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic;
-                ELSE
+            ELSE
                   vr_dscritic:= 'Nao foi possivel carregar o extrato.';
                 END IF;  
                 --Colocar todo o texto na variavel auxiliar

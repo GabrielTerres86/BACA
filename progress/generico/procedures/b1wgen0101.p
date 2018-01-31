@@ -58,9 +58,15 @@
                19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
                             pelo InternetBanking (Projeto 338 - Lucas Lunelli)
 				
-               27/07/2017 - Ajuste realizado na ordenacao da consulta das faturas, conforme
-                    solicitado no chamado 684865. (Kelvin)
-                    
+			   27/07/2017 - Ajuste realizado na ordenacao da consulta das faturas, conforme
+							solicitado no chamado 684865. (Kelvin)
+              
+               12/12/2017 - Alterar campo flgcnvsi por tparrecd.
+                           PRJ406-FGTS (Odirlei-AMcom)                 
+               
+               14/12/2017 - Incluido campo na tt-empr-conve.
+                             PRJ406-FGTS(Odirlei-AMcom)      
+                                     
                17/01/2018 - Alteraçoes referente ao PJ406
 ..............................................................................*/
 
@@ -311,7 +317,7 @@ PROCEDURE consulta_faturas:
                           (IF par_nrautdoc <> "" THEN           
                               craplft.cdbarras = par_nrautdoc    
                            ELSE 
-                              TRUE)
+                              TRUE)            
                            NO-LOCK BY (craplft.vllanmto + craplft.vlrmulta + craplft.vlrjuros):
 
         IF  par_vldpagto <> 0 THEN
@@ -622,7 +628,8 @@ PROCEDURE lista-empresas-conv:
     ASSIGN aux_nrregist = par_nrregist.
 
     FOR EACH crapcon WHERE crapcon.cdcooper = par_cdcooper AND
-                           /* crapcon.flgcnvsi = TRUE         AND \* SCIREDI *\  PJ406 */
+                           (crapcon.tparrecd = 1  OR		   /* SCIREDI */
+                            crapcon.tparrecd = 2 )         AND /* Bancoob */
                           (IF par_cdempcon <> 0 THEN
                            crapcon.cdempcon = par_cdempcon ELSE 
                            crapcon.cdempcon > 0)           AND
@@ -644,9 +651,10 @@ PROCEDURE lista-empresas-conv:
            DO:
                CREATE tt-empr-conve.
                ASSIGN tt-empr-conve.nmextcon  =  crapcon.nmextcon
+                      tt-empr-conve.nmrescon  =  crapcon.nmrescon
                       tt-empr-conve.cdempcon  =  crapcon.cdempcon
                       tt-empr-conve.cdsegmto  =  crapcon.cdsegmto
-                      tt-empr-conve.flgcnvsi  =  IF crapcon.flgcnvsi THEN "SIM"
+                      tt-empr-conve.flgcnvsi  =  IF crapcon.tparrecd = 1 THEN "SIM"
                                                  ELSE "NAO".
            END.
        
@@ -752,7 +760,7 @@ PROCEDURE grava-dados-fatura:
            LEAVE Contador.
 
        END. /* FIM do DO ... TO */
-       
+
        /* PJ406 */
        FIND crapcon WHERE crapcon.cdcooper = craplft.cdcooper AND
                           crapcon.cdsegmto = craplft.cdsegmto AND 

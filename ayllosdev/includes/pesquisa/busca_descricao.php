@@ -14,6 +14,7 @@
 	* 005: [27/07/2016] Carlos R.	    (CECRED): Corrigi o tratamento para o retorno de erro do XML. SD 479874.
     * 006: [06/06/2017] Jonata        (Mouts): Ajuste para inclusão da busca de dominios - P408.
 	* 007: [13/08/2017] Jonata       (Mouts): Ajuste para incluir a passagem de novo parâmetro na rotina buscaDescricao - P364.
+ * 008 [14/12/2017] Odirlei Busana (AMcom): Ajustado para não validar numerico para BUSCA_DESC_CONVEN. PRJ406 - FGTS
  */	
 
 	session_start();
@@ -55,7 +56,7 @@
 
 	// Valida c&oacute;digo
 	if ($codigo == "0") exibirErro('error','O c&oacute;digo '.$tituloPesquisa.' deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if ($nomeProcedure != 'BUSCA_ORGAO_EXPEDIDOR' && !validaInteiro($codigo)) exibirErro('error','C&oacute;digo '.$tituloPesquisa.' inv&aacute;lido, informe somente n&uacute;meros. Valor informado: '.$codigo.'.','Alerta - Ayllos','if( $(\'#divMatric\').css(\'display\') == \'block\' || $(\'#divTela\').css(\'display\') == \'block\' ) { unblockBackground(); }else{ bloqueiaFundo(divRotina); }',false);
+	if (($nomeProcedure != 'BUSCA_ORGAO_EXPEDIDOR' && $nomeProcedure != 'BUSCA_DESC_CONVEN') && !validaInteiro($codigo)) exibirErro('error','C&oacute;digo '.$tituloPesquisa.' inv&aacute;lido, informe somente n&uacute;meros. Valor informado: '.$codigo.'.','Alerta - Ayllos','if( $(\'#divMatric\').css(\'display\') == \'block\' || $(\'#divTela\').css(\'display\') == \'block\' ) { unblockBackground(); }else{ bloqueiaFundo(divRotina); }',false);
 	
 	
 	// Verifica se e' uma rotina Progress ou Oracle
