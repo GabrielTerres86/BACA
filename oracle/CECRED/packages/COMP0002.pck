@@ -49,7 +49,7 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0002 is
                                  ,pr_iniconta IN NUMBER                 --> Início da conta
                                  ,pr_nrregist IN NUMBER                 --> Número de registros
                                  ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
-																 ,pr_cdtipmod IN NUMBER                 --> Código do módulo da consulta
+								 ,pr_cdtipmod IN NUMBER                 --> Código do módulo da consulta
                                  ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
                                  ,pr_dsretorn OUT VARCHAR2 );
 
@@ -397,7 +397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
    END;
 
   -- Todos
-  PROCEDURE pc_lista_comprovantes(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+    PROCEDURE pc_lista_comprovantes(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
                                  ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
                                  ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
                                  ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
@@ -442,7 +442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_des_erro    VARCHAR2(4000);
       vr_dscritic    crapcri.dscritic%TYPE;
       vr_dstippro    VARCHAR2(100);
-						    			
+    
     BEGIN					  
 			
       IF pr_cdtipmod = 3 THEN -- Transferências Recebidas
@@ -465,7 +465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
         IF pr_cdtipmod = 1 THEN -- Pagamento
           -- Pagamento (Tit/Cnv); Operações DebAut; Pagamento/Agendamento GPS; Pagamento DebAut; Pagamento DARF; Agendamento DARF; Pagamento DAS; Agendamento DAS
           vr_dstippro := '2;11;13;15;16;17;18;19'; 
-
+  			
         ELSIF pr_cdtipmod = 2 THEN -- Transferências Realizadas
   				
           vr_dstippro := '1;4;9'; --Transferência; Credito Salario; TED
@@ -477,7 +477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
         ELSIF pr_cdtipmod = 5 THEN -- Recarga de Celular
 
           vr_dstippro := '20'; -- Recarga de Celular
-  											
+
         ELSIF pr_cdtipmod = 0 THEN -- Todos
   											
           vr_dstippro := '0';
@@ -485,27 +485,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
         END IF;
       
         gene0006.pc_lista_protocolos_por_tipos(pr_cdcooper  => pr_cdcooper
-                                    ,pr_nrdconta  => pr_nrdconta
-                                    ,pr_dtinipro  => pr_dtinipro
-                                    ,pr_dtfimpro  => pr_dtfimpro
+                                      ,pr_nrdconta  => pr_nrdconta
+                                      ,pr_dtinipro  => pr_dtinipro
+                                      ,pr_dtfimpro  => pr_dtfimpro
                                       ,pr_iniconta  => pr_iniconta - 1 /* Necessário subtrair pois o controle de paginação interno é realizado com posição inicial 0 */
-                                    ,pr_nrregist  => pr_nrregist
+                                      ,pr_nrregist  => pr_nrregist
                                       ,pr_cdtippro  => vr_dstippro 
-                                    ,pr_cdorigem  => pr_cdorigem
-                                    ,pr_dstransa  => vr_dstransa
-                                    ,pr_dscritic  => vr_dscritic
-                                    ,pr_qttotreg  => vr_qttotreg
-                                    ,pr_protocolo => vr_prot_fltr
-                                    ,pr_des_erro  => vr_des_erro);
+                                      ,pr_cdorigem  => pr_cdorigem
+                                      ,pr_dstransa  => vr_dstransa
+                                      ,pr_dscritic  => vr_dscritic
+                                      ,pr_qttotreg  => vr_qttotreg
+                                      ,pr_protocolo => vr_prot_fltr
+                                      ,pr_des_erro  => vr_des_erro);
 
         -- Verifica se retornou erro
         IF TRIM(vr_dscritic) IS NOT NULL THEN
           vr_des_erro := 'Não foi possível consultar os comprovantes.';        
           RAISE vr_exc_erro;
         END IF;
-        			
-          END IF;
-      
+        
+      END IF;
+        
       dbms_lob.createtemporary(pr_retxml, TRUE);
       dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
@@ -578,7 +578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     END;
     
   END pc_lista_comprovantes;
-   
+
    
   -- Transferencia
   PROCEDURE pc_detalhe_compr_transferencia(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
@@ -962,11 +962,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');       
        
-       -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Cecred><Protocolos>');       
-      
       FOR vr_ind IN 1..vr_protocolo.count LOOP
       
           gene0002.pc_escreve_xml(pr_xml            => pr_retxml

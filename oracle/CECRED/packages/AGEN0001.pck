@@ -169,7 +169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Alteracoes: 18/10/2017 - Alterado o parametro de consulta de recarga de 3 para 5
                               (IF pr_cdtipmod = 3 -> IF pr_cdtipmod = 3 -- Recarga de Celular), Prj. 285 
                               (Jean Michel).
-
+                              
                  06/12/2017 - Adicionado filtro por tipo de transação
                               (p285 - Ricardo Linhares)                              
 
@@ -186,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
     vr_dscritic    crapcri.dscritic%TYPE;
     vr_qttotage    INTEGER;
     vr_dstiptra    VARCHAR2(100);
-		
+                
     CURSOR cr_crapdat(pr_cdcooper crapdat.cdcooper%TYPE) IS
       SELECT dtmvtolt
         FROM crapdat
@@ -230,9 +230,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				
 			  IF pr_cdtipmod = 1 THEN -- Pagamento
           vr_dstiptra := '2;10'; -- Pagamento; DARF/DAS
-				ELSIF pr_cdtipmod = 2 THEN -- Transferências 
+  			ELSIF pr_cdtipmod = 2 THEN -- Transferências 
           vr_dstiptra := '1;3;4;5'; --Transferencias inter; Credito salario; TED; Transferencias intra
-					
+
 				END IF;
 						
 				PAGA0002.pc_obtem_agendamentos(pr_cdcooper => pr_cdcooper
@@ -256,9 +256,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 					RAISE vr_exc_erro;
 				END IF;
-				
-					END IF;
-							
+ 							
+      END IF;
+			
       -- Verifica se a quantidade de registro é zero
       IF nvl(vr_qttotage, 0) = 0 THEN
         vr_dscritic := 'Agendamento(s) nao encontrado(s).';
@@ -278,7 +278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
       IF vr_agendm_fltr.count > 0 THEN
 				FOR vr_idx IN vr_agendm_fltr.first..vr_agendm_fltr.last LOOP          
-	      
+          
 					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																 ,pr_texto_completo => vr_xml_temp      
 																 ,pr_texto_novo     => 
@@ -691,7 +691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				END IF;
 				
 				vr_info_sac := COMP0002.fn_info_sac(pr_cdcooper => rw_agendamento.cdcooper);
-
+        
         IF rw_agendamento.cdtiptra = 1 THEN
           vr_idlstdom := 5; -- Transf. Intracoop
         ELSIF rw_agendamento.cdtiptra = 5 THEN
@@ -731,7 +731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                 '<hrautent>' || rw_agendamento.hrtransa || '</hrautent>' ||
 																'<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>' ||																
 																'<vldocmto>' || to_char(rw_agendamento.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||																
-																'<dssituac>' || rw_agendamento.dssitlau || '</dssituac>' ||
+																'<dssituac>' || rw_agendamento.dssitlau || '</dssituac>' ||                                
                                 '<infosac>'  ||
                                     '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                     '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
@@ -1772,7 +1772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      ..................................................................................*/          
  
      CASE 
-       WHEN pr_cdtiptra = 1 OR pr_cdtiptra = 3 THEN -- Transferência ou Crédito Salário
+       WHEN pr_cdtiptra = 1 OR pr_cdtiptra = 3 OR pr_cdtiptra = 5 THEN -- Transferência Intra e Intercooperativa ou Crédito Salário
          pc_detalhe_agendamento_trans(pr_idlancto => pr_idlancto
                                      ,pr_retxml   => pr_retxml
                                      ,pr_dsretorn => pr_dsretorn);

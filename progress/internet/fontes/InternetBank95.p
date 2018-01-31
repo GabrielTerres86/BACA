@@ -343,7 +343,10 @@ DO:
                                                "</dtcarencia>" + 
                                                /* Novo IB */
                                                "<dtresgat>" +
-                                                   STRING(tt-saldo-rdca.dtresgat,"99/99/9999") +
+                                                   (IF par_dtmvtolt = ? THEN
+                                                       " "
+                                                    ELSE
+                                                       STRING(par_dtmvtolt,"99/99/9999")) +
                                                "</dtresgat>" + 
                                                "<dtcarenc>" +
                                                    STRING(tt-saldo-rdca.dtmvtolt + tt-saldo-rdca.qtdiacar,"99/99/9999") +

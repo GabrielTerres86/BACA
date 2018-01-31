@@ -64,6 +64,7 @@ DEFINE INPUT  PARAMETER par_cpfopelg AS DECIMAL     NO-UNDO.
 DEFINE INPUT  PARAMETER par_cdagenci AS INTEGER     NO-UNDO.
 DEFINE INPUT  PARAMETER par_dtmvtolt AS DATE        NO-UNDO.
 DEFINE INPUT  PARAMETER par_idorigem AS INTEGER     NO-UNDO.
+DEFINE INPUT  PARAMETER par_cdtransa LIKE tbgen_trans_pend.cdtransacao_pendente NO-UNDO.
 DEFINE INPUT  PARAMETER par_insittra AS INTEGER     NO-UNDO.
 DEFINE INPUT  PARAMETER par_dtiniper AS DATE        NO-UNDO.
 DEFINE INPUT  PARAMETER par_dtfimper AS DATE        NO-UNDO.
@@ -96,6 +97,7 @@ RUN STORED-PROCEDURE pc_busca_trans_pend
         ,INPUT  par_cdagenci          /* --> Codigo do PA                  */
         ,INPUT  par_dtmvtolt          /* --> Data de movimento             */
         ,INPUT  par_idorigem          /* --> Id da origem                  */
+        ,INPUT  par_cdtransa          /* --> Código da transaçao pendente  */
         ,INPUT  par_insittra          /* --> Id situacao da transacao      */
         ,INPUT  par_dtiniper          /* --> Data inicio do periodo        */
         ,INPUT  par_dtfimper          /* --> Data fim do periodo           */

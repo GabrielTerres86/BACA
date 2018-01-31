@@ -477,6 +477,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                                ,pr_cdagenci IN  crapage.cdagenci%TYPE --> Numero PA
                                ,pr_dtmvtolt IN  crapdat.dtmvtolt%TYPE --> Data Movimentacao
                                ,pr_cdorigem IN  INTEGER               --> Id de origem
+                               ,pr_cdtransa IN  tbgen_trans_pend.cdtransacao_pendente%TYPE DEFAULT 0 --> Código da transação pendente
                                ,pr_insittra IN  INTEGER               --> Id de situacao da transacao
                                ,pr_dtiniper IN  DATE                  --> Data Inicio
                                ,pr_dtfimper IN  DATE                  --> Data final
@@ -5297,6 +5298,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     --Variaveis Locais
     vr_hrlimini INTEGER; --horario inicio
     vr_hrlimfim INTEGER; --horario fim
+    vr_idesthor INTEGER; --indicador estouro horario
     vr_hrlimage VARCHAR2(5); --horario folha agendamento
     vr_hrlimptb VARCHAR2(5); --horario folha portabilidade
     vr_hrlimsol VARCHAR2(5); --horario folha solicitacao Estouro
@@ -5528,6 +5530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ,pr_cdagenci IN  crapage.cdagenci%TYPE --> Numero PA
                                 ,pr_dtmvtolt IN  crapdat.dtmvtolt%TYPE --> Data Movimentacao
                                 ,pr_cdorigem IN  INTEGER               --> Id de origem
+                                ,pr_cdtransa IN  tbgen_trans_pend.cdtransacao_pendente%TYPE DEFAULT 0 --> Código da transação pendente
                                 ,pr_insittra IN  INTEGER               --> Id de situacao da transacao
                                 ,pr_dtiniper IN  DATE                  --> Data Inicio
                                 ,pr_dtfimper IN  DATE                  --> Data final
@@ -5636,6 +5639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         
       CURSOR cr_tbgen_trans_pend (pr_cdcooper IN tbgen_trans_pend.cdcooper%TYPE
                                  ,pr_nrdconta IN tbgen_trans_pend.nrdconta%TYPE
+                                 ,pr_cdtransa IN tbgen_trans_pend.cdtransacao_pendente%TYPE
                                  ,pr_dtiniper IN tbgen_trans_pend.dtregistro_transacao%TYPE
                                  ,pr_dtfimper IN tbgen_trans_pend.dtregistro_transacao%TYPE
                                  ,pr_insittra IN tbgen_trans_pend.idsituacao_transacao%TYPE) IS
@@ -5701,9 +5705,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                   FROM tbgen_trans_pend gtp
                  WHERE gtp.cdcooper = pr_cdcooper
                    AND gtp.nrdconta = pr_nrdconta
-                   AND gtp.idsituacao_transacao <> 2
+                   AND ((pr_cdtransa <> 0 AND gtp.cdtransacao_pendente = pr_cdtransa) OR 
+                       (pr_cdtransa =  0 AND gtp.idsituacao_transacao <> 2
                    AND ((pr_insittra = 15 AND (gtp.idsituacao_transacao = 1 OR /*Pendente*/ gtp.idsituacao_transacao = 5))
-                                OR (gtp.idsituacao_transacao = DECODE(pr_insittra,0,gtp.idsituacao_transacao,pr_insittra)))
+                                OR (gtp.idsituacao_transacao = DECODE(pr_insittra,0,gtp.idsituacao_transacao,pr_insittra)))))
                  ORDER BY ord1) dados
                 ORDER BY orderby DESC
                         ,dados.tptransacao;                                 
@@ -5718,7 +5723,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ,tbtransf_trans_pend.dtdebito
       FROM   tbtransf_trans_pend 
       WHERE  tbtransf_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbtransf_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbtransf_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));
       rw_tbtransf_trans_pend cr_tbtransf_trans_pend%ROWTYPE;
   	  
       --Tipo Transacao 2 (Pagamento)
@@ -5735,7 +5741,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ,tbpagto_trans_pend.idtitulo_dda
       FROM   tbpagto_trans_pend 
       WHERE  tbpagto_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbpagto_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbpagto_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));        
       rw_tbpagto_trans_pend cr_tbpagto_trans_pend%ROWTYPE;
   	  
       --Tipo Transacao 4 (TED)
@@ -5756,7 +5763,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ,tbspb_trans_pend.nmtitula_favorecido
       FROM   tbspb_trans_pend 
       WHERE  tbspb_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbspb_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbspb_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));
       rw_tbspb_trans_pend cr_tbspb_trans_pend%ROWTYPE;
   	  
       --Tipo Transacao 6 (Credito Pre-Aprovado)
@@ -5806,7 +5814,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ,tbconv_trans_pend.vlmaximo_debito
       FROM   tbconv_trans_pend 
       WHERE  tbconv_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbconv_trans_pend.dtdebito_fatura BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbconv_trans_pend.dtdebito_fatura BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));
       rw_tbconv_trans_pend cr_tbconv_trans_pend%ROWTYPE;
       	  
       --Tipo Transacao 9 (Folha de Pagamento)
@@ -5818,7 +5827,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ,tbfolha_trans_pend.vltarifa
       FROM   tbfolha_trans_pend 
       WHERE  tbfolha_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbfolha_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbfolha_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));
       rw_tbfolha_trans_pend cr_tbfolha_trans_pend%ROWTYPE;
 
       --Tipo Transacao 10 - Cursor para buscar a transação de adesão de pacote de tarifa pendente
@@ -5838,7 +5848,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       SELECT tbpagto_darf_das_trans_pend.*
       FROM   tbpagto_darf_das_trans_pend
       WHERE  tbpagto_darf_das_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbpagto_darf_das_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbpagto_darf_das_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));
       rw_tbpagto_darf_das_trans_pend cr_tbpagto_darf_das_trans_pend%ROWTYPE;
            
       --Tipo Transacao 12 (Desconto de Cheque)
@@ -5851,7 +5862,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     ,tbgen_trans_pend g
                WHERE d.cdtransacao_pendente = pr_cddoitem
                  AND g.cdtransacao_pendente = d.cdtransacao_pendente
-                 AND g.dtmvtolt BETWEEN  pr_dtiniper AND pr_dtfimper
+                 AND ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND g.dtmvtolt BETWEEN  pr_dtiniper AND pr_dtfimper)
+                  OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL))
             GROUP BY g.dtmvtolt) x
            WHERE x.qtcheque > 0;
       rw_tbdscc_trans_pend cr_tbdscc_trans_pend%ROWTYPE;
@@ -6034,6 +6046,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_exc_erro EXCEPTION;
 
       --Variáveis locais
+      vr_nriniseq INTEGER := 0;
       vr_idastcjt NUMBER := 0;
       vr_nrcpfcgc NUMBER(14) := 0;
       vr_nrcpfgui VARCHAR2(100) := '';
@@ -6300,6 +6313,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         
       END IF;
       
+      -- Atualiza somente se for pesquisa de todas as transações no período informado
+      IF NVL(pr_cdtransa,0) = 0 AND pr_dtiniper IS NULL AND pr_dtfimper IS NULL AND pr_nrregist = 0 THEN
       PAGA0001.pc_atualiza_trans_nao_efetiv(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
                                            ,pr_cdagenci => pr_cdagenci
@@ -6308,12 +6323,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
                                            
-                                           
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;                                        
+      END IF;
       
       -------------------------------------------------------------------------------
       ------------------------------  Criacao do XML --------------------------------
@@ -6333,6 +6348,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                              ,pr_texto_completo => vr_xml_temp 
                              ,pr_texto_novo     => '<dstransa>'||vr_dstransa||'</dstransa>');
       
+      -- Retornar somente se for pesquisa geral ou específica para consultar parâmetros gerais
+      IF NVL(pr_cdtransa,0) = 0 THEN
       --Limpar Tabela Memoria de Horarios
       vr_tab_limite_pend.DELETE;
       
@@ -6563,12 +6580,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                              ,pr_texto_completo => vr_xml_temp 
                              ,pr_texto_novo     => '</convenios>');                       
+      END IF;                          
       
+      -- Se for pesquisa geral ou específica para determinada transação
+      IF (pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND pr_nrregist > 0) OR (NVL(pr_cdtransa,0) > 0) THEN      
       --Montar Tag Xml das transacoes pendentes
       gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                              ,pr_texto_completo => vr_xml_temp 
                              ,pr_texto_novo     => '<transacoes>');
-      
       --------------------------------------------------------------------------------------
       --Buscar transacoes pendentes (pai)
       --------------------------------------------------------------------------------------
@@ -6605,8 +6624,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         RAISE vr_exc_erro;
       END IF; 
 
+        -- IB Antigo passa o parâmetro com valores pares (Ex.: 0, 10, 20)
+        -- Novo IB está padronizado para iniciar a sequencia com valor 1. 
+        -- Para manter as 2 plataformas funcionais durante o piloto do novo IB é necessário decremetar o valor
+        IF MOD(pr_nriniseq,2) <> 0 THEN
+          vr_nriniseq := pr_nriniseq - 1;
+        ELSE
+          vr_nriniseq := pr_nriniseq;
+        END IF;
+
       FOR rw_tbgen_trans_pend IN cr_tbgen_trans_pend (pr_cdcooper => pr_cdcooper
                                                      ,pr_nrdconta => pr_nrdconta
+                                                       ,pr_cdtransa => pr_cdtransa
                                                      ,pr_dtiniper => pr_dtiniper
                                                      ,pr_dtfimper => pr_dtfimper
                                                      ,pr_insittra => pr_insittra) LOOP
@@ -6733,8 +6762,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Controle de paginacao
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                      IF ((vr_qttotpen <= vr_nriniseq) OR
+                         (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
 
@@ -6799,8 +6828,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                    
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                      IF ((vr_qttotpen <= vr_nriniseq) OR
+                         (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -6843,8 +6872,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -6948,8 +6977,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -6988,8 +7017,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7035,7 +7064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                           END IF;    
                           
 							--Filtro data
-							IF rw_tbgen_trans_pend.dtregistro_transacao NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+                          IF pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND rw_tbgen_trans_pend.dtregistro_transacao NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
 								CONTINUE;                                                               
 							END IF;
                           
@@ -7121,7 +7150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             END IF;                    
                           END IF;
 
-                          IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+                          IF pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
                           END IF;
                           
@@ -7164,7 +7193,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                               EXIT;
                           END LOOP; 
 
-                          IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+                          IF pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
                           END IF;                    
                           
@@ -7219,7 +7248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                              EXIT;
                           END LOOP;  
                           
-                          IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+                          IF pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
                           END IF;   
                           
@@ -7239,8 +7268,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7323,8 +7352,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7357,8 +7386,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7387,8 +7416,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                   CLOSE cr_tbpagto_darf_das_trans_pend;
 				          --Controle de paginação
                   vr_qttotpen := vr_qttotpen + 1;
-                  IF ((vr_qttotpen <= pr_nriniseq) OR
-                    (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                  IF ((vr_qttotpen <= vr_nriniseq) OR
+                    (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                     CONTINUE;
                   END IF;	
                END IF;
@@ -7447,8 +7476,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                         
                 --Controle de paginação
                 vr_qttotpen := vr_qttotpen + 1;
-                IF ((vr_qttotpen <= pr_nriniseq) OR
-                   (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                IF ((vr_qttotpen <= vr_nriniseq) OR
+                   (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                    CONTINUE;
                 END IF;
               END IF;
@@ -7477,8 +7506,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                         
                 --Controle de paginação
                 vr_qttotpen := vr_qttotpen + 1;
-                IF ((vr_qttotpen <= pr_nriniseq) OR
-                   (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                IF ((vr_qttotpen <= vr_nriniseq) OR
+                   (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                    CONTINUE;
                 END IF;
               END IF;
@@ -7560,6 +7589,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                    || '   <data_alteracao_sit>' ||vr_dtaltera||'</data_alteracao_sit>'
                                                    || '   <pode_alterar>'       ||vr_indiacao||'</pode_alterar>'
                                                    || '   <idsituacao_transacao>' ||vr_idsittra||'</idsituacao_transacao>'
+                                                   || '   <data_debito>' || CASE WHEN UPPER(vr_dsdtefet) = 'NESTA DATA' THEN TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR') ELSE vr_dsdtefet END || '</data_debito>'
+                                                   || '   <data_sistema>' || TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR') || '</data_sistema>'
                                                    || '</dados_resumo>');
          
          --Detalhes da Transacao
@@ -7856,7 +7887,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                 || '  <quantidade>'||vr_qttotpen||'</quantidade>'
                                                 || '  <valortotal>'||TO_CHAR(vr_vltotpen,'fm999g999g990d00')||'</valortotal>'
                                                 || '</total>');
-      
+      END IF;      
       
       -- Encerrar a tag raiz 
       gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 

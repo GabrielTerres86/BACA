@@ -83,7 +83,7 @@ DO:
                                               "zzzzzzzzzzzzzzzzzzzzzzzz9") +
                                        "</cdrefere><vlmaxdeb>" +
                                        STRING(tt-autorizacoes-cadastradas.vlmaxdeb,
-                                              "zzz,zzz,zz9.99") +
+                                              "zzz,zzz,zzz,zz9.99") +
                                        "</vlmaxdeb><dshisext>" +
                                        tt-autorizacoes-cadastradas.dshisext +
                                        "</dshisext><inaltera>" +

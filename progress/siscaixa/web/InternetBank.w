@@ -1034,6 +1034,8 @@ DEF VAR aux_nrcpfope LIKE crapopi.nrcpfope                             NO-UNDO.
 DEF VAR aux_cpfopelg LIKE crapopi.nrcpfope                             NO-UNDO.
 DEF VAR aux_nmrescop LIKE crapcop.nmrescop                             NO-UNDO.
 
+DEF VAR aux_cdtransa LIKE tbgen_trans_pend.cdtransacao_pendente        NO-UNDO.
+
 DEF VAR aux_nrcrcard AS DECI                                           NO-UNDO.
 DEF VAR aux_dtvctini AS DATE                                           NO-UNDO.
 DEF VAR aux_dtvctfim AS DATE                                           NO-UNDO.
@@ -1258,7 +1260,7 @@ DEF VAR aux_vintegra AS DECIMAL										   NO-UNDO.
 
 /* Operacao 153 */
 DEF VAR aux_indtpaga AS INTE NO-UNDO.
-DEF VAR aux_vlrlote AS DECI NO-UNDO.									   
+DEF VAR aux_vlrlote AS DECI NO-UNDO.			
 
 /* Operacao 205 */
 DEF VAR aux_cdoperad AS CHAR                         NO-UNDO.
@@ -1684,6 +1686,9 @@ PROCEDURE process-web-request :
         IF  GET-VALUE("flcadast") <> ""  THEN
             ASSIGN aux_flcadast = INT(GET-VALUE("flcadast")).
             
+        IF  GET-VALUE("aux_indvalid") <> ""  THEN    
+            ASSIGN aux_indvalid = INTE(GET-VALUE("aux_indvalid")).    
+            
         IF  GET-VALUE("tpoperac") <> ""  THEN
             ASSIGN aux_tpoperac = INT(GET-VALUE("tpoperac")).
 
@@ -1700,6 +1705,10 @@ PROCEDURE process-web-request :
                   /** Nao utiliza criptografia se for confirmacao de transferencia/TED **/
                   CAN-DO("22",STRING(aux_operacao)) AND aux_flgexecu 
                ) OR
+               (
+                  /** Nao utiliza criptografia se for aprovacao de transacao pendente **/
+                  CAN-DO("75",STRING(aux_operacao)) AND aux_indvalid = 1 
+               ) OR               
                (
                   /** Nao utiliza criptografia se for cancelamento de aplicacao **/
                   CAN-DO("85",STRING(aux_operacao))
@@ -1719,10 +1728,14 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for pagamento de GPS **/
                   CAN-DO("153",STRING(aux_operacao)) AND (aux_tpoperac = 3 OR aux_tpoperac = 5)
-               ) 
+               ) OR
                (
                   /** Nao utiliza criptografia se for pagamento de emprestimo **/
                   CAN-DO("158",STRING(aux_operacao))
+               ) OR
+               (
+                  /** Nao utiliza criptografia se for reprovacao de transacao pendente **/
+                  CAN-DO("163",STRING(aux_operacao))
                ) OR
                (
                   /** Nao utiliza criptografia se for pagamento de DARF e DAS **/
@@ -2326,10 +2339,10 @@ PROCEDURE process-web-request :
                 RUN proc_operacao196. 
         ELSE
             IF  aux_operacao = 197 THEN /* Detalhar Comprovante Recebido  */
-                RUN proc_operacao197.                
+                RUN proc_operacao197.  
         ELSE
             IF  aux_operacao = 204 THEN /* Carregar os dados do upload do arquivo de pagamento */
-                RUN proc_operacao204. 
+                RUN proc_operacao204.         
         ELSE
             IF  aux_operacao = 205 THEN /* Gravar a validaçao do upload do arquivo de pagamento */
                 RUN proc_operacao205. 
@@ -4927,7 +4940,8 @@ PROCEDURE proc_operacao73:
            aux_insittra = INTE(GET-VALUE("aux_insittra"))
            aux_cpfopelg = DECI(GET-VALUE("aux_cpfopelg"))
            aux_nrregist = INTE(GET-VALUE("aux_nrregist"))
-           aux_nriniseq = INTE(GET-VALUE("aux_nriniseq")).
+           aux_nriniseq = INTE(GET-VALUE("aux_nriniseq"))
+           aux_cdtransa = INTE(GET-VALUE("aux_cdtransa")).
 
     RUN sistema/internet/fontes/InternetBank73.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -4937,6 +4951,7 @@ PROCEDURE proc_operacao73:
                                                   INPUT 90, /* pac */
                                                   INPUT aux_dtmvtocd,
                                                   INPUT 3, /* origem */
+                                                  INPUT aux_cdtransa,
                                                   INPUT aux_insittra,
                                                   INPUT aux_dtiniper,
                                                   INPUT aux_dtfimper,
@@ -4984,8 +4999,7 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao75:
 
-    ASSIGN aux_cdditens = GET-VALUE("aux_cdditens")
-           aux_indvalid = INTE(GET-VALUE("aux_indvalid")).
+    ASSIGN aux_cdditens = GET-VALUE("aux_cdditens").
 
     RUN sistema/internet/fontes/InternetBank75.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -5261,6 +5275,11 @@ PROCEDURE proc_operacao84:
            aux_cdperapl = INTE(GET-VALUE("cdperapl"))
            aux_flgvalid = LOGICAL(GET-VALUE("flgvalid")).
 
+    IF  GET-VALUE("idtipapl") <> '' THEN
+        aux_idtipapl = GET-VALUE("idtipapl").
+    ELSE
+        aux_idtipapl = 'A'.           
+
     RUN sistema/internet/fontes/InternetBank84.p (INPUT aux_cdcooper,
                                                   INPUT 90, /*cdagenci*/
                                                   INPUT 900, /*nrdcaixa*/
@@ -5283,6 +5302,7 @@ PROCEDURE proc_operacao84:
                                                   INPUT 0, /*Nao debitar da CI*/
                                                   INPUT 1, /*Gera log*/
                                                   INPUT aux_flgvalid,
+                                                  INPUT aux_idtipapl,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
     
@@ -7777,7 +7797,7 @@ PROCEDURE proc_operacao164:
 												 INPUT 996,            /*par_cdoperad*/
 												 INPUT "INTERNETBANK", /*par_nmdatela*/
 												 INPUT 3,              /*par_idorigem*/
-												   INPUT aux_nrdconta,
+												 INPUT aux_nrdconta,
 												 INPUT aux_idseqttl,
 												 INPUT aux_dtmvtolt,
 												 INPUT aux_dtmvtopr,
@@ -7792,9 +7812,9 @@ PROCEDURE proc_operacao164:
 												 INPUT aux_inproces,
 												 INPUT 1,              /*par_promsini*/
 												 INPUT IF aux_iddspscp = 1 THEN "INTERNETBANK" ELSE "", /* Parametro criado para permitir a utilizacao da operacao no piloto do novo IB */
-												 INPUT FALSE,          /*par_flgentra*/
-                                                  OUTPUT aux_dsmsgerr,
-                                                  OUTPUT TABLE xml_operacao).
+												 INPUT FALSE,          /*par_flgentra*/                         
+                        OUTPUT aux_dsmsgerr,
+                        OUTPUT TABLE xml_operacao).
                         
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr.
@@ -8762,7 +8782,7 @@ PROCEDURE proc_operacao210:
     
         {&out} xml_operacao.dslinxml.
         
-                END.
+    END.
     {&out} aux_tgfimprg.
 
 END PROCEDURE.
@@ -8807,12 +8827,12 @@ PROCEDURE proc_operacao196:
          aux_idlancto = INTE(GET-VALUE("idlancto")).
  
 	RUN sistema/internet/fontes/InternetBank196.p (INPUT aux_cdtiptra,
-                                                 INPUT aux_idlancto,
+                                                 INPUT aux_idlancto,                                                
                                                 OUTPUT TABLE xml_operacao).
 
     
-      FOR EACH xml_operacao NO-LOCK:
-        {&out} xml_operacao.dslinxml.
+    FOR EACH xml_operacao NO-LOCK:
+      {&out} xml_operacao.dslinxml.
     END.
     {&out} aux_tgfimprg.
 
@@ -8993,7 +9013,7 @@ PROCEDURE proc_operacao213:
         {&out} xml_operacao.dslinxml.
         
     END.
-    
+
     {&out} aux_tgfimprg.
 END PROCEDURE.
 
@@ -9012,11 +9032,11 @@ PROCEDURE proc_operacao206:
                                                    INPUT aux_qtdregistros,
 												   INPUT aux_cdcanal,
                                                    OUTPUT TABLE xml_operacao).
-
+                                                   
     FOR EACH xml_operacao NO-LOCK:
         {&out} xml_operacao.dslinxml.
     END.
-    
+
     {&out} aux_tgfimprg.
 
 END PROCEDURE.
@@ -9035,8 +9055,8 @@ PROCEDURE proc_operacao207:
                                                    
     FOR EACH xml_operacao NO-LOCK:
         {&out} xml_operacao.dslinxml.
-                END.
-
+    END.
+    
     {&out} aux_tgfimprg.
 
 END PROCEDURE.
@@ -9055,7 +9075,7 @@ PROCEDURE proc_operacao208:
     END.
     
     {&out} aux_tgfimprg.
-
+    
 END PROCEDURE.
 
 /* Alterar configuracoes de recebimento de push */
@@ -9086,7 +9106,7 @@ END PROCEDURE.
 
 /* Obter quantidade de notificações não visualizadas do cooperado */
 PROCEDURE proc_operacao214:
-    
+        
     RUN sistema/internet/fontes/InternetBank214.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_idseqttl,
@@ -9096,7 +9116,7 @@ PROCEDURE proc_operacao214:
     FOR EACH xml_operacao NO-LOCK:
         {&out} xml_operacao.dslinxml.
     END.
-    
+
     {&out} aux_tgfimprg.
 
 END PROCEDURE.
