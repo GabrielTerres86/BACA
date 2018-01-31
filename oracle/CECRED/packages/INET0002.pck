@@ -5418,19 +5418,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       --Criar registro para tabela limite horarios
       vr_index_limite_pend:= 12; --Folha Pagamento Agenda
       pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
-      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '0';
+      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '00:00';
       pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimage;
         
       --Criar registro para tabela limite horarios
       vr_index_limite_pend:= 13; --Folha Pagamento Portabilidade
       pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
-      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '0';
+      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '00:00';
       pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimptb;
 
       --Criar registro para tabela limite horarios
       vr_index_limite_pend:= 14; --Folha Pagamento Solicitacao Estouro de conta
       pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
-      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '0';
+      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '00:00';
       pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimsol;
 
       --Criar registro para tabela limite horarios
@@ -5439,7 +5439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                               ,pr_cdacesso => 'FOLHAIB_HOR_LIM_PAG_COOP');
       vr_index_limite_pend:= 19; --Folha Pagamento Cooperativa
       pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
-      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '0';
+      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '00:00';
       pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimcop;
 
     END IF;
