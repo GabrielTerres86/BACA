@@ -820,7 +820,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                aux_dscedent = aux_dscedent + aux_nmabrevi.
                 END.                
             ELSE
-                IF tbgen_trans_pend.tptransacao = 4  THEN /** TED **/ 
+                    IF  tbgen_trans_pend.tptransacao = 4  THEN /** TED **/ 
                 DO: 
 
                         FIND tbspb_trans_pend 
@@ -842,7 +842,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                aux_dscedent = aux_dscedent + aux_nmabrevi.
                 END.
             ELSE
-                IF tbgen_trans_pend.tptransacao = 2  THEN /** PAGAMENTO **/ 
+                    IF  tbgen_trans_pend.tptransacao = 2  THEN /** PAGAMENTO **/ 
                 DO:      
                         FIND tbpagto_trans_pend 
                             WHERE tbpagto_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
@@ -854,9 +854,8 @@ PROCEDURE proc_cria_critica_transacao_oper:
 
                 END.
                 ELSE
-                IF tbgen_trans_pend.tptransacao = 6  THEN /** PRE APROVADO **/ 
+                    IF  tbgen_trans_pend.tptransacao = 6  THEN /** PRE APROVADO **/ 
     DO:
-
                         FIND tbepr_trans_pend 
                             WHERE tbepr_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
                             NO-LOCK NO-ERROR NO-WAIT.
@@ -866,7 +865,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                aux_dscedent = "CREDITO PRE-APROVADO - " + STRING(tbepr_trans_pend.nrparcelas) + " vezes de R$ " + STRING(tbepr_trans_pend.vlparcela).
     END.
     ELSE
-                IF tbgen_trans_pend.tptransacao = 7  THEN /** APLICACAO **/ 
+                    IF  tbgen_trans_pend.tptransacao = 7  THEN /** APLICACAO **/ 
     DO:
                         FIND tbcapt_trans_pend 
                             WHERE tbcapt_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
@@ -884,7 +883,8 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                            aux_dscedent = "CANCELAMENTO APLICACAO NR. " + STRING(tbcapt_trans_pend.nraplicacao)
                                            aux_dstptran = "Cancelamento Aplicacao".
     END.
-                        ELSE IF tbcapt_trans_pend.tpoperacao = 2 THEN /* Resgate */
+                            ELSE 
+                            IF  tbcapt_trans_pend.tpoperacao = 2 THEN /* Resgate */
                     DO:
                                 FOR FIRST crapdat FIELDS(dtmvtolt) WHERE crapdat.cdcooper = tbcapt_trans_pend.cdcooper NO-LOCK. END.
     
@@ -932,7 +932,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                 SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
                                 PUT-STRING(ponteiro_xml,1) = xml_req. 
 
-                                IF ponteiro_xml <> ? THEN
+                                    IF  ponteiro_xml <> ? THEN
         DO:
                                         xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
                                         xDoc:GET-DOCUMENT-ELEMENT(xRoot).
@@ -940,10 +940,10 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                         DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN:
                                            xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
                                
-                                           IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                                                IF  xRoot2:SUBTYPE <> "ELEMENT" THEN 
                                             NEXT. 
 
-                                           IF xRoot2:NUM-CHILDREN > 0 THEN               
+                                                IF  xRoot2:NUM-CHILDREN > 0 THEN               
                                                CREATE tt-saldo-rdca.     
         
                                            DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
@@ -957,7 +957,6 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                              ASSIGN tt-saldo-rdca.sldresga = DECI(xText:NODE-VALUE) WHEN xField:NAME = "sldresga".
             
                                              VALIDATE tt-saldo-rdca.
-                
             END.
              
         END.
@@ -967,7 +966,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
 
                                 FOR FIRST tt-saldo-rdca FIELDS(sldresga) NO-LOCK. END.
             
-                                IF AVAIL tt-saldo-rdca THEN
+                                    IF  AVAIL tt-saldo-rdca THEN
                                     ASSIGN aux_sldresga = DEC(tt-saldo-rdca.sldresga).
             ELSE
                                     ASSIGN aux_sldresga = 0.
@@ -977,7 +976,8 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                        aux_dscedent = "RESGATE " + (IF tbcapt_trans_pend.tpresgate = 1 THEN "PARCIAL" ELSE "TOTAL") + " NA APLICACAO NR. " + STRING(tbcapt_trans_pend.nraplicacao)
                                        aux_dstptran = "Resgate de Aplicacao".
                 END.
-                        ELSE IF tbcapt_trans_pend.tpoperacao = 3 THEN /* Agendamento Resgate */
+                            ELSE 
+                            IF  tbcapt_trans_pend.tpoperacao = 3 THEN /* Agendamento Resgate */
         DO:
                                 IF  tbcapt_trans_pend.idperiodo_agendamento = 0 THEN
                                     ASSIGN aux_dtdebito = STRING(tbcapt_trans_pend.dtinicio_agendamento,"99/99/9999").                    
@@ -993,7 +993,8 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                        aux_dscedent = "RESGATE COM AGENDAMENTO " + (IF tbcapt_trans_pend.idperiodo_agendamento = 0 THEN "UNICO" ELSE "MENSAL")
                                        aux_dstptran = "Agendamento de Resgate".
                                     END.
-                        ELSE IF tbcapt_trans_pend.tpoperacao = 4 THEN /* Cancelamento Agendamento */
+                            ELSE 
+                            IF  tbcapt_trans_pend.tpoperacao = 4 THEN /* Cancelamento Agendamento */
                                     DO:
                                 EMPTY TEMP-TABLE tt-agendamento.
     
@@ -1022,7 +1023,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
         DO:
                                         ASSIGN aux_dtdebito = STRING(tt-agendamento.dtiniaar,"99/99/9999").
                                
-                                        IF tt-agendamento.flgtipar = FALSE THEN /* Aplicacao */
+                                            IF  tt-agendamento.flgtipar = FALSE THEN /* Aplicacao */
                 				            ASSIGN aux_dscedent = "CANCELAR APLICACAO COM AGENDAMENTO " + (IF tt-agendamento.flgtipin = FALSE THEN "UNICO" ELSE "MENSAL")
                 				                   aux_dstptran = "Cancelamento Agendamento Aplicacao".
                 			            ELSE /* Resgate */
@@ -1032,7 +1033,8 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                         ASSIGN aux_vllantra = tt-agendamento.vlparaar.
         END.
     END.
-                        ELSE IF tbcapt_trans_pend.tpoperacao = 5 THEN /* Cancelamento Item Agendamento */
+                            ELSE 
+                            IF  tbcapt_trans_pend.tpoperacao = 5 THEN /* Cancelamento Item Agendamento */
             DO:
                                 EMPTY TEMP-TABLE tt-agen-det.
 
@@ -1072,11 +1074,9 @@ PROCEDURE proc_cria_critica_transacao_oper:
                             END.
                                 END.
                         END.
-                        
                     ELSE
-                IF tbgen_trans_pend.tptransacao = 8  THEN /** DEBITO AUTOMATICO **/ 
+                    IF  tbgen_trans_pend.tptransacao = 8  THEN /** DEBITO AUTOMATICO **/ 
                                 DO:
-    
                         FIND tbconv_trans_pend
                             WHERE tbconv_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
                             NO-LOCK NO-ERROR NO-WAIT.
@@ -1114,7 +1114,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                aux_dscedent = (IF tbconv_trans_pend.tpoperacao = 2 THEN "BLOQUEIO" ELSE IF tbconv_trans_pend.tpoperacao = 3 THEN "DESBLOQUEIO" ELSE "") + " DEBITO AUTOMATICO " + (IF AVAIL crapcon THEN " - " + crapcon.nmrescon ELSE "").
                                 END.
                     ELSE 
-                IF tbgen_trans_pend.tptransacao = 9  THEN /** FOLHA DE PAGAMENTO **/ 
+                    IF  tbgen_trans_pend.tptransacao = 9  THEN /** FOLHA DE PAGAMENTO **/ 
                          DO:
                         FIND tbfolha_trans_pend 
                             WHERE tbfolha_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
@@ -1125,7 +1125,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                aux_dscedent = "FOLHA DE PAGAMENTO".
                                         END.
                 ELSE
-                IF tbgen_trans_pend.tptransacao = 10  THEN /** PACOTE DE TARIFAS **/ 
+                    IF  tbgen_trans_pend.tptransacao = 10  THEN /** PACOTE DE TARIFAS **/ 
                     DO:
                         FIND tbtarif_pacote_trans_pend 
                             WHERE tbtarif_pacote_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
@@ -1136,26 +1136,28 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                aux_vllantra = tbtarif_pacote_trans_pend.vlpacote
                                aux_dscedent = "SERVICOS COOPERATIVOS".
                     END.
-                ELSE IF tbgen_trans_pend.tptransacao = 11 THEN /* DARF-DAS */
+                    ELSE 
+                    IF  tbgen_trans_pend.tptransacao = 11 THEN /* DARF-DAS */
 					DO:                    
                     FIND tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente NO-LOCK NO-ERROR NO-WAIT.
                             
                     ASSIGN aux_dtdebito = (IF tt-tbpagto_darf_das_trans_pend.idagendamento = 1 THEN "Nesta Data" ELSE STRING(tt-tbpagto_darf_das_trans_pend.dtdebito,"99/99/9999"))
 						   aux_vllantra = tt-tbpagto_darf_das_trans_pend.vlpagamento.
                            
-                    IF TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> ? AND
+                            IF  TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> ? AND
 					   TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> "" THEN 
                       ASSIGN aux_dscedent = TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto).
-                    ELSE DO: 
-                      IF tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN
+                            ELSE 
+                                DO: 
+                                    IF  tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN
                         ASSIGN aux_dscedent = "Pagamento de DARF".
-                      ELSE IF tt-tbpagto_darf_das_trans_pend.tppagamento = 2 THEN
+                                    ELSE 
+                                    IF tt-tbpagto_darf_das_trans_pend.tppagamento = 2 THEN
                         ASSIGN aux_dscedent = "Pagamento de DAS".
                     END.
                   END. /* FIM DARF/DAS */
                             ELSE
-                            /** CONTRATO SMS **/
-                            IF tbgen_trans_pend.tptransacao = 16  OR
+                    IF  tbgen_trans_pend.tptransacao = 16  OR /** CONTRATO SMS **/
                             tbgen_trans_pend.tptransacao = 17  THEN
                             DO:
                               FIND tbcobran_sms_trans_pend
@@ -1166,20 +1168,20 @@ PROCEDURE proc_cria_critica_transacao_oper:
                               aux_dscedent = "SMS INDIVIDUAL"
                               aux_vllantra = tbcobran_sms_trans_pend.vlservico.
                               
-                              IF tbgen_trans_pend.tptransacao = 16 THEN
+                            IF  tbgen_trans_pend.tptransacao = 16 THEN
                               ASSIGN aux_dstptran = "Adesao Serviço SMS de Cobrança".
                               ELSE
                               ASSIGN aux_dstptran = "Cancelamento do Serviço SMS de Cobrança".
-                
                               END.
-                IF tbgen_trans_pend.tptransacao = 2 THEN
 
+                    IF  tbgen_trans_pend.tptransacao = 2 THEN /* Pagamento */
                   /*aux_dstiptra= (IF tbpagto_trans_pend.tppagamento = 1 THEN "Pagamento de Convenio" ELSE "Pagamento de Boletos Diversos").*/
-                  IF tbpagto_trans_pend.tppagamento = 1 THEN
+                        IF  tbpagto_trans_pend.tppagamento = 1 THEN
                   DO:
                     ASSIGN aux_dstiptra = "Pagamento de Convenio".
                   END.
-                  ELSE IF tbpagto_trans_pend.tppagamento = 2 THEN
+                        ELSE 
+                        IF  tbpagto_trans_pend.tppagamento = 2 THEN
                   DO:
                     ASSIGN aux_dstiptra = "Pagamento de Boletos Diversos".
                   END.
@@ -1187,60 +1189,57 @@ PROCEDURE proc_cria_critica_transacao_oper:
                   DO:
                     ASSIGN aux_dstiptra = "GPS".
                   END.
-                  
                 ELSE
-                IF tbgen_trans_pend.tptransacao = 3 THEN
+                    IF  tbgen_trans_pend.tptransacao = 3 THEN
                     aux_dstiptra = "Credito de Salario".
                 ELSE
-                IF tbgen_trans_pend.tptransacao = 4 THEN
+                    IF  tbgen_trans_pend.tptransacao = 4 THEN
                     aux_dstiptra = "TED".
             ELSE
-                IF tbgen_trans_pend.tptransacao = 1 OR
+                    IF  tbgen_trans_pend.tptransacao = 1 OR
                  tbgen_trans_pend.tptransacao = 5 THEN
                     aux_dstiptra = "Transferencia".
                     ELSE
-                IF tbgen_trans_pend.tptransacao = 6 THEN
+                    IF  tbgen_trans_pend.tptransacao = 6 THEN
                     aux_dstiptra = "Credito Pre-Aprovado".
                     ELSE
-                                                              IF tbgen_trans_pend.tptransacao = 7 THEN
+                    IF  tbgen_trans_pend.tptransacao = 7 THEN
                  aux_dstiptra = aux_dstptran.
                 ELSE
-                IF tbgen_trans_pend.tptransacao = 8 THEN
+                    IF  tbgen_trans_pend.tptransacao = 8 THEN
                     aux_dstiptra = (IF tbconv_trans_pend.tpoperacao = 1 THEN "Autorizacao" ELSE (IF tbconv_trans_pend.tpoperacao = 2 THEN "Bloqueio" ELSE "Desbloqueio")) + " Debito Automatico".
             ELSE
-                IF tbgen_trans_pend.tptransacao = 9 THEN
+                    IF  tbgen_trans_pend.tptransacao = 9 THEN
                     aux_dstiptra = "Folha de Pagamento".
                                                           ELSE
-                IF tbgen_trans_pend.tptransacao = 10  THEN /** PACOTE DE TARIFAS **/ 
+                    IF  tbgen_trans_pend.tptransacao = 10  THEN /** PACOTE DE TARIFAS **/ 
                     aux_dstiptra = "Servicos Cooperativos".                    
                                                           ELSE
                 IF tbgen_trans_pend.tptransacao = 11 THEN
                     DO:
-                        IF tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN 
+                            IF  tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN 
                             aux_dstiptra = "Pagamento de DARF".
-                        ELSE IF tt-tbpagto_darf_das_trans_pend.tppagamento = 2 THEN
+                            ELSE 
+                            IF tt-tbpagto_darf_das_trans_pend.tppagamento = 2 THEN
                             aux_dstiptra = "Pagamento de DAS".
                     END.
                 ELSE   
-                IF tbgen_trans_pend.tptransacao = 12 THEN
+                    IF  tbgen_trans_pend.tptransacao = 12 THEN
                     DO:
                         FOR EACH  tbdscc_trans_pend 
                             WHERE  tbdscc_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente NO-LOCK:
-                          
                           ASSIGN aux_vltotbdc = aux_vltotbdc + tbdscc_trans_pend.vlcheque.
+                            END.
                           
-                        END.
                         ASSIGN aux_dtdebito = "Nesta Data"
                                aux_vllantra = aux_vltotbdc
                                aux_dscedent = "Bordero de Desconto de Cheques"
                                aux_dstptran = "Bordero de Desconto de Cheques"
                                aux_dstiptra = "Desconto de Cheque".
-                     
                     END.
                 ELSE
-                IF tbgen_trans_pend.tptransacao = 13 THEN
+                    IF  tbgen_trans_pend.tptransacao = 13 THEN
                     DO:
-                        
                         FIND tbrecarga_operacao WHERE  tbrecarga_operacao.idoperacao = tt-tbrecarga_trans_pend.idoperacao NO-LOCK NO-ERROR NO-WAIT.
                         
                         { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
@@ -1266,15 +1265,18 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                aux_dscedent = aux_resposta
                         	   aux_dstiptra = "Recarga de Celular".
                     END.
-                              ELSE IF tbgen_trans_pend.tptransacao = 16 THEN /*OK*/
+                    ELSE 
+                    IF  tbgen_trans_pend.tptransacao = 16 THEN /*OK*/
                               aux_dstiptra = "Adesao SMS Cobrança".
-                              ELSE IF tbgen_trans_pend.tptransacao = 17 THEN /*OK*/
+                    ELSE 
+                    IF  tbgen_trans_pend.tptransacao = 17 THEN /*OK*/
                               aux_dstiptra = "Cancelamento SMS Cobrança".
                                                               ELSE
                     aux_dstiptra = "Transacao".
                 
                 CREATE tt-criticas_transacoes_oper.
-                ASSIGN tt-criticas_transacoes_oper.dtcritic = aux_dtdebito
+                    ASSIGN tt-criticas_transacoes_oper.cdtiptra = tbgen_trans_pend.tptransacao
+                           tt-criticas_transacoes_oper.dtcritic = aux_dtdebito                           
                        tt-criticas_transacoes_oper.nrdrowid = par_nrdrowid
                        tt-criticas_transacoes_oper.vllantra = aux_vllantra
                        tt-criticas_transacoes_oper.dscedent = aux_dscedent
@@ -1282,14 +1284,14 @@ PROCEDURE proc_cria_critica_transacao_oper:
                    tt-criticas_transacoes_oper.flgtrans = par_aprovada
                        tt-criticas_transacoes_oper.dscritic = par_dscritic
 					   tt-criticas_transacoes_oper.cdtransa = tbgen_trans_pend.cdtransacao_pendente
-                       tt-criticas_transacoes_oper.dsprotoc = IF  par_indvalid = 1    AND 
-                                                                  par_aprovada = TRUE THEN 
+                           tt-criticas_transacoes_oper.dsprotoc = IF  par_indvalid = 1     AND 
+                                                                      par_aprovada = TRUE  THEN 
                                                                     glb_dsprotoc 
-                                                              ELSE "".
+                                                                  ELSE 
+                                                                      "".
     END.
 
             DELETE PROCEDURE h-b1wgen9999.
-
     END.
 
 END PROCEDURE.

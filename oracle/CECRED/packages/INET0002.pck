@@ -7295,7 +7295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     --Valor a somar
                     vr_vlasomar := 0;
                           
-                    vr_dsvltran := ' '; -- Valor
+                    vr_dsvltran := '0,00'; -- Valor
                     vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
                     vr_dsdescri := 'DEBITO AUTOMATICO - ' || vr_nmrescon;-- Descricao
                     vr_dstptran := 'Autorização Débito Automático'; -- Tipo de Transacao
@@ -7395,7 +7395,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                  END IF;
       						
                  vr_vlasomar := 0;
-                 vr_dsvltran := ' '; -- Valor
+                 vr_dsvltran := '0,00'; -- Valor
                  vr_dsdtefet := 'Mes atual'; -- Data Efetivacao
                  vr_dsdescri := 'SERVIÇOS COOPERATIVOS'; -- Descricao
                  vr_dstptran := 'Adesão de Serviços Cooperativos'; -- Tipo de Transacao
@@ -7552,7 +7552,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
               vr_vlasomar := 0;
                        
               --Variaveis do resumo
-              vr_dsvltran := NULL; -- Valor
+              vr_dsvltran := '0,00'; -- Valor
               vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
               vr_dsdescri := rw_sms_trans_pend.dspacote; -- Descricao
               IF vr_tptranpe IN (16) THEN
@@ -7591,7 +7591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                    || '   <data_alteracao_sit>' ||vr_dtaltera||'</data_alteracao_sit>'
                                                    || '   <pode_alterar>'       ||vr_indiacao||'</pode_alterar>'
                                                    || '   <idsituacao_transacao>' ||vr_idsittra||'</idsituacao_transacao>'
-                                                   || '   <data_debito>' || CASE WHEN UPPER(vr_dsdtefet) = 'NESTA DATA' THEN TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR') ELSE vr_dsdtefet END || '</data_debito>'
+                                                   || '   <data_debito>' || CASE WHEN UPPER(vr_dsdtefet) = 'NESTA DATA' THEN TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR') WHEN UPPER(vr_dsdtefet) = 'MES ATUAL' THEN TO_CHAR(TRUNC(pr_dtmvtolt,'MM'),'DD/MM/RRRR') ELSE vr_dsdtefet END || '</data_debito>'
                                                    || '   <data_sistema>' || TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR') || '</data_sistema>'
                                                    || '</dados_resumo>');
                

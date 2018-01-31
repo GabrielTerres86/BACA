@@ -46,7 +46,7 @@
 
                06/03/2017 - Adicionados campos nrddd, nrcelular e nmoperadora em 
                             tt-dados-agendamento (Projeto 321 - Lombardi).
-
+							
 			   06/03/2017 - Adicionados para o GPS (Previdência Social)
 							(Prj 354.2 - Ricardo Linhares).
 
@@ -162,7 +162,8 @@ DEF TEMP-TABLE tt-criticas_transacoes_oper NO-UNDO
     FIELD flgtrans AS LOGICAL
     FIELD nrdrowid AS CHAR
     FIELD cdtransa AS INTE
-    FIELD dsprotoc AS CHAR.
+    FIELD dsprotoc AS CHAR    
+    FIELD cdtiptra AS INTE.
 
 DEF TEMP-TABLE tt-parmon
     FIELD vlinimon LIKE crapcop.vlinimon

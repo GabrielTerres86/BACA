@@ -188,7 +188,20 @@ DO:
                               tt-criticas_transacoes_oper.dscritic +
                               "</dscritic><cdtransa>"+
                               STRING(tt-criticas_transacoes_oper.cdtransa) +
-                              "</cdtransa></TRANSACAO>".
+                              "</cdtransa><dtdebito>" +
+                              (IF tt-criticas_transacoes_oper.dtcritic = "Nesta Data" OR 
+                                  tt-criticas_transacoes_oper.dtcritic = ""           THEN 
+                                  STRING(par_dtmvtolt,"99/99/9999")
+                               ELSE       
+                               IF tt-criticas_transacoes_oper.dtcritic = "Mes atual" THEN
+                                  STRING(DATE(MONTH(par_dtmvtolt),1,YEAR(par_dtmvtolt)),"99/99/9999")
+                               ELSE
+                                  STRING(DATE(tt-criticas_transacoes_oper.dtcritic),"99/99/9999")) +
+                              "</dtdebito><dtmvtolt>" +
+                              STRING(par_dtmvtolt,"99/99/9999") +
+                              "</dtmvtolt><cdtiptra>" +
+                              STRING(tt-criticas_transacoes_oper.cdtiptra) +
+                              "</cdtiptra></TRANSACAO>".
     END.
                               
     ASSIGN aux_dslinxml = aux_dslinxml + "</APROVADAS><DESAPROVADAS>"
@@ -201,11 +214,13 @@ DO:
             DO:
                 ASSIGN aux_dtcritic = tt-criticas_transacoes_oper.dtcritic.                         
             END.
-		ELSE IF  STRING(tt-criticas_transacoes_oper.dtcritic) = "Mes atual" THEN
+        ELSE 
+        IF  STRING(tt-criticas_transacoes_oper.dtcritic) = "Mes atual" THEN
             DO:
                 ASSIGN aux_dtcritic = tt-criticas_transacoes_oper.dtcritic.                         
             END.
-        ELSE IF tt-criticas_transacoes_oper.dtcritic <> ? THEN            
+        ELSE 
+        IF  tt-criticas_transacoes_oper.dtcritic <> ? THEN            
             DO:
                 ASSIGN aux_dtcritic = STRING(DATE(tt-criticas_transacoes_oper.dtcritic),"99/99/9999").
             END.
@@ -227,7 +242,20 @@ DO:
                               tt-criticas_transacoes_oper.dscritic +
                               "</dscritic><cdtransa>"+
                               STRING(tt-criticas_transacoes_oper.cdtransa) +
-                              "</cdtransa></TRANSACAO>".
+                              "</cdtransa><dtdebito>" +
+                              (IF tt-criticas_transacoes_oper.dtcritic = "Nesta Data" OR 
+                                  tt-criticas_transacoes_oper.dtcritic = ""           THEN 
+                                  STRING(par_dtmvtolt,"99/99/9999")
+                               ELSE       
+                               IF tt-criticas_transacoes_oper.dtcritic = "Mes atual" THEN
+                                  STRING(DATE(MONTH(par_dtmvtolt),1,YEAR(par_dtmvtolt)),"99/99/9999")
+                               ELSE
+                                  STRING(DATE(tt-criticas_transacoes_oper.dtcritic),"99/99/9999")) +
+                              "</dtdebito><dtmvtolt>" +
+                              STRING(par_dtmvtolt,"99/99/9999") +
+                              "</dtmvtolt><cdtiptra>" +
+                              STRING(tt-criticas_transacoes_oper.cdtiptra) +
+                              "</cdtiptra></TRANSACAO>".
     
     END.
     

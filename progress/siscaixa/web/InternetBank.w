@@ -5561,8 +5561,8 @@ PROCEDURE proc_operacao91:
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_nrctraar,
                                                   INPUT aux_cdsitaar,
-                                                  OUTPUT aux_dsmsgerr,
-                                                  OUTPUT TABLE xml_operacao).
+                                                 OUTPUT aux_dsmsgerr,
+                                                 OUTPUT TABLE xml_operacao).
                                                  
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr.
@@ -8119,6 +8119,14 @@ END PROCEDURE.
 /* Cancelar integralizacao de cotas de capital */
 PROCEDURE proc_operacao177:
     
+    IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END.
+    
     ASSIGN aux_nrdrowid = GET-VALUE("nrdrowid").    
                               
     RUN sistema/internet/fontes/InternetBank177.p (INPUT aux_cdcooper,
@@ -8939,11 +8947,11 @@ PROCEDURE proc_operacao199:
             RETURN.
         END.
 
-      FOR EACH xml_operacao NO-LOCK:
+    FOR EACH xml_operacao NO-LOCK:
     
         {&out} xml_operacao.dslinxml.
         
-    END.
+        END.
     {&out} aux_tgfimprg.
 
 END PROCEDURE.

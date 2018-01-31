@@ -6133,20 +6133,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               
               vr_dsinfor1:= 'Aplicacao Pos'; 
               
-            vr_dsinfor2:= vr_nmextttl ||'#' ||
-                          'Conta/dv: ' ||vr_nrdconta ||' - '||
-                          rw_crapass.nmprimtl||'#'|| gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
-                          ' - '|| rw_crapcop.nmrescop;
-            vr_dsinfor3:= 'Data da Aplicacao: '   || TO_CHAR(pr_dtmvtolt,'dd/mm/yyyy')              || '#' ||
-                          'Numero da Aplicacao: ' || TO_CHAR(rw_craprda.nraplica,'9G999G990')       || '#' ||
-                          'Taxa Contratada: '     || TO_CHAR(NVL(vr_txaplica, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
-                          'Taxa Minima: '         || TO_CHAR(NVL(vr_txaplmes, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
-                          'Vencimento: '          || TO_CHAR(vr_dtfimper,'dd/mm/yyyy')               || '#' ||
-                          'Carencia: '            || TO_CHAR(pr_qtdiacar,'99990') || ' DIA(S)'       || '#' ||
-                          'Data da Carencia: '    || TO_CHAR(pr_dtmvtolt + pr_qtdiacar,'dd/mm/yyyy') || '#' ||
-                          'Cooperativa: '         || UPPER(rw_crapcop.nmextcop) || '#' || 
-                          'CNPJ: '                || TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) || '#' ||
-                          UPPER(TRIM(vr_nmcidade)) || ', ' || TO_CHAR(pr_dtmvtolt,'dd') || ' DE ' || GENE0001.vr_vet_nmmesano(TO_CHAR(pr_dtmvtolt,'mm')) || ' DE ' || TO_CHAR(pr_dtmvtolt,'RRRR') || '.';                             
+              vr_dsinfor2:= vr_nmextttl ||'#' ||
+                            'Conta/dv: ' ||vr_nrdconta ||' - '||
+                            rw_crapass.nmprimtl||'#'|| gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
+                            ' - '|| rw_crapcop.nmrescop;
+              vr_dsinfor3:= 'Data da Aplicacao: '   || TO_CHAR(pr_dtmvtolt,'dd/mm/yyyy')              || '#' ||
+                            'Numero da Aplicacao: ' || TO_CHAR(rw_craprda.nraplica,'9G999G990')       || '#' ||
+                            'Taxa Contratada: '     || TO_CHAR(NVL(vr_txaplica, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
+                            'Taxa Minima: '         || TO_CHAR(NVL(vr_txaplmes, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
+                            'Vencimento: '          || TO_CHAR(vr_dtfimper,'dd/mm/yyyy')               || '#' ||
+                            'Carencia: '            || TO_CHAR(pr_qtdiacar,'99990') || ' DIA(S)'       || '#' ||
+                            'Data da Carencia: '    || TO_CHAR(pr_dtmvtolt + pr_qtdiacar,'dd/mm/yyyy') || '#' ||
+                            'Cooperativa: '         || UPPER(rw_crapcop.nmextcop) || '#' || 
+                            'CNPJ: '                || TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) || '#' ||
+                            UPPER(TRIM(vr_nmcidade)) || ', ' || TO_CHAR(pr_dtmvtolt,'dd') || ' DE ' || GENE0001.vr_vet_nmmesano(TO_CHAR(pr_dtmvtolt,'mm')) || ' DE ' || TO_CHAR(pr_dtmvtolt,'RRRR') || '.';                             
               
             END IF;            
 
@@ -17127,7 +17127,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_nrdolote craplot.nrdolote%TYPE;
       vr_cdhistor craplot.cdhistor%TYPE;
       vr_dtmvtopg craplau.dtmvtopg%TYPE;
-
+      
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
       -- Selecionar dados dos agendamentos
@@ -17147,7 +17147,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
            AND ((pr_cdsitaar = 0) OR                       -- Retornar todas situações
                 (pr_cdsitaar = 6 AND aar.cdsitaar <> 3) OR -- Desprezar cancelados
                 (aar.cdsitaar = pr_cdsitaar));             -- Retornar situação específica
-
+                
       rw_crapaar cr_crapaar%ROWTYPE;          
 
       -- Selecionar dados dos agendamentos
@@ -17157,7 +17157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                         ,pr_nrctraar IN crapaar.nrctraar%TYPE) IS --> Numero agendamento
 
         SELECT aar.*
-              ,DECODE(aar.cdsitaar,1,'Em Andamento',2,'Suspenso',3,'Cancelado',4,'Não Efetivado',5,'Vencido','') dssitaar
+              ,DECODE(aar.cdsitaar,1,'Em Andamento',2,'Suspenso',3,'Cancelado',4,'Não Efetivado',5,'Concluído','') dssitaar
               ,DECODE(aar.flgtipar,0,'Aplicação',1,'Resgate','') dstipaar        
           FROM crapaar aar
          WHERE aar.cdcooper = pr_cdcooper
@@ -19972,7 +19972,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     BEGIN
    
       vr_nrdocsrc := TO_CHAR(pr_nrdolote,'fm00000')||TO_CHAR(pr_nrdocmto,'fm0000000000')||'%';
-  
+      
       OPEN cr_crapaar(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
                       pr_nrdocmto => pr_nrdocmto);

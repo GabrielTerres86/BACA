@@ -911,12 +911,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     DECLARE
     
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
-      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_exc_erro EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE;
       vr_info_sac typ_reg_info_sac;
-      vr_des_erro  VARCHAR2(4000);            
+      vr_des_erro VARCHAR2(4000);  
+      vr_txminima VARCHAR2(100);
+      vr_idxvenct INTEGER;
+      vr_dsaplica crapcpc.nmprodut%TYPE;
+      vr_nmdindex VARCHAR2(100);
     
     BEGIN
     
@@ -960,9 +964,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
        -- Criar cabecalho do XML
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<Comprovante>');       
-       
+                             ,pr_texto_novo     => '<Comprovante>');              
+      
       FOR vr_ind IN 1..vr_protocolo.count LOOP
+      
+          IF TRIM(gene0002.fn_busca_entrada(11, vr_protocolo(vr_ind).dsinform##3,'#')) = 'N' THEN -- Aplicação de nova estrutura 
+             vr_txminima := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
+             vr_idxvenct := 5;  -- Posicao do vencimento dentro dentro de dsinform##3            
+             vr_dsaplica := TRIM(gene0002.fn_busca_entrada(12, vr_protocolo(vr_ind).dsinform##3, '#')); 
+             vr_nmdindex := ' '; 
+          ELSE             
+             vr_nmdindex := 'CDI - Certificado de Deposito Interfinanceiro'; 
+             
+             IF TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) = '7' THEN -- RDCPRE
+               vr_txminima := ' '; 
+               vr_idxvenct := 4;  -- Posicao do vencimento dentro dentro de dsinform##3
+               vr_dsaplica := 'RDCPRE';
+             ELSE
+               vr_txminima := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
+               vr_idxvenct := 5;  -- Posicao do vencimento dentro dentro de dsinform##3
+               vr_dsaplica := 'RDCPOS';
+             END IF;
+          END IF;
       
           gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
@@ -975,68 +998,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
 															 	  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 															 	  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
+                                  '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                                                                      || '</nmprepos>' ||
+                                  '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                                                                      || '</nrcpfpre>' ||
+                                  '<nmoperad>' || vr_protocolo(vr_ind).nmoperad                                                                                      || '</nmoperad>' ||
+                                  '<nrcpfope>' || vr_protocolo(vr_ind).nrcpfope                                                                                      || '</nrcpfope>' ||                                  
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                                               || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                                               || '</hrautent>' ||
-                                  '<vldocmto>' ||to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                         || '</vldocmto>' ||
+                                  '<nraplica>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nraplica>' ||                                  
+                                  '<dsaplica>' || vr_dsaplica                                                                                                        || '</dsaplica>' || 
+                                  '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||                                  
+                                  '<txcontra>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</txcontra>' ||
+                                  '<txminima>' || vr_txminima                                                                                                        || '</txminima>' ||
+                                  '<dtvencto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(vr_idxvenct, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvencto>' ||
+                                  '<qtdiacar>' || REPLACE(TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(vr_idxvenct + 1, vr_protocolo(vr_ind).dsinform##3, '#')), ':')),' DIA(S)','') || '</qtdiacar>' ||
+                                  '<dtcarenc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(vr_idxvenct + 2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtcarenc>' ||                                  
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
-                                  '<dssolicit>' || TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##2, '#'))                                         || '</dssolicit>' ||
-                                  '<dtaplic>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtaplic>' ||
-                                  '<nraplic>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nraplic>' ||
-                                  '<txaplic>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</txaplic>' ||
-                                  '<txminim>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</txminim>' ||
-                                  '<dtvenci>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvenci>' ||
-                                  '<dscaren>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dscaren>' ||
-                                  '<dtcaren>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtcaren>' ||
-                                  '<dsbanco>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsbanco>' ||
-                                  '<cnpjban>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(9, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cnpjban>' ||
-                                  '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                             || '</nmprepos>' ||
-                                  '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                             || '</nrcpfpre>' ||
-                                  '<nmoperad>' || vr_protocolo(vr_ind).nmoperad                                             || '</nmoperad>' ||
-                                  '<nrcpfope>' || vr_protocolo(vr_ind).nrcpfope                                             || '</nrcpfope>' ||
-                                  '<infosac>' ||
+                                  '<nmdindex>' || vr_nmdindex                                                                                                        || '</nmdindex>' ||     
+                                  '<nmextcop>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(vr_idxvenct + 3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmextcop>' ||
+                                  '<nrcnpjco>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(vr_idxvenct + 4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrcnpjco>' ||
+                                  '<dtextens>' || TRIM(gene0002.fn_busca_entrada(vr_idxvenct + 5, vr_protocolo(vr_ind).dsinform##3,'#'))                                          || '</dtextens>' ||                                  
+                                  '<clausula>' ||
+                                      '<dsclausu>ATO COOPERATIVO CONFORME ART. 79 DA LEI 5764/71</dsclausu>'                                                                                                                                                    ||
+                                      '<dsclausu>INTRANSFERIVEL</dsclausu>'                                                                                                                                                                                     ||
+                                      '<dsclausu>DEPOSITOS EM CHEQUES SOMENTE TERAO VALIDADE APOS SUA LIQUIDACAO</dsclausu>'                                                                                                                                    ||
+                                      '<dsclausu>SAQUES ANTERIORES A CARENCIA, ADMITIDOS A CRITERIO DA COOPERATIVA IMPLICAM EM PERDA DO RENDIMENTO SOBRE O VALOR SACADO</dsclausu>'                                                                             ||
+                                      (CASE WHEN vr_dsaplica = 'RDCPOS' THEN
+                                      '<dsclausu>O RENDIMENTO SERA CALCULADO COM BASE NO CDI* DIARIO, CONSIDERANDO OS DIAS UTEIS DO PERIODO APLICADO E A TAXA CONTRATADA</dsclausu>'                                                                            ||
+                                      '<dsclausu>OS VALORES RESGATADOS APOS A CARENCIA E ANTES DO VENCIMENTO, ADMITIDOS A CRITERIO DA COOPERATIVA, SERAO REMUNERADOS NA FORMA DO ITEM ANTERIOR, POREM, TOMANDO COMO BASE PARA CALCULO A TAXA MINIMA</dsclausu>' ||
+                                      '<dsclausu>SAQUES ANTES DO VENCIMENTO DEVERAO SER COMUNICADOS COM ANTECEDENCIA</dsclausu>'                                                                                                                                ||
+                                      '<dsclausu>CASO A TAXA CONTRATADA, DEDUZIDO O IRRF, SEJA MENOR QUE A TAXA DA POUPANCA, SERA GARANTIDO O RENDIMENTO DA POUPANCA</dsclausu>'                                                                                ||
+                                      '<dsclausu>CASO OCORRA O RESGATE DA APLICACAO ANTES DO PRAZO DE VENCIMENTO ACIMA ACORDADO, A ALIQUOTA DO IRRF SEGUIRA A TABELA REGRESSIVA DE RENDA FIXA VIGENTE</dsclausu>'                                               
+                                      ELSE
+                                      ''
+                                      END) ||   
+                                  '</clausula>' ||
+                                  '<infosac>'   ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                       '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
                                       '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                  '</infosac>' ||
+                                  '</infosac>'  ||
                                  '</dados>' );        
                                  
-               /*
-               
-                - O trecho a seguir deve ser adicionado em alguma tag e deve ser armazenado em alguma tabela 
-                  a fim de ser parametrizável.
-               
-                1) ATO COOPERATIVO CONFORME ART. 79 DA LEI 5764/71;
-                2) INTRANSFERIVEL;
-                3) DEPOSITOS EM CHEQUES SOMENTE TERAO VALIDADE APOS SUA
-                LIQUIDACAO.
-                4) SAQUES ANTERIORES A CARENCIA, ADMITIDOS A CRITERIO DA
-                COOPERATIVA IMPLICAM EM PERDA DO RENDIMENTO SOBRE O
-                VALOR SACADO.
-                5) O RENDIMENTO SERA CALCULADO COM BASE NO CDI* DIARIO,
-                CONSIDERANDO OS DIAS UTEIS DO PERIODO APLICADO E A
-                TAXA CONTRATADA.
-                6) OS VALORES RESGATADOS APOS A CARENCIA E ANTES DO VEN–
-                CIMENTO, ADMITIDOS A CRITERIO DA COOPERATIVA, SERAO
-                REMUNERADOS NA FORMA DO ITEM ANTERIOR, POREM, TOMANDO
-                COMO BASE PARA CALCULO A TAXA MINIMA.
-                7) SAQUES ANTES DO VENCIMENTO DEVERAO SER COMUNICADOS
-                COM ANTECEDENCIA.
-                8) CASO A TAXA CONTRATADA, DEDUZIDO O IRRF, SEJA MENOR
-                QUE A TAXA DA POUPANCA, SERA GARANTIDO O RENDIMENTO
-                DA POUPANCA.
-                9) CASO OCORRA O RESGATE DA APLICACAO ANTES DO PRAZO DE
-                VENCIMENTO ACIMA ACORDADO, A ALIQUOTA DO IRRF SEGUIRA
-                A TABELA REGRESSIVA DE RENDA FIXA VIGENTE.
-                *CDI – Certificado de Deposito Interfinanceiro.
-                COOPERATIVA DE CREDITO DO VALE DO ITAJAI
-                82.639.451/0001-38
-                BLUMENAU, 15 DE DEZEMBRO DE 2016.
-               
-               */              
       END LOOP;
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -1242,8 +1248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     DECLARE
     
       vr_protocolo gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
-      vr_dsinfor2 VARCHAR2(400);                 --> Descrição do Convenio
-      vr_dsconven VARCHAR2(100);                 --> Descrição do Convenio
+      vr_dslindig VARCHAR2(100);
       vr_dsinstit VARCHAR2(100);                 --> Descrição do Banco
       vr_dscedent VARCHAR2(100);                 --> Descrição do Cedente      
       vr_nmpagado VARCHAR2(100);
@@ -1310,17 +1315,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       FOR vr_ind IN 1..vr_protocolo.count LOOP
       
         -- Verifica se é pagamento de convênio
-        vr_dsinfor2 := TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#')), ':'));
+        vr_dslindig := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
 
-        IF vr_dsinfor2 = 'Convenio'THEN
-          vr_dsconven := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#')), ':'));
+        IF LENGTH(vr_dslindig) = 55 THEN -- Convênio
+          vr_dsinstit := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#')), ':'));
           vr_dscedent := '';
-          vr_dsinstit := '';
 					vr_cdtippag := 1;
         ELSE
           vr_dsinstit := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#')), ':'));
           vr_dscedent := vr_protocolo(vr_ind).dscedent;
-          vr_dsconven := '';          
 					vr_cdtippag := 2;
           
           vr_split := gene0002.fn_quebra_string(pr_string  => vr_protocolo(vr_ind).dsinform##3 
@@ -1365,7 +1368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                  '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
 																 '<dtdpagto>' || to_char(vr_protocolo(vr_ind).dtmvtolt, 'DD/MM/RRRR')                                                               || '</dtdpagto>' ||
 																 '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
-																 '<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dslinhad>' ||
+																 '<dslinhad>' || vr_dslindig                                                                                                        || '</dslinhad>' ||
 																 '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||                                  
                                  '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                                                                      || '</nmprepos>' ||
                                  '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                                                                      || '</nrcpfpre>' ||

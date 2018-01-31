@@ -413,7 +413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                13/03/2017 - Na procedure pc_gera_protocolo foi retirado pr_dscritic 
                             da exception vr_exc_erro pois é um erro tratado 
                             (Lucas Ranghetti #624628)
-                            
+
                24/10/2017 - #781206 Nas rotinas pc_gera_protocolo e pc_gera_protocolo_md5, nos inserts da tabela
                             crappro, restringido o campo dscedent em 50 caracteres. Na rotina pc_busca_protocolo_wt,
                             no insert da tabela wt_protocolo, restringido o campo dscedent em 40 caracteres (Carlos)
@@ -1339,18 +1339,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
 
   /* Listar protocolos gerados podendo ser filtrado por vários tipos */
   PROCEDURE pc_lista_protocolos_por_tipos(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
-                               ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
-                               ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
-                               ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
-                               ,pr_iniconta IN NUMBER                 --> Início da conta
-                               ,pr_nrregist IN NUMBER                 --> Número de registros
+                                 ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                 ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
+                                 ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
+                                 ,pr_iniconta IN NUMBER                 --> Início da conta
+                                 ,pr_nrregist IN NUMBER                 --> Número de registros
                                  ,pr_cdtippro IN VARCHAR2               --> Código protocolo
-                               ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
-                               ,pr_dstransa OUT VARCHAR2              --> Descrição da transação
-                               ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                               ,pr_qttotreg OUT NUMBER                --> Quantidade de registros
+                                 ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                                 ,pr_dstransa OUT VARCHAR2              --> Descrição da transação
+                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                 ,pr_qttotreg OUT NUMBER                --> Quantidade de registros
                                  ,pr_protocolo  OUT typ_tab_protocolo   --> PL Table de registros
-                               ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+                                 ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
                                
     -- ..........................................................................
     --
@@ -1570,7 +1570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
           pr_protocolo(vr_index).cdagesic := rw_crapcop.cdagesic;
 
-          IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,6,9,11,13,15,16,17,18,19,20) THEN
+          IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,6,9,10,11,12,13,15,16,17,18,19,20) THEN
             pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
             pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
           END IF;
@@ -2214,7 +2214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         pr_protocolo(vr_index).nmoperad := vr_nmoperad;
         pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
 
-        IF rw_crappro.cdtippro IN (1,2,6,9,11,13,15,20) THEN
+        IF rw_crappro.cdtippro IN (1,2,6,9,10,11,12,13,15,20) THEN
           pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
           pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
 				ELSIF rw_crappro.cdtippro IN (16,17,18,19) THEN
