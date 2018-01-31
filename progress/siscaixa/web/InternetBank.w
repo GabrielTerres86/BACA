@@ -5128,6 +5128,14 @@ PROCEDURE proc_operacao80:
            aux_rowidcti = GET-VALUE("aux_rowidcti").
            aux_flexclui = GET-VALUE("aux_flregist").
 
+    IF  NOT aux_flgcript AND aux_flgexecu AND aux_rowidcti = ""  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END.           
+
     RUN sistema/internet/fontes/InternetBank80.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
@@ -5767,6 +5775,14 @@ PROCEDURE proc_operacao97:
            aux_dtvencto = DATE(GET-VALUE("dtvencto"))
            aux_qtdiaven = INTEGER(GET-VALUE("qtdiaven")).
 
+    IF  NOT aux_flgcript AND aux_flgtipar = 1 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END.
+
     RUN sistema/internet/fontes/InternetBank97.p (INPUT aux_cdcooper,
                                                   INPUT aux_flgtipar,
                                                   INPUT aux_nrdconta,
@@ -6245,6 +6261,14 @@ PROCEDURE proc_operacao112:
 
     ASSIGN aux_nrctraar = INTEGER(GET-VALUE("nrctraar")).
 
+    IF  NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END. 
+
     RUN sistema/internet/fontes/InternetBank112.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_idseqttl,
@@ -6474,6 +6498,14 @@ END PROCEDURE.
 PROCEDURE proc_operacao119:
 
     ASSIGN aux_detagend = GET-VALUE("detagend").
+
+    IF  NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END. 
 
     RUN sistema/internet/fontes/InternetBank119.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
@@ -7907,6 +7939,14 @@ PROCEDURE proc_operacao167:
 		   aux_dtinivig = GET-VALUE("aux_dtinivig")
 		   aux_vlpacote = DECI(GET-VALUE("aux_vlpacote")).
 
+  IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+      DO:
+          RUN proc_operacao2.
+          
+          IF   RETURN-VALUE = "NOK"   THEN
+               RETURN "NOK".
+      END.
+
 	RUN sistema/internet/fontes/InternetBank167.p (INPUT aux_cdcooper,
                                                  INPUT aux_nrdconta,
                                                  INPUT aux_nrcpfope,
@@ -8027,6 +8067,14 @@ PROCEDURE proc_operacao173:
          aux_nrdddtfc = DECI(GET-VALUE("nrdddtfc"))
          aux_nrtelefo = DECI(GET-VALUE("nrtelefo")).
 
+  IF  NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "E")  THEN /* Nao possui criptografia no front e autenticao e realizada junto com a propria operacao*/
+      DO:
+          RUN proc_operacao2.
+
+          IF   RETURN-VALUE = "NOK"   THEN
+               RETURN "NOK".
+      END.
+
 	RUN sistema/internet/fontes/InternetBank173.p (INPUT aux_cdcooper,
                                                  INPUT aux_nrdconta,
                                                  INPUT aux_idseqttl,
@@ -8118,8 +8166,8 @@ END PROCEDURE.
 
 /* Cancelar integralizacao de cotas de capital */
 PROCEDURE proc_operacao177:
-    
-    IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticao e realizada junto com a propria operacao*/
+
+    IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -8171,6 +8219,14 @@ PROCEDURE proc_operacao178:
                  aux_dsdocmc7 =      GET-VALUE("aux_dsdocmc7")
                  aux_nriniseq =  INT(GET-VALUE("aux_nriniseq"))
                  aux_nrregist =  INT(GET-VALUE("aux_nrregist")).
+                              
+    IF  NOT aux_flgcript AND aux_operacao = 6 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END.           
                               
     RUN sistema/internet/fontes/InternetBank178.p (INPUT aux_operacao,
                                                    INPUT aux_cdcooper,
@@ -8226,6 +8282,14 @@ PROCEDURE proc_operacao179:
                  aux_dsdocmc7 =     (GET-VALUE("aux_dsdocmc7"))
                  aux_nrremess =     (GET-VALUE("aux_nrremret"))
                  aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
+    
+    IF  NOT aux_flgcript AND aux_operacao = 5 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END.       
     
     RUN sistema/internet/fontes/InternetBank179.p (INPUT aux_operacao, 
                                                    INPUT aux_cdcooper,
@@ -8450,6 +8514,13 @@ PROCEDURE proc_operacao189:
          aux_idcontrato = INTE(GET-VALUE("idcontrato"))
          aux_idpacote   = INTE(GET-VALUE("idpacote")).
   
+  IF  NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "CA") THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+      DO:
+          RUN proc_operacao2.
+          
+          IF   RETURN-VALUE = "NOK"   THEN
+               RETURN "NOK".
+      END.    
   
 	RUN sistema/internet/fontes/InternetBank189.p (INPUT aux_cdcooper,
                                                  INPUT aux_nrdconta,

@@ -966,8 +966,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');              
       
-      FOR vr_ind IN 1..vr_protocolo.count LOOP
-      
+      FOR vr_ind IN 1..vr_protocolo.count LOOP          
+          
           IF TRIM(gene0002.fn_busca_entrada(11, vr_protocolo(vr_ind).dsinform##3,'#')) = 'N' THEN -- Aplicação de nova estrutura 
              vr_txminima := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
              vr_idxvenct := 5;  -- Posicao do vencimento dentro dentro de dsinform##3            
@@ -1042,7 +1042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
                                   '</infosac>'  ||
                                  '</dados>' );        
-                                 
+                                           
       END LOOP;
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -1165,23 +1165,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
 																  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
  																  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
+                                  '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                                                                      || '</nmprepos>' ||
+                                  '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                                                                      || '</nrcpfpre>' ||
+                                  '<nmoperad>' || vr_protocolo(vr_ind).nmoperad                                                                                      || '</nmoperad>' ||
+                                  '<nrcpfope>' || vr_protocolo(vr_ind).nrcpfope                                                                                      || '</nrcpfope>' ||                                  
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                                               || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                                               || '</hrautent>' ||
-                                  '<vlliquid>' ||to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                         || '</vlliquid>' ||
+                                  '<nraplica>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nraplica>' ||
+                                  '<vlrbruto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</vlrbruto>' ||
+                                  '<vlrdirrf>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</vlrdirrf>' ||
+                                  '<aliquota>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</aliquota>' ||
+                                  '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
-                                  '<dssolici>' || TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##2, '#'))                                          || '</dssolici>' ||
-                                  '<dtresgat>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtresgat>' ||
-                                  '<nraplic>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nraplic>' ||
-                                  '<txirrf>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':'))  || '</txirrf>' ||
-                                  '<txaliq>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':'))  || '</txaliq>' ||
-                                  '<vlbruto>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</vlbruto>' ||
-                                  '<dsbanco>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsbanco>' ||
-                                  '<cnpjban>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cnpjban>' ||
-                                  '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                             || '</nmprepos>' ||
-                                  '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                             || '</nrcpfpre>' ||
-                                  '<nmoperad>' || vr_protocolo(vr_ind).nmoperad                                             || '</nmoperad>' ||
-                                  '<nrcpfope>' || vr_protocolo(vr_ind).nrcpfope                                             || '</nrcpfope>' ||
+                                  '<nmextcop>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmextcop>' ||
                                   '<infosac>' ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                       '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
