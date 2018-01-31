@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 10/07/2017
+   Data    : Agosto/2007                      Ultima atualizacao: 25/01/2018
 
    Dados referentes ao programa:
 
@@ -178,6 +178,9 @@
                            
               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                            PRJ339 - CRM (Odirlei-AMcom)
+
+			  25/01/2018 - Inclusão do FIELD NIVRIORI na tt-proposta-epr.
+			               (Reginaldo AMcom)
               
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               

@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 29/09/2017
+   Data    : 14/09/2005                        Ultima atualizacao: 25/01/2018
 
    Dados referentes ao programa:
 
@@ -719,6 +719,10 @@
 
 			  23/01/2018 - Alterada Regras para retorno da Qualificação da Operação de acordo com dias de atraso. 
 						   (Diego Simas - AMcom) (Projeto Regulatórios Crédito).
+
+			  25/01/2018 - Alteração nas procedures obtem-dados-proposta-emprestimo e grava-proposta-completa
+			               para considerar o novo campo DSNIVORI (Nível de Risco Original da Proposta).
+						   (Reginaldo - AMcom) (Projeto Regulatórios Crédito).
 
  ..............................................................................*/
 
