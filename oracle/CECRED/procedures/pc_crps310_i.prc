@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 22/01/2018
+     Data    : Maio/2001                       Ultima atualizacao: 01/02/2018
 
      Dados referentes ao programa:
 
@@ -219,7 +219,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  04/12/2014 - Ajuste no calculo de dias de atraso. (James)
 
-				         02/01/2014 - Ajuste para nao gravar nulo no campo vljura60 para
+                 02/01/2014 - Ajuste para nao gravar nulo no campo vljura60 para
                               o emprestimo tipo novo. (James)
 
                  19/01/2015 - Ajuste quanto a data de fim da vigencia de contratos, onde
@@ -273,6 +273,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  26/12/2017 - Auditoria BACEN ajustar a quantidade de dias em atraso da central de risco produto PP e TR após a transferência para prejuizo. (Oscar/Odirlei-AMcom)
 
                  22/01/2018 - Nova rotina para Arrasto por CPF/CNPJ (Guilherme/AMcom)
+                 
+                 01/02/2018 - Utilizar a data do movimento para atualização da data do risco - Daniel(AMcom)
+
 
   ............................................................................ */
 
@@ -3103,8 +3106,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               -- OU o nível deste registro é diferente do nível do risco no cursor principal
               --    e o nível do risco principal seja diferente de HH(10)
               -- ATENCAO: caso seja alterada esta regra, ajustar em crps635_i tb
-              IF rw_crapris_last.dtrefere <> pr_rw_crapdat.dtultdma
-              OR (rw_crapris_last.innivris <> vr_innivris AND vr_innivris <> 10) THEN
+              -- Comentado comparatico de datas (dtrefere <> dtultdma), pois esta condição sempre irá existir - Daniel(AMcom)
+              IF /*rw_crapris_last.dtrefere <> pr_rw_crapdat.dtultdma
+              OR */(rw_crapris_last.innivris <> vr_innivris AND vr_innivris <> 10) THEN
                 -- Utilizar a data de referência do processo
                 vr_dtdrisco := vr_dtrefere;
               ELSE
@@ -3113,7 +3117,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               END IF;
             ELSE
               -- Utilizar a data de referência do processo
-              vr_dtdrisco := vr_dtrefere;
+              -- vr_dtdrisco := vr_dtrefere;
+              -- Utilizar a data do movimento - Daniel(AMcom)
+              vr_dtdrisco := (SELECT dtmvtoan FROM crapdat WHERE cdcooper = 1pr_cdcooper);
             END IF;
             -- Fechar o cursor
             CLOSE cr_crapris_last;
@@ -5508,6 +5514,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
       -- Efetuar Commit de informações pendentes de gravação
       COMMIT;
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Se não foi passado o código da critica
