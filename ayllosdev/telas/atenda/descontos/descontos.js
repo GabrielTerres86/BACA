@@ -26,10 +26,12 @@
 						  de desconto de cheque. Projeto 300. (Lombardi)
 			
              16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
-			 
+
              26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 			 
 			 21/07/2017 - Ajuste no cadastro de emitentes. Projeto 300. (Lombardi)
+			 
+			 19/01/2018 - Chamado 743079 - Problema da tela ficar travada quando CMLC7 inválido (Andrei-Mouts)
 			 
 ************************************************************************/
 
@@ -1109,7 +1111,7 @@ function formataCampoCmc7(exitCampo, nomeForm){
 	}
 	
 	if ( exitCampo && valorAtual.length < 34) {
-		showError('error','Valor do CMC-7 inv&aacute;lido.','Alerta - Ayllos','cDsdocmc7.focus(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+		showError('error','Valor do CMC-7 inv&aacute;lido.','Alerta - Ayllos','hideMsgAguardo(); $(\'#dsdocmc7\', \'#'+nomeForm+'\').focus(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
 	}
 	
 	//remover os caracteres de formatação
