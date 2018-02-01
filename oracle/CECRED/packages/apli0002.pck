@@ -17079,12 +17079,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
         -- Se há valor a bloquear de garantia em aplicações
         IF pr_innivblq IN(0,2) AND vr_vlblqapl > 0 Then
-          IF vr_vlresgat > (vr_sltotres + pr_vlsldinv- vr_vlblqjud - vr_vlblqapl)
+          IF vr_vlresgat > (nvl(vr_sltotres,0) + nvl(pr_vlsldinv,0) - nvl(vr_vlblqjud,0) - nvl(vr_vlblqapl,0))
           THEN
             vr_dscritic := 'Nao foi possivel resgatar devido a Garantia de Operacoes de Crédito. ';
 
             -- Calcular valor disponível resgate
-            vr_vldispon_resgate := greatest(0,vr_sltotres + pr_vlsldinv - vr_vlblqjud - vr_vlblqapl);
+            vr_vldispon_resgate := greatest(0, nvl(vr_sltotres,0) + nvl(pr_vlsldinv,0) - nvl(vr_vlblqjud,0) - nvl(vr_vlblqapl,0));
 
             -- Somente se há valor disponível resgate, então incrementa a mensagem.
             IF vr_vldispon_resgate > 0 THEN
@@ -22221,7 +22221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                     ,pr_dscritic => vr_dscritic);      --> Erros encontrados no processo
 
     IF vr_vlblqjud > 0                           AND
-       vr_vlresgat > (vr_vlsldtot - vr_vlblqjud) THEN
+       vr_vlresgat > (nvl(vr_vlsldtot,0) - nvl(vr_vlblqjud,0)) THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Nao foi possivel resgatar. Ha valores bloqueados judicialmente';
       RAISE vr_exc_erro;
@@ -22247,7 +22247,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
     -- Se há valor a bloquear de Garantia em Poupança
     IF vr_vlblqpou > 0 then
-      IF vr_vlresgat > (vr_vlsldtot - vr_vlblqjud - vr_vlblqpou) THEN
+      IF vr_vlresgat > (nvl(vr_vlsldtot,0) - nvl(vr_vlblqjud,0) - nvl(vr_vlblqpou,0)) THEN
         vr_cdcritic := NULL;
         vr_dscritic := 'Nao foi possivel resgatar devido a Garantia de Operacoes de Crédito.';
 
