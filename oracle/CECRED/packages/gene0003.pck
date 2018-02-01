@@ -1353,18 +1353,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Carlos (Cecred)
-       Data    : Abril/2014                          Ultima alteracao: 
+       Data    : Abril/2014                          Ultima alteracao: 24/01/2018
 
        Dados referentes ao programa:
 
        Frequencia : Sempre que chamado
        Objetivo   : Validar o e-mail informado
          
-       Alterações : 
+       Alterações : 24/01/2018 - Ajuste no regex para que seja possível cadastrar e-mails
+                                 com apenas um caracter, conforme solicitado no chamado 
+                                 830663. (Kelvin)
          
     ............................................................................. */
   BEGIN
-    if REGEXP_LIKE (pr_dsdemail, '^[a-zA-Z0-9$''-\_][^*{|\}?]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,4}$') then
+    if REGEXP_LIKE (pr_dsdemail, '^[a-zA-Z0-9$''-\_][^*{|\}?]*@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,4}$') then
       return 1;
     else
       return 0;
@@ -1427,14 +1429,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     vr_dsdmensg := REPLACE(pr_dsdmensg, '<', '%3C');
     vr_dsdmensg := REPLACE(vr_dsdmensg, '>', '%3E');
     vr_dsdmensg := REPLACE(vr_dsdmensg, CHR(38), '%26');
-    
+
     OPEN cr_usuarios_internet;
    FETCH cr_usuarios_internet BULK COLLECT
     INTO vr_usuarios_internet;
    CLOSE cr_usuarios_internet;
-    
+
     FOR idx IN 1 .. vr_usuarios_internet.count LOOP
-    
+
       -- Obtém o proximo valor da sequence32
     vr_nrdmensg := fn_sequence(pr_nmtabela => 'CRAPMSG'
                               ,pr_nmdcampo => 'NRDMENSG'
