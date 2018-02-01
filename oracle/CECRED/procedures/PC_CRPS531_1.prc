@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 09/08/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 31/01/2018
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -216,6 +216,20 @@ BEGIN
                01/08/2017 - Conversão Progress >> Oracle PLSQL (Andrei-Mouts)
                
                09/08/2017 - Inclusao da verificacao do produto TR. (Jaison/James - PRJ298)
+               
+               18/08/2017 - Ajuste para efetuar o controle de lock ao realizar a atualizacao
+                            da tabela craplfp (Adriano - SD 733103).
+
+               10/10/2017 - Alteracoes melhoria 407 (Mauricio - Mouts)
+
+               06/11/2017 - Alteração no tratamento da mensagem LTR0005R2 (Mauricio - Mouts)               
+               
+               11/12/2017 - Inclusão do parametro par_cdmensagem - Codigo da mensagem ou critica
+                            (Belli - Envolti - Chamado 786752)
+
+               19/12/2017 - Efetuado alteracao para validar corretamente o tipo de pessoa e conta (Jonata - MOUTS).               
+               
+               31/01/2018 - Inclusão das ultimas alterações pós-conversão (Andrei-Mouts)
 
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
@@ -235,7 +249,7 @@ BEGIN
     -- Tratamento de erros
     vr_exc_next   EXCEPTION;
     vr_exc_saida  EXCEPTION;
-    vr_exc_erro   EXCEPTION;
+    vr_exc_lock   EXCEPTION;
     
     -- Erro em chamadas da pc_gera_erro
     vr_des_reto     VARCHAR2(3);
@@ -339,6 +353,8 @@ BEGIN
     vr_aux_tpemprst       PLS_INTEGER := 2;
     vr_aux_qtregist       PLS_INTEGER := 0;
     vr_aux_vlsldliq       PLS_INTEGER := 0;
+    vr_aux_Hist           VARCHAR2(100);
+
     vr_aux_msgderro       VARCHAR(1000);
     vr_tab_situacao_if    SSPB0001.typ_tab_situacao_if;
     vr_aux_nrispbif       pls_integer;
@@ -381,7 +397,7 @@ BEGIN
     vr_tab_numerario typ_tab_numerario;
     
     /* Registro de TED */
-    CURSOR cr_craptvl(pr_cdcooper crapcop.cdcooper%type
+    CURSOR cr_craptvl(pr_cdcooper crapcop.cdcooper%TYPE
                      ,pr_idopetrf VARCHAR2) IS
       SELECT nmpesrcb
             ,vldocrcb
@@ -421,6 +437,7 @@ BEGIN
             ,ccs.cdagetrf
             ,ccs.nrctatrf
             ,ccs.nrdigtrf
+            ,lcs.rowid
         FROM craplcs lcs
             ,crapccs ccs
        WHERE lcs.cdcooper = pr_cdcooper
@@ -735,93 +752,61 @@ BEGIN
           END IF;
         END IF;       
          
-        -- Para PF
-        IF vr_val_tppessoa = 'F' OR vr_aux_CodMsg IN('STR0037R2','PAG0137R2') THEN
-          -- Verifica cpf da TED com o cpf da conta
-          OPEN cr_crapttl(pr_cdcooper => vr_val_cdcooper
-                         ,pr_nrdconta => vr_val_nrdconta
-                         ,pr_nrcpfcgc => vr_val_nrcpfcgc);
-          FETCH cr_crapttl
-           INTO rw_crapttl;
-          -- Se não encontrar
-          IF cr_crapttl%NOTFOUND THEN 
-            CLOSE cr_crapttl;
-            -- Verificar se o problema está com Conta ou CPF
+        -- Verifica se o problema esta na conta
+        OPEN cr_crapass(pr_cdcooper => vr_val_cdcooper
+                       ,pr_nrdconta => vr_val_nrdconta);
+        FETCH cr_crapass
+         INTO rw_crapass;
+        -- Se não encontrar
+        IF cr_crapass%NOTFOUND THEN 
+          CLOSE cr_crapass;
+          -- Cconta não encontrada
+          pr_cdcritic := 2;
+          pr_dscritic := 'Conta informada invalida.';
+          RETURN;
+        ELSIF rw_crapass.dtelimin IS NOT NULL THEN
+				  pr_cdcritic := 1;  /* Conta encerrada */	
+          RETURN;
+        ELSE
+          CLOSE cr_crapass;
+          -- Para PF
+          IF rw_crapass.inpessoa = 1 THEN
+            -- Verifica cpf da TED com o cpf da conta
             OPEN cr_crapttl(pr_cdcooper => vr_val_cdcooper
-                           ,pr_nrdconta => vr_val_nrdconta);
+                           ,pr_nrdconta => vr_val_nrdconta
+                           ,pr_nrcpfcgc => vr_val_nrcpfcgc);
             FETCH cr_crapttl
              INTO rw_crapttl;
-            -- Se mesmo sem CPF não achar
-            IF cr_crapttl%NOTFOUND THEN 
-              -- Conta invalida
-              pr_cdcritic := 2;
-              pr_dscritic := 'Conta informada invalida.';
-            ELSE
+            -- Se não encontrar
+            IF cr_crapttl%NOTFOUND OR NOT (vr_val_tppessoa = 'F' OR vr_aux_CodMsg IN('STR0037R2','PAG0137R2')) THEN
+              CLOSE cr_crapttl;
+              --CPF divergente
               pr_cdcritic := 3;
+              RETURN;
+            ELSE
+              CLOSE cr_crapttl;                  
             END IF;
-            CLOSE cr_crapttl;
-            -- Sair
-            RETURN;
-          ELSE 
-            CLOSE cr_crapttl;
-            -- Buscar se o cooperado está eliminado
+          ELSE -- PJ
+            -- Verifica se o problema esta no CPF
             rw_crapass := NULL;
             OPEN cr_crapass(pr_cdcooper => vr_val_cdcooper
-                           ,pr_nrdconta => vr_val_nrdconta);
-            FETCH cr_crapass
-             INTO rw_crapass;
-            CLOSE cr_crapass;                
-            -- Se estiver eliminado
-            IF rw_crapass.dtelimin IS NOT NULL THEN
-              pr_cdcritic := 1;  /* Conta encerrada */
-              RETURN;
-            END IF;
-          END IF; 
-        ELSE -- Para PJ
-          rw_crapass := NULL;
-          OPEN cr_crapass(pr_cdcooper => vr_val_cdcooper
-                         ,pr_nrdconta => vr_val_nrdconta
-                         ,pr_nrcpfcgc => vr_val_nrcpfcgc
-                         ,pr_flgjurid => 1);
-          FETCH cr_crapass
-           INTO rw_crapass;
-          -- Se não tiver encontrado
-          IF cr_crapass%NOTFOUND THEN
-            CLOSE cr_crapass;
-            -- Verificar se o problema está com Conta ou CNPJ
-            OPEN cr_crapass(pr_cdcooper => vr_val_cdcooper
                            ,pr_nrdconta => vr_val_nrdconta
+                           ,pr_nrcpfcgc => vr_val_nrcpfcgc
                            ,pr_flgjurid => 1);
             FETCH cr_crapass
              INTO rw_crapass;
-            -- Se mesmo sem CNPJ não achar
-            IF cr_crapass%NOTFOUND THEN 
-              -- Conta invalida
-              pr_cdcritic := 2;
-              pr_dscritic := 'Conta informada invalida.';
-            ELSE
-              -- Portabilidade nao trata codigo de devolucao por divergencia de CNPJ
-              IF vr_aux_CodMsg = 'STR0047R2' THEN 
-                pr_cdcritic := 0;
-              ELSE
-                /*CNPJ divergente*/
-                pr_cdcritic := 3;
-              END IF;
-            END IF;
-            CLOSE cr_crapttl;
-            IF pr_cdcritic <> 0 THEN
+            -- Se não tiver encontrado
+            IF vr_val_tppessoa <> 'J' OR cr_crapass%NOTFOUND  THEN
+              CLOSE cr_crapass;
+              /*CNPJ divergente*/
+              pr_cdcritic := 3;
               -- Sair
               RETURN;
-            END IF;
-          ELSE
-            CLOSE cr_crapass;
-            -- Se estiver eliminado
-            IF rw_crapass.dtelimin IS NOT NULL THEN
-              pr_cdcritic := 1;  /* Conta encerrada */
-              RETURN;
+            ELSE
+              CLOSE cr_crapass;
             END IF;
           END IF;
-        END IF;
+        END IF;  
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
@@ -879,7 +864,7 @@ BEGIN
         END IF;
       ELSE 
         -- Verifica as Mensagens de Recebimento 
-        IF vr_aux_CodMsg IN('STR0005R2','STR0007R2','STR0008R2','PAG0107R2','STR0025R2','PAG0121R2'-- Transferencia Judicial - Andrino
+        IF vr_aux_CodMsg IN('STR0005R2','STR0007R2','STR0008R2','PAG0107R2','STR0025R2','PAG0121R2'-- ]a Judicial - Andrino
                            ,'PAG0108R2','PAG0143R2'-- TED
                            ,'STR0037R2','PAG0137R2'-- TEC
                            ,'STR0026R2' --VR Boleto
@@ -1853,7 +1838,8 @@ BEGIN
                                   ,pr_dstiplog      => 'E'
                                   ,pr_tpexecucao    => 3
                                   ,pr_cdcriticidade => 0 
-                                  ,pr_flgsucesso    => 1);  
+                                  ,pr_flgsucesso    => 1
+                                  ,pr_cdmensagem    => vr_cdcritic);  
       END IF;
       
       -- Gravar a mensagem de TED devolvida como rejeitada
@@ -1899,7 +1885,8 @@ BEGIN
                                   ,pr_dstiplog      => 'E'
                                   ,pr_tpexecucao    => 3
                                   ,pr_cdcriticidade => 0 
-                                  ,pr_flgsucesso    => 1);  
+                                  ,pr_flgsucesso    => 1
+                                  ,pr_cdmensagem    => vr_cdcritic);  
       END IF;
       
     EXCEPTION  
@@ -2488,6 +2475,9 @@ BEGIN
             vr_aux_CodDevTransf := vr_aux_descrica;             
           ELSIF vr_node_name = 'DtMovto' THEN
             vr_aux_DtMovto := vr_aux_descrica;             
+          /* CNPJ Liquidante - antecipaçao de recebíveis - Mauricio*/
+          ELSIF vr_node_name = 'Hist' THEN
+            vr_aux_Hist := vr_aux_descrica;             
           END IF;
         END LOOP;
         
@@ -2780,7 +2770,8 @@ BEGIN
                                         ,pr_dstiplog      => 'E'
                                         ,pr_tpexecucao    => 3
                                         ,pr_cdcriticidade => 0 
-                                        ,pr_flgsucesso    => 1);  
+                                        ,pr_flgsucesso    => 1
+                                        ,pr_cdmensagem    => vr_cdcritic);  
             END IF;
           ELSE 
             -- Montar mensagem de erro para enviar ao LOG
@@ -3866,7 +3857,7 @@ BEGIN
              ,rw_craptco.nrdconta
              ,vr_aux_nrdocmto
                                    /* Credito TEC  TED */
-             ,DECODE(vr_aux_CodMsg,'STR0037R2',799,578)
+             ,DECODE(vr_aux_CodMsg,'STR0037R2',799,'PAG0137R2',799,578)
              ,nvl(rw_b_craplot.nrseqdig,0) + 1
              ,vr_aux_dadosdeb
              ,pr_vlrlanct
@@ -3996,6 +3987,79 @@ BEGIN
         pr_dscritic := 'Erro nao tratado em pc_processa_conta_transferida --> '||sqlerrm;
     END;
     
+
+    -- Função centralizadora de tabela em usa
+    FUNCTION fn_verifica_tab_em_uso(pr_sig_tabela VARCHAR2
+                                   ,pr_rowid ROWID DEFAULT NULL
+                                   ,pr_progress_recid NUMBER DEFAULT NULL) RETURN NUMBER IS 
+      
+      -- Verificar tvl
+      CURSOR cr_craptvl IS
+        SELECT craptvl.rowid
+          FROM craptvl
+         WHERE craptvl.rowid = pr_rowid
+         FOR UPDATE NOWAIT;
+      rw_craptvl cr_craptvl%ROWTYPE;
+      
+      -- Verificar LCS
+      CURSOR cr_craplcs IS
+        SELECT craplcs.rowid
+          FROM craplcs
+         WHERE craplcs.rowid = pr_rowid
+         FOR UPDATE NOWAIT;      
+      rw_craplcs cr_craplcs%ROWTYPE;
+         
+      -- Verificar LFP
+      CURSOR cr_craplfp IS
+        SELECT craplfp.rowid
+          FROM craplfp
+         WHERE craplfp.progress_recid = pr_progress_recid
+         FOR UPDATE NOWAIT;       
+      rw_craplfp cr_craplfp%ROWTYPE;  
+      
+    BEGIN
+      /* Tratamento para buscar registro se o mesmo estiver em lock, tenta por 10 seg. */ 
+      FOR i IN 1..100 LOOP
+        BEGIN
+          -- Leitura cfme tabela passada
+          IF pr_sig_tabela = 'TVL' THEN
+            OPEN cr_craptvl;
+            FETCH cr_craptvl INTO rw_craptvl;
+            CLOSE cr_craptvl;
+          ELSIF pr_sig_tabela = 'LCS' THEN
+            OPEN cr_craplcs;
+            FETCH cr_craplcs INTO rw_craplcs;
+            CLOSE cr_craplcs;            
+          ELSIF pr_sig_tabela = 'LFP' THEN
+            OPEN cr_craplfp;
+            FETCH cr_craplfp INTO rw_craplfp;
+            CLOSE cr_craplfp;
+          END IF;          
+          EXIT;
+        EXCEPTION
+          WHEN OTHERS THEN
+            IF cr_craptvl%ISOPEN THEN
+              CLOSE cr_craptvl;
+            END IF;
+            IF cr_craplcs%ISOPEN THEN
+              CLOSE cr_craplcs;
+            END IF;
+            IF cr_craplfp%ISOPEN THEN
+              CLOSE cr_craplfp;
+            END IF;
+
+            -- setar critica caso for o ultimo
+            IF i = 100 THEN
+              RETURN 1; --> em uso
+            END IF;
+            -- aguardar 0,5 seg. antes de tentar novamente
+            sys.dbms_lock.sleep(0.1);
+        END;
+      END LOOP;
+      
+      RETURN 0; --> liberado   
+    END fn_verifica_tab_em_uso;    
+    
     /* Procedimento geral de tratamento do lançamento */
     PROCEDURE pc_trata_lancamentos(pr_dscritic OUT varchar2) IS
       
@@ -4010,11 +4074,11 @@ BEGIN
       vr_tipolog       VARCHAR2(100);
     
       /* Registro de TEC Salário */
-      CURSOR cr_craplcs(pr_cdcooper crapcop.cdcooper%TYPE     
-                       ,pr_dtmvtolt crapdat.dtmvtolt%TYPE     
-                       ,pr_nrdconta crapass.nrdconta%TYPE     
-                       ,pr_cdhistor craplcs.cdhistor%TYPE     
-                       ,pr_nrdocmto craplcs.nrdocmto%TYPE ) IS
+      CURSOR cr_craplcs_lct(pr_cdcooper crapcop.cdcooper%TYPE     
+                           ,pr_dtmvtolt crapdat.dtmvtolt%TYPE     
+                           ,pr_nrdconta crapass.nrdconta%TYPE     
+                           ,pr_cdhistor craplcs.cdhistor%TYPE     
+                           ,pr_nrdocmto craplcs.nrdocmto%TYPE ) IS
         SELECT lcs.vllanmto
           FROM craplcs lcs
          WHERE lcs.cdcooper = pr_cdcooper
@@ -4022,7 +4086,7 @@ BEGIN
            AND lcs.nrdconta = pr_nrdconta
            AND lcs.cdhistor = pr_cdhistor
            AND lcs.nrdocmto = pr_nrdocmto;
-      rw_craplcs cr_craplcs%ROWTYPE;
+      rw_craplcs_lct cr_craplcs_lct%ROWTYPE;
       
       -- Buscar dados da conta em transferencia
       CURSOR cr_crapccs(pr_cdcooper crapcop.cdcooper%TYPE
@@ -4149,28 +4213,50 @@ BEGIN
         ELSE
           vr_aux_flgopfin := 0; /* Registro Devolução que não chegou a IF*/ 
         END IF;
-                
-              -- Atualizar flopfin do registro da TEC
-              BEGIN 
-                UPDATE craplcs
-                   SET flgopfin = vr_aux_flgopfin
-                 WHERE cdcooper = rw_crapcop_mensag.cdcooper  
-                   AND idopetrf = vr_aux_NumCtrlIF
-                 RETURNING nrridlfp 
-                          ,vllanmto
-                          ,nrdconta
-                      INTO vr_aux_nrridflp
-                          ,vr_aux_VlrLanc
-                          ,vr_aux_nrctacre;
-          -- Se nao atualizou nenhum registro
-          IF SQL%ROWCOUNT = 0 THEN 
-            -- Gerar critica
-            vr_dscritic := 'Numero de Controle invalido';
-          END IF;      
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao atualizar registro craplcs --> '||sqlerrm;
-              END;
+        
+        
+        -- Buscar registro transferência
+        OPEN cr_craplcs(pr_cdcooper => rw_crapcop_mensag.cdcooper
+                       ,pr_idopetrf => vr_aux_NumCtrlIF);
+        FETCH cr_craplcs
+         INTO rw_craplcs;          
+        -- Se encontrar
+        IF cr_craplcs%NOTFOUND THEN  
+          CLOSE cr_craplcs;
+          -- Gerar critica
+          vr_dscritic := 'Numero de Controle invalido';
+        ELSE
+          CLOSE cr_craplcs;          
+          
+          -- Verificar se tabela esta lockada
+          IF fn_verifica_tab_em_uso(pr_sig_tabela => 'LCS'
+                                   ,pr_rowid => rw_craplcs.rowid ) = 1 THEN
+            vr_dscritic := 'Registro de Transferencia Conta Salario '||vr_aux_NumCtrlIF||' em uso. Tente novamente.';  
+            -- apensa jogar critica em log
+            RAISE vr_exc_lock;
+          END IF; 
+            
+          -- Atualizar flopfin do registro da TEC
+          BEGIN 
+            UPDATE craplcs
+               SET flgopfin = vr_aux_flgopfin
+             WHERE ROWID = rw_craplcs.rowid
+             RETURNING nrridlfp 
+                      ,vllanmto
+                      ,nrdconta
+                  INTO vr_aux_nrridflp
+                      ,vr_aux_VlrLanc
+                      ,vr_aux_nrctacre;
+            -- Se nao atualizou nenhum registro
+            IF SQL%ROWCOUNT = 0 THEN 
+              -- Gerar critica
+              vr_dscritic := 'Numero de Controle invalido';
+            END IF;      
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar registro craplcs --> '||sqlerrm;
+          END;
+        END IF;  
         -- Se não deu erro 
         IF vr_dscritic IS NULL THEN
           -- Se retornou Recid Folha IB
@@ -4198,20 +4284,20 @@ BEGIN
           END IF;
           -- Verificar se ja existe Lancamento
           rw_craplcs := NULL;
-          OPEN cr_craplcs(pr_cdcooper => rw_crapcop_mensag.cdcooper
-                         ,pr_dtmvtolt => rw_crapdat_mensag.dtmvtolt
-                         ,pr_nrdconta => vr_aux_nrctacre
-                         ,pr_cdhistor => vr_aux_cdhistor
-                         ,pr_nrdocmto => vr_aux_nrdocmto);
-          FETCH cr_craplcs
-           INTO rw_craplcs;
-          CLOSE cr_craplcs;
+          OPEN cr_craplcs_lct(pr_cdcooper => rw_crapcop_mensag.cdcooper
+                             ,pr_dtmvtolt => rw_crapdat_mensag.dtmvtolt
+                             ,pr_nrdconta => vr_aux_nrctacre
+                             ,pr_cdhistor => vr_aux_cdhistor
+                             ,pr_nrdocmto => vr_aux_nrdocmto);
+          FETCH cr_craplcs_lct
+           INTO rw_craplcs_lct;
+          CLOSE cr_craplcs_lct;
           -- Se já existia LCS
-          IF rw_craplcs.vllanmto IS NOT NULL THEN
+          IF rw_craplcs_lct.vllanmto IS NOT NULL THEN
             -- Gerar critica
             vr_dscritic := 'Lancamento ja existe! Conta: ' 
                         || vr_aux_nrctacre || ', Valor: ' 
-                        || to_char(rw_craplcs.vllanmto,'999g999g990d00')
+                        || to_char(rw_craplcs_lct.vllanmto,'999g999g990d00')
                         || ', Lote: ' || vr_glb_nrdolote
                         || ', Doc.: ' || vr_aux_nrdocmto;
           ELSE
@@ -4677,7 +4763,16 @@ BEGIN
             -- Se está na cabine
             IF vr_aux_tagCABInf THEN
               vr_aux_VlrLanc := rw_craptvl.vldocrcb;
-              -- Atualiar a operação como finalizada
+              
+              -- Verificar se tabela esta lockada
+              IF fn_verifica_tab_em_uso(pr_sig_tabela => 'TVL'
+                                       ,pr_rowid => rw_craptvl.rowid ) = 1 THEN
+                vr_dscritic := 'Registro de Transferencia DOC/TED '||vr_aux_NumCtrlIF||' em uso. Tente novamente.';  
+                -- apensa jogar critica em log
+                RAISE vr_exc_lock;
+              END IF;
+              
+              -- Atualizar a operação como finalizada
               BEGIN
                 UPDATE craptvl
                    SET craptvl.flgopfin = 1 /*Finaliz.*/
@@ -4685,6 +4780,7 @@ BEGIN
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao atualizar craptlv --> '||sqlerrm;
+                  raise vr_exc_saida;
               END;                  
             END IF;
             -- Usar a conta da TVL  
@@ -5172,6 +5268,7 @@ BEGIN
         pr_dscritic := 'Erro nao tratado em pc_trata_lancamentos --> '||sqlerrm;
     END;
     
+    
   BEGIN
     
     -- Incluir nome do módulo logado
@@ -5189,7 +5286,7 @@ BEGIN
       -- Montar mensagem de critica
       pr_cdcritic := 651;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 651);
-      RAISE vr_exc_erro;
+      RAISE vr_exc_saida;
     ELSE
       -- Apenas fechar o cursor
       CLOSE cr_crapcop;
@@ -5206,7 +5303,7 @@ BEGIN
       -- Montar mensagem de critica
       pr_cdcritic := 1;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
-      RAISE vr_exc_erro;
+      RAISE vr_exc_saida;
     ELSE
       -- Apenas fechar o cursor
       CLOSE btch0001.cr_crapdat;
@@ -5242,7 +5339,7 @@ BEGIN
     IF vr_dscritic IS NOT NULL THEN 
       -- Incrementar o LOG
       vr_dscritic := 'Erro ao descriptografar e ler o arquivo : ' || vr_aux_nmdirxml||'/'||vr_aux_nmarqxml;
-      RAISE vr_exc_erro;
+      RAISE vr_exc_saida;
     ELSE
       -- Criar bloco para facilitar o desvio de fluxo ao final 
       BEGIN 
@@ -5326,6 +5423,7 @@ BEGIN
                                ,'STR0018','STR0019'                             -- Exclusao/Inclusao IF
                                ,'STR0005R2','STR0007R2','STR0008R2','PAG0107R2'
                                ,'STR0025R2','PAG0121R2'                         -- Transferencia Judicial - Andrino
+                               ,'LTR0005R2'                                     -- Antecipaçao de Recebíveis - LTR - Mauricio 
                                ,'PAG0108R2','PAG0143R2'                         -- TED
                                ,'STR0037R2','PAG0137R2'                         -- TEC 
                                ,'STR0010R2','PAG0111R2'                         -- Devolucao TED/TEC enviado com erro
@@ -5389,6 +5487,33 @@ BEGIN
           -- Processo finalizado 
           RAISE vr_exc_next;
         END IF;
+        
+        -- Antecipaçao de Recebíveis - LTR - Mauricio
+        IF vr_aux_CodMsg = ('LTR0005R2') THEN 
+          -- Acionar log
+          BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                    ,pr_ind_tipo_log  => 2 -- Erro não tratado
+                                    ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' 
+                                                      || to_char(sysdate,'hh24:mi:ss')||' - '
+                                                      || vr_glb_cdprogra ||' - '
+                                                      || vr_dscritic
+                                    ,pr_nmarqlog      => vr_nmarqlog);            
+          -- Enviar mensagem Domicilio
+          CCRD0006.pc_insere_msg_domicilio(pr_vlrlancto   => to_number(vr_aux_VlrLanc) /* Valor Lancamento */
+                                          ,pr_cnpjliqdant => vr_aux_hist               /* CPNJ Credenciador */
+                                          ,pr_dscritic    => vr_dscritic);             /* Retorno do Erro */
+          -- Se retornou erro    
+          IF vr_dscritic IS NOT NULL THEN 
+            -- Incrementar o LOG
+            vr_dscritic := 'Erro ao processar mensagem --> ' || vr_dscritic;
+            RAISE vr_exc_saida;
+          END IF;
+          
+          -- Salvar o arquivo 
+          pc_salva_arquivo;
+          -- Processo finalizado 
+          RAISE vr_exc_next;
+        END IF;        
         
         -- VR Boleto
         IF vr_aux_CodMsg = 'STR0026R2' THEN
@@ -5710,7 +5835,7 @@ BEGIN
             IF vr_tab_descontar.next(vr_idx_descontar) IS NULL
             OR vr_tab_descontar(vr_idx_descontar).nrdconta <> vr_tab_descontar(vr_tab_descontar.next(vr_idx_descontar)).nrdconta THEN 
               -- Efetuar a baixa do titulo
-              DSCT0001.pc_efetua_baixa_titulo (pr_cdcooper    => pr_cdcooper     -- Codigo Cooperativa
+              DSCT0001 .pc_efetua_baixa_titulo (pr_cdcooper    => pr_cdcooper     -- Codigo Cooperativa
                                               ,pr_cdagenci    => 0               -- Codigo Agencia
                                               ,pr_nrdcaixa    => 0               -- Numero Caixa
                                               ,pr_cdoperad    => 0               -- Codigo operador
@@ -5719,6 +5844,7 @@ BEGIN
                                               ,pr_nrdconta    => vr_tab_descontar(vr_idx_descontar).nrdconta -- Numero da conta
                                               ,pr_indbaixa    => 1                   -- Indicador Baixa /* 1-Pagamento 2- Vencimento */
                                               ,pr_tab_titulos => vr_tab_titulosdt    -- Titulos a serem baixados
+                                              ,pr_dtintegr    => vr_aux_dtintegr     -- Data Integração Pagamento
                                               ,pr_cdcritic    => vr_cdcritic         -- Codigo Critica
                                               ,pr_dscritic    => vr_dscritic         -- Descricao Critica
                                               ,pr_tab_erro    => vr_tab_erro);       -- Tabela erros
@@ -5904,6 +6030,21 @@ BEGIN
               vr_aux_dtintegr := vr_tab_estad_crise(rw_crapcop_mensag.cdcooper).dtintegr;
               vr_aux_inestcri := vr_tab_estad_crise(rw_crapcop_mensag.cdcooper).inestcri;
             END IF;
+          -- IFs incorporadas foram desativadas(crapcop.flgativo = FALSE)
+          ELSE
+             -- Tratamento incorporacao CONCREDI e CREDIMILSUL */ 
+             IF to_number(vr_aux_AgCredtd) = 103 THEN 
+               vr_aux_cdageinc := to_number(vr_aux_AgCredtd);
+               vr_aux_AgCredtd := '0101';
+             ELSIF to_number(vr_aux_AgCredtd) = 114 THEN
+               vr_aux_cdageinc := to_number(vr_aux_AgCredtd);
+               vr_aux_AgCredtd := '0112';
+             END IF;                     
+             -- Busca cooperativa de destino 
+             OPEN cr_crapcop(pr_cdagectl => vr_aux_AgCredtd);
+             FETCH cr_crapcop
+              INTO rw_crapcop_mensag;
+             CLOSE cr_crapcop;
           END IF;
           
           -- Se houve erro 
@@ -6066,23 +6207,40 @@ BEGIN
                 -- Processo finalizado 
                 RAISE vr_exc_next;
               ELSE
-                      -- Atualizar flopfin do registro da TED
-                      BEGIN 
-                        UPDATE craptvl
-                           SET flgopfin = 1 -- True
-                   WHERE cdcooper = rw_crapcop_mensag.cdcooper  
-                     AND tpdoctrf = 3                 
-                     AND idopetrf = vr_aux_NumCtrlIF;
-                  -- Se nao atualizou nenhum registro
-                  IF SQL%ROWCOUNT = 0 THEN 
-                    -- Gerar critica
-                    vr_dscritic := 'Numero de Controle invalido';
-                  END IF;   
-                      EXCEPTION
-                        WHEN OTHERS THEN
-                          vr_dscritic := 'Erro ao atualizar registro craptvl --> '||sqlerrm;
-                      END;
-                    END IF;
+                -- Buscar o registro da TVL a ser atualizado
+                OPEN cr_craptvl(rw_crapcop_mensag.cdcooper,vr_aux_NumCtrlIF);
+                FETCH cr_craptvl
+                 INTO rw_craptvl;
+                -- Se não encontrou
+                IF cr_craptvl%NOTFOUND THEN
+                  CLOSE cr_craptvl;
+                  vr_dscritic := 'Numero de Controle invalido';
+                ELSE
+                  CLOSE cr_craptvl;                 
+                  -- Verificar se tabela esta lockada
+                  IF fn_verifica_tab_em_uso(pr_sig_tabela => 'TVL'
+                                           ,pr_rowid => rw_craptvl.rowid ) = 1 THEN
+                    vr_dscritic := 'Registro de Transferencia DOC/TED '||vr_aux_NumCtrlIF||' em uso. Tente novamente.';  
+                    -- apensa jogar critica em log
+                    RAISE vr_exc_lock;
+                  END IF;
+                  
+                  -- Atualizar flopfin do registro da TED
+                  BEGIN 
+                    UPDATE craptvl
+                       SET flgopfin = 1 -- True
+                     WHERE ROWID = rw_craptvl.rowid;
+                    -- Se nao atualizou nenhum registro
+                    IF SQL%ROWCOUNT = 0 THEN 
+                      -- Gerar critica
+                      vr_dscritic := 'Numero de Controle invalido';
+                    END IF;   
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_dscritic := 'Erro ao atualizar registro craptvl --> '||sqlerrm;
+                  END;
+                END IF;  
+              END IF;
             -- TEC
             ELSIF SUBSTR(vr_aux_NumCtrlIF,1,1) = '2'  THEN 
               -- Se veio mensagem de Cancelado ou Rejeitado
@@ -6095,37 +6253,66 @@ BEGIN
                 -- Processo finalizado 
                 RAISE vr_exc_next;
               ELSE
-                      -- Atualizar flopfin do registro da TEC
-                      BEGIN 
-                        UPDATE craplcs
-                           SET flgopfin = 1 -- True
-                   WHERE cdcooper = rw_crapcop_mensag.cdcooper  
-                     AND idopetrf = vr_aux_NumCtrlIF
-                         RETURNING nrridlfp INTO vr_aux_nrridflp;
-                  -- Se nao atualizou nenhum registro
-                  IF SQL%ROWCOUNT = 0 THEN 
-                    -- Gerar critica
-                    vr_dscritic := 'Numero de Controle invalido';
-                  END IF;      
-                      EXCEPTION
-                        WHEN OTHERS THEN
-                          vr_dscritic := 'Erro ao atualizar registro craplcs --> '||sqlerrm;
-                      END;
+                -- Buscar registro transferência
+                OPEN cr_craplcs(pr_cdcooper => rw_crapcop_mensag.cdcooper
+                               ,pr_idopetrf => vr_aux_NumCtrlIF);
+                FETCH cr_craplcs
+                 INTO rw_craplcs;          
+                -- Se encontrar
+                IF cr_craplcs%NOTFOUND THEN  
+                  CLOSE cr_craplcs;
+                  -- Gerar critica
+                  vr_dscritic := 'Numero de Controle invalido';
+                ELSE
+                  CLOSE cr_craplcs;          
+                  
+                  -- Verificar se tabela esta lockada
+                  IF fn_verifica_tab_em_uso(pr_sig_tabela => 'LCS'
+                                           ,pr_rowid => rw_craplcs.rowid ) = 1 THEN
+                    vr_dscritic := 'Registro de Transferencia Conta Salario '||vr_aux_NumCtrlIF||' em uso. Tente novamente.';  
+                    -- apensa jogar critica em log
+                    RAISE vr_exc_lock;
+                  END IF;
+                  -- Atualizar flopfin do registro da TEC
+                  BEGIN 
+                    UPDATE craplcs
+                       SET flgopfin = 1 -- True
+                     WHERE cdcooper = rw_crapcop_mensag.cdcooper  
+                       AND idopetrf = vr_aux_NumCtrlIF
+                     RETURNING nrridlfp INTO vr_aux_nrridflp;
+                    -- Se nao atualizou nenhum registro
+                    IF SQL%ROWCOUNT = 0 THEN 
+                      -- Gerar critica
+                      vr_dscritic := 'Numero de Controle invalido';
+                    END IF;      
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_dscritic := 'Erro ao atualizar registro craplcs --> '||sqlerrm;
+                  END;
+                END IF;
                 -- Se não deu erro e retornou Recid Folha IB
                 IF vr_dscritic IS NULL AND vr_aux_nrridflp <> 0 THEN 
-                        -- Usaremos este Recid para atualizar o registro no sistema de Folha
-                        BEGIN 
-                          UPDATE craplfp
-                             SET idsitlct = 'T'  -- Transmitido
-                                ,dsobslct = NULL -- Sem observações por hora
+                  -- checar se a tabela nao esta em lock
+                  IF fn_verifica_tab_em_uso(pr_sig_tabela => 'LFP'
+                                           ,pr_progress_recid => vr_aux_nrridflp ) = 1 THEN
+                    vr_dscritic := 'Registro de Folha Conta Salario '||vr_aux_nrridflp||' em uso. Tente novamente.';  
+                    -- apensa jogar critica em log
+                    RAISE vr_exc_lock;
+                  END IF;  
+                
+                  -- Usaremos este Recid para atualizar o registro no sistema de Folha
+                  BEGIN 
+                    UPDATE craplfp
+                       SET idsitlct = 'T'  -- Transmitido
+                          ,dsobslct = NULL -- Sem observações por hora
                      WHERE cdcooper = rw_crapcop_mensag.cdcooper  
                        AND progress_recid = vr_aux_nrridflp;
-                        EXCEPTION
-                          WHEN OTHERS THEN
-                            vr_dscritic := 'Erro ao atualizar registro craplfp --> '||sqlerrm;
-                        END;
-                      END IF;
-                        END IF;
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_dscritic := 'Erro ao atualizar registro craplfp --> '||sqlerrm;
+                  END;
+                END IF;
+              END IF;
             -- STR0004              
             ELSIF SUBSTR(vr_aux_NumCtrlIF,1,1) <> '3'  THEN
               -- Gera critica
@@ -6179,7 +6366,25 @@ BEGIN
     COMMIT;
     
   EXCEPTION
-    WHEN vr_exc_erro THEN
+    WHEN vr_exc_lock THEN
+      -- O arquivo não será movido, portanto não haverá chamada a pc_salva_arquivo ou pc_mover_arquivo_xml
+      -- Assim ele será processado posteriormente em momento que a tabela não estiver em lock
+      pr_dscritic := vr_dscritic;
+      -- Efetuar rollback
+      ROLLBACK;
+      -- Iniciar LOG de execução
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratado
+                                ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '||pr_dscritic);
+      
+      -- Novamente tenta encerrar o JOB
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => pr_idprogra
+                                  ,pr_des_erro => pr_dscritic);
+                                  
+      -- Efetuar commit das alterações
+      COMMIT; 
+    WHEN vr_exc_saida THEN
       -- Se foi retornado apenas código
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
         -- Buscar a descrição
