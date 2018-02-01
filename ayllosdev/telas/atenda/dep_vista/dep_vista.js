@@ -1,7 +1,7 @@
 /***********************************************************************
    Fonte: dep_vista.js
    Autor: Guilherme
-   Data : Fevereiro/2007                  Última Alteração: 04/11/2017
+   Data : Fevereiro/2007                  Última Alteração: 24/01/2018
 
    Objetivo  : Biblioteca de funções da rotina Dep. Vista da tela
                ATENDA
@@ -21,6 +21,8 @@
 							 11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
                              04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
                                           (Jonata - RKAM P364).
+							 24/01/2018 - Na funcao controlaLayout havia erros de sintaxe ocasionando problemas na 
+							              formatação da tela (Tiago #824708)
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -618,8 +620,8 @@ function controlaLayout( nomeForm ){
 		rExecicio.addClass('rotulo').css({'width':'338px'});
 		rBase1.addClass('rotulo').css({'width':'170px'});
 		rBase2.addClass('rotulo-linha').css({'width':'10px'});
-		rValor1.addClass('rotulo').css({'width':'170px'});;
-		rValor2.addClass('rotulo-linha').css({'width':'10px'});;
+		rValor1.addClass('rotulo').css({'width':'170px'});
+		rValor2.addClass('rotulo-linha').css({'width':'10px'});
 		
 		cBase1		= $('#base1' , '#'+nomeForm);
 		cBase2		= $('#base2' , '#'+nomeForm);
@@ -697,7 +699,7 @@ function controlaLayout( nomeForm ){
 		var altura = '210px';
 
 		if ( $.browser.msie ) {
-			$('#'+nomeForm).css('margin-bottom','-10px')
+			$('#'+nomeForm).css('margin-bottom','-10px');
 		}
 		
 		// rotulo
