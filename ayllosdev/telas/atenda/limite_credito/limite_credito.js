@@ -35,7 +35,7 @@
  * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
  * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.		 
  * 021: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438.
- * 022:	[14/11/2017] Mateus Z    (MOUTS) : Adicionado a coluna Operador na tabela Ultimas Alterações. Chamado 791852.
+ * 022:	[14/11/2017] Mateus Z    (MOUTS) : Adicionado a coluna Operador na tabela Ultimas Alterações. Chamado 791852
  */
  
 var callafterLimiteCred = '';
