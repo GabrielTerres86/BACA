@@ -2350,7 +2350,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Junho/2007                        Ultima atualizacao: 24/09/2015
+      Data    : Junho/2007                        Ultima atualizacao: 16/01/2018
 
       Dados referentes ao programa:
 
@@ -2397,6 +2397,9 @@ create or replace package body cecred.PAGA0002 is
 							   PRJ356.4 - DDA (Ricardo Linhares)
 
 
+                  16/01/2018 - Adicionado validação para que não seja permitido realizar agendamento
+                               para uma data anterior a data atual do sistema
+                               (Douglas - Chamado 829446)
     .................................................................................*/
     ----------------> TEMPTABLE  <---------------
     vr_tab_limite     INET0001.typ_tab_limite;
@@ -2459,6 +2462,17 @@ create or replace package body cecred.PAGA0002 is
        AND a.nrdconta = pr_nrdconta;
 
   BEGIN
+
+    -- Verificar se é agendamento
+    IF NVL(pr_idagenda,0) = 2 THEN
+      -- Verificar se a data do agendamento é anterior a data atual 
+      IF pr_dtmvtopg < pr_dtmvtolt THEN
+        -- Gerar mensagem de erro para não permitir o pagamento
+        vr_dscritic := 'Não é permitido realizar agendamento para data retroativa.';
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;  
+    
     -- Definir descrição da transação
     SELECT 'Valida '||DECODE(NVL(pr_idtpdpag,0),1,'convenio (fatura)','titulo')||
            ' para '||DECODE(NVL(pr_idagenda,0),1,NULL,'agendamento de ')||'pagamento'
@@ -2864,7 +2878,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Junho/2007                        Ultima atualizacao: 24/05/2016
+      Data    : Junho/2007                        Ultima atualizacao: 16/01/2018
 
       Dados referentes ao programa:
 
@@ -2938,6 +2952,11 @@ create or replace package body cecred.PAGA0002 is
                  24/05/2016 - Removendo mensagem de log especifica para DDA pois já estava sendo
                               montada anteriormente para soluncionar o problema do chamado
                               417943. (Kelvin)
+                              
+                 16/01/2018 - Adicionado validação para que não seja permitido realizar agendamento
+                              para uma data anterior a data atual do sistema
+                              (Douglas - Chamado 829446)
+
     .................................................................................*/
     ----------------> CURSORES  <---------------
     -- Cursor para encontrar a conta/corrente
@@ -3123,6 +3142,16 @@ create or replace package body cecred.PAGA0002 is
     ELSE
       -- APENAS FECHAR O CURSOR
       CLOSE btch0001.cr_crapdat;
+    END IF;
+
+    -- Verificar se é agendamento
+    IF NVL(pr_idagenda,0) = 2 THEN
+      -- Verificar se a data do agendamento é anterior a data atual 
+      IF pr_dtmvtopg < rw_crapdat.dtmvtolt THEN
+        -- Gerar mensagem de erro para não permitir o pagamento
+        vr_dscritic := 'Não é permitido realizar agendamento para data retroativa.';
+        RAISE vr_exc_erro;
+      END IF;
     END IF;
 
     -- Definir descrição da transação
@@ -9049,7 +9078,7 @@ create or replace package body cecred.PAGA0002 is
         ELSIF rw_craplau.cdtiptra = 4 THEN
           vr_dstiptra := 'TED';
           vr_idlstdom := 4; -- TED         
-        ELSE
+        ELSE          
           vr_dstiptra := '';
         END IF;
 
