@@ -7571,6 +7571,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                               ,pr_cdcooper => pr_cdcooper -- IN
                                               ,pr_nmsubdir => '/salvar'   -- IN -- /salvar
                                               );
+          -- Cria registro na tabela GNCONTR para armazenar os detalhes do processamento de cada arquivo gerado
+          pc_gera_trilha(pr_cdcooper => pr_cdcooper                 -- IN
+                        ,pr_cdconven => pr_cdempres                 -- IN
+                        ,pr_dtmvtolt => pr_dtvencto                 -- IN
+                        ,pr_nrsequen => substr(fn_busca_nsa(pr_cdcooper => pr_cdcooper -- IN
+                                                           ,pr_cdconven => pr_cdempres -- IN
+                                                           ), 0, 6) -- IN
+                        ,pr_nmarquiv => pr_nmarqtxt                 -- IN
+                        ,pr_qtdoctos => pr_qtregist                 -- IN
+                        ,pr_vldoctos => pr_vltotrec                 -- IN
+                        ,pr_vltarifa => pr_vltrftot                 -- IN
+                        ,pr_dscritic => pr_dscritic                 -- OUT
+                        );
+          IF pr_dscritic IS NOT NULL THEN
+            --
+            RAISE vr_exc_errcon;
+            --
+          END IF;
           -- Abre o arquivo de dados em modo de gravação
           gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- Diretório do arquivo
                                   ,pr_nmarquiv => pr_nmarqtxt   -- IN -- Nome do arquivo
@@ -7646,24 +7664,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           IF vr_typ_saida = 'ERR' THEN
             --
             pr_dscritic := 'Não foi possível executar comando unix. ' || vr_comando || ' Erro: ' || pr_dscritic;
-            RAISE vr_exc_errcon;
-            --
-          END IF;
-          -- Cria registro na tabela GNCONTR para armazenar os detalhes do processamento de cada arquivo gerado
-          pc_gera_trilha(pr_cdcooper => pr_cdcooper                 -- IN
-                        ,pr_cdconven => pr_cdempres                 -- IN
-                        ,pr_dtmvtolt => pr_dtvencto                 -- IN
-                        ,pr_nrsequen => substr(fn_busca_nsa(pr_cdcooper => pr_cdcooper -- IN
-                                                           ,pr_cdconven => pr_cdempres -- IN
-                                                           ), 0, 6) -- IN
-                        ,pr_nmarquiv => pr_nmarqtxt                 -- IN
-                        ,pr_qtdoctos => pr_qtregist                 -- IN
-                        ,pr_vldoctos => pr_vltotrec                 -- IN
-                        ,pr_vltarifa => pr_vltrftot                 -- IN
-                        ,pr_dscritic => pr_dscritic                 -- OUT
-                        );
-          IF pr_dscritic IS NOT NULL THEN
-            --
             RAISE vr_exc_errcon;
             --
           END IF;
@@ -7818,7 +7818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                     vr_cdconven := 0;
                     vr_cdempcon := 0;
                     vr_trocaarq := FALSE;
-                    vr_trocaarq := FALSE;
+                    vr_procearq := TRUE;
                     --
                   END IF;
                   --
@@ -8005,7 +8005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
             vr_cdconven := 0;
             vr_cdempcon := 0;
             vr_trocaarq := FALSE;
-            vr_trocaarq := FALSE;
+            vr_procearq := TRUE;
             --
           END IF;
           --
