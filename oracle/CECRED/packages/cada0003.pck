@@ -796,6 +796,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).	   
   --
   --             07/12/2017 - Gerar log da data de demissão e motivo (Jonata - RKAM P364).
+  --
+  --             01/02/2017 - Ao validar se existe aplicacao ativa na conta do cooperado, verificar
+  --                          tambem na tabela CRAPRDA. Demetrius (Mouts) - Chamado 833672
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -4261,6 +4264,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       -- Cursor para verificar se existe aplicacao
       CURSOR cr_aplicacao IS
+        SELECT 1
+          FROM craprda 
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND insaqtot = 0
+        UNION ALL
         SELECT 1
           FROM crapaar 
          WHERE cdcooper = pr_cdcooper
