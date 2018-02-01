@@ -126,7 +126,7 @@
     <a href="#" class="botao" id="btPortabilidade" onClick="controlaOperacao('PORTAB_CRED');">Portabilidade</a>
 	<? 
 		$permissao = in_array('X', $glbvars['opcoesTela']);
-		if($glbvars["cddepart"] == 7 || $permissao == true) {  
+		if($glbvars["cddepart"] == 7 && $permissao == true) {  
 	?>
 			<a href="#" class="botao" id="btAltQualif" onClick="controlaOperacao('CON_QUALIFICA');">Alterar Qualificação</a>
 	<? 	
