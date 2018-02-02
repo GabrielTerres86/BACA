@@ -38,12 +38,8 @@
 	$numDigitos = strlen($nrcpfcnpj) > 11 ? 14 : 11;
 	$nrcpfcnpj = str_pad($nrcpfcnpj, 14, '0', STR_PAD_LEFT);
 
-	if (strlen($nrcpfcnpj) == 14) {
-		$nrcpfcnpj = substr($nrcpfcnpj, 0, 8); // raíz do CNPJ 
-	}
-
 	// Verifica se o número da conta é um inteiro válido
-	if (!validaInteiro($nrcpfcnpj)) {
+	if (!validaInteiro($nrdconta)) {
 		exibeErro('CPF/CNPJ inv&aacute;lido.');
 	}
 	
@@ -76,6 +72,8 @@
 	
 	$listaRiscos = $xmlObjRiscos->roottag->tags[0]->tags[0]->tags;
 	$dadosCentral = $xmlObjRiscos->roottag->tags[0]->tags[1]->tags;
+	$riscoCentral = getByTagName($dadosCentral, 'risco_ult_central'); 
+	$riscoFinal = getByTagName($dadosCentral, 'risco_final');
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -140,6 +138,22 @@
 					</tr>
 				<?
 				}
+
+				if (getByTagName($xmlObjRiscos->roottag->tags[0]->tags, 'qtd_contratos') == '0') { ?>
+					<tr>
+						<td><? echo aplicaMascara($nrcpfcnpj); ?></td>
+						<td><? echo formataContaDV($nrdconta); ?></td>
+						<td>&nbsp;</td>
+						<td>&nbsp;</td>
+						<td>&nbsp;</td>
+						<td>&nbsp;</td>
+						<td><? echo getByTagName($risco->tags, 'risco_agravado'); ?></td>
+						<td>&nbsp;</td>
+						<td>A</td>
+						<td>&nbsp;</td>
+					</tr>
+				<? 
+				}
 				?>
 			</tbody>
 		</table>
@@ -147,13 +161,13 @@
 	<div id="infoCentral" style="padding-top: 7px;">
 		<div id="infoUltimaCentral" style="float: left; width: 70%; text-align: left;">
 			<label for="riscoUltimaCentral" style="margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Risco Última Central:</label>
-			<input type="text" name="riscoUltimaCentral" id="riscoUltimaCentral" value="<? echo getByTagName($dadosCentral, 'risco_ult_central'); ?>" readonly tabindex="-1" style="width: 40px; text-align: center; outline: 1px solid black; display: block; float: left; position: relative;">
+			<input type="text" name="riscoUltimaCentral" id="riscoUltimaCentral" value="<? echo !empty($riscoCentral) ? $riscoCentral : 'A'; ?>" readonly tabindex="-1" style="width: 40px; text-align: center; outline: 1px solid black; display: block; float: left; position: relative;">
 			<input type="text" name="dataUltimaCentral" id="dataUltimaCentral" value="<? echo getByTagName($dadosCentral, 'data_ult_central'); ?>" readonly tabindex="-1" style="width: 70px; text-align: center; outline: 1px solid black; display: block; float: left; margin-left: 10px; position: relative;">
 			<input type="text" name="dataUltimaCentral" id="dataUltimaCentral" value="<? $diasRisco = getByTagName($dadosCentral, 'qtd_dias_risco'); echo !empty($diasRisco) ? $diasRisco . ' dias' : '' ?>" readonly tabindex="-1" style="width: 70px; text-align: center; outline: 1px solid black; display: block; float: left; margin-left: 10px; position: relative;">			
 		</div>
 		<div id="infoRiscoFinal" style="float: right; width: 30%; text-align: left;">
 			<label for="riscoFinal" style="margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Risco final:</label>
-			<input type="text" name="riscoFinal" id="riscoFinal" value="<? echo getByTagName($dadosCentral, 'risco_final'); ?>" readonly tabindex="-1" style="width: 40px; text-align: center; outline: 1px solid black;">
+			<input type="text" name="riscoFinal" id="riscoFinal" value="<? echo !empty($riscoFinal) ? $riscoFinal : 'A'; ?>" readonly tabindex="-1" style="width: 40px; text-align: center; outline: 1px solid black;">
 		</div>
 	</div>
 </div>
