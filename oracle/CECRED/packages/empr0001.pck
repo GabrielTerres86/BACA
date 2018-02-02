@@ -41,7 +41,7 @@ CREATE OR REPLACE PACKAGE empr0001 AS
   --                          no dia atual. Como utiliza informacao de saldo da CRAPSDA, esses valores nao estao contemplados.
   --                          Heitor (Mouts) - Chamado 718395
   --
-                 24/01/2018 - Adicionada solicitacao de senha de coordenador para utilizacao do saldo bloqueado no pagamento (Luis Fernando - GFT)
+  --             24/01/2018 - Adicionada solicitacao de senha de coordenador para utilizacao do saldo bloqueado no pagamento (Luis Fernando - GFT)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo com as informacoes do registro de emprestimo. Antiga: tt-dados-epr */
