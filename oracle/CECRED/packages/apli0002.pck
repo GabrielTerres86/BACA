@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 07/06/2016
+   Data    : 29/11/2010                        Ultima atualizacao: 23/08/2017
 
    Dados referentes ao programa:
 
@@ -120,6 +120,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                               limite para cancelamento (Dionathan)
 							   
                  07/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+
+				 23/08/2017 - Alterada procedure pc_validar_limite_resgate para validar senha do operador
+							  pelo AD. (PRJ339 - Reinert)
   ............................................................................*/
 
   /* Tipo que compreende o registro da tab. temporária tt-carencia-aplicacao */
@@ -1070,8 +1073,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                             ,pr_dtmvtopr OUT crapdat.dtmvtopr%TYPE   --> Proxima data movimento
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo de Critica
                             ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao de Critica                           
-										
-  
+														
+
   PROCEDURE pc_processa_lote_resgt(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Codigo Cooperativa
                                   ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
                                   ,pr_nrdcaixa IN INTEGER                  --> Numero do Caixa
@@ -2840,14 +2843,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
   BEGIN
     DECLARE    
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
-                       ,pr_cdoperad IN crapope.cdoperad%TYPE
-                       ,pr_cddsenha IN crapope.cddsenha%TYPE
-                       ,pr_flgsenha IN NUMBER) IS
+                       ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
         SELECT ope.vlapvcap
           FROM crapope ope
          WHERE ope.cdcooper = pr_cdcooper
-           AND upper(ope.cdoperad) = upper(pr_cdoperad)
-           AND ope.cddsenha = decode(pr_flgsenha,0,ope.cddsenha,pr_cddsenha);
+           AND upper(ope.cdoperad) = upper(pr_cdoperad);
            
       rw_crapope cr_crapope%ROWTYPE;     
       
@@ -2880,9 +2880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
         -- Encontra registro do associado
         OPEN cr_crapope(pr_cdcooper => pr_cdcooper
-                       ,pr_cdoperad => pr_cdoperad
-                       ,pr_cddsenha => pr_cddsenha
-                       ,pr_flgsenha => pr_flgsenha);
+                       ,pr_cdoperad => pr_cdoperad);
                          
         FETCH cr_crapope INTO rw_crapope;
           
@@ -2900,6 +2898,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             
         ELSE
           
+				  -- Se for preciso validar senha
+				  IF (pr_flgsenha = 1) THEN
+						-- Validar senha do operador no AD
+						gene0001.pc_valida_senha_AD(pr_cdcooper => pr_cdcooper
+						                           ,pr_cdoperad => pr_cdoperad
+																			 ,pr_nrdsenha => pr_cddsenha
+																			 ,pr_cdcritic => vr_cdcritic
+																			 ,pr_dscritic => vr_dscritic);
+						-- Se retornou crítica										 
+					  IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+							-- Levantar exceção
+							RAISE vr_exc_erro;
+						END IF;
+					END IF;
+				
           vr_dsvlresg := TO_CHAR(pr_vlrrsgat,'999G999G990D00');
           
           -- Fecha o cursor
@@ -2918,6 +2931,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         
     EXCEPTION
       WHEN vr_exc_erro THEN
+
+        -- Se possui código de crítica sem descrição
+        IF vr_cdcritic > 0 AND TRIM(vr_dscritic) IS NULL THEN
+					-- Buscar descrição da crítica
+					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
 
         -- Monta mensagem de erro
         pr_cdcritic := NVL(vr_cdcritic,0);
@@ -18720,9 +18739,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       IF vr_des_reto = 'NOK' THEN
         RAISE vr_exc_erro;        
-      END IF;   
-    
-    
+        END IF;
+        
+      
       BEGIN
         
         -- Inserir lancamento do resgate solicitado
