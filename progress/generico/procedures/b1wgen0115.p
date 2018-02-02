@@ -3720,6 +3720,7 @@ PROCEDURE Gera_Impressao:
 
     DEF VAR aux_qtregstr AS INTE                                      NO-UNDO.
     DEF VAR aux_nmendter AS CHAR    FORMAT "x(20)"                    NO-UNDO.
+    DEF VAR aux_dtcontra AS DATE                                      NO-UNDO.
 
 
     EMPTY TEMP-TABLE tt-erro.
@@ -3737,13 +3738,29 @@ PROCEDURE Gera_Impressao:
                 LEAVE Imprime.
             END.
             
-        /* Proposta de emprestimo */
-        FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
-                           crawepr.nrdconta = par_nrdconta   AND
-                           crawepr.nrctremp = par_nrctremp
-                           NO-LOCK NO-ERROR.
+        IF par_tpctrato = 90 THEN
+           DO:
+              /* Proposta de emprestimo */
+              FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
+                                 crawepr.nrdconta = par_nrdconta   AND
+                                 crawepr.nrctremp = par_nrctremp
+                                 NO-LOCK NO-ERROR.
+
+              ASSIGN aux_dtcontra = crawepr.dtmvtolt.
+           END.
+        ELSE
+           DO:
+              /* Contrato de limite */
+              FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                 craplim.nrdconta = par_nrdconta   AND
+                                 craplim.nrctrlim = par_nrctremp   AND
+                                 craplim.tpctrlim = par_tpctrato
+                                 NO-LOCK NO-ERROR.
+
+              ASSIGN aux_dtcontra = craplim.dtinivig.
+           END.
                            
-        IF  crawepr.dtmvtolt >= 10/22/2014    THEN
+        IF  aux_dtcontra >= 10/22/2014    THEN
           DO:
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -3833,7 +3850,7 @@ PROCEDURE Gera_Impressao:
 
           
 
-        IF   crawepr.dtmvtolt >= 10/22/2014    THEN
+        IF   aux_dtcontra >= 10/22/2014    THEN
              RUN gera_impressao_nova (INPUT par_cdcooper,
                                       INPUT par_cdagenci,
                                       INPUT par_nrdcaixa,
@@ -3886,7 +3903,7 @@ PROCEDURE Gera_Impressao:
                 IF  RETURN-VALUE <> "OK" THEN
                     RETURN "NOK".
             END.
-        END. /* Fim IF crawepr THEN*/      
+        END. /* Fim IF aux_dtcontra THEN*/      
     END.
 
     IF  VALID-HANDLE(h-b1wgen9999)  THEN

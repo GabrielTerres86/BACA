@@ -3361,22 +3361,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
 
       DELETE
         FROM tbgar_cobertura_operacao gar
-       WHERE gar.nrcontrato = 0 OR
-            (gar.nrcontrato > 0
-             AND NOT EXISTS(SELECT 1
+       WHERE NOT EXISTS (SELECT 1
                               FROM crawepr wpr
                              WHERE gar.tpcontrato = 90
                                AND wpr.cdcooper = gar.cdcooper
                                AND wpr.nrdconta = gar.nrdconta
-                               AND wpr.nrctremp = gar.nrcontrato
+                            AND gar.idcobertura IN (wpr.idcobefe,wpr.idcobope)
                              UNION
                             SELECT 1
                               FROM craplim lim
                              WHERE gar.tpcontrato <> 90
                                AND lim.cdcooper = gar.cdcooper
                                AND lim.nrdconta = gar.nrdconta
-                               AND lim.nrctrlim = gar.nrcontrato
-                               AND lim.tpctrlim = gar.tpcontrato));
+                            AND gar.idcobertura IN (lim.idcobefe,lim.idcobope));
 
     EXCEPTION
       WHEN OTHERS THEN

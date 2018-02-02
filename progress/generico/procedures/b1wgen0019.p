@@ -3905,7 +3905,8 @@ PROCEDURE cadastrar-novo-limite:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
            
-        ASSIGN craplim.idcobope = par_idcobope.
+        ASSIGN craplim.idcobope = par_idcobope
+               craplim.idcobefe = par_idcobope.
         
         RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT 
             SET h-b1wgen9999.              
@@ -9810,7 +9811,8 @@ PROCEDURE alterar-novo-limite:
                        UNDO TRANSACAO, LEAVE TRANSACAO.
                    END.
                    
-               ASSIGN craplim.idcobope = par_idcobope.
+               ASSIGN craplim.idcobope = par_idcobope
+                      craplim.idcobefe = par_idcobope.
                
         RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT 
             SET h-b1wgen9999.              

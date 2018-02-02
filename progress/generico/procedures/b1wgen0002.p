@@ -6423,7 +6423,8 @@ PROCEDURE grava-proposta-completa:
         IF aux_dscritic <> "" THEN
            UNDO Grava, LEAVE Grava.
         
-        ASSIGN crawepr.idcobope = par_idcobope.
+        ASSIGN crawepr.idcobope = par_idcobope
+               crawepr.idcobefe = par_idcobope.
         
         RUN atualiza_dados_avalista_proposta 
             (INPUT par_cdcooper,

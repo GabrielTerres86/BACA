@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2017-05-25T10:43:13 -->
+<!-- 2018-01-24T16:38:32 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_contrato_limite" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="CTRLIMD"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl519_contrato_limite_cheque_v2"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -25,6 +25,9 @@
 	</field>
 	<field name="tpctrlim" class="java.lang.String">
 		<fieldDescription><![CDATA[tpctrlim]]></fieldDescription>
+	</field>
+	<field name="nrvrsctr" class="java.lang.Integer">
+		<fieldDescription><![CDATA[nrvrsctr]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -59,7 +62,7 @@
 					<printWhenExpression><![CDATA[($F{idimpres} == "1" || $F{idimpres} == "2") && $F{tpctrlim} == "2"]]></printWhenExpression>
 				</reportElement>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//Contrato")]]></dataSourceExpression>
-				<subreportExpression><![CDATA["crrl519_contrato_limite_cheque.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA["crrl519_contrato_limite_cheque" + ($F{nrvrsctr} == 2 ? "_v2" : "") + ".jasper"]]></subreportExpression>
 			</subreport>
 		</band>
 		<band height="11">

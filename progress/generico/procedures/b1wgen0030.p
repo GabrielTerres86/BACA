@@ -4614,7 +4614,8 @@ PROCEDURE efetua_inclusao_limite:
                craplim.nrperger    = par_nrperger
                craplim.vltotsfn    = par_vltotsfn
                craplim.cdcooper    = par_cdcooper
-               craplim.idcobope    = par_idcobope.
+               craplim.idcobope    = par_idcobope
+               craplim.idcobefe    = par_idcobope.
         
         VALIDATE craplim.
 
@@ -5295,7 +5296,8 @@ PROCEDURE efetua_alteracao_limite:
                craplim.nrperger    = par_nrperger
                old_vltotsfn        = craplim.vltotsfn
                craplim.vltotsfn    = par_vltotsfn
-               craplim.idcobope    = par_idcobope.                                
+               craplim.idcobope    = par_idcobope
+               craplim.idcobefe    = par_idcobope.
         DO aux_contador = 1 TO 10:
         
             FIND FIRST crapprp WHERE crapprp.cdcooper = par_cdcooper     AND

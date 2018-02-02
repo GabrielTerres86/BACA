@@ -2382,7 +2382,8 @@ PROCEDURE efetua_inclusao_limite:
                craplim.dscfcav1    = CAPS(par_doccjav1)
                craplim.dscfcav2    = CAPS(par_doccjav2)
                craplim.cdcooper    = par_cdcooper
-               craplim.idcobope    = par_idcobope.
+               craplim.idcobope    = par_idcobope
+               craplim.idcobefe    = par_idcobope.
         VALIDATE craplim.
 
         FIND FIRST crapprp WHERE crapprp.cdcooper = par_cdcooper     AND
@@ -4681,7 +4682,8 @@ PROCEDURE efetua_alteracao_limite:
                craplim.nmcjgav2    = par_nmdcjav2
                craplim.dscfcav1    = par_doccjav1
                craplim.dscfcav2    = par_doccjav2
-               craplim.idcobope    = par_idcobope.
+               craplim.idcobope    = par_idcobope
+               craplim.idcobefe    = par_idcobope.
 
         DO aux_contador = 1 TO 10:
         
