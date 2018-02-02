@@ -5474,41 +5474,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     WHILE vr_index_limite IS NOT NULL LOOP
       --Criar registro para tabela limite horarios transacoes pendentes
       vr_index_limite_pend:= vr_tab_limite(vr_index_limite).idtpdpag;
-      IF vr_index_limite_pend = 6 THEN --se for Limite de VRBoleto, entao tipodtra = 2 (pagamento)
-        pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 2; 
-      ELSIF vr_index_limite_pend = 11 THEN --se for Limite de Debito Automatico, entao tipodtra = 8
-        pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 8;
-      ELSIF vr_index_limite_pend = 10 THEN --se for DARF/DAS, entao tipodtra = 8
-        pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 11;
+      
+      CASE 
+        WHEN vr_index_limite_pend IN (1,2,3,4) THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra := vr_index_limite_pend; -- Transferência, Pagto Título/Convênio, Cobrança, TED, FGTS, DAE
+        WHEN vr_index_limite_pend = 6  THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 20;  -- VR-Boleto
+        WHEN vr_index_limite_pend = 7  THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 6;  -- Pré-Aprovado
+        WHEN vr_index_limite_pend = 11 THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 8;  -- Débito Automático
+        WHEN vr_index_limite_pend = 15 THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 11; -- DARF/DAS
+        WHEN vr_index_limite_pend IN (20,21) THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra := 19; -- FGTS, DAE 
       ELSE
         pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= vr_index_limite;          
-      END IF;
+      END CASE;
+      
       pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= vr_tab_limite(vr_index_limite).hrinipag;
       pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_tab_limite(vr_index_limite).hrfimpag;
+
       --Encontrar proximo registro
       vr_index_limite:= vr_tab_limite.NEXT(vr_index_limite);
     END LOOP;
-
-    --Selecionar Horarios Limites Credito Pre-Aprovado
-    vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                            ,pr_nmsistem => 'CRED'
-                                            ,pr_tptabela => 'GENERI'
-                                            ,pr_cdempres => 0
-                                            ,pr_cdacesso => 'HRCTRPREAPROV'
-                                            ,pr_tpregist => pr_cdagenci);
-    --Se nao encontrou
-    IF TRIM(vr_dstextab) IS NULL THEN 
-      vr_cdcritic:= 0;
-      vr_dscritic := 'Tabela (HRCTRPREAPROV) nao cadastrada.';
-      --levantar Excecao
-      RAISE vr_exc_erro;
-    ELSE    
-      --Criar registro para tabela limite horarios
-      vr_index_limite_pend:= 7; --Credito Pre-Aprovado
-      pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 6; --Tipo de transacao  
-      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= GENE0002.fn_converte_time_data(gene0002.fn_busca_entrada(1,vr_dstextab,' '));
-      pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= GENE0002.fn_converte_time_data(gene0002.fn_busca_entrada(2,vr_dstextab,' '));
-    END IF;
       
     --Selecionar Horarios Limites Aplicacao 
     APLI0002.pc_horario_limite( pr_cdcooper => pr_cdcooper
