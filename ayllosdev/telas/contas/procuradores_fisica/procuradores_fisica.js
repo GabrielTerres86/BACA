@@ -10,8 +10,13 @@
  *				  25/09/2013 - Alteração da função de salvar poderes (Jean Michel).
  *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
  *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
- *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
+*				  25/08/2016 - Inclusao da validaResponsaveis e alteração da controlaOperacaoPoderes, SD 510426(Jean Michel).
+ *				  01/12/2016 - Retirada da function validaResponsaveis, SD.564025 (Jean Michel).		                         
  *				  18/10/2017 - Removendo caixa postal. (PRJ339 - Kelvin)
+ *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
+ *                08/01/2018 - Ajuste para carregar nome do cadastro unificado e não permitir alterar caso possua cadastro completo.
+                               P339 - Evandro Guaranha - Mout's   	                         
+ *                01/02/2018 - Adicionado idseqttl que estava fixo 0 no procedure salvarPoderes. (Lombardi)
  */
 
 var nrcpfcgc = '';
@@ -201,6 +206,13 @@ function controlaOperacaoProcuradores( operacao ){
 					controlaOperacaoProcuradores('TP');
 				}
 				
+                if (operacao == "A"){
+                    
+                    // Validar se o nome pode ser alterada
+                    buscaNomePessoa_gen($('#nrcpfcgc','#'+nomeFormProcuradores ).val(),'nmdavali', nomeFormProcuradores);                        
+                        
+                }
+                
 			} else {
 				eval( response );
 				controlaFocoProcuradores( operacao );
@@ -710,6 +722,9 @@ function controlaLayoutProcuradores( operacao ) {
 				nrdrowid 	= '';
 				showMsgAguardo('Aguarde, buscando dados do procurador...');
 				controlaOperacaoProcuradores('TB');
+                
+                // Validar se o nome pode ser alterada
+                buscaNomePessoa_gen($('#nrcpfcgc','#'+nomeFormProcuradores ).val(),'nmdavali', nomeFormProcuradores);  
 			} 
 		});		
 
@@ -903,7 +918,7 @@ function controlaPesquisasProcuradores() {
 					filtros 	= 'Codigo;cdnacion;30px;N;|Nacionalidade;dsnacion;200px;S;';
 					colunas 	= 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
-					return false;
+					return false;				
 				// Orgao Emissor
 				} else if (campoAnterior == 'cdoeddoc'){			
 					bo 		    = "ZOOM0001"
@@ -1416,12 +1431,21 @@ function salvarPoderes(){
 		strPoderes += dsoutpod;
 	});
 	
+	var idseqttl;
+	
+	if (nmrotina == "MATRIC") {
+		idseqttl = $('input[name="inpessoa"]:checked','#frmCabMatric').val();
+	} else {
+		idseqttl = $('#idseqttl','#frmCabContas').val();
+	}
+	
 	$.ajax({		
 		type: 'POST',
 		url: UrlSite + 'includes/procuradores/salva_poderes.php', 		
 		data: {			
 			strPoderes: strPoderes,nrdconta: nrdconta,
-			nrcpfcgc: nrcpfcgc,nrdctato: nrdctato
+			nrcpfcgc: nrcpfcgc,nrdctato: nrdctato,
+			idseqttl: idseqttl,
 		}, 
 		error:function(objAjax, responseError,objExcept){
 			hideMsgAguardo();
