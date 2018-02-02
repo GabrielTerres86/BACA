@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 24/01/2018
+   Data    : Abril/2004                        Ultima atualizacao: 02/02/2018
 
    Dados referentes ao programa:
 
@@ -442,6 +442,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                24/01/2018 - Validar dia util para a data do pagamento, se vir sab,dom, feriado vamos
                             considerar o proximo dia util. (Lucas Ranghetti #832286)
+
+               02/02/2018 - Ajsutar exception da referencia para gravar ndb somente para
+                            a cooperativa do agendamento (Lucas Ranghetti #837177) 
 ............................................................................ */
 
     DECLARE
@@ -2863,6 +2866,58 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_cdcritic := 453; -- Autorizacao nao encontrada.
                         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
                           
+                        /*Se for agencia sim e deu problema na hora de converter a referencia
+                        devolver a critica apenas pra coop do registro e descartar pras 
+                        outras coops*/
+                        IF rw_gnconve.flgagenc = 1 THEN
+                          IF rw_crapcop.cdagectl <> vr_cdagedeb AND  
+                             (vr_cdagedeb > 100 AND vr_cdagedeb <= vr_cdultage) THEN
+                             CONTINUE;
+                          END IF;
+                        ELSIF vr_nro_conta_dec > 9000000000 THEN -- Conta > 9000000000 
+                          IF SUBSTR(vr_nro_conta_tam,2,3) <> pr_cdcooper THEN
+                            CONTINUE;
+                          END IF;
+                        ELSE 
+                        
+                          -- Se a agencia de debito for diferente da agencia de controle
+                          -- e agencia de debito for diferente de 001(viacredi) ou cooperativa do processo
+                          -- for diferente de Viacredi então vamos ignorar o registro
+                          -- e agencia de debito nao for casan e samae timbo 
+                          IF vr_cdagedeb NOT IN(1294,23) THEN
+                            IF vr_cdagedeb <> rw_crapcop.cdagectl 
+                               AND (vr_cdagedeb <> 1 OR rw_crapcop.cdcooper <> 1) THEN
+                              continue;
+                            END IF;
+                          ELSE
+                            -- Se agencia do debito for 0023 (Samae Timbo) e cooperativa nao for viacredi
+                            -- devemos ignorar
+                            IF vr_cdagedeb = 23 AND rw_crapcop.cdcooper <> 1 THEN
+                              continue;
+                            ELSIF vr_cdagedeb = 1294 THEN                                                  
+                              -- processar registros da casan somente na cooperativa em questao
+                              IF pr_cdcooper <> rw_crapcop.cdcooper THEN
+                                continue;
+                              END IF;  
+                                        
+                              -- Abre o cursor de associados
+                              IF cr_crapass%ISOPEN THEN
+                                CLOSE cr_crapass;
+                              END IF;
+                              -- verificar se a conta pertence a cooperativa que esta rodando
+                              OPEN cr_crapass(pr_cdcooper, vr_nrdconta, 0);
+                              FETCH cr_crapass INTO rw_crapass;
+                              
+                              IF cr_crapass%NOTFOUND THEN
+                                CLOSE cr_crapass;
+                                continue;
+                              ELSE
+                                CLOSE cr_crapass;
+                              END IF;                            
+                            END IF;
+                          END IF;
+                        END IF;
+                        
                         -- Não devemos criar crapndb para registro C e B
                         IF vr_tpregist NOT IN( 'C', 'B') THEN
                         -- Para cada regitro D rejeitado, retornamos o H
@@ -2925,6 +2980,58 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_cdcritic := 453; -- Autorizacao nao encontrada.
                       vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
                           
+                      /*Se for agencia sim e deu problema na hora de converter a referencia
+                        devolver a critica apenas pra coop do registro e descartar pras 
+                        outras coops*/
+                      IF rw_gnconve.flgagenc = 1 THEN
+                        IF rw_crapcop.cdagectl <> vr_cdagedeb AND  
+                           (vr_cdagedeb > 100 AND vr_cdagedeb <= vr_cdultage) THEN
+                           CONTINUE;
+                        END IF;
+                      ELSIF vr_nro_conta_dec > 9000000000 THEN -- Conta > 9000000000 
+                        IF to_number(SUBSTR(vr_nro_conta_tam,2,3)) <> pr_cdcooper THEN
+                          CONTINUE;
+                        END IF;
+                      ELSE 
+                        
+                        -- Se a agencia de debito for diferente da agencia de controle
+                        -- e agencia de debito for diferente de 001(viacredi) ou cooperativa do processo
+                        -- for diferente de Viacredi então vamos ignorar o registro
+                        -- e agencia de debito nao for casan e samae timbo 
+                        IF vr_cdagedeb NOT IN(1294,23) THEN
+                          IF vr_cdagedeb <> rw_crapcop.cdagectl 
+                             AND (vr_cdagedeb <> 1 OR rw_crapcop.cdcooper <> 1) THEN
+                            continue;
+                          END IF;
+                        ELSE
+                          -- Se agencia do debito for 0023 (Samae Timbo) e cooperativa nao for viacredi
+                          -- devemos ignorar
+                          IF vr_cdagedeb = 23 AND rw_crapcop.cdcooper <> 1 THEN
+                            continue;
+                          ELSIF vr_cdagedeb = 1294 THEN                                                  
+                            -- processar registros da casan somente na cooperativa em questao
+                            IF pr_cdcooper <> rw_crapcop.cdcooper THEN
+                              continue;
+                            END IF;  
+                                        
+                            -- Abre o cursor de associados
+                            IF cr_crapass%ISOPEN THEN
+                              CLOSE cr_crapass;
+                            END IF;
+                            -- verificar se a conta pertence a cooperativa que esta rodando
+                            OPEN cr_crapass(pr_cdcooper, vr_nrdconta, 0);
+                            FETCH cr_crapass INTO rw_crapass;
+                              
+                            IF cr_crapass%NOTFOUND THEN
+                              CLOSE cr_crapass;
+                              continue;
+                            ELSE
+                              CLOSE cr_crapass;
+                            END IF;                            
+                          END IF;
+                        END IF;
+                      END IF;
+                      
                       -- Para cada regitro D rejeitado, retornamos o H
                       IF vr_tpregist = 'D' THEN
                         vr_dstexarq := 'H' || SUBSTR(vr_setlinha,2,68) || RPAD(vr_dscritic,80) || SUBSTR(vr_setlinha,150,1);
@@ -2979,7 +3086,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_flgrejei     := TRUE;                          
                       continue;    
                   ELSE
+                      IF vr_tpregist IN( 'C', 'B') THEN
                       vr_cdrefere := vr_dsrefere; -- Validar se referencia é valida
+                      END IF;
                     vr_cdrefere := 0;
                   END IF;  
                   END IF;  
