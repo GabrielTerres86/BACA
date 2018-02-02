@@ -300,7 +300,7 @@ function formataPrejuizos() {
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'235px', 'width':'530px'});
+	divRegistro.css({'height':'235px', 'width':'580px'});
 	
 	var ordemInicial = new Array();
 	
@@ -331,7 +331,7 @@ function formataSPC() {
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'180px', 'width':'530px'});
+	divRegistro.css({'height':'180px', 'width':'580px'});
 	
 	var ordemInicial = new Array();
 	
@@ -465,7 +465,7 @@ function formataGrupoEconomico(){
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'180px', 'width':'530px'});
+	divRegistro.css({'height':'180px', 'width':'580px'});
 	
 	var ordemInicial = new Array();
 	
@@ -498,7 +498,7 @@ function formataAcordos() {
     var tabela = $('table', divRegistro);
     var linha = $('table > tbody > tr', divRegistro);
 
-    divRegistro.css({ 'height': '180px', 'width': '530px' });
+    divRegistro.css({ 'height': '180px', 'width': '580px' });
 
     var ordemInicial = new Array();
 
