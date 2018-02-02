@@ -1100,8 +1100,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                 to_char(h.dtmvtolt,'DD') || ' de '||
                 to_char(h.dtmvtolt,'month','nls_date_language=portuguese') ||'de '||
                 to_char(h.dtmvtolt,'yyyy')||'.' dsdata,
-								d.flrecipr,
-								e.idrecipr
+			   d.flrecipr,
+			   e.idrecipr,
+			   DECODE(NVL(d.insrvprt,0), 0, 'Nenhum', 1, 'IEPTB', 2, 'BB') insrvprt
           FROM crapenc i,
                crapdat h,
                crapage g,
@@ -1274,6 +1275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                                                      '<qtdfloat>'||rw_crapceb.qtdfloat||'</qtdfloat>'||chr(10)||
                                                      '<flserasa>'||rw_crapceb.flserasa||'</flserasa>'||chr(10)||
                                                      '<flprotes>'||rw_crapceb.flprotes||'</flprotes>'||chr(10)||
+													 '<insrvprt>'||rw_crapceb.insrvprt||'</insrvprt>'||chr(10)||
                                                      '<dsdecurs>'||rw_crapceb.dsdecurs||'</dsdecurs>'||chr(10)||
                                                      '<nmextcop>'||rw_crapceb.nmextcop||'</nmextcop>'||chr(10)||
                                                      '<dsdata>'||rw_crapceb.dsdata||'</dsdata>'||chr(10)||
