@@ -135,8 +135,8 @@
 														<table class="tituloRegistros" id="tableSegmento" style="table-layout: fixed;">
 															<thead>
 																<tr>
-																	<th>Produto</th>
 																	<th>C&oacute;digo</th>
+																	<th>Produto</th>
 																	<th>Segmento</th>
 																</tr>
 															</thead>
@@ -147,8 +147,8 @@
 																?>
 																			<tr  onclick="detalheSubsegmento(<?php echo getByTagName($segmento->tags, 'CDSEGMENTO'); ?>);">
 																				<input type="hidden" id="cdsegmento" value="<?php echo getByTagName($segmento->tags, 'CDSEGMENTO'); ?>"/>
-																				<td><?php echo getByTagName($segmento->tags, 'DSPRODUTO'); ?></td>
 																				<td><?php echo getByTagName($segmento->tags, 'CDSEGMENTO'); ?></td>
+																				<td><?php echo getByTagName($segmento->tags, 'DSPRODUTO'); ?></td>
 																				<td><?php echo getByTagName($segmento->tags, 'DSSEGMENTO'); ?></td>
 																			</tr>
 																<?php

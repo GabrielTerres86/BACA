@@ -265,13 +265,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
 		vr_dscritic crapcri.dscritic%TYPE;
 		
 		-- Variáveis auxiliáres
-		vr_idacionamento tbgen_webservice_aciona.idacionamento%TYPE;
-
+		vr_idacionamento  tbgen_webservice_aciona.idacionamento%TYPE;
+		vr_dsrequicao     tbgen_webservice_aciona.dsconteudo_requisicao%TYPE;
+		vr_dsuriservico   tbgen_webservice_aciona.dsuriservico%TYPE;
+		
     BEGIN		
 			-- Incluir nome do módulo logado
 			GENE0001.pc_informa_acesso(pr_module => 'WEBS0003'
 																,pr_action => null);
-																
+
+      -- Remover caracteres inválidos
+			vr_dsrequicao := REPLACE(pr_dsconteudo_requisicao, '<![CDATA[', '');
+		  vr_dsrequicao := REPLACE(vr_dsrequicao, ']]>', '');
+      vr_dsrequicao := REPLACE(vr_dsrequicao, '&quot;', '"');
+			vr_dsuriservico := REPLACE(pr_dsuriservico, '<![CDATA[', '');
+		  vr_dsuriservico := REPLACE(vr_dsuriservico, ']]>', '');
+			
+			
 			-- Chamar rotina de acionamento
       pc_grava_acionamento(pr_cdcooper => pr_cdcooper 
 													,pr_cdagenci => pr_cdagenci 
@@ -282,11 +292,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
 													,pr_cdcliente => pr_cdcliente
 													,pr_tpacionamento => pr_tpacionamento 
 													,pr_dsoperacao => pr_dsoperacao
-													,pr_dsuriservico => pr_dsuriservico
+													,pr_dsuriservico => vr_dsuriservico
 													,pr_dsmetodo => pr_dsmetodo
-													,pr_dtmvtolt => to_date(pr_dtmvtolt, 'DD/MM/RRRR')
+													,pr_dtmvtolt => to_date(nvl(pr_dtmvtolt, TO_CHAR(SYSDATE, 'DD/MM/RRRR')), 'DD/MM/RRRR')
 													,pr_cdstatus_http => pr_cdstatus_http
-													,pr_dsconteudo_requisicao => replace(pr_dsconteudo_requisicao, '&quot;', '"')
+													,pr_dsconteudo_requisicao => vr_dsrequicao
 													,pr_dsresposta_requisicao => pr_dsresposta_requisicao
 													,pr_dsprotocolo => pr_dsprotocolo
 													,pr_flgreenvia => pr_flgreenvia 
@@ -461,7 +471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
     DECLARE
       vr_des_log        VARCHAR2(4000);      
       vr_dsdirlog       VARCHAR2(100);
-			vr_dsrequicao     VARCHAR2(4000);
+			vr_dsrequicao     CLOB;
     BEGIN
 			vr_dsrequicao := REPLACE(pr_dsrequis, '<![CDATA[', '');
 		  vr_dsrequicao := REPLACE(vr_dsrequicao, ']]>', '');

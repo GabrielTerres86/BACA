@@ -3305,7 +3305,7 @@ PROCEDURE grava_efetivacao_proposta:
        FOR FIRST crappre FIELDS(cdfinemp vlmulpli vllimmin) WHERE crappre.cdcooper = par_cdcooper     
                                                               AND crappre.inpessoa = crapass.inpessoa
                                                               AND (crappre.cdfinemp = crawepr.cdfinemp
-                                                               OR crawepr.flpreapv = 1) NO-LOCK: END.
+                                                               OR crawepr.flgpreap = TRUE) NO-LOCK: END.
 
        /* Verifica se o emprestimo eh pre-aprovado */
        IF AVAIL crappre THEN
@@ -4363,7 +4363,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
         FOR crappre FIELDS(cdfinemp vlmulpli) WHERE crappre.cdcooper = par_cdcooper
                                                 AND crappre.inpessoa = crapass.inpessoa
                                                 AND (crappre.cdfinemp = crapepr.cdfinemp 
-                                                 OR crawepr.flpreapv = 1) NO-LOCK: END.
+                                                 OR crawepr.flgpreap = TRUE) NO-LOCK: END.
 
         /* Verifica se o emprestimo eh pre-aprovado */
         IF AVAIL crappre THEN

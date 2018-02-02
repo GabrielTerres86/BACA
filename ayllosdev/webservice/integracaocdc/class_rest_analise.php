@@ -1,6 +1,6 @@
 <?php
 /* 
- * Classe Responsavel da requisicao REST do cooperado
+ * Classe Responsavel da requisicao REST da análise
  * 
  * @autor: Lucas Reinert
  */
@@ -12,9 +12,10 @@ class RestCDC extends RestServerJson{
     
     public function __construct(){
 		// Parâmetros obrigatórios Inclusão
-        $this->aParamsRequired = array('codigoCooperativa'
-									  ,'contaDebito'
-									  ,'digitoContaDebito'
+        $this->aParamsRequired = array('cooperativaCodigo'
+									  ,'contaNumero'
+									  ,'contaDV'
+									  ,'proposta'
 									  ,'patrimonioPessoalLivre'
 									  ,'dataScoreBVS'
 									  ,'liquidez'
@@ -64,7 +65,7 @@ class RestCDC extends RestServerJson{
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
 		$sXmlResult = mensageria($xml, "WEBS0003", "ATUALIZA_ACIONAMENTO", 0, 0, 0, 5, 0, "</Root>");		
-		
+	
         // Setando o codigo do status no Header da resposta
         header("Cache-Control: no-cache, must-revalidate");
 		header("Expires: 0");
@@ -202,7 +203,8 @@ class RestCDC extends RestServerJson{
 			}
 			
 			$dsoperacao = 'INTEGRACAO CDC - ANALISE PROPOSTA';
-			
+			$nrctremp = str_replace('.', '', trim($oDados->proposta));
+
             // Gravar acionamento do serviço
             $xml  = "<Root>";
             $xml .= " <Dados>";
@@ -210,12 +212,12 @@ class RestCDC extends RestServerJson{
 			$xml .= "	<cdagenci>1</cdagenci>";
 			$xml .= "	<cdoperad>AUTOCDC</cdoperad>";
 			$xml .= "	<cdorigem>5</cdorigem>";			
-			$xml .= "	<nrctrprp>".$oDados->proposta."</nrctrprp>";
+			$xml .= "	<nrctrprp>".$nrctremp."</nrctrprp>";
 			$xml .= "	<nrdconta>".$oDados->contaDebito.$oDados->digitoContaDebito."</nrdconta>";
 			$xml .= "	<cdcliente>1</cdcliente>";
 			$xml .= "	<tpacionamento>1</tpacionamento>";
 			$xml .= "	<dsoperacao>".$dsoperacao."</dsoperacao>";
-			$xml .= "	<dsuriservico>".$this->getNameHost()."</dsuriservico>";
+			$xml .= "	<dsuriservico><![CDATA[".$this->getURI()."]]></dsuriservico>";
 			$xml .= "	<dsmetodo>".$this->getMetodoRequisitado()."</dsmetodo>";
 			$xml .= "	<dtmvtolt></dtmvtolt>";			
 			$xml .= "	<cdstatus_http></cdstatus_http>";
@@ -250,6 +252,9 @@ class RestCDC extends RestServerJson{
 			$xml .= "   <cdorigem>5</cdorigem>";
 			$xml .= "   <dsprotoc>".$oDados->protocolo."</dsprotoc>";
             $xml .= "   <nrtransa>".$idacionamento."</nrtransa>";
+			$xml .= "   <cdcooper>".$oDados->cooperativaCodigo."</cdcooper>";
+			$xml .= "   <nrdconta>".$oDados->contaNumero.$oDados->contaDV."</nrdconta>";
+			$xml .= "   <nrctremp>".$nrctremp."</nrctremp>";
 			$xml .= "   <dsresana>".$oDados->resultadoAnaliseRegra."</dsresana>";
 			$xml .= "   <indrisco>".$oDados->indicadoresGeradosRegra->nivelRisco."</indrisco>";
 			$xml .= "   <nrnotrat>".$oDados->indicadoresGeradosRegra->notaRating."</nrnotrat>";
@@ -264,7 +269,7 @@ class RestCDC extends RestServerJson{
 			$xml .= "   <namehost>".$this->getNameHost()."</namehost>";
 			$xml .= " </Dados>";
 			$xml .= "</Root>";
-			$sXmlResult = mensageria($xml, "WEBS0001", "WEBS0001_ANALISE_MOTOR", 0, 0, 0, 5, 0, "</Root>");
+			$sXmlResult = mensageria($xml, "EMPR0012", "PROCESSA_ANALISE", 0, 0, 0, 5, 0, "</Root>");
             $oRetorno   = simplexml_load_string($sXmlResult);
 			
             // Vamos verificar se veio retorno 

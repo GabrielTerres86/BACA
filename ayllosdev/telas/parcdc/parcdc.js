@@ -128,7 +128,7 @@ function formataCabecalho() {
 	cCdcooper			= $('#cdcooper','#frmCab'); 
 	
 	//Rótulos
-	rCdcooper.css('width','44px');
+	rCdcooper.css('width','70px');
 	
 	//Campos	
 	cCdcooper.css({'width':'475px'}).habilitaCampo().focus();
@@ -248,8 +248,8 @@ function formataTabelaSegmento() {
 	var arrayLargura = new Array();
 	var arrayAlinha = new Array();
 	
-	arrayLargura[0] = '80px';
-	arrayLargura[1] = '75px';
+	arrayLargura[0] = '75px';
+	arrayLargura[1] = '80px';
 					
 	arrayAlinha[0] = 'left';
 	arrayAlinha[1] = 'center';
@@ -347,19 +347,19 @@ function rotinaSubsegmento(cddopcao){
 	if(cddopcao == "I"){
 		manterRotinaSubsegmento(cddopcao);
 	}else{
-		$('#tableSubsegmento > tbody > tr', 'div.divRegistros').each(function() {
-				if ($(this).hasClass('corSelecao')) {
-					if($(this).val() == "" || $(this).val() == undefined || $(this).val() == null || $(this).val() == 0){
-						showError('error', 'Selecione um subsegmento!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina);');
-						return false;
-					}else{						
-						if(cddopcao == "A"){
-							manterRotinaSubsegmento(cddopcao,$(this).val());
-						}else if(cddopcao == "E"){
-							showConfirmacao('Deseja excluir o Subsegmento?','Confirma&ccedil;&atilde;o - Ayllos','salvaDados(1,"E",0,' + $(this).val() + ');','bloqueiaFundo(divRotina);','sim.gif','nao.gif');
-						}
+		$('table.tituloRegistros > tbody > tr', '#divSubsegmentos').each(function() {
+			if ($(this).hasClass('corSelecao')) {
+				if($('#cdsubsegmento',$(this)).val() == "" || $('#cdsubsegmento',$(this)).val() == undefined || $('#cdsubsegmento',$(this)).val() == null){
+					showError('error', 'Selecione um subsegmento!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina);');
+					return false;
+				}else{						
+					if(cddopcao == "A"){
+						manterRotinaSubsegmento(cddopcao,$('#cdsubsegmento',$(this)).val());
+					}else if(cddopcao == "E"){
+						showConfirmacao('Deseja excluir o Subsegmento?','Confirma&ccedil;&atilde;o - Ayllos','salvaDados(1,"E",0,' + $('#cdsubsegmento',$(this)).val() + ');','bloqueiaFundo(divRotina);','sim.gif','nao.gif');
 					}
 				}
+			}
 		});
 	}
 }
@@ -492,7 +492,7 @@ function salvaDados(tpcadast,cddopcao,cdsegmento,cdsubsegmento){
 	// Executa script de bloqueio através de ajax
 	$.ajax({		
 		type: "POST",
-		dataType: 'html',
+		dataType: 'script',
 		url: "manter_segmentos.php", 
 		data: {		
 			tpcadast: tpcadast,
@@ -504,7 +504,7 @@ function salvaDados(tpcadast,cddopcao,cdsegmento,cdsubsegmento){
 			dssubsegmento: $('#dssubsegmento','#frmCadastro').val(),
 			nrmax_parcela: $('#nrmax_parcela','#frmCadastro').val(),
 			vlmax_financ: $('#vlmax_financ','#frmCadastro').val(),
-			redirect: "html_ajax"
+			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();

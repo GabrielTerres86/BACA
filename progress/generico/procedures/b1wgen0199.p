@@ -121,6 +121,58 @@ PROCEDURE integra_proposta:
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.
     DEF VAR aux_dsmensag AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgsenha AS INTE                                    NO-UNDO.
+    
+    /** ------------------- Variáveis do 1 avalista -------------------- **/    
+    DEF VAR aux_nrctaava AS INTE                                    NO-UNDO.
+    DEF VAR aux_nmdaval1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrcpfav1 AS DECI                                    NO-UNDO.
+    DEF VAR aux_tpdocav1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dsdocav1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nmdcjav1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_cpfcjav1 AS DECI                                    NO-UNDO.
+    DEF VAR aux_tdccjav1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_doccjav1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_ende1av1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_ende2av1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrfonav1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_emailav1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nmcidav1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_cdufava1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrcepav1 AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdnacio1 AS INTE                                    NO-UNDO.
+    DEF VAR aux_vledvmt1 AS DECI                                    NO-UNDO.
+    DEF VAR aux_vlrenme1 AS DECI                                    NO-UNDO.
+    DEF VAR aux_nrender1 AS INTE                                    NO-UNDO.
+    DEF VAR aux_complen1 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrcxaps1 AS INTE                                    NO-UNDO.
+    DEF VAR aux_inpesso1 AS INTE                                    NO-UNDO.
+    DEF VAR aux_dtnasct1 AS DATE                                    NO-UNDO.
+    
+    /** ------------------- Variáveis do 2 avalista -------------------- **/
+    DEF VAR aux_nrctaav2 AS INTE                                    NO-UNDO.
+    DEF VAR aux_nmdaval2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrcpfav2 AS DECI                                    NO-UNDO.
+    DEF VAR aux_tpdocav2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dsdocav2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nmdcjav2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_cpfcjav2 AS DECI                                    NO-UNDO.
+    DEF VAR aux_tdccjav2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_doccjav2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_ende1av2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_ende2av2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrfonav2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_emailav2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nmcidav2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_cdufava2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrcepav2 AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdnacio2 AS INTE                                    NO-UNDO.
+    DEF VAR aux_vledvmt2 AS DECI                                    NO-UNDO.
+    DEF VAR aux_vlrenme2 AS DECI                                    NO-UNDO.
+    DEF VAR aux_nrender2 AS INTE                                    NO-UNDO.
+    DEF VAR aux_complen2 AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrcxaps2 AS INTE                                    NO-UNDO.
+    DEF VAR aux_inpesso2 AS INTE                                    NO-UNDO.
+    DEF VAR aux_dtnasct2 AS DATE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-msg-confirma.
@@ -165,7 +217,7 @@ PROCEDURE integra_proposta:
 
        IF aux_dscritic <> "" THEN
           UNDO GRAVA, LEAVE GRAVA.           
-
+          
        RUN obtem-dados-proposta-emprestimo 
            IN h-b1wgen0002(INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -289,6 +341,84 @@ PROCEDURE integra_proposta:
                      aux_vlrpreju = tt-dados-analise.vlrpreju
                      aux_vlsfnout = tt-dados-analise.vlsfnout.
           END.
+          
+       FOR EACH tt-dados-avais NO-LOCK BY tt-dados-avais.idavalis:
+       
+          IF  tt-dados-avais.idavalis = 1 THEN
+              DO:
+                FOR FIRST crapnac 
+                   FIELDS(cdnacion)
+                    WHERE CAPS(crapnac.dsnacion) = CAPS(tt-dados-avais.dsnacion)
+                  NO-LOCK:
+                    ASSIGN aux_cdnacio1 = crapnac.cdnacion.
+                END.
+                
+                IF NOT AVAIL crapnac THEN
+                  ASSIGN aux_cdnacio1 = 42. /* Se nao encontrar nacionalidade assumimos como BRASILEIRA */              
+                  
+                ASSIGN aux_nrctaava = tt-dados-avais.nrctaava
+                       aux_nmdaval1 = tt-dados-avais.nmdavali
+                       aux_nrcpfav1 = tt-dados-avais.nrcpfcgc
+                       aux_tpdocav1 = tt-dados-avais.tpdocava
+                       aux_dsdocav1 = tt-dados-avais.nrdocava
+                       aux_nmdcjav1 = tt-dados-avais.nmconjug
+                       aux_cpfcjav1 = tt-dados-avais.nrcpfcjg
+                       aux_tdccjav1 = tt-dados-avais.tpdoccjg
+                       aux_doccjav1 = tt-dados-avais.nrdoccjg
+                       aux_ende1av1 = tt-dados-avais.dsendre1
+                       aux_ende2av1 = tt-dados-avais.dsendre2
+                       aux_nrfonav1 = tt-dados-avais.nrfonres
+                       aux_emailav1 = tt-dados-avais.dsdemail
+                       aux_nmcidav1 = tt-dados-avais.nmcidade
+                       aux_cdufava1 = tt-dados-avais.cdufresd
+                       aux_nrcepav1 = tt-dados-avais.nrcepend
+                       aux_vledvmt1 = tt-dados-avais.vledvmto
+                       aux_vlrenme1 = tt-dados-avais.vlrenmes
+                       aux_nrender1 = tt-dados-avais.nrendere
+                       aux_complen1 = tt-dados-avais.complend
+                       aux_nrcxaps1 = tt-dados-avais.nrcxapst
+                       aux_inpesso1 = tt-dados-avais.inpessoa
+                       aux_dtnasct1 = tt-dados-avais.dtnascto.
+              
+              END.
+          ELSE
+              DO:
+                FOR FIRST crapnac 
+                   FIELDS(cdnacion)
+                    WHERE CAPS(crapnac.dsnacion) = CAPS(tt-dados-avais.dsnacion)
+                  NO-LOCK:
+                    ASSIGN aux_cdnacio2 = crapnac.cdnacion.
+                END.
+                
+                IF NOT AVAIL crapnac THEN
+                  ASSIGN aux_cdnacio2 = 42. /* Se nao encontrar nacionalidade assumimos como BRASILEIRA */              
+                  
+                ASSIGN aux_nrctaav2 = tt-dados-avais.nrctaava
+                       aux_nmdaval2 = tt-dados-avais.nmdavali
+                       aux_nrcpfav2 = tt-dados-avais.nrcpfcgc
+                       aux_tpdocav2 = tt-dados-avais.tpdocava
+                       aux_dsdocav2 = tt-dados-avais.nrdocava
+                       aux_nmdcjav2 = tt-dados-avais.nmconjug
+                       aux_cpfcjav2 = tt-dados-avais.nrcpfcjg
+                       aux_tdccjav2 = tt-dados-avais.tpdoccjg
+                       aux_doccjav2 = tt-dados-avais.nrdoccjg
+                       aux_ende1av2 = tt-dados-avais.dsendre1
+                       aux_ende2av2 = tt-dados-avais.dsendre2
+                       aux_nrfonav2 = tt-dados-avais.nrfonres
+                       aux_emailav2 = tt-dados-avais.dsdemail
+                       aux_nmcidav2 = tt-dados-avais.nmcidade
+                       aux_cdufava2 = tt-dados-avais.cdufresd
+                       aux_nrcepav2 = tt-dados-avais.nrcepend
+                       aux_vledvmt2 = tt-dados-avais.vledvmto
+                       aux_vlrenme2 = tt-dados-avais.vlrenmes
+                       aux_nrender2 = tt-dados-avais.nrendere
+                       aux_complen2 = tt-dados-avais.complend
+                       aux_nrcxaps2 = tt-dados-avais.nrcxapst
+                       aux_inpesso2 = tt-dados-avais.inpessoa
+                       aux_dtnasct2 = tt-dados-avais.dtnascto.
+              
+              END.
+       END.
     
        RUN valida-dados-gerais IN h-b1wgen0002(INPUT par_cdcooper,
                                                INPUT par_cdagenci,
@@ -467,8 +597,8 @@ PROCEDURE integra_proposta:
                                                    INPUT 0, /* par_qtpromis */
                                                    INPUT FALSE, /* par_flgpagto */
                                                    INPUT "", /* par_dsctrliq */
-                                                   INPUT 0,  /* par_nrctaava */
-                                                   INPUT 0,  /* par_nrctaav2 */
+                                                   INPUT aux_nrctaava,  /* par_nrctaava */
+                                                   INPUT aux_nrctaav2,  /* par_nrctaav2 */
                                                    /*-------Rating------ */
                                                    INPUT aux_nrgarope,
                                                    INPUT aux_nrperger,
@@ -507,53 +637,53 @@ PROCEDURE integra_proposta:
                                                    INPUT aux_dsinterv,
                                                    INPUT tt-dados-coope.lssemseg,
                                                    /* Avalista 1 */
-                                                   INPUT "", /* par_nmdaval1 */
-                                                   INPUT 0,  /* par_nrcpfav1 */
-                                                   INPUT "", /* par_tpdocav1 */
-                                                   INPUT "", /* par_dsdocav1 */
-                                                   INPUT "", /* par_nmdcjav1 */
-                                                   INPUT 0,  /* par_cpfcjav1 */
-                                                   INPUT "", /* par_tdccjav1 */
-                                                   INPUT "", /* par_doccjav1 */
-                                                   INPUT "", /* par_ende1av1 */
-                                                   INPUT "", /* par_ende2av1 */
-                                                   INPUT "", /* par_nrfonav1 */
-                                                   INPUT "", /* par_emailav1 */
-                                                   INPUT "", /* par_nmcidav1 */
-                                                   INPUT "", /* par_cdufava1 */
-                                                   INPUT 0,  /* par_nrcepav1 */
-                                                   INPUT 0,  /* par_cdnacio1 */
-                                                   INPUT 0,  /* par_vledvmt1 */
-                                                   INPUT 0,  /* par_vlrenme1 */
-                                                   INPUT 0,  /* par_nrender1 */
-                                                   INPUT "", /* par_complen1 */
-                                                   INPUT 0,  /* par_nrcxaps1 */
-                                                   INPUT 0,
-                                                   INPUT ?,
+                                                   INPUT aux_nmdaval1,
+                                                   INPUT aux_nrcpfav1,
+                                                   INPUT aux_tpdocav1,
+                                                   INPUT aux_dsdocav1,
+                                                   INPUT aux_nmdcjav1,
+                                                   INPUT aux_cpfcjav1,
+                                                   INPUT aux_tdccjav1,
+                                                   INPUT aux_doccjav1,
+                                                   INPUT aux_ende1av1,
+                                                   INPUT aux_ende2av1,
+                                                   INPUT aux_nrfonav1,
+                                                   INPUT aux_emailav1,
+                                                   INPUT aux_nmcidav1,
+                                                   INPUT aux_cdufava1,
+                                                   INPUT aux_nrcepav1,
+                                                   INPUT aux_cdnacio1,
+                                                   INPUT aux_vledvmt1,
+                                                   INPUT aux_vlrenme1,
+                                                   INPUT aux_nrender1,
+                                                   INPUT aux_complen1,
+                                                   INPUT aux_nrcxaps1,
+                                                   INPUT aux_inpesso1,
+                                                   INPUT aux_dtnasct1,
                                                    /* Avalista 2 */
-                                                   INPUT "", /* aux_nmdaval2 */
-                                                   INPUT 0,  /* aux_nrcpfav2 */
-                                                   INPUT "", /* aux_tpdocav2 */
-                                                   INPUT "", /* aux_dsdocav2 */
-                                                   INPUT "", /* aux_nmdcjav2 */
-                                                   INPUT 0,  /* aux_cpfcjav2 */
-                                                   INPUT "", /* aux_tdccjav2 */
-                                                   INPUT "", /* aux_doccjav2 */
-                                                   INPUT "", /* aux_ende1av2 */
-                                                   INPUT "", /* aux_ende2av2 */
-                                                   INPUT "", /* aux_nrfonav2 */
-                                                   INPUT "", /* aux_emailav2 */
-                                                   INPUT "", /* aux_nmcidav2 */
-                                                   INPUT "", /* aux_cdufava2 */
-                                                   INPUT 0,  /* aux_nrcepav2 */
-                                                   INPUT 0,  /* aux_cdnacio2 */
-                                                   INPUT 0,  /* aux_vledvmt2 */
-                                                   INPUT 0,  /* aux_vlrenme2 */
-                                                   INPUT 0,  /* aux_nrender2 */
-                                                   INPUT "", /* aux_complen2 */
-                                                   INPUT 0,  /* aux_nrcxaps2 */
-                                                   INPUT 0,
-                                                   INPUT ?,
+                                                   INPUT aux_nmdaval2,
+                                                   INPUT aux_nrcpfav2,
+                                                   INPUT aux_tpdocav2,
+                                                   INPUT aux_dsdocav2,
+                                                   INPUT aux_nmdcjav2,
+                                                   INPUT aux_cpfcjav2,
+                                                   INPUT aux_tdccjav2,
+                                                   INPUT aux_doccjav2,
+                                                   INPUT aux_ende1av2,
+                                                   INPUT aux_ende2av2,
+                                                   INPUT aux_nrfonav2,
+                                                   INPUT aux_emailav2,
+                                                   INPUT aux_nmcidav2,
+                                                   INPUT aux_cdufava2,
+                                                   INPUT aux_nrcepav2,
+                                                   INPUT aux_cdnacio2,
+                                                   INPUT aux_vledvmt2,
+                                                   INPUT aux_vlrenme2,
+                                                   INPUT aux_nrender2,
+                                                   INPUT aux_complen2,
+                                                   INPUT aux_nrcxaps2,
+                                                   INPUT aux_inpesso2,
+                                                   INPUT aux_dtnasct2,
                                                    INPUT "",
                                                    INPUT aux_flgerlog,
                                                    INPUT aux_dsjusren,
@@ -583,30 +713,6 @@ PROCEDURE integra_proposta:
                           INPUT aux_cdcritic,
                           INPUT-OUTPUT aux_dscritic).
        END.
-
-    FIND FIRST tt-erro EXCLUSIVE-LOCK NO-ERROR.
-    IF AVAIL tt-erro THEN
-       DO:
-           /* Gera Log */
-           RUN proc_gerar_log (INPUT par_cdcooper,
-                               INPUT par_cdoperad,
-                               INPUT SUBSTR(tt-erro.dscritic,1,65),
-                               INPUT aux_dsorigem,
-                               INPUT aux_dstransa,
-                               INPUT FALSE,
-                               INPUT par_idseqttl,
-                               INPUT par_nmdatela,
-                               INPUT par_nrdconta,
-                              OUTPUT aux_nrdrowid).
-           
-           IF par_cddopcao = "I" THEN
-             ASSIGN tt-erro.cdcritic = 0
-                    tt-erro.dscritic = "Proposta nao foi criada".
-           ELSE
-             ASSIGN tt-erro.cdcritic = 0
-                    tt-erro.dscritic = "Proposta nao foi alterada".
-           
-       END. /* END IF AVAIL tt-erro THEN */
 
     IF VALID-HANDLE(h-b1wgen0002) THEN
        DELETE PROCEDURE h-b1wgen0002.

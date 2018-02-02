@@ -43,15 +43,23 @@
 			<td> 	
 				<label for="cdcooper"><? echo utf8ToHtml('Cooperativa:') ?></label>
 				<select id="cdcooper" name="cdcooper">
-					<option value="99">Todas</option> 
 					<?php
-							foreach ($lstCooper as $cooper) {								
-								if ( getByTagName($cooper->tags, 'CDCOOPER') <> '' ) {
+					if ($glbvars["cdcooper"] == 3){
+					?>
+						<option value="99">Todas</option> 
+					<?php
+						foreach ($lstCooper as $cooper) {								
+							if ( getByTagName($cooper->tags, 'CDCOOPER') <> '' ) {
 					?>
 						<option value="<?= getByTagName($cooper->tags, 'CDCOOPER'); ?>"><?= getByTagName($cooper->tags, 'NMRESCOP'); ?></option> 
 					<?php
 							}
 						}
+					}else{
+					?>
+						<option value="<?= $glbvars["cdcooper"]?>"><?= strtoupper($glbvars["nmcooper"]) ?></option> 
+					<?php
+					}
 					?>
 				</select>
 				<a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>

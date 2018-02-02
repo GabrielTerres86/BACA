@@ -1,6 +1,6 @@
 <?php
 /* 
- * Classe Responsavel da requisicao REST da proposta
+ * Classe Responsavel da requisicao REST do gravames
  * 
  * @autor: Lucas Reinert
  */
@@ -254,6 +254,7 @@ class RestCDC extends RestServerJson{
 					$dsoperacao = 'INTEGRACAO CDC - CANCELAMENTO GRAVAMES';
 					break;
 			}
+			$nrctremp = str_replace('.', '', trim($oDados->contratoNumero));
 			
             // Gravar acionamento do serviço
             $xml  = "<Root>";
@@ -262,12 +263,12 @@ class RestCDC extends RestServerJson{
 			$xml .= "	<cdagenci>1</cdagenci>";
 			$xml .= "	<cdoperad>AUTOCDC</cdoperad>";
 			$xml .= "	<cdorigem>5</cdorigem>";			
-			$xml .= "	<nrctrprp>".$oDados->contratoNumero."</nrctrprp>";
+			$xml .= "	<nrctrprp>".$nrctremp."</nrctrprp>";
 			$xml .= "	<nrdconta>".$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV."</nrdconta>";
 			$xml .= "	<cdcliente>1</cdcliente>";
 			$xml .= "	<tpacionamento>1</tpacionamento>";
 			$xml .= "	<dsoperacao>".$dsoperacao."</dsoperacao>";
-			$xml .= "	<dsuriservico>".$this->getNameHost()."</dsuriservico>";
+			$xml .= "	<dsuriservico><![CDATA[".$this->getURI()."]]></dsuriservico>";
 			$xml .= "	<dsmetodo>".$this->getMetodoRequisitado()."</dsmetodo>";
 			$xml .= "	<dtmvtolt></dtmvtolt>";			
 			$xml .= "	<cdstatus_http></cdstatus_http>";
@@ -308,7 +309,7 @@ class RestCDC extends RestServerJson{
 				$xml .= " <Dados>";
 				$xml .= "	<cdcopass>".$oDados->cooperativaAssociadoCodigo."</cdcopass>";
 				$xml .= "	<nrctaass>".$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV."</nrctaass>";
-				$xml .= "	<nrctremp>".$oDados->contratoNumero."</nrctremp>";
+				$xml .= "	<nrctremp>".$nrctremp."</nrctremp>";
 				$xml .= "	<dsbensal>".$sbens."</dsbensal>";
 				$xml .= " </Dados>";
 				$xml .= "</Root>";
@@ -335,7 +336,7 @@ class RestCDC extends RestServerJson{
 				$xml .= '	<Dados>';
 				$xml .= '		<cdcooper>'.$oDados->cooperativaAssociadoCodigo.'</cdcooper>';
 				$xml .= '		<nrdconta>'.$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV.'</nrdconta>';			
-				$xml .= '		<nrctrpro>'.$oDados->contratoNumero.'</nrctrpro>';
+				$xml .= '		<nrctrpro>'.$nrctremp.'</nrctrpro>';
 				$xml .= '		<dtmvtolt></dtmvtolt>';
 				$xml .= '		<cddopcao>E</cddopcao>';
 				$xml .= '	</Dados>';
@@ -363,7 +364,7 @@ class RestCDC extends RestServerJson{
 				$xml .= " <Dados>";
 				$xml .= "	<nrdconta>".$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV."</nrdconta>";
 				$xml .= "	<cddopcao>A</cddopcao>";
-				$xml .= "	<nrctrpro>".$oDados->contratoNumero."</nrctrpro>";
+				$xml .= "	<nrctrpro>".$nrctremp."</nrctrpro>";
 				$xml .= "	<idseqbem>".$oDados->bensAlienacao->identificacaoBem."</idseqbem>";
 				$xml .= "	<dscatbem>".$oDados->bensAlienacao->categoriaBem."</dscatbem>";
 				$xml .= "	<dschassi>".$oDados->bensAlienacao->chassiBem."</dschassi>";
@@ -398,7 +399,7 @@ class RestCDC extends RestServerJson{
 				$xml .= " <Dados>";
 				$xml .= "	<nrdconta>".$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV."</nrdconta>";
 				$xml .= "	<cddopcao>A</cddopcao>";
-				$xml .= "	<nrctrpro>".$oDados->contratoNumero."</nrctrpro>";
+				$xml .= "	<nrctrpro>".$nrctremp."</nrctrpro>";
 				$xml .= "	<idseqbem>".$oDados->bensAlienacao->identificacaoBem."</idseqbem>";
 				$xml .= "	<tpctrpro>90</tpctrpro>";
 				$xml .= "	<tpcancel>1</tpcancel>";

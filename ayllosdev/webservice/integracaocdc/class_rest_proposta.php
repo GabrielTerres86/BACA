@@ -242,17 +242,19 @@ class RestCDC extends RestServerJson{
 					$cdagenci = $oDados->PACodigo;
 					$cddopcao = 'I';
 					$msgsucesso = 'Proposta criada com sucesso';
+					$msgerro 	= 'Proposta nao foi criada';
 					$dsoperacao = 'INTEGRACAO CDC - INCLUSAO PROPOSTA';
 					break;
 				case 'PUT': // Alteração
-					$nrctremp = $oDados->contratoNumero;
+					$nrctremp = str_replace('.', '', trim($oDados->contratoNumero));
 					$cdagenci = $oDados->PACodigo;
 					$cddopcao = 'A';
 					$msgsucesso = 'Proposta alterada com sucesso';
+					$msgerro 	= 'Proposta nao foi alterada';
 					$dsoperacao = 'INTEGRACAO CDC - ALTERACAO PROPOSTA';
 					break;
 				case 'DELETE': // Cancelamento
-					$nrctremp = $oDados->contratoNumero;
+					$nrctremp = str_replace('.', '', trim($oDados->contratoNumero));
 					$cdagenci = $oDados->agenciaAssociadoCodigo;
 					$cddopcao = 'E';
 					$msgsucesso = 'Proposta cancelada com sucesso';
@@ -272,7 +274,7 @@ class RestCDC extends RestServerJson{
 			$xml .= "	<cdcliente>1</cdcliente>";
 			$xml .= "	<tpacionamento>1</tpacionamento>";
 			$xml .= "	<dsoperacao>".$dsoperacao."</dsoperacao>";
-			$xml .= "	<dsuriservico>".$this->getNameHost()."</dsuriservico>";
+			$xml .= "	<dsuriservico><![CDATA[".$this->getURI()."]]></dsuriservico>";
 			$xml .= "	<dsmetodo>".$this->getMetodoRequisitado()."</dsmetodo>";
 			$xml .= "	<dtmvtolt>".$oDados->dataMovimento."</dtmvtolt>";			
 			$xml .= "	<cdstatus_http></cdstatus_http>";
@@ -397,7 +399,7 @@ class RestCDC extends RestServerJson{
 					if (strpos($dscritic, 'Erro geral') !== false){
 						$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
 					}else{
-						$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
+						$this->processaRetornoErro(400,$msgerro,$dscritic,$idacionamento);
 					}
 					return false;
 				}

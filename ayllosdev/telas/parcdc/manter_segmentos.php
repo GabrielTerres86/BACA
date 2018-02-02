@@ -47,14 +47,17 @@
 
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 			
-			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			$msgErro = utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
 			if ($msgErro == "") {
-				$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
+				$msgErro = utf8_encode($xmlObjeto->roottag->tags[0]->cdata);
 			}
 		
 			$msgErro = str_replace('"','',str_replace('(','',str_replace(')','',$msgErro)));	
-						
-			echo('showError("error","'.$msgErro.'","Alerta - Ayllos","fechaRotina($(\'#divUsoGenerico\')); bloqueiaFundo(divRotina); ")');
+			if ($cddopcao == 'E'){
+				echo('showError("error","'.$msgErro.'","Alerta - Ayllos","fechaRotina($(\'#divUsoGenerico\')); bloqueiaFundo(divRotina);")');
+			}else{
+				echo('showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divUsoGenerico\').css(\'z-index\')));")');
+			}
 			exit();
 		}else{
 			exibirErro('inform','Atualiza&ccedil;&atilde;o Efetuada com Sucesso.','Alerta - Ayllos',"fechaRotina($('#divUsoGenerico')); abreTelaParametrosCDC(); setTimeout(function(){acessaOpcaoAba(1);},700); ",false);
@@ -80,14 +83,18 @@
 
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 			
-			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			$msgErro = utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
 			if ($msgErro == "") {
-				$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
+				$msgErro = utf8_encode($xmlObjeto->roottag->tags[0]->cdata);
 			}
 		
 			$msgErro = str_replace('"','',str_replace('(','',str_replace(')','',$msgErro)));	
-						
-			echo('showError("error","'.$msgErro.'","Alerta - Ayllos","fechaRotina($(\'#divUsoGenerico\')); bloqueiaFundo(divRotina); ")');
+			
+			if ($cddopcao == 'E'){
+				echo('showError("error","'.$msgErro.'","Alerta - Ayllos","fechaRotina($(\'#divUsoGenerico\')); bloqueiaFundo(divRotina);")');
+			}else{
+				echo('showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divUsoGenerico\').css(\'z-index\')));")');
+			}
 			exit();
 		}else{
 			exibirErro('inform','Atualiza&ccedil;&atilde;o Efetuada com Sucesso.','Alerta - Ayllos',"fechaRotina($('#divUsoGenerico')); abreTelaParametrosCDC(); setTimeout(function(){acessaOpcaoAba(1);},700); ",false);

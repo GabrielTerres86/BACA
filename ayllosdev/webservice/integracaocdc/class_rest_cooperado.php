@@ -87,7 +87,7 @@ class RestCDC extends RestServerJson{
         // Grava o erro no arquivo TEXTO
         $xml  = "<Root>";
         $xml .= " <Dados>";
-		$xml .= "   <dsrequis><![CDATA[".((string) $_SERVER['REQUEST_URI'])."]]></dsrequis>";		
+		$xml .= "   <dsrequis><![CDATA[".$this->getURI()."]]></dsrequis>";		
         $xml .= "   <dsmessag>".$mensagemDetalhe."</dsmessag>";
         $xml .= "   <nmarqlog>integracaocdc</nmarqlog>";
         $xml .= " </Dados>";
@@ -187,11 +187,11 @@ class RestCDC extends RestServerJson{
 			$xml .= "	<cdcliente>1</cdcliente>";
 			$xml .= "	<tpacionamento>1</tpacionamento>";
 			$xml .= "	<dsoperacao>INTEGRACAO CDC - CONSULTA COOPERADO</dsoperacao>";
-			$xml .= "	<dsuriservico>".$this->getNameHost()."</dsuriservico>";
+			$xml .= "	<dsuriservico><![CDATA[".$this->getURI()."]]></dsuriservico>";
 			$xml .= "	<dsmetodo>".$this->getMetodoRequisitado()."</dsmetodo>";
 			$xml .= "	<dtmvtolt></dtmvtolt>";			
 			$xml .= "	<cdstatus_http></cdstatus_http>";
-			$xml .= "	<dsconteudo_requisicao>".((string) $_SERVER['REQUEST_URI'])."</dsconteudo_requisicao>";
+			$xml .= "	<dsconteudo_requisicao><![CDATA[".$this->getURI()."]]></dsconteudo_requisicao>";
 			$xml .= "	<dsresposta_requisicao></dsresposta_requisicao>";
 			$xml .= "	<dsprotocolo></dsprotocolo>";
 			$xml .= "	<flgreenvia>0</flgreenvia>";
@@ -254,7 +254,6 @@ class RestCDC extends RestServerJson{
                                           'Consulta de cooperado realizada com sucesso',
                                           $idacionamento,
 										  $oRetorno->inf->contas,
-
                                           0,
                                           '');
 

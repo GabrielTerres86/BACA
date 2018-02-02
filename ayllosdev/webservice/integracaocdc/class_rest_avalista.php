@@ -1,6 +1,6 @@
 <?php
 /* 
- * Classe Responsavel da requisicao REST da proposta
+ * Classe Responsavel da requisicao REST do avalista
  * 
  * @autor: Lucas Reinert
  */
@@ -218,6 +218,8 @@ class RestCDC extends RestServerJson{
 				return false;
 			}
 			
+			$nrctremp = str_replace('.', '', trim($oDados->contratoNumero));
+			
             // Gravar acionamento do serviço
             $xml  = "<Root>";
             $xml .= " <Dados>";
@@ -225,12 +227,12 @@ class RestCDC extends RestServerJson{
 			$xml .= "	<cdagenci></cdagenci>";
 			$xml .= "	<cdoperad>AUTOCDC</cdoperad>";
 			$xml .= "	<cdorigem>5</cdorigem>";			
-			$xml .= "	<nrctrprp>".$oDados->contratoNumero."</nrctrprp>";
+			$xml .= "	<nrctrprp>".$nrctremp."</nrctrprp>";
 			$xml .= "	<nrdconta>".$oDados->proponente->contaAssociadoNumero.$oDados->proponente->contaAssociadoDV."</nrdconta>";
 			$xml .= "	<cdcliente>1</cdcliente>";
 			$xml .= "	<tpacionamento>1</tpacionamento>";
 			$xml .= "	<dsoperacao>INTEGRACAO CDC - INCLUSAO AVALISTA</dsoperacao>";
-			$xml .= "	<dsuriservico>".$this->getNameHost()."</dsuriservico>";
+			$xml .= "	<dsuriservico><![CDATA[".$this->getURI()."]]></dsuriservico>";
 			$xml .= "	<dsmetodo>".$this->getMetodoRequisitado()."</dsmetodo>";
 			$xml .= "	<dtmvtolt></dtmvtolt>";			
 			$xml .= "	<cdstatus_http></cdstatus_http>";
@@ -295,7 +297,7 @@ class RestCDC extends RestServerJson{
 			$xml .= "		<idorigem>5</idorigem>";
 			$xml .= "		<nrdconta>".$oDados->proponente->contaAssociadoNumero.$oDados->proponente->contaAssociadoDV."</nrdconta>";
 			$xml .= "		<idseqttl>1</idseqttl>";
-			$xml .= "		<nrctremp>".$oDados->contratoNumero."</nrctremp>";
+			$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
 			$xml .= "		<flgerlog>true</flgerlog>";
 			$xml .= "		<dsdopcao>ASA</dsdopcao>";
 			$xml .= $xmlAvalistas;
@@ -324,7 +326,7 @@ class RestCDC extends RestServerJson{
 			$xml .= "	<cdcooper>".$oDados->proponente->cooperativaAssociadoCodigo."</cdcooper>";
 			$xml .= "	<cdagenci>1</cdagenci>";
 			$xml .= "	<nrdconta>".$oDados->proponente->contaAssociadoNumero.$oDados->proponente->contaAssociadoDV."</nrdconta>";
-			$xml .= "	<nrctremp>".$oDados->contratoNumero."</nrctremp>";
+			$xml .= "	<nrctremp>".$nrctremp."</nrctremp>";
 			$xml .= " </Dados>";
 			$xml .= "</Root>";
 			$sXmlResult = mensageria($xml, "EMPR0012", "RETORNA_PROPOSTA", 0, 0, 0, 5, 0, "</Root>");

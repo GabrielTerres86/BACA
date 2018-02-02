@@ -142,15 +142,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CVNCDC IS
 																 ,pr_nmdcampo OUT VARCHAR2                                     --> Nome do campo com erro
 																 ,pr_des_erro OUT VARCHAR2);                                   --> Erros do processo
 
-  PROCEDURE pc_mantem_subsegmentos(pr_cddopcao IN VARCHAR2                                        --> Opção da Tela
-                                  ,pr_idcooperado_cdc IN tbepr_cdc_subsegmento.dssubsegmento%TYPE --> Descrição Subsegmento
-                                  ,pr_cdsubsegmento IN tbepr_cdc_subsegmento.cdsubsegmento%TYPE   --> Código Subsegmento
- 		                              ,pr_xmllog   IN VARCHAR2                                        --> XML com informacoes de LOG
-																  ,pr_cdcritic OUT PLS_INTEGER                                    --> Codigo da critica
-																  ,pr_dscritic OUT VARCHAR2                                       --> Descricao da critica
-																  ,pr_retxml   IN OUT NOCOPY xmltype                              --> Arquivo de retorno do XML
-																  ,pr_nmdcampo OUT VARCHAR2                                       --> Nome do campo com erro
-																  ,pr_des_erro OUT VARCHAR2);                                     --> Erros do processo
+  PROCEDURE pc_mantem_subsegmentos(pr_cddopcao IN VARCHAR2                                             --> Opção da Tela
+                                  ,pr_idcooperado_cdc IN tbepr_cdc_lojista_subseg.idcooperado_cdc%TYPE --> Id. cooperado CDC
+                                  ,pr_cdsubsegmento IN tbepr_cdc_lojista_subseg.cdsubsegmento%TYPE     --> Código Subsegmento
+                                  ,pr_xmllog   IN VARCHAR2                                             --> XML com informacoes de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER                                         --> Codigo da critica
+                                  ,pr_dscritic OUT VARCHAR2                                            --> Descricao da critica
+                                  ,pr_retxml   IN OUT NOCOPY xmltype                                   --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2                                            --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2);                                          --> Erros do processo
 
   PROCEDURE pc_lista_subsegmentos_coop(pr_idcooperado_cdc IN tbsite_cooperado_cdc.idcooperado_cdc%TYPE --> Código Subsegmento
                                       ,pr_xmllog   IN VARCHAR2                                         --> XML com informacoes de LOG
@@ -2537,15 +2537,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 
   END pc_lista_subsegmentos;
 
-  PROCEDURE pc_mantem_subsegmentos(pr_cddopcao IN VARCHAR2                                        --> Opção da Tela
-                                  ,pr_idcooperado_cdc IN tbepr_cdc_subsegmento.dssubsegmento%TYPE --> Descrição Subsegmento
-                                  ,pr_cdsubsegmento IN tbepr_cdc_subsegmento.cdsubsegmento%TYPE   --> Código Subsegmento
-                                  ,pr_xmllog   IN VARCHAR2                                        --> XML com informacoes de LOG
-                                  ,pr_cdcritic OUT PLS_INTEGER                                    --> Codigo da critica
-                                  ,pr_dscritic OUT VARCHAR2                                       --> Descricao da critica
-                                  ,pr_retxml   IN OUT NOCOPY xmltype                              --> Arquivo de retorno do XML
-                                  ,pr_nmdcampo OUT VARCHAR2                                       --> Nome do campo com erro
-                                  ,pr_des_erro OUT VARCHAR2) IS                                   --> Erros do processo
+  PROCEDURE pc_mantem_subsegmentos(pr_cddopcao IN VARCHAR2                                             --> Opção da Tela
+                                  ,pr_idcooperado_cdc IN tbepr_cdc_lojista_subseg.idcooperado_cdc%TYPE --> Id. cooperado CDC
+                                  ,pr_cdsubsegmento IN tbepr_cdc_lojista_subseg.cdsubsegmento%TYPE     --> Código Subsegmento
+                                  ,pr_xmllog   IN VARCHAR2                                             --> XML com informacoes de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER                                         --> Codigo da critica
+                                  ,pr_dscritic OUT VARCHAR2                                            --> Descricao da critica
+                                  ,pr_retxml   IN OUT NOCOPY xmltype                                   --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2                                            --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2) IS                                        --> Erros do processo
   BEGIN
 
     /* .............................................................................
@@ -2580,9 +2580,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
       vr_cdagenci VARCHAR2(100);
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
-
+			
+			-- Cursores
+			CURSOR cr_tbsite_cooperado_cdc IS
+				SELECT 1
+					FROM tbsite_cooperado_cdc scc
+				 WHERE scc.idcooperado_cdc = pr_idcooperado_cdc;
+      rw_tbsite_cooperado_cdc cr_tbsite_cooperado_cdc%ROWTYPE;
+			
     BEGIN
   
+	    OPEN cr_tbsite_cooperado_cdc;
+			FETCH cr_tbsite_cooperado_cdc INTO rw_tbsite_cooperado_cdc;
+			
+			-- Verificar se lojista está habilitado
+			IF cr_tbsite_cooperado_cdc%NOTFOUND THEN
+				-- Fechar cursor
+				CLOSE cr_tbsite_cooperado_cdc;
+				-- Gerar crítica
+				vr_cdcritic := 0;
+				vr_dscritic := 'Lojista não habilitado.';
+				-- Levantar exceção
+				RAISE vr_exc_erro;
+			END IF;
+	
       IF pr_cddopcao = 'I' THEN
         BEGIN
           INSERT INTO tbepr_cdc_lojista_subseg(idcooperado_cdc, cdsubsegmento) VALUES(pr_idcooperado_cdc, pr_cdsubsegmento);

@@ -66,11 +66,12 @@
 					if(count($subsegmentos) > 0){
 						foreach($subsegmentos as $subsegmento){
 				?>
-							<tr  value="<?php echo getByTagName($subsegmento->tags, 'CDSUBSEGMENTO'); ?>">
+							<tr>
 								<td><?php echo getByTagName($subsegmento->tags, 'CDSUBSEGMENTO'); ?></td>
 								<td><?php echo getByTagName($subsegmento->tags, 'DSSUBSEGMENTO'); ?></td>
 								<td><?php echo getByTagName($subsegmento->tags, 'NRMAX_PARCELA'); ?></td>
 								<td><?php echo getByTagName($subsegmento->tags, 'VLMAX_FINANC'); ?></td>
+								<input type="hidden" id="cdsubsegmento" value="<?php echo getByTagName($subsegmento->tags, 'CDSUBSEGMENTO'); ?>"/>
 							</tr>                                             
 				<?php
 						}
