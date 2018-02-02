@@ -199,6 +199,10 @@
                            
               20/12/2017 - Gravar dtiniatr e dtfimsus ou dtinisus como proximo dia util para convenios
                            sicredi no ultimo dia nao util do ano (Lucas Ranghetti #809954)
+
+              01/02/2018 - Ajustar na exclui_suspensao_autorizacao para sempre que possivel, utilizar a chave unica da
+                           tabela crapatr para encontrar a autorizacao para exclusao da suspensao. Quando isso nao for
+                           possivel, continuara buscando pelo cdempcon e cdsegmto (Anderson P285).
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -3737,12 +3741,21 @@ PROCEDURE exclui_suspensao_autorizacao:
 
     Desbloqueia: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
-        FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
-                           crapatr.nrdconta = par_nrdconta AND
-                           crapatr.cdsegmto = par_cdsegmto AND
-                           crapatr.cdempcon = par_cdempcon AND
-                           crapatr.cdrefere = par_cdrefere
-                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+        IF par_cdhistor > 0 THEN
+           /* Se vier o cdhistor, vamos dar preferencia a ele pois eh a chave unica (Novo IB) */
+           FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
+                              crapatr.nrdconta = par_nrdconta AND
+                              crapatr.cdhistor = par_cdhistor AND
+                              crapatr.cdrefere = par_cdrefere
+                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+        ELSE
+           /* Se nao veio, vamos continuar a testar a busca atraves do cdempcon e cdsegmto (Antigo IB) */
+           FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
+                              crapatr.nrdconta = par_nrdconta AND
+                              crapatr.cdsegmto = par_cdsegmto AND
+                              crapatr.cdempcon = par_cdempcon AND
+                              crapatr.cdrefere = par_cdrefere
+                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
         IF NOT AVAIL crapatr THEN
         DO:

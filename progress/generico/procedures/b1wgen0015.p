@@ -404,6 +404,9 @@
               18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			               crapass, crapttl, crapjur 
 						  (Adriano - P339).
+
+              30/01/2018 - Adicionado tratamento na valida-inclusao-conta-transferencia
+                           para trocar a mensagem quando a origem for InternetBank (Anderson).
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -10143,33 +10146,40 @@ PROCEDURE valida-inclusao-conta-transferencia:
     IF aux_cdcritic <> 0  OR
        aux_dscritic <> "" THEN
         DO:
+          EMPTY TEMP-TABLE tt-erro.
 
-            IF aux_dscritic <> ""  OR 
-        aux_cdcritic <> 0   THEN
-        DO: 
-                EMPTY TEMP-TABLE tt-erro.
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
+          /* Se for InternetBank, monta critica mais adequada e grava no log a critica real */
+          IF par_idorigem = 3 THEN
+             DO:
+               ASSIGN aux_dsibcrit = "Conta não encontrada no Sistema CECRED".
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,            /** Sequencia **/
+                              INPUT 0,            /** cdcritic  **/
+                              INPUT-OUTPUT aux_dsibcrit).
+             END.
+          ELSE
+             RUN gera_erro (INPUT par_cdcooper,
+                            INPUT par_cdagenci,
+                            INPUT par_nrdcaixa,
+                            INPUT 1,            /** Sequencia **/
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).
          
-            IF  par_flgerlog  THEN
-                RUN proc_gerar_log (INPUT par_cdcooper,
-                                    INPUT par_cdoperad,
-                                    INPUT aux_dscritic,
-                                    INPUT aux_dsorigem,
-                                    INPUT aux_dstransa,
-                                    INPUT FALSE,
-                                    INPUT par_idseqttl,
-                                    INPUT par_nmdatela,
-                                    INPUT par_nrdconta,
-                                   OUTPUT aux_nrdrowid).
-                                                   
-            RETURN "NOK".                           
-        END.
+          IF  par_flgerlog  THEN
+              RUN proc_gerar_log (INPUT par_cdcooper,
+                                  INPUT par_cdoperad,
+                                  INPUT aux_dscritic,
+                                  INPUT aux_dsorigem,
+                                  INPUT aux_dstransa,
+                                  INPUT FALSE,
+                                  INPUT par_idseqttl,
+                                  INPUT par_nmdatela,
+                                  INPUT par_nrdconta,
+                                 OUTPUT aux_nrdrowid).
+                                             
+          RETURN "NOK".
       
         END.
       
