@@ -8765,10 +8765,9 @@ PROCEDURE proc_operacao205:
         DO:
             {&out} aux_dsmsgerr aux_tgfimprg.
             RETURN.
-                                END.
+        END.
 
-                        {&out} aux_tgfimprg.
-                END.
+    {&out} aux_tgfimprg.    
 
 END PROCEDURE.
 
