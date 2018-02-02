@@ -1214,7 +1214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       
       --> Modelo 3
       ELSIF vr_cdempcon IN (0239,0451) THEN
-        vr_dsinfor3 := vr_dsinfor3 || '#Identificador: '   || pr_nrrefere;
+        vr_dsinfor3 := vr_dsinfor3 || '#Identificador: '   || substr(pr_nrrefere,3,15);
         
       END IF;
       
@@ -2483,6 +2483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                               ,pr_nrterfin      => 0                -- Numero Terminal Financeiro
                               ,pr_tpcptdoc      => pr_tpleitor      -- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                               ,pr_dsnomfon      => pr_dsnomfon      -- Numero do Telefone
+                              ,pr_identificador => pr_nrrefere      -- Identificador FGTS/DAE
                               ,pr_histor        => vr_cdhistor      -- Codigo Historico
                               ,pr_pg            => vr_flgpagto      -- Indicador Pago
                               ,pr_docto         => vr_nrdocmto      -- Numero Documento
@@ -5153,6 +5154,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           --Retornar data dias
           vr_dtvencto := CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_cdbarras,22,3)) --Numero de Dias
                                                       ,pr_inanocal => vr_inanocal);                       --Indicador do Ano
+          
+        ELSE 
+          --> demais tipos de convenio podem vir sem data de vencimeto.
+          BEGIN
+            vr_dtvencto := to_date(SUBSTR(pr_cdbarras,20,8),'RRRRMMDD');        
+          EXCEPTION
+            WHEN OTHERS THEN
+              NULL;
+          END;     
         END IF;
       EXCEPTION
         WHEN OTHERS THEN

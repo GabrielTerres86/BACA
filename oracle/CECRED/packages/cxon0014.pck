@@ -428,6 +428,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                             ,pr_nrterfin      IN INTEGER      --Numero Terminal Financeiro
                             ,pr_tpcptdoc      IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                             ,pr_dsnomfon      IN VARCHAR2 DEFAULT ' ' -- Numero do Telefone
+                            ,pr_identificador IN VARCHAR2 DEFAULT ' ' -- Identificador FGTS/DAE
                             ,pr_histor        OUT INTEGER     --Codigo Historico
                             ,pr_pg            OUT BOOLEAN     --Indicador Pago
                             ,pr_docto         OUT NUMBER      --Numero Documento
@@ -7096,32 +7097,33 @@ END pc_gera_titulos_iptu_prog;
           CLOSE cr_tbarrecd;        
         END IF;
         
-        
-        vr_dttolera := vr_dtvencto + rw_tbarrecd.nrdias_tolerancia;
-        LOOP
-          --Verifica se eh feriado ou final de semana
-          vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-                                                    ,pr_dtmvtolt => vr_dttolera --> Data do movimento
-                                                    ,pr_tipo     => 'P');       --> Proximo dia util
-          --Se for dia util
-          IF vr_dtferiado = vr_dttolera THEN
-            --Sair loop
-            EXIT;
-          END IF;
-          --Incrementar data
-          vr_dttolera:= vr_dttolera + 1;
-        END LOOP;
+        /* Se nao for tolerancia ilimitada */
+        IF rw_tbarrecd.nrdias_tolerancia <> 99 OR NOT pr_flnrtole THEN 
+          vr_dttolera := vr_dtvencto + rw_tbarrecd.nrdias_tolerancia;
+          LOOP
+            --Verifica se eh feriado ou final de semana
+            vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                                      ,pr_dtmvtolt => vr_dttolera --> Data do movimento
+                                                      ,pr_tipo     => 'P');       --> Proximo dia util
+            --Se for dia util
+            IF vr_dtferiado = vr_dttolera THEN
+              --Sair loop
+              EXIT;
+            END IF;
+            --Incrementar data
+            vr_dttolera:= vr_dttolera + 1;
+          END LOOP;
                         
-        --> validar data limite para pagamento 
-        IF vr_dttolera < pr_dtmvtopg THEN
-          pr_cdcritic:= 0;
-          pr_dscritic:= 'Prazo para pagamento apos o vencimento excedido.';
-          RAISE vr_exc_erro;
+          --> validar data limite para pagamento 
+          IF vr_dttolera < pr_dtmvtopg THEN
+            pr_cdcritic:= 0;
+            pr_dscritic:= 'Prazo para pagamento apos o vencimento excedido.';
+            RAISE vr_exc_erro;
+          END IF;
+        
+          -- sem críticas, devolve data calculada
+          pr_dttolera := vr_dttolera;		
         END IF;
-        
-        -- sem críticas, devolve data calculada
-        pr_dttolera := vr_dttolera;		
-        
       END IF;
     
     ELSE
@@ -8818,6 +8820,7 @@ END pc_gera_titulos_iptu_prog;
                             ,pr_nrterfin      IN INTEGER      --Numero Terminal Financeiro
                             ,pr_tpcptdoc      IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                             ,pr_dsnomfon      IN VARCHAR2 DEFAULT ' ' -- Numero do Telefone
+                            ,pr_identificador IN VARCHAR2 DEFAULT ' ' -- Identificador FGTS/DAE
                             ,pr_histor        OUT INTEGER     --Codigo Historico
                             ,pr_pg            OUT BOOLEAN     --Indicador Pago
                             ,pr_docto         OUT NUMBER      --Numero Documento
@@ -9566,6 +9569,7 @@ END pc_gera_titulos_iptu_prog;
                SET craplft.tpfatura = 4 -- DAE
                   ,craplft.dtlimite = vr_dtlimite
                   ,craplft.cdtribut = SUBSTR(pr_cdbarras,16,4)
+                  ,craplft.nrrefere = nvl(pr_identificador,' ')
             WHERE craplft.ROWID = rw_craplft.ROWID
             RETURNING
                  craplft.tpfatura
@@ -9592,7 +9596,9 @@ END pc_gera_titulos_iptu_prog;
                   ,craplft.dtapurac = vr_dtcompet
                   ,craplft.cdtribut = SUBSTR(pr_cdbarras,16,4)
                   ,craplft.nrcpfcgc = vr_nrinsemp
+                  ,craplft.nrrefere = nvl(pr_identificador,' ')
             WHERE craplft.ROWID = rw_craplft.ROWID
+            
             RETURNING
                  craplft.tpfatura
                 ,craplft.dtlimite
