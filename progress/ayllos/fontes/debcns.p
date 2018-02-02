@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                        Ultima atualizacao: 23/10/2017
+   Data    : Julho/2013                        Ultima atualizacao: 29/01/2018
 
    Dados referentes ao programa:
 
@@ -35,6 +35,9 @@
                 
    23/10/2017 - Ajustar relatorio e tambem para chamar a rotina efetua-debito-consorcio
                 como 3 "Ultima execucao" (Lucas Ranghetti #739738)
+                
+   
+   29/01/2018 - Ajustar DEBCNS conforme solicitaçao do chamado (Lucas Ranghetti #837834)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -132,7 +135,8 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
     FIELD dscritic AS CHAR
     FIELD nrdocmto LIKE craplau.nrdocmto
     FIELD nrdgrupo LIKE crapcns.nrdgrupo
-    FIELD nrctrato AS DECI FORMAT "zzz,zzz,zzz".   
+    FIELD nrctrato AS DECI FORMAT "zzz,zzz,zzz"
+    FIELD tpconsor LIKE crapcns.tpconsor.    
 
     FORM SKIP(1)
          "DEBITOS PARA: "                   AT 01
@@ -144,15 +148,16 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
     FORM SKIP(1)
          " PA  "
          "CONTA/DV"
-         "CTA.CONSOR"
+         "DOCUMENTO"
+         "             CTA.CONSOR"
          "NOME                       "
          "TIPO     "
-         "GRUPO "
-         "      COTA"
+         "GRUPO"
+         "       COTA"
          "     VALOR"
          SKIP
-         " --- --------- ---------- --------------------------- ---------"
-         "------ ---------- ----------"
+         " --- --------- ---------------------- ----------"
+         "--------------------------- --------- ------ ---------- ----------"
          WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao.
     
     FORM SKIP(1)
@@ -166,7 +171,7 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
          " PA  "
          "CONTA/DV"
          "CTA.CONSOR"
-         "NOME                         "
+         "NOME                       "
          "TIPO     "
          "GRUPO "
          "      COTA"
@@ -190,6 +195,7 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
 
     FORM tt-obtem-consorcio.cdagenci FORMAT "zz9"          
          tt-obtem-consorcio.nrdconta FORMAT "zzzz,zzz,9"   
+         tt-obtem-consorcio.nrdocmto FORMAT "9999999999999999999999"
          tt-obtem-consorcio.nrctacns FORMAT "zzzz,zzz,9"   
          tt-obtem-consorcio.nmprimtl FORMAT "x(27)"        
          tt-obtem-consorcio.dsconsor FORMAT "x(9)"         

@@ -2023,7 +2023,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 02/08/2017
+    Data    : Maio/14.                    Ultima atualizacao: 02/02/2018
 
     Dados referentes ao programa:
 
@@ -2134,6 +2134,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              
                 02/08/2017 - Incluir validacao para o trailer do arquivo CEXT, caso o arquivo venha 
                              incompleto vamos abrir chamado e rejeitar o arquivo. (Lucas Ranghetti #727623)
+                             
+                02/02/2018 - Ajuste para quando recebemos uma transacao de credito aprovada onde nao
+                             houve estorno na conta do cooperado de forma online precisamos lancar
+                             o credito em conta. (Chamado 836129) - (Fabricio)
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -3563,12 +3567,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                     vr_crialcmt := FALSE;
                                  ELSIF vr_tpmensag = '0220' AND vr_tpmsg200  THEN
                                     vr_crialcmt := FALSE;
-                                 ELSIF vr_tpmensag = '0420' AND vr_tpmsg200 AND vr_cdcrimsg = '00' THEN
-                                    vr_crialcmt := FALSE;
+                                 ELSIF vr_tpmensag = '0420' AND vr_tpmsg200 AND vr_cdcrimsg = '00' AND vr_indebcre = 'C' THEN
+                                    vr_crialcmt := TRUE;
                                  ELSIF vr_tpmensag = '0420' AND NOT vr_tpmsg200 AND NOT vr_tpmsg220 AND vr_cdcrimsg <> '00' THEN
                                     vr_crialcmt := FALSE;
-                                 ELSIF vr_tpmensag = '0420' AND vr_tpmsg220  AND vr_cdcrimsg = '00' THEN
-                                    vr_crialcmt := FALSE;
+                                 ELSIF vr_tpmensag = '0420' AND vr_tpmsg220  AND vr_cdcrimsg = '00' AND vr_indebcre = 'C' THEN
+                                    vr_crialcmt := TRUE;
                                  ELSIF vr_tpmensag = '0420' AND  vr_cdcrimsg = '00' THEN
                                     vr_crialcmt := FALSE;
                                  ELSE
