@@ -7180,6 +7180,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
               ,craplft.vllanmto
               ,craplft.cdagenci
               ,craplft.nrautdoc
+              ,craplft.nrrefere
+              ,craplft.nrdconta
               ,craplft.rowid
           FROM tbconv_arrecadacao
               ,crapcon
@@ -7224,6 +7226,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_cdagectl crapcop.cdagectl%TYPE;
       vr_cdconven tbconv_arrecadacao.cdempres%TYPE;
       vr_cdempcon tbconv_arrecadacao.cdempcon%TYPE;
+      vr_nrrefere craplft.nrrefere%TYPE;
+      vr_cdagebcb crapcop.cdagebcb%TYPE;
       vr_trocaarq BOOLEAN;
       vr_procearq BOOLEAN;
       vr_linha    VARCHAR2(400);
@@ -7261,7 +7265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       
       -- Função para buscar número sequencial do arquivo (NSA)
       FUNCTION fn_busca_nsa(pr_cdcooper IN craptab.cdcooper%TYPE
-                           ,pr_cdconven IN craptab.tpregist%TYPE
+                           ,pr_cdconven IN craptab.cdempres%TYPE
                            ) RETURN VARCHAR2 IS
         --
         vr_dstextab craptab.dstextab%TYPE;
@@ -7303,6 +7307,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         END IF;
         --
       END fn_valida_mvto;
+      
+      -- Busca agência do cooperado
+      FUNCTION fn_busca_agencia(pr_cdcooper IN crapass.cdcooper%TYPE
+                               ,pr_nrdconta IN crapass.nrdconta%TYPE
+                               ) RETURN NUMBER IS
+        --
+        vr_cdagenci crapass.cdagenci%TYPE;
+        --
+      BEGIN
+        --
+        SELECT crapass.cdagenci
+          INTO vr_cdagenci
+          FROM crapass
+         WHERE crapass.cdcooper = pr_cdcooper
+           AND crapass.nrdconta = pr_nrdconta;
+        --
+        RETURN vr_cdagenci;
+        --
+      END fn_busca_agencia;
+      
+      -- Busca o código de cadastro da agência na Caixa Economica Federal para pagemto de FGTS
+      FUNCTION fn_busca_age_cef(pr_cdcooper IN crapage.cdcooper%TYPE
+                               ,pr_cdagenci IN crapage.cdagenci%TYPE
+                               ) RETURN NUMBER IS
+        --
+        vr_cdagefgt crapage.cdagefgt%TYPE;
+        --
+      BEGIN
+        --
+        SELECT crapage.cdagefgt
+          INTO vr_cdagefgt
+          FROM crapage
+         WHERE crapage.cdcooper = pr_cdcooper
+           AND crapage.cdagenci = pr_cdagenci;
+        --
+        RETURN vr_cdagefgt;
+        --
+      END fn_busca_age_cef;
       
       -- Rotina para criar registro na tabela GNCONTR para armazenar os detalhes do processamento de cada arquivo gerado
       PROCEDURE pc_gera_trilha(pr_cdcooper IN  gncontr.cdcooper%TYPE
@@ -7356,7 +7398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       
       -- Rotina para incrementar número sequencial do arquivo (NSA)
       PROCEDURE pc_incrementa_nsa(pr_cdcooper IN  craptab.cdcooper%TYPE
-                                 ,pr_cdconven IN  craptab.tpregist%TYPE
+                                 ,pr_cdconven IN  craptab.cdempres%TYPE
                                  ,pr_dtmvtolt IN  crapdat.dtmvtolt%TYPE
                                  ,pr_dscritic OUT VARCHAR2
                                  ) IS
@@ -7458,6 +7500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ,pr_nrseqreg IN  NUMBER
                                ,pr_cdagebcb IN  crapcop.cdagebcb%TYPE
                                ,pr_nrautdoc IN  craplft.nrautdoc%TYPE
+                               ,pr_nrrefere IN  craplft.nrrefere%TYPE
                                ,pr_detalhe  OUT VARCHAR2
                                ,pr_dscritic OUT VARCHAR2
                                ) IS
@@ -7466,7 +7509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         -- Código do registro
         pr_detalhe := 'G';
         -- Identificação da agência/conta/dígito creditada
-        pr_detalhe := pr_detalhe || RPAD(' ', 20, ' ');
+        pr_detalhe := pr_detalhe || RPAD(nvl(pr_nrrefere, ' '), 20, ' ');
         -- Data de pagamento
         pr_detalhe := pr_detalhe || to_char(pr_dtvencto, 'YYYYMMDD');
         -- Data de crédito
@@ -7905,13 +7948,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                 END IF;
                 --
                 vr_linha := NULL;
+                -- Para o convênio 181, deverá enviar o código identificador informado pelo cooperado no pagamento da fatura
+                IF rw_conven.cdempcon = 181 THEN
+                  --
+                  vr_nrrefere := rw_conven.nrrefere;
+                  --
+                ELSE
+                  --
+                  vr_nrrefere := NULL;
+                  --
+                END IF;
+                -- Somente para convênios FGTS (0178,0179,0180,0181,0239,0240 e 0451), deverá informar o número CAF do PA do cooperado
+                IF rw_conven.cdempcon IN (0178, 0179, 0180, 0181, 0239, 0240, 0451) THEN
+                  --
+                  vr_cdagebcb := fn_busca_age_cef(pr_cdcooper => rw_cooper.cdcooper
+                                                 ,pr_cdagenci => fn_busca_agencia(pr_cdcooper => rw_cooper.cdcooper
+                                                                                 ,pr_nrdconta => rw_conven.nrdconta
+                                                                                 )
+                                                 );
+                  --
+                ELSE
+                  --
+                  vr_cdagebcb := rw_cooper.cdagebcb;
+                  --
+                END IF;
                 -- Gera a linha de detalhe
                 pc_gera_detalhe(pr_dtvencto => rw_conven.dtvencto -- IN
                                ,pr_cdbarras => rw_conven.cdbarras -- IN
                                ,pr_vllanmto => rw_conven.vllanmto -- IN
                                ,pr_nrseqreg => vr_qtregist        -- IN
-                               ,pr_cdagebcb => rw_cooper.cdagebcb -- IN
+                               ,pr_cdagebcb => vr_cdagebcb        -- IN
                                ,pr_nrautdoc => rw_conven.nrautdoc -- IN
+                               ,pr_nrrefere => vr_nrrefere        -- IN
                                ,pr_detalhe  => vr_linha           -- OUT
                                ,pr_dscritic => vr_dscritic        -- OUT
                                );
