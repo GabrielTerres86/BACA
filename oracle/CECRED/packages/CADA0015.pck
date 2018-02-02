@@ -1081,7 +1081,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para atualizacao da tabela de responsavel legal(CRAPCRL)
     --
-    --  Alteração :
+    --  Alteração : 31/01/2018 - Ajustes para fechar cursores que nao haviam sido fechados corretamente.
+    --                           PRJ339 - CRM(Odirlei-AMcom)
     --
     --
     -- ..........................................................................*/
@@ -1168,8 +1169,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           CLOSE cr_crapass;
           vr_dscritic := 'Nao encontrado a conta do responsavel legal';
           RAISE vr_exc_erro;
+        ELSE
+          CLOSE cr_crapass;
         END IF;
-        CLOSE cr_crapass;
 
         -- Verifica se este responsavel ja possui cadastro de pessoa
         rw_pessoa_resp := NULL;
@@ -1177,6 +1179,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         FETCH cr_pessoa INTO rw_pessoa_resp;
         -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
         IF cr_pessoa%NOTFOUND THEN
+          CLOSE cr_pessoa;
+        ELSE 
           CLOSE cr_pessoa;
         END IF;
 
@@ -1189,8 +1193,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
         IF cr_pessoa%NOTFOUND THEN
           CLOSE cr_pessoa;
+        ELSE
+          CLOSE cr_pessoa;
         END IF;
-
       END IF;
 
       --> se localizou pessoa, deve excluir registro
@@ -1957,7 +1962,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                              pr_cdcritic        => vr_cdcritic,
                                              pr_dscritic        => vr_dscritic);
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-            CLOSE cr_pessoa_telefone;
+            IF cr_pessoa_telefone%ISOPEN THEN
+              CLOSE cr_pessoa_telefone;
+            END IF;
             RAISE vr_exc_erro;
           END IF;
 
