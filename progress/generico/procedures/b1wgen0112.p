@@ -16,8 +16,9 @@
   | gera-impexttar                        | EXTR0002.pc_gera_impexttar                |
   | gera-impextapl                        | EXTR0002.pc_gera_impextapl                |
   | consulta-imposto-renda                | EXTR0002.pc_consulta_imposto_renda        |
-  | imprime_extrato                       | EXTR0002.pc_imprime_extrato     
-  +------------------------------------------+----------------------------------------+
+  | imprime_extrato                       | EXTR0002.pc_imprime_extrato               |
+  | extrato_pos_fixado                    | EXTR0002.pc_extrato_pos_fixado            |
+  +---------------------------------------+-------------------------------------------+
   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
@@ -33,7 +34,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 20/04/2017 
+    Data    : Agosto/2011                        Ultima atualizacao: 21/08/2017
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -221,7 +222,9 @@
 				20/04/2017 - Ajuste para remover a rotina consulta-imposto-renda, 
 				             pois nao esta mais sendo utilizada
 							(Adriano - P339).       
-                                                      
+
+                21/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -257,6 +260,7 @@ DEF VAR h-b1wgen0024 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen9999 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0084 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0002 AS HANDLE                                      NO-UNDO.
+DEF VAR h-b1wgen0003 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0081 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen9998 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0001 AS HANDLE                                      NO-UNDO.
@@ -4290,4 +4294,132 @@ PROCEDURE busca_extrato_aplicacao:
 
 END PROCEDURE.
 
+
+PROCEDURE extrato_pos_fixado:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    /*  extrato    */
+    DEF  INPUT PARAM par_dtiniper AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtfimper AS DATE                           NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM TABLE FOR tt-extrato_epr_aux.
+
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-extrato_epr_aux.
+
+    DEF VAR aux_vlsaldo1 AS DECI                                    NO-UNDO.
+    DEF VAR aux_cdcritic AS INTE                                    NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dtmvtoan AS DATE                                    NO-UNDO.
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = "".
+
+    IF NOT VALID-HANDLE(h-b1wgen0002) THEN
+       RUN sistema/generico/procedures/b1wgen0002.p 
+           PERSISTENT SET h-b1wgen0002.          
+    
+    RUN obtem-extrato-emprestimo IN h-b1wgen0002 ( 
+                                    INPUT  par_cdcooper,
+                                    INPUT  par_cdagenci,
+                                    INPUT  par_nrdcaixa,
+                                    INPUT  par_cdoperad,
+                                    INPUT  par_nmdatela,
+                                    INPUT  par_idorigem,
+                                    INPUT  par_nrdconta,
+                                    INPUT  par_idseqttl,
+                                    INPUT  par_nrctremp,
+                                    INPUT  par_dtiniper,
+                                    INPUT  par_dtfimper,
+                                    INPUT  par_flgerlog,
+                                    OUTPUT TABLE tt-erro,
+                                    OUTPUT TABLE tt-extrato_epr).
+
+    IF VALID-HANDLE(h-b1wgen0002) THEN
+       DELETE PROCEDURE h-b1wgen0002.
+
+    IF RETURN-VALUE <> "OK" THEN 
+       RETURN "NOK".
+
+    IF NOT VALID-HANDLE(h-b1wgen0003) THEN
+       RUN sistema/generico/procedures/b1wgen0003.p 
+           PERSISTENT SET h-b1wgen0003.
+
+    FOR EACH tt-extrato_epr BREAK BY tt-extrato_epr.dtmvtolt
+                                     BY tt-extrato_epr.nrparepr
+                                        BY tt-extrato_epr.dsextrat
+                                           BY tt-extrato_epr.flglista:
+                    
+        CREATE tt-extrato_epr_aux.
+
+        BUFFER-COPY tt-extrato_epr TO tt-extrato_epr_aux.
+
+        ASSIGN tt-extrato_epr_aux.vlrdtaxa = 0.
+        
+        /* Lancamento de Juros de Correcao */
+        IF CAN-DO("2344,2345",STRING(tt-extrato_epr.cdhistor)) THEN
+           DO:
+                FOR crappep FIELDS(vltaxatu) WHERE crappep.cdcooper = par_cdcooper            AND
+                                                   crappep.nrdconta = par_nrdconta            AND
+                                                   crappep.nrctremp = par_nrctremp            AND
+                                                   crappep.nrparepr = INTE(tt-extrato_epr.nrparepr)
+                                                   NO-LOCK:
+                  ASSIGN tt-extrato_epr_aux.vlrdtaxa = crappep.vltaxatu.
+                END.
+           END.
+           
+        IF FIRST (tt-extrato_epr.dtmvtolt) THEN
+           DO:
+               /* Saldo Inicial */
+               ASSIGN tt-extrato_epr_aux.vlsaldo  = tt-extrato_epr.vllanmto
+                      tt-extrato_epr_aux.vldebito = tt-extrato_epr.vllanmto
+                      aux_vlsaldo1 = tt-extrato_epr.vllanmto.
+
+               NEXT.
+
+           END.
+   
+        CASE tt-extrato_epr_aux.indebcre:
+            WHEN "C" THEN
+            DO: 
+                ASSIGN tt-extrato_epr_aux.vlcredit = tt-extrato_epr.vllanmto.
+
+                IF tt-extrato_epr.flgsaldo THEN
+                   ASSIGN aux_vlsaldo1 = aux_vlsaldo1 - tt-extrato_epr.vllanmto 
+                          tt-extrato_epr_aux.vlsaldo = aux_vlsaldo1.
+                ELSE
+                   ASSIGN tt-extrato_epr_aux.vlsaldo = aux_vlsaldo1.
+
+            END.
+            WHEN "D" THEN
+            DO: 
+               ASSIGN tt-extrato_epr_aux.vldebito = tt-extrato_epr.vllanmto.
+                        
+               IF tt-extrato_epr.flgsaldo THEN
+                   ASSIGN aux_vlsaldo1 = aux_vlsaldo1 + tt-extrato_epr.vllanmto
+                          tt-extrato_epr_aux.vlsaldo = aux_vlsaldo1.
+                ELSE
+                   ASSIGN tt-extrato_epr_aux.vlsaldo = aux_vlsaldo1.
+
+            END.
+        END CASE.
+    
+    END. /* FOR EACH tt-extrato_epr */
+
+    IF VALID-HANDLE(h-b1wgen0003) THEN
+       DELETE PROCEDURE h-b1wgen0003.
+        
+    RETURN "OK".
+
+END PROCEDURE. /*   extrato pos-fixado   */
 
