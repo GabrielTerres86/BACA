@@ -1,4 +1,4 @@
-glb_Senha,/* .............................................................................
+/* .............................................................................
 
    Programa: Fontes/landpvi.p
    Sistema : Conta-Corrente - Cooperativa de Credito
@@ -2610,26 +2610,27 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                 OUTPUT aut_flgsenha,
                                 OUTPUT aut_cdoperad).
                               
-                              IF <> aut_flgsenha THEN
-                                UNDO, NEXT INICIO.
-                              ELSE
-                                  /*Verrifica se o valor de lançamento é maior ou igual ao valor bloqueado*/
-                                  IF  aux_vlsdbloq <= tel_vllanmto THEN
 
-                                      /*Verifica o valor de alçada do operador.*/
-                                      /*ASSIGN aux_vlpagchq = crapope.vlpagchq.*/
-                                      
-                                      /*Verifica se o valor de alçada é suficiente para efetuar a transaçao*/
-                                      /*IF aux_vlpagchq >= (tel_vllanmto - aux_vlsdbloq) THEN */
-                              DO:
-                                /*Solicita a confirmaçao de pagamento mesmo ocorrendo o estouro da conta.*/
-                                RUN fontes/confirma.p
-                                  (INPUT "Saldo Disp.: " + STRING(aux_vlsddisp,"zzz,zzz,zz9.99-")
-                                          + ". Confirma estouro de conta? S/N",
-                                          OUTPUT aux_confirma).
-                                IF aux_confirma <> "S" THEN
-                                  UNDO, NEXT INICIO.                                  
-                              END. 
+                                IF <> aut_flgsenha THEN
+                                    /*Verrifica se o valor de lançamento é maior ou igual ao valor bloqueado*/
+                                    IF  aux_vlsdbloq <= tel_vllanmto THEN
+
+                                        /*Verifica o valor de alçada do operador.*/
+                                        /*ASSIGN aux_vlpagchq = crapope.vlpagchq.*/
+                                        
+                                        /*Verifica se o valor de alçada é suficiente para efetuar a transaçao*/
+                                        /*IF aux_vlpagchq >= (tel_vllanmto - aux_vlsdbloq) THEN */
+                                DO:
+                                  /*Solicita a confirmaçao de pagamento mesmo ocorrendo o estouro da conta.*/
+                                  RUN fontes/confirma.p
+                                    (INPUT "Saldo Disp.: " + STRING(aux_vlsddisp,"zzz,zzz,zz9.99-")
+                                            + ". Confirma estouro de conta? S/N",
+                                            OUTPUT aux_confirma).
+                                  IF aux_confirma <> "S" THEN
+                                    UNDO, NEXT INICIO.                                  
+                                END. 
+                              ELSE
+                                UNDO, NEXT INICIO.
                           END.             
                     END. /* END IF  CAN-DO("275,394,428",STRING(tel_cdhistor)) */        
 
