@@ -34,6 +34,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --             04/04/2017 - Criacao da procedure pc_gera_arq_saldo_devedor para utilizacao na tela RELSDV
   --                          Jean (Mouts)
   --
+  --             24/01/2018 - Adicionada solicitacao de senha de coordenador para utilizacao do saldo bloqueado no pagamento (Luis Fernando - GFT)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -7842,6 +7843,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 Prj. 302 (Jean Michel).             
 
                    16/03/2017 - Alteracao de mensagem de Contrato em acordo. (Jaison/James)
+                   
+                   24/01/2018 - Adicionada solicitacao de senha de coordenador para utilizacao do saldo bloqueado no pagamento (Luis Fernando - GFT)
     ............................................................................. */
   
     DECLARE
@@ -7866,6 +7869,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                AND ass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
     
+    CURSOR cr_crapdpb IS
+        select nvl(sum(c.vllanmto),0)
+          from craphis x
+             , crapdpb c
+         where c.cdcooper = pr_cdcooper
+           and c.nrdconta = pr_nrdconta
+           and x.cdcooper = c.cdcooper
+           and x.cdhistor = c.cdhistor
+           and x.inhistor in (3,4,5)
+           and c.dtliblan = pr_dtrefere
+           and c.inlibera = 1;
+           
+      vr_vllibera number(25,2);
+    
       --Registro tipo Data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     
@@ -7882,6 +7899,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_crapope  BOOLEAN;
       vr_difpagto NUMBER;
       vr_flgcrass BOOLEAN;
+      vr_vlsdbloque NUMBER;
+      vr_vlsddisptotal NUMBER;
     
       --Variaveis Erro
       vr_cdcritic INTEGER;
@@ -7976,9 +7995,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- que se nao estiver carregado fara a leitura de todas as contas da cooperativa
           -- Quando eh BATCH mantem o padrao TRUE
           vr_flgcrass := TRUE;
+
+      open cr_crapdpb;
+          fetch cr_crapdpb into vr_vllibera;
+          close cr_crapdpb;
         ELSE 
           -- Se nao estiver no BATCH, busca apenas a informacao da conta que esta sendo passada
           vr_flgcrass := FALSE;
+      vr_vllibera := 0;
         END IF;
         
         --Limpar tabela saldos
@@ -8008,7 +8032,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 --nvl(vr_tab_saldos(vr_index_saldo).vlsdbloq, 0) +
                                 --nvl(vr_tab_saldos(vr_index_saldo).vlsdblpr, 0) +
                                 --nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0) +
-                                nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0),2);
+                                nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0) +
+                                vr_vllibera,2); --Valor liberado no dia
+          vr_vlsdbloque := ROUND(
+                                nvl(vr_tab_saldos(vr_index_saldo).vlsdbloq, 0) +
+                                nvl(vr_tab_saldos(vr_index_saldo).vlsdblpr, 0) +
+                                nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0)
+                            ,2); -- Valor bloqueado total
+          vr_vlsddisptotal := nvl(pr_vlsomato, 0)  + nvl(vr_vlsdbloque,0); -- Saldo disponivel total + o bloqueado
         END IF;
       
         --Valor a Pagar Maior Soma total
@@ -8018,14 +8049,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Se encontrou operador
             IF vr_crapope THEN
               --Diferenca no valor pago
-              vr_difpagto := nvl(pr_vlapagar, 0) - nvl(pr_vlsomato, 0);
-              --Valor Diferenca Maior Limite Pagamento Cheque
+              vr_difpagto := nvl(pr_vlapagar, 0) - nvl(vr_vlsddisptotal, 0) ;
+              --Valor Diferenca Maior Limite Pagamento Cheque + Saldo Bloqueado
               IF vr_difpagto > nvl(rw_crapope.vlpagchq, 0) THEN
+              --Caso o saldo disponivel + bloqueado + limite + alçada não atingirem o valor do pagamento, encerra o programa
                 vr_dscritic := 'Saldo alcada do operador insuficiente.';
                 RAISE vr_exc_saida;
               END IF;
             END IF;
           END IF;
+
         
           --Montar Indice para Confirmacao
           vr_index_confirma := pr_tab_msg_confirma.count + 1;
@@ -8037,11 +8070,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             pr_tab_msg_confirma(vr_index_confirma).dsmensag := 'Saldo em conta insuficiente para pagamento da parcela.';     
                     
           ELSE
-                    
-            --Atribuir valores
-            pr_tab_msg_confirma(vr_index_confirma).inconfir := 1;
-            pr_tab_msg_confirma(vr_index_confirma).dsmensag := 'Saldo em conta insuficiente para pagamento da parcela. ' ||
+            -- Verifica se possui saldo bloqueado
+            IF (nvl(vr_vlsdbloque,0)>0 AND (nvl(vr_vlsdbloque,0)+nvl(pr_vlsomato,0))>0) THEN
+              -- Verifica se o Saldo disponivel + limite + saldo bloqueado atingem o valor do pagamento
+              IF (nvl(vr_vlsddisptotal,0)>=nvl(pr_vlapagar,0)) THEN
+                pr_tab_msg_confirma(vr_index_confirma).inconfir := 2;
+                pr_tab_msg_confirma(vr_index_confirma).dsmensag := 'Deseja utilizar o valor do saldo bloqueado?';
+              ELSE -- O valor do saldo + limite + bloqueado são menores que o valor do pagamento, porém com a alçada do operador é possível realizar o pagamento
+                pr_tab_msg_confirma(vr_index_confirma).inconfir := 3;
+                pr_tab_msg_confirma(vr_index_confirma).dsmensag := 'Deseja utilizar o valor do saldo bloqueado e a alcada?';
+              END IF;
+            ELSE
+              pr_tab_msg_confirma(vr_index_confirma).inconfir := 1;
+              pr_tab_msg_confirma(vr_index_confirma).dsmensag := 'Saldo em conta insuficiente para pagamento da parcela. ' ||
                                                                'Confirma pagamento?';
+            END IF;
+
           END IF;                                                                                                                              
         END IF;
       
