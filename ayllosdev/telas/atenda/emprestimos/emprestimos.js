@@ -7709,6 +7709,7 @@ function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao){
         if ($('#cdlcremp', '#' + nomeForm).val() == 6901) {
             $('#idquapro', '#' + nomeForm).val(5);
             $('#dsquapro', '#' + nomeForm).val('CESSAO DE CREDITO');
+            arrayProposta["dsquapro"] = "CESSAO DE CREDITO";
         }else{
 		$('#idquapro', '#' + nomeForm).val(1);
             $('#dsquapro', '#' + nomeForm).val('OPERACAO NORMAL');        
@@ -8096,7 +8097,8 @@ function controlaPesquisas() {
         // Qualifica��o da Opera��o recebe ( 5 - Cess�o de Cart�o)
         if($('#cdlcremp', '#' + nomeForm).val() == 6901){
             $('#idquapro', '#' + nomeForm).val(5);
-            $('#dsquapro', '#' + nomeForm).val('CESSAO DE CREDITO'); 
+            $('#dsquapro', '#' +nomeForm).val('CESSAO DE CREDITO');
+            arrayProposta["dsquapro"] = "CESSAO DE CREDITO";
         }else{
             $('#idquapro', '#' + nomeForm).val(1);
             $('#dsquapro', '#' + nomeForm).val('OPERACAO NORMAL'); 
