@@ -4095,7 +4095,7 @@ PROCEDURE proc_qualif_operacao:
     DEF VAR aux_atraso            AS INTE                           NO-UNDO.
     DEF VAR aux_mai_atraso        AS DECI                           NO-UNDO.
 	DEF VAR aux_qtd_dias_atraso   AS INTE							NO-UNDO.
-	DEF VAR aux_dias_atraso       AS INTE                           NO UNDO.
+	DEF VAR aux_dias_atraso       AS INTE                           NO-UNDO.
 
     DEF VAR par_vlsdeved          AS DECI                           NO-UNDO.
     DEF VAR par_vltotpre          AS DECI                           NO-UNDO.
