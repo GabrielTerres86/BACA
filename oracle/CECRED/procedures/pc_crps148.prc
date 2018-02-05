@@ -107,17 +107,43 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
            sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,3)+1,instr(a.dscritic,';',1,4)-instr(a.dscritic,';',1,3)-1))) vlinfodb,
            sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,4)+1,instr(a.dscritic,';',1,5)-instr(a.dscritic,';',1,4)-1))) vlcompdb,
            sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,5)+1,instr(a.dscritic,';',1,6)-instr(a.dscritic,';',1,5)-1))) qtinfoln,
-           sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,6)+1,instr(a.dscritic,';',1,7)-instr(a.dscritic,';',1,6)-1))) qtcompln,
-           max(to_number(a.dschave)) nrseqdig
+           sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,6)+1,instr(a.dscritic,';',1,7)-instr(a.dscritic,';',1,6)-1))) qtcompln
       from tbgen_batch_relatorio_wrk a
      where a.cdcooper    = pr_cdcooper
        and a.cdprograma  = 'CRPS148'
        and a.dsrelatorio = 'CRAPLOT'
        and a.dtmvtolt    = pr_dtmvtolt;        
 
+cursor cr_crapage_lpp (pr_dtmvtolt in craplpp.dtmvtolt%type) is      
+  select distinct a.cdagenci
+              from craplpp a
+             where a.cdcooper = pr_cdcooper 
+               and a.dtmvtolt = pr_dtmvtolt
+               and a.nrdolote = 8384
+               and a.cdbccxlt = 100       
+    order by a.cdagenci;       
+  
+  --Cursor para buscar lançamentos gerados na apli0001 e reajustar nrseqdig     
+  cursor cr_craplpp(pr_dtmvtolt in craplpp.dtmvtolt%type) is
+    select rownum nrseqdig, 
+           b.rowid,
+           count(*) over() nr_ultseqdig
+      from (select a.*
+              from craplpp a
+             where a.cdcooper = pr_cdcooper 
+               and a.dtmvtolt = pr_dtmvtolt
+               and a.nrdolote = 8384
+               and a.cdbccxlt = 100
+            order by a.cdagenci, 
+                     a.nrseqdig) b;      
+
   --PL TABLE para armazenar indice para realizar update forall
   TYPE typ_tbgen_relwrk IS TABLE OF cr_tbgen_relwrk_trd%ROWTYPE INDEX BY PLS_INTEGER;
   vr_typ_tbgen_relwrk   typ_tbgen_relwrk; 
+  
+  --PL TABLE para armazenar indice para realizar update forall
+  TYPE typ_craplpp IS TABLE OF cr_craplpp%ROWTYPE INDEX BY PLS_INTEGER;
+  vr_typ_craplpp   typ_craplpp;   
   
   vr_tbgen_relwrk_lot cr_tbgen_relwrk_lot%rowtype;
   -- Registro para armazenar as datas
@@ -154,7 +180,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
   vr_idlog_ini_par tbgen_prglog.idprglog%type;
   vr_tpexecucao    tbgen_prglog.tpexecucao%type; 
   vr_qterro        number := 0; 
-  vr_nrseqdig     craplot.nrseqdig%type;  
+  vr_nrseqdig      craplot.nrseqdig%type;  
+  vr_nr_ultseqdig  craplot.nrseqdig%type;  
   
         begin
 
@@ -226,10 +253,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                     pr_dsmensagem         => 'Inicio inserção ou atualização lote 8384 padrão',
                     pr_idprglog           => vr_idlog_ini_ger); 
     
-    vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
-                               pr_nmdcampo => 'NRSEQDIG',
-                               pr_dsdchave => pr_cdcooper||';'||to_char(rw_crapdat.dtmvtopr,'dd/mm/rrrr')||';'||'1;100;8384');    
-    
     begin
       update craplot
          set craplot.tplotmov = 14
@@ -237,7 +260,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
          and craplot.dtmvtolt = rw_crapdat.dtmvtopr
          and craplot.cdagenci = 1
          and craplot.cdbccxlt = 100
-         and craplot.nrdolote = 8384;
+         and craplot.nrdolote = 8384
+       returning craplot.nrseqdig into vr_nrseqdig;
             
     exception
       when others then
@@ -253,15 +277,14 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                              cdbccxlt,
                              nrdolote,
                              tplotmov,
-                             cdcooper,
-                             nrseqdig)
+                             cdcooper)
         values (rw_crapdat.dtmvtopr,
                 1,
                 100,
                 8384,
                 14,
-                pr_cdcooper,
-                vr_nrseqdig);
+                pr_cdcooper)
+        returning craplot.nrseqdig into vr_nrseqdig;
       exception
         when others then
           vr_dscritic := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
@@ -394,7 +417,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
     -- Verifica se algum job executou com erro
     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
                                                   pr_cdprogra    => vr_cdprogra,
-                                                  pr_dtmvtolt    => trunc(sysdate),
+                                                  pr_dtmvtolt    => rw_crapdat.dtmvtolt,
                                                   pr_tpagrupador => 1,
                                                   pr_nrexecucao  => 1);
     if vr_qterro > 0 then 
@@ -458,7 +481,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                                  pr_inproces  => vr_inproces,          --> Indicador do processo
                                  pr_dtmvtolt  => rw_crapdat.dtmvtolt,  --> Data do processo
                                  pr_dtmvtopr  => vr_dtmvtopr,          --> Próximo dia útil
-                                 pr_rpp_rowid => rw_craprpp.rowid,    --> Identificador do registro da tabela CRAPRPP em processamento
+                                 pr_rpp_rowid => rw_craprpp.rowid,     --> Identificador do registro da tabela CRAPRPP em processamento
+                                 pr_cdagenci  => pr_cdagenci,          --> Código da agência paralelizada          
                                  pr_vlsdrdpp  => vr_vlsdrdpp,          --> Saldo da poupança programada
                                  pr_cdcritic  => pr_cdcritic,          --> Código da critica de erro
                                  pr_des_erro  => pr_dscritic);         --> Descrição do erro encontrado
@@ -488,6 +512,46 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
   
   --Se for o programa principal ou sem paralelismo
   if nvl(pr_idparale,0) = 0 then
+    --
+    -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
+    pc_log_programa(PR_DSTIPLOG           => 'O',
+                    PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                    pr_cdcooper           => pr_cdcooper,
+                    pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                    pr_tpocorrencia       => 4,
+                    pr_dsmensagem         => 'Inicio - Atualiza tabela craplpp.',
+                    PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                    
+    --Ajusta nrseqdi tabela craplpp                     
+    open cr_craplpp(rw_crapdat.dtmvtopr); 
+    loop 
+      --fetch no cursor carregando 200 mil registros
+      fetch cr_craplpp bulk collect into vr_typ_craplpp limit 200000; 
+      
+        --Sai após processar os registros.
+        exit when vr_typ_craplpp.count = 0; 
+        --Realiza update dos registros utilizando forall
+        forall idx in 1 .. vr_typ_craplpp.count 
+          update craplpp lpp 
+             set lpp.nrdocmto = vr_typ_craplpp(idx).nrseqdig,
+                 lpp.nrseqdig = vr_typ_craplpp(idx).nrseqdig,
+                 lpp.cdagenci = 1
+           where rowid = vr_typ_craplpp(idx).rowid; 
+             
+      if vr_nr_ultseqdig is null then
+        vr_nr_ultseqdig := vr_typ_craplpp(vr_typ_craplpp.count).nr_ultseqdig;
+      end if;
+    end loop;
+    close cr_craplpp;
+
+    -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
+    pc_log_programa(PR_DSTIPLOG           => 'O',
+                    PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                    pr_cdcooper           => pr_cdcooper,
+                    pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                    pr_tpocorrencia       => 4,
+                    pr_dsmensagem         => 'Fim - Atualiza tabela craplpp.',
+                    PR_IDPRGLOG           => vr_idlog_ini_ger);   
 
 
     -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
@@ -513,8 +577,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
            where rowid = vr_typ_tbgen_relwrk(idx).rowid_trd; 
           
     end loop;
-    
-    delete from tbgen_batch_relatorio_wrk where cdprograma = 'CRPS148' and dsrelatorio = 'CRAPTRD';
+    close cr_tbgen_relwrk_trd; 
 
 
     -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
@@ -550,8 +613,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                craplot.qtcompln = vr_tbgen_relwrk_lot.qtcompln,
                craplot.vlinfodb = vr_tbgen_relwrk_lot.vlinfodb,
                craplot.vlcompdb = vr_tbgen_relwrk_lot.vlcompdb,
-               craplot.nrseqdig = vr_tbgen_relwrk_lot.nrseqdig 
-         where craplot.dtmvtolt = rw_crapdat.dtmvtolt
+               craplot.nrseqdig = vr_nr_ultseqdig
+         where craplot.dtmvtolt = rw_crapdat.dtmvtopr
            and craplot.cdagenci = 1
            and craplot.cdbccxlt = 100
            and craplot.nrdolote = 8384
