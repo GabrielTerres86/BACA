@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 25/01/2018
+   Data    : 14/09/2005                        Ultima atualizacao: 05/02/2018
 
    Dados referentes ao programa:
 
@@ -718,11 +718,15 @@
 			               Alterar Somente Avalista (Marcos-Supero)
 
 			  23/01/2018 - Alterada Regras para retorno da Qualificação da Operação de acordo com dias de atraso. 
-						   (Diego Simas - AMcom) (Projeto Regulatórios Crédito).
+						   (Diego Simas - AMcom) (Projeto Regulatório Crédito).
 
 			  25/01/2018 - Alteração nas procedures obtem-dados-proposta-emprestimo e grava-proposta-completa
 			               para considerar o novo campo DSNIVORI (Nível de Risco Original da Proposta).
-						   (Reginaldo - AMcom) (Projeto Regulatórios Crédito).
+						   (Reginaldo - AMcom) (Projeto Regulatório Crédito).
+
+			  05/02/2018 - Alterado a rotina obtem-dados-emprestimos para ao final da sua execução verificar se 
+						   existe liquidações LIMITE/ADP.
+						   (Diego Simas - AMcom) (Projeto Regulatório Crédito).
 
  ..............................................................................*/
 
@@ -4090,6 +4094,7 @@ PROCEDURE proc_qualif_operacao:
     DEF VAR aux_qtprecal          AS DECI                           NO-UNDO.
     DEF VAR aux_atraso            AS INTE                           NO-UNDO.
     DEF VAR aux_mai_atraso        AS DECI                           NO-UNDO.
+	DEF VAR aux_qtd_dias_atraso   AS INTE							NO-UNDO.
 
     DEF VAR par_vlsdeved          AS DECI                           NO-UNDO.
     DEF VAR par_vltotpre          AS DECI                           NO-UNDO.
@@ -4169,24 +4174,26 @@ PROCEDURE proc_qualif_operacao:
 
 	/* Alterada Regras para preenchimento do campo Qualificação da Operação */
 	/* Diego Simas - AMcom													*/
-
 	/* ANTERIOR - 0 dias de atraso											*/
 	/* ALTERADO - De 0 a 4 dias de atraso - Renovação de Crédito			*/ 
-    IF  aux_mai_atraso < 5 THEN
+	aux_qtd_dias_atraso = par_dtmvtolt - crabepr.dtultpag.
+
+
+    IF  aux_qtd_dias_atraso < 5 THEN
         ASSIGN par_idquapro = 2
                par_dsquapro = "Renovacao de credito".
     ELSE
 
 	/* ANTERIOR - 1 dia de atraso											*/
 	/* ALTERADO - De 5 a 60 dias de atraso - Renegociação de Crédito		*/ 
-    IF  aux_mai_atraso > 4 AND aux_mai_atraso < 61 THEN
+    IF  aux_qtd_dias_atraso > 4 AND aux_qtd_dias_atraso < 61 THEN
         ASSIGN par_idquapro = 3               
                par_dsquapro = "Renegociacao de credito".
     ELSE
 
 	/* ANTERIOR - Mais de 1 dia de atraso									*/
 	/* ALTERADO - Igual ou acima de 61 dias - Composição de dívida			*/
-	IF  aux_mai_atraso >= 61 THEN
+	IF  aux_qtd_dias_atraso >= 61 THEN
         ASSIGN par_idquapro = 4
                par_dsquapro = "Composicao da divida".
 
