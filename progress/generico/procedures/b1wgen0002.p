@@ -4168,7 +4168,8 @@ PROCEDURE proc_qualif_operacao:
 
         IF  aux_mai_atraso < aux_atraso THEN
             aux_mai_atraso = aux_atraso.
-
+		
+		aux_qtd_dias_atraso = par_dtmvtolt - crabepr.dtultpag.
 
     END. /* Fim FOR EACH crabepr */
 
@@ -4176,8 +4177,6 @@ PROCEDURE proc_qualif_operacao:
 	/* Diego Simas - AMcom													*/
 	/* ANTERIOR - 0 dias de atraso											*/
 	/* ALTERADO - De 0 a 4 dias de atraso - Renovação de Crédito			*/ 
-	aux_qtd_dias_atraso = par_dtmvtolt - crabepr.dtultpag.
-
 
     IF  aux_qtd_dias_atraso < 5 THEN
         ASSIGN par_idquapro = 2
