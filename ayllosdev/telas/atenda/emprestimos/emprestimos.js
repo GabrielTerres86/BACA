@@ -118,8 +118,8 @@
  * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
  * 096: [01/12/2017] NÃ£o permitir acesso a opÃ§Ã£o de incluir quando conta demitida (Jonata - RKAM P364).
  * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom)  
- * 099: [21/12/2017] Alterado para quando a linha de crédito for (6901 - Cessão Cartão Crédito) a 
- *                   qualificação da operação seja (5 - Cessão de Cartão) (Diego Simas - AMcom)
+ * 099: [21/12/2017] Alterado para quando a linha de crï¿½dito for (6901 - Cessï¿½o Cartï¿½o Crï¿½dito) a 
+ *                   qualificaï¿½ï¿½o da operaï¿½ï¿½o seja (5 - Cessï¿½o de Cartï¿½o) (Diego Simas - AMcom)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -3711,7 +3711,7 @@ function atualizaArray(novaOp, cdcooper) {
 
 function copiaProposta(novaOp) {
     arrayProposta['nivrisco'] = $('#nivrisco', '#frmNovaProp').val();
-    arrayProposta['nivriori'] = $('#nivrisco', '#frmNovaProp').val(); // nível de risco original
+    arrayProposta['nivriori'] = $('#nivrisco', '#frmNovaProp').val(); // nï¿½vel de risco original
     arrayProposta['nivcalcu'] = $('#nivcalcu', '#frmNovaProp').val();
     arrayProposta['vlemprst'] = $('#vlemprst', '#frmNovaProp').val();
     arrayProposta['cdlcremp'] = $('#cdlcremp', '#frmNovaProp').val();
@@ -7708,10 +7708,10 @@ function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao){
 	} else {
         if ($('#cdlcremp', '#' + nomeForm).val() == 6901) {
             $('#idquapro', '#' + nomeForm).val(5);
-            $('#dsquapro', '#' + nomeForm).val('CessÃ£o de CrÃ©dito');
+            $('#dsquapro', '#' + nomeForm).val('CESSAO DE CREDITO');
         }else{
 		$('#idquapro', '#' + nomeForm).val(1);
-            $('#dsquapro', '#' + nomeForm).val('OperaÃ§Ã£o Normal');        
+            $('#dsquapro', '#' + nomeForm).val('OPERACAO NORMAL');        
         }		
 	}
 
@@ -8092,8 +8092,8 @@ function controlaPesquisas() {
 
     // Linha de Credito
     $('#cdlcremp', '#' + nomeForm).unbind('change').bind('change', function() {
-        // Alterado para quando a linha de crédito for (Cessão de Cartão) a
-        // Qualificação da Operação recebe ( 5 - Cessão de Cartão)
+        // Alterado para quando a linha de crï¿½dito for (Cessï¿½o de Cartï¿½o) a
+        // Qualificaï¿½ï¿½o da Operaï¿½ï¿½o recebe ( 5 - Cessï¿½o de Cartï¿½o)
         if($('#cdlcremp', '#' + nomeForm).val() == 6901){
             $('#idquapro', '#' + nomeForm).val(5);
             $('#dsquapro', '#' + nomeForm).val('CessÃ£o de CrÃ©dito'); 
