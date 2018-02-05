@@ -24,7 +24,7 @@ begin
   dbms_output.put_line('Inicio do programa');
   
   -- Mensageria
-  OPEN cr_craprdr(pr_nmprogra => 'TELA_ATENDA_PRESTACOES');
+  OPEN cr_craprdr(pr_nmprogra => 'EMPR0001');
   FETCH cr_craprdr INTO rw_craprdr;
     
   -- Verifica se existe a tela do ayllos web
@@ -36,13 +36,13 @@ begin
     -- Insere ação da tela do aylloas web
     INSERT INTO craprdr(nmprogra
                        ,dtsolici) 
-                 values('TELA_ATENDA_PRESTACOES'
+                 values('EMPR0001'
                        ,SYSDATE);
     -- Posiciona no registro criado
-    OPEN cr_craprdr(pr_nmprogra => 'TELA_ATENDA_PRESTACOES');
+    OPEN cr_craprdr(pr_nmprogra => 'EMPR0001');
     FETCH cr_craprdr INTO rw_craprdr;
 
-    dbms_output.put_line('Insere CRAPRDR -> TELA_ATENDA_PRESTACOES: ' || rw_craprdr.nrseqrdr);
+    dbms_output.put_line('Insere CRAPRDR -> EMPR0001: ' || rw_craprdr.nrseqrdr);
 
   END IF;  
   
@@ -53,7 +53,7 @@ begin
   
   -- TELA_ATENDA_PRESTACOES - ACAO CONSULTAR
   OPEN cr_crapaca(pr_nmdeacao => 'CONSULTAR_LIMITE_CC'
-                 ,pr_nmpackag => 'TELA_ATENDA_PRESTACOES'
+                 ,pr_nmpackag => 'EMPR0001'
                  ,pr_nmproced => 'pc_consultar_limite_cc'
                  ,pr_nrseqrdr => rw_craprdr.nrseqrdr);
                    
@@ -69,12 +69,12 @@ begin
                         lstparam, 
                         nrseqrdr) 
                  VALUES('CONSULTAR_LIMITE_CC',
-                        'TELA_ATENDA_PRESTACOES',
+                        'EMPR0001',
                         'pc_consultar_limite_cc',
                         'pr_cdcooper, pr_nrdconta',
                         rw_craprdr.nrseqrdr);
                              
-    dbms_output.put_line('Insere CRAPACA -> CONSULTAR_CONTROLE -> TELA_ATENDA_PRESTACOES.pc_consultar_limite_cc');
+    dbms_output.put_line('Insere CRAPACA -> CONSULTAR_CONTROLE -> EMPR0001.pc_consultar_limite_cc');
     
   END IF;
   
