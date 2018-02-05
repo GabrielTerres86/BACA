@@ -4095,6 +4095,7 @@ PROCEDURE proc_qualif_operacao:
     DEF VAR aux_atraso            AS INTE                           NO-UNDO.
     DEF VAR aux_mai_atraso        AS DECI                           NO-UNDO.
 	DEF VAR aux_qtd_dias_atraso   AS INTE							NO-UNDO.
+	DEF VAR aux_dias_atraso       AS INTE                           NO UNDO.
 
     DEF VAR par_vlsdeved          AS DECI                           NO-UNDO.
     DEF VAR par_vltotpre          AS DECI                           NO-UNDO.
@@ -4171,6 +4172,9 @@ PROCEDURE proc_qualif_operacao:
 		
 		aux_qtd_dias_atraso = par_dtmvtolt - crabepr.dtultpag.
 
+		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
+		   aux_dias_atraso = aux_qtd_dias_atraso.
+
     END. /* Fim FOR EACH crabepr */
 
 	/* Alterada Regras para preenchimento do campo Qualificação da Operação */
@@ -4178,21 +4182,21 @@ PROCEDURE proc_qualif_operacao:
 	/* ANTERIOR - 0 dias de atraso											*/
 	/* ALTERADO - De 0 a 4 dias de atraso - Renovação de Crédito			*/ 
 
-    IF  aux_qtd_dias_atraso < 5 THEN
+    IF  aux_dias_atraso < 5 THEN
         ASSIGN par_idquapro = 2
                par_dsquapro = "Renovacao de credito".
     ELSE
 
 	/* ANTERIOR - 1 dia de atraso											*/
 	/* ALTERADO - De 5 a 60 dias de atraso - Renegociação de Crédito		*/ 
-    IF  aux_qtd_dias_atraso > 4 AND aux_qtd_dias_atraso < 61 THEN
+    IF  aux_dias_atraso > 4 AND aux_dias_atraso < 61 THEN
         ASSIGN par_idquapro = 3               
                par_dsquapro = "Renegociacao de credito".
     ELSE
 
 	/* ANTERIOR - Mais de 1 dia de atraso									*/
 	/* ALTERADO - Igual ou acima de 61 dias - Composição de dívida			*/
-	IF  aux_qtd_dias_atraso >= 61 THEN
+	IF  aux_dias_atraso >= 61 THEN
         ASSIGN par_idquapro = 4
                par_dsquapro = "Composicao da divida".
 
