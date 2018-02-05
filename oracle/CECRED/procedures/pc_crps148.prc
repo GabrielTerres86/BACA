@@ -1,11 +1,11 @@
 CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcooper%TYPE
                                                 ,pr_cdagenci  IN crapage.cdagenci%TYPE  --> Codigo Agencia 
                                                 ,pr_idparale  IN crappar.idparale%TYPE  --> Indicador de processoparalelo
-                                                ,pr_flgresta  IN PLS_INTEGER            --> Indicador para utilização de restart
-                                                ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
-                                                ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
-                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                                ,pr_dscritic OUT varchar2) is
+                     ,pr_flgresta  IN PLS_INTEGER            --> Indicador para utilização de restart
+                     ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
+                     ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
+                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                     ,pr_dscritic OUT varchar2) is
                                         
 /* ..........................................................................
 
@@ -27,7 +27,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                27/09/2004 - Aumentado nro digitos nrctrrpp(Mirtes)
 
                16/02/2006 - Unificacao dos Bancos de Dados - SQLWorks - Andre
-               
                04/06/2008 - Alterado para nao considerar cdsitrpp = 5 (poupanca
                             baixada pelo vencimento)  no for each na craprpp.
                             (Rosangela)
@@ -100,7 +99,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
        and a.cdprograma  = 'CRPS148'
        and a.dsrelatorio = 'CRAPTRD'
        and a.dtmvtolt    = pr_dtmvtolt; 
-       
+              
   --Cursor para buscar valores e atualizar a capa do lote na tabela craplot            
   cursor cr_tbgen_relwrk_lot(pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type) is
     select sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1))) vlinfocr,
@@ -108,14 +107,13 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
            sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,3)+1,instr(a.dscritic,';',1,4)-instr(a.dscritic,';',1,3)-1))) vlinfodb,
            sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,4)+1,instr(a.dscritic,';',1,5)-instr(a.dscritic,';',1,4)-1))) vlcompdb,
            sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,5)+1,instr(a.dscritic,';',1,6)-instr(a.dscritic,';',1,5)-1))) qtinfoln,
-           sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,6)+1,instr(a.dscritic,';',1,7)-instr(a.dscritic,';',1,6)-1))) qtcompln/*,
-           max(to_number(a.dschave)) nrseqdig*/
+           sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,6)+1,instr(a.dscritic,';',1,7)-instr(a.dscritic,';',1,6)-1))) qtcompln
       from tbgen_batch_relatorio_wrk a
      where a.cdcooper    = pr_cdcooper
        and a.cdprograma  = 'CRPS148'
        and a.dsrelatorio = 'CRAPLOT'
-       and a.dtmvtolt    = pr_dtmvtolt;  
-       
+       and a.dtmvtolt    = pr_dtmvtolt;        
+
 cursor cr_crapage_lpp (pr_dtmvtolt in craplpp.dtmvtolt%type) is      
   select distinct a.cdagenci
               from craplpp a
@@ -126,8 +124,7 @@ cursor cr_crapage_lpp (pr_dtmvtolt in craplpp.dtmvtolt%type) is
     order by a.cdagenci;       
   
   --Cursor para buscar lançamentos gerados na apli0001 e reajustar nrseqdig     
-  cursor cr_craplpp(pr_dtmvtolt in craplpp.dtmvtolt%type/*,
-                    pr_cdagenci in craplpp.cdagenci%type*/) is
+  cursor cr_craplpp(pr_dtmvtolt in craplpp.dtmvtolt%type) is
     select rownum nrseqdig, 
            b.rowid,
            count(*) over() nr_ultseqdig
@@ -137,7 +134,6 @@ cursor cr_crapage_lpp (pr_dtmvtolt in craplpp.dtmvtolt%type) is
                and a.dtmvtolt = pr_dtmvtolt
                and a.nrdolote = 8384
                and a.cdbccxlt = 100
---               and a.cdagenci = pr_cdagenci 
             order by a.cdagenci, 
                      a.nrseqdig) b;      
 
@@ -187,7 +183,7 @@ cursor cr_crapage_lpp (pr_dtmvtolt in craplpp.dtmvtolt%type) is
   vr_nrseqdig      craplot.nrseqdig%type;  
   vr_nr_ultseqdig  craplot.nrseqdig%type;  
   
-begin
+        begin
 
   vr_cdprogra := 'CRPS148';
   --
@@ -205,14 +201,12 @@ begin
   -- Incluir nome do módulo logado
   gene0001.pc_informa_acesso(pr_module => 'PC_CRPS148',
                              pr_action => vr_cdprogra);
-                             
   -- Validações iniciais do programa
   btch0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                            ,pr_flgbatch => 1
                            ,pr_cdprogra => vr_cdprogra
                            ,pr_infimsol => pr_infimsol
                            ,pr_cdcritic => pr_cdcritic);
-                                               
   -- Se retornou algum erro
   if pr_cdcritic <> 0 then
     -- Buscar descrição do erro
@@ -307,11 +301,11 @@ begin
                     pr_tpocorrencia       => 4,
                     pr_dsmensagem         => 'Fim inserção ou atualização lote 8384 padrão',
                     pr_idprglog           => vr_idlog_ini_ger); 
-
+    
     commit;    
     
   end if;
-
+  
   -- Buscar quantidade parametrizada de Jobs
   vr_qtdjobs := gene0001.fn_retorna_qt_paralelo( pr_cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
                                                , vr_cdprogra --pr_cdprogra  IN crapprg.cdprogra%TYPE    --> Código do programa
@@ -321,7 +315,7 @@ begin
   if vr_inproces         > 2 and
      vr_qtdjobs          > 0 and 
      pr_cdagenci         = 0 then  
-
+  
     -- Gerar o ID para o paralelismo
     vr_idparale := gene0001.fn_gera_ID_paralelo;
     
@@ -331,7 +325,7 @@ begin
        vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_ID_paral.';
        RAISE vr_exc_saida;
     END IF;
-    
+                                          
     -- Verifica se algum job paralelo executou com erro
     vr_qterro := 0;
     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
@@ -339,7 +333,7 @@ begin
                                                   pr_dtmvtolt    => rw_crapdat.dtmvtolt,
                                                   pr_tpagrupador => 1,
                                                   pr_nrexecucao  => 1);     
-
+                                          
     -- Retorna as agências, com poupança programada
     for rw_craprpp_age in cr_craprpp_age (pr_cdcooper,
                                           vr_dtmvtopr,
@@ -431,7 +425,7 @@ begin
       vr_dscritic := 'Paralelismo possui job executado com erro. Verificar na tabela tbgen_batch_controle e tbgen_prglog';
       raise vr_exc_saida;
     end if;
-    
+
   else 
     
     if pr_cdagenci <> 0 then
@@ -479,7 +473,7 @@ begin
     for rw_craprpp in cr_craprpp (pr_cdcooper,
                                   vr_dtmvtopr,
                                   pr_cdagenci) loop
-                                  
+      
       --Executa cálculo de poupança (antigo poupanca.i)
       apli0001.pc_calc_poupanca (pr_cdcooper  => pr_cdcooper,          --> Cooperativa
                                  pr_dstextab  => vr_prcaplic,          --> Percentual de IR da aplicação
@@ -559,7 +553,7 @@ begin
                     pr_dsmensagem         => 'Fim - Atualiza tabela craplpp.',
                     PR_IDPRGLOG           => vr_idlog_ini_ger);   
 
-  
+
     -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
     pc_log_programa(PR_DSTIPLOG           => 'O',
                     PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
@@ -584,7 +578,6 @@ begin
           
     end loop;
     close cr_tbgen_relwrk_trd; 
-    --delete from tbgen_batch_relatorio_wrk where cdprograma = 'CRPS148' and dsrelatorio = 'CRAPTRD';
 
 
     -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
@@ -620,7 +613,7 @@ begin
                craplot.qtcompln = vr_tbgen_relwrk_lot.qtcompln,
                craplot.vlinfodb = vr_tbgen_relwrk_lot.vlinfodb,
                craplot.vlcompdb = vr_tbgen_relwrk_lot.vlcompdb,
-               craplot.nrseqdig = vr_nr_ultseqdig--vr_tbgen_relwrk_lot.nrseqdig 
+               craplot.nrseqdig = vr_nr_ultseqdig
          where craplot.dtmvtolt = rw_crapdat.dtmvtopr
            and craplot.cdagenci = 1
            and craplot.cdbccxlt = 100
@@ -634,7 +627,7 @@ begin
           raise vr_exc_saida;            
       end;
       
-    end if;
+  end if;    
     --Fecha cursor
     close cr_tbgen_relwrk_lot;
     
@@ -650,7 +643,7 @@ begin
         vr_dscritic := 'Erro ao deletar tabela tbgen_batch_relatorio_wrk: '||sqlerrm;
         raise vr_exc_saida;            
     end;    
-    
+  
     -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
     pc_log_programa(PR_DSTIPLOG           => 'O',
                     PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
@@ -662,7 +655,7 @@ begin
 
  
     -- Processo OK, devemos chamar a fimprg
-    btch0001.pc_valida_fimprg (pr_cdcooper => pr_cdcooper
+  btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                               ,pr_cdprogra => vr_cdprogra
                               ,pr_infimsol => pr_infimsol
                               ,pr_stprogra => pr_stprogra);
@@ -681,11 +674,11 @@ begin
                                                       
     end if; 
  
-    --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
-    pc_log_programa(pr_dstiplog   => 'F',    
-                    pr_cdprograma => vr_cdprogra,           
-                    pr_cdcooper   => pr_cdcooper, 
-                    pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+      --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
+      pc_log_programa(pr_dstiplog   => 'F',    
+                      pr_cdprograma => vr_cdprogra,           
+                      pr_cdcooper   => pr_cdcooper, 
+                      pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                     pr_idprglog   => vr_idlog_ini_ger,
                     pr_flgsucesso => 1);                 
 
@@ -702,8 +695,8 @@ begin
     -- Encerrar o job do processamento paralelo dessa agência
     gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                 ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                ,pr_des_erro => vr_dscritic);                                       
-                                       
+                                ,pr_des_erro => vr_dscritic);  
+  
     --Salvar informacoes no banco de dados
     commit;
   end if;
@@ -725,7 +718,7 @@ exception
                       pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
                                                'pr_dscritic:'||pr_dscritic,
                       PR_IDPRGLOG           => vr_idlog_ini_par);   
-                      
+    
       --Grava data fim para o JOB na tabela de LOG 
       pc_log_programa(pr_dstiplog   => 'F',    
                       pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
@@ -804,7 +797,7 @@ exception
                       pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
                                                'pr_dscritic:'||pr_dscritic,
                       PR_IDPRGLOG           => vr_idlog_ini_par);   
-
+    
       --Grava data fim para o JOB na tabela de LOG 
       pc_log_programa(pr_dstiplog   => 'F',    
                       pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
@@ -826,3 +819,4 @@ exception
     rollback;
 END;
 /
+
