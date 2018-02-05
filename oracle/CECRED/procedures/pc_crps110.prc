@@ -9,7 +9,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS110" (pr_cdcooper  IN crapcop.cdcoope
 BEGIN
 
 /* .............................................................................
-
  Programa: pc_crps110                      Antigo: Fontes/crps110.p
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
@@ -137,6 +136,10 @@ BEGIN
      vr_tab_detalhe_pa   typ_tab_detalhe_pa;
      vr_tab_erro         GENE0001.typ_tab_erro;
      
+     --Variáveis auxiliares para verificar se os registros foram inseridos na WRK 
+     vr_tab_tot_qtaplica_ret NUMBER;      
+     vr_tab_tot_vlsdrdca_ret NUMBER;
+     
      -- Qtde parametrizada de Jobs
      vr_qtdjobs       number;
      -- Job name dos processos criados
@@ -153,6 +156,7 @@ BEGIN
      vr_qterro        number := 0;
      vr_dscritic      varchar2(4000);
      vr_tpexecucao    tbgen_prglog.tpexecucao%type;
+     
 
      -- Selecionar os dados da Cooperativa
      CURSOR cr_crapcop (pr_cdcooper IN craptab.cdcooper%TYPE) IS
@@ -178,7 +182,8 @@ BEGIN
        FROM crapage crapage
        WHERE  crapage.cdcooper = pr_cdcooper
          --Inclusão de filtro por agência para tratar o paralelismo
-         AND  crapage.cdagenci = decode(pr_cdagenci,0,crapage.cdagenci,pr_cdagenci);    
+         AND  crapage.cdagenci = decode(pr_cdagenci,0,crapage.cdagenci,pr_cdagenci)
+       ORDER BY crapage.cdagenci;    
          
      --Selecionar todas as agencias
      CURSOR cr_crapage_par (pr_cdcooper IN crapass.cdcooper%TYPE
@@ -319,8 +324,7 @@ BEGIN
      vr_vlrevers NUMBER;      --> Valor de Reversão
      vr_percirrf NUMBER;      --> Percentual do IRRF
      vr_vlbascal NUMBER := 0; --> Valor Base Cálculo
-
-
+     
      --Variavel usada para montar o indice da tabela de memoria
      vr_index_detalhe VARCHAR2(8);
      vr_index_agencia INTEGER;
@@ -328,7 +332,6 @@ BEGIN
 
      -- Variável para armazenar as informações em XML
      vr_des_xml     CLOB;
-
      --Variaveis para retorno de erro
      vr_des_erro    VARCHAR2(4000);
      vr_des_compl   VARCHAR2(4000);
@@ -342,7 +345,47 @@ BEGIN
      vr_exc_saida  EXCEPTION;
      vr_exc_fimprg EXCEPTION;
      vr_exc_pula   EXCEPTION;
-
+     
+     --Character separador utilizado para popular a tabela Work
+     ds_character_separador constant varchar2(1) := '#';
+     
+     --Procedure utilizada para popular informações na tabela tbgen_batch_relatorio_wrk
+     --O seu objetivo é auxiliar a geração dos totais quando a procedure for executada em paralelo
+     PROCEDURE pc_popular_tab_totais_wrk (pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                         ,pr_cdagenci   IN crapage.cdagenci%TYPE  
+                                         ,pr_cdprograma IN tbgen_batch_relatorio_wrk.cdprograma%TYPE
+                                         ,pr_dschave    IN VARCHAR2
+                                         ,pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
+                                         ,pr_nrdconta   IN crapass.nrdconta%TYPE
+                                         ,pr_dsxml      IN VARCHAR2
+                                         ,pr_dscritic   IN VARCHAR2) IS
+     BEGIN
+       BEGIN  
+         insert into tbgen_batch_relatorio_wrk(CDCOOPER
+                                              ,CDPROGRAMA
+                                              ,DSRELATORIO
+                                              ,Dscritic
+                                              ,DSCHAVE
+                                              ,DTMVTOLT
+                                              ,CDAGENCI
+                                              ,NRDCONTA
+                                              ,DSXML) values (pr_cdcooper
+                                                             ,pr_cdprograma
+                                                             ,'crrl090_999'
+                                                             ,pr_dscritic
+                                                             ,pr_dschave
+                                                             ,pr_dtmvtolt
+                                                             ,pr_cdagenci
+                                                             ,pr_nrdconta
+                                                             ,pr_dsxml 
+                                                             ); 
+       EXCEPTION 
+         WHEN OTHERS THEN 
+           vr_dscritic := 'Erro ao inserir informações na tabela auxiliar. Erro SQL: '||sqlerrm; 
+           raise vr_exc_saida;
+       END; 
+     END pc_popular_tab_totais_wrk;
+     
      --Procedure para limpar os dados das tabelas de memoria
      PROCEDURE pc_limpa_tabela IS
      BEGIN
@@ -380,9 +423,23 @@ BEGIN
        dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
      END;
 
-     --Geração do relatório crrl090 totalizador
+     --Geração do relatório crrl090 para agência 999 (totalizador)
      PROCEDURE pc_imprime_crrl090_total (pr_des_erro OUT VARCHAR2) IS
-
+       CURSOR cr_vr_tab_detalhe IS
+         select  distinct 
+                 to_date(wrk.dschave,'yyyy/mm/dd') as dtfimper
+                ,sum(substr(dbms_lob.substr(wrk.dsxml),dbms_lob.instr(wrk.dsxml,'#',1)+1,1)) as qtaplica
+                ,sum(substr(dbms_lob.substr(wrk.dsxml),dbms_lob.instr(wrk.dsxml,'#',1,2)+1
+                                                  ,dbms_lob.instr(wrk.dsxml,'#',1,3) - dbms_lob.instr(wrk.dsxml,'#',1,2) -1
+                                                  )) as vlaplica
+                ,sum(substr(dbms_lob.substr(wrk.dsxml),dbms_lob.instr(wrk.dsxml,'#',1,3)+1)) as vlsdrdca
+         from tbgen_batch_relatorio_wrk wrk  
+         where cdcooper       = pr_cdcooper
+           and wrk.cdprograma = vr_cdprogra 
+           and wrk.dscritic   = 'vr_tab_detalhe'   
+         group by to_date(wrk.dschave,'yyyy/mm/dd')
+         order by to_date(wrk.dschave,'yyyy/mm/dd') asc;
+       
        --Variaveis Locais
        vr_nrcopias     INTEGER;
        vr_qtaplica     INTEGER;
@@ -410,24 +467,35 @@ BEGIN
 
        --Zerar o totalizador do saldo
        vr_tot_vlsdrdca:= 0;
-
-       --Acessar primeiro registro da tabela de memoria de detalhe
-       vr_index_detalhe:= vr_tab_detalhe.FIRST;
-       WHILE vr_index_detalhe IS NOT NULL  LOOP
-         --Montar tag da conta para arquivo XML
-         pc_escreve_xml
-           ('<detalhe>
-              <dtfimper>'||To_Char(vr_tab_detalhe(vr_index_detalhe).dtrefere,'DD/MM/YYYY')||'</dtfimper>
-              <qtaplica>'||To_Char(vr_tab_detalhe(vr_index_detalhe).qtaplica,'999g999g990')||'</qtaplica>
-              <vlaplica>'||To_Char(vr_tab_detalhe(vr_index_detalhe).vlaplica,'fm999g999g999g990d00')||'</vlaplica>
-              <vlsdrdca>'||To_Char(vr_tab_detalhe(vr_index_detalhe).vlsdrdca,'fm999g999g999g990d00')||'</vlsdrdca>
-           </detalhe>');
-         --Acumular o total geral para o calculo do percentual
-         vr_tot_vlsdrdca:= Nvl(vr_tot_vlsdrdca,0) + Nvl(vr_tab_detalhe(vr_index_detalhe).vlsdrdca,0);
-         --Encontrar o proximo registro da tabela de memoria
-         vr_index_detalhe:= vr_tab_detalhe.NEXT(vr_index_detalhe);
-       END LOOP;
-
+       --Se estiver executando por paralelismo
+       if vr_inproces  > 2 and vr_qtdjobs > 0 then 
+         FOR cur_tab_detalhe IN cr_vr_tab_detalhe LOOP 
+           pc_escreve_xml('<detalhe>
+                              <dtfimper>'||To_Char(cur_tab_detalhe.dtfimper,'DD/MM/YYYY')||'</dtfimper>
+                              <qtaplica>'||To_Char(cur_tab_detalhe.qtaplica,'999g999g990')||'</qtaplica>
+                              <vlaplica>'||To_Char(cur_tab_detalhe.vlaplica,'fm999g999g999g990d00')||'</vlaplica>
+                              <vlsdrdca>'||To_Char(cur_tab_detalhe.vlsdrdca,'fm999g999g999g990d00')||'</vlsdrdca>
+                           </detalhe>');                                                                                                                                                
+           --Acumular o total geral para o calculo do percentual
+           vr_tot_vlsdrdca:= Nvl(vr_tot_vlsdrdca,0) + Nvl(cur_tab_detalhe.vlsdrdca,0);
+         END LOOP;
+       else 
+         --Acessar primeiro registro da tabela de memoria de detalhe
+         vr_index_detalhe:= vr_tab_detalhe.FIRST;
+         WHILE vr_index_detalhe IS NOT NULL  LOOP
+           pc_escreve_xml('<detalhe>
+                              <dtfimper>'||To_Char(vr_tab_detalhe(vr_index_detalhe).dtrefere,'DD/MM/YYYY')||'</dtfimper>
+                              <qtaplica>'||To_Char(vr_tab_detalhe(vr_index_detalhe).qtaplica,'999g999g990')||'</qtaplica>
+                              <vlaplica>'||To_Char(vr_tab_detalhe(vr_index_detalhe).vlaplica,'fm999g999g999g990d00')||'</vlaplica>
+                              <vlsdrdca>'||To_Char(vr_tab_detalhe(vr_index_detalhe).vlsdrdca,'fm999g999g999g990d00')||'</vlsdrdca>
+                           </detalhe>');                                                                                                                                                                                                    
+           --Acumular o total geral para o calculo do percentual
+           vr_tot_vlsdrdca:= Nvl(vr_tot_vlsdrdca,0) + Nvl(vr_tab_detalhe(vr_index_detalhe).vlsdrdca,0);
+           --Encontrar o proximo registro da tabela de memoria
+           vr_index_detalhe:= vr_tab_detalhe.NEXT(vr_index_detalhe);
+         END LOOP;  
+       end if;
+     
        --Finalizar tag detalhe
        pc_escreve_xml('</detalhes><agencias>');
 
@@ -436,36 +504,103 @@ BEGIN
                                     --Incluido parametro de agencia para aplicar paralelismo
                                     ,pr_cdagenci => 0 --Utiliza o parâmetro fixo para que o cursor retorne todas as agências.
                                      ) LOOP
-         --Se a quantidade aplicada e o saldo forem > 0
-         IF vr_tab_tot_qtaplica.EXISTS(rw_crapage.cdagenci) AND
-            vr_tab_tot_vlsdrdca.EXISTS(rw_crapage.cdagenci) AND
-            (vr_tab_tot_qtaplica(rw_crapage.cdagenci) != 0 OR
-            vr_tab_tot_vlsdrdca(rw_crapage.cdagenci) != 0) THEN
+         --Se for paralelismo 
+         --Se for execução em paralelo armazena informações na tabela work 
+         if vr_inproces  > 2 and vr_qtdjobs > 0 then 
+           --Verifica se existem valores lançados para quantidade de aplicação na tabela WRK
+           vr_tab_tot_qtaplica_ret := 0;
+           begin 
+             select sum(dbms_lob.substr(wrk.dsxml)) 
+             into vr_tab_tot_qtaplica_ret
+             from tbgen_batch_relatorio_wrk wrk
+             where wrk.cdcooper   = pr_cdcooper
+               and wrk.cdprograma = vr_cdprogra
+               and wrk.dscritic   = 'vr_tab_tot_qtaplica'
+               and wrk.dtmvtolt   = vr_dtmvtolt
+               and wrk.dschave    = rw_crapage.cdagenci; 
+           exception 
+             when no_data_found then 
+               vr_tab_tot_qtaplica_ret := 0;
+               vr_dscritic             := 'Não foram encontrados valores na da tabela de memória vr_tab_tot_qtaplica na tabela WRK. Erro SQL : '||sqlerrm;
+               raise vr_exc_saida;
+             when others then 
+               vr_tab_tot_qtaplica_ret := 0;
+               vr_dscritic             := 'Erro ao validar valores na da tabela de memória vr_tab_tot_qtaplica na tabela WRK. Erro SQL : '||sqlerrm;
+               raise vr_exc_saida;
+           end; 
+           
+           --Verifica se existem valores de RDCA
+           vr_tab_tot_vlsdrdca_ret := 0;
+           begin 
+             select sum(dbms_lob.substr(wrk.dsxml))
+             into vr_tab_tot_vlsdrdca_ret
+             from tbgen_batch_relatorio_wrk wrk
+             where wrk.cdcooper   = pr_cdcooper
+               and wrk.cdprograma = vr_cdprogra
+               and wrk.dscritic   = 'vr_tab_tot_vlsdrdca'
+               and wrk.dtmvtolt   = vr_dtmvtolt
+               and wrk.dschave    = rw_crapage.cdagenci; 
+           exception 
+             when no_data_found then 
+               vr_tab_tot_vlsdrdca_ret := 0;
+               vr_dscritic             := 'Não foram encontrados valores na da tabela de memória vr_tab_tot_vlsdrdca na tabela WRK. Erro SQL : '||sqlerrm;
+               raise vr_exc_saida;
+             when others then 
+               vr_tab_tot_vlsdrdca_ret := 0;
+               vr_dscritic             := 'Erro ao validar valores na da tabela de memória vr_tab_tot_vlsdrdca na tabela WRK. Erro SQL : '||sqlerrm;
+               raise vr_exc_saida;
+           end; 
+           
+           --Se existir quantidade de aplicação e valor positivo
+           if vr_tab_tot_vlsdrdca_ret > 0 and
+              vr_tab_tot_qtaplica_ret > 0 then 
+             --Valor do percentual recebe saldo total da agencia * 100 / saldo agencia
+             vr_vlpercen:= vr_tab_tot_vlsdrdca_ret * 100 / vr_tot_vlsdrdca;             
+             
+             --Gravar informacoes na tabela de memoria
+             vr_tab_ordem(rw_crapage.cdagenci).cdagenci := rw_crapage.cdagenci;
+             vr_tab_ordem(rw_crapage.cdagenci).nmresage := rw_crapage.nmresage;
+             vr_tab_ordem(rw_crapage.cdagenci).vlpercen := vr_vlpercen;
+             vr_tab_ordem(rw_crapage.cdagenci).ordem    := 0;
+             
+             --Criar registro na tabela de ordenacao
+             -- (Multiplico o vr_vlpercen por 1000, pois sem isso os numeros ficam muito
+             --  próximos o que gera problema na ordenação)
+             vr_index_agencia:= LPad(9999999999 - (vr_vlpercen*1000),10,'0')||LPad(rw_crapage.cdagenci,5,'0');
+             vr_tab_agencia(vr_index_agencia):= rw_crapage.cdagenci;
+           end if;
+         else 
+           --Quando não for paralelismo                                     
+           --Se a quantidade aplicada e o saldo forem > 0
+           IF vr_tab_tot_qtaplica.EXISTS(rw_crapage.cdagenci) AND
+              vr_tab_tot_vlsdrdca.EXISTS(rw_crapage.cdagenci) AND
+              (vr_tab_tot_qtaplica(rw_crapage.cdagenci) != 0 OR
+              vr_tab_tot_vlsdrdca(rw_crapage.cdagenci) != 0) THEN
 
-           --Valor do percentual recebe saldo total da agencia * 100 / saldo agencia
-           vr_vlpercen:= vr_tab_tot_vlsdrdca(rw_crapage.cdagenci) * 100 / vr_tot_vlsdrdca;
-           --Gravar informacoes na tabela de memoria
-           vr_tab_ordem(rw_crapage.cdagenci).cdagenci:= rw_crapage.cdagenci;
-           vr_tab_ordem(rw_crapage.cdagenci).nmresage:= rw_crapage.nmresage;
-           vr_tab_ordem(rw_crapage.cdagenci).vlpercen:= vr_vlpercen;
-           vr_tab_ordem(rw_crapage.cdagenci).ordem:= 0;
-           --Criar registro na tabela de ordenacao
-           -- (Multiplico o vr_vlpercen por 1000, pois sem isso os numeros ficam muito
-           --  próximos o que gera problema na ordenação)
-           vr_index_agencia:= LPad(9999999999 - (vr_vlpercen*1000),10,'0')||LPad(rw_crapage.cdagenci,5,'0');
-           vr_tab_agencia(vr_index_agencia):= rw_crapage.cdagenci;
-
-         END IF;
+             --Valor do percentual recebe saldo total da agencia * 100 / saldo agencia
+             vr_vlpercen:= vr_tab_tot_vlsdrdca(rw_crapage.cdagenci) * 100 / vr_tot_vlsdrdca;
+             
+             --Gravar informacoes na tabela de memoria
+             vr_tab_ordem(rw_crapage.cdagenci).cdagenci:= rw_crapage.cdagenci;
+             vr_tab_ordem(rw_crapage.cdagenci).nmresage:= rw_crapage.nmresage;
+             vr_tab_ordem(rw_crapage.cdagenci).vlpercen:= vr_vlpercen;
+             vr_tab_ordem(rw_crapage.cdagenci).ordem:= 0;
+                
+             --Criar registro na tabela de ordenacao
+             -- (Multiplico o vr_vlpercen por 1000, pois sem isso os numeros ficam muito
+             --  próximos o que gera problema na ordenação)
+             vr_index_agencia:= LPad(9999999999 - (vr_vlpercen*1000),10,'0')||LPad(rw_crapage.cdagenci,5,'0');
+             vr_tab_agencia(vr_index_agencia):= rw_crapage.cdagenci;
+           END IF;
+         end if;   
        END LOOP;
 
        /* ordenar os PA'S de acordo com o percentual */
-
        --Inicializar contador
        vr_contador:= 1;
        --Posicionar no primeiro registro (maior percentual de participacao)
        vr_index_agencia:= vr_tab_agencia.FIRST;
        WHILE vr_index_agencia IS NOT NULL LOOP
-
          vr_tab_ordem(vr_tab_agencia(vr_index_agencia)).ordem:= vr_contador;
          --Encontrar o proximo registro da tabela de memoria
          vr_index_agencia:= vr_tab_agencia.NEXT(vr_index_agencia);
@@ -476,10 +611,12 @@ BEGIN
 
        -- Processar todos os registros ordenados por agencia para gravar XML
        vr_index_ordem:= vr_tab_ordem.FIRST;
+
        --Enquanto o registro nao for nulo
        WHILE vr_index_ordem IS NOT NULL LOOP
          --Determinar o codigo da agencia
          vr_cdagenci:= vr_tab_ordem(vr_index_ordem).cdagenci;
+         
          --Montar a descricao da agencia
          vr_rel_nmresage:= To_Char(vr_tab_ordem(vr_index_ordem).cdagenci,'fm009') ||'-'||
                            vr_tab_ordem(vr_index_ordem).nmresage;
@@ -487,28 +624,86 @@ BEGIN
          vr_qtaplica:= 0;
          vr_vlaplica:= 0;
          vr_vlsdrdca:= 0;
-         --Encontrar a quantidade aplicada
-         IF vr_tab_tot_qtaplica.EXISTS(vr_cdagenci) THEN
-           vr_qtaplica:= vr_tab_tot_qtaplica(vr_cdagenci);
-         END IF;
-         --Encontrar o valor aplicado
-         IF vr_tab_tot_vlaplica.EXISTS(vr_cdagenci) THEN
-           vr_vlaplica:= vr_tab_tot_vlaplica(vr_cdagenci);
-         END IF;
-         --Encontrar o valor do saldo
-         IF vr_tab_tot_vlsdrdca.EXISTS(vr_cdagenci) THEN
-           vr_vlsdrdca:= vr_tab_tot_vlsdrdca(vr_cdagenci);
-         END IF;
+         
+         --Se estiver executando por paralelismo
+         if vr_inproces  > 2 and vr_qtdjobs > 0 then
+           --Busca quantidade aplicada na tabela wrk
+           begin 
+             select sum(dbms_lob.substr(wrk.dsxml)) as qtaplica
+             into vr_qtaplica
+             from tbgen_batch_relatorio_wrk wrk 
+             where wrk.cdcooper   = pr_cdcooper 
+               and wrk.cdagenci   = vr_cdagenci
+               and wrk.cdprograma = vr_cdprogra
+               and wrk.dtmvtolt   = vr_dtmvtolt
+               and wrk.dscritic   = 'vr_tab_tot_qtaplica';
+           exception 
+             when no_data_found then 
+               vr_qtaplica := 0;
+             when others then 
+               vr_dscritic := 'Erro ao buscar quantidade aplicada na tabela Work. Erro SQL : '||sqlerrm;
+               raise vr_exc_saida;
+           end; 
+           
+           --Busca valor aplicado
+           begin 
+             select sum(dbms_lob.substr(wrk.dsxml)) as vlaplica
+             into vr_vlaplica
+             from tbgen_batch_relatorio_wrk wrk 
+             where wrk.cdcooper   = pr_cdcooper 
+               and wrk.cdagenci   = vr_cdagenci
+               and wrk.cdprograma = vr_cdprogra
+               and wrk.dtmvtolt   = vr_dtmvtolt
+               and wrk.dscritic    = 'vr_tab_tot_vlaplica';
+           exception 
+             when no_data_found then 
+               vr_vlaplica := 0;
+             when others then 
+               vr_dscritic := 'Erro ao buscar o valor aplicado na tabela Work. Erro SQL : '||sqlerrm;
+               raise vr_exc_saida;
+           end;
+           
+           --Encontrar o valor do saldo na tabela wrk
+           begin 
+             select sum(dbms_lob.substr(wrk.dsxml)) as vlsdrdca
+             into vr_vlsdrdca
+             from tbgen_batch_relatorio_wrk wrk 
+             where wrk.cdcooper   = pr_cdcooper 
+               and wrk.cdagenci   = vr_cdagenci
+               and wrk.cdprograma = vr_cdprogra
+               and wrk.dtmvtolt   = vr_dtmvtolt
+               and wrk.dscritic   = 'vr_tab_tot_vlsdrdca';
+           exception 
+             when no_data_found then 
+               vr_vlsdrdca := 0;
+             when others then 
+               vr_dscritic := 'Erro ao buscar o de saldo RDCA na tabela Work. Erro SQL : '||sqlerrm;
+               raise vr_exc_saida;
+           end;
+         else 
+           --Encontrar a quantidade aplicada
+           IF vr_tab_tot_qtaplica.EXISTS(vr_cdagenci) THEN
+             vr_qtaplica:= vr_tab_tot_qtaplica(vr_cdagenci);
+           END IF;
+           --Encontrar o valor aplicado
+           IF vr_tab_tot_vlaplica.EXISTS(vr_cdagenci) THEN
+             vr_vlaplica:= vr_tab_tot_vlaplica(vr_cdagenci);
+           END IF;
+           --Encontrar o valor do saldo
+           IF vr_tab_tot_vlsdrdca.EXISTS(vr_cdagenci) THEN
+             vr_vlsdrdca:= vr_tab_tot_vlsdrdca(vr_cdagenci);
+           END IF;
+         end if;
          --Montar tag da agencia para arquivo XML
-         pc_escreve_xml
-             ('<agencia>
-                <nmresage>'||substr(vr_rel_nmresage,1,18)||'</nmresage>
-                <qtaplica>'||To_Char(vr_qtaplica,'999g990')||'</qtaplica>
-                <vlaplica>'||To_Char(vr_vlaplica,'fm999g999g990d00')||'</vlaplica>
-                <vlsdrdca>'||To_Char(vr_vlsdrdca,'fm999g999g990d00')||'</vlsdrdca>
-                <ordem>'||To_Char(vr_tab_ordem(vr_index_ordem).ordem,'999g990')||'</ordem>
-             </agencia>');
-         -- Buscar o próximo registro da tabela
+         
+         pc_escreve_xml('<agencia>
+                            <nmresage>'||substr(vr_rel_nmresage,1,18)||'</nmresage>
+                            <qtaplica>'||To_Char(vr_qtaplica,'999g990')||'</qtaplica>
+                            <vlaplica>'||To_Char(vr_vlaplica,'fm999g999g990d00')||'</vlaplica>
+                            <vlsdrdca>'||To_Char(vr_vlsdrdca,'fm999g999g990d00')||'</vlsdrdca>
+                            <ordem>'||To_Char(vr_tab_ordem(vr_index_ordem).ordem,'999g990')||'</ordem>
+                         </agencia>');
+         -- Buscar o próximo registro da tabela        
          vr_index_ordem:= vr_tab_ordem.NEXT(vr_index_ordem);
        END LOOP;
 
@@ -523,7 +718,6 @@ BEGIN
          --Demais cooperativas imprime 3 copias
          vr_nrcopias:= 3;
        END IF;
-
        -- Efetuar solicitação de geração de relatório --
        gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper            --> Cooperativa conectada
                                   ,pr_cdprogra  => vr_cdprogra            --> Programa chamador
@@ -558,7 +752,7 @@ BEGIN
        WHEN OTHERS THEN
          pr_des_erro:= 'Erro ao imprimir relatório crrl090_99. '||sqlerrm;
      END;
-     
+      
    ---------------------------------------
    -- Inicio Bloco Principal pc_crps110
    ---------------------------------------
@@ -660,6 +854,7 @@ BEGIN
                                              ,pr_cdempres => 11
                                              ,pr_cdacesso => 'MXRENDIPOS'
                                              ,pr_tpregist => 1);
+                                             
      --Determinar as data de inicio e fim das taxas para rotina pc_saldo_rgt_rdc_pos
      vr_dtinitax := To_Date(gene0002.fn_busca_entrada(1, vr_dstextab, ';'),'DD/MM/YYYY');
      vr_dtfimtax := To_Date(gene0002.fn_busca_entrada(2, vr_dstextab, ';'),'DD/MM/YYYY');
@@ -840,7 +1035,7 @@ BEGIN
 
            --Zerar o saldo geral
            vr_ger_vlsdrdca:= 0;
-                             
+                                       
            /* Calcular o Saldo da aplicacao ate a data do movimento */
            IF rw_craprda.tpaplica = 3 THEN
 
@@ -875,7 +1070,7 @@ BEGIN
                vr_dscritic := vr_des_erro;
                --Levantar Excecao
                RAISE vr_exc_saida;
-             END IF;
+             END IF;             
            ELSIF rw_craprda.tpaplica = 5 THEN
 
              -- Consulta saldo aplicação RDCA60 (Antiga includes/b1wgen0004a.i)
@@ -1054,6 +1249,23 @@ BEGIN
                vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).dtrefere := rw_craprda.dtfimper;               
                                                                                                                   
              END IF;
+             
+             --Se for execução em paralelo armazena informações na tabela work 
+             if vr_inproces  > 2 and vr_qtdjobs > 0 then
+               pc_popular_tab_totais_wrk (pr_cdcooper           --pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                         ,rw_crapage.cdagenci   --pr_cdagenci   IN crapage.cdagenci%TYPE  
+                                         ,vr_cdprogra           --pr_cdprograma IN tbgen_batch_relatorio_wrk.cdprograma%TYPE
+                                         ,To_Char(rw_craprda.dtfimper,'YYYYMMDD')      --pr_dschave    IN VARCHAR2(100)
+                                         ,vr_dtmvtolt           --pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
+                                         ,null                  --pr_nrdconta   IN crapass.nrdconta%TYPE
+                                         ,rw_craprda.dtfimper||ds_character_separador||
+                                          (1)||ds_character_separador||
+                                          Nvl(rw_craprda.vlaplica,0)||ds_character_separador||
+                                          Nvl(vr_ger_vlsdrdca,0)    --pr_dsxml      IN VARCHAR2(3000)                                                                             
+                                        ,'vr_tab_detalhe');
+             end if; 
+             
+             --Se não executar com paralelismo
              --Montar Indice para tabela de detalhes pela data
              vr_index_detalhe:= To_Char(rw_craprda.dtfimper,'YYYYMMDD');
              --Inserir os detalhes na tabela de aniversarios
@@ -1071,16 +1283,46 @@ BEGIN
 
            --Se for o ultimo registro da mesma data
            IF rw_craprda.qtregdata = rw_craprda.nrseqreg THEN
-
-             --Acumular totais da quantidade aplicada para relatório geral
-             vr_tab_tot_qtaplica(rw_craprda.cdageass):= vr_tab_tot_qtaplica(rw_craprda.cdageass) +
-                                                        Nvl(vr_rel_qtaplica,0);
-             --Acumular totais de valor aplicado para relatório geral
-             vr_tab_tot_vlaplica(rw_craprda.cdageass):= vr_tab_tot_vlaplica(rw_craprda.cdageass) +
-                                                        Nvl(vr_rel_vlaplica,0);
-             --Acumular totais de valor saldo para relatório geral
-             vr_tab_tot_vlsdrdca(rw_craprda.cdageass):= vr_tab_tot_vlsdrdca(rw_craprda.cdageass) +
-                                                        Nvl(vr_rel_vlsdrdca,0);
+             --Verifica se está executando ou não em paralelo 
+             --Se for execução em paralelo armazena informações na tabela work 
+             if vr_inproces  > 2 and vr_qtdjobs > 0 then 
+               pc_popular_tab_totais_wrk (pr_cdcooper           --pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                         ,rw_craprda.cdageass   --pr_cdagenci   IN crapage.cdagenci%TYPE  
+                                         ,vr_cdprogra           --pr_cdprograma IN tbgen_batch_relatorio_wrk.cdprograma%TYPE
+                                         ,rw_craprda.cdageass   --pr_dschave    IN VARCHAR2(100)
+                                         ,vr_dtmvtolt           --pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
+                                         ,rw_craprda.nrdconta   --pr_nrdconta   IN crapass.nrdconta%TYPE
+                                         ,vr_tab_tot_qtaplica(rw_craprda.cdageass) + Nvl(vr_rel_qtaplica,0)
+                                         ,'vr_tab_tot_qtaplica');  
+                                         
+               pc_popular_tab_totais_wrk (pr_cdcooper           --pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                         ,rw_craprda.cdageass   --pr_cdagenci   IN crapage.cdagenci%TYPE  
+                                         ,vr_cdprogra           --pr_cdprograma IN tbgen_batch_relatorio_wrk.cdprograma%TYPE
+                                         ,rw_craprda.cdageass --pr_dschave    IN VARCHAR2(100)
+                                         ,vr_dtmvtolt           --pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
+                                         ,rw_craprda.nrdconta   --pr_nrdconta   IN crapass.nrdconta%TYPE
+                                         ,vr_tab_tot_vlaplica(rw_craprda.cdageass) + Nvl(vr_rel_vlaplica,0)
+                                         ,'vr_tab_tot_vlaplica');                                         
+                                         
+               pc_popular_tab_totais_wrk (pr_cdcooper           --pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                         ,rw_craprda.cdageass   --pr_cdagenci   IN crapage.cdagenci%TYPE  
+                                         ,vr_cdprogra           --pr_cdprograma IN tbgen_batch_relatorio_wrk.cdprograma%TYPE
+                                         ,rw_craprda.cdageass   --pr_dschave    IN VARCHAR2(100)
+                                         ,vr_dtmvtolt           --pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
+                                         ,rw_craprda.nrdconta   --pr_nrdconta   IN crapass.nrdconta%TYPE
+                                         ,vr_tab_tot_vlsdrdca(rw_craprda.cdageass) + Nvl(vr_rel_vlsdrdca,0)
+                                         ,'vr_tab_tot_vlsdrdca');                                                                                                                           
+             else --Se não for executado em paralelo
+               --Acumular totais da quantidade aplicada para relatório geral
+               vr_tab_tot_qtaplica(rw_craprda.cdageass):= vr_tab_tot_qtaplica(rw_craprda.cdageass) +
+                                                          Nvl(vr_rel_qtaplica,0);
+               --Acumular totais de valor aplicado para relatório geral
+               vr_tab_tot_vlaplica(rw_craprda.cdageass):= vr_tab_tot_vlaplica(rw_craprda.cdageass) +
+                                                          Nvl(vr_rel_vlaplica,0);
+               --Acumular totais de valor saldo para relatório geral
+               vr_tab_tot_vlsdrdca(rw_craprda.cdageass):= vr_tab_tot_vlsdrdca(rw_craprda.cdageass) +
+                                                          Nvl(vr_rel_vlsdrdca,0);
+             end if;         
              --Zerar variaveis de acumulo por data
              vr_rel_qtaplica:= 0;
              vr_rel_vlaplica:= 0;
@@ -1218,34 +1460,77 @@ BEGIN
                                                                                                                   
              END IF;
              
+             if vr_inproces  > 2 and vr_qtdjobs > 0 then
+               pc_popular_tab_totais_wrk (pr_cdcooper           --pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                         ,rw_crapage.cdagenci   --pr_cdagenci   IN crapage.cdagenci%TYPE  
+                                         ,vr_cdprogra           --pr_cdprograma IN tbgen_batch_relatorio_wrk.cdprograma%TYPE
+                                         ,To_Char(rw_craprac.dtvencto,'YYYYMMDD')      --pr_dschave    IN VARCHAR2(100)
+                                         ,vr_dtmvtolt           --pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
+                                         ,null                  --pr_nrdconta   IN crapass.nrdconta%TYPE
+                                         ,rw_craprac.dtvencto||ds_character_separador||
+                                          (1)||ds_character_separador||
+                                          Nvl(rw_craprac.vlaplica,0)||ds_character_separador||
+                                          Nvl(vr_vlsldrgt,0)    --pr_dsxml      IN VARCHAR2(3000)                                                                             
+                                        ,'vr_tab_detalhe');
+             end if; 
+             
+             
              --Montar Indice para tabela de detalhes pela data
              vr_index_detalhe:= To_Char(rw_craprac.dtvencto,'YYYYMMDD');
              --Inserir os detalhes na tabela de aniversarios
              IF vr_tab_detalhe.EXISTS(vr_index_detalhe) THEN
                vr_tab_detalhe(vr_index_detalhe).qtaplica:= vr_tab_detalhe(vr_index_detalhe).qtaplica + 1;
                vr_tab_detalhe(vr_index_detalhe).vlaplica:= vr_tab_detalhe(vr_index_detalhe).vlaplica + Nvl(rw_craprac.vlaplica,0);
-               vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= vr_tab_detalhe(vr_index_detalhe).vlsdrdca + Nvl(vr_vlsldrgt,0);
+               vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= vr_tab_detalhe(vr_index_detalhe).vlsdrdca + Nvl(vr_vlsldrgt,0);                 
              ELSE
                vr_tab_detalhe(vr_index_detalhe).dtrefere:= rw_craprac.dtvencto;
                vr_tab_detalhe(vr_index_detalhe).qtaplica:= 1;
                vr_tab_detalhe(vr_index_detalhe).vlaplica:= Nvl(rw_craprac.vlaplica,0);
-               vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= Nvl(vr_vlsldrgt,0);
+               vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= Nvl(vr_vlsldrgt,0);   
              END IF;
-             
            END IF;
 
            --Se for o ultimo registro da mesma data
            IF rw_craprac.qtregdata = rw_craprac.nrseqreg THEN
-
-             --Acumular totais da quantidade aplicada para relatório geral
-             vr_tab_tot_qtaplica(rw_craprac.cdagenci):= vr_tab_tot_qtaplica(rw_craprac.cdagenci) +
-                                                        Nvl(vr_rel_qtaplica,0);
-             --Acumular totais de valor aplicado para relatório geral
-             vr_tab_tot_vlaplica(rw_craprac.cdagenci):= vr_tab_tot_vlaplica(rw_craprac.cdagenci) +
-                                                        Nvl(vr_rel_vlaplica,0);
-             --Acumular totais de valor saldo para relatório geral
-             vr_tab_tot_vlsdrdca(rw_craprac.cdagenci):= vr_tab_tot_vlsdrdca(rw_craprac.cdagenci) +
-                                                        Nvl(vr_rel_vlsdrdca,0);
+             --Se for execução em paralelo armazena informações na tabela work 
+             if vr_inproces  > 2 and vr_qtdjobs > 0 then 
+               pc_popular_tab_totais_wrk (pr_cdcooper           --pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                         ,rw_craprac.cdagenci   --pr_cdagenci   IN crapage.cdagenci%TYPE  
+                                         ,vr_cdprogra           --pr_cdprograma IN tbgen_batch_relatorio_wrk.cdprograma%TYPE
+                                         ,rw_craprac.cdagenci   --pr_dschave    IN VARCHAR2(100)
+                                         ,vr_dtmvtolt           --pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
+                                         ,rw_craprac.nrdconta   --pr_nrdconta   IN crapass.nrdconta%TYPE
+                                         ,vr_tab_tot_qtaplica(rw_craprac.cdagenci) + Nvl(vr_rel_qtaplica,0)
+                                         ,'vr_tab_tot_qtaplica');    
+               
+               pc_popular_tab_totais_wrk (pr_cdcooper           --pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                         ,rw_craprac.cdagenci   --pr_cdagenci   IN crapage.cdagenci%TYPE  
+                                         ,vr_cdprogra           --pr_cdprograma IN tbgen_batch_relatorio_wrk.cdprograma%TYPE
+                                         ,rw_craprac.cdagenci --pr_dschave    IN VARCHAR2(100)
+                                         ,vr_dtmvtolt           --pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
+                                         ,rw_craprac.nrdconta   --pr_nrdconta   IN crapass.nrdconta%TYPE
+                                         ,vr_tab_tot_vlaplica(rw_craprac.cdagenci) + Nvl(vr_rel_vlaplica,0)
+                                         ,'vr_tab_tot_vlaplica');                                           
+               
+               pc_popular_tab_totais_wrk (pr_cdcooper           --pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                         ,rw_craprac.cdagenci   --pr_cdagenci   IN crapage.cdagenci%TYPE  
+                                         ,vr_cdprogra           --pr_cdprograma IN tbgen_batch_relatorio_wrk.cdprograma%TYPE
+                                         ,rw_craprac.cdagenci --pr_dschave    IN VARCHAR2(100)
+                                         ,vr_dtmvtolt           --pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
+                                         ,rw_craprac.nrdconta   --pr_nrdconta   IN crapass.nrdconta%TYPE
+                                         ,vr_tab_tot_vlsdrdca(rw_craprac.cdagenci) + Nvl(vr_rel_vlsdrdca,0)
+                                         ,'vr_tab_tot_vlsdrdca');                                                                                     
+             else 
+               --Acumular totais da quantidade aplicada para relatório geral
+               vr_tab_tot_qtaplica(rw_craprac.cdagenci):= vr_tab_tot_qtaplica(rw_craprac.cdagenci) +
+                                                          Nvl(vr_rel_qtaplica,0);
+               --Acumular totais de valor aplicado para relatório geral
+               vr_tab_tot_vlaplica(rw_craprac.cdagenci):= vr_tab_tot_vlaplica(rw_craprac.cdagenci) +
+                                                          Nvl(vr_rel_vlaplica,0);
+               --Acumular totais de valor saldo para relatório geral
+               vr_tab_tot_vlsdrdca(rw_craprac.cdagenci):= vr_tab_tot_vlsdrdca(rw_craprac.cdagenci) +
+                                                          Nvl(vr_rel_vlsdrdca,0);
+             end if;                                                         
              --Zerar variaveis de acumulo por data
              vr_rel_qtaplica:= 0;
              vr_rel_vlaplica:= 0;
@@ -1253,7 +1538,7 @@ BEGIN
            END IF;
                     
          END LOOP;
-
+         
          IF NOT vr_tab_detalhe_pa.EXISTS(rw_crapage.cdagenci) THEN
            CONTINUE;
          END IF;
@@ -1283,8 +1568,7 @@ BEGIN
                                </aplica>');             
                                
              END IF;
-           END IF;
-             
+           END IF;             
          END LOOP;
                 
          --Finaliza o arquivo xml
@@ -1313,6 +1597,7 @@ BEGIN
                                     ,pr_flg_impri => 'N'                 --> Chamar a impressão (Imprim.p)
                                     ,pr_flg_gerar => 'N'                 --> gerar PDF
                                     ,pr_des_erro  => vr_des_erro);       --> Saída com erro
+         
          -- Liberando a memória alocada pro CLOB
          dbms_lob.close(vr_des_xml);
          dbms_lob.freetemporary(vr_des_xml);
@@ -1352,12 +1637,22 @@ BEGIN
                         pr_flgsucesso => 1); 
      
      end if;
-
      
+     -- Verifica se algum job paralelo executou com erro
+     vr_qterro := 0;
+     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                   pr_cdprogra    => vr_cdprogra,
+                                                   pr_dtmvtolt    => vr_dtmvtolt,
+                                                   pr_tpagrupador => 1,
+                                                   pr_nrexecucao  => 1);
+     dbms_output.put_line('vr_qterro = '||vr_qterro);
      --Se for o programa principal - executado no batch
      if pr_idparale = 0 then
        --Executar procedure geração relatorio crrl090 totalizador
-       pc_imprime_crrl090_total (pr_des_erro => vr_des_erro);
+       if vr_qterro = 0 then 
+         pc_imprime_crrl090_total (pr_des_erro => vr_des_erro);
+       end if; 
+       
        --Se retornou erro
        IF vr_des_erro IS NOT NULL THEN
          vr_dscritic := vr_des_erro;
@@ -1394,12 +1689,28 @@ BEGIN
                           pr_cdcooper   => pr_cdcooper, 
                           pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                           pr_idprglog   => vr_idlog_ini_ger,
-                          pr_flgsucesso => 1);                 
+                          pr_flgsucesso => 1);     
+                          
+          
+                                                        
+          --Limpa a tabela WRK utilizada na geração do resumo geral 
+          --quando o processo é executado em paralelo
+          --somente quando não houver jobs com erro ao final da execução.
+          if vr_qterro = 0 then 
+            begin 
+              delete tbgen_batch_relatorio_wrk wrk
+              where wrk.cdcooper   = pr_cdcooper 
+                and wrk.cdprograma = vr_cdprogra
+                and wrk.dtmvtolt   = vr_dtmvtolt;
+            exception 
+              when others then 
+                vr_dscritic := 'Erro ao excluir informações da tabela tbgen_batch_relatorio_wrk. Erro SQL: '||sqlerrm;
+                raise vr_exc_saida;
+            end;
+            null;
+          end if;                                                                                                                                     
         end if;
-
-        --Salvar informacoes no banco de dados
-        commit;
-     
+        
      --Se for job chamado pelo programa do batch   
      else
        -- Atualiza finalização do batch na tabela de controle 
@@ -1411,10 +1722,10 @@ BEGIN
        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                     ,pr_des_erro => vr_dscritic);  
+     end if;  
       
-       --Salvar informacoes no banco de dados
-       commit;
-     end if;   
+     --Salvar informacoes no banco de dados
+     commit;
    EXCEPTION
     WHEN vr_exc_fimprg THEN
       -- Se foi retornado apenas código
@@ -1439,7 +1750,7 @@ BEGIN
                                ,pr_stprogra => pr_stprogra);
       
       if pr_idparale <> 0 then 
-        -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+        -- Grava LOG de Erro
         pc_log_programa(PR_DSTIPLOG           => 'E',
                         PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
                         pr_cdcooper           => pr_cdcooper,
@@ -1460,11 +1771,11 @@ BEGIN
         -- Encerrar o job do processamento paralelo dessa agência
         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                    ,pr_des_erro => vr_dscritic);
+                                    ,pr_des_erro => vr_dscritic);                                   
       end if;                  
       
-      -- Efetuar commit
-      COMMIT;
+      -- Efetuar rollback
+      ROLLBACK;
     WHEN vr_exc_saida THEN
       -- Se foi retornado apenas código
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
@@ -1476,7 +1787,7 @@ BEGIN
       pr_dscritic := vr_dscritic;     
       
       if pr_idparale <> 0 then 
-        -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+        -- Grava LOG de Erro
         pc_log_programa(PR_DSTIPLOG           => 'E',
                         PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
                         pr_cdcooper           => pr_cdcooper,
@@ -1510,7 +1821,7 @@ BEGIN
       ROLLBACK;
       
       if pr_idparale <> 0 then 
-        -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+        --Grava LOG
         pc_log_programa(PR_DSTIPLOG           => 'E',
                         PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
                         pr_cdcooper           => pr_cdcooper,
