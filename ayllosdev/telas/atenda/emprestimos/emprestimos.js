@@ -8096,10 +8096,10 @@ function controlaPesquisas() {
         // Qualifica��o da Opera��o recebe ( 5 - Cess�o de Cart�o)
         if($('#cdlcremp', '#' + nomeForm).val() == 6901){
             $('#idquapro', '#' + nomeForm).val(5);
-            $('#dsquapro', '#' + nomeForm).val('Cessão de Crédito'); 
+            $('#dsquapro', '#' + nomeForm).val('CESSAO DE CREDITO'); 
         }else{
             $('#idquapro', '#' + nomeForm).val(1);
-            $('#dsquapro', '#' + nomeForm).val('Operação Normal'); 
+            $('#dsquapro', '#' + nomeForm).val('OPERACAO NORMAL'); 
         }
 
         bo = 'b1wgen0059.p';
