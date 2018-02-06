@@ -53,7 +53,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   --
   ---------------------------------------------------------------------------------------------------------------
 
-  FUNCTION fn_busca_rating(pr_cdcooper NUMBER, pr_nrdconta NUMBER)
+  FUNCTION fn_busca_rating(pr_cdcooper NUMBER, pr_nrdconta NUMBER, pr_nrctremp NUMBER)
     RETURN crapnrc.indrisco%TYPE AS vr_rating crapnrc.indrisco%TYPE;
 		  --- >>> CURSORES <<< ---
 			CURSOR cr_rating(pr_cdcooper NUMBER, pr_nrdconta NUMBER) IS
@@ -61,6 +61,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 				 FROM crapnrc rat
 				WHERE rat.cdcooper = pr_cdcooper
 					AND rat.nrdconta = pr_nrdconta
+					AND rat.nrctrrat = pr_nrctremp
 					AND rat.insitrat = 2
 					AND ROWNUM = 1;
 			rw_rating cr_rating%ROWTYPE;
@@ -204,7 +205,8 @@ END fn_busca_dias_atraso;
         AND uc.inddocto = 1
         AND (pr_dstextab IS NULL OR uc.vldivida > TO_NUMBER(replace(substr(pr_dstextab, 3, 9), ',', '.')))
         AND ROWNUM = 1
-  		ORDER BY innivris DESC;
+  		ORDER BY uc.innivris DESC,
+			         uc.dtdrisco ASC;
 		 rw_riscos cr_riscos%ROWTYPE;
 		 
 		 CURSOR cr_risco_final(pr_cdcooper NUMBER
@@ -738,7 +740,8 @@ END fn_busca_dias_atraso;
 																    
 						    -- Busca o rating da conta
 						    vr_rating := fn_busca_rating(rw_contas_do_titular.cdcooper
-																			     , rw_contas_do_titular.nrdconta);
+																			     , rw_contas_do_titular.nrdconta
+																					 , rw_contratos.nrctremp);
 
 				    		-- Busca a quantidade dias em atraso do contrato
 				   		  vr_diasatraso := fn_busca_dias_atraso(rw_contas_do_titular.cdcooper
@@ -801,7 +804,8 @@ END fn_busca_dias_atraso;
 																		, rw_contas_grupo_economico.nrdconta) LOOP
 						-- Busca o rating da conta
 						vr_rating := fn_busca_rating(rw_contas_grupo_economico.cdcooper
-																		, rw_contas_grupo_economico.nrdconta);
+																		, rw_contas_grupo_economico.nrdconta
+																		, rw_contratos.nrctremp);
 
 						-- Busca a quantidade de dias em atraso do contato
 						vr_diasatraso := fn_busca_dias_atraso(rw_contas_grupo_economico.cdcooper
