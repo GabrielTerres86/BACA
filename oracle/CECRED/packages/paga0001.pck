@@ -1181,7 +1181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 12/12/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 25/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1551,12 +1551,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        
        25/10/2017 - Alterar o armazenamento da pr_dscritic quando encontrar erros
                     para utilizar a vr_dscritic pois no raise utilizamos o vr_dscritic
-                    para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)               
+                    para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)
                     
-	   07/12/2017 - Melhoria 458, incluir parametro tppagmto nas chamadas da pc_gera_titulos_iptu - Antonio R. Jr (mouts)                         
-               
-       12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
-                    pc_gera_log_ope_cartao (Lucas Ranghetti #810576)         
+       07/12/2017 - Melhoria 458, incluir parametro tppagmto nas chamadas da pc_gera_titulos_iptu - Antonio R. Jr (mouts)                         
        
        11/12/2017 - Alterar campo flgcnvsi por tparrecd.
                     PRJ406-FGTS (Odirlei-AMcom) 
@@ -2300,15 +2297,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     .................................................................................*/                           
                                
     --Cursor para obter os 10 bancos mais utilizados
-    CURSOR cr_crapban (pr_cdbcoctl IN crapcop.cdbcoctl%TYPE
-                      ,pr_flmobile IN INTEGER) IS
+    CURSOR cr_crapban (pr_cdbcoctl IN crapcop.cdbcoctl%TYPE) IS
     SELECT REPLACE(UPPER(TRIM(b.nmresbcc)),'&','e') nmresbcc
           ,b.cdbccxlt
           ,b.nrispbif      
       FROM crapban b
      WHERE b.flgdispb = 1
        AND b.cdbccxlt <> pr_cdbcoctl
-       AND (pr_flmobile = 0 OR b.cdbccxlt IN (1,104,237,341,33,756,399,748,41,136)); --Lista dos bancos mais utilizados na TED para mobile
+       AND b.cdbccxlt IN (1,104,237,341,33,756,399,748,41,136); --Lista dos bancos mais utilizados na TED
     rw_crapban cr_crapban%ROWTYPE;
     
     --Cursor para obter os tipos de conta para TED
@@ -2364,7 +2360,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     vr_flghbtrf NUMBER;
     vr_dsmsgtar VARCHAR2(250);
     vr_dsmsgtrf VARCHAR2(250);
-    vr_dssitcta VARCHAR2(10);
     
     --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
@@ -2543,14 +2538,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     
     WHILE vr_index_contas_cad IS NOT NULL LOOP      
       
-      IF vr_tab_contas_cadastradas(vr_index_contas_cad).insitcta = 2 THEN
-        vr_dssitcta := 'Ativo';
-      ELSIF vr_tab_contas_cadastradas(vr_index_contas_cad).insitcta = 3 THEN
-        vr_dssitcta := 'Suspenso';
-      ELSE
-        vr_dssitcta := '';
-      END IF;        
-      
       gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<DADOS>' 
@@ -2571,7 +2558,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                 ||   '<dsageban>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).dsageban)    ||'</dsageban>'
                                                 ||   '<nmageban>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).nmageban)    ||'</nmageban>'
                                                 ||   '<nmsegntl>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).nmtitul2)    ||'</nmsegntl>'
-                                                ||   '<dssitcta>'||vr_dssitcta                                                         ||'</dssitcta>'
                                                 || '</DADOS>');   
                            
       vr_index_contas_cad := vr_tab_contas_cadastradas.NEXT(vr_index_contas_cad);
@@ -2658,8 +2644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                            ,pr_texto_novo     => '<BANCOS>');
                            
     -- Vamos listar somente os top 10 bancos ativos
-    FOR rw_crapban IN cr_crapban (pr_cdbcoctl => rw_crapcop.cdbcoctl
-                                 ,pr_flmobile => pr_flmobile) LOOP
+    FOR rw_crapban IN cr_crapban (pr_cdbcoctl => rw_crapcop.cdbcoctl) LOOP
 
       gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
                              ,pr_texto_completo => vr_xml_temp 
@@ -3985,7 +3970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : CRED
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 12/12/2017
+    --  Data     : Junho/2013.                   Ultima atualizacao: 04/02/2016
     --
     --  Dados referentes ao programa:
     --
@@ -4002,11 +3987,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --               04/02/2016 - Aumento no tempo de verificacao de Transferencia duplicada. 
     --                            De 30 seg. para 10 min. (Jorge/David) - SD 397867 
 	--
-	  --    			     28/03/2016 - Adicionados parâmetros para geraçao de LOG
-    --                           (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
+	--    			    28/03/2016 - Adicionados parâmetros para geraçao de LOG
+    --                          (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
 	--
-    --               12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
-    --                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
     -- ..........................................................................
 
   BEGIN
@@ -5146,7 +5129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 									                 ,pr_indtipo_cartao => pr_idtipcar    -- Tipo de cartao utilizado. (0-Sem cartao/1-Magnetico/2-Cartao Cecred) Alterar Andrino
 									                 ,pr_nrdocmto 	    => pr_nrdocdeb    -- Numero do documento utilizado no lancamento
 									                 ,pr_cdhistor 	    => pr_cdhisdeb    -- Codigo do historico utilizado no lancamento
-									                 ,pr_nrcartao 	    => to_char(pr_nrcartao) -- Numero do cartao utilizado. Zeros quando nao existe cartao
+									                 ,pr_nrcartao 	    => pr_nrcartao    -- Numero do cartao utilizado. Zeros quando nao existe cartao
 									                 ,pr_vllanmto 	    => pr_vllanmto    -- Valor do lancamento
 									                 ,pr_cdoperad 	    => pr_cdoperad    -- Codigo do operador
 									                 ,pr_cdbccrcb 	    => 0              -- Codigo do banco de destino para os casos de TED e DOC
@@ -5599,7 +5582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               vr_variaveis_notif('#contadestino') := GENE0002.fn_mask_conta(rw_craplau.nrctadst);
               vr_variaveis_notif('#destinatario') := vr_nmtldest;
               vr_variaveis_notif('#motivo') := 'insuficiência de saldo';
-
+										
               -- Cria uma notificação
               noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
                                           ,pr_cdmotivo_mensagem => MOTIVO_TRANSFERENCIA
@@ -5607,8 +5590,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                           ,pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => rw_craplau.nrdconta
                                           ,pr_variaveis => vr_variaveis_notif);
-							
-             END IF;
+
+                END IF;
 
              --Marcar que ocorreu erro TAA
              vr_flerrtaa:= TRUE;
@@ -5692,7 +5675,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             vr_variaveis_notif('#contadestino') := GENE0002.fn_mask_conta(rw_craplau.nrctadst);
             vr_variaveis_notif('#destinatario') := vr_nmtldest;
             vr_variaveis_notif('#motivo') := 'insuficiência de saldo';
-
+									
             -- Cria uma notificação
             noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
                                         ,pr_cdmotivo_mensagem => MOTIVO_TRANSFERENCIA
@@ -5700,12 +5683,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => rw_craplau.nrdconta
                                         ,pr_variaveis => vr_variaveis_notif);
-									
-           END IF;
-                  
-         END IF;
-
+						
                   END IF;
+					 
+                END IF;
+								
+           END IF;
        --Se origem nao for TAA e nao tem erro ou for TAA e nao deu erro
        IF  (pr_idorigem <> 4 AND vr_dscritic IS NULL)   OR
            (pr_idorigem = 4 AND NOT vr_flerrtaa) THEN
@@ -6823,7 +6806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 					(crapscn.cddmoden = 'A'     OR
 					 crapscn.cddmoden = 'C');
      rw_crapscn cr_crapscn%ROWTYPE;
-
+      
       CURSOR cr_tbarrecd (pr_cdempcon IN crapscn.cdempcon%TYPE
                          ,pr_cdsegmto IN crapscn.cdsegmto%TYPE) IS
        SELECT arr.cdsegmto
@@ -7338,14 +7321,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
       --Verifica se deve ofertar a inclusao para debito automatico da fatura
       IF rw_crapcop.flgofatr = 1 THEN
-
+      
         --> Convenio Cecred
-	    IF  rw_crapcon.tparrecd = 0 THEN					
-        OPEN cr_gnconve(pr_cdhistor => rw_crapcon.cdhistor);
-        FETCH cr_gnconve INTO rw_gnconve;
+			  IF  rw_crapcon.tparrecd = 0 THEN					
+          OPEN cr_gnconve(pr_cdhistor => rw_crapcon.cdhistor);
+          FETCH cr_gnconve INTO rw_gnconve;
 					vr_flgachou := cr_gnconve%FOUND;					
         --> Sicredi  
-	    ELSIF  rw_crapcon.tparrecd = 1 THEN					
+				ELSIF  rw_crapcon.tparrecd = 1 THEN					
 					OPEN cr_crapscn (pr_cdempcon  => rw_crapcon.cdempcon
                           ,pr_cdsegmto  => rw_crapcon.cdsegmto);
 					FETCH cr_crapscn INTO rw_crapscn;
@@ -7381,10 +7364,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 			  IF cr_crapscn%ISOPEN THEN
 					CLOSE cr_crapscn;
 				END IF;
-
+        
         IF cr_tbarrecd%ISOPEN THEN
-		  CLOSE cr_tbarrecd;
-		END IF; 
+					CLOSE cr_tbarrecd;
+				END IF; 
 
       ELSE
         pr_msgofatr := '';
@@ -9136,7 +9119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                              , pr_dscritic => vr_dscritic);
                                            
             IF pr_idorigem = 4 THEN
-              vr_dscedent := gene0007.fn_caract_acento(
+            vr_dscedent := gene0007.fn_caract_acento(
                                          NVL(TRIM(vr_tbtitulo.NomFantsBenfcrioOr)   -- Nome Fantasia do Beneficiário Original
                                             ,TRIM(vr_tbtitulo.Nom_RzSocBenfcrioOr)));-- Razão Social do Beneficiário Original
             END IF;
@@ -10544,7 +10527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         --Retornar nome convenio
         pr_nmextcon:= rw_crapcon.nmextcon;
       END IF;
-
+	
       -- Verifica se a data esta cadastrada
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -10921,7 +10904,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   
                   03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
                                4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
-                               processo (Lucas Ranghetti #711123)       
+                               processo (Lucas Ranghetti #711123)  
                                
                   10/01/2018 - Ajustes para arrecadacao de convenios FGTS/DAE.
                                PRJ406 - FGTS(Odirlei-AMcom)                    
@@ -11250,10 +11233,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => rw_craplau.nrdconta
                                             ,pr_variaveis => vr_variaveis_notif);
+                    
+										END IF;
 
-											END IF;																									
-
-            END IF;
+										END IF;
 
             --Montar mensagem erro
             vr_cdcritic:= 0;
@@ -11331,7 +11314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                CLOSE cr_crapcon;
 
                vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
-                                 'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
+                                       'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
                                  '<b>Pagamento de Convênio ' || vr_nmconven || '</b> agendado para <b>' ||
                                  rw_craplau.dtmvtopg || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
                                  '</b> por insuficiência de saldo.';
@@ -11365,7 +11348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                        ,pr_cdoperad   => '1'
                                                        ,pr_cdcadmsg   => '0'
                                                        ,pr_dscritic   => vr_dscritic2);
-
+                                          
                vr_variaveis_notif('#dataagendamento') := to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY');
                vr_variaveis_notif('#valor') := to_char(rw_craplau.vllanaut,'fm999g999g990d00');
                vr_variaveis_notif('#motivo') := 'insuficiência de saldo';
@@ -11377,9 +11360,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                            ,pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => rw_craplau.nrdconta
                                            ,pr_variaveis => vr_variaveis_notif);
-           END IF;
          END IF;
            END IF;
+         END IF;
 
       END IF;
 
@@ -11418,7 +11401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_idagenda => 1 -- Indicador de agendamento (1-Nesta Data/2-Agendamento)
                                        ,pr_dtagenda => rw_craplau.dtmvtopg -- Data de agendamento
                                        ,pr_indvalid => 2 -- Indicador de controle de validações (1-Operação Online/2-Operação Batch)
-									   ,pr_flmobile => 0 --Indicador Mobile
+									                     ,pr_flmobile => 0 --Indicador Mobile
                                        ,pr_cdseqfat => vr_cdseqfat -- Código sequencial da guia
                                        ,pr_vldocmto => vr_vlrdocum -- Valor da guia
                                        ,pr_nrdigfat => vr_nrdigfat -- Digito do faturamento
@@ -11482,7 +11465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_dtagenda => rw_craplau.dtmvtopg   --Data agendamento
                              ,pr_idorigem => pr_idorigem           --Indicador de origem
                              ,pr_indvalid => 1                     --nao validar
-							 ,pr_flmobile => 0                     --Indicador Mobile
+							               ,pr_flmobile => 0                     --Indicador Mobile
                              ,pr_nmextbcc => vr_nmconban           --Nome do banco
                              ,pr_vlfatura => vr_vlrdocum           --Valor fatura
                              ,pr_dtdifere => vr_dtdifere           --Indicador data diferente
@@ -12650,7 +12633,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 	    SELECT *
 	      FROM   tbpagto_darf_das_trans_pend
 	     WHERE  tbpagto_darf_das_trans_pend.cdtransacao_pendente = pr_cdtrapen;
-	  rw_tbpagto_darf_das_trans_pend cr_tbpagto_darf_das_trans_pend%ROWTYPE;
+	    rw_tbpagto_darf_das_trans_pend cr_tbpagto_darf_das_trans_pend%ROWTYPE;
     
       --Tabela Pagamento Tributos(FGTS/DAE) pend. (14-FGTS, 15-DAE)
       CURSOR cr_tbtrib_trans_pend (pr_cdtrapen IN tbpagto_tributos_trans_pend.cdtransacao_pendente%TYPE) IS
@@ -12687,6 +12670,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       vr_des_erro     VARCHAR2(4000);
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
+      
+      vr_qthoras number(15,5); -- SM 454.1
+      
     BEGIN
       --Inicializar retorno erro
       pr_cdcritic:= NULL;
@@ -12843,7 +12829,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         ELSE
 			-- Adesão de pacote de tarifas(10), contrao de SMS(16,17) e Desconto de cheque(12)
       -- não permite agendamento
-			IF vr_tptransa NOT IN(10,12,16,17) THEN
+			IF vr_tptransa NOT IN(10,12,16,17,18) THEN -- SM 454.1 - Foi inclusa a transação 18
 				vr_idagenda := 1;
 				vr_dtmvtopg := rw_tbgen_trans_pend.dtmvtolt;
 			END IF;
@@ -12873,6 +12859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         -- 15 - DARF/DAS
         -- 16 - Contrato SMS Cobrança
         -- 17 - Cancelamento Contrato SMS Cobrança
+        -- 18 - Resgate Cheque -- SM 454.1
         -- 21 - Pagamento FGTS
         -- 22 - Pagamento DAE
         
@@ -12915,7 +12902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               ELSE
                 -- Caso contrário, utilizar o horario limite da cooperativa
                 vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(19).hrfimpag,'hh24:mi'),'sssss'); --Horário Limite Folha 'FOLHAIB_HOR_LIM_PAG_COOP';
-           END IF;   
+              END IF;
            END IF;   
         ELSIF vr_tptransa = 8 THEN -- Débito Fácil
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(11).hrfimpag,'hh24:mi'),'sssss');
@@ -13019,6 +13006,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 						  vr_flgalter := TRUE;
 						  pr_flgalter := TRUE;
             END IF;           
+-- Início SM 454.1
+					ELSIF  vr_tptransa = 18 THEN --> Resgate Cheque
+            --> Verificar se ja se passou 24 horas desde a criação da pendencia
+            --Busca o dia e hora de criação da transação
+            BEGIN
+              select 
+                    (sysdate - t.dtmvtolt) * 24
+                into
+                    vr_qthoras
+                from
+                    tbcst_trans_pend t
+               where
+                    t.cdtransacao_pendente = rw_tbgen_trans_pend.cdtransacao_pendente;
+            EXCEPTION
+              WHEN NO_DATA_FOUND THEN
+                --Erro
+                vr_cdcritic:= 0;
+                vr_dscritic:= 'Transacao pendente Resgate de Cheque não cadastrada.';
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+            END;
+            IF vr_qthoras > 24 THEN
+              --Atualizar flag para true
+						  vr_flgalter := TRUE;
+						  pr_flgalter := TRUE;
+            END IF;           
+-- Fim  SM 454.1          
 					ELSE
 						--Debito por agendamento
 						vr_dtauxili := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
@@ -19097,198 +19111,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     END;
   END pc_gera_arq_cooperado;
 
-  /* Procedure para verificar o tipo de retorno do arquivo do cooperado */
-  PROCEDURE pc_verifica_ret_arq_coop(pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
-                                    ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE   --Numero Convenio
-                                    ,pr_nrdconta IN crapcob.nrdconta%TYPE   --Numero da Conta
-                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   --Data pagamento
-                                    ,pr_idorigem IN INTEGER                 --Identificador Origem
-                                    ,pr_flgproce IN INTEGER                 --Flag Processo
-                                    ,pr_cdprogra IN crapprg.cdprogra%TYPE   --Nome Programa
-                                    ,pr_tab_arq_cobranca  OUT PAGA0001.typ_tab_arq_cobranca --Tabela Cobranca
-                                    ,pr_cdcritic OUT INTEGER                --Codigo da Critica
-                                    ,pr_dscritic OUT VARCHAR2) IS           --Descricao Erro
-  /*---------------------------------------------------------------------------------------------------------------
-
-    Programa : pc_verifica_ret_arq_coop              Antigo:
-    Sistema  : Conta-Corrente - Cooperativa de Credito
-    Sigla    : CRED
-    Autor    : Douglas Quisinski
-    Data     : Dezembro/2017                          Ultima atualizacao:
-
-    Dados referentes ao programa:
-
-    Frequencia: -----
-    Objetivo   : Procedure para verificar o tipo de retorno do arquivo do cooperado
-
-    Alterações :
-
-  ---------------------------------------------------------------------------------------------------------------*/
-
-    -- Tipo de retorno do cooperado
-    vr_inenvcob INTEGER;
-
-    -- PL SQL para gerar o JOB
-    vr_dsplsql        VARCHAR2(30000);
-    vr_jobname        VARCHAR2(100);
-    
-    --Variaveis de Criticas
-    vr_cdcritic INTEGER;
-    vr_dscritic VARCHAR2(4000);
-    vr_exc_erro EXCEPTION;
-    vr_exc_saida EXCEPTION;
-    
-    -- Dados do convenio do cooperado
-    CURSOR cr_crapceb(pr_cdcooper INTEGER
-                     ,pr_nrdconta INTEGER
-                     ,pr_nrconven INTEGER ) IS
-      SELECT ceb.inenvcob
-        FROM crapceb ceb
-       WHERE ceb.cdcooper = pr_cdcooper
-         AND ceb.nrdconta = pr_nrdconta
-         AND ceb.nrconven = pr_nrconven;
-    rw_crapceb cr_crapceb%ROWTYPE;
-  
-    BEGIN
-      -- Buscar os dados do CEB do cooperado
-      OPEN cr_crapceb(pr_cdcooper => pr_cdcooper
-                     ,pr_nrdconta => pr_nrdconta
-                     ,pr_nrconven => pr_nrcnvcob) ;
-      FETCH cr_crapceb INTO rw_crapceb;
-      
-      -- Por padrao o retorno do cooperado é 0
-      vr_inenvcob := 0;
-
-      -- Verificar se encontrou a informação do convenio
-      IF cr_crapceb%FOUND THEN
-        -- Fechar o cursor
-        CLOSE cr_crapceb;
-        -- Se encontrou vamos utilizar a informação cadastrada
-        vr_inenvcob := rw_crapceb.inenvcob;
-      ELSE 
-        -- Fechar o cursor
-        CLOSE cr_crapceb;
-      END IF;
-      
-      -- Verificar o tipo de retorno do convenio do cooperado
-      IF vr_inenvcob  = 1 THEN
-        -- Se o retorno é pelo Internet Bank, o processo continua o mesmo
-        PAGA0001.pc_gera_arq_cooperado(pr_cdcooper => pr_cdcooper   --Codigo Cooperativa
-                                      ,pr_nrcnvcob => pr_nrcnvcob   --Numero Convenio
-                                      ,pr_nrdconta => pr_nrdconta   --Numero da Conta
-                                      ,pr_dtmvtolt => pr_dtmvtolt   --Data pagamento
-                                      ,pr_idorigem => pr_idorigem   --Identificador Origem
-                                      ,pr_flgproce => pr_flgproce   --Flag Processo
-                                      ,pr_cdprogra => pr_cdprogra   --Nome Programa
-                                      ,pr_tab_arq_cobranca  => pr_tab_arq_cobranca --Tabela Cobranca
-                                      ,pr_cdcritic => vr_cdcritic   --Codigo da Critica
-                                      ,pr_dscritic => vr_dscritic); --Descricao da critica
-
-        --Se ocorreu erro
-        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-          --Se nao tem a descricao do erro
-          IF vr_cdcritic = 0 AND vr_dscritic IS NULL THEN
-            vr_dscritic:= 'Nao foi possivel gerar o arquivo.';
-          END IF;
-
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-        END IF;
-        
-      ELSIF vr_inenvcob = 2 THEN
-        -- Se o retorno do cooperado é pelo FTP, vamos devolver uma mensagem de alerta
-        -- e criar um job para gerar o arquivo e disponibilizar no FTP
-        vr_jobname := 'JBRET_'||pr_nrdconta||'$';
-        vr_dsplsql := 
-'declare 
-  vr_cdcritic INTEGER;
-  vr_dscritic VARCHAR2(4000);
-
-  vr_tab_arq_cobranca PAGA0001.typ_tab_arq_cobranca;
-begin
-  -- Se o retorno é pelo Internet Bank, o processo continua o mesmo
-  PAGA0001.pc_gera_arq_cooperado(pr_cdcooper => ' || pr_cdcooper || '
-                                ,pr_nrcnvcob => ' || pr_nrcnvcob || '
-                                ,pr_nrdconta => ' || pr_nrdconta || '
-                                ,pr_dtmvtolt => to_date(''' || to_char(pr_dtmvtolt,'DD/MM/YYYY') || ''',''DD/MM/YYYY'')
-                                ,pr_idorigem => 7 -- FTP
-                                ,pr_flgproce => ' || pr_flgproce || '
-                                ,pr_cdprogra => ''' || pr_cdprogra || '''
-                                ,pr_tab_arq_cobranca  => vr_tab_arq_cobranca 
-                                ,pr_cdcritic => vr_cdcritic
-                                ,pr_dscritic => vr_dscritic);
-                                                      
-  IF NVL(vr_cdcritic,0) > 0 OR
-    TRIM(vr_dscritic) IS NOT NULL THEN
-    btch0001.pc_gera_log_batch(pr_cdcooper     => ' || pr_cdcooper || '
-                              ,pr_ind_tipo_log => 2 -- Erro tratato
-                              ,pr_nmarqlog     => ''JBCOBRAN_ARQ_RET.log''
-                              ,pr_des_log      => to_char(sysdate,''hh24:mi:ss'') || '' - '' ||
-                                                  ''JBCOBRAN_ARQ_RET.pc_gera_arq_cooperado'' || '' --> ATENCAO !! '' ||
-                                                  ''Erro: ''|| vr_cdcritic || ''-'' || vr_dscritic);
-  END IF;
-  
-  COMMIT;
-
-exception
-  when others then
-    btch0001.pc_gera_log_batch(pr_cdcooper     => ' || pr_cdcooper || '
-                              ,pr_ind_tipo_log => 2 -- Erro tratato
-                              ,pr_nmarqlog     => ''JBCOBRAN_ARQ_RET.log''
-                              ,pr_des_log      => to_char(sysdate,''hh24:mi:ss'') || '' - '' ||
-                                                  ''JBCOBRAN_ARQ_RET.pc_gera_arq_cooperado'' || '' --> ATENCAO !! '' ||
-                                                  ''Erro: '' || SQLERRM);
-                        
-    rollback;
-end;';
-    
-        gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper, 
-                               pr_cdprogra => 'PAGA0001', 
-                               pr_dsplsql  => vr_dsplsql, 
-                               pr_dthrexe  => NULL, 
-                               pr_interva  => NULL, 
-                               pr_jobname  => vr_jobname, 
-                               pr_des_erro => vr_dscritic );
-                                       
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-
-        vr_cdcritic := 0;
-        vr_dscritic := 'INFORM: Geração iniciada, em instantes o arquivo será disponibilizado no FTP';
-        RAISE vr_exc_saida;
-        
-      ELSE
-        vr_cdcritic := 0;
-        vr_dscritic := 'Retorno do arquivo de cobranca inválido!#' || 
-                       'O retorno permitido é 1 (Internet Bank) ou 2 (FTP), ' ||
-                       'e o retorno atual é ' || vr_inenvcob || '.#' ||
-                       'Entre em contato com o seu PA.';
-        RAISE vr_exc_erro;
-        
-      END IF;
-
-    EXCEPTION
-      WHEN vr_exc_saida THEN
-
-        --Erro
-        pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic;
-
-      WHEN vr_exc_erro THEN
-
-        --Erro
-        pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic;
-
-      WHEN OTHERS THEN
-        pr_cdcritic:= 0;
-        -- Chamar rotina de gravação de erro
-        pr_dscritic:= 'Erro na PAGA0001.pc_verifica_ret_arq_coop --> '|| SQLERRM;
-
-  END pc_verifica_ret_arq_coop;
-
-
   /* Procedure para Gerar arquivo para cooperado */
   PROCEDURE pc_gera_arq_cooperado_car(pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
                                      ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE   --Numero Convenio
@@ -19308,18 +19130,14 @@ end;';
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Adriano
-    Data     : Outubro/2015                           Ultima atualizacao: 13/12/2017
+    Data     : Outubro/2015                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
     Frequencia: -----
     Objetivo   : Procedure para gerar arquivo cobranca cooperado
 
-    Alterações : 13/12/2017 - Ajuste para chamar a rotina pc_verifica_ret_arq_coop que vai
-                              validar se o cooperado possui retorno para o FTP, ou Internet 
-                              Bank, pois se o retorno é por FTP, devolvemos apenas uma mensagem
-                              informando que o processo foi iniciado e o arquivo será 
-                              disponibilizado no FTP (Douglas - Chamado 756030)
+    Alterações :
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -19353,7 +19171,7 @@ end;';
 
       vr_dscritic:= null;
 
-      PAGA0001.pc_verifica_ret_arq_coop(pr_cdcooper => pr_cdcooper   --Codigo Cooperativa
+      PAGA0001.pc_gera_arq_cooperado(pr_cdcooper => pr_cdcooper   --Codigo Cooperativa
                                     ,pr_nrcnvcob => pr_nrcnvcob   --Numero Convenio
                                     ,pr_nrdconta => pr_nrdconta   --Numero da Conta
                                     ,pr_dtmvtolt => pr_dtmvtolt   --Data pagamento
@@ -19760,7 +19578,7 @@ end;';
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2014.                   Ultima atualizacao: 03/01/2018
+    --  Data     : Maio/2014.                   Ultima atualizacao: 02/05/2014
     --
     --  Dados referentes ao programa:
     --
@@ -19770,12 +19588,6 @@ end;';
     --                            pois será utilizada tanto para intra quanto para interbancaria.
     --                            PRJ340 - NPC (Odirlei-AMcom)
     -- 
-    --               08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
-    --                            (SD#791193 - AJFink)
-    --
-    --               03/01/2018 - Adicionar chamada para a CECRED.pc_internal_exception,
-    --                            para possibilitar a identificação do erro
-    --                            (Douglas - Chamado 822826)
     -- .........................................................................
 
   --buscar solicitações pendentes
@@ -19948,19 +19760,14 @@ end;';
     END IF;
     --Comitar alterações
     COMMIT;
-    npcb0002.pc_libera_sessao_sqlserver_npc('PAGA0001_1');
 
     -- Log de fim de execucao
     pc_controla_log_batch(pr_dstiplog => 'F');
 
   EXCEPTION
     WHEN OTHERS THEN
-      -- Adicionar chamada para possibilitar a identificação do erro
-      CECRED.pc_internal_exception;
-      
       pr_dscritic := 'Erro na rotina PAGA0001.pc_processa_crapdda: '||SQLErrm;
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc('PAGA0001_2');
 
       -- Log de erro de execucao
       pc_controla_log_batch(pr_dstiplog => 'E',
@@ -22938,26 +22745,26 @@ end;';
               CLOSE cr_crapcti;
                  
               vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
-                               'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
-                               '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
-                               ' - ' || vr_nmtldest || '</b> agendada para <b>' ||
-                               to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
-                               '</b> por insuficiência de saldo.';
-
+                                   'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
+                                   '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
+                                   ' - ' || vr_nmtldest || '</b> agendada para <b>' ||
+                                   to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
+                                   '</b> por insuficiência de saldo.';
+																									
               -- Criação de mensagem no internetbank - [TODO] Remover todas as chamadas do pc_gerar_mensagem quando o novo ibank entrar no ar
-                  GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
-                                             ,pr_nrdconta   => rw_craplau.nrdconta
+                    GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
+                                               ,pr_nrdconta   => rw_craplau.nrdconta
                                        --,pr_idseqttl   => GERA PARA TODOS OS USUÁRIOS
-                                             ,pr_cdprogra   => pr_nmdatela
-                                             ,pr_inpriori   => 0
-                                             ,pr_dsdmensg   => vr_dsdmensg
-                                             ,pr_dsdassun   => 'Transação não efetivada'
-                                             ,pr_dsdremet   => rw_crapcop.nmrescop
-                                             ,pr_dsdplchv   => 'Sem Saldo'
-                                             ,pr_cdoperad   => '1'
-                                             ,pr_cdcadmsg   => '0'
-                                             ,pr_dscritic   => vr_dscritic);
-                                               
+                                               ,pr_cdprogra   => pr_nmdatela
+                                               ,pr_inpriori   => 0
+                                               ,pr_dsdmensg   => vr_dsdmensg
+                                               ,pr_dsdassun   => 'Transação não efetivada'
+                                               ,pr_dsdremet   => rw_crapcop.nmrescop
+                                               ,pr_dsdplchv   => 'Sem Saldo'
+                                               ,pr_cdoperad   => '1'
+                                               ,pr_cdcadmsg   => '0'
+                                               ,pr_dscritic   => vr_dscritic);
+
               vr_variaveis_notif('#dataagendamento') := to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY');
               vr_variaveis_notif('#valor') := to_char(rw_craplau.vllanaut,'fm999g999g990d00');
               vr_variaveis_notif('#bancodestino') := to_char(rw_craplau.cddbanco);
@@ -22965,7 +22772,7 @@ end;';
               vr_variaveis_notif('#contadestino') := GENE0002.fn_mask_conta(rw_craplau.nrctadst);
               vr_variaveis_notif('#destinatario') := vr_nmtldest;
               vr_variaveis_notif('#motivo') := 'insuficiência de saldo';
-                
+                  
               -- Cria uma notificação
               noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
                                            ,pr_cdmotivo_mensagem => MOTIVO_TED
@@ -22973,7 +22780,7 @@ end;';
                                            ,pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => rw_craplau.nrdconta
                                            ,pr_variaveis => vr_variaveis_notif);
-										
+              
              --Marcar que ocorreu erro TAA
              vr_flerrtaa:= TRUE;
              
@@ -23016,46 +22823,46 @@ end;';
                                        ,pr_assin_conjunta => vr_assin_conjunta);        --Descricao do erro;
    
         IF vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
-           
-            --Verificar a conta de destino
-            OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
-                           ,pr_nrdconta => rw_craplau.nrdconta
-                           ,pr_cddbanco => rw_craplau.cddbanco
-                           ,pr_nrctatrf => rw_craplau.nrctadst
-                           ,pr_cdageban => rw_craplau.cdageban);
+          
+          --Verificar a conta de destino
+          OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => rw_craplau.nrdconta
+                         ,pr_cddbanco => rw_craplau.cddbanco
+                         ,pr_nrctatrf => rw_craplau.nrctadst
+                         ,pr_cdageban => rw_craplau.cdageban);
                                  
-            FETCH cr_crapcti INTO rw_crapcti;
+          FETCH cr_crapcti INTO rw_crapcti;
 
-            vr_nmtldest := '';
+          vr_nmtldest := '';
                   
-            IF cr_crapcti%FOUND THEN
-               vr_nmtldest := rw_crapcti.nmtitula;
-            END IF;
+          IF cr_crapcti%FOUND THEN
+             vr_nmtldest := rw_crapcti.nmtitula;
+          END IF;
                   
-            CLOSE cr_crapcti;
-
+          CLOSE cr_crapcti;
+          
           vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
-                                   'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
-                                   '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
-                                   ' - ' || vr_nmtldest || '</b> agendada para <b>' ||
-                                   to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
-                                   '</b> por insuficiência de saldo.';
-																									
-          -- Criação de mensagem no internetbank - [TODO] Remover todas as chamadas do pc_gerar_mensagem quando o novo ibank entrar no ar
-                    GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
-                                               ,pr_nrdconta   => rw_craplau.nrdconta
-                                   --,pr_idseqttl   => GERA PARA TODOS OS USUÁRIOS
-                                               ,pr_cdprogra   => pr_nmdatela
-                                               ,pr_inpriori   => 0
-                                               ,pr_dsdmensg   => vr_dsdmensg
-                                               ,pr_dsdassun   => 'Transação não efetivada'
-                                               ,pr_dsdremet   => rw_crapcop.nmrescop
-                                               ,pr_dsdplchv   => 'Sem Saldo'
-                                               ,pr_cdoperad   => '1'
-                                               ,pr_cdcadmsg   => '0'
-                                               ,pr_dscritic   => vr_dscritic2);
+                         'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
+                         '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
+                         ' - ' || vr_nmtldest || '</b> agendada para <b>' ||
+                         to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
+                         '</b> por insuficiência de saldo.';
 
-         END IF;
+          -- Criação de mensagem no internetbank - [TODO] Remover todas as chamadas do pc_gerar_mensagem quando o novo ibank entrar no ar
+          GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
+                                     ,pr_nrdconta   => rw_craplau.nrdconta
+                                   --,pr_idseqttl   => GERA PARA TODOS OS USUÁRIOS
+                                     ,pr_cdprogra   => pr_nmdatela
+                                     ,pr_inpriori   => 0
+                                     ,pr_dsdmensg   => vr_dsdmensg
+                                     ,pr_dsdassun   => 'Transação não efetivada'
+                                     ,pr_dsdremet   => rw_crapcop.nmrescop
+                                     ,pr_dsdplchv   => 'Sem Saldo'
+                                     ,pr_cdoperad   => '1'
+                                     ,pr_cdcadmsg   => '0'
+                                     ,pr_dscritic   => vr_dscritic2);
+          
+        END IF;
           
        END IF;
        
