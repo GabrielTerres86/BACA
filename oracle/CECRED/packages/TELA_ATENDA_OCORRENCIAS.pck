@@ -588,6 +588,7 @@ END fn_busca_dias_atraso;
       vr_qtd_dias_risco    INTEGER;                -- Quantidade de dias que o contrato está no risco  
 			vr_diasatraso        INTEGER;                -- Quantidade de dias em atraso do contrato  
 			vr_contratos_ativos  INTEGER;                -- Quantidade de contratos ativos da conta     
+			vr_risco_inclusao    crawepr.dsnivris%TYPE;  -- Risco inclusão para contratos de limite de crédito
 
       ---------->> CURSORES <<--------
       -- Contas de mesmo titular da conta base
@@ -620,7 +621,23 @@ END fn_busca_dias_atraso;
        AND w.cdcooper = e.cdcooper
        AND w.nrdconta = e.nrdconta
 			 AND w.nrctremp = e.nrctremp;  
-		rw_contratos cr_contratos%ROWTYPE;		       
+		rw_contratos cr_contratos%ROWTYPE;
+		
+		-- Contratos de limite de crédito, limite de descontos (cheques e títulos)
+		CURSOR cr_contratos_limite(pr_cdcooper NUMBER, pr_nrdconta NUMBER, pr_dtmvtoan DATE) IS 
+		SELECT l.nrctrlim
+		     , r.innivris
+		  FROM craplim l
+			   , crapris r
+		 WHERE l.cdcooper = pr_cdcooper
+		   AND l.nrdconta = pr_nrdconta
+			 AND l.insitlim = 2
+			 AND r.cdcooper = l.cdcooper	
+			 AND r.nrdconta = l.nrdconta
+			 AND r.nrctremp = l.nrctrlim
+			 AND r.dtrefere = pr_dtmvtoan
+			 AND r.inddocto = 3;
+		rw_contratos_limite cr_contratos_limite%ROWTYPE;
 
     -- Contas dos grupos econômicos aos quais o titular da conta base está ligado
     CURSOR cr_contas_grupo_economico(rw_cbase IN crapass%ROWTYPE) IS
@@ -774,6 +791,53 @@ END fn_busca_dias_atraso;
 								vr_contratos_ativos := vr_contratos_ativos + 1;
 					END LOOP;
 					
+					FOR rw_contratos_limite 
+						IN cr_contratos_limite(rw_contas_do_titular.cdcooper
+						                     , rw_contas_do_titular.nrdconta
+																 , rw_dat.dtmvtoan) LOOP
+																 
+								-- Busca o rating do contrato
+						    vr_rating := fn_busca_rating(rw_contas_do_titular.cdcooper
+																			     , rw_contas_do_titular.nrdconta
+																					 , rw_contratos_limite.nrctrlim);
+																					 
+								IF vr_rating <> NULL THEN
+									vr_risco_inclusao := vr_rating;
+								ELSE
+									vr_risco_inclusao := 'A';
+								END IF;
+
+				    		-- Busca a quantidade dias em atraso do contrato
+				   		  vr_diasatraso := fn_busca_dias_atraso(rw_contas_do_titular.cdcooper
+  								     						  		            , rw_contas_do_titular.nrdconta
+										 							                  , rw_contratos_limite.nrctrlim
+																	                  , rw_dat.dtmvtoan);
+
+						    -- Busca o risco agravado para a conta
+						    vr_risco_agr := fn_busca_risco_agravado(rw_contas_do_titular.cdcooper
+						  																		    , rw_contas_do_titular.nrdconta);					
+																									
+						    -- Adiciona registro para a conta/contrato no XML de retorno
+                pc_monta_reg_conta_xml(pr_retxml
+                                     , vr_auxconta
+                                     , vr_dscritic
+                                     , rw_contas_do_titular.nrdconta
+                                     , rw_contas_do_titular.nrcpfcgc
+                                     , rw_contratos_limite.nrctrlim
+                                     , vr_risco_inclusao
+                                     , vr_risco_grupo
+                                     , vr_rating
+                                     , fn_calcula_risco_atraso(vr_diasatraso)
+                                     , fn_traduz_risco(vr_risco_agr)
+                                     , fn_traduz_risco(rw_contratos_limite.innivris)
+                                     , rw_contas_do_titular.dsnivris
+                                     , vr_numero_grupo);
+																 
+																 
+								vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+								vr_contratos_ativos := vr_contratos_ativos + 1;
+					END LOOP;
+					
 					-- Se a conta não possui contratos ativos, inclui apenas dados de risco da conta
 					IF vr_contratos_ativos = 0 THEN
 						   pc_monta_reg_conta_xml(pr_retxml
@@ -840,6 +904,53 @@ END fn_busca_dias_atraso;
 					  vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 						vr_contratos_ativos := vr_contratos_ativos + 1;
 					END LOOP;
+					
+					FOR rw_contratos_limite 
+						IN cr_contratos_limite(rw_contas_grupo_economico.cdcooper
+						                     , rw_contas_grupo_economico.nrdconta
+																 , rw_dat.dtmvtoan) LOOP
+																 
+								-- Busca o rating do contrato
+						    vr_rating := fn_busca_rating(rw_contas_grupo_economico.cdcooper
+																			     , rw_contas_grupo_economico.nrdconta
+																					 , rw_contratos_limite.nrctrlim);
+																					 
+								IF vr_rating <> NULL THEN
+									vr_risco_inclusao := vr_rating;
+								ELSE
+									vr_risco_inclusao := 'A';
+								END IF;
+
+				    		-- Busca a quantidade dias em atraso do contrato
+				   		  vr_diasatraso := fn_busca_dias_atraso(rw_contas_grupo_economico.cdcooper
+  								     						  		            , rw_contas_grupo_economico.nrdconta
+										 							                  , rw_contratos_limite.nrctrlim
+																	                  , rw_dat.dtmvtoan);
+
+						    -- Busca o risco agravado para a conta
+						    vr_risco_agr := fn_busca_risco_agravado(rw_contas_grupo_economico.cdcooper
+						  																		    , rw_contas_grupo_economico.nrdconta);					
+																									
+						    -- Adiciona registro para a conta/contrato no XML de retorno
+                pc_monta_reg_conta_xml(pr_retxml
+                                     , vr_auxconta
+                                     , vr_dscritic
+                                     , rw_contas_grupo_economico.nrdconta
+                                     , rw_contas_grupo_economico.nrcpfcgc
+                                     , rw_contratos_limite.nrctrlim
+                                     , vr_risco_inclusao
+                                     , rw_contas_grupo_economico.dsdrisgp
+                                     , vr_rating
+                                     , fn_calcula_risco_atraso(vr_diasatraso)
+                                     , fn_traduz_risco(vr_risco_agr)
+                                     , fn_traduz_risco(rw_contratos_limite.innivris)
+                                     , rw_contas_grupo_economico.dsnivris
+                                     , rw_contas_grupo_economico.nrdgrupo);
+																 
+																 
+								vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+								vr_contratos_ativos := vr_contratos_ativos + 1;
+					END LOOP;					
 					
 					-- Se a conta não possui contratos ativos, inclui apenas dados de risco da conta
 					IF vr_contratos_ativos = 0 THEN
