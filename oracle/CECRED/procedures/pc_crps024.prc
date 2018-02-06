@@ -147,6 +147,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
       from crapage
      where crapage.cdcooper = pr_cdcooper
        and crapage.cdagenci = decode(pr_cdagenci,0,crapage.cdagenci,pr_cdagenci)
+       and crapage.cdagenci <> 999
        and (pr_qterro = 0 or (pr_qterro > 0 and exists (select 1
                                                         from tbgen_batch_controle
                                                         where tbgen_batch_controle.cdcooper    = pr_cdcooper
@@ -180,7 +181,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
           ,crapass
      where crapttl.cdcooper = crapass.cdcooper
        and crapttl.nrdconta = crapass.nrdconta
-       and crapttl.cdcooper = pr_cdcooper
+       and crapttl.cdcooper = pr_cdcooper 
        and crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
        and crapttl.idseqttl = 1;
   --
@@ -892,7 +893,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
                          pr_cdcooper           => pr_cdcooper,
                          pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                          pr_tpocorrencia       => 4,
-                         pr_dsmensagem         => 'Inicio Processo Agencia: '||rr_wrk_agencia.cdagenci||' - '||rr_wrk_agencia.nmresage,
+                         pr_dsmensagem         => '[pc_gerar_xml_wrk] Inicio Processo Agencia: '||rr_wrk_agencia.cdagenci||' - '||rr_wrk_agencia.nmresage,
                          PR_IDPRGLOG           => vr_idlog_ini);  
                          
          -- Incluir informações do cabeçalho da agência
@@ -985,7 +986,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
                         pr_cdcooper         => pr_cdcooper,
                         pr_tpexecucao       => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                         pr_tpocorrencia     => 4,
-                        pr_dsmensagem       => '****FINALIZOU A MONTAGEM DO XML****',
+                        pr_dsmensagem       => '[pc_gerar_xml_wrk] *FINALIZOU A MONTAGEM DO XML*',
                         PR_IDPRGLOG         => vr_idlog_ini);
       
       gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</conta></agencia>');
@@ -1004,7 +1005,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
       and wrk.cdprograma  in ('CRPS024_TOTAIS','CRPS024_AGENCIA','CRPS024_ASSOCIADO')
       and wrk.dsrelatorio = 'crrl025'
       and wrk.dtmvtolt    = vr_dtmvtolt
-      and wrk.cdagenci    = decode(pr_CDAGENCI,99999,wrk.cdagenci,pr_CDAGENCI);
+      and wrk.cdagenci    = decode(pr_CDAGENCI,0,wrk.cdagenci,pr_CDAGENCI);
       
   end pc_clear_memoria;
 
@@ -1031,6 +1032,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
     gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<?xml version="1.0" encoding="utf-8"?><agencias>');
     -- Início da leitura das informações
     while vr_indice_agencia is not null loop
+      --Desprezar os calculosfeitos.
+      vr_tab_agencia(vr_indice_agencia).qttotass := 0;
+      vr_tab_agencia(vr_indice_agencia).qttotfol := 0;
+      vr_dsmensag := '***Inicio [pc_gerar_xml_pl_table] Index Agencia: ['||vr_indice_agencia||'] Qtde Cooperados: ['||vr_tab_agencia(vr_indice_agencia).tab_associado.count()||']';
+        
+      pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 4,
+                      pr_dsmensagem         => vr_dsmensag,
+                      PR_IDPRGLOG           => vr_idlog_ini);  
+                      
       -- Este loop faz a quebra por agência, portanto sempre deve incluir o cabeçalho
       -- Calcular total de cheques para agência
       vr_qttal := nvl(vr_tab_agencia(vr_indice_agencia).qttaluso, 0) +
@@ -1053,7 +1067,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
       -- Inclui os dados das contas (tab_associados) somente quando a quantidade de cheques for maior do que a quantidade padrão
       vr_indice_associado := vr_tab_agencia(vr_indice_agencia).tab_associado.first;
       while vr_indice_associado is not null loop
-        if vr_tab_agencia(vr_indice_agencia).tab_associado(vr_indice_associado).qtchqtal > vr_tab_agencia(vr_indice_agencia).tab_associado(vr_indice_associado).nrflspad then
+        if vr_tab_agencia(vr_indice_agencia).tab_associado(vr_indice_associado).qtchqtal > 
+           vr_tab_agencia(vr_indice_agencia).tab_associado(vr_indice_associado).nrflspad then
+           
+          vr_dsmensag := '*****[pc_gerar_xml_pl_table]. Index Agencia: ['||vr_indice_agencia||'] Index Associado: ['||vr_indice_associado||']'||
+                         ' Qtde Cheque: ['||vr_tab_agencia(vr_indice_agencia).tab_associado(vr_indice_associado).qtchqtal||']'||
+                         ' Nro Folhas Padrao: ['||vr_tab_agencia(vr_indice_agencia).tab_associado(vr_indice_associado).nrflspad||']';
+        
+          pc_log_programa(PR_DSTIPLOG           => 'O',
+                          PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_tpocorrencia       => 4,
+                          pr_dsmensagem         => vr_dsmensag,
+                          PR_IDPRGLOG           => vr_idlog_ini);        
+           
           gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<conta nmtipcta="'||vr_tab_agencia(vr_indice_agencia).tab_associado(vr_indice_associado).nmtipcta||'">'||
                            '<nrflspad>'||vr_tab_agencia(vr_indice_agencia).tab_associado(vr_indice_associado).nrflspad||'</nrflspad>'||
                            '<nrdconta>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_associado(vr_indice_associado).nrdconta, '9G999G999G9')||'</nrdconta>'||
@@ -1070,12 +1098,38 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
         vr_indice_associado := vr_tab_agencia(vr_indice_agencia).tab_associado.next(vr_indice_associado);
       end loop;
       gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</agencia>');
+      
+      vr_dsmensag := '***Fim [pc_gerar_xml_pl_table] Index Agencia: ['||vr_indice_agencia||']'||
+                     ' Qtde Total Associados: ['||vr_tab_agencia(vr_indice_agencia).tab_associado.count()||']'||
+                     ' Qtde Associados: ['|| vr_tab_agencia(vr_indice_agencia).qttotass||']'||
+                     ' Qtde Total Folha: ['||vr_tab_agencia(vr_indice_agencia).qttotfol||']***';
+        
+      pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 4,
+                      pr_dsmensagem         => vr_dsmensag,
+                      PR_IDPRGLOG           => vr_idlog_ini);  
+      
       vr_indice_agencia := vr_tab_agencia.next(vr_indice_agencia);
+      
+      
+      
     end loop;
     -- Final do relatório, incluir resumo
     gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<agencia cdagenci="999999"><conta>');
     vr_indice_agencia := vr_tab_agencia.first;
     
+    vr_dsmensag := '***Inicio [pc_gerar_xml_pl_table Totais] Index Agencia: ['||vr_indice_agencia||'] Qtde Cooperados: ['||vr_tab_agencia(vr_indice_agencia).tab_associado.count()||']';
+        
+    pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 4,
+                      pr_dsmensagem         => vr_dsmensag,
+                      PR_IDPRGLOG           => vr_idlog_ini);  
     while vr_indice_agencia is not null loop
       -- Calcula os percentuais
       vr_prtaluso := nvl(vr_tab_agencia(vr_indice_agencia).qttaluso, 0) / vr_tot_qttaluso * 100;
@@ -1101,6 +1155,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
                      '</r_agencia>');
       vr_indice_agencia := vr_tab_agencia.next(vr_indice_agencia);
     end loop;
+    
+    vr_dsmensag := '***Fim [pc_gerar_xml_pl_table Totais] ';
+        
+    pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 4,
+                      pr_dsmensagem         => vr_dsmensag,
+                      PR_IDPRGLOG           => vr_idlog_ini);  
     gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</conta></agencia>');
     -- ultima tag e descarregar buffer
     gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</agencias>',TRUE);
@@ -1141,7 +1205,9 @@ begin
   if vr_inproces  > 2 and
      vr_qtdjobs   > 0 and 
      pr_cdagenci  = 0 then 
-    
+    --Pode ter ficado sujeira de uma execucao anterior (abortado), limpar tabela de memoria
+    pc_clear_memoria(pr_CDAGENCI => 0); 
+   
     vr_tpexecucao := 1;
     --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
     pc_log_programa(pr_dstiplog   => 'I',    
@@ -1183,7 +1249,12 @@ begin
   
   else
         
-    vr_tpexecucao := 2;
+    if pr_cdagenci <> 0 then
+      vr_tpexecucao := 2;
+    else
+      vr_tpexecucao := 1;
+    end if; 
+    
     --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
     pc_log_programa(pr_dstiplog   => 'I',    
                     pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
@@ -1263,32 +1334,61 @@ begin
     vr_nom_arquivo  := 'crrl025';                                              
     
     --Apos a finalização de todos os Jobs, é necessário montar o XML.
-    pc_log_programa(PR_DSTIPLOG           => 'O',
-                    PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                    pr_cdcooper           => pr_cdcooper,
-                    pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                    pr_tpocorrencia       => 4,
-                    pr_dsmensagem         => 'Inicio - pc_gerar_xml AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
-                    PR_IDPRGLOG           => vr_idlog_ini);
+    
     
     --Caso a Cooperativa tiver jobs para o programa, o xml é montado usando a tabela wrk
-    if vr_qtdjobs > 0 then
+    if vr_qtdjobs > 0 and vr_inproces > 2 then
+      vr_dsmensag := 'Inicio - pc_gerar_xml_wrk AGENCIA: ['||pr_cdagenci||'] - INPROCES: ['||vr_inproces||']'||
+                   ' vr_tpexecucao = [ '||vr_tpexecucao||']';
+                   
+      pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 4,
+                      pr_dsmensagem         => vr_dsmensag,
+                      PR_IDPRGLOG           => vr_idlog_ini);
       pc_gerar_xml_wrk;
-      --Limpar a tabela temporaria, todas as agencias.
-      pc_clear_memoria(pr_CDAGENCI => 99999);
-    else
-    --Caso a Cooperativa nao tiver jobs para o programa, o xml é montado usando a pl-table
-      pc_gerar_xml_pl_table;
-    end if;
-    
-    pc_log_programa(PR_DSTIPLOG           => 'O',
-                    PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                    pr_cdcooper           => pr_cdcooper,
-                    pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                    pr_tpocorrencia       => 4,
-                    pr_dsmensagem         => 'Fim - pc_gerar_xml AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
-                    PR_IDPRGLOG           => vr_idlog_ini);
+
+      vr_dsmensag := 'Fim - pc_gerar_xml_wrk AGENCIA: ['||pr_cdagenci||'] - INPROCES: ['||vr_inproces||']'||
+                   ' vr_tpexecucao = [ '||vr_tpexecucao||']';
+                   
+      pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 4,
+                      pr_dsmensagem         => vr_dsmensag,
+                      PR_IDPRGLOG           => vr_idlog_ini);
                     
+      --Limpar a tabela temporaria, todas as agencias.
+      pc_clear_memoria(pr_CDAGENCI => 0);
+    else
+      --Caso a Cooperativa nao tiver jobs para o programa, o xml é montado usando a pl-table
+      vr_dsmensag := '*Inicio - pc_gerar_xml_pl_table AGENCIA: ['||pr_cdagenci||'] - INPROCES: ['||vr_inproces||']'||
+                     ' vr_tpexecucao = ['||vr_tpexecucao||'] Qtde vr_tab_agencia ['||vr_tab_agencia.count()||']';
+
+      pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 4,
+                      pr_dsmensagem         => vr_dsmensag,
+                      PR_IDPRGLOG           => vr_idlog_ini);
+       pc_gerar_xml_pl_table;
+       
+       vr_dsmensag := '*Fim - pc_gerar_xml_pl_table AGENCIA: ['||pr_cdagenci||'] - INPROCES: ['||vr_inproces||']'||
+                     ' vr_tpexecucao = ['||vr_tpexecucao||'] Qtde vr_tab_agencia ['||vr_tab_agencia.count()||']';
+
+       pc_log_programa(PR_DSTIPLOG           => 'O',
+                       PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                       pr_cdcooper           => pr_cdcooper,
+                       pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                       pr_tpocorrencia       => 4,
+                       pr_dsmensagem         => vr_dsmensag,
+                       PR_IDPRGLOG           => vr_idlog_ini);
+    end if;
+                        
     -- Incializar a varíavel com o XML montado
     --vr_XMLType := XMLType.createXML(vr_des_xml);
     btch0001.pc_gera_log_batch(pr_cdcooper,
@@ -1336,8 +1436,22 @@ begin
                              ,pr_infimsol => pr_infimsol
                              ,pr_stprogra => pr_stprogra);
 
-                                 
 
+                                 
+    if vr_idcontrole <> 0 then
+      -- Atualiza finalização do batch na tabela de controle 
+      gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                         ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                         ,pr_dscritic   => vr_dscritic);
+                                         
+      -- Testar saida com erro
+      if  vr_dscritic is not null then 
+        -- Levantar exceçao
+        raise vr_exc_saida;
+      end if; 
+                                                      
+    end if;
+    
   else
     -- Foi executado por um job paralelo
     -- Atualiza finalização do batch na tabela de controle 
