@@ -1,11 +1,11 @@
 <?
 /*!
  * FONTE        : form_cabecalho.php
- * CRIAÇÃO      : James Prust Júnior
- * DATA CRIAÇÃO : 15/12/2014
- * OBJETIVO     : Cabeçalho para a tela CADLIM
+ * CRIAÃ‡ÃƒO      : James Prust JÃºnior
+ * DATA CRIAÃ‡ÃƒO : 15/12/2014
+ * OBJETIVO     : CabeÃ§alho para a tela CADLIM
  * --------------
- * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Projeto 300. (Lombardi)
+ * ALTERAÃ‡Ã•ES   : 21/09/2016 - InclusÃ£o do filtro "Tipo de Limite" no cabecalho. Projeto 300. (Lombardi)
  *				  
  * --------------
  */	
@@ -35,6 +35,7 @@
 					<option value="0">Selecione</option>
 					<option value="1">Limite de Cr&eacute;dito</option>
 					<option value="2">Limite Desconto de Cheque</option>
+					<option value="3">Limite Desconto de T&iacute;tulos</option>
 				</select>			
 			</td>
 		</tr>		

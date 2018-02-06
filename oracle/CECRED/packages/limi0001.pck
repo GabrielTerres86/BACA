@@ -13,14 +13,16 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
   -- Frequencia: -----
   -- Objetivo  : Agrupar rotinas genericas refente ao limite de credito
 
-  -- Alteracoes:     11/08/2016 - Inclus„o de par‚metros para limite de desconto de cheque.
+  -- Alteracoes:     11/08/2016 - Inclus√£o de par√¢metros para limite de desconto de cheque.
   --                 (Linhares - Projeto 300)
   --
-  --                 17/08/2016 - Inclus„o de rotina para renovaÁ„o de limite de cheque.
+  --                 17/08/2016 - Inclus√£o de rotina para renova√ß√£o de limite de cheque.
   --                 (Linhares - Projeto 300)
   --                 
   --                 08/08/2017 - Melhoria 438 - Majoracao automatica de limite de credito
   --                              Heitor (Mouts)
+  --
+  --                 05/02/2018 - Adicionados campos novos (qtcarpag e qtaltlim) - (Luis Fernando - GFT)
   ---------------------------------------------------------------------------------------------------------------
   --> Armazenar dados do contrato de limite (antigo b1wge0019tt.i - tt-dados-ctr)
   TYPE typ_rec_dados_ctr 
@@ -94,11 +96,11 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
   -- Rotina referente a consulta da tela CADLIM
   PROCEDURE pc_tela_cadlim_consultar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa
                                     ,pr_flgdepop IN INTEGER               --> Flag para verificar o departamento do operador
-                                    ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no cÛdigo, 0 ñ N„o / 1 - Sim)
+                                    ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no c√≥digo, 0 ‚Äì N√£o / 1 - Sim)
                                     ,pr_tplimite IN INTEGER               --> Tipo de limite (1 - Limite de credito / 2 - Limite de desconto de cheques / 3 - Lim. Desc. Titulo )
-                                    ,pr_xmllog   IN VARCHAR2              --> XML com informaÁıes de LOG
-                                    ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                                    ,pr_dscritic OUT VARCHAR2             --> DescriÁ„o da crÌtica
+                                    ,pr_xmllog   IN VARCHAR2              --> XML com informa√ß√µes de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                                    ,pr_dscritic OUT VARCHAR2             --> Descri√ß√£o da cr√≠tica
                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
@@ -114,38 +116,40 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                   ,pr_qtatracc IN craprli.qtatracc%TYPE --> Quantidade de dias de atraso em conta corrente
                                   ,pr_dssitdop IN craprli.dssitdop%TYPE --> Situacoes que englobam a operacao
                                   ,pr_dsrisdop IN craprli.dsrisdop%TYPE --> Riscos que englobam a operacao
-                                  ,pr_tplimite IN craprli.tplimite%TYPE --> Tipo de limite de crÈdito
-                                  ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual mÌnimo de liquidez
-                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez                                  
-                                  ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no cÛdigo, 0 ñ N„o / 1 - Sim)         
-                                  ,pr_xmllog   IN VARCHAR2              --> XML com informaÁıes de LOG
-                                  ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                                  ,pr_dscritic OUT VARCHAR2             --> DescriÁ„o da crÌtica
+                                  ,pr_tplimite IN craprli.tplimite%TYPE --> Tipo de limite de cr√©dito
+                                  ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual m√≠nimo de liquidez
+                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez
+                                  ,pr_qtcarpag IN craprli.qtcarpag%TYPE --> Contem o periodo de carencia de pagamento
+                                  ,pr_qtaltlim IN craprli.qtaltlim%TYPE --> Contem o periodo de alteracao de limites rejeitados                               
+                                  ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no c√≥digo, 0 ‚Äì N√£o / 1 - Sim)         
+                                  ,pr_xmllog   IN VARCHAR2              --> XML com informa√ß√µes de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                                  ,pr_dscritic OUT VARCHAR2             --> Descri√ß√£o da cr√≠tica
                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                   ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
     
   -- Rotina referente a renovacao manual do limite de credito
-  PROCEDURE pc_renovar_limite_cred_manual(pr_cdcooper IN crapcop.cdcooper%TYPE  --> CÛdigo da Cooperativa
-                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> CÛdigo do Operador
+  PROCEDURE pc_renovar_limite_cred_manual(pr_cdcooper IN crapcop.cdcooper%TYPE  --> C√≥digo da Cooperativa
+                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> C√≥digo do Operador
                                          ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
                                          ,pr_idorigem IN INTEGER                --> Identificador de Origem
-                                         ,pr_nrdconta IN crapass.nrdconta%TYPE  --> N˙mero da Conta
+                                         ,pr_nrdconta IN crapass.nrdconta%TYPE  --> N√∫mero da Conta
                                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular da Conta
                                          ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
                                          ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato                            
-                                         ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
-                                         ,pr_dscritic OUT VARCHAR2);            --> DescriÁ„o da crÌtica
+                                         ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
+                                         ,pr_dscritic OUT VARCHAR2);            --> Descri√ß√£o da cr√≠tica
 
-  -- Rotina para geraÁ„o do contrato de limite de credito
-  PROCEDURE pc_impres_contrato_limite(pr_cdcooper IN crapcop.cdcooper%TYPE  --> CÛdigo da Cooperativa
-                                     ,pr_cdagecxa IN crapage.cdagenci%TYPE  --> CÛdigo da agencia
+  -- Rotina para gera√ß√£o do contrato de limite de credito
+  PROCEDURE pc_impres_contrato_limite(pr_cdcooper IN crapcop.cdcooper%TYPE  --> C√≥digo da Cooperativa
+                                     ,pr_cdagecxa IN crapage.cdagenci%TYPE  --> C√≥digo da agencia
                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
-                                     ,pr_cdopecxa IN crapope.cdoperad%TYPE  --> CÛdigo do Operador
+                                     ,pr_cdopecxa IN crapope.cdoperad%TYPE  --> C√≥digo do Operador
                                      ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
                                      ,pr_idorigem IN INTEGER                --> Identificador de Origem
                                      ,pr_cdprogra IN crapprg.cdprogra%TYPE  --> Codigo do programa
-                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> N˙mero da Conta
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> N√∫mero da Conta
                                      ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular da Conta
                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
                                      ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE  --> Data do proximo Movimento 
@@ -158,11 +162,11 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                      --------> OUT <--------
                                      ,pr_nmarqpdf  OUT VARCHAR2             --> Retornar quantidad de registros                           
-                                     ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
-                                     ,pr_dscritic OUT VARCHAR2);            --> DescriÁ„o da crÌtica 
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
+                                     ,pr_dscritic OUT VARCHAR2);            --> Descri√ß√£o da cr√≠tica 
                                      
-  --> Rotina para geraÁ„o do contrato de limite de credito  - Ayllos Web
-  PROCEDURE pc_impres_contrato_limite_web(pr_nrdconta   IN crapass.nrdconta%TYPE  --> N˙mero da Conta
+  --> Rotina para gera√ß√£o do contrato de limite de credito  - Ayllos Web
+  PROCEDURE pc_impres_contrato_limite_web(pr_nrdconta   IN crapass.nrdconta%TYPE  --> N√∫mero da Conta
                                          ,pr_idseqttl   IN crapttl.idseqttl%TYPE  --> Titular da Conta
                                          ,pr_idimpres   IN INTEGER                --> Indicador de impresao
                                          ,pr_nrctrlim   IN craplim.nrctrlim%TYPE  --> Contrato
@@ -177,40 +181,40 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                          ,pr_des_erro  OUT VARCHAR2);             --> Erros do processo
 
   -- Rotina referente a renovacao manual do limite de desconto de cheque
-  PROCEDURE pc_renovar_lim_desc_cheque(pr_cdcooper IN crapcop.cdcooper%TYPE --> CÛdigo da Cooperativa
-                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --> N˙mero da Conta
+  PROCEDURE pc_renovar_lim_desc_cheque(pr_cdcooper IN crapcop.cdcooper%TYPE --> C√≥digo da Cooperativa
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --> N√∫mero da Conta
                                       ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Titular da Conta
                                       ,pr_vllimite IN craplim.vllimite%TYPE --> Valor Limite de Desconto
                                       ,pr_nrctrlim IN craplim.nrctrlim%TYPE --> Contrato
                                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de Movimento
-                                      ,pr_cdoperad IN crapope.cdoperad%TYPE --> CÛdigo do Operador
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE --> C√≥digo do Operador
                                       ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da Tela
                                       ,pr_idorigem IN INTEGER               --> Identificador de Origem
-                                      ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                                      ,pr_dscritic OUT VARCHAR2);           --> DescriÁ„o da crÌtica
+                                      ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                                      ,pr_dscritic OUT VARCHAR2);           --> Descri√ß√£o da cr√≠tica
                                       
   -- Rotina referente ao desbloqueio para inclusao de novos borderos
-  PROCEDURE pc_desblq_inclusao_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE --> CÛdigo da cooperativa
-                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --> N˙mero da Conta
+  PROCEDURE pc_desblq_inclusao_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE --> C√≥digo da cooperativa
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --> N√∫mero da Conta
                                       ,pr_nrctrlim IN craplim.nrctrlim%TYPE --> Contrato                            
-                                      ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> N˙mero do Caixa
-                                      ,pr_cdoperad IN craplgm.cdoperad%TYPE --> CÛdigo do operador
+                                      ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> N√∫mero do Caixa
+                                      ,pr_cdoperad IN craplgm.cdoperad%TYPE --> C√≥digo do operador
                                       ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da Tela
-                                      ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                                      ,pr_dscritic OUT VARCHAR2);           --> DescriÁ„o da crÌtica
+                                      ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                                      ,pr_dscritic OUT VARCHAR2);           --> Descri√ß√£o da cr√≠tica
 
   -- Rotina referente a consulta de ultimas alteracoes da tela ATENDA
-  PROCEDURE pc_ultimas_alteracoes(pr_nrdconta IN crapass.nrdconta%TYPE --> N˙mero da Conta
-                                 ,pr_xmllog   IN VARCHAR2              --> XML com informaÁıes de LOG
-                                 ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                                 ,pr_dscritic OUT VARCHAR2             --> DescriÁ„o da crÌtica
+  PROCEDURE pc_ultimas_alteracoes(pr_nrdconta IN crapass.nrdconta%TYPE --> N√∫mero da Conta
+                                 ,pr_xmllog   IN VARCHAR2              --> XML com informa√ß√µes de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                                 ,pr_dscritic OUT VARCHAR2             --> Descri√ß√£o da cr√≠tica
                                  ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
-  PROCEDURE pc_ultima_majoracao(pr_nrdconta IN crapass.nrdconta%TYPE --> N˙mero da Conta
-                               ,pr_xmllog   IN VARCHAR2              --> XML com informaÁıes de LOG
-                               ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                               ,pr_dscritic OUT VARCHAR2             --> DescriÁ„o da crÌtica
+  PROCEDURE pc_ultima_majoracao(pr_nrdconta IN crapass.nrdconta%TYPE --> N√∫mero da Conta
+                               ,pr_xmllog   IN VARCHAR2              --> XML com informa√ß√µes de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                               ,pr_dscritic OUT VARCHAR2             --> Descri√ß√£o da cr√≠tica
                                ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
@@ -235,10 +239,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   --                          comparacao com o campo cdoperad da tabela crapope
   --                          (Tiago SD339476)
   --
-  --             11/08/2016 - Inclus„o de par‚metros para limite de desconto de cheque.
+  --             11/08/2016 - Inclus√£o de par√¢metros para limite de desconto de cheque.
   --                          (Linhares - Projeto 300)
   --  
-  --             17/08/2016 - Inclus„o de rotina para renovaÁ„o de limite de cheque.
+  --             17/08/2016 - Inclus√£o de rotina para renova√ß√£o de limite de cheque.
   --                          (Linhares - Projeto 300)
   --
   --             03/10/2017 - Imprimir conta quando o avalista for cooperado
@@ -247,11 +251,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_tela_cadlim_consultar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa
                                     ,pr_flgdepop IN INTEGER               --> Flag para verificar o departamento do operador
-                                    ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no cÛdigo, 0 ñ N„o / 1 - Sim)
+                                    ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no c√≥digo, 0 ‚Äì N√£o / 1 - Sim)
                                     ,pr_tplimite IN INTEGER               --> Tipo de limite (1 - Limite de credito / 2 - Limite de desconto de cheques / 3 - Lim. Desc. Titulo )
-                                    ,pr_xmllog   IN VARCHAR2              --> XML com informaÁıes de LOG
-                                    ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                                    ,pr_dscritic OUT VARCHAR2             --> DescriÁ„o da crÌtica
+                                    ,pr_xmllog   IN VARCHAR2              --> XML com informa√ß√µes de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                                    ,pr_dscritic OUT VARCHAR2             --> Descri√ß√£o da cr√≠tica
                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
@@ -272,13 +276,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
      Observacao: -----
      Alteracoes: 
-                 25/11/2016 - AlteraÁ„o para que o fonte realize a avaliaÁ„o do departamento
-                              pelo campo CDDEPART ao invÈs do DSDEPART. (Renato Darosci - Supero)	  
+                 25/11/2016 - Altera√ß√£o para que o fonte realize a avalia√ß√£o do departamento
+                              pelo campo CDDEPART ao inv√©s do DSDEPART. (Renato Darosci - Supero)	  
 
-                 11/08/2016 - Inclus„o do par‚metro pr_tplmite para filtro por tipo de limite
-                            - Inclus„o dos campos pcliqdez e qtdialiq na consulta
+                 11/08/2016 - Inclus√£o do par√¢metro pr_tplmite para filtro por tipo de limite
+                            - Inclus√£o dos campos pcliqdez e qtdialiq na consulta
                               (Linhares - Projeto 300)
-           
+
+                 05/02/2018 - Adicionados campos novos (qtcarpag e qtaltlim) - (Luis Fernando - GFT)
      ..............................................................................*/ 
     DECLARE
 
@@ -296,7 +301,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                dssitdop,
                dsrisdop,
                pcliqdez,
-               qtdialiq
+               qtdialiq,
+               qtcarpag,
+               qtaltlim
           FROM craprli
          WHERE cdcooper = pr_cdcooper
            AND inpessoa = pr_inpessoa
@@ -312,7 +319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
            AND upper(crapope.cdoperad) = upper(pr_cdoperad);
       rw_crapope cr_crapope%ROWTYPE;
       
-      -- Vari·vel de crÌticas
+      -- Vari√°vel de cr√≠ticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
 
@@ -357,7 +364,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
           CLOSE cr_crapope;
         END IF;
           
-        -- Somente o departamento credito ir· ter acesso para alterar as informacoes
+        -- Somente o departamento credito ir√° ter acesso para alterar as informacoes
         IF rw_crapope.cddepart NOT IN (14,20) THEN
           vr_cdcritic := 36;
           vr_dscritic := NULL;
@@ -383,7 +390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         CLOSE cr_craprli;          
       END IF;      
       
-      -- Criar cabeÁalho do XML
+      -- Criar cabe√ßalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlmaxren', pr_tag_cont => rw_craprli.vlmaxren, pr_des_erro => vr_dscritic);
@@ -397,20 +404,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dsrisdop', pr_tag_cont => rw_craprli.dsrisdop, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'pcliqdez', pr_tag_cont => rw_craprli.pcliqdez, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdialiq', pr_tag_cont => rw_craprli.qtdialiq, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtcarpag', pr_tag_cont => rw_craprli.qtcarpag, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtaltlim', pr_tag_cont => rw_craprli.qtaltlim, pr_des_erro => vr_dscritic);
       
     EXCEPTION      
       WHEN vr_exc_saida THEN
-        -- Se foi retornado apenas cÛdigo
+        -- Se foi retornado apenas c√≥digo
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descriÁ„o
+          -- Buscar a descri√ß√£o
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
         
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
         
-        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
-        -- Existe para satisfazer exigÍncia da interface.
+        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
+        -- Existe para satisfazer exig√™ncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       WHEN OTHERS THEN
@@ -418,8 +427,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em LIMI0001.pc_tela_cadlim_alterar: ' || SQLERRM;
         
-        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
-        -- Existe para satisfazer exigÍncia da interface.
+        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
+        -- Existe para satisfazer exig√™ncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
@@ -436,13 +445,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                   ,pr_qtatracc IN craprli.qtatracc%TYPE --> Quantidade de dias de atraso em conta corrente
                                   ,pr_dssitdop IN craprli.dssitdop%TYPE --> Situacoes que englobam a operacao
                                   ,pr_dsrisdop IN craprli.dsrisdop%TYPE --> Riscos que englobam a operacao
-                                  ,pr_tplimite IN craprli.tplimite%TYPE --> Tipo de limite de crÈdito
-                                  ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual mÌnimo de liquidez
-                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez                                  
-                                  ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no cÛdigo, 0 ñ N„o / 1 - Sim)         
-                                  ,pr_xmllog   IN VARCHAR2              --> XML com informaÁıes de LOG
-                                  ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                                  ,pr_dscritic OUT VARCHAR2             --> DescriÁ„o da crÌtica
+                                  ,pr_tplimite IN craprli.tplimite%TYPE --> Tipo de limite de cr√©dito
+                                  ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual m√≠nimo de liquidez
+                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez
+                                  ,pr_qtcarpag IN craprli.qtcarpag%TYPE --> Contem o periodo de carencia de pagamento
+                                  ,pr_qtaltlim IN craprli.qtaltlim%TYPE --> Contem o periodo de alteracao de limites rejeitados
+                                  ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no c√≥digo, 0 ‚Äì N√£o / 1 - Sim)         
+                                  ,pr_xmllog   IN VARCHAR2              --> XML com informa√ß√µes de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                                  ,pr_dscritic OUT VARCHAR2             --> Descri√ß√£o da cr√≠tica
                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                   ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
@@ -463,12 +474,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
      Observacao: -----
      Alteracoes: 
-                 25/11/2016 - AlteraÁ„o para que o fonte realize a avaliaÁ„o do departamento
-                              pelo campo CDDEPART ao invÈs do DSDEPART. (Renato Darosci - Supero)		 
+                 25/11/2016 - Altera√ß√£o para que o fonte realize a avalia√ß√£o do departamento
+                              pelo campo CDDEPART ao inv√©s do DSDEPART. (Renato Darosci - Supero)		 
 
-                 11/08/2016 - Inclus„o do par‚metro pr_tplmite para filtro por tipo de limite
-                            - Inclus„o dos par‚metros pr_pcliqdez e pr_qtdialiq para busca e atualizaÁ„o
+                 11/08/2016 - Inclus√£o do par√¢metro pr_tplmite para filtro por tipo de limite
+                            - Inclus√£o dos par√¢metros pr_pcliqdez e pr_qtdialiq para busca e atualiza√ß√£o
                  (Linhares - Projeto 300)
+
+                 05/02/2018 - Adicionados campos novos (qtcarpag e qtaltlim) - (Luis Fernando - GFT)
+
      ..............................................................................*/ 
     DECLARE
 
@@ -485,7 +499,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                dssitdop,
                dsrisdop,
                pcliqdez,
-               qtdialiq               
+               qtdialiq,
+               qtcarpag,
+               qtaltlim
           FROM craprli
          WHERE cdcooper = pr_cdcooper
            AND inpessoa = pr_inpessoa
@@ -501,7 +517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
            AND upper(crapope.cdoperad) = upper(pr_cdoperad);
       rw_crapope cr_crapope%ROWTYPE; 
       
-      -- Vari·vel de crÌticas
+      -- Vari√°vel de cr√≠ticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
 
@@ -521,7 +537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       vr_dtaltcad      VARCHAR2(20);          --> Data de alteracao do cadastro
       vr_tpaltcad      VARCHAR2(50);          --> Tipo do cadastro da alteracao
       vr_dsclinha      VARCHAR2(4000);        --> Linha a ser inserida no LOG
-      vr_dsdireto      VARCHAR2(400);         --> DiretÛrio do arquivo de LOG
+      vr_dsdireto      VARCHAR2(400);         --> Diret√≥rio do arquivo de LOG
       vr_utlfileh      utl_file.file_type;    --> Handle para arquivo de LOG
 
     BEGIN
@@ -551,7 +567,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         CLOSE cr_crapope;
       END IF;
         
-      -- Somente o departamento credito ir· ter acesso para alterar as informacoes
+      -- Somente o departamento credito ir√° ter acesso para alterar as informacoes
       IF rw_crapope.cddepart NOT IN (14,20) THEN
         vr_cdcritic := 36;
         vr_dscritic := NULL;
@@ -578,6 +594,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       
       IF pr_tplimite = 2 THEN
         vr_tpaltcad := ' --> Limite Desconto de Cheque';
+      ELSIF pr_tplimite = 3 THEN
+        vr_tpaltcad := ' --> Limite Desconto de Titulo';
       ELSE
         vr_tpaltcad := ' --> Limite de Credito';
       END IF;
@@ -592,7 +610,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                           ,pr_cdcooper => vr_cdcooper
                                           ,pr_nmsubdir => '/log');
 
-      -- Abrir arquivo em modo de adiÁ„o
+      -- Abrir arquivo em modo de adi√ß√£o
       gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdireto
                               ,pr_nmarquiv => 'cadlim.log'
                               ,pr_tipabert => 'A'
@@ -719,7 +737,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         vr_dsclinha := vr_dtaltcad || vr_tpaltcad
                                    || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Quantidade de Dias para Calculo Percentual Liquidez de ' 
-                                   || rw_craprli.qtdialiq || ' para ' || pr_qtdialiq;                                 
+                                   || rw_craprli.qtdialiq || ' para ' || pr_qtdialiq;
+                                     
+        -- Gravar linha no arquivo
+        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                      ,pr_des_text => vr_dsclinha);
+        
+      END IF;
+     
+      IF rw_craprli.qtcarpag <> pr_qtcarpag THEN
+
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
+                                   || ' alterou o campo Periodo de carencia de pagamento ' 
+                                   || rw_craprli.qtcarpag || ' para ' || pr_qtcarpag;
+                                     
+        -- Gravar linha no arquivo
+        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                      ,pr_des_text => vr_dsclinha);
+        
+      END IF;
+     
+      IF rw_craprli.qtaltlim <> pr_qtaltlim THEN
+
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
+                                   || ' alterou o campo Periodo de alteracao de limites rejeitados ' 
+                                   || rw_craprli.qtaltlim || ' para ' || pr_qtaltlim;
                                      
         -- Gravar linha no arquivo
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
@@ -742,7 +786,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                dssitdop = pr_dssitdop,
                dsrisdop = pr_dsrisdop,
                pcliqdez = pr_pcliqdez,
-               qtdialiq = pr_qtdialiq               
+               qtdialiq = pr_qtdialiq,
+               qtcarpag = pr_qtcarpag,
+               qtaltlim = pr_qtaltlim
          WHERE cdcooper = vr_cdcooper
            AND inpessoa = pr_inpessoa
            AND tplimite = pr_tplimite;
@@ -756,17 +802,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
     EXCEPTION      
       WHEN vr_exc_saida THEN
-        -- Se foi retornado apenas cÛdigo
+        -- Se foi retornado apenas c√≥digo
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descriÁ„o
+          -- Buscar a descri√ß√£o
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
         
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
         
-        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
-        -- Existe para satisfazer exigÍncia da interface.
+        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
+        -- Existe para satisfazer exig√™ncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
@@ -775,8 +821,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em LIMI0001.pc_tela_cadlim_alterar: ' || SQLERRM;
         
-        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
-        -- Existe para satisfazer exigÍncia da interface.
+        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
+        -- Existe para satisfazer exig√™ncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
@@ -785,16 +831,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   END pc_tela_cadlim_alterar;
   
   -- Rotina referente a renovacao manual do limite de credito
-  PROCEDURE pc_renovar_limite_cred_manual(pr_cdcooper IN crapcop.cdcooper%TYPE  --> CÛdigo da Cooperativa
-                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> CÛdigo do Operador
+  PROCEDURE pc_renovar_limite_cred_manual(pr_cdcooper IN crapcop.cdcooper%TYPE  --> C√≥digo da Cooperativa
+                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> C√≥digo do Operador
                                          ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
                                          ,pr_idorigem IN INTEGER                --> Identificador de Origem
-                                         ,pr_nrdconta IN crapass.nrdconta%TYPE  --> N˙mero da Conta
+                                         ,pr_nrdconta IN crapass.nrdconta%TYPE  --> N√∫mero da Conta
                                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular da Conta
                                          ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
                                          ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato                            
-                                         ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
-                                         ,pr_dscritic OUT VARCHAR2) IS         --> DescriÁ„o da crÌtica
+                                         ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
+                                         ,pr_dscritic OUT VARCHAR2) IS         --> Descri√ß√£o da cr√≠tica
   BEGIN
     /* .............................................................................
 
@@ -808,12 +854,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
      Frequencia: 
      Objetivo  : Rotina referente a renovacao manual do limite de credito
-     Alteracoes:  11/08/2016 - IncluÌdo filtro tplimite para Limite de CrÈdito
+     Alteracoes:  11/08/2016 - Inclu√≠do filtro tplimite para Limite de Cr√©dito
              (Linhares Projeto 300)
     ..............................................................................*/
     
   DECLARE
-    -- Vari·vel de crÌticas
+    -- Vari√°vel de cr√≠ticas
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic crapcri.dscritic%TYPE;
     
@@ -825,9 +871,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_exc_saida EXCEPTION;
     
     -- Cursor Limite de cheque especial
-    CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE     --> CÛdigo da Cooperativa
-                     ,pr_nrdconta IN craplim.nrdconta%TYPE     --> N˙mero da Conta
-                     ,pr_nrctrlim IN craplim.nrctrlim%TYPE) IS --> N˙mero do Contrato                    
+    CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE     --> C√≥digo da Cooperativa
+                     ,pr_nrdconta IN craplim.nrdconta%TYPE     --> N√∫mero da Conta
+                     ,pr_nrctrlim IN craplim.nrctrlim%TYPE) IS --> N√∫mero do Contrato                    
                      
       SELECT craplim.cddlinha,
              craplim.insitlim,
@@ -1062,8 +1108,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                     pr_nrdconta          IN crapass.nrdconta%TYPE, --> Numero da conta do avalista
                                     pr_nrctrlim          IN craplim.nrctrlim%TYPE, --> Numero do contrato de limite
                                     pr_tab_avais_ctr IN OUT typ_tab_avais_ctr,     --> Retorna dados dos avalistas
-                                    pr_cdcritic         OUT PLS_INTEGER,           --> CÛdigo da crÌtica
-                                    pr_dscritic         OUT VARCHAR2) IS           --> DescriÁ„o da crÌt
+                                    pr_cdcritic         OUT PLS_INTEGER,           --> C√≥digo da cr√≠tica
+                                    pr_dscritic         OUT VARCHAR2) IS           --> Descri√ß√£o da cr√≠t
   /* .............................................................................
 
      Programa: pc_carrega_dados_avais
@@ -1114,7 +1160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
          AND cje.idseqttl = 1;
     rw_crapcje cr_crapcje%ROWTYPE;
     
-    --> Busca as informaÁoes do titular da conta 
+    --> Busca as informa√ßoes do titular da conta 
     CURSOR cr_crapttl (pr_cdcooper crapcje.cdcooper%TYPE,
                        pr_nrdconta crapcje.nrdconta%TYPE )IS
       SELECT ttl.nrdconta,
@@ -1128,7 +1174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
          AND ttl.idseqttl = 1;
     rw_crapttl cr_crapttl%ROWTYPE; 
         
-    --> Buscar endereÁo
+    --> Buscar endere√ßo
     CURSOR cr_crapenc (pr_cdcooper crapcje.cdcooper%TYPE,
                        pr_nrdconta crapcje.nrdconta%TYPE ) IS
       SELECT enc.nrdconta,
@@ -1183,8 +1229,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
          AND avt.tpctrato = 3;
     
     ----------->>> VARIAVEIS <<<-------- 
-    -- Vari·vel de crÌticas
-    vr_cdcritic        crapcri.cdcritic%TYPE; --> CÛd. Erro
+    -- Vari√°vel de cr√≠ticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> C√≥d. Erro
     vr_dscritic        VARCHAR2(1000);        --> Desc. Erro    
     
     -- Tratamento de erros
@@ -1230,7 +1276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
             CLOSE cr_crapcje;
             --> Verificar se existe o numero da conta do conjuge 
             IF rw_crapcje.nrctacje > 0 THEN
-              --> Busca as informaÁoes do titular da conta
+              --> Busca as informa√ßoes do titular da conta
               OPEN cr_crapttl ( pr_cdcooper => rw_crapcje.cdcooper,
                                 pr_nrdconta => rw_crapcje.nrctacje);
               FETCH cr_crapttl INTO rw_crapttl;
@@ -1271,7 +1317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
           
         END IF; --> Fim IF rw_crapass.inpessoa = 1
         
-        --> Buscar endereÁo do avalista
+        --> Buscar endere√ßo do avalista
         OPEN cr_crapenc ( pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => rw_crapass.nrdconta);      
         FETCH cr_crapenc INTO rw_crapenc;
@@ -1349,19 +1395,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   END pc_carrega_dados_avais;
   
   --> Rotina para buscar dados para impressao do contrato de limite de credito
-  PROCEDURE pc_obtem_dados_contrato (  pr_cdcooper        IN crapcop.cdcooper%TYPE  --> CÛdigo da Cooperativa 
-                                      ,pr_cdagenci        IN crapage.cdagenci%TYPE  --> CÛdigo da agencia
+  PROCEDURE pc_obtem_dados_contrato (  pr_cdcooper        IN crapcop.cdcooper%TYPE  --> C√≥digo da Cooperativa 
+                                      ,pr_cdagenci        IN crapage.cdagenci%TYPE  --> C√≥digo da agencia
                                       ,pr_nrdcaixa        IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
-                                      ,pr_cdoperad        IN crapope.cdoperad%TYPE  --> CÛdigo do Operador
+                                      ,pr_cdoperad        IN crapope.cdoperad%TYPE  --> C√≥digo do Operador
                                       ,pr_idorigem        IN INTEGER                --> Identificador de Origem
-                                      ,pr_nrdconta        IN crapass.nrdconta%TYPE  --> N˙mero da Conta
+                                      ,pr_nrdconta        IN crapass.nrdconta%TYPE  --> N√∫mero da Conta
                                       ,pr_dtmvtolt        IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
                                       ,pr_nrctrlim        IN craplim.nrctrlim%TYPE  --> Contrato
                                       ,pr_tab_dados_ctr  OUT typ_tab_dados_ctr      --> Dados do contrato 
                                       ,pr_tab_avais_ctr  OUT typ_tab_avais_ctr      --> Dados do avalista
                                       ,pr_tab_repres_ctr OUT typ_tab_repres_ctr     --> Dados do representantes/socios                                      
-                                      ,pr_cdcritic       OUT PLS_INTEGER            --> CÛdigo da crÌtica
-                                      ,pr_dscritic       OUT VARCHAR2) IS           --> DescriÁ„o da crÌt
+                                      ,pr_cdcritic       OUT PLS_INTEGER            --> C√≥digo da cr√≠tica
+                                      ,pr_dscritic       OUT VARCHAR2) IS           --> Descri√ß√£o da cr√≠t
                                       
     /* .............................................................................
 
@@ -1511,8 +1557,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
          AND avt.nrdconta = pr_nrdconta;
     
     ----------->>> VARIAVEIS <<<--------   
-    -- Vari·vel de crÌticas
-    vr_cdcritic        crapcri.cdcritic%TYPE; --> CÛd. Erro
+    -- Vari√°vel de cr√≠ticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> C√≥d. Erro
     vr_dscritic        VARCHAR2(1000);        --> Desc. Erro    
     
     -- Tratamento de erros
@@ -1541,7 +1587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     -- Verifica se a cooperativa esta cadastrada
     OPEN cr_crapcop;
     FETCH cr_crapcop INTO rw_crapcop;
-    -- Se n„o encontrar
+    -- Se n√£o encontrar
     IF cr_crapcop%NOTFOUND THEN   
       CLOSE cr_crapcop;
       -- Montar mensagem de critica
@@ -1574,7 +1620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       CLOSE cr_craplim;
     END IF;
     
-    --> Buscar endereÁo do cooperado
+    --> Buscar endere√ßo do cooperado
     OPEN cr_crapenc;
     FETCH cr_crapenc INTO rw_crapenc;
     IF cr_crapenc%NOTFOUND THEN
@@ -1639,7 +1685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_desdoano_ext := gene0002.fn_valor_extenso(pr_idtipval => 'I', 
                                                  pr_valor    => to_char(pr_dtmvtolt,'RRRR'));                                             
                                                    
-    vr_dtmvtolt_ext := vr_dtmvtolt_ext ||' DO M S DE '||
+    vr_dtmvtolt_ext := vr_dtmvtolt_ext ||' DO M√äS DE '||
                        gene0001.vr_vet_nmmesano(to_char(pr_dtmvtolt,'MM')) ||
                        ' DE ' || vr_desdoano_ext;
     
@@ -1660,8 +1706,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                     ,pr_txmensal  => rw_craplrt.txmensal -- Taxa mensal                                                               
                                     ,pr_txcetano  => vr_txcetano  -- Taxa cet ano
                                     ,pr_txcetmes  => vr_txcetmes  -- Taxa cet mes 
-                                    ,pr_cdcritic  => vr_cdcritic  --> CÛdigo da crÌtica
-                                    ,pr_dscritic  => vr_dscritic);--> DescriÁ„o da crÌtica
+                                    ,pr_cdcritic  => vr_cdcritic  --> C√≥digo da cr√≠tica
+                                    ,pr_dscritic  => vr_dscritic);--> Descri√ß√£o da cr√≠tica
     
     
     IF nvl(vr_cdcritic,0) > 0 OR
@@ -1669,7 +1715,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       RAISE vr_exc_erro;
     END IF; 
     
-    --> Montar string endereÁo cooper    
+    --> Montar string endere√ßo cooper    
     vr_dsendcop := rw_crapcop.dsendcop || ', ' || to_char(rw_crapcop.nrendcop,'fm999G999G999')||', '||
                    rw_crapcop.nmbairro || ', ' || rw_crapcop.nmcidade ||', '||
                    rw_crapcop.cdufdcop || '.';
@@ -1751,7 +1797,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
             vr_tab_repres_ctr(vr_idxrepre).dsdocrep := rw_crabass.nrdocptl;
             
             
-            --> Buscar org„o expedidor
+            --> Buscar org√£o expedidor
             vr_tab_repres_ctr(vr_idxrepre).cdoedrep := NULL;
             cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crabass.idorgexp, 
                                               pr_cdorgao_expedidor => vr_tab_repres_ctr(vr_idxrepre).cdoedrep, 
@@ -1774,7 +1820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                                                                pr_inpessoa => 1 );
           vr_tab_repres_ctr(vr_idxrepre).dsdocrep := rw_crapavt.nrdocava;
           
-          --> Buscar org„o expedidor
+          --> Buscar org√£o expedidor
           vr_tab_repres_ctr(vr_idxrepre).cdoedrep := NULL;
           cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapavt.idorgexp, 
                                             pr_cdorgao_expedidor => vr_tab_repres_ctr(vr_idxrepre).cdoedrep, 
@@ -1791,7 +1837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         
       END LOOP;
     ELSE
-      --> Buscar org„o expedidor
+      --> Buscar org√£o expedidor
       vr_cdorgexp := NULL;
       cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapass.idorgexp, 
                                         pr_cdorgao_expedidor => vr_cdorgexp, 
@@ -1817,8 +1863,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                             pr_nrdconta      => pr_nrdconta,         --> Numero da conta do avalista
                             pr_nrctrlim      => pr_nrctrlim,         --> Numero do contrato de limite de credito
                             pr_tab_avais_ctr => vr_tab_avais_ctr,    --> Retorna dados dos avalistas
-                            pr_cdcritic      => vr_cdcritic,         --> CÛdigo da crÌtica
-                            pr_dscritic      => vr_dscritic);        --> DescriÁ„o da crÌtica  
+                            pr_cdcritic      => vr_cdcritic,         --> C√≥digo da cr√≠tica
+                            pr_dscritic      => vr_dscritic);        --> Descri√ß√£o da cr√≠tica  
     IF nvl(vr_cdcritic,0) > 0 OR
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
@@ -1847,15 +1893,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       pr_dscritic := replace(replace('Erro ao buscar dados para impressao: ' || SQLERRM, chr(13)),chr(10));   
   END pc_obtem_dados_contrato;
   
-  -- Rotina para geraÁ„o do contrato de limite de credito
-  PROCEDURE pc_impres_contrato_limite(pr_cdcooper IN crapcop.cdcooper%TYPE  --> CÛdigo da Cooperativa
-                                     ,pr_cdagecxa IN crapage.cdagenci%TYPE  --> CÛdigo da agencia
+  -- Rotina para gera√ß√£o do contrato de limite de credito
+  PROCEDURE pc_impres_contrato_limite(pr_cdcooper IN crapcop.cdcooper%TYPE  --> C√≥digo da Cooperativa
+                                     ,pr_cdagecxa IN crapage.cdagenci%TYPE  --> C√≥digo da agencia
                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
-                                     ,pr_cdopecxa IN crapope.cdoperad%TYPE  --> CÛdigo do Operador
+                                     ,pr_cdopecxa IN crapope.cdoperad%TYPE  --> C√≥digo do Operador
                                      ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
                                      ,pr_idorigem IN INTEGER                --> Identificador de Origem
                                      ,pr_cdprogra IN crapprg.cdprogra%TYPE  --> Codigo do programa
-                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> N˙mero da Conta
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> N√∫mero da Conta
                                      ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular da Conta
                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
                                      ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE  --> Data do proximo Movimento 
@@ -1868,8 +1914,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                      --------> OUT <--------
                                      ,pr_nmarqpdf  OUT VARCHAR2              --> Retornar quantidad de registros                           
-                                     ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
-                                     ,pr_dscritic OUT VARCHAR2) IS          --> DescriÁ„o da crÌtica
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
+                                     ,pr_dscritic OUT VARCHAR2) IS          --> Descri√ß√£o da cr√≠tica
     /* .............................................................................
 
      Programa: pc_impres_contrato_limite  (antiga: b1wgen0019.p/gera-impressao-limite(parte contrato))
@@ -1881,9 +1927,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      Dados referentes ao programa:
 
      Frequencia:
-     Objetivo  : Rotina para geraÁ„o do contrato de limite de credito
-     Alteracoes: 20/03/2017 - Tratamento para que na impress„o do contrato apenas imprima o
-				              contrato, e n„o o CET e nem a nota promissora como no completo.
+     Objetivo  : Rotina para gera√ß√£o do contrato de limite de credito
+     Alteracoes: 20/03/2017 - Tratamento para que na impress√£o do contrato apenas imprima o
+				              contrato, e n√£o o CET e nem a nota promissora como no completo.
 				              Chamado: 511304 (Andrey Formigari - Mouts)
     ..............................................................................*/
     
@@ -1916,8 +1962,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     rw_crapage cr_crapage%ROWTYPE;
     
     ----------->>> VARIAVEIS <<<--------   
-    -- Vari·vel de crÌticas
-    vr_cdcritic        crapcri.cdcritic%TYPE; --> CÛd. Erro
+    -- Vari√°vel de cr√≠ticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> C√≥d. Erro
     vr_dscritic        VARCHAR2(1000);        --> Desc. Erro    
     vr_des_reto        VARCHAR2(100);
     vr_tab_erro        GENE0001.typ_tab_erro;
@@ -1951,7 +1997,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_dsassmail       VARCHAR2(200);
     vr_dscormail       VARCHAR2(50);
     
-    -- Vari·veis para armazenar as informaÁıes em XML
+    -- Vari√°veis para armazenar as informa√ß√µes em XML
     vr_des_xml   CLOB;
     vr_txtcompl  VARCHAR2(32600);
     
@@ -1960,7 +2006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_nmarqimp_CET    varchar2(60);
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
-    -- Subrotina para escrever texto na vari·vel CLOB do XML
+    -- Subrotina para escrever texto na vari√°vel CLOB do XML
     PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
                              pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
     BEGIN
@@ -1968,7 +2014,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     END;
     
   BEGIN    
-    --> Definir transaÁ„o
+    --> Definir transa√ß√£o
     IF pr_flgerlog = 1 THEN
       vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
     
@@ -2006,19 +2052,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     pr_nmarqpdf := 'crrl580_'||pr_dsiduser || gene0002.fn_busca_time || '.pdf';
       
     --> Buscar dados para impressao do contrato de limite de credito
-    pc_obtem_dados_contrato (  pr_cdcooper        => pr_cdcooper  --> CÛdigo da Cooperativa 
-                              ,pr_cdagenci        => pr_cdagecxa  --> CÛdigo da agencia
+    pc_obtem_dados_contrato (  pr_cdcooper        => pr_cdcooper  --> C√≥digo da Cooperativa 
+                              ,pr_cdagenci        => pr_cdagecxa  --> C√≥digo da agencia
                               ,pr_nrdcaixa        => pr_nrdcaixa  --> Numero do caixa do operador
-                              ,pr_cdoperad        => pr_cdopecxa  --> CÛdigo do Operador
+                              ,pr_cdoperad        => pr_cdopecxa  --> C√≥digo do Operador
                               ,pr_idorigem        => pr_idorigem  --> Identificador de Origem
-                              ,pr_nrdconta        => pr_nrdconta  --> N˙mero da Conta
+                              ,pr_nrdconta        => pr_nrdconta  --> N√∫mero da Conta
                               ,pr_dtmvtolt        => pr_dtmvtolt  --> Data de Movimento
                               ,pr_nrctrlim        => pr_nrctrlim  --> Contrato
                               ,pr_tab_dados_ctr   => vr_tab_dados_ctr    --> Dados do contrato 
                               ,pr_tab_avais_ctr   => vr_tab_avais_ctr    --> Dados do avalista
                               ,pr_tab_repres_ctr  => vr_tab_repres_ctr   --> Dados do representantes/socios                                      
-                              ,pr_cdcritic        => vr_cdcritic         --> CÛdigo da crÌtica
-                              ,pr_dscritic        => vr_dscritic);         --> DescriÁ„o da crÌt
+                              ,pr_cdcritic        => vr_cdcritic         --> C√≥digo da cr√≠tica
+                              ,pr_dscritic        => vr_dscritic);         --> Descri√ß√£o da cr√≠t
                                       
     IF nvl(vr_cdcritic,0) > 0 OR
        TRIM(vr_dscritic) IS NOT NULL THEN
@@ -2155,7 +2201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                          '<nmprimtl>'||  vr_tab_dados_ctr(vr_idxctr).nmprimtl   ||'</nmprimtl>'||
                          '<dscpfcgc>'||  vr_tab_dados_ctr(vr_idxctr).nrcpfcgc   ||'</dscpfcgc>'||
                          '<nrdconta>'||  vr_tab_dados_ctr(vr_idxctr).nrdconta   ||'</nrdconta>'||
-                         '<nmcidpac>'||  'P·gavel em '|| vr_tab_dados_ctr(vr_idxctr).nmcidpac   ||'</nmcidpac>'||
+                         '<nmcidpac>'||  'P√°gavel em '|| vr_tab_dados_ctr(vr_idxctr).nmcidpac   ||'</nmcidpac>'||
                          '<dsemsnot>'||  vr_tab_dados_ctr(vr_idxctr).dsemsctr    ||'</dsemsnot>'||
                          '<dsendass>'||  vr_tab_dados_ctr(vr_idxctr).dsendass   ||'</dsendass>');
                         
@@ -2215,8 +2261,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                       ,pr_flretxml  => 1                           -- Indicador se deve apenas retornar o XML da impressao
                                       ,pr_des_xml   => vr_desxml_CET               -- XML
                                       ,pr_nmarqimp  => vr_nmarqimp_CET             -- Nome do arquivo
-                                      ,pr_cdcritic  => vr_cdcritic                 --> CÛdigo da crÌtica
-                                      ,pr_dscritic  => vr_dscritic);               --> DescriÁ„o da crÌtica
+                                      ,pr_cdcritic  => vr_cdcritic                 --> C√≥digo da cr√≠tica
+                                      ,pr_dscritic  => vr_dscritic);               --> Descri√ß√£o da cr√≠tica
     
       IF nvl(vr_cdcritic,0) > 0 OR 
          TRIM(vr_dscritic) IS NOT NULL THEN
@@ -2422,8 +2468,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       
   END pc_impres_contrato_limite;
   
-  --> Rotina para geraÁ„o do contrato de limite de credito  - Ayllos Web
-  PROCEDURE pc_impres_contrato_limite_web(pr_nrdconta   IN crapass.nrdconta%TYPE  --> N˙mero da Conta
+  --> Rotina para gera√ß√£o do contrato de limite de credito  - Ayllos Web
+  PROCEDURE pc_impres_contrato_limite_web(pr_nrdconta   IN crapass.nrdconta%TYPE  --> N√∫mero da Conta
                                          ,pr_idseqttl   IN crapttl.idseqttl%TYPE  --> Titular da Conta
                                          ,pr_idimpres   IN INTEGER                --> Indicador de impresao
                                          ,pr_nrctrlim   IN craplim.nrctrlim%TYPE  --> Contrato
@@ -2497,14 +2543,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
       CLOSE BTCH0001.cr_crapdat;
 
-      pc_impres_contrato_limite(pr_cdcooper => vr_cdcooper  --> CÛdigo da Cooperativa
-                               ,pr_cdagecxa => vr_cdagenci  --> CÛdigo da agencia
+      pc_impres_contrato_limite(pr_cdcooper => vr_cdcooper  --> C√≥digo da Cooperativa
+                               ,pr_cdagecxa => vr_cdagenci  --> C√≥digo da agencia
                                ,pr_nrdcaixa => vr_nrdcaixa  --> Numero do caixa do operador
-                               ,pr_cdopecxa => vr_cdoperad  --> CÛdigo do Operador
+                               ,pr_cdopecxa => vr_cdoperad  --> C√≥digo do Operador
                                ,pr_nmdatela => vr_nmdatela  --> Nome da Tela
                                ,pr_idorigem => vr_idorigem  --> Identificador de Origem
                                ,pr_cdprogra => vr_nmdatela  --> Codigo do programa
-                               ,pr_nrdconta => pr_nrdconta  --> N˙mero da Conta
+                               ,pr_nrdconta => pr_nrdconta  --> N√∫mero da Conta
                                ,pr_idseqttl => pr_idseqttl  --> Titular da Conta
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --> Data de Movimento
                                ,pr_dtmvtopr => rw_crapdat.dtmvtopr  --> Data do proximo Movimento 
@@ -2517,8 +2563,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                ,pr_flgerlog => 1            --> True 
                                --------> OUT <--------
                                ,pr_nmarqpdf => vr_nmarqpdf       --> Retornar quantidad de registros                           
-                               ,pr_cdcritic => vr_cdcritic       --> CÛdigo da crÌtica
-                               ,pr_dscritic => vr_dscritic);     --> DescriÁ„o da crÌtica
+                               ,pr_cdcritic => vr_cdcritic       --> C√≥digo da cr√≠tica
+                               ,pr_dscritic => vr_dscritic);     --> Descri√ß√£o da cr√≠tica
 
       -- Se retornou erro
       IF NVL(vr_cdcritic,0) > 0 OR 
@@ -2567,17 +2613,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   END pc_impres_contrato_limite_web;
   
  -- Rotina referente a renovacao manual do limite de desconto de cheque
-  PROCEDURE pc_renovar_lim_desc_cheque(pr_cdcooper IN crapcop.cdcooper%TYPE --> CÛdigo da Cooperativa
-                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --> N˙mero da Conta
+  PROCEDURE pc_renovar_lim_desc_cheque(pr_cdcooper IN crapcop.cdcooper%TYPE --> C√≥digo da Cooperativa
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --> N√∫mero da Conta
                                       ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Titular da Conta
                                       ,pr_vllimite IN craplim.vllimite%TYPE --> Valor Limite de Desconto
                                       ,pr_nrctrlim IN craplim.nrctrlim%TYPE --> Contrato
                                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de Movimento
-                                      ,pr_cdoperad IN crapope.cdoperad%TYPE --> CÛdigo do Operador
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE --> C√≥digo do Operador
                                       ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da Tela
                                       ,pr_idorigem IN INTEGER               --> Identificador de Origem
-                                      ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                                      ,pr_dscritic OUT VARCHAR2) IS         --> DescriÁ„o da crÌtica                                       
+                                      ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                                      ,pr_dscritic OUT VARCHAR2) IS         --> Descri√ß√£o da cr√≠tica                                       
                                       
   BEGIN
 
@@ -2595,21 +2641,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      Objetivo  : Rotina referente a renovacao manual do limite de desconto de cheque
      
      Alteracoes: 08/09/2016 - Alterada procedure para ser chamada sem mensageria.
-                              Mensageria ser· tratada na package criada exclusivamente
+                              Mensageria ser√° tratada na package criada exclusivamente
                               para a tela. Projeto 300 (Lombardi)
      
     ..............................................................................*/
     
   DECLARE
   
-    -- Vari·vel para consulta de limite
+    -- Vari√°vel para consulta de limite
     vr_tab_lim_desconto dscc0001.typ_tab_lim_desconto;      
     
     --Variaveis auxiliares
     vr_vllimite craplim.vllimite%TYPE;
     vr_nrdrowid ROWID;
     
-    -- Vari·vel de crÌticas
+    -- Vari√°vel de cr√≠ticas
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic crapcri.dscritic%TYPE;
     
@@ -2621,9 +2667,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_exc_saida EXCEPTION;
     
     -- Cursor Limite de cheque especial
-    CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE     --> CÛdigo da Cooperativa
-                     ,pr_nrdconta IN craplim.nrdconta%TYPE     --> N˙mero da Conta
-                     ,pr_nrctrlim IN craplim.nrctrlim%TYPE) IS --> N˙mero do Contrato                    
+    CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE     --> C√≥digo da Cooperativa
+                     ,pr_nrdconta IN craplim.nrdconta%TYPE     --> N√∫mero da Conta
+                     ,pr_nrctrlim IN craplim.nrctrlim%TYPE) IS --> N√∫mero do Contrato                    
                      
       SELECT craplim.cddlinha,
              craplim.insitlim,
@@ -2635,7 +2681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
        WHERE craplim.cdcooper = pr_cdcooper
          AND craplim.nrdconta = pr_nrdconta
          AND craplim.nrctrlim = pr_nrctrlim
-         AND craplim.tpctrlim = 2; -- Limite de crÈdito de desconto de cheque
+         AND craplim.tpctrlim = 2; -- Limite de cr√©dito de desconto de cheque
     rw_craplim cr_craplim%ROWTYPE;
     
     -- Cursor Linhas de Credito de Desconto de Cheque
@@ -2687,7 +2733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   BEGIN
     
     IF(pr_vllimite <= 0) OR pr_vllimite IS NULL THEN
-      vr_dscritic := 'Valor do limite inv·lido.';
+      vr_dscritic := 'Valor do limite inv√°lido.';
       RAISE vr_exc_saida;
     END IF;
     
@@ -2700,7 +2746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     -- Verifica se o limite de credito existe
     IF cr_craplim%NOTFOUND THEN
       CLOSE cr_craplim;
-      vr_dscritic := 'Associado n„o possui proposta de limite de desconto cheque.';
+      vr_dscritic := 'Associado n√£o possui proposta de limite de desconto cheque.';
       RAISE vr_exc_saida;
     ELSE
       CLOSE cr_craplim;
@@ -2778,15 +2824,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     DSCC0001.pc_busca_tab_limdescont(pr_cdcooper => pr_cdcooper                  --> Codigo da cooperativa 
                                     ,pr_inpessoa => rw_crapass.inpessoa          --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
                                     ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
-                                    ,pr_cdcritic => vr_cdcritic                  --> CÛdigo da crÌtica
-                                    ,pr_dscritic => vr_dscritic);                --> DescriÁ„o da crÌtica                
+                                    ,pr_cdcritic => vr_cdcritic                  --> C√≥digo da cr√≠tica
+                                    ,pr_dscritic => vr_dscritic);                --> Descri√ß√£o da cr√≠tica                
     
-    -- Se retornou alguma crÌtica
+    -- Se retornou alguma cr√≠tica
     IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic,0) > 0 THEN
       RAISE vr_exc_saida;
     END IF;              
 
-    -- Verifica se o novo limite estipula o limite m·ximo pelo tipo de pessoa
+    -- Verifica se o novo limite estipula o limite m√°ximo pelo tipo de pessoa
     IF(pr_vllimite > vr_tab_lim_desconto(rw_crapass.inpessoa).vllimite) THEN
       vr_dscritic := 'Nao e possivel realizar a renovacao de limite, valor excede o limite estipulado.';
       RAISE vr_exc_saida;
@@ -2857,7 +2903,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         VALUES
           (pr_nrdconta
           ,pr_dtmvtolt
-          ,2 -- alteraÁıes diversas
+          ,2 -- altera√ß√µes diversas
           ,vr_dsaltera
           ,pr_cdcooper
           ,vr_flgctitg
@@ -2871,12 +2917,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     END IF;
        
     IF vr_vllimite <> pr_vllimite THEN
-      -- Inclus„o de log com retorno do ROWID
+      -- Inclus√£o de log com retorno do ROWID
       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => ''
                           ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem) --> Origem enviada
-                          ,pr_dstransa => 'AlteraÁ„o do valor limite de desconto de cheque.'
+                          ,pr_dstransa => 'Altera√ß√£o do valor limite de desconto de cheque.'
                           ,pr_dttransa => trunc(SYSDATE)
                           ,pr_flgtrans => 1 --> TRUE
                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
@@ -2910,14 +2956,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   END pc_renovar_lim_desc_cheque;
   
   -- Rotina referente ao desbloqueio para inclusao de novos borderos
-  PROCEDURE pc_desblq_inclusao_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE --> CÛdigo da cooperativa
-                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --> N˙mero da Conta
+  PROCEDURE pc_desblq_inclusao_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE --> C√≥digo da cooperativa
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --> N√∫mero da Conta
                                       ,pr_nrctrlim IN craplim.nrctrlim%TYPE --> Contrato                            
-                                      ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> N˙mero do Caixa
-                                      ,pr_cdoperad IN craplgm.cdoperad%TYPE --> CÛdigo do operador
+                                      ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> N√∫mero do Caixa
+                                      ,pr_cdoperad IN craplgm.cdoperad%TYPE --> C√≥digo do operador
                                       ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da Tela
-                                      ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                                      ,pr_dscritic OUT VARCHAR2) IS         --> DescriÁ„o da crÌtica
+                                      ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                                      ,pr_dscritic OUT VARCHAR2) IS         --> Descri√ß√£o da cr√≠tica
                                       
     BEGIN 
       
@@ -2939,7 +2985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
     DECLARE                                      
                                       
-      -- Vari·vel de crÌticas
+      -- Vari√°vel de cr√≠ticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE;
 
@@ -2959,7 +3005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
          AND crapass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;      
 
-    -- Cursor genÈrico de calend·rio
+    -- Cursor gen√©rico de calend√°rio
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
     --Tipo da tabela de saldos
@@ -2982,7 +3028,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_flgctitg crapalt.flgctitg%TYPE;
     vr_dsaltera LONG;       
     
-    -- saldo disponÌvel
+    -- saldo dispon√≠vel
     vr_vlsddisp NUMBER;
       
    BEGIN
@@ -3001,13 +3047,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       CLOSE cr_crapass;
     END IF;
     
-    -- Verifica se o cooperado est· demitido
+    -- Verifica se o cooperado est√° demitido
     IF rw_crapass.dtdemiss IS NOT NULL THEN
       vr_dscritic := 'Operacao nao efetuada. Cooperado Demitido';
       RAISE vr_exc_saida;
     END IF;    
 
-    -- Verifica se a conta n„o est· eliminada
+    -- Verifica se a conta n√£o est√° eliminada
     IF rw_crapass.dtelimin IS NOT NULL THEN
       vr_dscritic := 'Operacao nao efetuada. Conta Eliminada.';
       RAISE vr_exc_saida;
@@ -3018,7 +3064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
     CLOSE btch0001.cr_crapdat;    
 
-    -- Verifica se o saldo est· positivo
+    -- Verifica se o saldo est√° positivo
     extr0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper, 
                                 pr_rw_crapdat => rw_crapdat, 
                                 pr_cdagenci => rw_crapass.cdagenci, 
@@ -3056,7 +3102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                      nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
     END IF; 
     
-    -- Verifica se o saldo È positivo
+    -- Verifica se o saldo √© positivo
     IF vr_vlsddisp < 0 THEN
       vr_cdcritic:= 0;
       vr_dscritic:= 'Operacao nao Efetuada. Conta com Saldo Negativo.';   
@@ -3107,7 +3153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         VALUES
           (pr_nrdconta
           ,rw_crapdat.dtmvtolt
-          ,2 --alteraÁıes diversas
+          ,2 --altera√ß√µes diversas
           ,vr_dsaltera
           ,pr_cdcooper
           ,vr_flgctitg
@@ -3140,10 +3186,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     END pc_desblq_inclusao_bordero;
   
     -- Rotina referente a consulta de ultimas alteracoes da tela ATENDA
-    PROCEDURE pc_ultimas_alteracoes(pr_nrdconta IN crapass.nrdconta%TYPE --> N˙mero da Conta
-                                   ,pr_xmllog   IN VARCHAR2              --> XML com informaÁıes de LOG
-                                   ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                                   ,pr_dscritic OUT VARCHAR2             --> DescriÁ„o da crÌtica
+    PROCEDURE pc_ultimas_alteracoes(pr_nrdconta IN crapass.nrdconta%TYPE --> N√∫mero da Conta
+                                   ,pr_xmllog   IN VARCHAR2              --> XML com informa√ß√µes de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                                   ,pr_dscritic OUT VARCHAR2             --> Descri√ß√£o da cr√≠tica
                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                    ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
@@ -3276,10 +3322,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     end pc_ultimas_alteracoes;
     -- Rotina referente a consulta de ultimas alteracoes da tela ATENDA
-    PROCEDURE pc_ultima_majoracao(pr_nrdconta IN crapass.nrdconta%TYPE --> N˙mero da Conta
-                                 ,pr_xmllog   IN VARCHAR2              --> XML com informaÁıes de LOG
-                                 ,pr_cdcritic OUT PLS_INTEGER          --> CÛdigo da crÌtica
-                                 ,pr_dscritic OUT VARCHAR2             --> DescriÁ„o da crÌtica
+    PROCEDURE pc_ultima_majoracao(pr_nrdconta IN crapass.nrdconta%TYPE --> N√∫mero da Conta
+                                 ,pr_xmllog   IN VARCHAR2              --> XML com informa√ß√µes de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER          --> C√≥digo da cr√≠tica
+                                 ,pr_dscritic OUT VARCHAR2             --> Descri√ß√£o da cr√≠tica
                                  ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo

@@ -1,11 +1,11 @@
 <? 
 /*!
  * FONTE        : form_regras.php
- * CRIAÇÃO      : James Prust Junior
- * DATA CRIAÇÃO : 15/12/2014
+ * CRIAÃ‡ÃƒO      : James Prust Junior
+ * DATA CRIAÃ‡ÃƒO : 15/12/2014
  * OBJETIVO     : Formulario de Regras.
  * --------------
- * ALTERAÇÕES   : 21/09/2016 - Inclusão dos campos "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
+ * ALTERAÃ‡Ã•ES   : 21/09/2016 - InclusÃ£o dos campos "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
  * --------------
  */	
 ?>
@@ -34,12 +34,23 @@
 					<input name="qtmaxren" type="text"  id="qtmaxren" />
 				</td>
 			</tr>
+			<?if($tplimite==3){?>
+			<tr>
+				<td>
+					<label for="qtdiaatr">Opera&ccedil;&otilde;es de Cr&eacute;dito em Atraso:</label>	
+					<input name="qtdiaatr" type="text"  id="qtdiaatr" /> 
+					<label>&nbsp;</label>
+				</td>
+			</tr>
+			<?}
+			else{?>
 			<tr>
 				<td>
 					<label for="qtdiaatr">Empr&eacute;stimo em Atraso:</label>	
 					<input name="qtdiaatr" type="text"  id="qtdiaatr" /> <label>&nbsp;Dias</label>
 				</td>
 			</tr>
+			<?}?>
 			<tr>
 				<td>
 					<label for="qtatracc">Conta Corrente em Atraso:</label>	
@@ -105,8 +116,23 @@
 					<input name="qtdialiq" type="text"  id="qtdialiq" />
 				</td>
 			</tr>
-		</table>
-		
+			<?if($tplimite==3){?>
+			<tr>
+				<td>
+					<label for="qtcarpag">Per&iacute;odo de Car&ecirc;ncia de Pagamento:</label>	
+					<input name="qtcarpag" type="text"  id="qtcarpag" /> 
+					<label>&nbsp; Dias</label>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label for="qtaltlim">Per&iacute;odo de Altera&ccedil;&atilde;o de Limites Rejeitados:</label>	
+					<input name="qtaltlim" type="text"  id="qtaltlim" /> 
+					<label>&nbsp; Dias</label>
+				</td>
+			</tr>
+			<?}?>
+		</table>		
 	</fieldset>	
 				
 </form>

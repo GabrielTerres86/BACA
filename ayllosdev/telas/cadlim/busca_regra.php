@@ -66,6 +66,8 @@
     $('#qtatracc','#frmRegra').val('<?= getByTagName($regra->tags,'qtatracc'); ?>');
     $('#pcliqdez','#frmRegra').val('<?= getByTagName($regra->tags,'pcliqdez'); ?>');
     $('#qtdialiq','#frmRegra').val('<?= getByTagName($regra->tags,'qtdialiq'); ?>');
+    $('#qtcarpag','#frmRegra').val('<?= getByTagName($regra->tags,'qtcarpag'); ?>');
+    $('#qtaltlim','#frmRegra').val('<?= getByTagName($regra->tags,'qtaltlim'); ?>');
 	
 	<?
 	$aSituacao = explode(";", getByTagName($regra->tags,'dssitdop'));
