@@ -3119,7 +3119,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               -- Utilizar a data de referência do processo
               -- vr_dtdrisco := vr_dtrefere;
               -- Utilizar a data do movimento - Daniel(AMcom)
-              vr_dtdrisco := (SELECT dtmvtoan FROM crapdat WHERE cdcooper = 1pr_cdcooper);
+              vr_dtdrisco := pr_rw_crapdat.dtmvtoan;
             END IF;
             -- Fechar o cursor
             CLOSE cr_crapris_last;
