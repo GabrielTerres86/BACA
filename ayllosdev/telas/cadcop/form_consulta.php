@@ -610,9 +610,15 @@
         <label for="nrctabcb"><?php echo utf8ToHtml("Conta Bancoob:"); ?></label>
         <input type="text" id="nrctabcb" name="nrctabcb" value="<?php echo getByTagName($cooperativa->tags,'nrctabcb');?>" >
         
+        <label for="nrouvbcb"><?php echo utf8ToHtml("Telefone Ouvidoria:"); ?></label>
+        <input type="text" id="nrouvbcb" name="nrouvbcb" value="<?php echo getByTagName($cooperativa->tags,'nrouvbcb');?>" >
+                
         <br />
         <label for="vltarbcb"><?php echo utf8ToHtml("Tarifa Bancoob:"); ?></label>
         <input type="text" id="vltarbcb" name="vltarbcb" value="<?php echo getByTagName($cooperativa->tags,'vltarbcb');?>" >
+        
+        <label for="nrsacbcb"><?php echo utf8ToHtml("SAC:"); ?></label>
+        <input type="text" id="nrsacbcb" name="nrsacbcb" value="<?php echo getByTagName($cooperativa->tags,'nrsacbcb');?>" >        
         
         <br />
         

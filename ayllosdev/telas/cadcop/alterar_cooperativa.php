@@ -158,6 +158,8 @@
     $nrctabcb = (isset($_POST["nrctabcb"])) ? $_POST["nrctabcb"] : 0;
     $vltarbcb = (isset($_POST["vltarbcb"])) ? $_POST["vltarbcb"] : 0;
     $vlgarbcb = (isset($_POST["vlgarbcb"])) ? $_POST["vlgarbcb"] : 0;
+    $nrsacbcb = (isset($_POST["nrsacbcb"])) ? $_POST["nrsacbcb"] : '';
+    $nrouvbcb = (isset($_POST["nrouvbcb"])) ? $_POST["nrouvbcb"] : '';
 
     validaDados();
 
@@ -293,7 +295,9 @@
     $xml     .="       <vllimapv>".$vllimapv."</vllimapv>";
     $xml     .="       <nrctabcb>".$nrctabcb."</nrctabcb>";
     $xml     .="       <vltarbcb>".$vltarbcb."</vltarbcb>";
-    $xml     .="       <vlgarbcb>".$vlgarbcb."</vlgarbcb>";    
+    $xml     .="       <vlgarbcb>".$vlgarbcb."</vlgarbcb>";  
+    $xml     .="       <nrsacbcb>".$nrsacbcb."</nrsacbcb>";  
+    $xml     .="       <nrouvbcb>".$nrouvbcb."</nrouvbcb>";      
     $xml     .="       <vllimpag>".$vllimpag."</vllimpag>";    
     $xml       .= "  </Dados>";
     $xml       .= "</Root>";

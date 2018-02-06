@@ -386,7 +386,7 @@ function formataCamposTela(cddopcao){
 		cFlmajora.addClass('campo').css({'width':'60px'});
 		
 		cFlgutcrm.addClass('campo').css({'width':'60px'});
-        cCdagefgt.addClass('campo').css({'width':'60px'});
+        cCdagefgt.addClass('campo inteiro').css({'width':'60px'}).attr('maxlength','10');
 
         cDsendcop.addClass('campo').css({'width':'411px'}).attr('maxlength','40');
         cNrendere.addClass('campo').css({'width':'80px'}).attr('maxlength','10').setMask('INTEGER','zzzzzzzzzz','','');

@@ -338,6 +338,8 @@ function formataFormularioConsulta() {
     $('label[for="nrctabcb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" }); 
     $('label[for="vltarbcb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" }); 
     $('label[for="vlgarbcb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "240px" }); 
+    $('label[for="nrouvbcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "150px" }); 
+    $('label[for="nrsacbcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "190px" }); 
     
     
     $('label[for="qttmpsgr"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
@@ -503,6 +505,8 @@ function formataFormularioConsulta() {
     $('#nrctabcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '10').setMask("INTEGER", "zz.zzz.zzz", "", "");
     $('#vltarbcb', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '4').desabilitaCampo();    
     $('#vlgarbcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '18').setMask("DECIMAL", "zzz.zzz.zzz.zz9,99", "", "");
+    $('#nrouvbcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('alphanum').attr('maxlength', '20');
+    $('#nrsacbcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('alphanum').attr('maxlength', '20');
     
     $('#qttmpsgr', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
 
@@ -3474,6 +3478,9 @@ function alterarCooperativa() {
     var nrctabcb = normalizaNumero($("#nrctabcb", "#frmConsulta5").val());
     var vltarbcb = isNaN(parseFloat($('#vltarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var vlgarbcb = isNaN(parseFloat($('#vlgarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlgarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
+    var nrsacbcb = $("#nrsacbcb", "#frmConsulta5").val();
+    var nrouvbcb = $("#nrouvbcb", "#frmConsulta5").val();
+    
     
 
     showMsgAguardo("Aguarde, alterando cooperativa ...");
@@ -3611,6 +3618,9 @@ function alterarCooperativa() {
             nrctabcb: nrctabcb,
             vltarbcb: vltarbcb,
             vlgarbcb: vlgarbcb,
+            nrsacbcb: nrsacbcb,
+            nrouvbcb: nrouvbcb,
+            
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
