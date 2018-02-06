@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 26/12/2017
+     Data    : Maio/2001                       Ultima atualizacao: 05/02/2018
      
      Dados referentes ao programa:
 
@@ -273,6 +273,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  21/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
                  26/12/2017 - Auditoria BACEN ajustar a quantidade de dias em atraso da central de risco produto PP e TR após a transferência para prejuizo. (Oscar/Odirlei-AMcom)
+                 
+                 05/02/2018 - Alterado o cursor cr_cessao_carga para considerar contratos transferidos para prejuizo, 
+                              não estava considerando a sessaão de credito no calculo de dias em atraso. (Oscar)
             
 
   ............................................................................ */
@@ -403,7 +406,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,crapepr.diarefju
               ,crapepr.mesrefju
               ,crapepr.anorefju
-              ,crapepr.txjuremp                                       
+              ,crapepr.txjuremp
               ,crawepr.dtlibera                                       
           FROM crapepr
           JOIN crawepr
@@ -656,7 +659,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            AND epr.nrdconta = ces.nrdconta
            AND epr.nrctremp = ces.nrctremp
          WHERE ces.cdcooper = pr_cdcooper
-           AND epr.inliquid = 0;
+           AND (epr.inliquid = 0 OR epr.inprejuz = 1);                                                 
                                                  
       --> Buscar ultimo nivel de risco
       CURSOR cr_crapris_9 (pr_cdcooper IN crapris.cdcooper%TYPE,
@@ -1004,9 +1007,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         --Dia/Mes/Ano Referencia
         IF pr_diarefju <> 0 AND pr_mesrefju <> 0 AND pr_anorefju <> 0 THEN
           --Setar Dia/mes?ano
-        vr_diavtolt := pr_diarefju;
-        vr_mesvtolt := pr_mesrefju;
-        vr_anovtolt := pr_anorefju;        
+          vr_diavtolt := pr_diarefju;
+          vr_mesvtolt := pr_mesrefju;
+          vr_anovtolt := pr_anorefju;
         ELSE
           --Setar dia/mes/ano
           vr_diavtolt := to_number(to_char(pr_dtlibera, 'DD'));
@@ -2549,14 +2552,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           
           -- Diario
           IF to_char(pr_rw_crapdat.dtmvtolt,'mm') = to_char(pr_rw_crapdat.dtmvtopr,'mm') THEN
-          -- Obter valor de juros a mais de 60 dias
-          vr_totjur60 := nvl(vr_totjur60,0) + nvl(fn_calculas_juros_60d(pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
-                                                                       ,pr_dtmvtopr => pr_rw_crapdat.dtmvtopr
-                                                                       ,pr_dtdpagto => pr_rw_crapepr.dtdpagto
-                                                                       ,pr_diarefju => pr_rw_crapepr.diarefju
-                                                                       ,pr_mesrefju => pr_rw_crapepr.mesrefju
-                                                                       ,pr_anorefju => pr_rw_crapepr.anorefju
-                                                                       ,pr_txjuremp => pr_rw_crapepr.txjuremp
+            -- Obter valor de juros a mais de 60 dias
+            vr_totjur60 := nvl(vr_totjur60,0) + nvl(fn_calculas_juros_60d(pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                                                                         ,pr_dtmvtopr => pr_rw_crapdat.dtmvtopr
+                                                                         ,pr_dtdpagto => pr_rw_crapepr.dtdpagto
+                                                                         ,pr_diarefju => pr_rw_crapepr.diarefju
+                                                                         ,pr_mesrefju => pr_rw_crapepr.mesrefju
+                                                                         ,pr_anorefju => pr_rw_crapepr.anorefju
+                                                                         ,pr_txjuremp => pr_rw_crapepr.txjuremp
                                                                          ,pr_dtlibera => pr_rw_crapepr.dtlibera
                                                                          ,pr_vlsdeved => nvl(pr_rw_crapepr.vlsdevat,0)),0);
           END IF;
