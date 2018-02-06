@@ -485,7 +485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
           -- Pagamento (Tit/Cnv); Operações DebAut; Pagamento/Agendamento GPS; Pagamento DebAut; Pagamento DARF; Agendamento DARF; Pagamento DAS; Agendamento DAS
           vr_dstippro := '2;11;13;15;16;17;18;19'||
                          --;Pagamento FGTS;Pagamento DAE
-                         ';22;23'; 
+                         ';24;23'; 
   			
         ELSIF pr_cdtipmod = 2 THEN -- Transferências Realizadas
   				
@@ -4572,6 +4572,7 @@ END pc_comprovantes_recebidos;
       vr_cdcritic    crapcri.cdcritic%TYPE;
       vr_info_sac    typ_reg_info_sac;
       vr_des_erro    VARCHAR2(4000);
+      vr_cdtipdoc    VARCHAR2(100);
       
       TYPE typ_tab_campos IS TABLE OF VARCHAR2(2000)
            INDEX BY VARCHAR2(40);
@@ -4667,6 +4668,8 @@ END pc_comprovantes_recebidos;
                 vr_idx := 'DTTRANSA';
               WHEN '#HORARIO DO PAGAMENTO' THEN
                 vr_idx := 'HRAUTENT';
+              WHEN '#CANAL DE RECEBIMENTO' THEN
+                vr_idx := 'DSORIGEM';              
               ELSE
                 vr_idx := NULL;
             END CASE;  
@@ -4763,6 +4766,34 @@ END pc_comprovantes_recebidos;
                          '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
                      '</infosac>';
                      
+      IF vr_tab_campos.exists(UPPER('cdempcon')) THEN
+        IF vr_tab_campos(UPPER('cdempcon')) IN (178,240) THEN
+          vr_cdtipdoc := 'FGTS – GRDE';
+        ELSIF vr_tab_campos(UPPER('cdempcon')) IN (179,180,181) THEN
+          vr_cdtipdoc := 'FGTS - GRF';
+        ELSIF vr_tab_campos(UPPER('cdempcon')) IN (249) THEN
+          vr_cdtipdoc := 'FGTS - GRRF';
+        ELSIF vr_tab_campos(UPPER('cdempcon')) IN (451) THEN
+          vr_cdtipdoc := 'FGTS - GRFGTS';
+        END IF;    
+      
+      END IF;
+
+      vr_dsdlinha := NULL;      
+      vr_dsdlinha := '<infbancoob>'||
+                       '<dscopcen>'|| vr_protocolo(vr_ind).nmrescop_central ||
+                                      ' – '|| vr_protocolo(vr_ind).nmextcop_central ||'</dscopcen>'||
+                       '<dscopsin>'|| 'COOP.'|| to_char(vr_protocolo(vr_ind).cdagectl,'fm0000') ||
+                                      ' – '||vr_protocolo(vr_ind).nmrescop ||'</dscopsin>'||
+                       '<cdtipdoc>'|| vr_cdtipdoc                   ||'</cdtipdoc>';
+      IF vr_tab_campos.exists('DSORIGEM') THEN
+        vr_dsdlinha := vr_dsdlinha || '<dsdcanal>'|| vr_tab_campos('DSORIGEM') ||'</dsdcanal>	';
+      END IF;
+      vr_dsdlinha := vr_dsdlinha ||     
+                       '<nrtelsac>'|| vr_protocolo(vr_ind).nrtelsac ||'</nrtelsac>'||
+                       '<nrtelouv>'|| vr_protocolo(vr_ind).nrtelouv ||'</nrtelouv>	'||
+                     '</infbancoob> ';
+      
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp      
                              ,pr_texto_novo     => vr_dsdlinha);               
@@ -4916,6 +4947,8 @@ END pc_comprovantes_recebidos;
                 vr_idx := 'DTTRANSA';
               WHEN '#HORARIO DO PAGAMENTO' THEN
                 vr_idx := 'HRAUTENT';
+              WHEN '#CANAL DE RECEBIMENTO' THEN
+                vr_idx := 'DSORIGEM';              
               ELSE
                 vr_idx := NULL;
             END CASE;  
@@ -4989,6 +5022,23 @@ END pc_comprovantes_recebidos;
                          '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                          '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
                      '</infosac>';
+                     
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha);               
+      
+      vr_dsdlinha := NULL;      
+      vr_dsdlinha := '<infbancoob>'||                       
+                       '<dscopsin>'|| 'BANCO:'|| to_char(vr_protocolo(vr_ind).cdbcoctl ,'fm0000') ||
+                                      ' – AG:'|| to_char(vr_protocolo(vr_ind).cdagectl,'fm0000')  ||
+                                      ' – '||    vr_protocolo(vr_ind).nmrescop ||'</dscopsin>';
+      IF vr_tab_campos.exists('DSORIGEM') THEN
+        vr_dsdlinha := vr_dsdlinha || '<dsdcanal>'|| vr_tab_campos('DSORIGEM') ||'</dsdcanal>	';
+      END IF;
+      vr_dsdlinha := vr_dsdlinha ||     
+                       '<nrtelsac>'|| vr_protocolo(vr_ind).nrtelsac ||'</nrtelsac>'||
+                       '<nrtelouv>'|| vr_protocolo(vr_ind).nrtelouv ||'</nrtelouv>	'||
+                     '</infbancoob> ';
                      
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp      

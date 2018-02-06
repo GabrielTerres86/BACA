@@ -87,7 +87,13 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
           ,nmoperadora VARCHAR2(100)
 					,nrnsuope    VARCHAR2(100)
           ,cdhistor craphis.cdhistor%TYPE
-          ,cdagesic crapcop.cdagesic%TYPE);
+          ,cdagesic crapcop.cdagesic%TYPE
+          ,nmrescop crapcop.nmrescop%TYPE
+          ,nmextcop_central crapcop.nmextcop%TYPE
+          ,nmrescop_central crapcop.nmrescop%TYPE
+          ,nrtelsac crapcop.nrtelsac%TYPE
+          ,nrtelouv crapcop.nrtelouv%TYPE
+          );
 
   /* Definição da PL Table de registros de protocolos */
   TYPE typ_tab_protocolo IS TABLE OF typ_reg_protocolo INDEX BY PLS_INTEGER;
@@ -1384,9 +1390,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         SELECT cp.cdbcoctl
               ,cp.cdagectl
               ,cp.cdagesic
+              ,cp.nmrescop
+              ,cp.nmextcop
+              ,cp.nrsacbcb
+              ,cp.nrouvbcb
         FROM crapcop cp
         WHERE cp.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
+      rw_crapcop_central cr_crapcop%ROWTYPE;
 
       -- Busca dados do protocolo
       CURSOR cr_crappro(pr_cdcooper IN crappro.cdcooper%TYPE      --> Código da cooperativa
@@ -1440,6 +1451,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       -- Validar dados da cooperativa
       OPEN cr_crapcop(pr_cdcooper);
       FETCH cr_crapcop INTO rw_crapcop;
+
+      -- Verifica se foi encontrado registro na tupla
+      IF cr_crapcop%NOTFOUND THEN
+        CLOSE cr_crapcop;
+        pr_des_erro := 'NOK';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_crapcop;
+      END IF;
+
+      -- Buscar dados da cooperativa central
+      OPEN cr_crapcop(3);
+      FETCH cr_crapcop INTO rw_crapcop_central;
 
       -- Verifica se foi encontrado registro na tupla
       IF cr_crapcop%NOTFOUND THEN
@@ -1576,6 +1600,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,6,9,10,11,12,13,15,16,17,18,19,20,23,24) THEN
             pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
             pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
+            pr_protocolo(vr_index).nmrescop := rw_crapcop.nmrescop;
+            
+            --> Dados da cooperativa central
+            pr_protocolo(vr_index).nmextcop_central := rw_crapcop_central.nmextcop;
+            pr_protocolo(vr_index).nmrescop_central := rw_crapcop_central.nmrescop;
+                        
+            --> Sac/Ouvidoria Bancoob
+            pr_protocolo(vr_index).nrtelsac := rw_crapcop.nrsacbcb;
+            pr_protocolo(vr_index).nrtelouv := rw_crapcop.nrouvbcb;
           END IF;
 		  
 		      IF rw_crappro.cdtippro IN (20) THEN
@@ -2108,9 +2141,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       SELECT cop.cdbcoctl
             ,cop.cdagectl
 						,cop.cdagesic
+            ,cop.nmrescop
+            ,cop.nmextcop
+            ,cop.nrsacbcb
+            ,cop.nrouvbcb
         FROM crapcop cop
        WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
+      rw_crapcop_central cr_crapcop%ROWTYPE;
 
       -- Buscar dados dos protocolos
       CURSOR cr_crappro(pr_cdcooper IN crappro.cdcooper%TYPE
@@ -2170,6 +2208,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         RAISE vr_exc_erro;
       END IF;
       CLOSE cr_crapcop;
+      
+      -- Buscar dados da cooperativa central
+      OPEN cr_crapcop(3);
+      FETCH cr_crapcop INTO rw_crapcop_central;
+
+      -- Verifica se foi encontrado registro na tupla
+      IF cr_crapcop%NOTFOUND THEN
+        CLOSE cr_crapcop;
+        vr_cdcritic:= 651;
+        vr_dscritic:= NULL;
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_crapcop;
+      END IF;
       
       -- Busca o protocolo
       OPEN cr_crappro(pr_cdcooper => pr_cdcooper
@@ -2237,6 +2289,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         IF rw_crappro.cdtippro IN (1,2,6,9,10,11,12,13,15,20,23,24) THEN
           pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
           pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
+				  pr_protocolo(vr_index).nmrescop := rw_crapcop.nmrescop;
+            
+          --> Dados da cooperativa central
+          pr_protocolo(vr_index).nmextcop_central := rw_crapcop_central.nmextcop;
+          pr_protocolo(vr_index).nmrescop_central := rw_crapcop_central.nmrescop;
+                        
+          --> Sac/Ouvidoria Bancoob
+          pr_protocolo(vr_index).nrtelsac := rw_crapcop.nrsacbcb;
+          pr_protocolo(vr_index).nrtelouv := rw_crapcop.nrouvbcb;
+        
+        
 				ELSIF rw_crappro.cdtippro IN (16,17,18,19) THEN
 					pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdagesic;
 					pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;

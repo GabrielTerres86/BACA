@@ -952,6 +952,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                         ,pr_nrdocmto IN craplcm.nrdocmto%TYPE  -- Número do documento
                                         ,pr_nrseqaut IN crapaut.nrsequen%TYPE  -- Sequencial da autenticação
                                         ,pr_nrdcaixa IN crapaut.nrdcaixa%TYPE  -- Número do caixa da autenticação
+                                        ,pr_idorigem IN INTEGER                -- Indicador de canal de origem  da transação
                                         ,pr_nmconven IN crapcon.nmextcon%TYPE  -- Nome do convênio da guia
                                         ,pr_lindigi1 IN NUMBER                 -- Primeiro campo da linha digitável da guia
                                         ,pr_lindigi2 IN NUMBER                 -- Segundo campo da linha digitável da guia
@@ -1222,6 +1223,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_dsinfor3 := vr_dsinfor3 || '#Descrição do Pagamento: ' || pr_dsidepag;
       vr_dsinfor3 := vr_dsinfor3 || '#Data do Pagamento: ' || pr_dtmvtolt;
       vr_dsinfor3 := vr_dsinfor3 || '#Horario do Pagamento: ' || to_char(to_date(pr_hrautent,'SSSSS'),'HH24:MI:SS');
+      vr_dsinfor3 := vr_dsinfor3 || '#Canal de Recebimento: ' || (CASE pr_idorigem
+                                                                    WHEN 90 THEN 'Internet Banking'
+                                                                    WHEN 91 THEN 'TAA'
+                                                                    ELSE 'Caixa'  
+                                                                  END);
+    
     
     --> DAE
     ELSIF pr_cdtippro IN (23) THEN
@@ -1248,6 +1255,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_dsinfor3 := vr_dsinfor3 || '#Descrição do Pagamento: ' || pr_dsidepag;
       vr_dsinfor3 := vr_dsinfor3 || '#Data do Pagamento: ' || pr_dtmvtolt;
       vr_dsinfor3 := vr_dsinfor3 || '#Horario do Pagamento: ' || to_char(to_date(pr_hrautent,'SSSSS'),'HH24:MI:SS');
+      vr_dsinfor3 := vr_dsinfor3 || '#Canal de Recebimento: ' || (CASE pr_idorigem
+                                                                    WHEN 90 THEN 'Internet Banking'
+                                                                    WHEN 91 THEN 'TAA'
+                                                                    ELSE 'Caixa'  
+                                                                  END );
     
     END IF; --> Fim IF pr_cdtippro  
     
@@ -2693,6 +2705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                          ,pr_nrdocmto => rw_craplot.nrseqdig -- Número do documento
                                          ,pr_nrseqaut => rw_crapaut.nrsequen -- Sequencial da autenticação
                                          ,pr_nrdcaixa => rw_crapaut.nrdcaixa -- Número do caixa da autenticação
+                                         ,pr_idorigem => pr_idorigem         -- Indicador de canal de origem  da transação
                                          ,pr_nmconven => vr_dsnomcnv         -- Nome do convênio da guia
                                          ,pr_lindigi1 => pr_lindigi1 -- Primeiro campo da linha digitável da guia
                                          ,pr_lindigi2 => pr_lindigi2 -- Segundo campo da linha digitável da guia
@@ -4603,6 +4616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                              ,pr_nrdocmto => rw_craplau.nrdocmto -- Número do documento
                                              ,pr_nrseqaut => rw_craplau.idlancto -- Sequencial da autenticação
                                              ,pr_nrdcaixa => pr_nrdcaixa         -- Número do caixa da autenticação
+                                             ,pr_idorigem => pr_idorigem         -- Indicador de canal de origem  da transação
                                              ,pr_nmconven => vr_dsnomcnv         -- Nome do convênio da guia
                                              ,pr_lindigi1 => pr_lindigi1         -- Primeiro campo da linha digitável da guia
                                              ,pr_lindigi2 => pr_lindigi2         -- Segundo campo da linha digitável da guia
