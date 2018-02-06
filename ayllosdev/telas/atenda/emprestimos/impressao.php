@@ -172,11 +172,13 @@
                                                 if ($portabil == 'S') {
                                                     echo '<a href="#" class="botao" onClick="verificaImpressao(9); return false;">Termo Portabilidade</a>';
                                                 }
-                                            
+                                            ?>
+											<!--
+											<php
                                                 if ($isencaoIOF == 'S') {
                                                     echo '<a href="#" class="botao" onClick="verificaImpressao(57);return false;">Declara&ccedil;&atilde;o de Utiliza&ccedil;&atilde;o de Recursos</a>';
                                                 }
-                                            ?>
+                                            >-->
 											<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Voltar</a>
 										</div>
 										
