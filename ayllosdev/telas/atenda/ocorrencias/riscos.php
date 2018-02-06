@@ -57,13 +57,6 @@
     
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjRiscos = getObjectXML($xmlResultRiscos);
-
-	/*$xmlResultCentral = mensageria($xml, "TELA_ATENDA_OCORRENCIAS", "BUSCA_DADOS_RISCO_CENTRAL", 
-		$glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], 
-		$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    
-	// Cria objeto para classe de tratamento de XML
-	$xmlObjCentral = getObjectXML($xmlResultCentral);*/
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjRiscos->roottag->tags[0]->name) == 'ERRO') {

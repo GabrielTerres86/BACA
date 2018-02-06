@@ -75,19 +75,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
      RETURN vr_rating;
   END fn_busca_rating;
 
-  PROCEDURE pc_busca_riscos_contrato(pr_cdcooper    IN NUMBER
- 	                                 , pr_nrdconta    IN NUMBER
-																	 , pr_nrctremp    IN NUMBER
-																	 , pr_dtmvtoan    IN DATE
-																	 , vr_diastraso   OUT INTEGER
-																	 , vr_risco_final OUT VARCHAR2) IS
+FUNCTION fn_busca_dias_atraso(pr_cdcooper NUMBER
+	                          , pr_nrdconta NUMBER
+														, pr_nrctremp NUMBER
+														, pr_dtmvtoan DATE) 
+ RETURN INTEGER AS vr_dias_atraso INTEGER;
 		  --- >>> CURSORES <<< ---     
 		  CURSOR cr_riscos(pr_cdcooper NUMBER
 			               , pr_nrdconta NUMBER
 										 , pr_nrctremp NUMBER
 										 , pr_dtmvtoan DATE) IS
 			SELECT ris.qtdiaatr
-			     , ris.innivris
         FROM crapris ris
        WHERE ris.cdcooper = pr_cdcooper
          AND ris.nrdconta = pr_nrdconta
@@ -96,16 +94,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
          AND ris.inddocto = 1
          AND ROWNUM = 1;
 			rw_riscos cr_riscos%ROWTYPE;
-  BEGIN
+BEGIN
      OPEN cr_riscos(pr_cdcooper, pr_nrdconta, pr_nrctremp, pr_dtmvtoan);
 		 
 		 FETCH cr_riscos INTO rw_riscos;
 		 
 		 CLOSE cr_riscos;
 		 
-		 vr_diastraso   := rw_riscos.qtdiaatr;
-		 vr_risco_final := rw_riscos.innivris;		 
-  END pc_busca_riscos_contrato;
+		 vr_dias_atraso   := rw_riscos.qtdiaatr; 
+		 
+		 RETURN vr_dias_atraso;
+END fn_busca_dias_atraso;
 
   FUNCTION fn_busca_risco_agravado(pr_cdcooper NUMBER, pr_nrdconta NUMBER)
     RETURN tbrisco_cadastro_conta.cdnivel_risco%TYPE AS vr_risco_agr tbrisco_cadastro_conta.cdnivel_risco%TYPE;
@@ -176,8 +175,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   PROCEDURE pc_busca_risco_ult_central(pr_cdcooper          IN crawepr.cdcooper%TYPE
                                       ,pr_nrdconta          IN crawepr.nrdconta%TYPE
                                       ,pr_dtultdma          IN crapdat.dtultdma%TYPE
+																			,pr_dtmvtoan          IN crapdat.dtmvtoan%TYPE 
                                       ,vr_risco_ult_central OUT crawepr.dsnivris%TYPE
                                       ,vr_data_ult_central  OUT crapris.dtdrisco%TYPE
+																			,vr_risco_final       OUT crapris.innivris%TYPE
                                       ,vr_valor_divida      OUT crapris.vldivida%TYPE) IS
 		 -- >>> CURSORES <<< --
 		 CURSOR cr_tab(pr_cdcooper IN crawepr.cdcooper%TYPE) IS
@@ -205,6 +206,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         AND ROWNUM = 1
   		ORDER BY innivris DESC;
 		 rw_riscos cr_riscos%ROWTYPE;
+		 
+		 CURSOR cr_risco_final(pr_cdcooper NUMBER
+		                     , pr_nrdconta NUMBER
+												 , pr_dtmvtoan DATE) IS
+		 SELECT max(r.innivris) innivris
+		   FROM crapris r
+			WHERE r.cdcooper = pr_cdcooper
+			  AND r.nrdconta = pr_nrdconta
+				AND r.dtrefere = pr_dtmvtoan
+				AND r.inddocto = 1;
+		 rw_risco_final cr_risco_final%ROWTYPE; 
 		 
   BEGIN
       -- Recupera parâmetro da TAB089
@@ -237,7 +249,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       vr_risco_ult_central := rw_riscos.innivris;
 			vr_data_ult_central  := rw_riscos.dtdrisco;
 			vr_valor_divida      := rw_riscos.vldivida;
-
+			
+			OPEN cr_risco_final(pr_cdcooper, pr_nrdconta, pr_dtmvtoan);
+			
+			FETCH cr_risco_final INTO rw_risco_final;
+			
+			CLOSE cr_risco_final;
+			
+			vr_risco_final := rw_risco_final.innivris;
   END pc_busca_risco_ult_central;
 
   FUNCTION fn_traduz_risco(innivris NUMBER) RETURN crawepr.dsnivris%TYPE AS dsnivris crawepr.dsnivris%TYPE;
@@ -565,7 +584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 			vr_numero_grupo      crapgrp.nrdgrupo%TYPE;
 			vr_risco_grupo       crapgrp.dsdrisgp%TYPE;
       vr_qtd_dias_risco    INTEGER;
-			vr_diastraso         INTEGER;
+			vr_diasatraso        INTEGER;
 			vr_contratos_ativos  INTEGER;
 
       ---------->> CURSORES <<--------
@@ -631,7 +650,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                   gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
                   substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
        AND cgr.cdcooper =  grp.cdcooper
-       AND cgr.nrdconta =  grp.nrdconta;
+       AND cgr.nrdconta =  grp.nrdconta
+			 AND DECODE(rw_cbase.inpessoa, 1,
+                  gene0002.fn_mask(cgr.nrcpfcgc, '99999999999'),
+                  substr(gene0002.fn_mask(cgr.nrcpfcgc, '99999999999999'), 1, 8)) <>
+           DECODE(rw_cbase.inpessoa, 1,
+                  gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
+                  substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8));
     rw_contas_grupo_economico cr_contas_grupo_economico%ROWTYPE;
 		
 		-- Calendário da cooperativa selecionada
@@ -715,13 +740,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 						    vr_rating := fn_busca_rating(rw_contas_do_titular.cdcooper
 																			     , rw_contas_do_titular.nrdconta);
 
-				    		-- Busca os riscos para o contrato
-				   		  pc_busca_riscos_contrato(rw_contas_do_titular.cdcooper
-								     						  		 , rw_contas_do_titular.nrdconta
-										 							     , rw_contratos.nrctremp
-																	     , rw_dat.dtmvtoan
-																	     , vr_diastraso
-																	     , vr_risco_final);
+				    		-- Busca a quantidade dias em atraso do contrato
+				   		  vr_diasatraso := fn_busca_dias_atraso(rw_contas_do_titular.cdcooper
+  								     						  		            , rw_contas_do_titular.nrdconta
+										 							                  , rw_contratos.nrctremp
+																	                  , rw_dat.dtmvtoan);
 
 						    -- Busca o risco agravado para a conta
 						    vr_risco_agr := fn_busca_risco_agravado(rw_contas_do_titular.cdcooper
@@ -737,7 +760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                      , rw_contratos.dsnivori
                                      , vr_risco_grupo
                                      , vr_rating
-                                     , fn_calcula_risco_atraso(vr_diastraso)
+                                     , fn_calcula_risco_atraso(vr_diasatraso)
                                      , fn_traduz_risco(vr_risco_agr)
                                      , rw_contratos.dsnivcal
                                      , rw_contas_do_titular.dsnivris
@@ -780,13 +803,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 						vr_rating := fn_busca_rating(rw_contas_grupo_economico.cdcooper
 																		, rw_contas_grupo_economico.nrdconta);
 
-						-- Busca os riscos para o contrato
-						pc_busca_riscos_contrato(rw_contas_grupo_economico.cdcooper
-																	 , rw_contas_grupo_economico.nrdconta
-																	 , rw_contratos.nrctremp
-																	 , rw_dat.dtmvtoan
-																	 , vr_diastraso
-																	 , vr_risco_final);
+						-- Busca a quantidade de dias em atraso do contato
+						vr_diasatraso := fn_busca_dias_atraso(rw_contas_grupo_economico.cdcooper
+  																	            , rw_contas_grupo_economico.nrdconta
+																	              , rw_contratos.nrctremp
+																	              , rw_dat.dtmvtoan);
 
 						-- Busca o risco agravado para a conta
 						vr_risco_agr := fn_busca_risco_agravado(rw_contas_grupo_economico.cdcooper
@@ -802,7 +823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 															, rw_contratos.dsnivori
 															, rw_contas_grupo_economico.dsdrisgp
 															, vr_rating
-															, fn_calcula_risco_atraso(vr_diastraso)
+															, fn_calcula_risco_atraso(vr_diasatraso)
 															, fn_traduz_risco(vr_risco_agr)
 															, rw_contratos.dsnivcal
 															, rw_contas_grupo_economico.dsnivris
@@ -835,8 +856,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       pc_busca_risco_ult_central(pr_cdcooper
                                , pr_nrdconta
                                , rw_dat.dtultdma
+															 , rw_dat.dtmvtoan
                                , vr_risco_ult_central
                                , vr_data_ult_central
+															 , vr_risco_final
                                , vr_valor_divida);
 
       -- Adiciona registro com dados da central de riscos no XML de retorno
