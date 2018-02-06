@@ -138,22 +138,6 @@
 					</tr>
 				<?
 				}
-
-				if (getByTagName($xmlObjRiscos->roottag->tags[0]->tags, 'qtd_contratos') == '0') { ?>
-					<tr>
-						<td><? echo aplicaMascara($nrcpfcnpj); ?></td>
-						<td><? echo formataContaDV($nrdconta); ?></td>
-						<td>&nbsp;</td>
-						<td>&nbsp;</td>
-						<td>&nbsp;</td>
-						<td>&nbsp;</td>
-						<td><? echo getByTagName($risco->tags, 'risco_agravado'); ?></td>
-						<td>&nbsp;</td>
-						<td>A</td>
-						<td>&nbsp;</td>
-					</tr>
-				<? 
-				}
 				?>
 			</tbody>
 		</table>
