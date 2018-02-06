@@ -181,8 +181,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
           ,crapass
      where crapttl.cdcooper = crapass.cdcooper
        and crapttl.nrdconta = crapass.nrdconta
-       and crapttl.cdcooper = pr_cdcooper
-       and crapass.cdagenci in (5,6,7) 
+       and crapttl.cdcooper = pr_cdcooper 
        and crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
        and crapttl.idseqttl = 1;
   --
