@@ -688,12 +688,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
          AND t.idcidade (+)   = b.cdnaturalidade
          AND o.idorgao_expedidor(+) = b.idorgao_expedidor
          --
-         AND k.idpessoa       = b.idpessoa
-         AND k.tprelacao      = 4 -- Mãe
-         AND ka.idpessoa      = k.idpessoa_relacao
-         AND l.idpessoa       = b.idpessoa
-         AND l.tprelacao      = 3 -- Pai
-         AND la.idpessoa      = l.idpessoa_relacao
+         AND k.idpessoa(+)    = b.idpessoa
+         AND k.tprelacao(+)   = 4 -- Mãe
+         AND ka.idpessoa(+)   = k.idpessoa_relacao
+         AND l.idpessoa(+)    = b.idpessoa
+         AND l.tprelacao(+)   = 3 -- Pai
+         AND la.idpessoa(+)   = l.idpessoa_relacao
         ORDER BY i.tptelefone, i.nrseq_telefone, j.nrseq_email;
     rw_pessoa_fisica cr_pessoa_fisica%ROWTYPE;
 

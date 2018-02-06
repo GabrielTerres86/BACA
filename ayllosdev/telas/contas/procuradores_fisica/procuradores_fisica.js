@@ -206,7 +206,8 @@ function controlaOperacaoProcuradores( operacao ){
 					controlaOperacaoProcuradores('TP');
 				}
 				
-                if (operacao == "A"){
+                if (operacao == "A" || 
+                    operacao == "IB" ){
                     
                     // Validar se o nome pode ser alterada
                     buscaNomePessoa_gen($('#nrcpfcgc','#'+nomeFormProcuradores ).val(),'nmdavali', nomeFormProcuradores);                        
