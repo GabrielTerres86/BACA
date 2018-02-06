@@ -4177,26 +4177,31 @@ PROCEDURE proc_qualif_operacao:
 
     END. /* Fim FOR EACH crabepr */
 
-	/* Alterada Regras para preenchimento do campo Qualificação da Operação */
-	/* Diego Simas - AMcom													*/
-	/* ANTERIOR - 0 dias de atraso											*/
-	/* ALTERADO - De 0 a 4 dias de atraso - Renovação de Crédito			*/ 
+	IF  aux_mai_atraso = 0 THEN
+	    ASSIGN par_idquapro = 2
+               par_dsquapro = "Renovacao de credito".
+    ELSE
+	IF  aux_mai_atraso < 2  THEN
+		ASSIGN par_idquapro = 3               
+        par_dsquapro = "Renegociacao de credito".
+	ELSE	
+		ASSIGN par_idquapro = 4
+        par_dsquapro = "Composicao da divida".
 
+    /************************************************************************/
+	/* Diego Simas - AMcom													*/
+	/* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
     IF  aux_dias_atraso < 5 THEN
         ASSIGN par_idquapro = 2
                par_dsquapro = "Renovacao de credito".
     ELSE
-
-	/* ANTERIOR - 1 dia de atraso											*/
-	/* ALTERADO - De 5 a 60 dias de atraso - Renegociação de Crédito		*/ 
+	/*  De 5 a 60 dias de atraso - Renegociação de Crédito		            */ 
     IF  aux_dias_atraso > 4 AND aux_dias_atraso < 61 THEN
         ASSIGN par_idquapro = 3               
                par_dsquapro = "Renegociacao de credito".
     ELSE
-
-	/* ANTERIOR - Mais de 1 dia de atraso									*/
-	/* ALTERADO - Igual ou acima de 61 dias - Composição de dívida			*/
-	IF  aux_dias_atraso >= 61 THEN
+	/*  Igual ou acima de 61 dias - Composição de dívida			        */
+	IF aux_dias_atraso >= 61 THEN
         ASSIGN par_idquapro = 4
                par_dsquapro = "Composicao da divida".
 
