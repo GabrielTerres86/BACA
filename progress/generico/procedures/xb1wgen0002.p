@@ -1778,6 +1778,7 @@ PROCEDURE proc_qualif_operacao:
                              INPUT aux_dsctrliq,
                              INPUT aux_dtmvtolt,
                              INPUT aux_dtmvtopr,
+							 INPUT aux_dtmvtoan,
                             OUTPUT aux_idquapro,
                             OUTPUT aux_dsquapro ).
 

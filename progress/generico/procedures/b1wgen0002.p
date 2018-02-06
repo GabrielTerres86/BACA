@@ -4087,6 +4087,8 @@ PROCEDURE proc_qualif_operacao:
     DEF  INPUT PARAM par_dsctrliq AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtopr AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_dtmvtoan AS DATE                           NO-UNDO.
+	
     DEF OUTPUT PARAM par_idquapro AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dsquapro AS CHAR                           NO-UNDO.
     
@@ -4119,87 +4121,38 @@ PROCEDURE proc_qualif_operacao:
         IF  NOT CAN-DO(par_dsctrliq, aux_nrctremp)   THEN
             NEXT.
 
-        aux_qtprecal = crabepr.qtprecal.
-
-        RUN saldo-devedor-epr (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT par_cdoperad,
-                               INPUT par_nmdatela,
-                               INPUT par_idorigem,
-                               INPUT par_nrdconta,
-                               INPUT 1,
-                               INPUT par_dtmvtolt,
-                               INPUT par_dtmvtopr,
-                               INPUT crabepr.nrctremp,
-                               INPUT "",
-                               INPUT 0,
-                               INPUT FALSE,
-                               OUTPUT par_vlsdeved,
-                               OUTPUT par_vltotpre,
-                               OUTPUT par_qtprecal,
-                               OUTPUT TABLE tt-erro).
-
-        /* Prestacoes restantes */
-
-        IF   crabepr.tpemprst = 0   THEN
-         DO:
-             ASSIGN aux_qtprecal = aux_qtprecal + par_qtprecal.
-         END.
-
-        ASSIGN aux_qtpreapg = IF   crabepr.qtpreemp < aux_qtprecal   THEN
-                                   0
-                              ELSE
-                                   crabepr.qtpreemp - aux_qtprecal
-               aux_atraso    = 0.
-
-        IF   crabepr.qtmesdec > aux_qtprecal   THEN
-             DO:
-                 IF   crabepr.qtmesdec > crabepr.qtpreemp   THEN
-                      aux_atraso = aux_qtprepag.
-                 ELSE
-                      aux_atraso = crabepr.qtmesdec - aux_qtprecal.
-             END.
-
-        /** Verifica se existe12 atraso maior do que 2 meses **/
-        IF  aux_atraso <> 0 THEN
-            IF  crabepr.qtmesdec  >= (aux_qtprecal + 2) THEN
-                ASSIGN aux_atraso = 2.
-
-
-        IF  aux_mai_atraso < aux_atraso THEN
-            aux_mai_atraso = aux_atraso.
+			   
+		FOR FIRST crapris FIELDS(qtdiaatr) 
+            WHERE crapris.cdcooper = par_cdcooper 
+			  AND crapris.nrdconta = par_nrdconta
+			  AND crapris.cdorigem = 3
+			  AND crapris.nrctremp = crabepr.nrctremp
+			  AND crapris.inddocto = 1
+			  AND crapris.dtrefere = par_dtmvtoan
+              NO-LOCK: 
+				  ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
+		END.
 		
-		aux_qtd_dias_atraso = par_dtmvtolt - crabepr.dtultpag.
-
+		IF AVAIL crapris THEN
+		   aux_qtd_dias_atraso = aux_qtd_dias_atraso + 1.
+				
 		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
 		   aux_dias_atraso = aux_qtd_dias_atraso.
 
-    END. /* Fim FOR EACH crabepr */
+    END.  
 
-	IF  aux_mai_atraso = 0 THEN
-	    ASSIGN par_idquapro = 2
-               par_dsquapro = "Renovacao de credito".
-    ELSE
-	IF  aux_mai_atraso < 2  THEN
-		ASSIGN par_idquapro = 3               
-        par_dsquapro = "Renegociacao de credito".
-	ELSE	
-		ASSIGN par_idquapro = 4
-        par_dsquapro = "Composicao da divida".
-
-    /************************************************************************/
-	/* Diego Simas - AMcom													*/
-	/* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
+    /* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
     IF  aux_dias_atraso < 5 THEN
         ASSIGN par_idquapro = 2
                par_dsquapro = "Renovacao de credito".
     ELSE
+	
 	/*  De 5 a 60 dias de atraso - Renegociação de Crédito		            */ 
     IF  aux_dias_atraso > 4 AND aux_dias_atraso < 61 THEN
         ASSIGN par_idquapro = 3               
                par_dsquapro = "Renegociacao de credito".
     ELSE
+	
 	/*  Igual ou acima de 61 dias - Composição de dívida			        */
 	IF aux_dias_atraso >= 61 THEN
         ASSIGN par_idquapro = 4
