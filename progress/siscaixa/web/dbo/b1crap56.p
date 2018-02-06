@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
+   Data    : Marco/2001                      Ultima atualizacao: 06/02/2018
 
    Dados referentes ao programa:
 
@@ -92,6 +92,8 @@
 			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+			   
+			   06/02/2018 - Adicionado novo historico. (SD 838581 - Kelvin)
 
 ............................................................................ */
 /*----------------------------------------------------------------------*/
@@ -610,7 +612,8 @@ PROCEDURE valida-outros:
          p-cdhistor <> 555  AND
          p-cdhistor <> 503  AND
          p-cdhistor <> 486  AND 
-         p-cdhistor <> 561)  THEN 
+         p-cdhistor <> 561  AND		
+		 p-cdhistor <> 2553 )  THEN 
          DO:
              ASSIGN i-cod-erro  = 22
                     c-desc-erro = " ".           
@@ -1597,7 +1600,8 @@ PROCEDURE atualiza-outros:
          p-cdhistor = 555 OR
          p-cdhistor = 503 OR
          p-cdhistor = 486 OR    
-         p-cdhistor = 561 THEN 
+         p-cdhistor = 561 OR
+		 p-cdhistor = 2553 THEN 
          DO:
              ASSIGN c-nome-titular1 = " "
                     c-nome-titular2 = " ".
