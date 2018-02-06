@@ -40,6 +40,7 @@
  * 029: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
  * 030: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 031: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+ * 032: [26/01/2018] Alteração para exibição do nível de risco original (Reginaldo - AMcom).
 
  */
 
