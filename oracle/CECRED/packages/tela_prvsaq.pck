@@ -132,12 +132,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_prvsaq IS
   --  Programa : TELA_PARMON
   --  Sistema  : Ayllos Web
   --  Autor    : Antonio R. Junior (mouts)
-  --  Data     : Novembro - 2017.                Ultima atualizacao:
+  --  Data     : Novembro - 2017.                Ultima atualizacao: 06/02/2018
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela prvsaq
   --
+  --
+  --  Alterações: 06/02/2018 - Ajuste para não considerar a senha na validação do operador devido a mesma ser valida através do AD
+  --  						  (Adriano - SD 845176).
   ---------------------------------------------------------------------------
   
 PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcooper%TYPE      -->CODIGO COOPER
@@ -1119,7 +1122,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                pr_tag_nova => 'dsfinalidade',
                                pr_tag_cont => rw_prv_saq.dsfinalidade,
                                pr_des_erro => vr_dscritic);
-                                                                                             
+        
         gene0007.pc_insere_tag(pr_xml     => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_auxconta,
@@ -3088,28 +3091,28 @@ PROCEDURE pc_imprimir_protocolo(pr_cdcooper       IN tbcc_provisao_especie.cdcoo
     Sigla   : PRVSAQ
 
     Autor   : Antonio R. Jr
-    Data    : 11/12/2017                        Ultima atualizacao: 
+    Data    : 11/12/2017                        Ultima atualizacao: 06/02/2018
 
     Dados referentes ao programa:
 
     Frequencia: Sempre que for chamado
     Objetivo  : Validar o operador para a rotina de alterar dados da tela PRVSAQ 
 
-    Alteracoes:
+    Alteracoes: 06/02/2018 - Ajuste para não considerar a senha na validação do operador devido a mesma ser valida através do AD
+               							(Adriano - SD 845176).
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   ------------------------------- CURSORES ---------------------------------
   -- Busca os dados do operador
   CURSOR cr_crapope (pr_cdcooper IN crapope.cdcooper%TYPE,
-                     pr_cdoperad IN crapope.cdoperad%TYPE,
-                     pr_cddsenha IN crapope.cddsenha%TYPE) IS
+                     pr_cdoperad IN crapope.cdoperad%TYPE) IS
   SELECT ope.nvoperad
         ,ope.cdsitope
         ,ope.insaqesp
     FROM crapope ope
    WHERE ope.cdcooper = pr_cdcooper
-     AND UPPER(ope.cdoperad) = UPPER(pr_cdoperad)
-     AND ope.cddsenha = pr_cddsenha;     
+     AND UPPER(ope.cdoperad) = UPPER(pr_cdoperad);     
   rw_crapope cr_crapope%ROWTYPE;
   
   -- Selecionar os dados da Cooperativa
@@ -3162,8 +3165,7 @@ PROCEDURE pc_imprimir_protocolo(pr_cdcooper       IN tbcc_provisao_especie.cdcoo
     
     -- Verificar os dados do operador
     OPEN cr_crapope (pr_cdcooper => pr_cdcooper,
-                     pr_cdoperad => pr_cdoperad,
-                     pr_cddsenha => pr_nrdsenha);
+                     pr_cdoperad => pr_cdoperad);
     
     FETCH cr_crapope INTO rw_crapope;
     
@@ -3173,8 +3175,8 @@ PROCEDURE pc_imprimir_protocolo(pr_cdcooper       IN tbcc_provisao_especie.cdcoo
       CLOSE cr_crapope;
       
       -- Montar mensagem de critica
-      vr_cdcritic := 0;
-      vr_dscritic := 'Senha invalida.';
+      vr_cdcritic := 67; -- 067 - Operador nao cadastrado.
+      vr_dscritic := NULL;
            
       RAISE vr_exc_saida; 
     ELSE             

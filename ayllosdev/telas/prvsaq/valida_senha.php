@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 09/05/2014
  * OBJETIVO     : Rotina para manter validar senha do operador
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 06/02/2018 - Ajuste para enviar o nivel do operador como zero, pois não deve valida-lo. Apenas deve-se validar operador/senha (Adriano - SD 845176).
  * -------------- 
  */
 ?> 
@@ -43,7 +43,7 @@
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
 	$xml .= '		<nrdconta>0</nrdconta>';
 	$xml .= '		<idseqttl>0</idseqttl>';
-	$xml .= '		<nvopelib>2</nvopelib>';
+	$xml .= '		<nvopelib>0</nvopelib>';
 	$xml .= '		<cdopelib>'.$operauto.'</cdopelib>';
 	$xml .= '		<cddsenha>'.$codsenha.'</cddsenha>';
 	$xml .= '		<flgerlog>no</flgerlog>';
