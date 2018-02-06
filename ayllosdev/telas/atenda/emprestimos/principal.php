@@ -224,7 +224,7 @@
 			arrayProposta['vlpreemp'] = '<? echo getByTagName($proposta,'vlpreemp'); ?>';
 			arrayProposta['qtpreemp'] = '<? echo getByTagName($proposta,'qtpreemp'); ?>';
 			arrayProposta['nivrisco'] = '<? echo getByTagName($proposta,'nivrisco'); ?>';
-			arrayProposta['nivriori'] = '<? echo getByTagName($proposta,'nivriori'); ?>'; // nível de risco original
+			arrayProposta['nivriori'] = '<? echo getByTagName($proposta,'nivriori'); ?>'; // nï¿½vel de risco original
 			arrayProposta['nivcalcu'] = '<? echo getByTagName($proposta,'nivcalcu'); ?>';
 			arrayProposta['cdlcremp'] = '<? echo getByTagName($proposta,'cdlcremp'); ?>';
 			arrayProposta['cdfinemp'] = '<? echo getByTagName($proposta,'cdfinemp'); ?>';
@@ -691,7 +691,9 @@
 					mensagemAval<? echo $i; ?>['cdavalis'] = '<? echo getByTagName($mensagem_aval[$i]->tags,'cdavalis'); ?>';
 					mensagemAval<? echo $i; ?>['dsmensag'] = '<? echo retiraCharEsp(getByTagName($mensagem_aval[$i]->tags,'dsmensag')); ?>';
 					arrayMensagemAval[<? echo $i; ?>] = mensagemAval<? echo $i; ?>;
-				<?}?>
+				<? 
+				}
+				?>
 
 				var arrayEmprestimosAvalista1 = new Array();
 
