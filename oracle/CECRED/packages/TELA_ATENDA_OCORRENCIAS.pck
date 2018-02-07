@@ -212,14 +212,34 @@ END fn_busca_dias_atraso;
 		 CURSOR cr_risco_final(pr_cdcooper NUMBER
 		                     , pr_nrdconta NUMBER
 												 , pr_dtmvtoan DATE) IS
-		 SELECT max(r.innivris) innivris
+		 SELECT r.innivris
 		   FROM crapris r
 			WHERE r.cdcooper = pr_cdcooper
 			  AND r.nrdconta = pr_nrdconta
 				AND r.dtrefere = pr_dtmvtoan
-				AND r.inddocto = 1;
+				AND r.inddocto = 1
+				AND ROWNUM = 1
+	 	  ORDER BY innivris DESC;
 		 rw_risco_final cr_risco_final%ROWTYPE; 
 		 
+		 CURSOR cr_risco_cpf(pr_cdcooper NUMBER
+		                     , pr_nrdconta NUMBER) IS
+		 SELECT DECODE(TRIM(a.dsnivris)
+		             , 'A', 2 
+								 , 'B', 3
+								 , 'C', 4
+								 , 'D', 5
+								 , 'E', 6
+								 , 'F', 7
+								 , 'G', 8
+								 , 'H', 9) innivris								 
+		   FROM crapass a
+			WHERE a.cdcooper = pr_cdcooper
+			  AND a.nrdconta = pr_nrdconta; 
+		 rw_risco_cpf cr_risco_cpf%ROWTYPE;
+		 
+		 -- Variáveis -- 
+		 vr_risco_nao_cadastrado BOOLEAN;		 
   BEGIN
       -- Recupera parâmetro da TAB089
       OPEN cr_tab(pr_cdcooper);
@@ -227,6 +247,8 @@ END fn_busca_dias_atraso;
 			FETCH cr_tab INTO rw_tab;
 			
 			CLOSE cr_tab;
+			
+			vr_risco_nao_cadastrado := FALSE;
 			
 			OPEN cr_riscos(pr_cdcooper
                     ,pr_nrdconta
@@ -244,22 +266,55 @@ END fn_busca_dias_atraso;
 									  ,NULL);
 										
 			   FETCH cr_riscos INTO rw_riscos;
+				 
+				 IF cr_riscos%NOTFOUND THEN
+				    vr_risco_nao_cadastrado := TRUE;
+				 END IF;
 			END IF;
 			
 			CLOSE cr_riscos;
 
-      vr_risco_ult_central := rw_riscos.innivris;
-			vr_data_ult_central  := rw_riscos.dtdrisco;
-			vr_valor_divida      := rw_riscos.vldivida;
+      IF vr_risco_nao_cadastrado THEN
+				 OPEN cr_risco_cpf(pr_cdcooper, pr_nrdconta);
+				 
+				 FETCH cr_risco_cpf INTO rw_risco_cpf;
+				 
+				 vr_risco_ult_central := rw_risco_cpf.innivris;
+				 
+				 CLOSE cr_risco_cpf;
+				 
+				 vr_data_ult_central  := NULL;
+			   vr_valor_divida      := 0;
+			ELSE
+         vr_risco_ult_central := rw_riscos.innivris;
+			   vr_data_ult_central  := rw_riscos.dtdrisco;
+			   vr_valor_divida      := rw_riscos.vldivida;
+			END IF;
+			
+			vr_risco_nao_cadastrado := FALSE;
 			
 			OPEN cr_risco_final(pr_cdcooper, pr_nrdconta, pr_dtmvtoan);
 			
 			FETCH cr_risco_final INTO rw_risco_final;
 			
+			IF cr_risco_final%NOTFOUND THEN
+				vr_risco_nao_cadastrado := TRUE;
+			END IF;
+			
 			CLOSE cr_risco_final;
 			
-			vr_risco_final := rw_risco_final.innivris;
-  END pc_busca_risco_ult_central;
+			IF vr_risco_nao_cadastrado THEN 
+				 OPEN cr_risco_cpf(pr_cdcooper, pr_nrdconta);
+				 
+				 FETCH cr_risco_cpf INTO rw_risco_cpf;
+				 
+				 CLOSE cr_risco_cpf;
+				 
+				 vr_risco_final := rw_risco_cpf.innivris;
+			ELSE
+			   vr_risco_final := rw_risco_final.innivris;
+			END IF;
+	END pc_busca_risco_ult_central;
 
   FUNCTION fn_traduz_risco(innivris NUMBER) RETURN crawepr.dsnivris%TYPE AS dsnivris crawepr.dsnivris%TYPE;
   BEGIN
@@ -981,8 +1036,8 @@ END fn_busca_dias_atraso;
       pc_monta_reg_central_risco(pr_retxml
                             , vr_dscritic
                             , fn_traduz_risco(vr_risco_ult_central)
-                            , CASE WHEN vr_risco_ult_central > 2 THEN TO_CHAR(vr_data_ult_central, 'DD/MM/YYYY') ELSE '' END
-                            , CASE WHEN vr_risco_ult_central > 2 THEN TO_CHAR(rw_dat.dtmvtolt-vr_data_ult_central) ELSE '' END
+                            , CASE WHEN vr_risco_ult_central > 2 AND vr_data_ult_central <> NULL THEN TO_CHAR(vr_data_ult_central, 'DD/MM/YYYY') ELSE '' END
+                            , CASE WHEN vr_risco_ult_central > 2 AND vr_data_ult_central <> NULL THEN TO_CHAR(rw_dat.dtmvtolt-vr_data_ult_central) ELSE '' END
                             , fn_traduz_risco(vr_risco_final));
   EXCEPTION
     WHEN vr_exc_saida THEN
