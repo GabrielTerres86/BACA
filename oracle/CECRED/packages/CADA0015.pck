@@ -4981,15 +4981,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao:
+    --  Data     : Agosto/2017.                   Ultima atualizacao: 07/02/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para processar registros pendentes de atualização
     --
-    --  Alteração :
-    --
+    --  Alteração : 07/02/2018 - Alterado a prioridade de atualizacao das pessoas no cursor
+    --                           cr_pessoa_atlz para olhar a CRAPJUR primeiro (Tiago/Andrino #843413) 
     --
     -- ..........................................................................*/
 
@@ -5007,7 +5007,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               )
        ORDER BY trunc(atl.dhatualiza,'MI'),
                 --> Ordenacao priorizando as tabelas ass e ttl
-                decode(atl.nmtabela,'CRAPASS',0,'CRAPTTL',1,2);
+                decode(atl.nmtabela,'CRAPJUR',0,'CRAPASS',1,'CRAPTTL',2,3); 
 
     --> dados do conjuge
     CURSOR cr_crapcje( pr_cdcooper crapcje.cdcooper%TYPE,
