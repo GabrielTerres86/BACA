@@ -200,6 +200,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                                   ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
                                   ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
                                   ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_flg_enviar IN VARCHAR2 DEFAULT 'N'            --> Indicador para enviar o e-mail na hora
                                   ,pr_des_erro OUT VARCHAR2 --> Status erro
                                   ,pr_dscritic OUT VARCHAR2); --> Retorno de erro	
 
@@ -223,7 +224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
   --  Sigla    : GENE
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 28/09/2017
+  --  Data     : Maio/2013.                   Ultima atualizacao: 24/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -257,8 +258,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --             28/09/2017 - Incluir validação para caso o tamanho do cpf for maior 
   --                          que 11 posições não aceite o cadastro do mesmo 
   --                          (Lucas Ranghetti #717352)   
+  --
+  --             24/11/2017 - Correção na consulta de bloqueios judiciais pc_retorna_valor_blqjud, para somar todas 
+  --                          as ocorrencias e retornar o valor correto. SD 800517 (Carlos Rafael Tanholi)               
   ---------------------------------------------------------------------------------------------------------------
-
+  
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
    vr_nrctacef       crapprm.dsvlrprm%TYPE;
    vr_nrctaint       crapprm.dsvlrprm%TYPE;
@@ -1322,7 +1326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Marcos(Supero)
-     Data    : 04/06/2013                         Ultima atualizacao: 04/11/2015
+     Data    : 04/06/2013                         Ultima atualizacao: 24/11/2017
 
      Dados referentes ao programa:
 
@@ -1335,12 +1339,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
      Alteracães: 04/11/2015 - Correção de conversão, tratar 0 como todos para cdmodali
                               identificado na conversão carrega_dados_atenda SD318820 (Odirlei-AMcom)
 
+                 24/11/2017 - Correção na consulta de bloqueios judiciais, para somar todas as 
+                              ocorrencias e retornar o valor correto. SD 800517 (Carlos Rafael Tanholi) 
+
     ............................................................................. */
     DECLARE
      -- Buscar das informacães de bloqueio judicial na conta
      CURSOR cr_crapblj IS
-       SELECT vlbloque
-             ,vlresblq
+       SELECT SUM(vlbloque) AS vlbloque
+             ,SUM(vlresblq) AS vlresblq
          FROM crapblj
         WHERE cdcooper = pr_cdcooper
           AND nrdconta = pr_nrdconta
@@ -2593,13 +2600,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   END pc_busca_motivos;
 
 
-  PROCEDURE pc_gera_inconsistencia(pr_cdcooper IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
-                                  ,pr_iddgrupo IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
-                                  ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
-                                  ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
-                                  ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
-                                  ,pr_des_erro OUT VARCHAR2 --> Status erro
-                                  ,pr_dscritic OUT VARCHAR2) IS --> Retorno de erro
+  PROCEDURE pc_gera_inconsistencia(pr_cdcooper   IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
+                                  ,pr_iddgrupo   IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
+                                  ,pr_tpincons   IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
+                                  ,pr_dsregist   IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
+                                  ,pr_dsincons   IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_flg_enviar IN VARCHAR2 DEFAULT 'N'            --> Indicador para enviar o e-mail na hora
+                                  ,pr_des_erro   OUT VARCHAR2 --> Status erro
+                                  ,pr_dscritic   OUT VARCHAR2) IS --> Retorno de erro
   BEGIN
     -- ..........................................................................
     --
@@ -2713,7 +2721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                                     ,pr_des_assunto     => rw_inconsist_grp.dscabecalho
                                     ,pr_des_corpo       => vr_dscorpo
                                     ,pr_des_anexo       => NULL
-                                    ,pr_flg_enviar      => 'N'
+                                    ,pr_flg_enviar      => pr_flg_enviar
                                     ,pr_des_erro        => vr_dscritic);
           
           IF vr_dscritic IS NOT NULL THEN
@@ -2886,6 +2894,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       RETURN NVL(vr_result, 0);
 		END;																 
   END fn_valida_depart_operad;
-
+  
 END GENE0005;
 /
