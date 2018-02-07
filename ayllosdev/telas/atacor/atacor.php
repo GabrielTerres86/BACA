@@ -24,7 +24,9 @@
 	require_once("../../class/xmlfile.php");	
 	
 	// Carrega permissões do operador
-	include("../../includes/carrega_permissoes.php");	
+	include("../../includes/carrega_permissoes.php");
+
+	include('form_nova_prop.php');	
 
 	setVarSession("opcoesTela",$opcoesTela);
 		
@@ -41,12 +43,13 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="aturat.js?keyrand=<?php echo mt_rand(); ?>"></script>
-
-		<script type="text/javascript"">
-			
+		<!--<script type="text/javascript" src="atacor.js"></script>-->
+		<script type="text/javascript" src="form_inclusao_contrato.js"></script>
+		
+		<script>			
 			var cdcooper = "<? echo $glbvars['cdcooper']; ?>";
 
+			
 		</script>
 
 </head>
@@ -106,7 +109,11 @@
 																			<!-- Formulário com as opções de filtro -->
 																			<? include('form_filtro.php'); ?>
 
-																			<div id="divTabela"></div>
+																			<div id="divTabela">
+																				<a href="#" class="botao FluxoNavega LastInputModal" id="btnOpnWdw" onClick="mostraDivQualificaControle();">Teste</a>	
+																				
+																																						
+																			</div>
 																			<div id="divRotina"></div>
 																			<div id="divUsoGenerico"></div>
 																					
@@ -117,8 +124,7 @@
 																				<a href="#" class="botao" id="btConcluir" >Concluir</a>
 																				
 																			</div>
-
-																		</div>																	
+																		</div>																
 																		
 																	</td>
 																</tr>
@@ -129,7 +135,7 @@
 											</td>
 										</tr>
 									</table>																
-								</
+								</td>
 							</tr>
 						</table>
 					</td>
