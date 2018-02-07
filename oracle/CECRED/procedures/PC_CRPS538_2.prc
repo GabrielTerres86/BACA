@@ -36,8 +36,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
 
        06/12/2017 - Substituição do comando pc_set_modulo por pc_informa_acesso, para gerar as casas 
                     decimais corretamente
+
        07/12/2017 - Sustituir o tempo de espera do job de 30 minutos pela função fn_param_sistema
                     Ana - Envolti - Chamado 804921
+
+       07/02/2018 - se o mês de dtmvtoan é diferente do mês de dtmvtolt então buscar arquivos
+                    da pasta win12 - SD#842900 (AJFink)
 
    ................................................................................................*/
 
@@ -123,8 +127,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        vr_dtleiaux           VARCHAR2(8);
        vr_intemarq           BOOLEAN;
        vr_interminocoopers   NUMBER(1);
-       --Chamado 806333
-       vr_caminho_salvar_ant VARCHAR2(1000);
        
        -- Variaveis de controle de DBA SCHEDULER JOB LOG      
        vr_dsplsql         VARCHAR2(2000);
@@ -693,7 +695,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
 
       --Verifica se é o último dia do mês
       --Se for último dia do mês, nesse caso deve ler os arquivos da pasta "win12\salvar"
-      IF trunc(sysdate) = trunc(last_day(vr_dtmvtaux)) THEN
+      --IF trunc(sysdate) = trunc(last_day(vr_dtmvtaux)) THEN
+
+      --se o mês de dtmvtoan é diferente do mês de dtmvtolt SD#842900
+      if to_char(vr_dtmvtaux /*rw_crapdat.dtmvtoan*/,'yyyymm')
+      <> to_char(vr_dtmvtpro /*rw_crapdat.dtmvtolt*/,'yyyymm') then
         --Buscar Diretorio Integracao da Cooperativa
         vr_caminho_puro := gene0001.fn_diretorio(pr_tpdireto => 'W' --> Usr/Coop/Win12
                                                 ,pr_cdcooper => pr_cdcooper
