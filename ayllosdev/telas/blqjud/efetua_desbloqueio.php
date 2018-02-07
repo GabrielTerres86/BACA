@@ -55,12 +55,12 @@
   $xmlRegistro .= "		<cdoperad>".$glbvars['cdoperad']."</cdoperad>";
 	$xmlRegistro .= "		<nroficio>".$nroficio."</nroficio>";
 	$xmlRegistro .= "		<nrctacon>".$nrctacon."</nrctacon>"; 
-	$xmlRegistro .= "   <dtenvdes>".$dtenvdes."</dtenvdes>";
-	$xmlRegistro .= "   <dsinfdes>".$dsinfdes."</dsinfdes>";
-	$xmlRegistro .= "   <fldestrf>".$fldestrf."</fldestrf>";
-	$xmlRegistro .= "   <vldesblo>".$vldesblo."</vldesblo>";
-	$xmlRegistro .= "   <cdmodali>".$cdmodali."</cdmodali>";
-  $xmlRegistro .= "   <nrofides>".$nrofides."</nrofides>";
+	$xmlRegistro .= "   	<dtenvdes>".$dtenvdes."</dtenvdes>";
+	$xmlRegistro .= "   	<dsinfdes>".$dsinfdes."</dsinfdes>";
+	$xmlRegistro .= "   	<fldestrf>".$fldestrf."</fldestrf>";
+	$xmlRegistro .= "   	<vldesblo>".$vldesblo."</vldesblo>";
+	$xmlRegistro .= "   	<cdmodali>".$cdmodali."</cdmodali>";
+  	$xmlRegistro .= "   	<nrofides>".$nrofides."</nrofides>";
 	$xmlRegistro .= "	</Dados>";
 	$xmlRegistro .= "</Root>";
 		
@@ -74,9 +74,9 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjRegistro->roottag->tags[0]->name) == "ERRO") {
-		echo "showError('error','".$msgErro."','Informe - BLQJUD','hideMsgAguardo();');";
+		echo "showError('error','".$msgErro."','Informe - BLQJUD','hideMsgAguardo();$(\'#btnDesbloqueio\',\'#divBotoes\').show();');";
 	}else{
 		echo "showError('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Informe - BLQJUD','hideMsgAguardo();estadoInicial();');";
 	}
-
+		
 ?>

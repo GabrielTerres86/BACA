@@ -18,11 +18,11 @@
 			<label for="nrofides">Número do Ofício Desbloqueio:</label>
 			<input id="nrofides" name="nrofides" type="text" maxlength="25"  />
 			<br/>
-
+            
 			<label for="dtenvdes">Data Envio Resposta Desbloqueio:</label>
 			<input id="dtenvdes" name="dtenvdes" type="text" maxlength="12" />
 			<br />
-            
+		
 			<label for="dsinfdes">Inf. Adicionais Desbloqueio:</label>
 			<input id="dsinfdes" name="dsinfdes" type="text" maxlength="70" />	
 			<br />
@@ -32,10 +32,11 @@
 			<label for="flgsim" class="radio">Sim</label>	
 			<input name="fldestrf" id="flgnao" type="radio" class="radio" value="2" onClick="uncheck();"  />	
 			<label for="flgnao" class="radio">Não</label>	
-		
+
 			<br />
 			<label for="vldesblo">Valor do Desbloqueio:</label>
 			<input id="vldesblo" name="vldesblo" class="moeda" type="text" maxlength="15" />
+			<input id="vltmpbloque" name="vltmpbloque" type="hidden" />
 				
 		</fieldset>	
 	</form>

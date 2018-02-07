@@ -102,7 +102,7 @@
 		exibirErro('error',$msgErro,'Alerta - BLQJUD','hideMsgAguardo();$(\'#nroficon\',\'#frmConsulta\').focus();',true);				
 	}		
 	$dados = $xmlObjConsulta->roottag->tags[0]->tags;
-
+  
   // Monta o xml de requisição
 	$xmlConsultaOficio  = "";
 	$xmlConsultaOficio .= "<Root>";
@@ -141,7 +141,10 @@
 		echo "arrbloqu".$seq."['nrofides'] = '".getByTagName($banco->tags,'NROFIDES')."';";
 		echo "arrbloqu".$seq."['dtenvdes'] = '".getByTagName($banco->tags,'DTENVDES')."';";
 		echo "arrbloqu".$seq."['dsinfdes'] = '".getByTagName($banco->tags,'DSINFDES')."';";
+		echo "arrbloqu".$seq."['idmodali'] = '".getByTagName($banco->tags,'IDMODALI')."';";
+		echo "arrbloqu".$seq."['vlbloque'] = '".number_format(str_replace(",",".",getByTagName($banco->tags,'VLBLOQUE')),2,",",".")."';";
 		echo "arrbloqueios[".$seq."] = arrbloqu".$seq.";";
+
 		$seq = $seq + 1;
 	}	
 	echo "$('#divConsulta').css({'display':'block'});";
@@ -157,7 +160,17 @@
 		}
 		echo "<script>$('#div_tabblqjud').css({'display':'block'});layoutConsulta();</script>";
 	}
-	// selecinando a primeira linha do grid
-	echo "<script>if(arrbloqueios.length > 0){ selecionaBloqueio(0);} hideMsgAguardo();</script>";
+	
+	//Busca a primeira linha no grid de ofícios e a seleciona. Ao selecionar, preenche com o valor total bloqueado o campo de desbloqueio
+	$tmp_nroficio = '';
+	$tmp_nrdconta = '';
+	if (count($oficios) > 0) { 
+		$oficio = $oficios[0];
+		$tmp_nroficio = preg_replace("/[^0-9]/", "", getByTagName($oficio->tags,'NROFICIO'));
+		$tmp_nrdconta = getByTagName($oficio->tags,'NRDCONTA');
+	}
+
+	echo "<script>if(arrbloqueios.length > 0){ selecionaOficio('$tmp_nroficio','$tmp_nrdconta');} hideMsgAguardo();</script>";
+
 	
 ?>
