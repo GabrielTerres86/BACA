@@ -1042,8 +1042,8 @@ END fn_busca_dias_atraso;
       pc_monta_reg_central_risco(pr_retxml
                             , vr_dscritic
                             , fn_traduz_risco(vr_risco_ult_central)
-                            , CASE WHEN vr_risco_ult_central > 2 AND vr_data_ult_central <> NULL THEN TO_CHAR(vr_data_ult_central, 'DD/MM/YYYY') ELSE '' END
-                            , CASE WHEN vr_risco_ult_central > 2 AND vr_data_ult_central <> NULL THEN TO_CHAR(rw_dat.dtmvtolt-vr_data_ult_central) ELSE '' END
+                            , TO_CHAR(vr_data_ult_central, 'DD/MM/YYYY') 
+                            , TO_CHAR(rw_dat.dtmvtolt-vr_data_ult_central)
                             , fn_traduz_risco(vr_risco_final));
   EXCEPTION
     WHEN vr_exc_saida THEN
