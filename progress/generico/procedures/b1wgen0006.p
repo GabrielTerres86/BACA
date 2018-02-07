@@ -26,7 +26,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0006.p                  
     Autora  : Junior
-    Data    : 12/09/2005                      Ultima atualizacao: 23/01/2018
+    Data    : 12/09/2005                      Ultima atualizacao: 07/02/2018
 
     Dados referentes ao programa:
 
@@ -135,6 +135,8 @@
                              Uma busca utilizava <= dtmvtopr e a outra >= dtmvtolt, sobrepondo lancamentos e
                              descontando 2x, fazendo com que o cooperado nao conseguisse sacar o valor desejado.
                              Heitor (Mouts) - Chamado 825869
+
+			   07/02/2018 - Retirada com controle de lock da tabela CRAPLOT. Carlos Rafael Tanholi (SD 845899).
 
 ..............................................................................*/
 
@@ -2301,13 +2303,6 @@ PROCEDURE efetuar-resgate:
 
         END. /** Fim do DO ... TO **/
 
-		/* TIRA O LOCK DA TABELA CRAPLOT */
-		IF  AVAIL craplot  THEN
-        DO:
-            FIND CURRENT craplot NO-LOCK NO-ERROR.
-            RELEASE craplot.
-        END.
-
         IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
             UNDO TRANS_POUP, LEAVE TRANS_POUP.
 
@@ -2335,6 +2330,7 @@ PROCEDURE efetuar-resgate:
         
         VALIDATE craplrg.
 
+		FIND CURRENT craplot NO-LOCK NO-ERROR.
         FIND CURRENT craplrg NO-LOCK NO-ERROR.
 
         ASSIGN aux_flgtrans = TRUE.
