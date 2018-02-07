@@ -71,6 +71,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
 	
 	/* Validar informações do serviço */
 	PROCEDURE pc_valida_dados_integracao(pr_cdcooper  IN NUMBER                 --> Código da cooperativa
+  		                                ,pr_cdcoploj  IN NUMBER                 --> Código da cooperativa do lojista		
 																			,pr_dsusuari  IN VARCHAR2               --> Usuário
 																			,pr_dsdsenha  IN VARCHAR2               --> Senha
 																			,pr_cdcliente IN PLS_INTEGER            --> Código do cliente
@@ -1184,6 +1185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 	END pc_envia_retorno_gravames;
 	
 	PROCEDURE pc_valida_dados_integracao(pr_cdcooper  IN NUMBER                 --> Código da cooperativa
+  		                                ,pr_cdcoploj  IN NUMBER                 --> Código da cooperativa do lojista
 																			,pr_dsusuari  IN VARCHAR2               --> Usuário
 																			,pr_dsdsenha  IN VARCHAR2               --> Senha
 																			,pr_cdcliente IN PLS_INTEGER            --> Código do cliente
@@ -1298,14 +1300,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 			RAISE vr_exc_erro;
 		END IF;
 
-		-- Verificar indicador de integração CDC na cooperativa do lojista
+		-- Verificar indicador de integração CDC na cooperativa do cooperado
 		OPEN cr_crapcop_cdc(pr_cdcooper);
 		FETCH cr_crapcop_cdc INTO rw_crapcop_cdc;
-				
+					
 		-- Se não possui integração CDC
 		IF cr_crapcop_cdc%NOTFOUND THEN
 			-- Fechar cursor
-      CLOSE cr_crapcop_cdc;
+			CLOSE cr_crapcop_cdc;
 			-- Gerar crítica
 			vr_cdcritic    := 0;
 			vr_dscritic    := 'Cooperativa nao permite integracao CDC.';
@@ -1314,7 +1316,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 		END IF;
 		-- Fechar cursor
 		CLOSE cr_crapcop_cdc;
-
+		
+		-- Verificar indicador de integração CDC na cooperativa do lojista
+		OPEN cr_crapcop_cdc(pr_cdcoploj);
+		FETCH cr_crapcop_cdc INTO rw_crapcop_cdc;
+					
+		-- Se não possui integração CDC
+		IF cr_crapcop_cdc%NOTFOUND THEN
+			-- Fechar cursor
+			CLOSE cr_crapcop_cdc;
+			-- Gerar crítica
+			vr_cdcritic    := 0;
+			vr_dscritic    := 'Cooperativa nao permite integracao CDC.';
+			-- Levantar exceção
+			RAISE vr_exc_erro;			
+		END IF;
+		-- Fechar cursor
+		CLOSE cr_crapcop_cdc;
+		
     OPEN cr_param_cdc(pr_cdcooper);
 		FETCH cr_param_cdc INTO rw_param_cdc;
 		

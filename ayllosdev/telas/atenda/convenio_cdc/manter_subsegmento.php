@@ -26,6 +26,7 @@
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
 	   exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	   exit();
     }
 
 	// Monta o xml de requisição
@@ -47,5 +48,7 @@
 				$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
 		}
 		exibirErro('error',utf8_encode(str_replace("\"", "",$msgErro)),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exit();
 	}
+	echo "acessaOpcaoAba('S',0);";
 ?>

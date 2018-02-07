@@ -704,7 +704,76 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
     END;
 
   END pc_busca_dados;
+	
+  PROCEDURE pc_atualiza_filiais(pr_idcooperado_cdc IN tbepr_cdc_lojista_subseg.idcooperado_cdc%TYPE --> Id. CDC da Matriz
+															 ,pr_cdcritic OUT PLS_INTEGER                                         --> Código da crítica
+															 ,pr_dscritic OUT VARCHAR2) IS                                        --> Descrição da crítica
+    BEGIN                                   
+    /* .............................................................................
 
+    Programa: pc_atualiza_filiais
+    Sistema : Ayllos Web
+    Autor   : Lucas Reinert
+    Data    : 06/02/2018                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Atualizar subsegmento das filiais
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+      -- Variáveis de Erro          
+      vr_exc_erro EXCEPTION;
+      vr_cdcritic crapcri.cdcritic%TYPE := 0;
+      vr_dscritic crapcri.dscritic%TYPE := '';
+			
+			-- Cursor para buscar filiais
+			CURSOR cr_tbsite_cooperado_cdc(pr_idcooperado_cdc IN tbsite_cooperado_cdc.idcooperado_cdc%TYPE)	IS
+			  SELECT cdc.idcooperado_cdc
+				  FROM tbsite_cooperado_cdc cdc
+				 WHERE cdc.idmatriz = pr_idcooperado_cdc;
+				 
+    BEGIN
+			
+			-- Percorrer cada filial da matriz
+			FOR rw_tbsite_cooperado_cdc IN cr_tbsite_cooperado_cdc(pr_idcooperado_cdc) LOOP
+				BEGIN
+					-- Remover os subsegmentos da filiada
+					DELETE 
+					  FROM tbepr_cdc_lojista_subseg ssg
+					 WHERE ssg.idcooperado_cdc = rw_tbsite_cooperado_cdc.idcooperado_cdc;
+					-- Inserir subsegmentos da matriz à filial
+					INSERT INTO tbepr_cdc_lojista_subseg(idcooperado_cdc, cdsubsegmento)
+					SELECT rw_tbsite_cooperado_cdc.idcooperado_cdc
+					      ,ssg.cdsubsegmento
+					 FROM tbepr_cdc_lojista_subseg ssg
+					WHERE ssg.idcooperado_cdc = pr_idcooperado_cdc;
+				EXCEPTION
+					WHEN OTHERS THEN
+						vr_dscritic := 'Erro ao atualizar filiais: ' || SQLERRM;
+						RAISE vr_exc_erro;						 
+				END;				
+			END LOOP;
+			
+		EXCEPTION															
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela CVNCDC(pc_manter_tarifa_renovacao_cdc): ' || SQLERRM;
+        ROLLBACK;
+    END;			
+  END pc_atualiza_filiais;
+	
   PROCEDURE pc_grava_dados(pr_cdcooper           IN crapcop.cdcooper%TYPE --> Cód da cooperativa
 		                      ,pr_cdoperad           IN crapope.cdoperad%TYPE --> Operador
 													,pr_idorigem           IN INTEGER               --> Origem
@@ -897,6 +966,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
           vr_dscritic := 'Problema ao gravar dados: ' || SQLERRM;
           RAISE vr_exc_erro;
       END;
+			
+			-- Se possui matriz registro é filial
+			IF pr_idmatriz > 0 THEN
+				-- Atualizar subsegmento das filiais
+				pc_atualiza_filiais(pr_idcooperado_cdc => pr_idmatriz
+													 ,pr_cdcritic        => vr_cdcritic
+													 ,pr_dscritic        => vr_dscritic);
+
+				-- Se retornou crítica
+				IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+					-- Levantar exceção
+					RAISE vr_exc_erro;
+				END IF;
+
+			END IF;
       
       -- Verifica as diferencas
       IF NVL(vr_tab_cdr_cdc(pr_nrdconta).flgconve, '0') <> NVL(pr_flgconve, '0') THEN
@@ -1629,6 +1713,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
       END IF;
 
       BEGIN
+				-- Excluir subsegmentos da filial
+				DELETE FROM tbepr_cdc_lojista_subseg
+	            WHERE tbepr_cdc_lojista_subseg.idcooperado_cdc = pr_idcooperado_cdc;
         -- Exclui a filial
         DELETE FROM tbsite_cooperado_cdc
               WHERE tbsite_cooperado_cdc.idcooperado_cdc = pr_idcooperado_cdc;
@@ -2536,7 +2623,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
     END;
 
   END pc_lista_subsegmentos;
-
+	
   PROCEDURE pc_mantem_subsegmentos(pr_cddopcao IN VARCHAR2                                             --> Opção da Tela
                                   ,pr_idcooperado_cdc IN tbepr_cdc_lojista_subseg.idcooperado_cdc%TYPE --> Id. cooperado CDC
                                   ,pr_cdsubsegmento IN tbepr_cdc_lojista_subseg.cdsubsegmento%TYPE     --> Código Subsegmento
@@ -2588,6 +2675,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 				 WHERE scc.idcooperado_cdc = pr_idcooperado_cdc;
       rw_tbsite_cooperado_cdc cr_tbsite_cooperado_cdc%ROWTYPE;
 			
+			CURSOR cr_tbepr_cdc_lojista_subseg IS
+			  SELECT 1
+				  FROM tbepr_cdc_lojista_subseg ssg
+			   WHERE ssg.idcooperado_cdc = pr_idcooperado_cdc
+				   AND ssg.cdsubsegmento = pr_cdsubsegmento;
+			rw_tbepr_cdc_lojista_subseg cr_tbepr_cdc_lojista_subseg%ROWTYPE;
     BEGIN
   
 	    OPEN cr_tbsite_cooperado_cdc;
@@ -2603,8 +2696,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 				-- Levantar exceção
 				RAISE vr_exc_erro;
 			END IF;
-	
+			-- Fechar cursor
+			CLOSE cr_tbsite_cooperado_cdc;
+			
       IF pr_cddopcao = 'I' THEN
+				
+			   -- Verificar se registro já existe
+				 OPEN cr_tbepr_cdc_lojista_subseg;
+				 FETCH cr_tbepr_cdc_lojista_subseg INTO rw_tbepr_cdc_lojista_subseg;
+				 
+				 -- Subsegmento já cadastrado
+				 IF cr_tbepr_cdc_lojista_subseg%FOUND THEN
+					 -- Fechar cursor
+					 CLOSE cr_tbepr_cdc_lojista_subseg;
+					 -- Gerar crítica
+					 vr_cdcritic := 0;
+					 vr_dscritic := 'Subsegmento já cadastrado.';
+					 -- Levantar exceção
+					 RAISE vr_exc_erro;
+				 END IF;
+				 -- Fechar cursor
+				 CLOSE cr_tbepr_cdc_lojista_subseg;			
+				 
         BEGIN
           INSERT INTO tbepr_cdc_lojista_subseg(idcooperado_cdc, cdsubsegmento) VALUES(pr_idcooperado_cdc, pr_cdsubsegmento);
         EXCEPTION
@@ -2625,6 +2738,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
         vr_dscritic := 'Opção inválida.';
         RAISE vr_exc_erro;
       END IF;
+			
+			-- Atualizar subsegmento das filiais
+      pc_atualiza_filiais(pr_idcooperado_cdc => pr_idcooperado_cdc
+			                   ,pr_cdcritic        => vr_cdcritic
+												 ,pr_dscritic        => vr_dscritic);
+
+      -- Se retornou crítica
+      IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+				-- Levantar exceção
+				RAISE vr_exc_erro;
+			END IF;
 
       COMMIT;
 

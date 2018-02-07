@@ -11,12 +11,8 @@
 	 */	 
 ?>
 <form name="frmSegmentoCdc" id="frmSegmentoCdc" class="formulario">
-  <input type="hidden" id="idcooperado_cdc" name="idcooperado_cdc" value="<?php echo $idcooperado_cdc ; ?>" />	
-	<label for="cdsubsegmento">Subsegmento:</label>
-	<input type="text" id="cdsubsegmento" name="cdsubsegmento" value=""/>
-	<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" onclick="controlaPesquisasSegmentos();"></a>		
-	<input type="text" id="dssubsegmento" name="dssubsegmento" value="" />
 	<fieldset style="padding: 5px; height: 350px;">
+		<input type="hidden" id="idcooperado_cdc" name="idcooperado_cdc" value="<?php echo $idcooperado_cdc; ?>" />	
 		<legend style="margin-top: 10px; padding: 2px 10px 2px 10px">Dados para o Site da Cooperativa</legend>
 		<div id="divRegistros" name="divRegistros" class="divRegistros">
 			<table id="tableSegmento" name="tableSegmento" style="table-layout: fixed;">
@@ -53,7 +49,7 @@
 
 <div id="divBotoes">	
 	<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif"  onClick="fechaRotina(divRotina); return false;" />
-	<input type="image" id="btAlterar" src="<? echo $UrlImagens; ?>botoes/incluir.gif" onClick="manterSubsegmento('I'); return false;" />
+	<input type="image" id="btAlterar" src="<? echo $UrlImagens; ?>botoes/incluir.gif" onClick="mostraFormInclusaoSeg('<? echo $idcooperado_cdc; ?>'); return false;" />
 	<input type="image" id="btExcluir" src="<? echo $UrlImagens; ?>botoes/excluir.gif" onClick="showConfirmacao('Deseja excluir subsegmento?'	,'Confirma&ccedil;&atilde;o - CDC','manterSubsegmento(\'E\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));','sim.gif','nao.gif'); return false;" />
 </div>
 

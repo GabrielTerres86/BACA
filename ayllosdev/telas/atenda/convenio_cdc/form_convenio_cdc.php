@@ -39,8 +39,8 @@
     <label for="dtcancon" class="clsCampos">Data Cancelamento:</label>
     <input name="dtcancon" id="dtcancon" type="text" value="<?php echo $dtcancon ; ?>" autocomplete="off" class="clsCampos" />
 		</br>
-		<label for="dsmotcan">Outro:</label>
-		<input type="text" id="dsmotcan" name="dsmotcan" value="<?php echo $dsmotcan; ?>" />
+		<label for="dsmotcan" class="clsCampos">Outro:</label>
+		<input type="text" class="clsCampos" id="dsmotcan" name="dsmotcan" value="<?php echo $dsmotcan; ?>" />
 		<label for="dtrencon" class="clsCampos">Data Renovação:</label>
     <input name="dtrencon" id="dtrencon" type="text" value="<?php echo $dtrencon ; ?>" autocomplete="off" class="clsCampos" />
 		</br>

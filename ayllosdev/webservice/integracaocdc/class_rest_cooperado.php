@@ -157,6 +157,7 @@ class RestCDC extends RestServerJson{
 			$xml  = "<Root>";
 			$xml .= " <Dados>";
 			$xml .= "	<cdcooper>".$oDados->cooperativaLojista."</cdcooper>";
+			$xml .= "	<cdcoploj>".$oDados->cooperativaLojista."</cdcoploj>";
 			$xml .= "   <dsusuari>".$this->getUsuario()."</dsusuari>";
 			$xml .= "   <dsdsenha>".$this->getSenha()."</dsdsenha>";			
 			$xml .= "   <cdcliente>1</cdcliente>";
