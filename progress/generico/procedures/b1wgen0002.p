@@ -4122,17 +4122,18 @@ PROCEDURE proc_qualif_operacao:
             NEXT.
 
 		aux_qtd_dias_atraso = 0.
-			   
-		FOR FIRST crapris FIELDS(qtdiaatr) 
+		
+		FOR LAST crapris FIELDS(qtdiaatr) 
             WHERE crapris.cdcooper = par_cdcooper 
 			  AND crapris.nrdconta = par_nrdconta
 			  AND crapris.cdorigem = 3
 			  AND crapris.nrctremp = crabepr.nrctremp
 			  AND crapris.inddocto = 1
-			  AND crapris.dtrefere = par_dtmvtoan
+			  AND crapris.dtrefere < par_dtmvtoan
               NO-LOCK: 
 				  ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
 		END.
+
 		
 		IF AVAIL crapris THEN
 		   aux_qtd_dias_atraso = aux_qtd_dias_atraso + 1.
@@ -4142,7 +4143,7 @@ PROCEDURE proc_qualif_operacao:
 
     END.  
 
-    /* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
+	/* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
     IF  aux_dias_atraso < 5 THEN
         ASSIGN par_idquapro = 2
                par_dsquapro = "Renovacao de credito".
