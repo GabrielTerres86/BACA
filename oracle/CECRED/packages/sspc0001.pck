@@ -39,7 +39,16 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
   --                         - Inclusão módulo e ação e rotina de log no exception otheres - Chamado 663304
   --                           pc_solicita_consulta_biro (Ana - Envolti)
   --
+  --             04/12/2017 - Colocado no final pc_retorna_conaut_esteira chamada para pc_atualiza_tab_controle 
+  --                          para atualizar tabela craprpf e craprsc (restricoes de crédito) (Alexandre-Mouts)
+
   ---------------------------------------------------------------------------------------------------------------
+
+-- Atualiza as tabelas de controle com as informacoes finais
+PROCEDURE pc_atualiza_tab_controle(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Numero da consulta do biro 
+                                   pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Critica encontrada
+                                   pr_dscritic OUT VARCHAR2);          --> Texto de erro/critica encontrada
+
 
 -- Rotina geral de insert, update, select e delete da tela CONAUT da opção cadastro de Biros
 PROCEDURE pc_tela_conaut_crapbir(pr_cddopcao IN VARCHAR2              --> Tipo de acao que sera executada (A - ALteracao / C - Consulta / E - Exclur / I - Inclur)
@@ -482,7 +491,8 @@ PROCEDURE pc_busca_intippes(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cód. da
 													 ,pr_nrdconta IN crapass.nrdconta%TYPE     --> Nr. da conta
 													 ,pr_nrctremp IN crapepr.nrctremp%TYPE     --> Nr. do contrato de empréstimo
 													 ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE     --> Nr. do CPF/CNPJ
-													 ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
+													 ,pr_dsclasse IN VARCHAR2                  --> Classe Ibratan
+                           ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
 													 ,pr_intippes OUT NUMBER                   --> 1-Titular; 2-Avalista; 3-Conjuge; 7-Repr. Legal/Procurador; 0-Erro.
 													 ,pr_inpessoa OUT NUMBER);                 --> 1-Física; 2- Jurídica
 
@@ -494,6 +504,17 @@ PROCEDURE pc_retorna_conaut_esteira(pr_cdcooper IN NUMBER        -- Código da Co
 																	 ,pr_cdcritic OUT NUMBER       -- Retornará um possível código de critica
 																	 ,pr_dscritic OUT VARCHAR2);   -- Retornará uma possível descrição da crítica
 
+  PROCEDURE pc_lista_erros_biro_proposta(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                                        ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta
+                                        ,pr_nrctrato  IN crapepr.nrctremp%TYPE --> Numero do contrato
+                                        ,pr_inprodut  IN crappcb.inprodut%TYPE --> Indicador de tipo de produto
+                                        --------> OUT <--------
+                                        ,pr_clob_xml OUT CLOB                  --> XML com informacoes do retorno
+                                        ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                        ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica
+
+  PROCEDURE pc_job_conaut_contigencia;
+                                        
 END SSPC0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
@@ -502,7 +523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --
   --  Programa: SSPC0001                        
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Julho/2014                     Ultima Atualizacao: - 19/05/2017
+  --  Data    : Julho/2014                     Ultima Atualizacao: - 18/12/2017
   --
   --  Dados referentes ao programa:
   --
@@ -520,11 +541,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --              19/05/2017 - Alteração da mensagem de retorno do cursor crawepr
   --                         - Inclusão módulo e ação e rotina de log no exception otheres - Chamado 663304
   --                           pc_solicita_consulta_biro (Ana - Envolti)
---
+  --
   --              26/06/2017 - Incluido o campo nrconbir nas pesquisas da crapcbd, melhoria de performance
   --                           (Tiago/Rodrigo #700127).
---
---
+  --
+  --              28/09/2017 - Utilização do atributo classe da consulta da Ibratan
+  --                           (Marcos-Supero).
+  --
+  --             04/12/2017 - Colocado no final pc_retorna_conaut_esteira chamada para pc_atualiza_tab_controle 
+  --                          para atualizar tabela craprpf e craprsc (restricoes de crédito) (Alexandre-Mouts)
+  --
+  --              18/12/2017 - Apresentar erros nos Biros Externos. (Jaison/James - M464)
+  --
+  --
+  --             20/12/2017 - Ajuste de desempenho na procedure pc_consulta_adimistrador onde adicionei a chave
+  --                          correta no cursor principal, conforme solicitado no chamado 808164. (Kelvin)            
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
@@ -833,6 +864,8 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
+      vr_des_erro      VARCHAR2(10000);
+      vr_des_log       VARCHAR2(10000);
 
       -- Variaveis de log
       vr_cdoperad      VARCHAR2(100);
@@ -891,34 +924,41 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
         -- Verifica o tipo de acao que sera executada
         CASE pr_cddopcao
           WHEN 'A' THEN -- Alteracao
-
+            vr_des_log := to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
+                          'Operador ' || vr_cdoperad || ' alterou contingencia do biro '||
+                          rw_crapcbr.dsbircon||' da data '||to_char(rw_crapcbr.dtinicon,'dd/mm/yyyy')|| 
+                          ' para a data de '||pr_dtinicon;
+                          
             -- gera o log de alteracao
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 1 -- Processo normal
-                                      ,pr_nmarqlog => 'CONAUT' 
-                                      ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
-                                         'Operador ' || vr_cdoperad || ' alterou contingencia do biro '||
-                                         rw_crapcbr.dsbircon||' da data '||to_char(rw_crapcbr.dtinicon,'dd/mm/yyyy')|| 
-                                         ' para a data de '||pr_dtinicon);
+                                      ,pr_nmarqlog     => 'CONAUT' 
+                                      ,pr_des_log      => vr_des_log);
+
+            -- Insere na inconsistencia
+            GENE0005.pc_gera_inconsistencia(pr_cdcooper => 3 -- CECRED
+                                           ,pr_iddgrupo => 4 -- Consulta Automatizada
+                                           ,pr_tpincons => 1 -- Aviso
+                                           ,pr_dsregist => 'Cooperativa: ' || pr_cdcooper
+                                           ,pr_dsincons => vr_des_log
+                                           ,pr_flg_enviar => 'S'
+                                           ,pr_des_erro => vr_des_erro
+                                           ,pr_dscritic => vr_dscritic);
 
             BEGIN
               -- Atualizacao de registro de contingencia de biros
-              UPDATE
-                crapcbr
-              SET
-                crapcbr.dtinicon = to_date(pr_dtinicon,'dd/mm/yyyy')
-              WHERE crapcbr.cdcooper = pr_cdcooper
-                AND crapcbr.cdbircon = pr_cdbircon;
-
+              UPDATE crapcbr SET
+                     crapcbr.dtinicon = to_date(pr_dtinicon,'dd/mm/yyyy')
+               WHERE crapcbr.cdcooper = pr_cdcooper
+                 AND crapcbr.cdbircon = pr_cdbircon;
             -- Verifica se houve problema na atualizacao do registro
             EXCEPTION
               WHEN OTHERS THEN
                 -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
                 CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
-              -- Descricao do erro na insercao de registros
-              vr_dscritic := 'Problema ao atualizar CRAPBIR: ' || sqlerrm;
-              RAISE vr_exc_saida;
-
+                -- Descricao do erro na insercao de registros
+                vr_dscritic := 'Problema ao atualizar CRAPBIR: ' || sqlerrm;
+                RAISE vr_exc_saida;
             END;
 
           WHEN 'C' THEN -- Consulta
@@ -938,15 +978,26 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
 
           WHEN 'E' THEN -- Exclusao
 
+            vr_des_log := to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
+                          'Operador ' || vr_cdoperad || ' excluiu contingencia do biro '||
+                          rw_crapcbr.dsbircon||' com data de '||to_char(rw_crapcbr.dtinicon,'dd/mm/yyyy');
+                          
             -- gera o log de exclusao
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 1 -- Processo normal
-                                      ,pr_nmarqlog => 'CONAUT' 
-                                      ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
-                                         'Operador ' || vr_cdoperad || ' excluiu contingencia do biro '||
-                                         rw_crapcbr.dsbircon||' com data de '||to_char(rw_crapcbr.dtinicon,'dd/mm/yyyy'));
+                                      ,pr_nmarqlog     => 'CONAUT' 
+                                      ,pr_des_log      => vr_des_log);
 
-
+            -- Insere na inconsistencia
+            GENE0005.pc_gera_inconsistencia(pr_cdcooper => 3 -- CECRED
+                                           ,pr_iddgrupo => 4 -- Consulta Automatizada
+                                           ,pr_tpincons => 1 -- Aviso
+                                           ,pr_dsregist => 'Cooperativa: ' || pr_cdcooper
+                                           ,pr_dsincons => vr_des_log
+                                           ,pr_flg_enviar => 'S'
+                                           ,pr_des_erro => vr_des_erro
+                                           ,pr_dscritic => vr_dscritic);
+                                                                                    
             -- Efetua a exclusao do cadastro de contingencia de biros
             BEGIN
               DELETE crapcbr 
@@ -975,13 +1026,25 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
             FETCH cr_crapbir INTO rw_crapbir;
             CLOSE cr_crapbir;
             
+            vr_des_log := to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
+                          'Operador ' || vr_cdoperad || ' incluiu contingencia do biro '||
+                          rw_crapbir.dsbircon||' com data de '||pr_dtinicon;
+            
             -- gera o log de inclusao
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 1 -- Processo normal
-                                      ,pr_nmarqlog => 'CONAUT' 
-                                      ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
-                                         'Operador ' || vr_cdoperad || ' incluiu contingencia do biro '||
-                                         rw_crapbir.dsbircon||' com data de '||pr_dtinicon);
+                                      ,pr_nmarqlog     => 'CONAUT' 
+                                      ,pr_des_log      => vr_des_log);
+                                         
+            -- Insere na inconsistencia
+            GENE0005.pc_gera_inconsistencia(pr_cdcooper => 3 -- CECRED
+                                           ,pr_iddgrupo => 4 -- Consulta Automatizada
+                                           ,pr_tpincons => 1 -- Aviso
+                                           ,pr_dsregist => 'Cooperativa: ' || pr_cdcooper
+                                           ,pr_dsincons => vr_des_log
+                                           ,pr_flg_enviar => 'S'
+                                           ,pr_des_erro => vr_des_erro
+                                           ,pr_dscritic => vr_dscritic);                             
 
             -- Efetua a inclusao no cadastro de biros
             BEGIN
@@ -3390,6 +3453,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
     vr_flgrechq BOOLEAN;               --> Flag para indicar se eh consulta Recheque    
     vr_nrseqdet crapcbd.nrseqdet%TYPE; --> Numero da sequencia de consulta
     vr_database VARCHAR2(06);          --> Data base para as consultas SCR, no formato AAAAMM
+    vr_dsclasse VARCHAR2(100);         --> Classe da consulta
     vr_inlocnac craprsc.inlocnac%TYPE; --> Indicador de SPC local ou nacional
     vr_insitchq PLS_INTEGER;           --> Tipo de chque (1-Estadual, 2-Nacional, 3-Serasa)
     vr_inpefref crapprf.inpefref%TYPE; --> Indicador de 1-Pefin ou 2-Refin
@@ -3445,6 +3509,9 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
       
       -- Limpa as variaveis gerais
       vr_database := NULL;
+      vr_dsclasse := NULL;
+      vr_intippes := NULL;
+      vr_inpessoa := NULL;
       
 ------------- BUSCA OS DADOS DO CRAPCBD (titular da consulta) -------------
       BEGIN
@@ -3452,6 +3519,10 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/TIPO',         'S',vr_nmtagger, vr_dscritic);
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/DOCUMENTO',    'S',vr_crapcbd.nrcpfcgc, vr_dscritic);
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/DATA_BASE',    'S',vr_database, vr_dscritic);
+        -- Somente para Motor
+        IF pr_tpconaut = 'M' THEN 
+          pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/CLASSE',       'S',vr_dsclasse, vr_dscritic);        
+        END IF;  
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/CADASTRO/IDENTIFICACAO/RAZAO_SOCIAL', 'S',vr_crapcbd.nmtitcon, vr_dscritic);
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/CADASTRO/SITUACAO-CADASTRAL/DT_INICIO', 'D',vr_crapcbd.dtatuend, vr_dscritic);
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/CADASTRO/LOCALIZACAO/ENDERECO', 'S',vr_crapcbd.dsendere, vr_dscritic);
@@ -3521,19 +3592,20 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
 				-- Fechar cursor 
         CLOSE cr_conscr;
 				
-				-- Buscaremos o tipo da Pessoa em relação a Proposta (Titular, Conjuge, Avalista, etc)
-				pc_busca_intippes(pr_cdcooper => pr_cdcooper
-												 ,pr_nrdconta => pr_nrdconta
-												 ,pr_nrctremp => pr_nrdocmto
-												 ,pr_nrcpfcgc => vr_crapcbd.nrcpfcgc
-												 ,pr_intippes => vr_intippes 
-												 ,pr_nrctapes => vr_nrdconta
-												 ,pr_inpessoa => vr_inpessoa); 
+        -- Buscaremos o tipo da Pessoa em relação a Proposta (Titular, Conjuge, Avalista, etc)
+        pc_busca_intippes(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrctremp => pr_nrdocmto
+                         ,pr_nrcpfcgc => vr_crapcbd.nrcpfcgc
+                         ,pr_dsclasse => vr_dsclasse
+                         ,pr_intippes => vr_intippes 
+                         ,pr_nrctapes => vr_nrdconta
+                         ,pr_inpessoa => vr_inpessoa); 
 
 				-- Caso não tenhamos conseguido encontrar o tipo 
 				IF vr_intippes IS NULL or vr_inpessoa IS NULL THEN
 					-- Gerar erro
-					vr_dscritic := 'Erro ao verificar tipo de pessoa CPF: '||vr_crapcbd.nrcpfcgc;
+					vr_dscritic := 'Erro ao verificar tipo de pessoa CPF/CNPJ: '||vr_crapcbd.nrcpfcgc;
 					RAISE vr_exc_saida;
 				END IF;
 
@@ -3626,6 +3698,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
          WHERE nrconbir = pr_nrconbir
            AND nrcpfcgc = vr_crapcbd.nrcpfcgc
            AND cdbircon = rw_crapbir.cdbircon
+           AND intippes = DECODE(pr_tpconaut,'M',vr_intippes,intippes)
         RETURN nrseqdet, inpessoa 
           INTO vr_nrseqdet, vr_inpessoa;
       EXCEPTION
@@ -5674,8 +5747,10 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     -- Variaveis de erro
     vr_cdcritic   PLS_INTEGER; --> codigo retorno de erro
     vr_dscritic   VARCHAR2(4000); --> descricao do erro
+    vr_dscritic_aux VARCHAR2(4000); --> descricao do erro
     vr_dscritic_padrao VARCHAR2(400); --> descricao do erro padrao para nao exibir erros tecnicos para o usuario
     vr_exc_saida  EXCEPTION; --> Excecao prevista
+    vr_des_erro   VARCHAR2(10);
 
     -- Variaveis gerais
     vr_xmlenv   XMLtype;               --> XML de envio
@@ -5851,9 +5926,6 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       vr_vlprodut := 0;
       vr_nrconbir_dct := 0;
     END IF;
-    
-    -- Busca a proxima numeracao para consulta do biro
-    vr_nrconbir := fn_sequence(pr_nmtabela => 'CRAPCBC', pr_nmdcampo => 'NRCONBIR',pr_dsdchave => '0');
     
     -- Busca os dados do operador
     OPEN cr_crapope;
@@ -6079,6 +6151,9 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       vr_cdbircon_tit := vr_cdbircon_pj;
       vr_cdmodbir_tit := vr_cdmodbir_pj;
     END IF; 
+
+    -- Busca a proxima numeracao para consulta do biro
+    vr_nrconbir := fn_sequence(pr_nmtabela => 'CRAPCBC', pr_nmdcampo => 'NRCONBIR',pr_dsdchave => '0');
 
     -- Insere a capa da consulta de biro
     BEGIN
@@ -6845,7 +6920,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       IF pr_inprodut = 1 THEN
         BEGIN
           UPDATE crawepr
-             SET nrconbir = nvl(vr_nrconbir_dct, nrconbir)
+             SET nrconbir = nvl(vr_nrconbir, nrconbir)
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND nrctremp = pr_nrdocmto;
@@ -6856,7 +6931,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       ELSIF pr_inprodut = 3 THEN -- Limite de Credito
         BEGIN
           UPDATE craplim
-             SET nrconbir = nvl(vr_nrconbir_dct, nrconbir)
+             SET nrconbir = nvl(vr_nrconbir, nrconbir)
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND nrctrlim = pr_nrdocmto
@@ -6867,9 +6942,25 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
         END;        
       END IF;
       
+      IF vr_nrconbir > 0 THEN
+        -- Insere na inconsistencia
+        GENE0005.pc_gera_inconsistencia(pr_cdcooper => 3 -- CECRED
+                                       ,pr_iddgrupo => 4 -- Consulta Automatizada
+                                       ,pr_tpincons => 2 -- Erro
+                                       ,pr_dsregist => 'Cooperativa: ' || pr_cdcooper
+                                                    || ' Conta: '      || pr_nrdconta
+                                                    || ' Documento: '  || pr_nrdocmto
+                                                    || ' Protocolo do biro: ' || vr_nrprotoc
+                                                    || ' Consulta no biro: '  || vr_nrconbir
+                                       ,pr_dsincons => vr_dscritic
+                                       ,pr_flg_enviar => 'S'
+                                       ,pr_des_erro => vr_des_erro
+                                       ,pr_dscritic => vr_dscritic_aux);
+      END IF;                                       
+
       -- Devolvemos código e critica encontradas das variaveis locais
       pr_cdcritic := NVL(vr_cdcritic,0);
-      pr_dscritic := nvl(vr_dscritic_padrao, vr_dscritic);
+      pr_dscritic := nvl(vr_dscritic_padrao, vr_dscritic);                                      
 
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
@@ -6877,6 +6968,22 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
+
+      IF vr_nrconbir > 0 THEN
+        -- Insere na inconsistencia
+        GENE0005.pc_gera_inconsistencia(pr_cdcooper => 3 -- CECRED
+                                       ,pr_iddgrupo => 4 -- Consulta Automatizada
+                                       ,pr_tpincons => 2 -- Erro
+                                       ,pr_dsregist => 'Cooperativa: ' || pr_cdcooper
+                                                    || ' Conta: '      || pr_nrdconta
+                                                    || ' Documento: '  || pr_nrdocmto
+                                                    || ' Protocolo do biro: ' || vr_nrprotoc
+                                                    || ' Consulta no biro: '  || vr_nrconbir
+                                       ,pr_dsincons => pr_dscritic
+                                       ,pr_flg_enviar => 'S'
+                                       ,pr_des_erro => vr_des_erro
+                                       ,pr_dscritic => vr_dscritic);
+      END IF;                                       
 
       --Tratamento na chamada da pc_gera_log_batch CH=660433 / CH=660325
       -- Trata erro na requisicao
@@ -6892,7 +6999,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       IF pr_inprodut = 1 THEN
         BEGIN
           UPDATE crawepr
-             SET nrconbir = nvl(vr_nrconbir_dct, nrconbir)
+             SET nrconbir = nvl(vr_nrconbir, nrconbir)
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND nrctremp = pr_nrdocmto;
@@ -6903,7 +7010,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       ELSIF pr_inprodut = 3 THEN -- Limite de Credito
         BEGIN
           UPDATE craplim
-             SET nrconbir = nvl(vr_nrconbir_dct, nrconbir)
+             SET nrconbir = nvl(vr_nrconbir, nrconbir)
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND nrctrlim = pr_nrdocmto
@@ -7011,7 +7118,8 @@ PROCEDURE pc_verifica_mud_faixa(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> Codig
         FROM crapcbd
        WHERE nrconbir = pr_nrconbir
          AND cdcooper = pr_cdcooper
-         AND nrdconta = pr_nrdconta;
+         AND nrdconta = pr_nrdconta
+         AND inreterr = 0; -- Nao ocorreu erro
     rw_crapcbd cr_crapcbd%ROWTYPE;
     
     -- Cursor sobre o cadastro de modalidades do biro
@@ -7567,7 +7675,8 @@ PROCEDURE pc_busca_cns_biro(pr_cdcooper       IN  crapass.cdcooper%TYPE, --> Cod
          AND crapmbr.cdmodbir = crapcbd.cdmodbir
          AND crapmbr.nrordimp <> 0 -- Descosiderar Bacen
          AND (crapcbd.nrdconta = decode(pr_nrdconta_busca,0,-1,pr_nrdconta_busca)
-          OR  crapcbd.nrcpfcgc = pr_nrcpfcgc_busca);
+          OR  crapcbd.nrcpfcgc = pr_nrcpfcgc_busca)
+         AND crapcbd.inreterr = 0; -- Nao ocorreu erro
 
     -- Cursor sobre os detalhes das consultas de biros para os limites de credito
     CURSOR cr_crapcbd_lim IS
@@ -7585,7 +7694,8 @@ PROCEDURE pc_busca_cns_biro(pr_cdcooper       IN  crapass.cdcooper%TYPE, --> Cod
          AND crapmbr.cdmodbir = crapcbd.cdmodbir
          AND crapmbr.nrordimp <> 0 -- Descosiderar Bacen
          AND (crapcbd.nrdconta = decode(pr_nrdconta_busca,0,-1,pr_nrdconta_busca)
-          OR  crapcbd.nrcpfcgc = pr_nrcpfcgc_busca);
+          OR  crapcbd.nrcpfcgc = pr_nrcpfcgc_busca)
+         AND crapcbd.inreterr = 0; -- Nao ocorreu erro
 
   BEGIN
     -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
@@ -8563,7 +8673,8 @@ PROCEDURE pc_consulta_bacen_xml(pr_cdcooper       IN  crapass.cdcooper%TYPE --> 
          AND crapmbr.cdmodbir = crapcbd.cdmodbir
          AND crapmbr.nrordimp = 0 -- Buscar somente o que for Bacen
          AND (crapcbd.nrdconta = pr_nrdconta_busca
-          OR  crapcbd.nrcpfcgc = pr_nrcpfcgc_busca);
+          OR  crapcbd.nrcpfcgc = pr_nrcpfcgc_busca)
+         AND crapcbd.inreterr = 0; -- Nao ocorreu erro
     
     vr_cdcritic   PLS_INTEGER; --> codigo retorno de erro
     vr_dscritic   VARCHAR2(4000); --> descricao do erro
@@ -8872,7 +8983,8 @@ PROCEDURE pc_consulta_administrador(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Num
              crapcbd.dtatuadm,
              crapcbd.inpessoa
         FROM crapcbd
-       WHERE crapcbd.nrcbrsoc = pr_nrconbir
+       WHERE crapcbd.nrconbir = pr_nrconbir
+         AND crapcbd.nrcbrsoc = pr_nrconbir
          AND crapcbd.nrsdtsoc = pr_nrseqdet
          AND crapcbd.intippes = 5; -- Somente administrador
     
@@ -9411,6 +9523,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
          AND crawepr.nrctremp = pr_nrctremp
          AND crapcbd.nrconbir = crawepr.nrconbir
          AND crapcbd.nrdconta = crawepr.nrdconta
+         AND crapcbd.inreterr = 0 -- Nao ocorreu erro
          AND craprpf.nrconbir = crapcbd.nrconbir
          AND craprpf.nrseqdet = crapcbd.nrseqdet;
     rw_crapcbd cr_crapcbd%ROWTYPE;
@@ -9527,6 +9640,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
          AND craplim.tpctrlim = 1 -- limite de credito
          AND crapcbd.nrconbir = craplim.nrconbir
          AND crapcbd.nrdconta = craplim.nrdconta
+         AND crapcbd.inreterr = 0 -- Nao ocorreu erro
          AND craprpf.nrconbir = crapcbd.nrconbir
          AND craprpf.nrseqdet = crapcbd.nrseqdet;
     rw_crapcbd cr_crapcbd%ROWTYPE;
@@ -9800,6 +9914,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 														 ,pr_nrdconta IN crapass.nrdconta%TYPE     --> Nr. da conta
 														 ,pr_nrctremp IN crapepr.nrctremp%TYPE     --> Nr. do contrato de empréstimo
 														 ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE     --> Nr. do CPF/CNPJ
+														 ,pr_dsclasse IN VARCHAR2                  --> Classe Ibratan
 														 ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
 														 ,pr_intippes OUT NUMBER                   --> 1-Titular; 2-Avalista; 3-Conjuge; 7-Repr. Legal/Procurador; 0-Erro.
 														 ,pr_inpessoa OUT NUMBER) IS               --> 1-Física; 2- Jurídica
@@ -9837,6 +9952,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 			vr_inpessoa_av1 crapass.inpessoa%TYPE;
 			vr_nrcpfcgc_av2 crapass.nrcpfcgc%TYPE;
 			vr_inpessoa_av2 crapass.inpessoa%TYPE;
+			vr_stsnrcal BOOLEAN; --> validação tipo de pessoa
 			
 			-- Cursor sobre os dados de emprestimo
 			CURSOR cr_crawepr IS
@@ -9923,7 +10039,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 				CLOSE cr_crapcje;
 				
 				-- Caso o CPF do conjuge for o da consulta
-				IF vr_nrcpfcgc_cje = pr_nrcpfcgc THEN
+				IF vr_nrcpfcgc_cje = pr_nrcpfcgc AND NVL(pr_dsclasse,'C') = 'C' THEN
 					 -- Conjuge
 					 pr_nrctapes := vr_nrdconta_cje;
 				   pr_intippes := 3;
@@ -9980,32 +10096,48 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 			END LOOP;			
 			
 			-- Caso for um dos avalistas da proposta
-			IF vr_nrcpfcgc_av1 = pr_nrcpfcgc THEN 
+			IF vr_nrcpfcgc_av1 = pr_nrcpfcgc AND NVL(pr_dsclasse,'A') = 'A' THEN 
 				-- Avalista
 				pr_intippes := 2;
         pr_nrctapes := vr_nrdconta_av1;
 				pr_inpessoa := vr_inpessoa_av1;
 				RETURN;
-			ELSIF vr_nrcpfcgc_av2 = pr_nrcpfcgc THEN
+			ELSIF vr_nrcpfcgc_av2 = pr_nrcpfcgc AND NVL(pr_dsclasse,'A') = 'A' THEN
 				-- Avalista				
 				pr_intippes := 2;
         pr_nrctapes := vr_nrdconta_av2;
 				pr_inpessoa := vr_inpessoa_av2;
 				RETURN;				
 			END IF;
-			
-			-- Qualquer outro caso retornaremos o tipo 7 - Representante Legal/Procurador e PF
-			pr_intippes := 7;
+
+      -- Sem conta
       pr_nrctapes := 0;
-      pr_inpessoa := 1;
+			
+      -- Buscar tipo de pessoa
+      gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => pr_nrcpfcgc
+                                 ,pr_stsnrcal => vr_stsnrcal
+                                 ,pr_inpessoa => pr_inpessoa);
+      
+	  IF NVL(pr_dsclasse,' ') = 'S' THEN
+        pr_intippes := 4;          
+      ELSIF NVL(pr_dsclasse,' ') = 'T' THEN
+        pr_intippes := 6;          
+      ELSE
+        -- Qualquer outro caso retornaremos o tipo 7 - Representante Legal/Procurador e PF
+		pr_intippes := 7;
+      END IF;  
 			
 		EXCEPTION
 			WHEN vr_exc_erro THEN
 				-- Retorna Tipo pessoa com 0 -> Erro
         pr_intippes := 0;
+        pr_nrctapes := 0;
+        pr_inpessoa := 0;
 			WHEN OTHERS THEN
 				-- Retorna Tipo pessoa com 0 -> Erro
         pr_intippes := 0;
+        pr_nrctapes := 0;
+        pr_inpessoa := 0;
 		END;
 	END pc_busca_intippes;
 
@@ -10128,7 +10260,9 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
 			vr_exc_erro EXCEPTION;
 		  vr_cdcritic crapcri.cdcritic%TYPE;
 			vr_dscritic crapcri.dscritic%TYPE;
-		
+	    vr_dscritic_padrao VARCHAR2(400); --> descricao do erro padrao para nao exibir erros tecnicos para o usuario
+      vr_nrprotoc crapcbd.nrprotoc%TYPE; --> Numero do protocolo do envio da requisicao
+
 		  -- Variáveis auxiliares
 			vr_nrconbir crapcbd.nrconbir%TYPE; --> Numero da consulta no biro
 	    vr_xmlret   XMLtype;               --> XML de retorno
@@ -10136,6 +10270,8 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
 	    vr_inconscr PLS_INTEGER := 0;      --> Indicador de consulta de SCR do titular
 		
 		  rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      -- Tratamento de erros
+      vr_exc_saida     EXCEPTION;
 			
 			-- Cursor sobre os dados de emprestimo
 			CURSOR cr_crawepr IS
@@ -10377,7 +10513,22 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
 				-- Forca saida da rotina
 				RAISE vr_exc_erro;
 			END IF;  			
-			
+
+
+      -- Atualiza as tabelas finais de controle
+      pc_atualiza_tab_controle(pr_nrconbir => vr_nrconbir,
+                               pr_cdcritic => vr_cdcritic,
+                               pr_dscritic => vr_dscritic);
+      -- Se ocorreu erro na atualizacao
+      IF nvl(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+
+        -- Joga um texto padrao de retorno para a rotina
+        vr_dscritic_padrao := 'Houve erro no acesso ao biro (SPC/Serasa/SCR), consulta nao realizada!';
+
+        -- Forca saida da rotina
+        RAISE vr_exc_erro;
+      END IF;
+     
 		EXCEPTION
 			WHEN vr_exc_erro THEN
 				-- Se possuir código da crítica e descrição for nula
@@ -10420,5 +10571,193 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
 		END;
 	END pc_retorna_conaut_esteira;
 
+  PROCEDURE pc_lista_erros_biro_proposta(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                                        ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta
+                                        ,pr_nrctrato  IN crapepr.nrctremp%TYPE --> Numero do contrato
+                                        ,pr_inprodut  IN crappcb.inprodut%TYPE --> Indicador de tipo de produto
+                                        --------> OUT <--------
+                                        ,pr_clob_xml OUT CLOB                  --> XML com informacoes do retorno
+                                        ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                        ,pr_dscritic OUT VARCHAR2) IS          --> Descricao da critica
+
+    /* .............................................................................
+
+        Programa: pc_lista_erros_biro_proposta
+        Sistema : CECRED
+        Sigla   : SSPC
+        Autor   : Jaison Fernando
+        Data    : Dezembro/2017.                    Ultima atualizacao: 
+
+        Dados referentes ao programa:
+
+        Frequencia: Sempre que for chamado.
+
+        Objetivo  : Rotina responsavel em buscar os erros do biro e retornar ao Progress.
+
+        Observacao: -----
+
+        Alteracoes: 
+
+    ..............................................................................*/
+
+    -------------- CURSORES --------------
+    -- Cursor de emprestimo
+    CURSOR cr_crawepr IS
+      SELECT DISTINCT crapbir.dsbircon
+        FROM crawepr
+        JOIN crapcbd
+          ON crapcbd.nrconbir = crawepr.nrconbir
+   LEFT JOIN crapbir
+          ON crapbir.cdbircon = crapcbd.cdbircon
+       WHERE crawepr.cdcooper = pr_cdcooper
+         AND crawepr.nrdconta = pr_nrdconta
+         AND crawepr.nrctremp = pr_nrctrato
+         AND crapcbd.inreterr = 1; -- Erro
+
+    -- Cursor de limite
+    CURSOR cr_craplim IS
+      SELECT DISTINCT crapbir.dsbircon
+        FROM craplim
+        JOIN crapcbd
+          ON crapcbd.nrconbir = craplim.nrconbir
+   LEFT JOIN crapbir
+          ON crapbir.cdbircon = crapcbd.cdbircon
+       WHERE craplim.cdcooper = pr_cdcooper
+         AND craplim.nrdconta = pr_nrdconta
+         AND craplim.nrctrlim = pr_nrctrato
+         AND craplim.tpctrlim = 1  -- Limite de credito
+         AND crapcbd.inreterr = 1; -- Erro
+
+    -------------- VARIAVEIS --------------
+    -- Variaveis locais
+    vr_xml_temp VARCHAR2(32767);
+    vr_dsdoerro VARCHAR2(70) := 'Houve erro no acesso ao biro externo, consulta nao realizada.';
+
+    --------------- SUBROTINAS INTERNAS --------------
+    -- Subrotina para escrever texto na variavel CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      GENE0002.pc_escreve_xml(pr_clob_xml, vr_xml_temp, pr_des_dados, pr_fecha_xml);
+    END;
+
+  BEGIN
+
+    -- Criar documento XML
+    dbms_lob.createtemporary(pr_clob_xml, TRUE);
+    dbms_lob.open(pr_clob_xml, dbms_lob.lob_readwrite);
+
+    -- Insere o cabeçalho do XML
+    pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><root><erros>');
+
+    -- Se for emprestimo
+    IF pr_inprodut = 1 THEN
+
+      FOR rw_dados IN cr_crawepr LOOP
+        pc_escreve_xml('<erro>' || rw_dados.dsbircon || ' - ' || vr_dsdoerro || '</erro>');
+      END LOOP;
+
+    -- Se for limite de credito
+    ELSIF pr_inprodut = 3 THEN
+
+      FOR rw_dados IN cr_craplim LOOP
+        pc_escreve_xml('<erro>' || rw_dados.dsbircon || ' - ' || vr_dsdoerro || '</erro>');
+      END LOOP;
+
+    END IF;
+
+    -- Encerrar a tag raiz
+    pc_escreve_xml('</erros></root>',TRUE);
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro ao buscar lista de erros do biro na proposta: ' || SQLERRM;
+
+  END pc_lista_erros_biro_proposta;
+  
+  PROCEDURE pc_job_conaut_contigencia IS
+    CURSOR cr_crapcbr IS
+        SELECT crapcop.nmrescop
+              ,crapbir.dsbircon
+          from crapcbr
+          join crapcop
+            on crapcop.cdcooper = crapcbr.cdcooper
+           and crapcop.flgativo = 1
+          join crapbir
+            on crapbir.cdbircon = crapcbr.cdbircon
+      order by crapcop.cdcooper,
+               crapbir.cdbircon;
+
+    vr_cdprogra   VARCHAR2(1000) := 'JBCONAUT_CONTIGENCIA';
+    vr_flgerlog   BOOLEAN        := FALSE;
+    vr_dsregist   VARCHAR2(4000) := NULL;
+    vr_des_erro   VARCHAR2(1000);
+    
+    -- Variaveis de Erros
+    vr_cdcritic   crapcri.cdcritic%TYPE;
+    vr_dscritic   crapcri.dscritic%TYPE;
+    vr_exc_erro   EXCEPTION;
+  BEGIN 
+    --> Controlar geração de log de execução dos jobs
+    BTCH0001.pc_log_exec_job(pr_cdcooper  => 3
+                            ,pr_cdprogra  => vr_cdprogra
+                            ,pr_nomdojob  => vr_cdprogra
+                            ,pr_dstiplog  => 'I'
+                            ,pr_dscritic  => NULL
+                            ,pr_flgerlog  => vr_flgerlog);
+             
+    -- Percorrer todos as modalidades que estao em contigencia
+    FOR rw_crapcbr IN cr_crapcbr LOOP
+      vr_dsregist := vr_dsregist || '<br />' || rw_crapcbr.nmrescop||': '||rw_crapcbr.dsbircon;
+    END LOOP;
+
+    IF vr_dsregist IS NOT NULL THEN
+      -- Insere na inconsistencia
+      GENE0005.pc_gera_inconsistencia(pr_cdcooper => 3 -- CECRED
+                                     ,pr_iddgrupo => 4 -- Consulta Automatizada
+                                     ,pr_tpincons => 1 -- Aviso
+                                     ,pr_dsregist => vr_dsregist
+                                     ,pr_dsincons => 'Contigencia Habilitada'
+                                     ,pr_flg_enviar => 'S'
+                                     ,pr_des_erro => vr_des_erro
+                                     ,pr_dscritic => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;                    
+    END IF;                                   
+  
+    --> Controlar geração de log de execução dos jobs
+    BTCH0001.pc_log_exec_job(pr_cdcooper  => 3
+                            ,pr_cdprogra  => vr_cdprogra
+                            ,pr_nomdojob  => vr_cdprogra
+                            ,pr_dstiplog  => 'F'
+                            ,pr_dscritic  => NULL
+                            ,pr_flgerlog  => vr_flgerlog);
+                            
+    COMMIT;
+     
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      --> Controlar geração de log de execução dos jobs
+      BTCH0001.pc_log_exec_job(pr_cdcooper  => 3
+                              ,pr_cdprogra  => vr_cdprogra
+                              ,pr_nomdojob  => vr_cdprogra
+                              ,pr_dstiplog  => 'E'
+                              ,pr_dscritic  => vr_dscritic
+                              ,pr_flgerlog  => vr_flgerlog);
+      ROLLBACK;
+    WHEN OTHERS THEN
+      --> Controlar geração de log de execução dos jobs
+      BTCH0001.pc_log_exec_job(pr_cdcooper  => 3
+                              ,pr_cdprogra  => vr_cdprogra
+                              ,pr_nomdojob  => vr_cdprogra
+                              ,pr_dstiplog  => 'E'
+                              ,pr_dscritic  => SQLERRM
+                              ,pr_flgerlog  => vr_flgerlog);
+                                  
+      ROLLBACK;
+  END pc_job_conaut_contigencia;
+  
 END SSPC0001;
 /
