@@ -77,6 +77,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                         ,pr_vlminsgr     IN crapage.vlminsgr%TYPE --> Contem o valor minimo para efetuar a sangria de caixa
                         ,pr_vlmaxsgr     IN crapage.vlmaxsgr%TYPE --> Contem o valor maximo para efetuar a sangria de caixa
                         ,pr_flmajora     IN crapage.flmajora%TYPE --> Contem o identificador de Majoracao habilitada
+                        ,pr_vllimpag      IN crapage.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
                         ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
                         ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
                         ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
@@ -153,6 +154,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
   -- Alteracoes: 08/08/2017 - Inclusao de flag de majoracao, melhoria 438
   --                          Heitor (Mouts)
   --
+  --             03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
   ---------------------------------------------------------------------------
   
   -- Definicao do tipo de registro
@@ -233,7 +235,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
 				 ,indsptaa VARCHAR2(1)
          ,nrlatitu crapage.nrlatitu%TYPE
          ,nrlongit crapage.nrlongit%TYPE
-         ,flmajora crapage.flmajora%TYPE);
+         ,flmajora crapage.flmajora%TYPE
+         ,vllimpag crapage.vllimpag%TYPE);
 
   -- Definicao do tipo de tabela registro
   TYPE typ_tab_crapage IS TABLE OF typ_reg_crapage INDEX BY PLS_INTEGER;
@@ -352,6 +355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
               ,crapage.nrlatitu
               ,crapage.nrlongit
               ,crapage.flmajora
+              ,crapage.vllimpag
           FROM crapage
          WHERE crapage.cdcooper = pr_cdcooper
            AND crapage.cdagenci = pr_cdagenci;
@@ -607,6 +611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         pr_tab_crapage(pr_cdagenci).nrlatitu := rw_crapage.nrlatitu;
         pr_tab_crapage(pr_cdagenci).nrlongit := rw_crapage.nrlongit;
         pr_tab_crapage(pr_cdagenci).flmajora := rw_crapage.flmajora;
+        pr_tab_crapage(pr_cdagenci).vllimpag := rw_crapage.vllimpag;
 
       END IF;
 
@@ -1270,6 +1275,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_tag_nova => 'flmajora'
                               ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).flmajora
                               ,pr_des_erro => vr_dscritic);
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'vllimpag'
+                              ,pr_tag_cont => TO_CHAR(vr_tab_crapage(pr_cdagenci).vllimpag,'FM999G999G999G990D00')
+                              ,pr_des_erro => vr_dscritic);
       END IF;
 
     EXCEPTION
@@ -1441,6 +1452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                         ,pr_vlminsgr     IN crapage.vlminsgr%TYPE --> Contem o valor minimo para efetuar a sangria de caixa
                         ,pr_vlmaxsgr     IN crapage.vlmaxsgr%TYPE --> Contem o valor maximo para efetuar a sangria de caixa
                         ,pr_flmajora     IN crapage.flmajora%TYPE --> Contem o identificador de Majoracao habilitada
+                        ,pr_vllimpag      IN crapage.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
                         ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
                         ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
                         ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
@@ -2666,6 +2678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                 ,crapage.vlminsgr = pr_vlminsgr
                 ,crapage.vlmaxsgr = pr_vlmaxsgr
                 ,crapage.flmajora = pr_flmajora
+                ,crapage.vllimpag = pr_vllimpag
            WHERE crapage.cdcooper = vr_cdcooper
              AND crapage.cdagenci = pr_cdagenci;
 

@@ -13,6 +13,10 @@ Alteracoes.....:
                              é casesensitive e bugava a chamada dos BLs (Tiago/Elton SD563166).
 				28/03/2017 - Função para que se for clicado mais que uma vez no confirmar, vamos 
 							 desabilitar o botao para nao permitir a requisição dupla (Lucas Ranghetti #634500)
+                03/01/2018 - M307 - Solicitaçao de senha do coordenador quando 
+                             valor do pagamento for superior ao limite cadastrado 
+                             na CADCOP / CADPAC
+                            (Diogo - MoutS)
 
 -->
 <html>
@@ -224,6 +228,14 @@ Alteracoes.....:
                                     <td  align="right" style="display:none;">
                                         <input type="radio" id="inpesgps0" name="inpesgps" checked value="0">
                                     </td>
+                                </tr>
+                                <tr>
+                                    <td width="39%" align="right" class="linhaform">Código:</td>
+                                    <td width="61%"><input class="input" type="text" id="v_cod" name="v_cod" size="12" maxlength="10"></td>
+                                </tr>
+                                <tr>
+                                    <td width="39%" align="right" class="linhaform">Senha:</td>
+                                    <td width="61%"><input class="input" type="password" id="v_senha" name="v_senha" size="12" maxlength="10"></td>
                                 </tr>
                                 <tr>
                                     <td width="39%" align="right" class="linhaform"></td>

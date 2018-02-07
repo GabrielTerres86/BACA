@@ -7,6 +7,12 @@
                             a escrita será PA (Guilherme Gielow)
 
               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).    
+                            
+              03/01/2018 - M307 - Solicitaçao de senha do coordenador quando 
+                             valor do pagamento for superior ao limite cadastrado 
+                             na CADCOP / CADPAC
+                            (Diogo - MoutS)
+   
 -->
 
 <html>
@@ -93,6 +99,14 @@
             <input type="submit" value="Manual" name="Manual" class="button">
           </td>
         </tr>
+          <tr>
+        <td align="right">Código:</td>
+        <td><input class="input" type="text" id="v_cod" name="v_cod" size="12" maxlength="10"></td>
+    </tr>
+    <tr>
+        <td align="right">Senha:</td>
+        <td><input class="input" type="password" id="v_senha" name="v_senha" size="12" maxlength="10"></td>
+    </tr>
           <tr>
           <td align="right" class="linhaform"></td>
           <td align="left" class="linhaform">

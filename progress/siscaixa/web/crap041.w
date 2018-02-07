@@ -20,6 +20,11 @@
                 11/06/2015 - Inclusão da validação de Boletim Fechado 
                             (Lunelli - SD. 295367)
                              
+                03/01/2018 - M307 - Solicitaçao de senha do coordenador quando 
+                             valor do pagamento for superior ao limite cadastrado 
+                             na CADCOP / CADPAC
+                            (Diogo - MoutS)
+                             
 ..............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -47,7 +52,9 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_vllanmto AS CHARACTER FORMAT "X(256)":U
        FIELD v_vlrmulta AS CHARACTER FORMAT "X(256)":U
        FIELD v_vlrjuros AS CHARACTER FORMAT "X(256)":U
-       FIELD v_vlrtotal AS CHARACTER FORMAT "X(256)":U.
+       FIELD v_vlrtotal AS CHARACTER FORMAT "X(256)":U
+       FIELD v_cod      AS CHARACTER FORMAT "X(256)":U
+       FIELD v_senha    AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -109,8 +116,8 @@ DEF VAR p-ult-sequencia      AS INTE       NO-UNDO.
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.v_dtapurac ab_unmap.v_conta ab_unmap.v_nrcpfcgc ab_unmap.v_cdtribut ab_unmap.v_cdrefere ab_unmap.v_dtlimite ab_unmap.v_vlrecbru ab_unmap.v_vlpercen ab_unmap.v_vllanmto ab_unmap.v_vlrmulta ab_unmap.v_vlrjuros ab_unmap.v_vlrtotal ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.opcao ab_unmap.v_coop ab_unmap.v_data  ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_dtapurac ab_unmap.v_conta ab_unmap.v_nrcpfcgc ab_unmap.v_cdtribut ab_unmap.v_cdrefere ab_unmap.v_dtlimite ab_unmap.v_vlrecbru ab_unmap.v_vlpercen ab_unmap.v_vllanmto ab_unmap.v_vlrmulta ab_unmap.v_vlrjuros ab_unmap.v_vlrtotal ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.opcao ab_unmap.v_coop ab_unmap.v_data  ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac
+&Scoped-Define ENABLED-OBJECTS ab_unmap.v_dtapurac ab_unmap.v_conta ab_unmap.v_nrcpfcgc ab_unmap.v_cdtribut ab_unmap.v_cdrefere ab_unmap.v_dtlimite ab_unmap.v_vlrecbru ab_unmap.v_vlpercen ab_unmap.v_vllanmto ab_unmap.v_vlrmulta ab_unmap.v_vlrjuros ab_unmap.v_vlrtotal ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.opcao ab_unmap.v_coop ab_unmap.v_data  ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_cod ab_unmap.v_senha 
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_dtapurac ab_unmap.v_conta ab_unmap.v_nrcpfcgc ab_unmap.v_cdtribut ab_unmap.v_cdrefere ab_unmap.v_dtlimite ab_unmap.v_vlrecbru ab_unmap.v_vlpercen ab_unmap.v_vllanmto ab_unmap.v_vlrmulta ab_unmap.v_vlrjuros ab_unmap.v_vlrtotal ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.opcao ab_unmap.v_coop ab_unmap.v_data  ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_cod ab_unmap.v_senha
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -208,6 +215,14 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+    ab_unmap.v_cod AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+    ab_unmap.v_senha AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -247,6 +262,8 @@ DEFINE FRAME Web-Frame
             FIELD v_msg      AS CHARACTER FORMAT "X(256)":U 
             FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
             FIELD v_pac      AS CHARACTER FORMAT "X(256)":U 
+            FIELD v_cod      AS CHARACTER FORMAT "X(256)":U 
+            FIELD v_senha      AS CHARACTER FORMAT "X(256)":U 
       END-FIELDS.
    END-TABLES.
  */
@@ -318,6 +335,10 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR fill-in ab_unmap.v_valorout IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_valortot IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR fill-in ab_unmap.v_cod IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR fill-in ab_unmap.v_senha IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
@@ -405,6 +426,10 @@ PROCEDURE htmOffsets :
     ("v_pac":U,"ab_unmap.v_pac":U,ab_unmap.v_pac:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_conta":U,"ab_unmap.v_conta":U,ab_unmap.v_conta:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_cod":U,"ab_unmap.v_cod":U,ab_unmap.v_cod:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_senha":U,"ab_unmap.v_senha":U,ab_unmap.v_senha:HANDLE IN FRAME {&FRAME-NAME}).
   
 END PROCEDURE.
 
@@ -473,6 +498,10 @@ PROCEDURE process-web-request :
   Purpose:     Process the web request.
   Notes:       
 ------------------------------------------------------------------------*/
+  
+  DEFINE VARIABLE aux_inssenha      AS INTEGER        NO-UNDO.
+  DEFINE VARIABLE aux_des_erro      AS CHARACTER      NO-UNDO.
+  DEFINE VARIABLE aux_dscritic      AS CHARACTER      NO-UNDO.  
   
   /* STEP 0 -
    * Output the MIME header and set up the object as state-less or state-aware. 
@@ -636,6 +665,22 @@ PROCEDURE process-web-request :
                      ELSE
                         DO:
 
+                           RUN validar-valor-limite (INPUT STRING(ab_unmap.v_coop),
+                                                     INPUT STRING(ab_unmap.v_cod),
+                                                     INPUT INTE(ab_unmap.v_pac),
+                                                     INPUT INTE(ab_unmap.v_caixa),
+                                                     INPUT (DECI(ab_unmap.v_vllanmto) + DECI(ab_unmap.v_vlrmulta)+ DECI(ab_unmap.v_vlrjuros)),
+                                                     INPUT STRING(ab_unmap.v_senha),
+                                                     OUTPUT aux_des_erro,
+                                                     OUTPUT aux_dscritic,
+                                                     OUTPUT aux_inssenha).
+                           IF RETURN-VALUE = 'NOK' THEN  
+                            DO:
+                               ASSIGN ab_unmap.vh_foco = "10".
+                               {include/i-erro.i}
+                            END.
+                           ELSE
+                             DO:                           
                            RUN dbo/b1crap41.p PERSISTENT SET h_b1crap41.
                            RUN paga-darf IN h_b1crap41 (INPUT STRING(ab_unmap.v_coop),
                                                         INPUT INTE(ab_unmap.v_conta),
@@ -691,6 +736,7 @@ PROCEDURE process-web-request :
                                        '<script> window.location = "crap041.html" </script>'.
         
                                END.
+                            END. /* ELSE RUN validar-valor-limite  */
                         END.                                         
                 END.
         END. /* RETURN "OK" verifica-abertura-boletim FIM */
@@ -819,5 +865,57 @@ PROCEDURE process-web-request :
  
 END PROCEDURE.
 
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE validar-valor-limite w-html 
+
+/* valida o valor recebido como parâmetro com o limite da agencia / cooperativa e solicita senha do coordenador se for maior */
+PROCEDURE validar-valor-limite:
+
+    DEF INPUT PARAM par_nmrescop  AS CHARACTER                       NO-UNDO.
+    DEF INPUT PARAM par_cdoperad  AS CHARACTER                       NO-UNDO.
+    DEF INPUT PARAM par_cdagenci  AS INTEGER                         NO-UNDO.
+    DEF INPUT PARAM par_nrocaixa  AS INTEGER                         NO-UNDO.
+    DEF INPUT PARAM par_vltitfat  AS DECIMAL                         NO-UNDO.
+    DEF INPUT PARAM par_senha     AS CHARACTER                       NO-UNDO.
+    DEF OUTPUT PARAM par_des_erro AS CHARACTER                       NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHARACTER                       NO-UNDO.
+    DEF OUTPUT PARAM par_inssenha AS INTEGER                         NO-UNDO.
+
+    DEF VAR aux_inssenha          AS INTEGER                         NO-UNDO.
+    DEF VAR h_b1crap41            AS HANDLE                          NO-UNDO.
+    
+    RUN dbo/b1crap41.p PERSISTENT SET h_b1crap41.
+                           
+    RUN validar-valor-limite IN h_b1crap41(INPUT par_nmrescop,
+                                           INPUT par_cdoperad,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrocaixa,
+                                           INPUT par_vltitfat,
+                                           INPUT par_senha,
+                                           OUTPUT par_des_erro,
+                                           OUTPUT par_dscritic,
+                                           OUTPUT par_inssenha).
+                                          
+    DELETE PROCEDURE h_b1crap41.
+    
+    IF RETURN-VALUE = 'NOK' THEN  
+     DO:
+        RETURN "NOK".
+     END.
+           
+     /* Solicita confirmaçao operacao depois de inserida a senha DO coordenador */
+     IF par_inssenha > 0 THEN
+        DO: 
+           {&out}   '<script>if (confirm("Confirma operaçao?")) ~{' +
+                    'document.forms[0].submit();' +   
+                    '~} else ~{' +
+                    ' window.location = "crap041.html";' +
+                    '~}</script>'. 
+        END.
+        
+    RETURN "OK".
+END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME

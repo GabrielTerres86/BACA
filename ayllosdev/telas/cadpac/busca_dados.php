@@ -8,6 +8,8 @@
  * ALTERAÇÕES   : 08/08/2017 - Adicionado busca de novo campo flgutcrm da tela. (Reinert - Projeto 339)
  * --------------
  *				  08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ *
+ *                03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  */
 
     session_start();
@@ -112,6 +114,7 @@
         echo "$('#vlminsgr', '#frmCadpac').val('".getByTagName($registros->tags,'VLMINSGR')."');";
         echo "$('#vlmaxsgr', '#frmCadpac').val('".getByTagName($registros->tags,'VLMAXSGR')."');";
 		echo "$('#flmajora', '#frmCadpac').val('".getByTagName($registros->tags,'FLMAJORA')."');";
+        echo "$('#vllimpag', '#frmCadpac').val('".getByTagName($registros->tags,'VLLIMPAG')."');";
     }
 
     if ($cddopcao == 'C') {
