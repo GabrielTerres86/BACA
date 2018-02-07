@@ -555,7 +555,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --
   --
   --             20/12/2017 - Ajuste de desempenho na procedure pc_consulta_adimistrador onde adicionei a chave
-  --                          correta no cursor principal, conforme solicitado no chamado 808164. (Kelvin)            
+  --                          correta no cursor principal, conforme solicitado no chamado 808164. (Kelvin)  
+  --
+  --			 07/02/2018 - Ajuste no retorno do XML pc_processa_retorno_req para aceitar multiplas Observacoes, 
+							  pegando apenas a primeira obs - (Antonio R. JR - Mouts - Chamado 841067)          
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
@@ -3627,10 +3630,10 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
 
 ------------- Verifica se exite reaproveitamento -------------
       -- Verifica se existe dados na consulta
-      IF pr_retxml.existsnode('//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES/LISTA_OBSERVACAO/OBSERVACAO/DESCRICAO') > 0 THEN  
+      IF pr_retxml.existsnode('//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/DESCRICAO') > 0 THEN  
         BEGIN
-          pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES/LISTA_OBSERVACAO/OBSERVACAO/DESCRICAO','S',vr_dsobserv, vr_dscritic);
-          pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES/LISTA_OBSERVACAO/OBSERVACAO/MENSAGEM', 'S',vr_dsmsgobs, vr_dscritic);
+          pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/DESCRICAO','S',vr_dsobserv, vr_dscritic);
+          pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/MENSAGEM', 'S',vr_dsmsgobs, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
             -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
