@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
  *				  16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
  *                11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ *				  06/02/2018 - Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia. (Mateus Zimmermann - Mouts)
  * --------------
  */
 
@@ -40,6 +41,7 @@
 	<option value="X" <?php echo $cddopcao == 'X' ? 'selected' : '' ?>>X - Cancelamento Resgate de Cheque.</option>
 	<option value="L" <?php echo $cddopcao == 'L' ? 'selected' : '' ?>>L - Conciliar/Custodiar Cheque.</option>
 	<option value="I" <?php echo $cddopcao == 'I' ? 'selected' : '' ?>>I - Incluir Cheque em Cust&oacute;dia.</option>
+	<option value="N" <?php echo $cddopcao == 'N' ? 'selected' : '' ?>>N - Imprimir comprovante de resgate de cheque custodiado.</option>
 	</select>
 
 	<input type="hidden" id="glb_dtmvtolt" name="glb_dtmvtolt" value="<?php echo $glb_dtmvtolt; ?>">

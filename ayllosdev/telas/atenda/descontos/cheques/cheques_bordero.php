@@ -25,6 +25,8 @@
 							   
                  26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 				 							    
+
+				 06/02/2018 - Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia. (Mateus Zimmermann - Mouts)
 	************************************************************************/
 	
 	session_start();
@@ -87,6 +89,46 @@
 	
 	$borderos   = $xmlObjBorderos->roottag->tags[0]->tags;
 	$qtBorderos = count($borderos);
+	
+	$xml = "";
+	$xml .= "<Root>";
+	$xml .= "  <Cabecalho>";
+	$xml .= "	    <Bo>b1wgen0018.p</Bo>";
+	$xml .= "        <Proc>busca_informacoes_associado</Proc>";
+	$xml .= "  </Cabecalho>";
+	$xml .= "  <Dados>";
+	$xml .= "       <cdcooper>" . $glbvars['cdcooper'] . "</cdcooper>";
+	$xml .= "		<cdagenci>" . $glbvars['cdagenci'] . "</cdagenci>";
+	$xml .= "		<nrdcaixa>" . $glbvars['nrdcaixa'] . "</nrdcaixa>";
+	$xml .= "		<cdoperad>" . $glbvars['cdoperad'] . "</cdoperad>";
+	$xml .= "		<nmdatela>" . $glbvars['nmdatela'] . "</nmdatela>";
+	$xml .= "		<idorigem>" . $glbvars['idorigem'] . "</idorigem>";
+	$xml .= "		<dtmvtolt>" . $glbvars['dtmvtolt'] . "</dtmvtolt>";
+	$xml .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
+	$xml .= "		<nrcpfcgc>0</nrcpfcgc>";
+	$xml .= xmlFilho($protocolo, 'Cheques', 'Itens');
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	// Executa script para envio do XML
+	$xmlResult = getDataXML($xml);
+
+	// Cria objeto para classe de tratamento de XML
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	//----------------------------------------------------------------------------------------------------------------------------------	
+	// Controle de Erros
+	//----------------------------------------------------------------------------------------------------------------------------------
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+	    $msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	    $nmdcampo = $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
+	    if (!empty($nmdcampo)) {
+	        $retornoAposErro = $retornoAposErro . " focaCampoErro('" . $nmdcampo . "','frmOpcao');";
+	    }
+	    exibirErro('error', $msgErro, 'Alerta - Ayllos', $retornoAposErro, false);
+	}
+
+    $associado = $xmlObjeto->roottag->tags[0]->tags[0]->tags; // dados associado  
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -187,6 +229,10 @@
 </div>
 
 <script type="text/javascript">
+
+var nmprimtl = "<?php echo getByTagName($associado, 'nmprimtl') ?>";
+var inpessoa = <?php echo getByTagName($associado, 'inpessoa') ?>;
+var idastcjt = <?php echo getByTagName($associado, 'idastcjt') ?>;
 
 dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
