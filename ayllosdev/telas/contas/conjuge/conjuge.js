@@ -16,6 +16,7 @@
  * 007: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
+ * 018: [25/09/2017] Kelvin			     : Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  */
 
 // Definindo variáveis globais 
@@ -143,10 +144,19 @@ function controlaOperacao(operacao) {
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
 				$('#divConteudoOpcao').html(response);
+				
+				if ( operacao == 'CB' ){
+					// Validar se o nome pode ser alterada
+                    buscaNomePessoa_gen($('#nrcpfcjg','#'+nomeForm ).val(),'nmconjug', nomeForm);                        
+                    
+				}
+				
 			} else {
 				eval( response );
 				controlaFoco( operacao );
+				
 			}
+			
 			return false;
 		}				
 	});	
@@ -301,8 +311,8 @@ function controlaLayout(operacao) {
 	cCodigo_2.addClass('codigo pesquisa');
 	
 // FIELDSET INF. PROFISSIONAIS	
-	var rotulos_3 = $('label[for="tpcttrab"],label[for="nrdocnpj"],label[for="cdnvlcgo"],label[for="cdturnos"],label[for="cdoedcje"]', '#' + nomeForm);
-	var rColuna_2	= $('label[for="nmextemp"],label[for="dsproftl"],label[for="nrfonemp"],label[for="dtadmemp"]','#'+nomeForm );
+	var rotulos_3 = $('label[for="tpcttrab"],label[for="nrdocnpj"],label[for="dsproftl"],label[for="cdnvlcgo"],label[for="cdturnos"],label[for="cdoedcje"]', '#' + nomeForm);
+	var rColuna_2	= $('label[for="nmextemp"],label[for="nrfonemp"],label[for="dtadmemp"]','#'+nomeForm );
 	var rLinha_3   	= $('label[for="nrramemp"],label[for="vlsalari"]','#'+nomeForm );
 	var cColuna_1  	= $('#tpcttrab,#nrdocnpj,#cdturnos,#cdnvlcgo','#'+nomeForm );
 	var cCNPJ		= $('#nrdocnpj','#'+nomeForm );
@@ -400,6 +410,7 @@ function controlaLayout(operacao) {
 						nrdrowid = '';
 						showMsgAguardo('Aguarde, buscando dados ...');									
 						controlaOperacao('CB');
+                                               
 					}					
 		
 				// Caso em que o cpf é zero
@@ -408,8 +419,13 @@ function controlaLayout(operacao) {
 					camposGrupo2.habilitaCampo();	
 					controlaInfProfissionais();	
 					cNome.focus();
-					return false; 								
+					 								
 				}	
+                
+                // Validar empresa de trabalho, se pode ser alterada
+                buscaNomePessoa_gen($('#nrdocnpj','#'+nomeForm ).val(),'nmextemp', nomeForm);
+                return false;
+            
 			}			
 		});	
 
@@ -583,7 +599,15 @@ function controlaPesquisas() {
 					colunas 	= 'Código;grescola;20%;right|Escolaridade;dsescola;80%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,divRotina);
 					return false;
-				
+				// Orgao Emissor
+				} else if (campoAnterior == 'cdoedcje'){								
+					procedure	= 'BUSCA_ORGAO_EXPEDIDOR';
+					titulo      = 'Org&atilde;o expedidor';
+					qtReg		= '30';
+					filtrosPesq = 'Código;cdoedcje;100px;S;|Descrição;nmoedcje;200px;S;';
+					colunas = 'Código;cdorgao_expedidor;25%;left|Descrição;nmorgao_expedidor;75%;left';
+					mostraPesquisa("ZOOM0001", procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);									
+					return false;
 				// Curso Superior
 				} else if ( campoAnterior == 'cdfrmttl' ) {
 					procedure	= 'busca_formacao';
