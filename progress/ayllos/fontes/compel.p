@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson/Margarete
-   Data    : Maio/2001                           Ultima alteracao: 03/01/2014
+   Data    : Maio/2001                           Ultima alteracao: 01/12/2016
 
    Dados referentes ao programa:
 
@@ -181,6 +181,15 @@
                03/01/2014 - Trocar critica 15 Agencia nao cadastrada por 
                             962 PA nao cadastrado 
                           - Trocar Agencia por PA (Reinert)                            
+                          
+               01/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
+                            
+               02/01/2017 - Inserir bloqueio da opcoes "B" e "X" para
+                            borderos gerados com data posterior a da 
+                            liberaçao do projeto 300. (Lombardi)
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -881,10 +890,10 @@ DO WHILE TRUE:
                            glb_cdcritic = 0.
                        END.
                   
-                  IF   glb_dsdepart = "TI"                     OR
-                       glb_dsdepart = "SUPORTE"                OR
-                       glb_dsdepart = "COORD.ADM/FINANCEIRO"   OR
-                       glb_dsdepart = "COMPE"                  THEN
+                  IF   glb_cddepart = 20 OR    /* TI                   */
+                       glb_cddepart = 18 OR    /* SUPORTE              */
+                       glb_cddepart =  8 OR    /* COORD.ADM/FINANCEIRO */
+                       glb_cddepart =  4 THEN  /* COMPE                */
                        DO:
                            UPDATE tel_nrdhhini tel_nrdmmini tel_situacao
                                   WITH FRAME f_fechamento.
@@ -2201,12 +2210,31 @@ PROCEDURE proc_compel_dscchq:
 
    aux_dsmessag = "".
       
+   FOR FIRST crapprm FIELDS(dsvlrprm)
+                  WHERE crapprm.nmsistem = 'CRED' AND
+                        crapprm.cdcooper = 0      AND
+                        crapprm.cdacesso = 'DT_BLOQ_ARQ_DSC_CHQ'
+                        NO-LOCK: END.
+   IF NOT AVAILABLE crapprm THEN
+     DO:
+          MESSAGE "Data de bloqueio nao encontrada.".
+          PAUSE 10 NO-MESSAGE.
+          LEAVE.
+     END.
+   
    FOR EACH crapcdb WHERE crapcdb.cdcooper  = glb_cdcooper AND
                           crapcdb.nrborder  = tel_nrborder AND
                          (crapcdb.insitchq  = 0            OR
                           crapcdb.insitchq  = 2)
                           NO-LOCK:
 
+       IF   crapcdb.dtmvtolt > DATE(crapprm.dsvlrprm) THEN
+            DO:
+                MESSAGE 'Opcao nao permitida para borderos gerados apos' crapprm.dsvlrprm '.'.
+                PAUSE 10 NO-MESSAGE.
+                LEAVE.
+            END.
+       
        IF   crapcdb.dtlibbdc = ? THEN
             DO:
                 MESSAGE "Bordero nao aprovado.".

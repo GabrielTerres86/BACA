@@ -170,6 +170,9 @@
                22/09/2014 - Alteração da mensagem com critica 77 substituindo pela 
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
+
+		       08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
 ............................................................................ */
 
 { includes/var_online.i }
@@ -704,10 +707,10 @@ DO WHILE TRUE:
                        UPDATE tel_situacao WITH FRAME f_fechamento.     
                   ELSE
                        DO:
-                           IF   glb_dsdepart = "TI"                   OR
-                                glb_dsdepart = "SUPORTE"              OR
-                                glb_dsdepart = "COORD.ADM/FINANCEIRO" OR
-                                glb_dsdepart = "COMPE"                THEN
+                           IF   glb_cddepart = 20   OR   /* "TI"                   */
+                                glb_cddepart = 18   OR   /* "SUPORTE"              */
+                                glb_cddepart = 8    OR   /* "COORD.ADM/FINANCEIRO" */
+                                glb_cddepart = 4  THEN   /* "COMPE"                */
                                 UPDATE tel_nrdhhini tel_nrdmmini tel_situacao
                                        WITH FRAME f_fechamento.
                            ELSE
