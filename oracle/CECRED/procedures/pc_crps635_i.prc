@@ -149,7 +149,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
           FROM crapris
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
-           AND dtrefere < vr_dtrefere
+           -- Buscar somente informações do dia anterior - Daniel(AMcom)
+           --AND dtrefere < vr_dtrefere
+           AND dtrefere >= rw_crapdat.dtmvtoan
+           --
            AND dtrefere <> pr_dtrefere
            AND inddocto = 1 -- 3020 e 3030
            AND innivris < 10
@@ -289,7 +292,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
               UPDATE crapris
                  SET innivris = rw_contas_grupo.innivrge
                     ,inindris = rw_contas_grupo.innivrge
-                    ,dtdrisco = pr_dtrefere
+                    -- Atualiza com a data do movimento atual - Daniel(AMcom)
+                    --,dtdrisco = pr_dtrefere
+                    ,dtdrisco = rw_crapdat.dtmvtolt
                WHERE rowid = rw_riscos_cpfcnpj.rowid;
             EXCEPTION
               WHEN OTHERS THEN
@@ -468,17 +473,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
               -- OU o nível deste registro é diferente do nível do risco no cursor principal
               --    e o nível do risco principal seja diferente de HH(10)
               -- ATENCAO: caso seja alterada esta regra, ajustar em crps310_i tb
-              IF rw_crapris_last.dtrefere <> rw_crapdat.dtultdma
-              OR (rw_crapris_last.innivris <> rw_crapgrp.innivrge AND rw_crapris.innivris <> 10) THEN
+              --
+              -- Comentado comparativo de datas(dtrefere <> dtultdma), pois esta condição sempre irá existir - Daniel(AMcom)
+              IF /*rw_crapris_last.dtrefere <> rw_crapdat.dtultdma
+              OR */(rw_crapris_last.innivris <> rw_crapgrp.innivrge AND rw_crapris.innivris <> 10) THEN
                 -- Utilizar a data de referência do processo
-                vr_dtdrisco := vr_dtrefere;
+                --vr_dtdrisco := vr_dtrefere;
+              -- Atualiza com a data do movimento atual - Daniel(AMcom)
+               vr_dtdrisco := rw_crapdat.dtmvtolt;
               ELSE
                 -- Utilizar a data do ultimo risco
                 vr_dtdrisco := rw_crapris_last.dtdrisco;
               END IF;
             ELSE
               -- Utilizar a data de referência do processo
-              vr_dtdrisco := vr_dtrefere;
+              -- vr_dtdrisco := vr_dtrefere;          
+              -- Atualiza com a data do movimento atual - Daniel(AMcom)
+               vr_dtdrisco := rw_crapdat.dtmvtolt;              
             END IF;
             -- Fechar o cursor
             CLOSE cr_crapris_last;
