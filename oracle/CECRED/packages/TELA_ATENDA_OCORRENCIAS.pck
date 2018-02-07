@@ -723,6 +723,12 @@ END fn_busca_dias_atraso;
            DECODE(rw_cbase.inpessoa, 1,
                   gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
                   substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
+			 AND DECODE(rw_cbase.inpessoa, 1,
+                  gene0002.fn_mask(cgr.nrcpfcgc, '99999999999'),
+                  substr(gene0002.fn_mask(cgr.nrcpfcgc, '99999999999999'), 1, 8)) <>
+           DECODE(rw_cbase.inpessoa, 1,
+                  gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
+                  substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
        AND cgr.cdcooper =  grp.cdcooper
        AND cgr.nrdconta =  grp.nrdconta;
     rw_contas_grupo_economico cr_contas_grupo_economico%ROWTYPE;
