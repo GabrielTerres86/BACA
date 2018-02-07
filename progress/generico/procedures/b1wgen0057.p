@@ -2,7 +2,7 @@
 
     Programa: b1wgen0057.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 22/09/2017
+    Data    : Marco/2010                   Ultima atualizacao: 31/01/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - CONJUGE
 
@@ -30,24 +30,27 @@
                               
                  12/08/2015 - Reformulacao cadastral (Gabriel-RKAM).             
                               
-				 20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                  crapass, crapttl, crapjur 
-							 (Adriano - P339).        
+                 20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                              crapass, crapttl, crapjur 
+                              (Adriano - P339).        
 
                  19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                               PRJ339 - CRM (Odirlei-AMcom)  
                               
-				 28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
-							  CH, RE, PP E CT. (PRJ339 - Reinert)                              
+                 28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+                              CH, RE, PP E CT. (PRJ339 - Reinert)                              
 
                  22/09/2017 - Ajuste realizado na tela Contas/Dados Pessoais/Conjuge
-						      onde o telefone comercial do conjugue estava sendo
-							  carregado errado. PRJ339 (Kelvin).
+                              onde o telefone comercial do conjugue estava sendo
+                              carregado errado. PRJ339 (Kelvin).
 
-				 28/09/2017 - Alterado para buscar nome da empresa do conjuge pelo
-							  registro da crapttl. (PRJ339 - Reinert)
+                 28/09/2017 - Alterado para buscar nome da empresa do conjuge pelo
+                              registro da crapttl. (PRJ339 - Reinert)
                 
-				 09/11/2017 - Criaçao do documento de conjuge (codigo 22). (PRJ339 - Lombardi)
+                 09/11/2017 - Criaçao do documento de conjuge (codigo 22). (PRJ339 - Lombardi)
+         
+                 31/01/2018 - Ajustar busca da descricao do Perfil do conjuge, caso valor 
+                              venha nulo vamos considerar zero (Lucas Ranghetti #836600)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -720,7 +723,7 @@ PROCEDURE Atualiza_Descricao:
         FOR EACH tt-crapcje:
             /* atulizar descricoes */
             DYNAMIC-FUNCTION("BuscaGrauEscolar" IN h-b1wgen0060,
-                             INPUT tt-crapcje.grescola,
+                             INPUT IF tt-crapcje.grescola = ? THEN 0 ELSE tt-crapcje.grescola,
                              OUTPUT tt-crapcje.dsescola,
                              OUTPUT aux_dscritic).
 
@@ -728,7 +731,7 @@ PROCEDURE Atualiza_Descricao:
                 ASSIGN tt-crapcje.dsescola = "NAO INFORMADO".
 
             DYNAMIC-FUNCTION("BuscaFormacao" IN h-b1wgen0060,
-                             INPUT tt-crapcje.cdfrmttl,
+                             INPUT IF tt-crapcje.cdfrmttl = ? THEN 0 ELSE tt-crapcje.cdfrmttl,
                              OUTPUT tt-crapcje.rsfrmttl,
                              OUTPUT aux_dscritic).
 
@@ -736,7 +739,7 @@ PROCEDURE Atualiza_Descricao:
                 ASSIGN tt-crapcje.rsfrmttl = "NAO INFORMADO".
 
             DYNAMIC-FUNCTION("BuscaNatOcupacao" IN h-b1wgen0060,
-                             INPUT tt-crapcje.cdnatopc,
+                             INPUT IF tt-crapcje.cdnatopc = ? THEN 0 ELSE tt-crapcje.cdnatopc,
                              OUTPUT tt-crapcje.rsnatocp,
                              OUTPUT aux_dscritic).
 
@@ -744,7 +747,7 @@ PROCEDURE Atualiza_Descricao:
                 ASSIGN tt-crapcje.rsnatocp = "NAO INFORMADO".
 
             DYNAMIC-FUNCTION("BuscaOcupacao" IN h-b1wgen0060,
-                             INPUT tt-crapcje.cdocpcje,
+                             INPUT IF tt-crapcje.cdocpcje = ? THEN 0 ELSE tt-crapcje.cdocpcje,
                              OUTPUT tt-crapcje.rsdocupa,
                              OUTPUT aux_dscritic).
 
