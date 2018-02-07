@@ -145,6 +145,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DESCTO IS
 														   ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
 														   ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
 														   ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
+														   
+  PROCEDURE pc_busca_cheques_cust_hj(pr_nrdconta  IN craplim.nrdconta%TYPE  --> Conta
+																		,pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
+																		,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+																		,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+																		,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+																		,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+																		,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+																		,pr_des_erro  OUT VARCHAR2);            --> Erros do processo														   
   
 END TELA_ATENDA_DESCTO;
 /
@@ -3536,6 +3545,191 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
   END pc_valida_valor_saldo;
+  
+  --> Resgatar cheques custodiados no dia de movimento
+	PROCEDURE pc_busca_cheques_cust_hj(pr_nrdconta  IN craplim.nrdconta%TYPE  --> Conta
+																		,pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
+																		,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+																		,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+																		,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+																		,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+																		,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+																		,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
+  /* .............................................................................
+    Programa: pc_busca_cheques_cust_hj
+    Sistema : CECRED
+    Autor   : Mateus Zimmermann - Mouts
+    Data    : Janeiro/2018                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Resgatar cheques custodiados no dia de movimento
+
+    Alteracoes: 
+                             
+  ..............................................................................*/																			 
+	-- Variável de críticas
+	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+	vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
+	-- Tratamento de erros
+	vr_exc_erro        EXCEPTION;    
+	
+	-- Variáveis auxiliares
+	vr_dstextab craptab.dstextab%TYPE;
+	vr_qtdiasut INTEGER;
+	vr_qtdiasli INTEGER;
+	vr_hrlimite INTEGER;
+	vr_nrdocmto NUMBER;
+	vr_dtjurtab DATE;
+	vr_tab_resgate_erro cust0001.typ_erro_resgate;
+  
+  -- Variaveis de log
+  vr_cdcooper INTEGER;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+  
+  vr_dscheque VARCHAR(200);
+  vr_dsdocmc7 VARCHAR(1000);
+	
+	rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  
+  vr_tab_cheques dscc0001.typ_tab_cheques;
+	vr_index_cheque NUMBER;
+  vr_flgaprov NUMBER;
+	
+	-- Buscar cheques custodiados na data de hoje
+	CURSOR cr_crapcdb(pr_cdcooper IN crapbdc.cdcooper%TYPE
+	                 ,pr_nrdconta IN crapbdc.nrdconta%TYPE
+									 ,pr_nrborder IN crapbdc.nrborder%TYPE
+                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+		SELECT cdb.vlcheque,
+           cdb.dsdocmc7,
+           cdb.nrcheque
+		  FROM crapcdb cdb,
+           crapcst cst
+		 WHERE cdb.cdcooper = pr_cdcooper
+		   AND cdb.nrdconta = pr_nrdconta
+			 AND cdb.nrborder = pr_nrborder
+       AND cst.cdcooper = cdb.cdcooper
+       AND cst.nrdconta = cdb.nrdconta
+       AND cst.nrborder = cdb.nrborder
+       AND cst.cdcmpchq = cdb.cdcmpchq
+       AND cst.cdbanchq = cdb.cdbanchq
+       AND cst.cdagechq = cdb.cdagechq
+       AND cst.nrcheque = cdb.nrcheque
+       AND cst.nrctachq = cdb.nrctachq
+       --> Cheques ainda nao resgatados
+       AND cst.dtdevolu IS NULL
+			 AND cst.insitchq = 0
+       AND cdb.insitana = 2		
+       AND cst.dtmvtolt = pr_dtmvtolt;
+		
+    -- Verificar se cheque foi resgatado na data de hoje
+    CURSOR cr_crapcst_resg_hoje (pr_cdcooper IN crapcop.cdcooper%TYPE
+                                ,pr_dsdocmc7 IN VARCHAR2
+                                ,pr_dtmvtolt IN DATE) IS
+      SELECT cst.vlcheque
+            ,cst.dtlibera
+            ,cst.insitchq
+        FROM crapcst cst
+       WHERE cst.cdcooper = pr_cdcooper
+         AND UPPER(cst.dsdocmc7) = UPPER(pr_dsdocmc7)
+         AND cst.dtdevolu = pr_dtmvtolt;
+    rw_crapcst_resg_hoje cr_crapcst_resg_hoje%ROWTYPE;
+
+	BEGIN
+    
+    -- Incluir nome do modulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
+                              ,pr_action => NULL);	
+		
+		gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+														,pr_cdcooper => vr_cdcooper
+														,pr_nmdatela => vr_nmdatela
+														,pr_nmeacao  => vr_nmeacao
+														,pr_cdagenci => vr_cdagenci
+														,pr_nrdcaixa => vr_nrdcaixa
+														,pr_idorigem => vr_idorigem
+														,pr_cdoperad => vr_cdoperad
+														,pr_dscritic => vr_dscritic);
+  
+		-- Busca a data do sistema
+		OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+		CLOSE BTCH0001.cr_crapdat;
+	
+    --> Buscar cheques do bosrdero custodiados do dia atual
+    FOR rw_crapcdb IN cr_crapcdb (pr_cdcooper => vr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrborder => pr_nrborder
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+    
+      -- Verificar se cheque foi resgatado hoje
+      OPEN cr_crapcst_resg_hoje(pr_cdcooper => vr_cdcooper
+                               ,pr_dsdocmc7 => rw_crapcdb.dsdocmc7
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+      FETCH cr_crapcst_resg_hoje INTO rw_crapcst_resg_hoje;
+
+      IF cr_crapcst_resg_hoje%FOUND THEN
+        -- Gera crítica
+        vr_cdcritic := 673;
+        -- Fecha Cursor
+        CLOSE cr_crapcst_resg_hoje;
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      ELSE
+        -- Fecha Cursor
+        CLOSE cr_crapcst_resg_hoje;
+      END IF;
+      
+      -- Se retornou alguma crítica
+      IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN      
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      END IF;
+      
+      IF vr_dscheque IS NOT NULL THEN
+         vr_dscheque := vr_dscheque || '|';  
+      END IF;
+      
+      vr_dscheque := vr_dscheque || rw_crapcdb.nrcheque;
+      vr_dscheque := vr_dscheque || ';' || rw_crapcdb.vlcheque;
+      vr_dscheque := vr_dscheque || ';' || rw_crapcdb.dsdocmc7;
+      
+      IF vr_dsdocmc7 IS NOT NULL THEN
+         vr_dsdocmc7 := vr_dsdocmc7 || '|';  
+      END IF;     
+      
+      vr_dsdocmc7 := vr_dsdocmc7 || rw_crapcdb.dsdocmc7; 
+          
+    END LOOP;   
+    
+    
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'Dados',pr_tag_cont => NULL,pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Dados',pr_posicao => 0,pr_tag_nova => 'dscheque',pr_tag_cont => vr_dscheque,pr_des_erro => vr_dscritic);  
+    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Dados',pr_posicao => 0,pr_tag_nova => 'dsdocmc7',pr_tag_cont => vr_dsdocmc7,pr_des_erro => vr_dscritic);  
+        
+	EXCEPTION    
+    WHEN vr_exc_erro THEN      
+      IF NVL(vr_cdcritic,0) <> 0 AND 
+         TRIM(vr_dscritic) IS NULL THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+			ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := REPLACE(REPLACE(vr_dscritic,chr(13)),chr(10));
+      END IF;
+    WHEN OTHERS THEN      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := REPLACE(REPLACE('Nao foi possivel buscar os cheques custodiados no dia de hoje: ' || SQLERRM, chr(13)),chr(10));																							 																			 		
+	END pc_busca_cheques_cust_hj;
 
 END TELA_ATENDA_DESCTO;
 /

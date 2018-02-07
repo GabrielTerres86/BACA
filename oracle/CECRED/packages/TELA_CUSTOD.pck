@@ -208,7 +208,17 @@ CREATE OR REPLACE PACKAGE TELA_CUSTOD IS
 															,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
 															,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
 															,pr_des_erro OUT VARCHAR2);            --> Erros do processo
-
+															
+  -- Buscar chequeres custodiados resgatados                            
+  PROCEDURE pc_busca_cheques_resgatados(pr_nrdconta IN crapcst.nrdconta%TYPE --> Número da conta
+                                	     ,pr_dtresgat IN VARCHAR2              --> Data do resgaste
+                                       ,pr_nrcheque IN crapcst.nrcheque%TYPE --> Número do cheque 
+                                       ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                       ,pr_retxml   IN OUT NOCOPY xmltype     --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                       ,pr_des_erro OUT VARCHAR2);            --> Descricao do Erro
 	
 END TELA_CUSTOD;
 /
@@ -3692,6 +3702,141 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
         ROLLBACK;		
 		END;	
 	END pc_excluir_remessa;
+	
+	PROCEDURE pc_busca_cheques_resgatados(pr_nrdconta IN crapcst.nrdconta%TYPE --> Número da conta
+                                	     ,pr_dtresgat IN VARCHAR2              --> Data do resgaste
+                                       ,pr_nrcheque IN crapcst.nrcheque%TYPE --> Número do cheque 
+                                       ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                       ,pr_retxml   IN OUT NOCOPY xmltype     --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                       ,pr_des_erro OUT VARCHAR2) IS          --> Descricao do Erro
+    -- ..........................................................................
+    --
+    --  Programa : pc_busca_cheques_resgatados
+    --  Sistema  : Rotinas para buscar os cheques custodiados resgatadaos
+    --  Sigla    : GENE
+    --  Autor    : Mateus Zimmermann - Mouts
+    --  Data     : Dezembro/2017.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Retornar os cheques custodiados resgatados
+    --
+    --  Alteracoes:  
+    -- .............................................................................
+  BEGIN
+    DECLARE
+    
+      CURSOR cr_crapcst(pr_cdcooper IN crapcst.cdcooper%TYPE
+                       ,pr_nrdconta IN crapcst.nrdconta%TYPE
+                       ,pr_dtresgat IN VARCHAR2
+                       ,pr_nrcheque IN crapcst.nrcheque%TYPE)IS
+      SELECT crapcst.dsdocmc7,
+             crapcst.vlcheque
+        FROM crapcst
+       WHERE crapcst.cdcooper = pr_cdcooper 
+         and crapcst.nrdconta = pr_nrdconta
+         and crapcst.dtdevolu = nvl(pr_dtresgat, crapcst.dtdevolu)
+         and crapcst.nrcheque = nvl(pr_nrcheque, crapcst.nrcheque);
+      rw_crapcst cr_crapcst%ROWTYPE;
+    
+      -- Variaveis locais      
+      vr_cdoperad VARCHAR2(100);
+      vr_cdcooper NUMBER;
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_auxconta PLS_INTEGER := 0;
+      
+      -- Variáveis auxiliares
+      vr_dtresgat DATE := to_date(pr_dtresgat, 'dd/mm/rrrr');
+      
+      -- Variaveis gerais
+      vr_contador PLS_INTEGER := 0;
+      
+      -- Variaveis de critica
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+      vr_exc_saida   EXCEPTION;
+      
+    BEGIN
+    
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'TELA_CUSTOD'
+                                ,pr_action => null);
+
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      END IF;
+      
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'Cheques',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
+          
+      FOR rw_crapcst IN cr_crapcst(pr_cdcooper => vr_cdcooper
+                        	        ,pr_nrdconta => pr_nrdconta
+                                  ,pr_dtresgat => vr_dtresgat
+                                  ,pr_nrcheque => pr_nrcheque) LOOP
+        
+          gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Cheques',pr_posicao => 0,pr_tag_nova => 'inf',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
+          gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'inf',pr_posicao => vr_contador, pr_tag_nova => 'dsdocmc7', pr_tag_cont => rw_crapcst.dsdocmc7, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'inf',pr_posicao => vr_contador, pr_tag_nova => 'vlcheque', pr_tag_cont => rw_crapcst.vlcheque, pr_des_erro => vr_dscritic);
+          
+          vr_contador := vr_contador + 1;	
+          
+      END LOOP;
+                                 
+      --Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+      
+        IF TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+        END IF;
+        
+        pr_cdcritic := pr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+        
+      WHEN OTHERS THEN
+        cecred.pc_internal_exception(3);
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral (TELA_CUSTOD.pc_busca_cheques_resgatados).';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        
+        ROLLBACK;   
+        
+    END;
+    
+  END pc_busca_cheques_resgatados;
 	
 END TELA_CUSTOD;
 /

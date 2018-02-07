@@ -7293,6 +7293,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                              PRJ300 - Desconto de cheque (Odirlei-AMcom)
 
                 24/08/2017 - Ajuste para gravar log. (Lombardi)
+				
+				30/01/2018 - Inserido log de item com as informacoes principais do cheque resgatado 
+                             M454.1 (Mateus Z - Mouts)
                         
   ............................................................................. */
   	DECLARE
@@ -7512,10 +7515,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 					 WHERE cst.rowid = rw_crapcst.rowid;
   			
         -- Efetua os inserts para apresentacao na tela VERLOG
-        gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+        -- Gerar log do Lote do cheque
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                                 ,pr_nmdcampo => 'Nro Lote'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => rw_crapcst.nrdolote);
+                                 
+        -- Gerar log do Numero do cheque
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                                 ,pr_nmdcampo => 'Nro Cheque'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => rw_crapcst.nrcheque);
+                                 
+        -- Gerar log do CMC7 do cheque
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
                                  ,pr_nmdcampo => 'Cheque'
                                  ,pr_dsdadant => NULL
                                  ,pr_dsdadatu => vr_dsdocmc7_formatado);
+                                 
+        -- Gerar log do valor do cheque
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                                 ,pr_nmdcampo => 'Valor Cheque'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => rw_crapcst.vlcheque);
+								 
 				END IF;
 			END LOOP;
 

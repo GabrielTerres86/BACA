@@ -746,6 +746,16 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_cdcritic OUT INTEGER
                                     ,pr_dscritic OUT VARCHAR2
                                     );
+									
+  PROCEDURE pc_retorna_cartao_valido(pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
+                                    ,pr_idtipcar IN INTEGER                --> Indica qual o cartao 
+                                    ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indica o tipo de pessoa
+                                    ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);             --> Descricao do Erro									
 
 END CADA0004;
 /
@@ -11819,7 +11829,175 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pr_dscritic := 'Não foi possivel consultar dados telefone: '||SQLERRM;
                                     
   END pc_ib_verif_atualiz_fone;
+  
+  PROCEDURE pc_retorna_cartao_valido(pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
+                                    ,pr_idtipcar IN INTEGER                --> Indica qual o cartao 
+                                    ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indica o tipo de pessoa
+                                    ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS           --> Descricao do Erro
+    -- ..........................................................................
+    --
+    --  Programa : pc_retorna_cartao_valido
+    --  Sistema  : Rotinas para buscar cartao magnetico e cecred
+    --  Sigla    : CRED
+    --  Autor    : Mateus Zimmermann - Mouts
+    --  Data     : Dezembro/2017.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Retornar os cartoes da conta
+    --
+    --  Alteracoes:
+    -- .............................................................................
+  BEGIN
+    DECLARE
+    
+      -- Cursor sobre a tabela de datas
+      rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
+    
+      CURSOR cr_crapcrm(pr_cdcooper IN crapcop.cdcooper%TYPE)IS
+      SELECT crapcrm.nrcartao 
+        FROM crapcrm
+       WHERE crapcrm.cdcooper = pr_cdcooper
+         AND crapcrm.nrdconta = pr_nrdconta
+         AND crapcrm.cdsitcar = 2
+         AND crapcrm.dtvalcar > rw_crapdat.dtmvtolt
+         AND crapcrm.tptitcar = CASE WHEN pr_inpessoa IN (1) THEN 1 ELSE crapcrm.tptitcar END
+         AND crapcrm.dtentcrm IS NOT NULL;
+      rw_crapcrm cr_crapcrm%ROWTYPE;
+      
+      CURSOR cr_crawcrd(pr_cdcooper IN craptip.cdcooper%TYPE) IS
+      SELECT crawcrd.nrcrcard
+        FROM crawcrd
+       WHERE crawcrd.cdcooper = pr_cdcooper
+         AND crawcrd.nrdconta = pr_nrdconta
+         AND crawcrd.insitcrd = 4
+         AND crawcrd.dtentreg < rw_crapdat.dtmvtolt
+         AND crawcrd.dtvalida > rw_crapdat.dtmvtolt
+         AND crawcrd.dtcancel IS NULL;    
+      rw_crawcrd cr_crawcrd%ROWTYPE;
+    
+      -- Variaveis locais      
+      vr_cdoperad VARCHAR2(100);
+      vr_cdcooper NUMBER;
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_auxconta PLS_INTEGER := 0;
+      vr_vlminimo NUMBER (25,2) := 0;
+      vr_nrcartao crapcrm.nrcartao%TYPE;
+      vr_nrcrcard crawcrd.nrcrcard%TYPE;
+      
+      -- Variaveis gerais
+      vr_contador PLS_INTEGER := 0;
+      
+      -- Variaveis de critica
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+      vr_exc_saida   EXCEPTION;
+      
+    BEGIN
+    
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'MINCAP'
+                                ,pr_action => null);
 
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Busca a data do sistema
+      OPEN btch0001.cr_crapdat(vr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+      
+      -- Cartao magnetico
+      IF pr_idtipcar = 1 THEN
+        
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      
+        -- Loop sobre o cursor de busca de cartoes magnetico
+        FOR rw_crapcrm IN cr_crapcrm(pr_cdcooper => vr_cdcooper) LOOP
+
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0        , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrcartao', pr_tag_cont => rw_crapcrm.nrcartao, pr_des_erro => vr_dscritic);
+          
+          vr_contador := vr_contador + 1;
+
+        END LOOP;
+      
+      END IF;
+      
+      -- Cartao cecred
+      IF pr_idtipcar = 2 THEN
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      
+        -- Loop sobre o cursor de busca de cartoes cecred
+        FOR rw_crawcrd IN cr_crawcrd(pr_cdcooper => vr_cdcooper) LOOP
+
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0        , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrcartao', pr_tag_cont => rw_crawcrd.nrcrcard, pr_des_erro => vr_dscritic);
+          
+          vr_contador := vr_contador + 1;
+
+        END LOOP;
+         
+      END IF;
+                                 
+      --Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+      
+        IF TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+        END IF;
+        
+        pr_cdcritic := pr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+        
+      WHEN OTHERS THEN
+        cecred.pc_internal_exception(3);
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral (CADA0004.pc_retorna_cartao_valido).';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        
+        ROLLBACK;   
+        
+    END;
+    
+  END pc_retorna_cartao_valido;
   
 END CADA0004;
 /

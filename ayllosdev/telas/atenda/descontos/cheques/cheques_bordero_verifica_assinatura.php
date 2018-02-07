@@ -10,6 +10,8 @@
 	 Alterações: 31/05/2017 - Ajuste para verificar se possui cheque custodiado
                               no dia de hoje. 
                               PRJ300- Desconto de cheque. (Odirlei-AMcom)
+							  
+                 06/02/2018 - Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia. (Mateus Zimmermann - Mouts)							  
 	************************************************************************/
 	
 	session_start();
@@ -54,7 +56,7 @@
     // Verificar se possui cheques nao aprovados custodiados no dia de hj  
     $flcusthj = $xmlObj->roottag->tags[1]->cdata;
     if ($flcusthj == 1){
-        $aux_acao = 'confirmaResgateCustodiahj(\'efetivaBordero();\',\'L\');';
+        $aux_acao = 'confirmaResgateCustodiahj(\'mostraAutorizaResgate();\',\'L\');';
         
     }else {
         $aux_acao = 'efetivaBordero();';
@@ -69,6 +71,6 @@
 			echo 'showConfirmacao("Esta opera&ccedil;&atilde;o depende da assinatura do cooperado. Confirmar assinatura?","Confirma&ccedil;&atilde;o - Ayllos","'.$aux_acao.'","showError(\'error\',\''.$msgErro.'\',\'Alerta - Ayllos\',\'blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));\');","sim.gif","nao.gif");';
 		}
 	}else{
-		echo aux_acao;
+		echo $aux_acao;
 	}	
 ?>
