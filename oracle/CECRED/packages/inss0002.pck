@@ -207,7 +207,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
 						     ,pr_flmobile   IN INTEGER DEFAULT 0
                              ,pr_dshistor   IN VARCHAR2 DEFAULT NULL
                              ,pr_dsprotoc  OUT VARCHAR2                             
-                             ,pr_dslitera  OUT CLOB
+							 ,pr_dslitera  OUT CLOB
                              ,pr_cdultseq  OUT NUMBER
                              ,pr_dscritic  OUT VARCHAR2);
 
@@ -348,7 +348,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                ,pr_idagendamento IN NUMBER
                                ,pr_cdcritic1     OUT NUMBER  --> Código da crítica
                                ,pr_dscritic1     OUT VARCHAR2) ;
-                                   
+                               
   /*---------------------------------------------------------------------------------------------------------------
    Autor    : Ricardo Linhares
    Objetivo : GPS - Validar código de barras
@@ -369,6 +369,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                               ,pr_tpdpagto IN NUMBER -- (1 - com cod.barra, 2 - sem cod.barra)                            
                               ,pr_cdlindig IN VARCHAR2
                               ,pr_cdbarras IN VARCHAR2
+                              ,pr_dtcompet IN VARCHAR2
                               ,pr_vldoinss IN NUMBER
                               ,pr_vloutent IN NUMBER
                               ,pr_vlatmjur IN NUMBER
@@ -445,7 +446,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
                08/09/2017 - Implementação GPS para Mobile.
 				    		(P 356.2 - Ricardo Linhares)
-                            
+                
                26/10/2017 - Alterado na pc_gps_pagamento a ordem como era usada a tabela bcx pois
                             qdo ele estava lockada dava a impressao pro operador que o pagamento
                             não havia sido concluido qdo na verdade ja tinha sido processado no SICREDI
@@ -1294,7 +1295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                     ,pr_flgctrag => FALSE                --controla validacoes na efetivacao de agendamentos */
                                     ,pr_nmdatela => pr_nmdatela          -- Nome da tela
 								    ,pr_flgexage => 0  -- 1 - Efetua agendamento / 0 - não efetua agendamento
-                                    ,pr_dstransa => vr_dstransa          --Descricao da transacao
+									,pr_dstransa => vr_dstransa          --Descricao da transacao
                                     ,pr_tab_limite   => vr_tab_limite    --Tabelas de retorno de horarios limite
                                     ,pr_tab_internet => vr_tab_internet  --Tabelas de retorno de horarios limite
                                     ,pr_cdcritic => pr_cdcritic          --Código do erro
@@ -1985,7 +1986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
   BEGIN
     pr_des_reto := 'NOK';
-
+    
     IF TRIM(pr_dshistor) IS NULL THEN
       vr_dshistor := UPPER('GPS - Identificador ') || pr_cdidenti;
     ELSE
@@ -2889,7 +2890,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             ,pr_nrdrowid => vr_nrdrowid);
 
   END pc_gps_agmto_consulta;
-
+  
 
   /*---------------------------------------------------------------------------------------------------------------
    Autor    : Ricardo Linhares
@@ -2954,7 +2955,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                   ,pr_cdoperad   IN crapope.cdoperad%TYPE
                                   ,pr_nmdatela   IN craptel.nmdatela%TYPE
                                   ,pr_dsdrowid   IN VARCHAR2
-								  ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE --397
+								  ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE --397  								  
 								  ,pr_flmobile   IN INTEGER DEFAULT 0
                                   ,pr_dscritic  OUT VARCHAR2) IS
     
@@ -4911,7 +4912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
      -- Sempre passa a data que já está no CX-online
      vr_dtmvtolt := rw_crapdat.dtmvtocd;
-
+     
      IF pr_idorigem = 2 THEN -- Apenas CAIXA ON-LINE
        
        --Selecionar informacoes dos boletins dos caixas
@@ -4976,7 +4977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       END IF;
        
      END IF;
-     
+
      -- Atribui o histórico
      IF TRIM(pr_dshistor) IS NULL THEN
        vr_dshistor := UPPER('GPS - Identificador ') || pr_dsidenti;
@@ -6355,6 +6356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     vr_dsprotoc VARCHAR2(300);
 
 
+
   BEGIN
 
     -- Carregar os dados de lançamentos de guias
@@ -7133,6 +7135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                               ,pr_tpdpagto IN NUMBER -- (1 - com cod.barra, 2 - sem cod.barra)                            
                               ,pr_cdlindig IN VARCHAR2
                               ,pr_cdbarras IN VARCHAR2
+                              ,pr_dtcompet IN VARCHAR2
                               ,pr_vldoinss IN NUMBER
                               ,pr_vloutent IN NUMBER
                               ,pr_vlatmjur IN NUMBER
@@ -7156,8 +7159,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            vr_xml_temp        VARCHAR2(32726) := '';
            vr_dsmsgope        VARCHAR2(200) := ''; -- msg da operacao
            vr_dtmvtopg        DATE;
-           vr_ano_competencia INTEGER;
-           vr_mes_competencia INTEGER;
+     vr_dtminage        DATE;
+     vr_dtcompet        DATE;
+     vr_ano_competencia VARCHAR2(100);
+     vr_mes_competencia VARCHAR2(100);
            rw_crapdat         btch0001.cr_crapdat%ROWTYPE;
            vr_dstransa        VARCHAR2(100);
            vr_dsorigem        VARCHAR2(100);
@@ -7166,7 +7171,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            vr_vlrtotal        NUMBER := pr_vlrlote;
            vr_cdidenti        VARCHAR2(100);
            vr_cddpagto        VARCHAR2(100);
-           vr_dtcompet        VARCHAR2(10);
            vr_vltotgps        NUMBER; --valor total do GPS atual
            vr_tpvalid         VARCHAR2(1);
            vr_assconju        NUMBER;
@@ -7201,14 +7205,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
           BEGIN
             
-
           IF TRIM(pr_dshistor) IS NULL THEN
             vr_dshistor := UPPER('GPS - Identificador ') || pr_cdidenti;
           ELSE
             vr_dshistor := pr_dshistor;
           END IF;              
           
-           
             -- Leitura do calendário da cooperativa
             OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
             FETCH btch0001.cr_crapdat
@@ -7222,7 +7224,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             END IF;
             
             -- tipo validação sicredi
-  
           IF pr_indtpaga = 1  THEN
               vr_tpvalid := 'V';              
             ELSE
@@ -7244,7 +7245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                           ,pr_dtvencto => pr_dtdebito 
                                           ,pr_cdbarras => pr_cdbarras
                                           ,pr_dslindig => pr_cdlindig
-                                          ,pr_mmaacomp => vr_dtcompet
+                                          ,pr_mmaacomp => pr_dtcompet
                                           ,pr_vlrdinss => pr_vldoinss
                                           ,pr_vlrouent => pr_vloutent
                                           ,pr_vlrjuros => pr_vlatmjur
@@ -7275,19 +7276,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                   pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
                   RAISE vr_exc_saida;
                 END IF;
-
                 IF pr_idorigem = 2 THEN
                   pr_dscritic := REPLACE(REPLACE(pr_dscritic,'(NEGOCIO)','(SICREDI)'),'(VALIDACAO)','(SICREDI)');
                 END IF;
-
                 IF pr_dscritic LIKE '%ERR-SVC%' THEN
                   pr_dscritic := TRIM(REPLACE(pr_dscritic,'ERR-SVC','(Erro no serviço)'));
                 END IF;
                 RAISE vr_exc_saida;
               END IF;
             END IF;
-          
-
             IF pr_flmobile = 1 THEN
               vr_dsorigem := gene0001.vr_vet_des_origens(10);
             ELSE
@@ -7297,26 +7294,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             pr_cdcritic := 0;
 
            -- Valida competência para agendamento
-
            IF pr_indtpaga = 2 THEN
+              IF pr_tpdpagto = 1 THEN -- Código de barras
+         vr_mes_competencia := SUBSTR(pr_cdbarras,42,2);
+         vr_ano_competencia := SUBSTR(pr_cdbarras,38,4);
 
-             -- Validar Competência
-              vr_mes_competencia := TO_NUMBER(SUBSTR(pr_cdbarras,42,2));
-              vr_ano_competencia := TO_NUMBER(SUBSTR(pr_cdbarras,38,4));
-
-              IF vr_ano_competencia < TO_NUMBER(TO_CHAR(rw_crapdat.dtmvtolt,'YYYY')) THEN
-                pr_dscritic := 'Agendamento não permitido para competências anteriores. Para efetivar o pagamento utilize a rotina de Pagamento de GPS.';
-                RAISE vr_exc_saida;
+         IF vr_mes_competencia = '13' THEN
+           vr_mes_competencia := '12';
               END IF;
 
-              /*Para essa validacao, devemos considerar o mes anterior ao atual, pois
-                o mesmo ainda pode ser agendado e pago no mes corrente. */
-              IF vr_mes_competencia - 1 < TO_NUMBER(TO_CHAR(rw_crapdat.dtmvtolt,'MM')) THEN
-                pr_dscritic := 'Agendamento não permitido para competências anteriores. Para efetivar o pagamento utilize a rotina de Pagamento de GPS.';
-                RAISE vr_exc_saida;
-              END IF;
+         vr_dtcompet := TO_DATE('01/'||vr_mes_competencia||'/'||vr_ano_competencia,'dd/mm/RRRR');
+              ELSE
+         vr_mes_competencia := SUBSTR(pr_dtcompet,1,2);
+         vr_ano_competencia := SUBSTR(pr_dtcompet,3,4);       
 
-            END IF;
+         vr_dtcompet := TO_DATE('01/'||vr_mes_competencia||'/'||vr_ano_competencia,'dd/mm/RRRR');             
+                  END IF;                 
+          
+       -- Obtém a data de apuração mínima para agendamento
+       vr_dtminage := ADD_MONTHS(TRUNC(rw_crapdat.dtmvtocd,'MM'),-1);
+       
+       IF vr_dtcompet < vr_dtminage THEN
+         pr_dscritic := 'GPS com competência inferior a #dtminage# não pode ser agendada. Para efetivar o pagamento utilize a rotina de Pagamento de GPS.';
+         pr_dscritic := REPLACE(pr_dscritic, '#dtminage#', TO_CHAR(vr_dtminage,'fmMonth/YYYY','nls_date_language =''brazilian portuguese'''));
+                    RAISE vr_exc_saida;
+                  END IF;
+                END IF;
 
             -- Validar dia útil
             vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
@@ -7329,20 +7332,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             END IF;
 
             -- valida se pagamento já existe
-
              vr_cdidenti := SUBSTR(pr_cdbarras,24,14);
              vr_cddpagto := SUBSTR(pr_cdbarras,20,4);
-             vr_dtcompet := SUBSTR(pr_cdbarras,42,2) || SUBSTR(pr_cdbarras,38,4);
              vr_vltotgps := TO_NUMBER(SUBSTR(pr_cdbarras,6,10)) / 100;
 
            -- Verificar se o registro existe na CRAPLGP
-              OPEN  cr_craplgp(pr_cdcooper            -- pr_cdcooper
+     OPEN cr_craplgp(pr_cdcooper            -- pr_cdcooper
                               ,rw_crapdat.dtmvtolt    -- pr_dtmvtolt
                               ,vr_cdidenti            -- pr_cdidenti
                               ,vr_cddpagto            -- pr_cddpagto
-                              ,vr_dtcompet            -- pr_dtcompet
+                    ,SUBSTR(pr_cdbarras,42,2) || SUBSTR(pr_cdbarras,38,4) -- pr_dtcompet
                               ,vr_vltotgps);          -- pr_vlrtotal
-
               FETCH cr_craplgp INTO rw_craplgp;
 
               -- Se encontrar registro
@@ -7363,7 +7363,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             vr_reslote := vr_dstransa;
             
             -- Aqui valida total com lotes
-
             -- Validar Saldos
             INET0001.pc_verifica_operacao (pr_cdcooper => pr_cdcooper          --Código Cooperativa
                                           ,pr_cdagenci => 90                   --Agencia do Associado
@@ -7397,15 +7396,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                 RAISE vr_exc_saida;
               END IF;
 
-            --
             -- Monta XML de retorno
             dbms_lob.createtemporary(pr_retxml, TRUE);
             dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
-
             gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                    ,pr_texto_completo => vr_xml_temp
                                    ,pr_texto_novo     => '<dados>');
-
             gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                    ,pr_texto_completo => vr_xml_temp
                                    ,pr_texto_novo     =>
@@ -7421,12 +7417,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                    '<dshistor>' || nvl(vr_dshistor,' ')                                        || '</dshistor>' ||                                   
                                    '<dsreslot>' || vr_reslote || '</dsreslot>');
 
-
             gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                    ,pr_texto_completo => vr_xml_temp
                                    ,pr_texto_novo     => '</dados>'
                                    ,pr_fecha_xml      => TRUE);
-
            EXCEPTION
              WHEN vr_exc_saida THEN
                 pr_retxml := '<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||

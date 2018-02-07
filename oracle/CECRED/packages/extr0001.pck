@@ -775,7 +775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 			   21/07/2017 - Incluído histórico 508 na procedure pc_consulta_extrato. (Andrey - Mouts)
          
          11/09/2017 - Reincluída a alteração referente ao chamado #707230 (Carlos)
-         
+
          03/10/2017 - Corrigi a lista de historicos na pc_obtem_saldo_dia e alterei a consistencia
                       para resgates considerar resgates automaticos de aplicacoes no saldo do cooperado. 
                       (SD 768972 - Carlos Rafael Tanholi)

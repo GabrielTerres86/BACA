@@ -136,6 +136,9 @@
                
                26/09/2017 - Alteracao da forma de atualizacao automatica do plano de cotas para
 							"Correcao por Valor Fixo". SD 761675 (Carlos Rafael Tanholi)
+               09/10/2017 - Retornar protocolo da ultima alteracao no plano na
+                            procedure obtem-novo-plano (David)
+               
 ..............................................................................*/
 
 
@@ -817,6 +820,14 @@ PROCEDURE obtem-novo-plano:
 
     ASSIGN tt-novo-plano.despagto = aux_despagto
            tt-novo-plano.dtfuturo = aux_dtdpagto.
+            
+    FOR LAST crappro WHERE crappro.cdcooper = par_cdcooper AND
+                           crappro.nrdconta = par_nrdconta AND
+                           crappro.cdtippro = 3            AND
+                           crappro.nrdocmto = crappla.nrctrpla NO-LOCK. END.
+                           
+    IF  AVAILABLE crappro  THEN
+        ASSIGN tt-novo-plano.dsprotoc = crappro.dsprotoc.
             
     RUN proc_gerar_log (INPUT par_cdcooper,
                         INPUT par_cdoperad,

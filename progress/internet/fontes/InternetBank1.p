@@ -148,6 +148,7 @@ CREATE WIDGET-POOL.
 { sistema/generico/includes/b1wgen0003tt.i }
 { sistema/generico/includes/b1wgen0004tt.i }
 { sistema/generico/includes/b1wgen0006tt.i }
+{ sistema/generico/includes/b1wgen0015tt.i }
 { sistema/generico/includes/b1wgen0020tt.i }
 { sistema/generico/includes/b1wgen0021tt.i }
 { sistema/generico/includes/b1wgen0030tt.i }
@@ -160,6 +161,7 @@ DEF VAR h-b1wgen0003 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0004 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0006 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0014 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0015 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0020 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0021 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0023 AS HANDLE                                         NO-UNDO.
@@ -214,6 +216,11 @@ DEF VAR aux_vlreccap AS DECI                                           NO-UNDO.
 DEF VAR aux_vllicret AS DECI                                           NO-UNDO.
 DEF VAR aux_vltotren AS DECI                                           NO-UNDO.
 DEF VAR aux_vljurcap AS DECI                                           NO-UNDO.
+DEF VAR aux_vllimvrb AS DECI                                           NO-UNDO.
+DEF VAR aux_vllimted AS DECI                                           NO-UNDO.
+DEF VAR aux_vllimpag AS DECI                                           NO-UNDO.
+DEF VAR aux_vllimtrf AS DECI                                           NO-UNDO.
+DEF VAR aux_vllimflp AS DECI                                           NO-UNDO.
 
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
 DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
@@ -1155,7 +1162,7 @@ CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
    WHERE PROC-HANDLE = aux_ponteiro.
 
 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-	
+
 END.
 
 
@@ -1260,6 +1267,41 @@ IF  aux_inpessoa = 1 THEN DO:
     /** VERIFICACAO DA ATUALIZACAO TELEFONE **/
 END.
 
+/** Buscar limites operacionais do titular da conta **/
+RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET h-b1wgen0015.
+
+RUN busca_limites IN h-b1wgen0015 (INPUT par_cdcooper,
+                                   INPUT par_nrdconta,
+                                   INPUT par_idseqttl,
+                                   INPUT FALSE,
+                                   INPUT par_dtmvtocd,
+                                   INPUT FALSE,
+                                   INPUT "INTERNET",
+                                  OUTPUT aux_dscritic,
+                                  OUTPUT TABLE tt-limites-internet).
+                                  
+DELETE PROCEDURE h-b1wgen0015.
+
+ASSIGN aux_vllimvrb = 0
+       aux_vllimted = 0
+       aux_vllimpag = 0
+       aux_vllimtrf = 0
+       aux_vllimflp = 0.
+       
+FOR FIRST tt-limites-internet NO-LOCK. END.
+
+IF  AVAILABLE tt-limites-internet THEN
+    DO:
+        ASSIGN aux_vllimvrb = tt-limites-internet.vllimvrb
+               aux_vllimted = tt-limites-internet.vllimted.
+               
+        IF  crapass.inpessoa = 1  THEN 
+            ASSIGN aux_vllimpag = tt-limites-internet.vllimweb
+                   aux_vllimtrf = tt-limites-internet.vllimweb.
+        ELSE
+            ASSIGN aux_vllimpag = tt-limites-internet.vllimpgo
+                   aux_vllimtrf = tt-limites-internet.vllimtrf.
+   END.
 
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmextttl>" +
@@ -1395,7 +1437,19 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmextttl>" +
                                TRIM(STRING(aux_vljurcap,"zzz,zzz,zzz,zz9.99-")) +
                                "</vljurcap><flgbinss>" +
                                STRING(aux_flgbinss) +
-                               "</flgbinss><nmtitula>" + aux_nmtitula + "</nmtitula></CORRENTISTA>".
+                               "</flgbinss><nmtitula>" + 
+                               aux_nmtitula + 
+                               "</nmtitula><vllimpag>" + 
+                               STRING(aux_vllimpag, "zzz,zzz,zzz,zz9.99") +
+                               "</vllimpag><vllimtrf>" +
+                               STRING(aux_vllimtrf, "zzz,zzz,zzz,zz9.99") +
+                               "</vllimtrf><vllimted>" + 
+                               STRING(aux_vllimted, "zzz,zzz,zzz,zz9.99") + 
+                               "</vllimted><vllimvrb>" + 
+                               STRING(aux_vllimvrb, "zzz,zzz,zzz,zz9.99") + 
+                               "</vllimvrb><vllimflp>" + 
+                               STRING(aux_vllimflp, "zzz,zzz,zzz,zz9.99") + 
+                               "</vllimflp></CORRENTISTA>".
 
 RETURN "OK".
 

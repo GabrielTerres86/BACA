@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fabricio
-   Data    : Agosto/2014.                       Ultima atualizacao: 30/05/2016
+   Data    : Agosto/2014.                       Ultima atualizacao: 07/11/2017
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -15,6 +15,8 @@
 
                 07/07/2016 - Alterção na mascara do cdrefere para exibir conforme limite 
 				             do campo da tabela (Odirlei-AMcom - [PROJ320])
+                     
+                07/11/2017 - Retornar indicadores de situacao da autorizacao (David).
    
 ..............................................................................*/
  
@@ -81,15 +83,20 @@ DO:
                                               "zzzzzzzzzzzzzzzzzzzzzzzz9") +
                                        "</cdrefere><vlmaxdeb>" +
                                        STRING(tt-autorizacoes-cadastradas.vlmaxdeb,
-                                              "zzz,zzz,zz9.99") +
+                                              "zzz,zzz,zzz,zz9.99") +
                                        "</vlmaxdeb><dshisext>" +
                                        tt-autorizacoes-cadastradas.dshisext +
                                        "</dshisext><inaltera>" +
                                        STRING(tt-autorizacoes-cadastradas.inaltera) +
                                        "</inaltera><cdhistor>" +
                                        STRING(tt-autorizacoes-cadastradas.cdhistor) +
-                                       "</cdhistor>" +
-                                       "</AUTORIZACAO>".
+                                       "</cdhistor><insituac>" +
+                                       STRING(tt-autorizacoes-cadastradas.insituac) +
+                                       "</insituac><dssituac>" +
+                                       tt-autorizacoes-cadastradas.dssituac +
+                                       "</dssituac><dssegmto>" +
+                                       tt-autorizacoes-cadastradas.dssegmto +
+                                       "</dssegmto></AUTORIZACAO>".
         
     END.
 

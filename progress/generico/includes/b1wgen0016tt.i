@@ -2,7 +2,7 @@
 
    Programa: b1wgen0016tt.i                  
    Autor   : David
-   Data    : Abril/2008                         Ultima atualizacao: 24/05/2016
+   Data    : Abril/2008                         Ultima atualizacao: 21/09/2017
    Dados referentes ao programa:
 
    Objetivo  : Arquivo com variaveis utlizadas na BO b1wgen0016.p
@@ -46,9 +46,12 @@
 
                06/03/2017 - Adicionados campos nrddd, nrcelular e nmoperadora em 
                             tt-dados-agendamento (Projeto 321 - Lombardi).
-
+							
 			   06/03/2017 - Adicionados para o GPS (Previdência Social)
 							(Prj 354.2 - Ricardo Linhares).
+
+               21/09/2017 - Incluir campos referente a debaut na temp-table
+                            tt-convenios_aceitos (David).
 
 ..............................................................................*/
 
@@ -59,7 +62,10 @@ DEF TEMP-TABLE tt-convenios_aceitos NO-UNDO
     FIELD cdsegmto AS INTE
     FIELD hhoraini AS CHAR
     FIELD hhorafim AS CHAR
-    FIELD hhoracan AS CHAR.
+    FIELD hhoracan AS CHAR
+    FIELD fldebaut AS LOGI
+    FIELD cdhisdeb LIKE crapcon.cdhistor
+    FIELD dssegmto AS CHAR.
         
 DEF TEMP-TABLE tt-dados-agendamento NO-UNDO
     FIELD dtmvtage AS DATE
@@ -156,7 +162,8 @@ DEF TEMP-TABLE tt-criticas_transacoes_oper NO-UNDO
     FIELD flgtrans AS LOGICAL
     FIELD nrdrowid AS CHAR
     FIELD cdtransa AS INTE
-    FIELD dsprotoc AS CHAR.
+    FIELD dsprotoc AS CHAR    
+    FIELD cdtiptra AS INTE.
 
 DEF TEMP-TABLE tt-parmon
     FIELD vlinimon LIKE crapcop.vlinimon

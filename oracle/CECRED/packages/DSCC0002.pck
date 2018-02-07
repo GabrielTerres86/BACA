@@ -53,6 +53,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0002 AS
                                  ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Titular da Conta
                                  ,pr_nrctrlim  IN craplim.nrctrlim%TYPE --> Contrato
                                  ,pr_nrborder  IN crapbdc.nrborder%TYPE --> Numero do bordero
+                                 ,pr_iddspscp  IN INTEGER               --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                                  ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                  ,pr_retxml   OUT CLOB);                --> Arquivo de retorno do XML
   
@@ -167,6 +168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
               ,to_char(bdc.dtlibbdc,'DD/MM/RRRR') dtlibbdc
               ,bdc.nrctrlim
               ,(CASE WHEN bdc.dtrejeit IS NOT NULL THEN 1 ELSE 0 END) rejeitad
+              ,DECODE(bdc.insitbdc,1,'Aguardando Análise',2,'Em Análise',3,'Liberado','') dssitbdc
           from crapbdc bdc
          where bdc.cdcooper = pr_cdcooper
            AND bdc.nrdconta = pr_nrdconta
@@ -324,6 +326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                                   || '<dtlibbdc>'||rw_crapbdc.dtlibbdc||'</dtlibbdc>'
                                                   || '<nrctrlim>'||rw_crapbdc.nrctrlim||'</nrctrlim>'
                                                   || '<rejeitad>'||rw_crapbdc.rejeitad||'</rejeitad>'
+                                                  || '<dssitbdc>'||CASE WHEN rw_crapbdc.rejeitad = 1 THEN 'Não Aprovado' ELSE rw_crapbdc.dssitbdc END||'</dssitbdc>'
                                                   || '</bordero>');
         
       END LOOP;
@@ -437,6 +440,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                         ,pr_nrdconta IN crapass.nrdconta%TYPE
                         ,pr_nrborder IN crapbdc.nrborder%TYPE) IS
         SELECT bdc.insitbdc
+             ,DECODE(bdc.insitbdc,1,'Aguardando Análise',2,'Em Análise',3,'Liberado','') dssitbdc
+             ,(CASE WHEN bdc.dtrejeit IS NOT NULL THEN 1 ELSE 0 END) rejeitad
           from crapbdc bdc
          where bdc.cdcooper = pr_cdcooper
            AND bdc.nrdconta = pr_nrdconta
@@ -485,6 +490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                                   || '<inconcil>'||rw_crapcdb.inconcil||'</inconcil>'
                                                   || '<insitana>'||rw_crapcdb.insitana||'</insitana>'
                                                   || '<dsdocmc7>'||rw_crapcdb.dsdocmc7||'</dsdocmc7>'
+                                                  || '<dsconcil>'||CASE WHEN rw_crapcdb.inconcil = 0 THEN 'Pendente Entrega' ELSE 'Entregue' END||'</dsconcil>'
                                                   || '</cheque>');
         IF vr_qtregist = 0 THEN
           vr_qtregist := rw_crapcdb.qtregist;
@@ -514,6 +520,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_pgto_temp
                              ,pr_texto_novo     =>  '<insitbdc>' || rw_crapbdc.insitbdc || '</insitbdc>'
+                             ,pr_fecha_xml      => TRUE);
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_pgto_temp
+                             ,pr_texto_novo     =>  '<dssitbdc>' || CASE WHEN rw_crapbdc.rejeitad = 1 THEN 'Não Aprovado' ELSE rw_crapbdc.dssitbdc END || '</dssitbdc>'
+                             ,pr_fecha_xml      => TRUE);                             
+                             
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_pgto_temp
+                             ,pr_texto_novo     =>  '<rejeitad>' || rw_crapbdc.rejeitad || '</rejeitad>'
                              ,pr_fecha_xml      => TRUE);
       
     EXCEPTION
@@ -957,6 +973,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                  ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Titular da Conta
                                  ,pr_nrctrlim  IN craplim.nrctrlim%TYPE --> Contrato
                                  ,pr_nrborder  IN crapbdc.nrborder%TYPE --> Numero do bordero
+                                 ,pr_iddspscp  IN INTEGER               --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                                  ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                  ,pr_retxml   OUT CLOB) IS              --> Arquivo de retorno do XML
 
@@ -992,6 +1009,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       vr_xml_pgto_temp VARCHAR2(32726) := '';
       vr_retxml        XMLType;
       vr_nmarqpdf      VARCHAR2(1000);
+      vr_dssrvarq      VARCHAR2(200);
+      vr_dsdirarq      VARCHAR2(200);
     
     BEGIN
       
@@ -1021,7 +1040,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                         ,pr_dsiduser => to_char(pr_nrdconta)
                                         ,pr_flgemail => 0
                                         ,pr_flgerlog => 0
+                                        ,pr_iddspscp => pr_iddspscp
                                         ,pr_nmarqpdf => vr_nmarqpdf
+                                        ,pr_dssrvarq => vr_dssrvarq
+                                        ,pr_dsdirarq => vr_dsdirarq                                        
                                         ,pr_cdcritic => vr_cdcritic
                                         ,pr_dscritic => vr_dscritic);
       
@@ -1032,7 +1054,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       -- Encerrar a tag raiz
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_pgto_temp
-                             ,pr_texto_novo     => '<nmarqpdf>' || vr_nmarqpdf || '</nmarqpdf>'
+                             ,pr_texto_novo     => '<nmarqpdf>' || vr_nmarqpdf || '</nmarqpdf>' ||
+                                                   '<dsdirarq>' || vr_dsdirarq || '</dsdirarq>' ||
+                                                   '<dssrvarq>' || vr_dssrvarq || '</dssrvarq>'
                              ,pr_fecha_xml      => TRUE);
       
     EXCEPTION
@@ -1147,6 +1171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                                   '   <cdagechq>' || vr_tab_cheques(vr_index_cheque).cdagechq || '</cdagechq>' ||
                                   '   <nrctachq>' || vr_tab_cheques(vr_index_cheque).nrctachq || '</nrctachq>' ||
                                   '   <cdcmpchq>' || vr_tab_cheques(vr_index_cheque).cdcmpchq || '</cdcmpchq>' ||
+                                  '   <dsdocmc7>' || vr_tab_cheques(vr_index_cheque).dsdocmc7 || '</dsdocmc7>' ||
                                   '</emitente'|| vr_index_cheque || '>';
             END IF;
           END IF;
@@ -1630,7 +1655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
     Objetivo  : Verifica se a conta exige assinatura multipla
 
     Alteracoes: 24/08/2017 - Ajuste na busca de emitentes. (Lombardi)
-    
+
 	            19/09/2017 - Ajuste na busta de emitente 085 na crapttl (Daniel)
     
     ............................................................................. */

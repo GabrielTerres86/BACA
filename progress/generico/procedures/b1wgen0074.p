@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 14/11/2017
+    Data    : Maio/2010                   Ultima atualizacao: 24/01/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -224,6 +224,9 @@
 							( Jonata - RKAM P364).		
 
                 14/11/2017 - Incluido campo  tt-conta-corr.dtadmiss. PRJ339-CRM(Odirlei-AMcom)
+
+                24/01/2018 - Adicionar validacao para verificar se cooperado teve lancamento
+                             de INSS nos ultimos 3 meses ao mudar de PA (Lucas Ranghetti #835169)
 
 .............................................................................*/
 
@@ -1934,7 +1937,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_flgexclu AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_flgrestr AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_indserma AS LOG                            NO-UNDO.
-	DEF  INPUT PARAM par_idastcjt AS INTE							NO-UNDO.
+    DEF  INPUT PARAM par_idastcjt AS INTE							              NO-UNDO.
 	
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM log_msgatcad AS CHAR                           NO-UNDO.
@@ -2337,6 +2340,20 @@ PROCEDURE Grava_Dados:
                   
                   IF NOT AVAIL tt-dados-beneficiario THEN
                      LEAVE.
+                  
+                  /* se a conta nao tiver lançamento pro NB nos últimos 3 meses, vamos considerar inativo
+                     chamado SD 835169 */
+                  FIND FIRST craplcm WHERE craplcm.cdcooper = par_cdcooper
+                                       AND craplcm.nrdconta = crapass.nrdconta
+                                       AND craplcm.cdhistor = 1399
+                                       AND craplcm.dtmvtolt <= par_dtmvtolt
+                                       AND craplcm.dtmvtolt >= (par_dtmvtolt - 90)
+                                       /*Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)*/
+                                       AND DEC(ENTRY(1,craplcm.cdpesqbb, ";")) = crapdbi.nrrecben
+                                       NO-LOCK NO-ERROR.
+                 
+                 IF  NOT AVAILABLE craplcm THEN
+                     NEXT.
                   
                   /*Foi acorado com a area de compensacao que se for solicitado
                     a troca de PA para um cooperado, no qual seu beneficio

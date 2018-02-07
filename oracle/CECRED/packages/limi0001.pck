@@ -244,6 +244,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   --             03/10/2017 - Imprimir conta quando o avalista for cooperado
   --                          Junior (Mouts) - Chamado 767055
   --
+  --             14/11/2017 - Incluido retorno do operador na proc pc_ultimas_alteracoes 
+  --                          para a nova coluna ultimas alterações do limite de credito
+  --                          Chamado 791852 (Mateus Z - Mouts)
+  --  
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_tela_cadlim_consultar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa
                                     ,pr_flgdepop IN INTEGER               --> Flag para verificar o departamento do operador
@@ -3164,12 +3168,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                when 4 then 'TRANSFERENCIA C/C'
                                else 'DIFERENTE' end dsmotivo
              , null dhalteracao
+			 , o.nmoperad
           from craplim c
+             , crapope o
          where c.cdcooper = pr_cdcooper
            and c.nrdconta = pr_nrdconta
            and c.tpctrlim = 1            
            and c.insitlim = 3            
            and c.nrctrlim <> 0
+		   and o.cdcooper = c.cdcooper
+		   and o.cdoperad = c.cdoperad
         union
         select t.cdcooper
              , t.nrctrlim
@@ -3179,6 +3187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              , 'MAJORACAO' dssitlli
              , ('Limite - '||t.dsvalor_anterior||' --> '||t.dsvalor_novo) dsmotivo
              , t.dhalteracao
+			 , 'SUPER-USUARIO' nmoperad
           from craplim x
              , tblimcre_historico t
          where x.cdcooper = t.cdcooper
@@ -3199,6 +3208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              , 'RENOVACAO' dssitlli
              , ('Renovacao '||' - '||to_char(t.dhalteracao,'DD/MM/RRRR')) dsmotivo
              , t.dhalteracao
+			 , 'SUPER-USUARIO' nmoperad
           from craplim x
              , tblimcre_historico t
          where x.cdcooper = t.cdcooper
@@ -3219,12 +3229,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              , 'LIMITE ATIVO' dssitlli
              , (' ') dsmotivo
              , null dhalteracao
+			 , o.nmoperad
           from craplim x
+             , crapope o
          where x.cdcooper = pr_cdcooper
            and x.nrdconta = pr_nrdconta
            and x.tpctrlim = 1
            and x.nrctrlim <> 0
-           and x.insitlim = 2) x
+           and x.insitlim = 2
+		   and o.cdcooper = x.cdcooper
+           and o.cdoperad = x.cdoperad) x
         order
            by dtfimvig desc, dhalteracao desc;
       vr_cdcritic      crapcri.cdcritic%TYPE;
@@ -3265,6 +3279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vllimite', pr_tag_cont => r_ultimas_alteracoes.vllimite, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dssitlli', pr_tag_cont => r_ultimas_alteracoes.dssitlli, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsmotivo', pr_tag_cont => r_ultimas_alteracoes.dsmotivo, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmoperad', pr_tag_cont => r_ultimas_alteracoes.nmoperad, pr_des_erro => vr_dscritic);
         vr_contador := vr_contador + 1;
       end loop;
     exception

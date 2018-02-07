@@ -41,7 +41,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 05/06/2017
+   Data    : Agosto/2006                   Ultima Atualizacao: 02/10/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -308,7 +308,7 @@ PROCEDURE gera_protocolo:
     
     CLOSE STORED-PROC pc_gera_protocolo_car aux_statproc = PROC-STATUS
           WHERE PROC-HANDLE = aux_handproc.
-    
+
     ASSIGN par_dsprotoc = ""
            par_dscritic = ""
            aux_des_erro = ""
@@ -318,11 +318,11 @@ PROCEDURE gera_protocolo:
                           WHEN pc_gera_protocolo_car.pr_dscritic <> ?
            aux_des_erro = pc_gera_protocolo_car.pr_des_erro
                           WHEN pc_gera_protocolo_car.pr_des_erro <> ?.
-
+    
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                   
+    
     RETURN aux_des_erro.
-                   
+
 END PROCEDURE. /* Fim gera_protocolo */
 
 PROCEDURE lista_protocolos:
@@ -419,7 +419,7 @@ PROCEDURE lista_protocolos:
     END.
     ELSE
     FOR EACH crappro WHERE crappro.cdcooper  = par_cdcooper  AND
-                           crappro.nrdconta  = par_nrdconta  AND
+                           crappro.nrdconta  = par_nrdconta  AND                           
                            crappro.dttransa >= par_dtinipro  AND
                            crappro.dttransa <= par_dtfimpro  AND
                           (par_cdtippro      = 0             OR
@@ -497,7 +497,7 @@ PROCEDURE lista_protocolo:
        crabpro.cdtippro = 1 AND
        SUBSTR(crabpro.dsinform[3],1,3) <> "TAA" THEN
            NEXT.
-               
+
         IF par_cdorigem = 3 AND /* InternetBank */
            crabpro.cdtippro = 20 AND
            SUBSTR(crabpro.dsinform[3],1,3) = "TAA" THEN
@@ -540,19 +540,20 @@ PROCEDURE lista_protocolo:
                                                         OR crabpro.cdtippro = 6
                                                         OR crabpro.cdtippro = 9
                                                         OR crabpro.cdtippro = 11
-														OR crabpro.cdtippro = 13
+                                                        OR crabpro.cdtippro = 13
                                                         OR crabpro.cdtippro = 15
                                                         OR crabpro.cdtippro = 16
                                                         OR crabpro.cdtippro = 17
                                                         OR crabpro.cdtippro = 18
                                                         OR crabpro.cdtippro = 19
 														OR crabpro.cdtippro = 20
+                                                        
                cratpro.cdagectl    = crapcop.cdagectl WHEN (crabpro.cdtippro = 1 AND par_cdorigem = 3)
                                                         OR crabpro.cdtippro = 2
                                                         OR crabpro.cdtippro = 6
                                                         OR crabpro.cdtippro = 9
                                                         OR crabpro.cdtippro = 11
-														OR crabpro.cdtippro = 13
+                                                        OR crabpro.cdtippro = 13
                                                         OR crabpro.cdtippro = 15
                                                         OR crabpro.cdtippro = 16
                                                         OR crabpro.cdtippro = 17

@@ -621,15 +621,6 @@ BEGIN
     -- Grava os dados restantes conforme PL Table
     pc_grava_dados(pr_cdrestart => vr_ultconta);
 
-    -- Encerrar o job do processamento paralelo dessa agencia
-    GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-                                ,pr_idprogra => pr_cdagenci
-                                ,pr_des_erro => vr_dscritic);
-    -- Se houve erro
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
-    
     -- Finaliza agencia no controle do batch
     GENE0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole
                                        ,pr_cdcritic   => vr_cdcritic
@@ -639,6 +630,15 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
 
+    -- Encerrar o job do processamento paralelo dessa agencia
+    GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                ,pr_idprogra => pr_cdagenci
+                                ,pr_des_erro => vr_dscritic);
+    -- Se houve erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
     -- Processo OK, devemos chamar a fimprg
     BTCH0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                              ,pr_cdprogra => vr_cdprogra

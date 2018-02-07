@@ -193,7 +193,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     --  Sistema  : DDDA
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Janeiro/2017.                   Ultima atualizacao: 12/07/2017
+    --  Data     : Janeiro/2017.                   Ultima atualizacao: 23/01/2018
     --
     -- Dados referentes ao programa:
     --
@@ -201,6 +201,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     -- Objetivo  : Procedure para processar o retorno de inclusaon do titulo do NPC-CIP
     --
     -- Alteracoes: 12/07/2017 - Atualizar motivo A4 na confirmação do boleto na crapret (Rafael)
+    --
+    --             23/01/2018 - Atualizar motivo PC se o pagador nao for DDA (Rafael)    
     ---------------------------------------------------------------------------------------------------------------
   
     ---------->>> CURSORES <<<-----------
@@ -212,6 +214,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
              ,cob.nrcnvcob
              ,cob.nrdocmto            
              ,cob.inregcip            
+             ,decode(cob.cdtpinsc,1,'F','J') tppessoa
+             ,cob.nrinssac            
         FROM crapcob cob
        WHERE cob.idtitleg = pr_idtitleg;
     rw_crapcob cr_crapcob%ROWTYPE;   
@@ -228,7 +232,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     vr_dhenvcip   crapcob.dhenvcip%TYPE;
     vr_dsmensag   crapcol.dslogtit%TYPE;
     vr_inregcip   crapcob.inregcip%TYPE;
-    
+    vr_cdmotivo   VARCHAR2(2);
+    vr_flgsacad   INTEGER := 0;    
     
   BEGIN
   
@@ -286,8 +291,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
        
        IF pr_cdstiope = 'RC' THEN
          
+         -- verificar se o pagador eh DDA         
+         DDDA0001.pc_verifica_sacado_DDA(pr_tppessoa => rw_crapcob.tppessoa
+                                        ,pr_nrcpfcgc => rw_crapcob.nrinssac
+                                        ,pr_flgsacad => vr_flgsacad
+                                        ,pr_cdcritic => vr_cdcritic
+                                        ,pr_dscritic => vr_dscritic);
+                                        
+         IF vr_cdcritic > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+           RAISE vr_exc_erro;
+         END IF;                                                             
+
+         IF vr_flgsacad = 1 THEN
+           -- A4 = Pagador DDA
+           vr_cdmotivo := 'A4';
+         ELSE
+           -- PC = Boleto PCR (ou NPC)
+           vr_cdmotivo := 'PC';
+         END IF;
+                            
          UPDATE crapret ret
-            SET cdmotivo = 'A4' || cdmotivo
+            SET cdmotivo = vr_cdmotivo || cdmotivo
           WHERE ret.cdcooper = rw_crapcob.cdcooper
             AND ret.nrdconta = rw_crapcob.nrdconta
             AND ret.nrcnvcob = rw_crapcob.nrcnvcob

@@ -131,6 +131,11 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                                ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
                                ,pr_des_erro    OUT VARCHAR2); --> Erros do processo
 
+  PROCEDURE pc_lista_pas(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                        ,pr_flgpaaut  IN BOOLEAN DEFAULT TRUE  --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
+                        ,pr_retxml   OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+                        ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                                                              
+
 END TELA_CADPAC;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
@@ -1225,7 +1230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).hrinipaa
                               ,pr_des_erro => vr_dscritic);
 															
-				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
                               ,pr_tag_nova => 'hrfimpaa'
@@ -4444,6 +4449,115 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
     END;
 
   END pc_grava_dados_site;
+
+  PROCEDURE pc_lista_pas(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                        ,pr_flgpaaut  IN BOOLEAN DEFAULT TRUE  --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
+                        ,pr_retxml   OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+                        ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo  
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_lista_pas
+    Sistema : SOA
+    Autor   : David
+    Data    : Janeiro/2018                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para listar os PAs da cooperativa
+
+    Alteracoes: 
+    ..............................................................................*/
+    DECLARE        
+      -- Tratamento de erros
+      vr_dscritic  VARCHAR2(10000);
+      vr_exc_saida EXCEPTION;
+      
+      vr_qtregist  NUMBER; 
+      vr_flgpaaut  NUMBER;     
+      
+      -- Selecionar os dados
+      CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE,
+                        pr_flgpaaut IN NUMBER) IS
+      SELECT crapage.cdagenci
+            ,crapage.nmextage
+            ,crapage.nmresage
+            ,crapage.nmpasite
+        FROM crapage
+       WHERE crapage.cdcooper = pr_cdcooper
+         AND crapage.insitage NOT IN (0,2)
+         AND ((pr_flgpaaut = 1 AND crapage.cdagenci NOT IN (999))
+          OR  (pr_flgpaaut = 0 AND crapage.cdagenci NOT IN (90,91,999)));
+      rw_crapage cr_crapage%ROWTYPE; 
+    BEGIN    
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      
+      gene0007.pc_insere_tag(pr_xml => pr_retxml
+                            ,pr_tag_pai => 'Root'
+                            ,pr_posicao => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => ''
+                            ,pr_des_erro => vr_dscritic);
+      
+      vr_qtregist := 0;
+      vr_flgpaaut := CASE WHEN pr_flgpaaut THEN 1 ELSE 0 END;
+      
+      FOR rw_crapage IN cr_crapage(pr_cdcooper => pr_cdcooper
+                                  ,pr_flgpaaut => vr_flgpaaut) LOOP          
+        
+        gene0007.pc_insere_tag(pr_xml => pr_retxml
+                              ,pr_tag_pai => 'Dados'
+                              ,pr_posicao => 0
+                              ,pr_tag_nova => 'PA'
+                              ,pr_tag_cont => ''
+                              ,pr_des_erro => vr_dscritic);      
+                              
+        gene0007.pc_insere_tag(pr_xml => pr_retxml
+                              ,pr_tag_pai => 'PA'
+                              ,pr_posicao => vr_qtregist
+                              ,pr_tag_nova => 'cdagenci'
+                              ,pr_tag_cont => TO_CHAR(rw_crapage.cdagenci)
+                              ,pr_des_erro => vr_dscritic);          
+
+        gene0007.pc_insere_tag(pr_xml => pr_retxml
+                              ,pr_tag_pai => 'PA'
+                              ,pr_posicao => vr_qtregist
+                              ,pr_tag_nova => 'nmextage'
+                              ,pr_tag_cont => TO_CHAR(rw_crapage.nmextage)
+                              ,pr_des_erro => vr_dscritic);                                                            
+                              
+        gene0007.pc_insere_tag(pr_xml => pr_retxml
+                              ,pr_tag_pai => 'PA'
+                              ,pr_posicao => vr_qtregist
+                              ,pr_tag_nova => 'nmresage'
+                              ,pr_tag_cont => TO_CHAR(rw_crapage.nmresage)
+                              ,pr_des_erro => vr_dscritic);  
+                              
+        gene0007.pc_insere_tag(pr_xml => pr_retxml
+                              ,pr_tag_pai => 'PA'
+                              ,pr_posicao => vr_qtregist
+                              ,pr_tag_nova => 'nmpasite'
+                              ,pr_tag_cont => TO_CHAR(rw_crapage.nmpasite)
+                              ,pr_des_erro => vr_dscritic);                                                              
+                              
+        vr_qtregist := vr_qtregist + 1;                              
+        
+      END LOOP;    
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_des_erro := 'NOK';
+        vr_dscritic := 'Erro geral na rotina da tela CADPAC: ' || SQLERRM;
+
+        -- Carregar XML padrão para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><dsmsgerr>' || vr_dscritic || '</dsmsgerr></Root>');
+    END;
+
+  END pc_lista_pas;                                                   
 
 END TELA_CADPAC;
 /

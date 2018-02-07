@@ -1465,7 +1465,7 @@ end;';
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(AMcom)
-      Data     : Setembro/2017.                   Ultima atualizacao: 03/01/2018
+      Data     : Setembro/2017.                   Ultima atualizacao: 12/01/2018
     
       Dados referentes ao programa:
     
@@ -1475,12 +1475,13 @@ end;';
                                periodo de convivencia será tratado por faixa de valores
                                (Douglas - Chamado 823963)
         
+                  12/01/2018 - Ajuste para validar o valor do titulo e o valor informado
+                               utilizando ROUND na comparação (Douglas - Chamado 817561)
     ..........................................................................*/
   
     vr_flconviv  INTEGER;
     vr_idrollout INTEGER;
   BEGIN
-  
     vr_flconviv := NPCB0001.fn_valid_periodo_conviv (pr_dtmvtolt => pr_dtmvtolt
                                                     ,pr_vltitulo => pr_vltitulo);
       
@@ -1494,7 +1495,7 @@ end;';
     
       IF pr_flgregis = 0 THEN
         --> se estiver no rollout e valor informado for menor que valor do titulo
-        IF vr_idrollout = 1 AND pr_vlinform < pr_vltitulo THEN
+        IF vr_idrollout = 1 AND ROUND(pr_vlinform, 2) < ROUND(pr_vltitulo, 2) THEN
           RETURN 0; -- Nao permitir        
         ELSE
           -- se nao estiver no rollout ou valor nao for menor
@@ -1504,7 +1505,7 @@ end;';
       ELSE
         IF pr_flgpgdiv = 0 THEN
            -- Se o valor informado for menor que valor do titulo
-           IF pr_vlinform < pr_vltitulo THEN
+           IF ROUND(pr_vlinform, 2) < ROUND(pr_vltitulo, 2) THEN
              RETURN 0; -- Nao permitir     
            ELSE
              -- se nao estiver no rollout ou valor nao for menor

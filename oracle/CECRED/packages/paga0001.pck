@@ -2359,6 +2359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     vr_flghbtrf NUMBER;
     vr_dsmsgtar VARCHAR2(250);
     vr_dsmsgtrf VARCHAR2(250);
+    vr_dssitcta VARCHAR2(10);
     
     --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
@@ -2537,6 +2538,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     
     WHILE vr_index_contas_cad IS NOT NULL LOOP      
       
+      IF vr_tab_contas_cadastradas(vr_index_contas_cad).insitcta = 2 THEN
+        vr_dssitcta := 'Ativo';
+      ELSIF vr_tab_contas_cadastradas(vr_index_contas_cad).insitcta = 3 THEN
+        vr_dssitcta := 'Suspenso';
+      ELSE
+        vr_dssitcta := '';
+      END IF;        
+      
       gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<DADOS>' 
@@ -2557,6 +2566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                 ||   '<dsageban>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).dsageban)    ||'</dsageban>'
                                                 ||   '<nmageban>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).nmageban)    ||'</nmageban>'
                                                 ||   '<nmsegntl>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).nmtitul2)    ||'</nmsegntl>'
+                                                ||   '<dssitcta>'||vr_dssitcta                                                         ||'</dssitcta>'
                                                 || '</DADOS>');   
                            
       vr_index_contas_cad := vr_tab_contas_cadastradas.NEXT(vr_index_contas_cad);
@@ -10839,7 +10849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
      Sistema  : Rotinas Internet
      Sigla    : INET
      Autor    : Alisson C. Berrido - AMcom
-     Data     : Junho/2013.                   Ultima atualizacao: 03/08/2017
+     Data     : Junho/2013.                   Ultima atualizacao: 21/12/2017
 
      Dados referentes ao programa:
 
@@ -10881,6 +10891,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
                                4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
                                processo (Lucas Ranghetti #711123)       
+
+                  21/12/2017 - Ajuste na chamada da procedure pc_verifica_titulo  para que o 
+                               codigo de controle de consulta na CIP (craplau.cdctrlcs)
+                               seja passado como parametro, dessa forma o titulo é validado 
+                               com os mesmos dados que permitiram agendar o pagamento 
+                               (Douglas - Chamado 815286)
      ..........................................................................*/
 
   BEGIN
@@ -11433,6 +11449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_idorigem => pr_idorigem           --Indicador de origem
                              ,pr_indvalid => 1                     --nao validar
 							 ,pr_flmobile => 0                     --Indicador Mobile
+                             ,pr_cdctrlcs => rw_craplau.cdctrlcs   -- Numero de controle da consulta na CIP
                              ,pr_nmextbcc => vr_nmconban           --Nome do banco
                              ,pr_vlfatura => vr_vlrdocum           --Valor fatura
                              ,pr_dtdifere => vr_dtdifere           --Indicador data diferente
@@ -16839,8 +16856,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
         --Levantar Excecao
         RAISE vr_exc_erro;
-      END IF;      
-      
+      END IF;
+
       /* Preparar Lote de Retorno Cooperado */
       PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => pr_idtabcob     --ROWID da cobranca
                                          ,pr_cdocorre => pr_cdocorre     --Codigo Ocorrencia

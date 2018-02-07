@@ -60,6 +60,7 @@ CREATE WIDGET-POOL.
 
 { sistema/internet/includes/var_ibank.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i   }
 { sistema/internet/includes/b1wnet0001tt.i }
 { sistema/generico/includes/b1wgen0023tt.i }
 { sistema/generico/includes/b1wgen0015tt.i }
@@ -81,6 +82,8 @@ DEF VAR h-b1wgen0015 AS HANDLE                                         NO-UNDO.
 
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_contador AS INTE                                           NO-UNDO.
+DEF VAR aux_dsxmlout AS CHAR                                           NO-UNDO.
+DEF VAR aux_des_erro AS CHAR                                           NO-UNDO.
 
 /* sistema deve atribuir data do dia vindo da crapdat
    Rafael Cechet - 06/04/2011 */
@@ -269,6 +272,41 @@ FIND FIRST tt-dados-blt NO-LOCK NO-ERROR.
          
 IF  AVAILABLE tt-dados-blt  THEN    
     DO:
+        IF  tt-dados-blt.inpessoa > 1  THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                RUN STORED-PROCEDURE pc_busca_config_nome_blt
+                  aux_handproc = PROC-HANDLE NO-ERROR
+                                     (INPUT par_cdcooper,
+                                      INPUT par_nrdconta,
+                                      OUTPUT "",
+                                      OUTPUT "",
+                                      OUTPUT "").
+                                      
+                                     
+                CLOSE STORED-PROC pc_busca_config_nome_blt aux_statproc = PROC-STATUS
+                      WHERE PROC-HANDLE = aux_handproc.
+
+                ASSIGN aux_dsxmlout = ""
+                       aux_des_erro = ""
+                       aux_dscritic = ""
+                       aux_des_erro = pc_busca_config_nome_blt.pr_des_erro
+                                      WHEN pc_busca_config_nome_blt.pr_des_erro <> ?
+                       aux_dscritic = pc_busca_config_nome_blt.pr_dscritic
+                                      WHEN pc_busca_config_nome_blt.pr_dscritic <> ?
+                       aux_dsxmlout = pc_busca_config_nome_blt.pr_clobxmlc
+                                      WHEN pc_busca_config_nome_blt.pr_clobxmlc <> ?.      
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                IF  aux_des_erro <> "OK" OR
+                    aux_dscritic <> ""   THEN 
+                    ASSIGN aux_dsxmlout = "".                
+            END.
+        ELSE
+            ASSIGN aux_dsxmlout = "".
+            
         CREATE xml_operacao.
         ASSIGN xml_operacao.dslinxml = "<BOLETO><nrdctabb>" +
                                        TRIM(STRING(tt-dados-blt.nrdctabb,
@@ -323,6 +361,7 @@ IF  AVAILABLE tt-dados-blt  THEN
                                        "<cddbanco>" + STRING(tt-dados-blt.cddbanco) + "</cddbanco>" +
                                        "<flgregon>" + STRING(tt-dados-blt.flgregon) + "</flgregon>" +
                                        "<flgpgdiv>" + STRING(tt-dados-blt.flgpgdiv) + "</flgpgdiv>" +
+                                       (IF aux_dsxmlout <> "" THEN aux_dsxmlout ELSE "") +
                                        "</BOLETO>".
 
     END.
@@ -385,9 +424,15 @@ ASSIGN xml_operacao.dslinxml = "<SACADOS qttotsac='" +
                                            "1"
                                         ELSE 
                                            "0") +
-                                       "</flgemail></DADOS>".
+                                       "</flgemail><nmsacado>" +
+                                       tt-sacados-blt.nmsacado +
+                                       "</nmsacado><dsflgend>" +
+                                       STRING(tt-sacados-blt.dsflgend) +
+                                       "</dsflgend><dsflgprc>" +
+                                       STRING(tt-sacados-blt.dsflgprc) +
+                                       "</dsflgprc></DADOS>".
                                          
-    END.         
+END.
          
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "</SACADOS>".

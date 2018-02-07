@@ -4,14 +4,16 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fabricio
-   Data    : Agosto/2014.                       Ultima atualizacao:
+   Data    : Agosto/2014.                       Ultima atualizacao: 07/11/2017
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
    
    Objetivo  : Buscar os lancamentos agendados e efetivados - Debito Facil.
       
-   Alteracoes:
+   Alteracoes: 07/11/2017 - Retornar indicador de situacao do lancamento e
+                            protocolo de lancamento efetivado (David).
+                            
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -56,8 +58,7 @@ DO:
                                            INPUT par_dtiniper,
                                            INPUT par_dtfimper,
                                            INPUT par_cddopcao,
-                                          OUTPUT TABLE 
-                                                  tt-lancamentos).
+                                          OUTPUT TABLE tt-lancamentos).
     
     DELETE PROCEDURE h-b1wgen0092.
                 
@@ -85,8 +86,11 @@ DO:
                                        "</situacao><cdhistor>" +
                                        STRING(tt-lancamentos.cdhistor,
                                               "zzz9") +
-                                       "</cdhistor>" +
-                                       "</REGISTRO>".
+                                       "</cdhistor><insituac>" +
+                                       STRING(tt-lancamentos.insituac) +
+                                       "</insituac><dsprotoc>" +
+                                       tt-lancamentos.dsprotoc +
+                                       "</dsprotoc></REGISTRO>".
         
     END.
 

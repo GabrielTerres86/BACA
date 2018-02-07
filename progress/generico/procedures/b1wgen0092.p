@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 16/10/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 07/11/2017
     
    Dados referentes ao programa:
    
@@ -203,6 +203,9 @@
               16/10/2017 - Adicionar chamada da procedure pc_retorna_referencia_conv para formatar 
                            a referencia do convenio de acordo com o cadastrado na tabela crapprm 
                            (Lucas Ranghetti #712492)
+              07/11/2017 - Retornar indicador de situacao e descricao de protocolo
+                           na consulta de autorizacoes e lancamentos (David).
+                         
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1120,7 +1123,7 @@ PROCEDURE valida-dados:
 
         IF  par_cddopcao = "I"  THEN
             DO:   
-            
+                              
                 IF  par_cdrefere = 0 THEN              
                     DO:
                         ASSIGN aux_dscritic = "Informe o Codigo Identificador "
@@ -1140,7 +1143,7 @@ PROCEDURE valida-dados:
                                                OUTPUT aux_qtdigito,
                                                OUTPUT 0,   /* pr_cdcritic */
                                                OUTPUT ""). /* pr_dscritic */
-
+                              
                   CLOSE STORED-PROC pc_retorna_referencia_conv
                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
@@ -1189,7 +1192,7 @@ PROCEDURE valida-dados:
                                ASSIGN aux_cdcritic = 008
                                       par_nmdcampo = "cdrefere".
                                LEAVE Valida.
-                           END. 
+                    END.
                    END.
                     END.                
                 ELSE
@@ -2479,10 +2482,20 @@ PROCEDURE busca_autorizacoes_cadastradas:
 
     DEF OUTPUT PARAM TABLE FOR tt-autorizacoes-cadastradas.
 
-    DEF VAR aux_nmempcon         AS CHAR NO-UNDO.
-    DEF VAR aux_inaltera         AS LOGI NO-UNDO.
-    DEF VAR aux_cdempcon         AS INTE NO-UNDO.
-    DEF VAR aux_cdsegmto         AS INTE NO-UNDO.
+    DEF VAR aux_nmempcon         AS CHAR  NO-UNDO.
+    DEF VAR aux_inaltera         AS LOGI  NO-UNDO.
+    DEF VAR aux_cdempcon         AS INTE  NO-UNDO.
+    DEF VAR aux_cdsegmto         AS INTE  NO-UNDO.
+    DEF VAR aux_dssegmto AS CHAR EXTENT 8 NO-UNDO.
+    
+    ASSIGN aux_dssegmto[1] = "Prefeituras"
+           aux_dssegmto[2] = "Saneamento"
+           aux_dssegmto[3] = "Energia Elétrica e Gás"
+           aux_dssegmto[4] = "Telecomunicaçoes"
+           aux_dssegmto[5] = "Órgaos Governamentais"
+           aux_dssegmto[6] = "Órgaos Identificados pelo CNPJ"
+           aux_dssegmto[7] = "Multas de Trânsito"
+           aux_dssegmto[8] = "Uso Exclusivo do Banco".
     
     FOR EACH crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                            crapatr.nrdconta = par_nrdconta AND
@@ -2492,8 +2505,7 @@ PROCEDURE busca_autorizacoes_cadastradas:
                           (par_cddopcao <> "S"))                        NO-LOCK:
                             
         ASSIGN aux_nmempcon = ""
-               aux_inaltera = FALSE
-               aux_nmempcon = ""
+               aux_inaltera = FALSE               
                aux_cdempcon = 0
                aux_cdsegmto = 0.
         
@@ -2533,21 +2545,25 @@ PROCEDURE busca_autorizacoes_cadastradas:
                 ELSE 
                     ASSIGN aux_cdempcon = crapcon.cdempcon
                            aux_cdsegmto = crapcon.cdsegmto.                                                    
-            END.   
-
+            END.            
             
-            
+        IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
+            ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
+                   aux_nmempcon = REPLACE(aux_nmempcon, "FEBRABAN", "").
             
         CREATE tt-autorizacoes-cadastradas.
         ASSIGN tt-autorizacoes-cadastradas.nmextcon = aux_nmempcon
-               tt-autorizacoes-cadastradas.nmrescon = ""
-               tt-autorizacoes-cadastradas.cdempcon = IF  crapatr.cdhistor = 1019 THEN crapatr.cdempcon ELSE aux_cdempcon
-               tt-autorizacoes-cadastradas.cdsegmto = IF  crapatr.cdhistor = 1019 THEN crapatr.cdsegmto ELSE aux_cdsegmto
+               tt-autorizacoes-cadastradas.nmrescon = IF AVAIL crapcon AND TRIM(crapcon.nmrescon) <> '' THEN crapcon.nmrescon ELSE aux_nmempcon
+               tt-autorizacoes-cadastradas.cdempcon = IF crapatr.cdhistor = 1019 THEN crapatr.cdempcon ELSE aux_cdempcon
+               tt-autorizacoes-cadastradas.cdsegmto = IF crapatr.cdhistor = 1019 THEN crapatr.cdsegmto ELSE aux_cdsegmto
                tt-autorizacoes-cadastradas.cdrefere = crapatr.cdrefere
                tt-autorizacoes-cadastradas.vlmaxdeb = crapatr.vlrmaxdb
                tt-autorizacoes-cadastradas.dshisext = crapatr.dshisext
                tt-autorizacoes-cadastradas.inaltera = aux_inaltera
-               tt-autorizacoes-cadastradas.cdhistor = crapatr.cdhistor.
+               tt-autorizacoes-cadastradas.cdhistor = crapatr.cdhistor
+               tt-autorizacoes-cadastradas.insituac = IF crapatr.dtfimsus <> ? AND crapatr.dtfimsus > par_dtmvtolt THEN 2 ELSE 1
+               tt-autorizacoes-cadastradas.dssituac = IF tt-autorizacoes-cadastradas.insituac = 1 THEN 'ATIVO' ELSE 'SUSPENSO'
+               tt-autorizacoes-cadastradas.dssegmto = aux_dssegmto[tt-autorizacoes-cadastradas.cdsegmto].
                
         RELEASE crapscn.
         RELEASE gnconve.
@@ -3893,6 +3909,8 @@ PROCEDURE busca_lancamentos:
 
     DEF OUTPUT PARAM TABLE FOR tt-lancamentos.
     
+    DEF VAR aux_dsprotoc LIKE crappro.dsprotoc NO-UNDO.
+    
     /* busca os lancamentos agendados (PENDENTES e BLOQUEADOS) */
     FOR EACH craplau WHERE craplau.cdcooper = par_cdcooper      AND
                            craplau.nrdconta = par_nrdconta      AND
@@ -3917,6 +3935,8 @@ PROCEDURE busca_lancamentos:
                             crapatr.cdhistor = craplau.cdhistor AND
                             crapatr.cdrefere = craplau.nrdocmto NO-LOCK:
                             
+        ASSIGN aux_dsprotoc = "".
+        
         IF  crapatr.cdhistor <> 1019 THEN
             FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
                             gnconve.cdhisdeb = crapatr.cdhistor AND
@@ -3930,7 +3950,30 @@ PROCEDURE busca_lancamentos:
                                      (crapscn.cddmoden = 'A'                       OR
                                       crapscn.cddmoden = 'C') 
                                       NO-LOCK NO-ERROR NO-WAIT.
-
+                                      
+        IF  NOT AVAIL gnconve  AND
+            NOT AVAIL crapscn  THEN
+            NEXT.
+            
+        IF  craplau.flgblqdb  THEN /* Carregar comprovante do bloqueio */
+            DO:
+                FOR EACH crappro FIELDS (dsinform dsprotoc)
+                                  WHERE crappro.cdcooper  = craplau.cdcooper AND
+                                        crappro.nrdconta  = craplau.nrdconta AND
+                                        crappro.cdtippro  = 11               AND
+                                        crappro.dtmvtolt >= craplau.dtmvtolt AND
+                                        crappro.nrdocmto  = craplau.nrdocmto NO-LOCK
+                                        BY crappro.dttransa DESC BY crappro.hrautent:
+                                        
+                    IF  crappro.dsinform[1] = "Bloqueio de Debito - Inclusao"  THEN
+                        DO:
+                            ASSIGN aux_dsprotoc = crappro.dsprotoc.
+                            LEAVE. /* Carregar somente o ultimo comprovante de bloqueio */
+                        END.
+                        
+                END.
+            END.
+            
         CREATE tt-lancamentos.
         ASSIGN tt-lancamentos.dtmvtolt = craplau.dtmvtopg
                tt-lancamentos.nmextcon = IF (crapatr.cdhistor <> 1019) THEN gnconve.nmempres ELSE crapscn.dsnomcnv 
@@ -3941,7 +3984,9 @@ PROCEDURE busca_lancamentos:
                tt-lancamentos.situacao = IF craplau.flgblqdb THEN
                                             "BLOQUEADO"
                                          ELSE 
-                                            "PENDENTE".
+                                            "PENDENTE"
+               tt-lancamentos.insituac = IF craplau.flgblqdb THEN 2 ELSE 1
+               tt-lancamentos.dsprotoc = aux_dsprotoc.
     END.
 
     /* Ira consultar registros de Debito Facil somente se for a opcao de consulta */
@@ -3957,6 +4002,8 @@ PROCEDURE busca_lancamentos:
                                     crapatr.cdhistor = craplcm.cdhistor AND
                                     crapatr.cdrefere = craplcm.nrdocmto NO-LOCK:
                                     
+                ASSIGN aux_dsprotoc = "".
+                
                 IF  crapatr.cdhistor <> 1019 THEN
                     FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
                                              gnconve.cdhisdeb = crapatr.cdhistor AND
@@ -3970,6 +4017,21 @@ PROCEDURE busca_lancamentos:
                                              (crapscn.cddmoden = 'A'                       OR
                                               crapscn.cddmoden = 'C') 
                                               NO-LOCK NO-ERROR NO-WAIT.
+                          
+                IF  NOT AVAIL gnconve  AND
+                    NOT AVAIL crapscn  THEN
+                    NEXT.
+            
+                FOR FIRST crappro FIELDS (dsprotoc)
+                                  WHERE crappro.cdcooper = craplcm.cdcooper AND
+                                        crappro.nrdconta = craplcm.nrdconta AND
+                                        crappro.cdtippro = 15               AND
+                                        crappro.dtmvtolt = craplcm.dtmvtolt AND
+                                        crappro.nrdocmto = craplcm.nrdocmto AND
+                                        crappro.nrseqaut = craplcm.nrautdoc NO-LOCK. END.
+        
+                IF  AVAIL crappro  THEN
+                    ASSIGN aux_dsprotoc = crappro.dsprotoc.
         
                 CREATE tt-lancamentos.
                 ASSIGN tt-lancamentos.dtmvtolt = craplcm.dtmvtolt
@@ -3978,7 +4040,9 @@ PROCEDURE busca_lancamentos:
                        tt-lancamentos.nrdocmto = craplcm.nrdocmto
                        tt-lancamentos.vllanmto = craplcm.vllanmto
                        tt-lancamentos.cdhistor = craplcm.cdhistor
-                       tt-lancamentos.situacao = "EFETIVADO".
+                       tt-lancamentos.situacao = "EFETIVADO"
+                       tt-lancamentos.insituac = 3
+                       tt-lancamentos.dsprotoc = aux_dsprotoc.
             END.
         END. 
 
@@ -6293,19 +6357,19 @@ PROCEDURE busca_convenio_nome:
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdempcon AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdsegmto AS INTE NO-UNDO.
-
+   
     DEF OUTPUT PARAM pr_nmempcon AS CHAR NO-UNDO.
-        
+   
     FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
                              crapcon.cdempcon = par_cdempcon AND
                              crapcon.cdsegmto = par_cdsegmto NO-LOCK.    
-             
+   
     IF AVAILABLE crapcon THEN    
-    DO:
+      DO:
       ASSIGN pr_nmempcon = crapcon.nmextcon.
-    END.    
-
+      END.
+   
     RELEASE crapcon.
   
-    RETURN "OK".
-END PROCEDURE.    
+  RETURN "OK".
+END PROCEDURE.

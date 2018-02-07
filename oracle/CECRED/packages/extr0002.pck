@@ -3125,7 +3125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1619; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1620; /* Aval */                 
+                 vr_cdhistor := 1620; /* Aval */ 
             ELSE     
                  vr_cdhistor := 1078; /* Devedor */
             END CASE;
@@ -3152,7 +3152,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1540; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1618; /* Aval */                 
+                 vr_cdhistor := 1618; /* Aval */ 
             ELSE     
                  vr_cdhistor := 1076; /* Devedor */
             END CASE;
@@ -11225,6 +11225,12 @@ END pc_consulta_ir_pj_trim;
               ,crapcop.nmcidade
               ,crapcop.cdufdcop
               ,crapcop.nrtelvoz
+              ,crapcop.nrtelsac
+              ,crapcop.nrtelouv
+              ,crapcop.hrinisac
+              ,crapcop.hrfimsac
+              ,crapcop.hriniouv
+              ,crapcop.hrfimouv              
         FROM crapcop crapcop
         WHERE crapcop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
@@ -11291,6 +11297,7 @@ END pc_consulta_ir_pj_trim;
       vr_rel_nrcpfcgc VARCHAR2(100);
       vr_rel_aarefere VARCHAR2(100);
       vr_rel_nrdocnpj VARCHAR2(100);
+      vr_rel_nrtelcop VARCHAR2(100);
       vr_ant_dtrefere DATE;
       vr_sol_dtrefere DATE;
 	  vr_nmsegntl     crapttl.nmextttl%TYPE;
@@ -11539,8 +11546,14 @@ END pc_consulta_ir_pj_trim;
           vr_rel_nrdocnpj:= 'CNPJ: '||gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2);
           vr_rel_dsendcop##1:= rw_crapcop.dsendcop ||', '||to_char(rw_crapcop.nrendcop,'fm99g990')||
                                ' - '|| rw_crapcop.nmbairro;
+          IF pr_idorigem = 3 THEN                     
           vr_rel_dsendcop##2:= gene0002.fn_mask_cep(rw_crapcop.nrcepend)||' - '|| rw_crapcop.nmcidade||
+                                  ' - '||rw_crapcop.cdufdcop;
+          ELSE
+             vr_rel_dsendcop##2:= gene0002.fn_mask_cep(rw_crapcop.nrcepend)||' - '|| rw_crapcop.nmcidade||
                                ' - '||rw_crapcop.cdufdcop ||'  - TELEFONE: '||rw_crapcop.nrtelvoz;
+          END IF;
+          vr_rel_nrtelcop:= rw_crapcop.nrtelvoz;
           vr_rel_dscpmfpg:= vr_tab_extrato_ir(vr_index).dscpmfpg;
           vr_rel_vlcpmfpg:= vr_tab_extrato_ir(vr_index).vlcpmfpg;
           vr_rel_vldoirrf:= vr_tab_extrato_ir(vr_index).vldoirrf;
@@ -11596,7 +11609,13 @@ END pc_consulta_ir_pj_trim;
                     '" rf3_vlsdapli="'  || to_char(vr_rf3_vlsdapli,'fm9g999g999g990d00mi') ||
 
                     '" dtemissa="'      || to_char(SYSDATE,'DD/MM/YYYY')                   ||
-                    '" rel_vldoirrf="" flgano2009="N" flgant94="N" cdagectl=""><retencoes>';
+                    '" rel_vldoirrf="" flgano2009="N" flgant94="N" cdagectl=""';
+                    
+          IF pr_idorigem = 3 THEN   
+             vr_dstexto:= vr_dstexto || ' nrtelcop="' || vr_rel_nrtelcop || '"';
+          END IF;
+             
+          vr_dstexto:= vr_dstexto || '><retencoes>';
 
           --Limpar String retencoes
           vr_texto_retenc:= NULL;
@@ -11616,6 +11635,7 @@ END pc_consulta_ir_pj_trim;
           END LOOP;
           --Junta todos os textos para colocar no XML
            vr_dstexto:= vr_dstexto||vr_texto_retenc||'</retencoes></conta>';
+          
           --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
 
@@ -12861,7 +12881,7 @@ END pc_consulta_ir_pj_trim;
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_erro => pr_tab_erro);
       END;
-    END pc_imprime_extrato;
+    END pc_imprime_extrato;  
 
     -- Subrotina para Imprimir Extrato Emprestimo
     PROCEDURE pc_extrato_pos_fixado(pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
@@ -13927,7 +13947,7 @@ END pc_consulta_ir_pj_trim;
 
                 --Levantar Excecao
                 RAISE vr_exc_sair;
-               END IF;
+               END IF;            
 
             ELSIF vr_tab_dados_epr(vr_index).tpemprst = 2 THEN -- POS-FIXADO
 
@@ -13960,7 +13980,7 @@ END pc_consulta_ir_pj_trim;
                 --se tem erro na tabela 
                 IF pr_tab_erro.COUNT > 0 THEN
                   vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic;
-                ELSE
+            ELSE
                   vr_dscritic:= 'Nao foi possivel carregar o extrato.';
                 END IF;  
                 --Colocar todo o texto na variavel auxiliar

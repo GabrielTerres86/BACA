@@ -105,6 +105,7 @@ DEF VAR aux_qtdiaapl AS INTE                                           NO-UNDO.
 DEF VAR aux_nmdindex AS CHAR                                           NO-UNDO. 
 DEF VAR aux_idtxfixa AS INTE                                           NO-UNDO.
 DEF VAR aux_idtipapl AS CHAR                                           NO-UNDO.  
+DEF VAR aux_tpaplica AS INTE                                           NO-UNDO.
 
 /* Variáveis utilizadas para receber clob da rotina no oracle */
 DEF VAR xDoc          AS HANDLE   NO-UNDO.   
@@ -247,6 +248,7 @@ IF ponteiro_xml <> ? THEN
                 ASSIGN aux_dssitapl =      xText:NODE-VALUE  WHEN xField:NAME = "dssitapl".
                 ASSIGN aux_vlsldrgt =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "sldresga".
                 ASSIGN aux_idtipapl =      xText:NODE-VALUE  WHEN xField:NAME = "idtipapl".
+                ASSIGN aux_tpaplica =  INT(xText:NODE-VALUE) WHEN xField:NAME = "tpaplica".
         
             END. 
             
@@ -441,7 +443,8 @@ ASSIGN xml_operacao.dslinxml = "<APLICACOES dssitapl='" + aux_dssitapl + "'" +
                                           " qtdiaapl='" + TRIM(STRING(aux_qtdiaapl)) + "'" +
                                           " idtxfixa='" + TRIM(STRING(aux_idtxfixa)) + "'" +
                                           " nmdindex='" + aux_nmdindex + "' " +
-                                          " percirrf='" + STRING(aux_percirrf) + "' >".
+                                          " percirrf='" + STRING(aux_percirrf) + "' " +
+                                          " tpaplica='" + STRING(aux_tpaplica) + "' >".
 
 
 FOR EACH tt-extr-rdca NO-LOCK:

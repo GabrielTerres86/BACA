@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Ze Eduardo
-       Data    : Marco/2011                       Ultima atualizacao: 12/06/2014
+       Data    : Marco/2011                       Ultima atualizacao: 27/01/2018
 
        Dados referentes ao programa:
 
@@ -60,6 +60,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%T
                    
                    09/07/2014 - #176849 Format de nrboder (numero do bordero) 
                                 aumentado para 7 digitos (Carlos)
+
+				   27/01/2018 - #780914 Removido cheques digitalizados (Andrey)
                             
     ............................................................................ */
 
@@ -110,7 +112,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%T
          AND cst.cdcooper    = pr_cdcooper
          AND cst.dtlibera    > pr_dtmvtolt
          AND cst.dtlibera   <= pr_dtlimite
-         AND cst.insitprv    < 3 -- 0=Nao Enviado,1=Gerado,2=Digitalizado
+         AND cst.insitprv    < 2 -- 0 = Nao Enviado, 1 = Gerado
          AND cst.insitchq   in (0,2); -- 0=nao processado, 2=processado
       
     -- Buscar Cheques contidos do Bordero de desconto de cheques
@@ -392,8 +394,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%T
       IF rw_crapcdb.dtlibbdc >= vr_dtlibprj THEN
         CONTINUE;
       END IF;
-                                     
-        
+
       IF rw_crapcdb.dtlibera <= rw_crapdat.dtmvtopr THEN
         -- definir index do registro
         vr_index := lpad(rw_crapcdb.cdagenci,5,'0') ||'1'/*tpcheque*/||2/*tptabela*/|| 

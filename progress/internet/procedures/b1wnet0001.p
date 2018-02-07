@@ -1,8 +1,9 @@
+
 /*..............................................................................
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 31/01/2017
+   Data    : 14/07/2006                        Ultima atualizacao: 30/03/2017
 
    Dados referentes ao programa:
 
@@ -256,7 +257,7 @@
 
                11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
                             PRJ319 - SMS Cobrança(Odirlei-AMcom)
-                            
+
                09/11/2016 - Ajuste na correcao realizada pelo Andrey no dia 13/10,
                             nao fixara em convenio INTERNET, mas utilizara uma logica
                             semelhante ao que acontece para SERASA, assumindo valor
@@ -943,10 +944,10 @@ PROCEDURE gravar-boleto:
     DEF  INPUT PARAM par_qtdianeg AS INTE                           NO-UNDO.
 
     /* Aviso SMS */
-    DEF  INPUT PARAM par_inavisms AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_insmsant AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_insmsvct AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_insmspos AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inavisms AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM par_insmsant AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM par_insmsvct AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM par_insmspos AS INTE                                  NO-UNDO.
 
     /* NPC */
     DEF  INPUT PARAM par_flgregon AS INTE                           NO-UNDO.
@@ -994,9 +995,10 @@ PROCEDURE gravar-boleto:
 
     /* EMAIL DOS PAGADORES */
     DEF VAR aux_dsdemail AS CHAR                                    NO-UNDO.
-    
+
     /* Nome do Beneficiario para imprimir no boleto */
     DEF VAR aux_nmdobnfc AS CHAR                                    NO-UNDO.
+
     /* Tratamento para os boletos e a emissão de carnê */
     DEF VAR aux_vltitulo      AS DECI                               NO-UNDO.
     DEF VAR aux_vldescto      AS DECI                               NO-UNDO.
@@ -1433,8 +1435,8 @@ PROCEDURE gravar-boleto:
 			      DO:   
 				        ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
 			      END.
-				    UNDO TRANSACAO, LEAVE TRANSACAO.
-        END.
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
 
 
         /* ************************************************************************* */
@@ -1969,8 +1971,8 @@ PROCEDURE gravar-boleto:
                                    INPUT par_inavisms,
                                    INPUT par_insmsant,
                                    INPUT par_insmsvct,
-                                   INPUT par_insmspos,         
-                                                                   
+                                   INPUT par_insmspos,
+
                                    /* NPC */
                                    INPUT crapceb.flgregon,
                                    INPUT par_inpagdiv,
@@ -2251,7 +2253,7 @@ PROCEDURE gera-dados:
     DEF VAR aux_flgregon         AS LOG                             NO-UNDO.
     DEF VAR aux_flgpgdiv         AS LOG                             NO-UNDO.
     DEF VAR aux_flpersms         AS INT                             NO-UNDO.
-    DEF VAR aux_fllindig         AS INT                             NO-UNDO. 
+    DEF VAR aux_fllindig         AS INT                             NO-UNDO.
     DEF VAR aux_flsitsms         AS INT                             NO-UNDO.
     DEF VAR aux_idcontrato       AS INT                             NO-UNDO.
             
@@ -2345,6 +2347,8 @@ PROCEDURE gera-dados:
             RETURN "NOK".
         END.*/
         
+    IF  par_vldsacad < 2 THEN /* Quando receber valor 2 nao deve consultar sacados */
+        DO:
     RUN seleciona-sacados (INPUT par_cdcooper,
                            INPUT par_cdagenci,
                            INPUT par_nrdcaixa,
@@ -2385,7 +2389,6 @@ PROCEDURE gera-dados:
 
         IF  par_vldsacad = 1  THEN
         DO:
-        
             FIND FIRST tt-sacados-blt NO-LOCK NO-ERROR.
     
             IF  NOT AVAILABLE tt-sacados-blt  THEN
@@ -2418,6 +2421,7 @@ PROCEDURE gera-dados:
                                    
                     RETURN "NOK".
                 END.
+        END.
         END.
          
     FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND
@@ -2614,7 +2618,7 @@ PROCEDURE gera-dados:
 
     IF aux_dscritic <> "" THEN
       DO:
-      
+
           RUN gera_erro (INPUT par_cdcooper,
                          INPUT par_cdagenci,
                          INPUT par_nrdcaixa,
@@ -2673,7 +2677,7 @@ PROCEDURE gera-dados:
                               WHEN pc_verif_permite_lindigi.pr_flglinha_digitavel <> ?
            aux_dscritic = pc_verif_permite_lindigi.pr_dscritic
                               WHEN pc_verif_permite_lindigi.pr_dscritic <> ?.       
-
+      
     CREATE tt-dados-blt.
     ASSIGN tt-dados-blt.vllbolet = crapsnh.vllbolet
            tt-dados-blt.dsdinstr = crapsnh.dsdinstr
@@ -2975,9 +2979,12 @@ PROCEDURE seleciona-sacados:
         ASSIGN tt-sacados-blt.nmdsacad = 
                  (IF aux_errodcep THEN "** Verificar endereço ** - " 
                   ELSE "") + 
-                 (IF aux_errodpnp THEN "** Praça não protesta ** - " 
+                 (IF aux_errodpnp THEN "** Praça nao protesta ** - " 
                   ELSE "") + 
                   REPLACE(crapsab.nmdsacad,"&","%26")
+               tt-sacados-blt.nmsacado = REPLACE(crapsab.nmdsacad,"&","%26")
+               tt-sacados-blt.dsflgend = aux_errodcep
+               tt-sacados-blt.dsflgprc = aux_errodpnp
                tt-sacados-blt.nrinssac = crapsab.nrinssac
                tt-sacados-blt.dsinssac = aux_dsinssac
                tt-sacados-blt.nrctasac = crapsab.nrctasac
@@ -4213,7 +4220,7 @@ DO TRANSACTION:
      CREATE tt-consulta-blt.
 
      ASSIGN tt-consulta-blt.nmprimtl = REPLACE(p-nmdobnfc,"&","%26").
-  
+
      /*  Verifica no Cadastro de Sacados Cobranca */
      
      FIND crapsab WHERE crapsab.cdcooper = crapcob.cdcooper AND
@@ -4551,11 +4558,11 @@ PROCEDURE p_cria_titulo:
     DEF INPUT   PARAM p-qtdianeg    LIKE crapcob.qtdianeg   NO-UNDO.
 
     /* Aviso SMS */
-    DEF  INPUT PARAM p-inavisms AS INTE                     NO-UNDO.
-    DEF  INPUT PARAM p-insmsant AS INTE                     NO-UNDO.
-    DEF  INPUT PARAM p-insmsvct AS INTE                     NO-UNDO.
-    DEF  INPUT PARAM p-insmspos AS INTE                     NO-UNDO.
-    
+    DEF  INPUT PARAM p-inavisms AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM p-insmsant AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM p-insmsvct AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM p-insmspos AS INTE                                  NO-UNDO.
+
     /* NPC */
     DEF INPUT   PARAM p-flgregon    AS INTE                 NO-UNDO.
     DEF INPUT   PARAM p-inpagdiv    LIKE crapcob.inpagdiv   NO-UNDO.
@@ -4726,7 +4733,7 @@ PROCEDURE p_cria_titulo:
 
 
     END.
-    
+
     /* Se foi informado para enviar aviso, porem sem selecionar
        o momente, deve gravar como nao enviar aviso */
     IF  p-inavisms <> 0 AND 
@@ -4798,7 +4805,7 @@ PROCEDURE p_cria_titulo:
            crapcob.inavisms = p-inavisms
            crapcob.insmsant = p-insmsant
            crapcob.insmsvct = p-insmsvct
-           crapcob.insmspos = p-insmspos 
+           crapcob.insmspos = p-insmspos
 
            /* NPC */        
            crapcob.inenvcip = IF p-cddbanco = 85 THEN 1 ELSE 0
