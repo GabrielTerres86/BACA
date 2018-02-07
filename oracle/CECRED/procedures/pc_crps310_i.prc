@@ -3113,14 +3113,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               IF /*rw_crapris_last.dtrefere <> pr_rw_crapdat.dtultdma
               OR */(rw_crapris_last.innivris <> vr_innivris AND vr_innivris <> 10) THEN
                 -- Utilizar a data de referência do processo
-                vr_dtdrisco := vr_dtrefere;
+                -- vr_dtdrisco := vr_dtrefere;
+                -- Atualiza com a data do movimento atual - Daniel(AMcom)
+                vr_dtdrisco := pr_rw_crapdat.dtmvtolt;
               ELSE
                 -- Utilizar a data do ultimo risco
                 vr_dtdrisco := rw_crapris_last.dtdrisco;
               END IF;
             ELSE
               -- Utilizar a data de referência do processo
-              vr_dtdrisco := vr_dtrefere;
+              --vr_dtdrisco := vr_dtrefere;
+              -- Atualiza com a data do movimento atual - Daniel(AMcom)
+               vr_dtdrisco := pr_rw_crapdat.dtmvtolt;
             END IF;
             -- Fechar o cursor
             CLOSE cr_crapris_last;
@@ -3487,7 +3491,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               UPDATE crapris
                  SET innivris = rw_max_risco_cpfcnpj.MAX_RISCO
                     ,inindris = rw_max_risco_cpfcnpj.MAX_RISCO
-                    ,dtdrisco = vr_dtrefere
+                    -- Atualiza com a data do movimento atual - Daniel(AMcom)
+                    ,dtdrisco = pr_rw_crapdat.dtmvtolt --vr_dtrefere
                WHERE rowid = rw_riscos_cpfcnpj.rowid;
             EXCEPTION
               WHEN OTHERS THEN
