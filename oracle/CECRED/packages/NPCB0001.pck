@@ -313,56 +313,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
 
       Programa   : fn_titulo_vencimento_pagamento
       Autor      : Ademir Jose Fink
-      Data       : Dezembro/2017.                   Ultima atualizacao: --/--/----
+      Data       : Dezembro/2017.                   Ultima atualizacao: 07/02/2018
 
       Objetivo   : Recebe como parametro a data de vencimento do titulo e devolve a data
                    em que ele pode ser pago sem ser considerado vencido.
 
-      Alterações : 
+      Alterações : Tratamento para entrada de pr_dtvencto nulo (AJFink - SD#824706)
 
     ..........................................................................*/
     --
     --trunc da data de vencimento para considerar somente dia/mes/ano
     vr_dtvencto date := trunc(pr_dtvencto);
     --pega o ultimo dia do ano de vencimento do título
-    vr_dtultdia date := to_date('31/12/'||to_char(vr_dtvencto,'yyyy'),'dd/mm/yyyy');
+    vr_dtultdia date := null;
     vr_dtultuti date := null;
     vr_dtproxim date := null;
     --
   begin
     --
-    --calcula o próximo dia útil a partir da data de vencimento do título
-    vr_dtvencto := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper --> Cooperativa conectada
-                                              ,pr_dtmvtolt  => vr_dtvencto --> Data do movimento
-                                              ,pr_tipo      => 'P');       --> Proximo dia util
-    --
-    --com base no último dia do ano calcular o ultimo dia ÚTIL do ano
-    vr_dtultuti := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-                                              ,pr_dtmvtolt => vr_dtultdia --> Data do movimento
-                                              ,pr_tipo     => 'A'         --> Dia util anterior
-                                              ,pr_feriado  => FALSE);     --> Nao considera feriados
-    --
-    --se a data de vencimento é igual ao ultimo dia ÚTIL do ano
-    --então obrigatório calcular a proxima data de pagamento
-    --porque no último dia ÚTIL do ano não há compensação (abbc-cip)
-    if vr_dtvencto = vr_dtultuti then
+    if vr_dtvencto is not null then
       --
-      --se o ultimo dia ÚTIL do ano é igual ao ultimo dia do ano
-      --então tomar como base o primeiro dia do ano seguinte
-      if vr_dtultuti = vr_dtultdia then
-        vr_dtultdia := vr_dtultdia + 1;
-      end if;
+      vr_dtultdia := to_date('31/12/'||to_char(vr_dtvencto,'yyyy'),'dd/mm/yyyy');
       --
-      --entao calcula o proximo dia ÚTIL
-      vr_dtproxim := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+      --calcula o próximo dia útil a partir da data de vencimento do título
+      vr_dtvencto := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper --> Cooperativa conectada
+                                                ,pr_dtmvtolt  => vr_dtvencto --> Data do movimento
+                                                ,pr_tipo      => 'P');       --> Proximo dia util
+      --
+      --com base no último dia do ano calcular o ultimo dia ÚTIL do ano
+      vr_dtultuti := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                                 ,pr_dtmvtolt => vr_dtultdia --> Data do movimento
-                                                ,pr_tipo     => 'P'         --> Proximo dia util
-                                                ,pr_feriado  => TRUE);      --> Considera feriados
+                                                ,pr_tipo     => 'A'         --> Dia util anterior
+                                                ,pr_feriado  => FALSE);     --> Nao considera feriados
       --
-    else
-      --
-      --senao pega o dia útil calculado com base na própria data de vencimento
-      vr_dtproxim := vr_dtvencto;
+      --se a data de vencimento é igual ao ultimo dia ÚTIL do ano
+      --então obrigatório calcular a proxima data de pagamento
+      --porque no último dia ÚTIL do ano não há compensação (abbc-cip)
+      if vr_dtvencto = vr_dtultuti then
+        --
+        --se o ultimo dia ÚTIL do ano é igual ao ultimo dia do ano
+        --então tomar como base o primeiro dia do ano seguinte
+        if vr_dtultuti = vr_dtultdia then
+          vr_dtultdia := vr_dtultdia + 1;
+        end if;
+        --
+        --entao calcula o proximo dia ÚTIL
+        vr_dtproxim := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                                  ,pr_dtmvtolt => vr_dtultdia --> Data do movimento
+                                                  ,pr_tipo     => 'P'         --> Proximo dia util
+                                                  ,pr_feriado  => TRUE);      --> Considera feriados
+        --
+      else
+        --
+        --senao pega o dia útil calculado com base na própria data de vencimento
+        vr_dtproxim := vr_dtvencto;
+        --
+      end if;
       --
     end if;
     --
