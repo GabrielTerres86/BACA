@@ -343,6 +343,13 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 																			,pr_tab_erro_resg OUT typ_erro_resgate --> Erros do resgate
 																			,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
 																			,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica																
+
+PROCEDURE pc_efetua_resgate_cst_prog(pr_cdtransacao_pendente IN tbcst_trans_pend_det.cdtransacao_pendente%TYPE  --> Cooperativa
+                                      ,pr_cdcooper             IN crapcop.cdcooper%TYPE
+		                                  ,pr_nrdconta             IN crapass.nrdconta%TYPE  --> Nr. da conta
+																			,pr_cdoperad             IN crapope.cdoperad%TYPE  --> Operador
+																			,pr_cdcritic             OUT PLS_INTEGER           --> Código da crítica
+																			,pr_dscritic             OUT VARCHAR2);            --> Descrição da crítica                                      
 END CUST0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
@@ -7293,7 +7300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                              PRJ300 - Desconto de cheque (Odirlei-AMcom)
 
                 24/08/2017 - Ajuste para gravar log. (Lombardi)
-                        
+				
 				30/01/2018 - Inserido log de item com as informacoes principais do cheque resgatado 
                              M454.1 (Mateus Z - Mouts)
                         
@@ -7560,6 +7567,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 	
 		END;
 	END pc_efetua_resgate_custodia;
+PROCEDURE pc_efetua_resgate_cst_prog(pr_cdtransacao_pendente IN tbcst_trans_pend_det.cdtransacao_pendente%TYPE  --> Cooperativa
+                                      ,pr_cdcooper             IN crapcop.cdcooper%TYPE
+		                                  ,pr_nrdconta             IN crapass.nrdconta%TYPE  --> Nr. da conta
+																			,pr_cdoperad             IN crapope.cdoperad%TYPE  --> Operador
+																			,pr_cdcritic             OUT PLS_INTEGER           --> Código da crítica
+																			,pr_dscritic             OUT VARCHAR2) IS          --> Descrição da crítica
+                                      
+    CURSOR C1(prc_cdtransacao_pen IN tbcst_trans_pend_det.cdtransacao_pendente%TYPE)IS
+      SELECT c.dsdocmc7
+        FROM tbcst_trans_pend_det t
+            ,crapcst c
+       WHERE t.idcustodia = c.idcustod
+         AND t.cdtransacao_pendente = prc_cdtransacao_pen;  
+        
+    aux_dsdocmc7 VARCHAR2(32000);
+    vr_tab_resgate_erro cust0001.typ_erro_resgate;
+  
+  BEGIN
+    pr_cdcritic := 0;
+    pr_dscritic := NULL;
+    aux_dsdocmc7 := NULL;
+    
+    FOR r1 IN C1(pr_cdtransacao_pendente) LOOP
+      IF aux_dsdocmc7 IS NULL THEN 
+        aux_dsdocmc7 := aux_dsdocmc7 || r1.dsdocmc7;
+      ELSE
+        aux_dsdocmc7 := aux_dsdocmc7 || '|' || r1.dsdocmc7;
+      END IF;
+    END LOOP;
+      --> Cooperativa
+	  -- Chamar rotina para executar o resgate da custodia   
+    CUST0001.pc_efetua_resgate_custodia(pr_cdcooper => pr_cdcooper, 
+                                        pr_nrdconta => pr_nrdconta, 
+                                        pr_dscheque => aux_dsdocmc7, 
+                                        pr_cdoperad => pr_cdoperad, 
+                                        pr_tab_erro_resg => vr_tab_resgate_erro, 
+                                        pr_cdcritic => pr_cdcritic, 
+                                        pr_dscritic => pr_dscritic);
+     COMMIT;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral em pc_efetua_resgate_cst_prog: ' || SQLERRM;      
+  END pc_efetua_resgate_cst_prog;  
   
 END CUST0001;
 /
