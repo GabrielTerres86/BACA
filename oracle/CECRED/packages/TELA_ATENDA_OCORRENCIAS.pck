@@ -641,7 +641,7 @@ END fn_busca_dias_atraso;
 
     -- Contas dos grupos econômicos aos quais o titular da conta base está ligado
     CURSOR cr_contas_grupo_economico(rw_cbase IN crapass%ROWTYPE) IS
-    SELECT cgr.cdcooper
+    SELECT DISTINCT cgr.cdcooper
          , cgr.nrdconta
          , cgr.nrcpfcgc
          , cgr.inpessoa
@@ -669,13 +669,7 @@ END fn_busca_dias_atraso;
                   gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
                   substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
        AND cgr.cdcooper =  grp.cdcooper
-       AND cgr.nrdconta =  grp.nrdconta
-			 AND DECODE(rw_cbase.inpessoa, 1,
-                  gene0002.fn_mask(cgr.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(cgr.nrcpfcgc, '99999999999999'), 1, 8)) <>
-           DECODE(rw_cbase.inpessoa, 1,
-                  gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8));
+       AND cgr.nrdconta =  grp.nrdconta;
     rw_contas_grupo_economico cr_contas_grupo_economico%ROWTYPE;
 		
 		-- Calendário da cooperativa selecionada
