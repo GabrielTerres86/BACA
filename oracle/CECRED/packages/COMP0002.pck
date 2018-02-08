@@ -350,6 +350,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
           
           WHEN pr_protocolo.cdtippro in(16, 17, 18, 19) THEN -- DARF / DAS
             
+			vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(16, pr_protocolo.dsinform##3, '#')), ':'));            
+			
+			/*
              vr_split := gene0002.fn_quebra_string(pr_protocolo.dsinform##3,'#');
              vr_ult := vr_split.count();
 
@@ -364,6 +367,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
             END IF;
             
             vr_dsprotoc := vr_desc;
+
+			*/
             
           WHEN pr_protocolo.cdtippro = 20 THEN -- Recarga
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##2, '#')) || ' - ' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));
@@ -5026,7 +5031,7 @@ END pc_comprovantes_recebidos;
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp      
                              ,pr_texto_novo     => vr_dsdlinha);               
-      
+                     
       vr_dsdlinha := NULL;      
       vr_dsdlinha := '<infbancoob>'||                       
                        '<dscopsin>'|| 'BANCO:'|| to_char(vr_protocolo(vr_ind).cdbcoctl ,'fm0000') ||
