@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 07/11/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 20/12/2017
     
    Dados referentes ao programa:
    
@@ -205,7 +205,9 @@
                            (Lucas Ranghetti #712492)
               07/11/2017 - Retornar indicador de situacao e descricao de protocolo
                            na consulta de autorizacoes e lancamentos (David).
-                         
+                           
+              20/12/2017 - Gravar dtiniatr e dtfimsus ou dtinisus como proximo dia util para convenios
+                           sicredi no ultimo dia nao util do ano (Lucas Ranghetti #809954)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1133,7 +1135,7 @@ PROCEDURE valida-dados:
                               
                 /* buscar quantidade maxima de digitos aceitos para o convenio */
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-
+                              
                   RUN STORED-PROCEDURE pc_retorna_referencia_conv
                       aux_handproc = PROC-HANDLE NO-ERROR
                                               (INPUT 0, /* cdconven */
@@ -1720,6 +1722,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_nrctacns AS INTE                                    NO-UNDO. 
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
     DEF VAR aux_dtamenor AS DATE                                    NO-UNDO.
+    DEF VAR aux_dtmvtolt AS DATE                                    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1835,6 +1838,26 @@ PROCEDURE grava-dados:
         ELSE 
             ASSIGN aux_cdhistor = INT(par_cdhistor)
                    aux_flgsicre = FALSE.
+            
+        IF  aux_cdhistor = 1019 THEN
+            DO:
+                RUN valida_dia_util(INPUT par_cdcooper,
+                                    INPUT aux_dtiniatr,
+                                    INPUT TRUE, /* Ultimo dia do ano */
+                                    INPUT "A",  /* Anterior */
+                                    OUTPUT aux_dtmvtolt). 
+                                    
+                IF  aux_dtiniatr = aux_dtmvtolt THEN
+                    DO:                
+                        RUN valida_dia_util(INPUT par_cdcooper,
+                                            INPUT aux_dtiniatr,
+                                            INPUT TRUE, /* primeiro dia util do ano*/
+                                            INPUT "P",  /* Proximo */
+                                            OUTPUT aux_dtmvtolt).     
+                    
+                        ASSIGN aux_dtiniatr = aux_dtmvtolt.
+                    END.
+            END.
             
         IF  par_cddopcao = "I" THEN
             DO: 
@@ -3370,11 +3393,51 @@ PROCEDURE cadastra_suspensao_autorizacao:
 
     DEF VAR aux_contador AS INTE INIT 0  NO-UNDO.
     DEF VAR aux_retornvl AS CHAR INIT "NOK"                        NO-UNDO.
+    DEF VAR aux_dtmvtolt AS DATE                                   NO-UNDO.
+    
 
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Suspende autorizacao de debito em conta".
+
+    IF  par_cdhistor = 1019 THEN
+        DO:
+            RUN valida_dia_util(INPUT par_cdcooper,
+                                INPUT par_dtinisus,
+                                INPUT TRUE, /* Ultimo dia do ano */
+                                INPUT "A",
+                                OUTPUT aux_dtmvtolt). 
+                                
+            IF  par_dtinisus = aux_dtmvtolt THEN
+                DO:                
+                    RUN valida_dia_util(INPUT par_cdcooper,
+                                        INPUT par_dtinisus,
+                                        INPUT TRUE, /* primeiro dia util do ano*/
+                                        INPUT "P",
+                                        OUTPUT aux_dtmvtolt).     
+                
+                    ASSIGN par_dtinisus = aux_dtmvtolt.
+                END.
+            
+            RUN valida_dia_util(INPUT par_cdcooper,
+                                INPUT par_dtfimsus,
+                                INPUT TRUE, /* Ultimo dia do ano */
+                                INPUT "A",
+                                OUTPUT aux_dtmvtolt). 
+                                
+            IF  par_dtfimsus = aux_dtmvtolt THEN
+                DO:                
+                    RUN valida_dia_util(INPUT par_cdcooper,
+                                        INPUT par_dtfimsus,
+                                        INPUT TRUE, /* primeiro dia util do ano*/
+                                        INPUT "P",
+                                        OUTPUT aux_dtmvtolt).     
+                
+                    ASSIGN par_dtfimsus = aux_dtmvtolt.
+                END.
+            
+        END.
 
     Bloqueia: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
@@ -6351,6 +6414,73 @@ PROCEDURE atualiza_inassele:
     
 END PROCEDURE.    
 
+PROCEDURE valida_dia_util:
+
+   DEF INPUT PARAMETER pr_cdcooper AS INTEGER NO-UNDO.
+   DEF INPUT PARAMETER pr_dtmvtolt AS DATE    NO-UNDO.
+   DEF INPUT PARAMETER pr_flultimo AS LOG     NO-UNDO.
+   DEF INPUT PARAMETER pr_dstpcons AS CHAR    NO-UNDO.
+   
+   DEF OUTPUT PARAMETER pr_dtcaluti AS DATE   NO-UNDO.
+   
+   DEF VAR aux_dscritic  AS CHAR    NO-UNDO.
+   DEF VAR aux_dtcaluti  AS DATE    NO-UNDO.
+   
+   DEF VAR aux_dtmvtolt  AS CHAR    NO-UNDO. 
+  
+   IF pr_flultimo THEN
+     ASSIGN aux_dtmvtolt = "31/12/" +  STRING(YEAR(pr_dtmvtolt),"9999").
+   ELSE
+     ASSIGN aux_dtmvtolt = string(pr_dtmvtolt).  
+
+  /* validar dia util, senao for retorna o proximo - Rotina Oracle */
+  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+  RUN STORED-PROCEDURE pc_valida_dia_util
+    aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT pr_cdcooper         /* pr_cdcooper */
+                  ,INPUT-OUTPUT date(aux_dtmvtolt)  /* pr_dtmvtolt */
+                  ,INPUT pr_dstpcons         /* pr_tipo */
+                  ,INPUT 1                    /* pr_feriado - Considerar feriados*/
+                  ,INPUT 0).                  /* pr_excultdia - Nao excluir ultimo dia do ano*/
+
+  CLOSE STORED-PROC pc_valida_dia_util
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
+
+  /* FIM validar dia util - Rotina Oracle */
+
+  IF  ERROR-STATUS:ERROR  THEN DO:
+      DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+          ASSIGN aux_msgerora = aux_msgerora + ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
+      END.
+        
+      ASSIGN aux_dscritic = "valida_dia_util --> "  +
+                            "Erro ao executar Stored Procedure: " +
+                            aux_msgerora.
+     
+      RETURN "NOK".   
+  END. 
+
+  ASSIGN aux_dtcaluti  = ?
+         aux_dtcaluti  = DATE(pc_valida_dia_util.pr_dtmvtolt)
+                         WHEN pc_valida_dia_util.pr_dtmvtolt <> ?.
+                              
+  IF  DATE(aux_dtcaluti) = ? THEN
+      DO:
+          ASSIGN aux_dscritic = "valida_dia_util --> "  +
+                                "Erro ao processar data de retorno".
+         
+          RETURN "NOK".
+      END.
+   
+  ASSIGN pr_dtcaluti = aux_dtcaluti.
+   
+    RETURN "OK".
+    
+END PROCEDURE.    
+
 /* Retorna nome do convenio */
 PROCEDURE busca_convenio_nome:
 
@@ -6372,4 +6502,4 @@ PROCEDURE busca_convenio_nome:
     RELEASE crapcon.
   
   RETURN "OK".
-END PROCEDURE.
+END PROCEDURE.    
