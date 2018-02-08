@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson/Margarete
-   Data    : Maio/2001                           Ultima alteracao: 01/12/2016
+   Data    : Maio/2001                           Ultima alteracao: 07/02/2018
 
    Dados referentes ao programa:
 
@@ -189,6 +189,10 @@
                02/01/2017 - Inserir bloqueio da opcoes "B" e "X" para
                             borderos gerados com data posterior a da 
                             liberaçao do projeto 300. (Lombardi)
+
+
+			   07/02/2018 - Ajustado horario limite para digitacao dos cheques ate 22
+							(Adriano - SD 845726).
                             
 ............................................................................. */
 
@@ -438,7 +442,7 @@ FORM tel_cdagenci      LABEL " PA  "
      SKIP(3)
      tel_nrdhhini AT  1 LABEL "Limite para digitacao dos cheques" 
                         FORMAT "99" AUTO-RETURN
-                        HELP "Entre com a hora limite (12:00 a 20:00)."
+                        HELP "Entre com a hora limite (12:00 a 22:00)."
      ":"          AT 38 
      tel_nrdmmini AT 39 NO-LABEL FORMAT "99" 
                         HELP "Entre com os minutos (0 a 59)."
@@ -901,7 +905,7 @@ DO WHILE TRUE:
                   ELSE
                        UPDATE tel_nrdhhini tel_nrdmmini WITH FRAME f_fechamento.
                       
-                  IF   tel_nrdhhini < 10 OR tel_nrdhhini > 20 THEN
+                  IF   tel_nrdhhini < 10 OR tel_nrdhhini > 22 THEN
                        DO:
                            glb_cdcritic = 687.
                            NEXT.
@@ -919,7 +923,7 @@ DO WHILE TRUE:
                            NEXT.
                        END.
                            
-                  IF   tel_nrdhhini = 20 AND tel_nrdmmini > 0 THEN
+                  IF   tel_nrdhhini = 22 AND tel_nrdmmini > 0 THEN
                        DO:
                            glb_cdcritic = 687.
                            NEXT.
