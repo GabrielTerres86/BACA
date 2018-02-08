@@ -634,6 +634,7 @@ END fn_busca_dias_atraso;
       vr_auxconta          INTEGER := 0;           -- Contador auxiliar para posicão no XML
       vr_rating            crapnrc.indrisco%TYPE;  -- Rating do contrato
       vr_risco_agr         tbrisco_cadastro_conta.cdnivel_risco%TYPE; -- Risco agravado da conta
+			vr_risco_atraso      crawepr.dsnivris%TYPE;  -- Risco atraso da operação
       vr_risco_final       crawepr.dsnivris%TYPE;  -- Risco final 
       vr_risco_ult_central crawepr.dsnivris%TYPE;  -- Risco da última central
       vr_data_ult_central  crapris.dtdrisco%TYPE;  -- Data do risco da última central
@@ -824,7 +825,10 @@ END fn_busca_dias_atraso;
 
 						    -- Busca o risco agravado para a conta
 						    vr_risco_agr := fn_busca_risco_agravado(rw_contas_do_titular.cdcooper
-						  																		    , rw_contas_do_titular.nrdconta);					
+						  																		    , rw_contas_do_titular.nrdconta);	
+																											
+								-- Busca o risco atraso da operação
+								vr_risco_atraso := fn_calcula_risco_atraso(vr_diasatraso);				
 																									
 						    -- Adiciona registro para a conta/contrato no XML de retorno
                 pc_monta_reg_conta_xml(pr_retxml
@@ -836,9 +840,9 @@ END fn_busca_dias_atraso;
                                      , rw_contratos.dsnivori
                                      , vr_risco_grupo
                                      , vr_rating
-                                     , fn_calcula_risco_atraso(vr_diasatraso)
+                                     , vr_risco_atraso
                                      , fn_traduz_risco(vr_risco_agr)
-                                     , rw_contratos.dsnivcal
+                                     , greatest(rw_contratos.dsnivori, nvl(vr_rating, 'A'), vr_risco_atraso, nvl(fn_traduz_risco(vr_risco_agr), 'A'))   -- rw_contratos.dsnivcal
                                      , rw_contas_do_titular.dsnivris
                                      , vr_numero_grupo);
 																		 
@@ -870,7 +874,10 @@ END fn_busca_dias_atraso;
 
 						    -- Busca o risco agravado para a conta
 						    vr_risco_agr := fn_busca_risco_agravado(rw_contas_do_titular.cdcooper
-						  																		    , rw_contas_do_titular.nrdconta);					
+						  																		    , rw_contas_do_titular.nrdconta);	
+																											
+							  -- Calcula o risco atraso da operação
+								vr_risco_atraso := fn_calcula_risco_atraso(vr_diasatraso);
 																									
 						    -- Adiciona registro para a conta/contrato no XML de retorno
                 pc_monta_reg_conta_xml(pr_retxml
@@ -882,9 +889,9 @@ END fn_busca_dias_atraso;
                                      , vr_risco_inclusao
                                      , vr_risco_grupo
                                      , vr_rating
-                                     , fn_calcula_risco_atraso(vr_diasatraso)
+                                     , vr_risco_atraso
                                      , fn_traduz_risco(vr_risco_agr)
-                                     , fn_traduz_risco(rw_contratos_limite.innivris)
+                                     , greatest(vr_risco_inclusao, nvl(vr_rating, 'A'), vr_risco_atraso, nvl(fn_traduz_risco(vr_risco_agr), 'A')) -- fn_traduz_risco(rw_contratos_limite.innivris)
                                      , rw_contas_do_titular.dsnivris
                                      , vr_numero_grupo);
 																 
@@ -939,6 +946,9 @@ END fn_busca_dias_atraso;
 						-- Busca o risco agravado para a conta
 						vr_risco_agr := fn_busca_risco_agravado(rw_contas_grupo_economico.cdcooper
 																							 , rw_contas_grupo_economico.nrdconta);
+																							 
+						-- Calcula o risco atraso para a operação
+						vr_risco_atraso := fn_calcula_risco_atraso(vr_diasatraso);
 
 						-- Adiciona registro para a conta no XML de retorno
 						pc_monta_reg_conta_xml(pr_retxml
@@ -950,9 +960,9 @@ END fn_busca_dias_atraso;
 															, rw_contratos.dsnivori
 															, rw_contas_grupo_economico.dsdrisgp
 															, vr_rating
-															, fn_calcula_risco_atraso(vr_diasatraso)
+															, vr_risco_atraso
 															, fn_traduz_risco(vr_risco_agr)
-															, rw_contratos.dsnivcal
+															, greatest(rw_contratos.dsnivori, nvl(vr_rating, 'A'), vr_risco_atraso, nvl(fn_traduz_risco(vr_risco_agr), 'A')) -- rw_contratos.dsnivcal
 															, rw_contas_grupo_economico.dsnivris
 															, rw_contas_grupo_economico.nrdgrupo);
 
@@ -984,7 +994,10 @@ END fn_busca_dias_atraso;
 
 						    -- Busca o risco agravado para a conta
 						    vr_risco_agr := fn_busca_risco_agravado(rw_contas_grupo_economico.cdcooper
-						  																		    , rw_contas_grupo_economico.nrdconta);					
+						  																		    , rw_contas_grupo_economico.nrdconta);
+																											
+								-- Calcula o risco atraso da operação
+								vr_risco_atraso := fn_calcula_risco_atraso(vr_diasatraso);					
 																									
 						    -- Adiciona registro para a conta/contrato no XML de retorno
                 pc_monta_reg_conta_xml(pr_retxml
@@ -996,9 +1009,9 @@ END fn_busca_dias_atraso;
                                      , vr_risco_inclusao
                                      , rw_contas_grupo_economico.dsdrisgp
                                      , vr_rating
-                                     , fn_calcula_risco_atraso(vr_diasatraso)
+                                     , vr_risco_atraso
                                      , fn_traduz_risco(vr_risco_agr)
-                                     , fn_traduz_risco(rw_contratos_limite.innivris)
+                                     , greatest(rw_contratos.dsnivori, nvl(vr_rating, 'A'), vr_risco_atraso, nvl(fn_traduz_risco(vr_risco_agr), 'A')) -- fn_traduz_risco(rw_contratos_limite.innivris)
                                      , rw_contas_grupo_economico.dsnivris
                                      , rw_contas_grupo_economico.nrdgrupo);
 																 
