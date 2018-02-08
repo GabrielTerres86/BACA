@@ -34,7 +34,7 @@ DEFINE INPUT PARAMETER par_cdproduto AS INTEGER                 NO-UNDO.
 DEFINE INPUT PARAMETER par_vlrecarga AS DECIMAL                 NO-UNDO.
 
 /* Local Variable Definitions ---                                       */
-{ J:\f0030474\TAA\2018_02\includes\var_taa.i }
+{ includes/var_taa.i }
 
 DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgretur        AS LOGICAL                  NO-UNDO.
