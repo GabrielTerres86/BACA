@@ -527,7 +527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 28/09/2017
+    Data    : Agosto/2011                        Ultima atualizacao: 17/01/2018
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -781,6 +781,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
       
         28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40 pois estava estourando (Tiago #724513).      
+                   
+        17/01/2018 - Ajustar chamada da rotina TARI0001.pc_carrega_dados_tar_vigente
+                     pois haviam casos em que não estavamos entrando na rotina
+                     na procedure pc_gera_tarifa_extrato (Lucas Ranghetti #787894)
+        
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
 
@@ -929,7 +934,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 02/08/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 17/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -943,6 +948,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              02/08/2016 - Nao tratar parametro de isencao de extrato na cooperativa
   --                           quando cooperado possuir servico "extrato" no pacote de
   --                           tarifas (Diego).
+  --
+  --              17/01/2018 - Ajustar chamada da rotina TARI0001.pc_carrega_dados_tar_vigente
+  --                           pois haviam casos em que não estavamos entrando na rotina
+  --                           (Lucas Ranghetti #787894)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       --Cursores Locais
@@ -1079,7 +1088,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       CLOSE cr_crapass;
       
       /** Lista apenas para impres.p atenda/extrato exceto crps029.p **/
-      IF vr_inisenta = 0 AND pr_inproces < 3 THEN
+      
         --Data referencia anterior 30 dias
         IF pr_dtrefere < ( rw_crapdat.dtmvtocd - 30 ) THEN /* Periodo */
           --Se terminal for TAA
@@ -1120,76 +1129,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             END IF;
           END IF;
         END IF;
-        /*  Busca valor da tarifa do extrato*/
-        TARI0001.pc_carrega_dados_tar_vigente (pr_cdcooper  => pr_cdcooper  --Codigo Cooperativa
-                                              ,pr_cdbattar  => vr_cdbattar  --Codigo Tarifa
-                                              ,pr_vllanmto  => 1            --Valor Lancamento
-                                              ,pr_cdprogra  => NULL         --Codigo Programa
-                                              ,pr_cdhistor  => vr_cdhistor  --Codigo Historico
-                                              ,pr_cdhisest  => vr_cdhisest  --Historico Estorno
-                                              ,pr_vltarifa  => vr_vllanaut  --Valor tarifa
-                                              ,pr_dtdivulg  => vr_dtdivulg  --Data Divulgacao
-                                              ,pr_dtvigenc  => vr_dtvigenc  --Data Vigencia
-                                              ,pr_cdfvlcop  => vr_cdfvlcop  --Codigo faixa valor cooperativa
-                                              ,pr_cdcritic  => vr_cdcritic  --Codigo Critica
-                                              ,pr_dscritic  => vr_dscritic  --Descricao Critica
-                                              ,pr_tab_erro  => pr_tab_erro); --Tabela erros
-        --Se ocorreu erro
-        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-          --Criar mensagem Confirmacao
-          pr_tab_msg_confirma(1).inconfir:= 2;
-          pr_tab_msg_confirma(1).dsmensag:= 'Nao ha tabela cadastrada  CRED-USUARI-11-'||vr_cdbattar||
-                                            '. Informe o Suporte Operacional';
-          --Levantar Excecao
-          RAISE vr_exc_sair;
-        ELSE
-          --Criar mensagem Confirmacao
-          pr_tab_msg_confirma(1).inconfir:= 1;
-          pr_tab_msg_confirma(1).dsmensag:= '******** AVISO: ESTE EXTRATO SERA TARIFADO EM R$ '||
-                                            to_char(vr_vllanaut,'fm999g999g990d00')||' NESTA DATA. ********';
-        END IF;    
-      ELSE
-        --Data referencia anterior 30 dias
-        IF pr_dtrefere < ( rw_crapdat.dtmvtocd - 30 ) THEN /* Periodo */
-          --Se terminal for TAA
-          IF pr_nrterfin <> 0 THEN /* TAA */ 
-            vr_tipotari := 9;
-            --Se for pessoa fisica
-            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-              vr_cdbattar:= 'EXTPETAAPF';
-            ELSE
-              vr_cdbattar:= 'EXTPETAAPJ';
-            END IF;
-          ELSE
-            vr_tipotari := 8;
-            --Se for pessoa fisica
-            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-              vr_cdbattar:= 'EXTPEPREPF';
-            ELSE
-              vr_cdbattar:= 'EXTPEPREPJ';
-            END IF;
-          END IF;
-        ELSE
-          --Se terminal for TAA
-          IF pr_nrterfin <> 0 THEN /* TAA */ 
-            vr_tipotari := 7;
-            --Se for pessoa fisica
-            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-              vr_cdbattar:= 'EXTMETAAPF';
-            ELSE
-              vr_cdbattar:= 'EXTMETAAPJ';
-            END IF;
-          ELSE
-            vr_tipotari := 6;
-            --Se for pessoa fisica
-            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-              vr_cdbattar:= 'EXTMEPREPF';
-            ELSE
-              vr_cdbattar:= 'EXTMEPREPJ';
-            END IF;
-          END IF;
-        END IF;
-      END IF; --vr_inisenta = 0 AND pr_inproces < 3
        
       --Cobrar Tarifa
       IF pr_flgtarif THEN
@@ -1227,6 +1166,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                   o servico "extrato" no pacote de tarifas, nao devera receber
                   mais isencao pela cooperativa.*/
                vr_inisenta := 0;
+        END IF;
+
+        IF vr_inisenta = 0 THEN
+          /*  Busca valor da tarifa do extrato*/
+          TARI0001.pc_carrega_dados_tar_vigente (pr_cdcooper  => pr_cdcooper  --Codigo Cooperativa
+                                                ,pr_cdbattar  => vr_cdbattar  --Codigo Tarifa
+                                                ,pr_vllanmto  => 1            --Valor Lancamento
+                                                ,pr_cdprogra  => NULL         --Codigo Programa
+                                                ,pr_cdhistor  => vr_cdhistor  --Codigo Historico
+                                                ,pr_cdhisest  => vr_cdhisest  --Historico Estorno
+                                                ,pr_vltarifa  => vr_vllanaut  --Valor tarifa
+                                                ,pr_dtdivulg  => vr_dtdivulg  --Data Divulgacao
+                                                ,pr_dtvigenc  => vr_dtvigenc  --Data Vigencia
+                                                ,pr_cdfvlcop  => vr_cdfvlcop  --Codigo faixa valor cooperativa
+                                                ,pr_cdcritic  => vr_cdcritic  --Codigo Critica
+                                                ,pr_dscritic  => vr_dscritic  --Descricao Critica
+                                                ,pr_tab_erro  => pr_tab_erro); --Tabela erros
+          --Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            --Criar mensagem Confirmacao
+            pr_tab_msg_confirma(1).inconfir:= 2;
+            pr_tab_msg_confirma(1).dsmensag:= 'Nao ha tabela cadastrada  CRED-USUARI-11-'||vr_cdbattar||
+                                              '. Informe o Suporte Operacional';
+            --Levantar Excecao
+            RAISE vr_exc_sair;
+          ELSE
+            --Criar mensagem Confirmacao
+            pr_tab_msg_confirma(1).inconfir:= 1;
+            pr_tab_msg_confirma(1).dsmensag:= '******** AVISO: ESTE EXTRATO SERA TARIFADO EM R$ '||
+                                              to_char(vr_vllanaut,'fm999g999g990d00')||' NESTA DATA. ********';
+          END IF;
         END IF;
 
         --Inserir Extrato
@@ -9404,7 +9374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
     vr_vlmoefix     NUMBER(35,8);
     vr_vlmoefi1     NUMBER(35,8);
     vr_nmcidade     VARCHAR2(100);
-	vr_nmsegntl     crapttl.nmextttl%TYPE;
+	  vr_nmsegntl     crapttl.nmextttl%TYPE;
 
     vr_ant_vlirfcot NUMBER;
     vr_ant_vlprepag NUMBER;
@@ -11300,7 +11270,7 @@ END pc_consulta_ir_pj_trim;
       vr_rel_nrtelcop VARCHAR2(100);
       vr_ant_dtrefere DATE;
       vr_sol_dtrefere DATE;
-	  vr_nmsegntl     crapttl.nmextttl%TYPE;
+	    vr_nmsegntl     crapttl.nmextttl%TYPE;
 
 
       vr_dsdomes1     VARCHAR(10);
@@ -11547,11 +11517,11 @@ END pc_consulta_ir_pj_trim;
           vr_rel_dsendcop##1:= rw_crapcop.dsendcop ||', '||to_char(rw_crapcop.nrendcop,'fm99g990')||
                                ' - '|| rw_crapcop.nmbairro;
           IF pr_idorigem = 3 THEN                     
-          vr_rel_dsendcop##2:= gene0002.fn_mask_cep(rw_crapcop.nrcepend)||' - '|| rw_crapcop.nmcidade||
+             vr_rel_dsendcop##2:= gene0002.fn_mask_cep(rw_crapcop.nrcepend)||' - '|| rw_crapcop.nmcidade||
                                   ' - '||rw_crapcop.cdufdcop;
           ELSE
              vr_rel_dsendcop##2:= gene0002.fn_mask_cep(rw_crapcop.nrcepend)||' - '|| rw_crapcop.nmcidade||
-                               ' - '||rw_crapcop.cdufdcop ||'  - TELEFONE: '||rw_crapcop.nrtelvoz;
+                                  ' - '||rw_crapcop.cdufdcop ||'  - TELEFONE: '||rw_crapcop.nrtelvoz;
           END IF;
           vr_rel_nrtelcop:= rw_crapcop.nrtelvoz;
           vr_rel_dscpmfpg:= vr_tab_extrato_ir(vr_index).dscpmfpg;
@@ -11634,7 +11604,7 @@ END pc_consulta_ir_pj_trim;
              vr_index_retenc:= vr_tab_retencao_ir.NEXT(vr_index_retenc);
           END LOOP;
           --Junta todos os textos para colocar no XML
-           vr_dstexto:= vr_dstexto||vr_texto_retenc||'</retencoes></conta>';
+          vr_dstexto:= vr_dstexto||vr_texto_retenc||'</retencoes></conta>';          
           
           --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);

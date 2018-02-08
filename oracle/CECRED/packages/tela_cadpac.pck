@@ -130,7 +130,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                                ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
                                ,pr_des_erro    OUT VARCHAR2); --> Erros do processo
-
+                               
   PROCEDURE pc_lista_pas(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                         ,pr_flgpaaut  IN BOOLEAN DEFAULT TRUE  --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
                         ,pr_retxml   OUT NOCOPY xmltype        --> Arquivo de retorno do XML
@@ -641,7 +641,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
 
     Objetivo  : Rotina para buscar os dados do PA.
 
-    Alteracoes: -----
+    Alteracoes: 23/01/2018 - Adicionado nova permissao para o departamento CANAIS,
+                             conforme solicitado no chamado 825830. (Kelvin)
     ..............................................................................*/
     DECLARE
 
@@ -691,9 +692,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       -- Verifica se tem permissao de alteracao
       IF (pr_cdagenci = 90 OR pr_cdagenci = 91) AND
           pr_cddopcao <> 'C'                    AND
-          -- Não for 4-COMPE / 8-COORD.ADM/FINANCEIRO / 9-COORD.PRODUTOS / 18-SUPORTE / 20-TI
-          rw_crapope.cddepart NOT IN (4,8,9,18,20) THEN
-          vr_dscritic := 'PA 90 ou PA 91 podem ser alterados pelos departamentos: TI, SUPORTE, COORD.ADM/FIN., COORD.PROD e COMPE.';
+          -- Não for 4-COMPE / 8-COORD.ADM/FINANCEIRO / 9-COORD.PRODUTOS / 18-SUPORTE / 20-TI / 1-CANAIS
+          rw_crapope.cddepart NOT IN (4,8,9,18,20,1) THEN
+          vr_dscritic := 'PA 90 ou PA 91 podem ser alterados pelos departamentos: TI, SUPORTE, COORD.ADM/FIN., COORD.PROD, COMPE e CANAIS.';
           RAISE vr_exc_erro;
       END IF;
 
@@ -4449,7 +4450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
     END;
 
   END pc_grava_dados_site;
-
+  
   PROCEDURE pc_lista_pas(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                         ,pr_flgpaaut  IN BOOLEAN DEFAULT TRUE  --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
                         ,pr_retxml   OUT NOCOPY xmltype        --> Arquivo de retorno do XML

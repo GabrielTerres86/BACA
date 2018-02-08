@@ -144,7 +144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : James Prust Junior
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 31/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -152,7 +152,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
   -- Objetivo  : Centralizar rotinas relacionadas ao Estorno de Parcelas do PP
   --
   -- Alteracoes:
-  --
+  /*
+  31/01/2018 - #826621 Conforme posicionamento da área, os contratos de portabilidade também poderão 
+               ser estornados. Regra retirada do sistema. (Carlos)
+  */
   ---------------------------------------------------------------------------  
   PROCEDURE pc_tela_busca_lancto_estorno(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                         ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do Contrato
@@ -2604,10 +2607,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       END IF;
       
       -- Emprestimo/Financiamento nao pode ser do tipo Portabilidade
+      /* 31/01/2018 #826621 - Conforme posicionamento da área, os contratos de portabilidade também
+         poderão ser estornados. Regra retirada do sistema.
       IF rw_crapfin.tpfinali = 2 THEN
         vr_dscritic := 'Nao e permitido efetuar o estorno, contrato de portabilidade';
         RAISE vr_exc_saida;
-      END IF;
+      END IF; */
      
       -- Caso o contrato de emprestimo estiver liquidado, precisamos fazer algumas validacoes  
       IF rw_crapepr.inliquid = 1 THEN

@@ -439,6 +439,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                20/11/2017 - Validar consistencia da referencia para a cecred, caso ocorra erro,
                             vamos enviar e-mail para o convenios@cecred.coop.br (Lucas Ranghetti #790577)
+                            
+               24/01/2018 - Validar dia util para a data do pagamento, se vir sab,dom, feriado vamos
+                            considerar o proximo dia util. (Lucas Ranghetti #832286)
 
                02/02/2018 - Ajsutar exception da referencia para gravar ndb somente para
                             a cooperativa do agendamento (Lucas Ranghetti #837177) 
@@ -2513,6 +2516,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                     BEGIN
                       vr_dtrefere := to_date(lpad(vr_diarefer,2,'0')||lpad(vr_mesrefer,2,'0')||vr_anorefer,'ddmmyyyy');
+                      vr_dtrefere := gene0005.fn_valida_dia_util(vr_cdcooper, vr_dtrefere, 'P');
                     EXCEPTION
                       WHEN OTHERS THEN
                         vr_cdcritic := 13; -- Data invalida
@@ -3533,6 +3537,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                     BEGIN
                       vr_dtrefere := to_date(lpad(vr_diarefer,2,'0')||lpad(vr_mesrefer,2,'0')||vr_anorefer,'ddmmyyyy');
+                      vr_dtrefere := gene0005.fn_valida_dia_util(vr_cdcooper, vr_dtrefere, 'P');
                     EXCEPTION
                       WHEN OTHERS THEN
                         vr_cdcritic := 13; -- Data invalida
