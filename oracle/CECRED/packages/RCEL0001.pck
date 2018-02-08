@@ -1227,6 +1227,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
            vr_dserrlog := 'Você já possui um agendamento cadastrado com os mesmos dados informados.'
 					             || ' O agendamento de recarga para o mesmo telefone e valor devem ser feitos em datas diferentes.'
 											 || ' Consulte suas recargas agendadas.';
+					
+				  -- Se for pelo TAA
+					IF pr_idorigem = 4 THEN
+						-- Utilizaremos a crítica sem o CDATA/tagas
+						vr_dscritic := 'Você já possui um agendamento cadastrado para a mesma Data, Telefone e Valor.'
+   											 || ' Consulte suas recargas agendadas.';
+					END IF;											 
 					-- Levantar exceção
 					RAISE vr_exc_erro;					 
 			END IF;

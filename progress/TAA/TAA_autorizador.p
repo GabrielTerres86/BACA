@@ -10128,7 +10128,7 @@ PROCEDURE verifica_recarga:
 						  INPUT 1,             /* Titular da conta */
 						  INPUT aux_nrdddtel,  /* DDD */
 						  INPUT aux_nrcelular, /* Nr. do celular */
-						  INPUT 0,             /* Valor de recarga */
+						  INPUT aux_vlrecarga, /* Valor de recarga */
 						  INPUT DATE(aux_dtrecarga), /* Data de recarga */
 						  INPUT aux_qtmesagd,  /* Quantidade de mes agendamento (Somente opcao 3)*/
 						  INPUT aux_cddopcao,  /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */              
