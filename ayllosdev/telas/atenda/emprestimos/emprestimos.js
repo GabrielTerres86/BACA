@@ -44,8 +44,8 @@
  * 032: [06/12/2013] Incluido o trigger("change") para cCateg e validaçoes dos bens(Guilherme/SUPERO).
  * 033: [23/12/2013] Comentado replace de "," por "." do campo vlopescr em funcao manterRotina() (Jorge)
  * 034: [23/12/2013] Retirado condicao entre "Imprimir" e "Nao Imprimiri", em case "I_DADOS_AVAL" da funcao controlaOperacao(). (Jorge)
- * 				     Alteração de operacoes de fluxo do botao continuar para "Consulta". (Jorge)
- *					 Atribuição de var qtpromis voltada para array de proposta em funcao manterRotina(). (Jorge)
+ *             Alteração de operacoes de fluxo do botao continuar para "Consulta". (Jorge)
+ *           Atribuição de var qtpromis voltada para array de proposta em funcao manterRotina(). (Jorge)
  * 035: [23/01/2014] Adicionados parametros para validação de CPF/CNPJ do proprietário dos bens como interveniente (Lucas).
  * 036: [27/01/2014] Ajuste para bloquear a tela no momento que é fechado a tela de liquidações na inclusão da proposta (James).
  * 037: [29/01/2014] - Incluido tratamento para o campo "uflicenc" (Guilherme/SUPERO).
@@ -109,16 +109,19 @@
  * 088: [12/06/2017] Retornar o protocolo. (Jaison/Marcos - PRJ337)
  * 089: [08/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 090: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-					 (Adriano - P339).
+               crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+           (Adriano - P339).
  * 091: [26/06/2017] Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 092: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 093: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
  * 094: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
  * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
  * 096: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
- * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom)  
- * ##############################################################################
+ * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom) 
+ * 099: [25/11/2018] Adidionado função escolherTipoEmprestimo() para selecção do tipo de emprestimo
+ * 100: [21/12/2017] Alterado para quando a linha de crédito for (6901 - Cessão Cartão Crédito) a 
+ *                   qualificação da operação seja (5 - Cessão de Cartão) (Diego Simas - AMcom)
+  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
  */
@@ -364,8 +367,8 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
             idseqttl: idseqttl,
             operacao: operacao,
             inconfir: 1,
-			executandoProdutos: executandoProdutos,
-			sitaucaoDaContaCrm: sitaucaoDaContaCrm,
+      executandoProdutos: executandoProdutos,
+      sitaucaoDaContaCrm: sitaucaoDaContaCrm,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -376,8 +379,8 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 
             if (response.indexOf('showError("error"') == -1) {
                 $('#divConteudoOpcao').html(response);
-				
-                // $('#divConteudoOpcao').centralizaRotinaH();				
+        
+                // $('#divConteudoOpcao').centralizaRotinaH();        
             } else {
                 eval(response);
                 controlaFoco(operacao);
@@ -386,6 +389,38 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
             return false;
         }
     });
+}
+
+function escolherTipoEmprestimo(){
+    showMsgAguardo('Aguarde, abrindo altera&ccedil;&atilde;o...');
+
+    exibeRotina($('#divUsoGenerico'));
+
+    limpaDivGenerica();
+    
+    inobriga = $("#divEmpres table tr.corSelecao").find("input[id='inobriga']").val();
+    
+    // Executa script de confirmação através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/emprestimos/tabela_tipo_emprestimo.php',
+        data: {
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            $('#divUsoGenerico').html(response);
+            layoutPadrao();
+            hideMsgAguardo();
+            bloqueiaFundo($('#divUsoGenerico'));
+        }
+    });
+
+    return false;
 }
 
 function controlaOperacao(operacao) {
@@ -403,7 +438,7 @@ function controlaOperacao(operacao) {
     // Para isso verifico a linha que está selecionado e pego o valor do INPUT HIDDEN desta linha
     if (in_array(operacao, ['TA', 'TE', 'TC', 'A_NOVA_PROP', 'A_NUMERO', 'A_VALOR', 'A_AVALISTA', 'IMP', 'REG_GRAVAMES', 'VAL_GRAVAMES',
                             'PORTAB_CRED_C', 'VAL_RECALCULAR_EMPRESTIMO', 'RECALCULAR_EMPRESTIMO', 'PORTAB_CRED_A', 'PORTAB_CRED_I', 'ENV_ESTEIRA',
-							'ACIONAMENTOS'])) {
+              'ACIONAMENTOS'])) {
 
         nrctremp = (nrctremp == '') ? '' : nrctremp;
         tplcremp = (tplcremp == 0) ? 0 : tplcremp;
@@ -1166,10 +1201,10 @@ function controlaOperacao(operacao) {
             mensagem = 'Recalculando Empr&eacute;stimo...';
             cddopcao = 'R';
             break;
-		case 'ACIONAMENTOS': /* Esteira - Acionamentos - Consulta */
+    case 'ACIONAMENTOS': /* Esteira - Acionamentos - Consulta */
             cddopcao = 'C';
         //    numeroProposta = (numeroProposta == 0) ? $("#divEmpres table tr.corSelecao").find("input[id='nrctremp']").val() : numeroProposta;
-			mensagem = 'Carregando Consulta de Detalhes da Proposta...';
+      mensagem = 'Carregando Consulta de Detalhes da Proposta...';
             break;
         case 'PORTAB_CRED_I': /*Portabilidade - Insercao*/
             cddopcao = 'I';
@@ -1196,14 +1231,14 @@ function controlaOperacao(operacao) {
             mensagem = 'Carregando Altera&ccedil;&atilde;o de Portabilidade...';
             break;
         case 'ENV_ESTEIRA':
-			      insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
-			      dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
+            insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
+            dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
             mensagem = 'Enviando Proposta para An&aacute;lise de Cr&eacute;dito...';
-			if (dssitest == 'Analise Finalizada' && insitapr == 2){				
-				showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'manterRotina("ENV_ESTEIRA")\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
-			}else{
-				showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'ENV_ESTEIRA\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
-			}
+      if (dssitest == 'Analise Finalizada' && insitapr == 2){       
+        showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'manterRotina("ENV_ESTEIRA")\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+      }else{
+        showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'ENV_ESTEIRA\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+      }
             return false;
             break;
         default:
@@ -1226,7 +1261,7 @@ function controlaOperacao(operacao) {
     if (inpessoa == 1) {
         inconcje = (arrayRendimento['inconcje'] == 'yes') ? 1 : 0;
     }
-	/*
+  /*
     if ( ( operacao != 'RECALCULAR_EMPRESTIMO') && ( operacao != '') ) {
         $('.divRegistros').remove();
     }
@@ -1257,24 +1292,24 @@ function controlaOperacao(operacao) {
             nrcpfcgc_busca: nrcpfcgc_busca,
             inconfir: 1,
             nomeAcaoCall: nomeAcaoCall,
-			executandoProdutos: executandoProdutos,
+      executandoProdutos: executandoProdutos,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
-			
-			if ( operacao != 'RECALCULAR_EMPRESTIMO') {
-				$('.divRegistros').remove();
-			}
-			
+      
+      if ( operacao != 'RECALCULAR_EMPRESTIMO') {
+        $('.divRegistros').remove();
+      }
+      
             hideMsgAguardo();
             showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
         },
         success: function(response) {
-			
-			if ( operacao != 'RECALCULAR_EMPRESTIMO') {
-				$('.divRegistros').remove();
-			}
-			
+      
+      if ( operacao != 'RECALCULAR_EMPRESTIMO') {
+        $('.divRegistros').remove();
+      }
+      
             if (response.indexOf('showError("error"') == -1) {
 
                 if (cddopcao == 'G') {
@@ -1289,24 +1324,24 @@ function controlaOperacao(operacao) {
                             bloqueiaFundo(divRotina);
                             eval(response);
                         } else {
-							
-							if (nomeAcaoCall == 'A_AVALISTA'){
-								if (operacao == 'A_AVALISTA') {
-									$('#divConteudoOpcao').hide();
-									$('#divRotina').hide();
-								}else if ((operacao == 'AI_DADOS_AVAL') || (operacao == 'A_DADOS_AVAL')){
-									$('#divConteudoOpcao').show();
-									$('#divRotina').show();
-								}
-							}
-							
+              
+              if (nomeAcaoCall == 'A_AVALISTA'){
+                if (operacao == 'A_AVALISTA') {
+                  $('#divConteudoOpcao').hide();
+                  $('#divRotina').hide();
+                }else if ((operacao == 'AI_DADOS_AVAL') || (operacao == 'A_DADOS_AVAL')){
+                  $('#divConteudoOpcao').show();
+                  $('#divRotina').show();
+                }
+              }
+              
                             $('#divConteudoOpcao').html(response);
 
-							if (operacao == 'ACIONAMENTOS') {
-								formataAcionamento();
+              if (operacao == 'ACIONAMENTOS') {
+                formataAcionamento();
                         }
                         }
-                        //consulta campos de portabilidade	
+                        //consulta campos de portabilidade  
                         if (in_array(operacao, ['PORTAB_CRED_C', 'PORTAB_CRED_I', 'PORTAB_CRED_A'])) {
                             //carrega os campos da tela
                             carregaCamposPortabilidade(cdcooper, nrdconta, numeroProposta, 'PROPOSTA');
@@ -1750,36 +1785,39 @@ function controlaLayout(operacao) {
         divRegistro.css('height', '150px');
 
         altura = '230px';
-        largura = '900px';
+        largura = '1020px';
 
         var ordemInicial = new Array();
         //ordemInicial = [[0, 0]];
 
         var arrayLargura = new Array();
-        arrayLargura[0] = '55px';
-        arrayLargura[1] = '60px';
-        arrayLargura[2] = '150px';
-        arrayLargura[3] = '77px';
-        arrayLargura[4] = '65px';
-        arrayLargura[5] = '25px';
-        arrayLargura[6] = '28px';
-        arrayLargura[7] = '28px';
-        arrayLargura[8] = '50px';
-        arrayLargura[9] = '127px';
+        arrayLargura[0] = '65px';
+        arrayLargura[1] = '65px';
+        arrayLargura[2] = '120px';
+        arrayLargura[3] = '95px';
+        arrayLargura[4] = '85px';
+        arrayLargura[5] = '65px';
+        arrayLargura[6] = '35px';
+        arrayLargura[7] = '35px';
+        arrayLargura[8] = '35px';
+        arrayLargura[9] = '65px';
+        arrayLargura[10] = '65px';
+        arrayLargura[11] = '105px';
 
 
         var arrayAlinha = new Array();
         arrayAlinha[0] = 'center';
         arrayAlinha[1] = 'right';
         arrayAlinha[2] = 'center';
-        arrayAlinha[3] = 'right';
-        arrayAlinha[4] = 'center';
+        arrayAlinha[3] = 'center';
+        arrayAlinha[4] = 'right';
         arrayAlinha[5] = 'center';
         arrayAlinha[6] = 'center';
         arrayAlinha[7] = 'center';
         arrayAlinha[8] = 'center';
         arrayAlinha[9] = 'center';
         arrayAlinha[10] = 'center';
+        arrayAlinha[11] = 'center';
 
         var metodoTabela = 'controlaOperacao(\'TA\')';
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
@@ -1893,7 +1931,7 @@ function controlaLayout(operacao) {
         rProposta.css('width', '265px'); 
         rImgCalen.css('margin-top', '-5px');
 
-        rRiscoCalc.addClass('').css('width', '137px');
+        rRiscoCalc.addClass('').css('width', '140px');
         rLnCred.addClass('').css('width', '82px');
         rFinali.addClass('').css('width', '82px');
         rQualiParc.addClass('').css('width', '82px');
@@ -2408,7 +2446,7 @@ function controlaLayout(operacao) {
                         Busca_Associado(nrctaava, 0, contAvalistas - 1);
                     }
                 } else {
-                    //	$('#'+nomeForm).limpaFormulario();
+                    //  $('#'+nomeForm).limpaFormulario();
 
                     cTodos.habilitaCampo();
                     cTodos_1.habilitaCampo();
@@ -2645,7 +2683,7 @@ function controlaLayout(operacao) {
                         var nrseqres_ant = dsregexi.substr(dsregexi.indexOf('resposta') + 8);
                         var nrseqper_atu = $(this).attr('id');
 
-                        // Se tem regra para o elemento que foi modificado						
+                        // Se tem regra para o elemento que foi modificado            
                         if (nrseqper == nrseqper_ant) {
                             if (nrseqres == nrseqres_ant) {
                                 $("#" + nrseqper_atu, "#frmQuestionario").habilitaCampo();
@@ -2771,7 +2809,7 @@ function controlaLayout(operacao) {
         cPrej.addClass('moeda_6').css('width', '90px');
         c2Tit_1.css('width', '85px').setMask("DATE", "", "", "divRotina");
         c2TitEndv.addClass('moeda_6').css('width', '90px');
-		
+    
         var cTodos_2 = $('input', '#' + nomeForm + ' fieldset:eq(1)');
         var rRotulo_2 = $('label[for="nrgarope"],label[for="nrpatlvr"],label[for="nrperger"]', '#' + nomeForm);
 
@@ -2814,11 +2852,11 @@ function controlaLayout(operacao) {
             cTodos_1.desabilitaCampo();
             cTodos_2.habilitaCampo();
 
-			if (inobriga == 'S'){
+      if (inobriga == 'S'){
                 $('#' + nomeForm + ' fieldset:eq(1)').hide();
                 altura = '135px';
-			}
-			
+      }
+      
             if (arrayProtCred['flgcentr'] == 'no') {
 
                 c1Tit_1.habilitaCampo();
@@ -2978,62 +3016,62 @@ function controlaLayout(operacao) {
 
         // Se pressionar alguma tecla no campo Chassi/N.Serie, verificar a tecla pressionada e toda a devida ação
         cChassi.unbind('keydown').bind('keydown', function(event) {
-			
-			if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
-			
-				var tecla = event.which || event.keyCode;
-				
-				// Se é a tecla "Q" ou "q"
-				if (tecla == 81){
-					return false;
-				}
-				
-				// Se é a tecla "I" ou "i"			
-				if (tecla == 73){
-					return false;
-				}
-				
-				// Se é a tecla "O" ou "o"
-				if (tecla == 79){
-					return false;
-				}			
-				
-			}	
+      
+      if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+      
+        var tecla = event.which || event.keyCode;
+        
+        // Se é a tecla "Q" ou "q"
+        if (tecla == 81){
+          return false;
+        }
+        
+        // Se é a tecla "I" ou "i"      
+        if (tecla == 73){
+          return false;
+        }
+        
+        // Se é a tecla "O" ou "o"
+        if (tecla == 79){
+          return false;
+        }     
+        
+      } 
         });
 
-		//Remover caracteres especiais
-		cChassi.unbind('keyup').bind('keyup', function(e){
-			
-			var re = /[^\w\s]/gi;
-			
-			if(re.test(cChassi.val())){
-				cChassi.val(cChassi.val().replace(re, ''));
-			}		            
+    //Remover caracteres especiais
+    cChassi.unbind('keyup').bind('keyup', function(e){
+      
+      var re = /[^\w\s]/gi;
+      
+      if(re.test(cChassi.val())){
+        cChassi.val(cChassi.val().replace(re, ''));
+      }               
             
-			if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+      if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
                 re = /[\Q\q\I\i\O\o\_]/g;
                 
                 if(re.test(cChassi.val())){
                     cChassi.val(cChassi.val().replace(re, ''));
-                }			
-			}
-			re = / /g;
-			
-			if(re.test(cChassi.val())){
-				cChassi.val(cChassi.val().replace(re, ''));
-			}			
-		});
-		
-		cChassi.unbind('blur').bind('blur', function(){
-			cChassi.val(cChassi.val().replace(/[^\w\s]/gi, ''));
+                }     
+      }
+      re = / /g;
+      
+      if(re.test(cChassi.val())){
+        cChassi.val(cChassi.val().replace(re, ''));
+      }     
+    });
+    
+    cChassi.unbind('blur').bind('blur', function(){
+      cChassi.val(cChassi.val().replace(/[^\w\s]/gi, ''));
             
             if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
-			  cChassi.val(cChassi.val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
+        cChassi.val(cChassi.val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
             }
             
-			cChassi.val(cChassi.val().replace(/ /g,''));			
-		});
-		
+      cChassi.val(cChassi.val().replace(/ /g,''));      
+    });
+    
         if (operacao == 'C_ALIENACAO') {
             cTodos.desabilitaCampo();
         } else if (operacao == 'A_ALIENACAO' || operacao == 'IA_ALIENACAO') {
@@ -3389,7 +3427,7 @@ function controlaLayout(operacao) {
 
         cFinalidEmpr.val(arrayStatusApprov['cdfinemp']);
         cLinhaCredit.val(arrayStatusApprov['cdlcremp']);
-        cNivelRisco.val(arrayStatusApprov['nivrisco']);
+        cNivelRisco.val(arrayStatusApprov['nivriori'] != '' ? arrayStatusApprov['nivriori'] : arrayStatusApprov['nivriris']);
         cValorEmpr.val(arrayStatusApprov['vlemprst']);
         cValorParc.val(arrayStatusApprov['vlpreemp']);
         cQtdeParc.val(arrayStatusApprov['qtpreemp']);
@@ -3707,12 +3745,14 @@ function atualizaArray(novaOp, cdcooper) {
 
 function copiaProposta(novaOp) {
     arrayProposta['nivrisco'] = $('#nivrisco', '#frmNovaProp').val();
+    arrayProposta['nivriori'] = $('#nivrisco', '#frmNovaProp').val(); // nível de risco original
     arrayProposta['nivcalcu'] = $('#nivcalcu', '#frmNovaProp').val();
     arrayProposta['vlemprst'] = $('#vlemprst', '#frmNovaProp').val();
     arrayProposta['cdlcremp'] = $('#cdlcremp', '#frmNovaProp').val();
     arrayProposta['vlpreemp'] = $('#vlpreemp', '#frmNovaProp').val();
     arrayProposta['cdfinemp'] = $('#cdfinemp', '#frmNovaProp').val();
     arrayProposta['qtpreemp'] = $('#qtpreemp', '#frmNovaProp').val();
+    arrayProposta['idquapro'] = $('#idquapro', '#frmNovaProp').val();
     arrayProposta['idquapro'] = $('#idquapro', '#frmNovaProp').val();
     arrayProposta['flgpagto'] = $('#flgpagto', '#frmNovaProp').val();
     arrayProposta['percetop'] = $('#percetop', '#frmNovaProp').val();
@@ -3721,7 +3761,7 @@ function copiaProposta(novaOp) {
     arrayProposta['flgimppr'] = $('#flgimppr', '#frmNovaProp').val();
     arrayProposta['flgimpnp'] = $('#flgimpnp', '#frmNovaProp').val();
     arrayProposta['dsctrliq'] = $('#dsctrliq', '#frmNovaProp').val();
-	arrayProposta['idfiniof'] = $('#idfiniof', '#frmNovaProp').val();
+  arrayProposta['idfiniof'] = $('#idfiniof', '#frmNovaProp').val();
 
     flgimppr = arrayProposta['flgimppr'];
     flgimpnp = arrayProposta['flgimpnp'];
@@ -3757,6 +3797,7 @@ function attArray(novaOp, cdcooper) {
         }
 
         arrayProposta['nivrisco'] = $('#nivrisco', '#frmNovaProp').val();
+        arrayProposta['nivriori'] = $('#nivrisco', '#frmNovaProp').val();
         arrayProposta['nivcalcu'] = $('#nivcalcu', '#frmNovaProp').val();
         arrayProposta['vlemprst'] = $('#vlemprst', '#frmNovaProp').val();
         arrayProposta['cdlcremp'] = $('#cdlcremp', '#frmNovaProp').val();
@@ -3884,7 +3925,7 @@ function attArray(novaOp, cdcooper) {
         arrayAlienacoes[atual]['vlmerbem'] = $('#vlmerbem', '#frmAlienacao').val();
         arrayAlienacoes[atual]['idalibem'] = $('#idalibem', '#frmAlienacao').val();
         arrayAlienacoes[atual]['uflicenc'] = $('#uflicenc', '#frmAlienacao').val(); // GRAVAMES */
-		arrayAlienacoes[atual]['cdcoplib'] = glb_codigoOperadorLiberacao;
+    arrayAlienacoes[atual]['cdcoplib'] = glb_codigoOperadorLiberacao;
     } else if (in_array(operacao, ['AI_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU', 'I_INTEV_ANU'])) {
 
         atual = contIntervis - 1;
@@ -3948,6 +3989,7 @@ function attArray(novaOp, cdcooper) {
 
     } else if (in_array(operacao, ['V_PARCELAS'])) {
         arrayProposta['nivrisco'] = $('#nivrisco', '#frmNovaProp').val();
+        arrayProposta['nivriori'] = $('#nivriori', '#frmNovaProp').val();
         arrayProposta['nivcalcu'] = $('#nivcalcu', '#frmNovaProp').val();
         arrayProposta['vlemprst'] = $('#vlemprst', '#frmNovaProp').val();
         arrayProposta['cdlcremp'] = $('#cdlcremp', '#frmNovaProp').val();
@@ -4031,7 +4073,7 @@ function atualizaTela() {
     if (in_array(operacao, ['TI', 'TE', 'TC', 'TA', 'CF', 'A_NOVA_PROP', 'A_NUMERO', 'A_VALOR', 'A_AVALISTA', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA', 'A_INICIO', 'I_INICIO'])) {
 
         $('#nivrisco option:selected', '#frmNovaProp').val();
-        $('#nivrisco', '#frmNovaProp').val(arrayProposta['nivrisco']);
+        $('#nivrisco', '#frmNovaProp').val(arrayProposta['nivriori'] != '' ? arrayProposta['nivriori'] : arrayProposta['nivrisco']);
 
         if (operacao == 'TI') {
             arrayProposta['dtdpagto'] = dtdpagt2;
@@ -4445,7 +4487,7 @@ function deletaAlienacao(operacao) {
 
 function insereHipoteca(operacao, opContinua) {
 
-	var opContinua = opContinua || '';
+  var opContinua = opContinua || '';
 
     if ((typeof $('#dscatbem', '#frmHipoteca').val() == 'object') || ($('#dscatbem', '#frmHipoteca').val() == '')) {
         controlaOperacao(opContinua);
@@ -5035,13 +5077,13 @@ function validaDadosInterv() {
 
 function validaHipoteca(nmfuncao, operacao) {
 
-	if ((typeof $('#dscatbem', '#frmHipoteca').val() == 'object') || ($('#dscatbem', '#frmHipoteca').val() == '')) {
-		eval(nmfuncao);
+  if ((typeof $('#dscatbem', '#frmHipoteca').val() == 'object') || ($('#dscatbem', '#frmHipoteca').val() == '')) {
+    eval(nmfuncao);
         return true;
     }
-	
-	showMsgAguardo('Aguarde, validando dados...');
-	
+  
+  showMsgAguardo('Aguarde, validando dados...');
+  
     $('input,select', '#' + nomeForm).removeClass('campoErro');
 
     // Alteracao 069
@@ -5050,9 +5092,9 @@ function validaHipoteca(nmfuncao, operacao) {
     var dsbemfin  = $('#dsbemfin', '#frmHipoteca').val();
     var vlmerbem  = $('#vlmerbem', '#frmHipoteca').val();
     var dscatbem  = $('#dscatbem', '#frmHipoteca').val();
-	var fVlemprst = $('#vlemprst', '#frmNovaProp').val();
-	var fVlemprst = arrayProposta['vlemprst'];
-		fVlemprst = number_format(parseFloat(fVlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+  var fVlemprst = $('#vlemprst', '#frmNovaProp').val();
+  var fVlemprst = arrayProposta['vlemprst'];
+    fVlemprst = number_format(parseFloat(fVlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
 
     var idcatbem = contHipotecas;
 
@@ -5068,7 +5110,7 @@ function validaHipoteca(nmfuncao, operacao) {
         data: {
             dscatbem: dscatbem, dsbemfin: dsbemfin,
             vlmerbem: vlmerbem, idcatbem: idcatbem,
-			nmfuncao: nmfuncao, vlemprst: fVlemprst,
+      nmfuncao: nmfuncao, vlemprst: fVlemprst,
             operacao: operacao, nomeform: nomeForm,
             redirect: 'script_ajax'
         },
@@ -5094,17 +5136,17 @@ function validaHipoteca(nmfuncao, operacao) {
             }
         }
     });
-	return true;
+  return true;
 }
 
 function validaAlienacao(nmfuncao, operacao) {
-	
-	if (((typeof $('#dscatbem', '#frmAlienacao').val() == 'object') || $('#dscatbem', '#frmAlienacao').val() == '') && $('#dsbemfin', '#frmAlienacao').val() == ''){
+  
+  if (((typeof $('#dscatbem', '#frmAlienacao').val() == 'object') || $('#dscatbem', '#frmAlienacao').val() == '') && $('#dsbemfin', '#frmAlienacao').val() == ''){
         eval(nmfuncao);
         return false;
 }
 
-	showMsgAguardo('Aguarde, validando dados...');
+  showMsgAguardo('Aguarde, validando dados...');
 
     $('input,select', '#' + nomeForm).removeClass('campoErro');
 
@@ -5125,8 +5167,8 @@ function validaAlienacao(nmfuncao, operacao) {
     var nrcpfbem  = $.trim(normalizaNumero($('#nrcpfbem', '#frmAlienacao').val()));
     var uflicenc  = $.trim($('#uflicenc', '#frmAlienacao').val());
     var dstipbem  = $.trim($('#dstipbem', '#frmAlienacao').val());
-	var fVlemprst = arrayProposta['vlemprst'];
-		fVlemprst = number_format(parseFloat(fVlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+  var fVlemprst = arrayProposta['vlemprst'];
+    fVlemprst = number_format(parseFloat(fVlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
 
     var idcatbem = contAlienacao;
 
@@ -5198,7 +5240,7 @@ function validaAlienacao(nmfuncao, operacao) {
             nrdplaca: nrdplaca, idseqbem: idseqbem,
             nomeform: nomeForm, dstipbem: dstipbem,
             uflicenc: uflicenc, nmfuncao: nmfuncao,
-			vlemprst: fVlemprst,
+      vlemprst: fVlemprst,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -5257,7 +5299,7 @@ function validaAnaliseProposta() {
             dtoutris: dtoutris, nrgarope: nrgarope,
             nrliquid: nrliquid, nrpatlvr: nrpatlvr,
             nrperger: nrperger, inobriga: inobriga,
-			nomeform: nomeForm, redirect: 'script_ajax'
+      nomeform: nomeForm, redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
@@ -5316,8 +5358,8 @@ function validaDados(cdcooper) {
         if (!validaDadosGerais()) {
             return false;
         }
-		
-		carregaDadosPropostaLinhaCredito();
+    
+    carregaDadosPropostaLinhaCredito();
 
     } else if (in_array(operacao, ['A_DADOS_PROP_PJ', 'I_DADOS_PROP_PJ'])) {
 
@@ -5361,12 +5403,12 @@ function validaDados(cdcooper) {
     } else if (in_array(operacao, ['A_PROT_CRED', 'I_PROT_CRED'])) {
 
         var aux_dtmvtolt = dataParaTimestamp(dtmvtolt);
-		
-		if (inobriga == 'N'){
-			if (!validaAnaliseProposta()) {
-				return false;
-			}
-		}
+    
+    if (inobriga == 'N'){
+      if (!validaAnaliseProposta()) {
+        return false;
+      }
+    }
     }
     else if (in_array(operacao, ['A_PROTECAO_TIT'])) {
 
@@ -7358,11 +7400,11 @@ function fechaValores(flmudfai) {
 
     fechaRotina($('#divUsoGenerico'), $('#divRotina'));
 
-	if (flmudfai == 'N'){
-		exibirMensagens(strValor, 'confirmaConsultas("' + flmudfai + '" , "SVP");controlaOperacao("");');
-	}else{
-		exibirMensagens(strValor, 'controlaOperacao("");');
-	}
+  if (flmudfai == 'N'){
+    exibirMensagens(strValor, 'confirmaConsultas("' + flmudfai + '" , "SVP");controlaOperacao("");');
+  }else{
+    exibirMensagens(strValor, 'controlaOperacao("");');
+  }
 
     return false;
 
@@ -7383,7 +7425,7 @@ function confirmaConsultas(flmudfai, cddopcao) {
 //***************************************************
 
 function buscaLiquidacoes(operacao) {
-	
+  
     var dsctrliq = $('#dsctrliq', '#' + nomeForm).val();
     //variavel que contem o valor de "Emprestimos" na tela atenda    
     var vltotemp = parseFloat($('#valueRot1').html().replace(/[.R$ ]*/g, '').replace(',', '.'));
@@ -7403,7 +7445,7 @@ function buscaLiquidacoes(operacao) {
                 dsctrliq: dsctrliq,
                 operacao: operacao,
                 cdlcremp: cdlcremp,
-				inpessoa: inpessoa,
+        inpessoa: inpessoa,
                 redirect: 'script_ajax'
             },
             error: function(objAjax, responseError, objExcept) {
@@ -7668,7 +7710,7 @@ function selecionaLiquidacao() {
 }
 
 function fechaLiquidacoes(operacao) {
-	
+  
     var dsctrliq = '';
 
     for (var i in arrayLiquidacoes) {
@@ -7678,36 +7720,41 @@ function fechaLiquidacoes(operacao) {
     }
 
     dsctrliq = dsctrliq.slice(0, -1);
-	
-	if (dsctrliq != '' && qtmesblq != 0 && operacao[0] == 'I')
-		showConfirmacao('Deseja bloquear a oferta de cr&eacute;dito pr&eacute;-aprovado na conta durante o per&iacute;odo de ' + qtmesblq + ' mes(es)?',
-						'Confirma&ccedil;&atilde;o - Ayllos', 
-						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = true;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
-						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = false;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
-						'sim.gif', 
-						'nao.gif');
-	else
-		fechaLiquidacoesAposConfirmacao(dsctrliq, operacao);
-	return false;
+  
+  if (dsctrliq != '' && qtmesblq != 0 && operacao[0] == 'I')
+    showConfirmacao('Deseja bloquear a oferta de cr&eacute;dito pr&eacute;-aprovado na conta durante o per&iacute;odo de ' + qtmesblq + ' mes(es)?',
+            'Confirma&ccedil;&atilde;o - Ayllos', 
+            'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = true;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
+            'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = false;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
+            'sim.gif', 
+            'nao.gif');
+  else
+    fechaLiquidacoesAposConfirmacao(dsctrliq, operacao);
+  return false;
 }
 
 function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao){
-	
-	$('#dsctrliq', '#' + nomeForm).val(dsctrliq);
+  
+  $('#dsctrliq', '#' + nomeForm).val(dsctrliq);
 
-	if ($('#dsctrliq', '#' + nomeForm).val() != '') {
-		qualificaOperacao();
-	} else {
-		$('#idquapro', '#' + nomeForm).val(1);
-		$('#dsquapro', '#' + nomeForm).val('Operacao normal');
-	}
+  if ($('#dsctrliq', '#' + nomeForm).val() != '') {
+    qualificaOperacao();
+  } else {
+        if ($('#cdlcremp', '#' + nomeForm).val() == 6901) {
+            $('#idquapro', '#' + nomeForm).val(5);
+            $('#dsquapro', '#' + nomeForm).val('CESSAO DE CREDITO');
+        }else{
+    $('#idquapro', '#' + nomeForm).val(1);
+            $('#dsquapro', '#' + nomeForm).val('OPERACAO NORMAL');        
+        }   
+  }
 
-	limpaDivGenerica();
-	fechaRotina($('#divUsoGenerico'), $('#divRotina'));
-	showMsgAguardo('Aguarde, carregando...');
+  limpaDivGenerica();
+  fechaRotina($('#divUsoGenerico'), $('#divRotina'));
+  showMsgAguardo('Aguarde, carregando...');
 
-	validaLiquidacoes(true, operacao);
-	
+  validaLiquidacoes(true, operacao);
+  
     return false;
 }
 
@@ -8079,6 +8126,16 @@ function controlaPesquisas() {
 
     // Linha de Credito
     $('#cdlcremp', '#' + nomeForm).unbind('change').bind('change', function() {
+        // Alterado para quando a linha de crédito for (Cessão de Cartão) a
+        // Qualificação da Operação recebe ( 5 - Cessão de Cartão)
+        if($('#cdlcremp', '#' + nomeForm).val() == 6901){
+            $('#idquapro', '#' + nomeForm).val(5);
+            $('#dsquapro', '#' + nomeForm).val('CESSAO DE CREDITO'); 
+        }else{
+            $('#idquapro', '#' + nomeForm).val(1);
+            $('#dsquapro', '#' + nomeForm).val('OPERACAO NORMAL'); 
+        }
+
         bo = 'b1wgen0059.p';
         procedure = 'busca_linhas_credito';
         titulo = 'Linhas de Cr&eacute;dito';
@@ -8087,8 +8144,8 @@ function controlaPesquisas() {
         varMod = (modalidade == 0) ? $("#cdmodali", '#' + nomeForm).val() : modalidade; //modalidade previamente carregada no cadastro da portabilidade        
         filtrosDesc = 'flgstlcr|yes;cdfinemp|' + varAux + ';cdmodali|' + varMod;
         buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dslcremp', $(this).val(), 'dslcremp', filtrosDesc, nomeForm);
-		
-		if (nomeForm != 'frmSimulacao') {
+    
+    if (nomeForm != 'frmSimulacao') {
             carregaDadosPropostaLinhaCredito();
         }
     });
@@ -9122,7 +9179,7 @@ function SomarData(txtData, DiasAdd)
     // pelo número de dias que quero somar a txtData.
     d.setTime(Date.parse(txtData.split("/").reverse().join("/")) + (86400000 * (DiasAdd)))
 
-    // Crio a var da DataFinal			
+    // Crio a var da DataFinal      
     var DataFinal;
 
     var DataParam = txtData.split("/");
@@ -9214,7 +9271,7 @@ function formataAcionamento() {
     var arrayLargura = new Array();
 
     arrayLargura[0] = '80px';
-	  arrayLargura[1] = '110px';
+    arrayLargura[1] = '110px';
     arrayLargura[2] = '100px';
     arrayLargura[3] = '196px';
     arrayLargura[4] = '120px';
@@ -9230,40 +9287,40 @@ function formataAcionamento() {
     var metodoTabela = '';
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
-	
+  
     return false;
 }
 
 function validaDadosAlterarSomenteValorProposta(){
-	
-	hideMsgAguardo();
-	showMsgAguardo("Aguarde, validando os dados...");
-	
-	var fVlemprst = $('#vlemprst', '#frmNovaProp').val();
-	
-	$.ajax({
-		type: "POST",
-		url: UrlSite + 'telas/atenda/emprestimos/valida_dados_alterar_valor_proposta.php',
-		data: {
-			nrdconta: nrdconta, idseqttl: idseqttl,
-			nrctremp: nrctremp, vlemprst: fVlemprst,
-			redirect: "script_ajax"
-		},
-		error: function(objAjax,responseError,objExcept){
-			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divTela').css('z-index')))");
-		},
-		success: function(response) {
-			try {
-				hideMsgAguardo();
-				eval(response);
-				return false;
-			} catch(error) {
-				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-			}
-		}
-	});	
+  
+  hideMsgAguardo();
+  showMsgAguardo("Aguarde, validando os dados...");
+  
+  var fVlemprst = $('#vlemprst', '#frmNovaProp').val();
+  
+  $.ajax({
+    type: "POST",
+    url: UrlSite + 'telas/atenda/emprestimos/valida_dados_alterar_valor_proposta.php',
+    data: {
+      nrdconta: nrdconta, idseqttl: idseqttl,
+      nrctremp: nrctremp, vlemprst: fVlemprst,
+      redirect: "script_ajax"
+    },
+    error: function(objAjax,responseError,objExcept){
+      hideMsgAguardo();
+      showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divTela').css('z-index')))");
+    },
+    success: function(response) {
+      try {
+        hideMsgAguardo();
+        eval(response);
+        return false;
+      } catch(error) {
+        hideMsgAguardo();
+        showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+      }
+    }
+  }); 
     return false;
 }
 
@@ -9281,18 +9338,18 @@ function abreProtocoloAcionamento(dsprotocolo) {
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
-			hideMsgAguardo();
+      hideMsgAguardo();
             showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
         },
         success: function(response) {
             hideMsgAguardo();
-			if (response.substr(0,4) == "hide") {
-				eval(response);
-			} else {
+      if (response.substr(0,4) == "hide") {
+        eval(response);
+      } else {
                 $('#nmarquiv', '#frmImprimir').val(response);
                 var action = UrlSite + 'telas/atenda/emprestimos/form_acionamentos.php';
                 carregaImpressaoAyllos("frmImprimir",action,"bloqueiaFundo(divRotina);");
-			}
+      }
             return false;
         }
     });
