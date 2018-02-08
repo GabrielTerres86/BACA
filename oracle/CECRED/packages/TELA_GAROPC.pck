@@ -352,6 +352,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
       IF rw_linha.tpctrato = 4 THEN
         vr_permingr := rw_linha.permingr;
         vr_labgaran := 'Garantia Obrigatória:';
+        -- Se for inclusao e parametro geral de resgate for sim
+        IF pr_tipaber = 'I' AND vr_inresgate_permitido = 1 THEN
+          vr_inresgate_automatico := 1;
+        END IF;
       ELSE
         vr_labgaran := 'Garantia Sugerida:';
       END IF;
@@ -403,7 +407,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
 
         END IF;
 
-      END IF; -- pr_tipaber IN ('C','A')
+      END IF; -- pr_tipaber IN ('C','A','AI')
 
       -- Valor da garantia necessaria
       vr_vlgarnec := pr_vlropera * (vr_permingr / 100);

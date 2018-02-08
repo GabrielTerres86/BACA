@@ -2279,16 +2279,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     rw_craplim cr_craplim%ROWTYPE;
 
     --> Seleciona dados da cobertura
-    CURSOR cr_cobertura(pr_cdcooper   IN tbgar_cobertura_operacao.cdcooper%TYPE
-                       ,pr_nrdconta   IN tbgar_cobertura_operacao.nrdconta%TYPE
-                       ,pr_nrcontrato IN tbgar_cobertura_operacao.nrcontrato%TYPE) IS
+    CURSOR cr_cobertura(pr_idcobert IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
       SELECT tco.perminimo,
              tco.nrconta_terceiro,
              tco.qtdias_atraso_permitido
         FROM tbgar_cobertura_operacao tco
-       WHERE tco.cdcooper   = pr_cdcooper
-         AND tco.nrdconta   = pr_nrdconta
-   		   AND tco.nrcontrato = pr_nrcontrato;
+       WHERE tco.idcobertura = pr_idcobert;
     rw_cobertura cr_cobertura%ROWTYPE;
 
     ----------->>> VARIAVEIS <<<--------   
@@ -2338,6 +2334,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     vr_dstitulo        VARCHAR2(200);
     vr_modrelat        VARCHAR2(10);
     vr_tpctrava        INTEGER;
+    vr_idcobert        NUMBER;
     
     vr_linhatra        VARCHAR2(100);
     vr_nmdevsol        VARCHAR2(100);
@@ -2448,6 +2445,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       
       vr_cdagenci := rw_crawepr.cdagenci;
       vr_dtctrato := rw_crawepr.dtmvtolt;
+      vr_idcobert := rw_crawepr.idcobope;
       vr_modrelat := (CASE WHEN rw_crawepr.idcobope = rw_crawepr.idcobefe THEN '_1' ELSE '_2' END);
     ELSE
       --> Dados do limite
@@ -2460,6 +2458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       
       vr_cdagenci := rw_crapass.cdagenci;
       vr_dtctrato := rw_craplim.dtinivig;
+      vr_idcobert := rw_craplim.idcobope;
       vr_modrelat := (CASE WHEN rw_craplim.idcobope = rw_craplim.idcobefe THEN '_1' ELSE '_2' END);
     END IF;
     
@@ -2615,14 +2614,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     ELSIF pr_cdaditiv = 9 THEN
 
       --> Dados da cobertura
-      OPEN cr_cobertura(pr_cdcooper   => pr_cdcooper
-                       ,pr_nrdconta   => pr_nrdconta
-                       ,pr_nrcontrato => pr_nrctremp);
+      OPEN cr_cobertura(pr_idcobert => vr_idcobert);
       FETCH cr_cobertura INTO rw_cobertura;
       CLOSE cr_cobertura;
       
       -- Se possui garantidor terceiro
-      IF rw_cobertura.nrconta_terceiro > 0 THEN
+      IF NVL(rw_cobertura.nrconta_terceiro,0) > 0 THEN
         OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
                         pr_nrdconta => rw_cobertura.nrconta_terceiro);
         FETCH cr_crapass INTO rw_crapass_gar;
