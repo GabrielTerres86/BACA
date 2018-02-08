@@ -15,8 +15,6 @@
              15/09/2017 - Alteracao na mascara da Agencia do Banco do Brasil. (Jaison/Elton - M459)
 
 			 17/10/2017 - Adicionar flgofatr para o form frmConsulta5 (Lucas Ranghetti #772863)
-            
-             03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
 ************************************************************************/
 var cddepart;
 
@@ -273,7 +271,6 @@ function formataFormularioConsulta() {
     $('label[for="qtdiaenl"]', "#frmConsulta2").addClass("rotulo-linha").css({ "width": "180px" });
     $('label[for="cdsinfmg"]', "#frmConsulta2").addClass("rotulo").css({ "width": "150px" });
     $('label[for="taamaxer"]', "#frmConsulta2").addClass("rotulo-linha").css({ "width": "160px" });
-    $('label[for="vllimpag"]', "#frmConsulta2").addClass("rotulo-linha").css({ "width": "180px" });
 
     $('label[for="flgcmtlc"]', "#frmConsulta3").addClass("rotulo").css({ "width": "180px" });
     $('label[for="vllimapv"]', "#frmConsulta3").addClass("rotulo-linha").css({ "width": "180px" });
@@ -431,7 +428,6 @@ function formataFormularioConsulta() {
     $('#qtdiaenl', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '3');
     $('#cdsinfmg', '#frmConsulta2').css({ 'width': '120px', 'text-align': 'left' }).desabilitaCampo();
     $('#taamaxer', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '3');
-    $('#vllimpag', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '18').setMask("DECIMAL", "zzz.zzz.zzz.zz9,99", "", "");
 
     $('#flgcmtlc', '#frmConsulta3').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
     $('#vllimapv', '#frmConsulta3').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '18').setMask("DECIMAL", "zzz.zzz.zzz.zz9,99", "", "");
@@ -3328,7 +3324,6 @@ function alterarCooperativa() {
     var qtdiaenl = $("#qtdiaenl", "#frmConsulta2").val();
     var cdsinfmg = $("#cdsinfmg", "#frmConsulta2").val();
     var taamaxer = $("#taamaxer", "#frmConsulta2").val();
-    var vllimpag = isNaN(parseFloat($('#vllimpag', '#frmConsulta2').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vllimpag', '#frmConsulta2').val().replace(/\./g, "").replace(/\,/g, "."));
 
     var cdcrdarr = $("#cdcrdarr", "#frmConsulta3").val();
     var cdagsede = $("#cdagsede", "#frmConsulta3").val();
@@ -3536,7 +3531,6 @@ function alterarCooperativa() {
             cdsinfmg: cdsinfmg,
             taamaxer: taamaxer,
             vllimapv: vllimapv,
-            vllimpag: vllimpag,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
