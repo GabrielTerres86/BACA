@@ -203,35 +203,35 @@ DEFINE FRAME f_data_agendamento_recarga
      Btn_G AT ROW 19.14 COL 94.4 WIDGET-ID 86
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 66
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 74
-     "RECARGA DE CELULAR" VIEW-AS TEXT
-          SIZE 122 BY 2.14 AT ROW 2.43 COL 29.6 WIDGET-ID 226
-          FGCOLOR 1 FONT 10
-     "VALOR:" VIEW-AS TEXT
-          SIZE 17 BY 2.38 AT ROW 13 COL 63.8 RIGHT-ALIGNED WIDGET-ID 264
-          FONT 8
-     "meses" VIEW-AS TEXT
-          SIZE 14 BY 2.38 AT ROW 16 COL 122.6 RIGHT-ALIGNED WIDGET-ID 286
+     "No dia" VIEW-AS TEXT
+          SIZE 14 BY 2.38 AT ROW 16 COL 27.6 RIGHT-ALIGNED WIDGET-ID 270
           FONT 8
      "Iniciar em:" VIEW-AS TEXT
           SIZE 21 BY 2.38 AT ROW 19 COL 27.6 RIGHT-ALIGNED WIDGET-ID 288
           FONT 8
-     "OPERADORA:" VIEW-AS TEXT
-          SIZE 32 BY 2.38 AT ROW 7 COL 63.8 RIGHT-ALIGNED WIDGET-ID 246
+     "VALOR:" VIEW-AS TEXT
+          SIZE 17 BY 2.38 AT ROW 13 COL 63.8 RIGHT-ALIGNED WIDGET-ID 264
           FONT 8
-     "-" VIEW-AS TEXT
-          SIZE 5 BY 2.62 AT ROW 9.86 COL 80.6 WIDGET-ID 242
-          FONT 13
-     "DDD/TELEFONE:" VIEW-AS TEXT
-          SIZE 39 BY 2.38 AT ROW 10 COL 63.8 RIGHT-ALIGNED WIDGET-ID 238
+     "RECARGA DE CELULAR" VIEW-AS TEXT
+          SIZE 122 BY 2.14 AT ROW 2.43 COL 29.6 WIDGET-ID 226
+          FGCOLOR 1 FONT 10
+     "(Mês/Ano)" VIEW-AS TEXT
+          SIZE 23.2 BY 2.38 AT ROW 19 COL 89 RIGHT-ALIGNED WIDGET-ID 298
           FONT 8
      "de cada mês, durante" VIEW-AS TEXT
           SIZE 48 BY 2.38 AT ROW 16 COL 93.6 RIGHT-ALIGNED WIDGET-ID 280
           FONT 8
-     "(Mês/Ano)" VIEW-AS TEXT
-          SIZE 23.2 BY 2.38 AT ROW 19 COL 89 RIGHT-ALIGNED WIDGET-ID 298
+     "DDD/TELEFONE:" VIEW-AS TEXT
+          SIZE 39 BY 2.38 AT ROW 10 COL 63.8 RIGHT-ALIGNED WIDGET-ID 238
           FONT 8
-     "No dia" VIEW-AS TEXT
-          SIZE 14 BY 2.38 AT ROW 16 COL 27.6 RIGHT-ALIGNED WIDGET-ID 270
+     "-" VIEW-AS TEXT
+          SIZE 5 BY 2.62 AT ROW 9.86 COL 80.6 WIDGET-ID 242
+          FONT 13
+     "OPERADORA:" VIEW-AS TEXT
+          SIZE 32 BY 2.38 AT ROW 7 COL 63.8 RIGHT-ALIGNED WIDGET-ID 246
+          FONT 8
+     "meses" VIEW-AS TEXT
+          SIZE 14 BY 2.38 AT ROW 16 COL 122.6 RIGHT-ALIGNED WIDGET-ID 286
           FONT 8
      IMAGE-37 AT ROW 24.29 COL 1 WIDGET-ID 148
      IMAGE-40 AT ROW 24.29 COL 156 WIDGET-ID 154
@@ -571,6 +571,7 @@ DO:
                                     ,INPUT par_nrcelula 
                                     ,INPUT aux_dtrecarga
                                     ,INPUT INT(ed_mmrecarga:SCREEN-VALUE)
+                                    ,INPUT par_vlrecarga
                                     ,INPUT 3
                                     ,OUTPUT aux_flgderro
                                     ,OUTPUT aux_lsdatagd
@@ -622,7 +623,9 @@ DO:
                END.
          END.                                         
      END.   
-     
+  ELSE
+      APPLY "CHOOSE" TO Btn_G.
+
   IF aux_flgretur THEN
      DO:
        /* puxa o frame principal */
@@ -1093,7 +1096,7 @@ chtemporizador:t_cartao_data_agendamento_recarga:INTERVAL = 0.
         Btn_D:SENSITIVE IN FRAME f_data_agendamento_recarga  THEN
         APPLY "CHOOSE" TO Btn_D.
     ELSE
-    IF  KEY-FUNCTION(LASTKEY) = "G"                    AND    /* Continuar*/
+    IF  KEY-FUNCTION(LASTKEY) = "G"                    AND    /* Corrige */
         Btn_G:SENSITIVE IN FRAME f_data_agendamento_recarga  THEN
         APPLY "CHOOSE" TO Btn_G.
     ELSE

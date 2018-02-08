@@ -34,7 +34,7 @@ DEFINE INPUT PARAMETER par_cdproduto AS INTEGER                 NO-UNDO.
 DEFINE INPUT PARAMETER par_vlrecarga AS DECIMAL                 NO-UNDO.
 
 /* Local Variable Definitions ---                                       */
-{ includes/var_taa.i }
+{ J:\f0030474\TAA\2018_02\includes\var_taa.i }
 
 DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgretur        AS LOGICAL                  NO-UNDO.
@@ -484,6 +484,7 @@ DO:
                                     ,INPUT par_nrcelula 
                                     ,INPUT ed_dtrecarga:SCREEN-VALUE
                                     ,INPUT 0
+                                    ,INPUT par_vlrecarga
                                     ,INPUT 2
                                     ,OUTPUT aux_flgderro
                                     ,OUTPUT aux_lsdatagd
@@ -535,6 +536,8 @@ DO:
                END.
          END.                                         
      END.   
+  ELSE
+    APPLY "CHOOSE" TO Btn_G.
      
   IF aux_flgretur THEN
      DO:
@@ -893,7 +896,7 @@ chtemporizador:t_cartao_data_futura_recarga:INTERVAL = 0.
         Btn_D:SENSITIVE IN FRAME f_data_futura_recarga  THEN
         APPLY "CHOOSE" TO Btn_D.
     ELSE
-    IF  KEY-FUNCTION(LASTKEY) = "G"                    AND    /* Continuar*/
+    IF  KEY-FUNCTION(LASTKEY) = "G"                    AND    /* Corrigir*/
         Btn_G:SENSITIVE IN FRAME f_data_futura_recarga  THEN
         APPLY "CHOOSE" TO Btn_G.
     ELSE

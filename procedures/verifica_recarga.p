@@ -14,6 +14,7 @@ DEFINE INPUT PARAMETER par_nrdddcel  AS INTEGER                 NO-UNDO.
 DEFINE INPUT PARAMETER par_nrcelula  AS DECIMAL                 NO-UNDO.
 DEFINE INPUT PARAMETER par_dtrecarga AS CHAR                    NO-UNDO.
 DEFINE INPUT PARAMETER par_qtmesagd  AS INTEGER                 NO-UNDO.
+DEFINE INPUT PARAMETER par_vlrecarga AS DECIMAL                 NO-UNDO.
 DEFINE INPUT PARAMETER par_cddopcao  AS INTEGER                 NO-UNDO.
 
 DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL  INIT NO     NO-UNDO.
@@ -240,6 +241,14 @@ DO:
     xField:APPEND-CHILD(xText).    
     
     /* ---------- */
+    xDoc:CREATE-NODE(xField,"VLRECARGA","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_vlrecarga).
+    xField:APPEND-CHILD(xText).    
+
+    /* ---------- */
     xDoc:CREATE-NODE(xField,"CDDOPCAO","ELEMENT").
     xRoot:APPEND-CHILD(xField).
     
@@ -335,6 +344,7 @@ DO:
                       ASSIGN par_flgretur = YES.
                       
                     par_flgderro = YES.
+                    LEAVE.
                 END.
             ELSE
             IF  xField:NAME = "LSDATAGD"  THEN

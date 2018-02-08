@@ -172,12 +172,12 @@ DEFINE FRAME f_data_atual_recarga
      ed_dtrecarga AT ROW 17.62 COL 66.4 COLON-ALIGNED NO-LABEL WIDGET-ID 272
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 66
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 74
+     "VALOR:" VIEW-AS TEXT
+          SIZE 17 BY 2.38 AT ROW 14.52 COL 63.6 RIGHT-ALIGNED WIDGET-ID 264
+          FONT 8
      "RECARGA DE CELULAR" VIEW-AS TEXT
           SIZE 122 BY 2.14 AT ROW 2.43 COL 29.6 WIDGET-ID 226
           FGCOLOR 1 FONT 10
-     "OPERADORA:" VIEW-AS TEXT
-          SIZE 32 BY 2.38 AT ROW 8.52 COL 63.6 RIGHT-ALIGNED WIDGET-ID 246
-          FONT 8
      "DATA:" VIEW-AS TEXT
           SIZE 14 BY 2.38 AT ROW 17.52 COL 63.6 RIGHT-ALIGNED WIDGET-ID 270
           FONT 8
@@ -187,8 +187,8 @@ DEFINE FRAME f_data_atual_recarga
      "-" VIEW-AS TEXT
           SIZE 5 BY 2.62 AT ROW 11.38 COL 80.4 WIDGET-ID 242
           FONT 13
-     "VALOR:" VIEW-AS TEXT
-          SIZE 17 BY 2.38 AT ROW 14.52 COL 63.6 RIGHT-ALIGNED WIDGET-ID 264
+     "OPERADORA:" VIEW-AS TEXT
+          SIZE 32 BY 2.38 AT ROW 8.52 COL 63.6 RIGHT-ALIGNED WIDGET-ID 246
           FONT 8
      IMAGE-37 AT ROW 24.29 COL 1 WIDGET-ID 148
      IMAGE-40 AT ROW 24.29 COL 156 WIDGET-ID 154
@@ -398,6 +398,7 @@ DO:
                                     ,INPUT par_nrcelula 
                                     ,INPUT ed_dtrecarga:SCREEN-VALUE
                                     ,INPUT 0
+                                    ,INPUT par_vlrecarga
                                     ,INPUT 1
                                     ,OUTPUT aux_flgderro
                                     ,OUTPUT aux_lsdatagd
