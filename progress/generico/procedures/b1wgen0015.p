@@ -35,7 +35,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 12/05/2017
+    Data    : Abril/2006                      Ultima Atualizacao: 08/02/2018
     
     Dados referentes ao programa:
 
@@ -407,6 +407,9 @@
 
               30/01/2018 - Adicionado tratamento na valida-inclusao-conta-transferencia
                            para trocar a mensagem quando a origem for InternetBank (Anderson).
+                           
+              08/02/2018 - Na procedure atualizar-preposto foi atualizado as transacoes pendentes
+                           de aprovacao para o novo preposto qdo for PJ sem ass conjunta(Tiago #775776).
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -8139,6 +8142,45 @@ PROCEDURE atualizar-preposto:
                                               "99999999999"),"xxx.xxx.xxx-xx")).
                     END.
             END.
+        
+        /*Atualizar as transaçoes pendentes de aprovaçao para o novo preposto
+          quando for uma conta PJ sem assinatura conjunta Tiago*/
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_atu_trans_pend_prep
+            aux_handproc = PROC-HANDLE NO-ERROR
+                          (INPUT par_cdcooper, /* Codigo da Cooperativa */
+                           INPUT par_nrdconta, /* Numero da Conta */
+                           INPUT par_nrcpfcgc, /* CPF/CGC */
+                           INPUT crapass.inpessoa, /* Tipo Pessoa */
+                           INPUT 1,            /* Tipo de senha (1=INTERNET) */
+                           INPUT crapass.idastcjt, /* Exige Ass.Conjunta Nao=0 Sim=1 */
+                          OUTPUT 0,            /* Codigo da critica */
+                          OUTPUT "").          /* Descricao da critica */
+        
+        CLOSE STORED-PROC pc_atu_trans_pend_prep
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_cdcritic = pc_atu_trans_pend_prep.pr_cdcritic 
+                              WHEN pc_atu_trans_pend_prep.pr_cdcritic <> ?
+               aux_dscritic = pc_atu_trans_pend_prep.pr_dscritic
+                              WHEN pc_atu_trans_pend_prep.pr_dscritic <> ?.
+        
+        IF aux_cdcritic <> 0   OR
+           aux_dscritic <> ""  THEN
+        DO:
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,            /** Sequencia **/
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+                                       
+          UNDO TRANSACAO, LEAVE TRANSACAO.                                   
+        END.
         
         ASSIGN aux_flgtrans = TRUE.
         

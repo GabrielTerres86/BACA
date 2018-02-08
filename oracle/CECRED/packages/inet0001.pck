@@ -514,7 +514,14 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                         ,pr_cdcritic     OUT INTEGER        --Codigo do erro
                                         ,pr_dscritic     OUT VARCHAR2);                                                                       
                                     
-    
+  PROCEDURE pc_atu_trans_pend_prep (pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE   --Numero conta
+                                   ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE   --CPF/CGC
+                                   ,pr_inpessoa IN crapass.inpessoa%TYPE   --Tipo de Pessoa
+                                   ,pr_tpdsenha IN crapsnh.tpdsenha%TYPE   --Tipo de Senha
+                                   ,pr_idastcjt IN crapass.idastcjt%TYPE   --Exige Ass.Conjunta Nao=0 Sim=1
+                                   ,pr_cdcritic   OUT INTEGER              --Código do erro
+                                   ,pr_dscritic   OUT VARCHAR2);
                                     
 END INET0001;
 /
@@ -526,7 +533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 03/01/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 08/02/2018
   --
   -- Dados referentes ao programa:
   --
@@ -616,6 +623,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --
   --            05/01/2018 - Na pc_verifica_operacao corrigdo acentuação na frase de critica agendamento 
   --                         e pagamento (Tiago #818723).
+  --
+  --            08/02/2018 - Criado a procedure pc_atu_trans_pend_prep que faz a atualização das transacoes
+  --                         pendentes de aprovação por preposto de conta PJ sem ass conjunta (Tiago #775776).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -1382,7 +1392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         IF vr_hratual < vr_hrinipag OR vr_hratual > vr_hrfimpag THEN
           --Estourou limite
           vr_idesthor:= 1;
-        ELSE
+        ELSE 
           --Dentro do Horario limite
           vr_idesthor:= 2;
         END IF;
@@ -6500,8 +6510,54 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
       pr_dscritic := 'Erro na proc pc_verifica_limite_ope_canc '||sqlerrm;
   
   END pc_verifica_limite_ope_canc;    
-  
 
+  /*Atualiza as transacoes pendentes para o novo preposto*/
+  PROCEDURE pc_atu_trans_pend_prep (pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE   --Numero conta
+                                   ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE   --CPF/CGC
+                                   ,pr_inpessoa IN crapass.inpessoa%TYPE   --Tipo de Pessoa
+                                   ,pr_tpdsenha IN crapsnh.tpdsenha%TYPE   --Tipo de Senha
+                                   ,pr_idastcjt IN crapass.idastcjt%TYPE   --Exige Ass.Conjunta Nao=0 Sim=1
+                                   ,pr_cdcritic   OUT INTEGER              --Código do erro
+                                   ,pr_dscritic   OUT VARCHAR2) IS         --Descricao do erro
+  BEGIN
+  DECLARE
+    -------------------------> VARIAVEIS <-------------------------
+    vr_exc_erro EXCEPTION;
+    
+    BEGIN
+      
+      IF pr_tpdsenha =  1 /*Internet*/ AND
+         pr_inpessoa > 1 /*PJ*/        AND 
+         pr_idastcjt = 0 /*Nao exige Ass.Conj*/ THEN
+         BEGIN
+           UPDATE tbgen_trans_pend
+              SET tbgen_trans_pend.nrcpf_representante = pr_nrcpfcgc
+            WHERE tbgen_trans_pend.cdcooper = pr_cdcooper
+              AND tbgen_trans_pend.nrdconta = pr_nrdconta
+              AND tbgen_trans_pend.idsituacao_transacao = 1;             
+              
+           UPDATE tbgen_aprova_trans_pend
+              SET tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = pr_nrcpfcgc
+            WHERE tbgen_aprova_trans_pend.cdcooper = pr_cdcooper
+              AND tbgen_aprova_trans_pend.nrdconta = pr_nrdconta
+              AND tbgen_aprova_trans_pend.idsituacao_aprov = 1;             
+              
+         EXCEPTION           
+           WHEN OTHERS THEN
+             RAISE vr_exc_erro;
+         END;
+      END IF;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Não foi atualizar as transacoes do preposto: '|| SQLERRM;
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Não foi atualizar as transacoes do preposto: '|| SQLERRM;    
+    END;
+  END pc_atu_trans_pend_prep;
   
 
 END INET0001;
