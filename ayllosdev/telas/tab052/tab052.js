@@ -101,10 +101,10 @@ function formataCabecalho() {
     return false;
 }
 
-function formataCampos() {	
-	$('.labelPri', '#frmTab052').css('width', '300px');
-	$('#tituloO', '#frmTab052').css('width', '390px');
-	$('#tituloC', '#frmTab052').css('width', '160px');
+function formataCampos() {  
+    $('.labelPri', '#frmTab052').css('width', '300px');
+    $('#tituloO', '#frmTab052').css('width', '390px');
+    $('#tituloC', '#frmTab052').css('width', '160px');
  
     cVllimite = $('#vllimite', '#frmTab052');
     cVlconsul = $('#vlconsul', '#frmTab052');
@@ -137,7 +137,7 @@ function formataCampos() {
     cQtprzmin.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtprzmax.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtminfil.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE    
-	cNrmespsq.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE 
+    cNrmespsq.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE 
     cPctitemi.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cPctolera.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cPcdmulta.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
@@ -166,7 +166,7 @@ function formataCampos() {
     cPcnaopag_c = $('#pcnaopag_c', '#frmTab052');
     cQtnaopag_c = $('#qtnaopag_c', '#frmTab052');
     cQtprotes_c = $('#qtprotes_c', '#frmTab052');
-	
+    
     cVllimite_c.css('width',  '100px').addClass('moeda').addClass('editcecred');// DECI
     cVlconsul_c.css('width',  '100px').addClass('moeda').addClass('editcecred');// DECI
     cVlmaxsac_c.css('width',  '100px').addClass('moeda').addClass('editcecred');// DECI
@@ -178,7 +178,7 @@ function formataCampos() {
     cQtprzmin_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtprzmax_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtminfil_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE    
-	cNrmespsq_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE 
+    cNrmespsq_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE 
     cPctitemi_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cPctolera_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cPcdmulta_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
@@ -293,7 +293,7 @@ function controlaFoco() {
 
     $('#qtprzmax', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#cardbtit', '#frmTab052').focus();
+            $('#qtminfil', '#frmTab052').focus();
             return false;
         }
     });
@@ -498,10 +498,9 @@ function controlaFoco() {
             return false;
         }
     });
-          
-      
+    
     $('#qtnaopag_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
-        if(1 == normalizaNumero($('#tpcobran', '#frmCab').val())){
+        if (e.keyCode == 9 || e.keyCode == 13) {
              if(1 == normalizaNumero($('#tpcobran', '#frmCab').val())){
                 $('#qtprotes_c', '#frmTab052').focus();
                 return false;
@@ -511,6 +510,7 @@ function controlaFoco() {
             }
         }
     });
+    
     /*registerRow*/
     $('#qtprotes_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
@@ -542,8 +542,14 @@ function controlaOperacao() {
     // Apenas quando for alteração
     if ($('#cddopcao', '#frmCab').val() == 'C') {
         manterRotina('C');
+        $('#cardbtit', '#frmTab052').css({'display': ''});
+        $('#cardbtit-label-compl', '#frmTab052').css({'display': ''});
     } else {
         manterRotina('AC');
+        $('#cardbtit', '#frmTab052').css({'display': 'none'});
+        $('#cardbtit-label-compl', '#frmTab052').css({'display': 'none'});
+
+        
     }
              
     return false;
@@ -558,7 +564,7 @@ function manterRotina(cddopcao) {
     hideMsgAguardo();
 
     var tpcobran = normalizaNumero($('#tpcobran', '#frmCab').val());
-	
+    
     var vllimite = normalizaNumero($('#vllimite', '#frmTab052').val());
     var vlconsul = normalizaNumero($('#vlconsul', '#frmTab052').val());
     var vlminsac = normalizaNumero($('#vlminsac', '#frmTab052').val());
@@ -610,44 +616,44 @@ function manterRotina(cddopcao) {
         data: {
             cddopcao: cddopcao,
             tpcobran: tpcobran,
-			vllimite: vllimite,
-			vlconsul: vlconsul,
-			vlminsac: vlminsac,
-			vlmaxsac: vlmaxsac,
-			qtremcrt: qtremcrt,
-			qttitprt: qttitprt,
-			qtrenova: qtrenova,
-			qtdiavig: qtdiavig,
-			qtprzmin: qtprzmin,
-			qtprzmax: qtprzmax,
-			cardbtit: cardbtit,
-			qtminfil: qtminfil,
-			nrmespsq: nrmespsq,
-			pctitemi: pctitemi,
-			pctolera: pctolera,
-			pcdmulta: pcdmulta,
-			pcnaopag: pcnaopag,
-			qtnaopag: qtnaopag,
-			qtprotes: qtprotes,
-			vllimite_c: vllimite_c,
-			vlconsul_c: vlconsul_c,
-			vlminsac_c: vlminsac_c,
-			vlmaxsac_c: vlmaxsac_c,
-			qtremcrt_c: qtremcrt_c,
-			qttitprt_c: qttitprt_c,
-			qtrenova_c: qtrenova_c,
-			qtdiavig_c: qtdiavig_c,
-			qtprzmin_c: qtprzmin_c,
-			qtprzmax_c: qtprzmax_c,
-			cardbtit_c: cardbtit_c,
-			qtminfil_c: qtminfil_c,
-			nrmespsq_c: nrmespsq_c,
-			pctitemi_c: pctitemi_c,
-			pctolera_c: pctolera_c,
-			pcdmulta_c: pcdmulta_c,
-			pcnaopag_c: pcnaopag_c,
-			qtnaopag_c: qtnaopag_c,
-			qtprotes_c: qtprotes_c,
+            vllimite: vllimite,
+            vlconsul: vlconsul,
+            vlminsac: vlminsac,
+            vlmaxsac: vlmaxsac,
+            qtremcrt: qtremcrt,
+            qttitprt: qttitprt,
+            qtrenova: qtrenova,
+            qtdiavig: qtdiavig,
+            qtprzmin: qtprzmin,
+            qtprzmax: qtprzmax,
+            cardbtit: cardbtit,
+            qtminfil: qtminfil,
+            nrmespsq: nrmespsq,
+            pctitemi: pctitemi,
+            pctolera: pctolera,
+            pcdmulta: pcdmulta,
+            pcnaopag: pcnaopag,
+            qtnaopag: qtnaopag,
+            qtprotes: qtprotes,
+            vllimite_c: vllimite_c,
+            vlconsul_c: vlconsul_c,
+            vlminsac_c: vlminsac_c,
+            vlmaxsac_c: vlmaxsac_c,
+            qtremcrt_c: qtremcrt_c,
+            qttitprt_c: qttitprt_c,
+            qtrenova_c: qtrenova_c,
+            qtdiavig_c: qtdiavig_c,
+            qtprzmin_c: qtprzmin_c,
+            qtprzmax_c: qtprzmax_c,
+            cardbtit_c: cardbtit_c,
+            qtminfil_c: qtminfil_c,
+            nrmespsq_c: nrmespsq_c,
+            pctitemi_c: pctitemi_c,
+            pctolera_c: pctolera_c,
+            pcdmulta_c: pcdmulta_c,
+            pcnaopag_c: pcnaopag_c,
+            qtnaopag_c: qtnaopag_c,
+            qtprotes_c: qtprotes_c,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -734,7 +740,7 @@ function liberaCamposCecred() {
 
     $('#vllimite_c', '#frmTab052').focus();
 
-	document.getElementById('btContinuar').innerText ='Alterar';
+    document.getElementById('btContinuar').innerText ='Alterar';
     return false;
 }
 
@@ -754,7 +760,7 @@ function alteracaoMensagem() {
 }
 
 function confirmaOperacao() {
-	
+    
     
     if ($("#idctrlab", "#frmTab052").val() == 'COOPER'){
         
@@ -778,7 +784,7 @@ function confirmaOperacao() {
     } 
            
     return false;
-	
+    
 }
 
 function validarCampos() {
@@ -835,7 +841,7 @@ function validarCampos() {
     /* pctolera > pctolera_c = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
     if( converteMoedaFloat($('#pctolera', '#frmTab052').val()) > converteMoedaFloat($('#pctolera_c', '#frmTab052').val())  ){
         showError('error','A toler$acirc;ncia para limite excedido deve ser inferior ou igual ao estipulado pela CECRED','Alerta - Ayllos',"$(\'#pctolera\',\'#frmTab052\').focus();");
-        return false;
+        return false; 
     }
 
     /* pcdmulta > 2 = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
@@ -850,8 +856,8 @@ function validarCampos() {
         return false;
     }
 
-	return true;
-	
+    return true;
+    
 }
 
 function executar() {

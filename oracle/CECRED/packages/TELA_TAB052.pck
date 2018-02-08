@@ -492,7 +492,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'cardbtit',
-                             pr_tag_cont => to_char(vr_tab_dados_dsctit(pr_tpcobran).cardbtit),                                                    
+                             pr_tag_cont => to_char(0), -- to_char(vr_tab_dados_dsctit(pr_tpcobran).cardbtit),                                                  
                              pr_des_erro => vr_dscritic);
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
