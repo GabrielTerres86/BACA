@@ -109,7 +109,7 @@
 				<!-- cardbtit -->
 				<td width="300px"><label for="cardbtit" class='labelPri'><?php echo utf8ToHtml('Carência Débito Título Vencido:') ?></label></td>
 				<td width="170px"><input type="text" id="cardbtit" name="cardbtit" value="<?php echo $cardbtit == 0 ? '' : $cardbtit ?>" maxlength="3" style="text-align:right;"/>
-					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label></td>
+					<label id="cardbtit-label-compl"><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label></td>
 				<td width="170px"><input type="text" id="cardbtit_c" name="cardbtit_c" value="<?php echo $cardbtit_c == 0 ? '' : $cardbtit_c ?>" maxlength="3" style="text-align:right;"/>
 					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label></td>
 			</tr>
