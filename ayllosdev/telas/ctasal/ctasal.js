@@ -17,6 +17,8 @@
 				  
 				  07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
 							   inclusao, conforme solicitado no chamado 689996. (Kelvin)
+							   
+				  08/02/2018 - Ajuste para caracteres especiais não gerarem problemas. (SD 845660 - Kelvin).			   
   
  */
 
@@ -450,7 +452,7 @@ function manterRotina( operacao ) {
 				cddopcao	: cddopcao,
 				cdagenca	: cdagenca,
 				cdempres    : cdempres,
-				nmfuncio    : nmfuncio,
+				nmfuncio    : removeCaracteresInvalidos(nmfuncio),
 				cdagetrf    : cdagetrf,
 				cdbantrf    : cdbantrf,
 				nrdigtrf    : nrdigtrf,
