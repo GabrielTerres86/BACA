@@ -1368,15 +1368,15 @@ function controlaLayoutPoder() {
 }
 
 function controlaOperacaoPoderes(operacao){
-    switch (operacao) {
+	switch (operacao) {
 		
 		case 'SP':
 			// Oculto o formulario e mostro a tabela
-		    showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 	}
-        }
+}
 
 function salvarPoderes(){
 	

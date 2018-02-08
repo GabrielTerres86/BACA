@@ -27,6 +27,8 @@
  *                24/10/2017 - Remocao da caixa postal. (PRJ339 - Kelvin).
  *                27/10/2017 - Ajustes tela CADCTA. PRJ339-CRM (Odirlei-AMcom)
 
+ *                08/01/2018 - Ajuste para carregar nome do avalista do cadastro unificado e não permitir alterar caso possua cadastro completo.
+                               P339 - Evandro Guaranha - Mout's   
  */
 var flgAcessoRotina = true; // Flag para validar acesso as rotinas da tela CONTAS
 var nrcpfcgc_proc = ''; 
@@ -265,7 +267,7 @@ function controlaOperacaoProc( operacao_proc ){
         if (nmdatela == 'CADCTA' ){
             nrdrowid 	= $('#nrdrowid','#frmDadosProcuradores').val();            
         } else {
-	    	if ( nrcpfcgc_proc == '' && nrdctato == '' ) { return false; }
+		if ( nrcpfcgc_proc == '' && nrdctato == '' ) { return false; }
         }
 		
 	}
@@ -430,6 +432,11 @@ function controlaOperacaoProc( operacao_proc ){
 				if (flgPoderes) {
 					controlaOperacaoProc('TP');
 				}	
+							
+				if (operacao_proc == 'IB'){
+					// Validar se o nome pode ser alterada
+                    buscaNmPessoa_procur($('#nrcpfcgc','#'+nomeFormProc ).val(),'nmdavali', nomeFormProc);                                            
+				}
 							
 			} else {
 				eval( response );
@@ -810,39 +817,39 @@ function controlaLayoutProc( operacao_proc ) {
                 
                 // tela CADCTA nao permitirá alterar dados, pois os mesmos só podem ser editados no CRM 
                 if (nmdatela != 'CADCTA') {
-				 //Se o nº da conta for igual a 0 ou vazio então o formulario é desbloqueado para preenchimento 
-			  	  if ( cNrConta.val() == '0' || cNrConta.val() == '' ){
-					  camposGrupo2.habilitaCampo();
-					  sexo.habilitaCampo();	
-					  cDescBem.habilitaCampo();
-					  cDescBem.prop('disabled',true);					
-					  endDesabilita.desabilitaCampo();	
+				//Se o nº da conta for igual a 0 ou vazio então o formulario é desbloqueado para preenchimento 
+				if ( cNrConta.val() == '0' || cNrConta.val() == '' ){
+					camposGrupo2.habilitaCampo();
+					sexo.habilitaCampo();	
+					cDescBem.habilitaCampo();
+					cDescBem.prop('disabled',true);					
+					endDesabilita.desabilitaCampo();	
 					
-					  if( $('#cdestcvl','#'+nomeFormProc).val() == "2" ||
-						  $('#cdestcvl','#'+nomeFormProc).val() == "3" ||
-						  $('#cdestcvl','#'+nomeFormProc).val() == "4" || 
-						  $('#cdestcvl','#'+nomeFormProc).val() == "8" || 
-						  $('#cdestcvl','#'+nomeFormProc).val() == "9" || 
-						  $('#cdestcvl','#'+nomeFormProc).val() == "11" ){
+					if( $('#cdestcvl','#'+nomeFormProc).val() == "2" ||
+						$('#cdestcvl','#'+nomeFormProc).val() == "3" ||
+						$('#cdestcvl','#'+nomeFormProc).val() == "4" || 
+						$('#cdestcvl','#'+nomeFormProc).val() == "8" || 
+						$('#cdestcvl','#'+nomeFormProc).val() == "9" || 
+						$('#cdestcvl','#'+nomeFormProc).val() == "11" ){
 					
-						  $('#inhabmen','#'+nomeFormProc).desabilitaCampo();
-						  $('#dthabmen','#'+nomeFormProc).desabilitaCampo();
+						$('#inhabmen','#'+nomeFormProc).desabilitaCampo();
+						$('#dthabmen','#'+nomeFormProc).desabilitaCampo();
 			
-					  }else{			
+					}else{			
 					
-						  ( $('#inhabmen','#'+nomeFormProc).val() != 1 ) ? $('#dthabmen','#'+nomeFormProc).desabilitaCampo() : $('#dthabmen','#'+nomeFormProc).habilitaCampo();
+						( $('#inhabmen','#'+nomeFormProc).val() != 1 ) ? $('#dthabmen','#'+nomeFormProc).desabilitaCampo() : $('#dthabmen','#'+nomeFormProc).habilitaCampo();
 						
-					  }
+					}
 
 					
-				  }
+				}
                     
 			    	camposGrupo3.habilitaCampo();
                 // tela CADCTA somente exibirá procurador e nao permitira alterar.    
                 }else {
                     //cCargo.val('PROCURADOR');
                     dsProfissao = 'PROCURADOR';
-				    camposGrupo3.habilitaCampo();
+				camposGrupo3.habilitaCampo();
                     cCargo.desabilitaCampo();
                     
                 }
@@ -2610,4 +2617,53 @@ function selecionaPoder(check){
         }
     }
 
+}
+
+// Rotina para buscar nome da pessoa procurador e validar se poderá ser alterado
+function buscaNmPessoa_procur(nrcpfcgc,nmdcampo, nmdoform){
+
+    var nrdocnpj = nrcpfcgc;
+
+    hideMsgAguardo();
+
+    var mensagem = '';
+
+    mensagem = 'Aguarde, buscando nome da pessoa ...';
+
+    showMsgAguardo(mensagem);    
+
+    nrdocnpj = normalizaNumero(nrdocnpj);
+    
+    // Nao deve buscar nome caso campo esteja zerado/em branco
+    if (nrdocnpj == "" || nrdocnpj == "0" ){   
+        $('#'+nmdcampo,'#'+nmdoform ).habilitaCampo();     
+        hideMsgAguardo();
+        return false;
+    }
+    
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + 'telas/contas/busca_nome_pessoa.php',
+        data: {
+            nrdocnpj: nrdocnpj,
+            nmdcampo: nmdcampo,
+            nmdoform: nmdoform,
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+        },
+        success: function (response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+            }
+        }
+    });
 }

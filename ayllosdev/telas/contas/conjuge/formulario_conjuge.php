@@ -102,7 +102,7 @@
 		<br>
 		
 		<label for="nrdocnpj">C.N.P.J.:</label>
-		<input name="nrdocnpj" id="nrdocnpj" type="text" onfocusout="buscaNomePessoa(); $('#nmextemp', '#frmDadosConjuge').focus();" value="<? echo getByTagName($conjuge,'nrdocnpj') ?>" />
+		<input name="nrdocnpj" id="nrdocnpj" type="text" onfocusout="buscaNomePessoa_gen($('#nrdocnpj','#frmDadosConjuge' ).val(),'nmextemp', 'frmDadosConjuge'); $('#nmextemp', '#frmDadosConjuge').focus();" value="<? echo getByTagName($conjuge,'nrdocnpj') ?>" />
 				
 		<label for="nmextemp">Empresa:</label>
 		<input name="nmextemp" id="nmextemp" type="text" value="<? echo getByTagName($conjuge,'nmextemp') ?>" />

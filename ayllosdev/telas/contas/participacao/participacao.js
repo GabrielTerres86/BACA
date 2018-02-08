@@ -6,6 +6,9 @@
  *
  * ALTERAÇÃO    : 04/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
  *
+ *                08/01/2018 - Ajuste para carregar nome da empresa do cadastro unificado e não permitir alterar caso possua cadastro completo.
+                               P339 - Evandro Guaranha - Mout's 
+ *
  */
 
 var nrcpfcgc = '';
@@ -208,10 +211,31 @@ function controlaOperacao( operacao ){
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
+				
 				$('#divConteudoOpcao').html(response);
+				
+				if (operacao == "IB" || 
+				    operacao == "A"){
+                    
+                    // Validar se o nome pode ser alterada
+                    buscaNomePessoa_gen($('#nrcpfcgc','#'+nomeForm ).val(),'nmprimtl', nomeForm);                        
+                        
+                }
+				
 			} else {
+				
 				eval( response );
 				controlaFoco( operacao );
+				
+				if (operacao == "IB" || 
+				    operacao == "A"){
+                    
+                    // Validar se o nome pode ser alterada
+                    buscaNomePessoa_gen($('#nrcpfcgc','#'+nomeForm ).val(),'nmprimtl', nomeForm);                        
+                        
+                }
+				
+				
 			}
 			return false;	
 		}				
