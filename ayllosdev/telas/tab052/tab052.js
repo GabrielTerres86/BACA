@@ -627,7 +627,6 @@ function manterRotina(cddopcao) {
             qtprzmin: qtprzmin,
             qtprzmax: qtprzmax,
             cardbtit: cardbtit,
-            cardbtit: cardbtit,
             qtminfil: qtminfil,
             nrmespsq: nrmespsq,
             pctitemi: pctitemi,
@@ -842,7 +841,7 @@ function validarCampos() {
     /* pctolera > pctolera_c = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
     if( converteMoedaFloat($('#pctolera', '#frmTab052').val()) > converteMoedaFloat($('#pctolera_c', '#frmTab052').val())  ){
         showError('error','A toler$acirc;ncia para limite excedido deve ser inferior ou igual ao estipulado pela CECRED','Alerta - Ayllos',"$(\'#pctolera\',\'#frmTab052\').focus();");
-        return false;
+        return false; 
     }
 
     /* pcdmulta > 2 = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
