@@ -498,30 +498,18 @@ function controlaFoco() {
             return false;
         }
     });
-
-
+    
     $('#qtnaopag_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#qtprotes_c', '#frmTab052').focus();
-            return false;
-        }
-    });
-    
-          
-    /*
-    $('#qtnaopag_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
-        if(1 == normalizaNumero($('#tpcobran', '#frmCab').val())){
              if(1 == normalizaNumero($('#tpcobran', '#frmCab').val())){
                 $('#qtprotes_c', '#frmTab052').focus();
                 return false;
             }else{
-                //confirmaOperacao();
+                confirmaOperacao();
                 return false;
             }
         }
     });
-    */
-
     
     /*registerRow*/
     $('#qtprotes_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
@@ -638,6 +626,7 @@ function manterRotina(cddopcao) {
             qtdiavig: qtdiavig,
             qtprzmin: qtprzmin,
             qtprzmax: qtprzmax,
+            cardbtit: cardbtit,
             cardbtit: cardbtit,
             qtminfil: qtminfil,
             nrmespsq: nrmespsq,
