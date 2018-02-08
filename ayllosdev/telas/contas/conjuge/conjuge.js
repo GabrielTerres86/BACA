@@ -17,6 +17,7 @@
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
  * 018: [25/09/2017] Kelvin			     : Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
+ * 019: [07/02/2018] Lucas Ranghetti     : Aumentar o tamanho do campo cdnatopc para 90px pois estava estourando o tamanho no label (SD )
  */
 
 // Definindo variáveis globais 
@@ -305,7 +306,7 @@ function controlaLayout(operacao) {
 	var cDescricao = $('#dsescola,#rsfrmttl,#rsnatocp,#rsdocupa','#'+nomeForm );	
 	var cCodigo_2  = $('#grescola,#cdnatopc,#cdfrmttl,#cdocpcje','#'+nomeForm );	
 	
-	rotulos_2.addClass('rotulo').css('width','80px');
+	rotulos_2.addClass('rotulo').css('width','90px');
 	rLinha_2.css('width','70px');
 	cDescricao.addClass('descricao').css('width','134px');
 	cCodigo_2.addClass('codigo pesquisa');
@@ -698,4 +699,4 @@ function proximaRotina () {
 	hideMsgAguardo();
 	encerraRotina(false);
 	acessaRotina('CONTATOS','Contatos','contatos_pf');				
-}			   
+}
