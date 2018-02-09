@@ -770,6 +770,14 @@ PROCEDURE pc_corrigi_limite_preposto(pr_cdcooper IN VARCHAR2
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);    
                                                                                               
+PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2 
+                                    ,pr_nrdconta IN VARCHAR2 
+                                    ,pr_xmllog   IN  VARCHAR2
+                                    ,pr_cdcritic OUT PLS_INTEGER                       
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);                                         
 END INET0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
@@ -11526,6 +11534,96 @@ PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2
 
                                         
   END pc_corrigi_limite_preposto;
+
+PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2 
+                                    ,pr_nrdconta IN VARCHAR2 
+                                    ,pr_xmllog   IN  VARCHAR2
+                                    ,pr_cdcritic OUT PLS_INTEGER                       
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_busca_resp_assinatura
+    --  Sistema  : Procedure buscar os responsaveis por assinatura
+    --  Sigla    : CRED
+    --  Autor    : Mateus Zimmermann (Mouts)
+    --  Data     : Janeiro/2018.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Buscar os responsaveis por assinatura
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------                                                                           
+    BEGIN
+    DECLARE
+        
+       -- Variaveis de XML
+       vr_xml_temp VARCHAR2(32767); 
+      -- Cursores
+      CURSOR cr_resp_assinatura IS
+        SELECT crapass.nmprimtl
+              ,crapass.nrcpfcgc
+        FROM crapavt,
+             crappod,
+             crapass
+       WHERE crapavt.cdcooper = pr_cdcooper
+         AND crapavt.nrdconta = pr_nrdconta
+         AND crappod.cdcooper = crapavt.cdcooper
+         AND crappod.nrdconta = crapavt.nrdconta 
+         AND crappod.nrcpfpro = crapavt.nrcpfcgc 
+         AND crappod.nrctapro = crapavt.nrdctato
+         AND crappod.cddpoder = 10
+         AND crapass.cdcooper = crapavt.cdcooper
+         AND crapass.nrdconta = crappod.nrctapro;
+      rw_resp_assinatura cr_resp_assinatura%ROWTYPE;
+    
+      -- Variaveis locais
+      vr_contador INTEGER := 0;
+    
+      -- Variaveis de critica
+      vr_dscritic crapcri.dscritic%TYPE;
+    BEGIN
+      
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'Responsaveis',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
+          
+    FOR rw_resp_assinatura IN cr_resp_assinatura LOOP
+        
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,
+                               pr_tag_pai => 'Responsaveis',
+                               pr_posicao => 0,
+                               pr_tag_nova => 'inf',
+                               pr_tag_cont => NULL,
+                               pr_des_erro => vr_dscritic); 
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,
+                               pr_tag_pai => 'inf',
+                               pr_posicao => vr_contador, 
+                               pr_tag_nova => 'nmprimtl', 
+                               pr_tag_cont => rw_resp_assinatura.nmprimtl, 
+                               pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,
+                               pr_tag_pai => 'inf',
+                               pr_posicao => vr_contador, 
+                               pr_tag_nova => 'nrcpfcgc', 
+                               pr_tag_cont => rw_resp_assinatura.nrcpfcgc, 
+                               pr_des_erro => vr_dscritic);
+        
+        vr_contador := vr_contador + 1;	
+        
+    END LOOP;  
+    
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_des_erro := 'Erro geral em pc_busca_resp_assinatura: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em pc_busca_resp_assinatura: ' || SQLERRM;
+    END;
+  END pc_busca_resp_assinatura;
 
 END INET0002;
 /
