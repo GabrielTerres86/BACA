@@ -752,9 +752,10 @@ END fn_busca_dias_atraso;
 		-- Calendário da cooperativa selecionada
 		CURSOR cr_dat(pr_cdcooper INTEGER) IS 
 		SELECT dat.dtmvtolt
-		     , (CASE WHEN TO_CHAR(trunc(dat.dtmvtolt), 'mm') = TO_CHAR(trunc(dat.dtmvtoan), 'mm') 
+		    /* , (CASE WHEN TO_CHAR(trunc(dat.dtmvtolt), 'mm') = TO_CHAR(trunc(dat.dtmvtoan), 'mm') 
 							THEN dat.dtmvtoan 
-							ELSE dat.dtultdma END) dtmvtoan
+							ELSE dat.dtultdma END) dtmvtoan */
+				 , dat.dtmvtoan	
 				 , dat.dtultdma
       FROM crapdat dat
      WHERE dat.cdcooper = pr_cdcooper;
