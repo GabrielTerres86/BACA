@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 27/12/2017
+       Data    : Agosto/2010                       Ultima atualizacao: 09/02/2018
 
        Dados referentes ao programa:
 
@@ -319,6 +319,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     27/12/2017 - Ajustado para enviar a qtd de dias de atraso calculado na 
                                  central de risco para os contratos em prejuizo, devido a auditoria do Bacen.
                                  (Odirlei-AMcom/Oscar) 
+																 
+								    09/02/2018 - Correção de erro na consulta de índices quando empréstimo do BNDES (PRJ298), 
+                                 erro reportado pelos plantonistas (Jean Michel)
 
 .............................................................................................................................*/
 
@@ -3065,7 +3068,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             pr_stperidx := ' PercIndx="0"';
           END IF;
 
-          END IF;
+        END IF;
         END IF;
       END pc_busca_coddindx;
 
@@ -3130,8 +3133,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         -- Empréstimo da base Cecred
         IF vr_tab_saida(pr_idxsaida).cdmodali IN(0299,0499) AND vr_tab_saida(pr_idxsaida).cdorigem = 3 THEN
           vr_ind_epr  := lpad(vr_tab_saida(pr_idxsaida).nrdconta,10,'0')||lpad(vr_tab_saida(pr_idxsaida).nrctremp,10,'0');
-          vr_tpemprst := vr_tab_crapepr(vr_ind_epr).tpemprst;
-          vr_cddindex := vr_tab_crapepr(vr_ind_epr).cddindex;
+          IF vr_tab_crapepr.EXISTS(vr_ind_epr) THEN
+            vr_tpemprst := vr_tab_crapepr(vr_ind_epr).tpemprst;
+            vr_cddindex := vr_tab_crapepr(vr_ind_epr).cddindex;
+          END IF;
         END IF;
 
         -- Com base na modalidade retorna o codigo indexador e o percentual de indexacao
@@ -3987,8 +3992,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- Empréstimo da base Cecred
             IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499) AND vr_tab_individ(vr_idx_individ).cdorigem = 3 THEN
               vr_ind_epr  := lpad(vr_tab_individ(vr_idx_individ).nrdconta,10,'0')||lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
-              vr_tpemprst := vr_tab_crapepr(vr_ind_epr).tpemprst;
-              vr_cddindex := vr_tab_crapepr(vr_ind_epr).cddindex;
+              IF vr_tab_crapepr.EXISTS(vr_ind_epr) THEN
+                vr_tpemprst := vr_tab_crapepr(vr_ind_epr).tpemprst;
+                vr_cddindex := vr_tab_crapepr(vr_ind_epr).cddindex;
+              END IF;
             END IF;
 
             -- Com base na modalidade retorna o codigo indexador e o percentual de indexacao
