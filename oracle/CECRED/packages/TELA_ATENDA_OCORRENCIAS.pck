@@ -179,6 +179,8 @@ END fn_busca_dias_atraso;
 																			,pr_dtmvtoan          IN crapdat.dtmvtoan%TYPE 
                                       ,vr_risco_ult_central OUT crawepr.dsnivris%TYPE
                                       ,vr_data_ult_central  OUT crapris.dtdrisco%TYPE
+                                      -- Carregar a data do risco final - Daniel(AMcom)
+                                      ,vr_data_risco_final  OUT crapris.dtdrisco%TYPE
 																			,vr_risco_final       OUT crapris.innivris%TYPE
                                       ,vr_valor_divida      OUT crapris.vldivida%TYPE) IS
 		 -- >>> CURSORES <<< --
@@ -212,14 +214,15 @@ END fn_busca_dias_atraso;
 		 CURSOR cr_risco_final(pr_cdcooper NUMBER
 		                     , pr_nrdconta NUMBER
 												 , pr_dtmvtoan DATE) IS
-		 SELECT r.innivris
-		   FROM crapris r
-			WHERE r.cdcooper = pr_cdcooper
-			  AND r.nrdconta = pr_nrdconta
-				AND r.dtrefere = pr_dtmvtoan
-				AND r.inddocto = 1
-				AND ROWNUM = 1
-	 	  ORDER BY innivris DESC;
+     SELECT r.innivris
+          , r.dtdrisco data_risco_final -- busca data do risco final - Daniel(AMcom)
+       FROM crapris r
+      WHERE r.cdcooper = pr_cdcooper
+        AND r.nrdconta = pr_nrdconta
+        AND r.dtrefere = pr_dtmvtoan
+        AND r.inddocto = 1
+        AND ROWNUM = 1
+       ORDER BY r.dtrefere DESC, innivris DESC;
 		 rw_risco_final cr_risco_final%ROWTYPE; 
 		 
 		 CURSOR cr_risco_cpf(pr_cdcooper NUMBER
@@ -275,14 +278,7 @@ END fn_busca_dias_atraso;
 			CLOSE cr_riscos;
 
       IF vr_risco_nao_cadastrado THEN
-				 OPEN cr_risco_cpf(pr_cdcooper, pr_nrdconta);
-				 
-				 FETCH cr_risco_cpf INTO rw_risco_cpf;
-				 
-				 vr_risco_ult_central := rw_risco_cpf.innivris;
-				 
-				 CLOSE cr_risco_cpf;
-				 
+				 vr_risco_ult_central := 'A';			 
 				 vr_data_ult_central  := NULL;
 			   vr_valor_divida      := 0;
 			ELSE
@@ -313,6 +309,8 @@ END fn_busca_dias_atraso;
 				 vr_risco_final := rw_risco_cpf.innivris;
 			ELSE
 			   vr_risco_final := rw_risco_final.innivris;
+         -- Carregar a data do risco final - Daniel(AMcom)
+         vr_data_risco_final := rw_risco_final.data_risco_final;
 			END IF;
 	END pc_busca_risco_ult_central;
 
@@ -330,20 +328,22 @@ END fn_busca_dias_atraso;
       RETURN dsnivris;
   END fn_traduz_risco;
 
-  PROCEDURE pc_monta_reg_conta_xml(pr_retxml       IN OUT NOCOPY XMLType
-                               ,pr_pos_conta    IN INTEGER
-                               ,pr_dscritic     IN OUT VARCHAR2
-                               ,pr_num_conta    IN crapass.nrdconta%TYPE
-                               ,pr_cpf_cnpj     IN crapass.nrcpfcgc%TYPE
-                               ,pr_num_contrato IN crawepr.nrctremp%TYPE
-                               ,pr_ris_inclusao IN crawepr.dsnivris%TYPE
-                               ,pr_ris_grupo    IN crawepr.dsnivris%TYPE
-                               ,pr_rating       IN crawepr.dsnivris%TYPE
-                               ,pr_ris_atraso   IN crawepr.dsnivris%TYPE
-                               ,pr_ris_agravado IN crawepr.dsnivris%TYPE
-                               ,pr_ris_operacao IN crawepr.dsnivris%TYPE
-                               ,pr_ris_cpf      IN crawepr.dsnivris%TYPE
-                               ,pr_numero_grupo IN crapgrp.nrdgrupo%TYPE) IS
+  PROCEDURE pc_monta_reg_conta_xml(pr_retxml     IN OUT NOCOPY XMLType
+                               ,pr_pos_conta     IN INTEGER
+                               ,pr_dscritic      IN OUT VARCHAR2
+                               ,pr_num_conta     IN crapass.nrdconta%TYPE
+                               ,pr_cpf_cnpj      IN crapass.nrcpfcgc%TYPE
+                               ,pr_num_contrato  IN crawepr.nrctremp%TYPE
+                               ,pr_ris_inclusao  IN crawepr.dsnivris%TYPE
+                               ,pr_ris_grupo     IN crawepr.dsnivris%TYPE
+                               ,pr_rating        IN crawepr.dsnivris%TYPE
+                               ,pr_ris_atraso    IN crawepr.dsnivris%TYPE
+                               ,pr_ris_agravado  IN crawepr.dsnivris%TYPE
+                               ,pr_ris_operacao  IN crawepr.dsnivris%TYPE
+                               ,pr_ris_cpf       IN crawepr.dsnivris%TYPE
+                               ,pr_numero_grupo  IN crapgrp.nrdgrupo%TYPE
+															 ,pr_ris_cooperado IN crapass.inrisctl%TYPE
+															 ,pr_dt_ris_cooper IN crapass.dtrisctl%TYPE) IS
   BEGIN
          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Contas',
@@ -427,6 +427,20 @@ END fn_busca_dias_atraso;
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'numero_gr_economico',
                              pr_tag_cont => pr_numero_grupo,
+                             pr_des_erro => pr_dscritic);
+														 
+					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Conta',
+                             pr_posicao  => pr_pos_conta,
+                             pr_tag_nova => 'risco_cooperado',
+                             pr_tag_cont => pr_ris_cooperado,
+                             pr_des_erro => pr_dscritic);
+														 
+					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Conta',
+                             pr_posicao  => pr_pos_conta,
+                             pr_tag_nova => 'data_risco_cooperado',
+                             pr_tag_cont => TO_CHAR(pr_dt_ris_cooper, 'DD/MM/YYYY'),
                              pr_des_erro => pr_dscritic);
   END pc_monta_reg_conta_xml;
 
@@ -638,6 +652,7 @@ END fn_busca_dias_atraso;
       vr_risco_final       crawepr.dsnivris%TYPE;  -- Risco final 
       vr_risco_ult_central crawepr.dsnivris%TYPE;  -- Risco da última central
       vr_data_ult_central  crapris.dtdrisco%TYPE;  -- Data do risco da última central
+      vr_data_risco_final  crapris.dtdrisco%TYPE;  -- Data do risco final 
       vr_valor_divida      crapris.vldivida%TYPE;  -- Valor da dívida (do registro da última central)
 			vr_numero_grupo      crapgrp.nrdgrupo%TYPE;  -- Número do grupo econômico vinculado com a conta
 			vr_risco_grupo       crapgrp.dsdrisgp%TYPE;  -- Risco do grupo econômico
@@ -737,7 +752,9 @@ END fn_busca_dias_atraso;
 		-- Calendário da cooperativa selecionada
 		CURSOR cr_dat(pr_cdcooper INTEGER) IS 
 		SELECT dat.dtmvtolt
-		     , dat.dtmvtoan
+		     , (CASE WHEN TO_CHAR(trunc(dat.dtmvtolt), 'mm') = TO_CHAR(trunc(dat.dtmvtoan), 'mm') 
+							THEN dat.dtmvtoan 
+							ELSE dat.dtultdma END) dtmvtoan
 				 , dat.dtultdma
       FROM crapdat dat
      WHERE dat.cdcooper = pr_cdcooper;
@@ -844,7 +861,9 @@ END fn_busca_dias_atraso;
                                      , fn_traduz_risco(vr_risco_agr)
                                      , greatest(rw_contratos.dsnivori, nvl(vr_rating, 'A'), vr_risco_atraso, nvl(fn_traduz_risco(vr_risco_agr), 'A'))   -- rw_contratos.dsnivcal
                                      , rw_contas_do_titular.dsnivris
-                                     , vr_numero_grupo);
+                                     , vr_numero_grupo
+																		 , rw_cbase.inrisctl
+																		 , rw_cbase.dtrisctl);
 																		 
 								vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 								vr_contratos_ativos := vr_contratos_ativos + 1;
@@ -893,7 +912,9 @@ END fn_busca_dias_atraso;
                                      , fn_traduz_risco(vr_risco_agr)
                                      , greatest(vr_risco_inclusao, nvl(vr_rating, 'A'), vr_risco_atraso, nvl(fn_traduz_risco(vr_risco_agr), 'A')) -- fn_traduz_risco(rw_contratos_limite.innivris)
                                      , rw_contas_do_titular.dsnivris
-                                     , vr_numero_grupo);
+                                     , vr_numero_grupo
+																		 , rw_cbase.inrisctl
+																		 , TO_CHAR(rw_cbase.dtrisctl, 'DD/MM/YYYY'));
 																 
 																 
 								vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
@@ -915,7 +936,9 @@ END fn_busca_dias_atraso;
                                      , NULL
                                      , NULL
                                      , rw_contas_do_titular.dsnivris
-                                     , vr_numero_grupo);
+                                     , vr_numero_grupo
+																		 , rw_cbase.inrisctl
+																		 , TO_CHAR(rw_cbase.dtrisctl, 'DD/MM/YYYY'));
 																		 
 								vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 					END IF;
@@ -964,7 +987,9 @@ END fn_busca_dias_atraso;
 															, fn_traduz_risco(vr_risco_agr)
 															, greatest(rw_contratos.dsnivori, nvl(vr_rating, 'A'), vr_risco_atraso, nvl(fn_traduz_risco(vr_risco_agr), 'A')) -- rw_contratos.dsnivcal
 															, rw_contas_grupo_economico.dsnivris
-															, rw_contas_grupo_economico.nrdgrupo);
+															, rw_contas_grupo_economico.nrdgrupo
+															, rw_cbase.inrisctl
+															, TO_CHAR(rw_cbase.dtrisctl, 'DD/MM/YYYY'));
 
 					  vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 						vr_contratos_ativos := vr_contratos_ativos + 1;
@@ -1013,7 +1038,9 @@ END fn_busca_dias_atraso;
                                      , fn_traduz_risco(vr_risco_agr)
                                      , greatest(rw_contratos.dsnivori, nvl(vr_rating, 'A'), vr_risco_atraso, nvl(fn_traduz_risco(vr_risco_agr), 'A')) -- fn_traduz_risco(rw_contratos_limite.innivris)
                                      , rw_contas_grupo_economico.dsnivris
-                                     , rw_contas_grupo_economico.nrdgrupo);
+                                     , rw_contas_grupo_economico.nrdgrupo
+																		 , rw_cbase.inrisctl
+																		 , TO_CHAR(rw_cbase.dtrisctl, 'DD/MM/YYYY'));
 																 
 																 
 								vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
@@ -1035,7 +1062,9 @@ END fn_busca_dias_atraso;
                                      , NULL
                                      , NULL
                                      , rw_contas_grupo_economico.dsnivris
-                                     , rw_contas_grupo_economico.nrdgrupo);
+                                     , rw_contas_grupo_economico.nrdgrupo
+																		 , rw_cbase.inrisctl
+																		 , TO_CHAR(rw_cbase.dtrisctl, 'DD/MM/YYYY'));
 																		 
 								vr_auxconta := vr_auxconta + 1;
 					END IF;
@@ -1048,6 +1077,7 @@ END fn_busca_dias_atraso;
 															 , rw_dat.dtmvtoan
                                , vr_risco_ult_central
                                , vr_data_ult_central
+                               , vr_data_risco_final
 															 , vr_risco_final
                                , vr_valor_divida);
 
@@ -1055,8 +1085,12 @@ END fn_busca_dias_atraso;
       pc_monta_reg_central_risco(pr_retxml
                             , vr_dscritic
                             , fn_traduz_risco(vr_risco_ult_central)
+                            -- Buscar a data do risco final ao inves do risco da ultima central - Daniel(AMcom)                            
                             , TO_CHAR(vr_data_ult_central, 'DD/MM/YYYY') 
+                            --, TO_CHAR(vr_data_risco_final, 'DD/MM/YYYY')                             
+                            -- Buscar a data do risco final ao inves do risco da ultima central - Daniel(AMcom)                            
                             , TO_CHAR(rw_dat.dtmvtolt-vr_data_ult_central)
+                            --, TO_CHAR(rw_dat.dtmvtolt-vr_data_risco_final)                            
                             , fn_traduz_risco(vr_risco_final));
   EXCEPTION
     WHEN vr_exc_saida THEN
