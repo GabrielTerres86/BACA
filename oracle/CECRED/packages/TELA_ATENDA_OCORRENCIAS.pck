@@ -278,7 +278,7 @@ END fn_busca_dias_atraso;
       CLOSE cr_riscos;
 
       IF vr_risco_nao_cadastrado THEN
-         vr_risco_ult_central := 'A';
+         vr_risco_ult_central := 2;
          vr_data_ult_central  := NULL;
          vr_valor_divida      := 0;
       ELSE
