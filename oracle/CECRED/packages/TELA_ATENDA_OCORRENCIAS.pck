@@ -429,7 +429,7 @@ END fn_busca_dias_atraso;
                              pr_tag_cont => pr_numero_grupo,
                              pr_des_erro => pr_dscritic);
 
-      /*    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_cooperado',
@@ -441,7 +441,7 @@ END fn_busca_dias_atraso;
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'data_risco_cooperado',
                              pr_tag_cont => TO_CHAR(pr_dt_ris_cooper, 'DD/MM/YYYY'),
-                             pr_des_erro => pr_dscritic);*/
+                             pr_des_erro => pr_dscritic);
   END pc_monta_reg_conta_xml;
 
   PROCEDURE pc_monta_reg_central_risco(pr_retxml           IN OUT NOCOPY XMLType
@@ -752,10 +752,9 @@ END fn_busca_dias_atraso;
     -- Calendário da cooperativa selecionada
     CURSOR cr_dat(pr_cdcooper INTEGER) IS
     SELECT dat.dtmvtolt
-        /* , (CASE WHEN TO_CHAR(trunc(dat.dtmvtolt), 'mm') = TO_CHAR(trunc(dat.dtmvtoan), 'mm')
+         , (CASE WHEN TO_CHAR(trunc(dat.dtmvtolt), 'mm') = TO_CHAR(trunc(dat.dtmvtoan), 'mm')
               THEN dat.dtmvtoan
-              ELSE dat.dtultdma END) dtmvtoan */
-         , dat.dtmvtoan
+              ELSE dat.dtultdma END) dtmvtoan 
          , dat.dtultdma
       FROM crapdat dat
      WHERE dat.cdcooper = pr_cdcooper;
@@ -933,10 +932,10 @@ END fn_busca_dias_atraso;
                                      , NULL
                                      , vr_risco_grupo
                                      , NULL
+                                     , 'A'
                                      , NULL
-                                     , NULL
-                                     , NULL
-                                     , rw_contas_do_titular.dsnivris
+                                     , 'A'
+                                     , CASE WHEN trim(rw_contas_do_titular.dsnivris) IS NULL OR trim(rw_contas_do_titular.dsnivris) = '' THEN 'A' ELSE rw_contas_do_titular.dsnivris END
                                      , vr_numero_grupo
                                      , rw_cbase.inrisctl
                                      , rw_cbase.dtrisctl);
@@ -1059,10 +1058,10 @@ END fn_busca_dias_atraso;
                                      , NULL
                                      , rw_contas_grupo_economico.dsdrisgp
                                      , NULL
+                                     , 'A'
                                      , NULL
-                                     , NULL
-                                     , NULL
-                                     , rw_contas_grupo_economico.dsnivris
+                                     , 'A'
+																		 , CASE WHEN trim(rw_contas_grupo_economico.dsnivris) IS NULL OR trim(rw_contas_grupo_economico.dsnivris) = '' THEN 'A' ELSE rw_contas_grupo_economico.dsnivris END
                                      , rw_contas_grupo_economico.nrdgrupo
                                      , rw_cbase.inrisctl
                                      , rw_cbase.dtrisctl);
