@@ -429,7 +429,7 @@ END fn_busca_dias_atraso;
                              pr_tag_cont => pr_numero_grupo,
                              pr_des_erro => pr_dscritic);
 														 
-					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+			/*		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_cooperado',
@@ -441,7 +441,7 @@ END fn_busca_dias_atraso;
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'data_risco_cooperado',
                              pr_tag_cont => TO_CHAR(pr_dt_ris_cooper, 'DD/MM/YYYY'),
-                             pr_des_erro => pr_dscritic);
+                             pr_des_erro => pr_dscritic);*/
   END pc_monta_reg_conta_xml;
 
   PROCEDURE pc_monta_reg_central_risco(pr_retxml           IN OUT NOCOPY XMLType
