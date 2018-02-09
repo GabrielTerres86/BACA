@@ -23,7 +23,7 @@
  * 08/01/2017 - Adicionar o campo flgdprot para definir label e informacao a mostrar (Protesto x Negativacao (Heitor - Mouts) - Chamado 574161
  * 26/06/2017 - Incluido campo de Sacado DDA, Prj. 340 (Jean Michel)
  * 03/07/2017 - Incluido nova instância do campo Cobrança Registrada, Prj. 340 (Jean Michel)
- * 27/09/2017 - Adicionar o campo qtdiaprt, inserasa como parametro para a tela de instrucoes (Douglas - Chamado 754911)
+ * 02/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
  */
 
 //Formulários e Tabela
@@ -205,6 +205,7 @@ function manterRotina(operacao) {
     var vlabatim = $('#vlabatim', '#frmCampo').val();
     var dtvencto = $('#dtvencto', '#frmCampo').val();
     var vldescto = $('#vldescto', '#frmCampo').val();
+	var qtdiaprt = $('#qtdiaprt', '#frmCampo').val();
 
     var nmarqint = '';
 
@@ -266,6 +267,7 @@ function manterRotina(operacao) {
             vrsarqvs: vrsarqvs,
             arquivos: arquivos,
             vldescto: vldescto,
+			qtdiaprt: qtdiaprt,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1203,9 +1205,7 @@ function buscaConsulta(operacao) {
             cdbandoc: cdbandoc,
             flserasa: flserasa,
             qtdianeg: qtdianeg,
-			inserasa: inserasa,
 			flgdprot: flgdprot,
-            qtdiaprt: qtdiaprt,
 			cdtpinsc: cdtpinsc,
 			nrinssac: nrinssac,
             redirect: 'script_ajax'
@@ -1444,7 +1444,6 @@ function formataLog() {
 }
 
 function formataInstrucoes(operacao) {
-
     highlightObjFocus($('#frmConsulta'));
 
     // Label
@@ -1478,6 +1477,10 @@ function formataInstrucoes(operacao) {
 function buscaCampo() {
 
     var cdinstru = $('#cdinstru', '#frmConsulta').val();
+	var nrdconta = $('#nrdconta', '#frmOpcao').val();
+	var er = /[^a-z0-9]/gi;
+	nrdconta = nrdconta.replace(er, "");
+	var nrconven = $('#nrdctabb', '#frmTabela').val();
     var mensagem = 'Aguarde, buscando dados ...';
     showMsgAguardo(mensagem);
 
@@ -1487,6 +1490,8 @@ function buscaCampo() {
         url: UrlSite + 'telas/cobran/form_campo.php',
         data: {
             cdinstru: cdinstru,
+			nrdconta: nrdconta,
+			nrconven: nrconven,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1527,19 +1532,24 @@ function formataCampo() {
 
     rVlabatim = $('label[for="vlabatim"]', '#frmCampo');
     rDtvencto = $('label[for="dtvencto"]', '#frmCampo');
+	rQtdiaprt = $('label[for="qtdiaprt"]', '#frmCampo');
 
     rVlabatim.css({ 'width': '152px' }).addClass('rotulo-linha');
     rDtvencto.css({ 'width': '152px' }).addClass('rotulo-linha');
+	rQtdiaprt.css({ 'width': '250px' }).addClass('rotulo-linha');
 
     // Input
     cVlabatim = $('#vlabatim', '#frmCampo');
     cDtvencto = $('#dtvencto', '#frmCampo');
+	cQtdiaprt = $('#qtdiaprt', '#frmCampo');
 
     cVlabatim.css({ 'width': '120px' }).addClass('monetario');
     cDtvencto.css({ 'width': '120px' }).addClass('data');
+	cQtdiaprt.css({ 'width': '40px' }).addClass('inteiro');
 
     cVlabatim.habilitaCampo().focus();
     cDtvencto.habilitaCampo().focus();
+	cQtdiaprt.habilitaCampo().focus();
 
     // centraliza a divUsoGenerico
     $('#divUsoGenerico').css({ 'width': '375px' });
@@ -2320,7 +2330,8 @@ function btnVoltar() {
 			$('input, select', '#' + frmOpcao + ' fieldset:eq(' + x + ')').limpaFormulario();
 			$('fieldset:eq(' + x + ')', '#' + frmOpcao).css({ 'display': 'none' });
 		}
-		controlaLayoutC();
+
+        controlaLayoutC();
 
     } else if (cddopcao === 'C' && ni > 0 && $('fieldset:eq(' + ni + ')', '#' + frmOpcao).css('display') == 'block') {
         
