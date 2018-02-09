@@ -245,8 +245,8 @@
 
               11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
 
-              26/01/2018 - Criada funcao para posicionar o contrato para pegar a Qualificacao
-                           da Operacao (Controle). (Diego Simas - AMcom)
+              26/01/2018 - Criada funcao verificaQualificacao para posicionar o contrato para 
+						   pegar a Qualificacao da Operacao (Controle). (Diego Simas - AMcom)
 .............................................................................*/
   
   
@@ -4667,8 +4667,7 @@ PROCEDURE calcula_rating_fisica:
     DEF VAR aux_dtmvtolt          AS DATE                            NO-UNDO.
 
     DEF VAR par_dsliquid          AS CHAR                            NO-UNDO.
-        DEF VAR aux_idqualif          AS INTE                            NO-UNDO.
-
+    DEF VAR aux_idqualif          AS INTE                            NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-ocorren.
@@ -4800,7 +4799,13 @@ PROCEDURE calcula_rating_fisica:
     IF   par_tpctrato = 90  THEN  /* Emprestimo / Financiamento */
          DO:
              IF  AVAIL crawepr THEN
-                 IF   crawepr.idquapro = 3   THEN  /* Renegociacao */
+				 ASSIGN aux_idqualif = DYNAMIC-FUNCTION("verificaQualificacao",
+                                            INPUT par_cdcooper,
+                                            INPUT par_nrdconta,
+                                            INPUT par_nrctrato,
+                                            INPUT crawepr.idquapro).
+
+                 IF   aux_idqualif = 3   THEN  /* Renegociacao */
                        ASSIGN aux_nrseqite = 3.
          END.
 
@@ -5309,11 +5314,17 @@ PROCEDURE calcula_rating_fisica:
      Item 2_1 - Finalidade da operacao
     **********************************************************************/
 
+	ASSIGN aux_idqualif = DYNAMIC-FUNCTION("verificaQualificacao",
+                                            INPUT par_cdcooper,
+                                            INPUT par_nrdconta,
+                                            INPUT par_nrctrato,
+                                            INPUT crawepr.idquapro).
+
     IF   par_tpctrato = 90   THEN  /* Emprestimo / Financiamento */ 
          DO:
              IF  AVAIL crawepr THEN
                  RUN natureza_operacao (INPUT  par_tpctrato,
-                                        INPUT  crawepr.idquapro,
+                                        INPUT  aux_idqualif,
                                         INPUT  craplcr.dsoperac,
                                         INPUT  par_cdcooper,
                                         INPUT  par_nrctrato,
@@ -7247,20 +7258,10 @@ PROCEDURE natureza_operacao:
 
     DEF OUTPUT PARAM par_nrseqite AS INTE                NO-UNDO.
 
-    DEF    VAR aux_idqualif       AS INTE                NO-UNDO.
-
-        ASSIGN aux_idqualif = DYNAMIC-FUNCTION( "verificaQualificacao",
-                                                 INPUT par_cdcooper,
-                                                 INPUT par_nrdconta,
-                                                 INPUT par_nrctrato,
-                                                 INPUT par_idquapro). 
-        
     IF   par_tpctrato = 90   THEN  /* Emprestimo / Financiamento */ 
          DO:
-             /*IF   par_idquapro > 2   THEN                      */
-             /*     CASE par_idquapro:                           */
-             IF   aux_idqualif > 2   THEN 
-                  CASE aux_idqualif: 
+             IF   par_idquapro > 2   THEN 
+                  CASE par_idquapro: 
                   /* Renegociacao / Composicao de divida / Cessao de Cartao */
                        WHEN 3 OR 
                        WHEN 4 OR   
