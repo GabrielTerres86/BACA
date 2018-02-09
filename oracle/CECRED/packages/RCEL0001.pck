@@ -276,7 +276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --
   --    Programa: RCEL0001
   --    Autor   : Lucas Reinert
-  --    Data    : Janeiro/2017                   Ultima Atualizacao: 03/11/2017
+  --    Data    : Janeiro/2017                   Ultima Atualizacao: 09/02/2018
   --
   --    Dados referentes ao programa:
   --
@@ -301,6 +301,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 	--
 	--                08/11/2017 - Ajustado tempo para nova solicitação de recarga para 5 minutos na procedure
   --                             pc_confirma_recarga_ib. (Reinert)
+  --
+	--                09/02/2018 - Alterado para verificar operação de recarga duplicada;
+	--                           - Alterada crítica para solicitações de recargas repetidas no TAA. (Reinert)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Objetos para armazenar as variáveis da notificação
@@ -1819,6 +1822,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
          WHERE opr.cdoperadora = pr_cdoperadora;
       rw_operadora cr_operadora%ROWTYPE;
       
+			-- Buscar outras operações de recarga com os mesmos dados
+			CURSOR cr_operacao_repetida(pr_cdcooper  IN tbrecarga_operacao.cdcooper%TYPE
+			                           ,pr_nrdconta  IN tbrecarga_operacao.nrdconta%TYPE
+																 ,pr_dtrecarga IN tbrecarga_operacao.dtrecarga%TYPE
+																 ,pr_nrdddtel  IN tbrecarga_operacao.nrddd%TYPE
+																 ,pr_nrcelular IN tbrecarga_operacao.nrcelular%TYPE
+																 ,pr_vlrecarga IN tbrecarga_operacao.vlrecarga%TYPE
+																 ,pr_nsuopera  IN tbrecarga_operacao.dsnsu_operadora%TYPE) IS
+			  SELECT 1
+				  FROM tbrecarga_operacao tope
+				 WHERE tope.cdcooper = pr_cdcooper
+					 AND tope.nrdconta = pr_nrdconta
+					 AND tope.dtrecarga = pr_dtrecarga
+					 AND tope.nrddd = pr_nrdddtel
+					 AND tope.nrcelular = pr_nrcelular
+					 AND tope.vlrecarga = pr_vlrecarga
+					 AND tope.dsnsu_operadora = pr_nsuopera;  /* retornado da operadora */
+			rw_operacao_repetida cr_operacao_repetida%ROWTYPE;
+			
 			rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 			rw_craplcm craplcm%ROWTYPE;
 			
@@ -2327,6 +2349,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				-- Atribuir Nsu da operadora e RedeTendencia
 				vr_nsuoperadora := replace(vr_resposta.conteudo.get('IdFornecedor').to_char(), '"', '');
 				vr_nsutendencia  := replace(vr_resposta.conteudo.get('IdMidlware').to_char(), '"', '');
+				
+				-- Verificar se existe alguma operação de recarga com os mesmos dados
+				OPEN cr_operacao_repetida(pr_cdcooper  => pr_cdcooper
+			                           ,pr_nrdconta  => pr_nrdconta
+																 ,pr_dtrecarga => TRUNC(SYSDATE)
+																 ,pr_nrdddtel  => pr_nrdddtel
+																 ,pr_nrcelular => pr_nrtelefo
+																 ,pr_vlrecarga => pr_vlrecarga
+																 ,pr_nsuopera  => vr_nsuoperadora);
+				FETCH cr_operacao_repetida INTO rw_operacao_repetida;
+				
+				-- Se encontrou, operação já existe
+				IF cr_operacao_repetida%FOUND THEN
+					-- Fechar cursor
+					CLOSE cr_operacao_repetida;
+					-- Gerar crítica
+					vr_cdcritic := 0;
+					vr_dscritic := 'Não foi possível efetuar a recarga.';
+					vr_dserrlog := 'NSU já processado.';
+					
+					-- Se for registro em processamento
+					IF rw_operacao.insit_operacao = 0 THEN
+						-- Devemos atualizar o registro de operação de recarga
+						UPDATE tbrecarga_operacao 
+							 SET insit_operacao = 8 -- Transação abortada
+						 WHERE idoperacao = rw_operacao.idoperacao;
+						-- Efetuar commit
+						COMMIT;
+					END IF;
+					
+					-- Gerar log
+					pc_gera_log_erro(pr_cdcooper => pr_cdcooper
+													,pr_nrdconta => pr_nrdconta
+													,pr_idorigem => pr_idorigem
+													,pr_idseqttl => pr_idseqttl
+													,pr_cdoperadora => pr_cdopetel
+													,pr_nrdddtel => pr_nrdddtel
+													,pr_nrtelefo => pr_nrtelefo
+													,pr_vlrecarga => pr_vlrecarga
+													,pr_idoperacao => pr_idoperac												
+													,pr_dserrlog => vr_dserrlog);
+									
+					-- Levantar exceção
+					RAISE vr_exc_erro;
+						
+				END IF;
+				-- Fechar cursor
+				CLOSE cr_operacao_repetida;				
 				
         -- Buscar a próxima data de repasse de valores para o fornecedor
         vr_dtrepasse := fn_calcula_proximo_repasse(pr_cdcooper => pr_cdcooper
