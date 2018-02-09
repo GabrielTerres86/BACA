@@ -63,6 +63,12 @@ function exibeErroNew($msgErro) {
 		?>
     </select>
 	
+	<label class="rotulo-60">Produto:</label>
+	<select>
+		<option>Empréstimo e Financiamento</option>
+		<option>Desconto de Títulos</option>
+	</select>
+
 	<a href="#" class="botao" id="btnOK" name="btnOK" onClick="controlaOperacao();
             return false;" style = "text-align:right;">OK</a>
 
