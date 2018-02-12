@@ -172,23 +172,24 @@ function controlaFoco() {
 
     $('#cddopcao', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-			if ($(this).val() == 'C'){
-				$('#tpprodut', '#frmCab').focus();
-			}else{
-				$('#tlcooper', '#frmCab').focus();
-			}
-            return false;
-        }
-    });
-	
-	  $('#tlcooper', '#frmCab').unbind('keypress').bind('keypress', function(e) {
-        if (e.keyCode == 9 || e.keyCode == 13) {
             $('#tpprodut', '#frmCab').focus();
             return false;
         }
     });
 
-      $('#tpprodut', '#frmCab').unbind('keypress').bind('keypress', function(e) {
+    $('#tpprodut', '#frmCab').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            
+            if ($('#cddopcao').val() == 'C'){
+                $('#btnOK', '#frmCab').focus();    
+            }else{
+                $('#tlcooper', '#frmCab').focus();
+            }
+            return false;
+        }
+    });
+	
+	$('#tlcooper', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             $('#btnOK', '#frmCab').focus();
             return false;
@@ -398,7 +399,8 @@ function manterRotina(cdopcao) {
     showMsgAguardo(mensagem);
 	
     var tlcooper = normalizaNumero($('#tlcooper', '#' + frmCab).val());
-	
+	var tpprodut = normalizaNumero($('#tpprodut', '#' + frmCab).val());
+    
     var contigen = normalizaNumero($('#contigen', '#' + frmParest).val());
     var incomite = normalizaNumero($('#incomite', '#' + frmParest).val());
     var anlautom = normalizaNumero($('#anlautom', '#' + frmParest).val());
@@ -417,6 +419,7 @@ function manterRotina(cdopcao) {
         data: {
             cddopcao: cdopcao,
             tlcooper: tlcooper,
+            tpprodut: tpprodut,
             contigen: contigen,
             anlautom: anlautom,
             incomite: incomite,
