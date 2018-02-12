@@ -173,7 +173,7 @@ function controlaFoco() {
     $('#cddopcao', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
 			if ($(this).val() == 'C'){
-				$('#btnOK', '#frmCab').focus();
+				$('#tpprodut', '#frmCab').focus();
 			}else{
 				$('#tlcooper', '#frmCab').focus();
 			}
@@ -183,6 +183,13 @@ function controlaFoco() {
 	
 	  $('#tlcooper', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#tpprodut', '#frmCab').focus();
+            return false;
+        }
+    });
+
+      $('#tpprodut', '#frmCab').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
             $('#btnOK', '#frmCab').focus();
             return false;
         }
@@ -190,7 +197,6 @@ function controlaFoco() {
 
     $('#btnOK', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-			
 			controlaOperacao();
             return false;
         }
