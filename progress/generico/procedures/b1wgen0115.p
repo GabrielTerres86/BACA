@@ -2543,7 +2543,9 @@ PROCEDURE Grava_Dados:
                                    IF  AVAIL crawepr THEN
                                        DO:
                                            ASSIGN aux_idgaropc_old = crawepr.idcobope
-                                                  crawepr.idcobope = par_idgaropc.
+                                                  crawepr.idcobope = par_idgaropc
+                                                  crawepr.idcobefe = par_idgaropc
+                                                                     WHEN crawepr.idcobefe = 0.
                                        END.
                                 END.
                             ELSE
@@ -2558,7 +2560,9 @@ PROCEDURE Grava_Dados:
                                    IF  AVAIL craplim THEN
                                        DO:
                                            ASSIGN aux_idgaropc_old = craplim.idcobope
-                                                  craplim.idcobope = par_idgaropc.
+                                                  craplim.idcobope = par_idgaropc
+                                                  craplim.idcobefe = par_idgaropc
+                                                                     WHEN craplim.idcobefe = 0.
                                        END.
                                 END.
 

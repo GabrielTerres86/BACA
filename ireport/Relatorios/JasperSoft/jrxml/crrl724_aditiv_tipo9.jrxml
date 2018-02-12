@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-02-02T14:41:34 -->
+<!-- 2018-02-12T19:44:48 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl724_aditiv_tipo9" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="0.9558924531310722"/>
 	<property name="ireport.x" value="0"/>
@@ -132,7 +132,7 @@
 					<textElement textAlignment="Justified" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["Por este instrumento particular, de um lado o(a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>  " + $F{nmprimtl} + ", inscrito(a) no CPF/CNPJ sob nº " + $F{dscpfcgc} + ", e de outro lado, a <style isBold='true' pdfFontName='Courier-Bold'>" + $F{nmextcop} + " - " + $F{nmcopres} +"</style>, todas já devidamente qualificadas na cédula ou contrato supramencionado(a), tem, entre si, ajustado o presente Termo Aditivo da Cédula de Crédito Bancário" + ($F{modrelat} == "90_1" ? " ou Contrato de Crédito Simplificado" : "") + " nº " + $F{nraditiv} + " emitido(a) em " + $F{dtmvtolt} + " pelo(a) Cooperado(a), vinculado(a) à conta corrente nº " + $F{nrdconta} + ", nas seguintes cláusulas e condições:"]]></textFieldExpression>
+					<textFieldExpression><![CDATA["Por este instrumento particular, de um lado o(a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>  " + $F{nmprimtl} + ", inscrito(a) no CPF/CNPJ sob nº " + $F{dscpfcgc} + ", e de outro lado, a <style isBold='true' pdfFontName='Courier-Bold'>" + $F{nmextcop} + " - " + $F{nmcopres} +"</style>, todas já devidamente qualificadas na cédula ou contrato supramencionado(a), tem, entre si, ajustado o presente Termo Aditivo da Cédula de Crédito Bancário" + ($F{modrelat} == "90_1" ? " ou Contrato de Crédito Simplificado" : "") + " nº " + $F{nrctremp} + " emitido(a) em " + $F{dtmvtolt} + " pelo(a) Cooperado(a), vinculado(a) à conta corrente nº " + $F{nrdconta} + ", nas seguintes cláusulas e condições:"]]></textFieldExpression>
 				</textField>
 				<line>
 					<reportElement x="495" y="1" width="1" height="64" uuid="e2205477-67ec-4bed-8671-24bd95586830">
@@ -840,7 +840,7 @@
 		</band>
 		<band height="70">
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="20" y="49" width="556" height="11" uuid="9ed9e563-0956-4315-a67d-74c651bc39cc">
+				<reportElement positionType="Float" x="20" y="40" width="556" height="11" uuid="9ed9e563-0956-4315-a67d-74c651bc39cc">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>

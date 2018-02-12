@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-02-02T14:51:53 -->
+<!-- 2018-02-09T08:39:44 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_contrato_limite_cheque" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="0.9558924531310722"/>
 	<property name="ireport.x" value="0"/>
@@ -513,10 +513,11 @@
 					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>" + (3 + $F{ind_dev_sol}) + ".5</style> Linha de Crédito\n" + $F{dsdlinha}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true">
-					<reportElement positionType="Float" x="170" y="3" width="155" height="24" uuid="f8537e77-3d5c-475e-a064-5730766a3b1d">
+					<reportElement positionType="Float" x="170" y="3" width="145" height="24" uuid="f8537e77-3d5c-475e-a064-5730766a3b1d">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Left" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -524,18 +525,19 @@
 					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>" + (3 + $F{ind_dev_sol}) + ".6</style> Prazo de vigência\n" +  $F{qtdiavig} + " DIAS."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true">
-					<reportElement positionType="Float" x="330" y="3" width="223" height="24" uuid="774918bd-3525-4d65-8466-54d928a2690e">
+					<reportElement positionType="Float" x="320" y="3" width="233" height="24" uuid="774918bd-3525-4d65-8466-54d928a2690e">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Left" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>" + (3 + $F{ind_dev_sol}) + ".7</style> Taxa de juros remuneratórios aplicável em cada borderô até o limite de 0,00%"]]></textFieldExpression>
+					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>" + (3 + $F{ind_dev_sol}) + ".7</style> Taxa de juros remuneratórios\naplicável em cada borderô até o limite de 0,00%"]]></textFieldExpression>
 				</textField>
 				<line direction="BottomUp">
-					<reportElement x="326" y="4" width="1" height="24" uuid="ed2e0482-6614-4f0f-b187-d41b160ffc5d"/>
+					<reportElement x="316" y="4" width="1" height="24" uuid="ed2e0482-6614-4f0f-b187-d41b160ffc5d"/>
 				</line>
 				<line direction="BottomUp">
 					<reportElement x="165" y="4" width="1" height="24" uuid="5cf859a6-84b4-48a1-abb4-701438ca02f9">
@@ -934,7 +936,7 @@ l) descumprir qualquer das disposições constantes na Política de Responsabili
 				<text><![CDATA[<style isBold='true' pdfFontName='Courier-Bold'><u>20. Do foro</u> –</style> As partes, de comum acordo, elegem o foro da Comarca de celebração deste contrato, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir quaisquer questões resultantes do presente contrato.]]></text>
 			</staticText>
 			<line>
-				<reportElement x="28" y="341" width="540" height="1" uuid="5800e320-bfb3-4f47-b6e0-c60b10802ff8">
+				<reportElement x="28" y="321" width="540" height="1" uuid="5800e320-bfb3-4f47-b6e0-c60b10802ff8">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>

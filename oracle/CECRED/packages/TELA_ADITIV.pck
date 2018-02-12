@@ -1176,7 +1176,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       -- Cobertura de Aplicacao Vinculada a Operacao
       IF pr_tpctrato <> 90 AND
          pr_cdaditiv <> 9  THEN
-         vr_dscritic := 'TIPO DE ADITIVO NAO PERMITIDO';
+         vr_dscritic := 'TIPO DE ADITIVO NAO ' || (CASE WHEN pr_cddopcao = 'C' THEN 'ENCONTRADO' ELSE 'PERMITIDO' END);
          RAISE vr_exc_erro;
       END IF;
       
