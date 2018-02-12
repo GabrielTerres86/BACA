@@ -114,7 +114,7 @@ select.campo, select.campoTelaSemBorda {padding:1px;}
 
 /* FORMUL�RIOS */
 form.formulario  {width:100%;}
-form.formulario label {display:block;float:left;text-align:right;height:25px;vertical-align:middle;line-height:25px;color:#333;font-weight:bold;font-size:12px;}
+form.formulario label {display:block;float:left;text-align:right;height:25px;vertical-align:middle;line-height:25px;color:#333;font-weight:bold;font-size:12px; }
 form.formulario input {float:left;margin:3px 0px 3px 3px;}
 form.formulario input.codigo {width:35px;}
 form.formulario input.descricao {width:369px;}
@@ -159,6 +159,7 @@ div .divFinanc label{display:block;float:left;text-align:right;height:25px;verti
 div .divFinanc input {margin:3px 0px 3px 3px;float:left;}
 
 /* FORM CABE�ALHO */
+#frmCab{display: flex}
 #frmCabContas {padding-top:3px;border-bottom:1px solid #777;padding-bottom:2px;margin-bottom:4px;border-top:1px solid #777;}
 #frmCabMatric {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
 #frmCabAnota   {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
