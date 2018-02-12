@@ -24,6 +24,7 @@ isPostMethod();
 $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
 
 $tlcooper = (isset($_POST['tlcooper'])) ? $_POST['tlcooper'] : 0;
+$tpprodut = (isset($_POST['tpprodut'])) ? $_POST['tpprodut'] : 0;
 $contigen = (isset($_POST['contigen'])) ? $_POST['contigen'] : 0;
 $incomite = (isset($_POST['incomite'])) ? $_POST['incomite'] : 0;
 $anlautom = (isset($_POST['anlautom'])) ? $_POST['anlautom'] : 0;
@@ -101,6 +102,7 @@ if ( $cdopcao == 'C') {
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
 	$xml .= "   <flgativo>1</flgativo>";
+	$xml .= "   <tpprodut>" . $tpprodut . "</tpprodut>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
@@ -113,6 +115,7 @@ if ( $cdopcao == 'C') {
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
 	$xml .= "   <flgativo>1</flgativo>";
+	$xml .= "   <tpprodut>" . $tpprodut . "</tpprodut>";
 	$xml .= "   <incomite>" . $incomite . "</incomite>";
 	$xml .= "   <contigen>" . $contigen . "</contigen>";
     $xml .= "   <anlautom>" . $anlautom . "</anlautom>";
