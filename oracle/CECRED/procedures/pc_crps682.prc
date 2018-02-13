@@ -187,9 +187,7 @@ BEGIN
          AND ass.dtelimin IS NULL
          AND ','||pr_cdsitdct||',' LIKE ('%,'||ass.cdsitdct||',%')
          AND ass.cdtipcta IN (1, 2, 3, 4, 8, 9, 10, 11)
-         AND ass.inpessoa = pr_inpessoa
-         
-         and ass.cdagenci in (1,2,3,4,5,6,7,8,9,10);
+         AND ass.inpessoa = pr_inpessoa;
 
     -- Listagem de parametros
     CURSOR cr_crappre(pr_cdcooper IN crappre.cdcooper%TYPE
