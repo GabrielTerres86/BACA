@@ -173,6 +173,10 @@ DEF TEMP-TABLE xml_operacao9                                            NO-UNDO
     FIELD nrdocmto AS CHAR
     FIELD indebcre AS CHAR
     FIELD vllanmto AS CHAR
+    FIELD cdtiptra AS CHAR
+    FIELD idlstdom AS CHAR
+    FIELD idlancto AS CHAR
+    FIELD incancel AS CHAR
     FIELD dscabfim AS CHAR.
  
 DEF TEMP-TABLE xml_operacao10                                           NO-UNDO
@@ -218,7 +222,9 @@ DEF TEMP-TABLE xml_operacao14b                                          NO-UNDO
     FIELD dscabfim AS CHAR
     FIELD vldebito AS CHAR
     FIELD vlcredit AS CHAR
-    FIELD cdorigem AS CHAR.   
+    FIELD cdorigem AS CHAR
+    FIELD qtdiacal AS CHAR 
+    FIELD vlrdtaxa AS CHAR.
     
 DEF TEMP-TABLE xml_operacao24                                           NO-UNDO
     FIELD dscabini AS CHAR

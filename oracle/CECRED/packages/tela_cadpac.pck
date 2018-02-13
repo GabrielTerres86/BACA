@@ -137,7 +137,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                                ,pr_des_erro    OUT VARCHAR2); --> Erros do processo
 
   PROCEDURE pc_lista_pas(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
-                        ,pr_flgpaaut  IN BOOLEAN DEFAULT TRUE  --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
+                        ,pr_flgpaaut  IN INTEGER DEFAULT 1     --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
                         ,pr_retxml   OUT NOCOPY xmltype        --> Arquivo de retorno do XML
                         ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                                                              
 
@@ -4666,7 +4666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
   END pc_grava_dados_site;
 
   PROCEDURE pc_lista_pas(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
-                        ,pr_flgpaaut  IN BOOLEAN DEFAULT TRUE  --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
+                        ,pr_flgpaaut  IN INTEGER DEFAULT 1  --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
                         ,pr_retxml   OUT NOCOPY xmltype        --> Arquivo de retorno do XML
                         ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo  
   BEGIN
@@ -4691,8 +4691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       vr_dscritic  VARCHAR2(10000);
       vr_exc_saida EXCEPTION;
       
-      vr_qtregist  NUMBER; 
-      vr_flgpaaut  NUMBER;     
+      vr_qtregist  NUMBER;     
       
       -- Selecionar os dados
       CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE,
@@ -4717,11 +4716,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                             ,pr_tag_cont => ''
                             ,pr_des_erro => vr_dscritic);
       
-      vr_qtregist := 0;
-      vr_flgpaaut := CASE WHEN pr_flgpaaut THEN 1 ELSE 0 END;
+      vr_qtregist := 0;      
       
       FOR rw_crapage IN cr_crapage(pr_cdcooper => pr_cdcooper
-                                  ,pr_flgpaaut => vr_flgpaaut) LOOP          
+                                  ,pr_flgpaaut => pr_flgpaaut) LOOP          
         
         gene0007.pc_insere_tag(pr_xml => pr_retxml
                               ,pr_tag_pai => 'Dados'

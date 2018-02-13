@@ -35,6 +35,7 @@ DEF VAR aux_cdagedbb AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdbcoctl AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdagectl AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmtitula AS CHAR										                       NO-UNDO.
+DEF VAR aux_nmprepos AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmrescop AS CHAR                                           NO-UNDO.
 
 DEF VAR tmp_cdagectl AS DECI                                           NO-UNDO.
@@ -43,6 +44,8 @@ DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 
 DEF VAR aux_idpessoa LIKE crapass.nrcpfcgc                             NO-UNDO. /* TODO - Alterar para campo TB_CADAST_PESSOA.IDPESSOA - CRM */
+DEF VAR aux_nrcpfcgc LIKE crapass.nrcpfcgc                             NO-UNDO.
+DEF VAR aux_nrcpfpre LIKE crapsnh.nrcpfcgc                             NO-UNDO.
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 
@@ -146,14 +149,20 @@ IF  crapass.inpessoa = 1  THEN
             END.
 
         ASSIGN aux_nmtitula = crapttl.nmextttl
-               aux_nmoperad = crapttl.nmextttl
+               aux_nmoperad = ""
+               aux_nmprepos = ""
+               aux_nrcpfpre = 0
+               aux_nrcpfcgc = crapttl.nrcpfcgc
                aux_inpessoa = crapttl.inpessoa
                aux_idpessoa = crapttl.nrcpfcgc. /* TODO - Alterar para campo TB_CADAST_PESSOA.IDPESSOA - CRM */
     END.
 ELSE
     DO:
         ASSIGN aux_nmtitula = crapass.nmprimtl
-               aux_nmoperad = crapass.nmprimtl
+               aux_nmoperad = ""
+               aux_nmprepos = ""
+               aux_nrcpfpre = 0
+               aux_nrcpfcgc = crapass.nrcpfcgc
                aux_inpessoa = crapass.inpessoa
                aux_idpessoa = crapass.nrcpfcgc. /* TODO - Alterar para campo TB_CADAST_PESSOA.IDPESSOA - CRM */
 
@@ -178,7 +187,6 @@ ELSE
                 ASSIGN aux_nmoperad = crapopi.nmoperad.
             END.
         ELSE 
-        IF  crapass.idastcjt = 1  THEN 
             DO:
               /* Obter Dados do Representante Legal */
               /* buscar cpf do preposto */
@@ -198,6 +206,8 @@ ELSE
                                             NO-LOCK. END.
                     IF  AVAIL crapavt THEN
                         DO:
+                          ASSIGN aux_nrcpfpre = crapsnh.nrcpfcgc.
+                          
                           IF  crapavt.nrdctato <> 0 then
                               DO:
                                   FOR FIRST crabass
@@ -206,12 +216,12 @@ ELSE
                                             NO-LOCK. END.
 
                                 IF  AVAIL crabass THEN
-                                    ASSIGN aux_nmoperad = crabass.nmprimtl.
+                                    ASSIGN aux_nmprepos = crabass.nmprimtl.
                                 ELSE
-                                    ASSIGN aux_nmoperad = crapavt.nmdavali.
+                                    ASSIGN aux_nmprepos = crapavt.nmdavali.
                               END.
                           ELSE
-                              ASSIGN aux_nmoperad = crapavt.nmdavali.
+                              ASSIGN aux_nmprepos = crapavt.nmdavali.
                         END.
                 END.
             END.
@@ -301,7 +311,13 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmtitula>" +
                                STRING(aux_datdodia,"99/99/9999") +
                                "</datdodia><nmrescop>" +
                                aux_nmrescop + 
-                               "</nmrescop></CORRENTISTA>".
+                               "</nmrescop><nmprepos>" +
+                               aux_nmprepos + 
+                               "</nmprepos><nrcpfpre>" +
+                               STRING(aux_nrcpfpre) +
+                               "</nrcpfpre><nrcpfcgc>" +
+                               STRING(aux_nrcpfcgc) + 
+                               "</nrcpfcgc></CORRENTISTA>".
 
 RETURN "OK".
 

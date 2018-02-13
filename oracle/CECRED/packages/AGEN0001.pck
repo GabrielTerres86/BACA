@@ -424,7 +424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                    WHEN 3 THEN 'Cancelado'
                    WHEN 4 THEN 'Nao Efetivado'
               END AS dssitlau
-            ,TO_CHAR(lau.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') AS vllanaut
+            ,lau.vllanaut AS vllanaut
 						,to_char(lau.dtdebito, 'DD/MM/RRRR') AS dtdebito
             ,NVL2(ban.cdbccxlt, LPAD(ban.cdbccxlt,4,'0') || ' - ' || REPLACE(UPPER(TRIM(ban.nmextbcc)),'&','e'),'Nao cadastrado') AS dsdbanco
             ,NVL2(agb.cdageban, LPAD(agb.cdageban,4,'0') || ' - ' || REPLACE(UPPER(TRIM(agb.nmageban)),'&','e'),'Nao cadastrado') AS dsdagenc
@@ -1930,7 +1930,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                                  '<competencia>'  || rw_agendamento.dtapuracao                   || '</competencia>'  || 
                                                  '<nrseqgrde>'    || rw_agendamento.nrseqgrde                    || '</nrseqgrde>'    || 
                                                  '<identificador>'|| rw_agendamento.nridentificador              || '</identificador>'|| 
-                                                 '<vldocmto>'     || rw_agendamento.vllanaut                     || '</vldocmto>'     || 
                                                  '<dsdpagto>'     || rw_agendamento.dsdpagto                     || '</dsdpagto>'     ||
                                                  '<dttransa>'     || rw_agendamento.dttransa                     || '</dttransa>' ||
                                                  '<hrautent>'     || rw_agendamento.hrtransa 	                   || '</hrautent>' ||
@@ -2141,7 +2140,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                                  '<cdbarras>'     || rw_agendamento.dscodbar                     || '</cdbarras>' || 
                                                  '<dslinhad>'     || rw_agendamento.dslindig                     || '</dslinhad>' ||
                                                  '<nrdocdae>'     || rw_agendamento.nridentificador              || '</nrdocdae>' ||
-                                                 '<vldocmto>'     || rw_agendamento.vllanaut                     || '</vldocmto>' ||                                                  
                                                  '<dsdpagto>'     || rw_agendamento.dsdpagto                     || '</dsdpagto>' ||
                                                  '<dttransa>'     || rw_agendamento.dttransa                     || '</dttransa>' ||
                                                  '<hrautent>'     || rw_agendamento.hrtransa 	                   || '</hrautent>' ||

@@ -676,6 +676,9 @@ PROCEDURE consulta-extrato:
                     ASSIGN tt-extrato_conta.vlblqjud = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlblqjud".
                     ASSIGN tt-extrato_conta.cdcoptfn = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdcoptfn".
                     ASSIGN tt-extrato_conta.nrseqlmt = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrseqlmt".
+                    ASSIGN tt-extrato_conta.cdtippro = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdtippro".
+                    ASSIGN tt-extrato_conta.dsprotoc = xText:NODE-VALUE WHEN xField:NAME = "dsprotoc".
+                    ASSIGN tt-extrato_conta.flgdetal = INT(xText:NODE-VALUE) WHEN xField:NAME = "flgdetal".
 
                 END. 
 

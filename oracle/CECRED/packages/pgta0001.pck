@@ -10460,7 +10460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                          ,pr_dsdirarq => pr_dsdirarq
                                          ,pr_des_erro => vr_dscritic);
                                          
-      IF TRIM(vr_des_erro) <> '' THEN
+      IF vr_dscritic IS NOT NULL AND TRIM(vr_dscritic) <> ' ' THEN
         RAISE vr_exc_saida;
       END IF;
     END IF;
@@ -10738,7 +10738,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                          ,pr_dsdirarq => pr_dsdirarq
                                          ,pr_des_erro => vr_dscritic);
         
-      IF TRIM(vr_des_erro) <> '' THEN
+      IF vr_dscritic IS NOT NULL AND TRIM(vr_dscritic) <> ' ' THEN
         RAISE vr_exc_saida;
       END IF;
     END IF;

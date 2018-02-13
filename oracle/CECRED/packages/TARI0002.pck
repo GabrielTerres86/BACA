@@ -79,7 +79,10 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0002 AS
 																		 ,pr_dtinivig IN  VARCHAR2             -- Data de início da vigência
 																		 ,pr_dtdiadeb IN  VARCHAR2             -- Dia de débito
 																		 ,pr_vlpacote IN  VARCHAR2             -- Valor do pacote
+                                     ,pr_iddspscp IN  INTEGER              -- Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
  	                                   ,pr_nmarquiv OUT VARCHAR2             -- Nome do arquivo
+                                     ,pr_dssrvarq OUT VARCHAR2             -- Nome do servidor para download do arquivo
+                                     ,pr_dsdirarq OUT VARCHAR2             -- Nome do diretório para download do arquivo                                                                                                                                   
 																		 ,pr_des_erro OUT VARCHAR2             -- Indicador erro OK/NOK
 																		 ,pr_dscritic OUT VARCHAR2);           -- Descrição da crítica    																		 
 
@@ -154,12 +157,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
 		 vr_idastcjt   INTEGER(1);
 		 vr_nrcpfcgc   INTEGER;
 		 vr_nmprimtl   VARCHAR2(500);
-		 vr_flcartma   INTEGER(1);		
+		 vr_flcartma   INTEGER(1);	
+     vr_inpessoa crapass.inpessoa%TYPE;	
 				 
     -- Cursor genérico de calendário
     rw_crapdat BTCH0001.CR_CRAPDAT%ROWTYPE;
 		 
-		CURSOR cr_pacotes(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+		CURSOR cr_pacotes(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                     ,pr_inpessoa IN crapass.inpessoa%TYPE) IS
 		  SELECT tpac.dspacote
 			      ,tpac.cdtarifa_lancamento cdtarifa
 			      ,tcoop.cdpacote
@@ -207,6 +212,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
 				    ,tbtarif_servicos tser
 			 WHERE tser.cdpacote = pr_cdpacote
 				 AND tar.cdtarifa = tser.cdtarifa;
+         
+    -- Buscar tipo de pessoa da conta
+    CURSOR cr_crapass IS
+		  SELECT ass.inpessoa
+			  FROM crapass ass
+			 WHERE ass.cdcooper = pr_cdcooper
+				 AND ass.nrdconta = pr_nrdconta;  
+    rw_crapass cr_crapass%ROWTYPE;       
 	BEGIN
 		
 		-- Leitura do calendário da cooperativa
@@ -303,7 +316,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
     END IF;		
 		-- Se cooperado não possui pacote de tarifas
 		IF vr_flgtarif = FALSE THEN
-			FOR rw_pacotes IN cr_pacotes(pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+      
+      IF NVL(pr_inpessoa,0) = 0 THEN
+        OPEN cr_crapass;
+				FETCH cr_crapass INTO rw_crapass;
+
+        IF cr_crapass%NOTFOUND THEN
+          vr_cdcritic := 0;
+					vr_dscritic := 'Associado não encontrado.';
+				  CLOSE cr_crapass;
+					RAISE vr_exc_saida;
+        END IF;
+        
+        CLOSE cr_crapass;
+        
+        vr_inpessoa := rw_crapass.inpessoa;
+      ELSE
+        vr_inpessoa := pr_inpessoa;
+      END IF;
+      
+			FOR rw_pacotes IN cr_pacotes(pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_inpessoa => vr_inpessoa) LOOP
 				
 	 			-- Procura valor da tarifa
 				OPEN cr_crapfco(rw_pacotes.cdtarifa);
@@ -442,8 +475,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
 		vr_cdcritic  crapcri.cdcritic%TYPE;
 		vr_dscritic  crapcri.dscritic%TYPE;
 		vr_des_erro  VARCHAR2(10);
-		
+    
 		-- Variáveis auxiliares
+		vr_xml_temp   VARCHAR2(32767);    
+    vr_dsmsgsuc   VARCHAR2(500);
     vr_idastcjt   INTEGER(1);
     vr_nrcpfcgc   INTEGER;
     vr_nmprimtl   VARCHAR2(500);
@@ -529,16 +564,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
 				 TRIM(vr_dscritic) IS NOT NULL THEN
 				 RAISE vr_exc_saida; 
 			END IF;
-			 
-			IF vr_idastcjt = 1 THEN
-				 vr_dscritic := 'Servico Cooperativo registrado com sucesso. '|| 
+      
+      IF vr_idastcjt = 1 THEN
+				 vr_dsmsgsuc := 'Servico Cooperativo registrado com sucesso. '|| 
 												'Aguardando aprovacao do registro pelos demais responsaveis.';
-			   pr_dscritic := vr_dscritic;
 			ELSE
-				 vr_dscritic := 'Servico Cooperativo registrado com sucesso. '|| 
+				 vr_dsmsgsuc := 'Servico Cooperativo registrado com sucesso. '|| 
 												'Aguardando efetivacao do registro pelo preposto.';
-			   pr_dscritic := vr_dscritic;
 			END IF;
+      
+      -- Criar documento XML
+		  dbms_lob.createtemporary(pr_clobxmlc, TRUE);
+		  dbms_lob.open(pr_clobxmlc, dbms_lob.lob_readwrite);
+
+		  -- Insere mensagem de sucesso do XML
+		  gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc
+														 ,pr_texto_completo => vr_xml_temp
+				  									 ,pr_texto_novo     => '<dsmsgsuc>' || vr_dsmsgsuc || '</dsmsgsuc>'
+					  								 ,pr_fecha_xml      => TRUE);                           
 		ELSE
 			-- Verifica se existe pacote ativo na conta
 		  OPEN cr_conta_pacote_ativo;
@@ -950,7 +993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
                         ,pr_nrdconta IN crapass.nrdconta%TYPE
                         ,pr_idseqttl IN crapttl.idseqttl%TYPE) IS
         SELECT ttl.nmextttl  nmprimtl-- PESSOA FISICA
-              ,'CPF: ' || gene0002.fn_mask_cpf_cnpj(ttl.nrcpfcgc,ttl.inpessoa) nrcpfcgc
+              ,gene0002.fn_mask_cpf_cnpj(ttl.nrcpfcgc,ttl.inpessoa) nrcpfcgc
               ,ttl.inpessoa
           FROM crapttl ttl
          WHERE ttl.cdcooper = pr_cdcooper
@@ -958,7 +1001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
            AND ttl.idseqttl = pr_idseqttl
         UNION
         SELECT ass.nmprimtl -- PESSOA JURIDICA
-              ,'CNPJ:' || gene0002.fn_mask_cpf_cnpj(ass.nrcpfcgc,ass.inpessoa) nrcpfcgc
+              ,gene0002.fn_mask_cpf_cnpj(ass.nrcpfcgc,ass.inpessoa) nrcpfcgc
               ,ass.inpessoa
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
@@ -1029,6 +1072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
       vr_cargos         VARCHAR2(10000);
       vr_dstarifa       VARCHAR2(10000);
       vr_qtdoperacoes   VARCHAR2(10000);
+      vr_xmlrepresen    VARCHAR2(10000);
       vr_dtcancelamento VARCHAR2(20);
       vr_dtinivig       VARCHAR2(10);
       
@@ -1140,7 +1184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
                              ,pr_texto_completo => vr_xml_temp 
                              ,pr_texto_novo     => 
       '<nmprimtl>' || rw_crapass.nmprimtl || '</nmprimtl>' ||
-      '<nrcpfcgc>' || rw_crapass.nrcpfcgc || '</nrcpfcgc>' ||
+      '<nrcpfcgc>' || CASE WHEN rw_crapass.inpessoa = 1 THEN 'CPF:' ELSE 'CNPJ:' END || rw_crapass.nrcpfcgc || '</nrcpfcgc>' ||
       '<nrdconta>' || 
           REPLACE(gene0002.fn_mask_conta(pr_nrdconta),' ', '') ||
       '</nrdconta>');
@@ -1218,9 +1262,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
       
       
       --*********** REPRESENTANTES **********
-      vr_represen := '';
-      vr_cargos   := '';
-      
+      vr_represen    := '';
+      vr_cargos      := '';
+      vr_xmlrepresen := '<representantes_legais>';
       -- Se for pessoa juridica
       IF rw_crapass.inpessoa = 2 THEN
         -- Popula responsaveis legais
@@ -1231,16 +1275,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
               
               IF trim(vr_represen) IS NOT NULL THEN
                 vr_represen := vr_represen || '<br>';
-                vr_cargos   := vr_cargos   || '<br>';
+                vr_cargos   := vr_cargos   || '<br>';                 
               END IF;
             
               vr_represen := vr_represen || vr_tab_crapavt(vr_index).nmdavali;
               vr_cargos   := vr_cargos   || vr_tab_crapavt(vr_index).dsproftl;
               
+              vr_xmlrepresen := vr_xmlrepresen || 
+                                '<representante>' ||
+                                '  <nome>'  || vr_tab_crapavt(vr_index).nmdavali || '</nome>' ||         
+                                '  <cargo>' || vr_tab_crapavt(vr_index).dsproftl || '</cargo>' ||                               
+                                '</representante>';
             END IF;
           END LOOP;
         END IF;
       END IF;
+      
+      vr_xmlrepresen := vr_xmlrepresen || '</representantes_legais>';
       
       gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                              ,pr_texto_completo => vr_xml_temp 
@@ -1301,7 +1352,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
       -- Encerrar a tag raiz
 			gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
 														 ,pr_texto_completo => vr_xml_temp 
-														 ,pr_texto_novo     => '<idorigem>' || pr_idorigem || '</idorigem>');
+														 ,pr_texto_novo     => '<idorigem>' || pr_idorigem         || '</idorigem>' ||
+                                                   '<dscpfcgc>' || rw_crapass.nrcpfcgc || '</dscpfcgc>');
+                            
+      -- Atribuir lista de representantes no XML                       
+      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                             ,pr_texto_completo => vr_xml_temp 
+                             ,pr_texto_novo     => vr_xmlrepresen);                                                   
       
       -- Encerrar a tag raiz
 			gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
@@ -1334,7 +1391,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
 																		 ,pr_dtinivig IN  VARCHAR2             -- Data de início da vigência
 																		 ,pr_dtdiadeb IN  VARCHAR2             -- Dia de débito
 																		 ,pr_vlpacote IN  VARCHAR2             -- Valor do pacote
+                                     ,pr_iddspscp IN  INTEGER              -- Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
  	                                   ,pr_nmarquiv OUT VARCHAR2             -- Nome do arquivo
+                                     ,pr_dssrvarq OUT VARCHAR2             -- Nome do servidor para download do arquivo
+                                     ,pr_dsdirarq OUT VARCHAR2             -- Nome do diretório para download do arquivo                                                                                                                                   
 																		 ,pr_des_erro OUT VARCHAR2             -- Indicador erro OK/NOK
 																		 ,pr_dscritic OUT VARCHAR2) IS         -- Descrição da crítica    
  /* .............................................................................
@@ -1443,25 +1503,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0002 AS
     dbms_lob.close(vr_xml);
     dbms_lob.freetemporary(vr_xml);
     
-		-- Copia o PDF para o IB
-		GENE0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper,
-																		pr_nmarqpdf => vr_caminho || '/' || vr_nom_arquivo,
-																		pr_des_erro => vr_des_reto);
-		-- Testar se houve erro
-		IF vr_des_reto IS NOT NULL THEN
-			-- Gerar excecao
-			RAISE vr_exc_erro;
-		END IF;
-
-		-- Remove o arquivo XML fisico de envio
-		GENE0001.pc_OScommand (pr_typ_comando => 'S'
-													,pr_des_comando => 'rm '||vr_caminho || '/' || vr_nom_arquivo||' 2> /dev/null'
-													,pr_typ_saida   => vr_des_reto
-													,pr_des_saida   => vr_dscritic);
-		-- Se ocorreu erro dar RAISE
-		IF vr_des_reto = 'ERR' THEN
-			RAISE vr_exc_erro;
-		END IF;
+    IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino
+      -- Copia o PDF para o IB
+      GENE0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper,
+                                      pr_nmarqpdf => vr_caminho || '/' || vr_nom_arquivo,
+                                      pr_des_erro => vr_des_reto);
+      -- Testar se houve erro
+      IF vr_des_reto IS NOT NULL THEN
+        -- Gerar excecao
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Remove o arquivo XML fisico de envio
+      GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                            ,pr_des_comando => 'rm '||vr_caminho || '/' || vr_nom_arquivo||' 2> /dev/null'
+                            ,pr_typ_saida   => vr_des_reto
+                            ,pr_des_saida   => vr_dscritic);
+      -- Se ocorreu erro dar RAISE
+      IF vr_des_reto = 'ERR' THEN
+        RAISE vr_exc_erro;
+      END IF;      
+    ELSE
+      gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
+                                         ,pr_dsdirecp => vr_caminho||'/'
+                                         ,pr_nmarqucp => vr_nom_arquivo
+                                         ,pr_flgcopia => 0
+                                         ,pr_dssrvarq => pr_dssrvarq
+                                         ,pr_dsdirarq => pr_dsdirarq
+                                         ,pr_des_erro => vr_dscritic);
+        
+      IF vr_dscritic IS NOT NULL AND TRIM(vr_dscritic) <> ' ' THEN
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
 		
 		-- Seta o retorno
 		pr_dscritic := NULL;

@@ -518,7 +518,12 @@ PROCEDURE consulta-lancto-car.
                         tt-lancamento_futuro.cdbccxlt = INT(xText:NODE-VALUE)  WHEN xField:NAME = "cdbccxlt"
                         tt-lancamento_futuro.nrdolote = INT(xText:NODE-VALUE)  WHEN xField:NAME = "nrdolote"
                         tt-lancamento_futuro.nrseqdig = INT(xText:NODE-VALUE)  WHEN xField:NAME = "nrseqdig"
-                        tt-lancamento_futuro.dtrefere = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtrefere".
+                        tt-lancamento_futuro.dtrefere = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtrefere"
+                        tt-lancamento_futuro.cdtiptra = INT(xText:NODE-VALUE)  WHEN xField:NAME = "cdtiptra"
+                        tt-lancamento_futuro.idlancto = INT(xText:NODE-VALUE)  WHEN xField:NAME = "idlancto"
+                        tt-lancamento_futuro.idlstdom = INT(xText:NODE-VALUE)  WHEN xField:NAME = "idlstdom"
+                        tt-lancamento_futuro.incancel = INT(xText:NODE-VALUE)  WHEN xField:NAME = "incancel".
+                        
                END.              
              
            END.    

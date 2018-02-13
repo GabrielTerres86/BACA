@@ -75,7 +75,11 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,cdbccxlt craplau.cdbccxlt%TYPE
       ,nrdolote craplau.nrdolote%TYPE
       ,nrseqdig craplau.nrseqdig%TYPE
-      ,dtrefere craplau.dtmvtolt%TYPE);
+      ,dtrefere craplau.dtmvtolt%TYPE
+      ,cdtiptra craplau.cdtiptra%TYPE
+      ,idlancto craplau.idlancto%TYPE
+      ,idlstdom NUMBER
+      ,incancel INTEGER);
       
     TYPE typ_tab_lancamento_futuro IS TABLE OF typ_reg_lancamento_futuro INDEX BY PLS_INTEGER;
 
@@ -119,7 +123,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,flglista BOOLEAN DEFAULT TRUE
       ,nranomes INTEGER
       ,cdorigem VARCHAR2(100)
-      ,qtdiacal craplem.qtdiacal%TYPE);
+      ,qtdiacal NUMBER);
     TYPE typ_tab_extrato_epr IS TABLE OF typ_reg_extrato_epr INDEX BY PLS_INTEGER;
     
     --Tipo de Registro para Extrato de Emprestimo Auxiliar (b1wgen0112tt.i/tt-extrato_epr_aux) 
@@ -143,7 +147,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,dsextrat VARCHAR2(4000)
       ,flglista BOOLEAN DEFAULT TRUE
       ,cdorigem VARCHAR2(100)
-      ,qtdiacal craplem.qtdiacal%TYPE);  
+      ,qtdiacal NUMBER);  
     TYPE typ_tab_extrato_epr_aux IS TABLE OF typ_reg_extrato_epr_aux INDEX BY PLS_INTEGER;
 
     --Tipo de Tabela para armazenar decimais  
@@ -2916,7 +2920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplem.nrdocmto
               ,craplem.txjurepr
               ,craplem.nrseqava
-              ,craplem.qtdiacal
+              ,0 qtdiacal
             --  ,DECODE(craplem.cdorigem,1,'Ayllos',2,'Caixa',3,'Internet',4,'Cash',5,'Ayllos WEB',6,'URA',7,'Batch',8,'Mensageria',' ') cdorigem
               ,DECODE(craplem.cdorigem,1,'Debito CC',2,'Caixa',3,'Internet',4,'Cash',5,'Debito CC',6,'URA',7,'Debito CC',8,'Mensageria',' ') cdorigem
               ,count(*) over (partition by  craplem.cdcooper,craplem.nrdconta,craplem.dtmvtolt) nrtotdat
@@ -3828,6 +3832,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplau.dtmvtolt
               ,craplau.cdtiptra
               ,craplau.idlancto
+              ,craplau.nrseqagp
+              ,craplau.dslindig
               ,craplau.progress_recid
         FROM craplau craplau
         WHERE craplau.cdcooper = pr_cdcooper   
@@ -3853,7 +3859,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplau.nrseqdig
               ,craplau.dtmvtolt
               ,craplau.cdtiptra
-              ,craplau.idlancto			  
+              ,craplau.idlancto
+              ,craplau.nrseqagp		
+              ,craplau.dslindig              	  
               ,craplau.progress_recid
         FROM craplau craplau
         WHERE craplau.cdcooper = pr_cdcooper
@@ -4312,6 +4320,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_dtiniper01 DATE;
       vr_dtfimper01 DATE;
       vr_dscedent VARCHAR(300);
+      vr_idlstdom NUMBER;
+      vr_incancel INTEGER;
       --Variaveis para uso na craptab
       vr_dstextab    craptab.dstextab%TYPE;
       vr_lshistor    craptab.dstextab%TYPE;
@@ -4692,6 +4702,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_tab_lancamento_futuro(vr_index).nrdolote := rw_craplau.nrdolote;
         pr_tab_lancamento_futuro(vr_index).nrseqdig := rw_craplau.nrseqdig;
         pr_tab_lancamento_futuro(vr_index).dtrefere := rw_craplau.dtmvtolt;
+        pr_tab_lancamento_futuro(vr_index).cdtiptra := rw_craplau.cdtiptra;
+        pr_tab_lancamento_futuro(vr_index).idlancto := rw_craplau.idlancto;
+        
+        IF rw_craplau.cdtiptra <> 0 THEN
+          IF rw_craplau.cdtiptra = 1 THEN 
+            vr_idlstdom := 5; -- Transf. Intracooperativa
+          ELSIF rw_craplau.cdtiptra = 3 THEN
+            vr_idlstdom := 3; -- Crédito Salário
+          ELSIF rw_craplau.cdtiptra = 4 THEN
+            vr_idlstdom := 4; -- TED
+          ELSIF rw_craplau.cdtiptra = 5 THEN
+            vr_idlstdom := 6; -- Transf. Intercooperativa
+          ELSIF rw_craplau.cdtiptra = 2 THEN
+            IF NVL(rw_craplau.nrseqagp,0) <> 0 THEN 
+              vr_idlstdom := 9; -- GPS
+            ELSIF LENGTH(NVL(rw_craplau.dslindig,'')) = 55 THEN
+              vr_idlstdom := 2; -- Convênio
+            ELSE
+              vr_idlstdom := 1; -- Título
+            END IF;
+          ELSIF rw_craplau.cdtiptra = 10 THEN
+            IF rw_darf_das.tppagamento = 1 THEN 
+              vr_idlstdom := 7; -- DARF
+            ELSE 
+              vr_idlstdom := 8; -- DAS
+            END IF;
+          ELSE
+            vr_idlstdom := 0;
+          END IF;
+        END IF;
+        
+        pr_tab_lancamento_futuro(vr_index).idlstdom := vr_idlstdom;
+        pr_tab_lancamento_futuro(vr_index).incancel := 0;
         
         /* Pagtos INTERNET */  
         IF rw_craplau.cdhistor = 508 THEN
@@ -6074,6 +6117,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                                               'fm9999999999999999999999999');
         pr_tab_lancamento_futuro(vr_index).indebcre:= rw_craphis.indebcre;
         pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_recarga.vlrecarga;
+        pr_tab_lancamento_futuro(vr_index).cdtiptra:= 20;
+        pr_tab_lancamento_futuro(vr_index).idlancto:= rw_recarga.idoperacao;
+        pr_tab_lancamento_futuro(vr_index).idlstdom:= 20;
+        pr_tab_lancamento_futuro(vr_index).incancel:= 0;
         --Acumular valor automatico
         vr_vllautom:= nvl(vr_vllautom,0) - rw_recarga.vlrecarga;
         --Acumular valor Credito
@@ -12972,7 +13019,7 @@ END pc_consulta_ir_pj_trim;
                               ,pr_nrdconta IN crappep.nrdconta%TYPE
                               ,pr_nrctremp IN crappep.nrctremp%TYPE
                               ,pr_nrparepr IN crappep.nrparepr%TYPE) IS
-        SELECT crappep.vltaxatu
+        SELECT 1 vltaxatu
           FROM crappep
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
@@ -13374,26 +13421,6 @@ END pc_consulta_ir_pj_trim;
         --Se deve Imprimir
         IF pr_flgimpri THEN
           -- Busca as parcelas para pagamento
-          EMPR0011.pc_busca_pagto_parc_pos_prog(pr_cdcooper => pr_cdcooper
-                                               ,pr_dtmvtolt => TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR')
-                                               ,pr_dtmvtoan => TO_CHAR(pr_dtmvtoan,'DD/MM/RRRR')
-                                               ,pr_nrdconta => pr_nrdconta
-                                               ,pr_nrctremp => pr_nrctremp
-                                               ,pr_cdlcremp => rw_crapepr.cdlcremp
-                                               ,pr_qttolatr => rw_crapepr.qttolatr
-                                               ,pr_vlsdeved => vr_vlsdeved
-                                               ,pr_vlprvenc => vr_vlprvenc
-                                               ,pr_vlpraven => vr_vlpraven
-                                               ,pr_vlmtapar => vr_vlmtapar
-                                               ,pr_vlmrapar => vr_vlmrapar
-                                               ,pr_cdcritic => vr_cdcritic
-                                               ,pr_dscritic => vr_dscritic);
-                                
-          -- Se houve erro
-          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_erro;
-          END IF;
-
           vr_dstexto:= 'Saldo para Liquidacao em '||to_char(pr_dtmvtolt,'DD/MM/YYYY')||' R$: '||to_char(vr_vlsdeved,'fm9g999g990d00');
           --Finalizar TAG parcelas e Montar Cabecalho do Extrato
           vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="" dstexinf2="">';
@@ -20284,6 +20311,10 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
                                                       ||   '<nrdolote>'||nvl(to_char(vr_tab_lancamento_futuro(vr_contador).nrdolote),'0') ||'</nrdolote>'
                                                       ||   '<nrseqdig>'||nvl(to_char(vr_tab_lancamento_futuro(vr_contador).nrseqdig),'0') ||'</nrseqdig>'
                                                       ||   '<dtrefere>'||nvl(TO_CHAR(vr_tab_lancamento_futuro(vr_contador).dtrefere, 'DD/MM/RRRR'),' ')||'</dtrefere>'
+                                                      ||   '<cdtiptra>'||nvl(vr_tab_lancamento_futuro(vr_contador).cdtiptra,0)||'</cdtiptra>'
+                                                      ||   '<idlancto>'||nvl(vr_tab_lancamento_futuro(vr_contador).idlancto,0)||'</idlancto>'
+                                                      ||   '<idlstdom>'||nvl(vr_tab_lancamento_futuro(vr_contador).idlstdom,0)||'</idlstdom>'
+                                                      ||   '<incancel>'||nvl(vr_tab_lancamento_futuro(vr_contador).incancel,0)||'</incancel>'                                                      
                                                     || '</lancamento>');
         END LOOP;
          

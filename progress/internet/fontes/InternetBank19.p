@@ -43,13 +43,16 @@ DEF VAR h-b1wnet0001 AS HANDLE                                         NO-UNDO.
 
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_contador AS INTE                                           NO-UNDO.
+DEF VAR aux_qtemails AS INTE                                           NO-UNDO.
 DEF VAR aux_nrcelsac AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsdemail AS CHAR                                           NO-UNDO.
 
 DEF  INPUT PARAM par_cdcooper LIKE crapcob.cdcooper                    NO-UNDO.
 DEF  INPUT PARAM par_nrdconta LIKE crapcob.nrdconta                    NO-UNDO.
 DEF  INPUT PARAM par_idseqttl LIKE crapttl.idseqttl                    NO-UNDO.
 DEF  INPUT PARAM par_nrinssac LIKE crapsab.nrinssac                    NO-UNDO.
 DEF  INPUT PARAM par_nmdsacad LIKE crapsab.nmdsacad                    NO-UNDO.
+DEF  INPUT PARAM par_cdsitsac LIKE crapsab.cdsitsac                    NO-UNDO.
 DEF  INPUT PARAM par_flgvalid AS LOGI                                  NO-UNDO.
                                               
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
@@ -106,7 +109,7 @@ IF  par_nrinssac > 0  THEN
             DO:
                 ASSIGN aux_nrcelsac = "".
                 IF tt-dados-sacado-blt.nrcelsac > 0 THEN
-                    ASSIGN aux_nrcelsac = TRIM(STRING(tt-dados-sacado-blt.nrcelsac)).
+                   ASSIGN aux_nrcelsac = TRIM(STRING(tt-dados-sacado-blt.nrcelsac)).
                 
                 CREATE xml_operacao.
                 ASSIGN xml_operacao.dslinxml = "<BOLETO><nmdsacad>" +
@@ -143,7 +146,23 @@ IF  par_nrinssac > 0  THEN
                                                "</dsdemail>" + 
                                                "<nrcelsac>" + 
                                                aux_nrcelsac +
-                                               "</nrcelsac>" + "</BOLETO>".
+                                               "</nrcelsac>" +                                                
+                                               "<dssitsac>" +
+                                               tt-dados-sacado-blt.dssitsac +
+                                               "</dssitsac>" +                                               
+                                               "<nrdddcel>" +
+                                               (IF tt-dados-sacado-blt.nrcelsac > 0 THEN
+                                                   SUBSTR(STRING(tt-dados-sacado-blt.nrcelsac),1,2)
+                                                ELSE
+                                                   "0") +
+                                               "</nrdddcel>" +
+                                               "<nrcelula>" +
+                                               (IF tt-dados-sacado-blt.nrcelsac > 0 THEN
+                                                   SUBSTR(STRING(tt-dados-sacado-blt.nrcelsac),3)
+                                                ELSE
+                                                   "0") +
+                                               "</nrcelula>" +                                               
+                                               "</BOLETO>".
             END.
     END.
 ELSE
@@ -158,7 +177,7 @@ ELSE
                                          INPUT par_nrdconta,
                                          INPUT par_idseqttl,
                                          INPUT par_nmdsacad,
-                                         INPUT par_flgvalid,
+                                         INPUT par_cdsitsac,
                                          INPUT FALSE,          /** Logar    **/
                                         OUTPUT TABLE tt-erro,
                                         OUTPUT TABLE tt-sacados-blt).
@@ -203,7 +222,9 @@ ELSE
                                                "</nrctasac><dsctasac>" +
                                                tt-sacados-blt.dsctasac +
                                                "</dsctasac>" + 
-                                               "<cdsitsac>" + "</cdsitsac>" +
+                                               "<cdsitsac> " + 
+                                               STRING(tt-sacados-blt.cdsitsac) +
+                                               "</cdsitsac>" +
                                                "<flgemail>" +
                                                (IF(tt-sacados-blt.flgemail)THEN
                                                    "1"
@@ -215,7 +236,26 @@ ELSE
                                                STRING(tt-sacados-blt.dsflgend) +
                                                "</dsflgend><dsflgprc>" +
                                                STRING(tt-sacados-blt.dsflgprc) +
-                                               "</dsflgprc></SACADO>".
+                                               "</dsflgprc><dssitsac>" +
+                                               tt-sacados-blt.dssitsac +
+                                               "</dssitsac><LISTA_EMAILS>".
+                                               
+                DO aux_qtemails = 1 TO NUM-ENTRIES(tt-sacados-blt.dsdemail,";"):
+                
+                   ASSIGN aux_dsdemail = ENTRY(aux_qtemails,tt-sacados-blt.dsdemail,";").
+                   
+                   IF  TRIM(aux_dsdemail) <> "" THEN
+                       DO:
+                           CREATE xml_operacao.
+                           ASSIGN xml_operacao.dslinxml = "<EMAIL><dsdemail>" + 
+                                                          TRIM(aux_dsdemail) + 
+                                                          "</dsdemail></EMAIL>".
+                       END.
+                
+                END.                                               
+                                               
+                CREATE xml_operacao.
+                ASSIGN xml_operacao.dslinxml = "</LISTA_EMAILS></SACADO>".
             END.
         END.
 

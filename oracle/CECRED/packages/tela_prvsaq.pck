@@ -614,6 +614,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
       vr_nrregist NUMBER;
       vr_qtregist NUMBER;
       vr_aloc     NUMBER;
+      vr_insit_prov tbcc_provisao_especie.insit_provisao%TYPE;
       vr_tempcooper NUMBER;                     
       
       ---------->> CURSORES <<--------
@@ -756,6 +757,10 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
         RAISE vr_exc_saida;
       END IF;   
       
+      vr_insit_prov := pr_insit_prov;
+      IF vr_insit_prov = 0 THEN -- Conta Online envia com valor 0 para todos
+        vr_insit_prov := NULL;        
+      END IF; 
       
       IF(pr_cdagenci_saque IS NOT NULL)THEN
         OPEN cr_agencia(pr_cdcooper => pr_cdcooper, 
@@ -849,7 +854,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                    pr_peri_ini       => pr_peri_ini,
                                    pr_peri_fim       => pr_peri_fim,                                                               
                                    pr_cdagenci_saque => pr_cdagenci_saque,
-                                   pr_insit_prov     => pr_insit_prov,                                            
+                                   pr_insit_prov     => vr_insit_prov,                                            
                                    pr_dtsaqpagto     => pr_dtsaqpagto,
                                    pr_idorigem       => vr_idorigem,                      
                                    pr_vlsaqpagto     => pr_vlsaqpagto,
@@ -1369,8 +1374,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
      -- Cursor genérico de calendário
      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
     
-    BEGIN                                           
-    pr_des_erro := 'OK';              
+    BEGIN                                                             
       -- Extrai dados do xml
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
                                pr_cdcooper => vr_cdcooper,
@@ -1849,7 +1853,9 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                              pr_tag_nova => 'pedesenha',
                              pr_tag_cont => vr_pedesenha,
                              pr_des_erro => vr_dscritic); 
-                                                                                          
+       
+      pr_des_erro := 'OK';
+                                                                                         
   EXCEPTION
     WHEN vr_exc_pedesenha THEN
        --retorno protocolo

@@ -5863,6 +5863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
           -- Popula a tabela
           vr_tab_pagamento(vr_idx_pagto).tpregist := 0;
+          vr_tab_pagamento(vr_idx_pagto).envcompr := vr_qtdiaenv;
           vr_tab_pagamento(vr_idx_pagto).indrowid := rw_registros.dsrowid;
           vr_tab_pagamento(vr_idx_pagto).dtmvtolt := rw_registros.dtmvtolt;
           vr_tab_pagamento(vr_idx_pagto).dssitpgt := rw_registros.dssitpgt;
@@ -5923,13 +5924,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             vr_idx_pagto := vr_idx_pagto + 1;
             vr_flgprime := 1;
           END IF; */
-
-          -- Se passou do limite do envio de comprovante
-          IF rw_registros.qtsubtra > vr_qtdiaenv THEN
-              vr_tab_pagamento(vr_idx_pagto).envcompr := vr_qtdiaenv;
-          ELSE
-              vr_tab_pagamento(vr_idx_pagto).envcompr := 0;
-          END IF;
 
           IF  rw_registros.idsitapr = 5 THEN
               vr_tab_pagamento(vr_idx_pagto).exibestr := 1;
@@ -6021,6 +6015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
           -- Popula a tabela
           vr_tab_pagamento(vr_idx_pagto).tpregist := 1;
+          vr_tab_pagamento(vr_idx_pagto).envcompr := vr_qtdiaenv;
           vr_tab_pagamento(vr_idx_pagto).indrowid := rw_registros.dsrowid;
           vr_tab_pagamento(vr_idx_pagto).dtmvtolt := rw_registros.dtmvtolt;
           vr_tab_pagamento(vr_idx_pagto).qtlctpag := rw_registros.qtlctpag;
@@ -10410,7 +10405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                          ,pr_dtmvtolt  crapdat.dtmvtolt%TYPE ) IS
 
             SELECT lfp.cdcooper
-                  ,NVL(TO_CHAR(lfp.dtrefenv,'MM/RRRR'),TO_CHAR(pfp.dthorcre,'DD/MM/RRRR'))  dtrefenv  -- dtrefere
+                  ,NVL(TO_CHAR(lfp.dtrefenv,'DD/MM/RRRR'),TO_CHAR(pfp.dthorcre,'DD/MM/RRRR'))  dtrefenv  -- dtrefere
                   ,lfp.dsxmlenv  -- dsdpagto
                   ,ofp.dsorigem
                   ,lfp.rowid     -- nrdrowid

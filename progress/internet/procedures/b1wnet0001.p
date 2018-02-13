@@ -2358,7 +2358,7 @@ PROCEDURE gera-dados:
                                    INPUT par_nrdconta,
                                    INPUT par_idseqttl,
                                    INPUT "",
-                                   INPUT (IF par_vldsacad = 1 THEN TRUE ELSE FALSE),
+                                   INPUT par_vldsacad,
                                    INPUT FALSE,
                                   OUTPUT TABLE tt-erro,
                                   OUTPUT TABLE tt-sacados-blt).
@@ -2792,7 +2792,7 @@ PROCEDURE seleciona-sacados:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdsacad AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_flsitsac AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdsitsac LIKE crapsab.cdsitsac             NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -2874,24 +2874,24 @@ PROCEDURE seleciona-sacados:
                            crapsab.nmdsacad MATCHES "*" + par_nmdsacad + "*" 
                            NO-LOCK BY crapsab.nmdsacad:
         
-		/* Se nao foi passado nada para a pesquisa limito os resultados a 400 senao 2000 */
-		IF TRIM(par_nmdsacad) = "" AND
-		   aux_qtregcon >= 400     THEN
-		   DO:			   
-			   LEAVE.
-			END.
-		ELSE
-			DO:
-				IF TRIM(par_nmdsacad) <> "" AND
-		           aux_qtregcon >= 2000     THEN
-				   DO:
-						LEAVE.
-				   END.
-			END.
+        /* Se nao foi passado nada para a pesquisa limito os resultados a 400 senao 2000 */
+        IF TRIM(par_nmdsacad) = "" AND
+           aux_qtregcon >= 400     THEN
+           DO:			   
+              LEAVE.
+           END.
+        ELSE
+           DO:
+              IF TRIM(par_nmdsacad) <> "" AND
+                 aux_qtregcon >= 2000     THEN
+                 DO:
+                   LEAVE.
+                 END.
+           END.
 
         ASSIGN aux_qtregcon = aux_qtregcon + 1.
         
-        IF  par_flsitsac AND crapsab.cdsitsac = 2  THEN
+        IF  par_cdsitsac <> 0 AND crapsab.cdsitsac <> par_cdsitsac  THEN
             NEXT.
                                                       /* 80835988953 */
         IF  crapsab.cdtpinsc = 1 AND crapsab.nrinssac <= 99999999999  THEN
@@ -2990,6 +2990,15 @@ PROCEDURE seleciona-sacados:
                tt-sacados-blt.nrctasac = crapsab.nrctasac
                tt-sacados-blt.dsctasac = TRIM(STRING(crapsab.nrctasac,
                                                      "zzzz,zz9,9"))
+               tt-sacados-blt.cdsitsac = crapsab.cdsitsac
+               tt-sacados-blt.dssitsac = IF crapsab.cdsitsac = 1 THEN
+                                            "Ativo"
+                                         ELSE
+                                         IF crapsab.cdsitsac = 2 THEN
+                                            "Inativo"
+                                         ELSE
+                                            ""
+               tt-sacados-blt.dsdemail = aux_dsdemail
                tt-sacados-blt.flgemail = (IF TRIM(aux_dsdemail) <> "" THEN 
                                              TRUE
                                           ELSE 
@@ -3206,6 +3215,13 @@ PROCEDURE valida-sacado:
            tt-dados-sacado-blt.cdufsaca = crapsab.cdufsaca
            tt-dados-sacado-blt.nrcepsac = crapsab.nrcepsac
            tt-dados-sacado-blt.cdsitsac = crapsab.cdsitsac
+           tt-dados-sacado-blt.dssitsac = IF crapsab.cdsitsac = 1 THEN
+                                             "Ativo"
+                                          ELSE
+                                          IF crapsab.cdsitsac = 2 THEN
+                                             "Inativo"
+                                          ELSE
+                                             ""
            tt-dados-sacado-blt.flgremov = (IF  AVAILABLE crapcob  THEN
                                               FALSE
                                            ELSE

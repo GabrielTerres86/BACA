@@ -413,8 +413,11 @@ PROCEDURE pc_ret_dados_serv_sms (pr_cdcooper      IN crapcop.cdcooper%TYPE  --> 
                                      ,pr_cdoperad    IN crapope.cdoperad%TYPE  --> Codigo do operador
                                      ,pr_nmdatela    IN craptel.nmdatela%TYPE  --> Identificador da tela da operacao
                                      ,pr_dsiduser    IN VARCHAR2               --> id do usuario
+                                     ,pr_iddspscp    IN INTEGER                --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo                                                                                                        
                                      -----> OUT <----                                   
                                      ,pr_nmarqpdf   OUT VARCHAR2               --> Retorna o nome do relatorio gerado
+                                     ,pr_dssrvarq   OUT VARCHAR2               --> Nome do servidor para download do arquivo
+                                     ,pr_dsdirarq   OUT VARCHAR2               --> Nome do diretório para download do arquivo                                                                                                                                                                        
                                      ,pr_cdcritic   OUT  INTEGER               --> Retorna codigo de critica
                                      ,pr_dscritic   OUT  VARCHAR2);            --> Retorno de critica
 
@@ -4663,8 +4666,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                    ,pr_cdoperad    IN crapope.cdoperad%TYPE  --> Codigo do operador
                                    ,pr_nmdatela    IN craptel.nmdatela%TYPE  --> Identificador da tela da operacao
                                    ,pr_dsiduser    IN VARCHAR2               --> id do usuario
+                                   ,pr_iddspscp    IN INTEGER                --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo                                                                   
                                    -----> OUT <----                                   
                                    ,pr_nmarqpdf   OUT VARCHAR2               --> Retorna o nome do relatorio gerado
+                                   ,pr_dssrvarq   OUT VARCHAR2               --> Nome do servidor para download do arquivo
+                                   ,pr_dsdirarq   OUT VARCHAR2               --> Nome do diretório para download do arquivo                                                                                                                                   
                                    ,pr_cdcritic   OUT  INTEGER               --> Retorna codigo de critica
                                    ,pr_dscritic   OUT  VARCHAR2) IS          --> Retorno de critica
 
@@ -4992,48 +4998,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     dbms_lob.freetemporary(vr_des_xml);
 
       
-    --> AyllosWeb
-    IF pr_idorigem = 5 THEN
-      -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
-      GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
-                                  ,pr_cdagenci => NULL
-                                  ,pr_nrdcaixa => NULL
-                                  ,pr_nmarqpdf => vr_dsdireto ||'/'||pr_nmarqpdf
-                                  ,pr_des_reto => vr_des_reto
-                                  ,pr_tab_erro => vr_tab_erro);
-      -- Se retornou erro
-      IF NVL(vr_des_reto,'OK') <> 'OK' THEN
-        IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros          
-          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+    IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino    
+      --> AyllosWeb
+      IF pr_idorigem = 5 THEN
+        -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
+        GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                                    ,pr_cdagenci => NULL
+                                    ,pr_nrdcaixa => NULL
+                                    ,pr_nmarqpdf => vr_dsdireto ||'/'||pr_nmarqpdf
+                                    ,pr_des_reto => vr_des_reto
+                                    ,pr_tab_erro => vr_tab_erro);
+        -- Se retornou erro
+        IF NVL(vr_des_reto,'OK') <> 'OK' THEN
+          IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros          
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+            RAISE vr_exc_erro; -- encerra programa
+          END IF;
+        END IF;
+
+        -- Remover relatorio do diretorio padrao da cooperativa
+        gene0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => 'rm '||vr_dsdireto ||'/'||pr_nmarqpdf
+                             ,pr_typ_saida   => vr_typsaida
+                             ,pr_des_saida   => vr_dscritic);
+        -- Se retornou erro
+        IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+          -- Concatena o erro que veio
+          vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
           RAISE vr_exc_erro; -- encerra programa
         END IF;
-      END IF;
-
-      -- Remover relatorio do diretorio padrao da cooperativa
-      gene0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => 'rm '||vr_dsdireto ||'/'||pr_nmarqpdf
-                           ,pr_typ_saida   => vr_typsaida
-                           ,pr_des_saida   => vr_dscritic);
-      -- Se retornou erro
-      IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
-        -- Concatena o erro que veio
-        vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
-        RAISE vr_exc_erro; -- encerra programa
-      END IF;
+          
+      ELSIF pr_idorigem = 3 THEN
         
-    ELSIF pr_idorigem = 3 THEN
-      
-      -- Copia o PDF para o IB
-      GENE0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper,
-                                      pr_nmarqpdf => vr_dsdireto ||'/'||pr_nmarqpdf,
-                                      pr_des_erro => vr_dscritic);
-      -- Testar se houve erro
-      IF vr_dscritic IS NOT NULL THEN
-        -- Gerar excecao
+        -- Copia o PDF para o IB
+        GENE0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper,
+                                        pr_nmarqpdf => vr_dsdireto ||'/'||pr_nmarqpdf,
+                                        pr_des_erro => vr_dscritic);
+        -- Testar se houve erro
+        IF vr_dscritic IS NOT NULL THEN
+          -- Gerar excecao
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;  
+    ELSE
+      gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
+                                         ,pr_dsdirecp => vr_dsdireto||'/'
+                                         ,pr_nmarqucp => pr_nmarqpdf
+                                         ,pr_flgcopia => 0
+                                         ,pr_dssrvarq => pr_dssrvarq
+                                         ,pr_dsdirarq => pr_dsdirarq
+                                         ,pr_des_erro => vr_dscritic);
+                                         
+      IF vr_dscritic IS NOT NULL AND TRIM(vr_dscritic) <> ' ' THEN
         RAISE vr_exc_erro;
       END IF;
-    END IF;  
-    
+    END IF;    
     
     -- Gerar log ao cooperado (b1wgen0014 - gera_log);
     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -5149,6 +5168,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_cdagenci   VARCHAR2(100);
     vr_nrdcaixa   VARCHAR2(100);
     vr_idorigem   VARCHAR2(100);
+    vr_dssrvarq VARCHAR2(200);
+    vr_dsdirarq VARCHAR2(200);    
 
     vr_nmarqpdf VARCHAR2(100);
     
@@ -5174,8 +5195,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                            ,pr_cdoperad    => vr_cdoperad    --> Codigo do operador
                            ,pr_nmdatela    => vr_nmdatela    --> Identificador da tela da operacao
                            ,pr_dsiduser    => pr_dsiduser    --> id do usuario
+                           ,pr_iddspscp    => 0              --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo                                                                   
                            -----> OUT <----                                   
                            ,pr_nmarqpdf    => vr_nmarqpdf    --> Retorna o nome do relatorio gerado
+                           ,pr_dssrvarq    => vr_dssrvarq    --> Nome do servidor para download do arquivo
+                           ,pr_dsdirarq    => vr_dsdirarq    --> Nome do diretório para download do arquivo                        
                            ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
                            ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
                                    

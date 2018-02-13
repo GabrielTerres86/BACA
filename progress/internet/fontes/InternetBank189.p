@@ -50,6 +50,8 @@ DEF VAR aux_vltarifa        AS DEC                                       NO-UNDO
 DEF VAR aux_flposcob        AS INT                                       NO-UNDO.
 DEF VAR aux_idcontrato      AS INT                                       NO-UNDO.
 DEF VAR aux_nmarqpdf        AS CHAR                                      NO-UNDO.
+DEF VAR aux_dssrvarq        AS CHAR                                      NO-UNDO.
+DEF VAR aux_dsdirarq        AS CHAR                                      NO-UNDO.
 DEF VAR aux_qtsmspct        AS INT                                       NO-UNDO.
 DEF VAR aux_qtsmsusd        AS INT                                       NO-UNDO.
 DEF VAR aux_dsmensag        AS CHAR                                      NO-UNDO.
@@ -71,6 +73,7 @@ DEF INPUT  PARAM  par_tpnommis  AS INT                                    NO-UND
 DEF INPUT  PARAM  par_nmemisms  AS CHAR                                   NO-UNDO.
 DEF INPUT  PARAM  par_qtpagina  AS INT                                    NO-UNDO.
 DEF INPUT  PARAM  par_qtporpag  AS INT                                    NO-UNDO.
+DEF INPUT  PARAM  par_iddspscp  AS INT                                    NO-UNDO.
 
 DEF OUTPUT PARAM  xml_dsmsgerr  AS CHAR                                   NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -237,8 +240,11 @@ ELSE IF par_cddopcao = "IC" THEN
                                  ,INPUT 3                /* pr_idorigem  */
                                  ,INPUT '996'            /* pr_cdoperad  */
                                  ,INPUT 'INTERNETBANK'   /* pr_nmdatela  */
-                                 ,STRING(par_nrdconta) + "IB"   /* pr_dsiduser */
+                                 ,INPUT STRING(par_nrdconta) + "IB"   /* pr_dsiduser */
+                                 ,INPUT par_iddspscp     /* pr_iddspscp */
                                 ,OUTPUT ""               /* pr_nmarqpdf */
+                                ,OUTPUT ""               /* pr_dssrvarq */
+                                ,OUTPUT ""               /* pr_dsdirarq */                                
                                 ,OUTPUT 0
                                 ,OUTPUT "").             /* par_dscritic */
 
@@ -249,20 +255,29 @@ ELSE IF par_cddopcao = "IC" THEN
 
     ASSIGN aux_dscritic = ""
            aux_nmarqpdf = ""
+           aux_dssrvarq = ""
+           aux_dsdirarq = ""           
            aux_dscritic = pc_imprim_contrato_sms.pr_dscritic
                           WHEN pc_imprim_contrato_sms.pr_dscritic <> ?
            aux_nmarqpdf = pc_imprim_contrato_sms.pr_nmarqpdf
-                          WHEN pc_imprim_contrato_sms.pr_nmarqpdf <> ?.
+                          WHEN pc_imprim_contrato_sms.pr_nmarqpdf <> ?
+           aux_dssrvarq = pc_imprim_contrato_sms.pr_dssrvarq
+                          WHEN pc_imprim_contrato_sms.pr_dssrvarq <> ?
+           aux_dsdirarq = pc_imprim_contrato_sms.pr_dsdirarq
+                          WHEN pc_imprim_contrato_sms.pr_dsdirarq <> ?.                          
 
-    IF aux_dscritic <> "" THEN
-    DO:
-        xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
-        RETURN "NOK".
-    END.
+    IF  aux_dscritic <> "" THEN
+        DO:
+            xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+            RETURN "NOK".
+        END.
     
     CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = '<dados><nmarqpdf>' + aux_nmarqpdf + 
-                                   '</nmarqpdf></dados>'.
+    ASSIGN xml_operacao.dslinxml = '<dados>' + 
+                                   '<nmarqpdf>' + aux_nmarqpdf + '</nmarqpdf>' +
+                                   '<dssrvarq>' + aux_dssrvarq + '</dssrvarq>' +
+                                   '<dsdirarq>' + aux_dsdirarq + '</dsdirarq>' +
+                                   '</dados>'.
     
   END.
 /* Oferta de SMS */
@@ -316,7 +331,7 @@ ELSE IF par_cddopcao = "LP" THEN
     RUN STORED-PROCEDURE pc_listar_pacotes_prog
         aux_handproc = PROC-HANDLE NO-ERROR
                                 ( INPUT par_cdcooper     /* pr_cdcooper  */
-								 ,INPUT crapass.inpessoa /* pr_inpessoa */
+								                 ,INPUT crapass.inpessoa /* pr_inpessoa */
                                  ,INPUT 1                /* pr_flgstatus */ 
                                  ,INPUT par_qtpagina     /* pr_pagina     */   
                                  ,INPUT par_qtporpag     /* pr_tamanho_pagina */
@@ -341,11 +356,11 @@ ELSE IF par_cddopcao = "LP" THEN
            aux_retxml = pc_listar_pacotes_prog.pr_retxml
                           WHEN pc_listar_pacotes_prog.pr_retxml <> ?.
 
-    IF aux_dscritic <> "" THEN
-    DO:
-        xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
-        RETURN "NOK".
-    END.
+    IF  aux_dscritic <> "" THEN
+        DO:
+            xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+            RETURN "NOK".
+        END.
     
     /* Atribuir xml de retorno a temptable */ 
     IF  aux_retxml <> "" THEN

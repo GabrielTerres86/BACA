@@ -2335,6 +2335,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
                                pr_tag_cont => TO_CHAR(NVL(vr_vlpacote,0),'fm999g999g990d00'),
                                pr_des_erro => vr_dscritic);                                                                                                                                                                                                                                                      
 
+        gene0007.pc_insere_tag(pr_xml      => vr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'cdcooper',
+                               pr_tag_cont => pr_cdcooper,
+                               pr_des_erro => vr_dscritic); 
+
         vr_contador := vr_contador + 1;
      
      END LOOP;
