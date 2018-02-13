@@ -536,7 +536,104 @@ function confirmaHabilitacao(cddopcao) {
 	// Se o convenio esta ativo, imprimir termo de adesão, caso contrario o termo de cancelamento
 	tpdtermo_imprimir = (insitceb == 1) ? 1 : 2;
 
-    showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaHabilitacaoSerasa("' + cddopcao + '")', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+    //showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaHabilitacaoSerasa("' + cddopcao + '")', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+    showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaInativacaoProtesto("' + cddopcao + '")', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+}
+
+function confirmaCancelamentoBoletos(cddopcao) {
+    confirmaCancelamentoSustacao = false;
+    showConfirmacao(
+        'Deseja cancelar a instru&ccedil;&atilde;o autom&aacute;tica de protesto<br>dos boletos ativos e ainda n&atilde;o vencidos ou dentro da toler&acirc;ncia?',
+        'Confirma&ccedil;&atilde;o - Ayllos',
+        'cancelaSustaBoletos(0, "' + cddopcao + '")',
+        'confirmaSustacaoBoletos("' + cddopcao + '")',
+        'sim.gif', 'nao.gif'
+    );
+}
+
+function confirmaSustacaoBoletos(cddopcao) {
+    var flgregis = $("#flgregis", "#divOpcaoConsulta").val();
+    showConfirmacao(
+        'Deseja cancelar/sustar o protesto dos boletos?<br>O Cooperado deve ser conscientizado que a susta&ccedil;&atilde;o ocorrer&aacute; mediante aprova&ccedil;&atilde;o do cart&oacute;rio.',
+        'Confirma&ccedil;&atilde;o - Ayllos',
+        'cancelaSustaBoletos(1, "' + cddopcao + '")',
+        'confirmaImpressaoCancelamento("' + flgregis + '", "confirmaHabilitacaoSerasa(\'' + cddopcao + '\')");',
+        'sim.gif', 'nao.gif'
+    );
+}
+
+function cancelaSustaBoletos(fltipo, cddopcao) { // 0 = cancela | 1 = susta
+
+    confirmaCancelamentoSustacao = true;
+
+    var nrconven = normalizaNumero($("#nrconven", "#divOpcaoConsulta").val());
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        dataType: 'html',
+        url: UrlSite + "telas/atenda/cobranca/cancela_susta_boletos.php",
+        data: {
+            cddopcao: cddopcao,
+            cdcooper: cdcooper,
+            nrdconta: nrdconta,
+            nrconven: nrconven,
+            fltipo  : fltipo,
+            flgregis: $("#flgregis", "#divOpcaoConsulta").val(),
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o." + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+        },
+        success: function (response) {
+            try {
+				eval(response);
+            } catch (error) {
+				hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+        }
+    });
+}
+
+function confirmaInativacaoProtesto(cddopcao) {
+    var blnchecked = $("#flprotes", "#divOpcaoConsulta").prop("checked");
+    var flprotes_old = $("#flprotes", "#divConteudoOpcao").val();
+    flprotes_old = flprotes_old == '' ? "NAO" : flprotes_old;
+    var flprotes_new = blnchecked ? "SIM" : "NAO";
+
+    // Se foi habilitado/desabilitado o indicador
+    if (flprotes_old != flprotes_new && flprotes_old == "SIM" && flprotes_new == "NAO") {
+
+        // Seta como checkbox alterado, utilizado no realiza_habilitacao.php
+        $("#flproalt", "#divConteudoOpcao").val(1);
+
+        confirmaCancelamentoBoletos(cddopcao);
+
+    } else {
+        confirmaHabilitacaoSerasa(cddopcao);
+    }
+}
+
+// imprimir
+function imprimeRelatorio() {
+
+    if (confirmaCancelamentoSustacao) {
+        var nmprimtl = $('#nmprimtl','#frmCabAtenda').val(),
+            cdagenci = $('#cdagenci','#frmCabAtenda').val(),
+            action = UrlSite + 'telas/atenda/cobranca/imprimir_relatorio.php';
+
+        $("#nrdconta", "#frmRelatorio").val(nrdconta);
+        $("#nmprimtl", "#frmRelatorio").val(nmprimtl);
+        $("#cdagenci", "#frmRelatorio").val(cdagenci);
+
+        //carregaImpressaoAyllos("frmRelatorio",action,"bloqueiaFundo(divRotina);");
+        carregaImpressaoAyllos("frmRelatorio",action,"");
+    }
 }
 
 // Confirmar a habilitacao do Serasa
@@ -663,6 +760,8 @@ function realizaHabilitacao() {
     var flgregis = $("#flgregis", "#divOpcaoConsulta").val();
     var flserasa = $("#flserasa", "#divOpcaoConsulta").val();
     var flseralt = $("#flseralt", "#divConteudoOpcao").val();
+    var flprotes = $("#flprotes", "#divOpcaoConsulta").val();
+    var flproalt = $("#flproalt", "#divConteudoOpcao").val();
     var flposbol = $("#flposbol", "#divConteudoOpcao").val();
     var cddbanco = $("#cddbanco", "#divOpcaoConsulta").val();
     var qtdfloat = $("#qtdfloat", "#divOpcaoConsulta").val();
@@ -743,6 +842,7 @@ function realizaHabilitacao() {
 			cddopcao: cddopcao,
             qtdfloat: qtdfloat,
             flprotes: flprotes,
+            flproalt: flproalt,
             qtdecprz: qtdecprz,
             idrecipr: idrecipr,
 			inenvcob: inenvcob,
@@ -886,6 +986,10 @@ function validaCpf(nmrotina) {
 			}
 		}
 	});
+}
+
+function imprimirTermoCancelamentoProtesto(cddopcao, flgregis, dsdtitul, tpimpres) {
+    confirmaHabilitacaoSerasa(cddopcao);
 }
 
 
@@ -1220,11 +1324,19 @@ function buscaDescricaoConvenio(campoCodigo,valorCodigo) {
 
 
 // Perguntar se quer fazer a impressao do termo
-function confirmaImpressaoCancelamento(flgregis) {
+function confirmaImpressaoCancelamento(flgregis, callafterFnc) {
 
-    var callafterCobranca = 'blockBackground(parseInt($("#divRotina").css("z-index")));';
+    imprimeRelatorio();
 
-    callafterCobranca += (executandoProdutos) ? 'encerraRotina();' : 'realizaExclusao(1);';
+    var callafterCobranca;
+
+    if (!callafterFnc) {
+        callafterCobranca = 'blockBackground(parseInt($("#divRotina").css("z-index")));';
+
+        callafterCobranca += (executandoProdutos) ? 'encerraRotina();' : 'realizaExclusao(1);';
+    } else {
+        callafterCobranca = callafterFnc;
+    }
 
     aux_mensagem = "Deseja efetuar impress&atilde;o do termo de cancelamento ?"; // Mensagem de confirmacao de impressao;
 
