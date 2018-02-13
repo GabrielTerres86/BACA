@@ -393,7 +393,7 @@ ELSE IF par_cddopcao = "V" THEN
     FIND FIRST crapceb 
          WHERE crapceb.cdcooper = par_cdcooper
            AND crapceb.nrdconta = par_nrdconta
-           AND crapceb.insitceb = 1.
+           AND crapceb.insitceb = 1 NO-LOCK NO-ERROR.
     IF AVAILABLE crapceb THEN       
       DO:
         aux_flposcob = 1.

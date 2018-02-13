@@ -2222,7 +2222,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
                 ,cdoperad
             FROM tbcobran_sms_pacotes
            WHERE cdcooper = pr_cdcooper
-             AND idpacote > 2
              AND flgstatus = pr_flgstatus
              AND (inpessoa = pr_inpessoa OR pr_inpessoa IS NULL)
         )a WHERE rownum < ((pr_pagina * pr_tamanho_pagina) + 1)

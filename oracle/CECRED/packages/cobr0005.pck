@@ -3614,7 +3614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     rw_contrato_sms cr_contrato_sms%ROWTYPE;
     
     --> Buscar pacote de sms
-    CURSOR cr_pacotes IS
+    CURSOR cr_pacotes (pr_idpacote tbcobran_sms_pacotes.idpacote%TYPE) IS
       SELECT pct.idpacote,
              pct.cdtarifa
         FROM tbcobran_sms_pacotes pct,
@@ -3624,7 +3624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta
          AND pct.flgstatus = 1
-         AND pct.idpacote IN (1,2);      
+         AND ((pr_idpacote = 0 AND pct.idpacote IN (1,2)) OR pct.idpacote = pr_idpacote);      
     
     --> Buscar Valor tarifa
     CURSOR cr_crapfco(pr_cdcooper crapcop.cdcooper%TYPE,
@@ -3722,9 +3722,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     --> Verificar se nao gerou novo contrato pela troca de pacote
     IF nvl(pr_idcontrato,0) = 0 THEN
       --> buscar pacote caso nao seja informado
-      IF nvl(pr_idpacote,0) = 0 THEN
+      IF nvl(pr_idpacote,0) <= 2 THEN
         --> Buscar pacote de sms
-        OPEN cr_pacotes;
+        OPEN cr_pacotes (pr_idpacote => nvl(pr_idpacote,0));
         FETCH cr_pacotes INTO vr_idpacote, vr_cdtarifa;
         CLOSE cr_pacotes;
         
