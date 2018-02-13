@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS445" (pr_cdcooper IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004.                     Ultima atualizacao: 24/01/2018
+   Data    : Abril/2004.                     Ultima atualizacao: 12/02/2018
 
    Dados referentes ao programa:
 
@@ -118,9 +118,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS445" (pr_cdcooper IN crapcop.cdcooper
                             ampliada a memoria da maquina.
                             (Heitor - RKAM)
                             
-               24/01/2018 - Foram feitas melhoria no programa para que possibilite a
+               12/02/2018 - Melhorias no programa para que possibilite a
                             execução do mesmo com paralelismo (Projeto Ligeirinho).
-                            (Roberto - AMCOM)                            
+                            (Jonatas - AMCOM)                            
 ............................................................................. */
 
 /******************************************************************************
@@ -203,36 +203,6 @@ BEGIN
     vr_tab_crapcst typ_tab_crapcst;
     vr_tab_craprpp typ_tab_crapcst;
 
-    -- Tabela de memoria para atualizacao do saldo diario
-   /* TYPE typ_reg_crapscd IS RECORD
-      (cdcooper crapscd.cdcooper%type
-      ,nrcpfcgc crapscd.nrcpfcgc%type
-      ,dtmvtolt crapscd.dtmvtolt%type
-      ,vlsddisp crapscd.vlsddisp%type
-      ,vlsdchsl crapscd.vlsdchsl%type
-      ,vlsdbloq crapscd.vlsdbloq%type
-      ,vlsdblpr crapscd.vlsdblpr%type
-      ,vlsdblfp crapscd.vlsdblfp%type
-      ,vlsdindi crapscd.vlsdindi%type
-      ,vllimcre crapscd.vllimcre%type
-      ,vlsdeved crapscd.vlsdeved%type
-      ,vldeschq crapscd.vldeschq%type
-      ,vllimutl crapscd.vllimutl%type
-      ,vladdutl crapscd.vladdutl%type
-      ,vlsdrdca crapscd.vlsdrdca%type
-      ,vlsdrdpp crapscd.vlsdrdpp%type
-      ,vllimdsc crapscd.vllimdsc%type
-      ,vllimtit crapscd.vllimtit%type
-      ,vldestit crapscd.vldestit%type
-      ,vlprepla crapscd.vlprepla%type
-      ,vlprerpp crapscd.vlprerpp%type
-      ,vlcrdsal crapscd.vlcrdsal%type
-      ,qtchqliq crapscd.qtchqliq%type
-      ,qtchqass crapscd.qtchqass%type);*/
-
-   /* TYPE typ_tab_crapscd IS TABLE OF typ_reg_crapscd INDEX BY PLS_INTEGER;
-    vr_tab_crapscd typ_tab_crapscd;
-    vr_index_crapscd PLS_INTEGER;*/
 
     -- Instancia TEMP TABLE referente a tabela CRAPERR
     vr_tab_craterr GENE0001.typ_tab_erro;
@@ -385,13 +355,13 @@ BEGIN
             ,crapass.nrcpfcgc
       FROM crapass crapass
       WHERE crapass.cdcooper = pr_cdcooper
-        AND crapass.dtelimin IS NULL;
+        AND crapass.dtelimin IS NULL        
+        AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci);
 
     -- Buscar dados dos associados para depósito a vista
     -- Projeto Ligeirinho - Foi incluida a tabela CRAPASS ao cursor
     -- para executarmos o processo por agência.
-    CURSOR cr_crapsld(pr_cdcooper IN craptab.cdcooper%TYPE
-                     ,pr_cdagenci IN crapass.cdagenci%TYPE) IS    --> Código da cooperativa
+    CURSOR cr_crapsld(pr_cdcooper IN craptab.cdcooper%TYPE) IS    --> Código da cooperativa
       SELECT sld.nrdconta
             ,sld.vlsdchsl
             ,sld.vlsddisp
@@ -404,7 +374,6 @@ BEGIN
         
     -- Buscar dados de cadastro de empréstimos
     CURSOR cr_crapepr(pr_cdcooper IN craptab.cdcooper%TYPE--> Código da cooperativa
-                     ,pr_cdagenci IN crapass.cdagenci%TYPE--> Código da agência
                       ) IS    
       select epr.nrdconta,
              epr.inliquid,
@@ -445,10 +414,8 @@ BEGIN
 
     -- Buscar dados cadastro auxiliar dos emprétimos
     CURSOR cr_crawepr(pr_cdcooper IN craptab.cdcooper%TYPE--> Código da cooperativa
-                     ,pr_cdagenci IN crapass.cdagenci%TYPE--> Código da agência
                       ) IS                           
-      SELECT /*+ full (cp) */ 
-             cp.nrdconta
+      SELECT cp.nrdconta
             ,cp.nrctremp
             ,cp.dtmvtolt
       FROM crawepr cp
@@ -505,13 +472,16 @@ BEGIN
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS   --> Data de execução do movimento
       SELECT craptdb.nrdconta
       FROM craptdb craptdb
+          ,crapass 
       WHERE craptdb.cdcooper =  pr_cdcooper
+        AND craptdb.cdcooper = crapass.cdcooper
+        AND craptdb.nrdconta = crapass.nrdconta
+        AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
         AND ( (craptdb.insittit = 4 AND craptdb.dtvencto >= pr_dtmvtolt)
                OR(craptdb.insittit = 2 AND craptdb.dtdpagto = pr_dtmvtolt) );
 
     -- Buscar dados dos contratos de limite de crédito
-    CURSOR cr_craplim(pr_cdcooper IN craptab.cdcooper%TYPE--> Código da cooperativa     
-                     ,pr_cdagenci IN crapass.cdagenci%TYPE--> Código da agência
+    CURSOR cr_craplim(pr_cdcooper IN craptab.cdcooper%TYPE--> Código da cooperativa
                       ) IS    
         SELECT ci.nrdconta
               ,ci.vllimite
@@ -533,15 +503,20 @@ BEGIN
     -- Buscar dados cheques contidos no bordero de descontos de cheques
     CURSOR cr_crapcdb(pr_cdcooper IN craptab.cdcooper%TYPE
                      ,pr_insitchq IN crapcdb.insitchq%TYPE
-                     ,pr_dtlibera IN crapcdb.dtlibera%TYPE) IS
+                     ,pr_dtlibera IN crapcdb.dtlibera%TYPE
+                     ) IS
       SELECT crapcdb.nrdconta
             ,crapcdb.nrctrlim
             ,crapcdb.dtlibera
             ,Sum(Nvl(crapcdb.vlcheque,0)) vlcheque
-      FROM crapcdb crapcdb
-      WHERE crapcdb.cdcooper = pr_cdcooper
-        AND crapcdb.insitchq = pr_insitchq
-        AND crapcdb.dtlibera > pr_dtlibera
+        FROM crapcdb crapcdb
+            ,crapass
+       WHERE crapass.cdcooper = crapcdb.cdcooper
+         AND crapass.nrdconta = crapcdb.nrdconta
+         AND crapcdb.cdcooper = pr_cdcooper
+         AND crapcdb.insitchq = pr_insitchq
+         AND crapcdb.dtlibera > pr_dtlibera
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
       GROUP BY crapcdb.nrdconta,crapcdb.nrctrlim,crapcdb.dtlibera
       ORDER BY crapcdb.dtlibera;
 
@@ -554,27 +529,30 @@ BEGIN
             ,crapcst.vlcheque
             ,Count(*)     OVER (PARTITION BY crapcst.nrdconta,crapcst.dtlibera) totreg
             ,Row_Number() OVER (PARTITION BY crapcst.nrdconta,crapcst.dtlibera ORDER BY crapcst.dtlibera ASC) seqreg
-      FROM crapcst crapcst
-      WHERE crapcst.cdcooper = pr_cdcooper
-      AND   crapcst.nrdconta = pr_nrdconta
-      AND   crapcst.dtlibera >= pr_dtlibera
-      AND   crapcst.dtdevolu IS NULL;
+        FROM crapcst crapcst
+       WHERE crapcst.cdcooper = pr_cdcooper
+         AND crapcst.nrdconta = pr_nrdconta
+         AND crapcst.dtlibera >= pr_dtlibera
+         AND crapcst.dtdevolu IS NULL;
     rw_crapcst cr_crapcst%ROWTYPE;
 
     -- Buscar dados da custória de cheques
     CURSOR cr_crapcst_conta(pr_cdcooper  IN crapcob.cdcooper%TYPE         --> Código da cooperativa
-                           ,pr_dtlibera  IN crapcst.dtmvtolt%TYPE) IS     --> Data do movimento
-      SELECT /*+ index (crapcst crapcst##crapcst3) */
-             crapcst.nrdconta
-      FROM crapcst crapcst
-      WHERE crapcst.cdcooper = pr_cdcooper
-      AND   crapcst.dtlibera >= pr_dtlibera
-      AND   crapcst.dtdevolu IS NULL;
+                           ,pr_dtlibera  IN crapcst.dtmvtolt%TYPE         --> Data do movimento         
+                           ) IS     
+      SELECT crapcst.nrdconta
+        FROM crapcst crapcst
+            ,crapass 
+       WHERE crapass.cdcooper = crapcst.cdcooper
+         AND crapass.nrdconta = crapcst.nrdconta
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
+         AND crapcst.cdcooper = pr_cdcooper
+         AND crapcst.dtlibera >= pr_dtlibera
+         AND crapcst.dtdevolu IS NULL;
 
     -- Buscar dados saldo diário dos associados
     CURSOR cr_crapsda(pr_cdcooper IN craptab.cdcooper%TYPE--> Código da cooperativa
                      ,pr_dtmvtolt IN crapsda.dtmvtolt%TYPE--> Data do movimento
-                     ,pr_cdagenci IN crapass.cdagenci%TYPE--> Código da agência
                      ) IS    
       SELECT crapsda.nrdconta
             ,crapsda.vlavlatr
@@ -594,16 +572,20 @@ BEGIN
         AND crapsda.cdcooper = pr_cdcooper
         AND ass.cdagenci     = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)    
         AND crapsda.dtmvtolt = pr_dtmvtolt;
-
-    -- Buscar dados dos avalistas
-    CURSOR cr_crapavl(pr_cdcooper IN craptab.cdcooper%TYPE
-                     ,pr_nrdconta IN crapavl.nrdconta%TYPE) IS      --> Código da cooperativa
-      SELECT cl.nrdconta
-            ,cl.nrctaavd
-            ,cl.nrctravd
-      FROM crapavl cl
-      WHERE cl.cdcooper = pr_cdcooper
-      AND   cl.nrdconta = pr_nrdconta;
+        
+        
+    -- Buscar dados saldo diário dos associados para atualização de valores referentes aos avlistas
+    CURSOR cr_crapsda_aval(pr_cdcooper IN craptab.cdcooper%TYPE--> Código da cooperativa
+                          ,pr_dtmvtolt IN crapsda.dtmvtolt%TYPE--> Data do movimento
+                          ,pr_nrdconta IN crapsda.nrdconta%TYPE--> Numero da conta
+                     ) IS    
+      SELECT crapsda.nrdconta
+            ,crapsda.vlavlatr
+            ,crapsda.vlavaliz
+         FROM crapsda crapsda
+      WHERE crapsda.cdcooper = pr_cdcooper
+        AND crapsda.dtmvtolt = pr_dtmvtolt
+        AND crapsda.nrdconta = pr_nrdconta;        
 
     -- Buscar dados do cadastro das linhas de desconto
     CURSOR cr_crapldc (pr_cdcooper IN craptab.cdcooper%TYPE) IS       --> Código da cooperativa
@@ -615,7 +597,6 @@ BEGIN
 
     -- Buscar dados dos planos de capitalização
     CURSOR cr_crappla(pr_cdcooper IN crappla.cdcooper%TYPE--> Código da cooperativa
-                     ,pr_cdagenci IN crapass.cdagenci%TYPE--> Código da agencia 
                       ) IS      
       SELECT pla.nrdconta
             ,pla.vlprepla
@@ -700,7 +681,7 @@ BEGIN
     -- Buscar dados de devoluções
     CURSOR cr_crapneg(pr_cdcooper IN craplim.cdcooper%TYPE       --> Código da cooperativa
                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE       --> Data do movimento
-                     ,pr_cdagenci IN crapass.cdagenci%TYPE) IS   --> Código da agência
+                     ) IS   --> Código da agência
       SELECT crapneg.nrdconta
             ,Count(*) conta
       FROM crapneg crapneg
@@ -718,7 +699,6 @@ BEGIN
 
     -- Buscar dados do cadastro das aplicações RDCA
     CURSOR cr_craprda(pr_cdcooper  IN crapcob.cdcooper%TYPE--> Código da cooperativa
-                     ,pr_cdagenci  IN crapass.cdagenci%TYPE--> Código da agência
                       ) IS    
         SELECT  rda.tpaplica
                ,rda.cdageass
@@ -753,33 +733,45 @@ BEGIN
              Nvl(crapttl.vldrendi##4,0) +
              Nvl(crapttl.vldrendi##5,0) +
              Nvl(crapttl.vldrendi##6,0)),0) vlsalari
-      FROM crapttl crapttl
-      WHERE crapttl.cdcooper = pr_cdcooper
-      GROUP BY crapttl.nrdconta;
+        FROM crapttl crapttl
+            ,crapass
+       WHERE crapttl.cdcooper  = crapass.cdcooper 
+         AND crapttl.nrdconta  = crapass.nrdconta 
+         AND crapttl.cdcooper = pr_cdcooper
+         AND crapass.cdagenci  = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
+       GROUP BY crapttl.nrdconta;
 
     -- Buscar dados das folhas de cheques
     CURSOR cr_crapfdc_carga (pr_cdcooper IN crapfdc.cdcooper%TYPE
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
-      SELECT  /*+ full (crapfdc) */ crapfdc.nrdconta
-             ,crapfdc.incheque
-             ,Count(1) quantidade
-      FROM crapfdc crapfdc
-      WHERE crapfdc.cdcooper = pr_cdcooper
-        AND crapfdc.incheque in (0,2)
-        AND crapfdc.dtretchq IS NOT NULL
-        AND (crapfdc.dtliqchq IS NULL OR crapfdc.dtliqchq >= pr_dtmvtolt)
+      SELECT crapfdc.nrdconta
+            ,crapfdc.incheque
+            ,Count(1) quantidade
+        FROM crapfdc crapfdc
+            ,crapass
+       WHERE crapfdc.cdcooper = crapass.cdcooper 
+         AND crapfdc.nrdconta = crapass.nrdconta 
+         AND crapfdc.cdcooper = pr_cdcooper
+         AND crapfdc.incheque in (0,2)
+         AND crapfdc.dtretchq IS NOT NULL
+         AND (crapfdc.dtliqchq IS NULL OR crapfdc.dtliqchq >= pr_dtmvtolt)
+         AND crapass.cdagenci  = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)        
       GROUP BY crapfdc.nrdconta,crapfdc.incheque;
 
     -- Buscar dados das folhas de cheques
     CURSOR cr_crapfdc_carga_5 (pr_cdcooper IN crapfdc.cdcooper%TYPE
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
-      SELECT  crapfdc.nrdconta
-             ,crapfdc.incheque
-             ,Count(1) quantidade
-      FROM crapfdc crapfdc
-      WHERE crapfdc.cdcooper = pr_cdcooper
-        AND crapfdc.incheque = 5
-        AND crapfdc.dtliqchq = pr_dtmvtolt
+      SELECT crapfdc.nrdconta
+            ,crapfdc.incheque
+            ,Count(1) quantidade
+        FROM crapfdc crapfdc
+            ,crapass      
+       WHERE crapfdc.cdcooper = crapass.cdcooper 
+         AND crapfdc.nrdconta = crapass.nrdconta 
+         AND crapfdc.cdcooper = pr_cdcooper
+         AND crapfdc.incheque = 5
+         AND crapfdc.dtliqchq = pr_dtmvtolt
+         AND crapass.cdagenci  = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)          
       GROUP BY crapfdc.nrdconta,crapfdc.incheque;
 
     -- type para utilizacao no bulk collect
@@ -789,16 +781,13 @@ BEGIN
     --Selecionar as contas que possuem RPP
     CURSOR cr_craprpp_conta (pr_cdcooper IN craprpp.cdcooper%TYPE) IS
       SELECT craprpp.nrdconta
-      FROM craprpp
-      WHERE craprpp.cdcooper = pr_cdcooper;
+        FROM craprpp
+            ,crapass  
+       WHERE craprpp.cdcooper = crapass.cdcooper 
+         AND craprpp.nrdconta = crapass.nrdconta 
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)         
+         AND craprpp.cdcooper = pr_cdcooper;
 
-    -- Buscar dados dos saldos diarios por cpf/cnpj
-    /*CURSOR cr_crapscd (pr_cdcooper IN crapscd.cdcooper%TYPE
-                      ,pr_dtmvtolt IN crapscd.dtmvtolt%TYPE) IS
-      SELECT crapscd.nrcpfcgc
-      FROM crapscd crapscd
-      WHERE crapscd.cdcooper = pr_cdcooper
-      AND   crapscd.dtmvtolt = pr_dtmvtolt;*/
 
     --Início - Projeto Ligeirinho 
     vr_jobname        VARCHAR2(500);
@@ -809,7 +798,9 @@ BEGIN
     vr_idlog_ini_ger  NUMBER;
     vr_idlog_ini_par  NUMBER;
     vr_tpexecucao     tbgen_prglog.tpexecucao%type;    
-    
+    --Código de controle retornado pela rotina gene0001.pc_grava_batch_controle
+    vr_idcontrole    tbgen_batch_controle.idcontrole%TYPE; 
+  
     --Cursor buscar a informação de todas as agências que o programa será executado.
     --Controlando também a re-execução de uma agência através do parametro pr_qterro
     CURSOR cr_crapage (pr_cdcooper IN crapass.cdcooper%TYPE
@@ -818,29 +809,19 @@ BEGIN
                       ,pr_cdprogra IN tbgen_batch_controle.cdprogra%TYPE
                       ,pr_qterro   IN NUMBER) IS 
       select age.cdagenci 
-      from crapage age 
-      where age.cdcooper = pr_cdcooper
-        and age.cdagenci = decode(pr_cdagenci,0,age.cdagenci,pr_cdagenci) 
-        and (pr_qterro = 0 or 
-            (pr_qterro > 0 and exists (select 1
-                                        from tbgen_batch_controle
-                                       where tbgen_batch_controle.cdcooper    = pr_cdcooper
-                                         and tbgen_batch_controle.cdprogra    = pr_cdprogra
-                                         and tbgen_batch_controle.tpagrupador = 1
-                                         and tbgen_batch_controle.cdagrupador = age.cdagenci
-                                         and tbgen_batch_controle.insituacao  = 1
-                                         and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)))
+        from crapage age 
+       where age.cdcooper = pr_cdcooper
+         and age.cdagenci = decode(pr_cdagenci,0,age.cdagenci,pr_cdagenci) 
+         and (pr_qterro = 0 or 
+             (pr_qterro > 0 and exists (select 1
+                                          from tbgen_batch_controle
+                                         where tbgen_batch_controle.cdcooper    = pr_cdcooper
+                                           and tbgen_batch_controle.cdprogra    = pr_cdprogra
+                                           and tbgen_batch_controle.tpagrupador = 1
+                                           and tbgen_batch_controle.cdagrupador = age.cdagenci
+                                           and tbgen_batch_controle.insituacao  = 1
+                                           and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)))
       order by age.cdagenci asc; 
-    
-    --Cursor de agência utilizado no processamento da rotina.
-    --Este cursor não é necessário controlar a re-execução
-    CURSOR cr_crapage_par (pr_cdcooper IN crapass.cdcooper%TYPE
-                          ,pr_cdagenci IN crapass.cdagenci%TYPE) IS 
-      select age.cdagenci 
-      from crapage age 
-      where age.cdcooper = pr_cdcooper
-        and age.cdagenci = decode(pr_cdagenci,0,age.cdagenci,pr_cdagenci)
-      order by age.cdagenci asc;     
     
     --Fim - Projeto Ligeirinho
 
@@ -850,7 +831,6 @@ BEGIN
 
     -- Variaveis locais da procedure crps445
     vr_exc_erro     EXCEPTION;                           --> Variável para exceção personalizada
-    vr_exc_fimprg   EXCEPTION;                           --> Variável para exceção fimprg
     vr_cdcritic     VARCHAR2(400);                       --> Variável para armazenzar mensagens de crítica
     vr_dscritic     VARCHAR2(4000);                      --> Variável para armazenzar mensagens de crítica
     vr_dstextab     craptab.dstextab%TYPE;               --> Variavel para armazenar mensagem tabela generica
@@ -1332,32 +1312,6 @@ BEGIN
                rw_crapsda2.qtchqliq:= Nvl(pr_tot_qtchqliq,0);
                rw_crapsda2.qtchqass:= Nvl(pr_tot_qtchqass,0);
 
-               -- Melhoria de Performance
-               /*vr_index_crapscd:= vr_tab_crapscd.count+1;
-               vr_tab_crapscd(vr_index_crapscd).cdcooper:= pr_cdcooper;
-               vr_tab_crapscd(vr_index_crapscd).nrcpfcgc:= pr_nrcpfcgc;
-               vr_tab_crapscd(vr_index_crapscd).dtmvtolt:= pr_dtmvtolt;
-               vr_tab_crapscd(vr_index_crapscd).vlsddisp:= rw_crapsda2.vlsddisp;
-               vr_tab_crapscd(vr_index_crapscd).vlsdchsl:= rw_crapsda2.vlsdchsl;
-               vr_tab_crapscd(vr_index_crapscd).vlsdbloq:= rw_crapsda2.vlsdbloq;
-               vr_tab_crapscd(vr_index_crapscd).vlsdblpr:= rw_crapsda2.vlsdblpr;
-               vr_tab_crapscd(vr_index_crapscd).vlsdblfp:= rw_crapsda2.vlsdblfp;
-               vr_tab_crapscd(vr_index_crapscd).vlsdindi:= rw_crapsda2.vlsdindi;
-               vr_tab_crapscd(vr_index_crapscd).vllimcre:= rw_crapsda2.vllimcre;
-               vr_tab_crapscd(vr_index_crapscd).vlsdeved:= rw_crapsda2.vlsdeved;
-               vr_tab_crapscd(vr_index_crapscd).vldeschq:= rw_crapsda2.vldeschq;
-               vr_tab_crapscd(vr_index_crapscd).vllimutl:= rw_crapsda2.vllimutl;
-               vr_tab_crapscd(vr_index_crapscd).vladdutl:= rw_crapsda2.vladdutl;
-               vr_tab_crapscd(vr_index_crapscd).vlsdrdca:= rw_crapsda2.vlsdrdca;
-               vr_tab_crapscd(vr_index_crapscd).vlsdrdpp:= rw_crapsda2.vlsdrdpp;
-               vr_tab_crapscd(vr_index_crapscd).vllimdsc:= rw_crapsda2.vllimdsc;
-               vr_tab_crapscd(vr_index_crapscd).vllimtit:= rw_crapsda2.vllimtit;
-               vr_tab_crapscd(vr_index_crapscd).vldestit:= rw_crapsda2.vldestit;
-               vr_tab_crapscd(vr_index_crapscd).vlprepla:= rw_crapsda2.vlprepla;
-               vr_tab_crapscd(vr_index_crapscd).vlprerpp:= rw_crapsda2.vlprerpp;
-               vr_tab_crapscd(vr_index_crapscd).vlcrdsal:= rw_crapsda2.vlcrdsal;
-               vr_tab_crapscd(vr_index_crapscd).qtchqliq:= rw_crapsda2.qtchqliq;
-               vr_tab_crapscd(vr_index_crapscd).qtchqass:= rw_crapsda2.qtchqass;*/
              END IF;
 
            EXCEPTION
@@ -2385,92 +2339,6 @@ BEGIN
            END;
          END LOOP; --cr_crapass
 
-         -- Atualização da tabela crapscd
-         /*BEGIN
-           FORALL idx IN INDICES OF vr_tab_crapscd SAVE EXCEPTIONS
-             MERGE
-                INTO crapscd t
-                USING (SELECT 1 from DUAL) s
-                ON (t.cdcooper = vr_tab_crapscd(idx).cdcooper
-                AND t.nrcpfcgc = vr_tab_crapscd(idx).nrcpfcgc
-                AND t.dtmvtolt = vr_tab_crapscd(idx).dtmvtolt)
-                WHEN MATCHED THEN
-                  UPDATE SET
-                       vlsddisp = nvl(vlsddisp,0) + vr_tab_crapscd(idx).vlsddisp
-                      ,vlsdchsl = nvl(vlsdchsl,0) + vr_tab_crapscd(idx).vlsdchsl
-                      ,vlsdbloq = nvl(vlsdbloq,0) + vr_tab_crapscd(idx).vlsdbloq
-                      ,vlsdblpr = nvl(vlsdblpr,0) + vr_tab_crapscd(idx).vlsdblpr
-                      ,vlsdblfp = nvl(vlsdblfp,0) + vr_tab_crapscd(idx).vlsdblfp
-                      ,vlsdindi = nvl(vlsdindi,0) + vr_tab_crapscd(idx).vlsdindi
-                      ,vllimcre = nvl(vllimcre,0) + vr_tab_crapscd(idx).vllimcre
-                      ,vlsdeved = nvl(vlsdeved,0) + vr_tab_crapscd(idx).vlsdeved
-                      ,vldeschq = nvl(vldeschq,0) + vr_tab_crapscd(idx).vldeschq
-                      ,vllimutl = nvl(vllimutl,0) + vr_tab_crapscd(idx).vllimutl
-                      ,vladdutl = nvl(vladdutl,0) + vr_tab_crapscd(idx).vladdutl
-                      ,vlsdrdca = nvl(vlsdrdca,0) + vr_tab_crapscd(idx).vlsdrdca
-                      ,vlsdrdpp = nvl(vlsdrdpp,0) + vr_tab_crapscd(idx).vlsdrdpp
-                      ,vllimdsc = nvl(vllimdsc,0) + vr_tab_crapscd(idx).vllimdsc
-                      ,vllimtit = nvl(vllimtit,0) + vr_tab_crapscd(idx).vllimtit
-                      ,vldestit = nvl(vldestit,0) + vr_tab_crapscd(idx).vldestit
-                      ,vlprepla = nvl(vlprepla,0) + vr_tab_crapscd(idx).vlprepla
-                      ,vlprerpp = nvl(vlprerpp,0) + vr_tab_crapscd(idx).vlprerpp
-                      ,vlcrdsal = nvl(vlcrdsal,0) + vr_tab_crapscd(idx).vlcrdsal
-                      ,qtchqliq = nvl(qtchqliq,0) + vr_tab_crapscd(idx).qtchqliq
-                      ,qtchqass = nvl(qtchqass,0) + vr_tab_crapscd(idx).qtchqass
-                WHEN NOT MATCHED THEN
-                  INSERT (cdcooper
-                         ,nrcpfcgc
-                         ,dtmvtolt
-                         ,vlsddisp
-                         ,vlsdchsl
-                         ,vlsdbloq
-                         ,vlsdblpr
-                         ,vlsdblfp
-                         ,vlsdindi
-                         ,vllimcre
-                         ,vlsdeved
-                         ,vldeschq
-                         ,vllimutl
-                         ,vladdutl
-                         ,vlsdrdca
-                         ,vlsdrdpp
-                         ,vllimdsc
-                         ,vllimtit
-                         ,vldestit
-                         ,vlprepla
-                         ,vlprerpp
-                         ,vlcrdsal
-                         ,qtchqliq
-                         ,qtchqass)
-                  VALUES (vr_tab_crapscd(idx).cdcooper
-                         ,vr_tab_crapscd(idx).nrcpfcgc
-                         ,vr_tab_crapscd(idx).dtmvtolt
-                         ,vr_tab_crapscd(idx).vlsddisp
-                         ,vr_tab_crapscd(idx).vlsdchsl
-                         ,vr_tab_crapscd(idx).vlsdbloq
-                         ,vr_tab_crapscd(idx).vlsdblpr
-                         ,vr_tab_crapscd(idx).vlsdblfp
-                         ,vr_tab_crapscd(idx).vlsdindi
-                         ,vr_tab_crapscd(idx).vllimcre
-                         ,vr_tab_crapscd(idx).vlsdeved
-                         ,vr_tab_crapscd(idx).vldeschq
-                         ,vr_tab_crapscd(idx).vllimutl
-                         ,vr_tab_crapscd(idx).vladdutl
-                         ,vr_tab_crapscd(idx).vlsdrdca
-                         ,vr_tab_crapscd(idx).vlsdrdpp
-                         ,vr_tab_crapscd(idx).vllimdsc
-                         ,vr_tab_crapscd(idx).vllimtit
-                         ,vr_tab_crapscd(idx).vldestit
-                         ,vr_tab_crapscd(idx).vlprepla
-                         ,vr_tab_crapscd(idx).vlprerpp
-                         ,vr_tab_crapscd(idx).vlcrdsal
-                         ,vr_tab_crapscd(idx).qtchqliq
-                         ,vr_tab_crapscd(idx).qtchqass);
-         EXCEPTION
-           WHEN OTHERS THEN
-             vr_dscritic := 'Erro ao atualizar CRAPSCD com Merge. ' || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
-             RAISE vr_exc_erro;
-         END;*/
        EXCEPTION
          WHEN vr_exc_erro THEN
            pr_des_erro := vr_dscritic;
@@ -2529,7 +2397,10 @@ BEGIN
          FOR rw_crapass IN cr_crapass(pr_cdcooper => pr_cdcooper) LOOP
 
            -- Verificar se o registro marcador existe
-           IF vr_tab_crapsda.exists(rw_crapass.nrdconta) THEN
+           --IF vr_tab_crapsda.exists(rw_crapass.nrdconta) THEN
+           FOR rw_crapsda IN cr_crapsda_aval(pr_cdcooper => pr_cdcooper
+                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                            ,pr_nrdconta => rw_crapass.nrdconta) LOOP
              -- Zerar valores de variáveis
              vr_tot_vlavaliz := 0;
              vr_tot_vlavlatr := 0;
@@ -2537,7 +2408,9 @@ BEGIN
              --Selecionar informacoes dos avalistas e informacoes dos saldos devedores dos emprestimos
              FOR rw_crapsdv IN cr_crapsdv (pr_cdcooper => pr_cdcooper
                                           ,pr_nrctaavd => rw_crapass.nrdconta
-                                          ,pr_dtmvtolt => vr_tab_crapsda(rw_crapass.nrdconta).dtmvtolt) LOOP
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt/*vr_tab_crapsda(rw_crapass.nrdconta).dtmvtolt*/) LOOP
+               
+                
                --Acumular total avalista
                vr_tot_vlavaliz := Nvl(vr_tot_vlavaliz,0) + rw_crapsdv.vldsaldo;
                -- Localizar dados de emprétimos
@@ -2577,7 +2450,7 @@ BEGIN
                                    ,crapsda.vlavaliz = vr_tot_vlavaliz
                  WHERE crapsda.cdcooper = pr_cdcooper
                    AND crapsda.nrdconta = rw_crapass.nrdconta
-                   AND crapsda.dtmvtolt = vr_tab_crapsda(rw_crapass.nrdconta).dtmvtolt;
+                   AND crapsda.dtmvtolt = rw_crapdat.dtmvtolt/*vr_tab_crapsda(rw_crapass.nrdconta).dtmvtolt*/;
                EXCEPTION
                  WHEN OTHERS THEN
                    vr_dscritic:= 'Erro ao atualizar tabela crapsda. Rotina: pc_crps445_2. '||sqlerrm;
@@ -2585,7 +2458,7 @@ BEGIN
                    RAISE vr_exc_erro;
                END;
              END IF;
-           END IF;  --vr_tab_crapsda.exists
+           END LOOP;--END IF;  --vr_tab_crapsda.exists
          END LOOP; --rw_crapass
        EXCEPTION
          WHEN vr_exc_erro THEN
@@ -2754,9 +2627,11 @@ BEGIN
          vr_tab_crapsdv2.delete; --limpa dados da tabela auxiliar
          vr_tab_crapsdv.delete; -- limpa dados da tabela principal
 
-         -- Executa processo do programa 2
-         pc_crps445_2 (pr_cdcooper => pr_cdcooper
-                      ,pr_des_erro => vr_dscritic);
+         -- Executa processo do programa 2 apenas se não for job paralelo
+         IF pr_idparale = 0 THEN
+           pc_crps445_2 (pr_cdcooper => pr_cdcooper
+                        ,pr_des_erro => vr_dscritic);
+         END IF;
 
          -- Retornar nome do módulo original, para que tire o action gerado pelo programa chamado acima
          GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
@@ -2785,20 +2660,23 @@ BEGIN
     GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                               ,pr_action => NULL);
 
-    -- Verifica se a cooperativa esta cadastrada
-    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
-    FETCH cr_crapcop INTO rw_crapcop;
+    --Apenas valida a cooperativa quando for o programa principal, paralelos não tem necessidade.
+    IF pr_idparale = 0 THEN
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
 
-    -- Se não encontrar registros montar mensagem de critica
-    IF cr_crapcop%NOTFOUND THEN
-      --Fechar Cursor
-      CLOSE cr_crapcop;
-      --Buscar mensagem de erro
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 651);
-      RAISE vr_exc_erro;
-    ELSE
-      --Fechar Cursor
-      CLOSE cr_crapcop;
+      -- Se não encontrar registros montar mensagem de critica
+      IF cr_crapcop%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_crapcop;
+        --Buscar mensagem de erro
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 651);
+        RAISE vr_exc_erro;
+      ELSE
+        --Fechar Cursor
+        CLOSE cr_crapcop;
+      END IF;
     END IF;
 
     -- Validações iniciais do programa
@@ -2865,8 +2743,8 @@ BEGIN
     -- Projeto Ligeirinho 
     -- Buscar quantidade parametrizada de Jobs
     vr_qtdjobs := 0;
-    vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
-                                                 ,pr_cdprogra => vr_cdprogra --pr_cdprogra  IN crapprg.cdprogra%TYPE    --> Código do programa
+    vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper --> Código da coopertiva
+                                                 ,pr_cdprogra => vr_cdprogra --> Código do programa
                                                  ); 
                                                  
     /* Paralelismo visando performance Rodar Somente no processo Noturno */
@@ -2881,7 +2759,7 @@ BEGIN
       IF vr_idparale = 0 THEN
          -- Levantar exceção
          vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_id_paralelo.';
-         RAISE vr_exc_fimprg;
+         RAISE vr_exc_erro;
       END IF;
     
       --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
@@ -2917,7 +2795,7 @@ BEGIN
         -- Testar saida com erro
         if vr_dscritic is not null then
           -- Levantar exceçao
-          raise vr_exc_fimprg;
+          raise vr_exc_erro;
         end if; 
           
         -- Montar o bloco PLSQL que será executado
@@ -2948,7 +2826,7 @@ BEGIN
         -- Testar saida com erro
         if vr_dscritic is not null then 
            -- Levantar exceçao
-           raise vr_exc_fimprg;
+           raise vr_exc_erro;
         end if;
           
         -- Chama rotina que irá pausar este processo controlador
@@ -2959,10 +2837,62 @@ BEGIN
         -- Testar saida com erro
         if  vr_dscritic is not null then 
           -- Levantar exceçao
-          raise vr_exc_fimprg;
+          raise vr_exc_erro;
         end if; 
       end loop;
+      
+      -- Chama rotina de aguardo agora passando 0, para esperarmos
+      -- até que todos os Jobs tenha finalizado seu processamento
+      gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                  ,pr_qtdproce => 0
+                                  ,pr_des_erro => vr_dscritic);
+                                
+      -- Testar saida com erro
+      if  vr_dscritic is not null then 
+        -- Levantar exceçao
+        raise vr_exc_erro;
+      end if; 
+
+      -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+      pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 4,
+                      pr_dsmensagem         => 'Início - pc_crps445_2',
+                      PR_IDPRGLOG           => vr_idlog_ini_ger); 
+      
+      -- Executa processo do programa 2 - Para atualizar valores referente avalistas
+      pc_crps445_2 (pr_cdcooper => pr_cdcooper
+                   ,pr_des_erro => vr_dscritic);     
+                   
+      -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+      pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 4,
+                      pr_dsmensagem         => 'Fim - pc_crps445_2',
+                      PR_IDPRGLOG           => vr_idlog_ini_ger);                                                      
+      
+      --Realiza commit para manter dados mesmo que algum job Falhe
+      commit;                          
+
+      -- Verifica se algum job paralelo executou com erro
+      vr_qterro := 0;
+      vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                    pr_cdprogra    => vr_cdprogra,
+                                                    pr_dtmvtolt    => rw_crapdat.dtmvtolt,
+                                                    pr_tpagrupador => 1,
+                                                    pr_nrexecucao  => 1);
+      if vr_qterro > 0 then 
+        vr_cdcritic := 0;
+        vr_dscritic := 'Paralelismo possui job executado com erro. Verificar na tabela tbgen_batch_controle e tbgen_prglog';
+        raise vr_exc_erro;
+      end if;         
+      
     else  
+      
       --Classifica o tipo de execução de acordo com a informação no campo agência.    
       if pr_cdagenci <> 0 then
         vr_tpexecucao := 2;
@@ -2970,19 +2900,69 @@ BEGIN
         vr_tpexecucao := 1;
       end if;                           
       
-      FOR rw_crapage_par in cr_crapage_par (pr_cdcooper => pr_cdcooper
-                                           ,pr_cdagenci => pr_cdagenci) LOOP                                 
+      -- Grava controle de batch por agência
+      gene0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper               -- Codigo da Cooperativa
+                                      ,pr_cdprogra    => vr_cdprogra               -- Codigo do Programa
+                                      ,pr_dtmvtolt    => rw_crapdat.dtmvtolt       -- Data de Movimento
+                                      ,pr_tpagrupador => 1                         -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                      ,pr_cdagrupador => pr_cdagenci               -- Codigo do agrupador conforme (tpagrupador)
+                                      ,pr_cdrestart   => null                      -- Controle do registro de restart em caso de erro na execucao
+                                      ,pr_nrexecucao  => 1                         -- Numero de identificacao da execucao do programa
+                                      ,pr_idcontrole  => vr_idcontrole             -- ID de Controle
+                                      ,pr_cdcritic    => pr_cdcritic               -- Codigo da critica
+                                      ,pr_dscritic    => vr_dscritic              
+                                       );   
+      -- Testar saida com erro
+      if  vr_dscritic is not null then 
+        -- Levantar exceçao
+        raise vr_exc_erro;
+      end if;                                         
+    
+      --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
+      pc_log_programa(pr_dstiplog   => 'I',    
+                      pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                      pr_cdcooper   => pr_cdcooper, 
+                      pr_tpexecucao => vr_tpexecucao,     -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_idprglog   => vr_idlog_ini_par); 
+                        
         --Zerar tabela de memoria auxiliar
         pc_limpa_tabela;
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapsld. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
         
         -- Carregar PL Table com dados da tabela CRAPSLD
-        FOR rw_crapsld IN cr_crapsld(pr_cdcooper => pr_cdcooper
-                                    ,pr_cdagenci => rw_crapage_par.cdagenci
+        FOR rw_crapsld IN cr_crapsld(pr_cdcooper => pr_cdcooper/*
+                                    ,pr_cdagenci => rw_crapage_par.cdagenci*/
                                      ) LOOP
           vr_tab_crapsld(rw_crapsld.nrdconta).nrdconta := rw_crapsld.nrdconta;
           vr_tab_crapsld(rw_crapsld.nrdconta).vlsdchsl := rw_crapsld.vlsdchsl;
           vr_tab_crapsld(rw_crapsld.nrdconta).vlsddisp := rw_crapsld.vlsddisp;
         END LOOP;
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapsld. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_craplcr. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
 
         -- Carregar PL Table com dados da tabela CRAPLCR
         FOR vr_craplcr IN cr_craplcr(pr_cdcooper) LOOP
@@ -2992,10 +2972,46 @@ BEGIN
           vr_tab_craplcr(vr_craplcr.cdlcremp).dslcremp := vr_craplcr.dslcremp;
         END LOOP;
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_craplcr. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapfin. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
         -- Carregar PL Table com dados da tabela CRAPFIN
         FOR rw_crapfin IN cr_crapfin(pr_cdcooper => pr_cdcooper) LOOP
           vr_tab_crapfin(rw_crapfin.cdfinemp):= rw_crapfin.dsfinemp;
         END LOOP;
+        
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapfin. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);         
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapldc. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
 
         -- Carregar PL Table com dados da tabela CRAPLDC
         FOR rw_crapldc IN cr_crapldc(pr_cdcooper) LOOP
@@ -3004,18 +3020,54 @@ BEGIN
           --Gravar dados na tabela memoria
           vr_tab_crapldc(vr_index_crapldc):= rw_crapldc.dsdlinha;
         END LOOP;
+        
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapldc. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+                        
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crappla. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);                                 
 
         -- Carregar PL Table com dados da tabela CRAPPLA
-        FOR rw_crappla IN cr_crappla(pr_cdcooper => pr_cdcooper
-                                    ,pr_cdagenci => rw_crapage_par.cdagenci) LOOP
+        FOR rw_crappla IN cr_crappla(pr_cdcooper => pr_cdcooper/*
+                                    ,pr_cdagenci => rw_crapage_par.cdagenci*/) LOOP
           IF NOT vr_tab_crappla.EXISTS(rw_crappla.nrdconta) THEN
             vr_tab_crappla(rw_crappla.nrdconta):= rw_crappla.vlprepla;
           END IF;
         END LOOP;
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crappla. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapepr. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
          -- Carregar PL Table com dados da tabela CRAPEPR
-        OPEN cr_crapepr (pr_cdcooper => pr_cdcooper
-                        ,pr_cdagenci => rw_crapage_par.cdagenci);
+        OPEN cr_crapepr (pr_cdcooper => pr_cdcooper/*
+                        ,pr_cdagenci => rw_crapage_par.cdagenci*/);
         LOOP
           FETCH cr_crapepr BULK COLLECT INTO vr_tab_crapepr_carga  LIMIT 100000;
           EXIT WHEN vr_tab_crapepr_carga.COUNT = 0;
@@ -3033,11 +3085,29 @@ BEGIN
         END LOOP;
         CLOSE cr_crapepr;
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapepr. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
         vr_tab_crapepr_carga.delete; -- limpa dados do bulk ja armazenado em outra pl table
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_craprda. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
         -- Carregar PL Table com dados da tabela CRAPRDA
-        OPEN cr_craprda (pr_cdcooper => pr_cdcooper
-                        ,pr_cdagenci => rw_crapage_par.cdagenci);
+        OPEN cr_craprda (pr_cdcooper => pr_cdcooper/*
+                        ,pr_cdagenci => rw_crapage_par.cdagenci*/);
         LOOP
           FETCH cr_craprda BULK COLLECT INTO vr_tab_craprda_carga  LIMIT 100000;
           EXIT WHEN vr_tab_craprda_carga.COUNT = 0;
@@ -3059,12 +3129,30 @@ BEGIN
         END LOOP;
         CLOSE cr_craprda;
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_craprda. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);
+
         vr_tab_craprda_carga.delete; -- limpa dados do bulk ja armazenado em outra pl table
 
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crawepr. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);
+
         -- Carregar PL Table com dados da tabela CRAWEPR
-        OPEN cr_crawepr (pr_cdcooper => pr_cdcooper
-                        ,pr_cdagenci => rw_crapage_par.cdagenci);
+        OPEN cr_crawepr (pr_cdcooper => pr_cdcooper/*
+                        ,pr_cdagenci => rw_crapage_par.cdagenci*/);
         LOOP
           FETCH cr_crawepr BULK COLLECT INTO r_crawepr /* LIMIT 100000*/;
           EXIT WHEN r_crawepr.COUNT = 0;
@@ -3079,9 +3167,27 @@ BEGIN
         CLOSE cr_crawepr;
         r_crawepr.delete; -- limpa dados do bulk ja armazenado em outra pl table
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crawepr. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_craplim. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);
+
         --Carregar PL table com dados da tabela CRAPLIM
-        FOR rw_craplim IN cr_craplim(pr_cdcooper => pr_cdcooper
-                                    ,pr_cdagenci => rw_crapage_par.cdagenci) LOOP
+        FOR rw_craplim IN cr_craplim(pr_cdcooper => pr_cdcooper/*
+                                    ,pr_cdagenci => rw_crapage_par.cdagenci*/) LOOP
 
           vr_index_craplim := lpad(rw_craplim.nrdconta, 10, '0') ||
                               lpad(rw_craplim.tpctrlim, 5, '0');
@@ -3112,10 +3218,28 @@ BEGIN
 
         END LOOP;
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_craplim. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);
+                        
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapsda. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);                        
+
         -- Carregar PL Table com dados da tabela CRAPSDA
         FOR rw_crapsda IN cr_crapsda (pr_cdcooper => pr_cdcooper
-                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                     ,pr_cdagenci => rw_crapage_par.cdagenci) LOOP
+                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt/*
+                                     ,pr_cdagenci => rw_crapage_par.cdagenci*/) LOOP
           vr_tab_crapsda(rw_crapsda.nrdconta).nrdconta:= rw_crapsda.nrdconta;
           vr_tab_crapsda(rw_crapsda.nrdconta).vlavlatr:= rw_crapsda.vlavlatr;
           vr_tab_crapsda(rw_crapsda.nrdconta).vlavaliz:= rw_crapsda.vlavaliz;
@@ -3129,15 +3253,51 @@ BEGIN
           vr_tab_crapsda(rw_crapsda.nrdconta).vllimcre:= rw_crapsda.vllimcre;
         END LOOP;
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapsda. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapdtc. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
         -- Carregar PL Table com dados da tabela CRAPDTC
         FOR vr_crapdtc IN cr_crapdtc(pr_cdcooper) LOOP
           vr_tab_crapdtc(lpad(vr_crapdtc.tpaplica, 3, '0')).tpaplrdc := vr_crapdtc.tpaplrdc;
         END LOOP;
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapdtc. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapneg. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
         -- Carregar PL table com dados da tabela CRAPNEG
         OPEN cr_crapneg (pr_cdcooper => pr_cdcooper
-                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                        ,pr_cdagenci => rw_crapage_par.cdagenci);
+                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt/*
+                        ,pr_cdagenci => rw_crapage_par.cdagenci*/);
         LOOP
 
           FETCH cr_crapneg BULK COLLECT INTO r_crapneg;
@@ -3151,10 +3311,30 @@ BEGIN
         CLOSE cr_crapneg;
         r_crapneg.delete; -- limpa dados do bulk ja armazenado em outra pl table
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapneg. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapcdb. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
         --Carregar tabela memoria com dados da tabela CRAPCDB
         FOR rw_crapcdb IN cr_crapcdb (pr_cdcooper => pr_cdcooper
                                      ,pr_insitchq => 2
-                                     ,pr_dtlibera => rw_crapdat.dtmvtolt) LOOP
+                                     ,pr_dtlibera => rw_crapdat.dtmvtolt/*
+                                     ,pr_cdagenci => rw_crapage_par.cdagenci*/) LOOP
           --Se ja existir entao soma valor cheque
           IF vr_tab_crapcdb.EXISTS(rw_crapcdb.nrdconta) THEN
             vr_tab_crapcdb(rw_crapcdb.nrdconta).nrctrlim:= rw_crapcdb.nrctrlim;
@@ -3165,22 +3345,97 @@ BEGIN
           END IF;
         END LOOP;
 
-        --Carregar tabela memoria com dados da tabela CRAPCDB
-        FOR rw_crapttl IN cr_crapttl(pr_cdcooper => pr_cdcooper) LOOP
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapcdb. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapttl. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
+        --Carregar tabela memoria com dados da tabela CRAPTTL
+        FOR rw_crapttl IN cr_crapttl(pr_cdcooper => pr_cdcooper/*
+                                    ,pr_cdagenci => rw_crapage_par.cdagenci*/) LOOP
           vr_tab_crapttl(rw_crapttl.nrdconta):= rw_crapttl.vlsalari;
         END LOOP;
+        
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapttl. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);         
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapcst_conta. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
 
         --Carregar tabela memoria com dados da tabela CRAPCDB
         FOR rw_crapcst_conta IN cr_crapcst_conta(pr_cdcooper => pr_cdcooper
-                                                ,pr_dtlibera => rw_crapdat.dtmvtolt) LOOP
-          vr_tab_crapcst(rw_crapcst_conta.nrdconta):= 0;
+                                                ,pr_dtlibera => rw_crapdat.dtmvtolt/*
+                                                ,pr_cdagenci => rw_crapage_par.cdagenci*/) LOOP
+          vr_tab_crapcst(rw_crapcst_conta.nrdconta) := 0;
         END LOOP;
+        
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapcst_conta. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);   
+                        
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_craptdb_conta. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);                              
 
         --Carregar tabela memoria com dados da tabela CRAPTDB
         FOR rw_craptdb IN cr_craptdb_conta (pr_cdcooper => pr_cdcooper
-                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
-          vr_tab_craptdb(rw_craptdb.nrdconta):= 0;
+                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt/*
+                                           ,pr_cdagenci => rw_crapage_par.cdagenci*/) LOOP
+          vr_tab_craptdb(rw_craptdb.nrdconta) := 0;
         END LOOP;
+        
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_craptdb_conta. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+                        
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapfdc_carga. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);                               
 
         --Carregar tabela memoria com dados da tabela CRAPFDC
         OPEN cr_crapfdc_carga (pr_cdcooper => pr_cdcooper
@@ -3197,7 +3452,25 @@ BEGIN
         END LOOP;
         CLOSE cr_crapfdc_carga;
 
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapfdc_carga. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);  
+
         r_crapfdc.delete; -- limpa dados do bulk ja armazenado em outra pl table
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapfdc_carga_5. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);  
 
         --Carregar tabela memoria com dados da tabela CRAPFDC incheque 5
         OPEN cr_crapfdc_carga_5 (pr_cdcooper => pr_cdcooper
@@ -3213,13 +3486,40 @@ BEGIN
 
         END LOOP;
         CLOSE cr_crapfdc_carga_5;
+        
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_crapfdc_carga_5. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);         
 
         r_crapfdc.delete; -- limpa dados do bulk ja armazenado em outra pl table
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_craprpp. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
 
         --Carregar tabela memoria com dados da tabela CRAPRPP
         FOR rw_craprpp IN cr_craprpp_conta (pr_cdcooper => pr_cdcooper) LOOP
           vr_tab_craprpp(rw_craprpp.nrdconta):= 0;
         END LOOP;
+        
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - cursor cr_craprpp. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);         
 
         --Selecionar o percentual de IR para calculo poupanca
         vr_percirtab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -3229,10 +3529,27 @@ BEGIN
                                                  ,pr_cdacesso => 'PERCIRAPLI'
                                                  ,pr_tpregist => 0);
 
-
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - procedure pc_sub_rotinas. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
 
         -- Executar programas
         pc_sub_rotinas(pr_des_erro => vr_dscritic);
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - procedure pc_sub_rotinas. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+
 
         -- Retornar nome do módulo original, para que tire o action gerado pelo programa chamado acima
         GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
@@ -3242,6 +3559,15 @@ BEGIN
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - update crapsda. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
 
           --Atualizar informacoes da tabela crapsda
           BEGIN
@@ -3282,55 +3608,88 @@ BEGIN
                               SQLERRM(-(SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
               RAISE vr_exc_erro;
           END;
-      END LOOP;
+
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim - update crapsda. AGENCIA: '||pr_cdagenci,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+                        
+      --Grava data fim para o JOB na tabela de LOG 
+      pc_log_programa(pr_dstiplog   => 'F',    
+                      pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                      pr_cdcooper   => pr_cdcooper, 
+                      pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_idprglog   => vr_idlog_ini_par,
+                      pr_flgsucesso => 1);                            
+
     end if;  
 
     -- Projeto Ligeirinho - Fim do paralelismo
     
-    -- Processo OK, devemos chamar a fimprg
-    btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                             ,pr_cdprogra => vr_cdprogra
-                             ,pr_infimsol => pr_infimsol
-                             ,pr_stprogra => pr_stprogra);
-    -- Salvar informacoes
-    COMMIT;
+    --Se for o programa principal - executado no batch
+    if pr_idparale = 0 then
+      -- Processo OK, devemos chamar a fimprg
+      btch0001.pc_valida_fimprg (pr_cdcooper => pr_cdcooper
+                                ,pr_cdprogra => vr_cdprogra
+                                ,pr_infimsol => pr_infimsol
+                                ,pr_stprogra => pr_stprogra);
+      
+      if vr_idcontrole <> 0 then
+        -- Atualiza finalização do batch na tabela de controle 
+        gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                           ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                           ,pr_dscritic   => vr_dscritic);
+                                           
+        -- Testar saida com erro
+        if  vr_dscritic is not null then 
+          -- Levantar exceçao
+          raise vr_exc_erro;
+        end if; 
+                                                        
+      end if;    
+      
+      if rw_crapdat.inproces > 2 and vr_qtdjobs > 0 then 
+        --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_ger,
+                        pr_flgsucesso => 1);                 
+      end if;
 
-    --Zerar tabela de memoria auxiliar
-    pc_limpa_tabela;
-
-  EXCEPTION
-    WHEN vr_exc_fimprg THEN
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
-      -- Se foi gerada critica para envio ao log
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> '
-                                                     || vr_dscritic );
-      END IF;
+      -- Salvar informacoes
+      COMMIT;
 
       --Zerar tabela de memoria auxiliar
       pc_limpa_tabela;
 
-      -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-      btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                               ,pr_cdprogra => vr_cdprogra
-                               ,pr_infimsol => pr_infimsol
-                               ,pr_stprogra => pr_stprogra);
-
-
-
-
-
-      -- Efetuar commit pois gravaremos o que foi processo até então
+    
+    --Se for job chamado pelo programa do batch     
+    else
+      -- Atualiza finalização do batch na tabela de controle 
+      gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                         ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                         ,pr_dscritic   => vr_dscritic);  
+                                             
+      -- Encerrar o job do processamento paralelo dessa agência
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                  ,pr_des_erro => vr_dscritic);  
+    
+      -- Salvar informacoes
       COMMIT;
 
+      --Zerar tabela de memoria auxiliar
+      pc_limpa_tabela;
+    end if;
+    
+
+  EXCEPTION
     WHEN vr_exc_erro THEN
       -- Se foi retornado apenas código
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
@@ -3344,6 +3703,32 @@ BEGIN
       --Zerar tabela de memoria auxiliar
       pc_limpa_tabela;
 
+      if pr_idparale <> 0 then 
+        -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+        pc_log_programa(PR_DSTIPLOG           => 'E',
+                        PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 2,
+                        pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                 'pr_dscritic:'||pr_dscritic,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);  
+
+        --Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 0);  
+                        
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);
+      end if;    
+      
+
       -- Efetuar rollback
       ROLLBACK;
 
@@ -3351,9 +3736,35 @@ BEGIN
       -- Efetuar retorno do erro nao tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
-
+      
       --Zerar tabela de memoria auxiliar
       pc_limpa_tabela;
+      
+      if pr_idparale <> 0 then 
+        -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+        pc_log_programa(PR_DSTIPLOG           => 'E',
+                        PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 2,
+                        pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                 'pr_dscritic:'||pr_dscritic,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);   
+
+        --Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 0);  
+      
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);
+      end if;  
+        
 
       -- Efetuar rollback
       ROLLBACK;
