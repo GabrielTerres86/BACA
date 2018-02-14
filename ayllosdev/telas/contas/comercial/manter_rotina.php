@@ -9,6 +9,7 @@
 				  08/09/2015 - Adicionado função para remover caracteres inválidos SD 317628 (Kelvin)
 				  23/12/2015 - #350828 Adicionada a operação para a aba PPE (Carlos) 
 							  14/07/2016 - Correcao na forma de recuperacao das variaveis do XML. SD 479874. Carlos R. 
+                              11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).								  
  */
     session_start();
 	require_once("../../../includes/config.php");
@@ -41,7 +42,6 @@
 	$cepedct1 = (isset($_POST['cepedct1'])) ? $_POST['cepedct1'] : '' ; 
 	$cidadct1 = (isset($_POST['cidadct1'])) ? $_POST['cidadct1'] : '' ; 
 	$ufresct1 = ($_POST['ufresct1'] == 'null') ? '' : $_POST['ufresct1']; 
-	$cxpotct1 = (isset($_POST['cxpotct1'])) ? $_POST['cxpotct1'] : '' ; 
 	$tpdrendi = (isset($_POST['tpdrendi'])) ? $_POST['tpdrendi'] : '' ; 
 	$vldrendi = (isset($_POST['vldrendi'])) ? $_POST['vldrendi'] : '' ; 
 	$tpdrend2 = (isset($_POST['tpdrend2'])) ? $_POST['tpdrend2'] : '' ; 
@@ -111,7 +111,7 @@
 	$xml .= "       <cepedct1>".$cepedct1."</cepedct1>";   
 	$xml .= "       <cidadct1>".$cidadct1."</cidadct1>";   
 	$xml .= "       <ufresct1>".$ufresct1."</ufresct1>";   
-	$xml .= "       <cxpotct1>".$cxpotct1."</cxpotct1>";   
+	$xml .= "       <cxpotct1>". 0 ."</cxpotct1>";   
 	$xml .= "       <tpdrendi>".$tpdrendi."</tpdrendi>";   
 	$xml .= "       <vldrendi>".$vldrendi."</vldrendi>";   
 	$xml .= "       <tpdrend2>".$tpdrend2."</tpdrend2>";   

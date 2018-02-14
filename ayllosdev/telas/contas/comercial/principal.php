@@ -13,6 +13,10 @@
  *                07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
  *				  13/07/2016 - Correcao de acesso ao indice MSGALERT do array XML. SD 479874. (Carlos R.)	
  *                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+ *                20/09/2017 - Ajustes para carregar endereço comercial corretamente. PRJ339 - CRM(Odirlei)
+ *				  20/09/2017 - Ajuste onde o turno e nivel cargo nao estavam sendos carregados. (PRJ339 - Kelvin) 
+ *                21/09/2017 - Ajuste para pegar o tpdrendi e vldrendi na posição correta do xml (Adriano - SD ).
+ *                10/10/2017 - Ajuste para chamar fonte principal.php apenas uma vez qnd vem da tela matric. PRJ339 - CRM(Odirlei-AMcom)
  */
 
 	session_start();
@@ -30,6 +34,10 @@
 	$glbvars["nmrotina"] = (isset($_POST['nmrotina'])) ? $_POST['nmrotina'] : $glbvars["nmrotina"];
 	$cddopcao = ( $operacao == 'CA' || $operacao == 'CAE' ) ? 'A' : 'C';
 	$op       = ( $cddopcao == 'C' ) ? '@' : $cddopcao ;
+	
+    // forçar opecao CA, para carregar o endereço correto na bo75
+    $cddopcao = ( $operacao == 'CA' ) ? 'CA' : $cddopcao;
+    
 	
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op,false)) <> '') {
@@ -190,25 +198,25 @@
 	var vldrend3 = 0;
 	var vldrend4 = 0;
 		 
-	tpdrendi = '<? echo str_replace(",",".",getByTagName($comercial[13]->tags,'tpdrendi.1')); ?>';
-	tpdrend2 = '<? echo str_replace(",",".",getByTagName($comercial[13]->tags,'tpdrendi.2')); ?>';
-	tpdrend3 = '<? echo str_replace(",",".",getByTagName($comercial[13]->tags,'tpdrendi.3')); ?>';
-	tpdrend4 = '<? echo str_replace(",",".",getByTagName($comercial[13]->tags,'tpdrendi.4')); ?>';
+	tpdrendi = '<? echo str_replace(",",".",getByTagName($comercial[12]->tags,'tpdrendi.1')); ?>';
+	tpdrend2 = '<? echo str_replace(",",".",getByTagName($comercial[12]->tags,'tpdrendi.2')); ?>';
+	tpdrend3 = '<? echo str_replace(",",".",getByTagName($comercial[12]->tags,'tpdrendi.3')); ?>';
+	tpdrend4 = '<? echo str_replace(",",".",getByTagName($comercial[12]->tags,'tpdrendi.4')); ?>';
 	
-	vldrendi = '<? echo str_replace(",",".",getByTagName($comercial[15]->tags,'vldrendi.1')); ?>';
-	vldrend2 = '<? echo str_replace(",",".",getByTagName($comercial[15]->tags,'vldrendi.2')); ?>';
-	vldrend3 = '<? echo str_replace(",",".",getByTagName($comercial[15]->tags,'vldrendi.3')); ?>';
-	vldrend4 = '<? echo str_replace(",",".",getByTagName($comercial[15]->tags,'vldrendi.4')); ?>';
+	vldrendi = '<? echo str_replace(",",".",getByTagName($comercial[14]->tags,'vldrendi.1')); ?>';
+	vldrend2 = '<? echo str_replace(",",".",getByTagName($comercial[14]->tags,'vldrendi.2')); ?>';
+	vldrend3 = '<? echo str_replace(",",".",getByTagName($comercial[14]->tags,'vldrendi.3')); ?>';
+	vldrend4 = '<? echo str_replace(",",".",getByTagName($comercial[14]->tags,'vldrendi.4')); ?>';
 	
-	$('#tpdrendi','#frmDadosComercial').val(<?php echo getByTagName($comercial[13]->tags,'tpdrendi.1'); ?>);
-	$('#tpdrend2','#frmDadosComercial').val(<?php echo getByTagName($comercial[13]->tags,'tpdrendi.2'); ?>);
-	$('#tpdrend3','#frmDadosComercial').val(<?php echo getByTagName($comercial[13]->tags,'tpdrendi.3'); ?>);
-	$('#tpdrend4','#frmDadosComercial').val(<?php echo getByTagName($comercial[13]->tags,'tpdrendi.4'); ?>);
+	$('#tpdrendi','#frmDadosComercial').val(<?php echo getByTagName($comercial[12]->tags,'tpdrendi.1'); ?>);
+	$('#tpdrend2','#frmDadosComercial').val(<?php echo getByTagName($comercial[12]->tags,'tpdrendi.2'); ?>);
+	$('#tpdrend3','#frmDadosComercial').val(<?php echo getByTagName($comercial[12]->tags,'tpdrendi.3'); ?>);
+	$('#tpdrend4','#frmDadosComercial').val(<?php echo getByTagName($comercial[12]->tags,'tpdrendi.4'); ?>);
 
-	$('#vldrendi','#frmDadosComercial').val('<?php echo getByTagName($comercial[15]->tags,'vldrendi.1'); ?>');
-	$('#vldrend22','#frmDadosComercial').val('<?php echo getByTagName($comercial[15]->tags,'vldrendi.2'); ?>');
-	$('#vldrend3','#frmDadosComercial').val('<?php echo getByTagName($comercial[15]->tags,'vldrendi.3'); ?>');
-	$('#vldrend4','#frmDadosComercial').val('<?php echo getByTagName($comercial[15]->tags,'vldrendi.4'); ?>');
+	$('#vldrendi','#frmDadosComercial').val('<?php echo getByTagName($comercial[14]->tags,'vldrendi.1'); ?>');
+	$('#vldrend22','#frmDadosComercial').val('<?php echo getByTagName($comercial[14]->tags,'vldrendi.2'); ?>');
+	$('#vldrend3','#frmDadosComercial').val('<?php echo getByTagName($comercial[14]->tags,'vldrendi.3'); ?>');
+	$('#vldrend4','#frmDadosComercial').val('<?php echo getByTagName($comercial[14]->tags,'vldrendi.4'); ?>');
 	
 	if('<? echo $cddopcao; ?>' == 'C'){
 		otrsrend = parseFloat(vldrendi) + parseFloat(vldrend2) + parseFloat(vldrend3) + parseFloat(vldrend4);
@@ -233,17 +241,20 @@
 		var cooperativa  = '<? echo $cooperativa;  ?>';
 				
 		if (flgcadas == 'M' && operacao == '') {
-			controlaOperacao('CA');
+            
+            // retirada chamada qnd tela matric pois chamava fonte duas vezes, fazendo com que algumas inf
+            // nao fosse carregadas como cdturnos e cdnvlcgo
+			//controlaOperacao('CA');
+            operacao = 'CA' ;
 		}
 		
 	}
 			
 	nrdrowid = '<? echo $nrdrowid ?>';
 	
-	if (operacao == '') {
 		cdturnos = '<? echo $cdturnos ?>';
 		cdnvlcgo = '<? echo $cdnvlcgo ?>';
-	}
+	
 		
 	controlaLayout(operacao);
 	
