@@ -35,6 +35,9 @@ Alterações: 03/01/2012 - Ajustes:
 						 
             26/10/2017 - Ajustado para permitir importar inscritos PJ 
                          e Criar arquivo de Inconsistência - Prj. 322 (Mateus)						 
+   		    09/02/2018 - Mostrar os eventos encerrados na lista de valores de eventos, desde que
+			             o mês do mesmo não esteja fechado na tela de parâmetros das agendas
+			 		     PRJ. 322 - SM 8 (Andrei - Mouts) 
                            
 ............................................................................ */
 
@@ -490,9 +493,10 @@ PROCEDURE CriaListaEventos :
                            AND crapadp.cdagenci = crapeap.cdagenci
                            AND crapadp.dtanoage = crapeap.dtanoage
                            AND crapadp.cdevento = crapeap.cdevento
-                           AND crapadp.idstaeve <> 4 /* Evento Encerrado */ NO-LOCK BREAK BY crapadp.cdagenci
-                                                                                           BY crapedp.nmevento
-                                                                                            BY crapadp.nrseqdig:
+                           //AND crapadp.idstaeve <> 4 /* Evento Encerrado */ //PRJ 322 - SM - 8 -- Linha comentada para mostrar eventos encerrados
+						   NO-LOCK BREAK BY crapadp.cdagenci
+                                         BY crapedp.nmevento
+                                         BY crapadp.nrseqdig:
 
                  FIND FIRST crapagp WHERE crapagp.idevento = INT(ab_unmap.aux_idevento)
                                       AND crapagp.cdcooper = crapeap.cdcooper          
@@ -536,21 +540,24 @@ PROCEDURE CriaListaEventos :
         END.
                  
     END.
-  
-	RUN RodaJavaScript("mevento.push(~{cdagenci:'" + STRING(crapeap.cdagenci)
-                                  + "',cdcooper:'" + STRING(crapeap.cdcooper)
-                                  + "',cdevento:'" + STRING(crapeap.cdevento)
-                                  + "',nmevento:'" + STRING(aux_nmevento)
-                                  + "',idstaeve:'" + STRING(crapadp.idstaeve)
-                                  + "',flgcompr:'" + STRING(aux_flgcompr)
-                                  + "',flgrest:'"  + STRING(aux_flgrest)
-                                  + "',qtmaxtur:'" + STRING(aux_qtmaxtur)
-                                  + "',nrinscri:'" + STRING(aux_nrinscri)
-                                  + "',nrconfir:'" + STRING(aux_nrconfir)
-                                  + "',nrseqeve:'" + STRING(aux_nrseqeve)
-                                  + "',idademin:'" + STRING(aux_idademin)
-                                  + "',tppartic:'" + STRING(aux_tppartic)
-                                  + "',fechamen:'" + STRING(aux_fechamen) + "'~});").
+
+    IF 	aux_fechamen = "Não" THEN //PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado
+	  DO:
+	    RUN RodaJavaScript("mevento.push(~{cdagenci:'" + STRING(crapeap.cdagenci)
+                                      + "',cdcooper:'" + STRING(crapeap.cdcooper)
+                                      + "',cdevento:'" + STRING(crapeap.cdevento)
+                                      + "',nmevento:'" + STRING(aux_nmevento)
+                                      + "',idstaeve:'" + STRING(crapadp.idstaeve)
+                                      + "',flgcompr:'" + STRING(aux_flgcompr)
+                                      + "',flgrest:'"  + STRING(aux_flgrest)
+                                      + "',qtmaxtur:'" + STRING(aux_qtmaxtur)
+                                      + "',nrinscri:'" + STRING(aux_nrinscri)
+                                      + "',nrconfir:'" + STRING(aux_nrconfir)
+                                      + "',nrseqeve:'" + STRING(aux_nrseqeve)
+                                      + "',idademin:'" + STRING(aux_idademin)
+                                      + "',tppartic:'" + STRING(aux_tppartic)
+                                      + "',fechamen:'" + STRING(aux_fechamen) + "'~});").
+      END.	//PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado			   								  
     
   END.
 

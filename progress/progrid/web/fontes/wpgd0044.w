@@ -42,7 +42,9 @@ Alterações:  26/02/2008 - Não permitir inscrições quando o mês da Data Final do
                           encerrados, solicitaçao de ficha de presenca quando evento AGO/AGE,
                           alterar inscritos nao confirmados para faltantes quando encerrar evento,
                           Prj. 322 (Jean Michel)
-                          
+			 08/02/2018 - Mostrar os eventos encerrados na lista de valores de eventos, desde que
+			              o mês do mesmo não esteja fechado na tela de parâmetros das agendas
+						  PRJ. 322 - SM 8 (Andrei - Mouts) 
 ................................................................................... */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -379,8 +381,9 @@ PROCEDURE CriaListaEventos :
                            crapadp.cdcooper       = crapeap.cdcooper            AND
                            crapadp.cdagenci       = crapeap.cdagenci            AND
                            crapadp.dtanoage       = crapeap.dtanoage            AND
-                         crapadp.cdevento       = crapeap.cdevento            AND
-                         crapadp.idstaeve       <> 4 NO-LOCK
+                         crapadp.cdevento       = crapeap.cdevento            //AND
+                         //crapadp.idstaeve       <> 4 PRJ 322 - SM - 8 -- Linha comentada para mostrar eventos encerrados
+						 NO-LOCK
                            BREAK BY crapadp.cdagenci
                                     BY crapedp.nmevento
                                        BY crapadp.nrseqdig:
@@ -416,22 +419,25 @@ PROCEDURE CriaListaEventos :
                                  LEAVE.
                           END.
                 END.
-                
-    RUN RodaJavaScript("mevento.push(~{cdagenci:'" + STRING(crapeap.cdagenci)  
-                   + "',cdcooper:'" + STRING(crapeap.cdcooper)  
-                   + "',cdevento:'" + STRING(crapeap.cdevento)  
-                   + "',nmevento:'" + STRING(aux_nmevento)      
-                   + "',idstaeve:'" + STRING(crapadp.idstaeve)  
-                   + "',flgcompr:'" + STRING(aux_flgcompr)      
-                   + "',flgrest:'"  + STRING(aux_flgrest)       
-                   + "',qtmaxtur:'" + STRING(aux_qtmaxtur)      
-                   + "',nrinscri:'" + STRING(aux_nrinscri)      
-                   + "',nrconfir:'" + STRING(aux_nrconfir)      
-                   + "',nrseqeve:'" + STRING(aux_nrseqeve)      
-                   + "',idademin:'" + STRING(aux_idademin)      
-                   + "',tppartic:'" + STRING(aux_tppartic)      
-                   + "',tpevento:'" + STRING(crapedp.tpevento)  
-                   + "',fechamen:'" + STRING(aux_fechamen) + "'~});").       
+    
+    IF 	aux_fechamen = "Não" THEN //PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado
+	  DO:
+        RUN RodaJavaScript("mevento.push(~{cdagenci:'" + STRING(crapeap.cdagenci)  
+                       + "',cdcooper:'" + STRING(crapeap.cdcooper)  
+                       + "',cdevento:'" + STRING(crapeap.cdevento)  
+                       + "',nmevento:'" + STRING(aux_nmevento)      
+                       + "',idstaeve:'" + STRING(crapadp.idstaeve)  
+                       + "',flgcompr:'" + STRING(aux_flgcompr)      
+                       + "',flgrest:'"  + STRING(aux_flgrest)       
+                       + "',qtmaxtur:'" + STRING(aux_qtmaxtur)      
+                       + "',nrinscri:'" + STRING(aux_nrinscri)      
+                       + "',nrconfir:'" + STRING(aux_nrconfir)      
+                       + "',nrseqeve:'" + STRING(aux_nrseqeve)      
+                       + "',idademin:'" + STRING(aux_idademin)      
+                       + "',tppartic:'" + STRING(aux_tppartic)      
+                       + "',tpevento:'" + STRING(crapedp.tpevento)  
+                       + "',fechamen:'" + STRING(aux_fechamen) + "'~});").    
+      END.	//PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado			   
     END.    
 	
 END PROCEDURE.
@@ -534,7 +540,8 @@ PROCEDURE local-assign-record:
        DO:
         FIND FIRST crapadp WHERE crapadp.nrseqdig = INT(ab_unmap.nrseqeve)
                              AND crapadp.cdcooper = INT(ab_unmap.aux_cdcooper)
-                             AND crapadp.idstaeve <> 4 NO-LOCK NO-ERROR.
+                             //AND crapadp.idstaeve <> 4 PRJ 322 - SM - 8 -- Linha comentada para permitir incrições de eventos encerrados
+							 NO-LOCK NO-ERROR.
         
                     IF NOT AVAIL crapadp THEN 
                        DO:
