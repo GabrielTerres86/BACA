@@ -51,7 +51,7 @@ function acessaOpcaoAba(cddopcao,id) {
 	
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando...");
-	
+
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({		
 		dataType: "html",
@@ -230,13 +230,6 @@ function controlaLayout(operacao) {
 	var cDsemail            = $('#dsemail',      '#frmConvenioCdc');
 	var cNrlatitude   			= $('#nrlatitude', 	 '#frmConvenioCdc');
 	var cNrlongitude  			= $('#nrlongitude',	 '#frmConvenioCdc');
-
-	/* ABA SEGMENTOS */
-	var rCdsubsegmento = $('label[for="cdsubsegmento"]', '#frmSegmentoCdc');	
-	var cCdsubsegmento = $('#cdsubsegmento',             '#frmSegmentoCdc');
-	var cDssubsegmento = $('#dssubsegmento',             '#frmSegmentoCdc');
-	cCdsubsegmento.addClass('campo').addClass('inteiro').css({'width':'35px'});
-	cDssubsegmento.addClass('campo').css({'width':'250px'});
 	
 	$('#frmConvenioCdc').css({'padding-top':'5px','padding-bottom':'15px'});
 
@@ -285,8 +278,8 @@ function controlaLayout(operacao) {
 	cDstelefone.addClass('campo').css({'width':'370px'}).attr('maxlength','50');
 	cDsemail.addClass('campo').css({'width':'370px'}).attr('maxlength','200');
 	
-	cNrlatitude.addClass('campo coordenadas').css({'width':'150px'});
-	cNrlongitude.addClass('campo coordenadas').css({'width':'150px'});
+	cNrlatitude.addClass('campo').css({'width':'150px'});
+	cNrlongitude.addClass('campo').css({'width':'150px'});
 		
 	highlightObjFocus( $('#frmConvenioCdc') );
 				
@@ -298,22 +291,7 @@ function controlaLayout(operacao) {
         default: 
             $('.clsCampos', '#frmConvenioCdc').show();
 	}
-			
-	/* SUBSEGMENTO */		
-	cCdsubsegmento.unbind('keypress').bind('keypress', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {
-			controlaPesquisasSegmentos();
-			return false;
-		}
-	});
-	
-	cDssubsegmento.unbind('keypress').bind('keypress', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {
-			controlaPesquisasSegmentos();
-			return false;
-		}
-	});
-			
+						
 	cFlgconve.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
 			cDtinicon.focus();
@@ -455,6 +433,17 @@ function controlaLayout(operacao) {
 		}
 	});
 	
+	cNrlatitude.keyup(function () { 
+	
+		this.value = this.value.replace(/\./g,',').replace(/[^0-9,.-]/g,'');// Deixa digitar somente hífen, ponto e número
+		
+		if ((this.value.match(/^\-$/g) || []).length == 0) //Remove a última ocorrência do hífen
+			this.value = this.value.replace(/\-$/g,'');
+			
+		if ((this.value.match(/\,/g) || []).length > 1) //Remove as ocorrências de vírgula (,), deixando apenas a primeira
+			this.value = this.value.replace(/\,$/g,'');
+	});
+		
 	cNrlongitude.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || (e.keyCode == 13 && !e.shiftKey) ) {
 
@@ -468,7 +457,18 @@ function controlaLayout(operacao) {
 			return false;
 		}
 	});
-    	
+	
+	cNrlongitude.keyup(function () { 
+		this.value = this.value.replace(/\./g,',').replace(/[^0-9,.-]/g,'');// Deixa digitar somente hífen, ponto e número
+		
+		if ((this.value.match(/^\-$/g) || []).length == 0) //Remove a última ocorrência do hífen
+			this.value = this.value.replace(/\-$/g,'');
+			
+		if ((this.value.match(/\,/g) || []).length > 1) //Remove as ocorrências de vírgula (,), deixando apenas a primeira
+			this.value = this.value.replace(/\,$/g,'');
+		
+	});
+	    	
 	var divRegistro = $('div.divRegistros','#divTitularCDCPrincipal');		
 	var tabela      = $('table', divRegistro );
 					
@@ -607,12 +607,17 @@ function controlaOperacao(operacao) {
             idcooperado_cdc = glbIdCooperado_CDC;
             cddopcao        = 'A';
             break;
+		// Subsegmento - Cancelar inclusão
+		case 'SCI':
+			showConfirmacao('Deseja cancelar a inclus&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','acessaOpcaoAba(\'S\',0);','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			return false;
+			break;
 		default: 
 			msgOperacao = 'abrindo consulta';
 			cddopcao = '@';
 			break;			
 	}
-	
+
 	showMsgAguardo('Aguarde, ' + msgOperacao + '...');
 	
 	// Executa script de através de ajax
@@ -865,8 +870,8 @@ function controlaPesquisasSegmentos() {
 	var campoAnterior = '';
 	var bo, procedure, titulo, qtReg, filtros, colunas, filtrosPesq, filtrosDesc, cdsubsegmento, dssubsegmento;
 	
-	cdsubsegmento = $('#cdsubsegmento', '#frmSegmentoCdc').val();
-	dssubsegmento = $('#dssubsegmento', '#frmSegmentoCdc').val();
+	cdsubsegmento = $('#cdsubsegmento', '#frmIncluiSegCdc').val();
+	dssubsegmento = $('#dssubsegmento', '#frmIncluiSegCdc').val();
 	
 	bo          = 'TELA_ATENDA_CVNCDC'
 	procedure   = 'LISTA_SUBSEGMENTOS';
@@ -881,22 +886,24 @@ function controlaPesquisasSegmentos() {
 }
 
 function manterSubsegmento(cddopcao){
-	
-	var idcooperado_cdc = $('#idcooperado_cdc','#frmSegmentoCdc').val();
+	var idcooperado_cdc = 0;
 	var cdsubsegmento = 0;
-	
+
 	if(cddopcao == "I"){
-		cdsubsegmento = $('#cdsubsegmento','#frmSegmentoCdc').val();
+		idcooperado_cdc = $('#idcooperado_cdc','#frmIncluiSegCdc').val();
+		cdsubsegmento 	= $('#cdsubsegmento','#frmIncluiSegCdc').val();
 	}else if(cddopcao == "E"){
+		idcooperado_cdc = $('#idcooperado_cdc','#frmSegmentoCdc').val();
 		cdsubsegmento = glb_cdsubsegmento;
 	}
+	
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
 		url: UrlSite + 'telas/atenda/convenio_cdc/manter_subsegmento.php', 
 		data: {
 			cddopcao       : cddopcao,
-			cdsubsegmento	 : cdsubsegmento,
+			cdsubsegmento  : cdsubsegmento,
 			idcooperado_cdc: normalizaNumero(idcooperado_cdc),
 			redirect       : "html_ajax"
 		},  
@@ -905,12 +912,7 @@ function manterSubsegmento(cddopcao){
 			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
-			if ( response.indexOf('showError("error"') == -1 ) { 
-				$('#divConteudoOpcao').html(response);
-			} else {
-				eval( response );				
-			}
-			acessaOpcaoAba('S',0);
+			eval( response );
 			return false;
 		}				
 	});	
@@ -919,4 +921,60 @@ function manterSubsegmento(cddopcao){
 
 function selecionaSubsegmento(cdsubsegmento){
 	glb_cdsubsegmento = cdsubsegmento;
+}
+
+function mostraFormInclusaoSeg(idcooperado_cdc){
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando...");
+	$.ajax({		
+		dataType: 'html',
+		type: 'POST',
+		url: UrlSite + 'telas/atenda/convenio_cdc/form_inclui_segmento_cdc.php', 
+		data: {
+			idcooperado_cdc: normalizaNumero(idcooperado_cdc),
+			redirect       : "html_ajax"
+		},  
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		},
+		success: function(response) {
+			$('#divConteudoOpcao').html(response);
+			return false;
+		}				
+	});	
+}
+
+function formataInclusaoSegmento(){
+
+	/* ABA SEGMENTOS */
+	var rCdsubsegmento = $('label[for="cdsubsegmento"]', '#frmIncluiSegCdc');	
+	var cCdsubsegmento = $('#cdsubsegmento',             '#frmIncluiSegCdc');
+	var cDssubsegmento = $('#dssubsegmento',             '#frmIncluiSegCdc');
+	cCdsubsegmento.addClass('campo').addClass('inteiro').css({'width':'35px'});
+	cDssubsegmento.addClass('campo').css({'width':'250px'});
+
+	/* SUBSEGMENTO */		
+	cCdsubsegmento.unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 9 || e.keyCode == 13 ) {
+			controlaPesquisasSegmentos();
+			return false;
+		}
+	});
+	
+	cDssubsegmento.unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 9 || e.keyCode == 13 ) {
+			controlaPesquisasSegmentos();
+			return false;
+		}
+	});
+	
+	layoutPadrao();
+	hideMsgAguardo();
+	bloqueiaFundo(divRotina);	
+	$(this).fadeIn(1000);
+	divRotina.centralizaRotinaH(); 
+	
+	return false;
 }
