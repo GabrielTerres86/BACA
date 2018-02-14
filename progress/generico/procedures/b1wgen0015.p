@@ -10191,7 +10191,8 @@ PROCEDURE valida-inclusao-conta-transferencia:
           EMPTY TEMP-TABLE tt-erro.
 
           /* Se for InternetBank, monta critica mais adequada e grava no log a critica real */
-          IF par_idorigem = 3 THEN
+          IF par_idorigem = 3 AND 
+             aux_cdcritic <> 979 THEN /* 979 - Conta de transferencia ja cadastrada [possui tratamento dif. na operacao 80] */
              DO:
                ASSIGN aux_dsibcrit = "Conta não encontrada no Sistema CECRED".
                RUN gera_erro (INPUT par_cdcooper,
