@@ -201,8 +201,8 @@ if ($cdopcao == 'C') {
     $xml .= "   <qtprotes>". $qtprotes."</qtprotes>";
     $xml .= "   <qtprotes_c>". $qtprotes_c."</qtprotes_c>";
 
-    $xml .= "   <vlmxassi>". $vlmxassi."</vlmxassi>";
-    $xml .= "   <vlmxassi_c>". $vlmxassi_c."</vlmxassi_c>";
+    $xml .= "   <vlmxassi>". converteFloat($vlmxassi)."</vlmxassi>";
+    $xml .= "   <vlmxassi_c>". converteFloat($vlmxassi_c)."</vlmxassi_c>";
 
     $xml .= "   <qtmxtbib>". $qtmxtbib."</qtmxtbib>";
     $xml .= "   <qtmxtbib_c>". $qtmxtbib_c."</qtmxtbib_c>";
@@ -219,32 +219,32 @@ if ($cdopcao == 'C') {
     $xml .= "   <qttliqcp>". $qttliqcp."</qttliqcp>";
     $xml .= "   <qttliqcp_c>". $qttliqcp_c."</qttliqcp_c>";
 
-    $xml .= "   <vltliqcp>". $vltliqcp."</vltliqcp>";
-    $xml .= "   <vltliqcp_c>". $vltliqcp_c."</vltliqcp_c>";
+    $xml .= "   <vltliqcp>". converteFloat($vltliqcp)."</vltliqcp>";
+    $xml .= "   <vltliqcp_c>". converteFloat($vltliqcp_c)."</vltliqcp_c>";
 
     $xml .= "   <qtmintgc>". $qtmintgc."</qtmintgc>";
     $xml .= "   <qtmintgc_c>". $qtmintgc_c."</qtmintgc_c>";
 
-    $xml .= "   <vlmintgc>". $vlmintgc."</vlmintgc>";
-    $xml .= "   <vlmintgc_c>". $vlmintgc_c."</vlmintgc_c>";
+    $xml .= "   <vlmintgc>". converteFloat($vlmintgc)."</vlmintgc>";
+    $xml .= "   <vlmintgc_c>". converteFloat($vlmintgc_c)."</vlmintgc_c>";
 
     //novo 
     $xml .= "   <qtmitdcl>". $qtmitdcl."</qtmitdcl>";
     $xml .= "   <qtmitdcl_c>". $qtmitdcl_c."</qtmitdcl_c>";
 
-    $xml .= "   <vlmintcl>". $vlmintcl."</vlmintcl>";
-    $xml .= "   <vlmintcl_c>". $vlmintcl_c."</vlmintcl_c>";
+    $xml .= "   <vlmintcl>". converteFloat($vlmintcl)."</vlmintcl>";
+    $xml .= "   <vlmintcl_c>". converteFloat($vlmintcl_c)."</vlmintcl_c>";
     // fim novo
 
 
     $xml .= "   <qtmesliq>". $qtmesliq."</qtmesliq>";
     $xml .= "   <qtmesliq_c>". $qtmesliq_c."</qtmesliq_c>";
 
-    $xml .= "   <vlmxprat>". $vlmxprat."</vlmxprat>";
-    $xml .= "   <vlmxprat_c>". $vlmxprat_c."</vlmxprat_c>";
+    $xml .= "   <vlmxprat>". converteFloat($vlmxprat)."</vlmxprat>";
+    $xml .= "   <vlmxprat_c>". converteFloat($vlmxprat_c)."</vlmxprat_c>";
 
-    $xml .= "   <pcmxctip>". $pcmxctip."</pcmxctip>";
-    $xml .= "   <pcmxctip_c>". $pcmxctip_c."</pcmxctip_c>";
+    $xml .= "   <pcmxctip>". converteFloat($pcmxctip)."</pcmxctip>";
+    $xml .= "   <pcmxctip_c>". converteFloat($pcmxctip_c)."</pcmxctip_c>";
 
 
 
@@ -254,9 +254,9 @@ if ($cdopcao == 'C') {
     $xml .= "   <qtdiexbo>". $qtdiexbo."</qtdiexbo>";
     $xml .= "   <qtdiexbo_c>". $qtdiexbo_c."</qtdiexbo_c>";
 
+
     $xml .= "   <pctitpag>". $pctitpag."</pctitpag>";
     $xml .= "   <pctitpag_c>". $pctitpag_c."</pctitpag_c>";
-
 
     /* inicio campos excluidos */
 
@@ -273,21 +273,14 @@ if ($cdopcao == 'C') {
     $xml .= "   <qtmxtbay>0</qtmxtbay>";
     $xml .= "   <qtmxtbay_c>0</qtmxtbay_c>";
     
-    $xml .= "   <pctitpag>0</pctitpag>";
-    $xml .= "   <pctitpag_c>0</pctitpag_c>";
-
-    $xml .= "   <qtmxtbib>0</qtmxtbib>";
-    $xml .= "   <qtmxtbib_c>0</qtmxtbib_c>";
-
-
-
      /*  fim campos excluidos */
     
 
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
-    
+    //print_r($xml);
+
 
     $xmlResult = mensageria(
             $xml,
@@ -322,7 +315,7 @@ $registros = $xmlObj->roottag->tags[0]->tags;
 if ($cdopcao == 'C') {
     foreach ($registros as $r) {
 
-        echo '$("#cddepart", "#frmTab019").val("' . getByTagName($r->tags, 'dsdepart') . '");';
+        echo '$("#cddepart", "#frmTab052").val("' . getByTagName($r->tags, 'dsdepart') . '");';
 	
         echo '$("#vllimite", "#frmTab052").val("' . getByTagName($r->tags, 'vllimite') . '");';
         echo '$("#vllimite_c", "#frmTab052").val("' . getByTagName($r->tags, 'vllimite_c') . '");';
