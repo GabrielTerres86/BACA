@@ -228,7 +228,7 @@ function formataCampos() {
     cQtdiexbo.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtmxtbib.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     //cQtmxtbay.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
-    cPctitpag.css('width',  '100px').addClass('moeda').addClass('editcooper');// DECI
+    cPctitpag.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
 
    
 
@@ -270,7 +270,7 @@ function formataCampos() {
     cQtdiexbo_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtmxtbib_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     //cQtmxtbay_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
-    cPctitpag_c.css('width',  '100px').addClass('moeda').addClass('editcecred');// DECI
+    cPctitpag_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
 
         
     cTodosFiltro.habilitaCampo();
@@ -326,13 +326,17 @@ function controlaFoco() {
     });
 
     $('#vlminsac', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
-        if(1 == normalizaNumero($('#tpcobran', '#frmCab').val())){
-            $('#qtremcrt', '#frmTab052').focus();
-            return false;
-        }else{
-            $('#qtdiavig', '#frmTab052').focus();
-            return false;
+    
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            if(1 == normalizaNumero($('#tpcobran', '#frmCab').val())){
+                $('#qtremcrt', '#frmTab052').focus();
+                return false;
+            }else{
+                $('#qtdiavig', '#frmTab052').focus();
+                return false;
+            }
         }
+
     });
 
 
@@ -577,7 +581,6 @@ function controlaFoco() {
 
     $('#vllimite_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-
             $('#vlconsul_c', '#frmTab052').focus();
             return false;
         }
@@ -592,12 +595,14 @@ function controlaFoco() {
 
     $('#vlminsac_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
 
-        if(1 == normalizaNumero($('#tpcobran', '#frmCab').val())){
-            $('#qtremcrt_c', '#frmTab052').focus();
-            return false;
-        }else{
-            $('#qtdiavig_c', '#frmTab052').focus();
-            return false;
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            if(1 == normalizaNumero($('#tpcobran', '#frmCab').val())){
+                $('#qtremcrt_c', '#frmTab052').focus();
+                return false;
+            }else{
+                $('#qtdiavig_c', '#frmTab052').focus();
+                return false;
+            }
         }
     });
 
