@@ -61,11 +61,11 @@ function formataCabecalho() {
   
 	// Labels
 	$('label[for="cddopcao"]',"#frmCab").addClass("rotulo").css({"width":"60px"});
-  $('label[for="cdagente"]',"#frmCab").addClass("rotulo-liha").css({"width":"60px"});
+    $('label[for="cdagente"]',"#frmCab").addClass("rotulo-liha").css({"width":"60px"});
 	
 	// Campos
-	$("#cddopcao","#frmCab").css("width","150").habilitaCampo();
-  $("#cdagente","#frmCab").css("width","150").habilitaCampo();
+	$("#cddopcao","#frmCab").css("width","250").habilitaCampo();
+    $("#cdagente","#frmCab").css("width","120").habilitaCampo();
 	
 	$('input[type="text"],select','#frmCab').limpaFormulario().removeClass('campoErro');
 	
@@ -102,8 +102,7 @@ function formataFiltros(){
   $('label[for="cdempres"]','#frmFiltros').addClass('rotulo').css({'width':'75'});
   $('label[for="dtiniper"]','#frmFiltros').addClass('rotulo').css({'width':'75'});
   $('label[for="dtfimper"]','#frmFiltros').addClass('rotulo-linha').css({'width':'15','text-align':'center'});
-  $('label[for="nmarquiv"]','#frmFiltros').addClass('rotulo').css({'width':'75'});
-  $('label[for="nrsequen"]','#frmFiltros').addClass('rotulo').css({'width':'75'});
+      
    
   // CAMPOS - Filtro
   $('#tlcooper','#frmFiltros').css({'width':'100px'});
@@ -113,22 +112,34 @@ function formataFiltros(){
   $('#dtiniper','#frmFiltros').val(dtmvtglb);
   $('#dtfimper','#frmFiltros').css({'width':'75px','text-align':'right'}).habilitaCampo().addClass('inteiro').attr('maxlength','14').setMask("DATE","","","");
   $('#dtfimper','#frmFiltros').val(dtmvtglb);
-  $('#nmarquiv','#frmFiltros').css({'width':'245px','text-align':'left'}).desabilitaCampo().addClass('alphanum').attr('maxlength','24');
-  $('#nrsequen','#frmFiltros').addClass('inteiro').css({'width':'100px'}).desabilitaCampo();
   
   //Alteração
   if ($('#cddopcao','#frmCab').val() == 'A') {
 	  
 	  $('label[for="dtiniper"]','#frmFiltros').css({'display':'none'});
 	  $('label[for="dtfimper"]','#frmFiltros').css({'display':'none'});
-	  $('label[for="nmarquiv"]','#frmFiltros').css({'display':'none'});
-	  $('label[for="nrsequen"]','#frmFiltros').css({'display':'none'});
+	  $('label[for="nmarquiv"]','#frmDetalhe').css({'display':'none'});
+	  $('label[for="nrsequen"]','#frmDetalhe').css({'display':'none'});
+      $('label[for="dssitret"]','#frmDetalhe').css({'display':'none'});
 	  
 	  $('#dtiniper','#frmFiltros').css({'display':'none'});
 	  $('#dtfimper','#frmFiltros').css({'display':'none'});
-	  $('#nmarquiv','#frmFiltros').css({'display':'none'});
-	  $('#nrsequen','#frmFiltros').css({'display':'none'});
+	  $('#nmarquiv','#frmDetalhe').css({'display':'none'});
+	  $('#nrsequen','#frmDetalhe').css({'display':'none'});
+      $('#dssitret','#frmDetalhe').css({'display':'none'});
 	  
+  }else{
+      $('label[for="dtiniper"]','#frmFiltros').css({'display':'inline'});
+	  $('label[for="dtfimper"]','#frmFiltros').css({'display':'inline'});
+	  $('label[for="nmarquiv"]','#frmDetalhe').css({'display':'inline'});
+	  $('label[for="nrsequen"]','#frmDetalhe').css({'display':'inline'});
+      $('label[for="dssitret"]','#frmDetalhe').css({'display':'inline'});
+	  
+	  $('#dtiniper','#frmFiltros').css({'display':'inline'});
+	  $('#dtfimper','#frmFiltros').css({'display':'inline'});
+	  $('#nmarquiv','#frmDetalhe').css({'display':'inline'});
+	  $('#nrsequen','#frmDetalhe').css({'display':'inline'});      
+      $('#dssitret','#frmDetalhe').css({'display':'inline'});
   }
   
   
@@ -550,9 +561,19 @@ function trocaBotao(labelBotao){
  *  Função para seleção de faturas
  */
 function selecionaFaturas(tr){
-		
-	document.getElementById("nmarquiv").value =$('#nmarquiv', tr ).val();
-	document.getElementById("nrsequen").value =$('#nrsequen', tr ).val();
+
+	$('#nmarquiv','#frmDetalhe').val( $('#nmarquiv', tr ).val());
+	$('#nrsequen','#frmDetalhe').val( $('#nrsequen', tr ).val());
+    $('#dssitret','#frmDetalhe').val( $('#dssitret', tr ).val());
+    //armazenar os selecionados
+    $('#cdcooper_selec','#frmDetalhe').val( $('#cdcooper', tr ).val());
+    $('#cdconven_selec','#frmDetalhe').val( $('#cdconven', tr ).val());
+    $('#dtmvtolt_selec','#frmDetalhe').val( $('#dtmvtolt', tr ).val());
+    $('#nrsequen_selec','#frmDetalhe').val( $('#nrsequen', tr ).val());
+    
+    
+    
+    
 
 	return false;		
 }
@@ -591,6 +612,7 @@ function selecionaFaturas(tr){
 				arrayLargura[4] = '65px';
 				arrayLargura[5] = '65px';
 				arrayLargura[6] = '65px';
+                arrayLargura[7] = '65px';
 
 
 			var arrayAlinha = new Array();
@@ -601,6 +623,7 @@ function selecionaFaturas(tr){
 				arrayAlinha[4] = 'right';
 				arrayAlinha[5] = 'right';
 				arrayAlinha[6] = 'right';
+                arrayAlinha[7] = 'center';
 
 			arrayAlinha[2] = 'center';
 
@@ -632,8 +655,8 @@ function selecionaFaturas(tr){
 			$('#divRegistros').css('display','block');
 			$('#divRegistrosRodape','#divConsulta').formataRodapePesquisa();	
 			
-			$("input","#frmTotal").desabilitaCampo();
-			$("select","#frmTotal").desabilitaCampo();
+			$("input","#frmDetalhe").desabilitaCampo();
+			$("select","#frmDetalhe").desabilitaCampo();
 			
 			// Se clicar no btVoltar
 			$('#btVoltar','#divBotoes').unbind('click').bind('click', function() { 		
@@ -883,4 +906,71 @@ function alterarSicredi() {
             }
         }
 	});
+}
+
+// Confirmar geracao do relatorio
+function confirmaGeracRel(tr){ 
+
+  var comando =  'gerarRelat();'   
+  showConfirmacao('Deseja visualizar a impressão?','Confirma&ccedil;&atilde;o - Ayllos', comando ,'','sim.gif','nao.gif');     
+}
+
+function gerarRelat() {
+	
+    showMsgAguardo('Aguarde gerando relatorio...');
+    
+    var cdcooper = $('#cdcooper_selec','#frmDetalhe').val();
+    var cdempres = $('#cdconven_selec','#frmDetalhe').val();
+    var dtmvtolt = $('#dtmvtolt_selec','#frmDetalhe').val();
+    var nrsequen = $('#nrsequen_selec','#frmDetalhe').val();
+    $('#formImpres').html('');
+    
+    // Insiro input do tipo hidden do formulário para enviá-los posteriormente
+	$('#formImpres').append('<input type="hidden" id="cdcooper" name="cdcooper" />');
+	$('#formImpres').append('<input type="hidden" id="cdempres" name="cdempres" />');
+	$('#formImpres').append('<input type="hidden" id="dtmvtolt" name="dtmvtolt" />');
+	$('#formImpres').append('<input type="hidden" id="nrsequen" name="nrsequen" />');
+    $('#formImpres').append('<input type="hidden" id="sidlogin" name="sidlogin" />');
+    
+	
+	// Agora insiro os devidos valores nos inputs criados
+	$('#cdcooper','#formImpres').val( cdcooper );
+	$('#cdempres','#formImpres').val( cdempres );
+	$('#dtmvtolt','#formImpres').val( dtmvtolt );
+	$('#nrsequen','#formImpres').val( nrsequen );    
+    $('#sidlogin','#formImpres').val( $('#sidlogin','#frmMenu').val() );
+    
+    var action = UrlSite + 'telas/tab057/gerar_relatorio.php';
+	carregaImpressaoAyllos("formImpres",action,'bloqueiaFundo(divRotina);hideMsgAguardo();');
+    
+    
+	
+	/*
+	$.ajax({		
+		type	: 'POST',
+		dataType: 'html',
+		url		: UrlSite + 'telas/tab057/gerar_relatorio.php', 
+		data    :
+				{ 
+				  cdcooper : cdcooper,
+				  cdempres : cdempres,
+				  dtmvtolt : dtmvtolt,
+                  nrsequen : nrsequen,
+				  redirect : 'script_ajax'
+				  
+				},
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o(1).', 'Alerta - Ayllos', 'estadoInicial();');
+        },
+        success: function(response) {
+            try {
+                eval(response);	
+                return false;
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.(2)', 'Alerta - Ayllos', 'estadoInicial();');
+            }
+        }
+	});*/
 }

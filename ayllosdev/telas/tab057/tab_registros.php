@@ -33,6 +33,7 @@
 					<th><? echo utf8ToHtml('Arrec.'); ?></th>
 					<th><? echo utf8ToHtml('Tarifa'); ?></th>
 					<th><? echo utf8ToHtml('Pagar'); ?></th>
+                    <th><? echo utf8ToHtml('Ocorrência'); ?></th>
 			    </tr>
 			</thead>
 			<tbody>
@@ -45,8 +46,22 @@
 						<td><span><? echo getByTagName($result->tags,'vldoctos'); ?></span> <? echo number_format(str_replace(",",".",getByTagName($result->tags,'vldoctos')),2,",","."); ?> </td>
 						<td><span><? echo getByTagName($result->tags,'vltarifa'); ?></span> <? echo number_format(str_replace(",",".",getByTagName($result->tags,'vltarifa')),2,",","."); ?> </td>
 						<td><span><? echo getByTagName($result->tags,'vlapagar'); ?></span> <? echo number_format(str_replace(",",".",getByTagName($result->tags,'vlapagar')),2,",","."); ?> </td>
+                        <td> <? //Verificar se esta em uma situacao com critica
+                                
+                                if (getByTagName($result->tags,'cdsitret') == 3 ||
+                                    getByTagName($result->tags,'cdsitret') == 4 ||
+                                    getByTagName($result->tags,'cdsitret') == 5) { ?> 
+                                    
+                                <input type="image" src="<? echo $UrlImagens; ?>/geral/detalhes.gif" onClick="confirmaGeracRel(); return false;" /> </td>
+                             <?    }?>   
+                             
+                        <input type="hidden" id="cdcooper" name="cdcooper" value="<? echo getByTagName($result->tags,'cdcooper') ?>" />               
+                        <input type="hidden" id="cdconven" name="cdconven" value="<? echo getByTagName($result->tags,'cdconven') ?>" />                        
+                        <input type="hidden" id="dtmvtolt" name="dtmvtolt" value="<? echo getByTagName($result->tags,'dtmvtolt') ?>" />                        
 						<input type="hidden" id="nrsequen" name="nrsequen" value="<? echo getByTagName($result->tags,'nrsequen') ?>" />
 						<input type="hidden" id="nmarquiv" name="nmarquiv" value="<? echo getByTagName($result->tags,'nmarquiv') ?>" />		
+                        <input type="hidden" id="cdsitret" name="cdsitret" value="<? echo getByTagName($result->tags,'cdsitret') ?>" />		
+                        <input type="hidden" id="dssitret" name="dssitret" value="<? echo getByTagName($result->tags,'dssitret') ?>" />		
 				    </tr>	
 				<? } ?>
 			</tbody>	

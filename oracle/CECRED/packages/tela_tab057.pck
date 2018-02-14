@@ -92,6 +92,18 @@ create or replace package cecred.tela_tab057 is
                                  ,pr_des_erro OUT    VARCHAR2              -- Descricao do Erro
                                  );
   --
+  -- Gerar relatorio de criticas de arrecadacao do Bancoob
+  PROCEDURE pc_relat_critica_ret( pr_cdcoptel IN     gncontr.cdcooper%TYPE -- Código da Cooperativa
+                                 ,pr_cdconven IN     gncontr.cdconven%TYPE -- Código da Empresa
+                                 ,pr_dtmvtolt IN     VARCHAR2              -- Data do movimento
+                                 ,pr_nrsequen IN     NUMBER                -- Numero sequencial NSA
+                                 ,pr_xmllog   IN     VARCHAR2              -- XML com informações de LOG
+                                 ,pr_cdcritic OUT    PLS_INTEGER           -- Código da crítica
+                                 ,pr_dscritic OUT    VARCHAR2              -- Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype        -- Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT    VARCHAR2              -- Nome do campo com erro
+                                 ,pr_des_erro OUT    VARCHAR2);              -- Descricao do Erro
+
 end tela_tab057;
 /
 create or replace package body cecred.tela_tab057 is
@@ -546,9 +558,9 @@ create or replace package body cecred.tela_tab057 is
     CURSOR cr_sequencias IS
       SELECT to_number(SUBSTR(craptab.dstextab,1,6)) seqarnsa
         FROM craptab
-       WHERE nmsistem = 'CRED'
-         AND tptabela = 'GENERI'
-         AND cdacesso = 'ARQBANCOOB'
+       WHERE UPPER(nmsistem) = 'CRED'
+         AND UPPER(tptabela) = 'GENERI'
+         AND UPPER(cdacesso) = 'ARQBANCOOB'
          AND tpregist = 00
          AND cdempres = pr_cdempres
          AND cdcooper = pr_cdcooper;
@@ -739,7 +751,8 @@ create or replace package body cecred.tela_tab057 is
                      ,pr_dtiniper VARCHAR2              -- Data início
                      ,pr_dtfimper VARCHAR2              -- Data fim
                      ) IS
-      SELECT crapcop.nmrescop
+      SELECT crapcop.cdcooper
+            ,crapcop.nmrescop
             ,gncontr.cdconven
             ,gncontr.dtmvtolt
             ,gncontr.qtdoctos
@@ -748,6 +761,7 @@ create or replace package body cecred.tela_tab057 is
             ,gncontr.vlapagar
             ,gncontr.nrsequen
             ,gncontr.nmarquiv
+            ,gncontr.cdsitret
         FROM gncontr
             ,crapcop
        WHERE gncontr.cdcooper = crapcop.cdcooper
@@ -770,6 +784,8 @@ create or replace package body cecred.tela_tab057 is
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
+    
+    vr_dssitret VARCHAR2(100);
     -- Totais
     vr_qttotdoc NUMBER;
     vr_qttotarr NUMBER;
@@ -850,6 +866,15 @@ create or replace package body cecred.tela_tab057 is
         gene0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'inf'
                               ,pr_posicao  => vr_nr_ctrl
+                              ,pr_tag_nova => 'cdcooper'
+                              ,pr_tag_cont => rw_arrecad.cdcooper
+                              ,pr_des_erro => vr_dscritic
+                              );
+        
+        --
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'inf'
+                              ,pr_posicao  => vr_nr_ctrl
                               ,pr_tag_nova => 'cdconven'
                               ,pr_tag_cont => rw_arrecad.cdconven
                               ,pr_des_erro => vr_dscritic
@@ -910,6 +935,36 @@ create or replace package body cecred.tela_tab057 is
                               ,pr_tag_cont => rw_arrecad.nmarquiv
                               ,pr_des_erro => vr_dscritic
                               );
+                              
+        --
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'inf'
+                              ,pr_posicao  => vr_nr_ctrl
+                              ,pr_tag_nova => 'cdsitret'
+                              ,pr_tag_cont => rw_arrecad.cdsitret
+                              ,pr_des_erro => vr_dscritic
+                              );
+        --
+                            
+        CASE rw_arrecad.cdsitret
+          WHEN 0 THEN vr_dssitret := 'Nao trata retorno';
+          WHEN 1 THEN vr_dssitret := 'Pendente de retorno';
+          WHEN 2 THEN vr_dssitret := 'Arquivo processado com sucesso';
+          WHEN 3 THEN vr_dssitret := 'Arquivo processado com inconsistencia';
+          WHEN 4 THEN vr_dssitret := 'Arquivo rejeitado';
+          WHEN 5 THEN vr_dssitret := 'Arquivo de retorno inválido';
+          ELSE vr_dssitret := 'Sesc. nao encontrada.';
+        END CASE;  
+        
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'inf'
+                              ,pr_posicao  => vr_nr_ctrl
+                              ,pr_tag_nova => 'dssitret'
+                              ,pr_tag_cont => vr_dssitret
+                              ,pr_des_erro => vr_dscritic
+                              );  
+        
+        
         --
         vr_nr_ctrl := vr_nr_ctrl + 1;
         --
@@ -1001,6 +1056,368 @@ create or replace package body cecred.tela_tab057 is
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_lista_arrecadacoes;
+  
   --
+  -- Gerar relatorio de criticas de arrecadacao do Bancoob
+  PROCEDURE pc_relat_critica_ret( pr_cdcoptel IN     gncontr.cdcooper%TYPE -- Código da Cooperativa
+                                 ,pr_cdconven IN     gncontr.cdconven%TYPE -- Código da Empresa
+                                 ,pr_dtmvtolt IN     VARCHAR2              -- Data do movimento
+                                 ,pr_nrsequen IN     NUMBER                -- Numero sequencial NSA
+                                 ,pr_xmllog   IN     VARCHAR2              -- XML com informações de LOG
+                                 ,pr_cdcritic OUT    PLS_INTEGER           -- Código da crítica
+                                 ,pr_dscritic OUT    VARCHAR2              -- Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype        -- Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT    VARCHAR2              -- Nome do campo com erro
+                                 ,pr_des_erro OUT    VARCHAR2              -- Descricao do Erro
+                                 ) IS
+    -- ..........................................................................
+    --
+    --  Programa : pc_relat_critica_ret
+    --  Sistema  : Rotinas para listar as arrecadações
+    --  Autor    : Odirlei Busana - AMcom
+    --  Sigla    : tab057
+    --  Data     : Janeiro/2018.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Gerar relatorio de criticas de arrecadacao do Bancoob
+    --
+    --  Alteracoes: 
+    -- .............................................................................
+    --
+    -- Lista as arrecadações
+    CURSOR cr_gncontr(pr_cdcooper gncontr.cdcooper%TYPE -- Código da Cooperativa
+                     ,pr_cdempres gncontr.cdconven%TYPE -- Código da Empresa
+                     ,pr_dtmvtolt gncontr.dtmvtolt%TYPE -- Data início
+                     ,pr_nrsequen gncontr.nrsequen%TYPE -- Data fim
+                     ) IS
+      SELECT cop.nmrescop
+            ,cop.cdagectl
+            ,ctr.cdconven
+            ,ctr.dtmvtolt
+            ,ctr.qtdoctos
+            ,ctr.vldoctos
+            ,ctr.vltarifa
+            ,ctr.vlapagar
+            ,ctr.nrsequen
+            ,ctr.nmarquiv
+            ,ctr.cdsitret
+        FROM gncontr ctr
+            ,crapcop cop
+       WHERE ctr.cdcooper = cop.cdcooper
+         AND ctr.cdcooper = pr_cdcooper
+         AND ctr.cdconven = pr_cdempres
+         AND ctr.dtmvtolt = pr_dtmvtolt
+         AND ctr.tpdcontr = 6
+         AND ctr.nrsequen = pr_nrsequen;
+    
+    rw_gncontr cr_gncontr%ROWTYPE;
+    
+    --> Buscar registro de inconsistencia
+    CURSOR cr_tbincons (pr_cdcooper crapcop.cdcooper%TYPE,
+                        pr_dtmvtolt DATE,
+                        pr_nmarqret VARCHAR2) IS
+      SELECT inc.dsinconsist,
+             inc.dsregistro_referencia 
+        FROM tbgen_inconsist inc
+       WHERE inc.cdcooper        = pr_cdcooper 
+         AND inc.idinconsist_grp = 5
+         AND inc.dtmvtolt        = pr_dtmvtolt
+         AND (inc.dsregistro_referencia like '%'||pr_nmarqret||'%');
+    
+    -- Cursor da data
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    --
+    vr_qt_reg   NUMBER;
+    vr_nr_ctrl  NUMBER;
+    
+    vr_cdprogra VARCHAR2(40) := 'TAB057';
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_dtmvtolt DATE;
+    vr_nmarqret VARCHAR2(100);
+    
+    vr_dssitret    VARCHAR2(100);
+    vr_tab_reg    gene0002.typ_split;
+    vr_tab_campos gene0002.typ_split;
+    vr_nrseqret   VARCHAR2(100);
+    vr_des_reto   VARCHAR2(100);
+    vr_tab_erro   gene0001.typ_tab_erro;
+    
+    --
+    vr_exc_saida EXCEPTION;
+    --
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+    -- diretorio de geracao do relatorio
+    vr_dsdireto  VARCHAR2(100);
+    vr_nmdrelat  VARCHAR2(100);
+    vr_dscomand  VARCHAR2(200);
+    vr_typ_saida VARCHAR2(200);
+    
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+    END;
+    
+    
+  BEGIN
+    --
+    pr_des_erro := 'OK';
+    
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic
+                            );
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+    
+    -- Busca a data do sistema
+    OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
+    
+    
+    vr_dtmvtolt := to_date(pr_dtmvtolt,'DD/MM/RRRR');
+    
+    OPEN cr_gncontr(pr_cdcooper => pr_cdcoptel
+                   ,pr_cdempres => pr_cdconven
+                   ,pr_dtmvtolt => vr_dtmvtolt
+                   ,pr_nrsequen => pr_nrsequen);
+    FETCH cr_gncontr INTO rw_gncontr;
+    IF cr_gncontr%NOTFOUND THEN
+      CLOSE cr_gncontr;
+      vr_dscritic := 'Registro de controle nao encontrado';
+      RAISE vr_exc_saida;
+      
+    ELSE
+      CLOSE cr_gncontr;
+    END IF;
+    
+    --> Montar nome do arquivo de retorno
+    /*
+    9999 – código da agência de arrecadação + “-” - Fixo + “RT” – Fixo 
+        +  9999999999 – código do convênio 
+        + AAAAMMDD – Data da geração do arquivo + NSA – número sequencial único do arquivo com 3 dígitos  + “.RET” 
+    
+    */
+    
+    vr_nmarqret := to_char(rw_gncontr.cdagectl,'fm0000') ||
+                   '-RT' ||
+                   to_char(rw_gncontr.cdconven,'fm0000000000') ||  
+                   to_char(rw_gncontr.dtmvtolt,'RRRRMMDD') ||
+                   to_char(rw_gncontr.nrsequen,'fm000') ||  
+                   '.RET';
+    
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    
+    -- Inicilizar as informações do XML
+    vr_texto_completo := NULL;
+    pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
+    
+    --> Buscar registro de inconsistencia
+    FOR rw_tbincons IN cr_tbincons ( pr_cdcooper => pr_cdcoptel,
+                                     pr_dtmvtolt => rw_gncontr.dtmvtolt,
+                                     pr_nmarqret => vr_nmarqret) LOOP
+                                    
+      vr_nrseqret := NULL;
+      vr_tab_reg := gene0002.fn_quebra_string(rw_tbincons.dsregistro_referencia,'<br>');
+      
+      IF vr_tab_reg.count > 1 THEN
+        FOR id_reg IN vr_tab_reg.first..vr_tab_reg.last LOOP 
+          vr_tab_campos := gene0002.fn_quebra_string(vr_tab_reg(id_reg),':');
+          
+          IF vr_tab_campos(1) = 'RET NSR' THEN
+            vr_nrseqret := vr_tab_campos(2);          
+          END IF;
+          
+        END LOOP;
+      
+      END IF;
+      
+      pc_escreve_xml('<arquivos>
+                          <retorno>
+                             <nmarquiv>'|| vr_nmarqret                               ||'</nmarquiv>
+                             <dtmvtolt>'|| to_char(rw_gncontr.dtmvtolt,'DD/MM/RRRR') ||'</dtmvtolt>
+                             <dsincons>'|| rw_tbincons.dsinconsist                   ||'</dsincons>
+                             <nrseqret>'|| vr_nrseqret                               ||'</nrseqret>
+                          </retorno>
+                      </arquivos>');                                 
+                                     
+    END LOOP;
+    
+    -- Finalizar o agrupador do relatório
+    pc_escreve_xml('</raiz>',TRUE);      
+
+    -- Busca do diretório base da cooperativa para PDF
+    vr_dsdireto := gene0001.fn_diretorio( pr_tpdireto => 'C' -- /usr/coop
+                                         ,pr_cdcooper => vr_cdcooper
+                                         ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
+
+    vr_nmdrelat := 'crrl737_'||vr_cdoperad||'_'||to_char(SYSDATE,'SSSSS')||'.pdf';
+    
+    -- Efetuar solicitação de geração de relatório --
+    gene0002.pc_solicita_relato(pr_cdcooper  => vr_cdcooper         --> Cooperativa conectada
+                               ,pr_cdprogra  => vr_cdprogra         --> Programa chamador
+                               ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
+                               ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
+                               ,pr_dsxmlnode => '/raiz/arquivos/retorno'    --> Nó base do XML para leitura dos dados
+                               ,pr_dsjasper  => 'crrl737.jasper'    --> Arquivo de layout do iReport
+                               ,pr_cdrelato  => 737 
+                               ,pr_dsparams  => NULL                --> Sem parametros
+                               ,pr_dsarqsaid => vr_dsdireto||'/'||vr_nmdrelat --> Arquivo final com código da agência
+                               ,pr_qtcoluna  => 132                 --> 132 colunas
+                               ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_5.i}
+                               ,pr_flg_impri => 'N'                 --> Chamar a impressão (Imprim.p)
+                               ,pr_nmformul  => '132col'            --> Nome do formulário para impressão
+                               ,pr_nrcopias  => 1                   --> Número de cópias
+                               ,pr_flg_gerar => 'S'                 --> gerar relat na hora
+                               ,pr_nrvergrl  => 1                   --> versao do gerador de relatorio 
+                               ,pr_des_erro  => vr_dscritic);       --> Saída com erro
+    -- Testar se houve erro
+    IF vr_dscritic IS NOT NULL THEN
+      -- Gerar exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+    --O ireport já irá gerar o relatório em formato pdf e por isso, iremos apenas
+    --envia-lo ao servidor web.           
+    gene0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_nmarqpdf => vr_dsdireto||'/'||vr_nmdrelat
+                                ,pr_des_reto => vr_des_reto
+                                ,pr_tab_erro => vr_tab_erro);
+
+    --Se ocorreu erro
+    IF vr_des_reto <> 'OK' THEN
+              
+      --Se tem erro na tabela 
+      IF vr_tab_erro.COUNT > 0 THEN
+        --Mensagem Erro
+        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+      ELSE
+        vr_dscritic:= 'Erro ao enviar arquivo para web.';  
+      END IF; 
+              
+      --Sair 
+      RAISE vr_exc_saida;
+              
+    END IF;                 
+         
+    --Eliminar arquivo impressao
+    IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdireto||'/'||vr_nmdrelat) THEN 
+                                                      
+      --Excluir arquivo de impressao
+       vr_dscomand := 'rm '||vr_dsdireto||'/'||vr_nmdrelat||' 2>/dev/null';
+
+      --Executar o comando no unix
+      gene0001.pc_OScommand (pr_typ_comando => 'S'
+                            ,pr_des_comando => vr_dscomand
+                            ,pr_typ_saida   => vr_typ_saida
+                            ,pr_des_saida   => vr_dscritic);
+                                  
+      --Se ocorreu erro dar RAISE
+      IF vr_typ_saida = 'ERR' THEN
+        vr_dscritic:= 'Nao foi possivel excluir arq.: '|| vr_dscritic;
+                            
+        -- retornando ao programa chamador
+        RAISE vr_exc_saida;
+      END IF;
+           
+    END IF;
+          
+    -- Criar cabecalho do XML
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'nmarqpdf'
+                          ,pr_tag_cont => vr_nmdrelat
+                          ,pr_des_erro => vr_dscritic);
+                                   
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;  
+            
+    -- Liberando a memória alocada pro CLOB
+    dbms_lob.close(vr_des_xml);
+    dbms_lob.freetemporary(vr_des_xml);
+    
+    COMMIT;
+                                     
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+    
+      IF vr_cdcritic <> 0 AND
+         vr_dscritic IS NULL THEN
+        --
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        --
+      ELSE
+        --
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        --
+      END IF;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+                                     
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_relat_critica_ret;
+  
+  
 END tela_tab057;
 /

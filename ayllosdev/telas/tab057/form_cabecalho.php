@@ -16,7 +16,7 @@
 	isPostMethod();
   
 ?>
-
+<form id="formImpres" ></form>
 <form id="frmCab" name="frmCab" class="formulario cabecalho" width="800px">
   <input id="glcooper" type="hidden" value="<?php echo $glbvars["cdcooper"]; ?>" />
 	<table width="100%">
@@ -31,7 +31,7 @@
       <td>
 				<label for="cdagente">Agente:</label>
 				<select id="cdagente" name="cdagente">
-					<option value="S">S - Sicred</option>
+					<option value="S">S - Sicredi</option>
 					<option value="B">B - Bancoob</option>
 				</select>
 				<a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>

@@ -51,7 +51,7 @@
 		
 		<legend>Filtro</legend>
 
-		<table width="100%">
+    <table width="100%">
       <tr>
         <td>
         <label for="tlcooper"><? echo utf8ToHtml('Cooperativa:') ?></label>
@@ -90,18 +90,7 @@
           <input id="dtfimper" name="dtfimper" type="text"/>
         </td>
       </tr>
-      <tr>
-        <td>
-          <label for="nmarquiv"><? echo utf8ToHtml('Arquivo:') ?></label>
-					<input id="nmarquiv" name="nmarquiv" type="text"/>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <label for="nrsequen"><? echo utf8ToHtml('Nro. Seq.:') ?></label>
-					<input id="nrsequen" name="nrsequen" type="text"/>
-        </td>
-      </tr>
-		</table>
+      
+	</table>
 	</fieldset>
 </form>

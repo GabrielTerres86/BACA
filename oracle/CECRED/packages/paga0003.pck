@@ -7396,8 +7396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                             ,nrsequen
                             ,vldocto2
                             ,flgmigra
-                            ,progress_recid
-                           )
+                            ,cdsitret)
                      VALUES(pr_cdcooper               -- cdcooper
                            ,6                         -- tpdcontr
                            ,pr_cdconven               -- cdconven
@@ -7411,8 +7410,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                            ,pr_nrsequen               -- nrsequen
                            ,0                         -- vldocto2
                            ,0                         -- flgmigra
-                           ,NULL                      -- progress_recid
-                           );
+                           ,1  );                     -- cdsitret 
+                           
         --
       EXCEPTION
         WHEN OTHERS THEN
