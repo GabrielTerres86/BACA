@@ -544,10 +544,10 @@ PROCEDURE busca_inf_produtos:
 		
   /* PRJ 402 */
   FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
-                      AND crapcdr.nrdconta = par_nrdconta NO-LOCK NO-ERROR NO-WAIT. END.
+                      AND crapcdr.nrdconta = par_nrdconta NO-LOCK: END.
                       
   IF AVAILABLE crapcdr THEN
-    ASSIGN tt-inf-produto.flgconve = crapcdr.flgconve.
+    ASSIGN tt-inf-produto.flgconve = INTEGER(STRING(crapcdr.flgconve, "1/0")).
   /* PRJ 402 */
     
   RETURN "OK".

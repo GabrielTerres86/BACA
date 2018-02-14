@@ -260,7 +260,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
                        ,pr_nrdconta IN crapcdr.nrdconta%TYPE) IS
         SELECT crapcdr.flgconve
               ,crapcdr.dtinicon
-              ,crapcdr.inmotcan
+              ,nvl(crapcdr.inmotcan,0) inmotcan
               ,crapcdr.dtcancon              
               ,crapcdr.dsmotcan
               ,crapcdr.dtrencon

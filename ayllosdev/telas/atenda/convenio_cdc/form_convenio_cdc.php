@@ -30,6 +30,7 @@
 		</br>
 		<label for="inmotcan" class="clsCampos">Mot. Cancelamento:</label>
 		<select id="inmotcan" name="inmotcan" class="clsCampos">
+			<option value="" <?php echo ($inmotcan == 0 ? 'selected' : ''); ?>>-</option>
 			<option value="1" <?php echo ($inmotcan == 1 ? 'selected' : ''); ?>>Inadimplência</option>
 			<option value="2" <?php echo ($inmotcan == 2 ? 'selected' : ''); ?>>Não Utiliza CDC</option>
 			<option value="3" <?php echo ($inmotcan == 3 ? 'selected' : ''); ?>>Empresa Inativa</option>
