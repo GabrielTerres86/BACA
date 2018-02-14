@@ -8016,7 +8016,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 16/03/2017
+       Data    : Fevereiro/2014                        Ultima atualizacao: 08/02/2018
     
        Dados referentes ao programa:
     
@@ -8042,6 +8042,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 Prj. 302 (Jean Michel).             
 
                    16/03/2017 - Alteracao de mensagem de Contrato em acordo. (Jaison/James)
+
+                   08/02/2018 - Incluir novamente o número 3 fixo no parâmetro pr_cdorigem
+                                na chamada da procedure recp0001.pc_verifica_acordo_ativo.
+                                Alterado indevidamente em 23/01/2018 SM 12158. (SD#846598 - AJFink)
+
     ............................................................................. */
   
     DECLARE
@@ -8270,7 +8275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
                                            ,pr_nrctremp => pr_nrctremp
-                                           ,pr_cdorigem => pr_idorigem
+                                           ,pr_cdorigem => 3 /*SD#846598*/
                                            ,pr_flgativo => vr_flgativo
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
@@ -13603,7 +13608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Carlos Rafael Tanholi
-       Data    : Agosto/2015.                         Ultima atualizacao: 27/11/2015
+       Data    : Agosto/2015.                         Ultima atualizacao: 08/02/2018
       
        Dados referentes ao programa:
       
@@ -13622,6 +13627,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     regras da b1wgen0084a.p->gera_pagamentos_parcelas, conforme 
                     projeto 302 - Sistema de acordos ( Renato Darosci - Supero )
        
+       08/02/2018 - Incluir novamente o número 3 fixo no parâmetro pr_cdorigem
+                    na chamada da procedure recp0001.pc_verifica_acordo_ativo.
+                    Alterado indevidamente em 23/01/2018 SM 12158. (SD#846598 - AJFink)
+
     ............................................................................. */
     DECLARE
        
@@ -13767,7 +13776,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => pr_nrdconta
                                         ,pr_nrctremp => pr_nrctremp
-                                        ,pr_cdorigem => pr_idorigem
+                                        ,pr_cdorigem => 3  /*SD#846598*/
                                         ,pr_flgativo => vr_flgativo
                                         ,pr_cdcritic => vr_cdcritic
                                         ,pr_dscritic => vr_dscritic);
