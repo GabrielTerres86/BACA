@@ -276,7 +276,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  
                  01/02/2018 - Utilizar a data do movimento para atualização da data do risco - Daniel(AMcom)
 
-
   ............................................................................ */
 
     DECLARE
@@ -907,6 +906,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       -- Variaves do processo
       vr_dstextab     craptab.dstextab%TYPE;  --> Busca na craptab
       vr_dtrefere     DATE;                   --> Data de referência do processo
+      vr_dtrefere_aux DATE;                   --> Data de referência auxiliar do processo
       vr_risco_rating PLS_INTEGER;            --> Nível do risco auxiliar
       vr_risco_aux    PLS_INTEGER;            --> Nível de risco auxiliar 2
       vr_nrseqctr     crapris.nrseqctr%TYPE;  --> Sequencia de contrato de empréstimo
@@ -2976,7 +2976,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Busca dos dados do ultimo risco Doctos 3020/3030
         CURSOR cr_crapris_last(pr_nrdconta IN crapris.nrdconta%TYPE
                               ,pr_dtrefere in crapris.dtrefere%TYPE) IS
-          SELECT dtrefere
+           -- Ajuste no cursor para tratar data do risco - Daniel(AMcom)           
+           SELECT r.dtrefere
+                , r.innivris
+                , NVL(r.dtdrisco,pr_dtrefere) dtdrisco -- trata data risco
+            FROM crapris r
+           WHERE r.cdcooper = pr_cdcooper
+             AND r.nrdconta = pr_nrdconta
+             AND r.dtrefere = pr_dtrefere
+             AND r.inddocto = 1 -- 3020 e 3030
+             AND r.innivris < 10
+           ORDER BY dtrefere DESC --> Retornar o ultimo gravado
+                  , innivris DESC --> Retornar o ultimo gravado
+                  , NVL(r.dtdrisco,pr_dtrefere) DESC; 
+        rw_crapris_last cr_crapris_last%ROWTYPE;
+        
+        -- Comentado cursor original cr_crapris_last Daniel(AMcom)
+          /*SELECT dtrefere
                 ,innivris
                 ,dtdrisco
             FROM crapris
@@ -2984,16 +3000,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
              AND nrdconta = pr_nrdconta
              -- Incluir um periodo de data pois não é necessario ler todos os registros
              -- e o mesmo é gerado todo mês
-             --AND dtrefere BETWEEN last_day(add_months(vr_dtrefere,-2)) AND (vr_dtrefere -1) --desconsiderar ultimo dia
-             -- Buscar somente informações do dia anterior - Daniel(AMcom)
-             AND dtrefere >= pr_rw_crapdat.dtmvtoan
+             AND dtrefere BETWEEN last_day(add_months(vr_dtrefere,-2)) AND (vr_dtrefere -1) --desconsiderar ultimo dia
              AND dtrefere <> pr_dtrefere
              AND inddocto = 1 -- 3020 e 3030
              AND innivris < 10
            ORDER BY dtrefere DESC --> Retornar o ultimo gravado
                    ,innivris DESC --> Retornar o ultimo gravado
-                   ,dtdrisco DESC; --> Retornar o ultimo gravado
-        rw_crapris_last cr_crapris_last%ROWTYPE;
+                   ,dtdrisco DESC;*/ --> Retornar o ultimo gravado
+                                     
+
         -- Busca de todos os riscos Doctos 3020/3030
         -- com valor superior ao de arrasto e data igual a de referência
         -- retornando dentro da conta os riscos com nível mais elevado primeiro
@@ -3097,9 +3112,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_innivris := vr_tab_contas_risco_soberano(rw_crapris.nrdconta).innivris;
               END IF;
             END IF;
+            
+            -- Regra para carga de data para o cursor
+            -- Se for rotina mensal - Daniel(AMcom)
+            IF to_char(pr_rw_crapdat.dtmvtolt, 'MM') <> to_char(pr_rw_crapdat.dtmvtopr, 'MM') THEN
+              -- Utilizar o final do mês como data
+              vr_dtrefere_aux := pr_rw_crapdat.dtultdma;
+            ELSE
+              -- Utilizar a data atual
+              vr_dtrefere_aux := pr_rw_crapdat.dtmvtoan;
+            END IF;
+            
             -- Busca dos dados do ultimo risco de origem 1
             OPEN cr_crapris_last(pr_nrdconta => rw_crapris.nrdconta
-                                ,pr_dtrefere => vr_datautil);
+                                ,pr_dtrefere => vr_dtrefere_aux); -- Daniel(AMcom)
+                                --,pr_dtrefere => vr_datautil); 
             FETCH cr_crapris_last
              INTO rw_crapris_last;
             -- Se encontrou
@@ -3113,18 +3140,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               IF /*rw_crapris_last.dtrefere <> pr_rw_crapdat.dtultdma
               OR */(rw_crapris_last.innivris <> vr_innivris AND vr_innivris <> 10) THEN
                 -- Utilizar a data de referência do processo
-                -- vr_dtdrisco := vr_dtrefere;
-                -- Atualiza com a data do movimento atual - Daniel(AMcom)
-                vr_dtdrisco := pr_rw_crapdat.dtmvtolt;
+                 vr_dtdrisco := vr_dtrefere;
               ELSE
                 -- Utilizar a data do ultimo risco
                 vr_dtdrisco := rw_crapris_last.dtdrisco;
               END IF;
             ELSE
               -- Utilizar a data de referência do processo
-              --vr_dtdrisco := vr_dtrefere;
-              -- Atualiza com a data do movimento atual - Daniel(AMcom)
-               vr_dtdrisco := pr_rw_crapdat.dtmvtolt;
+              vr_dtdrisco := vr_dtrefere;
             END IF;
             -- Fechar o cursor
             CLOSE cr_crapris_last;
@@ -3491,8 +3514,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               UPDATE crapris
                  SET innivris = rw_max_risco_cpfcnpj.MAX_RISCO
                     ,inindris = rw_max_risco_cpfcnpj.MAX_RISCO
-                    -- Atualiza com a data do movimento atual - Daniel(AMcom)
-                    ,dtdrisco = pr_rw_crapdat.dtmvtolt --vr_dtrefere
+                    ,dtdrisco = vr_dtrefere
                WHERE rowid = rw_riscos_cpfcnpj.rowid;
             EXCEPTION
               WHEN OTHERS THEN
