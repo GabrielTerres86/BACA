@@ -1214,25 +1214,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       END IF;
 
       vr_nrdolote := 15000 + pr_nrdcaixa;
+      if not paga0001.fn_processo_ligeir then
+        LOTE0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                               ,pr_cdagenci => pr_cdagenci
+                               ,pr_cdbccxlt => 11
+                               ,pr_nrdolote => vr_nrdolote
+                               ,pr_cdoperad => pr_cdoperad
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_tplotmov => 13
+                               ,pr_cdhistor => 1154
+                               ,pr_craplot => rw_craplot
+                               ,pr_dscritic => vr_dscritic);
 
-      LOTE0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
-                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_cdbccxlt => 11
-                             ,pr_nrdolote => vr_nrdolote
-                             ,pr_cdoperad => pr_cdoperad
-                             ,pr_nrdcaixa => pr_nrdcaixa
-                             ,pr_tplotmov => 13
-                             ,pr_cdhistor => 1154
-                             ,pr_craplot => rw_craplot
-                             ,pr_dscritic => vr_dscritic);
-
-      -- Se ocorreu erro
-      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-        -- Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-
+        -- Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          -- Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+      
+      else
+        paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
+                                     pr_dtmvtolt => rw_crapdat.dtmvtocd,
+                                     pr_cdagenci => pr_cdagenci,
+                                     pr_cdbccxlt => 11,
+                                     pr_nrdolote => vr_nrdolote,
+                                     pr_cdoperad => pr_cdoperad,
+                                     pr_nrdcaixa => pr_nrdcaixa,
+                                     pr_tplotmov => 13,
+                                     pr_cdhistor => 1154,
+                                     pr_cdbccxpg => null,
+                                     pr_nmrotina => 'CXON0041.PC_PAGA_DARF');
+                            
+        rw_craplot.cdcooper := pr_cdcooper;                   
+        rw_craplot.dtmvtolt := rw_crapdat.dtmvtocd;                  
+        rw_craplot.cdagenci := pr_cdagenci;                   
+        rw_craplot.cdbccxlt := 11;                  
+        rw_craplot.nrdolote := vr_nrdolote;                   
+        rw_craplot.cdoperad := pr_cdoperad;  
+        rw_craplot.tplotmov := 13;                   
+        rw_craplot.cdhistor := 1154;
+        rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
+                                                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                                                             ,pr_cdagenci => pr_cdagenci
+                                                             ,pr_cdbccxlt => 11
+                                                             ,pr_nrdolote => vr_nrdolote);  
+      end if;
+      
+      
       IF pr_cdtribut = '6106' THEN -- DARF SIMPLES
         
         OPEN cr_crapscn(pr_cdempres => 'DO');
@@ -1316,14 +1345,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                   ,1154
                   ,pr_dsnomfon)
         RETURNING progress_recid INTO vr_progress_recid_lft;
-
-      UPDATE craplot
-         SET craplot.qtcompln = rw_craplot.qtcompln + 1
-            ,craplot.qtinfoln = rw_craplot.qtinfoln + 1
-            ,craplot.vlcompcr = rw_craplot.vlcompcr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
-            ,craplot.vlinfocr = rw_craplot.vlinfocr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
-       WHERE craplot.ROWID = rw_craplot.rowid;
-
+      
+      if not paga0001.fn_processo_ligeir then
+        UPDATE craplot
+           SET craplot.qtcompln = rw_craplot.qtcompln + 1
+              ,craplot.qtinfoln = rw_craplot.qtinfoln + 1
+              ,craplot.vlcompcr = rw_craplot.vlcompcr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
+              ,craplot.vlinfocr = rw_craplot.vlinfocr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
+         WHERE craplot.ROWID = rw_craplot.rowid;
+      end if;
+      
       CXON0000.pc_grava_autenticacao_internet(pr_cooper => pr_cdcooper
                                              ,pr_nrdconta => pr_nrdconta
                                              ,pr_idseqttl => pr_idseqttl     
