@@ -42,8 +42,8 @@
 									<div id="divConteudoOpcao" style="height: 80px;">
 									
 									<div id="divBotoes" style="height:80px;">
-										<a href="#" class="botao gft" id="btEmprestimosFinanciamentos" onClick="fechaRotina($('#divUsoGenerico'),divRotina);controlaOperacao('I');" style="margin: 20px 5px">Empr&eacute;stimos e Financiamentos</a>
-										<a href="#" class="botao gft" id="btEmprestimosConsignado" onClick="alert('Funcionalidade ainda em desenvolvimento!');" style="margin: 20px 7px">Empr&eacute;stimo Consignado</a>
+										<a href="#" class="botao gft" id="btEmprestimosFinanciamentos" onClick="fechaRotina($('#divUsoGenerico'),divRotina);controlaOperacao('I');" style="margin: 20px 6px">Empr&eacute;stimos e Financiamentos</a>
+										<a href="#" class="botao gft" id="btEmprestimosConsignado" onClick="alert('Funcionalidade ainda em desenvolvimento!');" style="margin: 20px 6px">Empr&eacute;stimo Consignado</a>
 									</div>
 								</td>
 							</tr>
