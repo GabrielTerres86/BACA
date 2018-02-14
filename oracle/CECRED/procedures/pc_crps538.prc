@@ -371,7 +371,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             que apresentaram critica no loop de processamento das linhas
                             do arquivo. (SD#726081-AJFink)
 
-
                01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
                             o nome do arquivo apos processamento, iremos gerar o arquivo
                             _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
@@ -4537,7 +4536,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                                ,pr_idorigem    => 1  /*AYLLOS*/       --Identificador Origem pagamento
                                                ,pr_nrdconta    => vr_tab_descontar(vr_index_desc).nrdconta         --Numero da conta
                                                ,pr_indbaixa    => 1                   --Indicador Baixa /* 1-Pagamento 2- Vencimento */
-                                               ,pr_dtintegr    => vr_dtmvtaux         -- Data de integração do pagamento
                                                ,pr_tab_titulos => vr_tab_titulos      --Titulos a serem baixados
                                                ,pr_cdcritic    => vr_cdcritic         --Codigo Critica
                                                ,pr_dscritic    => vr_dscritic         --Descricao Critica
