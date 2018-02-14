@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004.                     Ultima atualizacao: 01/09/2017
+   Data    : Abril/2004.                     Ultima atualizacao: 13/02/2018
 
    Dados referentes ao programa:
 
@@ -90,6 +90,9 @@
                01/09/2017 - Inclusao de log de fim de execucao do programa 
                             (Carlos)
                             
+               13/02/2018 - Inclusao de novos parametros na chamada do procedure 
+                            pc_crps445 - Projeto Ligeirinho (Jonatas - AMcom)
+                            
 ............................................................................. */
 
 /******************************************************************************
@@ -122,6 +125,8 @@ ETIME(TRUE).
 RUN STORED-PROCEDURE pc_crps445 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,                                                  
     INPUT INT(STRING(glb_flgresta,"1/0")),
+    INPUT 0,
+    INPUT 0,
     OUTPUT 0,
     OUTPUT 0,
     OUTPUT 0, 
@@ -173,7 +178,7 @@ UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    +
                   "Stored Procedure rodou em "         + 
                   STRING(INT(ETIME / 1000),"HH:MM:SS") + 
                   " >> log/proc_batch.log").
-                  
+
 { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
    (INPUT "PF",
