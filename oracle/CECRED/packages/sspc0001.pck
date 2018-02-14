@@ -558,7 +558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --                          correta no cursor principal, conforme solicitado no chamado 808164. (Kelvin)            
   --
   --			 07/02/2018 - Ajuste no retorno do XML pc_processa_retorno_req para aceitar multiplas Observacoes, 
-							  pegando apenas a primeira obs - (Antonio R. JR - Mouts - Chamado 841067)          
+  --						  pegando apenas a primeira obs - (Antonio R. JR - Mouts - Chamado 841067)          
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
