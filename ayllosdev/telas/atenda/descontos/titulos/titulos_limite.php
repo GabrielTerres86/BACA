@@ -108,8 +108,9 @@
 					<th>Limite</th>
 					<th>Vig</th>
 					<th>LD</th>
-					<th >Situa&ccedil;&atilde;o</th>
-					<th>Comit&ecirc;</th>
+					<th >Situa&ccedil;&atilde;o do Limite</th>
+					<th>Situa&ccedil;&atilde;o da An&aacute;lise</th>
+					<th>Decis&atilde;o</th>
 				</tr>			
 			</thead>
 			<tbody>
@@ -119,8 +120,7 @@
 									
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
-					
-						<td><? echo $limites[$i]->tags[0]->cdata; ?></td>
+						<td><? echo getByTagName($limites[$i]->tags,"DTPROPOS"); ?></td>
 						
 						<td><? echo $limites[$i]->tags[1]->cdata; ?></td>
 						
@@ -137,6 +137,8 @@
 						<td><? echo $limites[$i]->tags[7]->cdata; ?></td>
 						
 						<td><? echo $limites[$i]->tags[8]->cdata; ?></td>
+
+						<td><? echo $limites[$i]->tags[9]->cdata; ?></td>
 												
 					</tr>
 				<?} // Fim do for ?>			
@@ -153,14 +155,16 @@
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
 
-<div id="divBotoesTitulosLimite">
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispA.'" onClick="return false;"'; } else { echo 'style="'.$dispA.'" onClick="mostraTelaAltera();return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispX.'" onClick="return false;"'; } else { echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o limite de desconto de t&iacute;tulos?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="carregaDadosConsultaLimiteDscTit();return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/excluir.gif"   <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="showConfirmacao(\'Deseja excluir o limite de desconto de t&iacute;tulos?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> />
-	<input type="image" id="btnIncluirLimite" name="btnIncluirLimite" src="<?php echo $UrlImagens; ?>botoes/incluir.gif"   <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscTit(1);return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> />
+<div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
+	<input type="button" class="botao gft" value="Voltar"  onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
+	<input type="button" class="botao gft" value="Alterar"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispA.'" onClick="return false;"'; } else { echo 'style="'.$dispA.'" onClick="mostraTelaAltera();return false;"'; } ?> />
+	<input type="button" class="botao gft" value="Cancelar"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispX.'" onClick="return false;"'; } else { echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o limite de desconto de t&iacute;tulos?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?>  />
+	<input type="button" class="botao gft" value="Consultar"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="carregaDadosConsultaLimiteDscTit();return false;"'; } ?> />
+	<input type="button" class="botao gft" value="Excluir"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="showConfirmacao(\'Deseja excluir o limite de desconto de t&iacute;tulos?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> />
+	<input type="button" class="botao gft" value="Incluir" id="btnIncluirLimite" name="btnIncluirLimite" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscTit(1);return false;"'; } ?> />
+
+	<input type="button" class="botao gft" value="Analisar"  id="btnAnalisarLimite" name="btnAnalisarLimite" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="carregaDadosAnalisarTitulo();return false;"'; } ?>/>
+	<input type="button" class="botao gft" value="Imprimir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> />
 </div>
 
 <script type="text/javascript">

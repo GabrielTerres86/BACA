@@ -382,7 +382,7 @@ function formataLayout(nomeForm){
 			
 	}else if( nomeForm == 'divLimites' ){
 				
-		$('#'+nomeForm).css('width','533px');
+		$('#'+nomeForm).css('width','800px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -398,7 +398,9 @@ function formataLayout(nomeForm){
 		arrayLargura[3] = '80px';
 		arrayLargura[4] = '30px';
 		arrayLargura[5] = '25px';
-		arrayLargura[6] = '65px';
+		arrayLargura[6] = '120px';
+		arrayLargura[7] = '120px';
+		arrayLargura[8] = '120px';
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
@@ -407,8 +409,9 @@ function formataLayout(nomeForm){
 		arrayAlinha[3] = 'right';
 		arrayAlinha[4] = 'center';
 		arrayAlinha[5] = 'right';
-		arrayAlinha[6] = 'left';
+		arrayAlinha[6] = 'center';
 		arrayAlinha[7] = 'center';
+		arrayAlinha[8] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		

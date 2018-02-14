@@ -334,7 +334,7 @@ function carregaLimitesTitulos() {
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
-			$("#divOpcoesDaOpcao2").html(response);
+			$("#divOpcoesDaOpc ao2").html(response);
 		}				
 	});		
 }
@@ -545,6 +545,32 @@ function mostraTelaAltera() {
 
     $('#todaProp', '#frmAltera').focus();
     return false;
+}
+
+// OPÇÃO ANALISAR
+// Carregar os dados para consulta de limite de desconto de títulos
+function carregaDadosAnalisarTitulo() {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
+	
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_analisar.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			nrctrlim: nrcontrato,
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$("#divOpcoesDaOpcao3").html(response);
+		}				
+	});		
 }
 
 function exibeAlteraNumero() {
