@@ -6381,7 +6381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     vr_exc_erro EXCEPTION;
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
-
+	
     -- Indicador se encontrou registro
     vr_fcrawepr  BOOLEAN := FALSE;
     vr_fcraplcr  BOOLEAN := FALSE;
@@ -6396,6 +6396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     rw_crapprp4 cr_crapprp%ROWTYPE;
     rw_craplcr3 cr_craplcr%ROWTYPE;
     rw_craplim4 cr_craplim%ROWTYPE;
+	vr_idqualif NUMBER;
     
   BEGIN
 
@@ -6488,7 +6489,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       -- Se encontrou registro na crawepr
       IF vr_fcrawepr THEN
         -- Renegociacao / Composicao de divida
-        IF rw_crawepr5.idquapro > 2 THEN
+		
+		--simas--
+		vr_idqualif := fn_verifica_qualificacao(pr_nrdconta => pr_nrdconta,
+												pr_nrctremp => pr_nrctrato,
+												pr_idquapro => rw_crawepr5.idquapro,
+												pr_cdcooper => pr_cdcooper);
+		
+        -- IF rw_crawepr5.idquapro > 2 THEN
+		IF vr_idqualif > 2 THEN
           vr_nrseqite := 6;
         ELSE
           -- Buscar conforme linha de credito
@@ -7073,8 +7082,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     
     IF pr_tpctrato = 90 THEN  -- Emprestimo / Financiamento
       IF pr_idquapro > 2 THEN
-        -- Renegociacao / Composicao de divida
-        IF pr_idquapro in (3,4) THEN
+        -- Renegociacao / Composicao de divida / Cessao de Cartao
+        IF pr_idquapro in (3,4,5) THEN
           pr_nrseqite := 4;
         END IF;
       ELSE
@@ -7681,6 +7690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     vr_index varchar2(100);
     vr_cdcooper crapass.cdcooper%TYPE;
     vr_nrdconta crapass.nrdconta%TYPE;
+	vr_idqualif NUMBER;
 
     rw_crawepr8 cr_crawepr%ROWTYPE;
     rw_crapepr2 cr_crapepr%ROWTYPE;
@@ -7868,8 +7878,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     END IF;
 
     IF pr_tpctrato = 90  THEN  /* Emprestimo / Financiamento */
-      IF vr_fcrawepr AND
-         rw_crawepr8.idquapro = 3   THEN  /* Renegociacao */
+	   vr_idqualif := fn_verifica_qualificacao(pr_nrdconta => pr_nrdconta,
+												pr_nrctremp => pr_nrctrato,
+												pr_idquapro => rw_crawepr8.idquapro,
+												pr_cdcooper => pr_cdcooper);
+												 
+      IF vr_fcrawepr AND vr_idqualif = 3 THEN
+	     -- simas 
+	     -- rw_crawepr8.idquapro = 3   THEN  /* Renegociacao */
+		 -- vr_idqualif = 3 THEN /* Renegociacao */ 
         vr_nrseqite := 3;
       END IF;
     END IF;
@@ -8651,6 +8668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   -- Classificação e Nota do cooperado
   vr_notacoop NUMBER;
   vr_clascoop VARCHAR2(10);
+  vr_idqualif NUMBER;
   ----------------- CURSOR ------------------
 
   rw_crawepr9 cr_crawepr%ROWTYPE;
@@ -8744,11 +8762,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     /**********************************************************************
      Item 2_1 - Finalidade da operacao
     **********************************************************************/
+
+	--simas
+	vr_idqualif := fn_verifica_qualificacao(pr_nrdconta => pr_nrdconta,
+												pr_nrctremp => pr_nrctrato,
+												pr_idquapro => rw_crawepr9.idquapro,
+												pr_cdcooper => pr_cdcooper);
+
     IF pr_tpctrato = 90 THEN  /* Emprestimo / Financiamento */
       -- se encontrou registro na crawepr
       IF vr_fcrawepr THEN
         pc_natureza_operacao ( pr_tpctrato => pr_tpctrato          --> Tipo Contrato Rating
-                              ,pr_idquapro => rw_crawepr9.idquapro --> Numero Contrato Rating
+                              ,pr_idquapro => vr_idqualif          --> Numero Contrato Rating
                               ,pr_dsoperac => rw_craplcr6.dsoperac --> Indicado se deve criar o rating
                               ,pr_cdcooper => pr_cdcooper          --> Código da cooperativa
                               ,pr_nrctrato => pr_nrctrato          --> Número do Contrato

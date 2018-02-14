@@ -4799,13 +4799,13 @@ PROCEDURE calcula_rating_fisica:
     IF   par_tpctrato = 90  THEN  /* Emprestimo / Financiamento */
          DO:
              IF  AVAIL crawepr THEN
-				 ASSIGN aux_idqualif = DYNAMIC-FUNCTION("verificaQualificacao",
+			     ASSIGN aux_idqualif = DYNAMIC-FUNCTION("verificaQualificacao",
                                             INPUT par_cdcooper,
                                             INPUT par_nrdconta,
                                             INPUT par_nrctrato,
                                             INPUT crawepr.idquapro).
 
-                 IF   aux_idqualif = 3   THEN  /* Renegociacao */
+				 IF   aux_idqualif = 3   THEN  /* Renegociacao */
                        ASSIGN aux_nrseqite = 3.
          END.
 
@@ -5319,7 +5319,7 @@ PROCEDURE calcula_rating_fisica:
                                             INPUT par_nrdconta,
                                             INPUT par_nrctrato,
                                             INPUT crawepr.idquapro).
-
+    
     IF   par_tpctrato = 90   THEN  /* Emprestimo / Financiamento */ 
          DO:
              IF  AVAIL crawepr THEN
@@ -6125,10 +6125,10 @@ PROCEDURE calcula_rating_juridica:
      Item 4_4 - Limite de credito (dados da proposta) 
      Passou 4_1
     ********************************************************************/
-
-    IF   par_tpctrato = 90  THEN /* Emprestimo / Financiamento */
+	
+	IF   par_tpctrato = 90  THEN /* Emprestimo / Financiamento */
          DO:
-             /* Renegociacao / Composicao de divida*/
+			 /* Renegociacao / Composicao de divida*/
              IF  AVAIL crawepr THEN DO:
                                 
                  ASSIGN aux_idqualif = DYNAMIC-FUNCTION("verificaQualificacao",
@@ -6136,8 +6136,8 @@ PROCEDURE calcula_rating_juridica:
                                             INPUT par_nrdconta,
                                             INPUT par_nrctrato,
                                             INPUT crawepr.idquapro). 
-                                 
-                /* IF   crawepr.idquapro > 2 THEN  */
+				
+				/* IF   crawepr.idquapro > 2 THEN  */
                 /* Alterado para quando o controle alterar 
                    a qualificacao da operacao, pegar o do controle 
                 */
