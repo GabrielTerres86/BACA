@@ -927,7 +927,7 @@ END pc_busca_dias_atraso;
                                      , rw_contas_do_titular.dsnivris -- risco CPF
                                      , vr_numero_grupo
 																		 , NULL -- risco melhora
-																		 , vr_risco_final);
+																		 , fn_traduz_risco(vr_risco_final));
 
 
                 vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
