@@ -7259,11 +7259,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       FUNCTION fn_nm_arquivo(pr_cdagectl IN crapcop.cdagectl%TYPE
                             ,pr_cdempres IN tbconv_arrecadacao.cdempres%TYPE
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                            ,pr_nrnsa    IN NUMBER
                             ) RETURN VARCHAR2 IS
         --
       BEGIN
         --
-        RETURN lpad(pr_cdagectl, 4, '0') || '-' || 'EG'|| lpad(pr_cdempres, 10, '0') || to_char(pr_dtmvtolt, 'YYYYMMDD') || '.CNV';
+        --RETURN lpad(pr_cdagectl, 4, '0') || '-' || 'EG'|| lpad(pr_cdempres, 10, '0') || to_char(pr_dtmvtolt, 'YYYYMMDD') || '.CNV';
+        RETURN lpad(pr_cdagectl, 4, '0') || '-' || 'FC'|| lpad(pr_cdempres, 10, '0') || to_char(pr_dtmvtolt, 'YYYYMMDD') || '.' || lpad(pr_nrnsa, 3, '0');
         --
       END fn_nm_arquivo;
       
@@ -7507,7 +7509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         -- Versão do layout
         pr_cabecalho := pr_cabecalho || LPAD(nvl(pr_nrlayout, '0'), 2, '0');
         -- Fixo
-        pr_cabecalho := pr_cabecalho || RPAD('CÓDIGO de BARRAS', 17, ' ');
+        pr_cabecalho := pr_cabecalho || RPAD('CODIGO DE BARRAS', 17, ' ');
         -- Reservado para o futuro (filler)
         pr_cabecalho := pr_cabecalho || RPAD(' ', 52, ' ');
         --
@@ -7572,7 +7574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         -- Código do registro
         pr_trailler := 'Z';
         -- Total de registros do arquivo
-        pr_trailler := pr_trailler || lpad(pr_nrseqreg, 6, '0');
+        pr_trailler := pr_trailler || lpad((pr_nrseqreg + 2), 6, '0'); -- Somado 2 para considerar as linhas referentes ao header e trailler.
         -- Valor total recebido dos registros do arquivo
         pr_trailler := pr_trailler || lpad(replace(trim(to_char(pr_vltotreg, '999999999999990D90')), ',', ''), 17, '0');
         -- Reservado para o futuro (filler)
@@ -7631,6 +7633,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           pr_nmarqtxt := fn_nm_arquivo(pr_cdagectl => pr_cdagectl -- IN
                                       ,pr_cdempres => pr_cdempres -- IN
                                       ,pr_dtmvtolt => pr_dtmvtolt -- IN
+                                      ,pr_nrnsa    => substr(fn_busca_nsa(pr_cdcooper => pr_cdcooper -- IN
+                                                                                        ,pr_cdconven => pr_cdempres -- IN
+                                                                         ), 0, 6) -- IN
                                       );
           -- Busca do diretório base da cooperativa
           vr_nmdirtxt := gene0001.fn_diretorio(pr_tpdireto => 'C'         -- IN -- /usr/coop
@@ -7823,7 +7828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                     --
                     vr_linha := NULL;
                     -- Gera a linha de trailler
-                    pc_gera_trailler(pr_nrseqreg => vr_qtregist -- IN
+                    pc_gera_trailler(pr_nrseqreg => vr_qtregist -- IN 
                                     ,pr_vltotreg => vr_vltotrec -- IN
                                     ,pr_trailler => vr_linha    -- OUT
                                     ,pr_dscritic => vr_dscritic -- OUT
