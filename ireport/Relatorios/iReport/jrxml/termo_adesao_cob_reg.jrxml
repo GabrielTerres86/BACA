@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-02-02T14:51:33 -->
+<!-- 2018-02-14T11:44:48 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_cob_registrada" language="groovy" pageWidth="460" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="460" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="1584"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="XML base"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -18,6 +19,9 @@
 	<queryString language="xPath">
 		<![CDATA[/adesao]]>
 	</queryString>
+	<field name="dsqrcode" class="java.lang.String">
+		<fieldDescription><![CDATA[dsqrcode]]></fieldDescription>
+	</field>
 	<field name="nmcooper" class="java.lang.String">
 		<fieldDescription><![CDATA[cooperativa/nmcooper]]></fieldDescription>
 	</field>
@@ -106,7 +110,7 @@
 		<band height="11"/>
 	</pageHeader>
 	<columnHeader>
-		<band height="33"/>
+		<band height="45"/>
 	</columnHeader>
 	<detail>
 		<band height="176" splitType="Stretch">
@@ -158,7 +162,7 @@
 				<textFieldExpression><![CDATA[$F{nmcooper}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="0" y="5" width="460" height="12" uuid="466f794e-1f08-459f-9942-c8476ab7ada4"/>
+				<reportElement x="0" y="-20" width="460" height="12" uuid="466f794e-1f08-459f-9942-c8476ab7ada4"/>
 				<textElement textAlignment="Center" markup="none">
 					<font fontName="Courier New" size="10" isBold="true" isUnderline="false"/>
 				</textElement>
