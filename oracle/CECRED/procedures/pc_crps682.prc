@@ -1027,8 +1027,7 @@ BEGIN
     --IF ((rw_crapdat.inproces = 1) -- Caso seja uma geracao manual (carga ou SPC/Serasa) e o processo esteja on-line
     --If acima retirado, pois quando for geração manual, não roda vom paralelismo.
     
-    IF rw_crapdat.inproces   > 2 
-    --  AND TO_CHAR(rw_crapdat.dtmvtolt,'D')= 2  -- Processo noturno rodando e tbm eh segunda-feira
+    IF TO_CHAR(Sysdate,'D')= 1  -- Tratamento para execução aos Domingos - Será parelelismo
       AND vr_qtdjobs          > 0 
       AND pr_cdagenci         = 0   
       AND pr_flgexpor         = 0   then    
@@ -3267,7 +3266,7 @@ BEGIN
                                          
       end if;    
     
-      if rw_crapdat.inproces > 2 and vr_qtdjobs > 0     then 
+      if /*rw_crapdat.inproces > 2 and*/ vr_qtdjobs > 0     then 
         --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
         pc_log_programa(pr_dstiplog   => 'F',    
                         pr_cdprograma => vr_cdprogra,           
@@ -3304,6 +3303,14 @@ BEGIN
       -- Devolvemos código e critica encontradas das variaveis locais
       pr_cdcritic := nvl(vr_cdcritic, 0);
       pr_dscritic := vr_dscritic;
+
+    pc_log_programa(PR_DSTIPLOG           => 'O',
+                    PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                    pr_cdcooper           => pr_cdcooper,
+                    pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                    pr_tpocorrencia       => 4,
+                    pr_dsmensagem         => 'Erro: '||pr_cdagenci||' '||pr_dscritic ,
+                    PR_IDPRGLOG           => vr_idlog_ini_par); 
       
     if pr_idparale <> 0 then 
       -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
@@ -3378,6 +3385,15 @@ BEGIN
       pr_dscritic := SQLERRM||' Nr Conta '||Nr_DConta;
       
       pc_internal_exception(pr_cdcooper => pr_cdcooper);
+  
+  
+    pc_log_programa(PR_DSTIPLOG           => 'O',
+                    PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                    pr_cdcooper           => pr_cdcooper,
+                    pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                    pr_tpocorrencia       => 4,
+                    pr_dsmensagem         => 'Erro1: '||pr_cdagenci||' '||pr_dscritic ,
+                    PR_IDPRGLOG           => vr_idlog_ini_par);
       
       -- Efetuar rollback
       ROLLBACK;
