@@ -132,7 +132,7 @@
 		$xmlFuncao .= "</Root>";
 
 		// Executa script para envio do XML	
-		$xmlFuncaoResult = mensageria($xmlFuncao, "EMPR0001", "OBTEM_DADOS_CONSIGNADO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlFuncaoResult = mensageria($xmlFuncao, "TELA_ATENDA_EMPRESTIMO", "OBTEM_DADOS_CONSIGNADO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObjFuncao = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlFuncaoResult)));
 		//$xmlObjFuncao = simplexml_load_string($xmlFuncaoResult);
 
