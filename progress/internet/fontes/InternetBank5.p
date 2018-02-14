@@ -502,6 +502,11 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    "<codigobarras>" + tt-consulta-blt.dscodbar + "</codigobarras>" +
                                    "<dsdespec>" + tt-consulta-blt.dsdespec + "</dsdespec>" +
                                    "<nrborder>" + STRING(tt-consulta-blt.nrborder) + "</nrborder>" +
+                                   "<dsdinst1>" + STRING(tt-consulta-blt.dsdinst1) + "</dsdinst1>" +                                   
+                                   "<dsdinst2>" + STRING(tt-consulta-blt.dsdinst2) + "</dsdinst2>" +                                   
+                                   "<dsdinst3>" + STRING(tt-consulta-blt.dsdinst3) + "</dsdinst3>" +                                   
+                                   "<dsdinst4>" + STRING(tt-consulta-blt.dsdinst4) + "</dsdinst4>" +                                   
+                                   "<dsdinst5>" + STRING(tt-consulta-blt.dsdinst5) + "</dsdinst5>" +                                                                      
                                    "</BOLETO>".
 END.
 

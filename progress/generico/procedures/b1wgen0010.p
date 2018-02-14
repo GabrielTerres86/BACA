@@ -4440,6 +4440,42 @@ PROCEDURE cria_tt-consulta-blt.
          WHEN 2 THEN tt-consulta-blt.dsavisms = "Sem Linha Dig:".
      END CASE. 
      
+     CASE crapcob.cdmensag:
+       WHEN 0 THEN ASSIGN tt-consulta-blt.dsdinst1 = ' '.
+       WHEN 1 THEN ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO ATE O VENCIMENTO'.
+       WHEN 2 THEN ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO APOS O VENCIMENTO'.
+       OTHERWISE ASSIGN tt-consulta-blt.dsdinst1 = ' '.
+     END CASE.           
+     
+     IF (crapcob.tpjurmor <> 3) OR (crapcob.tpdmulta <> 3) THEN DO:
+      
+       ASSIGN tt-consulta-blt.dsdinst2 = 'APOS VENCIMENTO, COBRAR: '.
+       
+       IF crapcob.tpjurmor = 1 THEN 
+          tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + 'R$ ' + TRIM(STRING(crapcob.vljurdia, 'zzz,zzz,zz9.99')) + ' JUROS AO DIA'.
+       ELSE 
+         IF crapcob.tpjurmor = 2 THEN 
+            tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + TRIM(STRING(crapcob.vljurdia, 'zzz,zzz,zz9.99')) + '% JUROS AO MES'.
+                         
+       IF crapcob.tpjurmor <> 3 AND
+          crapcob.tpdmulta <> 3 THEN
+          tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + ' E '.            
+ 
+       IF crapcob.tpdmulta = 1 THEN 
+          tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + 'MULTA DE R$ ' + TRIM(STRING(crapcob.vlrmulta, 'zzz,zzz,zz9.99')).
+       ELSE IF crapcob.tpdmulta = 2 THEN 
+          tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + 'MULTA DE ' + TRIM(STRING(crapcob.vlrmulta, 'zzz,zzz,zz9.99')) + '%'.
+                                                       
+     END.     
+
+     IF crapcob.flgdprot = TRUE THEN
+        ASSIGN tt-consulta-blt.dsdinst3 = 'PROTESTAR APOS ' + STRING(crapcob.qtdiaprt) + ' DIAS CORRIDOS DO VENCIMENTO.'
+               tt-consulta-blt.dsdinst4 = '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***'.
+               
+     IF crapcob.flserasa = TRUE AND crapcob.qtdianeg > 0  THEN
+        ASSIGN tt-consulta-blt.dsdinst3 = 'NEGATIVAR NA SERASA APOS ' + STRING(crapcob.qtdianeg) + ' DIAS CORRIDOS DO VENCIMENTO.'
+               tt-consulta-blt.dsdinst4 = ' '.     
+     
    END. /* Fim do DO TRANSACTION */
   
    /*Bloco para tratamento de erro do create da lcm try catch*/
@@ -5307,19 +5343,19 @@ PROCEDURE proc_nosso_numero.
             ASSIGN tt-consulta-blt.dsdinst2 = 'APOS VENCIMENTO, COBRAR: '.
             
             IF crapcob.tpjurmor = 1 THEN 
-               tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + 'R$ ' + STRING(crapcob.vljurdia, 'zzz,zzz,zz9.99') + ' JUROS AO DIA'.
+               tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + 'R$ ' + TRIM(STRING(crapcob.vljurdia, 'zzz,zzz,zz9.99')) + ' JUROS AO DIA'.
             ELSE 
               IF crapcob.tpjurmor = 2 THEN 
-                 tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + STRING(crapcob.vljurdia, 'zzz,zzz,zz9.99') + '% JUROS AO MES'.
+                 tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + TRIM(STRING(crapcob.vljurdia, 'zzz,zzz,zz9.99')) + '% JUROS AO MES'.
                               
             IF crapcob.tpjurmor <> 3 AND
                crapcob.tpdmulta <> 3 THEN
                tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + ' E '.            
 
             IF crapcob.tpdmulta = 1 THEN 
-               tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + 'MULTA DE R$ ' + STRING(crapcob.vlrmulta, 'zzz,zzz,zz9.99').
+               tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + 'MULTA DE R$ ' + TRIM(STRING(crapcob.vlrmulta, 'zzz,zzz,zz9.99')).
             ELSE IF crapcob.tpdmulta = 2 THEN 
-               tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + 'MULTA DE ' + STRING(crapcob.vlrmulta, 'zzz,zzz,zz9.99') + '%'.
+               tt-consulta-blt.dsdinst2 = tt-consulta-blt.dsdinst2 + 'MULTA DE ' + TRIM(STRING(crapcob.vlrmulta, 'zzz,zzz,zz9.99')) + '%'.
                                                             
           END.
            
