@@ -1,23 +1,23 @@
 /***********************************************************************
     Fonte: ocorrencias.js
     Autor: Guilherme
-    Data : Fevereiro/2007                Última Alteração: 29/10/2012
+    Data : Fevereiro/2007                Ãšltima AlteraÃ§Ã£o: 29/10/2012
 
-    Objetivo  : Biblioteca de funções da rotina OCORRENCIAS da tela
+    Objetivo  : Biblioteca de funÃ§Ãµes da rotina OCORRENCIAS da tela
                 ATENDA
 
-    Alterações: 13/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
+    AlteraÃ§Ãµes: 13/07/2011 - Alterado para layout padrÃ£o (Rogerius - DB1). 	
 	
-	            16/09/2011 - Ajuste no tamanho do campo Crédito Líquido (David).
+	            16/09/2011 - Ajuste no tamanho do campo CrÃ©dito LÃ­quido (David).
 				
-				29/10/2012 - Ajustes referente a inclusão da opção "Grupo Economico". 
+				29/10/2012 - Ajustes referente a inclusÃ£o da opÃ§Ã£o "Grupo Economico". 
 						     Projeto GE (Adriano).
-                01/08/2016 - Adicionado função controlaFoco (Evandro - RKAM).     
+                01/08/2016 - Adicionado funÃ§Ã£o controlaFoco (Evandro - RKAM).     
                 
-                29/09/2016 - Ajustes referente a inclusão da opção "Acordos". 
+                29/09/2016 - Ajustes referente a inclusÃ£o da opÃ§Ã£o "Acordos". 
 						     Projeto 302 (Jean Michel).
 
-				24/01/2018 - Ajustes referentes a inclusão da opção "Riscos".
+				24/01/2018 - Ajustes referentes a inclusÃ£o da opÃ§Ã£o "Riscos".
 					         Reginaldo - AMcom
 							 
  ***********************************************************************/
@@ -44,13 +44,13 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
     } else if (opcao == "5") {	// Op&ccedil;&atilde;o Estouros
 		var msg = "estouros";
 		var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/estouros.php";
-    } else if (opcao == '6') { // Operação Grupo Economico
+    } else if (opcao == '6') { // OperaÃ§Ã£o Grupo Economico
 		var msg  = "grupo economico";
 		var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/grupo_economico.php";
-    } else if (opcao == '7') { // Operação Acordos
+    } else if (opcao == '7') { // OperaÃ§Ã£o Acordos
         var msg = "acordos";
         var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/acordos.php";
-	} else if (opcao == '8') { // Operação Riscos
+	} else if (opcao == '8') { // OperaÃ§Ã£o Riscos
 		var msg = "riscos";
 		var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/riscos.php";
 	}
@@ -95,7 +95,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 	}); 		
 }
 
-//Função para controle de navegação pelas abas
+//FunÃ§Ã£o para controle de navegaÃ§Ã£o pelas abas
 function controlaFoco() {
 	$('#divRotina').each(function () {
 	    $(this).find("#linkAba0").focus();
@@ -199,7 +199,7 @@ function formataPrincipal() {
 	
 }
 
-// Função que formata a tabela contra-ordens
+// FunÃ§Ã£o que formata a tabela contra-ordens
 function formataContraOrdens() {
 			
 	var divRegistro = $('div.divRegistros','#divTabContraOrdens');		
@@ -236,7 +236,7 @@ function formataContraOrdens() {
 	return false;
 }
 
-// Função que formata a tabela emprestimos
+// FunÃ§Ã£o que formata a tabela emprestimos
 function formataEmprestimos() {
 			
 	var divRegistro = $('div.divRegistros','#divTabEmprestimos');		
@@ -270,21 +270,21 @@ function formataEmprestimos() {
 	return false;
 }
 
-// Função que formata a tabela riscos
+// FunÃ§Ã£o que formata a tabela riscos
 function formataRiscos() {
 	var divRegistro = $('div.divRegistros', '#divTabRiscos');
 	var tabela = $('table', divRegistro);
 	var linha = $('table > tbody > tr', divRegistro);
 
-	divRegistro.css({ 'height': '200px', 'width': '700px' });
+	divRegistro.css({ 'height': '175px', 'width': '780px' });
 
 	var ordemInicial = new Array();
 
 	var arrayLargura = ['140px', '70px', '60px', '40px', '40px', '40px', '40px', '40px', 
-		'40px', '40px'];
+		'40px', '40px', '40px', '40px'];
 
 	var arrayAlinha = ['center', 'right', 'right', 'center', 'center', 'center', 'center',
-		'center', 'center', 'center'];
+		'center', 'center', 'center', 'center', 'center'];
 
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 
@@ -293,7 +293,7 @@ function formataRiscos() {
 	return false;
 }
 
-// Função que formata a tabela prejuizos
+// FunÃ§Ã£o que formata a tabela prejuizos
 function formataPrejuizos() {
 			
 	var divRegistro = $('div.divRegistros','#divTabPrejuizos');		
@@ -324,7 +324,7 @@ function formataPrejuizos() {
 	return false;
 }
 
-// Função que formata a tabela SPC
+// FunÃ§Ã£o que formata a tabela SPC
 function formataSPC() {
 
 	var divRegistro = $('div.divRegistros','#divTabSPC');		
@@ -360,12 +360,12 @@ function formataSPC() {
 	$('li:eq(2)', linha1).addClass('txtNormalBold').css({'width':'15%'});
 	$('li:eq(3)', linha1).addClass('txtNormal');
 
-	// seleciona o registro que é clicado
+	// seleciona o registro que Ã© clicado
 	$('table > tbody > tr', divRegistro).click( function() {
 		selecionaSPC($(this));
 	});	
 
-	// seleciona o registro que é focado
+	// seleciona o registro que Ã© focado
 	$('table > tbody > tr', divRegistro).focus( function() {
 		selecionaSPC($(this));
 	});	
@@ -373,7 +373,7 @@ function formataSPC() {
 	return false;
 }
 
-// Função de complemento da formataSPC
+// FunÃ§Ã£o de complemento da formataSPC
 function selecionaSPC(tr) {
 
 	$('#contrat2').html($('#contrat1', tr ).val());
@@ -382,7 +382,7 @@ function selecionaSPC(tr) {
 	return false;
 }
 
-// Função que formata a tabela estouros
+// FunÃ§Ã£o que formata a tabela estouros
 function formataEstouros() {
 
 	var divRegistro = $('div.divRegistros','#divTabEstouros');		
@@ -429,12 +429,12 @@ function formataEstouros() {
 	$('li:eq(3)', linha2).addClass('txtNormal');
 
 
-	// seleciona o registro que é clicado
+	// seleciona o registro que Ã© clicado
 	$('table > tbody > tr', divRegistro).click( function() {
 		selecionaEstouros($(this));
 	});	
 
-	// seleciona o registro que é focado
+	// seleciona o registro que Ã© focado
 	$('table > tbody > tr', divRegistro).focus( function() {
 		selecionaEstouros($(this));
 	});	
@@ -517,7 +517,7 @@ function formataAcordos() {
 
 }
 
-// Função de complemento da formataEstourso
+// FunÃ§Ã£o de complemento da formataEstourso
 function selecionaEstouros(tr) {
 
 	$('#complem1').html($('#complem11', tr ).val());

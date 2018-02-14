@@ -135,9 +135,6 @@
 	<label for="campo09">Empr. em atraso:</label>
 	<input id="campo09"type="text" value="<?php if ($ocorrencia[9]->cdata == "yes") { echo "SIM"; } else { echo "NAO"; } ?>" />
 	
-	<label for="campo17">Risco Cooperado:</label>
-	<input id="campo17" type="text" value="<?php echo $ocorrencia[17]->cdata." - ".$ocorrencia[18]->cdata;  ?>" />
-	
 	<br />
 	<br />
 	<br />
