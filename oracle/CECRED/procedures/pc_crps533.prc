@@ -296,7 +296,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                03/10/2017 - SD761624 - Inclusão de tratamento da Critica 811 - Marcos(Supero)
 
+               04/01/2018 - #824564 Tratamento para incrementar nrseqdig em 100.000 ao tentar inserir índice
+                           duplicado na craplcm (dup_val_on_index) (Carlos)
+
 			   09/02/2018 - Adicionado coluna cdagenci no relatorio 526 - Chamado 771338 - Mateus Zimmermann (Mouts)
+                            
+               14/02/2018 - SD813179 - Verificar se existe devolucao alinea 70 igual a alinea 21 - Demetrius (Mouts)
                             
 ............................................................................. */
 
@@ -518,7 +523,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
            AND tbchq.nrdconta = pr_nrdconta;
         rw_tbchq_param_conta cr_tbchq_param_conta%ROWTYPE;
 
-
        /* Variaveis Locais da pc_crps533 */
 
        vr_exc_saida       EXCEPTION;
@@ -549,6 +553,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        vr_vlsddisp        NUMBER;
        vr_vldeplib        NUMBER;
        vr_alinea_96       NUMBER;
+       
+       vr_flg_criou_lcm   BOOLEAN := FALSE;
+       vr_nrseqdig        NUMBER;
        
        -- Código do programa
        vr_cdprogra crapprg.cdprogra%TYPE;
@@ -968,6 +975,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
            END LOOP;
 
+           vr_flg_criou_lcm := FALSE;
+           vr_nrseqdig := nvl(vr_tab_chqtco(idx).nrseqarq,0);
+           
+           WHILE NOT vr_flg_criou_lcm LOOP
            BEGIN
              --Inserir Lancamentos de deposito a vista (CRAPLCM)
              INSERT INTO craplcm (craplcm.cdcooper
@@ -1001,7 +1012,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                ,nvl(vr_nrdocmt2,0)
                                ,nvl(vr_tab_chqtco(idx).cdhistor,0)
                                ,nvl(vr_tab_chqtco(idx).vllanmto,0)
-                               ,nvl(vr_tab_chqtco(idx).nrseqarq,0)
+                                 ,vr_nrseqdig
                                ,nvl(vr_tab_chqtco(idx).cdpesqbb,' ')
                                ,pr_dtleiarq
                                ,nvl(vr_tab_chqtco(idx).cdbandep,0)
@@ -1013,10 +1024,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                ,0)
              RETURNING craplcm.nrseqdig INTO rw_craplcm.nrseqdig;
            EXCEPTION
+               WHEN DUP_VAL_ON_INDEX THEN
+                 vr_nrseqdig := vr_nrseqdig + 100000;
+                 continue;
              WHEN OTHERS THEN
+                 cecred.pc_internal_exception;
                vr_dscritic:= 'Erro ao inserir craplcm na rotina pc_crps533.pc_processamento_tco: '||SQLERRM;
                RAISE vr_exc_erro;
            END;
+
+             vr_flg_criou_lcm := TRUE;
+             
+           END LOOP;
 
            BEGIN
              --Atualizar capas de lote (CRAPLOT)
@@ -1024,7 +1043,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                 ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
                                 ,craplot.vlinfodb = nvl(craplot.vlinfodb,0) + nvl(vr_tab_chqtco(idx).vllanmto,0)
                                 ,craplot.vlcompdb = nvl(craplot.vlcompdb,0) + nvl(vr_tab_chqtco(idx).vllanmto,0)
-                                ,craplot.nrseqdig = rw_craplcm.nrseqdig
+                                ,craplot.nrseqdig = vr_nrseqdig
              WHERE ROWID = rw_craplot.rowid;
            EXCEPTION
              WHEN OTHERS THEN
@@ -2035,13 +2054,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
             --Selecionar os lancamentos
             CURSOR cr_craplcm2 (pr_cdcooper IN craplcm.cdcooper%TYPE
                                ,pr_nrdconta IN craplcm.nrdconta%TYPE
-                               ,pr_nrdocmto IN craplcm.nrdocmto%TYPE) IS
+                               ,pr_nrdocmto IN craplcm.nrdocmto%TYPE
+                               ,pr_cdpesqbb IN craplcm.cdpesqbb%TYPE) IS
               SELECT craplcm.dtmvtolt
                 FROM craplcm craplcm
                WHERE craplcm.cdcooper = pr_cdcooper
                  AND craplcm.nrdconta = pr_nrdconta
                  AND craplcm.nrdocmto = pr_nrdocmto
-                 AND craplcm.cdpesqbb = '21'
+                 AND craplcm.cdpesqbb = pr_cdpesqbb -- '21'
                  AND craplcm.cdhistor IN (47, 191, 338, 573)
                ORDER BY craplcm.progress_recid DESC;
             rw_craplcm2 cr_craplcm2%ROWTYPE;
@@ -3688,6 +3708,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             IF cr_craptco%FOUND THEN
                               --Fechar Cursor
                               CLOSE cr_craptco;
+                              IF vr_cdalinea = 70 THEN
+                                /* Se ja existir devolucao com a alinea 70, devolver com a alinea 43 */
+                                OPEN cr_craplcm2 (pr_cdcooper => rw_craptco.cdcopant
+                                                 ,pr_nrdconta => rw_craptco.nrdconta
+                                                 ,pr_nrdocmto => vr_nrdocmto
+                                                 ,pr_cdpesqbb => vr_cdalinea);
+                                --Posicionar no proximo registro
+                                FETCH cr_craplcm2 INTO rw_craplcm2;
+                                --Se encontrou registro
+                                IF cr_craplcm2%FOUND THEN
+                                  vr_cdalinea:= 43;
+                                END IF;
+                                --Fechar cursor
+                                CLOSE cr_craplcm2;
+                              END IF;
+
                               --Executar rotina
                               pc_cria_dev(pr_cdcooper => rw_craptco.cdcopant
                                          ,pr_dtmvtopr => (CASE pr_nmtelant
@@ -3732,12 +3768,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                               --Fechar Cursor
                               CLOSE cr_craptco;
 
-                              IF  vr_cdalinea = 21 THEN
+                              IF  vr_cdalinea in (21,70) THEN
                                 /* Se ja existir devolucao com a alinea 21, devolver com a alinea 43 */
                                 --Selecionar os lancamentos
                                 OPEN cr_craplcm2 (pr_cdcooper => pr_cdcooper
                                                  ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                 ,pr_nrdocmto => vr_nrdocmto);
+                                                 ,pr_nrdocmto => vr_nrdocmto
+                                                 ,pr_cdpesqbb => vr_cdalinea);
                                 --Posicionar no proximo registro
                                 FETCH cr_craplcm2 INTO rw_craplcm2;
                                 --Se encontrou registro
@@ -4631,8 +4668,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                       -- Depósito intercooperativa
                       IF vr_cdbandep = 85 AND vr_cdageapr <> vr_cdagedep THEN
-                        --Inserir lancamento
-                        BEGIN
+
                           --Verificar o tipo de cheque para determinar o código do histórico
                           IF rw_crapfdc.tpcheque = 2 THEN
                             vr_cdhistor:= 572;
@@ -4651,6 +4687,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                           CLOSE cr_crapcoop;
 
+                        vr_flg_criou_lcm := FALSE;
+                        vr_nrseqdig := nvl(vr_nrseqarq,0);
+                        
+                        WHILE NOT vr_flg_criou_lcm LOOP
+                          BEGIN
                           --Inserir lancamento
                           INSERT INTO craplcm (cdcooper
                                               ,dtmvtolt
@@ -4685,7 +4726,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nvl(vr_nrdocmto,0)
                                               ,nvl(vr_cdhistor,0)
                                               ,nvl(vr_vllanmto,0)
-                                              ,nvl(vr_nrseqarq,0)
+                                                ,vr_nrseqdig
                                               ,nvl(vr_cdpesqbb,' ')
                                               ,nvl(vr_cdbandep,0)
                                               ,nvl(vr_cdcmpdep,0)
@@ -4697,13 +4738,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,vr_cdageapr
                                               ,to_char(SYSDATE,'sssss'));
                         EXCEPTION
+                            WHEN DUP_VAL_ON_INDEX THEN
+                              vr_nrseqdig := vr_nrseqdig + 100000;
+                              continue;
                           WHEN OTHERS THEN
+                              cecred.pc_internal_exception;
                             vr_des_erro:= 'Erro ao inserir na tabela craplcm, deposito intercooperativa. Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
                             RAISE vr_exc_erro;
                         END;
+                          
+                          vr_flg_criou_lcm := TRUE;
+                          
+                        END LOOP;
+
                       ELSE
-                        --Inserir lancamento
-                        BEGIN
+
                           --Verificar o tipo de cheque para determinar o código do histórico
                           IF rw_crapfdc.tpcheque = 2 THEN
                             vr_cdhistor:= 572;
@@ -4711,6 +4760,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             vr_cdhistor:= 524;
                           END IF;
 
+                        vr_flg_criou_lcm := FALSE;
+                        vr_nrseqdig := nvl(vr_nrseqarq,0);               
+                        
+                        WHILE NOT vr_flg_criou_lcm LOOP
+                          BEGIN
                           --Inserir lancamento
                           INSERT INTO craplcm (cdcooper
                                               ,dtmvtolt
@@ -4744,7 +4798,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nvl(vr_nrdocmto,0)
                                               ,nvl(vr_cdhistor,0)
                                               ,nvl(vr_vllanmto,0)
-                                              ,nvl(vr_nrseqarq,0)
+                                                ,vr_nrseqdig
                                               ,nvl(vr_cdpesqbb,' ')
                                               ,nvl(vr_cdbandep,0)
                                               ,nvl(vr_cdcmpdep,0)
@@ -4755,10 +4809,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,0
                                               ,to_char(SYSDATE,'sssss'));
                         EXCEPTION
+                            WHEN DUP_VAL_ON_INDEX THEN
+                              vr_nrseqdig := vr_nrseqdig + 100000;
+                              continue;
                           WHEN OTHERS THEN
+                              cecred.pc_internal_exception;
                             vr_des_erro:= 'Erro ao inserir na tabela craplcm. Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
                             RAISE vr_exc_erro;
                         END;
+
+                          vr_flg_criou_lcm := TRUE;
+
+                        END LOOP;
                       END IF;
 
                       --Atualizar informacoes dos Lotes
@@ -4767,7 +4829,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,craplot.qtcompln = craplot.qtcompln + 1
                                           ,craplot.vlinfodb = craplot.vlinfodb + vr_vllanmto
                                           ,craplot.vlcompdb = craplot.vlcompdb + vr_vllanmto
-                                          ,craplot.nrseqdig = vr_nrseqarq
+                                          ,craplot.nrseqdig = vr_nrseqdig
                         WHERE craplot.ROWID = rw_craplot.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN
@@ -4908,6 +4970,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_alinea_96:= 21;
                         END IF;
                       
+                        vr_flg_criou_lcm := FALSE;
+                        vr_nrseqdig := nvl(vr_nrseqarq, 0);
+                         IF vr_alinea_96 = 70 THEN
+                          /* Se ja existir devolucao com a alinea 70, devolver com a alinea 43 */
+                          OPEN cr_craplcm2 (pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => nvl(nvl(vr_nrdconta_incorp, vr_nrdconta), 0)
+                                           ,pr_nrdocmto => nvl(vr_nrdocmto, 0)
+                                           ,pr_cdpesqbb => vr_alinea_96);
+                          --Posicionar no proximo registro
+                          FETCH cr_craplcm2 INTO rw_craplcm2;
+                          --Se encontrou registro
+                          IF cr_craplcm2%FOUND THEN
+                            vr_alinea_96:= 43;
+                          END IF;
+                          --Fechar cursor
+                          CLOSE cr_craplcm2;
+                        END IF;
+
+                        WHILE NOT vr_flg_criou_lcm LOOP
                         BEGIN
                          INSERT INTO craplcm
                            (cdcooper,
@@ -4944,7 +5025,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             nvl(vr_nrdocmto, 0),
                             (CASE rw_crapfdc.tpcheque WHEN 1 THEN 573 ELSE 78 END),
                             nvl(vr_vllanmto, 0),
-                            nvl(vr_nrseqarq, 0),
+                              vr_nrseqdig,
                             vr_alinea_96,
                             rw_crapfdc.cdbanchq,
                             rw_crapfdc.cdagechq,
@@ -4956,11 +5037,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             2, -- dsidenti 
                             to_char(SYSDATE, 'sssss'));
                          EXCEPTION
+                             WHEN DUP_VAL_ON_INDEX THEN
+                               -- Incrementar o nrseqdig e tentar inserir novamente
+                               vr_nrseqdig := vr_nrseqdig + 100000;
+                               continue;
                            WHEN OTHERS THEN
+                               cecred.pc_internal_exception;
                              vr_des_erro:= 'Erro ao inserir na tabela craplcm (devolucao). Rotina'
                                            || ' pc_crps533.pc_integra_todas_coop. '||SQLERRM;
                              RAISE vr_exc_erro;
                         END;
+                        
+                          vr_flg_criou_lcm := TRUE;
+
+                        END LOOP;
                         
                         --Atualizar informacoes dos Lotes
                         BEGIN
@@ -4969,7 +5059,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                  craplot.qtcompln = craplot.qtcompln + 1,
                                  craplot.vlinfocr = craplot.vlinfocr + vr_vllanmto,
                                  craplot.vlcompcr = craplot.vlcompcr + vr_vllanmto,
-                                 craplot.nrseqdig = vr_nrseqarq
+                                 craplot.nrseqdig = vr_nrseqdig
                            WHERE craplot.rowid = rw_craplot2.rowid;
                         EXCEPTION
                           WHEN OTHERS THEN
@@ -5218,6 +5308,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
                       -- Adiciona a linha ao arquivo de criticas
                       dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);                      
+
+                    ELSIF vr_cdcritic = 439 THEN
+                      -- Monta a mensagem
+                      vr_desdados := '50' || 
+                                     TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || 
+                                     TO_CHAR(rw_crapdat.dtmvtopr,'DDMMRR') || --Entra no próximo dia útil
+                                     ',4958,1413,' ||               
+                                     TO_CHAR(rw_craprej.vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
+                                     ',5210,"' || 
+                                     ' DEVOLUÇÃO DO CHEQUE C.ORDEM - APR.INDEVIDA ' || GENE0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z') || 
+                                     ' DO COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_craprej.nrdconta) ||
+                                     ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
+                      -- Adiciona a linha ao arquivo de criticas
+                      dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);					                      
                     END IF;
 
 
