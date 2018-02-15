@@ -16,7 +16,7 @@
 
           <legend><?php echo utf8ToHtml('Parâmetros da Esteira de Crédito') ?></legend>
         
-          <label for="contigen"><?php echo utf8ToHtml('Habilita Contigência:') ?></label>
+          <label for="contigen"><?php echo utf8ToHtml('Habilita Contingência:') ?></label>
           <select id="contigen" name="contigen">
             <option value="1"><? echo utf8ToHtml(' Sim') ?></option> 
             <option value="0"><? echo utf8ToHtml(' Não') ?></option>
@@ -24,7 +24,7 @@
         
           <br style="clear:both" />
 
-          <label for="incomite"><?php echo utf8ToHtml('Valida envio de e-mail comite sede:') ?></label>
+          <label for="incomite"><?php echo utf8ToHtml('Valida Envio de E-mail Comitê Sede:') ?></label>
           <select id="incomite" name="incomite">
             <option value="1"><? echo utf8ToHtml(' Sim') ?></option> 
             <option value="0"><? echo utf8ToHtml(' Não') ?></option>
@@ -32,7 +32,7 @@
           
           <br style="clear:both" />	
           
-          <label for="anlautom"><?php echo utf8ToHtml('Analise Automática da Esteira:') ?></label>
+          <label for="anlautom"><?php echo utf8ToHtml('Análise Automática da Esteira:') ?></label>
           <select id="anlautom" name="anlautom">
             <option value="1"><? echo utf8ToHtml(' Sim') ?></option> 
             <option value="0"><? echo utf8ToHtml(' Não') ?></option>
@@ -56,7 +56,7 @@
         
           <br style="clear:both" />	
         
-          <label class="rotulo" style="width:300px">Quantidade de meses para:</label>
+          <label class="rotulo" style="width:300px">Quantidade de Meses Para:</label>
         
           <br style="clear:both" />	
 
