@@ -3100,37 +3100,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
     Alteracoes: -----
     ..............................................................................*/
     DECLARE
-      -- Consultar tipo de cooperado
-      CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
-                       ,pr_nrdconta crapass.nrdconta%TYPE) IS
 
-        SELECT ass.inpessoa
-              ,ass.cdagenci
-              ,ass.nrdctitg
-          FROM crapass ass
-         WHERE ass.cdcooper = pr_cdcooper
-           AND ass.nrdconta = pr_nrdconta;
-           
-      rw_crapass cr_crapass%ROWTYPE;
+      -- data das coopeativas
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-      CURSOR cr_crapcdr IS
-        SELECT trunc(SYSDATE) AS dtrencon -- data de renovacao do convenio 
+      -- cursor com as cooperativas
+      CURSOR cr_crapcop IS
+        SELECT cop.cdcooper
+          FROM crapcop cop
+         ORDER BY cop.cdcooper;
+
+      rw_crapcop cr_crapcop%ROWTYPE;
+
+      -- lojista que precisam de renovacao
+      CURSOR cr_crapcdr (pr_cdcooper crapcop.cdcooper%TYPE
+                        ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+        SELECT pr_dtmvtolt dtrencon -- data de renovacao do convenio 
               ,cdr.cdcooper 
               ,cdr.nrdconta 
               ,cdr.dttercon 
-              ,add_months(trunc(SYSDATE), 12) as proxima_dttercon -- proxima data de ter-mino 
+              ,add_months(pr_dtmvtolt, 12) as proxima_dttercon -- proxima data de ter-mino 
               ,ass.inpessoa
+              ,ass.cdagenci
+              ,ass.nrdctitg
+              ,DECODE(ass.inpessoa,1,'RENCDCLJPF','RENCDCLJPJ') as cdbattar
+              ,DECODE(ass.inpessoa,1,'1439','1463') as cdhistor
+              ,cdr.rowid
           FROM crapcdr cdr
               ,crapass ass 
-         WHERE cdr.flgconve = 1 -- cdc ativo 
-           AND cdr.dttercon < trunc(SYSDATE) -- contratos vencidos
+         WHERE cdr.cdcooper = pr_cdcooper
+           AND cdr.flgconve = 1 -- cdc ativo 
+           AND cdr.dttercon < pr_dtmvtolt -- contratos vencidos
            AND cdr.cdcooper = ass.cdcooper
-           AND cdr.nrdconta = cdr.nrdconta;
-      
-      rw_crapcdr cr_crapcdr%ROWTYPE;
+           AND cdr.nrdconta = ass.nrdconta;
 
-      -- Cursor genérico de calendário
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      rw_crapcdr cr_crapcdr%ROWTYPE;
 
       -- Variáveis de Erro          
       vr_exc_erro EXCEPTION;
@@ -3154,119 +3158,125 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
       vr_cdfvlcop INTEGER;
       vr_cdprogra VARCHAR2(50) := 'ATENDA_CVNCDC';
       vr_cdcooper crapcop.cdcooper%TYPE := 0;
+
     BEGIN
 
-      FOR rw_crapcdr IN cr_crapcdr LOOP
-        
-        IF vr_cdcooper <> rw_crapcdr.cdcooper THEN
-          vr_cdcooper := rw_crapcdr.cdcooper;
+      FOR rw_crapcop IN cr_crapcop LOOP
 
-          -- Leitura do calendário da cooperativa
-          OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcdr.cdcooper);
-
-          FETCH btch0001.cr_crapdat INTO rw_crapdat;
-
-          -- Se não encontrar
-          IF btch0001.cr_crapdat%NOTFOUND THEN
-            -- Fechar o cursor pois efetuaremos raise
-            CLOSE btch0001.cr_crapdat;
-            -- Montar mensagem de critica
-            vr_cdcritic := 1;
-            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
-            RAISE vr_exc_erro;
-          ELSE
-            -- Apenas fechar o cursor
-            CLOSE btch0001.cr_crapdat;
-          END IF;
-
-        END IF;
-
-        OPEN cr_crapass(pr_cdcooper => rw_crapcdr.cdcooper
-                       ,pr_nrdconta => rw_crapcdr.nrdconta);
-
-        FETCH cr_crapass INTO rw_crapass;
-
-        IF cr_crapass%NOTFOUND THEN
-          CLOSE cr_crapass;
-          vr_cdcritic := 9;
+        -- Leitura do calendário da cooperativa
+        OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+        FETCH btch0001.cr_crapdat INTO rw_crapdat;
+       
+        -- Se não encontrar
+        IF btch0001.cr_crapdat%NOTFOUND THEN
+          -- Fechar o cursor pois efetuaremos raise
+          CLOSE btch0001.cr_crapdat;
+          -- Montar mensagem de critica
+          vr_cdcritic := 1;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
           RAISE vr_exc_erro;
         ELSE
-          CLOSE cr_crapass;
-          vr_inpessoa := rw_crapass.inpessoa;
+          -- Apenas fechar o cursor
+          CLOSE btch0001.cr_crapdat;
         END IF;
+        
+        FOR rw_crapcdr IN cr_crapcdr(rw_crapcop.cdcooper, rw_crapdat.dtmvtolt) LOOP
 
-        IF vr_inpessoa = 1 THEN -- PF
-          vr_cdbattar := 'RENCDCLJPF'; -- Cadastro CDC Pessoa Fisica
-          vr_cdhistor := 1439;
-        ELSE -- PJ
-          vr_cdbattar := 'RENCDCLJPJ'; -- Cadastro CDC Pessoa Juridica
-          vr_cdhistor := 1463;
-        END IF;
+          -- busca a tarifa
+          TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => rw_crapcdr.cdcooper -- IN cooperativa 
+                                               ,pr_cdbattar => rw_crapcdr.cdbattar -- IN nome da tarifa 
+                                               ,pr_vllanmto => 1 -- IN 0 ou 1 -- valor do movimento 
+                                               ,pr_cdprogra => vr_cdprogra -- IN 
+                                               ,pr_cdhistor => vr_cdhistor -- OUT 
+                                               ,pr_cdhisest => vr_cdhisest -- OUT 
+                                               ,pr_vltarifa => vr_vlrtarif -- OUT 
+                                               ,pr_dtdivulg => vr_dtdivulg -- OUT 
+                                               ,pr_dtvigenc => vr_dtvigenc -- OUT 
+                                               ,pr_cdfvlcop => vr_cdfvlcop -- OUT 
+                                               ,pr_cdcritic => vr_cdcritic -- OUT 
+                                               ,pr_dscritic => vr_dscritic -- OUT 
+                                               ,pr_tab_erro => vr_tab_erro); -- OUT 
+          
+          -- cria a tarifa
+          TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper => rw_crapcdr.cdcooper -- Codigo Cooperativa 
+                                          ,pr_nrdconta => rw_crapcdr.nrdconta -- Numero da Conta 
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt -- Data Lancamento 
+                                          ,pr_cdhistor => vr_cdhistor -- retornado na chamada pc_carrega_dados_tar_vigente -- Codigo Historico 
+                                          ,pr_vllanaut => vr_vlrtarif -- retornado na chamada pc_carrega_dados_tar_vigente -- Valor lancamento automatico 
+                                          ,pr_cdoperad => '1' -- Codigo Operador 
+                                          ,pr_cdagenci => rw_crapcdr.cdagenci -- PEGAR DA TABELA E COLUNA CITADA -- Codigo Agencia 
+                                          ,pr_cdbccxlt => 100 -- valor fixo -Codigo banco caixa 
+                                          ,pr_nrdolote => 10127 -- valor fixo -Numero do lote 
+                                          ,pr_tpdolote => 1 -- valor fixo -Tipo do lote 
+                                          ,pr_nrdocmto => 0 -- valor fixo -numero do documento 
+                                          ,pr_nrdctabb => rw_crapcdr.nrdconta -- numero da conta 
+                                          ,pr_nrdctitg => rw_crapcdr.nrdctitg -- PEGAR DA TABELA E COLUNA CITADA -- Numero da conta integraca 
+                                          ,pr_cdpesqbb => 'Fato gerador tarifa: ' || vr_cdbattar -- Codigo pesquisa 
+                                          ,pr_cdbanchq => 0 -- Codigo Banco Cheque 
+                                          ,pr_cdagechq => 0 -- Codigo Agencia Cheque 
+                                          ,pr_nrctachq => 0 -- Numero Conta Cheque 
+                                          ,pr_flgaviso => FALSE --Flag aviso 
+                                          ,pr_tpdaviso => 0 -- Tipo aviso 
+                                          ,pr_cdfvlcop => vr_cdfvlcop -- retornado na chamada pc_carrega_dados_tar_vigente -- Codigo cooperativa 
+                                          ,pr_inproces => rw_crapdat.inproces --Indicador processo 
+                                          ,pr_rowid_craplat => vr_rowid_lat -- Rowid do lancamento tarifa 
+                                          ,pr_tab_erro => vr_tab_erro 
+                                          ,pr_cdcritic => vr_cdcritic 
+                                          ,pr_dscritic => vr_dscritic);
 
-        TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper => rw_crapcdr.cdcooper -- Codigo Cooperativa 
-                                        ,pr_nrdconta => rw_crapcdr.nrdconta -- Numero da Conta 
-                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt -- Data Lancamento 
-                                        ,pr_cdhistor => vr_cdhistor -- retornado na chamada pc_carrega_dados_tar_vigente -- Codigo Historico 
-                                        ,pr_vllanaut => vr_vlrtarif -- retornado na chamada pc_carrega_dados_tar_vigente -- Valor lancamento automatico 
-                                        ,pr_cdoperad => '1' -- Codigo Operador 
-                                        ,pr_cdagenci => rw_crapass.cdagenci -- PEGAR DA TABELA E COLUNA CITADA -- Codigo Agencia 
-                                        ,pr_cdbccxlt => 100 -- valor fixo -Codigo banco caixa 
-                                        ,pr_nrdolote => 10127 -- valor fixo -Numero do lote 
-                                        ,pr_tpdolote => 1 -- valor fixo -Tipo do lote 
-                                        ,pr_nrdocmto => 0 -- valor fixo -numero do documento 
-                                        ,pr_nrdctabb => rw_crapcdr.nrdconta -- numero da conta 
-                                        ,pr_nrdctitg => rw_crapass.nrdctitg -- PEGAR DA TABELA E COLUNA CITADA -- Numero da conta integraca 
-                                        ,pr_cdpesqbb => 'Fato gerador tarifa: ' || vr_cdbattar -- Codigo pesquisa 
-                                        ,pr_cdbanchq => 0 -- Codigo Banco Cheque 
-                                        ,pr_cdagechq => 0 -- Codigo Agencia Cheque 
-                                        ,pr_nrctachq => 0 -- Numero Conta Cheque 
-                                        ,pr_flgaviso => FALSE --Flag aviso 
-                                        ,pr_tpdaviso => 0 -- Tipo aviso 
-                                        ,pr_cdfvlcop => vr_cdfvlcop -- retornado na chamada pc_carrega_dados_tar_vigente -- Codigo cooperativa 
-                                        ,pr_inproces => rw_crapdat.inproces --Indicador processo 
-                                        ,pr_rowid_craplat => vr_rowid_lat -- Rowid do lancamento tarifa 
-                                        ,pr_tab_erro => vr_tab_erro 
-                                        ,pr_cdcritic => vr_cdcritic 
-                                        ,pr_dscritic => vr_dscritic);
+          -- Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            -- Se possui erro no vetor
+            IF vr_tab_erro.Count > 0 THEN
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro no lancamento de tarifa CDC.';
+            END IF;
 
-        -- Se ocorreu erro
-        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-          -- Se possui erro no vetor
-          IF vr_tab_erro.Count > 0 THEN
-            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-          ELSE
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro no lancamento de tarifa CDC.';
-          END IF;
+            vr_assunto := 'Erro ao cobrar tarifa de renovacao CDC';
+            vr_conteudo := 'Cooperativa: ' || rw_crapcdr.cdcooper
+                         || CHR(10) 
+                         ||'Conta: ' || rw_crapcdr.nrdconta ;
 
-          vr_assunto := '';
-          vr_conteudo := '';
-
-          --Enviar Email
-          GENE0003.pc_solicita_email(pr_cdcooper        => rw_crapcdr.cdcooper    --> Cooperativa conectada
-                                    ,pr_cdprogra        => 'JBEPR_RENOVARTARIFACDC'    --> Programa conectado
-                                    ,pr_des_destino     => 'CECRED - CDC <cdc@cecred.coop.br>' --> Um ou mais detinatários separados por ';' ou ','
-                                    ,pr_des_assunto     => vr_assunto     --> Assunto do e-mail
-                                    ,pr_des_corpo       => vr_conteudo    --> Corpo (conteudo) do e-mail
-                                    ,pr_des_anexo       => NULL           --> Um ou mais anexos separados por ';' ou ','
-                                    ,pr_flg_remove_anex => 'N'            --> Remover os anexos passados
-                                    ,pr_flg_remete_coop => 'N'            --> Se o envio será do e-mail da Cooperativa
-                                    ,pr_des_nome_reply  => NULL           --> Nome para resposta ao e-mail
-                                    ,pr_des_email_reply => NULL           --> Endereço para resposta ao e-mail
-                                    ,pr_flg_enviar      => 'S'            --> Enviar o e-mail na hora
-                                    ,pr_flg_log_batch   => 'N'            --> Incluir inf. no log
-                                    ,pr_des_erro        => vr_dscritic);  --> Descricao Erro
-          --Se ocorreu erro
-          IF vr_dscritic IS NOT NULL THEN
-            vr_cdcritic:= 0;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-
-        END IF;
-
-      END LOOP;
+            --Enviar Email
+            GENE0003.pc_solicita_email(pr_cdcooper        => rw_crapcdr.cdcooper    --> Cooperativa conectada
+                                      ,pr_cdprogra        => 'JBEPR_RENOVARTARIFACDC'    --> Programa conectado
+                                      ,pr_des_destino     => 'CECRED - CDC <cdc@cecred.coop.br>' --> Um ou mais detinatários separados por ';' ou ','
+                                      ,pr_des_assunto     => vr_assunto     --> Assunto do e-mail
+                                      ,pr_des_corpo       => vr_conteudo    --> Corpo (conteudo) do e-mail
+                                      ,pr_des_anexo       => NULL           --> Um ou mais anexos separados por ';' ou ','
+                                      ,pr_flg_remove_anex => 'N'            --> Remover os anexos passados
+                                      ,pr_flg_remete_coop => 'N'            --> Se o envio será do e-mail da Cooperativa
+                                      ,pr_des_nome_reply  => NULL           --> Nome para resposta ao e-mail
+                                      ,pr_des_email_reply => NULL           --> Endereço para resposta ao e-mail
+                                      ,pr_flg_enviar      => 'S'            --> Enviar o e-mail na hora
+                                      ,pr_flg_log_batch   => 'N'            --> Incluir inf. no log
+                                      ,pr_des_erro        => vr_dscritic);  --> Descricao Erro
+            --Se ocorreu erro
+            IF vr_dscritic IS NOT NULL THEN
+              vr_cdcritic:= 0;
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+          END IF; -- validacao de erro
+          
+          BEGIN
+            -- atualiza registro para renovar a matricula
+            UPDATE crapcdr cdr
+               SET cdr.dtrencon=rw_crapcdr.dtrencon
+                  ,cdr.dttercon=rw_crapcdr.proxima_dttercon
+             WHERE rowid= rw_crapcdr.rowid;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := '';
+              RAISE vr_exc_erro;
+          END;       
+            
+          
+        END LOOP; -- dados
+      END LOOP; -- cooperativa
 
       -- Efetua o commit
       COMMIT;
