@@ -179,7 +179,7 @@
 						<td><? echo $risco['risco_operacao']; ?></td>						
 						<td><? echo $riscoCpfCnpj; ?></td>
 						<td><? echo $risco['risco_grupo']; ?></td>
-						<td><? echo $risco['risco_final']; ?></td>
+						<td><? echo !empty($risco['risco_final']) ? $risco['risco_final'] : $riscoCpfCnpj; ?></td>
 					</tr>
 				<?
 					}

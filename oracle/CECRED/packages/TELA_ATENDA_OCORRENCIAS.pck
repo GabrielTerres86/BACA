@@ -653,6 +653,7 @@ END pc_busca_dias_atraso;
       vr_rating            crapnrc.indrisco%TYPE;  -- Rating do contrato
       vr_risco_agr         tbrisco_cadastro_conta.cdnivel_risco%TYPE; -- Risco agravado da conta
       vr_risco_atraso      crawepr.dsnivris%TYPE;  -- Risco atraso da operação
+			vr_risco_cpf         crawepr.dsnivris%TYPE;  -- Risco CPF
       vr_risco_final       crapris.innivris%TYPE;  -- Risco final
       vr_risco_ult_central crawepr.dsnivris%TYPE;  -- Risco da última central
       vr_data_ult_central  crapris.dtdrisco%TYPE;  -- Data do risco da última central
@@ -936,6 +937,8 @@ END pc_busca_dias_atraso;
 
           -- Se a conta não possui contratos ativos, inclui apenas dados de risco da conta
           IF vr_contratos_ativos = 0 THEN
+						   vr_risco_cpf := CASE WHEN trim(rw_contas_do_titular.dsnivris) IS NULL OR trim(rw_contas_do_titular.dsnivris) = '' THEN 'A' ELSE rw_contas_do_titular.dsnivris END;
+							 
                pc_monta_reg_conta_xml(pr_retxml
                                      , vr_auxconta
                                      , vr_dscritic
@@ -948,10 +951,10 @@ END pc_busca_dias_atraso;
                                      , 'A'
                                      , NULL
                                      , 'A'
-                                     , CASE WHEN trim(rw_contas_do_titular.dsnivris) IS NULL OR trim(rw_contas_do_titular.dsnivris) = '' THEN 'A' ELSE rw_contas_do_titular.dsnivris END
+                                     , vr_risco_cpf
                                      , vr_numero_grupo
 																		 , NULL
-																		 , 'A');
+																		 , NULL);
 
                 vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
           END IF;
@@ -1073,6 +1076,8 @@ END pc_busca_dias_atraso;
 
           -- Se a conta não possui contratos ativos, inclui apenas dados de risco da conta
           IF vr_contratos_ativos = 0 THEN
+						   vr_risco_cpf := CASE WHEN trim(rw_contas_grupo_economico.dsnivris) IS NULL OR trim(rw_contas_grupo_economico.dsnivris) = '' THEN 'A' ELSE rw_contas_grupo_economico.dsnivris END;
+							 
                pc_monta_reg_conta_xml(pr_retxml
                                      , vr_auxconta
                                      , vr_dscritic
@@ -1085,10 +1090,10 @@ END pc_busca_dias_atraso;
                                      , 'A'
                                      , NULL
                                      , 'A'
-																		 , CASE WHEN trim(rw_contas_grupo_economico.dsnivris) IS NULL OR trim(rw_contas_grupo_economico.dsnivris) = '' THEN 'A' ELSE rw_contas_grupo_economico.dsnivris END
+																		 , vr_risco_cpf
                                      , rw_contas_grupo_economico.nrdgrupo
 																		 , NULL
-																		 , 'A');
+																		 , NULL);
 
                 vr_auxconta := vr_auxconta + 1;
           END IF;
