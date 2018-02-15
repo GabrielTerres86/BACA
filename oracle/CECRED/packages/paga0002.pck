@@ -8644,7 +8644,7 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Jean Michel
-    --  Data     : Julho/2016.                   Ultima atualizacao: 23/01/2018
+    --  Data     : Julho/2016.                   Ultima atualizacao: 15/02/2018
     --
     --  Dados referentes ao programa:
     --
@@ -8660,6 +8660,10 @@ create or replace package body cecred.PAGA0002 is
     --              23/01/2018 - Incluido log no "WHEN OTHERS THEN" para tentar solucionar
     --                           um erro que não foi possível simular em desenvolvimento. 
     --                           (SD 830373 - Kelvin)
+    --                           
+    --              15/02/2018 - Ajuste realizado para corrigir o problema do chamado 
+    --                           830373. (Kelvin)
+    --  
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -9353,9 +9357,9 @@ create or replace package body cecred.PAGA0002 is
             vr_gps_cddpagto := rw_gps.cddpagto;
             vr_gps_dscompet := rw_gps.dscompet;
             vr_gps_cdidenti := rw_gps.cdidenti;
-            vr_gps_vlrdinss := to_number(rw_gps.vlrdinss,'9G999D99');
-            vr_gps_vlrouent := to_number(rw_gps.vlrouent,'9G999D99');
-            vr_gps_vlrjuros := to_number(rw_gps.vlrjuros,'9G999D99');
+            vr_gps_vlrdinss := to_number(rw_gps.vlrdinss,'999G999D99');
+            vr_gps_vlrouent := to_number(rw_gps.vlrouent,'999G999D99');
+            vr_gps_vlrjuros := to_number(rw_gps.vlrjuros,'999G999D99');
           END IF;
 
         ELSE
