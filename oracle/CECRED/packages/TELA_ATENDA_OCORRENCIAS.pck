@@ -1057,7 +1057,7 @@ END pc_busca_dias_atraso;
                                      , vr_rating
                                      , vr_risco_atraso
                                      , fn_traduz_risco(vr_risco_agr)
-                                     , greatest(rw_contratos.dsnivori
+                                     , greatest(vr_risco_inclusao
 																		          , nvl(vr_rating, 'A')
 																							, vr_risco_atraso
 																							, nvl(fn_traduz_risco(vr_risco_agr), 'A')) -- fn_traduz_risco(rw_contratos_limite.innivris)

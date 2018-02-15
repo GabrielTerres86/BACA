@@ -190,20 +190,20 @@
 	</div>
 	<div id="infoCentral" style="padding-top: 7px;">
 		<div id="infoUltimaCentral" style="float: left; width: 50%; text-align: left;">
-			<label for="riscoCooperado" style="width: 150px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Risco Cooperado:</label>
+			<label for="riscoCooperado" style="width: 170px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Risco Cooperado:</label>
 			<input type="text" name="riscoCooperado" id="riscoCooperado" value="<? echo getByTagName($dadosCentral, 'risco_cooperado'); ?>" readonly tabindex="-1" style="width: 90px; text-align: center; outline: 1px solid grey; display: block; float: left; position: relative;">
 			<br>
 			<div style="margin-top: 10px;">
-				<label for="riscoUltimaCentral" style="width: 150px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Risco Último Fechamento:</label>
+				<label for="riscoUltimaCentral" style="width: 170px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Risco Último Fechamento:</label>
 				<input type="text" name="riscoUltimaCentral" id="riscoUltimaCentral" value="<? echo !empty($riscoCentral) ? $riscoCentral : 'A'; ?>" readonly tabindex="-1" style="width: 40px; text-align: center; outline: 1px solid grey; display: block; float: left; position: relative;">
 			</div>
 		</div>
 		<div id="infoRiscoFinal" style="float: right; width: 50%; text-align: left;">
-		    <label for="dataRisco" style="width: 105px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Data do risco:</label>
+		    <label for="dataRisco" style="width: 130px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Data do risco:</label>
 			<input type="text" name="dataUltimaCentral" id="dataUltimaCentral" value="<? echo getByTagName($dadosCentral, 'data_risco'); ?>" readonly tabindex="-1" style="width: 80px; text-align: center; outline: 1px solid grey; display: block; float: left; margin-left: 10px; position: relative;">
 			<br>
 			<div style="margin-top: 10px;">
-				<label for="dataRisco" style="width: 105px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Qtd. Dias no risco:</label>
+				<label for="dataRisco" style="width: 130px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Qtd. Dias no risco:</label>
 				<input type="text" name="dataUltimaCentral" id="dataUltimaCentral" value="<? echo getByTagName($dadosCentral, 'qtd_dias_risco'); ?>" readonly tabindex="-1" style="width: 80px; text-align: center; outline: 1px solid grey; display: block; float: left; margin-left: 10px; position: relative;">
 			</div>
 		</div>
