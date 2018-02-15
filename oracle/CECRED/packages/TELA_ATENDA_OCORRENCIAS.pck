@@ -712,7 +712,7 @@ END pc_busca_dias_atraso;
        AND r.nrdconta = l.nrdconta
        AND r.nrctremp = l.nrctrlim
        AND r.dtrefere = pr_dtmvtoan
-       AND r.inddocto = 3;
+       AND r.inddocto = 1;
     rw_contratos_limite cr_contratos_limite%ROWTYPE;
 
     -- Contas dos grupos econômicos aos quais o titular da conta base está ligado
