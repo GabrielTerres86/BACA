@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 07/02/2018
+   Data    : 14/09/2005                        Ultima atualizacao: 22/01/2018
 
    Dados referentes ao programa:
 
@@ -728,7 +728,6 @@
               22/01/2018 - Inclusao de trava para testes em producao do produto Pos-Fixado. 
                            (Jaison/James - PRJ298)
 
-              07/02/2018 - Liberar a inclusao do produto Pós Fixado para todas as contas da Viacredi. (James)
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -3624,7 +3623,7 @@ PROCEDURE valida-dados-gerais:
         ELSE IF par_tpemprst = 2 THEN
             DO:
                 /* Trava para testes em producao */
-                IF par_cdcooper <> 1 THEN
+                IF par_cdcooper <> 1 OR par_nrdconta <> 6820743 THEN
                    DO:
                       ASSIGN aux_dscritic = "Produto nao liberado.".
                       LEAVE.
