@@ -1716,7 +1716,7 @@ PROCEDURE Produtos_Servicos_Ativos:
 		
     END.
 
-  /********************* Limite de Credito *****************************/ 
+  /********************* Convenio CDC *****************************/ 
   IF CAN-FIND(FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper 
                               AND crapcdr.nrdconta = par_nrdconta 
                               AND crapcdr.flgconve = 1 NO-LOCK) THEN
