@@ -316,8 +316,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 		vr_qtdaciona NUMBER := 0;
 		vr_nrchassi  VARCHAR2(40);
 		vr_dsbensal_out  CLOB;
-		
-		-- Buscar parâmetros do cdc
+
+		 -- data das coopeativas
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+    -- Buscar parâmetros do cdc
 		CURSOR cr_param_cdc(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
 		  SELECT par.nrprop_env
 			      ,par.intempo_prop_env
@@ -325,15 +328,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 			 WHERE par.cdcooper = pr_cdcooper;		
 		rw_param_cdc cr_param_cdc%ROWTYPE;
 		
-		-- Verificar quantidade de acionamentos feitos pelo mesmo lojista dentro do prazo parametrizado
 		CURSOR cr_ver_aciona(pr_cdcoploj IN NUMBER
 		                    ,pr_nrctaloj IN NUMBER
-												,pr_tempoenv IN NUMBER) IS 
+												,pr_tempoenv IN NUMBER
+                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS 
 		  SELECT count(*)
-			  FROM tbgen_webservice_aciona aci
-			 WHERE aci.cdcooper = pr_cdcoploj
-			   AND aci.nrdconta = pr_nrctaloj
-				 AND aci.dhacionamento >= (SYSDATE - ((pr_tempoenv / 60)/24));
+			  FROM crawepr epr
+            ,tbgen_webservice_aciona aci
+			 WHERE epr.cdcoploj=pr_cdcoploj
+         AND epr.nrdccloj=pr_nrctaloj
+         AND epr.dtmvtolt=pr_dtmvtolt
+         AND epr.cdcooper=aci.cdcooper
+         AND epr.nrdconta=aci.nrdconta
+         AND epr.nrctremp=aci.nrctrprp
+         AND aci.dhacionamento >= (SYSDATE - ((pr_tempoenv / 60)/24));
 							  
 	  -- Verificar indicador de integração CDC na cooperativa
 		CURSOR cr_crapcop_cdc(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -410,10 +418,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 		-- Fechar cursor
 		CLOSE cr_param_cdc;	
 		
-		-- Verificar quantidade de acionamentos feitos pelo mesmo lojista dentro de uma hora		
+		-- Leitura do calendário da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcoploj);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+       
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor pois efetuaremos raise
+      CLOSE btch0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_cdcritic := 1;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+    
+    -- Verificar quantidade de acionamentos feitos pelo mesmo lojista dentro de uma hora		
     OPEN cr_ver_aciona(pr_cdcoploj => pr_cdcoploj
 		                  ,pr_nrctaloj => pr_nrctaloj
-											,pr_tempoenv => rw_param_cdc.intempo_prop_env);
+											,pr_tempoenv => rw_param_cdc.intempo_prop_env
+                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
 		FETCH cr_ver_aciona INTO vr_qtdaciona;
     -- Fechar cursor
 		CLOSE cr_ver_aciona;
