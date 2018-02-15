@@ -2920,7 +2920,7 @@ PROCEDURE busca_limites:
                tt-limite_tit.qtdiavig = craplim.qtdiavig
                tt-limite_tit.cddlinha = craplim.cddlinha
                tt-limite_tit.tpctrlim = craplim.tpctrlim
-               tt-limite_tit.dssitlim = (IF craplim.insitlim = 1 THEN
+               tt-limite_tit.dssitlim = (IF craplim.insitlim = 1 THEN               /*Situacao do Limite*/
                                             "EM ESTUDO"
                                          ELSE 
                                          IF craplim.insitlim = 2 THEN
@@ -2931,7 +2931,60 @@ PROCEDURE busca_limites:
                                          ELSE
                                          IF craplim.insitlim = 4 THEN
                                             "VIGENTE"
+                                         ELSE
+                                         IF craplim.insitlim = 5 THEN
+                                            "APROVADO"
+                                         ELSE
+                                         IF craplim.insitlim = 6 THEN
+                                            "NAO APROVADO"
+                                         ELSE
+                                         IF craplim.insitlim = 7 THEN
+                                            "REJEITADO"
                                          ELSE 
+                                            "DIFERENTE")
+               tt-limite_tit.dssitest = (IF craplim.insitest = 0 THEN               /*Situacao da Analise*/
+                                            "NAO ENVIADO"
+                                         ELSE 
+                                         IF craplim.insitest = 1 THEN
+                                            "ENVIADA ANALISE AUTOMATICA"
+                                         ELSE
+                                         IF craplim.insitest = 2 THEN
+                                            "ENVIADA ANALISE MANUAL"
+                                         ELSE
+                                         IF craplim.insitest = 3 THEN
+                                            "ANALISE FINALIZADA"
+                                         ELSE 
+                                         IF craplim.insitest = 4 THEN
+                                            "EXPIRADO"
+                                         ELSE 
+                                            "DIFERENTE")
+               tt-limite_tit.dssitapr = (IF craplim.insitapr = 0 THEN               /*Decisao*/
+                                            "NAO ANALISADO"
+                                         ELSE 
+                                         IF craplim.insitapr=1 THEN 
+                                           "APROVADO AUTOMATICAMENTE"
+                                         ELSE
+                                         IF craplim.insitapr=2 THEN 
+                                           "APROVADO MANUAL"
+                                         ELSE
+                                         IF craplim.insitapr=3 THEN 
+                                           "APROVADO (CONTINGENCIA)"
+                                         ELSE
+                                         IF craplim.insitapr=4 THEN 
+                                           "REJEITADO MANUAL"
+                                         ELSE
+                                         IF craplim.insitapr=5 THEN 
+                                           "REJEITADO AUTOMATICAMENTE"
+                                         ELSE
+                                         IF craplim.insitapr=6 THEN 
+                                           "REJEITADO (CONTINGENCIA)"
+                                         ELSE
+                                         IF craplim.insitapr=7 THEN 
+                                           "NAO ANALISADO"
+                                         ELSE
+                                         IF craplim.insitapr=8 THEN 
+                                           "NAO ANALISADO"
+                                         ELSE
                                             "DIFERENTE")
                tt-limite_tit.flgenvio = IF   AVAIL crapprp   THEN
                                              IF   crapprp.flgenvio   THEN

@@ -67,6 +67,7 @@
                23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_cecred_dsctit (Oscar).
                             Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_dsctit_cr (Oscar).
                
+               07/02/2018 - Adicionados novos campos na tt-limite_tit (Luis Fernando - GFT)
 
 ..............................................................................*/
     
@@ -143,7 +144,10 @@ DEF TEMP-TABLE tt-limite_tit NO-UNDO
     FIELD cddlinha LIKE craplim.cddlinha
     FIELD tpctrlim LIKE craplim.tpctrlim
     FIELD dssitlim AS CHAR
-    FIELD flgenvio AS CHAR.
+    FIELD dssitest AS CHAR
+    FIELD dssitapr AS CHAR
+    FIELD flgenvio AS CHAR
+    FIELD insitlim AS INTE.
 
 DEF TEMP-TABLE tt-dsctit_dados_limite NO-UNDO
     FIELD txdmulta AS DECI
@@ -175,7 +179,8 @@ DEF TEMP-TABLE tt-dsctit_dados_limite NO-UNDO
     FIELD nrperger LIKE craplim.nrperger  
     FIELD perfatcl LIKE crapjfn.perfatcl
     FIELD flgdigit LIKE craplim.flgdigit
-    FIELD cdtipdoc AS INTEGER.
+    FIELD cdtipdoc AS INTEGER
+    FIELD idcobope AS INTEGER.
 
 DEF TEMP-TABLE tt-desconto_titulos NO-UNDO
     FIELD nrctrlim AS INTE
