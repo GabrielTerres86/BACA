@@ -49,6 +49,7 @@ DEF VAR aux_flmntage AS LOGI                                           NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdcoptel AS CHAR                                           NO-UNDO.
+DEF VAR aux_nrcpfope AS DECI                                           NO-UNDO.
 
 { sistema/generico/includes/b1wgen0016tt.i }
 { sistema/generico/includes/b1wgen0119tt.i }
@@ -87,10 +88,10 @@ PROCEDURE valores_entrada:
             WHEN "vlsaqind" THEN aux_vlsaqind = DECI(tt-param.valorCampo). 
             WHEN "insaqlim" THEN aux_insaqlim = INTE(tt-param.valorCampo). 
             WHEN "inaleblq" THEN aux_inaleblq = INTE(tt-param.valorCampo). 
-			WHEN "nrdconta" THEN aux_nrdconta = INTE(tt-param.valorCampo). 
-			WHEN "idseqttl" THEN aux_idseqttl = INTE(tt-param.valorCampo). 			
-			WHEN "dtmvtage" THEN aux_dtmvtage = DATE(tt-param.valorCampo). 
-			WHEN "nrdocmto" THEN aux_nrdocmto = INTE(tt-param.valorCampo). 
+            WHEN "nrdconta" THEN aux_nrdconta = INTE(tt-param.valorCampo). 
+            WHEN "idseqttl" THEN aux_idseqttl = INTE(tt-param.valorCampo). 			
+            WHEN "dtmvtage" THEN aux_dtmvtage = DATE(tt-param.valorCampo). 
+            WHEN "nrdocmto" THEN aux_nrdocmto = INTE(tt-param.valorCampo). 
             WHEN "vlmnlmtd" THEN aux_vlmnlmtd = DECI(tt-param.valorCampo).
             WHEN "vlinited" THEN aux_vlinited = DECI(tt-param.valorCampo).
             WHEN "flmstted" THEN aux_flmstted = LOGICAL(tt-param.valorCampo).
@@ -98,6 +99,7 @@ PROCEDURE valores_entrada:
             WHEN "flmobted" THEN aux_flmobted = LOGICAL(tt-param.valorCampo).
             WHEN "dsestted" THEN aux_dsestted = tt-param.valorCampo.
             WHEN "flmntage" THEN aux_flmntage = LOGICAL(tt-param.valorCampo).
+            WHEN "nrcpfope" THEN aux_nrcpfope = DECI(tt-param.valorCampo).
 
         END CASE.
 
@@ -207,18 +209,20 @@ END PROCEDURE.
 PROCEDURE cancelar_agendamento:
     
     RUN cancelar-agendamento IN hBO (INPUT aux_cdcooper,
-									 INPUT 90,          /** PAC      **/
+                                     INPUT 90,          /** PAC      **/
                                      INPUT 900,         /** CAIXA    **/                                     
-									 INPUT aux_cdoperad,
-									 INPUT aux_nrdconta,
-									 INPUT aux_idseqttl,
-									 INPUT aux_dtmvtolt,
-									 INPUT "INTERNET",  /** ORIGEM   **/
-									 INPUT aux_dtmvtage,
-									 INPUT aux_nrdocmto,
-									 INPUT aux_nmdatela,
-									 OUTPUT aux_dstransa,
-									 OUTPUT aux_dscritic).
+                                     INPUT aux_cdoperad,
+                                     INPUT aux_nrdconta,
+                                     INPUT aux_idseqttl,
+                                     INPUT aux_dtmvtolt,
+                                     INPUT "INTERNET",  /** ORIGEM   **/
+                                     INPUT aux_dtmvtage,
+                                     INPUT aux_nrdocmto,
+                                     INPUT 0,
+                                     INPUT aux_nmdatela,
+                                     INPUT aux_nrcpfope,
+                                     OUTPUT aux_dstransa,
+                                     OUTPUT aux_dscritic).
          message RETURN-VALUE   aux_dscritic.                 
     IF  RETURN-VALUE <> "OK" OR
 	    aux_dscritic <> ""    THEN
