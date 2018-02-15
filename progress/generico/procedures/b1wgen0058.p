@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 03/11/2017
+    Data    : Marco/2010                   Ultima atualizacao: 15/02/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -206,6 +206,9 @@
                              quando a conta esteja demitida, deixar para buscar os dados do cadastro unificado.
                              PRJ339 - CRM (Odirlei-AMcom) 
                  
+				15/02/2018 - Ajustado problema que não deixava a tela de poderes abrir pois
+							 havia um FIND retorando mais de um registro. Para solucionar
+							 fiz o filtro com a chave correta. (SD 841137 - Kelvin).
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -5271,7 +5274,8 @@ PROCEDURE Busca_Dados_Poderes:
                                                crapavt.tpctrato = par_tpctrato AND
                                                crapavt.nrdconta = par_nrdconta AND
                                                crapavt.nrdctato = par_nrdctpro AND
-                                               crapavt.nrcpfcgc = par_cpfprocu
+                                               crapavt.nrcpfcgc = par_cpfprocu AND
+											   crapavt.nrctremp = par_idseqttl
                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
                             
