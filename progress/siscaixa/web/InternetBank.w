@@ -7102,7 +7102,8 @@ PROCEDURE proc_operacao141:
            aux_vltarapr = DECI(GET-VALUE("vltarapr"))
            aux_xmldados = GET-VALUE("xmldados")
            aux_dssessao = GET-VALUE("dssessao")
-           aux_dtmvtolt = DATE(GET-VALUE("dtmvtolt")).
+           aux_dtmvtolt = DATE(GET-VALUE("dtmvtolt"))
+           aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
 
     RUN sistema/internet/fontes/InternetBank141.p (INPUT aux_cdcooper,
                                                    INPUT aux_dtmvtolt,
@@ -7121,6 +7122,7 @@ PROCEDURE proc_operacao141:
                                                    INPUT aux_vltarapr,
                                                    INPUT aux_xmldados,
                                                    INPUT aux_dssessao,
+                                                   INPUT aux_iddspscp,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
     IF  RETURN-VALUE = "NOK"  THEN DO:
@@ -7252,13 +7254,15 @@ PROCEDURE proc_operacao146:
 
     ASSIGN aux_nmarquiv = STRING(GET-VALUE("aux_nmarquiv"))
            aux_dsdireto = STRING(GET-VALUE("aux_dsdireto"))
-           aux_nrseqpag = INT(GET-VALUE("aux_nrseqpag")).
+           aux_nrseqpag = INT(GET-VALUE("aux_nrseqpag"))
+           aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
            
           RUN sistema/internet/fontes/InternetBank146.p (INPUT aux_cdcooper,
                                                           INPUT aux_nrdconta,
                                                           INPUT aux_nmarquiv,
                                                           INPUT aux_dsdireto,
                                                           INPUT aux_nrseqpag,
+                                                          INPUT aux_iddspscp,
                                                           OUTPUT aux_dsmsgerr,
                                                           OUTPUT TABLE xml_operacao).
                                                         
@@ -7333,7 +7337,8 @@ PROCEDURE proc_operacao149:
            aux_insittit = INTE(GET-VALUE("insituac"))
            aux_dsinform = STRING(GET-VALUE("tpemissa"))
            aux_nrctatrf = INTE(GET-VALUE("nrctalfp"))
-		   aux_nrcpfope = DECI(GET-VALUE("nrcpfope")).
+		       aux_nrcpfope = DECI(GET-VALUE("nrcpfope"))
+           aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
 
     RUN sistema/internet/fontes/InternetBank149.p (INPUT aux_cdcooper,
                                                    INPUT aux_dtmvtolt,
@@ -7344,6 +7349,7 @@ PROCEDURE proc_operacao149:
                                                    INPUT aux_insittit,
                                                    INPUT aux_dsinform,
                                                    INPUT aux_nrctatrf,
+                                                   INPUT aux_iddspscp,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT aux_nmarquiv).
 

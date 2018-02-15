@@ -45,6 +45,7 @@ DEF INPUT  PARAM par_flgravar AS INTE                                  NO-UNDO.
 DEF INPUT  PARAM par_vltarapr AS DECI                                  NO-UNDO.
 DEF INPUT  PARAM par_xmldados AS LONGCHAR                              NO-UNDO.
 DEF INPUT  PARAM par_dssessao AS CHAR                                  NO-UNDO.
+DEF INPUT  PARAM par_iddspscp AS INTE                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
@@ -185,7 +186,8 @@ ELSE IF  par_tpoperac = 2 THEN DO: /* Valida selecao de registros para aprovacao
     END.
     ELSE IF aux_des_reto = "OK" AND aux_dscritic <> "" THEN DO:
 
-        ASSIGN xml_dsmsgerr = "<dsmsg>" + aux_dscritic + "</dsmsg>".
+        ASSIGN xml_dsmsgerr = "<dsmsg>" + aux_dscritic + "</dsmsg>" + 
+                              "<idestour>1</idestour>".
         RETURN "NOK".
     END.
 
@@ -467,6 +469,7 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Validar arquivo de pagamentos */
                           INPUT par_dsdireto,
                           INPUT par_dssessao,
                           INPUT STRING(par_dtcredit),
+                          INPUT par_iddspscp,
                           OUTPUT "",
                           OUTPUT "").
     CLOSE STORED-PROC pc_valida_arq_folha_ib aux_statproc = PROC-STATUS
@@ -831,6 +834,7 @@ ELSE IF  par_tpoperac = 11 THEN DO: /* Envio de pagamentos para aprovacao */
                           INPUT par_flgravar,
                           INPUT par_dsdireto,
                           INPUT par_dsarquiv,
+                          INPUT par_iddspscp,
                           OUTPUT 0,
                           OUTPUT "").
 
