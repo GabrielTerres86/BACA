@@ -2983,7 +2983,7 @@ PROCEDURE busca_limites:
                                            "NAO ANALISADO"
                                          ELSE
                                          IF craplim.insitapr=8 THEN 
-                                           "NAO ANALISADO"
+                                           "REFAZER"
                                          ELSE
                                             "DIFERENTE")
                tt-limite_tit.flgenvio = IF   AVAIL crapprp   THEN
