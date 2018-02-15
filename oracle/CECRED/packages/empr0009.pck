@@ -66,7 +66,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Jaison Fernando
-  --  Data     : Maio - 2016                 Ultima atualizacao: 22/09/2017
+  --  Data     : Maio - 2016                 Ultima atualizacao: 15/02/2018
   --
   -- Dados referentes ao programa:
   --
@@ -81,6 +81,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
   --                          Inclui nome do modulo logado
   --                          ( Belli - Envolti - Chamados 697089 758606 ) 
   --
+  --             15/02/2018 - Ajustar Cálculo juros/multa - Chamado 771668
   ---------------------------------------------------------------------------
 
   /* Calcular a quantidade de dias que o emprestimo está em atraso */
@@ -535,6 +536,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
 
     ............................................................................. */
     DECLARE
+
+      -- Cursor generico de calendario
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      
       -- Busca o emprestimo
       CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
                        ,pr_nrdconta IN crapepr.nrdconta%TYPE
@@ -545,6 +550,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
               ,crapepr.cdlcremp
               ,crapepr.vlpreemp
               ,crapepr.qtpreemp
+              ,crapepr.qtprepag
+              ,crapepr.vlsdeved
+              ,crapepr.vljuracu
+              ,crapepr.dtultpag
+              ,crapepr.inliquid
+              ,crapepr.qtprecal
+              ,trunc(add_months(rw_crapdat.dtmvtolt, - (crapepr.qtmesdec - trunc(crapepr.qtprecal))),'MM')+ (to_char(crapepr.dtdpagto,'dd')-1) dtdpagto_nova
           FROM crapepr
          WHERE crapepr.cdcooper = pr_cdcooper
            AND crapepr.nrdconta = pr_nrdconta
@@ -573,8 +585,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
            AND crapass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
 
-      -- Cursor generico de calendario
-      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -604,6 +614,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
       vr_cdoperad crapope.cdoperad%TYPE;
       vr_qtmesdec crapepr.qtmesdec%TYPE;
       vr_dtdpagto crapepr.dtdpagto%TYPE;
+
+      -- Variáveis para passagem a rotina pc_calcula_lelem
+      vr_diapagto     INTEGER;
+      vr_qtprepag     crapepr.qtprepag%TYPE;
+      vr_qtprecal_lem crapepr.qtprecal%TYPE;
+      vr_vlprepag     craplem.vllanmto%TYPE;
+      vr_vljuracu     crapepr.vljuracu%TYPE;
+      vr_vljurmes     crapepr.vljurmes%TYPE;
+      vr_dtultpag     crapepr.dtultpag%TYPE;
+      vr_txdjuros     crapepr.txjuremp%TYPE;
+      vr_qtprecal     crapepr.qtprecal%TYPE;      --> Quantidade de parcelas do empréstimo
+      vr_vlsdeved     NUMBER(14,2);               --> Saldo devedor do empréstimo
+      --vr_dtdpagto_lem     crapepr.dtdpagto%TYPE;
+      vr_mesespago    INTEGER;      
+      vr_nrparcela    tbepr_tr_parcelas.nrparcela%TYPE;
 
       -- Tabela de Saldos
       vr_tab_saldos EXTR0001.typ_tab_saldos;
@@ -1010,7 +1035,88 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
       IF rw_craplcr.flgcobmu = 0 AND NVL(rw_craplcr.perjurmo,0) <= 0 THEN
         RAISE vr_exc_saida;
       END IF;
-
+      --
+      IF pr_nmdatela = 'landpv.p' AND pr_vlpagpar = rw_crapepr.vlpreemp THEN
+         --
+         vr_diapagto := 0;
+         vr_qtprepag := NVL(rw_crapepr.qtprepag,0);
+         vr_vlprepag := 0;
+         vr_vlsdeved := NVL(rw_crapepr.vlsdeved,0);
+         vr_vljuracu := NVL(rw_crapepr.vljuracu,0);
+         vr_vljurmes := 0;
+         vr_dtultpag := rw_crapepr.dtultpag;
+         -- Chamar rotina de cálculo externa
+         empr0001.pc_leitura_lem(pr_cdcooper    => pr_cdcooper
+                                ,pr_cdprogra    => 'EMPR009'
+                                ,pr_rw_crapdat  => rw_crapdat
+                                ,pr_nrdconta    => pr_nrdconta
+                                ,pr_nrctremp    => pr_nrctremp
+                                ,pr_dtcalcul    => NULL
+                                ,pr_diapagto    => vr_diapagto
+                                ,pr_txdjuros    => vr_txdjuros
+                                ,pr_qtprepag    => vr_qtprepag
+                                ,pr_qtprecal    => vr_qtprecal_lem
+                                ,pr_vlprepag    => vr_vlprepag
+                                ,pr_vljuracu    => vr_vljuracu
+                                ,pr_vljurmes    => vr_vljurmes
+                                ,pr_vlsdeved    => vr_vlsdeved
+                                ,pr_dtultpag    => vr_dtultpag
+                                ,pr_cdcritic    => vr_cdcritic
+                                ,pr_des_erro    => vr_dscritic);
+         -- Se a rotina retornou com erro
+         IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
+           -- Gerar exceção
+           RAISE vr_exc_erro;
+         END IF;
+         --
+         -- Se o empréstimo estiver ativo
+         IF rw_crapepr.inliquid = 0 THEN
+           -- Acumular a quantidade calculada com a da tabela
+           vr_qtprecal := rw_crapepr.qtprecal + vr_qtprecal_lem;
+         ELSE
+           -- empréstimo liquidado
+           RAISE vr_exc_saida;
+         END IF;
+         --
+         vr_mesespago := trunc(vr_qtprecal) - trunc(rw_crapepr.qtprecal);
+         --
+         -- Adicionar de quantidade meses
+         vr_dtdpagto := add_months(rw_crapepr.dtdpagto_nova,vr_mesespago);         
+         --
+         vr_nrparcela := trunc(vr_qtprecal)+1;
+         --
+         -- Procedure para lancar Multa e Juros de Mora para o TR
+         EMPR0009.pc_efetiva_pag_atraso_tr_prc(pr_cdcooper => pr_cdcooper
+                                             ,pr_cdagenci => pr_cdagenci
+                                             ,pr_cdoperad => pr_cdoperad
+                                             ,pr_nmdatela => pr_nmdatela
+                                             ,pr_idorigem => pr_idorigem
+                                             ,pr_nrdconta => pr_nrdconta
+                                             ,pr_nrctremp => pr_nrctremp
+                                             ,pr_vlpreapg => pr_vlpagpar
+                                             ,pr_nrparcela => vr_nrparcela
+                                             ,pr_dtdpagto  => vr_dtdpagto
+                                             ,pr_vlpagpar => pr_vlpagpar
+                                             ,pr_vlsldisp => pr_vlsldisp
+                                             ,pr_cdhismul => pr_cdhismul
+                                             ,pr_vldmulta => pr_vldmulta
+                                             ,pr_cdhismor => pr_cdhismor
+                                             ,pr_vljumora => pr_vljumora
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+            -- Se houve retorno de erro
+            IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+              -- Verifica se foi passado apenas o codigo
+              IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+                vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);    
+              END IF;
+              --
+              RAISE vr_exc_erro;
+              --
+            END IF;         
+         --
+      ELSE
+      --
       -- Se foi passado o Saldo Disponivel
       IF pr_vlsldisp IS NOT NULL THEN
         vr_vlsldisp := ROUND(pr_vlsldisp,2);
@@ -1407,6 +1513,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
                                 
       -- Inicializa nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
+      --
+      END IF;
+      --
     EXCEPTION
       WHEN vr_exc_erro THEN
         IF vr_cdcritic <> 0 THEN
