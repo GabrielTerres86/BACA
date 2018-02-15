@@ -334,7 +334,7 @@ function carregaLimitesTitulos() {
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
-			$("#divOpcoesDaOpc ao2").html(response);
+			$("#divOpcoesDaOpcao2").html(response);
 		}				
 	});		
 }
