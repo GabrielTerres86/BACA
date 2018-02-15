@@ -32,6 +32,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --                          para passagem do parâmetro pr_tipo_busca, para melhoria
   --                          de performance.
   --                          Chamado 291693 (Heitor - RKAM)
+  --
+  --             04/01/2018 - Correcao nos campos utilizados para atualizacao da CRAPLOT quando inserida nova aplicacao
+  --                          com debito em Conta Investimento.
+  --                          Heitor (Mouts) - Chamado 821010.
   ---------------------------------------------------------------------------------------------------------------
   
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -4025,8 +4029,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,nrseqdig
                ,qtinfoln
                ,qtcompln
-               ,vlinfocr
-               ,vlcompcr)
+               ,vlinfodb
+               ,vlcompdb)
             VALUES(
               pr_cdcooper
              ,rw_crapdat.dtmvtolt
@@ -4069,8 +4073,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               craplot.nrseqdig = rw_craplot.nrseqdig + 1,
               craplot.qtinfoln = rw_craplot.qtinfoln + 1,
               craplot.qtcompln = rw_craplot.qtcompln + 1,
-              craplot.vlinfocr = rw_craplot.vlinfocr + pr_vlaplica,
-              craplot.vlcompcr = rw_craplot.vlcompdb + pr_vlaplica
+              craplot.vlinfodb = rw_craplot.vlinfodb + pr_vlaplica,
+              craplot.vlcompdb = rw_craplot.vlcompdb + pr_vlaplica
             WHERE
               craplot.rowid = rw_craplot.rowid
             RETURNING
