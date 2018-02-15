@@ -1699,6 +1699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         AND   craptdb.nrdocmto = pr_nrdocmto
         AND   craptdb.insittit = pr_insittit;
       rw_craptdb cr_craptdb%ROWTYPE;
+      
       --Selecionar informacoes Cobranca
       CURSOR cr_crapcob (pr_cdcooper IN crapcob.cdcooper%TYPE
                         ,pr_cdbandoc IN crapcob.cdbandoc%TYPE
@@ -1725,15 +1726,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               AND   crapcob.flgregis = pr_flgregis
          ORDER BY crapcob.progress_recid ASC;
       rw_crapcob cr_crapcob%ROWTYPE;
+      
       --Selecionar Bordero de titulos
       CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%type
                         ,pr_nrborder IN crapbdt.nrborder%type) IS
         SELECT crapbdt.txmensal
-
+              ,crapbdt.vltaxiof
         FROM crapbdt
         WHERE crapbdt.cdcooper = pr_cdcooper
         AND   crapbdt.nrborder = pr_nrborder;
       rw_crapbdt cr_crapbdt%ROWTYPE;
+      
       --Selecionar lancamento juros desconto titulo
       CURSOR cr_crapljt (pr_cdcooper IN crapljt.cdcooper%type
                         ,pr_nrdconta IN crapljt.nrdconta%type
@@ -1759,6 +1762,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         AND   crapljt.nrdocmto = pr_nrdocmto;
       rw_crapljt cr_crapljt%ROWTYPE;
 
+      -- Sumarizar os juros no desconto do cheque
+      CURSOR cr_craptdb_total(pr_cdcooper IN craptdb.cdcooper%TYPE
+                             ,pr_nrdconta IN craptdb.nrdconta%TYPE
+                             ,pr_nrborder IN craptdb.nrborder%TYPE) IS
+        SELECT NVL(SUM(craptdb.vlliquid),0)
+          FROM craptdb
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND nrborder = pr_nrborder;
+      vr_vltotal_liquido craptdb.vlliquid%TYPE;
+      
       --Variaveis Locais
       vr_vllanmto     NUMBER;
       vr_vldjuros     NUMBER;
@@ -1793,7 +1807,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_index        VARCHAR2(20);
       vr_index_titulo VARCHAR2(20);
       vr_incrawljt    PLS_INTEGER;
-
+   	  vr_natjurid     crapjur.natjurid%TYPE;
+      vr_tpregtrb     crapjur.tpregtrb%TYPE;
+      vr_vliofpri     NUMBER(25,2);
+      vr_vliofadi     NUMBER(25,2);
+      vr_vliofcpl     NUMBER(25,2);
+      vr_qtdiaiof     PLS_INTEGER;                          
+      vr_dtmvtolt_lcm craplcm.dtmvtolt%TYPE;
+      vr_cdagenci_lcm craplcm.cdagenci%TYPE;
+      vr_cdbccxlt_lcm craplcm.cdbccxlt%TYPE;
+      vr_nrdolote_lcm craplcm.nrdolote%TYPE;
+      vr_nrseqdig_lcm craplcm.nrseqdig%TYPE;
+      vr_vltaxa_iof_principal NUMBER := 0;
 
       --Variaveis de erro
       vr_des_erro     VARCHAR2(4000);
@@ -1927,6 +1952,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             vr_tottitul_sr:= Nvl(vr_tottitul_sr,0) + 1;
           END IF;
 
+          --Selecionar Bordero de titulos
+          OPEN cr_crapbdt (pr_cdcooper => rw_craptdb.cdcooper
+                          ,pr_nrborder => rw_craptdb.nrborder);
+          --Posicionar no proximo registro
+          FETCH cr_crapbdt INTO rw_crapbdt;
+          --Se nao encontrar
+          IF cr_crapbdt%NOTFOUND THEN
+            --Fechar Cursor
+            CLOSE cr_crapbdt;
+            --Mensagem de erro
+            vr_dscritic:= 'Bordero nao encontrado.';
+            vr_cdcritic:= 0;
+            --Gerar erro
+            GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdagenci => pr_cdagenci
+                                 ,pr_nrdcaixa => pr_nrdcaixa
+                                 ,pr_nrsequen => 1 /** Sequencia **/
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic
+                                 ,pr_tab_erro => vr_tab_erro);
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+          --Fechar Cursor
+          CLOSE cr_crapbdt;
 
           /*
           Valor pago eh menor que o titulo (Ex: Desconto de 10%)
@@ -2400,6 +2450,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
               END IF;
 
+              -- Procedure para inserir o valor do IOF
+              TIOF0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
+                                    ,pr_nrdconta     => rw_craptdb.nrdconta
+                                    ,pr_dtmvtolt     => vr_dtmvtolt                              
+                                    ,pr_tpproduto    => 2   --> Desconto de Titulo
+                                    ,pr_nrcontrato   => rw_craptdb.nrborder
+                                    ,pr_dtmvtolt_lcm => vr_dtmvtolt_lcm
+                                    ,pr_cdagenci_lcm => vr_cdagenci_lcm
+                                    ,pr_cdbccxlt_lcm => vr_cdbccxlt_lcm
+                                    ,pr_nrdolote_lcm => vr_nrdolote_lcm
+                                    ,pr_nrseqdig_lcm => vr_nrseqdig_lcm
+                                    ,pr_vliofcpl     => vr_vliofcpl
+                                    ,pr_cdcritic     => vr_cdcritic
+                                    ,pr_dscritic     => vr_dscritic);
+                                      
+              -- Condicao para verificar se houve critica                             
+              IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_erro;
+              END IF; 
+              ------------------------------------------------------------------------------------------
+              -- Fim Efetuar o Lancamento de IOF
+              ------------------------------------------------------------------------------------------                
+            END IF;
 
             --Atualizar situacao titulo
             BEGIN
@@ -2530,6 +2603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               --Levantar Excecao
               RAISE vr_exc_erro;
             END;
+            
             --Atualizar situacao titulo
             BEGIN
               UPDATE craptdb SET craptdb.insittit = 3 /* Baixado s/ pagto */
@@ -2575,7 +2649,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               CLOSE cr_crapcob;
             END IF;
           END IF; /* Final da baixa por vencimento */
-
 
           /**** ABATIMENTO DE JUROS ****/
           vr_txdiaria:= APLI0001.fn_round((POWER(1 + (rw_crapbdt.txmensal / 100),1 / 30) - 1),7);
