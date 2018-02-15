@@ -278,8 +278,10 @@
 			<tr>
 				<!-- qttliqcp -->
 				<td width="300px"><label for="qttliqcp" class='labelPri'><?php echo utf8ToHtml('Mínimo de Liquidez do Cedente x Pagador (Qtd. de Títulos):') ?></label></td>
-				<td width="170px"><input type="text" id="qttliqcp" name="qttliqcp" value="<?php echo $qttliqcp == 0 ? '' : $qttliqcp ?>" maxlength="3" style="text-align:right;"/></td>
-				<td width="170px"><input type="text" id="qttliqcp_c" name="qttliqcp_c" value="<?php echo $qttliqcp_c == 0 ? '' : $qttliqcp_c ?>" maxlength="3" style="text-align:right;"/></td>
+				<td width="170px"><input type="text" id="qttliqcp" name="qttliqcp" value="<?php echo $qttliqcp == 0 ? '' : $qttliqcp ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
+				<td width="170px"><input type="text" id="qttliqcp_c" name="qttliqcp_c" value="<?php echo $qttliqcp_c == 0 ? '' : $qttliqcp_c ?>" maxlength="3" style="text-align:right;"/>
+				<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 			</tr>
 
 			<!--7 
@@ -289,8 +291,10 @@
 			<tr>
 				<!-- vltliqcp -->
 				<td width="300px"><label for="vltliqcp" class='labelPri'><?php echo utf8ToHtml('Mínimo de Liquidez do Cedente x Pagador (Valor dos Títulos):') ?></label></td>
-				<td width="170px"><input type="text" id="vltliqcp" name="vltliqcp" value="<?php echo $vltliqcp == 0 ? '' : $vltliqcp ?>" maxlength="3" style="text-align:right;"/></td>
-				<td width="170px"><input type="text" id="vltliqcp_c" name="vltliqcp_c" value="<?php echo $vltliqcp_c == 0 ? '' : $vltliqcp_c ?>" maxlength="3" style="text-align:right;"/></td>
+				<td width="170px"><input type="text" id="vltliqcp" name="vltliqcp" value="<?php echo $vltliqcp == 0 ? '' : $vltliqcp ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
+				<td width="170px"><input type="text" id="vltliqcp_c" name="vltliqcp_c" value="<?php echo $vltliqcp_c == 0 ? '' : $vltliqcp_c ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 			</tr>
 
 
@@ -302,8 +306,10 @@
 			<tr>
 				<!-- qtmintgc -->
 				<td width="300px"><label for="qtmintgc" class='labelPri'><?php echo utf8ToHtml('Mínimo de Liquidez de Títulos Geral do Cedente (Qtd de Títulos):') ?></label></td>
-				<td width="170px"><input type="text" id="qtmintgc" name="qtmintgc" value="<?php echo $qtmintgc == 0 ? '' : $qtmintgc ?>" maxlength="3" style="text-align:right;"/></td>
-				<td width="170px"><input type="text" id="qtmintgc_c" name="qtmintgc_c" value="<?php echo $qtmintgc_c == 0 ? '' : $qtmintgc_c ?>" maxlength="3" style="text-align:right;"/></td>
+				<td width="170px"><input type="text" id="qtmintgc" name="qtmintgc" value="<?php echo $qtmintgc == 0 ? '' : $qtmintgc ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
+				<td width="170px"><input type="text" id="qtmintgc_c" name="qtmintgc_c" value="<?php echo $qtmintgc_c == 0 ? '' : $qtmintgc_c ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 			</tr>
 
 			<!--9 
@@ -313,8 +319,10 @@
 			<tr>
 				<!-- vlmintgc -->
 				<td width="300px"><label for="vlmintgc" class='labelPri'><?php echo utf8ToHtml('Mínimo de Liquidez de Titulos Geral do Cedente (Valor dos Títulos):') ?></label></td>
-				<td width="170px"><input type="text" id="vlmintgc" name="vlmintgc" value="<?php echo $vlmintgc == 0 ? '' : $vlmintgc ?>" maxlength="3" style="text-align:right;"/></td>
-				<td width="170px"><input type="text" id="vlmintgc_c" name="vlmintgc_c" value="<?php echo $vlmintgc_c == 0 ? '' : $vlmintgc_c ?>" maxlength="3" style="text-align:right;"/></td>
+				<td width="170px"><input type="text" id="vlmintgc" name="vlmintgc" value="<?php echo $vlmintgc == 0 ? '' : $vlmintgc ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
+				<td width="170px"><input type="text" id="vlmintgc_c" name="vlmintgc_c" value="<?php echo $vlmintgc_c == 0 ? '' : $vlmintgc_c ?>" maxlength="3" style="text-align:right;"/>					
+					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 			</tr>
 
 
@@ -385,8 +393,10 @@
 			<tr>
 				
 				<td width="300px"><label for="pcmxctip" class='labelPri'><?php echo utf8ToHtml('Concentração máxima de títulos por pagador:') ?></label></td>
-				<td width="170px"><input type="text" id="pcmxctip" name="pcmxctip" value="<?php echo $pcmxctip == 0 ? '' : $pcmxctip ?>" maxlength="3" style="text-align:right;"/></td>
-				<td width="170px"><input type="text" id="pcmxctip_c" name="pcmxctip_c" value="<?php echo $pcmxctip_c == 0 ? '' : $pcmxctip_c ?>" maxlength="3" style="text-align:right;"/></td>
+				<td width="170px"><input type="text" id="pcmxctip" name="pcmxctip" value="<?php echo $pcmxctip == 0 ? '' : $pcmxctip ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
+				<td width="170px"><input type="text" id="pcmxctip_c" name="pcmxctip_c" value="<?php echo $pcmxctip_c == 0 ? '' : $pcmxctip_c ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 			</tr>
 
 
