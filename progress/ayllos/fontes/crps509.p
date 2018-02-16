@@ -44,10 +44,12 @@ ETIME(TRUE).
 RUN STORED-PROCEDURE pc_crps509 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,                                                  
     INPUT INT(STRING(glb_flgbatch,"1/0")),
+	INPUT 0,
+	INPUT 0,
     OUTPUT 0,
     OUTPUT 0,
     OUTPUT 0, 
-    OUTPUT "").
+    OUTPUT "").	
 
 IF  ERROR-STATUS:ERROR  THEN DO:
     DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
