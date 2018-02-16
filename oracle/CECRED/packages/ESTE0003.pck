@@ -59,21 +59,28 @@ vr_dscritic VARCHAR2(4000);
 
   
   
+
 PROCEDURE incluir_proposta_esteira(pr_cdcooper IN crawepr.cdcooper%TYPE,    -- Codigo que identifica a Cooperativa.
                                    pr_cdagenci IN craplim.cdagenci%TYPE,    -- Numero do PA ou Agência.
                                    pr_nrctrlim IN craplim.nrctrlim%TYPE,    -- Numero do Contrato do Limite. 
                                    pr_nrdcaixa IN INTEGER,
                                    pr_nmdatela IN craplgm.nmdatela%TYPE,
-                                   pr_cdoperad IN craplim.cdoperad%TYPE,    --Codigo do operador.
+                                   pr_cdoperad IN crapass.inpessoa%TYPE,    --Codigo do operador.
                                    pr_agenci IN craplim.cdagenci%TYPE,      -- Código da Agencia
                                    pr_cdageori IN craplim.cdageori%TYPE,    --Codigo da agencia original do registro.
-                                   pr_tpctrlim IN craplim.tpctrlim%TYPE,
-                                   pr_idcobope IN craplim.idcobope%TYPE,
+                                   pr_tpctrlim IN crawepr.cdfinemp%TYPE,
+                                   pr_idcobope IN crawepr.cdlcremp%TYPE,
                                    pr_nrdconta IN crawepr.nrdconta%TYPE,    --Numero da conta/dv do associado.
                                    pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,    --Data do movimento atual
                                    pr_nrctremp IN crawepr.nrctremp%TYPE,    --Numero da proposta de emprestimo
-                                   pr_dsiduser IN VARCHAR2,                  --Gera ID aleatório,
-                                   pr_tpenvest IN CHAR,                     --Tipo do envestimento
+                                   pr_nmarqpdf IN VARCHAR2,                 --Numero do Arquivo PDF
+                                   pr_dsiduser IN VARCHAR2,                 --Gera ID aleatório,
+                                   pr_tpenvest IN OUT CHAR,                 --Tipo do envestimento I - inclusao Proposta
+                                                                            --                     D - Derivacao Proposta
+                                                                            --                     A - Alteracao Proposta
+                                                                            --                     N - Alterar Numero Proposta
+                                                                            --                     C - Cancelar Proposta
+                                                                            --                     E - Efetivar Proposta
                                    pr_dsmensag OUT CHAR,                    --Descrição da mensagem
                                    pr_cdcritic IN OUT NUMBER,               --Código da critica.
                                    pr_dscritic IN OUT character);           --Código da critica.
@@ -97,8 +104,8 @@ create or replace package body ESTE0003 is
 PROCEDURE incluir_proposta_esteira(pr_cdcooper IN crawepr.cdcooper%TYPE,    -- Codigo que identifica a Cooperativa.
                                    pr_cdagenci IN craplim.cdagenci%TYPE,    -- Numero do PA ou Agência.
                                    pr_nrctrlim IN craplim.nrctrlim%TYPE,    -- Numero do Contrato do Limite. 
-                                   pr_nrdcaixa IN INTEGER,
-                                   pr_nmdatela IN craplgm.nmdatela%TYPE,
+                                   --pr_nrdcaixa IN INTEGER,
+                                   --pr_nmdatela IN craplgm.nmdatela%TYPE,
                                    pr_cdoperad IN crapass.inpessoa%TYPE,    --Codigo do operador.
                                    pr_agenci IN craplim.cdagenci%TYPE,      -- Código da Agencia
                                    pr_cdageori IN craplim.cdageori%TYPE,    --Codigo da agencia original do registro.
@@ -107,21 +114,23 @@ PROCEDURE incluir_proposta_esteira(pr_cdcooper IN crawepr.cdcooper%TYPE,    -- C
                                    pr_nrdconta IN crawepr.nrdconta%TYPE,    --Numero da conta/dv do associado.
                                    pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,    --Data do movimento atual
                                    pr_nrctremp IN crawepr.nrctremp%TYPE,    --Numero da proposta de emprestimo
-                                   pr_dsiduser IN VARCHAR2,                 --Gera ID aleatório,
-                                   pr_tpenvest IN OUT CHAR,                 --Tipo do envestimento
+                                   --pr_nmarqpdf IN VARCHAR2,                 --Numero do Arquivo PDF
+                                   --pr_dsiduser IN VARCHAR2,                 --Gera ID aleatório,
+                                   pr_tpenvest IN OUT CHAR,                 --Tipo do envestimento I - inclusao Proposta
+                                                                            --                     D - Derivacao Proposta
+                                                                            --                     A - Alteracao Proposta
+                                                                            --                     N - Alterar Numero Proposta
+                                                                            --                     C - Cancelar Proposta
+                                                                            --                     E - Efetivar Proposta
                                    pr_dsmensag OUT CHAR,                    --Descrição da mensagem
                                    pr_cdcritic IN OUT NUMBER,               --Código da critica.
                                    pr_dscritic IN OUT character) IS         --Código da critica.
---NRCTRLIM
 
 
 
 -- DECLARE
-vr_recidepr NUMBER := 0;
-vr_flgentrv BOOLEAN := FALSE;
-vr_nmarqimp CHARACTER := '';
-vr_nmarqpdf CHARACTER :=  '';
-vr_flcontes CHARACTER :=  '';
+
+
 vr_dscritic CHARACTER :=  '';
 vr_exc_erro CHARACTER :=  '';
 vr_dsmensag CHARACTER :=  '';
@@ -159,7 +168,6 @@ BEGIN
       -- ainda nao foi a Esteira
       -- Se parametro de entrada for de Inclusao
       IF pr_tpenvest = 'I' THEN
-
         -- Localiza o limite de crédito na tabela de limites referente aos dados efltuado
           -- Busca do nome do associado
           -- Abertura do cursor para obter o dados do limite do contrato
@@ -203,62 +211,54 @@ BEGIN
             END IF;
 
             -- Verificar se a Esteira esta em contigencia
-            ESTE0001.pc_verifica_regras_esteira ( pr_cdcooper => rw_craplim.pr_cdcooper,                -- Código da Cooperativa
+            ESTE0001.pc_verifica_regras_esteira ( pr_cdcooper => rw_craplim.pr_cdcooper,                   -- Código da Cooperativa
                                                   pr_nrdconta => rw_craplim.pr_nrdconta,                --> Numero da conta do cooperado
                                                   pr_nrctremp => rw_craplim.pr_nrctrlim,                --> Numero da proposta de emprestimo 
-                                                  pr_tpenvest => 'I',                --> Tipo de envio C - Consultar(Get)
+                                                  pr_tpenvest => 'I',                                   --> Tipo de envio C - Consultar(Get)
                                                   pr_cdcritic => vr_cdcritic,                           -- Código da crítica
                                                   pr_dscritic => vr_dscritic);                          -- Descriçao da crítica
 
-/*
-                                          
-  PROCEDURE pc_verifica_regras_esteira (pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa                                        
-                                        pr_nrdconta  IN crawepr.nrdconta%TYPE,  --> Numero da conta do cooperado
-                                        pr_nrctremp  IN crawepr.nrctremp%TYPE,  --> Numero da proposta de emprestimo                                        
-                                        pr_tpenvest  IN VARCHAR2 DEFAULT NULL,  --> Tipo de envio C - Consultar(Get)
-                                        ---- OUT ----                                        
-                                        pr_cdcritic OUT NUMBER,                 --> Codigo da critica
-                                        pr_dscritic OUT VARCHAR2);              --> Descricao da critica
-                                        
-*/
+
 
                                         
             IF vr_cdcritic > 0 OR vr_dscritic <> '' THEN
-               RETURN 'NOK';
+               pr_dsmensag := 'NOK';
+               pr_cdcritic := vr_cdcritic;
+               pr_dscritic := vr_dscritic;
+               RETURN;
             END IF;
+   
+            /* Gerar impressao da proposta em PDF para as opcoes abaixo*/
 
-            -- Gerar impressao da proposta em PDF para as opcoes abaixo
-            ESTE0001.pc_extrai_dados(pr_xml      => pr_retxml,
-                                     pr_cdcooper => vr_cdcooper,
-                                     pr_nmdatela => vr_nmdatela,
-                                     pr_nmeacao  => vr_nmeacao,
-                                     pr_cdagenci => vr_cdagenci,
-                                     pr_nrdcaixa => vr_nrdcaixa,
-                                     pr_idorigem => vr_idorigem,
-                                     pr_cdoperad => vr_cdoperad,
-                                     pr_dscritic => vr_dscritic);
-                                    
-                                    
-            IF pr_cdcritic > 0 OR   pr_dscritic <> '' THEN
-               RETURN "NOK";
-            END IF;
-
-            IF vr_nmarqpdf = '' THEN
-                vr_dscritic := 'Nao foi possivel gerar impressao da proposta para Analise de Credito.';
-                RETURN "NOK";
-            END IF;
             -- Chamar rotina de inclusao da proposta na Esteira
-            pc_incluir_proposta_esteira(vr_cdcooper => pr_cdcooper,    -- pr_cdcooper
-                                        vr_cdagenci => pr_cdagenci,     -- pr_cdagenci
-                                        vr_cdoperad => pr_cdoperad,     -- pr_cdoperad
-                                        vr_idorigem => pr_idorigem,     -- pr_cdorigem
-                                        vr_nrdconta => pr_nrdconta,     -- pr_nrdconta
-                                        vr_nrctremp => pr_nrctremp,     -- pr_nrctremp
-                                        vr_dtmvtolt => pr_dtmvtolt,     -- pr_dtmvtolt
-                                        vr_nmarqpdf => pr_nmarqpdf,     -- pr_nmarquiv
-                                        pr_dsmensag => vr_dsmensag,     -- pr_dsmensag
-                                        pr_cdcritic => vr_cdcritic,     -- pr_cdcritic
-                                        pr_dscritic => vr_dscritic);    -- pr_dscritic
+            ESTE0001.pc_incluir_proposta_est(pr_cdcooper => pr_cdcooper,     -- pr_cdcooper
+                                             pr_cdagenci => pr_cdagenci,     -- pr_cdagenci
+                                             pr_cdoperad => pr_cdoperad,     -- pr_cdoperad
+                                             pr_cdorigem => pr_cdageori,     -- pr_cdorigem
+                                             pr_nrdconta => pr_nrdconta,     -- pr_nrdconta
+                                             pr_nrctremp => pr_nrctremp,     -- pr_nrctremp
+                                             pr_dtmvtolt => pr_dtmvtolt,     -- pr_dtmvtolt
+                                             pr_nmarquiv => '',              -- pr_nmarquiv
+                                                 --out
+                                                 pr_dsmensag => vr_dsmensag,     -- pr_dsmensag
+                                                 pr_cdcritic => vr_cdcritic,     -- pr_cdcritic
+                                                 pr_dscritic => vr_dscritic);    -- pr_dscritic
+/*
+            PROCEDURE pc_incluir_proposta_est (pr_cdcooper  IN crawepr.cdcooper%TYPE
+                                              ,pr_cdagenci  IN crapage.cdagenci%TYPE
+                                              ,pr_cdoperad  IN crapope.cdoperad%TYPE
+                                              ,pr_cdorigem  IN INTEGER
+                                              ,pr_nrdconta  IN crawepr.nrdconta%TYPE
+                                              ,pr_nrctremp  IN crawepr.nrctremp%TYPE
+                                              ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
+                                              ,pr_nmarquiv  IN VARCHAR2
+                                               ---- OUT ----
+                                              ,pr_dsmensag OUT VARCHAR2
+                                              ,pr_cdcritic OUT NUMBER
+                                              ,pr_dscritic OUT VARCHAR2);
+*/
+
+
 
             --Fechar Cursor do contrato
             CLOSE cr_craplim;
