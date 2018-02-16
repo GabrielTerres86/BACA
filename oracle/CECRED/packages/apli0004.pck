@@ -195,6 +195,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
   --                        - Inclusão da chamada de procedure em exception others
   --                        - Colocado logs no padrão
   --                          (Ana - Envolti - Chamado 744573)
+  --
+  --             16/02/2018 - Alterado a logica do "IF" da proc pc_calcula_poupanca 
+  --                          (Alcemir - Mouts : Chamado 846597)
   ---------------------------------------------------------------------------------------------------------------
 
   vr_dsmsglog  VARCHAR2(4000); -- Mensagem de log
