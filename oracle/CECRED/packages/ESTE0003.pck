@@ -1,4 +1,4 @@
-create or replace package ESTE0003 is
+CREATE OR REPLACE PACKAGE ESTE0003 IS
 /* --------------------------------------------------------------------------------------------------
 
       Programa : ESTE0003
@@ -84,9 +84,54 @@ PROCEDURE incluir_proposta_esteira(pr_cdcooper IN crawepr.cdcooper%TYPE,    -- C
                                    pr_dsmensag OUT CHAR,                    --Descrição da mensagem
                                    pr_cdcritic IN OUT NUMBER,               --Código da critica.
                                    pr_dscritic IN OUT character);           --Código da critica.
+								   
+--> Rotina responsavel por gravar registro de log de acionamento
+PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_aciona.cdcooper%TYPE, 
+																 pr_cdagenci                 IN tbgen_webservice_aciona.cdagenci_acionamento%TYPE,
+																 pr_cdoperad                 IN tbgen_webservice_aciona.cdoperad%TYPE, 
+																 pr_cdorigem                 IN tbgen_webservice_aciona.cdorigem%TYPE, 
+																 pr_nrctrprp                 IN tbgen_webservice_aciona.nrctrprp%TYPE, 
+																 pr_nrdconta                 IN tbgen_webservice_aciona.nrdconta%TYPE, 
+																 pr_tpacionamento            IN tbgen_webservice_aciona.tpacionamento%TYPE, 
+																 pr_dsoperacao               IN tbgen_webservice_aciona.dsoperacao%TYPE, 
+																 pr_dsuriservico             IN tbgen_webservice_aciona.dsuriservico%TYPE, 
+																 pr_dtmvtolt                 IN tbgen_webservice_aciona.dtmvtolt%TYPE, 
+																 pr_dhacionamento            IN tbgen_webservice_aciona.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
+																 pr_cdstatus_http            IN tbgen_webservice_aciona.cdstatus_http%TYPE, 
+																 pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
+																 pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
+																 pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
+																 pr_dsmetodo								 IN tbgen_webservice_aciona.dsmetodo%TYPE DEFAULT NULL,
+																 pr_tpconteudo               IN tbgen_webservice_aciona.tpconteudo%TYPE DEFAULT NULL,  --tipo de retorno json/xml
+																 pr_tpproduto                IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT NULL,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
+																 pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
+																 pr_dscritic                OUT VARCHAR2);
+	
+--> Rotina responsavel por buscar registro de log de acionamento																															 
+PROCEDURE pc_busca_acionamento( pr_idacionamento IN tbgen_webservice_aciona.idacionamento%TYPE,
+                                                                 pr_cdcooper                 OUT tbgen_webservice_aciona.cdcooper%TYPE, 
+																 pr_cdagenci                 OUT tbgen_webservice_aciona.cdagenci_acionamento%TYPE,
+																 pr_cdoperad                 OUT tbgen_webservice_aciona.cdoperad%TYPE, 
+																 pr_cdorigem                 OUT tbgen_webservice_aciona.cdorigem%TYPE, 
+																 pr_nrctrprp                 OUT tbgen_webservice_aciona.nrctrprp%TYPE, 
+																 pr_nrdconta                 OUT tbgen_webservice_aciona.nrdconta%TYPE, 
+																 pr_tpacionamento            OUT tbgen_webservice_aciona.tpacionamento%TYPE, 
+																 pr_dsoperacao               OUT tbgen_webservice_aciona.dsoperacao%TYPE, 
+																 pr_dsuriservico             OUT tbgen_webservice_aciona.dsuriservico%TYPE, 
+																 pr_dtmvtolt                 OUT tbgen_webservice_aciona.dtmvtolt%TYPE, 
+																 pr_dhacionamento            OUT tbgen_webservice_aciona.dhacionamento%TYPE,
+																 pr_cdstatus_http            OUT tbgen_webservice_aciona.cdstatus_http%TYPE, 
+																 pr_dsconteudo_requisicao    OUT tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
+																 pr_dsresposta_requisicao    OUT tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
+																 pr_dsprotocolo              OUT tbgen_webservice_aciona.dsprotocolo%TYPE, -- Protocolo do Acionamento
+																 pr_dsmetodo				 OUT tbgen_webservice_aciona.dsmetodo%TYPE,
+																 pr_tpconteudo               OUT tbgen_webservice_aciona.tpconteudo%TYPE,  --tipo de retorno json/xml
+																 pr_tpproduto                OUT tbgen_webservice_aciona.tpproduto%TYPE,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
+																 pr_dscritic                 OUT VARCHAR2);
+
 END ESTE0003;
 /
-create or replace package body ESTE0003 is
+CREATE OR REPLACE PACKAGE BODY ESTE0003 IS
 
 -- Private type declarations
 -- type <TypeName> is <Datatype>;
@@ -125,8 +170,6 @@ PROCEDURE incluir_proposta_esteira(pr_cdcooper IN crawepr.cdcooper%TYPE,    -- C
                                    pr_dsmensag OUT CHAR,                    --Descrição da mensagem
                                    pr_cdcritic IN OUT NUMBER,               --Código da critica.
                                    pr_dscritic IN OUT character) IS         --Código da critica.
-
-
 
 -- DECLARE
 
@@ -273,6 +316,180 @@ BEGIN
 
 
 END incluir_proposta_esteira;
+
+
+
+	--> Rotina responsavel por gravar registro de log de acionamento
+	PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_aciona.cdcooper%TYPE, 
+																 pr_cdagenci                 IN tbgen_webservice_aciona.cdagenci_acionamento%TYPE,
+																 pr_cdoperad                 IN tbgen_webservice_aciona.cdoperad%TYPE, 
+																 pr_cdorigem                 IN tbgen_webservice_aciona.cdorigem%TYPE, 
+																 pr_nrctrprp                 IN tbgen_webservice_aciona.nrctrprp%TYPE, 
+																 pr_nrdconta                 IN tbgen_webservice_aciona.nrdconta%TYPE, 
+																 pr_tpacionamento            IN tbgen_webservice_aciona.tpacionamento%TYPE, 
+																 pr_dsoperacao               IN tbgen_webservice_aciona.dsoperacao%TYPE, 
+																 pr_dsuriservico             IN tbgen_webservice_aciona.dsuriservico%TYPE, 
+																 pr_dtmvtolt                 IN tbgen_webservice_aciona.dtmvtolt%TYPE, 
+																 pr_dhacionamento            IN tbgen_webservice_aciona.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
+																 pr_cdstatus_http            IN tbgen_webservice_aciona.cdstatus_http%TYPE, 
+																 pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
+																 pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
+																 pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
+																 pr_dsmetodo								 IN tbgen_webservice_aciona.dsmetodo%TYPE DEFAULT NULL,
+																 pr_tpconteudo               IN tbgen_webservice_aciona.tpconteudo%TYPE DEFAULT NULL,  --tipo de retorno json/xml
+																 pr_tpproduto                IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT NULL,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
+																 pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
+																 pr_dscritic                OUT VARCHAR2)IS
+																 
+	/* ..........................................................................
+		
+		Programa : pc_grava_acionamento        
+		Sistema  : Conta-Corrente - Cooperativa de Credito
+		Sigla    : CRED
+		Autor    : Luis Fernando - GFT
+		Data     : Fevereiro/2018.                   Ultima atualizacao: 
+		
+		Dados referentes ao programa:
+		
+		Frequencia: Sempre que for chamado
+		Objetivo  : Grava registro de log de acionamento
+		
+		Alteração : 
+				
+	..........................................................................*/
+		PRAGMA AUTONOMOUS_TRANSACTION;
+	BEGIN
+		INSERT INTO tbgen_webservice_aciona                                                                                     /*@TROCAR PARA CECRED.TBGEN_WEBSERVICE_ACIONA*/
+								( cdcooper, 
+									cdagenci_acionamento, 
+									cdoperad, 
+									cdorigem, 
+									nrctrprp, 
+									nrdconta, 
+									tpacionamento, 
+									dhacionamento, 
+									dsoperacao, 
+									dsuriservico, 
+									dtmvtolt, 
+									cdstatus_http, 
+									dsconteudo_requisicao,
+									dsresposta_requisicao,
+									dsmetodo,
+									tpconteudo,
+									tpproduto,
+									dsprotocolo)  
+					VALUES( pr_cdcooper,        --cdcooper
+									pr_cdagenci,        -- cdagenci_acionamento, 
+									pr_cdoperad,        -- cdoperad, 
+									pr_cdorigem,        -- cdorigem
+									pr_nrctrprp,        -- nrctrprp
+									pr_nrdconta,        -- nrdconta
+									pr_tpacionamento,   -- tpacionamento 
+									pr_dhacionamento,   -- dhacionamento
+									pr_dsoperacao,      -- dsoperacao
+									pr_dsuriservico,    -- dsuriservico
+									pr_dtmvtolt,        -- dtmvtolt
+									pr_cdstatus_http,   -- cdstatus_http
+									pr_dsconteudo_requisicao,
+									pr_dsresposta_requisicao, --dsresposta_requisicao       
+									pr_dsmetodo,				-- dsmetodo
+									pr_tpconteudo,			-- tpconteudo
+									pr_tpproduto,				--tpproduto
+									pr_dsprotocolo)     -- protocolo
+					 RETURNING tbgen_webservice_aciona.idacionamento INTO pr_idacionamento;
+	 
+		--> Commit para garantir que guarde as informações do log de acionamento
+		COMMIT;
+	EXCEPTION
+		WHEN OTHERS THEN
+			pr_dscritic := 'Erro ao inserir tbgen_webservice_aciona: '||SQLERRM;
+			ROLLBACK;
+	END pc_grava_acionamento;
+
+	--> Rotina responsavel por buscar registro de log de acionamento
+	PROCEDURE pc_busca_acionamento( pr_idacionamento IN tbgen_webservice_aciona.idacionamento%TYPE,
+                                                                 pr_cdcooper                 OUT tbgen_webservice_aciona.cdcooper%TYPE, 
+																 pr_cdagenci                 OUT tbgen_webservice_aciona.cdagenci_acionamento%TYPE,
+																 pr_cdoperad                 OUT tbgen_webservice_aciona.cdoperad%TYPE, 
+																 pr_cdorigem                 OUT tbgen_webservice_aciona.cdorigem%TYPE, 
+																 pr_nrctrprp                 OUT tbgen_webservice_aciona.nrctrprp%TYPE, 
+																 pr_nrdconta                 OUT tbgen_webservice_aciona.nrdconta%TYPE, 
+																 pr_tpacionamento            OUT tbgen_webservice_aciona.tpacionamento%TYPE, 
+																 pr_dsoperacao               OUT tbgen_webservice_aciona.dsoperacao%TYPE, 
+																 pr_dsuriservico             OUT tbgen_webservice_aciona.dsuriservico%TYPE, 
+																 pr_dtmvtolt                 OUT tbgen_webservice_aciona.dtmvtolt%TYPE, 
+																 pr_dhacionamento            OUT tbgen_webservice_aciona.dhacionamento%TYPE,
+																 pr_cdstatus_http            OUT tbgen_webservice_aciona.cdstatus_http%TYPE, 
+																 pr_dsconteudo_requisicao    OUT tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
+																 pr_dsresposta_requisicao    OUT tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
+																 pr_dsprotocolo              OUT tbgen_webservice_aciona.dsprotocolo%TYPE, -- Protocolo do Acionamento
+																 pr_dsmetodo				 OUT tbgen_webservice_aciona.dsmetodo%TYPE,
+																 pr_tpconteudo               OUT tbgen_webservice_aciona.tpconteudo%TYPE,  --tipo de retorno json/xml
+																 pr_tpproduto                OUT tbgen_webservice_aciona.tpproduto%TYPE,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
+																 pr_dscritic                 OUT VARCHAR2) IS
+																 
+	/* ..........................................................................
+		
+		Programa : pc_busca_acionamento        
+		Sistema  : Conta-Corrente - Cooperativa de Credito
+		Sigla    : CRED
+		Autor    : Leonardo Oliveira - GFT
+		Data     : Fevereiro/2018.                   Ultima atualizacao: 
+		
+		Dados referentes ao programa:
+		
+		Frequencia: Sempre que for chamado
+		Objetivo  : Buscar registro de log de acionamento
+		
+		Alteração : 
+				
+	..........................................................................*/
+	BEGIN
+		SELECT
+			cdcooper,
+			cdagenci_acionamento,
+			cdoperad,
+			cdorigem,
+			nrctrprp,
+			nrdconta,
+			tpacionamento,
+			dhacionamento,
+			dsoperacao,
+			dsuriservico,
+			dtmvtolt,
+			cdstatus_http,
+			dsconteudo_requisicao,
+			dsresposta_requisicao,
+			dsmetodo,
+			tpconteudo,
+			tpproduto,
+			dsprotocolo
+		INTO 
+			pr_cdcooper,
+			pr_cdagenci,
+			pr_cdoperad,
+			pr_cdorigem,
+			pr_nrctrprp,
+			pr_nrdconta,
+			pr_tpacionamento,
+			pr_dhacionamento,
+			pr_dsoperacao,
+			pr_dsuriservico,
+			pr_dtmvtolt,
+			pr_cdstatus_http,
+			pr_dsconteudo_requisicao,
+			pr_dsresposta_requisicao,
+			pr_dsmetodo,
+			pr_tpconteudo,
+			pr_tpproduto,
+			pr_dsprotocolo
+  		FROM tbgen_webservice_aciona
+        WHERE idacionamento = pr_idacionamento;
+	EXCEPTION
+		WHEN OTHERS THEN
+			pr_dscritic := 'Erro ao buscar tbgen_webservice_aciona: '||SQLERRM;
+	END pc_busca_acionamento;
+
 
 
 
