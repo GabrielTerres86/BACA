@@ -292,7 +292,6 @@ function exibeErro($msgErro) {
 	<input type="hidden" id= "emails_titular" name="emails_titular" value="<?php echo $emails_titular; ?>">
 	<input type="hidden" id= "qtdfloat"    name="qtdfloat">
 	<input type="hidden" id= "flprotes"    name="flprotes">
-	<input type="hidden" id= "flproalt"    name="flproalt" value="0">
 	<input type="hidden" id= "qtdecprz"    name="qtdecprz">
 	<input type="hidden" id= "idrecipr"    name="idrecipr">
 	<input type="hidden" id= "inenvcob"    name="inenvcob">

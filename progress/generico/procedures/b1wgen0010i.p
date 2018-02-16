@@ -906,8 +906,6 @@ PROCEDURE proc_crrl600: /* Relat 5 - Cedente */
     { sistema/generico/includes/b1cabrel234.i "11" "600" }
   
     FOR EACH tt-consulta-blt WHERE tt-consulta-blt.cdcooper = par_cdcooper AND
-									(IF par_tprelato = 8 THEN
-										tt-consulta-blt.cdocorre = 20 ELSE TRUE) AND
                                  ((tt-consulta-blt.cdagenci = par_cdagencx AND
                                                par_cdagencx > 0 )          OR
                                                par_cdagencx = 0)
@@ -1005,7 +1003,6 @@ PROCEDURE proc_crrl601: /* Relat 6 - Francesa */
     DEF  INPUT PARAM par_cdagencx AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inidtmvt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_fimdtmvt AS DATE                           NO-UNDO.
-	DEF  INPUT PARAM par_tprelato AS INTE                           NO-UNDO.
 
     DEF  INPUT PARAM TABLE FOR tt-consulta-blt.
 
