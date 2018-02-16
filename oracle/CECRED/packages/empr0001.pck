@@ -41,6 +41,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --                          no dia atual. Como utiliza informacao de saldo da CRAPSDA, esses valores nao estao contemplados.
   --                          Heitor (Mouts) - Chamado 718395
   --
+  --             24/01/2018 - Adicionada solicitacao de senha de coordenador para utilizacao do saldo bloqueado no pagamento (Luis Fernando - GFT)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo com as informacoes do registro de emprestimo. Antiga: tt-dados-epr */
@@ -8042,11 +8043,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 Prj. 302 (Jean Michel).             
 
                    16/03/2017 - Alteracao de mensagem de Contrato em acordo. (Jaison/James)
+                   
+                   24/01/2018 - Adicionada solicitacao de senha de coordenador para utilizacao do saldo bloqueado no pagamento (Luis Fernando - GFT)
 
-                   08/02/2018 - Incluir novamente o número 3 fixo no parâmetro pr_cdorigem
+				   08/02/2018 - Incluir novamente o número 3 fixo no parâmetro pr_cdorigem
                                 na chamada da procedure recp0001.pc_verifica_acordo_ativo.
                                 Alterado indevidamente em 23/01/2018 SM 12158. (SD#846598 - AJFink)
-
     ............................................................................. */
   
     DECLARE
@@ -8101,6 +8103,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_crapope  BOOLEAN;
       vr_difpagto NUMBER;
       vr_flgcrass BOOLEAN;
+      vr_vlsdbloque NUMBER;
+      vr_vlsddisptotal NUMBER;
     
       --Variaveis Erro
       vr_cdcritic INTEGER;
@@ -8234,6 +8238,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 --nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0) +
                                 nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0) +
                                 vr_vllibera,2); --Valor liberado no dia
+          vr_vlsdbloque := ROUND(
+                                nvl(vr_tab_saldos(vr_index_saldo).vlsdbloq, 0) +
+                                nvl(vr_tab_saldos(vr_index_saldo).vlsdblpr, 0) +
+                                nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0)
+                            ,2); -- Valor bloqueado total
+          vr_vlsddisptotal := nvl(pr_vlsomato, 0)  + nvl(vr_vlsdbloque,0); -- Saldo disponivel total + o bloqueado
         END IF;
       
         --Valor a Pagar Maior Soma total
@@ -8243,9 +8253,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Se encontrou operador
             IF vr_crapope THEN
               --Diferenca no valor pago
-              vr_difpagto := nvl(pr_vlapagar, 0) - nvl(pr_vlsomato, 0);
-              --Valor Diferenca Maior Limite Pagamento Cheque
+              vr_difpagto := nvl(pr_vlapagar, 0) - nvl(vr_vlsddisptotal, 0) ;
+              --Valor Diferenca Maior Limite Pagamento Cheque + Saldo Bloqueado
               IF vr_difpagto > nvl(rw_crapope.vlpagchq, 0) THEN
+              --Caso o saldo disponivel + bloqueado + limite + alçada não atingirem o valor do pagamento, encerra o programa
                 vr_dscritic := 'Saldo alcada do operador insuficiente.';
                 RAISE vr_exc_saida;
               END IF;
@@ -8262,11 +8273,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             pr_tab_msg_confirma(vr_index_confirma).dsmensag := 'Saldo em conta insuficiente para pagamento da parcela.';     
                     
           ELSE
-                    
-            --Atribuir valores
+            -- Verifica se possui saldo bloqueado
+            IF (nvl(vr_vlsdbloque,0)>0 AND (nvl(vr_vlsdbloque,0)+nvl(pr_vlsomato,0))>0) THEN
+              -- Verifica se o Saldo disponivel + limite + saldo bloqueado atingem o valor do pagamento
+              IF (nvl(vr_vlsddisptotal,0)>=nvl(pr_vlapagar,0)) THEN
+                pr_tab_msg_confirma(vr_index_confirma).inconfir := 2;
+                pr_tab_msg_confirma(vr_index_confirma).dsmensag := 'Deseja utilizar o valor do saldo bloqueado?';
+              ELSE -- O valor do saldo + limite + bloqueado são menores que o valor do pagamento, porém com a alçada do operador é possível realizar o pagamento
+                pr_tab_msg_confirma(vr_index_confirma).inconfir := 3;
+                pr_tab_msg_confirma(vr_index_confirma).dsmensag := 'Deseja utilizar o valor do saldo bloqueado e a alcada?';
+              END IF;
+            ELSE
             pr_tab_msg_confirma(vr_index_confirma).inconfir := 1;
             pr_tab_msg_confirma(vr_index_confirma).dsmensag := 'Saldo em conta insuficiente para pagamento da parcela. ' ||
                                                                'Confirma pagamento?';
+          END IF;                                                                                                                              
+
           END IF;                                                                                                                              
         END IF;
       
@@ -13627,10 +13649,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     regras da b1wgen0084a.p->gera_pagamentos_parcelas, conforme 
                     projeto 302 - Sistema de acordos ( Renato Darosci - Supero )
        
-       08/02/2018 - Incluir novamente o número 3 fixo no parâmetro pr_cdorigem
+	   08/02/2018 - Incluir novamente o número 3 fixo no parâmetro pr_cdorigem
                     na chamada da procedure recp0001.pc_verifica_acordo_ativo.
                     Alterado indevidamente em 23/01/2018 SM 12158. (SD#846598 - AJFink)
-
     ............................................................................. */
     DECLARE
        
