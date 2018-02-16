@@ -18,6 +18,8 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
   --                          Setar modulo
   --                          (Belli - Envolti - Chamado 660306)
   --
+  --             15/02/2018 - Adicionado o procedimento pc_apaga_lim_desc_tit_estudo (Paulo Penteado GFT)
+  --
   ---------------------------------------------------------------------------------------------------------------
   -- Rotina referente a consulta da tela de Limite de Saque do TAA
   PROCEDURE pc_tela_lim_saque_consultar(pr_nrdconta tbtaa_limite_saque.nrdconta%TYPE --> Numero da Conta
@@ -46,6 +48,12 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
                       ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                       ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+                      
+  procedure pc_apaga_lim_desc_tit_estudo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+                                        ,pr_cdoperad IN crapdev.cdoperad%TYPE --> Codigo do operador
+                                        ,pr_idorigem IN INTEGER               --> Indicador da origem da chamada
+                                        ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                        );
 END LIMI0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
@@ -76,6 +84,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
      
                  20/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
                               (Ana - Envolti - Chamado 746134)
+  
+                 15/02/2018 - Adicionado o procedimento pc_apaga_lim_desc_tit_estudo (Paulo Penteado GFT) que será
+                              chamado no procedimento pc_crps517
   */
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_tela_lim_saque_consultar(pr_nrdconta tbtaa_limite_saque.nrdconta%TYPE  --> Numero da Conta
@@ -302,7 +313,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
       vr_dstransa             VARCHAR2(1000);
       vr_dsorigem             VARCHAR2(1000);
       vr_emissao_recibo_saque VARCHAR2(100);
-      vr_indtrans             INTEGER;
+      --vr_indtrans             INTEGER;
       vr_nrdrowid             ROWID;
 
     BEGIN
@@ -544,6 +555,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                             
                20/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
                             (Ana - Envolti - Chamado 746134)
+                            
+               15/02/2018 - Adicionado a chamada do procedimento pc_apaga_lim_desc_tit_estudo (Paulo Penteado GFT)
+               
+               16/02/2018 - Adicionado o cursor cr_crapsab para atualização do saldo das linhas de desconto (Lucas Silva GFT)
     ............................................................................ */
 
     DECLARE
@@ -646,7 +661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
            AND crapbdt.insitbdt = 3; -- Pendente
 
       -- Cursor sobre os titulos contidos do Bordero de desconto de titulos
-      CURSOR cr_craptdb(pr_dtrefere DATE) IS
+      /*CURSOR cr_craptdb(pr_dtrefere DATE) IS
         SELECT nrdconta,
                nrborder,
                cdbandoc,
@@ -663,7 +678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
            AND craptdb.dtvencto >= pr_dtrefere
            AND craptdb.dtvencto  < rw_crapdat.dtmvtolt
            AND craptdb.insittit  = 4
-         ORDER BY cdcooper, nrdconta, nrborder, vltitulo, nrdocmto;  -- , insittit, nrdconta, dtdpagto, progress_recid;
+         ORDER BY cdcooper, nrdconta, nrborder, vltitulo, nrdocmto;  -- , insittit, nrdconta, dtdpagto, progress_recid;*/
 
       -- Cursor sobre os parametros do cadastro de cobranca
       CURSOR cr_crapcco(pr_nrconven crapcco.nrconven%TYPE) IS
@@ -699,7 +714,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
            AND crapsab.nrdconta = pr_nrdconta
            AND crapsab.nrinssac = pr_nrinssac;
       rw_crapsab cr_crapsab%ROWTYPE;
-
+      
+      CURSOR cr_crapldc IS
+        SELECT 0 AS flgsaldo_novo, 
+               ldc.cddlinha,
+               ldc.tpdescto,
+               ldc.flgsaldo
+        FROM   crapldc ldc
+        WHERE  ldc.tpdescto = 3
+        AND    ldc.cdcooper = vr_cdcooper
+        AND    flgsaldo = 1
+        AND    NOT EXISTS(SELECT 1 FROM craplim lim WHERE insitlim IN (2,4) AND lim.cddlinha = ldc.cddlinha AND lim.tpctrlim = 3)
+        UNION
+        SELECT 1 AS flgsaldo_novo, 
+              ldc.cddlinha,
+              ldc.tpdescto,
+              ldc.flgsaldo
+        FROM   crapldc ldc
+        WHERE  ldc.tpdescto = 3
+        AND    ldc.cdcooper = vr_cdcooper
+        AND    flgsaldo = 0
+        AND    EXISTS(SELECT 1 FROM craplim lim WHERE insitlim IN (2,4) AND lim.cddlinha = ldc.cddlinha AND lim.tpctrlim = 3);
+      rw_crapldc cr_crapldc%ROWTYPE;
+      
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
       -- Registro de limites das contas
       TYPE typ_reg_limite IS
@@ -764,11 +801,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
       vr_tab_limite  typ_tab_limite;                 --> Tabela de limite de credito
       vr_ind         VARCHAR2(31);                   --> Indice da pl/table vr_tab_limite (insitlim(05), nrdconta(10), nrctrlim(10), sequencial(6)
       vr_seq         PLS_INTEGER := 0;               --> Sequencial do indice vr_ind
-      vr_dtdiauti    DATE;                           --> Dia util anterior a 31/12
+      --vr_dtdiauti    DATE;                           --> Dia util anterior a 31/12
       vr_dtrefere    DATE;                           --> Data de referencia de vencimento do titulo
       vr_tab_titulos paga0001.typ_tab_titulos;       --> Temp-table dos registros de titulos
       vr_ind_tit     VARCHAR2(20);                   --> Indice da temp-table vr_tab_titulos (nrdconta(10), sequencial(10))
-      vr_seq_tit     PLS_INTEGER := 0;               --> Sequencial do indice vr_ind_tit
+      --vr_seq_tit     PLS_INTEGER := 0;               --> Sequencial do indice vr_ind_tit
       vr_tab_titulos_rel typ_tab_titulos;            --> Temp-table dos registros de titulos utilizada no relatorio com outro ordenador
       vr_ind_rel     VARCHAR2(41);                   --> Indice da pl/table vr_tab_limite (cdagenci(05) nrdconta(10), nrborder(10), nrdocmto(10), sequencial(06))
       vr_seq_rel     PLS_INTEGER := 0;               --> Sequencial do indice vr_ind
@@ -1246,7 +1283,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
         END IF;
 
       END LOOP;
-
+      
+      -- Atualização do saldo das linhas de desconto
+      FOR rw_crapldc IN cr_crapldc LOOP
+        BEGIN
+          UPDATE crapldc
+          SET    flgsaldo = rw_crapldc.flgsaldo_novo
+          WHERE  tpdescto = rw_crapldc.tpdescto
+          AND    cddlinha = rw_crapldc.cddlinha 
+          AND    cdcooper = vr_cdcooper;
+        EXCEPTION
+          WHEN OTHERS THEN
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);
+      
+            vr_dscritic := '2-Erro ao alterar CRAPLDC: ' ||SQLERRM;
+            RAISE vr_exc_saida;
+          END; 
+      END LOOP;
+      
+      pc_apaga_lim_desc_tit_estudo(pr_cdcooper => vr_cdcooper
+                                  ,pr_cdoperad => vr_cdoperad
+                                  ,pr_idorigem => vr_idorigem
+                                  ,pr_dscritic => vr_dscritic);
+                                  
+      if  vr_dscritic is not null then
+          RAISE vr_exc_saida;
+      end if;      
+      
       ------------------------
       ------------------------ GERACAO DO RELATORIO CRRL492
       ------------------------
@@ -1574,6 +1637,96 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
       END;
       
   END pc_crps517;
+                      
+  procedure pc_apaga_lim_desc_tit_estudo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+                                        ,pr_cdoperad IN crapdev.cdoperad%TYPE --> Codigo do operador
+                                        ,pr_idorigem IN INTEGER               --> Indicador da origem da chamada
+                                        ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                        ) is
+    /* .............................................................................
+
+     Programa: pc_apaga_lim_desc_tit_estudo
+     Sistema : Rotinas referentes ao limite de credito
+     Sigla   : LIMI
+     Autor   : Paulo Penteado
+     Data    : fevereiro/2018.                    Ultima atualizacao: 15/02/2018
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Excluir do sistema todos os limites de desconto em estudo por mais de 30 dias a partir 
+                 da liberação desta melhoria, para limpeza da base de dados.
+                 
+                 O parâmetro pr_cdcooper é alimentado com todas as coop ativas, pois a procedure  limi0002.pc_crps517 
+                 é chamada dentro do loop das coop ativas dentro da procedure cecred.pc_crps517
+
+     Observacao: -----
+     Alteracoes: 15/02/2018 - Criação (Paulo Penteado GFT)
+                 
+     ..............................................................................*/ 
+     
+    vr_dtretro date;
+
+    -- Tratamento de erros
+    vr_exc_saida     EXCEPTION;
+
+    -- Variaveis de log
+    vr_dsorigem      VARCHAR2(1000);
+    vr_nrdrowid      rowid;
+      
+    -- cursor sobre os contratos de limites de credito que estão em estudo
+    cursor cr_craplim is
+    select lim.tpctrlim
+         , lim.nrctrlim
+         , lim.nrdconta
+    from   craplim lim
+    where  lim.dtpropos <= vr_dtretro
+    and    lim.tpctrlim  = 3
+    and    lim.Insitlim  = 1
+    and    lim.cdcooper  = pr_cdcooper;
+    rw_craplim cr_craplim%rowtype;
+      
+  begin
+    BEGIN
+      vr_dtretro  := add_months(trunc(sysdate),-1);
+      vr_dsorigem := TRIM(GENE0001.vr_vet_des_origens(pr_idorigem));
+      
+      open  cr_craplim;
+      loop
+            fetch cr_craplim into rw_craplim;
+            exit  when cr_craplim%notfound;
+                  
+            delete craplim lim
+            where  lim.tpctrlim = rw_craplim.tpctrlim
+            and    lim.nrctrlim = rw_craplim.nrctrlim
+            and    lim.cdcooper = pr_cdcooper;
+
+            GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                                ,pr_cdoperad => pr_cdoperad
+                                ,pr_dscritic => null
+                                ,pr_dsorigem => vr_dsorigem
+                                ,pr_dstransa => 'Decurso de Prazo'
+                                ,pr_dttransa => SYSDATE
+                                ,pr_flgtrans => 1
+                                ,pr_hrtransa => GENE0002.fn_busca_time
+                                ,pr_idseqttl => 1
+                                ,pr_nmdatela => 'ATENDA'
+                                ,pr_nrdconta => rw_craplim.nrdconta
+                                ,pr_nrdrowid => vr_nrdrowid);
+      end   loop;
+      close cr_craplim;
+      
+      COMMIT;
+    exception
+      WHEN OTHERS then
+        pr_dscritic := 'Falha em LIMI0002.pc_apaga_lim_desc_tit_estudo, erro: ' || SQLERRM;
+
+        -- Desfaz as alterações da base
+        ROLLBACK;
+    END;
+  end pc_apaga_lim_desc_tit_estudo;
+                                        
   
 END LIMI0002;
 /
