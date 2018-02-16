@@ -493,7 +493,7 @@ PROCEDURE CriaListaEventos :
                            AND crapadp.cdagenci = crapeap.cdagenci
                            AND crapadp.dtanoage = crapeap.dtanoage
                            AND crapadp.cdevento = crapeap.cdevento
-                           //AND crapadp.idstaeve <> 4 /* Evento Encerrado */ //PRJ 322 - SM - 8 -- Linha comentada para mostrar eventos encerrados
+                           /*AND crapadp.idstaeve <> 4 Evento Encerrado PRJ 322 - SM - 8 -- Linha comentada para mostrar eventos encerrados*/
 						   NO-LOCK BREAK BY crapadp.cdagenci
                                          BY crapedp.nmevento
                                          BY crapadp.nrseqdig:
@@ -541,7 +541,7 @@ PROCEDURE CriaListaEventos :
                  
     END.
 
-    IF 	aux_fechamen = "Não" THEN //PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado
+    IF 	aux_fechamen = "Não" THEN /*PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado*/
 	  DO:
 	    RUN RodaJavaScript("mevento.push(~{cdagenci:'" + STRING(crapeap.cdagenci)
                                       + "',cdcooper:'" + STRING(crapeap.cdcooper)
@@ -557,7 +557,7 @@ PROCEDURE CriaListaEventos :
                                       + "',idademin:'" + STRING(aux_idademin)
                                       + "',tppartic:'" + STRING(aux_tppartic)
                                       + "',fechamen:'" + STRING(aux_fechamen) + "'~});").
-      END.	//PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado			   								  
+      END.	/*PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado	*/
     
   END.
 

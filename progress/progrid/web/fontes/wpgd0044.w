@@ -381,8 +381,8 @@ PROCEDURE CriaListaEventos :
                            crapadp.cdcooper       = crapeap.cdcooper            AND
                            crapadp.cdagenci       = crapeap.cdagenci            AND
                            crapadp.dtanoage       = crapeap.dtanoage            AND
-                         crapadp.cdevento       = crapeap.cdevento            //AND
-                         //crapadp.idstaeve       <> 4 PRJ 322 - SM - 8 -- Linha comentada para mostrar eventos encerrados
+                         crapadp.cdevento       = crapeap.cdevento            /*AND*/
+                         /*crapadp.idstaeve       <> 4 PRJ 322 - SM - 8 -- Linha comentada para mostrar eventos encerrados*/
 						 NO-LOCK
                            BREAK BY crapadp.cdagenci
                                     BY crapedp.nmevento
@@ -420,7 +420,7 @@ PROCEDURE CriaListaEventos :
                           END.
                 END.
     
-    IF 	aux_fechamen = "Não" THEN //PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado
+    IF 	aux_fechamen = "Não" THEN /*PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado*/
 	  DO:
         RUN RodaJavaScript("mevento.push(~{cdagenci:'" + STRING(crapeap.cdagenci)  
                        + "',cdcooper:'" + STRING(crapeap.cdcooper)  
@@ -437,7 +437,7 @@ PROCEDURE CriaListaEventos :
                        + "',tppartic:'" + STRING(aux_tppartic)      
                        + "',tpevento:'" + STRING(crapedp.tpevento)  
                        + "',fechamen:'" + STRING(aux_fechamen) + "'~});").    
-      END.	//PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado			   
+      END.	/*PRJ 322 - SM - 8 -- Só carregar eventos que não estão com mês fechado	 */
     END.    
 	
 END PROCEDURE.
@@ -540,7 +540,7 @@ PROCEDURE local-assign-record:
        DO:
         FIND FIRST crapadp WHERE crapadp.nrseqdig = INT(ab_unmap.nrseqeve)
                              AND crapadp.cdcooper = INT(ab_unmap.aux_cdcooper)
-                             //AND crapadp.idstaeve <> 4 PRJ 322 - SM - 8 -- Linha comentada para permitir incrições de eventos encerrados
+                             /*AND crapadp.idstaeve <> 4 PRJ 322 - SM - 8 -- Linha comentada para permitir incrições de eventos encerrados*/
 							 NO-LOCK NO-ERROR.
         
                     IF NOT AVAIL crapadp THEN 
