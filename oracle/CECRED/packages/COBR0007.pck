@@ -3733,6 +3733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
               ,cob.flgdprot
               ,cob.idopeleg
               ,cob.vltitulo
+			  ,cob.dtbloque
               ,cob.rowid
           FROM crapcob cob
          WHERE cob.cdcooper = pr_cdcooper
@@ -3829,6 +3830,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
       ----- VALIDACOES PARA RECUSAR -----
       CASE rw_crapcob.incobran
+		WHEN 0 THEN
+          IF rw_crapcob.dtbloque IS NOT NULL THEN
+            vr_dscritic:= 'Boleto Bloqueado - Baixa nao efetuada!';
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
         WHEN 3 THEN
           IF rw_crapcob.insitcrt <> 5 THEN
             vr_dscritic:= 'Boleto Baixado - Baixa nao efetuada!';

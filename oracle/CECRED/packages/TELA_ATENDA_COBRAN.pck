@@ -132,7 +132,29 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);           --> Erros do processo                               
-                                        
+
+  --> Rotina para cancelar os boletos
+  PROCEDURE pc_cancela_boletos(pr_cdcooper IN crapceb.cdcooper%TYPE --> Codigo da cooperativa
+                              ,pr_nrdconta IN crapceb.nrdconta%TYPE --> Conta
+                              ,pr_nrconven IN crapceb.nrconven%TYPE --> Convenio
+                              ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                              ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                              ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2);           --> Erros do processo   
+
+  --> Rotina para sustar os boletos
+  PROCEDURE pc_susta_boletos(pr_cdcooper IN crapceb.cdcooper%TYPE --> Codigo da cooperativa
+                            ,pr_nrdconta IN crapceb.nrdconta%TYPE --> Conta
+                            ,pr_nrconven IN crapceb.nrconven%TYPE --> Convenio
+                            ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                            ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                            ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                            ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                            ,pr_des_erro OUT VARCHAR2);           --> Erros do processo   
+
 END TELA_ATENDA_COBRAN;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
@@ -3728,6 +3750,258 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       ROLLBACK;
 
   END pc_consulta_log_conv_web;     
+  
+  PROCEDURE pc_cancela_boletos(pr_cdcooper IN crapceb.cdcooper%TYPE  --> Codigo da cooperativa
+                               ,pr_nrdconta IN crapceb.nrdconta%TYPE --> Conta
+                               ,pr_nrconven IN crapceb.nrconven%TYPE --> Nro Convenio
+                               ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+                                    
+    --> Buscar boletos
+    CURSOR cr_boletos (pr_cdcooper crapceb.cdcooper%TYPE,
+                       pr_nrdconta crapceb.nrdconta%TYPE,
+                       pr_nrconven crapceb.nrconven%TYPE) IS
+      SELECT nrdconta,
+             nrcnvcob,
+             nrdocmto,
+             insitcrt,
+             insrvprt
+        FROM crapcob
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrcnvcob = pr_nrconven
+         AND dtdpagto IS NULL
+         AND dtdbaixa IS NULL
+         AND (insitcrt = 0 OR insitcrt = 1);
+    rw_boletos cr_boletos%ROWTYPE;
+      
+    -- Cria o registro de data
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+    
+  BEGIN
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+                             
+    -- Abre o cursor de data
+    OPEN btch0001.cr_crapdat(pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    CLOSE btch0001.cr_crapdat;
+    
+    FOR boleto IN cr_boletos(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_nrconven => pr_nrconven)
+    LOOP
+      --dbms_output.put_line('Doc Nro: ' || boleto.nrdocmto);
+        COBR0010.pc_grava_instr_boleto(pr_cdcooper => pr_cdcooper          --Codigo Cooperativa
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --Data Movimentacao
+                                      ,pr_cdoperad => nvl(vr_cdoperad,'1') --Codigo Operador
+                                      ,pr_cdinstru => 41                   --Codigo Instrucao
+                                      ,pr_nrdconta => pr_nrdconta          --Nro Conta
+                                      ,pr_nrcnvcob => pr_nrconven          --Nro Convenio
+                                      ,pr_nrdocmto => boleto.nrdocmto      --Nro Documento
+                                      ,pr_vlabatim => NULL                 --Valor Abatimento
+                                      ,pr_dtvencto => NULL                 --Data Vencimento
+                                      ,pr_qtdiaprt => NULL                 --Qtd dias
+                                      ,pr_cdcritic => vr_cdcritic          --Codigo Critica
+                                      ,pr_dscritic => vr_dscritic);        --Descricao Critica
+    END LOOP;
+    
+    CLOSE cr_boletos;
+    
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+
+  END pc_cancela_boletos;      
+  
+  PROCEDURE pc_susta_boletos(pr_cdcooper IN crapceb.cdcooper%TYPE  --> Codigo da cooperativa
+                               ,pr_nrdconta IN crapceb.nrdconta%TYPE --> Conta
+                               ,pr_nrconven IN crapceb.nrconven%TYPE --> Nro Convenio
+                               ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+                                    
+    --> Buscar boletos
+    CURSOR cr_boletos (pr_cdcooper crapceb.cdcooper%TYPE,
+                       pr_nrdconta crapceb.nrdconta%TYPE,
+                       pr_nrconven crapceb.nrconven%TYPE) IS
+      SELECT nrdconta,
+             nrcnvcob,
+             nrdocmto,
+             insitcrt,
+             insrvprt
+        FROM crapcob
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrcnvcob = pr_nrconven
+         AND dtdpagto IS NULL
+         AND dtdbaixa IS NULL
+         AND (insitcrt = 2 OR insitcrt = 3);
+    rw_boletos cr_boletos%ROWTYPE;
+      
+    -- Cria o registro de data
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+    
+  BEGIN
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+                             
+    -- Abre o cursor de data
+    OPEN btch0001.cr_crapdat(vr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    CLOSE btch0001.cr_crapdat;
+    
+    FOR boleto IN cr_boletos(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_nrconven => pr_nrconven)
+    LOOP
+      --dbms_output.put_line('Doc Nro: ' || boleto.nrdocmto);
+        COBR0010.pc_grava_instr_boleto(pr_cdcooper => pr_cdcooper          --Codigo Cooperativa
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --Data Movimentacao
+                                      ,pr_cdoperad => nvl(vr_cdoperad,'1') --Codigo Operador
+                                      ,pr_cdinstru => 41                   --Codigo Instrucao
+                                      ,pr_nrdconta => pr_nrdconta          --Nro Conta
+                                      ,pr_nrcnvcob => pr_nrconven          --Nro Convenio
+                                      ,pr_nrdocmto => boleto.nrdocmto      --Nro Documento
+                                      ,pr_vlabatim => NULL                 --Valor Abatimento
+                                      ,pr_dtvencto => NULL                 --Data Vencimento
+                                      ,pr_qtdiaprt => NULL                 --Qtd dias
+                                      ,pr_cdcritic => vr_cdcritic          --Codigo Critica
+                                      ,pr_dscritic => vr_dscritic);        --Descricao Critica
+    END LOOP;
+    
+    CLOSE cr_boletos;
+    
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+
+  END pc_susta_boletos;      
 
 END TELA_ATENDA_COBRAN;
 /
