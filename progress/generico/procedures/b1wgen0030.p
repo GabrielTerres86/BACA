@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 20/10/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 16/02/2018
            
     Dados referentes ao programa:
                 
@@ -506,6 +506,9 @@
 
                25/10/2017 - Projeto 410 - Ajustado cálculo do IOF na baixa do título
                             (James)
+
+			   16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
+						   (Gustavo Sene - GFT)							
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -6809,8 +6812,6 @@ PROCEDURE busca_parametros_dsctit:
     DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
     DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
     DEF INPUT PARAM par_tpcobran AS LOGICAL                 NO-UNDO.
-
-	/* GGS */
 	DEF INPUT PARAM par_inpessoa AS INTEGER     			NO-UNDO.	
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -6825,17 +6826,8 @@ PROCEDURE busca_parametros_dsctit:
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
-
-
-	/* GGS - Atual 
-    IF par_tpcobran = TRUE THEN
-       aux_cdacesso = "LIMDESCTITCR".
-    ELSE
-       aux_cdacesso = "LIMDESCTIT".
-	*/
 		   
-		   
-	/* GGS -- Novo */
+
     IF par_inpessoa = 1 THEN /* Pessoa Física */
     DO:
 	  IF par_tpcobran = TRUE THEN /* Cobrança com Regisro */
@@ -6957,17 +6949,6 @@ PROCEDURE grava_parametros_dsctit:
            aux_dscritic = "".
 
 
-    /* GGS -- Atual 
-    IF par_tpcobran = TRUE THEN
-      ASSIGN aux_cdacesso = "LIMDESCTITCR"
-             aux_cdacess2 = "LIMDESCTIT".
-    ELSE
-      ASSIGN aux_cdacesso = "LIMDESCTIT"
-             aux_cdacess2 = "LIMDESCTITCR".
-	*/
-
-	
-	/* GGS -- Novo */
     IF par_inpessoa = 1 THEN /* Pessoa Física */
     DO:
 	  IF par_tpcobran = TRUE THEN /* Cobrança com Regisro */

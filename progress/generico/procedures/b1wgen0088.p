@@ -39,18 +39,11 @@
 
 
 
-
-
-
-
-
-
-
 /*..............................................................................
 
    Programa: sistema/internet/procedures/b1wgen0088.p
    Autor   : Guilherme/Supero
-   Data    : 15/03/2011                        Ultima atualizacao: 16/12/2016
+   Data    : 15/03/2011                        Ultima atualizacao: 16/02/2018
 
    Dados referentes ao programa:
 
@@ -242,6 +235,9 @@
 
 	           12/12/2016 - Adicionar LOOP para buscar o numero do convenio de protesto 
 			                (Douglas - Chamado 564039)
+							
+			   16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
+							(Gustavo Sene - GFT)							
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0087tt.i }
@@ -5627,17 +5623,7 @@ PROCEDURE efetua-validacao-recusa-padrao:
 
             /* -------------------------------------------------- */
 
-			
 
-			/* -- GGS - Atual
-            IF (bcrapcob.flgregis) THEN
-              ASSIGN aux_cdacesso = "LIMDESCTITCR".
-            ELSE
-              ASSIGN aux_cdacesso = "LIMDESCTIT".
-			*/
-
-
-			/* GGS -- Novo */
 			FIND crapass WHERE crapass.cdcooper = bcrapcob.cdcooper AND
 							   crapass.nrdconta = bcrapcob.nrdconta
 							   NO-LOCK NO-ERROR.
@@ -5645,8 +5631,7 @@ PROCEDURE efetua-validacao-recusa-padrao:
 			 IF  NOT AVAILABLE crapass  THEN
 				 RETURN "NOK".
 			
-			
-			/* GGS -- Novo */
+
 			IF crapass.inpessoa = 1 THEN /* Pessoa Física */
 			DO:
 			  IF (bcrapcob.flgregis) THEN /* Cobrança com Regisro */
