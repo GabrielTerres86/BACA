@@ -184,7 +184,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 							(Adriano - P339).
               
                25/11/2017 - Ajuste para cobrar IOF. (James - P410)
-
+               
+               14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
+                            da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)                            
+    
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
 
@@ -1965,7 +1968,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               ELSE
                 vr_cdhistor:= 1101;
               END IF;
-
+              
+              /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+                 PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+                 se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+                 da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+                 a agencia do cooperado*/
+                 
               if not paga0001.fn_processo_ligeir then  
                 /* Leitura do lote */
                 OPEN cr_craplot (pr_cdcooper => pr_cdcooper
@@ -2044,11 +2053,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   rw_craplot.cdagenci := 1;
                   rw_craplot.cdbccxlt := 100;
                   rw_craplot.nrdolote := 10300;
-                  rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                                       ,pr_dtmvtolt => pr_dtmvtolt
-                                                                       ,pr_cdagenci => 1
-                                                                       ,pr_cdbccxlt => 100
-                                                                       ,pr_nrdolote => 10300); 
+                  rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(); 
               end if;  
               --Gravar lancamento
               BEGIN
@@ -2090,6 +2095,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
                   RAISE vr_exc_erro;
               END;
+              /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+                 PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+                 se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+                 da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+                 a agencia do cooperado*/
+                 
               if not paga0001.fn_processo_ligeir then  
                 /* Atualiza o lote na craplot */
                 BEGIN
@@ -2120,7 +2131,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               ELSE
                 vr_cdhistor:= 1102;
               END IF;
-               
+              /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+                 PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+                 se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+                 da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+                 a agencia do cooperado*/ 
               if not paga0001.fn_processo_ligeir then  
                 /* Leitura do lote */
                 OPEN cr_craplot (pr_cdcooper => pr_cdcooper
@@ -2198,11 +2213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 rw_craplot.cdagenci := 1;                   
                 rw_craplot.cdbccxlt := 100;                  
                 rw_craplot.nrdolote := 10300;                   
-                rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => rw_crapcop.cdcooper
-                                                                     ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                                     ,pr_cdagenci => 1
-                                                                     ,pr_cdbccxlt => 100
-                                                                     ,pr_nrdolote => 10300); 
+                rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(); 
               END IF;
               
               --Gravar lancamento
@@ -2245,6 +2256,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
                   RAISE vr_exc_erro;
               END;
+              /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+                 PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+                 deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
               if not paga0001.fn_processo_ligeir then
                 /* Atualiza o lote na craplot */
                 BEGIN
@@ -2349,7 +2363,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               IF vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
               END IF;
-              
+              /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+                 PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+                 se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+                 da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+                 a agencia do cooperado*/
               if not paga0001.fn_processo_ligeir then
                 -- Vamos verificar se o valo do IOF complementar é maior que 0
                 IF NVL(vr_vliofcpl,0) > 0 THEN              
@@ -2430,11 +2448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   rw_craplot.cdagenci := 1;                   
                   rw_craplot.cdbccxlt := 100;                  
                   rw_craplot.nrdolote := 10300;                                     
-                  rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                                       ,pr_dtmvtolt => pr_dtmvtolt
-                                                                       ,pr_cdagenci => 1
-                                                                       ,pr_cdbccxlt => 100
-                                                                       ,pr_nrdolote => 10300); 
+                  rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(); 
                 END IF;  
                 -- Grava na tabela de lancamentos
                 BEGIN
@@ -2485,6 +2499,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                     RAISE vr_exc_erro;
                 END;
 
+                /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+                PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+       	        deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
+                
                 if not paga0001.fn_processo_ligeir then
                   /* Atualiza o lote na craplot */
                   BEGIN
@@ -2543,6 +2561,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 RAISE vr_exc_erro;
             END;
           ELSIF pr_indbaixa = 2 THEN
+            
+            /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+             PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+             se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+             da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+             a agencia do cooperado*/
+
             if not paga0001.fn_processo_ligeir then
               /* Leitura do lote */
               OPEN cr_craplot (pr_cdcooper => pr_cdcooper
@@ -2621,11 +2646,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               rw_craplot.cdagenci := 1;                   
               rw_craplot.cdbccxlt := 100;                  
               rw_craplot.nrdolote := 10300;  
-              rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                                   ,pr_dtmvtolt => pr_dtmvtolt
-                                                                   ,pr_cdagenci => 1
-                                                                   ,pr_cdbccxlt => 100
-                                                                   ,pr_nrdolote => 10300);                                   
+              rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm();                                   
               
             END IF;
             
@@ -2668,6 +2689,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
                 RAISE vr_exc_erro;
             END;
+            
+            /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+              PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+              deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
             if not paga0001.fn_processo_ligeir then
               /* Atualiza o lote na craplot */
               BEGIN
@@ -2931,6 +2956,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           END LOOP;
           --Se valor total juros positivo
           IF vr_vltotjur > 0 THEN
+            
+            /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+            PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+            se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+            da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+            a agencia do cooperado*/
+            
             if not paga0001.fn_processo_ligeir then
               /* Leitura do lote */
               OPEN cr_craplot (pr_cdcooper => pr_cdcooper
@@ -3009,11 +3041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               rw_craplot.cdagenci := 1;                   
               rw_craplot.cdbccxlt := 100;                  
               rw_craplot.nrdolote := 10300;  
-              rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                                   ,pr_dtmvtolt => pr_dtmvtolt
-                                                                   ,pr_cdagenci => 1
-                                                                   ,pr_cdbccxlt => 100
-                                                                   ,pr_nrdolote => 10300); 
+              rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(); 
             END IF;
             
             --Gravar lancamento
@@ -3056,6 +3084,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
                 RAISE vr_exc_erro;
             END;
+            
+            /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+            PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+            deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
+            
             if not paga0001.fn_processo_ligeir then
               /* Atualiza o lote na craplot */
               BEGIN

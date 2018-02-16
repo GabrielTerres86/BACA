@@ -238,6 +238,9 @@ END paga0003;
                       
        01/11/2017 - Validar corretamente o horario da debsic em caso de agendamentos
                     e também validar data do pagamento menor que o dia atual (Lucas Ranghetti #775900)
+                    
+       14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
+                            da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
 ..............................................................................*/
 CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
@@ -1936,6 +1939,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       RAISE vr_exc_erro;
     END IF;
    
+    
+       /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+       da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+       a agencia do cooperado*/
     if not paga0001.fn_processo_ligeir then 
       -- Procedimento para inserir o lote e não deixar tabela lockada
       lote0001.pc_insere_lote(pr_cdcooper => rw_crapaut.cdcooper
@@ -1972,11 +1981,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        rw_craplot.tplotmov := 1;
        rw_craplot.cdhistor := 0;
        
-       rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => rw_crapaut.cdcooper
-                                                            ,pr_dtmvtolt => rw_crapaut.dtmvtolt
-                                                            ,pr_cdagenci => rw_crapaut.cdagenci
-                                                            ,pr_cdbccxlt => 11
-                                                            ,pr_nrdolote => 119000);                            
+       rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm();                            
 
     end if; 
     -- se encontrou erro ao buscar lote, abortar programa
@@ -2415,6 +2420,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			RAISE vr_exc_erro;
 		END IF;	
     
+    
+    /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509.*/
     IF not PAGA0001.fn_processo_ligeir then
       
       /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
@@ -2446,7 +2454,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       END IF;
     
     end if;
-      
+    
+    /*PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+       deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/  
     IF not PAGA0001.fn_processo_ligeir then
       
       -- Atualiza o lote na craplot
@@ -2467,7 +2477,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       END;
       
     END IF;
-     
+    
+     /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+       deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/  
     IF not PAGA0001.fn_processo_ligeir then 
       -- se for pagemento pela INTERNET deve atualizar o lote referente a
       -- criação do titulo, estrategia utilizada para diminuir o tempo de lock do lote
@@ -2504,7 +2517,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-
+        
+      
+       
         -- Atualizar lote de criação da Tit, deixado por ultimo para diminuir tempo de lock
         BEGIN
           UPDATE craplot SET craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
@@ -3656,7 +3671,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			vr_dssigemp	:= rw_crapscn2.dssigemp;
 		END IF;
 		
-    
+     /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+       da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+       a agencia do cooperado*/
+       
     if not PAGA0001.fn_processo_ligeir then 
       -- criação lote 
       LOTE0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
@@ -3707,11 +3727,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         rw_craplot.cdoperad := pr_cdoperad;
         rw_craplot.tplotmov := 12;
         rw_craplot.cdhistor := 0;
-        rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                             ,pr_cdagenci => pr_cdagenci
-                                                             ,pr_cdbccxlt => 11
-                                                             ,pr_nrdolote => 119000);
+        rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm();
       END IF;
       
 			IF pr_idorigem = 3 THEN -- INTERNET
