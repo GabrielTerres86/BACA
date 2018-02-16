@@ -757,7 +757,8 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
          
          "STR0010R2,PAG0111R2," +     /* Devolucao TED/TEC enviado com erro */
          "STR0003R2," +        /* Liquidacao de transferencia de numerarios */
-         "CIR0020,CIR0021"      +     /* ????????  */ /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+         "CIR0020"    +        /* Pagamento de Lançamento Devido MECIR */ /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+		 "CIR0021"    +        /* Lançamento a Crédito Efetivado do MECIR */ /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
          "STR0004R1,STR0005R1,STR0008R1,STR0037R1," + 
          "PAG0107R1,PAG0108R1,PAG0137R1," + /* Confirma envio */
          "STR0010R1,PAG0111R1," + /*Confirma devolucao enviada*/
@@ -4524,7 +4525,7 @@ PROCEDURE trata_lancamentos.
                                              ( INPUT crabcop.cdcooper /* par_cdcooper */
                                               ,INPUT "CRPS531" /* par_cdprogra */
                                               ,INPUT "carroforte@cecred.coop.br" 
-                                              ,INPUT "CIR0020 - CECRED" /* par_des_assunto */
+                                              ,INPUT "Pagamento de Lançamento Devido MECIR - CECRED" /* par_des_assunto */
                                               ,INPUT aux_dsmensag /* par_des_corpo */
                                               ,INPUT "" /* par_des_anexo */
                                               ,INPUT "N" /* par_flg_remove_anex */
@@ -4571,7 +4572,7 @@ PROCEDURE trata_lancamentos.
                                              ( INPUT crabcop.cdcooper /* par_cdcooper */
                                               ,INPUT "CRPS531" /* par_cdprogra */
                                               ,INPUT "carroforte@cecred.coop.br" 
-                                              ,INPUT "CIR0021 - CECRED" /* par_des_assunto */
+                                              ,INPUT "Lançamento a Crédito Efetivado do MECIR - CECRED" /* par_des_assunto */
                                               ,INPUT aux_dsmensag /* par_des_corpo */
                                               ,INPUT "" /* par_des_anexo */
                                               ,INPUT "N" /* par_flg_remove_anex */
