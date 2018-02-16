@@ -5703,17 +5703,17 @@ function formataTabelaResponsaveisAssinatura(){
     var ordemInicial = new Array();
 
     var arrayLargura = new Array();
+	arrayLargura[0] = '13px';
     
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
 
-    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, "selecionarResponsavel(this)");
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
     
 }
 
-function selecionarResponsavel(responsavel){
-    var objResponsavel = jQuery(responsavel);
-    nrcpfcgc = objResponsavel.find('td').find('input').val();
+function selecionarResponsavel(){
+    var nrcpfcgc = $('input[type=radio][name=nrcpfcgc]:checked', '#tabelaResponsaveis').val();
 
     criaTransPendenteCheque('senha', nrcpfcgc);
 }

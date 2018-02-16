@@ -51,7 +51,7 @@ isPostMethod();
 
 											<div id="divAutIB">
 												<input name="flgautoriza" id="flgAutorizaIB" type="radio" onchange="alteraOpcaoAutorizar()" class="radio" value="ib" />
-												<label for="flgAutorizaIB" class="radio">Internet Banking</label>
+												<label for="flgAutorizaIB" class="radio"><? echo utf8ToHtml('Aprovação via Internet Banking') ?></label>
 											</div>
 
 											<input name="flgautoriza" id="flgAutorizaComprovante" type="radio" onchange="alteraOpcaoAutorizar()" class="radio" value="comprovante" />

@@ -48,10 +48,12 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 }
 
 ?>
+<span><? echo utf8ToHtml('Selecione o sócio que está realizando o resgate.') ?></span>
 <div class="divRegistros" id="divResponsaveis">	
-	<table class="tituloRegistros" id="divResponsaveis">
+	<table class="tituloRegistros" id="tabelaResponsaveis">
 		<thead>
 			<tr>
+				<th></th>
 				<th>Nome</th>
 			</tr>
 		</thead>
@@ -61,9 +63,11 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 				foreach($xmlObj->roottag->tags[0]->tags as $responsavel){
 					?>
 					<tr>
+						<td id="nrcpfcgc" >
+							<input type="radio" name="nrcpfcgc" value="<? echo $responsavel->tags[1]->cdata; ?>" />
+						</td>
 						<td id="nmprimtl" >
 							<? echo $responsavel->tags[0]->cdata; ?>
-							<input type="hidden" value="<? echo $responsavel->tags[1]->cdata; ?>" />
 						</td>
 					</tr>
 					<?
@@ -72,4 +76,8 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 			?>
 		</tbody>
 	</table>
+</div>
+<div id="divBotoes">
+	<a href="#" class="botao" id="btVoltar" onclick="fechaRotina(divRotina); return false;">Voltar</a>
+	<a href="#" class="botao" id="btProsseguirAutorizacao" onclick="selecionarResponsavel(); return false;" >Prosseguir</a>
 </div>
