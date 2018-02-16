@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                        Ultima atualizacao: 29/01/2018
+   Data    : Julho/2013                        Ultima atualizacao: 14/02/2018
 
    Dados referentes ao programa:
 
@@ -40,6 +40,8 @@
                 
    
    29/01/2018 - Ajustar DEBCNS conforme solicitaçao do chamado (Lucas Ranghetti #837834)
+   
+   14/02/2018 - Retirar validaçao do horario de pagamento SICREDI (Lucas Ranghetti #838937)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -471,12 +473,6 @@ DO  WHILE TRUE:
                                                " - Opcao para processo manual "
                                                   + "desabilitada.".
                         
-                        /** Verifica se horario para pagamentos nao esgotou */
-                        IF  TIME > INT(ENTRY(1,craptab.dstextab," ")) AND
-                            TIME < INT(ENTRY(2,craptab.dstextab," ")) THEN
-                            ASSIGN glb_dscritic = crapcop.nmrescop +
-                                                  " - Horario para " + 
-                                           "pagamentos CONSORCIO nao esgotou". 
                     END.
    
                     IF  glb_dscritic <> ""  THEN
