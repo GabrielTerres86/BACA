@@ -726,7 +726,11 @@
 
               14/12/2017 - Inclusão dos campo flintcdc, inintegra_cont na tt tt-proposta-epr
                            utilizada nas procedures obtem-propostas-emprestimo e 
-                           obtem-dados-proposta-emprestimo, Prj. 402 (Jean Michel).                     
+                           obtem-dados-proposta-emprestimo, Prj. 402 (Jean Michel).
+              
+              16/02/2018 - Ajuste na procedure obtem-dados-proposta-emprestimo para verificar se existe valor 
+                           na coluna nrrenavo, caso sim, retorna esse valor, senao retorna o nrrenava.
+                           Chamado 845869 - (Mateus Z - Mouts)
                        
  ..............................................................................*/
 
@@ -2958,7 +2962,10 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                    tt-bens-alienacao.nranobem = crapbpr.nranobem
                                    tt-bens-alienacao.nrmodbem = crapbpr.nrmodbem
                                    tt-bens-alienacao.nrdplaca = crapbpr.nrdplaca
-                                   tt-bens-alienacao.nrrenava = crapbpr.nrrenava
+                                   tt-bens-alienacao.nrrenava = 
+                                       IF crapbpr.nrrenovo > 0 THEN
+                                           crapbpr.nrrenovo
+                                       ELSE crapbpr.nrrenava
                                    tt-bens-alienacao.tpchassi = crapbpr.tpchassi
                                    tt-bens-alienacao.ufdplaca = crapbpr.ufdplaca
                                    tt-bens-alienacao.vlmerbem = crapbpr.vlmerbem
