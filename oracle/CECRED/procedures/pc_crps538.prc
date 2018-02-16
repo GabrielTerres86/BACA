@@ -392,6 +392,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                26/01/2018 - Adicionar validação para carregar a data em que boleto pode ser pago
                             (Douglas - Chamado 824706)
+
+               14/02/2018 - Retirar regra de devolução do título pelo motivo 63
+                            (código de barras em desacordo com as especificacoes).
+                            CIP alterou as regras e o fator de vencimento e valor não
+                            fazem mais parte dos campos validados. (SD#847687 - AJFink)
+
    .............................................................................*/
 
      DECLARE
@@ -1017,7 +1023,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        vr_vltitulo     crapcob.vltitulo%TYPE;
        vr_nrispbif_rec crapban.nrispbif%TYPE;
        vr_nrispbif_fav crapban.nrispbif%TYPE;
-       vr_flgdnpcb     INTEGER;
        vr_fcrapcob     BOOLEAN;
        vr_nrseqarq     INTEGER;
        vr_tpcaptur     INTEGER;
@@ -2856,12 +2861,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    RAISE vr_exc_proximo;
                  END IF; --vr_crapaceb
 
-                 --> Veificar se cobrança ja entra na regra de rollout da nova plataforma de cobrança
-                 vr_flgdnpcb := NPCB0001.fn_verifica_rollout ( pr_cdcooper   => rw_crapcop.cdcooper, --> Codigo da cooperativa
-                                                               pr_dtmvtolt   => rw_crapdat.dtmvtolt, --> Data do movimento
-                                                               pr_vltitulo   => vr_vltitulo,         --> Valor do titulo
-                                                               pr_tpdregra   => 2 );                 --> Tipo de regra de rollout(1-registro,2-pagamento)
-                 
                  --limpar registro
                  rw_crapcob := null;
 
@@ -3105,124 +3104,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  IF cr_crapcob%ISOPEN THEN
                    CLOSE cr_crapcob;
                  END IF;
-
-                 --> Se cobrança ja esta na regra de rollout da nova plataforma de cobrança, 
-                 IF vr_flgdnpcb = 1 
-                 --> e esta fora do periodo de convivencia /*SD#764044*/
-                 AND npcb0001.fn_valid_periodo_conviv (pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                      ,pr_vltitulo => rw_crapcob.vltitulo) = 0 THEN                                      
-                   
-                   cxon0014.pc_calcula_data_vencimento(pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                                       pr_de_campo => substr(vr_dscodbar_ori,6,4),
-                                                       pr_dtvencto => vr_dtvencto,
-                                                       pr_cdcritic => vr_cdcritic,
-                                                       pr_dscritic => vr_dscritic);
-                   
-                   
-                   --> Verificar se valor e data de vencimento do codigo de barra estão corretos
-                   IF TO_NUMBER(trim(SUBSTR(vr_dscodbar_ori,10,10))) / 100 <> rw_crapcob.vltitulo OR 
-                      vr_dtvencto <> NVL(rw_crapcob.dtvctori,rw_crapcob.dtvencto) OR
-                      --> ou se na validacao da do vencto retornou critica
-                      nvl(vr_cdcritic,0) > 0 OR 
-                      TRIM(vr_dscritic) IS NOT NULL THEN
-                      
-                      
-                     /* Criacao da tabela generica gncptit - utilizada na conciliacao */
-                     BEGIN
-                       INSERT INTO gncptit
-                        (gncptit.cdcooper
-                        ,gncptit.cdagenci
-                        ,gncptit.dtmvtolt
-                        ,gncptit.dtliquid
-                        ,gncptit.cdbandst
-                        ,gncptit.cddmoeda
-                        ,gncptit.nrdvcdbr
-                        ,gncptit.dscodbar
-                        ,gncptit.tpcaptur
-                        ,gncptit.cdagectl
-                        ,gncptit.nrdolote
-                        ,gncptit.nrseqdig
-                        ,gncptit.vldpagto
-                        ,gncptit.tpdocmto
-                        ,gncptit.nrseqarq
-                        ,gncptit.nmarquiv
-                        ,gncptit.cdoperad
-                        ,gncptit.hrtransa
-                        ,gncptit.vltitulo
-                        ,gncptit.cdtipreg
-                        ,gncptit.flgconci
-                        ,gncptit.flgpcctl
-                        ,gncptit.cdcritic
-                        ,gncptit.cdmotdev
-                        ,gncptit.cdfatven
-                        ,gncptit.nrispbds)
-                       VALUES
-                        (pr_cdcooper
-                        ,0
-                        ,vr_dtmvtolt
-                        ,rw_crapdat.dtmvtolt
-                        ,to_number(trim(SUBSTR(vr_setlinha,1,3)))
-                        ,to_number(trim(SUBSTR(vr_setlinha,4,1)))
-                        ,to_number(trim(SUBSTR(vr_setlinha,5,1)))
-                        ,SUBSTR(vr_setlinha,01,44)
-                        ,to_number(trim(SUBSTR(vr_setlinha,50,1)))
-                        ,to_number(trim(SUBSTR(vr_setlinha,57,4)))
-                        ,to_number(trim(SUBSTR(vr_setlinha,61,6)))
-                        ,to_number(trim(SUBSTR(vr_setlinha,68,3)))
-                        ,to_number(trim(SUBSTR(vr_setlinha,85,12))) / 100
-                        ,to_number(trim(SUBSTR(vr_setlinha,45,2)))
-                        ,to_number(trim(SUBSTR(vr_setlinha,151,10)))
-                        ,vr_tab_nmarqtel(idx)
-                        ,vr_cdoperad
-                        ,TO_NUMBER(trim(SUBSTR(vr_setlinha,151,10)))
-                        ,to_number(trim(SUBSTR(vr_setlinha,10,10))) / 100
-                        ,3              /* Sua Remessa - Erro */
-                        ,1              /* registro conciliado */
-                        ,0              /* processou na central */
-                        ,998            /* Apresentacao indevida */
-                        ,0
-                        ,to_number(trim(SUBSTR(vr_setlinha,6,4)))
-                        ,vr_nrispbif_rec);                           --> gncptit.nrispbds
-                     EXCEPTION
-                       WHEN OTHERS THEN
-                         -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
-                         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-                         vr_cdcritic:= 0;
-                         vr_dscritic:= 'Erro ao inserir na tabela gncptit. '||sqlerrm;
-                         --Levantar Excecao
-                         RAISE vr_exc_sair;
-                     END; 
-                      
-                     vr_cdmotdev := 63; --> 63 - Código de barras em desacordo com as especificações
-                     
-                     --> Procedimento para grava registro de devolucao
-                     pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
-                                         ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
-                                         ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
-                                         ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
-                                         ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
-                                         ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
-                                         ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
-                                         ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
-                                         ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
-                                         ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
-                                         ,pr_nrdocmto   => vr_nrdocmto          --> numero do boleto de cobranca
-                                         ,pr_cdmotdev   => vr_cdmotdev          --> codigo do motivo da devolucao
-                                         ,pr_tpcaptur   => vr_tpcaptur          --> tipo de captura (cob615)
-                                         ,pr_tpdocmto   => vr_tpdocmto          --> codigo do tipo de documento (cob615)
-                                         ,pr_cdagerem   => vr_cdagepag          --> codigo da agencia do remetente (cob615)
-                                         ,pr_dslinarq   => vr_setlinha
-                                         ,pr_dscritic   => vr_dscritic);
-                                         
-                     IF TRIM(vr_dscritic) IS NOT NULL THEN
-                       RAISE vr_exc_sair;                       
-                     END IF;
-                     --> processar proximo registro
-                     RAISE vr_exc_proximo;
-                      
-                   END IF;
-                 
-                 END IF;  --> Fim regra rollout    
                  
                  --> Devolução de Pagamento Fraudado
                  IF rw_crapcob.incobran = 2 THEN               
