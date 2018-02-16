@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-02-09T08:39:44 -->
+<!-- 2018-02-14T15:48:26 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_contrato_limite_cheque" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="0.9558924531310722"/>
 	<property name="ireport.x" value="0"/>
@@ -534,7 +534,7 @@
 					<textElement textAlignment="Left" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>" + (3 + $F{ind_dev_sol}) + ".7</style> Taxa de juros remuneratórios\naplicável em cada borderô até o limite de 0,00%"]]></textFieldExpression>
+					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>" + (3 + $F{ind_dev_sol}) + ".7</style> Taxa de juros remuneratórios\nAplicável em cada borderô até o limite de 0,00%"]]></textFieldExpression>
 				</textField>
 				<line direction="BottomUp">
 					<reportElement x="316" y="4" width="1" height="24" uuid="ed2e0482-6614-4f0f-b187-d41b160ffc5d"/>

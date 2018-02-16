@@ -98,7 +98,7 @@ function estadoInicial() {
 
 	$("#btVoltar","#divBotoes").hide();
 
-
+    carregaTipoAditivo();
 
 }
 
@@ -539,10 +539,14 @@ function formataCabecalho() {
 		if ( divError.css('display') == 'block' ) { return false; }
 		// Se é a tecla ENTER,
 		if ( e.keyCode == 13 ) {
-			cNrctremp.focus();
+            cNrctremp.focus();
             return false;
 		}
 	});
+
+    cTpctrato.unbind('blur').bind('blur', function(){
+        carregaTipoAditivo();
+    });
 
 	cNrctremp.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }
@@ -2425,4 +2429,39 @@ function carregaAditivoCadastrado(par_nrdconta,par_tpctrato,par_nrctremp,par_nra
     $('#nrctremp', '#frmCab').val(par_nrctremp);
     $('#nraditiv', '#frmCab').val(par_nraditiv);
     $('#btnOK2',   '#frmCab').click();
+}
+
+function carregaTipoAditivo() {
+    var strOpcao1 = '<option value="9">9</option>';
+    var strOpcao2 = '<option value="9">9 - Cobertura de Aplicação Vinculada à Operação</option>';
+    var strCampo1 = '';
+    var strCampo2 = '';
+
+    // Se for Emprestimo/Financiamento
+    if (cTpctrato.val() == 90) {
+        // Opcoes do campo cdaditix
+        strCampo1 = strCampo1 + '<option value="1">1</option>';
+        strCampo1 = strCampo1 + '<option value="2">2</option>';
+        strCampo1 = strCampo1 + '<option value="3">3</option>';
+        strCampo1 = strCampo1 + '<option value="4">4</option>';
+        strCampo1 = strCampo1 + '<option value="5">5</option>';
+        strCampo1 = strCampo1 + '<option value="6">6</option>';
+        strCampo1 = strCampo1 + '<option value="7">7</option>';
+        strCampo1 = strCampo1 + '<option value="8">8</option>';
+        // Opcoes do campo cdaditiv
+        strCampo2 = strCampo2 + '<option value="1">1 - Alteração Data do Débito de Empréstimo</option>';
+        strCampo2 = strCampo2 + '<option value="2">2 - Aplicação Vinculada à Operação de Empréstimo</option>';
+        strCampo2 = strCampo2 + '<option value="3">3 - Aplicação Vinculada Terceiro à Operação de Empréstimo</option>';
+        strCampo2 = strCampo2 + '<option value="4">4 - Inclusão de Fiador/Avalista de Empréstimo</option>';
+        strCampo2 = strCampo2 + '<option value="5">5 - Substituição de Veículo de Empréstimo</option>';
+        strCampo2 = strCampo2 + '<option value="6">6 - Interveniente Garantidor Veículo de Empréstimo</option>';
+        strCampo2 = strCampo2 + '<option value="7">7 - Sub-rogação - C/ Nota Promissória de Empréstimo</option>';
+        strCampo2 = strCampo2 + '<option value="8">8 - Sub-rogação - S/ Nota Promissória de Empréstimo</option>';
+    }
+
+    strCampo1 = strCampo1 + strOpcao1;
+    strCampo2 = strCampo2 + strOpcao2;
+
+    cCdaditix.html(strCampo1);
+    cCdaditiv.html(strCampo2);
 }

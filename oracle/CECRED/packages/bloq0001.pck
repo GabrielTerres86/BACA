@@ -901,7 +901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
       
       -- Somente caso a linha de crédito seja específica de aplicação
       IF pr_tpctrato = 4 AND vr_vlgarnec > vr_valor_selecionado THEN 
-        vr_dscritic := 'Valor da garantia nao a suficiente!';
+        vr_dscritic := 'Valor da garantia insuficiente!';
         RAISE vr_exc_erro;
       END IF;
       

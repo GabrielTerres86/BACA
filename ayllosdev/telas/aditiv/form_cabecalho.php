@@ -67,17 +67,7 @@
 				<input name="dtmvtolx" id="dtmvtolx" type="text" value="<? echo $dtmvtolx ?>" />
 
 				<label for="cdaditix"><? echo utf8ToHtml('Tipo:') ?></label>
-				<select name="cdaditix" id="cdaditix" onChange="selecionaTipo(); return false;">
-				<option value="1">1</option>
-				<option value="2">2</option>
-				<option value="3">3</option>
-				<option value="4">4</option>
-				<option value="5">5</option>
-				<option value="6">6</option>
-				<option value="7">7</option>
-				<option value="8">8</option>
-				<option value="9">9</option>
-				</select>
+				<select name="cdaditix" id="cdaditix" onChange="selecionaTipo(); return false;"></select>
 				
 				<a href="#" class="botao" id="btnOK2">OK</a>
 			</td>
@@ -85,17 +75,7 @@
 	</table>
 	
 	<label for="cdaditiv"></label>
-	<select id="cdaditiv" name="cdaditiv" multiple size="8">
-	<option value="1"  <? echo $cdaditiv == '1' ? 'selected' : '' ?> ><? echo utf8ToHtml('1 - Alteração Data do Débito de Empréstimo') ?></option>
-	<option value="2"  <? echo $cdaditiv == '2' ? 'selected' : '' ?> ><? echo utf8ToHtml('2 - Aplicação Vinculada à Operação de Empréstimo') ?></option>
-	<option value="3"  <? echo $cdaditiv == '3' ? 'selected' : '' ?> ><? echo utf8ToHtml('3 - Aplicação Vinculada Terceiro à Operação de Empréstimo') ?></option>
-	<option value="4"  <? echo $cdaditiv == '4' ? 'selected' : '' ?> ><? echo utf8ToHtml('4 - Inclusão de Fiador/Avalista de Empréstimo') ?></option>
-	<option value="5"  <? echo $cdaditiv == '5' ? 'selected' : '' ?> ><? echo utf8ToHtml('5 - Substituição de Veículo de Empréstimo') ?></option>
-	<option value="6"  <? echo $cdaditiv == '6' ? 'selected' : '' ?> ><? echo utf8ToHtml('6 - Interveniente Garantidor Veículo de Empréstimo') ?></option>
-	<option value="7"  <? echo $cdaditiv == '7' ? 'selected' : '' ?> ><? echo utf8ToHtml('7 - Sub-rogação - C/ Nota Promissória de Empréstimo') ?></option>
-	<option value="8"  <? echo $cdaditiv == '8' ? 'selected' : '' ?> ><? echo utf8ToHtml('8 - Sub-rogação - S/ Nota Promissória de Empréstimo') ?></option>
-	<option value="9"  <? echo $cdaditiv == '9' ? 'selected' : '' ?> ><? echo utf8ToHtml('9 - Cobertura de Aplicação Vinculada à Operação') ?></option>
-	</select>	
+	<select id="cdaditiv" name="cdaditiv" multiple size="8"></select>	
 	
 	<br style="clear:both" />	
 	

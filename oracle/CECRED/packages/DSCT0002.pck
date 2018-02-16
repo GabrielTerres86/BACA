@@ -3720,7 +3720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                              vr_tab_dados_avais(vr_idxavais).dsendcmp ||', da cidade de ' || 
                              vr_tab_dados_avais(vr_idxavais).nmcidade ||'/' || 
                              vr_tab_dados_avais(vr_idxavais).cdufresd || ', CEP ' ||
-                             vr_tab_dados_avais(vr_idxavais).nrcepend || ', na condição de DEVEDOR(ES) SOLIDÁRIO(S)' ||
+                             GENE0002.fn_mask(vr_tab_dados_avais(vr_idxavais).nrcepend,'99.999-999') || ', na condição de DEVEDOR(ES) SOLIDÁRIO(S)' ||
                              (CASE WHEN vr_tab_dados_avais(vr_idxavais).nrctaava > 0 THEN ', titular da conta corrente nº ' || TRIM(gene0002.fn_mask_conta(vr_tab_dados_avais(vr_idxavais).nrctaava)) ELSE '' END) ||
                              '.';
         ELSE
@@ -3783,7 +3783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                              vr_tab_dados_avais(vr_idxavais).dsendcmp ||', da cidade de ' || 
                              vr_tab_dados_avais(vr_idxavais).nmcidade ||'/' || 
                              vr_tab_dados_avais(vr_idxavais).cdufresd || ', CEP ' ||
-                             vr_tab_dados_avais(vr_idxavais).nrcepend || ', na condição de DEVEDOR(ES) SOLIDÁRIO(S)' ||
+                             GENE0002.fn_mask(vr_tab_dados_avais(vr_idxavais).nrcepend,'99.999-999') || ', na condição de DEVEDOR(ES) SOLIDÁRIO(S)' ||
                              (CASE WHEN vr_tab_dados_avais(vr_idxavais).nrctaava > 0 THEN ', titular da conta corrente nº ' || TRIM(gene0002.fn_mask_conta(vr_tab_dados_avais(vr_idxavais).nrctaava)) ELSE '' END) ||
                              '.';
         ELSE
