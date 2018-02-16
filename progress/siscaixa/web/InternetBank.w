@@ -7101,12 +7101,11 @@ PROCEDURE proc_operacao141:
            aux_flgravar = INTE(GET-VALUE("flgravar"))
            aux_vltarapr = DECI(GET-VALUE("vltarapr"))
            aux_xmldados = GET-VALUE("xmldados")
-           aux_dssessao = GET-VALUE("dssessao")
-           aux_dtmvtolt = DATE(GET-VALUE("dtmvtolt"))
+           aux_dssessao = GET-VALUE("dssessao")           
            aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
 
     RUN sistema/internet/fontes/InternetBank141.p (INPUT aux_cdcooper,
-                                                   INPUT aux_dtmvtolt,
+                                                   INPUT aux_dtmvtocd,
                                                    INPUT aux_lisrowid,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_idseqttl,
@@ -7394,13 +7393,15 @@ PROCEDURE proc_operacao151:
 
     ASSIGN  aux_nrdconta =    INT(GET-VALUE("aux_nrdconta"))
             aux_lisrowid = STRING(GET-VALUE("aux_lisrowid"))
-            aux_idtipfol =    INT(GET-VALUE("aux_idtipfol")).
+            aux_idtipfol =    INT(GET-VALUE("aux_idtipfol"))
+            aux_iddspscp =    INT(GET-VALUE("aux_iddspscp")).
     
   
    RUN sistema/internet/fontes/InternetBank151.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idtipfol,
-                                                  INPUT aux_lisrowid,                                                 
+                                                  INPUT aux_lisrowid,     
+                                                  INPUT aux_iddspscp,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
                                                   
