@@ -49,19 +49,7 @@ RUN STORED-PROCEDURE pc_crps509 aux_handproc = PROC-HANDLE
     OUTPUT 0,
     OUTPUT 0,
     OUTPUT 0, 
-    OUTPUT "").
-	
-	
-	( pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
-   ,pr_flgresta IN PLS_INTEGER             --> Flag padrão para utilização de restart
-   ,pr_cdagenci IN PLS_INTEGER DEFAULT 0  --> Código da agência, utilizado no paralelismo
-   ,pr_idparale IN PLS_INTEGER DEFAULT 0  --> Identificador do job executando em paralelo.
-   ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
-   ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
-   ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
-   ,pr_dscritic OUT VARCHAR2)
-
-	
+    OUTPUT "").	
 
 IF  ERROR-STATUS:ERROR  THEN DO:
     DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
