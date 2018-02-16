@@ -11177,7 +11177,91 @@ PROCEDURE aprova_trans_pend:
                                                 INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
                                                 INPUT 0, /*tt-tbtarif_pacote_trans_pend.vlpacote,*/
                                                 INPUT aux_conttran).
-                    END. /* 13 */                
+                    END. /* 13 */
+					
+					ELSE IF tt-tbgen_trans_pend.tptransacao = 18 THEN /*  cheque em custodia */
+                    DO: /*Inicio 18*/
+                    /*Se ultimo aprovador e se a tela eh a de confirmacao faca*/
+                    IF par_indvalid = 1 AND aux_conttran = 1 THEN
+                      DO:
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                                                 
+                        RUN STORED-PROCEDURE pc_efetua_resgate_cst_prog aux_handproc = PROC-HANDLE NO-ERROR
+                                             (INPUT tt-tbgen_trans_pend.cdtransacao_pendente
+                                             ,INPUT par_cdcooper
+                                             ,INPUT par_nrdconta
+                                             ,INPUT par_cdoperad
+                                             ,OUTPUT 0
+                                             ,OUTPUT "").
+                        CLOSE STORED-PROC pc_efetua_resgate_cst_prog 
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                        
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = ""
+                               aux_cdcritic = pc_efetua_resgate_cst_prog.pr_cdcritic
+                                              WHEN pc_efetua_resgate_cst_prog.pr_cdcritic <> ?
+                               aux_dscritic = pc_efetua_resgate_cst_prog.pr_dscritic
+                                              WHEN pc_efetua_resgate_cst_prog.pr_dscritic <> ?.
+                        
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                                                  
+                        IF  aux_cdcritic <> 0   OR
+                            aux_dscritic <> ""  THEN 
+                          DO: 
+                            IF  aux_dscritic = "" THEN 
+                              DO:
+                                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                NO-LOCK NO-ERROR.
+                                IF AVAIL crapcri THEN
+                                  ASSIGN aux_dscritic = crapcri.dscritic.
+                                ELSE
+                                  ASSIGN aux_dscritic =  "Nao foi possivel executar a rotina resgate custodia".
+                              END.
+                            
+                            RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                    INPUT par_cdoperad,
+                                                    INPUT aux_dscritic,
+                                                    INPUT aux_dsorigem,
+                                                    INPUT aux_dstransa,
+                                                    INPUT FALSE,
+                                                    INPUT par_nmdatela,
+                                                    INPUT par_nrdconta,
+                                                    INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                    INPUT FALSE,
+                                                    INPUT par_indvalid,
+                                                    INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
+                                                    INPUT 0, /*tt-tbtarif_pacote_trans_pend.vlpacote,*/
+                                                    INPUT aux_conttran).
+                                         
+                            IF par_indvalid = 1 THEN
+                              ASSIGN par_flgaviso = TRUE.
+                                    
+                            UNDO TRANSACAO, LEAVE TRANSACAO.
+                          
+                          END.
+                          
+                          
+                          
+                      END. /*FIM IF  par_indvalid = 1 AND aux_conttran = 1 */                                        
+                    
+                    RUN gera_erro_transacao(INPUT par_cdcooper,
+                                            INPUT par_cdoperad,
+                                            INPUT aux_dscritic,
+                                            INPUT aux_dsorigem,
+                                            INPUT aux_dstransa,
+                                            INPUT FALSE,
+                                            INPUT par_nmdatela,
+                                            INPUT par_nrdconta,
+                                            INPUT STRING(ROWID(tbgen_trans_pend)),
+                                            INPUT TRUE,
+                                            INPUT par_indvalid,
+                                            INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
+                                            INPUT 0,
+                                            INPUT aux_conttran).                                                                 
+                      
+                      
+                        
+                  END. /*FIM 18*/  					
  
                         IF par_indvalid = 1 THEN
                       DO:
