@@ -2920,9 +2920,7 @@ PROCEDURE busca_limites:
                tt-limite_tit.qtdiavig = craplim.qtdiavig
                tt-limite_tit.cddlinha = craplim.cddlinha
                tt-limite_tit.tpctrlim = craplim.tpctrlim
-               tt-limite_tit.idcobope = craplim.idcobope
-               tt-limite_tit.cdageori = craplim.cdageori
-               tt-limite_tit.dssitlim = (IF craplim.insitlim = 1 THEN               /*Situacao do Limite*/
+               tt-limite_tit.dssitlim = (IF craplim.insitlim = 1 THEN
                                             "EM ESTUDO"
                                          ELSE 
                                          IF craplim.insitlim = 2 THEN
@@ -2933,60 +2931,7 @@ PROCEDURE busca_limites:
                                          ELSE
                                          IF craplim.insitlim = 4 THEN
                                             "VIGENTE"
-                                         ELSE
-                                         IF craplim.insitlim = 5 THEN
-                                            "APROVADO"
-                                         ELSE
-                                         IF craplim.insitlim = 6 THEN
-                                            "NAO APROVADO"
-                                         ELSE
-                                         IF craplim.insitlim = 7 THEN
-                                            "REJEITADO"
                                          ELSE 
-                                            "DIFERENTE")
-               tt-limite_tit.dssitest = (IF craplim.insitest = 0 THEN               /*Situacao da Analise*/
-                                            "NAO ENVIADO"
-                                         ELSE 
-                                         IF craplim.insitest = 1 THEN
-                                            "ENVIADA ANALISE AUTOMATICA"
-                                         ELSE
-                                         IF craplim.insitest = 2 THEN
-                                            "ENVIADA ANALISE MANUAL"
-                                         ELSE
-                                         IF craplim.insitest = 3 THEN
-                                            "ANALISE FINALIZADA"
-                                         ELSE 
-                                         IF craplim.insitest = 4 THEN
-                                            "EXPIRADO"
-                                         ELSE 
-                                            "DIFERENTE")
-               tt-limite_tit.dssitapr = (IF craplim.insitapr = 0 THEN               /*Decisao*/
-                                            "NAO ANALISADO"
-                                         ELSE 
-                                         IF craplim.insitapr=1 THEN 
-                                           "APROVADO AUTOMATICAMENTE"
-                                         ELSE
-                                         IF craplim.insitapr=2 THEN 
-                                           "APROVADO MANUAL"
-                                         ELSE
-                                         IF craplim.insitapr=3 THEN 
-                                           "APROVADO (CONTINGENCIA)"
-                                         ELSE
-                                         IF craplim.insitapr=4 THEN 
-                                           "REJEITADO MANUAL"
-                                         ELSE
-                                         IF craplim.insitapr=5 THEN 
-                                           "REJEITADO AUTOMATICAMENTE"
-                                         ELSE
-                                         IF craplim.insitapr=6 THEN 
-                                           "REJEITADO (CONTINGENCIA)"
-                                         ELSE
-                                         IF craplim.insitapr=7 THEN 
-                                           "NAO ANALISADO"
-                                         ELSE
-                                         IF craplim.insitapr=8 THEN 
-                                           "REFAZER"
-                                         ELSE
                                             "DIFERENTE")
                tt-limite_tit.flgenvio = IF   AVAIL crapprp   THEN
                                              IF   crapprp.flgenvio   THEN
@@ -6865,6 +6810,9 @@ PROCEDURE busca_parametros_dsctit:
     DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
     DEF INPUT PARAM par_tpcobran AS LOGICAL                 NO-UNDO.
 
+	/* GGS */
+	DEF INPUT PARAM par_inpessoa AS INTEGER     			NO-UNDO.	
+
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-dsctit.
     DEF OUTPUT PARAM TABLE FOR tt-dados_cecred_dsctit.   
@@ -6878,11 +6826,35 @@ PROCEDURE busca_parametros_dsctit:
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
+
+	/* GGS - Atual 
     IF par_tpcobran = TRUE THEN
        aux_cdacesso = "LIMDESCTITCR".
     ELSE
        aux_cdacesso = "LIMDESCTIT".
+	*/
+		   
+		   
+	/* GGS -- Novo */
+    IF par_inpessoa = 1 THEN /* Pessoa Física */
+    DO:
+	  IF par_tpcobran = TRUE THEN /* Cobrança com Regisro */
+		aux_cdacesso = "LIMDESCTITCRPF".
+	  ELSE 
+	    aux_cdacesso = "LIMDESCTITPF".		  	
+    END.
+    ELSE
+	DO:	
+	  IF par_inpessoa = 2 THEN /* Pessoa Jurídica */
+	  DO: 	
+	    IF par_tpcobran = TRUE THEN /* Cobrança com Regisro */
+		  aux_cdacesso = "LIMDESCTITCRPJ".
+	    ELSE 
+	      aux_cdacesso = "LIMDESCTITPJ".
+	  END.		
+    END.    
 
+	
     FIND craptab WHERE craptab.cdcooper = par_cdcooper    AND
                        craptab.nmsistem = "CRED"          AND
                        craptab.tptabela = "USUARI"        AND
@@ -6984,13 +6956,41 @@ PROCEDURE grava_parametros_dsctit:
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
+
+    /* GGS -- Atual 
     IF par_tpcobran = TRUE THEN
       ASSIGN aux_cdacesso = "LIMDESCTITCR"
              aux_cdacess2 = "LIMDESCTIT".
     ELSE
       ASSIGN aux_cdacesso = "LIMDESCTIT"
              aux_cdacess2 = "LIMDESCTITCR".
-    
+	*/
+
+	
+	/* GGS -- Novo */
+    IF par_inpessoa = 1 THEN /* Pessoa Física */
+    DO:
+	  IF par_tpcobran = TRUE THEN /* Cobrança com Regisro */
+        ASSIGN aux_cdacesso = "LIMDESCTITCRPF"
+               aux_cdacess2 = "LIMDESCTITPF".		
+	  ELSE 
+        ASSIGN aux_cdacesso = "LIMDESCTITPF"
+               aux_cdacess2 = "LIMDESCTITCRPF".
+    END.
+    ELSE
+	DO:	
+	  IF par_inpessoa = 2 THEN /* Pessoa Jurídica */
+	  DO: 	
+	    IF par_tpcobran = TRUE THEN /* Cobrança com Regisro */
+          ASSIGN aux_cdacesso = "LIMDESCTITCRPJ"
+                 aux_cdacess2 = "LIMDESCTITPJ".
+	    ELSE 
+          ASSIGN aux_cdacesso = "LIMDESCTITPJ"
+                 aux_cdacess2 = "LIMDESCTITCRPJ".
+	  END.		
+    END.    
+
+	
     TRANS_1:
     DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN "NOK":
 

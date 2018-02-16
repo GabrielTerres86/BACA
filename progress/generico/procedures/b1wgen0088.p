@@ -5626,11 +5626,46 @@ PROCEDURE efetua-validacao-recusa-padrao:
             END.
 
             /* -------------------------------------------------- */
+
+			
+
+			/* -- GGS - Atual
             IF (bcrapcob.flgregis) THEN
               ASSIGN aux_cdacesso = "LIMDESCTITCR".
             ELSE
               ASSIGN aux_cdacesso = "LIMDESCTIT".
+			*/
 
+
+			/* GGS -- Novo */
+			FIND crapass WHERE crapass.cdcooper = bcrapcob.cdcooper AND
+							   crapass.nrdconta = bcrapcob.nrdconta
+							   NO-LOCK NO-ERROR.
+
+			 IF  NOT AVAILABLE crapass  THEN
+				 RETURN "NOK".
+			
+			
+			/* GGS -- Novo */
+			IF crapass.inpessoa = 1 THEN /* Pessoa Física */
+			DO:
+			  IF (bcrapcob.flgregis) THEN /* Cobrança com Regisro */
+				aux_cdacesso = "LIMDESCTITCRPF".
+			  ELSE 
+				aux_cdacesso = "LIMDESCTITPF".		  	
+			END.
+			ELSE
+			DO:	
+			  IF crapass.inpessoa = 2 THEN /* Pessoa Jurídica */
+			  DO: 	
+				IF (bcrapcob.flgregis) THEN /* Cobrança com Regisro */
+				  aux_cdacesso = "LIMDESCTITCRPJ".
+				ELSE 
+				  aux_cdacesso = "LIMDESCTITPJ".
+			  END.		
+			END.
+			
+			  
             FIND craptab WHERE 
                  craptab.cdcooper = bcrapcob.cdcooper  AND
                  craptab.nmsistem = "CRED"             AND
