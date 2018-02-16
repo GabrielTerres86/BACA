@@ -2920,6 +2920,8 @@ PROCEDURE busca_limites:
                tt-limite_tit.qtdiavig = craplim.qtdiavig
                tt-limite_tit.cddlinha = craplim.cddlinha
                tt-limite_tit.tpctrlim = craplim.tpctrlim
+               tt.limite_tit.idcobope = craplim.idcobope
+               tt.limite_tit.cdageori = craplim.cdageori
                tt-limite_tit.dssitlim = (IF craplim.insitlim = 1 THEN               /*Situacao do Limite*/
                                             "EM ESTUDO"
                                          ELSE 
