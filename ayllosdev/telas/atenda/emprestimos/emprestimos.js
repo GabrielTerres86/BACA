@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 14/12/2017
+ * FONTE        : emprestimos.js                            Última alteração: 07/02/2018
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -118,6 +118,7 @@
  * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
  * 096: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
  * 097: [14/12/2017] Incluão de novas regras de alteração, registro de gravamos e análise, Prj. 402 (Jean Michel).
+ * 101: [07/02/2017] Forçar o preenchimento da primeira categoria para emprestimos Imoveis ou Veiculos - Antonio R. Jr - Mouts - Chamado 809763
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -324,6 +325,9 @@ var idSocio = 0;
 var insitapr = '';
 var dssitest = '';
 var inobriga = '';
+
+//emprestimo
+var booPrimeiroBen = false; //809763
 
 $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
@@ -731,6 +735,7 @@ function controlaOperacao(operacao) {
         case 'AI_ALIENACAO':
             mensagem = 'abrindo altera ...';
             cddopcao = 'A';
+            booPrimeiroBen = false; //809763
             break;
         case 'A_ALIENACAO' :
 
@@ -811,7 +816,8 @@ function controlaOperacao(operacao) {
             mensagem = 'finalizando...';
             cddopcao = 'A';
             break;
-        case 'I' :
+        case 'I':
+            booprimeirbooPrimeiroBen = false;
             if (msgDsdidade != '') {
                 showError('inform', msgDsdidade, 'Alerta - Ayllos', 'controlaOperacao("TI");');
             } else if (possuiPortabilidade == 'S' && cadastroNovo == 'N') { /* portabilidade */
@@ -847,6 +853,7 @@ function controlaOperacao(operacao) {
             contIntervis = 0;
             resposta = '';
             cddopcao = 'I';
+            booPrimeiroBen = false;//809763
             break;
         case 'I_DADOS_AVAL' :
             if (contAvalistas < nrAvalistas) {
@@ -5052,9 +5059,9 @@ function validaDadosInterv() {
     return aux_retorno;
 }
 
-function validaHipoteca(nmfuncao, operacao) {
+function validaHipoteca(nmfuncao, operacao) {   
 
-	if ((typeof $('#dscatbem', '#frmHipoteca').val() == 'object') || ($('#dscatbem', '#frmHipoteca').val() == '')) {
+    if (((typeof $('#dscatbem', '#frmHipoteca').val() == 'object') || ($('#dscatbem', '#frmHipoteca').val() == '')) && booPrimeiroBen) { //809763	
 		eval(nmfuncao);
         return true;
     }
@@ -5074,6 +5081,13 @@ function validaHipoteca(nmfuncao, operacao) {
 		fVlemprst = number_format(parseFloat(fVlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
 
     var idcatbem = contHipotecas;
+
+    if (!booPrimeiroBen) {//809763
+        if (dscatbem == '') {//809763
+            showError('error', 'O campo categoria &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Ayllos', 'focaCampoErro(\'dscatbem\',\'frmAlienacao\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
+            return false;//809763
+        } 
+    }//809763
 
     if (operacao == 'AI_HIPOTECA' || operacao == 'I_HIPOTECA') {
         idcatbem++;
@@ -5101,7 +5115,7 @@ function validaHipoteca(nmfuncao, operacao) {
                     eval(response);
                     hideMsgAguardo();
                     bloqueiaFundo(divRotina);
-
+                    booPrimeiroBen = true;//809763
                 } else {
                     hideMsgAguardo();
                     eval(response);
@@ -5118,7 +5132,7 @@ function validaHipoteca(nmfuncao, operacao) {
 
 function validaAlienacao(nmfuncao, operacao) {
 	
-	if (((typeof $('#dscatbem', '#frmAlienacao').val() == 'object') || $('#dscatbem', '#frmAlienacao').val() == '') && $('#dsbemfin', '#frmAlienacao').val() == ''){
+    if (((typeof $('#dscatbem', '#frmAlienacao').val() == 'object') || $('#dscatbem', '#frmAlienacao').val() == '') && $('#dsbemfin', '#frmAlienacao').val() == '' && booPrimeiroBen) {//809763
         eval(nmfuncao);
         return false;
 }
@@ -5148,6 +5162,13 @@ function validaAlienacao(nmfuncao, operacao) {
 		fVlemprst = number_format(parseFloat(fVlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
 
     var idcatbem = contAlienacao;
+
+    if (!booPrimeiroBen) {//809763
+        if (dscatbem == '') {//809763
+            showError('error', 'O campo categoria &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Ayllos', 'focaCampoErro(\'dscatbem\',\'frmAlienacao\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
+            return false;//809763
+        } 
+    }//809763
 
     if (operacao == 'AI_ALIENACAO' || operacao == 'I_ALIENACAO') {
         idcatbem++;
@@ -5231,7 +5252,7 @@ function validaAlienacao(nmfuncao, operacao) {
                     eval(response);
                     hideMsgAguardo();
                     bloqueiaFundo(divRotina);
-
+                    booPrimeiroBen = true;//809763
                 } else {
                     hideMsgAguardo();
                     eval(response);
