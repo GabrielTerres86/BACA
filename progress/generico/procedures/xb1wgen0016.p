@@ -218,6 +218,7 @@ PROCEDURE cancelar_agendamento:
                                      INPUT "INTERNET",  /** ORIGEM   **/
                                      INPUT aux_dtmvtage,
                                      INPUT aux_nrdocmto,
+                                     INPUT 0,
                                      INPUT aux_nmdatela,
                                      INPUT aux_nrcpfope,
                                      OUTPUT aux_dstransa,
