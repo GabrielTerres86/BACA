@@ -51,6 +51,14 @@ include("../../../includes/carrega_permissoes.php");
 
 ?>
 
+<form action="<?php echo $UrlSite; ?>telas/atenda/cobranca/imprimir_relatorio.php" name="frmRelatorio" class="formulario" id="frmRelatorio" method="post">
+	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>" />
+    <input type="hidden" name="nmarquiv" id="nmarquiv" />
+    <input type="hidden" name="nrdconta" id="nrdconta" />
+    <input type="hidden" name="nmprimtl" id="nmprimtl" />
+    <input type="hidden" name="cdagenci" id="cdagenci" />
+</form>	
+
 <form action="<?php echo $UrlSite; ?>telas/atenda/cobranca/impressao_termo.php" name="frmTermo" class="formulario" id="frmTermo" method="post">
 	<input type="hidden" id="nrdconta" name="nrdconta" value="">	
 	<input type="hidden" id="dsdtitul" name="dsdtitul" value="">

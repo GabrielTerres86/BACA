@@ -7911,7 +7911,7 @@ PROCEDURE gera_relatorio:
                aux_nmarqimp = aux_nmendter + ".ex"
                aux_nmarqpdf = aux_nmendter + ".pdf".
 
-        IF  CAN-DO("2,6",STRING(par_tprelato)) THEN
+        IF  CAN-DO("2,6,8",STRING(par_tprelato)) THEN
             IF  NOT CAN-FIND(crapage WHERE
                              crapage.cdcooper = par_cdcooper AND
                              crapage.cdagenci = par_cdagencx) THEN
@@ -7953,7 +7953,7 @@ PROCEDURE gera_relatorio:
                    aux_fimdtmvt = par_fimdtper
                    aux_flgregis = TRUE.
         END.
-        IF  par_tprelato = 6 THEN
+        IF  par_tprelato = 6 OR par_tprelato = 8 THEN
             ASSIGN aux_inidtmvt = par_inidtper
                    aux_fimdtmvt = par_fimdtper
                    aux_flgregis = TRUE
@@ -8059,6 +8059,7 @@ PROCEDURE gera_relatorio:
                                  INPUT par_cdagencx,
                                  INPUT aux_inidtmvt,
                                  INPUT aux_fimdtmvt,
+								 INPUT par_tprelato,
                                  INPUT TABLE tt-consulta-blt).
                                  
                 IF  par_idorigem = 3  THEN  /** Internet Bank **/
@@ -8145,6 +8146,16 @@ PROCEDURE gera_relatorio:
                         END.
                               
                     END.
+			WHEN 8 THEN
+				RUN proc_crrl601 IN h-b1wgen0010i
+                               ( INPUT par_cdcooper,
+                                 INPUT par_dtmvtolt,
+                                 INPUT aux_nmarqimp,
+                                 INPUT par_cdagencx,
+                                 INPUT aux_inidtmvt,
+                                 INPUT aux_fimdtmvt,
+								 INPUT par_tprelato,
+                                 INPUT TABLE tt-consulta-blt).
             END.
         END CASE.
 

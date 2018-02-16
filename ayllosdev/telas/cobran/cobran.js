@@ -86,7 +86,7 @@ function estadoInicial() {
     removeOpacidade('divTela');
 	if (nrdconta != ''){
 		sequenciaImpedimentos();
-	}
+}
 
 }
 
@@ -1243,7 +1243,7 @@ function buscaConsulta(operacao) {
             qtdianeg: qtdianeg,
 			inserasa: inserasa,
 			flgdprot: flgdprot,
-            qtdiaprt: qtdiaprt,
+			qtdiaprt: qtdiaprt,
 			cdtpinsc: cdtpinsc,
 			nrinssac: nrinssac,
             redirect: 'script_ajax'
@@ -1988,7 +1988,7 @@ function formataOpcaoR() {
             if (cTprelato.val() == '1' || cTprelato.val() == '3') {
                 btnContinuar();
                 return false;
-            } else if (cTprelato.val() == '2' || cTprelato.val() == '4' || cTprelato.val() == '6') {
+            } else if (cTprelato.val() == '2' || cTprelato.val() == '4' || cTprelato.val() == '6' || cTprelato.val() == 8) {
                 cNrdconta.focus();
                 return false;
             } else if (cTprelato.val() == '5') {
@@ -2032,7 +2032,7 @@ function formataOpcaoR() {
         // Se é a tecla TAB, 
         if (e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') {
 
-            if (tprelato == 6 && normalizaNumero(cNrdconta.val()) == 0) {
+            if ((tprelato == 6 || tprelato == 8) && normalizaNumero(cNrdconta.val()) == 0) {
                 cNrdconta.desabilitaCampo();
                 cCdagenci.habilitaCampo().focus();
             // para tipo 7, permitir informar conta 0    
@@ -2067,6 +2067,7 @@ function tipoOptionR() {
             option = option + '<option value="5">5- Relatorio Beneficiario</option>';
             option = option + '<option value="6">6- Relatorio Movimento de Cobranca Registrada</option>';
             option = option + '<option value="7">7- Relatório analítico de envio de SMS</option>';
+            option = option + '<option value="8">8- Relatório de títulos cancelados</option>';
             
 
         } else if (flgregis == 'no') {
@@ -2115,17 +2116,17 @@ function controlaLayoutR() {
         cNrdconta.habilitaCampo();
         cInserasa.habilitaCampo();
 
-		if (flgimped){
-			cInidtmvt.val(dtmvtolt.toString());
-			cFimdtmvt.val(dtmvtolt.substr(0,2) + "/" + 
-						  dtmvtolt.substr(3,2) + "/" + 
-						  (Number(dtmvtolt.substr(6,4)) + 2)); // Adicionar 2 anos a partir da data atual
-			cCdstatus.val(1);
-			cNrdconta.val(nrdconta);
-			btnContinuar();
-		}
-		
-    } else if (tprelato == '6') {
+        if (flgimped) {
+            cInidtmvt.val(dtmvtolt.toString());
+            cFimdtmvt.val(dtmvtolt.substr(0, 2) + "/" +
+						  dtmvtolt.substr(3, 2) + "/" +
+						  (Number(dtmvtolt.substr(6, 4)) + 2)); // Adicionar 2 anos a partir da data atual
+            cCdstatus.val(1);
+            cNrdconta.val(nrdconta);
+            btnContinuar();
+        }
+
+    } else if (tprelato == '6' || tprelato == '8') {
         cNrdconta.habilitaCampo();
         //cCdagenci.habilitaCampo();	
      
@@ -2378,7 +2379,7 @@ function btnVoltar() {
 			$('fieldset:eq(' + x + ')', '#' + frmOpcao).css({ 'display': 'none' });
 		}
 
-		controlaLayoutC();
+        controlaLayoutC();
 
     } else if (cddopcao === 'C' && ni > 0 && $('fieldset:eq(' + ni + ')', '#' + frmOpcao).css('display') == 'block') {
         
