@@ -1218,3 +1218,27 @@ function mostraMsgsGenericas(){
 	return false;
 	
 }
+
+function consultarDetalhesProposta(){
+	showMsgAguardo("Aguarde, carregando detalhes da proposta ...");
+	
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_detalhes_proposta.php",
+		//url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_consultar.php",
+		dataType: "html",
+		data: {
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			console.log(response);
+			$("#divOpcoesDaOpcao3").html(response);
+		}				
+	});	
+
+}
