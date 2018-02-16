@@ -624,7 +624,15 @@ function formataCamposTela(cddopcao){
 
 			cFlgutcrm.unbind('keypress').bind('keypress', function(e) {
 			    if ( divError.css('display') == 'block' ) { return false; }
-			    if ( e.keyCode == 9 || e.keyCode == 13 ) {
+			    if ( e.keyCode == 9 || e.keyCode == 13 ) {                    
+                    cCdagefgt.focus();
+                    return false;
+                }
+            });
+            
+            cCdagefgt.unbind('keypress').bind('keypress', function(e) {
+			    if ( divError.css('display') == 'block' ) { return false; }
+			    if ( e.keyCode == 9 || e.keyCode == 13 ) {                   
                     acessaOpcaoAba(1);
                     cDsendcop.focus();
                     return false;

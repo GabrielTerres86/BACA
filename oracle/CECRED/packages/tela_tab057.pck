@@ -1234,7 +1234,7 @@ create or replace package body cecred.tela_tab057 is
                    '-RT' ||
                    to_char(rw_gncontr.cdconven,'fm0000000000') ||  
                    to_char(rw_gncontr.dtmvtolt,'RRRRMMDD') ||
-                   to_char(rw_gncontr.nrsequen,'fm000') ||  
+                   substr(LPAD(rw_gncontr.nrsequen,10,0),-3)   ||
                    '.RET';
     
     -- Inicializar o CLOB
@@ -1258,7 +1258,7 @@ create or replace package body cecred.tela_tab057 is
         FOR id_reg IN vr_tab_reg.first..vr_tab_reg.last LOOP 
           vr_tab_campos := gene0002.fn_quebra_string(vr_tab_reg(id_reg),':');
           
-          IF vr_tab_campos(1) = 'RET NSR' THEN
+          IF vr_tab_campos(1) = 'NSR' THEN
             vr_nrseqret := vr_tab_campos(2);          
           END IF;
           

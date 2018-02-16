@@ -2584,6 +2584,23 @@ function formataFormularioConsulta() {
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
+            $("#nrouvbcb", "#frmConsulta5").focus();
+
+            return false;
+        }
+
+    });
+    
+    //Define ação para o campo nrctabcb
+    $("#nrouvbcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        $('input,select').removeClass('campoErro');
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
             $("#vltarbcb", "#frmConsulta5").focus();
 
             return false;
@@ -2593,6 +2610,21 @@ function formataFormularioConsulta() {
     
     //Define ação para o campo vltarbcb
     $("#vltarbcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        $('input,select').removeClass('campoErro');
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {           
+           $("#nrsacbcb", "#frmConsulta5").focus(); 
+            return false;
+        }
+
+    });
+    
+    //Define ação para o campo vltarbcb
+    $("#nrsacbcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
@@ -3477,7 +3509,11 @@ function alterarCooperativa() {
     //Bancoob
     var nrctabcb = normalizaNumero($("#nrctabcb", "#frmConsulta5").val());
     var vltarbcb = isNaN(parseFloat($('#vltarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
-    var vlgarbcb = isNaN(parseFloat($('#vlgarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlgarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
+    if ($("#cdcooper", "#frmConsulta").val() == 3) {
+      var vlgarbcb = isNaN(parseFloat($('#vlgarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlgarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
+    } else {
+      var vlgarbcb = 0;  
+    }
     var nrsacbcb = $("#nrsacbcb", "#frmConsulta5").val();
     var nrouvbcb = $("#nrouvbcb", "#frmConsulta5").val();
     

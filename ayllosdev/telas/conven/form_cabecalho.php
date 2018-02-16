@@ -62,23 +62,21 @@ function exibeErroNew($msgErro) {
     <input name="cdempcon" id="cdempcon" type="text" value="" >
     <a style="margin-top:5px"><img id="lupaEmp" name = "lupaEmp" src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
     
-    <label for="cdsegmto"><? echo utf8ToHtml('Segmaneto:') ?></label>
+    <label for="cdsegmto"><? echo utf8ToHtml('Segmento:') ?></label>
     <select id="cdsegmto" name="cdsegmto">    
     
         <option value="1"> <? echo utf8ToHtml('1 - Prefeituras'); ?></option> 
         <option value="2"> <? echo utf8ToHtml('2 - Saneamento'); ?></option> 
-        <option value="3"> <? echo utf8ToHtml('3 - Energia Eletria e Gas'); ?></option> 
-        <option value="4"> <? echo utf8ToHtml('4 - Telecomunicacoes'); ?></option> 
-        <option value="5"> <? echo utf8ToHtml('5 - Orgaos Governamentais'); ?></option> 
-        <option value="6"> <? echo utf8ToHtml('6 - Orgaos identificados atraves do CNPJ'); ?></option> 
-        <option value="7"> <? echo utf8ToHtml('7 - Multas de Transito'); ?></option> 
+        <option value="3"> <? echo utf8ToHtml('3 - Energia Elétria e Gás'); ?></option> 
+        <option value="4"> <? echo utf8ToHtml('4 - Telecomunicações'); ?></option> 
+        <option value="5"> <? echo utf8ToHtml('5 - Orgãos Governamentais'); ?></option> 
+        <option value="6"> <? echo utf8ToHtml('6 - Orgãos identificados através do CNPJ'); ?></option> 
+        <option value="7"> <? echo utf8ToHtml('7 - Multas de Trânsito'); ?></option> 
         <option value="9"> <? echo utf8ToHtml('9 - Uso interno do banco'); ?></option> 
     
     </select>
     <a href="#" class="botao" id="btnBusca" onClick="buscaDados(); return false;">OK</a>	
-    <br style="clear:both" />	
-	
-	<br style="clear:both" />	
+    <br style="clear:both" />		
 	
 </form>
 </div>

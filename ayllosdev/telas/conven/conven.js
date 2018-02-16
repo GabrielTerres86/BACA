@@ -35,7 +35,7 @@ $(document).ready(function() {
     cCdsegmto       = $('#cdsegmto'	,'#' + frmCab);          
     
     // Form Campos
-    cTodosCampos  = $('input[type="text"],select', '#frmCampos');
+    cTodosCampos  = $('input[type="text"],input[type="radio"],select', '#frmCampos');
     cRadio        = $('.radio', '#frmCampos');
     
     rNmrescon       = $('label[for="nmrescon"]'	,'#frmCampos');
@@ -131,7 +131,7 @@ function LiberaCampos(tipo) {
     
     // liberar campos para edicao qnd for alteracao ou inclusao
     if (cCddopcao.val() == 'A' || cCddopcao.val() == 'I' ){
-        cTodosCampos.habilitaCampo();   
+        cTodosCampos.habilitaCampo();           
         
         // Manter Sicredi desabilitado
         cFlgacsic.prop('readonly', true).prop('disabled', true);
@@ -171,7 +171,7 @@ function formataCabecalho() {
 	cCddopcao.css({'width':'419px'});
     
     rCdempcon.addClass('rotulo').css({'width':'68px'});
-    cCdempcon.css({'width':'40px'});
+    cCdempcon.addClass('inteiro').css({'width':'47px'}).attr('maxlength','5');
     
     rCdsegmto.addClass('rotulo-linha').css({'padding-left':'10px'});
 	cCdsegmto.css('width','280px');
@@ -204,7 +204,7 @@ function formataCabecalho() {
 		}
 	});
     
-    
+    layoutPadrao();
     return false;
 }
 
@@ -227,25 +227,12 @@ function formataCampos(){
     cCdhistor.addClass('codigo').css('width','50px');
     cNrdolote.css('width','80px').setMask('INTEGER', 'zzz.zz9', '.', '');
     cFlginter.css('width','52px');
-    
-    cFlgaccec.css({'margin-left':'10px'});
-    cFlgacsic.css({'margin-left':'10px'});
-    cFlgacbcb.css({'margin-left':'10px'});
-    
+       
     cRadio.prop('readonly', false).prop('disabled', false);
     
-    cTparrecd_3.css({'margin-left':'132px'});
-    cTparrecd_N3.css({'margin-left':'10px'});     
-
-    cTparrecd_1.css({'margin-left':'132px'}); 
-    cTparrecd_N1.css({'margin-left':'10px'});     
     cTparrecd_1.prop('readonly', true).prop('disabled', true);
     cTparrecd_N1.prop('readonly', true).prop('disabled', true);
     
-    cTparrecd_2.css({'margin-left':'132px'}); 
-    cTparrecd_N2.css({'margin-left':'10px'});     
-    
-
     cTodosCampos.desabilitaCampo();     
     
     layoutPadrao();
@@ -609,7 +596,7 @@ function buscaDados(){
 
 function confirmaRegExist(){
     hideMsgAguardo();
-    showConfirmacao('Ja existe Convenio para esta empresa e segmento, deseja altera-lo?', 'Confirma&ccedil;&atilde;o - Ayllos', 'cCddopcao.val("A");LiberaCampos("campos");', '', 'sim.gif', 'nao.gif');
+    showConfirmacao('Já existe Convênio para esta empresa e segmento, deseja alterá-lo?', 'Confirma&ccedil;&atilde;o - Ayllos', 'cCddopcao.val("A");LiberaCampos("campos");', '', 'sim.gif', 'nao.gif');
 }
 
 function confirmaOpe() {
@@ -643,12 +630,12 @@ function confirmaOpe() {
         }
         
         if (cNrdolote.val() == ""){
-            showError("error","Lote deve ser informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdhistor.focus();");        
+            showError("error","Lote deve ser informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cNrdolote.focus();");        
             return false;
         }
         
         if (cTparrecd.val() == ''){
-            showError("error","Informe a forma de arrecadação do convênio.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdhistor.focus();");        
+            showError("error","Informe a forma de arrecadação do convênio.","Alerta - Ayllos","blockBackground(); unblockBackground(); cTparrecd_3.focus();");        
             return false;
         }
         

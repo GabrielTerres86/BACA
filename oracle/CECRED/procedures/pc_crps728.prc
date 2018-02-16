@@ -145,13 +145,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
       -- Se ocorreu erro dar RAISE
       IF vr_typ_saida = 'ERR' THEN
         --
-        pr_dscritic := 'Não foi possível executar comando unix. ' || vr_comando || ' Erro: ' || pr_dscritic;        
+        vr_dscritic := 'Não foi possível executar comando unix. ' || vr_comando || ' Erro: ' || vr_dscritic;        
         RAISE vr_exc_erro;
       END IF;
     
     EXCEPTION
-      WHEN OTHERS THEN
+      WHEN vr_exc_erro THEN
         pc_gera_log_prccon('Erro ao copiar arquivo '||pr_nmarquiv ||': '|| vr_dscritic);
+        vr_dscritic := NULL;
+      WHEN OTHERS THEN
+        pc_gera_log_prccon('Erro ao copiar arquivo '||pr_nmarquiv ||': '|| SQLERRM);
         vr_dscritic := NULL;
     END;
     
@@ -166,7 +169,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                                              pr_cdcooper => 3, 
                                              pr_cdacesso => 'DIR_CONNECT_BANCOOB');
       
-    vr_dtproces := to_date('03/11/2017','DD/MM/RRRR'); /****** teste descomentar *****/--SYSDATE;
+    vr_dtproces := SYSDATE;
     
     --> Listar cooperativas ativas
     FOR rw_crapcop IN cr_crapcop LOOP
@@ -203,7 +206,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
               vr_nrsequen := SUBSTR(vr_tab_arquiv(idx),26,INSTR(vr_tab_arquiv(idx),'.')-26);
               vr_dtarquiv := to_date(SUBSTR(vr_tab_arquiv(idx),18,8),'RRRRMMDD');
               
-              -- Buscar controle
+             /* -- Buscar controle
               OPEN cr_gncontr( pr_cdcooper => rw_crapcop.cdcooper
                               ,pr_cdconven => vr_cdconven
                               ,pr_dtmvtolt => vr_dtarquiv
@@ -223,7 +226,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                 vr_dscritic := 'Motivo: Arquivo de retorno já processado.';
                 RAISE vr_exc_prox;               
               END IF;
-              
+              */
               vr_tab_linhas.delete;
               --Importar o arquivo
               gene0009.pc_importa_arq_layout( pr_nmlayout   => 'RET_ARRECAD_BANCOOB', 
@@ -253,15 +256,47 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                   
                   -------------------  Header do Arquivo --------------------
                   IF vr_tab_linhas(i)('$LAYOUT$').texto = 'H' THEN 
-                    IF vr_tab_linhas(i)('DTPROCES').data <> rw_gncontr.dtmvtolt THEN                      
-                      vr_dscritic := 'Data de processamento do arquivo não confere';                       
-                    END IF;   
+                  
+                    BEGIN
+                      IF vr_tab_linhas(i)('DTPROCES').data <> vr_dtarquiv THEN
+                        vr_dscritic := 'Data de processamento do arquivo não confere';                       
+                        RAISE vr_exc_prox;
+                      END IF;   
+                      
+                      -- Buscar controle
+                      OPEN cr_gncontr( pr_cdcooper => rw_crapcop.cdcooper
+                                      ,pr_cdconven => vr_cdconven
+                                      ,pr_dtmvtolt => vr_tab_linhas(i)('DTPROCES').data
+                                      ,pr_nrsequen => vr_tab_linhas(i)('NRSEQNSA').numero); 
+                      
+                      FETCH cr_gncontr INTO rw_gncontr;
+                      IF cr_gncontr%NOTFOUND THEN
+                        CLOSE cr_gncontr;
+                        vr_dscritic := 'Motivo: Sequencial do arquivo não encontrado.';
+                        RAISE vr_exc_prox;
+                      ELSE
+                        CLOSE cr_gncontr;
+                      END IF;
+                      
+                      --> Verificar se ja foi processado
+                      IF rw_gncontr.cdsitret > 1 THEN
+                        vr_dscritic := 'Motivo: Arquivo de retorno já processado.';             
+                        RAISE vr_exc_prox;
+                      END IF;
                     
-                    --> Validar NSA
-                    IF vr_tab_linhas(i)('NRSEQNSA').numero <> rw_gncontr.nrsequen THEN
-                      vr_dscritic := 'NSA do arquivo não confere.';
-                       
-                    END IF; 
+                      --> Validar NSA
+                      IF vr_tab_linhas(i)('NRSEQNSA').numero <> rw_gncontr.nrsequen THEN
+                        vr_dscritic := 'NSA do arquivo não confere.';
+                        RAISE vr_exc_prox;                       
+                      END IF; 
+                    
+                    EXCEPTION
+                      WHEN vr_exc_prox THEN
+                        --> apenas sair, para validar abaixo se possui critica
+                        NULL;
+                      WHEN OTHERS THEN
+                        vr_dscritic := 'Erro ao validar header: '||SQLERRM;
+                    END;
                     
                     IF vr_dscritic IS NOT NULL THEN
                                            

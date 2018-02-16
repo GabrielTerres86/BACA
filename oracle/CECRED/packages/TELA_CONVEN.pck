@@ -242,11 +242,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
         IF vr_dsalerta IS NOT NULL THEN
           IF rw_crapcon.flgacsic = 1 THEN
             IF pr_cddopcao = 'A' AND vr_cdcooper <> 3 THEN
-              vr_dsalerta := 'Convenios Sicredi nao podem ser alterados.';  
+              vr_dsalerta := 'Convênios SICREDI não podem ser alterados.';  
             ELSIF pr_cddopcao = 'E' THEN
-              vr_dsalerta := 'Convenios Sicredi nao podem ser excluidos.';
+              vr_dsalerta := 'Convênios SICREDI não podem ser excluidos.';
             ELSIF pr_cddopcao = 'X' THEN
-              vr_dsalerta := 'Nao e possivel replicar convenios SICREDI.';  
+              vr_dsalerta := 'Não e possivel replicar convênios SICREDI.';  
             END IF;          
           END IF;              
         END IF;
@@ -467,7 +467,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
         
           --> Verificar se convenio é Sicredi
           IF rw_crapcon.flgacsic = 1 AND vr_cdcooper <> 3 THEN
-            vr_dscritic := 'Convenios Sicredi nao podem ser alterados.';  
+            vr_dscritic := 'Convênios Sicredi nao podem ser alterados.';  
             RAISE vr_exc_erro;
           END IF;
         
@@ -529,40 +529,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
           IF nvl(pr_flginter,'') <> nvl(rw_crapcon.flginter,'') THEN
             pr_gera_log_conven (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' a Ind. aceita pagto na internet ' ||rw_crapcon.flginter ||
-                                                 ' para '|| pr_flginter);
+                                                 ' a Indicador de pagamento na internet ' || CASE rw_crapcon.flginter WHEN 1 THEN 'Sim' ELSE 'Não' END ||
+                                                 ' para '||  CASE pr_flginter WHEN 1 THEN 'Sim' ELSE 'Não' END );
           END IF;
           
           --> tipo de arrecadacao efetuada na cooperativa (1-sicredi/ 2-bancoob/ 3-cecred) 
           IF nvl(pr_tparrecd,'') <> nvl(rw_crapcon.tparrecd,'') THEN
             pr_gera_log_conven (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o Tipo de arrecadacao ' ||rw_crapcon.tparrecd ||
-                                                 ' para '|| pr_tparrecd);
+                                                 ' o Indicador de arrecadação ' ||
+                                                  CASE rw_crapcon.tparrecd 
+                                                       WHEN 1 THEN 'SICREDI' 
+                                                       WHEN 2 THEN 'BANCOOB' 
+                                                       WHEN 3 THEN 'CECRED' 
+                                                       ELSE NULL END||
+                                                 ' para '|| CASE pr_tparrecd 
+                                                                 WHEN 1 THEN 'SICREDI' 
+                                                                 WHEN 2 THEN 'BANCOOB' 
+                                                                 WHEN 3 THEN 'CECRED' 
+                                                                 ELSE NULL END);
           END IF;
           
           --> indicador de arrecadacao na cecred  (0-nao aceita/ 1-aceita) 
           IF nvl(pr_flgaccec,'') <> nvl(rw_crapcon.flgaccec,'') THEN
             pr_gera_log_conven (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o Indicador de arrecadacao na cecred ' ||rw_crapcon.flgaccec ||
-                                                 ' para '|| pr_flgaccec);
+                                                 ' o Indicador de aceitação na CECRED ' || CASE rw_crapcon.flgaccec WHEN 1 THEN 'Sim' ELSE 'Não' END ||
+                                                 ' para '|| CASE pr_flgaccec WHEN 1 THEN 'Sim' ELSE 'Não' END);
           END IF;
           
           --> indicador de arrecadacao na cecred  (0-nao aceita/ 1-aceita) 
           IF nvl(pr_flgacsic,'') <> nvl(rw_crapcon.flgacsic,'') THEN
             pr_gera_log_conven (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o Indicador de arrecadacao na sicredi ' ||rw_crapcon.flgacsic ||
-                                                 ' para '|| pr_flgacsic);
+                                                 ' o Indicador de aceitação na SICREDI ' || CASE rw_crapcon.flgacsic WHEN 1 THEN 'Sim' ELSE 'Não' END ||
+                                                 ' para '||  CASE pr_flgacsic WHEN 1 THEN 'Sim' ELSE 'Não' END);
           END IF;
           
           --> indicador de arrecadacao na cecred  (0-nao aceita/ 1-aceita) 
           IF nvl(pr_flgacbcb,'') <> nvl(rw_crapcon.flgacbcb,'') THEN
             pr_gera_log_conven (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o Indicador de arrecadacao na bancoob ' ||rw_crapcon.flgacbcb ||
-                                                 ' para '|| pr_flgacbcb);
+                                                 ' o Indicador de aceitação na BANCOOB ' || CASE rw_crapcon.flgacbcb WHEN 1 THEN 'Sim' ELSE 'Não' END ||
+                                                 ' para '||  CASE pr_flgacbcb WHEN 1 THEN 'Sim' ELSE 'Não' END);
           END IF;
           vr_dsmensag := 'Registros atualizados com sucesso.';
         
@@ -571,7 +580,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
       --> INCLUSAO
       ELSIF pr_cddopcao = 'I' THEN
         IF vr_fcrapcon = TRUE THEN
-          vr_dscritic := 'Empresa ja cadastrada.';
+          vr_dscritic := 'Empresa já cadastrada.';
           RAISE vr_exc_erro;        
         ELSE
           --> Inserir convenio
@@ -623,7 +632,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
           
           --> Verificar se convenio é Sicredi
           IF rw_crapcon.flgacsic = 1 THEN
-            vr_dscritic := 'Convenios Sicredi nao podem ser excluidos.';  
+            vr_dscritic := 'Convênios Sicredi nao podem ser excluidos.';  
             RAISE vr_exc_erro;
           END IF;
         
@@ -639,7 +648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
           
           --> Gerar log  
           pr_gera_log_conven (pr_cdcooper => vr_cdcooper
-                             ,pr_dscdolog => 'Excluido o Convenio ' || rw_crapcon.cdempcon ||', Segmento '||rw_crapcon.cdsegmto);
+                             ,pr_dscdolog => 'Excluido Convênio ' || rw_crapcon.cdempcon ||', Segmento '||rw_crapcon.cdsegmto);
                              
           vr_dsmensag := 'Registros excluido com sucesso.';
         
@@ -655,7 +664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
           
           --> Verificar se convenio é Sicredi
           IF rw_crapcon.flgacsic = 1 THEN
-            vr_dscritic := 'Convenios Sicredi nao podem ser excluidos.';  
+            vr_dscritic := 'Convênios Sicredi não podem ser excluidos.';  
             RAISE vr_exc_erro;
           END IF;
           

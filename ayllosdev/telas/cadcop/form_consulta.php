@@ -614,7 +614,7 @@
         <input type="text" id="nrouvbcb" name="nrouvbcb" value="<?php echo getByTagName($cooperativa->tags,'nrouvbcb');?>" >
                 
         <br />
-        <label for="vltarbcb"><?php echo utf8ToHtml("Tarifa Bancoob:"); ?></label>
+        <label for="vltarbcb"><?php echo utf8ToHtml("Tarifa Arrecadação:"); ?></label>
         <input type="text" id="vltarbcb" name="vltarbcb" value="<?php echo getByTagName($cooperativa->tags,'vltarbcb');?>" >
         
         <label for="nrsacbcb"><?php echo utf8ToHtml("SAC:"); ?></label>

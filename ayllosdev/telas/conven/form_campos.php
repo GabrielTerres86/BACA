@@ -19,11 +19,11 @@
         <input name="nmrescon" id="nmrescon" type="text" value="" >
         <br style="clear:both" />
         
-        <label for="nmextcon"><? echo utf8ToHtml('Razao Social:') ?></label>
+        <label for="nmextcon"><? echo utf8ToHtml('Razão Social:') ?></label>
         <input name="nmextcon" id="nmextcon" type="text" value="" >
         <br style="clear:both" />
         
-        <label for="cdhistor"><? echo utf8ToHtml('Historico:') ?></label>
+        <label for="cdhistor"><? echo utf8ToHtml('Histórico:') ?></label>
         <input name="cdhistor" id="cdhistor" type="text" value="" >
         
         <label for="nrdolote"><? echo utf8ToHtml('Nro.Lote:') ?></label>
@@ -51,40 +51,40 @@
         
         <br style="clear:both" />
         <label for="flgaccec"><? echo utf8ToHtml('CECRED:') ?></label>
-        <input name="flgaccec" id="flgaccec_1" type="radio" class="radio" value="1" >
+        <input name="flgaccec" id="flgaccec_1" type="radio" class="radio" value="1"   style="height: 20px; margin: 3px 2px 3px 10px !important;"/>
         <label for="flgaccec_1" class="radio">Sim</label>
-        <input name="flgaccec" id="flgaccec_0" type="radio" class="radio" value="0" >
+        <input name="flgaccec" id="flgaccec_0" type="radio" class="radio" value="0"   style="height: 20px; margin: 3px 2px 3px 10px !important;"/>
         <label for="flgaccec_0" class="radio"><? echo utf8ToHtml('Não'); ?></label>
         
-        <input name="tparrecd_3" id="tparrecd_3" type="radio" class="radio" value="1" >
+        <input name="tparrecd_3" id="tparrecd_3" type="radio" class="radio" value="1"  style="height: 20px; margin: 3px 2px 3px 132px !important;"/>
         <label for="tparrecd_3" class="radio">Sim</label>
-        <input name="tparrecd_3" id="tparrecd_N3" type="radio" class="radio" value="0" >
+        <input name="tparrecd_3" id="tparrecd_N3" type="radio" class="radio" value="0" style="height: 20px; margin: 3px 2px 3px 10px !important;"/>
         <label for="tparrecd_N3" class="radio"><? echo utf8ToHtml('Não'); ?></label>
         
         <br style="clear:both" />
         
         <label for="flgacsic"><? echo utf8ToHtml('Convênio SICREDI:') ?></label>
-        <input name="flgacsic" id="flgacsic_1" type="radio" class="radio" value="1" >
-        <label for="flgacsic_1" class="radio">Sim</label>
-        <input name="flgacsic" id="flgacsic_0" type="radio" class="radio" value="0" >
+        <input name="flgacsic" id="flgacsic_1" type="radio" class="radio" value="1" style="height: 20px; margin: 3px 2px 3px 10px !important;"/>
+        <label for="flgacsic_1" class="radio">Sim</label>                           
+        <input name="flgacsic" id="flgacsic_0" type="radio" class="radio" value="0" style="height: 20px; margin: 3px 2px 3px 10px !important;"/>
         <label for="flgacsic_0" class="radio"><? echo utf8ToHtml('Não'); ?></label>
         
-        <input name="tparrecd_1" id="tparrecd_1" type="radio" class="radio" value="2" >
-        <label for="tparrecd_1" class="radio">Sim</label>
-        <input name="tparrecd_1" id="tparrecd_N1" type="radio" class="radio" value="0" >
+        <input name="tparrecd_1" id="tparrecd_1" type="radio" class="radio" value="2"  style="height: 20px; margin: 3px 2px 3px 132px !important;"/>
+        <label for="tparrecd_1" class="radio">Sim</label>                             
+        <input name="tparrecd_1" id="tparrecd_N1" type="radio" class="radio" value="0" style="height: 20px; margin: 3px 2px 3px 10px !important;"/>
         <label for="tparrecd_N1" class="radio"><? echo utf8ToHtml('Não'); ?></label>
     
         <br style="clear:both" />
         
         <label for="flgacbcb"><? echo utf8ToHtml('Convênio BANCOOB:') ?></label>
-        <input name="flgacbcb" id="flgacbcb_1" type="radio" class="radio" value="1" >
-        <label for="flgacbcb_1" class="radio">Sim</label>
-        <input name="flgacbcb" id="flgacbcb_0" type="radio" class="radio" value="0" >
+        <input name="flgacbcb" id="flgacbcb_1" type="radio" class="radio" value="1" style="height: 20px; margin: 3px 2px 3px 10px !important;"/>
+        <label for="flgacbcb_1" class="radio">Sim</label>                           
+        <input name="flgacbcb" id="flgacbcb_0" type="radio" class="radio" value="0" style="height: 20px; margin: 3px 2px 3px 10px !important;"/>
         <label for="flgacbcb_0" class="radio"><? echo utf8ToHtml('Não'); ?></label>
         
-        <input name="tparrecd_2" id="tparrecd_2" type="radio" class="radio" value="3" >
-        <label for="tparrecd_2" class="radio">Sim</label>
-        <input name="tparrecd_2" id="tparrecd_N2" type="radio" class="radio" value="0" >
+        <input name="tparrecd_2" id="tparrecd_2" type="radio" class="radio" value="3" style="height: 20px; margin: 3px 2px 3px 132px !important;"/>
+        <label for="tparrecd_2" class="radio">Sim</label>                             
+        <input name="tparrecd_2" id="tparrecd_N2" type="radio" class="radio" value="0" style="height: 20px; margin: 3px 2px 3px 10px !important;"/>
         <label for="tparrecd_N2" class="radio"><? echo utf8ToHtml('Não'); ?></label>
     
     </fieldset>
