@@ -286,29 +286,17 @@ BEGIN
                                                  pr_dsmensag => vr_dsmensag,     -- pr_dsmensag
                                                  pr_cdcritic => vr_cdcritic,     -- pr_cdcritic
                                                  pr_dscritic => vr_dscritic);    -- pr_dscritic
-/*
-            PROCEDURE pc_incluir_proposta_est (pr_cdcooper  IN crawepr.cdcooper%TYPE
-                                              ,pr_cdagenci  IN crapage.cdagenci%TYPE
-                                              ,pr_cdoperad  IN crapope.cdoperad%TYPE
-                                              ,pr_cdorigem  IN INTEGER
-                                              ,pr_nrdconta  IN crawepr.nrdconta%TYPE
-                                              ,pr_nrctremp  IN crawepr.nrctremp%TYPE
-                                              ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
-                                              ,pr_nmarquiv  IN VARCHAR2
-                                               ---- OUT ----
-                                              ,pr_dsmensag OUT VARCHAR2
-                                              ,pr_cdcritic OUT NUMBER
-                                              ,pr_dscritic OUT VARCHAR2);
-*/
-
-
 
             --Fechar Cursor do contrato
             CLOSE cr_craplim;
           
           
             END IF;
-	          
+	      
+
+		  vr_dsmensag:='Aprovada Automaticamente';
+
+
           pr_dsmensag := vr_dsmensag;
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic;
