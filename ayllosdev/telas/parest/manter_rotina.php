@@ -199,7 +199,7 @@ if ( $cddopcao == 'C') {
 		echo '$("#btContinuar", "#divBotoes").show();';
 		echo 'hideMsgAguardo();';
 	} else {
-		echo 'showError("inform","Parametro alterado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';		
+		echo 'showError("inform","Par&acirc;metro Alterado com Sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
 	}
 }
 

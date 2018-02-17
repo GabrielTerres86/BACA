@@ -501,7 +501,7 @@ function alteracaoMensagem(){
 
 function confirmaAlteracao() {
 
-    showConfirmacao('Confirma a Altera&ccedil;&atilde;o dos parametros?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'A\');', '', 'sim.gif', 'nao.gif');
+    showConfirmacao('Confirma a Altera&ccedil;&atilde;o dos Par&acirc;metros?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'A\');', '', 'sim.gif', 'nao.gif');
 }
 
 function desbloqueia() {
