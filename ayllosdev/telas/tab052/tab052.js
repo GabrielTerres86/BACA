@@ -148,7 +148,7 @@ function formataCampos() {
     cQtdiexbo = $('#qtdiexbo', '#frmTab052');
     cQtmxtbib = $('#qtmxtbib', '#frmTab052');
     //cQtmxtbay = $('#qtmxtbay', '#frmTab052');
-    cPctitpag = $('#pctitpag', '#frmTab052');
+    //cPctitpag = $('#pctitpag', '#frmTab052');
 
     cVllimite_c = $('#vllimite_c', '#frmTab052');
     cVlconsul_c = $('#vlconsul_c', '#frmTab052');
@@ -188,7 +188,7 @@ function formataCampos() {
     cQtdiexbo_c = $('#qtdiexbo_c', '#frmTab052');
     cQtmxtbib_c = $('#qtmxtbib_c', '#frmTab052');
     //cQtmxtbay_c = $('#qtmxtbay_c', '#frmTab052');
-    cPctitpag_c = $('#pctitpag_c', '#frmTab052');
+    //cPctitpag_c = $('#pctitpag_c', '#frmTab052');
 
     cVllimite.css('width',  '100px').addClass('moeda').addClass('editcooper');// DECI
     cVlconsul.css('width',  '100px').addClass('moeda').addClass('editcooper');// DECI
@@ -228,7 +228,7 @@ function formataCampos() {
     cQtdiexbo.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtmxtbib.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     //cQtmxtbay.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
-    cPctitpag.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
+    //cPctitpag.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
 
    
 
@@ -270,7 +270,7 @@ function formataCampos() {
     cQtdiexbo_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtmxtbib_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     //cQtmxtbay_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
-    cPctitpag_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
+    //cPctitpag_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
 
         
     cTodosFiltro.habilitaCampo();
@@ -393,18 +393,11 @@ function controlaFoco() {
 
     $('#nrmespsq', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#pctitemi', '#frmTab052').focus();
-            return false;
-        }
-    });
-
-    $('#pctitemi', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
-        if (e.keyCode == 9 || e.keyCode == 13) {
-
             $('#pctolera', '#frmTab052').focus();
             return false;
         }
     });
+
         
     $('#pctolera', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
@@ -566,12 +559,12 @@ function controlaFoco() {
 
     $('#qtdiexbo', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#pctitpag', '#frmTab052').focus();
+            $('#pctitemi', '#frmTab052').focus();
             return false;
         }
     });
 
-     $('#pctitpag', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
+     $('#pctitemi', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             confirmaOperacao();
             return false;
@@ -658,25 +651,16 @@ function controlaFoco() {
             return false;
         }
     });
-
-   
-
     
 
     $('#nrmespsq_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#pctitemi_c', '#frmTab052').focus();
-            return false;
-        }
-    });
-
-    $('#pctitemi_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
-        if (e.keyCode == 9 || e.keyCode == 13) {
-
             $('#pctolera_c', '#frmTab052').focus();
             return false;
         }
     });
+
+    
         
     $('#pctolera_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
@@ -830,12 +814,12 @@ function controlaFoco() {
 
     $('#qtdiexbo_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#pctitpag_c', '#frmTab052').focus();
+            $('#pctitemi_c', '#frmTab052').focus();
             return false;
         }
     });
 
-    $('#pctitpag_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
+    $('#pctitemi_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             confirmaOperacao();
             return false;
@@ -938,7 +922,7 @@ function manterRotina(cddopcao) {
     var qtmxtbib = normalizaNumero($('#qtmxtbib', '#frmTab052').val());
 
     //var qtmxtbay = normalizaNumero($('#qtmxtbay', '#frmTab052').val());
-    var pctitpag = normalizaNumero($('#pctitpag', '#frmTab052').val());
+    //var pctitpag = normalizaNumero($('#pctitpag', '#frmTab052').val());
     
 
     var vllimite_c = normalizaNumero($('#vllimite_c', '#frmTab052').val());
@@ -980,7 +964,7 @@ function manterRotina(cddopcao) {
     var qtmxtbib_c = normalizaNumero($('#qtmxtbib_c', '#frmTab052').val());
     //var qtmxtbay_c = normalizaNumero($('#qtmxtbay_c', '#frmTab052').val());
 
-    var pctitpag_c = normalizaNumero($('#pctitpag_c', '#frmTab052').val());
+    //var pctitpag_c = normalizaNumero($('#pctitpag_c', '#frmTab052').val());
 
 
     mensagem = 'Aguarde, efetuando solicitacao...';
@@ -1032,7 +1016,7 @@ function manterRotina(cddopcao) {
             qtdiexbo: qtdiexbo,
             qtmxtbib: qtmxtbib,
             //qtmxtbay: qtmxtbay,
-            pctitpag: pctitpag,
+            //pctitpag: pctitpag,
 
 			vllimite_c: vllimite_c,
 			vlconsul_c: vlconsul_c,
@@ -1072,7 +1056,7 @@ function manterRotina(cddopcao) {
             qtdiexbo_c: qtdiexbo_c,
             qtmxtbib_c: qtmxtbib_c,
             //qtmxtbay_c: qtmxtbay_c,
-            pctitpag_c: pctitpag_c,
+            //pctitpag_c: pctitpag_c,
 
             redirect: 'script_ajax'
         },
