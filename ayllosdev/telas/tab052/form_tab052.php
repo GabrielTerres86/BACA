@@ -49,15 +49,23 @@
 			<tr class="registerRow">
 				<!-- qtremcrt -->
 				<td width="300px"><label for="qtremcrt" class='labelPri'><?php echo utf8ToHtml('Qtd. Remessa em Cartório:') ?></label></td>
-				<td width="170px"><input type="text" id="qtremcrt" name="qtremcrt" value="<?php echo $qtremcrt == 0 ? '' : $qtremcrt ?>" maxlength="3" style="text-align:right;"/></td>
-				<td width="170px"><input type="text" id="qtremcrt_c" name="qtremcrt_c" value="<?php echo $qtremcrt_c == 0 ? '' : $qtremcrt_c ?>" maxlength="3" style="text-align:right;"/></td>
+				<td width="170px"><input type="text" id="qtremcrt" name="qtremcrt" value="<?php echo $qtremcrt == 0 ? '' : $qtremcrt ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label>
+				</td>
+				<td width="170px"><input type="text" id="qtremcrt_c" name="qtremcrt_c" value="<?php echo $qtremcrt_c == 0 ? '' : $qtremcrt_c ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label>
+				</td>
 			</tr>
 
 			<tr class="registerRow">
 				<!-- qttitprt -->
 				<td width="300px"><label for="qttitprt" class='labelPri'><?php echo utf8ToHtml('Qtd. de Títulos Protestados:') ?></label></td>
-				<td width="170px"><input type="text" id="qttitprt" name="qttitprt" value="<?php echo $qttitprt == 0 ? '' : $qttitprt ?>" maxlength="3" style="text-align:right;"/></td>
-				<td width="170px"><input type="text" id="qttitprt_c" name="qttitprt_c" value="<?php echo $qttitprt_c == 0 ? '' : $qttitprt_c ?>" maxlength="3" style="text-align:right;"/></td>
+				<td width="170px"><input type="text" id="qttitprt" name="qttitprt" value="<?php echo $qttitprt == 0 ? '' : $qttitprt ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label>
+				</td>
+				<td width="170px"><input type="text" id="qttitprt_c" name="qttitprt_c" value="<?php echo $qttitprt_c == 0 ? '' : $qttitprt_c ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label>
+				</td>
 			</tr>
 
 			<tr>
@@ -115,15 +123,6 @@
 				<td width="300px"><label for="nrmespsq" class='labelPri'><?php echo utf8ToHtml('Qtd. de Meses para Pesquisa de Pagador:') ?></label></td>
 				<td width="170px"><input type="text" id="nrmespsq" name="nrmespsq" value="<?php echo $nrmespsq == 0 ? '' : $nrmespsq ?>" maxlength="3" style="text-align:right;"/></td>
 				<td width="170px"><input type="text" id="nrmespsq_c" name="nrmespsq_c" value="<?php echo $nrmespsq_c == 0 ? '' : $nrmespsq_c ?>" maxlength="3" style="text-align:right;"/></td>
-			</tr>
-
-			<tr>
-				<!-- pctitemi -->
-				<td width="300px"><label for="pctitemi" class='labelPri'><?php echo utf8ToHtml('Percentual de Títulos por Pagador:') ?></label></td>
-				<td width="170px"><input type="text" id="pctitemi" name="pctitemi" value="<?php echo $pctitemi == 0 ? '' : $pctitemi ?>" maxlength="3" style="text-align:right;"/>	
-					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
-				<td width="170px"><input type="text" id="pctitemi_c" name="pctitemi_c" value="<?php echo $pctitemi_c == 0 ? '' : $pctitemi_c ?>" maxlength="3" style="text-align:right;"/>	
-					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 			</tr>
 
 			<tr>
@@ -189,14 +188,14 @@
 			-->
 			<tr>
 				<!-- qtmxtbib -->
-				<td width="300px"><label for="qtmxtbib" class='labelPri'><?php echo utf8ToHtml('Qtd. máxima de títulos por borderô:') ?></label></td>
+				<td width="300px"><label for="qtmxtbib" class='labelPri'><?php echo utf8ToHtml('Qtd. Máxima de Títulos por Borderô:') ?></label></td>
 				<td width="170px"><input type="text" id="qtmxtbib" name="qtmxtbib" value="<?php echo $qtmxtbib == 0 ? '' : $qtmxtbib ?>" maxlength="3" style="text-align:right;"/></td>
 				<td width="170px"><input type="text" id="qtmxtbib_c" name="qtmxtbib_c" value="<?php echo $qtmxtbib_c == 0 ? '' : $qtmxtbib_c ?>" maxlength="3" style="text-align:right;"/></td>
 			</tr>
 
 
 			<!--2 
-				Texto: Verificar Relacionamento Emitente (Cônjugue/Sócio): 
+				Texto: Verificar Relacionamento Emitente (Cônjuge/Sócio): 
 				Nome: flemipar (tab019)
 				Tipo: SIM/ NÃO
 				visibilidade: Pessoa Fisica
@@ -207,8 +206,8 @@
 			-->
 			<tr>
 				<!-- flemipar -->
-				<td width="300px" class="personForm"><label for="flemipar" class='labelPri'><?php echo utf8ToHtml('Verificar se Emitente é Conjugue do Cooperado:') ?></label></td>
-				<td width="300px" class="companyForm"><label for="flemipar" class='labelPri'><?php echo utf8ToHtml('Verificar Relacionamento Emitente (Cônjugue/Sócio):') ?></label></td>
+				<td width="300px" class="personForm"><label for="flemipar" class='labelPri'><?php echo utf8ToHtml('Verificar se Emitente é Conjuge do Cooperado:') ?></label></td>
+				<td width="300px" class="companyForm"><label for="flemipar" class='labelPri'><?php echo utf8ToHtml('Verificar Relacionamento Emitente (Cônjuge/Sócio):') ?></label></td>
 				<td width="170px">
 					<select id="flemipar" name="flemipar">
 					  <option value=0> <?php echo utf8ToHtml('Não') ?> </option>
@@ -250,13 +249,13 @@
 			</tr>
 
 			<!--5 
-				Texto: Verificar Cooperado Possui Titulos Descontatos na Conta do Pagador
+				Texto: Verificar Cooperado Possui Títulos Descontados na Conta do Pagador
 				Nome **flpdctcp
 				tipo: SIM/ NÃO 
 			-->
 			<tr>
 				<!-- flpdctcp -->
-				<td width="300px"><label for="flpdctcp" class='labelPri'><?php echo utf8ToHtml('Verificar Cooperado Possui Titulos Descontatos na Conta do Pagador:') ?></label></td>
+				<td width="300px"><label for="flpdctcp" class='labelPri'><?php echo utf8ToHtml('Verificar Cooperado Possui Títulos Descontados na Conta do Pagador:') ?></label></td>
 				<td width="170px">
 					<select id="flpdctcp" name="flpdctcp">
 					  <option value=0> <?php echo utf8ToHtml('Não') ?> </option>
@@ -300,12 +299,12 @@
 
 
 			<!--8 
-				Texto: Mínimo de Liquidez de Titulos Geral do Cedente (Qtd de Títulos) 
+				Texto: Mínimo de Liquidez de Títulos Geral do Cedente (Qtd. de Títulos)
 				Nome: **qtmintgc
 			-->
 			<tr>
 				<!-- qtmintgc -->
-				<td width="300px"><label for="qtmintgc" class='labelPri'><?php echo utf8ToHtml('Mínimo de Liquidez de Títulos Geral do Cedente (Qtd de Títulos):') ?></label></td>
+				<td width="300px"><label for="qtmintgc" class='labelPri'><?php echo utf8ToHtml('Mínimo de Liquidez de Títulos Geral do Cedente (Qtd. de Títulos):') ?></label></td>
 				<td width="170px"><input type="text" id="qtmintgc" name="qtmintgc" value="<?php echo $qtmintgc == 0 ? '' : $qtmintgc ?>" maxlength="3" style="text-align:right;"/>
 					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 				<td width="170px"><input type="text" id="qtmintgc_c" name="qtmintgc_c" value="<?php echo $qtmintgc_c == 0 ? '' : $qtmintgc_c ?>" maxlength="3" style="text-align:right;"/>
@@ -313,12 +312,12 @@
 			</tr>
 
 			<!--9 
-				Texto: Mínimo de Liquidez de Titulos Geral do Cedente (Valor dos Títulos)
+				Texto: Mínimo de Liquidez de Títulos Geral do Cedente (Valor dos Títulos)
 				Nome: **vlmintgc
 			 -->
 			<tr>
 				<!-- vlmintgc -->
-				<td width="300px"><label for="vlmintgc" class='labelPri'><?php echo utf8ToHtml('Mínimo de Liquidez de Titulos Geral do Cedente (Valor dos Títulos):') ?></label></td>
+				<td width="300px"><label for="vlmintgc" class='labelPri'><?php echo utf8ToHtml('Mínimo de Liquidez de Títulos Geral do Cedente (Valor dos Títulos):') ?></label></td>
 				<td width="170px"><input type="text" id="vlmintgc" name="vlmintgc" value="<?php echo $vlmintgc == 0 ? '' : $vlmintgc ?>" maxlength="3" style="text-align:right;"/>
 					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 				<td width="170px"><input type="text" id="vlmintgc_c" name="vlmintgc_c" value="<?php echo $vlmintgc_c == 0 ? '' : $vlmintgc_c ?>" maxlength="3" style="text-align:right;"/>					
@@ -327,12 +326,12 @@
 
 
 			<!--10 
-				Texto: Qtd. Mínima de Títulos Descontados para Cálculo da Liquidez
+				Texto: Qtd. Mínima de Títulos Descontados para Cálculo de Liquidez
 				Nome: qtmitdcl
 				-->
 			<tr>
 				<!-- qtmitdcl -->
-				<td width="300px"><label for="qtmitdcl" class='labelPri'><?php echo utf8ToHtml('Qtd. Mínima de Títulos Descontados para Cálculo da Liquidez:') ?></label></td>
+				<td width="300px"><label for="qtmitdcl" class='labelPri'><?php echo utf8ToHtml('Qtd. Mínima de Títulos Descontados para Cálculo de Liquidez:') ?></label></td>
 				<td width="170px"><input type="text" id="qtmitdcl" name="qtmitdcl" value="<?php echo $qtmitdcl == 0 ? '' : $qtmitdcl ?>" maxlength="3" style="text-align:right;"/></td>
 				<td width="170px"><input type="text" id="qtmitdcl_c" name="qtmitdcl_c" value="<?php echo $qtmitdcl_c == 0 ? '' : $qtmitdcl_c ?>" maxlength="3" style="text-align:right;"/></td>
 			</tr>
@@ -351,25 +350,25 @@
 
 
 			<!--12 
-				Texto: Período em meses para realizar o cálculo de liquidez 
+				Texto: Período em Meses para Realizar o Cálculo de Liquidez 
 					Alternativa: Qtd. Meses Cálculo Percentual de Liquidez ?(tab019)
 				Nome: qtmesliq
 				-->
 			<tr>
 				<!-- qtmesliq -->
-				<td width="300px"><label for="qtmesliq" class='labelPri'><?php echo utf8ToHtml('Período em meses para realizar o cálculo de liquidez:') ?></label></td>
+				<td width="300px"><label for="qtmesliq" class='labelPri'><?php echo utf8ToHtml('Período em Meses para Realizar o Cálculo de Liquidez:') ?></label></td>
 				<td width="170px"><input type="text" id="qtmesliq" name="qtmesliq" value="<?php echo $qtmesliq == 0 ? '' : $qtmesliq ?>" maxlength="3" style="text-align:right;"/></td>
 				<td width="170px"><input type="text" id="qtmesliq_c" name="qtmesliq_c" value="<?php echo $qtmesliq_c == 0 ? '' : $qtmesliq_c ?>" maxlength="3" style="text-align:right;"/></td>
 			</tr>
 
 
 			<!--11 
-				Texto: Valor máximo permitido por ramo de atividade -> Verificar o valor máximo permitido por ramo de atividade (Cód. CNAE)
+				Texto: Valor máximo permitido por ramo de atividade -> Verificar o Valor Máximo Permitido por Ramo de Atividade (Cód. CNAE)
 				Nome: **vlmxprat
 				Tipo:SIM/ NÃO -->
 			<tr>
 				<!-- flpdctcp -->
-				<td width="300px"><label for="vlmxprat" class='labelPri'><?php echo utf8ToHtml('Verificar o valor máximo permitido por ramo de atividade (Cód. CNAE):') ?></label></td>
+				<td width="300px"><label for="vlmxprat" class='labelPri'><?php echo utf8ToHtml('Verificar o Valor Máximo Permitido por Ramo de Atividade (Cód. CNAE):') ?></label></td>
 				<td width="170px">
 					<select id="vlmxprat" name="vlmxprat">
 					  <option value=0> <?php echo utf8ToHtml('Não') ?> </option>
@@ -387,12 +386,12 @@
 
 
 			<!--12  (ordenado)
-				Texto: Concentração máxima de títulos por pagador -> Percentual de Títulos por pagador
+				Texto: Concentração Máxima de Títulos por Pagador
 				Nome: **width="500px"
 				 -->
 			<tr>
 				
-				<td width="300px"><label for="pcmxctip" class='labelPri'><?php echo utf8ToHtml('Concentração máxima de títulos por pagador:') ?></label></td>
+				<td width="300px"><label for="pcmxctip" class='labelPri'><?php echo utf8ToHtml('Concentração Máxima de Títulos por Pagador:') ?></label></td>
 				<td width="170px"><input type="text" id="pcmxctip" name="pcmxctip" value="<?php echo $pcmxctip == 0 ? '' : $pcmxctip ?>" maxlength="3" style="text-align:right;"/>
 					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 				<td width="170px"><input type="text" id="pcmxctip_c" name="pcmxctip_c" value="<?php echo $pcmxctip_c == 0 ? '' : $pcmxctip_c ?>" maxlength="3" style="text-align:right;"/>
@@ -401,34 +400,42 @@
 
 
 			<!--14 
-				Texto: Quantidade máxima de dias para envio para Esteira
+				Texto: Quantidade Máxima de Dias para Envio para Esteira
 				Nome: **qtmxdene
 			 -->
 			 <tr>
 				<!-- qtmxdene -->
-				<td width="300px"><label for="qtmxdene" class='labelPri'><?php echo utf8ToHtml('Quantidade máxima de dias para envio para Esteira:') ?></label></td>
+				<td width="300px"><label for="qtmxdene" class='labelPri'><?php echo utf8ToHtml('Quantidade Máxima de Dias para Envio para Esteira:') ?></label></td>
 				<td width="170px"><input type="text" id="qtmxdene" name="qtmxdene" value="<?php echo $qtmxdene == 0 ? '' : $qtmxdene ?>" maxlength="3" style="text-align:right;"/></td>
 				<td width="170px"><input type="text" id="qtmxdene_c" name="qtmxdene_c" value="<?php echo $qtmxdene_c == 0 ? '' : $qtmxdene_c ?>" maxlength="3" style="text-align:right;"/></td>
 			</tr>
 
 			<!--15 
-				Texto: Dias para expirar borderô 
+				Texto: Dias para Expirar Borderô 
 				Nome: **qtdiexbo
 			-->
 			<tr>
 				<!-- qtdiexbo -->
-				<td width="300px"><label for="qtdiexbo" class='labelPri'><?php echo utf8ToHtml('Dias para expirar borderô:') ?></label></td>
-				<td width="170px"><input type="text" id="qtdiexbo" name="qtdiexbo" value="<?php echo $qtdiexbo == 0 ? '' : $qtdiexbo ?>" maxlength="3" style="text-align:right;"/></td>
-				<td width="170px"><input type="text" id="qtdiexbo_c" name="qtdiexbo_c" value="<?php echo $qtdiexbo_c == 0 ? '' : $qtdiexbo_c ?>" maxlength="3" style="text-align:right;"/></td>
+				<td width="300px"><label for="qtdiexbo" class='labelPri'><?php echo utf8ToHtml('Dias para Expirar Borderô:') ?></label></td>
+				<td width="170px"><input type="text" id="qtdiexbo" name="qtdiexbo" value="<?php echo $qtdiexbo == 0 ? '' : $qtdiexbo ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label>
+				</td>
+				<td width="170px"><input type="text" id="qtdiexbo_c" name="qtdiexbo_c" value="<?php echo $qtdiexbo_c == 0 ? '' : $qtdiexbo_c ?>" maxlength="3" style="text-align:right;"/>
+					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label>
+				</td>
 			</tr>
 
 
 			<tr>
-				<!-- qtmesliq -->
-				<td width="300px"><label for="pctitpag" class='labelPri'><?php echo utf8ToHtml('Percentual de Títulos por pagador:') ?></label></td>
-				<td width="170px"><input type="text" id="pctitpag" name="pctitpag" value="<?php echo $pctitpag == 0 ? '' : $pctitpag ?>" maxlength="3" style="text-align:right;"/></td>
-				<td width="170px"><input type="text" id="pctitpag_c" name="pctitpag_c" value="<?php echo $pctitpag_c == 0 ? '' : $pctitpag_c ?>" maxlength="3" style="text-align:right;"/></td>
+				<!-- pctitemi -->
+				<td width="300px"><label for="pctitemi" class='labelPri'><?php echo utf8ToHtml('Percentual de Títulos por Pagador:') ?></label></td>
+				<td width="170px"><input type="text" id="pctitemi" name="pctitemi" value="<?php echo $pctitemi == 0 ? '' : $pctitemi ?>" maxlength="3" style="text-align:right;"/>	
+					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
+				<td width="170px"><input type="text" id="pctitemi_c" name="pctitemi_c" value="<?php echo $pctitemi_c == 0 ? '' : $pctitemi_c ?>" maxlength="3" style="text-align:right;"/>	
+					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 			</tr>
+
+			<!-- removido pctitpag -->
 
 		</table>
     </fieldset>
