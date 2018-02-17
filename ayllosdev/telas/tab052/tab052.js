@@ -107,7 +107,7 @@ function formataCabecalho() {
 function formataCampos() {
 	$('.labelPri', '#frmTab052').css('width', '430px');
 	$('#tituloO', '#frmTab052').css('width', '515px');
-	$('#tituloC', '#frmTab052').css('width', '100px');
+	$('#tituloC', '#frmTab052').css('width', '160px');
     $('#frmCab').css('width', '900px');
  
     cVllimite = $('#vllimite', '#frmTab052');
