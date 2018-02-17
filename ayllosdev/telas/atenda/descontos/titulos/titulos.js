@@ -57,6 +57,10 @@ var aux_inconfi4 = ""; /*Variável usada para controlar validações que serão 
 var aux_inconfi5 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
 var aux_inconfi6 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
 
+var tpctrlim = "";
+var idcobope = "";
+var cdageori = "";
+
 
 // ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
@@ -547,20 +551,91 @@ function mostraTelaAltera() {
     return false;
 }
 
-// OPÇÃO ANALISAR
-// Carregar os dados para consulta de limite de desconto de títulos
-function carregaDadosAnalisarTitulo() {
-	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
-	
-	// Carrega conteúdo da opção através de ajax
+function confirmaEnvioAnalise(){
+	showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validaAnaliseTitulo();', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+}
+
+//OPÇÂO ANALISAR
+//Avaliar se é possível executar a ação de analisar
+function validaAnaliseTitulo(){
+
+	// INICIO MOCK - (remover trecho quando subir - utilizado apenas para mock)
+	var insitapr = 'REJEITADO AUTOMATICAMENTE'; 
+	var dssitest = 'ANALISE FINALIZADA'; 
+
+	// FIM MOCK - (remover trecho quando subir - utilizado apenas para mock)
+
+	// pega os valores conforme o status que está na tabela (descomentar quando não estiver usando o mock)
+	//var insitapr = $('#insitapr').val();
+	//var dssitest = $("#dssitest").val();
+
+	if (dssitest == 'ANALISE FINALIZADA' && insitapr == 'REJEITADO AUTOMATICAMENTE'){				
+		showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'enviarPropostaAnaliseComLIberacaoCordenador()\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+	}else{
+		enviarPropostaAnalise();
+	}
+    return false;
+}
+
+// funcao que é chamada caso seja aprovado com senha coordenador
+function enviarPropostaAnaliseComLIberacaoCordenador(){
+	alert("Proposta enviada para analise após liberação do coordenador.\nObs.: Função ainda em desenvolvimento!");
+
+	/*
+	showMsgAguardo("Aguarde, enviando dados para esteira ...");
+
+	var operacao = "ENVIAR_ESTEIRA";
+
 	$.ajax({		
 		type: "POST", 
-		url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_analisar.php",
+		url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
 		dataType: "html",
 		data: {
+			operacao: operacao,
 			nrdconta: nrdconta,
 			nrctrlim: nrcontrato,
+
+			redirect: "html_ajax"
+		},
+		success: function(response) {
+			$("#divOpcoesDaOpcao3").html(response);
+		},	
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		}
+						
+	});	
+	*/
+
+}
+
+
+// OPÇÃO ANALISAR
+// Carregar os dados para consulta de limite de desconto de títulos
+function enviarPropostaAnalise() {
+	alert("Proposta enviada para analise.\nObs.: Função ainda em desenvolvimento!");
+
+	/*
+	showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
+
+	var operacao = "ENVIAR_ANALISE";
+
+	/*
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+		dataType: "html",
+		data: {
+			operacao: operacao,
+			nrdconta: nrdconta,
+			nrctrlim: nrcontrato,
+
+
+			tpctrlim: tpctrlim,
+			idcobope: idcobope,
+			cdageori: cdageori,
+
 			redirect: "html_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -570,7 +645,10 @@ function carregaDadosAnalisarTitulo() {
 		success: function(response) {
 			$("#divOpcoesDaOpcao3").html(response);
 		}				
-	});		
+	});	
+	*/
+
+	
 }
 
 function exibeAlteraNumero() {

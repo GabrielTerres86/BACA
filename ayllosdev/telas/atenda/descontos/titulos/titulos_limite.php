@@ -85,6 +85,8 @@
 	
 	$limites   = $xmlObjLimites->roottag->tags[0]->tags;
 	$qtLimites = count($limites);
+
+	//print_r($limites);
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
@@ -96,6 +98,18 @@
 	}	
 	
 ?>
+
+<?  for ($i = 0; $i < $qtLimites; $i++) {
+
+?>
+
+	<input type="hidden" id="insitapr" name="insitapr" value="<? echo $limites[$i]->tags[8]->cdata; ?>" />
+	<input type="hidden" id="dssitest" name="dssitest" value="<? echo $limites[$i]->tags[9]->cdata; ?>" />
+
+<?
+}
+?>
+
 
 <div id="divLimites">
 	<div class="divRegistros">
@@ -163,7 +177,7 @@
 	<input type="button" class="botao gft" value="Excluir"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="showConfirmacao(\'Deseja excluir o limite de desconto de t&iacute;tulos?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> />
 	<input type="button" class="botao gft" value="Incluir" id="btnIncluirLimite" name="btnIncluirLimite" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscTit(1);return false;"'; } ?> />
 
-	<input type="button" class="botao gft" value="Analisar"  id="btnAnalisarLimite" name="btnAnalisarLimite" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="carregaDadosAnalisarTitulo();return false;"'; } ?>/>
+	<input type="button" class="botao gft" value="Analisar"  id="btnAnalisarLimite" name="btnAnalisarLimite" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="confirmaEnvioAnalise();"'; } ?>/>
 	<input type="button" class="botao gft" value="Imprimir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> />
 </div>
 
