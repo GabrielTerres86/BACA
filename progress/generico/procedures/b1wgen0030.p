@@ -362,7 +362,7 @@
                              (Gabriel).
                              
                 24/06/2014 - Adicionado o parametro par_dsoperac 
-                            (com valor 'DESCONTO TITULO') 'a chamada das
+                            (com valor 'DESCONTO TITULO') a chamada das
                             procedures cria-tabelas-avalistas e 
                             atualiza_tabela_avalistas. 
                             (Chamado 166383) - (Fabricio)
@@ -3298,7 +3298,7 @@ PROCEDURE busca_dados_limite_incluir:
         
     IF  VALID-HANDLE(h-b1wgen0001)   THEN
     DO:
-        RUN ver_cadastro IN h-b1wgen0001(INPUT par_cdcooper,
+        RUN ver_cadastro IN h-f(INPUT par_cdcooper,
                                          INPUT par_nrdconta,
                                          INPUT 0, /* cod-agencia */
                                          INPUT 0, /* nro-caixa   */
@@ -3343,13 +3343,36 @@ PROCEDURE busca_dados_limite_incluir:
 		   RETURN "NOK".
 	    END.
 
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */  
+
     RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE,
+                                 INPUT FALSE,            /* GGS: Original: Tipo Cobranca = Sem Registro     */
+                                 INPUT crapass.inpessoa, /* GGS: Novo:     Tipo Pessoa   = crapass.inpessoa */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-dados_dsctit,
                                 OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -3695,13 +3718,38 @@ PROCEDURE busca_dados_limite:
             RETURN "NOK".
         END.
 
+
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */  
+
+
     RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE,
+                                 INPUT FALSE,            /* GGS: Original: Tipo Cobranca = Sem Registro     */
+                                 INPUT crapass.inpessoa, /* GGS: Novo:     Tipo Pessoa   = crapass.inpessoa */
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -3971,13 +4019,37 @@ PROCEDURE valida_proposta_dados:
        END.
 
 
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */  
+
+
    RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                 INPUT par_cdagenci,
                                 INPUT par_nrdcaixa,
                                 INPUT par_cdoperad,
                                 INPUT par_dtmvtolt,
                                 INPUT par_idorigem,
-                                INPUT FALSE,
+                                INPUT FALSE,            /* GGS: Original: Tipo Cobranca = Sem Registro     */
+                                INPUT crapass.inpessoa, /* GGS: Novo:     Tipo Pessoa   = crapass.inpessoa */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-dados_dsctit,
                                 OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -4446,13 +4518,39 @@ PROCEDURE efetua_inclusao_limite:
                aux_dstransa = "Incluir limite " + STRING(par_nrctrlim) +
                               " de desconto de titulos.".
 
+
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */  
+
+
+
     RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE,
+                                 INPUT FALSE,            /* GGS: Original: Tipo Cobranca = Sem Registro     */
+                                 INPUT crapass.inpessoa, /* GGS: Novo:     Tipo Pessoa   = crapass.inpessoa */
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -6812,7 +6910,7 @@ PROCEDURE busca_parametros_dsctit:
     DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
     DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
     DEF INPUT PARAM par_tpcobran AS LOGICAL                 NO-UNDO.
-	DEF INPUT PARAM par_inpessoa AS INTEGER     			NO-UNDO.	
+	  DEF INPUT PARAM par_inpessoa AS INTEGER     			      NO-UNDO.	
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-dsctit.
@@ -7331,13 +7429,16 @@ PROCEDURE busca_titulos:
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".  
 
+
+    /* GGS: Original */       
+    /*.................................................................
     RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT TRUE, /* COB.REGISTRADA */
+                                 INPUT TRUE, 
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit_cr,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -7351,13 +7452,76 @@ PROCEDURE busca_titulos:
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE, /* COB.SEM REGISTRO */
+                                 INPUT FALSE, 
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
 
     IF  RETURN-VALUE = "NOK" THEN
         RETURN "NOK".
+    .................................................................*/
+    /* GGS: Fim Original */       
+
+
+
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */  
+
+
+
+    /* GGS: Novo */    
+    /*.................................................................*/    
+    RUN busca_parametros_dsctit (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT par_cdoperad,
+                                 INPUT par_dtmvtolt,
+                                 INPUT par_idorigem,
+                                 INPUT TRUE,             /* COB.REGISTRADA */
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
+                                 OUTPUT TABLE tt-erro,
+                                 OUTPUT TABLE tt-dados_dsctit_cr,
+                                 OUTPUT TABLE tt-dados_cecred_dsctit).
+         
+    IF  RETURN-VALUE = "NOK" THEN
+        RETURN "NOK".
+
+    RUN busca_parametros_dsctit (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT par_cdoperad,
+                                 INPUT par_dtmvtolt,
+                                 INPUT par_idorigem,
+                                 INPUT FALSE,            /* COB.SEM REGISTRO */
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
+                                 OUTPUT TABLE tt-erro,
+                                 OUTPUT TABLE tt-dados_dsctit,
+                                 OUTPUT TABLE tt-dados_cecred_dsctit).
+
+    IF  RETURN-VALUE = "NOK" THEN
+        RETURN "NOK".
+    /*.................................................................*/
+    /* GGS: Fim Novo */    
+
 
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND 
                              craplim.nrdconta = par_nrdconta AND
@@ -15733,6 +15897,10 @@ PROCEDURE analisar-titulo-bordero:
     DEF OUTPUT PARAM par_flsnhcoo AS LOGICAL                NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
+     /* GGS - Incluido */
+     ASSIGN aux_cdcritic = 0
+            aux_dscritic = "".   
+
     EMPTY TEMP-TABLE tt-erro.
 
     DEF VAR aux_nrseqdig         AS INTE                    NO-UNDO.
@@ -15757,13 +15925,16 @@ PROCEDURE analisar-titulo-bordero:
     DEF BUFFER crabtdb  FOR craptdb.
     DEF BUFFER crabcob  FOR crapcob.
 
+
+    /* GGS: Original */       
+    /*.................................................................
     RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT TRUE, /* COB.REGISTRADA */
+                                 INPUT TRUE, 
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit_cr,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -15777,13 +15948,74 @@ PROCEDURE analisar-titulo-bordero:
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE, /* COB.SEM REGISTRO */
+                                 INPUT FALSE, 
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
 
     IF  RETURN-VALUE = "NOK" THEN
         RETURN "NOK".
+    .................................................................*/
+    /* GGS: Fim Original */       
+
+
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */
+
+
+    /* GGS: Novo */        
+    /*.................................................................*/
+    RUN busca_parametros_dsctit (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT par_cdoperad,
+                                 INPUT par_dtmvtolt,
+                                 INPUT par_idorigem,
+                                 INPUT TRUE,             /* COB.REGISTRADA */
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
+                                 OUTPUT TABLE tt-erro,
+                                 OUTPUT TABLE tt-dados_dsctit_cr,
+                                 OUTPUT TABLE tt-dados_cecred_dsctit).
+         
+    IF  RETURN-VALUE = "NOK" THEN
+        RETURN "NOK".
+
+    RUN busca_parametros_dsctit (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT par_cdoperad,
+                                 INPUT par_dtmvtolt,
+                                 INPUT par_idorigem,
+                                 INPUT FALSE,            /* COB.SEM REGISTRO */
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
+                                 OUTPUT TABLE tt-erro,
+                                 OUTPUT TABLE tt-dados_dsctit,
+                                 OUTPUT TABLE tt-dados_cecred_dsctit).
+
+    IF  RETURN-VALUE = "NOK" THEN
+        RETURN "NOK".
+    /*.................................................................*/
+    /* GGS: Fim Novo */  
+
 
     RUN busca_dados_dsctit (INPUT par_cdcooper,
                             INPUT par_cdagenci,
@@ -15793,13 +16025,15 @@ PROCEDURE analisar-titulo-bordero:
                             INPUT par_idorigem,
                             INPUT par_nrdconta,
                             INPUT par_idseqttl,
-                            INPUT par_nmdatela,
-                            INPUT FALSE,
+                            INPUT par_nmdatela,                      
+                            INPUT FALSE,            /* GGS: Original: Tipo Cobranca = Sempre Sem Registro */
+                            INPUT crapass.inpessoa, /* GGS: Novo:     Tipo Pessoa = crapass.inpessoa      */
                             OUTPUT TABLE tt-erro,
                             OUTPUT TABLE tt-desconto_titulos).
 
     IF  RETURN-VALUE = "NOK" THEN
         RETURN "NOK".
+
 
     /* Calcular valor Total dos Títulos desse bordero com COB. REGISTRADA e S/ REGISTRO */
     FOR EACH craptdb WHERE craptdb.cdcooper = par_cdcooper     AND
@@ -16541,8 +16775,8 @@ PROCEDURE carrega-impressao-dsctit:
 
     DEF VAR h-b1wgen0030i AS HANDLE                                 NO-UNDO.
 
-    DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
-    DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
+    DEF VAR aux_cdcritic AS INTE                                    NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
 
     RUN sistema/generico/procedures/b1wgen0030i.p PERSISTENT SET h-b1wgen0030i.
 
