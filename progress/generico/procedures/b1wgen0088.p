@@ -39,18 +39,11 @@
 
 
 
-
-
-
-
-
-
-
 /*..............................................................................
 
    Programa: sistema/internet/procedures/b1wgen0088.p
    Autor   : Guilherme/Supero
-   Data    : 15/03/2011                        Ultima atualizacao: 16/12/2016
+   Data    : 15/03/2011                        Ultima atualizacao: 16/02/2018
 
    Dados referentes ao programa:
 
@@ -217,7 +210,7 @@
                 28/04/2015 - Ajustes referente Projeto Cooperativa Emite e Expede
                             (Daniel/Rafael/Reinert)
                 
-                31/07/2015 - Inclusão de novos motivos (Iniciados com "X, Ex: XA, XB, XC, etc...) nas 
+                31/07/2015 - Inclusão de novos motivos (Iniciados com X, Ex: XA, XB, XC, etc...) nas 
                              situações em que estava gravando ocorrência 26 com motivo em branco
                              Chamado 294197 (Heitor - RKAM)
                              
@@ -242,6 +235,9 @@
 
 	           12/12/2016 - Adicionar LOOP para buscar o numero do convenio de protesto 
 			                (Douglas - Chamado 564039)
+							
+			   16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
+							(Gustavo Sene - GFT)							
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0087tt.i }
@@ -5626,10 +5622,37 @@ PROCEDURE efetua-validacao-recusa-padrao:
             END.
 
             /* -------------------------------------------------- */
-            IF (bcrapcob.flgregis) THEN
-              ASSIGN aux_cdacesso = "LIMDESCTITCR".
-            ELSE
-              ASSIGN aux_cdacesso = "LIMDESCTIT".
+
+
+
+            /* GGS - Inicio */
+      			FIND crapass WHERE crapass.cdcooper = bcrapcob.cdcooper AND
+      							   crapass.nrdconta = bcrapcob.nrdconta
+      							   NO-LOCK NO-ERROR.
+
+      			 IF  NOT AVAILABLE crapass  THEN
+      				 RETURN "NOK".
+      			
+
+      			IF crapass.inpessoa = 1 THEN /* Pessoa Física */
+      			DO:
+      			  IF (bcrapcob.flgregis) THEN /* Cobrança com Regisro */
+      				aux_cdacesso = "LIMDESCTITCRPF".
+      			  ELSE 
+      				aux_cdacesso = "LIMDESCTITPF".		  	
+      			END.
+      			ELSE
+      			DO:	
+      			  IF crapass.inpessoa = 2 THEN /* Pessoa Jurídica */
+      			  DO: 	
+      				IF (bcrapcob.flgregis) THEN /* Cobrança com Regisro */
+      				  aux_cdacesso = "LIMDESCTITCRPJ".
+      				ELSE 
+      				  aux_cdacesso = "LIMDESCTITPJ".
+      			  END.		
+      			END.
+            /* GGS - Fim */			
+			  
 
             FIND craptab WHERE 
                  craptab.cdcooper = bcrapcob.cdcooper  AND
