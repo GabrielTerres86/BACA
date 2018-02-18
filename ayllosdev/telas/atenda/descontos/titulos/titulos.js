@@ -689,6 +689,14 @@ function fechaRotinaAltera() {
 
 }
 
+function fechaRotinaDetalhe() {
+
+    fechaRotina($('#divUsoGenerico'), $('#divRotina'));
+    carregaLimitesTitulos();
+    return false;
+
+}
+
 function limpaDivGenerica() {
 
     $('#numero').remove();
@@ -1297,16 +1305,21 @@ function mostraMsgsGenericas(){
 	
 }
 
-function consultarDetalhesProposta(){
+function carregaDadosDetalhesProposta(){
 	showMsgAguardo("Aguarde, carregando detalhes da proposta ...");
 	
+	exibeRotina($('#divOpcoesDaOpcao2'));
+
+    //limpaDivGenerica();
+
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({		
 		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_detalhes_proposta.php",
-		//url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_consultar.php",
 		dataType: "html",
 		data: {
+			nrdconta: nrdconta,
+			nrctrlim: nrcontrato,
 			redirect: "html_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -1314,9 +1327,60 @@ function consultarDetalhesProposta(){
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
-			console.log(response);
-			$("#divOpcoesDaOpcao3").html(response);
+			//$('#divUsoGenerico').html(response);
+
+			if (response.indexOf('showError("error"') == -1) {
+				$('#divOpcoesDaOpcao2').html(response);
+				$("#divConteudoOpcao").css('display','none');
+				formataDetalhesProposta();
+	            //layoutPadrao();
+	            //hideMsgAguardo();
+	            //bloqueiaFundo($('#divUsoGenerico'));
+	        } else {
+	        	eval(response);
+	        }
+	        return false;
 		}				
 	});	
+	
+}
 
+function formataDetalhesProposta() {
+	var divRegistro = $('div.divRegistros', '#divResultadoAciona');
+    var tabela = $('table', divRegistro);
+    var tabelaHeader = $('table > thead > tr > th', divRegistro);
+    var fonteLinha = $('table > tbody > tr > td', divRegistro);
+
+    tabelaHeader.css({'font-size': '11px'});
+    fonteLinha.css({'font-size': '11px'});
+
+    $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '10px 3px 5px 3px'});
+    $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
+
+    divRegistro.css({'height':'205px', 'width':'930px'});
+	
+    var ordemInicial = new Array();
+
+    var arrayLargura = new Array();
+
+    arrayLargura[0] = '80px';
+	arrayLargura[1] = '110px';
+    arrayLargura[2] = '100px';
+    arrayLargura[3] = '196px';
+    arrayLargura[4] = '120px';
+    //arrayLargura[5] = '20px';
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'left';
+    arrayAlinha[2] = 'center';
+    arrayAlinha[3] = 'left';
+    arrayAlinha[4] = 'center';
+    arrayAlinha[5] = 'left';
+
+    var metodoTabela = '';
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
+	
+    return false;
 }
