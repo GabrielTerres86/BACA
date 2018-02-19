@@ -32,7 +32,7 @@ $xml .= "   <dtafinal>31/12/9999</dtafinal>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTIT", "CONS_ACIONAMENTOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "CONS_ACIONAMENTOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObj = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {

@@ -568,12 +568,13 @@ function validaAnaliseTitulo(){
 	// pega os valores conforme o status que está na tabela (descomentar quando não estiver usando o mock)
 	//var insitapr = $('#insitapr').val();
 	//var dssitest = $("#dssitest").val();
-
+	/*
 	if (dssitest == 'ANALISE FINALIZADA' && insitapr == 'REJEITADO AUTOMATICAMENTE'){				
 		showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'enviarPropostaAnaliseComLIberacaoCordenador()\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
 	}else{
 		enviarPropostaAnalise();
-	}
+	}*/
+	enviarPropostaAnalise();
     return false;
 }
 
@@ -614,14 +615,14 @@ function enviarPropostaAnaliseComLIberacaoCordenador(){
 // OPÇÃO ANALISAR
 // Carregar os dados para consulta de limite de desconto de títulos
 function enviarPropostaAnalise() {
-	alert("Proposta enviada para analise.\nObs.: Função ainda em desenvolvimento!");
+	//alert("Proposta enviada para analise.\nObs.: Função ainda em desenvolvimento!");
 
-	/*
+	
 	showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
 
 	var operacao = "ENVIAR_ANALISE";
 
-	/*
+	
 	$.ajax({		
 		type: "POST", 
 		url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
@@ -630,12 +631,6 @@ function enviarPropostaAnalise() {
 			operacao: operacao,
 			nrdconta: nrdconta,
 			nrctrlim: nrcontrato,
-
-
-			tpctrlim: tpctrlim,
-			idcobope: idcobope,
-			cdageori: cdageori,
-
 			redirect: "html_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -646,7 +641,7 @@ function enviarPropostaAnalise() {
 			$("#divOpcoesDaOpcao3").html(response);
 		}				
 	});	
-	*/
+	
 
 	
 }
