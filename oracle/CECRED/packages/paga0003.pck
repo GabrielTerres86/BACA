@@ -213,7 +213,7 @@ END paga0003;
   
    Programa: PAGA0003
    Autor   : Dionathan
-   Data    : 19/07/2016                        Ultima atualizacao: 14/09/2017
+   Data    : 19/07/2016                        Ultima atualizacao: 01/11/2017
   
    Dados referentes ao programa: 
   
@@ -234,6 +234,10 @@ END paga0003;
                     (Lucas Ranghetti #705465)
                     
        14/09/2017 - Adicionar no campo nrrefere como varchar2 (Lucas Ranghetti #756034)
+       
+                      
+       01/11/2017 - Validar corretamente o horario da debsic em caso de agendamentos
+                    e também validar data do pagamento menor que o dia atual (Lucas Ranghetti #775900)
 ..............................................................................*/
 CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
@@ -1030,6 +1034,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      --                       Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)   
        
                  14/09/2017 - Adicionar no campo nrrefere como varchar2 (Lucas Ranghetti #756034)
+
+	 --          02/10/2017 - Alteração da mensagem de validação de pagamento GPS (prj 356.2 - Ricardo Linhares)
     ..............................................................................*/
     
     --Selecionar contas migradas
@@ -1323,7 +1329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         -- GPS -- Convênio 270 e Segmento 5
         IF vr_cdempcon = 270 AND vr_cdsegmto = 5 THEN
 					IF pr_flmobile = 1 THEN -- Canal Mobile
-						vr_dscritic := 'Pagamento de GPS não disponível, utilize a Conta Online.';
+												vr_dscritic := 'Pagamento de GPS deve ser pago na opção ''Pagamentos - GPS.';
 					ELSE -- Conta Online
 									vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
 					END IF;
@@ -2497,7 +2503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   
    Programa: PAGA0003
    Autor   : Lucas Lunelli
-   Data    : 19/09/2016                        Ultima atualizacao: 08/11/2016
+   Data    : 19/09/2016                        Ultima atualizacao: 01/11/2017
   
    Dados referentes ao programa: 
   
@@ -2508,6 +2514,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                04/09/2017 - Alteração Projeto Assinatura conjunta (Proj 397), 
                Incluido a variavel que determina se deve gerar pendência de aprovação
                ou efetivar pagamento de acordo com alçada do preposto ou operador.
+               
+               01/11/2017 - Validar corretamente o horario da debsic em caso de agendamentos
+                            e também validar data do pagamento menor que o dia atual (Lucas Ranghetti #775900)
 ..............................................................................*/  
 
 	/* Procedimento do internetbank operação 188 - Operar pagamento DARF/DAS */
@@ -2939,16 +2948,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     
     -- Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o dia
     -- que antecede o final de semana ou feriado nacional
-    IF to_char(SYSDATE,'sssss') >= vr_hriniexe  AND 
-       rw_crapdat.dtmvtolt = vr_dtmvtopg THEN
        
+      IF TRUNC(SYSDATE) > vr_dtmvtopg  THEN   
       IF pr_tpdaguia = 1 THEN -- DARF
         vr_dscritic := 'Agendamento de DARF permitido apenas para o proximo dia util.'; 
       ELSE -- DAS
         vr_dscritic := 'Agendamento de DAS permitido apenas para o proximo dia util.'; 
       END IF;
-      
       RAISE vr_exc_erro;     
+      ELSIF TRUNC(SYSDATE) = vr_dtmvtopg AND to_char(SYSDATE,'sssss') >= vr_hriniexe THEN
+      
+        IF pr_tpdaguia = 1 THEN -- DARF
+          vr_dscritic := 'Agendamento de DARF permitido apenas para o proximo dia util.'; 
+        ELSE -- DAS
+          vr_dscritic := 'Agendamento de DAS permitido apenas para o proximo dia util.'; 
+        END IF;        
+      RAISE vr_exc_erro;     
+       
     END IF;
     END IF;
 
@@ -3957,9 +3973,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
     vr_dstransa VARCHAR2(100) := '';
     vr_vllanmto NUMBER(20,5);
+    vr_tpdaguia VARCHAR2(100) := '';    
   BEGIN
 
     vr_vllanmto := pr_vllanmto;
+    vr_tpdaguia := '<tpdaguia>' || TO_CHAR(pr_tpoperac) || '</tpdaguia>';
 
     INET0001.pc_verifica_operacao_prog(pr_cdcooper => pr_cdcooper 
                                       ,pr_cdagenci => pr_cdagenci 
@@ -3975,7 +3993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                       ,pr_nrctatrf => pr_nrctatrf 
                                       ,pr_cdtiptra => pr_cdtiptra 
                                       ,pr_cdoperad => pr_cdoperad 
-                                      ,pr_tpoperac => pr_tpoperac 
+                                      ,pr_tpoperac => 10 
                                       ,pr_flgvalid => pr_flgvalid 
                                       ,pr_dsorigem => pr_dsorigem 
                                       ,pr_nrcpfope => pr_nrcpfope 
@@ -3994,6 +4012,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		--remover <?xml version="1.0" encoding="ISO-8859-1"?>
 		IF INSTR(vr_tab_limite, '<?xml') > 0 THEN 
 			vr_tab_limite := SUBSTR(vr_tab_limite,(INSTR(vr_tab_limite, '>') + 1));
+	  END IF;
+    
+    IF INSTR(vr_tab_limite, '</limite>') > 0 THEN
+      vr_tab_limite := REPLACE(vr_tab_limite,'</limite></raiz>',vr_tpdaguia||'</limite></raiz>');
 	  END IF;
     
     pr_xml_operacao187 := vr_tab_limite;
