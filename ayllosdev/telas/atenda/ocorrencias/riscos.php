@@ -68,8 +68,7 @@
 	$listaRiscos = $xmlObjRiscos->roottag->tags[0]->tags[0]->tags;
 	$dadosCentral = $xmlObjRiscos->roottag->tags[0]->tags[1]->tags;
 	$riscoCentral = getByTagName($dadosCentral, 'risco_ult_central'); 
-	$riscoFinal = getByTagName($dadosCentral, 'risco_final');
-	
+		
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo "<script type='text/javascript'>";
@@ -117,6 +116,7 @@
 					<th><span title="CPF/CNPJ">CPF/CNPJ</span></th>
 					<th><span title="Número da conta">Conta</span></th>
 					<th><span title="Número do contrato">Contr.</span></th>
+					<th><span title="Tipo de contrato">Tipo</span></th>
 					<th><span title="Risco Inclusão">R. Incl.</span></th>
 					<th><span title="Rating">Rat.</span></th>
 					<th><span title="Risco Atraso">R. Atr.</span></th>
@@ -143,7 +143,9 @@
 
 					$riscoOperacao = getByTagName($risco->tags, 'risco_operacao');
 
-					array_push($riscosOperacao[$cpfCnpjRaiz], $riscoOperacao);
+					if (getByTagName($risco->tags, 'arrasta_operacao') == 'S') {
+						array_push($riscosOperacao[$cpfCnpjRaiz], $riscoOperacao);
+					}
 
 					array_push($dadosRisco[$cpfCnpjRaiz], 
 						array(
@@ -157,20 +159,23 @@
 							'risco_melhora' => getByTagName($risco->tags, 'risco_melhora'),
 							'risco_operacao' => $riscoOperacao,
 							'risco_grupo' => getByTagName($risco->tags, 'risco_grupo'),
-							'risco_final' => getByTagName($risco->tags, 'risco_final')
+							'risco_final' => getByTagName($risco->tags, 'risco_final'),
+							'tipo_registro' => getByTagName($risco->tags, 'tipo_registro')
 						));
 				}
 
 				foreach ($riscosOperacao as $cpfCnpj => $niveisRisco) {
-					// Calcula o risco CPF como o maior risco das opera??es do mesmo CPF
+					// Calcula o risco CPF como o maior risco das operações do mesmo CPF
 					$riscoCpfCnpj = max($niveisRisco);
 
 					foreach ($dadosRisco[$cpfCnpj] as $risco) {
+						$riscoGrupo = $risco['risco_grupo'];
 				?>
 					<tr>
 						<td><? echo aplicaMascara($risco['cpf_cnpj']); ?></td>
 						<td><? echo formataContaDV($risco['numero_conta']); ?></td>
 						<td><? echo number_format($risco['contrato'], 0, '', '.'); ?></td>
+						<td><? echo $risco['tipo_registro']; ?></td>
 						<td><? echo $risco['risco_inclusao']; ?></td>
 						<td><? echo $risco['rating']; ?></td>
 						<td><? echo $risco['risco_atraso']; ?></td>
@@ -178,8 +183,8 @@
 						<td><? echo $risco['risco_melhora']; ?></td>
 						<td><? echo $risco['risco_operacao']; ?></td>						
 						<td><? echo $riscoCpfCnpj; ?></td>
-						<td><? echo $risco['risco_grupo']; ?></td>
-						<td><? echo !empty($risco['risco_final']) ? $risco['risco_final'] : $riscoCpfCnpj; ?></td>
+						<td><? echo $riscoGrupo ?></td>
+						<td><? echo !empty($risco['risco_final']) ? $risco['risco_final'] : max($riscoCpfCnpj, $riscoGrupo); ?></td>
 					</tr>
 				<?
 					}
@@ -195,7 +200,7 @@
 			<br>
 			<div style="margin-top: 10px;">
 				<label for="riscoUltimaCentral" style="width: 170px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Risco Último Fechamento:</label>
-				<input type="text" name="riscoUltimaCentral" id="riscoUltimaCentral" value="<? echo !empty($riscoCentral) ? $riscoCentral : 'A'; ?>" readonly tabindex="-1" style="width: 40px; text-align: center; outline: 1px solid grey; display: block; float: left; position: relative;">
+				<input type="text" name="riscoUltimaCentral" id="riscoUltimaCentral" value="<? echo getByTagName($dadosCentral, 'risco_ult_central');/*!empty($riscoCentral) ? $riscoCentral : 'A';*/ ?>" readonly tabindex="-1" style="width: 40px; text-align: center; outline: 1px solid grey; display: block; float: left; position: relative;">
 			</div>
 		</div>
 		<div id="infoRiscoFinal" style="float: right; width: 50%; text-align: left;">
@@ -204,7 +209,7 @@
 			<br>
 			<div style="margin-top: 10px;">
 				<label for="dataRisco" style="width: 130px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Qtd. Dias no risco:</label>
-				<input type="text" name="dataUltimaCentral" id="dataUltimaCentral" value="<? echo getByTagName($dadosCentral, 'qtd_dias_risco'); ?>" readonly tabindex="-1" style="width: 80px; text-align: center; outline: 1px solid grey; display: block; float: left; margin-left: 10px; position: relative;">
+				<input type="text" name="diasRisco" id="diasRisco" value="<? echo getByTagName($dadosCentral, 'qtd_dias_risco'); ?>" readonly tabindex="-1" style="width: 80px; text-align: center; outline: 1px solid grey; display: block; float: left; margin-left: 10px; position: relative;">
 			</div>
 		</div>
 	</div>

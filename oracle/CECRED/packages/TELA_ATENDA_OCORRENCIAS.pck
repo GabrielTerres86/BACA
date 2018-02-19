@@ -54,7 +54,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   --
   ---------------------------------------------------------------------------------------------------------------
 
-  FUNCTION fn_busca_rating(pr_cdcooper NUMBER, pr_nrdconta NUMBER, pr_nrctremp NUMBER)
+  FUNCTION fn_busca_rating(pr_cdcooper NUMBER
+		                     , pr_nrdconta NUMBER
+												 , pr_nrctremp NUMBER
+												 , pr_cdorigem NUMBER)
     RETURN crapnrc.indrisco%TYPE AS vr_rating crapnrc.indrisco%TYPE;
       --- >>> CURSORES <<< ---
       CURSOR cr_rating(pr_cdcooper NUMBER, pr_nrdconta NUMBER) IS
@@ -63,6 +66,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         WHERE rat.cdcooper = pr_cdcooper
           AND rat.nrdconta = pr_nrdconta
           AND rat.nrctrrat = pr_nrctremp
+			    AND rat.tpctrrat = DECODE(pr_cdorigem
+					                         , 1, 1
+																	 , 2, 2
+																	 , 3, 90
+																	 , 4, 3
+																	 , 5, 3)
           AND rat.insitrat = 2;
       rw_rating cr_rating%ROWTYPE;
   BEGIN
@@ -471,7 +480,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                ,pr_numero_grupo  IN crapgrp.nrdgrupo%TYPE
 															 ,pr_ris_melhora   IN crawepr.dsnivris%TYPE
 															 ,pr_ris_final     IN crawepr.dsnivris%TYPE
-															 ,pr_tipo_registro IN VARCHAR2) IS
+															 ,pr_tipo_registro IN VARCHAR2
+															 ,pr_arrastaoperac IN VARCHAR2) IS
   BEGIN
          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Contas',
@@ -576,6 +586,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'tipo_registro',
                              pr_tag_cont => pr_tipo_registro,
+                             pr_des_erro => pr_dscritic);
+														 
+					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Conta',
+                             pr_posicao  => pr_pos_conta,
+                             pr_tag_nova => 'arrasta_operacao',
+                             pr_tag_cont => pr_arrastaoperac,
                              pr_des_erro => pr_dscritic);
   END pc_monta_reg_conta_xml;
 
@@ -738,6 +755,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 																	, pr_vlrarrasto NUMBER) IS
 		SELECT DISTINCT nrctrlim
 		     , innivris
+				 , cdorigem
 				 , 'DCH' tipcontr
 		  FROM crapris r
 			   , crapbdc b
@@ -752,6 +770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 		UNION
 		SELECT DISTINCT nrctrlim
 		     , innivris
+				 , cdorigem
 				 , 'DTI' tipcontr
 		  FROM crapris r
 			   , crapbdt b
@@ -916,7 +935,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 										-- Busca o rating do contrato
 										vr_rating := fn_busca_rating(rw_contas_do_titular.cdcooper
 																							 , rw_contas_do_titular.nrdconta
-																							 , rw_contratos_emprestimo.nrctremp);
+																							 , rw_contratos_emprestimo.nrctremp
+																							 , 3);
 
 										-- Busca a quantidade dias em atraso e o risco final do contrato
 										pc_busca_dados_diaria(rw_contas_do_titular.cdcooper
@@ -950,7 +970,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 																				 , vr_numero_grupo
 																				 , rw_contratos_emprestimo.dsnivris
 																				 , fn_traduz_risco(vr_risco_final)
-																				 , 'EMP');
+																				 , 'EMP'
+																				 , 'S');
 
 										vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 										vr_contratos_ativos := vr_contratos_ativos + 1;
@@ -966,7 +987,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
 					      vr_rating := fn_busca_rating(rw_contas_do_titular.cdcooper
                                            , rw_contas_do_titular.nrdconta
-																			     , rw_contratos_limite_desc.nrctrlim);
+																			     , rw_contratos_limite_desc.nrctrlim
+																					 , rw_contratos_limite_desc.cdorigem);
 
 
 								vr_risco_inclusao := 'A';
@@ -992,7 +1014,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                      , vr_numero_grupo
 																		 , NULL
 																		 , NULL
-																		 , rw_contratos_limite_desc.tipcontr);
+																		 , rw_contratos_limite_desc.tipcontr
+																		 , 'S');
 
 					     vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 						   vr_contratos_ativos := vr_contratos_ativos + 1;
@@ -1008,7 +1031,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 					IF cr_contrato_limite_credito%FOUND THEN
 						    vr_rating := fn_busca_rating(rw_contas_do_titular.cdcooper
                                            , rw_contas_do_titular.nrdconta
-																			     , rw_contrato_limite_credito.nrctrlim);
+																			     , rw_contrato_limite_credito.nrctrlim
+																					 , 1);
 
 						    --vr_risco_inclusao := fn_traduz_risco(rw_contrato_limite_credito.innivris);
 								vr_risco_inclusao := 'A';
@@ -1040,16 +1064,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                      , vr_numero_grupo
 																		 , NULL
 																		 , NULL
-																		 , 'LIM');
+																		 , 'LIM'
+																		 , CASE WHEN fn_busca_valor_divida(rw_contas_do_titular.cdcooper
+                                                                     , rw_contas_do_titular.nrdconta
+																			                               , rw_contrato_limite_credito.nrctrlim
+																			                               , rw_dat.dtmvtoan) > vr_valor_arrasto 
+																		          OR fn_busca_valor_divida(rw_contas_do_titular.cdcooper
+                                                                     , rw_contas_do_titular.nrdconta
+																			                               , rw_contas_do_titular.nrdconta
+																			                               , rw_dat.dtmvtoan) > vr_valor_arrasto
+																						THEN 'S' ELSE 'N' END);
 
 					   vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 						 vr_contratos_ativos := vr_contratos_ativos + 1;
+					ELSE 
+						   vr_risco_cpf := CASE WHEN trim(rw_contas_do_titular.dsnivris) IS NULL OR trim(rw_contas_do_titular.dsnivris) = '' THEN 'A' ELSE rw_contas_do_titular.dsnivris END;
+
+					     vr_diasatraso := fn_busca_dias_atraso_adp(rw_contas_do_titular.cdcooper
+							                                         , rw_contas_do_titular.nrdconta
+																											 , rw_dat.dtmvtoan);
+
+							 vr_risco_atraso := fn_calcula_risco_atraso_adp(vr_diasatraso);
+							 
+							 vr_risco_inclusao := 'A';
+
+               pc_monta_reg_conta_xml(pr_retxml
+                                     , vr_auxconta
+                                     , vr_dscritic
+                                     , rw_contas_do_titular.nrdconta
+                                     , rw_contas_do_titular.nrcpfcgc
+                                     , NULL
+                                     , vr_risco_inclusao
+                                     , vr_risco_grupo
+                                     , NULL
+                                     , vr_risco_atraso
+                                     , fn_traduz_risco(vr_risco_agr)
+                                     , greatest(vr_risco_atraso
+																		          , nvl(fn_traduz_risco(vr_risco_agr), 'A'))
+                                     , vr_risco_cpf
+                                     , vr_numero_grupo
+																		 , NULL
+																		 , NULL
+																		 , 'CTA'
+																		 , CASE WHEN fn_busca_valor_divida(rw_contas_do_titular.cdcooper
+                                                                     , rw_contas_do_titular.nrdconta
+																			                               , rw_contas_do_titular.nrdconta
+																			                               , rw_dat.dtmvtoan) > vr_valor_arrasto
+																						THEN 'S' ELSE 'N' END);
+
+                vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 					END IF;
 
 					CLOSE cr_contrato_limite_credito;
 
           -- Se a conta não possui contratos ativos, inclui apenas dados de risco da conta
-          IF vr_contratos_ativos = 0 
+          /*IF vr_contratos_ativos = 0 
 						OR fn_verifica_atraso_conta(rw_contas_do_titular.cdcooper
 							                        , rw_contas_do_titular.nrdconta
 																			, rw_dat.dtmvtoan
@@ -1084,7 +1153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 																		 , 'CTA');
 
                 vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
-          END IF;
+          END IF; */
       END LOOP;
 
       -- Percorre contas dos grupos econômicos em que o titular da conta base faz parte
@@ -1110,7 +1179,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 								-- Busca o rating do contrato
 								vr_rating := fn_busca_rating(rw_contas_grupo_economico.cdcooper
 																	   			 , rw_contas_grupo_economico.nrdconta
-																				   , rw_contratos_emprestimo.nrctremp);
+																				   , rw_contratos_emprestimo.nrctremp
+																					 , 3);
 
 								-- Busca a quantidade de dias em atraso do contato
 								pc_busca_dados_diaria(rw_contas_grupo_economico.cdcooper
@@ -1144,7 +1214,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 																	, rw_contas_grupo_economico.nrdgrupo
 																	, rw_contratos_emprestimo.dsnivris -- risco melhora
 																	, fn_traduz_risco(vr_risco_final)
-																	, 'EMP');
+																	, 'EMP'
+																	, 'S');
 
 								vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 								vr_contratos_ativos := vr_contratos_ativos + 1;
@@ -1160,7 +1231,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
 					      vr_rating := fn_busca_rating(rw_contas_grupo_economico.cdcooper
                                            , rw_contas_grupo_economico.nrdconta
-																			     , rw_contratos_limite_desc.nrctrlim);
+																			     , rw_contratos_limite_desc.nrctrlim
+																					 , rw_contratos_limite_desc.cdorigem);
 
 
 								vr_risco_inclusao := 'A';
@@ -1186,7 +1258,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                      , vr_numero_grupo
 																		 , NULL
 																		 , NULL
-																		 , rw_contratos_limite_desc.tipcontr);
+																		 , rw_contratos_limite_desc.tipcontr
+																		 , 'S');
 
 					     vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 						   vr_contratos_ativos := vr_contratos_ativos + 1;
@@ -1227,16 +1300,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                      , vr_numero_grupo
 																		 , NULL
 																		 , NULL
-																		 , 'LIM');
+																		 , 'LIM'
+																		 , CASE WHEN fn_busca_valor_divida(rw_contas_grupo_economico.cdcooper
+                                                                     , rw_contas_grupo_economico.nrdconta
+																			                               , rw_contrato_limite_credito.nrctrlim
+																			                               , rw_dat.dtmvtoan) > vr_valor_arrasto 
+																		          OR fn_busca_valor_divida(rw_contas_grupo_economico.cdcooper
+                                                                     , rw_contas_grupo_economico.nrdconta
+																			                               , rw_contas_grupo_economico.nrdconta
+																			                               , rw_dat.dtmvtoan) > vr_valor_arrasto
+																						THEN 'S' ELSE 'N' END);
 
 					   vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 						 vr_contratos_ativos := vr_contratos_ativos + 1;
+					ELSE
+						 vr_risco_cpf := CASE WHEN trim(rw_contas_grupo_economico.dsnivris) IS NULL OR trim(rw_contas_grupo_economico.dsnivris) = '' THEN 'A' ELSE rw_contas_grupo_economico.dsnivris END;
+
+							 --vr_risco_inclusao := fn_traduz_risco(rw_contrato_limite_credito.innivris);
+							 vr_risco_inclusao := 'A';
+
+							 vr_diasatraso := fn_busca_dias_atraso_adp(rw_contas_grupo_economico.cdcooper
+                                                       , rw_contas_grupo_economico.nrdconta
+																			              	 , rw_dat.dtmvtoan);
+
+							 vr_risco_atraso := fn_calcula_risco_atraso_adp(vr_diasatraso);
+
+               pc_monta_reg_conta_xml(pr_retxml
+                                     , vr_auxconta
+                                     , vr_dscritic
+                                     , rw_contas_grupo_economico.nrdconta
+                                     , rw_contas_grupo_economico.nrcpfcgc
+                                     , NULL
+                                     , vr_risco_inclusao
+                                     , rw_contas_grupo_economico.dsdrisgp
+                                     , NULL
+                                     , vr_risco_atraso
+                                     , fn_traduz_risco(vr_risco_agr)
+                                     , greatest(vr_risco_atraso
+																		          , nvl(fn_traduz_risco(vr_risco_agr), 'A'))
+																		 , vr_risco_cpf
+                                     , rw_contas_grupo_economico.nrdgrupo
+																		 , NULL
+																		 , NULL
+																		 , 'CTA'
+																		 , CASE WHEN fn_busca_valor_divida(rw_contas_grupo_economico.cdcooper
+                                                                     , rw_contas_grupo_economico.nrdconta
+																			                               , rw_contas_grupo_economico.nrdconta
+																			                               , rw_dat.dtmvtoan) > vr_valor_arrasto
+																						THEN 'S' ELSE 'N' END);
+
+                vr_auxconta := vr_auxconta + 1;
 					END IF;
 
 					CLOSE cr_contrato_limite_credito;
 
           -- Se a conta não possui contratos ativos, inclui apenas dados de risco da conta
-          IF vr_contratos_ativos = 0 
+          /*IF vr_contratos_ativos = 0 
 						OR fn_verifica_atraso_conta(rw_contas_grupo_economico.cdcooper
                                       , rw_contas_grupo_economico.nrdconta
 																			, rw_dat.dtmvtoan
@@ -1272,7 +1391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 																		 , 'CTA');
 
                 vr_auxconta := vr_auxconta + 1;
-          END IF;
+          END IF; */
       END LOOP;
 
       -- Busca o risco da última central de riscos (último fechamento)
