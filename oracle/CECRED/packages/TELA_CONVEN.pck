@@ -497,16 +497,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
           IF nvl(pr_nmrescon,'') <> nvl(rw_crapcon.nmrescon,'') THEN
             pr_gera_log_conven (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o Nome fantasia ' ||rw_crapcon.nmrescon ||
-                                                 ' para '|| pr_nmrescon);
+                                                 ' o Nome fantasia ' ||upper(rw_crapcon.nmrescon) ||
+                                                 ' para '|| upper(pr_nmrescon));
           END IF;
           
           --> razao social da empresa a ser conveniada. 
           IF nvl(pr_nmextcon,'') <> nvl(rw_crapcon.nmextcon,'') THEN
             pr_gera_log_conven (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' a Razao social ' ||rw_crapcon.nmextcon ||
-                                                 ' para '|| pr_nmextcon);
+                                                 ' a Razao social ' ||upper(rw_crapcon.nmextcon) ||
+                                                 ' para '|| upper(pr_nmextcon));
           END IF;
           
           --> Codigo do historico do lancamento.
@@ -554,7 +554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
           IF nvl(pr_flgaccec,'') <> nvl(rw_crapcon.flgaccec,'') THEN
             pr_gera_log_conven (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o Indicador de aceitação na CECRED ' || CASE rw_crapcon.flgaccec WHEN 1 THEN 'Sim' ELSE 'Não' END ||
+                                                 ' o Indicador de aceitação para CECRED de ' || CASE rw_crapcon.flgaccec WHEN 1 THEN 'Sim' ELSE 'Não' END ||
                                                  ' para '|| CASE pr_flgaccec WHEN 1 THEN 'Sim' ELSE 'Não' END);
           END IF;
           
@@ -562,7 +562,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
           IF nvl(pr_flgacsic,'') <> nvl(rw_crapcon.flgacsic,'') THEN
             pr_gera_log_conven (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o Indicador de aceitação na SICREDI ' || CASE rw_crapcon.flgacsic WHEN 1 THEN 'Sim' ELSE 'Não' END ||
+                                                 ' o Indicador de aceitação para SICREDI de ' || CASE rw_crapcon.flgacsic WHEN 1 THEN 'Sim' ELSE 'Não' END ||
                                                  ' para '||  CASE pr_flgacsic WHEN 1 THEN 'Sim' ELSE 'Não' END);
           END IF;
           
@@ -570,7 +570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
           IF nvl(pr_flgacbcb,'') <> nvl(rw_crapcon.flgacbcb,'') THEN
             pr_gera_log_conven (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o Indicador de aceitação na BANCOOB ' || CASE rw_crapcon.flgacbcb WHEN 1 THEN 'Sim' ELSE 'Não' END ||
+                                                 ' o Indicador de aceitação para BANCOOB de ' || CASE rw_crapcon.flgacbcb WHEN 1 THEN 'Sim' ELSE 'Não' END ||
                                                  ' para '||  CASE pr_flgacbcb WHEN 1 THEN 'Sim' ELSE 'Não' END);
           END IF;
           vr_dsmensag := 'Registros atualizados com sucesso.';

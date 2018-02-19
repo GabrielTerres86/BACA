@@ -628,8 +628,8 @@ PROCEDURE lista-empresas-conv:
     ASSIGN aux_nrregist = par_nrregist.
 
     FOR EACH crapcon WHERE crapcon.cdcooper = par_cdcooper AND
-                           (crapcon.tparrecd = 1  OR		   /* SCIREDI */
-                            crapcon.tparrecd = 2 )         AND /* Bancoob */
+                          /* (crapcon.tparrecd = 1  OR		    SCIREDI 
+                              crapcon.tparrecd = 2 )         AND  Bancoob   PJ406 */
                           (IF par_cdempcon <> 0 THEN
                            crapcon.cdempcon = par_cdempcon ELSE 
                            crapcon.cdempcon > 0)           AND

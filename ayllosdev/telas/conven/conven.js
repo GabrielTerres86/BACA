@@ -550,12 +550,12 @@ function buscaDados(){
     cTparrecd.val("");
     
     if (cdempcon == "" ){
-        showError("error","Empresa deve sert informada informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdempcon.focus();");        
+        showError("error","Empresa deve ser informada informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdempcon.focus();");        
         return false;
     }
     
     if (cdsegmto == "" ){
-        showError("error","Segmento deve sert informada informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdsegmto.focus();");        
+        showError("error","Segmento deve ser informada informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdsegmto.focus();");        
         return false;
     }
            
