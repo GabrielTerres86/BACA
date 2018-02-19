@@ -98,7 +98,19 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBRAN IS
                                 ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                                       
-                                   
+  -- Rotina para consultar os limites de dias para protesto
+  PROCEDURE pc_busca_limite_dias(pr_cdcooper  IN crapcop.cdcooper%TYPE --> cooperativa
+                                ,pr_nrdconta  IN crapceb.nrdconta%TYPE --> Conta
+                                ,pr_nrconven  IN crapceb.nrconven%TYPE --> Convenio
+                                ,pr_nrcnvceb  IN crapceb.nrcnvceb%TYPE --> Ceb
+                                ,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2
+                                );
+  --
 END TELA_COBRAN;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
@@ -108,7 +120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   --  Sistema  : Rotinas utilizadas pela Tela COBRAN
   --  Sigla    : Cobran
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Maio/2016.                   Ultima atualizacao:
+  --  Data     : Maio/2016.                   Ultima atualizacao: 01/02/2018
   --
   -- Dados referentes ao programa:
   --
@@ -116,6 +128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   -- Objetivo  : Centralizar rotinas relacionadas a Tela COBRAN
   --
   -- Alteracoes:
+  --             01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
   --
   ---------------------------------------------------------------------------*/
   -- Chamada AyllosWeb Rotina para retornar lista de convenios ceb e suas situações
@@ -1111,7 +1124,100 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
-  END pc_alterar_sit_conv;  
+  END pc_alterar_sit_conv;
+  
+  -- Rotina para consultar os limites de dias para protesto
+  PROCEDURE pc_busca_limite_dias(pr_cdcooper  IN crapcop.cdcooper%TYPE --> cooperativa
+                                ,pr_nrdconta  IN crapceb.nrdconta%TYPE --> Conta
+                                ,pr_nrconven  IN crapceb.nrconven%TYPE --> Convenio
+                                ,pr_nrcnvceb  IN crapceb.nrcnvceb%TYPE --> Ceb
+                                ,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2
+                                ) IS          --> Erros do processo   
+ 
+  /* .............................................................................
 
+    Programa: pc_busca_limite_dias          
+    Sistema : Ayllos Web
+    Autor   : Supero
+    Data    : Fevereiro/2018                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para consultar os limites de dias minímo e máximo para protesto
+
+    Alteracoes:
+  ..............................................................................*/
+
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(2000);
+    --
+    vr_qtlimmip crapceb.qtlimmip%TYPE;
+    vr_qtlimaxp crapceb.qtlimaxp%TYPE;
+    --
+  BEGIN
+    --
+    SELECT crapceb.qtlimmip
+          ,crapceb.qtlimaxp
+      INTO vr_qtlimmip
+          ,vr_qtlimaxp
+      FROM crapceb
+     WHERE crapceb.cdcooper = pr_cdcooper
+       AND crapceb.nrdconta = pr_nrdconta
+       AND crapceb.nrconven = pr_nrconven
+       AND crapceb.nrcnvceb = decode(pr_nrcnvceb, 0, crapceb.nrcnvceb, pr_nrcnvceb)
+       AND crapceb.dtcadast = (SELECT MAX(crapceb2.dtcadast)
+                                 FROM crapceb crapceb2
+                                WHERE crapceb2.cdcooper = crapceb.cdcooper
+                                  AND crapceb2.nrdconta = crapceb.nrdconta
+                                  AND crapceb2.nrconven = crapceb.nrconven
+                                  AND crapceb2.nrcnvceb = crapceb.nrcnvceb);
+    --
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'inf'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic
+                          );
+    --
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'inf'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'qtlimmip'
+                          ,pr_tag_cont => vr_qtlimmip
+                          ,pr_des_erro => vr_dscritic
+                          ); 
+    --
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'inf'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'qtlimaxp'
+                          ,pr_tag_cont => vr_qtlimaxp
+                          ,pr_des_erro => vr_dscritic
+                          ); 
+    --
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_des_erro := 'Erro geral em TELA_COBRAN.PC_BUSCA_LIMITE_DIAS: ' || SQLERRM;
+      pr_dscritic := 'Erro geral em TELA_COBRAN.PC_BUSCA_LIMITE_DIAS: ' || SQLERRM;
+  END pc_busca_limite_dias; 
+  --
 END TELA_COBRAN;
 /
