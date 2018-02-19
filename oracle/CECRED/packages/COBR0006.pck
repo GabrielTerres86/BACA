@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --  Sistema  : Procedimentos para  gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Novembro/2015.                   Ultima atualizacao: 02/08/2018
+  --  Data     : Novembro/2015.                   Ultima atualizacao: 29/12/2016 
   --
   -- Dados referentes ao programa:
   --
@@ -20,8 +20,6 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --                           rejeitados (Rodrigo - 550849 / 583172)
   --
   --              29/12/2016 - P340 - Ajustes para leitura do Segmento y053 e envia a CIP (Ricardo Linhares).
-  --
-  --              02/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
   --
   ---------------------------------------------------------------------------------------------------------------
     
@@ -454,7 +452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 02/02/2018
+    Data     : Novembro/2015.                   Ultima atualizacao: 30/05/2017
   
    Dados referentes ao programa:
   
@@ -543,9 +541,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                              
                 30/05/2017 - Implementado ajustes para nao estourar a chave da crapcob na 
                              pc_processa_titulos(Tiago/Rodrigo #663295)
-                
-                01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto.
-                
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -2410,7 +2405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 02/02/2018
+       Data    : Janeiro/2016                     Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -2422,9 +2417,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
 	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
-                
-                   01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
-                   
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -2997,49 +2989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
-          
-          -- 80 = Instrução automática de protesto
-          WHEN 80 THEN
-            COBR0007.pc_inst_aut_protesto(pr_cdcooper => vr_instrucao.cdcooper
-                                         ,pr_nrdconta => vr_instrucao.nrdconta
-                                         ,pr_nrcnvcob => vr_instrucao.nrcnvcob
-                                         ,pr_nrdocmto => vr_instrucao.nrdocmto
-                                         ,pr_cdocorre => vr_instrucao.cdocorre
-                                         ,pr_dtmvtolt => pr_dtmvtolt
-                                         ,pr_cdoperad => pr_cdoperad
-                                         ,pr_qtdiaprt => vr_instrucao.qtdiaprt
-                                         ,pr_dtvencto => vr_instrucao.dtvencto
-                                         ,pr_nrremass => vr_instrucao.nrremass
-                                         ,pr_tab_lat_consolidada => pr_tab_lat_consolidada
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic
-                                         );
-            -- Verificar se ocorreu erro durante a execucao da instrucao
-            IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-              RAISE vr_processa_erro;
-            END IF;
-          
-          -- 81 = Excluir Protesto com Carta de Anuência Eletrônica -- REVISAR
-          WHEN 81 THEN
-            COBR0007.pc_exc_prtst_anuencia_eletr(pr_cdcooper => vr_instrucao.cdcooper
-                                                ,pr_nrdconta => vr_instrucao.nrdconta
-                                                ,pr_nrcnvcob => vr_instrucao.nrcnvcob
-                                                ,pr_nrdocmto => vr_instrucao.nrdocmto
-                                                ,pr_cdocorre => vr_instrucao.cdocorre
-                                                ,pr_dtmvtolt => pr_dtmvtolt
-                                                ,pr_cdoperad => pr_cdoperad
-                                                ,pr_qtdiaprt => vr_instrucao.qtdiaprt
-                                                ,pr_dtvencto => vr_instrucao.dtvencto
-                                                ,pr_nrremass => vr_instrucao.nrremass
-                                                ,pr_tab_lat_consolidada => pr_tab_lat_consolidada
-                                                ,pr_cdcritic => vr_cdcritic
-                                                ,pr_dscritic => vr_dscritic
-                                                );
-            -- Verificar se ocorreu erro durante a execucao da instrucao
-            IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-              RAISE vr_processa_erro;
-            END IF;
-          
+
           -- 90 = Alterar tipo de emissao CEE
           WHEN 90 THEN
             COBR0007.pc_inst_alt_tipo_emissao_cee(pr_cdcooper => vr_instrucao.cdcooper

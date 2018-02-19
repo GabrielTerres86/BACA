@@ -14,10 +14,7 @@
    
                 09/12/2015 - Adicionado parametro inserasa (Daniel) 
    
-                04/08/2016 - Adicionado parametro cddemail (Reinert).
-                
-                0/02/2018 - Alteraçoes referente ao PRJ352 - Nova soluçao de protesto.
-                
+				04/08/2016 - Adicionado parametro cddemail (Reinert).
 .............................................................................*/
 
 /*...........................................................................*/
@@ -69,7 +66,6 @@ DEF VAR aux_cdagencx AS INTE                                           NO-UNDO.
 DEF VAR aux_nmarqint AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsnmarqv AS CHAR                                           NO-UNDO.
 DEF VAR aux_vrsarqvs AS LOGI                                           NO-UNDO.
-DEF VAR aux_qtdiaprt AS INTE                                           NO-UNDO.
 
 DEF VAR aux_nrregist AS INTE                                           NO-UNDO.
 DEF VAR aux_nriniseq AS INTE                                           NO-UNDO.
@@ -153,7 +149,6 @@ DEF VAR aux_cddemail AS INTE                                           NO-UNDO.
             WHEN "inestcri" THEN aux_inestcri = INTE(tt-param.valorCampo).
             WHEN "inserasa" THEN aux_inserasa = tt-param.valorCampo.   
             WHEN "cddemail" THEN aux_cddemail = INTE(tt-param.valorCampo).
-            WHEN "qtdiaprt" THEN aux_qtdiaprt = INTE(tt-param.valorCampo).
                 
         END CASE.
 
@@ -371,7 +366,6 @@ PROCEDURE grava_instrucoes:
                          INPUT aux_vlabatim,
                          INPUT aux_dtvencto,
                          INPUT aux_cdtpinsc,
-                         INPUT aux_qtdiaprt,
                         OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE <> "OK" THEN

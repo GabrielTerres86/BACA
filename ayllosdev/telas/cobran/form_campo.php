@@ -6,8 +6,6 @@
  * OBJETIVO     : Formulário para a entrada do valor da instrução que será executada 
  * ALTERACOES   : 
  *     			  03/05/2013 - Adicionado cdisntru 7, concessao de desconto. (Jorge)
- *
- *				  01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
  */	 
 ?>
 
@@ -17,38 +15,8 @@
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");
-	require_once('../../includes/controla_secao.php');	
-	require_once('../../class/xmlfile.php');
 	
 	$cdinstru 	= $_POST['cdinstru'];
-	$nrdconta 	= $_POST['nrdconta'];
-	$nrconven 	= $_POST['nrconven'];
-	$nrcnvceb	= '0';
-	
-	$xml = "<Root>";
-	$xml .= " <Dados>";
-	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "   <nrconven>".$nrconven."</nrconven>";
-	$xml .= "   <nrcnvceb>".$nrcnvceb."</nrcnvceb>";
-	$xml .= " </Dados>";
-	$xml .= "</Root>";
-	
-	$xmlResult = mensageria($xml, "COBRAN", "COBRAN_CONSULTA_LIMITE_DIAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObj = getObjectXML($xmlResult);
-  
-	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-	  $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-	  if ($msgErro == "") {
-		  $msgErro = $xmlObj->roottag->tags[0]->cdata;
-	  }
-	  
-	  exibirErro('error',$msgErro,'Alerta - Ayllos','fechaRotina( $(\'#divRotina\') )', false);
-	  exit();
-	}
-	
-	$qtlimmip = $xmlObj->roottag->tags[0]->tags[4]->tags[0]->cdata;
-	$qtlimaxp = $xmlObj->roottag->tags[0]->tags[4]->tags[1]->cdata;
 ?>
 
 <table cellpadding="0" cellspacing="0" border="0" >
@@ -108,12 +76,6 @@
 													<legend>Concessao de Desconto</legend>
 													<label for="vldescto">Valor Desconto:</label>
 													<input name="vldescto" id="vldescto" type="text"  />
-												<?php
-												} else if ( $cdinstru == 80 ) { /*Instrução automática de protesto (PRJ352)*/
-												?>
-													<legend><? echo utf8ToHtml('Instrução automática de Protesto') ?></legend>
-													<label for="qtdiaprt"><? echo utf8ToHtml('Dias corridos (Limitado de '.$qtlimmip.' a '.$qtlimaxp.' dias):') ?></label>
-													<input name="qtdiaprt" id="qtdiaprt" type="text"  />
 												<?php
 												}
 												?>

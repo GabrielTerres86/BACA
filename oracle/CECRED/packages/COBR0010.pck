@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0010 IS
   --  Sistema  : Procedimentos para  gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Demetrius Wolff - Mouts
-  --  Data     : Abril/2017.                   Ultima atualizacao: 02/02/2018
+  --  Data     : Abril/2017.                   Ultima atualizacao: 12/04/2017
   --
   -- Objetivo  : Rotinas referente a Instruções Bancárias para Títulos
   --
@@ -38,7 +38,6 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0010 IS
                                   pr_nrdocmto IN INTEGER,     --> Boleto
                                   pr_vlabatim IN NUMBER,      --> Valor de Abatimento
                                   pr_dtvencto IN DATE,        --> Data de Vencimetno
-                                  pr_qtdiaprt IN NUMBER,      --> Quantidade de dias para protesto
                                   pr_cdcritic OUT INTEGER,    --> Codigo da Critica
                                   pr_dscritic OUT VARCHAR2);  --> Descricao da Critica
 
@@ -445,10 +444,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
                                   pr_nrdocmto IN INTEGER,      --> Boleto
                                   pr_vlabatim IN NUMBER,       --> Valor de Abatimento
                                   pr_dtvencto IN DATE,         --> Data de Vencimetno
-                                  pr_qtdiaprt IN NUMBER,       --> Quantidade de dias para protesto
                                   pr_cdcritic OUT INTEGER,     --> Codigo da Critica
-                                  pr_dscritic OUT VARCHAR2     --> Descricao da Critica
-                                 ) IS 
+                                  pr_dscritic OUT VARCHAR2) IS --> Descricao da Critica
   
     /* ..........................................................................
     
@@ -463,7 +460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
      Frequencia: Sempre que for chamado (On-Line)
      Objetivo  : Comandar Instruções Bancárias para Títulos - Cob. Registrada
          
-     Alteracoes: 02/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
+     Alteracoes:                   
     
     .................................................................................*/
   
@@ -635,7 +632,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
     ELSE
       CLOSE cr_crapcob;
     END IF;
-    
+  
     vr_tab_instrucao.delete;
     vr_tab_instrucao(1).cdcooper := pr_cdcooper;
     vr_tab_instrucao(1).nrdconta := pr_nrdconta;
@@ -647,7 +644,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
     vr_tab_instrucao(1).vltitulo := rw_crapcob.vltitulo;
     vr_tab_instrucao(1).vlabatim := pr_vlabatim;
     vr_tab_instrucao(1).dtvencto := pr_dtvencto;
-    vr_tab_instrucao(1).qtdiaprt := pr_qtdiaprt;
     vr_tab_instrucao(1).nrnosnum := rw_crapcob.nrnosnum;
     vr_tab_instrucao(1).nrinssac := rw_crapcob.nrinssac;
     vr_tab_instrucao(1).dsendsac := rw_crapcob.dsendsac;
@@ -655,6 +651,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
     vr_tab_instrucao(1).nrcepsac := rw_crapcob.nrcepsac;
     vr_tab_instrucao(1).nmcidsac := rw_crapcob.nmcidsac;
     vr_tab_instrucao(1).cdufsaca := rw_crapcob.cdufsaca;
+    vr_tab_instrucao(1).qtdiaprt := rw_crapcob.qtdiaprt;
     vr_tab_instrucao(1).dsdoccop := rw_crapcob.dsdoccop;
     vr_tab_instrucao(1).cdbandoc := rw_crapcob.cdbandoc;
     vr_tab_instrucao(1).nrdctabb := rw_crapcob.nrdctabb;
