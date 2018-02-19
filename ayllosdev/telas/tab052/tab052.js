@@ -208,25 +208,26 @@ function formataCampos() {
     cQtnaopag.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtprotes.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     
+    //!!
     cVlmxassi.css('width',  '100px').addClass('moeda').addClass('editcooper');// DECI
     cFlemipar.addClass('editcooper');//FLAG
     cFlpjzemi.addClass('editcooper');//FLAG
     cFlpdctcp.addClass('editcooper');//FLAG
     cQttliqcp.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
-    cVltliqcp.css('width',  '100px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
+    cVltliqcp.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtmintgc.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
-    cVlmintgc.css('width',  '100px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
+    cVlmintgc.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
 
     cQtmitdcl.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cVlmintcl.css('width',  '100px').addClass('moeda').addClass('editcooper');// DECI
 
-    cQtmesliq.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
-    cVlmxprat.css('width',  '100px').addClass('moeda').addClass('editcooper');// DECI
-    cpcmxctip.css('width',  '100px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
-    cFlcocpfp.addClass('editcooper');
+    cQtmesliq.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzzz','','');// INTE
+    cVlmxprat.addClass('editcooper');//FLAG
+    cpcmxctip.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
+    cFlcocpfp.addClass('editcooper');//FLAG
     cQtmxdene.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtdiexbo.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
-    cQtmxtbib.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
+    cQtmxtbib.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzzz','','');// INTE
     //cQtmxtbay.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     //cPctitpag.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
 
@@ -255,20 +256,20 @@ function formataCampos() {
     cFlpjzemi_c.addClass('editcecred');//FLAG
     cFlpdctcp_c.addClass('editcecred');//FLAG
     cQttliqcp_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
-    cVltliqcp_c.css('width',  '100px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
+    cVltliqcp_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtmintgc_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
-    cVlmintgc_c.css('width',  '100px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
+    cVlmintgc_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     
     cQtmitdcl_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cVlmintcl_c.css('width',  '100px').addClass('moeda').addClass('editcecred');// DECI
 
-    cQtmesliq_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
-    cVlmxprat_c.css('width',  '100px').addClass('moeda').addClass('editcecred');// DECI
-    cpcmxctip_c.css('width',  '100px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
-    cFlcocpfp_c.addClass('editcecred');
+    cQtmesliq_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzzz','','');// INTE
+    cVlmxprat_c.addClass('editcecred');//FLAG
+    cpcmxctip_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
+    cFlcocpfp_c.addClass('editcecred');//FLAG
     cQtmxdene_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtdiexbo_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
-    cQtmxtbib_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
+    cQtmxtbib_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzzz','','');// INTE
     //cQtmxtbay_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     //cPctitpag_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
 
@@ -1266,6 +1267,12 @@ function validarCampos() {
         return false;
     }
 
+    /* qtdiavig > qtdiavig_c o valor deve ser inferior ou igual ao estipulado pela CECRED */
+    if( converteMoedaFloat($('#qtdiavig', '#frmTab052').val()) > converteMoedaFloat($('#qtdiavig_c', '#frmTab052').val())  ){
+        showError('error','O valor de Vig&ecirc;ncia M&iacute;nima deve ser inferior ou igual ao estipulado pela CECRED','Alerta - Ayllos',"$(\'#qtdiavig\',\'#frmTab052\').focus();");
+        return false;
+    }
+    
     /* qtmxtbay > qtmxtbay_c o valor deve ser inferior ou igual ao estipulado pela CECRED */
     /*
     if( converteMoedaFloat($('#qtmxtbay', '#frmTab052').val()) > converteMoedaFloat($('#qtmxtbay_c', '#frmTab052').val())  ){
@@ -1273,6 +1280,65 @@ function validarCampos() {
         return false;
     }
     */
+    /* Validações de % */
+    /* pctolera > 100% o valor deve ser inferior ou igual a 100
+    
+    if( converteMoedaFloat($('#pctolera', '#frmTab052').val()) > 100  ){
+        showError('error','O valor de Toler&acirc;ncia para Limite Excedido deve ser inferior ou igual a 100%','Alerta - Ayllos',"$(\'#pctolera\',\'#frmTab052\').focus();");
+        return false;
+    }
+
+
+    // pcdmulta > 100% o valor deve ser inferior ou igual a 100
+    if( converteMoedaFloat($('#pcdmulta', '#frmTab052').val()) > 100  ){
+        showError('error','O valor de Percentual de Multa deve ser inferior ou igual a 100%','Alerta - Ayllos',"$(\'#pcdmulta\',\'#frmTab052\').focus();");
+        return false;
+    }
+
+
+    // pcnaopag > 100% o valor deve ser inferior ou igual a 100
+    if( converteMoedaFloat($('#pcnaopag', '#frmTab052').val()) > 100  ){
+        showError('error','O valor de Perc. de T&iacute;tulos N&atilde;o Pagos Benefici&aacute;rio deve ser inferior ou igual a 100%','Alerta - Ayllos',"$(\'#pcnaopag\',\'#frmTab052\').focus();");
+        return false;
+    }
+
+    // qttliqcp > 100% o valor deve ser inferior ou igual a 100
+    if( converteMoedaFloat($('#qttliqcp', '#frmTab052').val()) > 100  ){
+        showError('error','O valor de M&iacute;nimo de Liquidez do Cedente x Pagador (Qtd. de T&iacute;tulos) deve ser inferior ou igual a 100%','Alerta - Ayllos',"$(\'#qttliqcp\',\'#frmTab052\').focus();");
+        return false;
+    }
+
+    // vltliqcp > 100% o valor deve ser inferior ou igual a 100
+    if( converteMoedaFloat($('#vltliqcp', '#frmTab052').val()) > 100  ){
+        showError('error','O valor de M&iacute;nimo de Liquidez do Cedente x Pagador (Valor dos T&iacute;tulos) deve ser inferior ou igual a 100%','Alerta - Ayllos',"$(\'#vltliqcp\',\'#frmTab052\').focus();");
+        return false;
+    }
+
+    // qtmintgc > 100% o valor deve ser inferior ou igual a 100
+    if( converteMoedaFloat($('#qtmintgc', '#frmTab052').val()) > 100  ){
+        showError('error','O valor de M&iacute;nimo de Liquidez de T&iacute;tulos Geral do Cedente (Qtd. de T&iacute;tulos) deve ser inferior ou igual a 100%','Alerta - Ayllos',"$(\'#qtmintgc\',\'#frmTab052\').focus();");
+        return false;
+    }
+
+    // vlmintgc > 100% o valor deve ser inferior ou igual a 100
+    if( converteMoedaFloat($('#vlmintgc', '#frmTab052').val()) > 100  ){
+        showError('error','O valor de M&iacute;nimo de Liquidez de T&iacute;tulos Geral do Cedente (Valor dos T&iacute;tulos) deve ser inferior ou igual a 100%','Alerta - Ayllos',"$(\'#vlmintgc\',\'#frmTab052\').focus();");
+        return false;
+    }
+
+    // pcmxctip > 100% o valor deve ser inferior ou igual a 100
+    if( converteMoedaFloat($('#pcmxctip', '#frmTab052').val()) > 100  ){
+        showError('error','O valor de Concentra&ccedil;&atilde;o M&aacute;xima de T&iacute;tulos por Pagador deve ser inferior ou igual a 100%','Alerta - Ayllos',"$(\'#pcmxctip\',\'#frmTab052\').focus();");
+        return false;
+    }
+
+    // pctitemi > 100% o valor deve ser inferior ou igual a 100
+    if( converteMoedaFloat($('#pctitemi', '#frmTab052').val()) > 100  ){
+        showError('error','O valor de Percentual de T&iacutetulos por Pagador: deve ser inferior ou igual a 100%','Alerta - Ayllos',"$(\'#pctitemi\',\'#frmTab052\').focus();");
+        return false;
+    }
+    */
+
 	return true;
 	
 }
