@@ -10126,6 +10126,8 @@ PROCEDURE valida-inclusao-conta-transferencia:
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
+	DEF VAR aux_dsibcrit AS CHAR                                    NO-UNDO.
+
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
     RUN STORED-PROCEDURE pc_val_inclui_conta_transf
         aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,
