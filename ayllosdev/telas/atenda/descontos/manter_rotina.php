@@ -39,17 +39,15 @@
 	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ENVIAR_ESTEIRA_DESCT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
-	    
-		exit;
+	    //print_r($xmlObj);
 
 
-	    // Se ocorrer um erro, mostra mensagem
-	    /*
-		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodoErro,false);
-		*/
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){		   
+           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';           
+           exit;
+		}
 		
-
+		/*
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	    	$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		    if ($msgErro == "") {
@@ -60,12 +58,13 @@
 		    exibeErroNew($msgErro,$nmdcampo);
 		    exit();
 		}
-
-		$registros = $xmlObj->roottag->tags[0]->tags;
+		*/
 		
-		
-		exit;
 
+		//$registros = $xmlObj->roottag->tags[0]->tags;
+
+		echo 'showError("inform","Análise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
+        exit;
 
 	}else if ($operacao == 'ENVIAR_ESTEIRA' ) {
 
@@ -83,12 +82,12 @@
 
 
 	    // Se ocorrer um erro, mostra mensagem
-	    /*
+	    
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodoErro,false);
-		*/
+		}
 
-
+		/*
 	    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	    	$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		    if ($msgErro == "") {
@@ -99,11 +98,27 @@
 		    exibeErroNew($msgErro,$nmdcampo);
 		    exit();
 		}
+		*/
 
 		$registros = $xmlObj->roottag->tags[0]->tags;
 
+		exit;
+
 	    
 		
+	}
+
+
+	function exibeErroNew($msgErro,$nmdcampo) {
+	    echo 'hideMsgAguardo();';
+	    if ($nmdcampo <> ""){
+	        $nmdcampo = '$(\'#'.$nmdcampo.'\', \'#frmTab052\').focus();';
+	    }
+	    $msgErro = str_replace('"','',$msgErro);
+	    $msgErro = preg_replace('/\s/',' ',$msgErro);
+	    
+	    echo 'showError("error","' .$msgErro. '","Alerta - Ayllos","liberaCampos(); '.$nmdcampo.'");'; 
+	    exit();
 	}
 
 ?>

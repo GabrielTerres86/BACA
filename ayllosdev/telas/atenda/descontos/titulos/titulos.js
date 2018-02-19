@@ -552,7 +552,7 @@ function mostraTelaAltera() {
 }
 
 function confirmaEnvioAnalise(){
-	showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validaAnaliseTitulo();', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+	showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validaAnaliseTitulo();', 'return false;', 'sim.gif', 'nao.gif');
 }
 
 //OPÇÂO ANALISAR
@@ -638,7 +638,14 @@ function enviarPropostaAnalise() {
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
-			$("#divOpcoesDaOpcao3").html(response);
+			try {
+                eval(response);
+                return false;
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            }
+			
 		}				
 	});	
 	
