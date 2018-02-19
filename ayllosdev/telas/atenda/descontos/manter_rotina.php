@@ -30,14 +30,16 @@
 	    $xml .= " <Dados>";
 	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	    $xml .= "   <nrctrlim>".$nrctrlim."</nrctrlim>";
-	    $xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	    $xml .= "	<dtmovimento>".$glbvars["dtmvtolt"]."</dtmovimento>";
 	    $xml .= "   <tpenvest>I</tpenvest>"; // Tipo de envio para esteira I - Inclusao (Emprestimo)
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
+
+
 	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ENVIAR_ESTEIRA_DESCT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
-	    print_r($xmlObj);
+	    
 		exit;
 
 
@@ -61,7 +63,7 @@
 
 		$registros = $xmlObj->roottag->tags[0]->tags;
 		
-		print_r($registros);
+		
 		exit;
 
 
