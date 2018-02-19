@@ -297,17 +297,17 @@
                 14/10/2016 - Descontinuar batimento do 620_credito para todas as cooperativas 
                              (Lucas Ranghetti #510032)
 
-	              25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
-				                     Melhoria 310 (Tiago/Thiago).
+	            25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
+				             Melhoria 310 (Tiago/Thiago).
 
-			          11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
-				                     para Lic. Soc.Ambientais M310(Tiago/Thiago).
+			    11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
+				             para Lic. Soc.Ambientais M310(Tiago/Thiago).
                 
                 09/06/2017 - Ajuste na rotina retorna_docs_liberados para nao gerar pendencia 
                              para borderos efetuados no IB e com valor menor ou igual a 5 mil.
                              PRJ300 - Desconto de Cheques (Lombardi/Daniel)
                      
-                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+			    11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)
                      
                 31/10/2017 - Ajuste na retirada da mascara do CPF/CNPJ na procedure
@@ -315,8 +315,10 @@
                      
                 22/11/2017 - Em alguns documentos não virá mais nrdconta
                              Tratado consultas e updates. Projeto 339 - CRM. (Lombardi)
-                             
-                11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).                             
+                     
+                11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).    
+				
+				19/02/2018 - Ajuste para geração de pendência no DIGIDOC para termos de adesão e cancelamento de protesto. (Marcus Kaefer - Supero)                         
                      
 .............................................................................*/
 
@@ -354,6 +356,7 @@ DEF BUFFER b-crapbdc  FOR crapbdc.
 DEF BUFFER b-craplim  FOR craplim.
 DEF BUFFER b-crapdoc  FOR crapdoc.
 DEF BUFFER b-crapadt  FOR crapadt.
+DEF BUFFER b-crapceb  FOR crapceb.
 
 /** Retorno XML **/
 DEF VAR aux_nrdconta  AS INTE                                         NO-UNDO.
@@ -1497,14 +1500,13 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                            tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
                                          USE-INDEX tt-documento-digitalizado5 
                                          NO-LOCK: END.
-                      
+
                       END.
 
 
                     /* Caso encontrar o contrato digitalizado, altera flag e vai para o proximo */
                     IF  AVAIL tt-documento-digitalizado  THEN
                         DO: 
-                        
                             /*Verifica se documento foi digitalizado*/
                             FIND FIRST b-crapdoc WHERE RECID(b-crapdoc) = RECID(crapdoc) EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                             
@@ -3042,7 +3044,7 @@ PROCEDURE efetua_batimento_ged_termos:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF  CAN-DO("108,109,124,125,126,127,162,163", ENTRY(3,craptab.dstextab,";")) THEN DO:
+        IF  CAN-DO("106,108,109,115,124,125,126,127,162,163", ENTRY(3,craptab.dstextab,";")) THEN DO:
 
             CREATE tt-documentos.
             ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -3310,7 +3312,6 @@ PROCEDURE efetua_batimento_ged_termos:
                        tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
                        NO-LOCK NO-ERROR NO-WAIT.
 					        
-                       
         IF NOT AVAIL tt-documento-digitalizado  THEN
            DO:
         /* Verifica se a declaracao de pep foi digitalizada */
@@ -3386,7 +3387,7 @@ PROCEDURE efetua_batimento_ged_termos:
     END.
     /* fim tipo de documento 37 */
 
-	/* TIPO DE DOCUMENTO: 55 Termo Declaracao Simples Nacional */
+    /* TIPO DE DOCUMENTO: 55 Termo Declaracao Simples Nacional */
     ASSIGN aux_tpdocmto = 0
            aux_conttabs = 55.
     /* Buscar valor parametrizado p/ digitalizacao de declaracao pep */
@@ -3458,7 +3459,8 @@ PROCEDURE efetua_batimento_ged_termos:
     END. /* fim for each crapdoc */
     END.
     /* fim tipo de documento 55 */
-	/* TIPO DE DOCUMENTO: 56 Declaracao Pessoa Juridica Cooperativa */
+    
+	  /* TIPO DE DOCUMENTO: 56 Declaracao Pessoa Juridica Cooperativa */
     ASSIGN aux_tpdocmto = 0
            aux_conttabs = 56.
     /* Buscar valor parametrizado p/ digitalizacao de declaracao PJ Cooperativa */
@@ -3530,6 +3532,7 @@ PROCEDURE efetua_batimento_ged_termos:
     END. /* fim for each crapdoc */
     END.
     /* fim tipo de documento 56 */
+    
     /*TIPO DE DOCUMENTO: 39 Termo Adesao*/
     ASSIGN aux_tpdocmto = 0
            aux_conttabs = 39.
@@ -3823,6 +3826,311 @@ PROCEDURE efetua_batimento_ged_termos:
         END.
     END.
     /* fim tipo de documento 38 */
+    
+    /* TIPO DE DOCUMENTO: 106 - Termo de Adesao de Cobrança (PF) */
+    ASSIGN aux_tpdocmto = 0
+           aux_conttabs = 106.
+    /* Buscar valor parametrizado p/ digitalizacao de declaracao pep */
+    FIND tt-documentos WHERE 
+         tt-documentos.idseqite = aux_conttabs NO-LOCK NO-ERROR.
+    IF  AVAIL tt-documentos  THEN
+        ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
+    DO  aux_data = par_datainic TO par_datafina:
+    FOR EACH crapceb 
+       WHERE crapceb.cdcooper = par_cdcooper 
+         AND crapceb.dtcadast = aux_data
+         AND crapceb.fltercan = FALSE
+         AND crapceb.flgdigit = FALSE NO-LOCK:
+         /*AND crapceb.tpdocmto = aux_conttabs */
+        
+        /* Se cooperado estiver demitido nao gera no relatorio */
+        FIND FIRST crapass 
+             WHERE crapass.cdcooper = crapceb.cdcooper 
+               AND crapass.nrdconta = crapceb.nrdconta NO-LOCK NO-ERROR.
+        IF  NOT AVAIL crapass THEN 
+            NEXT.
+        IF  crapass.dtdemiss <> ? THEN
+            NEXT.
+        /* Verifica se a declaracao de pep foi digitalizada */
+        FIND FIRST tt-documento-digitalizado 
+             WHERE tt-documento-digitalizado.cdcooper  = crapceb.cdcooper 
+               AND tt-documento-digitalizado.nrdconta  = crapceb.nrdconta 
+               AND tt-documento-digitalizado.dtpublic >= crapceb.dtcadast NO-LOCK NO-ERROR NO-WAIT.
+               /*AND tt-documento-digitalizado.tpdocmto = aux_tpdocmto */
+
+        /*Verifica se registro existe*/
+        IF  AVAIL tt-documento-digitalizado  THEN DO:
+            /*Verifica se documento foi digitalizado*/
+            FIND FIRST b-crapceb
+                 WHERE b-crapceb.cdcooper = crapceb.cdcooper
+                   AND b-crapceb.nrdconta = crapceb.nrdconta
+                   AND b-crapceb.dtcadast = crapceb.dtcadast EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                   /*AND b-crapceb.tpdocmto = crapceb.tpdocmto*/
+
+            /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
+            IF  AVAIL b-crapceb THEN
+                ASSIGN b-crapceb.flgdigit = TRUE.
+            NEXT.
+        END.
+        ELSE DO:
+            FIND FIRST tt-documentos-termo
+                 WHERE tt-documentos-termo.cdcooper = crapceb.cdcooper
+                   AND tt-documentos-termo.nrdconta = crapceb.nrdconta
+                   AND tt-documentos-termo.dstpterm = "TERMOADESAOCOBRANCA"  NO-LOCK NO-ERROR.
+                   /* Termo de Adesao de Cobrança (PF) */
+               
+            /*Verifica se registro existe*/
+            IF  NOT AVAIL tt-documentos-termo  THEN DO:
+                        /* Buscar agencia em que o operador trabalha */
+                        FIND FIRST crapope 
+                             WHERE crapope.cdcooper = crapceb.cdcooper
+                               AND crapope.cdoperad = crapceb.cdoperad NO-LOCK NO-ERROR.
+                /* Criar registro para listar no relatorio */
+                CREATE tt-documentos-termo.
+                ASSIGN tt-documentos-termo.cdcooper = crapceb.cdcooper
+                       tt-documentos-termo.cdagenci = crapass.cdagenci
+                       tt-documentos-termo.nrdconta = crapceb.nrdconta
+                       tt-documentos-termo.cdoperad = crapceb.cdoperad
+                       tt-documentos-termo.nmcontat = " "
+                       tt-documentos-termo.dstpterm = "TERMOADESAOCOBRANCA" /* Termo de Adesao de Cobrança (PF) */
+                       tt-documentos-termo.dsempres = crapass.nmprimtl
+                       tt-documentos-termo.dtincalt = crapceb.dtcadast
+                       tt-documentos-termo.idseqite = aux_conttabs.
+            END.
+        END.
+    END. /* fim for each crapceb */
+    END. /* fim tipo de documento 106 */
+    
+    
+    /* TIPO DE DOCUMENTO: 115 - Termo de Adesao de Cobrança (PJ) */
+    ASSIGN aux_tpdocmto = 0
+           aux_conttabs = 115.
+    /* Buscar valor parametrizado p/ digitalizacao de declaracao pep */
+    FIND tt-documentos WHERE 
+         tt-documentos.idseqite = aux_conttabs NO-LOCK NO-ERROR.
+    IF  AVAIL tt-documentos  THEN
+        ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
+    DO  aux_data = par_datainic TO par_datafina:
+    FOR EACH crapceb 
+       WHERE crapceb.cdcooper = par_cdcooper
+         AND crapceb.fltercan = FALSE
+         AND crapceb.flgdigit = FALSE
+         AND crapceb.dtcadast = aux_data NO-LOCK:
+         /*AND crapceb.tpdocmto = aux_conttabs */
+        
+        /* Se cooperado estiver demitido nao gera no relatorio */
+        FIND FIRST crapass WHERE 
+                   crapass.cdcooper = crapceb.cdcooper AND
+                   crapass.nrdconta = crapceb.nrdconta NO-LOCK NO-ERROR.
+        IF  NOT AVAIL crapass THEN 
+            NEXT.
+        IF  crapass.dtdemiss <> ? THEN
+            NEXT.
+        /* Verifica se a declaracao de pep foi digitalizada */
+        FIND FIRST tt-documento-digitalizado 
+             WHERE tt-documento-digitalizado.cdcooper  = crapceb.cdcooper 
+               AND tt-documento-digitalizado.nrdconta  = crapceb.nrdconta 
+               AND tt-documento-digitalizado.dtpublic >= crapceb.dtcadast NO-LOCK NO-ERROR NO-WAIT.
+               /*AND tt-documento-digitalizado.tpdocmto = aux_tpdocmto */
+
+        /*Verifica se registro existe*/
+        IF  AVAIL tt-documento-digitalizado  THEN DO:
+            /*Verifica se documento foi digitalizado*/
+            FIND FIRST b-crapceb
+                 WHERE b-crapceb.cdcooper = crapceb.cdcooper
+                   AND b-crapceb.nrdconta = crapceb.nrdconta 
+                   AND b-crapceb.dtcadast = crapceb.dtcadast EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                   /*AND b-crapceb.idseqttl = aux_conttabs*/
+                   /*AND b-crapceb.tpdocmto = crapceb.tpdocmto*/
+                   /*AND b-crapceb.idseqttl = crapdoc.idseqttl*/
+
+            /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
+            IF  AVAIL b-crapceb THEN
+                ASSIGN b-crapceb.flgdigit = TRUE.
+            NEXT.
+        END.
+        ELSE DO:
+            FIND FIRST tt-documentos-termo
+                 WHERE tt-documentos-termo.cdcooper = crapceb.cdcooper
+                   AND tt-documentos-termo.nrdconta = crapceb.nrdconta
+                   AND tt-documentos-termo.dstpterm = "TERMOADESAOCOBRANCA" NO-LOCK NO-ERROR.
+                   /* Termo de Adesao de Cobrança (PJ)  */
+               
+            /*Verifica se registro existe*/
+            IF  NOT AVAIL tt-documentos-termo  THEN DO:
+                        /* Buscar agencia em que o operador trabalha */
+                        FIND FIRST crapope 
+                             WHERE crapope.cdcooper = crapceb.cdcooper
+                               AND crapope.cdoperad = crapceb.cdoperad NO-LOCK NO-ERROR.
+                /* Criar registro para listar no relatorio */
+                CREATE tt-documentos-termo.
+                ASSIGN tt-documentos-termo.cdcooper = crapceb.cdcooper
+                       tt-documentos-termo.cdagenci = crapass.cdagenci
+                       tt-documentos-termo.nrdconta = crapceb.nrdconta
+                       tt-documentos-termo.cdoperad = crapceb.cdoperad
+                       tt-documentos-termo.nmcontat = " "
+                       tt-documentos-termo.dstpterm = "TERMOADESAOCOBRANCA" /* Termo de Adesao de Cobrança (PJ)  */
+                       tt-documentos-termo.dsempres = crapass.nmprimtl
+                       tt-documentos-termo.dtincalt = crapceb.dtcadast
+                       tt-documentos-termo.idseqite = aux_conttabs.
+            END.
+        END.
+    END. /* fim for each crapdoc */
+    END. /* fim tipo de documento 115 */
+    
+    
+    /* TIPO DE DOCUMENTO: 106_2 (Provisório) - Termo de Adesao de Cobrança (PF) */
+    ASSIGN aux_tpdocmto = 0
+           aux_conttabs = 106.
+    /* Buscar valor parametrizado p/ digitalizacao de declaracao pep */
+    FIND tt-documentos WHERE 
+         tt-documentos.idseqite = aux_conttabs NO-LOCK NO-ERROR.
+    IF  AVAIL tt-documentos  THEN
+        ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
+    DO  aux_data = par_datainic TO par_datafina:
+    FOR EACH crapceb 
+       WHERE crapceb.cdcooper = par_cdcooper 
+         AND crapceb.dtinsexc = aux_data
+         AND crapceb.flgdigit = FALSE
+         AND crapceb.fltercan = FALSE NO-LOCK:
+         /*AND crapceb.tpdocmto = aux_conttabs */
+        
+        /* Se cooperado estiver demitido nao gera no relatorio */
+        FIND FIRST crapass 
+             WHERE crapass.cdcooper = crapceb.cdcooper 
+               AND crapass.nrdconta = crapceb.nrdconta NO-LOCK NO-ERROR.
+        IF  NOT AVAIL crapass THEN 
+            NEXT.
+        IF  crapass.dtdemiss <> ? THEN
+            NEXT.
+        /* Verifica se a declaracao de pep foi digitalizada */
+        FIND FIRST tt-documento-digitalizado 
+             WHERE tt-documento-digitalizado.cdcooper  = crapceb.cdcooper 
+               AND tt-documento-digitalizado.nrdconta  = crapceb.nrdconta 
+               AND tt-documento-digitalizado.dtpublic >= crapceb.dtinsexc NO-LOCK NO-ERROR NO-WAIT.
+               /*AND tt-documento-digitalizado.tpdocmto = aux_tpdocmto */
+
+        /*Verifica se registro existe*/
+        IF  AVAIL tt-documento-digitalizado  THEN DO:
+            /*Verifica se documento foi digitalizado*/
+            FIND FIRST b-crapceb
+                 WHERE b-crapceb.cdcooper = crapceb.cdcooper
+                   AND b-crapceb.nrdconta = crapceb.nrdconta
+                   AND b-crapceb.dtinsexc = crapceb.dtinsexc EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                   /*AND b-crapceb.tpdocmto = crapceb.tpdocmto*/
+
+            /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
+            IF  AVAIL b-crapceb THEN
+                ASSIGN b-crapceb.fltercan = TRUE.
+            NEXT.
+        END.
+        ELSE DO:
+            FIND FIRST tt-documentos-termo
+                 WHERE tt-documentos-termo.cdcooper = crapceb.cdcooper
+                   AND tt-documentos-termo.nrdconta = crapceb.nrdconta
+                   AND tt-documentos-termo.dstpterm = "TERMOCANCELAMENTOCOBRANCA"  NO-LOCK NO-ERROR.
+                   /* Termo de Adesao de Cobrança (PF) */
+               
+            /*Verifica se registro existe*/
+            IF  NOT AVAIL tt-documentos-termo  THEN DO:
+                        /* Buscar agencia em que o operador trabalha */
+                        FIND FIRST crapope 
+                             WHERE crapope.cdcooper = crapceb.cdcooper
+                               AND crapope.cdoperad = crapceb.cdoperad NO-LOCK NO-ERROR.
+                /* Criar registro para listar no relatorio */
+                CREATE tt-documentos-termo.
+                ASSIGN tt-documentos-termo.cdcooper = crapceb.cdcooper
+                       tt-documentos-termo.cdagenci = crapass.cdagenci
+                       tt-documentos-termo.nrdconta = crapceb.nrdconta
+                       tt-documentos-termo.cdoperad = crapceb.cdoperad
+                       tt-documentos-termo.nmcontat = " "
+                       tt-documentos-termo.dstpterm = "TERMOCANCELAMENTOCOBRANCA" /* Termo de Adesao de Cobrança (PF) */
+                       tt-documentos-termo.dsempres = crapass.nmprimtl
+                       tt-documentos-termo.dtincalt = crapceb.dtinsexc
+                       tt-documentos-termo.idseqite = aux_conttabs.
+            END.
+        END.
+    END. /* fim for each crapceb */
+    END. /* fim tipo de documento 106_2 */
+    
+    
+    /* TIPO DE DOCUMENTO: 115_2 (PROVISORIO) - Termo de Adesao de Cobrança (PJ) */
+    ASSIGN aux_tpdocmto = 0
+           aux_conttabs = 115.
+    /* Buscar valor parametrizado p/ digitalizacao de declaracao pep */
+    FIND tt-documentos WHERE 
+         tt-documentos.idseqite = aux_conttabs NO-LOCK NO-ERROR.
+    IF  AVAIL tt-documentos  THEN
+        ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
+    DO  aux_data = par_datainic TO par_datafina:
+    FOR EACH crapceb 
+       WHERE crapceb.cdcooper = par_cdcooper
+         AND crapceb.fltercan = FALSE
+         AND crapceb.flgdigit = FALSE
+         AND crapceb.dtinsexc = aux_data NO-LOCK:
+         /*AND crapceb.tpdocmto = aux_conttabs */
+        
+        /* Se cooperado estiver demitido nao gera no relatorio */
+        FIND FIRST crapass WHERE 
+                   crapass.cdcooper = crapceb.cdcooper AND
+                   crapass.nrdconta = crapceb.nrdconta NO-LOCK NO-ERROR.
+        IF  NOT AVAIL crapass THEN 
+            NEXT.
+        IF  crapass.dtdemiss <> ? THEN
+            NEXT.
+        /* Verifica se a declaracao de pep foi digitalizada */
+        FIND FIRST tt-documento-digitalizado 
+             WHERE tt-documento-digitalizado.cdcooper  = crapceb.cdcooper 
+               AND tt-documento-digitalizado.nrdconta  = crapceb.nrdconta 
+               AND tt-documento-digitalizado.dtpublic >= crapceb.dtinsexc NO-LOCK NO-ERROR NO-WAIT.
+               /*AND tt-documento-digitalizado.tpdocmto = aux_tpdocmto */
+
+        /*Verifica se registro existe*/
+        IF  AVAIL tt-documento-digitalizado  THEN DO:
+            /*Verifica se documento foi digitalizado*/
+            FIND FIRST b-crapceb
+                 WHERE b-crapceb.cdcooper = crapceb.cdcooper
+                   AND b-crapceb.nrdconta = crapceb.nrdconta 
+                   AND b-crapceb.dtinsexc = crapceb.dtinsexc EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                   /*AND b-crapceb.idseqttl = aux_conttabs*/
+                   /*AND b-crapceb.tpdocmto = crapceb.tpdocmto*/
+                   /*AND b-crapceb.idseqttl = crapdoc.idseqttl*/
+
+            /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
+            IF  AVAIL b-crapceb THEN
+                ASSIGN b-crapceb.fltercan = TRUE.
+            NEXT.
+        END.
+        ELSE DO:
+            FIND FIRST tt-documentos-termo
+                 WHERE tt-documentos-termo.cdcooper = crapceb.cdcooper
+                   AND tt-documentos-termo.nrdconta = crapceb.nrdconta
+                   AND tt-documentos-termo.dstpterm = "TERMOCANCELAMENTOCOBRANCA" NO-LOCK NO-ERROR.
+                   /* Termo de Adesao de Cobrança (PJ)  */
+               
+            /*Verifica se registro existe*/
+            IF  NOT AVAIL tt-documentos-termo  THEN DO:
+                        /* Buscar agencia em que o operador trabalha */
+                        FIND FIRST crapope 
+                             WHERE crapope.cdcooper = crapceb.cdcooper
+                               AND crapope.cdoperad = crapceb.cdoperad NO-LOCK NO-ERROR.
+                /* Criar registro para listar no relatorio */
+                CREATE tt-documentos-termo.
+                ASSIGN tt-documentos-termo.cdcooper = crapceb.cdcooper
+                       tt-documentos-termo.cdagenci = crapass.cdagenci
+                       tt-documentos-termo.nrdconta = crapceb.nrdconta
+                       tt-documentos-termo.cdoperad = crapceb.cdoperad
+                       tt-documentos-termo.nmcontat = " "
+                       tt-documentos-termo.dstpterm = "TERMOCANCELAMENTOCOBRANCA" /* Termo de Adesao de Cobrança (PJ)  */
+                       tt-documentos-termo.dsempres = crapass.nmprimtl
+                       tt-documentos-termo.dtincalt = crapceb.dtinsexc
+                       tt-documentos-termo.idseqite = aux_conttabs.
+            END.
+        END.
+    END. /* fim for each crapdoc */
+    END. /* fim tipo de documento 115_2 */
+    
+    
         
     END. /* do aux_data */
     

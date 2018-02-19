@@ -1101,7 +1101,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                 to_char(h.dtmvtolt,'month','nls_date_language=portuguese') ||'de '||
                 to_char(h.dtmvtolt,'yyyy')||'.' dsdata,
 								d.flrecipr,
-								e.idrecipr
+							 e.idrecipr,
+               DECODE(NVL(d.insrvprt,0), 0, 'Nenhum', 1, 'IEPTB', 2, 'BB') insrvprt,
+               e.cdcooper,
+               e.nrdconta,
+               e.nrconven,
+               f.cdagenci
           FROM crapenc i,
                crapdat h,
                crapage g,
@@ -1179,8 +1184,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       vr_nom_direto  VARCHAR2(200);   --> Diretório para gravação do arquivo
       vr_dsjasper    VARCHAR2(100);   --> nome do jasper a ser usado
       vr_nmarqim     VARCHAR2(50);    --> nome do arquivo PDF
-			vr_xml_recipro VARCHAR2(32767); --> informações da reciprocidade
-      
+	    vr_xml_recipro VARCHAR2(32767); --> informações da reciprocidade
+      vr_qrcode      VARCHAR2(32767); --> QR Code enviado para o XML
+      vr_cdtipdoc    VARCHAR2(32767); --> Tipo do documento a ser usado no QR Code
     
   BEGIN
       -- Extrai os dados vindos do XML
@@ -1252,8 +1258,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
           -- Finalizamos a tag
           vr_xml_recipro := vr_xml_recipro ||'</reciprocidade>'||chr(10);
         END IF;
-			END IF;
-
+	  END IF;
+      
+      -- Definir o TIPO DE DOCUMENTO de acordo com o layout.
+      -- OBS.: Verificar os códigos de cancelamento. Por enquanto está igual adesão.
+      IF (NVL(pr_tpimpres, 1) = 1) THEN  -- Se for Adesao
+        IF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 11) THEN
+          vr_cdtipdoc := 106; -- PF
+        ELSIF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 14) THEN
+          vr_cdtipdoc := 115; -- PJ
+        END IF;
+      ELSE -- Cancelamento
+        IF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 11) THEN
+          vr_cdtipdoc := 106; -- PF
+        ELSIF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 14) THEN
+          vr_cdtipdoc := 115; -- PJ
+        END IF;
+      END IF;
+      
+      vr_qrcode := rw_crapceb.cdcooper || '_' || 
+                   rw_crapceb.cdagenci || '_' ||
+                   TRIM(gene0002.fn_mask_conta(rw_crapceb.nrdconta)) || '_' || 
+                   0 || '_' ||
+                   rw_crapceb.nrconven || '_' || 
+                   0 || '_' || 
+                   vr_cdtipdoc; -- 
+             
       -- Escreve os dados principais
       gene0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
@@ -1261,6 +1291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                                                      '<nmcooper>'||rw_crapceb.nmcooper||'</nmcooper>'||chr(10)||
                                                      '<cnpjcoop>'||rw_crapceb.cnpjcoop||'</cnpjcoop>'||chr(10)||
                                                    '</cooperativa>'||chr(10)||
+                                                   '<dsqrcode>'|| vr_qrcode ||'</dsqrcode>'||chr(10)||
                                                    '<cooperado>'||chr(10)||
                                                      '<nmprimtl>'||rw_crapceb.nmprimtl||'</nmprimtl>'||chr(10)||
                                                      '<nrcpfcgc>'||rw_crapceb.nrcpfcgc||'</nrcpfcgc>'||chr(10)||
@@ -1274,6 +1305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                                                      '<qtdfloat>'||rw_crapceb.qtdfloat||'</qtdfloat>'||chr(10)||
                                                      '<flserasa>'||rw_crapceb.flserasa||'</flserasa>'||chr(10)||
                                                      '<flprotes>'||rw_crapceb.flprotes||'</flprotes>'||chr(10)||
+                                                     '<insrvprt>'||rw_crapceb.insrvprt||'</insrvprt>'||chr(10)||
                                                      '<dsdecurs>'||rw_crapceb.dsdecurs||'</dsdecurs>'||chr(10)||
                                                      '<nmextcop>'||rw_crapceb.nmextcop||'</nmextcop>'||chr(10)||
                                                      '<dsdata>'||rw_crapceb.dsdata||'</dsdata>'||chr(10)||
@@ -1381,6 +1413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END;
+
 
 END SSPC0002;
 /
