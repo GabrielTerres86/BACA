@@ -30,7 +30,7 @@
 	    $xml .= " <Dados>";
 	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	    $xml .= "   <nrctrlim>".$nrctrlim."</nrctrlim>";
-	    $xml .= "	<datamovt>".$glbvars["dtmvtolt"]."</datamovt>";
+	    $xml .= "	<dtmovito>".$glbvars["dtmvtolt"]."</dtmovito>";
 	    $xml .= "   <tpenvest>I</tpenvest>"; // Tipo de envio para esteira I - Inclusao (Emprestimo)
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
