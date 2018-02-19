@@ -11,6 +11,10 @@
  *							   (Jorge/Rosangela) - SD 155408
  *                
  *                05/11/2015 - Inclusão de novo Poder, PRJ. 131 - Ass. Conjunta (Jean Michel) 
+ *			  
+ *				  07/12/2017 - Realizado ajuste onde o relatório completo para contas menores de idade
+ *							   com dois responsaveis legais sem conta na viacredi não estava abrindo. 
+ *							   SD 802764. (Kelvin)
  */	 
 
 	require_once('../../../includes/funcoes.php');
@@ -76,6 +80,7 @@
 		
 	$intQtdRegistros = 0;
 	
+	$nrdctaprt = 0;
 	
 	foreach($registrosAvt as $registroAvt){		
 		$intQtdRegistros = $intQtdRegistros + 1;
@@ -85,6 +90,9 @@
 	
 		foreach($registrosAvt as $registroAvt){		
 		
+			if (getByTagName($registroAvt->tags,'nrdconta') <> "")
+				$nrdctaprt = formataContaDVsimples(getByTagName($registroAvt->tags,'nrdconta'));
+			
 			echo "<p>&nbsp;</p>";	
 			$GLOBALS['numPagina']++;
 			$GLOBALS['numLinha'] = 0;	
@@ -94,7 +102,7 @@
 			escreveLinha("                   Pessoa Juridica e/ou Procurador");
 			escreveLinha("==========================================================================");
 			pulaLinha(1);
-			escreveLinha("FILIADA: ".getByTagName($registroAvt->tags,'nmrescop')."     PA: ".getByTagName($registroAvt->tags,'cdagenci')."     Conta: ".formataContaDVsimples(getByTagName($registroAvt->tags,'nrdconta'))."     Titular:".getByTagName($registroAvt->tags,'idseqttl'));
+			escreveLinha("FILIADA: ".getByTagName($registroAvt->tags,'nmrescop')."     PA: ".getByTagName($registroAvt->tags,'cdagenci')."     Conta: ".$nrdctaprt."     Titular:".getByTagName($registroAvt->tags,'idseqttl'));
 			escreveLinha("CPF/CNPJ: ".getByTagName($registroAvt->tags,'nrcpfcgc'));
 			escreveLinha("Outorgante(titular da conta ou razao social):".getByTagName($registroAvt->tags,'nmtitula'));
 			escreveLinha("CPF: ".getByTagName($registroAvt->tags,'nrcpfpro')."    Outorgado: ".getByTagName($registroAvt->tags,'nmprocur'));
