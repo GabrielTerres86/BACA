@@ -753,35 +753,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 		                              , pr_nrdconta   NUMBER
 																	, pr_dtmvtoan   DATE
 																	, pr_vlrarrasto NUMBER) IS
-		SELECT DISTINCT nrctrlim
-		     , innivris
-				 , cdorigem
-				 , 'DCH' tipcontr
-		  FROM crapris r
-			   , crapbdc b
-		 WHERE r.cdcooper = pr_cdcooper
-		   AND r.dtrefere = pr_dtmvtoan
-			 AND r.inddocto = 1
-		   AND r.nrdconta = pr_nrdconta
-		   AND r.cdmodali = 302
-			 AND r.vldivida > pr_vlrarrasto
-			 AND b.cdcooper = r.cdcooper
-			 AND b.nrborder = r.nrctremp
+																	
+    SELECT nrctrlim
+     , cdorigem
+		 , tipcontr
+		 , MAX(qtdiaatr) qtdiaatr
+    FROM (
+      SELECT nrctrlim
+           , qtdiaatr
+           , cdorigem
+           , 'DCH' tipcontr
+        FROM crapris r
+           , crapbdc b
+       WHERE r.cdcooper = pr_cdcooper
+         AND r.dtrefere = pr_dtmvtoan
+         AND r.inddocto = 1
+         AND r.nrdconta = pr_nrdconta
+         AND r.cdmodali = 302
+         AND r.vldivida > 100
+         AND b.cdcooper = r.cdcooper
+         AND b.nrborder = r.nrctremp
+    )
+    GROUP BY nrctrlim
+		       , cdorigem
+					 , tipcontr
 		UNION
-		SELECT DISTINCT nrctrlim
-		     , innivris
-				 , cdorigem
-				 , 'DTI' tipcontr
-		  FROM crapris r
-			   , crapbdt b
-		 WHERE r.cdcooper = pr_cdcooper
-		   AND r.dtrefere = pr_dtmvtoan
-		   AND r.nrdconta = pr_nrdconta
-		   AND r.inddocto = 1
-		   AND r.cdmodali = 301
-			 AND r.vldivida > pr_vlrarrasto
-			 AND b.cdcooper = r.cdcooper
-			 AND b.nrborder = r.nrctremp;
+		SELECT nrctrlim
+     , cdorigem
+		 , tipcontr
+		 , MAX(qtdiaatr) qtdiaatr
+    FROM (
+      SELECT nrctrlim
+           , qtdiaatr
+           , cdorigem
+           , 'DTI' tipcontr
+        FROM crapris r
+           , crapbdt b
+       WHERE r.cdcooper = pr_cdcooper
+         AND r.dtrefere = pr_dtmvtoan
+         AND r.inddocto = 1
+         AND r.nrdconta = pr_nrdconta
+         AND r.cdmodali = 301
+         AND r.vldivida > 100
+         AND b.cdcooper = r.cdcooper
+         AND b.nrborder = r.nrctremp
+    )
+    GROUP BY nrctrlim
+		       , cdorigem
+					 , tipcontr;
 		rw_contratos_limite_desc cr_contratos_limite_desc%ROWTYPE;
 
     -- Contas dos grupos econômicos aos quais o titular da conta base está ligado
@@ -992,7 +1011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
 
 								vr_risco_inclusao := 'A';
-								vr_risco_atraso := fn_traduz_risco(rw_contratos_limite_desc.innivris);
+								vr_risco_atraso := fn_calcula_risco_atraso(rw_contratos_limite_desc.qtdiaatr);
 
 								-- Adiciona registro para a conta/contrato no XML de retorno
                 pc_monta_reg_conta_xml(pr_retxml
@@ -1236,7 +1255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
 
 								vr_risco_inclusao := 'A';
-								vr_risco_atraso := fn_traduz_risco(rw_contratos_limite_desc.innivris);
+								vr_risco_atraso := fn_calcula_risco_atraso(rw_contratos_limite_desc.qtdiaatr);
 
 								-- Adiciona registro para a conta/contrato no XML de retorno
                 pc_monta_reg_conta_xml(pr_retxml
@@ -1272,6 +1291,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 				  FETCH cr_contrato_limite_credito INTO rw_contrato_limite_credito;
 
 					IF cr_contrato_limite_credito%FOUND THEN
+						    vr_rating := fn_busca_rating(rw_contas_grupo_economico.cdcooper
+                                           , rw_contas_grupo_economico.nrdconta
+																			     , rw_contrato_limite_credito.nrctrlim
+																					 , 1);
+																					 
 						    vr_diasatraso := fn_busca_dias_atraso_adp(rw_contas_grupo_economico.cdcooper
 							                                          , rw_contas_grupo_economico.nrdconta
 																												, rw_dat.dtmvtoan);

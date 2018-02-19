@@ -143,6 +143,7 @@
 
 					$riscoOperacao = getByTagName($risco->tags, 'risco_operacao');
 
+					// evita arrasto de operações que não atendem ao critério da materialidade
 					if (getByTagName($risco->tags, 'arrasta_operacao') == 'S') {
 						array_push($riscosOperacao[$cpfCnpjRaiz], $riscoOperacao);
 					}
