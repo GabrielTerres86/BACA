@@ -2155,7 +2155,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
         END IF;
       END IF;
 
-      if not paga0001.fn_processo_ligeir then
       -- Controlar criação de lote, com pragma
       pc_insere_lote (pr_cdcooper => rw_crapcop.cdcooper,
                       pr_dtmvtolt => rw_crapdat.dtmvtocd,
@@ -2175,32 +2174,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
         RAISE vr_exc_erro;
       END IF;
 
-      else
-        paga0001.pc_insere_lote_wrk (pr_cdcooper => rw_crapcop.cdcooper,
-                                     pr_dtmvtolt => rw_crapdat.dtmvtocd,
-                                     pr_cdagenci => pr_cod_agencia,
-                                     pr_cdbccxlt => 11,
-                                     pr_nrdolote => vr_nro_lote,
-                                     pr_cdoperad => pr_cod_operador,
-                                     pr_nrdcaixa => pr_nro_caixa,
-                                     pr_tplotmov => vr_tplotmov,
-                                     pr_cdhistor => vr_cdhistor,
-                                     pr_cdbccxpg => null,
-                                     pr_nmrotina => 'CXON0014.PC_GERA_TITULOS_IPTU');
-                            
-        rw_craplot.dtmvtolt := rw_crapdat.dtmvtocd;                  
-        rw_craplot.cdagenci := pr_cod_agencia;                   
-        rw_craplot.cdbccxlt := 11;                  
-        rw_craplot.nrdolote := vr_nro_lote;                   
-        rw_craplot.cdoperad := pr_cod_operador;                   
-        rw_craplot.tplotmov := vr_tplotmov;                   
-        rw_craplot.cdhistor := vr_cdhistor;
-        rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => rw_crapcop.cdcooper
-                                                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                             ,pr_cdagenci => pr_cod_agencia
-                                                             ,pr_cdbccxlt => 11
-                                                             ,pr_nrdolote => vr_nro_lote); 
-      end if;  
       --Se for iptu
       IF pr_iptu THEN
         vr_digito:= to_number(SUBSTR(gene0002.fn_mask(pr_fatura4,'999999999999'),12,1));
@@ -2477,7 +2450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
         END IF;
         --Se nao estiver descontado e nao for registrado
         IF NOT vr_flgdesct  AND NOT vr_flgregst THEN
-          if not paga0001.fn_processo_ligeir then
+
           -- Controlar criação de lote, com pragma
           pc_insere_lote (pr_cdcooper => rw_crapcop.cdcooper,
                           pr_dtmvtolt => rw_crapdat.dtmvtocd,
@@ -2497,32 +2470,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
             RAISE vr_exc_erro;
           END IF;
 
-          ELSE
-           paga0001.pc_insere_lote_wrk (pr_cdcooper => rw_crapcop.cdcooper,
-                                       pr_dtmvtolt => rw_crapdat.dtmvtocd,
-                                       pr_cdagenci => pr_cod_agencia,
-                                       pr_cdbccxlt => 11,
-                                       pr_nrdolote => vr_nro_lote,
-                                       pr_cdoperad => pr_cod_operador,
-                                       pr_nrdcaixa => pr_nro_caixa,
-                                       pr_tplotmov => vr_tplotmov,
-                                       pr_cdhistor => vr_cdhistor,
-                                       pr_cdbccxpg => null,
-                                       pr_nmrotina => 'CXON0014.PC_GERA_TITULOS_IPTU');
-                            
-            rw_craplot.dtmvtolt := rw_crapdat.dtmvtocd;                  
-            rw_craplot.cdagenci := pr_cod_agencia;                   
-            rw_craplot.cdbccxlt := 11;                  
-            rw_craplot.nrdolote := vr_nro_lote;                   
-            rw_craplot.cdoperad := pr_cod_operador;                   
-            rw_craplot.tplotmov := vr_tplotmov;                   
-            rw_craplot.cdhistor := vr_cdhistor;
-            rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => rw_crapcop.cdcooper
-                                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                                 ,pr_cdagenci => pr_cod_agencia
-                                                                 ,pr_cdbccxlt => 11
-                                                                 ,pr_nrdolote => vr_nro_lote); 
-          end if;
           --Numero da Conta
           vr_nrdctabb:= pr_contaconve;
           --Selecionar lancamentos para conta convenio
@@ -2822,7 +2769,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           END IF; --rw_crapcob.nrctremp <> 0  AND rw_crapcob.nrctasac <> 0
 
           --Atualizar lote da lcm por ultimo, a fim de diminuir tempo de lock
-          if not paga0001.fn_processo_ligeir then
           BEGIN
             UPDATE craplot SET craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
                               ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
@@ -2838,32 +2784,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
               --Levantar Excecao
               RAISE vr_exc_erro;
           END;
-          else
-            paga0001.pc_insere_lote_wrk (pr_cdcooper => rw_crapcop.cdcooper,
-                                     pr_dtmvtolt => rw_crapdat.dtmvtocd,
-                                     pr_cdagenci => pr_cod_agencia,
-                                     pr_cdbccxlt => 11,
-                                     pr_nrdolote => vr_nro_lote,
-                                     pr_cdoperad => pr_cod_operador,
-                                     pr_nrdcaixa => pr_nro_caixa,
-                                     pr_tplotmov => vr_tplotmov,
-                                     pr_cdhistor => vr_cdhistor,
-                                     pr_cdbccxpg => null,
-                                     pr_nmrotina => 'CXON0014.PC_GERA_TITULOS_IPTU');
-                            
-            rw_craplot.dtmvtolt := rw_crapdat.dtmvtocd;                  
-            rw_craplot.cdagenci := pr_cod_agencia;                   
-            rw_craplot.cdbccxlt := 11;                  
-            rw_craplot.nrdolote := vr_nro_lote;                   
-            rw_craplot.cdoperad := pr_cod_operador;                   
-            rw_craplot.tplotmov := vr_tplotmov;                   
-            rw_craplot.cdhistor := vr_cdhistor;
-            rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => rw_crapcop.cdcooper
-                                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                                 ,pr_cdagenci => pr_cod_agencia
-                                                                 ,pr_cdbccxlt => 11
-                                                                 ,pr_nrdolote => vr_nro_lote); 
-          end if;
 
         ELSIF vr_flgregst THEN /* Cobranca Registrada */
           /* Faz a baixa de titulos em emprestimo */
@@ -3521,7 +3441,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
         RAISE vr_exc_erro;
       END IF;
 
-      if not paga0001.fn_processo_ligeir then
       -- Apenas atualizar o lote se não for pagamento pela INTERNET
       -- pagamentos pela Internet, atualizacao do lote será na paga0001.pc_paga_titulo
       IF pr_cod_agencia <> 90 THEN
@@ -3570,7 +3489,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
             RAISE vr_exc_erro;
         END;
       END IF; --cdagenci <> 90
-      end if;
 
       /* Atualiza sequencia Autenticacao */
       BEGIN
@@ -3963,13 +3881,13 @@ END pc_gera_titulos_iptu_prog;
           pr_critica_data:= FALSE;
         END IF;
       ELSE
-        
+
         vr_dtvencto := npcb0001.fn_titulo_vencimento_pagamento(pr_cdcooper => pr_cod_cooper
                                                               ,pr_dtvencto => pr_dt_vencto);
 
         -- se a data de agendamento é maior que o prazo de vencimento
         -- então a data é criticada pois o título estará vencido
-              pr_critica_data:= FALSE;
+        pr_critica_data:= FALSE;
         if trunc(pr_dt_agendamento) > trunc(vr_dtvencto) then
           pr_critica_data:= TRUE;
         end if;
@@ -9153,7 +9071,6 @@ END pc_gera_titulos_iptu_prog;
         END IF;
       END IF;
 
-      if not paga0001.fn_processo_ligeir then
       -- Controlar criação de lote, com pragma
       pc_insere_lote (pr_cdcooper => rw_crapcop.cdcooper,
                       pr_dtmvtolt => rw_crapdat.dtmvtocd,
@@ -9170,31 +9087,6 @@ END pc_gera_titulos_iptu_prog;
         RAISE vr_exc_erro;
       END IF;
 
-      else
-        PAGA0001.pc_insere_lote_wrk (pr_cdcooper => rw_crapcop.cdcooper,
-                                     pr_dtmvtolt => rw_crapdat.dtmvtocd,
-                                     pr_cdagenci => pr_cod_agencia,
-                                     pr_cdbccxlt => 11,
-                                     pr_nrdolote => vr_nro_lote,
-                                     pr_cdoperad => pr_cod_operador,
-                                     pr_nrdcaixa => pr_nro_caixa,
-                                     pr_tplotmov => null,
-                                     pr_cdhistor => 0,
-                                     pr_cdbccxpg => null,
-                                     pr_nmrotina => 'CXON0014.PC_GERA_FATURAS');
-         
-        rw_craplot.dtmvtolt := rw_crapdat.dtmvtocd;
-        rw_craplot.cdagenci := pr_cod_agencia;
-        rw_craplot.cdbccxlt := 11;
-        rw_craplot.nrdolote := vr_nro_lote;
-        rw_craplot.cdoperad := pr_cod_operador; 
-                   
-        rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => rw_crapcop.cdcooper
-                                                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                             ,pr_cdagenci => pr_cod_agencia
-                                                             ,pr_cdbccxlt => 100
-                                                             ,pr_nrdolote => 10120);      
-      end if;
       --Criar lancamento de fatura
       BEGIN
         INSERT INTO craplft
@@ -9530,7 +9422,6 @@ END pc_gera_titulos_iptu_prog;
 
       -- Apenas atualizar o lote se não for pagamento pela INTERNET
       -- pagamentos pela Internet, atualizacao do lote será na paga0001.pc_paga_convenio
-      if not PAGA0001.fn_processo_ligeir then
       IF pr_cod_agencia <> 90 THEN
 
         /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
@@ -9576,7 +9467,6 @@ END pc_gera_titulos_iptu_prog;
             --Levantar Excecao
             RAISE vr_exc_erro;
         END;
-      END IF;
       END IF;
     EXCEPTION
       WHEN vr_exc_erro THEN
