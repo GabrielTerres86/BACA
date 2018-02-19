@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel132" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.1435888100000104"/>
+	<property name="ireport.x" value="28"/>
+	<property name="ireport.y" value="0"/>
+	<subDataset name="dataset1" uuid="91f1cf62-c7be-482e-96bb-80f99844b493"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["\\\\pkghomol\\migracao_oracle\\_conversao\\crps613_v01\\"]]></defaultValueExpression>
+	</parameter>
+	<queryString language="xPath">
+		<![CDATA[/relprt/data/reg]]>
+	</queryString>
+	<field name="critica" class="java.lang.String">
+		<fieldDescription><![CDATA[critica]]></fieldDescription>
+	</field>
+	<field name="portabilidade" class="java.lang.String">
+		<fieldDescription><![CDATA[portabilidade]]></fieldDescription>
+	</field>
+	<field name="contrato" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="data" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::data/@data]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="30">
+			<staticText>
+				<reportElement uuid="6cf92fe4-f291-4c97-9cbb-06fb7069a8af" x="106" y="15" width="89" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[NR. PORTABILIDADE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="6cf92fe4-f291-4c97-9cbb-06fb7069a8af" x="208" y="15" width="68" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[CRITICA]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="3010a5e4-8d16-4743-8773-429421cf84fc" x="35" y="0" width="74" height="8"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{data}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="6cf92fe4-f291-4c97-9cbb-06fb7069a8af" x="51" y="22" width="44" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[----------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="6cf92fe4-f291-4c97-9cbb-06fb7069a8af" x="208" y="22" width="55" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[--------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="6cf92fe4-f291-4c97-9cbb-06fb7069a8af" x="51" y="15" width="44" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[CONTRATO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="6cf92fe4-f291-4c97-9cbb-06fb7069a8af" x="-1" y="22" width="47" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[----------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="6cf92fe4-f291-4c97-9cbb-06fb7069a8af" x="103" y="22" width="93" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[-----------------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="6cf92fe4-f291-4c97-9cbb-06fb7069a8af" x="-1" y="15" width="47" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[CONTA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="6cf92fe4-f291-4c97-9cbb-06fb7069a8af" x="0" y="0" width="35" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[DATA:]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band/>
+	</columnHeader>
+	<detail>
+		<band height="8">
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="a7d19d0f-4448-4217-91c0-13d73175e2c7" x="0" y="0" width="47" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="9a7f2c16-5ecf-454d-8631-f901ff1c2a1f" x="51" y="0" width="44" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{contrato}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="106c4486-1e70-42cd-849f-2de01d75e830" x="110" y="0" width="89" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{portabilidade}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="f20944df-38ad-42ed-8fd6-a16ba9972b7b" x="210" y="0" width="385" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{critica}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="15"/>
+	</summary>
+</jasperReport>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl114_conv" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<parameter name="PR_CDAGENCI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl114/empresa/convenio]]>
+	</queryString>
+	<field name="dsempres" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::empresa/@dsempres]]></fieldDescription>
+	</field>
+	<field name="dsconven" class="java.lang.String">
+		<fieldDescription><![CDATA[dsconven]]></fieldDescription>
+	</field>
+	<field name="qtavscnv" class="java.lang.String">
+		<fieldDescription><![CDATA[qtavscnv]]></fieldDescription>
+	</field>
+	<field name="vlavscnv" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlavscnv]]></fieldDescription>
+	</field>
+	<field name="qtdebcnv" class="java.lang.String">
+		<fieldDescription><![CDATA[qtdebcnv]]></fieldDescription>
+	</field>
+	<field name="vldebcnv" class="java.lang.Double">
+		<fieldDescription><![CDATA[vldebcnv]]></fieldDescription>
+	</field>
+	<field name="qtestcnv" class="java.lang.String">
+		<fieldDescription><![CDATA[qtestcnv]]></fieldDescription>
+	</field>
+	<field name="vlestcnv" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlestcnv]]></fieldDescription>
+	</field>
+	<columnHeader>
+		<band height="16">
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="0" y="0" width="36" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[EMPRESA:]]></text>
+			</staticText>
+			<textField pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="38" y="0" width="159" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsempres}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="56" splitType="Stretch">
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="0" y="0" width="40" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[CONVENIO:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="43" y="0" width="220" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsconven}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="269" y="0" width="50" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[QUANTIDADE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="345" y="0" width="50" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[VALOR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="194" y="16" width="65" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[AVISADOS     :]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="264" y="16" width="50" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtavscnv}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="345" y="16" width="50" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlavscnv}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="194" y="24" width="65" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[DEBITADOS    :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="194" y="32" width="65" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[ESTOUROS     :]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="264" y="24" width="50" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtdebcnv}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="345" y="24" width="50" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vldebcnv}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="264" y="32" width="50" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtestcnv}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="345" y="32" width="50" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlestcnv}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

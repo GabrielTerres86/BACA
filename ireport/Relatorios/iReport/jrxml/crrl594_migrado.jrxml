@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl594_migrado" language="groovy" pageWidth="842" pageHeight="512" orientation="Landscape" whenNoDataType="AllSectionsNoDetail" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_PAGE_NUMBER" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl594/migracoes/migracao]]>
+	</queryString>
+	<field name="nmrescop" class="java.lang.String">
+		<fieldDescription><![CDATA[nmrescop]]></fieldDescription>
+	</field>
+	<field name="qtdmigra" class="java.lang.String">
+		<fieldDescription><![CDATA[qtdmigra]]></fieldDescription>
+	</field>
+	<field name="vlrmigra" class="java.lang.String">
+		<fieldDescription><![CDATA[vlrmigra]]></fieldDescription>
+	</field>
+	<field name="vltarifa" class="java.lang.String">
+		<fieldDescription><![CDATA[vltarifa]]></fieldDescription>
+	</field>
+	<group name="fltipdoc" isReprintHeaderOnEachPage="true">
+		<groupHeader>
+			<band height="24">
+				<staticText>
+					<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="10" y="8" width="140" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<text><![CDATA[TITULOS MIGRADOS]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="160" y="8" width="40" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<text><![CDATA[ QTD]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="10" y="16" width="140" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<text><![CDATA[-----------------------------------------------------------------------------------]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="160" y="16" width="40" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<text><![CDATA[------------------------------------------------]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="275" y="8" width="50" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<text><![CDATA[TARIFA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="275" y="16" width="50" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<text><![CDATA[---------------------------------------]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="212" y="8" width="50" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<text><![CDATA[VALOR]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="212" y="16" width="50" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<text><![CDATA[------------------------------------------------]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="24">
+				<printWhenExpression><![CDATA[]]></printWhenExpression>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="10" y="0" width="140" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmrescop}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0" isBlankWhenNull="true">
+				<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="160" y="0" width="40" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtdmigra}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="275" y="0" width="50" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vltarifa}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="212" y="0" width="50" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlrmigra}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

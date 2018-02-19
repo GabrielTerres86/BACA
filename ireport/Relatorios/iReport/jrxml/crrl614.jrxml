@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel132" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="1.2418426461183159"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<subDataset name="dataset1" uuid="91f1cf62-c7be-482e-96bb-80f99844b493"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["\\\\pkghomol\\migracao_oracle\\_conversao\\crps613_v01\\"]]></defaultValueExpression>
+	</parameter>
+	<queryString language="xPath">
+		<![CDATA[/crrl614]]>
+	</queryString>
+	<field name="descricao" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/@descricao]]></fieldDescription>
+	</field>
+	<field name="cdcooper" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/cdcooper]]></fieldDescription>
+	</field>
+	<field name="nmrescop" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/nmrescop]]></fieldDescription>
+	</field>
+	<field name="dsocorre" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/dsocorre]]></fieldDescription>
+	</field>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/cdagenci]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/nrdconta]]></fieldDescription>
+	</field>
+	<field name="nrdctabb" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/nrdctabb]]></fieldDescription>
+	</field>
+	<field name="nrnosnum" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/nrnosnum]]></fieldDescription>
+	</field>
+	<field name="nrdocmto" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/nrdocmto]]></fieldDescription>
+	</field>
+	<field name="dtvencto" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/dtvencto]]></fieldDescription>
+	</field>
+	<field name="vllanmto" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/vllanmto]]></fieldDescription>
+	</field>
+	<field name="dtmvtolt" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/dtmvtolt]]></fieldDescription>
+	</field>
+	<field name="cdocorre" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl613/ocorreDetalhe/ocorrencia/reg/cdocorre]]></fieldDescription>
+	</field>
+	<field name="coop" class="java.lang.String">
+		<fieldDescription><![CDATA[@coop]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="50">
+			<subreport>
+				<reportElement uuid="5c1035bb-12dc-4801-85ef-08f42a648367" x="0" y="0" width="595" height="32"/>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[]]></dataSourceExpression>
+				<subreportExpression><![CDATA["cabrel132.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<detail>
+		<band/>
+		<band height="51">
+			<subreport>
+				<reportElement uuid="ce1ec94a-da53-4d80-9625-8051d0193944" isPrintRepeatedValues="false" x="0" y="4" width="595" height="41"/>
+				<subreportParameter name="PR_NMRESCOP"/>
+				<subreportParameter name="PR_NMRELATO"/>
+				<subreportParameter name="PR_DTMVTOLT"/>
+				<subreportParameter name="PR_NMMODULO"/>
+				<subreportParameter name="PR_CDRELATO"/>
+				<subreportParameter name="PR_PROGERAD"/>
+				<subreportParameter name="PR_NMDESTIN"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//ocorreTotais/ocorrencia")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl614_totais.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="45">
+			<printWhenExpression><![CDATA[($F{coop}.equals("3") ? true : false)]]></printWhenExpression>
+			<subreport>
+				<reportElement uuid="cf0072ee-4b3e-4b47-9d99-08ceb8433f17" x="0" y="0" width="595" height="40"/>
+				<subreportParameter name="PR_NMRESCOP"/>
+				<subreportParameter name="PR_NMRELATO"/>
+				<subreportParameter name="PR_DTMVTOLT"/>
+				<subreportParameter name="PR_NMMODULO"/>
+				<subreportParameter name="PR_CDRELATO"/>
+				<subreportParameter name="PR_PROGERAD"/>
+				<subreportParameter name="PR_NMDESTIN"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//ocorreDetalhe/ocorrencia/reg")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl614_central_detalhado.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="45">
+			<printWhenExpression><![CDATA[($F{coop}.equals("3") ? false : true)]]></printWhenExpression>
+			<subreport>
+				<reportElement uuid="cf0072ee-4b3e-4b47-9d99-08ceb8433f17" x="0" y="0" width="595" height="40"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//ocorreDetalhe/ocorrencia/reg")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl614_coop_detalhado.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>

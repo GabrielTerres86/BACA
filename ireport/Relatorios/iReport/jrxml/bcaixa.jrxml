@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="bcaixa" language="groovy" pageWidth="442" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.1961500000000007"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["C:\\Users\\f0030367\\Desktop\\SVN\\branches\\PRJ+STT\\relatorios\\"]]></defaultValueExpression>
+	</parameter>
+	<queryString language="xPath">
+		<![CDATA[/bcaixa]]>
+	</queryString>
+	<field name="nmrescop" class="java.lang.String">
+		<fieldDescription><![CDATA[titulo/nmrescop]]></fieldDescription>
+	</field>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[titulo/cdagenci]]></fieldDescription>
+	</field>
+	<field name="nmrelato" class="java.lang.String">
+		<fieldDescription><![CDATA[titulo/nmrelato]]></fieldDescription>
+	</field>
+	<field name="horario" class="java.lang.String">
+		<fieldDescription><![CDATA[titulo/horario]]></fieldDescription>
+	</field>
+	<field name="dtmvtolt" class="java.lang.String">
+		<fieldDescription><![CDATA[titulo/dtmvtolt]]></fieldDescription>
+	</field>
+	<field name="tpcaicof" class="java.lang.String">
+		<fieldDescription><![CDATA[titulo/tpcaicof]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="22">
+			<textField>
+				<reportElement uuid="5458336c-de1a-4559-9bda-4ed6bf0363ea" mode="Transparent" x="0" y="0" width="74" height="11" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmrescop}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="d27a245e-7f3a-4686-b283-ce852ab64235" mode="Transparent" x="78" y="0" width="103" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" - "+$F{nmrelato}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy HH:mm" isBlankWhenNull="false">
+				<reportElement uuid="ef3b6eee-97fc-4669-893a-4cc00e867290" mode="Transparent" x="309" y="0" width="101" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" - "+$F{dtmvtolt}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy HH:mm" isBlankWhenNull="false">
+				<reportElement uuid="ef3b6eee-97fc-4669-893a-4cc00e867290" mode="Transparent" x="219" y="0" width="90" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{horario}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="22" splitType="Stretch">
+			<printWhenExpression><![CDATA[$F{tpcaicof}.equals( "CAIXA" )]]></printWhenExpression>
+			<subreport>
+				<reportElement uuid="18732381-3d1f-42bf-9fae-aa81c146e04f" x="0" y="0" width="442" height="22"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agencia")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["bcaixa_T_caixa.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="22">
+			<printWhenExpression><![CDATA[$F{tpcaicof}.equals( "COFRE" )]]></printWhenExpression>
+			<subreport>
+				<reportElement uuid="63f76855-8c6d-4355-9323-0b09f54870b6" x="0" y="0" width="442" height="22" isPrintInFirstWholeBand="true"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agencia")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["bcaixa_T_cofre.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="22">
+			<printWhenExpression><![CDATA[$F{tpcaicof}.equals( "TOTAL" ) && !$F{cdagenci}.equals( "0" )]]></printWhenExpression>
+			<subreport>
+				<reportElement uuid="939b73c6-a978-4bcf-8998-07a953a7f330" x="0" y="0" width="442" height="22"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agencia")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["bcaixa_T_total_pa.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="22" splitType="Stretch">
+			<printWhenExpression><![CDATA[$F{tpcaicof}.equals( "TOTAL" ) && $F{cdagenci}.equals( "0" )]]></printWhenExpression>
+			<subreport isUsingCache="true">
+				<reportElement uuid="939b73c6-a978-4bcf-8998-07a953a7f330" x="0" y="0" width="442" height="22"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agencia")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["bcaixa_T_total_todos.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl291" language="groovy" pageWidth="595" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_CDAGENCI" class="java.lang.String"/>
+	<parameter name="PR_NMRESAGE" class="java.lang.String"/>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/root]]>
+	</queryString>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="8">
+			<subreport>
+				<reportElement uuid="51a47fea-6be3-45a2-9841-04f3067aa14c" x="0" y="0" width="595" height="8"/>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[]]></dataSourceExpression>
+				<subreportExpression><![CDATA["cabrel132.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<subreport>
+				<reportElement uuid="a0b4186a-eacf-41c0-b0de-bf47f5499416" x="0" y="0" width="595" height="8" isRemoveLineWhenBlank="true"/>
+				<subreportParameter name="PR_NMDESTIN"/>
+				<subreportParameter name="PR_NMRELATO"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<subreportParameter name="PR_PROGERAD"/>
+				<subreportParameter name="PR_CDRELATO"/>
+				<subreportParameter name="PR_NMRESCOP"/>
+				<subreportParameter name="PR_DTMVTOLT"/>
+				<subreportParameter name="PR_NMMODULO"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//totais/total")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl291_totais.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="16">
+			<subreport>
+				<reportElement uuid="adbc1bf5-0f67-4caa-b076-e2760e15b268" x="0" y="0" width="595" height="8"/>
+				<subreportParameter name="PR_NMDESTIN"/>
+				<subreportParameter name="PR_NMRELATO"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<subreportParameter name="PR_PROGERAD"/>
+				<subreportParameter name="PR_CDRELATO"/>
+				<subreportParameter name="PR_NMRESCOP"/>
+				<subreportParameter name="PR_DTMVTOLT"/>
+				<subreportParameter name="PR_NMMODULO"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//saldos/saldo")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl291_saldos.jasper"]]></subreportExpression>
+			</subreport>
+			<break>
+				<reportElement uuid="7e8217d7-ae75-46a4-a1f2-7bf90f984c57" x="0" y="14" width="100" height="1"/>
+			</break>
+		</band>
+		<band height="16">
+			<subreport>
+				<reportElement uuid="f53226c0-54ee-4d6b-915c-285b0f242180" x="0" y="0" width="595" height="8"/>
+				<subreportParameter name="PR_NMDESTIN"/>
+				<subreportParameter name="PR_NMRELATO"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<subreportParameter name="PR_PROGERAD"/>
+				<subreportParameter name="PR_CDRELATO"/>
+				<subreportParameter name="PR_NMRESCOP"/>
+				<subreportParameter name="PR_DTMVTOLT"/>
+				<subreportParameter name="PR_NMMODULO"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//rejeitados/rejeito")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl291_rejeitados.jasper"]]></subreportExpression>
+			</subreport>
+			<break>
+				<reportElement uuid="a21750c3-5769-45b7-9c1a-5bb0354c6974" x="0" y="14" width="100" height="1"/>
+			</break>
+		</band>
+		<band height="8">
+			<subreport>
+				<reportElement uuid="f53226c0-54ee-4d6b-915c-285b0f242180" x="0" y="0" width="595" height="8"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//integrados")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl291_integrados.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>

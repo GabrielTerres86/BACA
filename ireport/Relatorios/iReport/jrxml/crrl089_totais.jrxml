@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crps109_totais" language="groovy" pageWidth="802" pageHeight="555" orientation="Landscape" whenNoDataType="AllSectionsNoDetail" columnWidth="802" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="def0cc55-5a9a-406b-bde1-8a9c372f70f8">
+	<property name="ireport.zoom" value="3.0"/>
+	<property name="ireport.x" value="1218"/>
+	<property name="ireport.y" value="0"/>
+	<queryString language="xPath">
+		<![CDATA[/agencias/agencia/totais/total]]>
+	</queryString>
+	<field name="apl_dsaplica" class="java.lang.String">
+		<fieldDescription><![CDATA[apl_dsaplica]]></fieldDescription>
+	</field>
+	<field name="apl_vlsldapl" class="java.lang.Double">
+		<fieldDescription><![CDATA[apl_vlsldapl]]></fieldDescription>
+	</field>
+	<field name="apl_vlsaques" class="java.lang.Double">
+		<fieldDescription><![CDATA[apl_vlsaques]]></fieldDescription>
+	</field>
+	<field name="apl_qtdaplic" class="java.lang.String">
+		<fieldDescription><![CDATA[apl_qtdaplic]]></fieldDescription>
+	</field>
+	<field name="id" class="java.lang.String">
+		<fieldDescription><![CDATA[@id]]></fieldDescription>
+	</field>
+	<field name="apl_dsfaixa" class="java.lang.String">
+		<fieldDescription><![CDATA[apl_dsfaixa]]></fieldDescription>
+	</field>
+	<field name="apl_dstotal" class="java.lang.String">
+		<fieldDescription><![CDATA[apl_dstotal]]></fieldDescription>
+	</field>
+	<variable name="VR_QTD_SALDO" class="java.lang.Double" resetType="Column" incrementType="Column" calculation="Sum">
+		<variableExpression><![CDATA[$F{apl_vlsldapl}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="VR_QTD_RESGATE" class="java.lang.Double" resetType="Column" incrementType="Column" calculation="Sum">
+		<variableExpression><![CDATA[$F{apl_vlsaques}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="VR_QTD_TITULOS" class="java.lang.Integer" calculation="Count">
+		<variableExpression><![CDATA[new Integer(1)]]></variableExpression>
+		<initialValueExpression><![CDATA[new Integer(0)]]></initialValueExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="16">
+			<staticText>
+				<reportElement uuid="9c7b0daa-f9fa-4d58-8d46-d9b13de86877" x="274" y="0" width="72" height="8"/>
+				<textElement textAlignment="Right" verticalAlignment="Top">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[QTD. DE TITULOS]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="9c7b0daa-f9fa-4d58-8d46-d9b13de86877" x="105" y="0" width="34" height="8"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[TIPO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="9c7b0daa-f9fa-4d58-8d46-d9b13de86877" x="440" y="0" width="96" height="8"/>
+				<textElement textAlignment="Right" verticalAlignment="Top">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[TOTAL DE RESGATES]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="9c7b0daa-f9fa-4d58-8d46-d9b13de86877" x="359" y="0" width="72" height="8"/>
+				<textElement textAlignment="Right" verticalAlignment="Top">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[TOTAL DO SALDO]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="8">
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="15bac7d0-5ffe-4aed-97e3-585fab5e82f9" x="105" y="0" width="34" height="8"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{apl_dsaplica}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0" isBlankWhenNull="true">
+				<reportElement uuid="30c0e0d3-4983-437a-adbe-c5a2cff15fb1" mode="Transparent" x="274" y="0" width="72" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{apl_qtdaplic}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="5b1578f2-81a4-422f-a2ba-7cb1f157a76f" mode="Transparent" x="359" y="0" width="72" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{apl_vlsldapl}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="9ae3fd79-26aa-4724-a903-c2f6fa93453f" mode="Transparent" x="440" y="0" width="96" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{apl_vlsaques}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement uuid="30c0e0d3-4983-437a-adbe-c5a2cff15fb1" mode="Transparent" x="142" y="0" width="115" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{apl_dsfaixa}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="3e018614-3e6d-47b6-86b7-337cf5685bdd" x="3" y="0" width="99" height="8"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" markup="none">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{apl_dstotal}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="8"/>
+	</pageFooter>
+</jasperReport>

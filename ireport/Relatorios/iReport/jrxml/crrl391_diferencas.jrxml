@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl391" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl391/diferenca]]>
+	</queryString>
+	<field name="tipo" class="java.lang.String">
+		<fieldDescription><![CDATA[@tipo]]></fieldDescription>
+	</field>
+	<field name="linha1" class="java.lang.String">
+		<fieldDescription><![CDATA[linha1]]></fieldDescription>
+	</field>
+	<field name="linha2" class="java.lang.String">
+		<fieldDescription><![CDATA[linha2]]></fieldDescription>
+	</field>
+	<group name="Tipo">
+		<groupExpression><![CDATA[$F{tipo}]]></groupExpression>
+		<groupHeader>
+			<band height="32">
+				<textField>
+					<reportElement uuid="e6e67593-abb1-4f53-b911-04d13aba08a7" x="198" y="8" width="200" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tipo}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<title>
+		<band height="16">
+			<staticText>
+				<reportElement uuid="04ce9543-d82b-4215-b6d1-b81dd2a29fda" x="212" y="0" width="178" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[VALORES COM DIFERENCA - FAVOR VERIFICAR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="04ce9543-d82b-4215-b6d1-b81dd2a29fda" x="212" y="8" width="178" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[------- --- --------- - ----- ---------]]></text>
+			</staticText>
+		</band>
+	</title>
+	<detail>
+		<band height="16" splitType="Stretch">
+			<textField>
+				<reportElement uuid="68fbf664-3f4d-40fb-9ca7-cbd673623058" x="176" y="0" width="316" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{linha1}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="fbfce2fa-2efe-46e3-ae59-f3db2d69f232" x="176" y="8" width="316" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{linha2}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

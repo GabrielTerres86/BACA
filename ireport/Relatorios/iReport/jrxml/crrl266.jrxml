@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl266" language="groovy" pageWidth="595" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isSummaryNewPage="true" isSummaryWithPageHeaderAndFooter="true" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["\\\\PKGDESEN2\\migracao_oracle\\Supero(PLSQL)\\Daniel\\Conversao\\crps314 ajustar XML\\"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/agencias/agencia/tipo/valor]]>
+	</queryString>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::agencia/@cdagenci]]></fieldDescription>
+	</field>
+	<field name="nmresage" class="java.lang.String">
+		<fieldDescription><![CDATA[/agencias/agencia/nmresage]]></fieldDescription>
+	</field>
+	<field name="dsrelato" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::tipo/@dsrelato]]></fieldDescription>
+	</field>
+	<field name="desvalor" class="java.lang.String">
+		<fieldDescription><![CDATA[@desvalor]]></fieldDescription>
+	</field>
+	<field name="tplayout" class="java.lang.String">
+		<fieldDescription><![CDATA[conta/@tplayout]]></fieldDescription>
+	</field>
+	<field name="dtmvtolt" class="java.lang.String">
+		<fieldDescription><![CDATA[dtmvtolt]]></fieldDescription>
+	</field>
+	<field name="cdbccxlt" class="java.lang.String">
+		<fieldDescription><![CDATA[cdbccxlt]]></fieldDescription>
+	</field>
+	<field name="nrdolote" class="java.lang.String">
+		<fieldDescription><![CDATA[conta/nrdolote]]></fieldDescription>
+	</field>
+	<field name="dtlibbdc" class="java.lang.String">
+		<fieldDescription><![CDATA[dtlibbdc]]></fieldDescription>
+	</field>
+	<group name="dsrelato" isStartNewPage="true" isReprintHeaderOnEachPage="true">
+		<groupExpression><![CDATA[$F{dsrelato}+$F{desvalor}]]></groupExpression>
+		<groupHeader>
+			<band height="32">
+				<printWhenExpression><![CDATA[$F{tplayout}!="8"]]></printWhenExpression>
+				<staticText>
+					<reportElement uuid="6498975b-66dc-44cd-83fd-d657a42ee3a4" x="37" y="0" width="8" height="8" isPrintWhenDetailOverflows="true"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[-]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="ad634cbc-1191-4643-8a73-acddceb8a8f0" x="0" y="0" width="17" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[PA:]]></text>
+				</staticText>
+				<textField>
+					<reportElement uuid="79c080f5-cb9d-4643-b9c4-104c69135881" x="379" y="0" width="29" height="8">
+						<printWhenExpression><![CDATA[$F{tplayout}=="1"||$F{tplayout}=="2"||$F{tplayout}=="3"||$F{tplayout}=="7"]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{cdbccxlt}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="6785b746-5043-4294-94ef-385ba9583c5e" x="449" y="0" width="50" height="8">
+						<printWhenExpression><![CDATA[$F{tplayout}=="1"||$F{tplayout}=="2"]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrdolote}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="4ffbb183-b3be-4a6b-8c95-913603cbd6a4" x="20" y="0" width="14" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{cdagenci}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="f61cbe8f-35c9-4a34-a135-a12a93b6212c" x="0" y="16" width="203" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dsrelato}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="fbf3b804-a963-46aa-8e17-27c8be5b2af1" x="189" y="0" width="62" height="8">
+						<printWhenExpression><![CDATA[$F{tplayout}=="1"||$F{tplayout}=="2"]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[DATA DO LOTE:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="fbf3b804-a963-46aa-8e17-27c8be5b2af1" x="320" y="0" width="52" height="8">
+						<printWhenExpression><![CDATA[$F{tplayout}=="1"||$F{tplayout}=="2"||$F{tplayout}=="3"||$F{tplayout}=="7"]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[BANCO/CAIXA:]]></text>
+				</staticText>
+				<textField>
+					<reportElement uuid="273ed0dc-e258-4964-9934-283ec17e2fc1" x="48" y="0" width="105" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nmresage}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="fbf3b804-a963-46aa-8e17-27c8be5b2af1" x="417" y="0" width="27" height="8">
+						<printWhenExpression><![CDATA[$F{tplayout}=="1"||$F{tplayout}=="2"]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[LOTE:]]></text>
+				</staticText>
+				<textField>
+					<reportElement uuid="77578daa-7046-4322-a904-5afe44161aba" x="258" y="0" width="50" height="8">
+						<printWhenExpression><![CDATA[$F{tplayout}=="1"||$F{tplayout}=="2"||$F{tplayout}=="4"||$F{tplayout}=="5"||$F{tplayout}=="6"]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dtmvtolt}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="fbf3b804-a963-46aa-8e17-27c8be5b2af1" x="163" y="0" width="88" height="8">
+						<printWhenExpression><![CDATA[$F{tplayout}=="4"||$F{tplayout}=="5"||$F{tplayout}=="6"]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[INICIO DA VIGENCIA:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="fbf3b804-a963-46aa-8e17-27c8be5b2af1" x="163" y="0" width="88" height="8">
+						<printWhenExpression><![CDATA[$F{tplayout}=="3"||$F{tplayout}=="7"]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[DATA DA LIBERACAO:]]></text>
+				</staticText>
+				<textField>
+					<reportElement uuid="77578daa-7046-4322-a904-5afe44161aba" x="258" y="0" width="50" height="8">
+						<printWhenExpression><![CDATA[$F{tplayout}=="3"||$F{tplayout}=="7"]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dtlibbdc}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="232">
+				<printWhenExpression><![CDATA[$F{tplayout}!="8"]]></printWhenExpression>
+				<staticText>
+					<reportElement uuid="94fcdef9-bcf1-4233-a8d7-a688a62927a8" x="0" y="32" width="440" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[                        PROCEDIMENTOS:                       DATA        CADASTRO        VISTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="94fcdef9-bcf1-4233-a8d7-a688a62927a8" x="0" y="56" width="440" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[                        CONFERENCIA INICIAL            ____/____/____    ________      __________]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="94fcdef9-bcf1-4233-a8d7-a688a62927a8" x="0" y="80" width="440" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[                        CONFERENCIA ASSINATURA         ____/____/____    ________      __________]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="94fcdef9-bcf1-4233-a8d7-a688a62927a8" x="0" y="104" width="440" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[                        ASSINATURA CONTRATOS           ____/____/____    ________      __________]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="94fcdef9-bcf1-4233-a8d7-a688a62927a8" x="0" y="128" width="440" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[                        CONFERENCIA FINAL              ____/____/____    ________      __________]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="94fcdef9-bcf1-4233-a8d7-a688a62927a8" x="0" y="152" width="440" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[                        DIGITALIZADOS                  ____/____/____    ________      __________]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="94fcdef9-bcf1-4233-a8d7-a688a62927a8" x="0" y="176" width="440" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[                        ________________________       ____/____/____    ________      __________]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="94fcdef9-bcf1-4233-a8d7-a688a62927a8" x="0" y="200" width="440" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[                        ________________________       ____/____/____    ________      __________]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="94fcdef9-bcf1-4233-a8d7-a688a62927a8" x="0" y="224" width="440" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[                        ARQUIVO                        ____/____/____    ________      __________]]></text>
+				</staticText>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="32">
+			<subreport>
+				<reportElement uuid="5c1035bb-12dc-4801-85ef-08f42a648367" x="0" y="0" width="595" height="32"/>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[]]></dataSourceExpression>
+				<subreportExpression><![CDATA["cabrel132.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="40">
+			<printWhenExpression><![CDATA[$F{tplayout}=="1"||$F{tplayout}=="6"]]></printWhenExpression>
+			<subreport>
+				<reportElement uuid="c1c646cb-2022-4c24-b112-dc7ae9c3b404" x="0" y="0" width="595" height="40"/>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_TPLAYOUT">
+					<subreportParameterExpression><![CDATA[$F{tplayout}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DESVALOR">
+					<subreportParameterExpression><![CDATA[$F{desvalor}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//conta")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl266_1.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="40">
+			<printWhenExpression><![CDATA[$F{tplayout}=="2"||$F{tplayout}=="4"||$F{tplayout}=="5"]]></printWhenExpression>
+			<subreport>
+				<reportElement uuid="c1c646cb-2022-4c24-b112-dc7ae9c3b404" x="0" y="0" width="595" height="40"/>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//conta")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl266_2.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="40">
+			<printWhenExpression><![CDATA[$F{tplayout}=="3"||$F{tplayout}=="7"]]></printWhenExpression>
+			<subreport>
+				<reportElement uuid="2aa7d30c-3dde-44ac-b493-e08fd2ad0d2a" x="0" y="0" width="595" height="40"/>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_TPLAYOUT">
+					<subreportParameterExpression><![CDATA[$F{tplayout}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DESVALOR">
+					<subreportParameterExpression><![CDATA[$F{desvalor}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//conta")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl266_3.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="56">
+			<printWhenExpression><![CDATA[$F{tplayout}=="8"]]></printWhenExpression>
+			<subreport>
+				<reportElement uuid="2aa7d30c-3dde-44ac-b493-e08fd2ad0d2a" x="0" y="16" width="595" height="40" isRemoveLineWhenBlank="true"/>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDAGENCI">
+					<subreportParameterExpression><![CDATA[$F{cdagenci}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_TPLAYOUT">
+					<subreportParameterExpression><![CDATA[$F{tplayout}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DESVALOR">
+					<subreportParameterExpression><![CDATA[$F{desvalor}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//conta")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl266_4.jasper"]]></subreportExpression>
+			</subreport>
+			<textField>
+				<reportElement uuid="f61cbe8f-35c9-4a34-a135-a12a93b6212c" x="0" y="0" width="203" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsrelato}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

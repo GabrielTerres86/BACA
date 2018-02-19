@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl039_conta" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[crrl039/credit/pa/flstatus/conta]]>
+	</queryString>
+	<field name="dsstatus" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::flstatus/dsstatus]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="nrmatric" class="java.lang.String">
+		<fieldDescription><![CDATA[nrmatric]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="vljurass" class="java.lang.String">
+		<fieldDescription><![CDATA[vljurass]]></fieldDescription>
+	</field>
+	<field name="sldmdcap" class="java.lang.String">
+		<fieldDescription><![CDATA[sldmdcap]]></fieldDescription>
+	</field>
+	<field name="dtdemiss" class="java.lang.String">
+		<fieldDescription><![CDATA[dtdemiss]]></fieldDescription>
+	</field>
+	<field name="agencia" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::flstatus/agencia]]></fieldDescription>
+	</field>
+	<field name="msg" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::flstatus/msg]]></fieldDescription>
+	</field>
+	<group name="conta" isStartNewPage="true" isReprintHeaderOnEachPage="true">
+		<groupExpression><![CDATA[$F{agencia}+$F{dsstatus}]]></groupExpression>
+		<groupHeader>
+			<band height="64">
+				<staticText>
+					<reportElement uuid="9bba553a-f348-4733-9c53-e3333a7ad93c" positionType="Float" x="0" y="48" width="595" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[  CONTA/DV    MATRICULA    ASSOCIADO                                          VALOR DA ATUALIZACAO  SALDO MEDIO CAPITAL  DEMISSAO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="9bba553a-f348-4733-9c53-e3333a7ad93c" positionType="Float" x="0" y="56" width="595" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[----------    ---------    -------------------------------------------------- --------------------  -------------------  ----------]]></text>
+				</staticText>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="fdc3eeeb-0578-4367-be9e-8d401746f3e6" isPrintRepeatedValues="false" x="0" y="32" width="160" height="16" isRemoveLineWhenBlank="true"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dsstatus}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="496155c6-9684-4461-bb0f-086888b89a10" isPrintRepeatedValues="false" x="0" y="16" width="303" height="16" isRemoveLineWhenBlank="true"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{agencia}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="429317b7-670c-4601-a30b-53244a8c8033" x="0" y="0" width="450" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{msg}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<textField>
+				<reportElement uuid="f04f751e-d90e-4fc1-a1eb-6fc69355bc99" x="0" y="0" width="45" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="48ccbc26-cf61-4066-bfc9-fe0f6f995274" x="59" y="0" width="45" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrmatric}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="0dc3d24b-316b-4c3e-999d-c8c512c60a18" x="122" y="0" width="239" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="21eae036-d883-4c00-a797-0604794a241c" x="361" y="0" width="83" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vljurass}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="67437b15-ae14-46aa-bd31-7983007e4e72" x="459" y="0" width="75" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{sldmdcap}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="b2da492e-e537-400e-ae6c-a74e556b3cbb" x="533" y="0" width="57" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtdemiss}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

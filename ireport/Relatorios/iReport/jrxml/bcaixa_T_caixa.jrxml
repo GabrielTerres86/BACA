@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="bcaixa_T_caixa.jrxml" language="groovy" pageWidth="555" pageHeight="802" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="baa2e57a-a427-4c21-9914-cc519d164c5d">
+	<property name="ireport.zoom" value="1.7715610000000013"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<queryString language="xPath">
+		<![CDATA[/bcaixa/conteudo/agencia]]>
+	</queryString>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="nrdcaixa" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdcaixa]]></fieldDescription>
+	</field>
+	<field name="nmoperad" class="java.lang.String">
+		<fieldDescription><![CDATA[nmoperad]]></fieldDescription>
+	</field>
+	<field name="vldsdtot" class="java.lang.String">
+		<fieldDescription><![CDATA[vldsdtot]]></fieldDescription>
+	</field>
+	<field name="csituaca" class="java.lang.String">
+		<fieldDescription><![CDATA[csituaca]]></fieldDescription>
+	</field>
+	<field name="saldotot" class="java.lang.String">
+		<fieldDescription><![CDATA[saldotot]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<columnHeader>
+		<band height="22">
+			<staticText>
+				<reportElement uuid="072bdc64-64d9-4297-8331-a6dbb09b59a6" x="244" y="0" width="83" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[Saldo]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="072bdc64-64d9-4297-8331-a6dbb09b59a6" x="17" y="0" width="18" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[ PA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="072bdc64-64d9-4297-8331-a6dbb09b59a6" x="74" y="11" width="166" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[------------------------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="072bdc64-64d9-4297-8331-a6dbb09b59a6" x="244" y="11" width="83" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[---------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="072bdc64-64d9-4297-8331-a6dbb09b59a6" x="35" y="11" width="31" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[-----]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="072bdc64-64d9-4297-8331-a6dbb09b59a6" x="332" y="11" width="83" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[---------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="072bdc64-64d9-4297-8331-a6dbb09b59a6" x="17" y="11" width="18" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[---]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="072bdc64-64d9-4297-8331-a6dbb09b59a6" x="332" y="0" width="83" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[Situacao]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="072bdc64-64d9-4297-8331-a6dbb09b59a6" x="35" y="0" width="31" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[Caixa]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="072bdc64-64d9-4297-8331-a6dbb09b59a6" x="74" y="0" width="166" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[Operador]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="11" splitType="Stretch">
+			<textField>
+				<reportElement uuid="faf3f0a9-4258-408a-96ea-a82c8c886755" x="17" y="0" width="18" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdagenci}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="faf3f0a9-4258-408a-96ea-a82c8c886755" x="35" y="0" width="31" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdcaixa}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="faf3f0a9-4258-408a-96ea-a82c8c886755" x="74" y="0" width="166" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmoperad}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="faf3f0a9-4258-408a-96ea-a82c8c886755" x="244" y="0" width="83" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vldsdtot}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="faf3f0a9-4258-408a-96ea-a82c8c886755" x="332" y="0" width="83" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{csituaca}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="22">
+			<textField>
+				<reportElement uuid="faf3f0a9-4258-408a-96ea-a82c8c886755" x="244" y="11" width="83" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{saldotot}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="072bdc64-64d9-4297-8331-a6dbb09b59a6" x="211" y="11" width="35" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[TOTAL:]]></text>
+			</staticText>
+		</band>
+	</summary>
+</jasperReport>

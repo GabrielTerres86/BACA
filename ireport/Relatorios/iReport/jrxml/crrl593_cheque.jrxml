@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl593_cheque" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl593/agencia/tpcheque/tptabela/cheque]]>
+	</queryString>
+	<field name="tptabela" class="java.lang.Integer">
+		<fieldDescription><![CDATA[ancestor::tptabela/@tptabela]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="dtmvtolt" class="java.lang.String">
+		<fieldDescription><![CDATA[dtmvtolt]]></fieldDescription>
+	</field>
+	<field name="dtlibera" class="java.lang.String">
+		<fieldDescription><![CDATA[dtlibera]]></fieldDescription>
+	</field>
+	<field name="nrdolote" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdolote]]></fieldDescription>
+	</field>
+	<field name="dtlibbdc" class="java.lang.String">
+		<fieldDescription><![CDATA[dtlibbdc]]></fieldDescription>
+	</field>
+	<field name="nrborder" class="java.lang.String">
+		<fieldDescription><![CDATA[nrborder]]></fieldDescription>
+	</field>
+	<field name="cdcmpchq" class="java.lang.String">
+		<fieldDescription><![CDATA[cdcmpchq]]></fieldDescription>
+	</field>
+	<field name="cdbanchq" class="java.lang.String">
+		<fieldDescription><![CDATA[cdbanchq]]></fieldDescription>
+	</field>
+	<field name="cdagechq" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagechq]]></fieldDescription>
+	</field>
+	<field name="nrctachq" class="java.lang.String">
+		<fieldDescription><![CDATA[nrctachq]]></fieldDescription>
+	</field>
+	<field name="nrcheque" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcheque]]></fieldDescription>
+	</field>
+	<field name="vlcheque" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlcheque]]></fieldDescription>
+	</field>
+	<field name="dtmvtopr" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::agencia/@dtmvtopr]]></fieldDescription>
+	</field>
+	<field name="tpcheque" class="java.lang.Integer">
+		<fieldDescription><![CDATA[ancestor::tpcheque/@tpcheque]]></fieldDescription>
+	</field>
+	<variable name="vr_count_cheque" class="java.lang.Integer" resetType="Group" resetGroup="tptabela" calculation="Sum">
+		<variableExpression><![CDATA[($F{nrdconta}.equals() ? new Integer(0):
+
+(($F{dtlibera}.equals($F{dtmvtopr}) &&
+  $F{tpcheque}.equals(new Integer(1))) ||
+ ((!$F{dtlibera}.equals($F{dtmvtopr})) &&
+   $F{tpcheque}.equals(new Integer(2)))
+
+   ? new Integer(1) : new Integer(0) ))]]></variableExpression>
+	</variable>
+	<group name="tptabela" isReprintHeaderOnEachPage="true">
+		<groupExpression><![CDATA[$F{tptabela}]]></groupExpression>
+		<groupHeader>
+			<band height="104">
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="0" y="8" width="595" height="8"/>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[($F{tptabela}.equals(new Integer(1))?
+    new String("CUSTODIA DE CHEQUES")
+    :
+    new String("DESCONTO DE CHEQUES")
+)]]></textFieldExpression>
+				</textField>
+				<frame>
+					<reportElement uuid="fe5678d4-2e74-41dd-9ebb-af19098428e6" positionType="Float" stretchType="RelativeToBandHeight" x="0" y="24" width="595" height="40" isRemoveLineWhenBlank="true">
+						<printWhenExpression><![CDATA[($F{tptabela}.equals(new Integer(1)) ? true :false)]]></printWhenExpression>
+					</reportElement>
+					<staticText>
+						<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="0" y="0" width="594" height="8"/>
+						<textElement>
+							<font fontName="Courier New" size="7"/>
+						</textElement>
+						<text><![CDATA[                                                                                      Dados do Cheque]]></text>
+					</staticText>
+					<staticText>
+						<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="0" y="8" width="594" height="8"/>
+						<textElement>
+							<font fontName="Courier New" size="7"/>
+						</textElement>
+						<text><![CDATA[                                                         -------------------------------------------------------------------------]]></text>
+					</staticText>
+					<staticText>
+						<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="0" y="24" width="594" height="8" isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[($F{nrdconta}.equals()  ? false : true )]]></printWhenExpression>
+						</reportElement>
+						<textElement>
+							<font fontName="Courier New" size="7"/>
+						</textElement>
+						<text><![CDATA[   Conta/DV   Data Entrada   Data Liberacao     Lote     Compe   Banco   Agencia     Conta Cheque   Nro.Cheque               Valor]]></text>
+					</staticText>
+					<staticText>
+						<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="0" y="32" width="594" height="8" isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[($F{nrdconta}.equals()  ? false : true )]]></printWhenExpression>
+						</reportElement>
+						<textElement>
+							<font fontName="Courier New" size="7"/>
+						</textElement>
+						<text><![CDATA[-----------   ------------   --------------  -------     -----   -----   -------     ------------   ----------  ------------------]]></text>
+					</staticText>
+				</frame>
+				<frame>
+					<reportElement uuid="fe5678d4-2e74-41dd-9ebb-af19098428e6" positionType="Float" stretchType="RelativeToBandHeight" x="0" y="64" width="595" height="40" isRemoveLineWhenBlank="true">
+						<printWhenExpression><![CDATA[($F{tptabela}.equals(new Integer(2))? true: false)]]></printWhenExpression>
+					</reportElement>
+					<staticText>
+						<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="0" y="0" width="594" height="8"/>
+						<textElement>
+							<font fontName="Courier New" size="7"/>
+						</textElement>
+						<text><![CDATA[                                                                                      Dados do Cheque]]></text>
+					</staticText>
+					<staticText>
+						<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="0" y="8" width="594" height="8"/>
+						<textElement>
+							<font fontName="Courier New" size="7"/>
+						</textElement>
+						<text><![CDATA[                                                                 -----------------------------------------------------------------]]></text>
+					</staticText>
+					<staticText>
+						<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="0" y="24" width="594" height="8" isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[($F{nrdconta}.equals()  ? false : true )]]></printWhenExpression>
+						</reportElement>
+						<textElement>
+							<font fontName="Courier New" size="7"/>
+						</textElement>
+						<text><![CDATA[   Conta/DV  Data Entrada  Data Aprov.  Data Liberacao  Bordero  Compe  Banco Agencia  Conta Cheque  Nro.Cheque              Valor]]></text>
+					</staticText>
+					<staticText>
+						<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="0" y="32" width="594" height="8" isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[($F{nrdconta}.equals()  ? false : true )]]></printWhenExpression>
+						</reportElement>
+						<textElement>
+							<font fontName="Courier New" size="7"/>
+						</textElement>
+						<text><![CDATA[-----------  ------------  -----------  --------------  -------  -----  ----- -------  ------------  ---------- ------------------]]></text>
+					</staticText>
+				</frame>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="16">
+				<staticText>
+					<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="0" y="8" width="86" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[Quantidade Total:]]></text>
+				</staticText>
+				<textField pattern="#,##0" isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="86" y="8" width="37" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{vr_count_cheque}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="16" splitType="Stretch">
+			<frame>
+				<reportElement uuid="36449921-0a5d-436d-8a4f-1e94ba9f0fce" positionType="Float" x="0" y="0" width="594" height="8" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[($F{tptabela}.equals(new Integer(1))? true : false)]]></printWhenExpression>
+				</reportElement>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="0" y="0" width="48" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="61" y="0" width="50" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dtmvtolt}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="129" y="0" width="64" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dtlibera}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="194" y="0" width="39" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrdolote}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="246" y="0" width="30" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{cdcmpchq}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="283" y="0" width="30" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{cdbanchq}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="327" y="0" width="30" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{cdagechq}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="391" y="0" width="47" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrctachq}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="452" y="0" width="47" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrcheque}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="518" y="0" width="68" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{vlcheque}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement uuid="36449921-0a5d-436d-8a4f-1e94ba9f0fce" positionType="Float" stretchType="RelativeToTallestObject" mode="Transparent" x="0" y="8" width="594" height="8" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[($F{tptabela}.equals(new Integer(2))? true : false)]]></printWhenExpression>
+				</reportElement>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="0" y="0" width="48" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="58" y="0" width="50" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dtmvtolt}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="121" y="0" width="51" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dtlibbdc}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="180" y="0" width="61" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dtlibera}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="243" y="0" width="40" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrborder}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="292" y="0" width="24" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{cdcmpchq}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="319" y="0" width="25" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{cdbanchq}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="352" y="0" width="30" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{cdagechq}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="400" y="0" width="47" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrctachq}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="455" y="0" width="47" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrcheque}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="518" y="0" width="68" height="8" isRemoveLineWhenBlank="true"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{vlcheque}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</detail>
+</jasperReport>

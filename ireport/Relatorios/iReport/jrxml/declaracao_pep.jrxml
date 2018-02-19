@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="declaracao_ppe" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenResourceMissingType="Empty" uuid="3507f05f-852a-4801-ace7-f9927a1d69bc">
+	<property name="ireport.zoom" value="1.3310000000000006"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="194"/>
+	<queryString language="xPath">
+		<![CDATA[/declaracao]]>
+	</queryString>
+	<field name="tpexposto" class="java.lang.String">
+		<fieldDescription><![CDATA[tpexposto]]></fieldDescription>
+	</field>
+	<field name="cdocpttl" class="java.lang.String">
+		<fieldDescription><![CDATA[cdocpttl]]></fieldDescription>
+	</field>
+	<field name="cdrelacionamento" class="java.lang.String">
+		<fieldDescription><![CDATA[cdrelacionamento]]></fieldDescription>
+	</field>
+	<field name="dtinicio" class="java.lang.String">
+		<fieldDescription><![CDATA[dtinicio]]></fieldDescription>
+	</field>
+	<field name="dttermino" class="java.lang.String">
+		<fieldDescription><![CDATA[dttermino]]></fieldDescription>
+	</field>
+	<field name="nmempresa" class="java.lang.String">
+		<fieldDescription><![CDATA[nmempresa]]></fieldDescription>
+	</field>
+	<field name="nrcnpj_empresa" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcnpj_empresa]]></fieldDescription>
+	</field>
+	<field name="nmpolitico" class="java.lang.String">
+		<fieldDescription><![CDATA[nmpolitico]]></fieldDescription>
+	</field>
+	<field name="nrcpf_politico" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpf_politico]]></fieldDescription>
+	</field>
+	<field name="nmextttl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmextttl]]></fieldDescription>
+	</field>
+	<field name="rsocupa" class="java.lang.String">
+		<fieldDescription><![CDATA[rsocupa]]></fieldDescription>
+	</field>
+	<field name="nrcpfcgc" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfcgc]]></fieldDescription>
+	</field>
+	<field name="dsrelacionamento" class="java.lang.String">
+		<fieldDescription><![CDATA[dsrelacionamento]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="cidade" class="java.lang.String">
+		<fieldDescription><![CDATA[cidade]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="79" splitType="Stretch">
+			<textField>
+				<reportElement uuid="0a9b2273-6ee3-4b27-a281-ce8f377f4435" x="0" y="0" width="555" height="78"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Courier New" size="12" isBold="false" isUnderline="false" isStrikeThrough="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["DECLARAÇÃO DE PESSOA EXPOSTA POLITICAMENTE - PEP"]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<detail>
+		<band height="100" splitType="Stretch">
+			<printWhenExpression><![CDATA[$F{tpexposto}.equals('0')]]></printWhenExpression>
+			<textField>
+				<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="72" y="0" width="410" height="100"/>
+				<textElement textAlignment="Justified">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["   Declaro que eu, " + $F{nmextttl} + ", portador do CPF " + $F{nrcpfcgc} +
+", não sou uma pessoa exposta politicamente, nos termos dos " +
+"normativos em vigor.\n\n\n" +
+
+"   Declaro, ainda, que comunicarei a Cooperativa qualquer alteração da " +
+"presente condição."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="145">
+			<printWhenExpression><![CDATA[$F{tpexposto}.equals('1')]]></printWhenExpression>
+			<textField>
+				<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="72" y="0" width="410" height="145"/>
+				<textElement textAlignment="Justified">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["    Declaro que eu, " + $F{nmextttl} + ", portador do CPF " + $F{nrcpfcgc} +
+", sou uma pessoa exposta " +
+"politicamente, nos termos dos normativos em vigor.\n\n\n" +
+
+"   Declaro, ainda, que comunicarei a Cooperativa qualquer alteração da " +
+"presente condição.\n\n\n" +
+
+"Cargo ou Função: " + $F{rsocupa} + "\n" +
+"Data Início do Exercício: " + $F{dtinicio} + "\n" +
+"Data Fim do Exercício: " + (($F{dttermino})? $F{dttermino} : "") + "\n" +
+"Empresa/Órgão Público: " + $F{nmempresa} + "\n" +
+(($F{nrcnpj_empresa})? "CNPJ: " + $F{nrcnpj_empresa} : "")
+]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="140">
+			<printWhenExpression><![CDATA[$F{tpexposto}.equals('2')]]></printWhenExpression>
+			<textField>
+				<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="72" y="0" width="410" height="140"/>
+				<textElement textAlignment="Justified">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["    Declaro que eu, " + $F{nmextttl} + ", portador " +
+"do CPF " + $F{nrcpfcgc} + ", possuo " +
+"relacionamento com uma pessoa exposta politicamente, nos termos dos " +
+"normativos em vigor.\n\n\n" +
+
+"    Declaro, ainda, que comunicarei a Cooperativa qualquer alteração da " +
+"presente condição.\n\n\n" +
+
+"Nome do Relacionado: " + $F{nmpolitico} + "\n" +
+"CPF: " + $F{nrcpf_politico} + "\n" +
+"Cargo ou Função: " + $F{rsocupa} + "\n" +
+"Tipo de Relacionamento/Ligação: " + $F{dsrelacionamento}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="130">
+			<textField>
+				<reportElement uuid="d0609fd7-ba15-4dbd-99f3-00d58a78599b" x="0" y="92" width="555" height="38"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["______________________________________\n" +
+$F{nmextttl}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="d0609fd7-ba15-4dbd-99f3-00d58a78599b" x="72" y="42" width="410" height="22"/>
+				<textElement textAlignment="Left">
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cidade}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="20" splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="64" splitType="Stretch">
+			<textField>
+				<reportElement uuid="77873aeb-6e89-4aac-adbc-c4e85a67d1fd" x="72" y="0" width="410" height="64"/>
+				<textElement textAlignment="Justified">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["(*) PEP – Consideram-se pessoas expostas politicamente os agentes públicos "+
+"que desempenham ou tenham desempenhado, nos últimos cinco anos, no Brasil "+
+"ou em países, territórios e dependências estrangeiras, cargos, empregos, ou " +
+"funções públicas relevantes, assim como seus representantes, familiares e " +
+"outras pessoas de seu relacionamento próximo, conforme determina a Circular " +
+"Bacen n° 3.461, de 24/07/2009."]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="42" splitType="Stretch"/>
+	</summary>
+</jasperReport>

@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl028" language="groovy" pageWidth="592" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="592" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="194"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crps013/cotista]]>
+	</queryString>
+	<field name="agencia" class="java.lang.String">
+		<fieldDescription><![CDATA[agencia]]></fieldDescription>
+	</field>
+	<field name="ordem" class="java.lang.String">
+		<fieldDescription><![CDATA[ordem]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="nrmatric" class="java.lang.String">
+		<fieldDescription><![CDATA[nrmatric]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="nrcpfcgc" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfcgc]]></fieldDescription>
+	</field>
+	<field name="vlsaldo" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlsaldo]]></fieldDescription>
+	</field>
+	<variable name="tot_saldo" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{vlsaldo}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="32">
+			<subreport>
+				<reportElement uuid="5c1035bb-12dc-4801-85ef-08f42a648367" x="0" y="0" width="592" height="32"/>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[]]></dataSourceExpression>
+				<subreportExpression><![CDATA["cabrel132.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="16">
+			<staticText>
+				<reportElement uuid="b4420f24-add9-4b18-835f-e4e25b61a110" x="403" y="0" width="73" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[SALDO TOTAL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="202ddb93-bfcd-4e7f-b9e2-350f5a617de8" x="89" y="0" width="45" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[CONTA/DV]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="a07d009e-5cf7-454a-943e-2f8cdd3f2959" x="512" y="0" width="71" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[CPF/CNPJ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="559a6874-83c4-4ba9-9770-c9e35daf7e70" x="31" y="0" width="20" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[PA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="c4c0ac0c-97c6-4e3e-a54a-54f2274d7402" x="53" y="0" width="29" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[ORD]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="852eedea-5c38-4022-9b2b-b0e0bc04c740" x="177" y="0" width="226" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[TITULAR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="5e6baea0-0697-4404-b55a-e224e0f7f29c" x="141" y="0" width="32" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[MATRIC.]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="074fab0b-8586-482d-9523-e140203fe571" x="403" y="0" width="77" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlsaldo}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="4e999d29-555b-492e-8abb-4327225bd714" x="89" y="0" width="45" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="db1a26d9-d842-4756-b79c-d041c31af0c6" x="512" y="0" width="80" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrcpfcgc}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="29670815-39bb-4ae4-9e75-a651d4f9e954" x="31" y="0" width="20" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{agencia}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="d85036fa-ab59-46ec-b240-3a4aa15cc412" x="53" y="0" width="32" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ordem}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="5ebc8289-6818-4eea-8f06-d99fb7ddf592" x="177" y="0" width="226" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="a9695a84-273b-4c97-8388-a266f1652fc9" x="141" y="0" width="32" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrmatric}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="120" splitType="Immediate">
+			<staticText>
+				<reportElement uuid="01ebef37-fe49-4aa4-b100-b2b188d901db" x="313" y="8" width="40" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[TOTAL ==>]]></text>
+			</staticText>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="e65a943f-b380-4a75-bdac-39910d95ad30" x="403" y="8" width="77" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{tot_saldo}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="d2340c6b-6c18-4096-b5ac-fbba5bd009ef" x="186" y="32" width="292" height="88"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[**************************************************************
+*                                                            *
+*   RELATORIO REFERENTE PROCEDIMENTOS ADOTADOS COM RELACAO   *
+*   ******************************************************   *
+*     A CIRCULAR NUMERO 2852 DO BANCO CENTRAL DO BRASIL.     *
+*     **************************************************     *
+*                                                            *
+*                                                            *
+*   ASSINATURA DA GERENCIA: ______________________________   *
+*                                                            *
+**************************************************************]]></text>
+			</staticText>
+		</band>
+	</summary>
+</jasperReport>

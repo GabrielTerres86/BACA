@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl414_resumo" language="groovy" pageWidth="592" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="592" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.657341500000001"/>
+	<property name="ireport.x" value="671"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl414/resumos/resumo]]>
+	</queryString>
+	<field name="tot_dsintegr" class="java.lang.String">
+		<fieldDescription><![CDATA[tot_dsintegr]]></fieldDescription>
+	</field>
+	<field name="tot_nrdctabb" class="java.lang.String">
+		<fieldDescription><![CDATA[tot_nrdctabb]]></fieldDescription>
+	</field>
+	<field name="tot_qtcompdb" class="java.lang.Integer">
+		<fieldDescription><![CDATA[tot_qtcompdb]]></fieldDescription>
+	</field>
+	<field name="tot_vlcompdb" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlcompdb]]></fieldDescription>
+	</field>
+	<field name="tot_qtcompcr" class="java.lang.Integer">
+		<fieldDescription><![CDATA[tot_qtcompcr]]></fieldDescription>
+	</field>
+	<field name="tot_vlcompcr" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlcompcr]]></fieldDescription>
+	</field>
+	<variable name="tot_qtcompdb" class="java.lang.Integer" calculation="Sum">
+		<variableExpression><![CDATA[$F{tot_qtcompdb}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Integer(0)]]></initialValueExpression>
+	</variable>
+	<variable name="tot_vlcompdb" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{tot_vlcompdb}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="tot_qtcompcr" class="java.lang.Integer" calculation="Sum">
+		<variableExpression><![CDATA[$F{tot_qtcompcr}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Integer(0)]]></initialValueExpression>
+	</variable>
+	<variable name="tot_vlcompcr" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{tot_vlcompcr}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<group name="Agencia" isStartNewPage="true" isReprintHeaderOnEachPage="true">
+		<groupHeader>
+			<band/>
+		</groupHeader>
+		<groupFooter>
+			<band height="32">
+				<textField pattern="#,##0;-#,##0">
+					<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="339" y="0" width="60" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{tot_qtcompdb}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00;-#,##0.00">
+					<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="416" y="0" width="70" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{tot_vlcompdb}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="82" y="0" width="104" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[TOTAL DA COMPE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="266" y="0" width="50" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[ A DEBITO:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="266" y="8" width="50" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[ A CREDITO:]]></text>
+				</staticText>
+				<textField pattern="#,##0;-#,##0">
+					<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="339" y="8" width="60" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{tot_qtcompcr}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00;-#,##0.00">
+					<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="416" y="8" width="70" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{tot_vlcompcr}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<columnHeader>
+		<band height="40">
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="0" y="0" width="198" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[RESUMO PARA FECHAMENTO DE CONTA:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="339" y="24" width="60" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[QUANTIDADE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="416" y="24" width="70" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[VALOR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="339" y="32" width="60" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[------------------------------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="416" y="32" width="70" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[------------------------------------]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="24" splitType="Prevent">
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="339" y="0" width="60" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtcompdb}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="416" y="0" width="70" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlcompdb}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="82" y="0" width="104" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_dsintegr}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="193" y="0" width="62" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_nrdctabb}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="266" y="0" width="50" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[ A DEBITO:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="266" y="8" width="50" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[ A CREDITO:]]></text>
+			</staticText>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="339" y="8" width="60" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtcompcr}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="416" y="8" width="70" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlcompcr}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

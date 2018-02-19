@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl323_detalhes" language="groovy" pageWidth="442" pageHeight="924" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="c570a91b-b2f9-4245-ad00-236dcbaf3163">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="6"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_TIPO" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/root/tributos/impostos[@tipo="$P{PR_TIPO}"]/imposto]]>
+	</queryString>
+	<field name="rel_nmrescop" class="java.lang.String">
+		<fieldDescription><![CDATA[rel_nmrescop]]></fieldDescription>
+	</field>
+	<field name="rel_nrdocnpj" class="java.lang.String">
+		<fieldDescription><![CDATA[rel_nrdocnpj]]></fieldDescription>
+	</field>
+	<field name="vlarecol" class="java.lang.String">
+		<fieldDescription><![CDATA[vlarecol]]></fieldDescription>
+	</field>
+	<field name="vlapagar" class="java.lang.String">
+		<fieldDescription><![CDATA[vlapagar]]></fieldDescription>
+	</field>
+	<field name="vlapagar2" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::impostos/@vlapagar]]></fieldDescription>
+	</field>
+	<field name="vlarecol2" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::impostos/@vlarecol]]></fieldDescription>
+	</field>
+	<detail>
+		<band height="11" splitType="Stretch">
+			<textField>
+				<reportElement uuid="51e74d1f-c7ec-4028-b8d5-3280cbe01641" x="11" y="0" width="135" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{rel_nmrescop}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="31f5f023-e789-4095-bf3c-354eb68afc66" x="151" y="0" width="108" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{rel_nrdocnpj}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="70ec25dd-67de-44bd-b209-ce2d469bda8c" x="264" y="0" width="80" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlarecol}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="267a4078-3843-49b3-b399-1308465b97a2" x="349" y="0" width="80" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlapagar}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

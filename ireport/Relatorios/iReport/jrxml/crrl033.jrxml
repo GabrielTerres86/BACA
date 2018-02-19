@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl033" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isSummaryWithPageHeaderAndFooter="true" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="406"/>
+	<property name="ireport.y" value="50"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crps033/agencia/demissao]]>
+	</queryString>
+	<field name="dsrefere" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::crps033/@dsrefere]]></fieldDescription>
+	</field>
+	<field name="qtdtotal" class="java.lang.String">
+		<fieldDescription><![CDATA[/crps033/totalgeral/qtdtotal]]></fieldDescription>
+	</field>
+	<field name="qttotdup" class="java.lang.String">
+		<fieldDescription><![CDATA[/crps033/totalgeral/qttotdup]]></fieldDescription>
+	</field>
+	<field name="qtexclui" class="java.lang.String">
+		<fieldDescription><![CDATA[/crps033/totalgeral/qtexclui]]></fieldDescription>
+	</field>
+	<field name="vltotcap" class="java.lang.String">
+		<fieldDescription><![CDATA[/crps033/totalgeral/vltotcap]]></fieldDescription>
+	</field>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::agencia/@cdagenci]]></fieldDescription>
+	</field>
+	<field name="dsagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::agencia/@dsagenci]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="nrmatric" class="java.lang.String">
+		<fieldDescription><![CDATA[nrmatric]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="vlcapmes" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlcapmes]]></fieldDescription>
+	</field>
+	<field name="dtdemiss" class="java.lang.String">
+		<fieldDescription><![CDATA[dtdemiss]]></fieldDescription>
+	</field>
+	<field name="dsoperad" class="java.lang.String">
+		<fieldDescription><![CDATA[dsoperad]]></fieldDescription>
+	</field>
+	<field name="dsmotdem" class="java.lang.String">
+		<fieldDescription><![CDATA[dsmotdem]]></fieldDescription>
+	</field>
+	<field name="dsobserv" class="java.lang.String">
+		<fieldDescription><![CDATA[dsobserv]]></fieldDescription>
+	</field>
+	<field name="induplic" class="java.lang.Integer">
+		<fieldDescription><![CDATA[induplic]]></fieldDescription>
+	</field>
+	<variable name="TOTAL_PAGE" class="java.lang.Integer" calculation="Highest">
+		<variableExpression><![CDATA[$V{PAGE_NUMBER}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Integer(0)]]></initialValueExpression>
+	</variable>
+	<variable name="VR_QTD_EXCLUIDAS" class="java.lang.Integer" resetType="Group" resetGroup="grupo_pa" calculation="Count">
+		<variableExpression><![CDATA[1]]></variableExpression>
+		<initialValueExpression><![CDATA[new Integer(0)]]></initialValueExpression>
+	</variable>
+	<variable name="VR_QTD_DUPLICADAS" class="java.lang.Integer" resetType="Group" resetGroup="grupo_pa" calculation="Sum">
+		<variableExpression><![CDATA[$F{induplic}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Integer(0)]]></initialValueExpression>
+	</variable>
+	<variable name="VR_QTD_DEMITIDO" class="java.lang.Integer" resetType="Group" resetGroup="grupo_pa">
+		<variableExpression><![CDATA[$V{VR_QTD_EXCLUIDAS}-$V{VR_QTD_DUPLICADAS}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Integer(0)]]></initialValueExpression>
+	</variable>
+	<variable name="VL_VLR_TOTAL" class="java.lang.Double" resetType="Group" resetGroup="grupo_pa" calculation="Sum">
+		<variableExpression><![CDATA[$F{vlcapmes}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<group name="grupo_pa" isStartNewPage="true" isReprintHeaderOnEachPage="true">
+		<groupExpression><![CDATA[$F{cdagenci}]]></groupExpression>
+		<groupHeader>
+			<band height="32">
+				<printWhenExpression><![CDATA[( $F{cdagenci}.isEmpty() ? false : true )]]></printWhenExpression>
+				<textField>
+					<reportElement uuid="b1b3ac12-0546-460a-b038-a8769e2a01f7" x="86" y="0" width="120" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dsrefere}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="1ea81b69-0fe5-48ed-b82c-fc2b7c613a19" x="0" y="0" width="86" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[MES DE REFERENCIA:]]></text>
+				</staticText>
+				<textField>
+					<reportElement uuid="ca96f889-bbb8-4cbc-9288-678c71ed718a" x="240" y="0" width="248" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dsagenci}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="375e47fb-bddb-43f1-b80e-c7dc4f866a87" x="220" y="0" width="14" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[PA:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="bd2e8311-b12b-4279-b7df-8abf54594126" x="53" y="16" width="40" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[MATRICULA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="bd1ab578-2d7a-434d-b797-c412fb96c6d5" x="9" y="16" width="36" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[CONTA/DV]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="9e6e6216-1d7b-4e2d-aba1-61d6ada0bb43" x="102" y="16" width="104" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[TITULAR]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="717e3492-7663-4be1-88c7-6c910b8ed8cc" x="215" y="16" width="65" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[CAPITAL NO MES]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="170fa5da-3153-4f18-aaa5-7d0da25bbf57" x="289" y="16" width="45" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[DEMISSAO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="14c5da25-2b39-446d-9ed1-92353199e400" x="343" y="16" width="90" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[OPERADOR DE DEMISSAO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="5cdea57b-3a1a-4f4a-8375-ddefd1cf0189" x="442" y="16" width="90" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[MOTIVO DE DEMISSAO]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="64">
+				<printWhenExpression><![CDATA[( $F{cdagenci}.isEmpty() ? false : true )]]></printWhenExpression>
+				<staticText>
+					<reportElement uuid="ec5e98e9-4462-4524-aedf-d9aa94f2cdcf" x="147" y="8" width="196" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[QUANTIDADE DE ASSOCIADOS DEMITIDOS:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="ec5e98e9-4462-4524-aedf-d9aa94f2cdcf" x="147" y="24" width="196" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[QUANTIDADE DE CONTAS DUPLICADAS EXCLUIDAS:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="ec5e98e9-4462-4524-aedf-d9aa94f2cdcf" x="147" y="40" width="196" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[QUANTIDADE DE CONTAS EXCLUIDAS:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="ec5e98e9-4462-4524-aedf-d9aa94f2cdcf" x="147" y="56" width="196" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[TOTAL DO SALDO CAPITAL NO MES:]]></text>
+				</staticText>
+				<break>
+					<reportElement uuid="31ec4746-caa5-4f29-8bb6-0b69bbd535e1" x="0" y="63" width="500" height="1">
+						<printWhenExpression><![CDATA[( ($F{qtdtotal}.isEmpty()) ? false : true )]]></printWhenExpression>
+					</reportElement>
+				</break>
+				<textField>
+					<reportElement uuid="c9424cde-761a-4cb3-817e-fdccf5b6f342" x="343" y="40" width="85" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{VR_QTD_EXCLUIDAS}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="d3e231c8-fc7c-4fe6-bc7b-7280359c2c84" x="343" y="24" width="85" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{VR_QTD_DUPLICADAS}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="8796e4d8-3401-4b31-afff-4030407c2056" x="343" y="8" width="85" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{VR_QTD_DEMITIDO}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00;-#,##0.00">
+					<reportElement uuid="6f9687e0-7537-4283-8b63-9c4bfd133550" x="343" y="55" width="85" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{VL_VLR_TOTAL}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="32">
+			<subreport>
+				<reportElement uuid="5c1035bb-12dc-4801-85ef-08f42a648367" x="0" y="0" width="595" height="32"/>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[]]></dataSourceExpression>
+				<subreportExpression><![CDATA["cabrel132.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="8">
+			<printWhenExpression><![CDATA[( $F{cdagenci}.isEmpty() ? false : true )]]></printWhenExpression>
+			<textField>
+				<reportElement uuid="2dd4a5eb-f863-4d62-94a1-d770b7bb0f27" x="0" y="0" width="45" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="acda6084-9872-4231-aac6-e244c10e6704" x="53" y="0" width="40" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrmatric}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="9e1f6326-127d-4869-b5a8-b3c21fe1b3af" x="102" y="0" width="104" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="10be64f7-1466-4c5e-8095-08655e560bff" x="215" y="0" width="65" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlcapmes}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="9e096bfa-517f-4194-99b5-bee839083ae8" x="289" y="0" width="45" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtdemiss}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="88a09a2e-fca2-41ec-b964-f50dba9caf3f" x="343" y="0" width="90" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsoperad}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="cfa0d90f-cbe8-4361-acf7-6a1e8f2b2c3a" x="442" y="0" width="90" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsmotdem}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="dec7468c-6ae3-4cd2-aca5-aacccaab9f6a" x="542" y="0" width="53" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsobserv}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="144">
+			<printWhenExpression><![CDATA[( ($F{qtdtotal}.isEmpty()) ? false : true )]]></printWhenExpression>
+			<staticText>
+				<reportElement uuid="1ea81b69-0fe5-48ed-b82c-fc2b7c613a19" x="0" y="0" width="86" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[MES DE REFERENCIA:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="b1b3ac12-0546-460a-b038-a8769e2a01f7" x="86" y="0" width="120" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsrefere}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="ec5e98e9-4462-4524-aedf-d9aa94f2cdcf" x="147" y="59" width="196" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[QUANTIDADE DE CONTAS EXCLUIDAS:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="ec5e98e9-4462-4524-aedf-d9aa94f2cdcf" x="147" y="27" width="196" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[QUANTIDADE DE ASSOCIADOS DEMITIDOS:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="ec5e98e9-4462-4524-aedf-d9aa94f2cdcf" x="147" y="43" width="196" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[QUANTIDADE DE CONTAS DUPLICADAS EXCLUIDAS:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="ec5e98e9-4462-4524-aedf-d9aa94f2cdcf" x="147" y="75" width="196" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[TOTAL DO SALDO CAPITAL NO MES:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="8f12afe7-7c91-4b44-a3c9-863f808fe957" x="343" y="43" width="85" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qttotdup}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="8957f52b-fa41-4013-94b6-c89c71d96d35" x="343" y="59" width="85" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtexclui}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="db7c965e-3b81-48c8-bcad-7cbe911a0bf1" x="343" y="75" width="85" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vltotcap}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="86b4de69-f7f0-40d3-9c06-aa9a806807ca" x="150" y="131" width="100" height="8"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[PRESIDENTE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="86b4de69-f7f0-40d3-9c06-aa9a806807ca" x="365" y="131" width="100" height="8"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[SECRETARIO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="86b4de69-f7f0-40d3-9c06-aa9a806807ca" x="98" y="123" width="198" height="8"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[____________________________________________]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="86b4de69-f7f0-40d3-9c06-aa9a806807ca" x="312" y="123" width="198" height="8"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[____________________________________________]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="878e88c5-6c1c-4df0-be65-477071e98048" x="343" y="27" width="85" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtdtotal}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

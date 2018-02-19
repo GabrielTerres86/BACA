@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<raiz>
+<conta dtmvtolt="25/03/2015" nmextcop="VIACREDI - COOPERATIVA DE CREDITO DO VALE DO ITAJAI" cdagenci="79 - ITJ CORDEIROS (ITAJAI)" nrdconta=" 736.701.5" vltotcre="       10.800,00" dtadmiss="31/10/2013" dtaltera="29/10/2013" dsdjusti="Informar ao COAF, cooperado negou informacoes" dsobserv="COOPERADO NAO QUIZ INFORMAR A ORIGEM DO DINHEIRO">
+<titular>
+<idseqttl>1</idseqttl>
+<nmextttl>DANIELA DE SOUZA DE MIRANDA</nmextttl>
+<nrcpfcgc>054.718.739-47</nrcpfcgc>
+<flpolexp>Nao</flpolexp>
+<flgpubli>Sim</flgpubli>
+<inpessoa>1</inpessoa>
+</titular>
+</conta>
+<conta dtmvtolt="26/01/2015" nmextcop="VIACREDI - COOPERATIVA DE CREDITO DO VALE DO ITAJAI" cdagenci="85 - BNU" nrdconta=" 737.999.8" vltotcre="       10.800,00" dtadmiss="31/10/2013" dtaltera="29/10/2013" dsdjusti="Informar ao COAF, cooperado negou informacoes" dsobserv="COOPERADO NAO QUIZ INFORMAR A ORIGEM DO DINHEIRO">
+<titular>
+<idseqttl>1</idseqttl>
+<nmextttl>TESTE EMPRESA S.A</nmextttl>
+<nrcpfcgc>05.718.739/0001-22</nrcpfcgc>
+<flpolexp>Nao</flpolexp>
+<flgpubli>Sim</flgpubli>
+<inpessoa>2</inpessoa>
+</titular>
+</conta>
+
+</raiz>

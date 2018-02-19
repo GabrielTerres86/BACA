@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl642" language="groovy" pageWidth="842" pageHeight="496" orientation="Landscape" whenNoDataType="AllSectionsNoDetail" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl642]]>
+	</queryString>
+	<field name="cdcooper" class="java.lang.String">
+		<fieldDescription><![CDATA[cdcooper]]></fieldDescription>
+	</field>
+	<field name="dscooper" class="java.lang.String">
+		<fieldDescription><![CDATA[dscooper]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="cdtiptra" class="java.lang.String">
+		<fieldDescription><![CDATA[cdtiptra]]></fieldDescription>
+	</field>
+	<field name="dstiptra" class="java.lang.String">
+		<fieldDescription><![CDATA[dstiptra]]></fieldDescription>
+	</field>
+	<field name="fltipdoc" class="java.lang.String">
+		<fieldDescription><![CDATA[fltipdoc]]></fieldDescription>
+	</field>
+	<field name="dstransa" class="java.lang.String">
+		<fieldDescription><![CDATA[dstransa]]></fieldDescription>
+	</field>
+	<field name="vllanaut" class="java.lang.Double">
+		<fieldDescription><![CDATA[vllanaut]]></fieldDescription>
+	</field>
+	<field name="dttransa" class="java.lang.String">
+		<fieldDescription><![CDATA[dttransa]]></fieldDescription>
+	</field>
+	<field name="hrtransa" class="java.lang.String">
+		<fieldDescription><![CDATA[hrtransa]]></fieldDescription>
+	</field>
+	<field name="nrdocmto" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdocmto]]></fieldDescription>
+	</field>
+	<field name="dslindig" class="java.lang.String">
+		<fieldDescription><![CDATA[dslindig]]></fieldDescription>
+	</field>
+	<field name="dscritic" class="java.lang.String">
+		<fieldDescription><![CDATA[dscritic]]></fieldDescription>
+	</field>
+	<field name="nrdrecid" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdrecid]]></fieldDescription>
+	</field>
+	<field name="dsorigem" class="java.lang.String">
+		<fieldDescription><![CDATA[dsorigem]]></fieldDescription>
+	</field>
+	<field name="idseqttl" class="java.lang.String">
+		<fieldDescription><![CDATA[idseqttl]]></fieldDescription>
+	</field>
+	<field name="dtagenda" class="java.lang.String">
+		<fieldDescription><![CDATA[dtagenda]]></fieldDescription>
+	</field>
+	<field name="dsdebito" class="java.lang.String">
+		<fieldDescription><![CDATA[dsdebito]]></fieldDescription>
+	</field>
+	<field name="fldebito" class="java.lang.String">
+		<fieldDescription><![CDATA[fldebito]]></fieldDescription>
+	</field>
+	<variable name="labelagenda_CONCAT" class="java.lang.String">
+		<variableExpression><![CDATA["AGENDAMENTOS PARA: "]]></variableExpression>
+	</variable>
+	<variable name="DistinctCdCooper" class="java.lang.Integer" calculation="DistinctCount">
+		<variableExpression><![CDATA[$F{dscooper}]]></variableExpression>
+	</variable>
+	<group name="dados" isStartNewPage="true">
+		<groupExpression><![CDATA[$F{cdcooper}]]></groupExpression>
+		<groupHeader>
+			<band height="8">
+				<subreport>
+					<reportElement uuid="19924257-8f5d-48fe-a2fd-3ab553730aad" x="0" y="0" width="842" height="8" printWhenGroupChanges="dados"/>
+					<subreportParameter name="PR_SQSOLICI"/>
+					<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//chave")]]></dataSourceExpression>
+					<subreportExpression><![CDATA["crrl642_dados.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+	</group>
+	<group name="debito_aut" isStartNewPage="true">
+		<groupExpression><![CDATA[$F{cdcooper}]]></groupExpression>
+		<groupHeader>
+			<band height="32">
+				<subreport>
+					<reportElement uuid="19924257-8f5d-48fe-a2fd-3ab553730aad" isPrintRepeatedValues="false" x="0" y="24" width="842" height="8" printWhenGroupChanges="debito_aut"/>
+					<subreportParameter name="PR_SQSOLICI"/>
+					<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//chave")]]></dataSourceExpression>
+					<subreportExpression><![CDATA["crrl642_debito_aut.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="32">
+			<subreport>
+				<reportElement uuid="5c1035bb-12dc-4801-85ef-08f42a648367" x="0" y="0" width="842" height="32"/>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[]]></dataSourceExpression>
+				<subreportExpression><![CDATA["cabrel234.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<summary>
+		<band/>
+	</summary>
+</jasperReport>

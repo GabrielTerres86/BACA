@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl288_conta" language="groovy" pageWidth="592" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="592" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl145/agencia/contrato/detalhe/info_detalhe]]>
+	</queryString>
+	<field name="rel_nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[rel_nmprimtl]]></fieldDescription>
+	</field>
+	<field name="rel_nmprimt2" class="java.lang.String">
+		<fieldDescription><![CDATA[rel_nmprimt2]]></fieldDescription>
+	</field>
+	<field name="rel_dschassi" class="java.lang.String">
+		<fieldDescription><![CDATA[rel_dschassi]]></fieldDescription>
+	</field>
+	<field name="flgexbinfo" class="java.lang.String">
+		<fieldDescription><![CDATA[flgexbinfo]]></fieldDescription>
+	</field>
+	<columnHeader>
+		<band/>
+	</columnHeader>
+	<detail>
+		<band height="8" splitType="Prevent">
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="158" y="0" width="434" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{rel_nmprimtl}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="8">
+			<printWhenExpression><![CDATA[new Boolean($F{flgexbinfo} == "S")]]></printWhenExpression>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="158" y="0" width="130" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{rel_nmprimt2}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="293" y="0" width="159" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{rel_dschassi}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

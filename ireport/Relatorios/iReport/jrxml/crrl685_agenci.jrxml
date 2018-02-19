@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl685" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isFloatColumnFooter="true" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl685/cooper/agenci]]>
+	</queryString>
+	<field name="cdcooper" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::cooper/@cdcooper]]></fieldDescription>
+	</field>
+	<field name="nmrescop" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::cooper/@nmrescop]]></fieldDescription>
+	</field>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[@cdagenci]]></fieldDescription>
+	</field>
+	<field name="nmresage" class="java.lang.String">
+		<fieldDescription><![CDATA[@nmresage]]></fieldDescription>
+	</field>
+	<group name="group_cooperativa">
+		<groupExpression><![CDATA[$F{cdcooper}]]></groupExpression>
+		<groupHeader>
+			<band height="16">
+				<staticText>
+					<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="10" y="8" width="62" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7" isBold="true"/>
+					</textElement>
+					<text><![CDATA[Cooperativa:]]></text>
+				</staticText>
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="72" y="8" width="261" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nmrescop}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<group name="group_agenci">
+		<groupExpression><![CDATA[$F{cdagenci}]]></groupExpression>
+		<groupHeader>
+			<band height="16">
+				<textField isBlankWhenNull="true">
+					<reportElement uuid="cfcc2d04-9561-47cc-8299-c4af0f7e82c1" x="30" y="8" width="261" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nmresage}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="10" y="8" width="17" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7" isBold="true"/>
+					</textElement>
+					<text><![CDATA[PA:]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="8">
+			<subreport runToBottom="false">
+				<reportElement uuid="f53226c0-54ee-4d6b-915c-285b0f242180" x="0" y="0" width="595" height="8"/>
+				<subreportParameter name="PR_DSLIMITE"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agenci/detalhes")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl685_detalhe.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="8">
+			<subreport>
+				<reportElement uuid="f53226c0-54ee-4d6b-915c-285b0f242180" x="0" y="0" width="595" height="8"/>
+				<subreportParameter name="PR_DSLIMITE"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agenci/detalhes")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl685_totais_agenci.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="8">
+			<subreport>
+				<reportElement uuid="f53226c0-54ee-4d6b-915c-285b0f242180" x="0" y="0" width="595" height="8"/>
+				<subreportParameter name="PR_DSLIMITE"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agenci/detalhes")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl685_totais_agenci_historico.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl311_corpo" language="groovy" pageWidth="595" pageHeight="672" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="7676eb33-15b8-427a-b27d-6a61ec2bda7f">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="216"/>
+	<property name="ireport.y" value="0"/>
+	<queryString language="xPath">
+		<![CDATA[/base/registros1/pac]]>
+	</queryString>
+	<field name="descricao" class="java.lang.String">
+		<fieldDescription><![CDATA[descricao]]></fieldDescription>
+	</field>
+	<field name="rel_deschequ" class="java.lang.String">
+		<fieldDescription><![CDATA[total/rel_deschequ]]></fieldDescription>
+	</field>
+	<field name="tot_qtcheque" class="java.lang.String">
+		<fieldDescription><![CDATA[total/tot_qtcheque]]></fieldDescription>
+	</field>
+	<field name="tot_qtdgeral" class="java.lang.String">
+		<fieldDescription><![CDATA[total/tot_qtdgeral]]></fieldDescription>
+	</field>
+	<field name="tot_vlrlimit" class="java.lang.String">
+		<fieldDescription><![CDATA[total/tot_vlrlimit]]></fieldDescription>
+	</field>
+	<field name="tot_vldescto" class="java.lang.String">
+		<fieldDescription><![CDATA[total/tot_vldescto]]></fieldDescription>
+	</field>
+	<field name="tot_vldjuros" class="java.lang.String">
+		<fieldDescription><![CDATA[total/tot_vldjuros]]></fieldDescription>
+	</field>
+	<field name="tot_vllimite" class="java.lang.String">
+		<fieldDescription><![CDATA[total/tot_vllimite]]></fieldDescription>
+	</field>
+	<field name="tot_vlrdispo" class="java.lang.String">
+		<fieldDescription><![CDATA[total/tot_vlrdispo]]></fieldDescription>
+	</field>
+	<variable name="teste" class="java.lang.String">
+		<variableExpression><![CDATA[$F{descricao}.intern()]]></variableExpression>
+	</variable>
+	<group name="gr_descricao">
+		<groupExpression><![CDATA[$F{descricao}]]></groupExpression>
+		<groupHeader>
+			<band height="24">
+				<textField>
+					<reportElement uuid="2f4a0fe1-7501-4fc7-85d8-ad44b0763913" x="0" y="8" width="134" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{descricao}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="40">
+				<textField>
+					<reportElement uuid="cb43aee0-123d-4540-b1ab-80ea9f050f3c" positionType="Float" x="447" y="8" width="61" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tot_vldjuros}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="1b6fb07f-f831-40c2-84b2-ab99287eae2f" positionType="Float" x="368" y="8" width="74" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tot_vldescto}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="672353af-cd2c-4293-a6af-51b17ce43f01" positionType="Float" x="225" y="8" width="31" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tot_qtcheque}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="cfb1f401-7a3e-46cf-8aeb-0811b7e8922a" positionType="Float" x="261" y="8" width="35" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tot_qtdgeral}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="5f9f8296-cafb-40a6-926f-519166e0a948" positionType="Float" x="301" y="8" width="62" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tot_vlrlimit}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="1a59241b-ef85-4650-b768-a4bc42e372e6" positionType="Float" x="513" y="8" width="68" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tot_vlrdispo}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="550d2dd0-04ec-4d00-b9cb-4db24f1d4d89" positionType="Float" x="99" y="8" width="73" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{rel_deschequ}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="1ee3bcf4-6c13-4e51-a1e1-1631968ef077" positionType="Float" x="97" y="24" width="164" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[TOTAL SOCIOS UTILIZANDO LIMITE:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="6c0bd146-4e04-418b-bca9-2b7f57e67153" positionType="Float" x="0" y="8" width="94" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[DESCONTARAM CHEQUES:]]></text>
+				</staticText>
+				<textField>
+					<reportElement uuid="beaea421-3be2-4c3a-9b4b-db8c054a2a80" positionType="Float" x="266" y="24" width="62" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tot_vllimite}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<subreport>
+				<reportElement uuid="46855041-80bb-4cc7-9686-8e36f9e4d50a" x="0" y="0" width="595" height="8"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//registro1")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl311_i_corpo.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>

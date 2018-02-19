@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<crrl370>
+<contas>
+<conta nrdconta="32.9" nrctainv="32.9" nmprimtl="TESTE ESTE" vlsldant="200,00" flginvest="S" flgmensag="N" dscmensag="** Nao houve lancamentos no periodo de 01/02/2014 ate 03/02/2014 **">
+  <investimentos>
+     <investimento>
+	    <dtmvtolt>03/02/14</dtmvtolt>
+		<dsextrat>CR.BLOQ.EMPR.</dsextrat>
+		<nrdocmto>        159</nrdocmto>
+		<vllanmto>15.000,00</vllanmto>
+		<indebcre>C</indebcre>
+		<vlsldtot>0,00</vlsldtot>
+	 </investimento>
+     <investimento>
+	    <dtmvtolt>04/02/14</dtmvtolt>
+		<dsextrat>CR.BLOQ.EMPR.</dsextrat>
+		<nrdocmto>        159</nrdocmto>
+		<vllanmto>15.000,00</vllanmto>
+		<indebcre>D</indebcre>
+		<vlsldtot>12.000,00</vlsldtot>
+	 </investimento>
+     <investimento>
+	    <dtmvtolt>05/02/14</dtmvtolt>
+		<dsextrat>CR.BLOQ.EMPR.</dsextrat>
+		<nrdocmto>        159</nrdocmto>
+		<vllanmto>15.000,00</vllanmto>
+		<indebcre>C</indebcre>
+		<vlsldtot>13.000,00</vlsldtot>
+	 </investimento>
+  </investimentos>
+</conta>
+<conta nrdconta="92.614.0" nrctainv="92.614.0" nmprimtl="TQKIQVFRO LOK YCKAFZ T AQOFQCF XMVCPZMJW" vlsldant="9.899,56" flginvest="S" flgmensag="N" dscmensag="** Nao houve lancamentos no periodo de 01/02/2014 ate 03/02/2014 **">
+  <investimentos>
+     <investimento>
+	    <dtmvtolt>07/02/14</dtmvtolt>
+		<dsextrat>CR.BLOQ.EMPR.</dsextrat>
+		<nrdocmto>        159</nrdocmto>
+		<vllanmto>2.000,00</vllanmto>
+		<indebcre>D</indebcre>
+		<vlsldtot>10,00</vlsldtot>
+	 </investimento>
+     <investimento>
+	    <dtmvtolt>08/02/14</dtmvtolt>
+		<dsextrat>CR.BLOQ.EMPR.</dsextrat>
+		<nrdocmto>       1000</nrdocmto>
+		<vllanmto>500,00</vllanmto>
+		<indebcre>C</indebcre>
+		<vlsldtot>1.000,00</vlsldtot>
+	 </investimento>
+     <investimento>
+	    <dtmvtolt>09/02/14</dtmvtolt>
+		<dsextrat>CR.BLOQ.EMPR.</dsextrat>
+		<nrdocmto>        161542</nrdocmto>
+		<vllanmto>100,00</vllanmto>
+		<indebcre>D</indebcre>
+		<vlsldtot>135.000,00</vlsldtot>
+	 </investimento>
+  </investimentos>
+
+</conta>
+<conta nrdconta="219.099.0" nrctainv="219.099.0" nmprimtl="RLYT LDFUZGZ" vlsldant="7.583,20-" flginvest="N" flgmensag="S" dscmensag="** Nao houve lancamentos no periodo de 01/02/2014 ate 03/02/2014 **">
+<investimentos>
+</investimentos>
+</conta>
+<conta nrdconta="279.420.9" nrctainv="279.420.9" nmprimtl="WYDSOWA MJJVQK GK NZAAP" vlsldant="200,00" flginvest="S" flgmensag="N" dscmensag="** Nao houve lancamentos no periodo de 01/02/2014 ate 03/02/2014 **">
+  <investimentos>
+     <investimento>
+	    <dtmvtolt>01/03/14</dtmvtolt>
+		<dsextrat>CR.BLOQ.EMPR.</dsextrat>
+		<nrdocmto>        1</nrdocmto>
+		<vllanmto>135.000,00</vllanmto>
+		<indebcre>D</indebcre>
+		<vlsldtot>11,32</vlsldtot>
+	 </investimento>
+     <investimento>
+	    <dtmvtolt>02/03/14</dtmvtolt>
+		<dsextrat>CR.BLOQ.EMPR.</dsextrat>
+		<nrdocmto>        2</nrdocmto>
+		<vllanmto>115.000,00</vllanmto>
+		<indebcre>C</indebcre>
+		<vlsldtot>1.013,50</vlsldtot>
+	 </investimento>
+  </investimentos>
+</conta>
+</contas>
+</crrl370>

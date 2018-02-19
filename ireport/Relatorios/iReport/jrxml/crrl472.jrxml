@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl472" language="groovy" pageWidth="842" pageHeight="496" orientation="Landscape" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl472/tipo]]>
+	</queryString>
+	<field name="tprelato" class="java.lang.String">
+		<fieldDescription><![CDATA[@tprelato]]></fieldDescription>
+	</field>
+	<field name="nmrescop" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::crrl472/@nmrescop]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_nossodoc" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_nossodoc]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_nossoted" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_nossoted]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_seudoc" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_seudoc]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_seuted" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_seuted]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_nossotec" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_nossotec]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_seutec" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_seutec]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_nossarem" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_nossarem]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_suacompe" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_suacompe]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_nossadev" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_nossadev]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_suadevol" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_suadevol]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_nossacob" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_nossacob]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_gpspagas" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_gpspagas]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_suacob" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_suacob]]></fieldDescription>
+	</field>
+	<field name="tot_qtd_noscoban" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_qtd_noscoban]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_nossodoc" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_nossodoc]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_nossoted" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_nossoted]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_seudoc" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_seudoc]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_seuted" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_seuted]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_nossotec" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_nossotec]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_seutec" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_seutec]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_nossarem" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_nossarem]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_suacompe" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_suacompe]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_nossadev" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_nossadev]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_suadevol" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_suadevol]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_nossacob" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_nossacob]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_gpspagas" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_gpspagas]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_suacob" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_suacob]]></fieldDescription>
+	</field>
+	<field name="tot_vlr_noscoban" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlr_noscoban]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="48">
+			<subreport>
+				<reportElement uuid="709994dc-1056-454a-8f92-e7e2dac4ae36" x="0" y="0" width="842" height="32"/>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[]]></dataSourceExpression>
+				<subreportExpression><![CDATA["cabrel234.jasper"]]></subreportExpression>
+			</subreport>
+			<textField>
+				<reportElement uuid="7c127ebb-15c7-49c4-bf0e-726e7d73326a" x="0" y="32" width="200" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmrescop}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="80" splitType="Immediate">
+			<subreport>
+				<reportElement uuid="844f89df-dc96-4b60-847c-2585e9eabe55" x="0" y="24" width="842" height="24" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[$F{tot_qtd_nossodoc}!=0||
+$F{tot_qtd_nossoted}!=0||
+$F{tot_qtd_seudoc}!=0||
+$F{tot_qtd_seuted}!=0||
+$F{tot_qtd_nossotec}!=0||
+$F{tot_qtd_seutec}!=0||
+$F{tot_qtd_nossarem}!=0||
+$F{tot_qtd_suacompe}!=0||
+$F{tot_qtd_nossadev}!=0||
+$F{tot_qtd_suadevol}!=0||
+$F{tot_qtd_nossacob}!=0||
+$F{tot_qtd_gpspagas}!=0||
+$F{tot_qtd_suacob}!=0||
+$F{tot_qtd_noscoban}!=0]]></printWhenExpression>
+				</reportElement>
+				<subreportParameter name="PR_NMRESCOP"/>
+				<subreportParameter name="PR_NMRELATO"/>
+				<subreportParameter name="PR_DTMVTOLT"/>
+				<subreportParameter name="PR_NMMODULO"/>
+				<subreportParameter name="PR_CDRELATO"/>
+				<subreportParameter name="PR_PROGERAD"/>
+				<subreportParameter name="PR_NMDESTIN"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<subreportParameter name="pr_tprelato">
+					<subreportParameterExpression><![CDATA[$F{tprelato}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agencia")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl472_quantidade.jasper"]]></subreportExpression>
+			</subreport>
+			<textField>
+				<reportElement uuid="be3ee76f-21db-4402-b1a7-6228a30c1ae7" x="83" y="8" width="100" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tprelato}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="e0bca35a-b909-4965-9149-946700ca708d" x="0" y="8" width="83" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[==> QUANTIDADES TOTAIS ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="d7d0b67c-ba06-4846-a990-3b78123dfbd7" positionType="Float" x="13" y="64" width="47" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[TOTAL GERAL:]]></text>
+			</staticText>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="9e3439c0-41d3-4b45-b493-a9378009f623" positionType="Float" x="79" y="64" width="27" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_nossodoc}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="ff45ecad-e386-48c2-910b-0b062efb1958" positionType="Float" x="136" y="64" width="27" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_nossoted}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="3549e79b-c03e-4be7-ad35-cd87327e1945" positionType="Float" x="194" y="64" width="27" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_seudoc}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="50563a89-0d5d-4698-a8df-550a1b3bb76d" positionType="Float" x="251" y="64" width="27" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_seuted}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="d7a6c25b-8f7c-4be6-ac68-3e449e5d36da" positionType="Float" x="309" y="64" width="27" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_nossotec}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="56d57328-8b98-4a83-a06b-50ce3d2589a3" positionType="Float" x="367" y="64" width="27" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_seutec}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="d1c5671a-10b8-4ea3-9687-17a13d497637" positionType="Float" x="428" y="64" width="34" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_nossarem}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="59357223-d57a-41b5-9b92-1218d5e47584" positionType="Float" x="484" y="64" width="34" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_suacompe}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="c189dc53-155d-41cc-9e34-6a0c86eb3e2c" positionType="Float" x="539" y="64" width="46" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_nossadev}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="381a7ea6-e507-4cfc-916e-291f06ccb9ee" positionType="Float" x="597" y="64" width="46" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_suadevol}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="3e01741f-4cff-4352-94ec-3b52484d1240" positionType="Float" x="654" y="64" width="42" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_nossacob}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="d194d11c-35b1-480d-b559-b06f3c84220f" positionType="Float" x="712" y="64" width="27" height="8">
+					<printWhenExpression><![CDATA[$F{tprelato}=="BANCOOB"]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_gpspagas}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="2afa0948-77a9-4f35-bb5b-95e318150e64" positionType="Float" x="712" y="64" width="42" height="8">
+					<printWhenExpression><![CDATA[$F{tprelato}!="BANCOOB"]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_suacob}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="d1b09672-9e86-4027-a390-7c079a13fd21" positionType="Float" x="770" y="64" width="32" height="8">
+					<printWhenExpression><![CDATA[$F{tprelato}!="BANCOOB"]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtd_noscoban}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="80" splitType="Immediate">
+			<subreport>
+				<reportElement uuid="14c9aeaa-f9af-499b-8637-7d5b267c7a91" x="0" y="24" width="842" height="24" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[$F{tot_vlr_nossodoc}!=0||
+$F{tot_vlr_nossoted}!=0||
+$F{tot_vlr_seudoc}!=0||
+$F{tot_vlr_seuted}!=0||
+$F{tot_vlr_nossotec}!=0||
+$F{tot_vlr_seutec}!=0||
+$F{tot_vlr_nossarem}!=0||
+$F{tot_vlr_suacompe}!=0||
+$F{tot_vlr_nossadev}!=0||
+$F{tot_vlr_suadevol}!=0||
+$F{tot_vlr_nossacob}!=0||
+$F{tot_vlr_gpspagas}!=0||
+$F{tot_vlr_suacob}!=0||
+$F{tot_vlr_noscoban}!=0]]></printWhenExpression>
+				</reportElement>
+				<subreportParameter name="pr_tprelato">
+					<subreportParameterExpression><![CDATA[$F{tprelato}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//agencia")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl472_valor.jasper"]]></subreportExpression>
+			</subreport>
+			<staticText>
+				<reportElement uuid="ffd8e053-6ce7-4144-9aac-69e8e3490720" x="0" y="8" width="68" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[==> VALORES TOTAIS ]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="be3ee76f-21db-4402-b1a7-6228a30c1ae7" x="68" y="8" width="100" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tprelato}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="d7d0b67c-ba06-4846-a990-3b78123dfbd7" positionType="Float" x="13" y="64" width="47" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[TOTAL GERAL:]]></text>
+			</staticText>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="bd75e33d-6776-427c-9b24-d1f220d03565" positionType="Float" x="79" y="64" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_nossodoc}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="10cb74ba-19e5-4c7b-bb03-82449d62cd9e" positionType="Float" x="136" y="64" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_nossoted}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="a12182be-d55d-4c46-ad90-24b89a4b4ef0" positionType="Float" x="194" y="64" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_seudoc}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="f3bc34a2-9a18-4238-b5ad-f2bfd418d5ab" positionType="Float" x="251" y="64" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_seuted}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="4b6d075c-f821-4f6c-84a0-d2cb129b3e8d" positionType="Float" x="309" y="64" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_nossotec}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="b88a8172-a75f-41db-bbc7-3a6613c9f745" positionType="Float" x="367" y="64" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_seutec}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="3a5aba44-69ce-49d2-ab38-6304e26789ab" positionType="Float" x="424" y="64" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_nossarem}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="da807dac-a3a5-44b4-8d7f-88da9b5c0c1c" positionType="Float" x="482" y="64" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_suacompe}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="c5e8a3e0-a25c-4f66-95e3-e83276650b50" positionType="Float" x="539" y="64" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_nossadev}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="24c57fc9-4ce4-456d-8d41-3fce515ab921" positionType="Float" x="597" y="64" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_suadevol}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="1d2962aa-4025-44cb-8881-ec28477580fd" positionType="Float" x="654" y="64" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_nossacob}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="04cc156c-7a90-4902-8d2e-29b6fe5eb87c" positionType="Float" x="712" y="64" width="56" height="8">
+					<printWhenExpression><![CDATA[$F{tprelato}=="BANCOOB"]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_gpspagas}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="83c64652-dd0c-4708-9d0c-bcf7a90fd68c" positionType="Float" x="712" y="64" width="56" height="8">
+					<printWhenExpression><![CDATA[$F{tprelato}!="BANCOOB"]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_suacob}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="0769a138-7655-4000-8c99-4f080856cb1f" positionType="Float" x="770" y="64" width="56" height="8">
+					<printWhenExpression><![CDATA[$F{tprelato}!="BANCOOB"]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlr_noscoban}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

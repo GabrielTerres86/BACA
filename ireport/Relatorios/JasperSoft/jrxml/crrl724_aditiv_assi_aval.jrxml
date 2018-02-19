@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2016-09-06T17:48:21 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="aditic_assi_aval" language="groovy" pageWidth="480" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="aditiv"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/raiz/termo/assinaturas/avalista]]>
+	</queryString>
+	<field name="linhatra" class="java.lang.String">
+		<fieldDescription><![CDATA[linhatra]]></fieldDescription>
+	</field>
+	<field name="nmdevsol" class="java.lang.String">
+		<fieldDescription><![CDATA[nmdevsol]]></fieldDescription>
+	</field>
+	<field name="dscpfcgc" class="java.lang.String">
+		<fieldDescription><![CDATA[dscpfcgc]]></fieldDescription>
+	</field>
+	<field name="dsendere" class="java.lang.String">
+		<fieldDescription><![CDATA[dsendere]]></fieldDescription>
+	</field>
+	<field name="dstelefo" class="java.lang.String">
+		<fieldDescription><![CDATA[dstelefo]]></fieldDescription>
+	</field>
+	<field name="vr_linhatra_cje" class="java.lang.String">
+		<fieldDescription><![CDATA[vr_linhatra_cje]]></fieldDescription>
+	</field>
+	<field name="vr_nmdevsol_cje" class="java.lang.String">
+		<fieldDescription><![CDATA[vr_nmdevsol_cje]]></fieldDescription>
+	</field>
+	<field name="vr_dscpfcgc_cje" class="java.lang.String">
+		<fieldDescription><![CDATA[vr_dscpfcgc_cje]]></fieldDescription>
+	</field>
+	<field name="vr_dsendere_cje" class="java.lang.String">
+		<fieldDescription><![CDATA[vr_dsendere_cje]]></fieldDescription>
+	</field>
+	<field name="vr_dstelefo_cje" class="java.lang.String">
+		<fieldDescription><![CDATA[vr_dstelefo_cje]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<columnHeader>
+		<band height="11">
+			<staticText>
+				<reportElement x="0" y="0" width="220" height="11" uuid="74a5683a-4a38-4df8-b839-7c6c6a4e08f0">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Devedores Solidários/Fiadores ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="230" y="0" width="220" height="11" uuid="d317bf64-76fe-4284-909c-84758b622c86">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Cônjuges dos Devedores Solidários/Fiadores]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="66" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<line>
+				<reportElement x="10" y="21" width="148" height="1" uuid="eb4dccef-937a-4e61-88b2-5a3a9111fa07">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{nmdevsol} != null]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="0" y="11" width="20" height="11" uuid="f934ae1d-eef4-432a-b2dd-d42095231729">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{linhatra}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="0" y="22" width="220" height="11" uuid="1251565d-aa68-4c36-b814-db33b7089bd6">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmdevsol}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="0" y="33" width="220" height="11" uuid="111ecf48-4d10-42ef-8a03-60e929092bf3">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dscpfcgc}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="0" y="44" width="220" height="11" uuid="0712794d-85ee-4afe-8cdc-031437ca2ff2">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsendere}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="0" y="55" width="220" height="11" uuid="2a47f78d-d146-448c-bf44-2625967a5ffb">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dstelefo}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="238" y="21" width="148" height="1" uuid="1f284bb2-7e3d-46e6-81f2-d6491264d60d">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{vr_linhatra_cje} != null]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="230" y="22" width="234" height="11" isRemoveLineWhenBlank="true" uuid="7551220a-563b-4130-9e62-9cd67ba14045">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vr_nmdevsol_cje}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="230" y="11" width="20" height="11" isRemoveLineWhenBlank="true" uuid="4b886da0-c030-4ad7-9ad1-d8ce6f026bbf">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vr_linhatra_cje}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="230" y="33" width="234" height="11" isRemoveLineWhenBlank="true" uuid="e5fb8e96-f9b8-4655-9e09-aeea24e3cfa2">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vr_dscpfcgc_cje}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="230" y="44" width="234" height="11" isRemoveLineWhenBlank="true" uuid="ff47e412-8c97-424b-b83a-5cddda38f255">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vr_dsendere_cje}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement positionType="Float" x="230" y="55" width="234" height="11" isRemoveLineWhenBlank="true" uuid="4562fd7e-0e39-4027-a84d-8ddb5250b93c">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vr_dstelefo_cje}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

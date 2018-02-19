@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl006_pnmpo" language="groovy" pageWidth="539" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="539" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_NMARQSAI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl006_99/totais/pnmpo/linha/contrato]]>
+	</queryString>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="nrctremp" class="java.lang.String">
+		<fieldDescription><![CDATA[nrctremp]]></fieldDescription>
+	</field>
+	<field name="vlsdeved" class="java.lang.String">
+		<fieldDescription><![CDATA[vlsdeved]]></fieldDescription>
+	</field>
+	<field name="vlemprst" class="java.lang.String">
+		<fieldDescription><![CDATA[vlemprst]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="dtmvtolt" class="java.lang.String">
+		<fieldDescription><![CDATA[dtmvtolt]]></fieldDescription>
+	</field>
+	<field name="id" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::linha/@id]]></fieldDescription>
+	</field>
+	<group name="GR_MICRO" isReprintHeaderOnEachPage="true">
+		<groupExpression><![CDATA[$F{id}]]></groupExpression>
+		<groupHeader>
+			<band height="32">
+				<staticText>
+					<reportElement uuid="6048e203-b707-4347-9272-a2cb3d56521f" x="1" y="15" width="20" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[PA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="6048e203-b707-4347-9272-a2cb3d56521f" x="1" y="2" width="126" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[Detalhamento da linha PNMPO:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="6048e203-b707-4347-9272-a2cb3d56521f" x="31" y="15" width="44" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[CONTA/DV]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="6048e203-b707-4347-9272-a2cb3d56521f" x="83" y="15" width="44" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[NOME]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="6048e203-b707-4347-9272-a2cb3d56521f" x="257" y="15" width="44" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[CONTRATO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="6048e203-b707-4347-9272-a2cb3d56521f" x="321" y="15" width="44" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[EMPRESTADO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="6048e203-b707-4347-9272-a2cb3d56521f" x="376" y="15" width="59" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[SALDO DEVEDOR]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="6048e203-b707-4347-9272-a2cb3d56521f" x="452" y="15" width="59" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[DATA]]></text>
+				</staticText>
+				<textField>
+					<reportElement uuid="dff871e9-de9f-4689-a85f-d13ac3c75999" x="130" y="2" width="20" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{id}.trim()]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="2a98bb7e-f3de-4b41-91e1-f3da2c92b90d" x="1" y="23" width="514" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<text><![CDATA[--------------------------------------------------------------------------------------------------------------------------------]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="16"/>
+		</groupFooter>
+	</group>
+	<detail>
+		<band height="8">
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="376" y="0" width="60" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlsdeved}.trim()]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="452" y="0" width="60" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtmvtolt}.trim()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c3476d7c-36cc-48b6-a5d1-cb64abcd39af" x="31" y="0" width="45" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}.trim()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c3476d7c-36cc-48b6-a5d1-cb64abcd39af" x="2" y="0" width="19" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdagenci}.trim()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c3476d7c-36cc-48b6-a5d1-cb64abcd39af" x="261" y="0" width="40" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrctremp}.trim()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c3476d7c-36cc-48b6-a5d1-cb64abcd39af" x="82" y="0" width="180" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmprimtl}.trim()]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="306" y="0" width="60" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlemprst}.trim()]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

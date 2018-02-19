@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl014_99" language="groovy" pageWidth="592" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="592" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="5.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl014_tot]]>
+	</queryString>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="vlsddisp" class="java.lang.String">
+		<fieldDescription><![CDATA[vlsddisp]]></fieldDescription>
+	</field>
+	<field name="vllimcre" class="java.lang.String">
+		<fieldDescription><![CDATA[vllimcre]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="vlsdbltl" class="java.lang.String">
+		<fieldDescription><![CDATA[vlsdbltl]]></fieldDescription>
+	</field>
+	<field name="vlsdchsl" class="java.lang.String">
+		<fieldDescription><![CDATA[vlsdchsl]]></fieldDescription>
+	</field>
+	<field name="vlstotal" class="java.lang.String">
+		<fieldDescription><![CDATA[vlstotal]]></fieldDescription>
+	</field>
+	<field name="pac_vlsaqmax" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_geral/total/pac_vlsaqmax]]></fieldDescription>
+	</field>
+	<field name="pac_vltotlim" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_geral/total/pac_vltotlim]]></fieldDescription>
+	</field>
+	<field name="pac_vlsddisp" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_geral/total/pac_vlsddisp]]></fieldDescription>
+	</field>
+	<field name="pac_vlsdbltl" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_geral/total/pac_vlsdbltl]]></fieldDescription>
+	</field>
+	<field name="pac_vlsdchsl" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_geral/total/pac_vlsdchsl]]></fieldDescription>
+	</field>
+	<field name="pac_vlstotal" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_geral/total/pac_vlstotal]]></fieldDescription>
+	</field>
+	<field name="dem_agpsdmax" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_demit/demit/dem_agpsdmax]]></fieldDescription>
+	</field>
+	<field name="dem_agpvllim" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_demit/demit/dem_agpvllim]]></fieldDescription>
+	</field>
+	<field name="dem_agpsddis" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_demit/demit/dem_agpsddis]]></fieldDescription>
+	</field>
+	<field name="dem_agpsdbtl" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_demit/demit/dem_agpsdbtl]]></fieldDescription>
+	</field>
+	<field name="dem_agpsdchs" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_demit/demit/dem_agpsdchs]]></fieldDescription>
+	</field>
+	<field name="dem_agpsdstl" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl006/agencia/tot_demit/demit/dem_agpsdstl]]></fieldDescription>
+	</field>
+	<field name="dsdacstp" class="java.lang.String">
+		<fieldDescription><![CDATA[dsdacstp]]></fieldDescription>
+	</field>
+	<field name="vlsaqmax" class="java.lang.String">
+		<fieldDescription><![CDATA[vlsaqmax]]></fieldDescription>
+	</field>
+	<pageHeader>
+		<band height="8">
+			<subreport>
+				<reportElement uuid="3ec5e745-43e8-4fcd-8cf1-229a6adeca01" x="0" y="0" width="595" height="8"/>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[]]></dataSourceExpression>
+				<subreportExpression><![CDATA["cabrel132.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<subreport>
+				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="595" height="8"/>
+				<subreportParameter name="PR_NMRESCOP"/>
+				<subreportParameter name="PR_NMRELATO"/>
+				<subreportParameter name="PR_DTMVTOLT"/>
+				<subreportParameter name="PR_NMMODULO"/>
+				<subreportParameter name="PR_CDRELATO"/>
+				<subreportParameter name="PR_PROGERAD"/>
+				<subreportParameter name="PR_NMDESTIN"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//p1")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl014_total_planos.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="8" splitType="Stretch">
+			<subreport>
+				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="595" height="8"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//s1")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl014_total_saldos.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="8">
+			<subreport>
+				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="595" height="8"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//e1")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl014_total_emprestimos.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="8">
+			<subreport>
+				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="595" height="8"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//r1")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl014_total_recadastros.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>

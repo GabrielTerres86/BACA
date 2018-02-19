@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2016-10-18T09:10:35 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl728" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl728"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl728/SMS]]>
+	</queryString>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="nmresage" class="java.lang.String">
+		<fieldDescription><![CDATA[nmresage]]></fieldDescription>
+	</field>
+	<field name="nrnosnum" class="java.lang.String">
+		<fieldDescription><![CDATA[nrnosnum]]></fieldDescription>
+	</field>
+	<field name="nmdsacad" class="java.lang.String">
+		<fieldDescription><![CDATA[nmdsacad]]></fieldDescription>
+	</field>
+	<field name="dtvencto" class="java.lang.String">
+		<fieldDescription><![CDATA[dtvencto]]></fieldDescription>
+	</field>
+	<field name="vltitulo" class="java.lang.Double">
+		<fieldDescription><![CDATA[vltitulo]]></fieldDescription>
+	</field>
+	<field name="dhenvio_sms" class="java.lang.String">
+		<fieldDescription><![CDATA[dhenvio_sms]]></fieldDescription>
+	</field>
+	<field name="nrdofone" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdofone]]></fieldDescription>
+	</field>
+	<field name="dtiniper" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::crrl728/@dtiniper]]></fieldDescription>
+	</field>
+	<field name="dtfimper" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::crrl728/@dtfimper]]></fieldDescription>
+	</field>
+	<group name="Agencia" isStartNewPage="true">
+		<groupExpression><![CDATA[$F{cdagenci}]]></groupExpression>
+		<groupHeader>
+			<band height="16">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<textField pattern="" isBlankWhenNull="false">
+					<reportElement mode="Transparent" x="20" y="8" width="360" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="773755a1-cc6e-471b-860f-961fb7d08bc9">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["PA: " + $F{cdagenci} + " - " + $F{nmresage}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<group name="Conta">
+		<groupExpression><![CDATA[$F{nrdconta}]]></groupExpression>
+		<groupHeader>
+			<band height="24">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<textField pattern="" isBlankWhenNull="false">
+					<reportElement mode="Transparent" x="20" y="0" width="360" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="e72d68fa-5e4d-4be9-99b1-f7e999187cee">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Conta: " + $F{nrdconta} + " - " + $F{nmprimtl}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="20" y="16" width="80" height="8" uuid="806260f4-5525-4f10-8e3a-2f777f03177d">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[Nosso Numero]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="103" y="16" width="150" height="8" uuid="4fdc16bd-d77d-4251-b715-f60fa702cdfb">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[Nome do Pagador]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="259" y="16" width="45" height="8" uuid="2d2beef3-fbfa-4786-b94d-3fb438293137">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[Vencimento	]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="308" y="16" width="80" height="8" uuid="6a7aa377-4501-474a-bc79-d49c04cec22d">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[Valor Boleto	]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="397" y="16" width="90" height="8" uuid="3436978d-5914-4769-8a91-2d4718b3e150">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[Data/Hora Envio]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="494" y="16" width="70" height="8" uuid="7823c3ca-dc72-4ac4-a162-87e837106e5a">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[Celular]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="16">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<textField pattern="" isBlankWhenNull="false">
+					<reportElement mode="Transparent" x="20" y="0" width="360" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="3229aca4-8bf3-4068-9fba-bf9d63afe78d">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Total de Envios: " + $V{Conta_COUNT}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="32">
+			<textField>
+				<reportElement x="20" y="0" width="52" height="8" isPrintWhenDetailOverflows="true" uuid="50e7d6bb-e4d1-4b00-bb2e-6407e6ad6f33"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{PR_NMRESCOP}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="74" y="0" width="170" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="9d57c8f3-fd13-49f0-aeac-6d0c50fe3647">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA["- "+$P{PR_NMRELATO}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="248" y="0" width="74" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="79b6e762-49e4-4bea-97b0-f4266ed87367"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA["- REF."+$P{PR_DTMVTOLT}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="324" y="0" width="52" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="b2e92722-06ef-48aa-89b3-949457a3f94c"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{PR_NMMODULO}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="371" y="0" width="38" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="10da589d-c39e-4ed4-b62f-a0673aaab5d9"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{PR_CDRELATO}+"/"+$P{PR_PROGERAD}]]></textFieldExpression>
+			</textField>
+			<textField pattern="&apos; EM&apos; dd/MM/yyyy &apos;AS&apos; HH:mm &apos;HR&apos;" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="426" y="0" width="101" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="018c1fe2-cdce-4278-bc5c-5bc0ce7a43ab"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new Date()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="528" y="0" width="22" height="8" isPrintWhenDetailOverflows="true" uuid="8f48a636-d4de-4394-b35e-6d895ab61b51"/>
+				<textElement>
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[PAG.:]]></text>
+			</staticText>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="549" y="0" width="26" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="20aaa757-7ef6-448e-8d5e-dd7ec9c0d6f8"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="20" y="24" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="a2bcdccd-5cf1-4e2e-927f-0ac904933161">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtiniper} +" à " + $F{dtfimper}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="20" y="16" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="1d88307d-16f0-46db-ac9f-12cdc9d24c2a">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{PR_NMRELATO}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="8"/>
+	</columnHeader>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="20" y="0" width="80" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="1ce4213a-44b0-414c-97a7-b54c9e5f1173">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrnosnum}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="103" y="0" width="150" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="ab50cd0c-b10c-4057-9451-f68e0a5725c8">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmdsacad}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="259" y="0" width="45" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="be5d6a7b-0962-4976-a459-190d1171bedb">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtvencto}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00#" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="308" y="0" width="80" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="c865ee90-384e-46b5-9526-bd3dab1541be">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vltitulo}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="397" y="0" width="90" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="8798be03-bed8-43fa-9009-bcf231d95027">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dhenvio_sms}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement mode="Transparent" x="494" y="0" width="70" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="b8268ae1-67cf-4efd-98cd-95a915a42937">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdofone}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl628_conteudo" language="groovy" pageWidth="595" pageHeight="672" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="a20d0709-df91-4686-96ee-8d900797b890">
+	<property name="ireport.zoom" value="3.0"/>
+	<property name="ireport.x" value="457"/>
+	<property name="ireport.y" value="0"/>
+	<queryString language="xPath">
+		<![CDATA[/coope/grupo/registro]]>
+	</queryString>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="nrdgrupo" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdgrupo]]></fieldDescription>
+	</field>
+	<field name="nrctasoc" class="java.lang.String">
+		<fieldDescription><![CDATA[nrctasoc]]></fieldDescription>
+	</field>
+	<field name="dsdrisco" class="java.lang.String">
+		<fieldDescription><![CDATA[dsdrisco]]></fieldDescription>
+	</field>
+	<field name="vlendivi" class="java.lang.String">
+		<fieldDescription><![CDATA[vlendivi]]></fieldDescription>
+	</field>
+	<field name="dsdrisgp" class="java.lang.String">
+		<fieldDescription><![CDATA[dsdrisgp]]></fieldDescription>
+	</field>
+	<field name="vlendigp" class="java.lang.String">
+		<fieldDescription><![CDATA[vlendigp]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<textField>
+				<reportElement uuid="91bcc0a9-2a29-4df6-a915-31888754e8d0" x="0" y="0" width="51" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdgrupo}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="6c482281-882c-4f2d-ba63-daf946653aaa" x="56" y="0" width="15" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdagenci}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="29fafaa1-dcdd-4c01-85e2-06fd19a88c51" x="76" y="0" width="43" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrctasoc}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="11cc9543-7857-44c2-bd95-9cd7c90488a1" x="124" y="0" width="23" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsdrisco}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="3a157611-0d4f-4c3b-9e06-51b1e5b19039" x="152" y="0" width="76" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlendivi}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="daea7ac1-b915-4a72-b5eb-e943ed317690" x="233" y="0" width="61" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsdrisgp}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="697b8645-0511-487d-971d-29c8a0d1dc9c" x="299" y="0" width="106" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlendigp}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

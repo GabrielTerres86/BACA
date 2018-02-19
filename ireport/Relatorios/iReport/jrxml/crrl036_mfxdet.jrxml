@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl037_mfxdet" language="groovy" pageWidth="592" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="592" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="409"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl036/mesref/tabmfx/mfxdet]]>
+	</queryString>
+	<field name="desdia1" class="java.lang.String">
+		<fieldDescription><![CDATA[desdia1]]></fieldDescription>
+	</field>
+	<field name="vlmoefix1" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlmoefix1]]></fieldDescription>
+	</field>
+	<field name="desdia2" class="java.lang.String">
+		<fieldDescription><![CDATA[desdia2]]></fieldDescription>
+	</field>
+	<field name="vlmoefix2" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlmoefix2]]></fieldDescription>
+	</field>
+	<field name="desdia3" class="java.lang.String">
+		<fieldDescription><![CDATA[desdia3]]></fieldDescription>
+	</field>
+	<field name="vlmoefix3" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlmoefix3]]></fieldDescription>
+	</field>
+	<field name="desdia4" class="java.lang.String">
+		<fieldDescription><![CDATA[desdia4]]></fieldDescription>
+	</field>
+	<field name="vlmoefix4" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlmoefix4]]></fieldDescription>
+	</field>
+	<field name="desdia5" class="java.lang.String">
+		<fieldDescription><![CDATA[desdia5]]></fieldDescription>
+	</field>
+	<field name="vlmoefix5" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlmoefix5]]></fieldDescription>
+	</field>
+	<group name="Agencia" isStartNewPage="true" isReprintHeaderOnEachPage="true">
+		<groupHeader>
+			<band height="32">
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="0" y="0" width="592" height="8"/>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[TABELA DE UFIR]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="3" y="16" width="40" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[DIA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="50" y="16" width="60" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[VALOR]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="115" y="16" width="40" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[DIA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="160" y="16" width="60" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[VALOR]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="225" y="16" width="40" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[DIA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="277" y="16" width="60" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[VALOR]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="340" y="16" width="35" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[DIA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="386" y="16" width="60" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[VALOR]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="450" y="16" width="35" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[DIA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="502" y="16" width="60" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[VALOR]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+	</group>
+	<detail>
+		<band height="8">
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="3" y="0" width="40" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{desdia1}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00000000">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="50" y="0" width="60" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlmoefix1}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="115" y="0" width="40" height="8" forecolor="#000000" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[($F{desdia2}.isEmpty() ? Boolean.FALSE : Boolean.TRUE)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{desdia2}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00000000">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="160" y="0" width="60" height="8" forecolor="#000000" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[($F{desdia2}.isEmpty() ? Boolean.FALSE : Boolean.TRUE)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlmoefix2}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="225" y="0" width="40" height="8" forecolor="#000000" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[($F{desdia3}.isEmpty() ? Boolean.FALSE : Boolean.TRUE)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{desdia3}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00000000">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="277" y="0" width="60" height="8" forecolor="#000000" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[($F{desdia3}.isEmpty() ? Boolean.FALSE : Boolean.TRUE)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlmoefix3}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="340" y="0" width="35" height="8" forecolor="#000000" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[($F{desdia4}.isEmpty() ? Boolean.FALSE : Boolean.TRUE)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{desdia4}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00000000">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="386" y="0" width="60" height="8" forecolor="#000000" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[($F{desdia4}.isEmpty() ? Boolean.FALSE : Boolean.TRUE)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlmoefix4}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="450" y="0" width="35" height="8" forecolor="#000000" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[($F{desdia5}.isEmpty() ? Boolean.FALSE : Boolean.TRUE)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{desdia5}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00000000">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="502" y="0" width="60" height="8" forecolor="#000000" backcolor="#FFFFFF">
+					<printWhenExpression><![CDATA[($F{desdia5}.isEmpty() ? Boolean.FALSE : Boolean.TRUE)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlmoefix5}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

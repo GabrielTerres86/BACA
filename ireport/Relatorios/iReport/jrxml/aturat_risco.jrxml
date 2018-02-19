@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl367" language="groovy" pageWidth="592" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="592" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.196150000000008"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<subDataset name="dataset1" uuid="0695e938-6a20-48a5-9cc2-5c0937dbf294"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["C:\\Users\\f0030668\\Desktop\\SVN\\branches\\PRJ+STT\\relatorios\\"]]></defaultValueExpression>
+	</parameter>
+	<queryString language="xPath">
+		<![CDATA[/crrl367/topico/subtopico/item]]>
+	</queryString>
+	<field name="dspessoa" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::crrl367/@dspessoa]]></fieldDescription>
+	</field>
+	<field name="dtmvtolt" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::crrl367/@dtmvtolt]]></fieldDescription>
+	</field>
+	<field name="nmoperad" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::crrl367/@nmoperad]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::crrl367/@nmprimtl]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::crrl367/@nrdconta]]></fieldDescription>
+	</field>
+	<field name="dstopico" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::topico/@dstopico]]></fieldDescription>
+	</field>
+	<field name="nrtopico" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::topico/@nrtopico]]></fieldDescription>
+	</field>
+	<field name="dsitetop" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::subtopico/@dsitetop]]></fieldDescription>
+	</field>
+	<field name="nritetop" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::subtopico/@nritetop]]></fieldDescription>
+	</field>
+	<field name="pesoitem" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::subtopico/@pesoitem]]></fieldDescription>
+	</field>
+	<field name="pesosequ" class="java.lang.String">
+		<fieldDescription><![CDATA[pesosequ]]></fieldDescription>
+	</field>
+	<field name="nrseqite" class="java.lang.String">
+		<fieldDescription><![CDATA[nrseqite]]></fieldDescription>
+	</field>
+	<field name="dsseqite" class="java.lang.String">
+		<fieldDescription><![CDATA[dsseqite]]></fieldDescription>
+	</field>
+	<field name="vlrdnota" class="java.lang.String">
+		<fieldDescription><![CDATA[vlrdnota]]></fieldDescription>
+	</field>
+	<field name="nrctrrat" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::crrl367/@nrctrrat]]></fieldDescription>
+	</field>
+	<field name="dsdriscotl" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl367/deslegenda/dsdriscotl]]></fieldDescription>
+	</field>
+	<field name="vlrtotaltl" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl367/deslegenda/vlrtotaltl]]></fieldDescription>
+	</field>
+	<field name="nrnotaope" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl367/deslegenda/nrnotaope]]></fieldDescription>
+	</field>
+	<field name="dsdriscocl" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl367/deslegenda/dsdriscocl]]></fieldDescription>
+	</field>
+	<field name="vlrtotalcl" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl367/deslegenda/vlrtotalcl]]></fieldDescription>
+	</field>
+	<field name="vlprovis" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl367/deslegenda/vlprovis]]></fieldDescription>
+	</field>
+	<field name="parecer" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl367/deslegenda/parecer]]></fieldDescription>
+	</field>
+	<field name="dsdefeti" class="java.lang.String">
+		<fieldDescription><![CDATA[/crrl367/obervacao/dsdefeti]]></fieldDescription>
+	</field>
+	<field name="dsdopera" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::crrl367/@dsdopera]]></fieldDescription>
+	</field>
+	<group name="topico" keepTogether="true">
+		<groupExpression><![CDATA[$F{nrtopico}]]></groupExpression>
+		<groupHeader>
+			<band height="8">
+				<textField pattern="" isBlankWhenNull="false">
+					<reportElement uuid="67ed3fa1-283e-42c5-954b-f5a4463e6a3d" mode="Transparent" x="13" y="0" width="19" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrtopico}]]></textFieldExpression>
+				</textField>
+				<textField pattern="" isBlankWhenNull="false">
+					<reportElement uuid="73c0af50-7196-41c6-9a26-3e8a4e19cab0" mode="Transparent" x="36" y="0" width="329" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dstopico}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="024f0b82-f83e-4ae4-88c7-65f77982cc20" mode="Transparent" x="373" y="0" width="44" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[PESO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="6f25a556-9bd1-4c96-afc9-88e655d0520c" mode="Transparent" x="427" y="0" width="34" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[NOTA]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="8"/>
+		</groupFooter>
+	</group>
+	<group name="subtopico" keepTogether="true">
+		<groupExpression><![CDATA[$F{nritetop}]]></groupExpression>
+		<groupHeader>
+			<band height="24">
+				<textField pattern="" isBlankWhenNull="false">
+					<reportElement uuid="0c0662c6-a95e-4e98-8296-bc8365e568c3" mode="Transparent" x="36" y="16" width="329" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dsitetop}]]></textFieldExpression>
+				</textField>
+				<textField pattern="" isBlankWhenNull="false">
+					<reportElement uuid="f7e7f788-fe4a-4e20-9ffa-053dbaf0e5b7" mode="Transparent" x="373" y="16" width="44" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA['('+ $F{pesoitem} + ')']]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<pageHeader>
+		<band height="32">
+			<subreport>
+				<reportElement uuid="27f4e593-89bd-4b42-9d68-3b436e5c278d" x="0" y="0" width="595" height="32"/>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[]]></dataSourceExpression>
+				<subreportExpression><![CDATA["cabrel132.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="24">
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="45fc407c-4e70-4129-b11f-d7c3623f65e7" mode="Transparent" x="46" y="0" width="50" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="16d4da16-8406-4bf2-a497-4eaf5b7b2298" mode="Transparent" x="101" y="0" width="195" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="d196e3b1-5c61-4e8e-abdd-18f12f1b6678" mode="Transparent" x="492" y="0" width="59" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dspessoa}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="13a46139-2e53-4c2d-a4ae-c8ec47b3f999" mode="Transparent" x="13" y="0" width="29" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[Conta:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="608b14ce-853e-4e0d-89d0-6c86131fb1be" mode="Transparent" x="300" y="0" width="40" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[Contrato:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="f8e1f142-2207-405d-99b8-437f85747ee6" mode="Transparent" x="342" y="0" width="50" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrctrrat}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="6ca81b2d-c78a-4c55-a68b-79ad632cd54d" mode="Transparent" x="395" y="0" width="85" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA['('+ $F{dsdopera} + ')']]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="6af42414-b28e-4cab-a2cb-ceab8de09160" mode="Transparent" x="480" y="0" width="10" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[-]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="8">
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="2fe674ae-aa46-477b-bbfd-263923a47fe5" mode="Transparent" x="55" y="0" width="310" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsseqite}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="24e2ac7c-3740-411c-90cf-41f4f7902fc8" mode="Transparent" x="373" y="0" width="44" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{pesosequ}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement uuid="c12378c4-8312-403e-aabf-0c825982ace1" mode="Transparent" x="427" y="0" width="34" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlrdnota}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="102">
+			<staticText>
+				<reportElement uuid="87e727c5-f288-4879-80de-f9d8f577c168" mode="Transparent" x="13" y="10" width="68" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[RISCO COOPERADO:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="41a4539d-d4c5-4953-ae90-d858bea96adf" mode="Transparent" x="1" y="28" width="80" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[RISCO GERAL RATING:]]></text>
+			</staticText>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="73462e58-a5a9-4e7d-a967-ae72836e4a0a" mode="Transparent" x="85" y="10" width="31" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlrtotaltl}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="eaffeba1-a5db-4e4d-9651-28fea9cb29ad" mode="Transparent" x="152" y="10" width="26" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsdriscotl}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="25a7483e-2290-4d21-bb4a-8b149779f993" mode="Transparent" x="121" y="10" width="27" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[RISCO:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="2496782f-7239-45c9-b553-729e2976aacd" mode="Transparent" x="181" y="10" width="66" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[RISCO OPERACAO:]]></text>
+			</staticText>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="bc622374-42b5-4c9c-9f6c-2f35c78d3bcf" mode="Transparent" x="251" y="10" width="57" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrnotaope}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="acc964c2-2ea5-4e78-9cc9-fa80b373848c" mode="Transparent" x="85" y="28" width="31" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlrtotalcl}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="9fdff312-2d1d-4562-8fec-8edd32544baa" mode="Transparent" x="121" y="28" width="27" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[RISCO:]]></text>
+			</staticText>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="e0d5b9f3-bb59-4f3f-8bfc-aae971728d01" mode="Transparent" x="152" y="28" width="26" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsdriscocl}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="e7d6ea16-cb6a-4df8-ab43-0f471cf13a22" mode="Transparent" x="181" y="28" width="39" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[PROVISAO:]]></text>
+			</staticText>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="32bfc947-1cc6-46b1-9e57-42e2ac236a96" mode="Transparent" x="223" y="28" width="28" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlprovis}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="072ac941-650d-4abc-8cff-24271b5a12a2" mode="Transparent" x="254" y="28" width="54" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{parecer}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="3a6ebba9-751b-4fa6-a05b-89b3fb650178" mode="Transparent" x="1" y="87" width="541" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsdefeti}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd MMMMM yyyy" isBlankWhenNull="true">
+				<reportElement uuid="6b3c3580-cc65-4a37-bdcc-e0088624f188" mode="Transparent" x="13" y="64" width="100" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtmvtolt}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="64af928c-1e53-4cff-ad71-4f6df8666198" mode="Transparent" x="355" y="72" width="209" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[RESPONSAVEL]]></text>
+			</staticText>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement uuid="87bfebea-6047-4c94-b14f-adc181cecf6c" mode="Transparent" x="124" y="72" width="209" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmoperad}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="04599cf4-0640-4671-83ee-45a707f37f6a" mode="Transparent" x="355" y="63" width="209" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[___________________________________________________]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="04599cf4-0640-4671-83ee-45a707f37f6a" mode="Transparent" x="124" y="63" width="209" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[___________________________________________________]]></text>
+			</staticText>
+		</band>
+	</summary>
+</jasperReport>

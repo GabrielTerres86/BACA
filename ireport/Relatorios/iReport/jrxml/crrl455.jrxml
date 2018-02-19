@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel132" language="groovy" pageWidth="595" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<subDataset name="dataset1" uuid="af0bd23c-3237-452d-89bf-cf0221f78f5c"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_MESREF" class="java.lang.String"/>
+	<parameter name="PR_CDCOOPER" class="java.lang.String"/>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/raiz/tipoAplica]]>
+	</queryString>
+	<field name="id" class="java.lang.String">
+		<fieldDescription><![CDATA[@id]]></fieldDescription>
+	</field>
+	<field name="desTpApli" class="java.lang.String">
+		<fieldDescription><![CDATA[@desTpApli]]></fieldDescription>
+	</field>
+	<field name="mesRef" class="java.lang.String">
+		<fieldDescription><![CDATA[@mesRef]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="32">
+			<subreport>
+				<reportElement uuid="dfc4bf43-3f6d-4996-b612-ad557e30d8e4" x="0" y="0" width="595" height="32"/>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[]]></dataSourceExpression>
+				<subreportExpression><![CDATA["cabrel132.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="24">
+			<staticText>
+				<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="20" y="0" width="85" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[APLICACOES TIPO]]></text>
+			</staticText>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="f8626b67-e9cb-474d-bbcb-49e19cae59a7" mode="Transparent" x="106" y="0" width="12" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{id}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="7072d18c-a27a-445a-b044-f06e6070cae1" mode="Transparent" x="132" y="0" width="100" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{desTpApli}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="6498975b-66dc-44cd-83fd-d657a42ee3a4" mode="Transparent" x="122" y="0" width="5" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[-]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="16" splitType="Stretch">
+			<frame>
+				<reportElement uuid="516f4eea-313f-493a-bd95-7d4e31a937c0" x="0" y="0" width="592" height="8"/>
+				<subreport>
+					<reportElement uuid="ea0c0142-b4cc-44f2-9289-d2fdf23b1d58" x="0" y="0" width="592" height="8"/>
+					<subreportParameter name="PR_NMRESCOP"/>
+					<subreportParameter name="PR_NMRELATO"/>
+					<subreportParameter name="PR_DTMVTOLT"/>
+					<subreportParameter name="PR_NMMODULO"/>
+					<subreportParameter name="PR_CDRELATO"/>
+					<subreportParameter name="PR_PROGERAD"/>
+					<subreportParameter name="PR_NMDESTIN"/>
+					<subreportParameter name="PR_SQSOLICI"/>
+					<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//total")]]></dataSourceExpression>
+					<subreportExpression><![CDATA["crrl455_totais.jasper"]]></subreportExpression>
+				</subreport>
+			</frame>
+		</band>
+		<band height="16">
+			<frame>
+				<reportElement uuid="21c65e17-cb77-4530-b166-ad5509901df0" x="0" y="0" width="592" height="8"/>
+				<subreport>
+					<reportElement uuid="daea8ba2-54d2-446f-a745-7f6a72704751" x="0" y="0" width="592" height="8"/>
+					<subreportParameter name="PR_NMDESTIN"/>
+					<subreportParameter name="PR_NMRELATO"/>
+					<subreportParameter name="PR_SQSOLICI"/>
+					<subreportParameter name="PR_PROGERAD"/>
+					<subreportParameter name="PR_CDRELATO"/>
+					<subreportParameter name="PR_NMRESCOP"/>
+					<subreportParameter name="PR_DTMVTOLT"/>
+					<subreportParameter name="PR_MESREF">
+						<subreportParameterExpression><![CDATA[$P{PR_MESREF}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="PR_NMMODULO"/>
+					<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//periodo")]]></dataSourceExpression>
+					<subreportExpression><![CDATA["crrl455_periodos.jasper"]]></subreportExpression>
+				</subreport>
+			</frame>
+		</band>
+		<band height="16" splitType="Prevent">
+			<printWhenExpression><![CDATA[$P{PR_CDCOOPER}.equals("3")]]></printWhenExpression>
+			<frame>
+				<reportElement uuid="9b3b6d42-a5e6-407b-9e6e-433123f5fec1" x="0" y="0" width="592" height="8"/>
+				<subreport>
+					<reportElement uuid="704db557-5dca-4941-bbbb-3a80595064ae" x="0" y="0" width="592" height="8"/>
+					<subreportParameter name="PR_NMRESCOP"/>
+					<subreportParameter name="PR_NMRELATO"/>
+					<subreportParameter name="PR_DTMVTOLT"/>
+					<subreportParameter name="PR_NMMODULO"/>
+					<subreportParameter name="PR_CDRELATO"/>
+					<subreportParameter name="PR_PROGERAD"/>
+					<subreportParameter name="PR_NMDESTIN"/>
+					<subreportParameter name="PR_SQSOLICI"/>
+					<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//resumo")]]></dataSourceExpression>
+					<subreportExpression><![CDATA["crrl455_resumo.jasper"]]></subreportExpression>
+				</subreport>
+			</frame>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="16"/>
+	</pageFooter>
+</jasperReport>
