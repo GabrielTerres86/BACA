@@ -2409,7 +2409,7 @@ function limpaDivGenerica(){
 function mostraExtrato( operacao ) {
 
 	showMsgAguardo('Aguarde, abrindo extrato...');
-	exibeRotina($('#divUsoGenerico'));
+	//exibeRotina($('#divUsoGenerico'));
 
 	tpemprst = arrayRegistros['tpemprst'];
 
@@ -3769,8 +3769,8 @@ function confirmarLiquidacao(){
 }
 
 function cancelaLiquidacao() {
-	
+
     showError('inform', 'Contrato n&atilde;o Liquidado!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-	return false;
+    return false;
 	
 }
