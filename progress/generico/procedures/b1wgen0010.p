@@ -4238,6 +4238,7 @@ PROCEDURE cria_tt-consulta-blt.
                                            crapcob.dtvencto)
             tt-consulta-blt.dtvctori = crapcob.dtvctori /* P340 - Rafael */
             tt-consulta-blt.vltitulo = crapcob.vltitulo
+			tt-consulta-blt.insitcrt = crapcob.insitcrt
             tt-consulta-blt.nrinssac = crapcob.nrinssac
             tt-consulta-blt.cdtpinsc = crapcob.cdtpinsc
             tt-consulta-blt.vltarifa = crapcob.vltarifa
@@ -5361,6 +5362,7 @@ PROCEDURE proc_nosso_numero.
                tt-consulta-blt.nmprimtl = p-nmprimtl 
                tt-consulta-blt.nmdsacad = REPLACE(aux_na_nmdsacad,"&","%26")
                tt-consulta-blt.nrinssac = crapcob.nrinssac
+			   tt-consulta-blt.insitcrt = crapcob.insitcrt
                tt-consulta-blt.cdtpinsc = (IF crapcob.nrinssac = 0 THEN
                                               1
                                            ELSE

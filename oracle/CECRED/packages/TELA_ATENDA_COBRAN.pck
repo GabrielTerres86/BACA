@@ -56,7 +56,10 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_flserasa  IN crapceb.flserasa%TYPE --> Pode negativar no Serasa
                                 ,pr_qtdfloat  IN crapceb.qtdfloat%TYPE --> Quantidade de dias para o Float
                                 ,pr_flprotes  IN crapceb.flprotes%TYPE --> Liberacao da opcao de Protesto na Cobranca
-                                ,pr_qtdecprz  IN crapceb.qtdecprz%TYPE --> Quantidade de dias para Decurso de Prazo
+                                ,pr_insrvprt  IN crapceb.insrvprt%TYPE --> Serviço de Protesto
+                                ,pr_qtlimaxp  IN crapceb.qtlimaxp%TYPE --> Limite a maximo de dias para pode protestar
+                                ,pr_qtlimmip  IN crapceb.qtlimmip%TYPE --> Quantidade de dias para poder protestar
+								,pr_qtdecprz  IN crapceb.qtdecprz%TYPE --> Quantidade de dias para Decurso de Prazo
                                 ,pr_idrecipr  IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
@@ -1103,7 +1106,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_flserasa  IN crapceb.flserasa%TYPE --> Pode negativar no Serasa
                                 ,pr_qtdfloat  IN crapceb.qtdfloat%TYPE --> Quantidade de dias para o Float
                                 ,pr_flprotes  IN crapceb.flprotes%TYPE --> Liberacao da opcao de Protesto na Cobranca
-                                ,pr_qtdecprz  IN crapceb.qtdecprz%TYPE --> Quantidade de dias para Decurso de Prazo
+                                ,pr_insrvprt  IN crapceb.insrvprt%TYPE --> Serviço de Protesto
+                                ,pr_qtlimaxp  IN crapceb.qtlimaxp%TYPE --> Limite a maximo de dias para pode protestar
+                                ,pr_qtlimmip  IN crapceb.qtlimmip%TYPE --> Quantidade de dias para poder protestar
+								,pr_qtdecprz  IN crapceb.qtdecprz%TYPE --> Quantidade de dias para Decurso de Prazo
                                 ,pr_idrecipr  IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
@@ -1226,6 +1232,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.flcooexp
               ,crapceb.flceeexp
               ,crapceb.flprotes
+			  ,crapceb.insrvprt
+              ,crapceb.qtlimaxp
+              ,crapceb.qtlimmip
               ,crapceb.qtdecprz
               ,crapceb.qtdfloat
 							,crapceb.inenvcob
@@ -1838,9 +1847,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       
       --> senao é manutencao  
       ELSE
+	      IF (rw_crapceb.flprotes = 1 AND pr_flprotes = 0) THEN
+ 
+          --> Gravar o log atenda - cobram - log, registrando o cancelamento do serviço de protesto
+          COBR0008.pc_gera_log_ceb 
+                          (pr_idorigem  => vr_idorigem,
+                           pr_cdcooper  => vr_cdcooper,
+                           pr_cdoperad  => vr_cdoperad,
+                           pr_nrdconta  => pr_nrdconta,
+                           pr_nrconven  => pr_nrconven,
+                           pr_dstransa  => 'Cancelamento do serviço de protesto',
+                           pr_insitceb_ant => nvl(rw_crapceb.insitceb,0), --Antes de alterar
+                           pr_insitceb  => 1, -- 'ATIVO'
+                           pr_dscritic  => vr_dscritic);
+                           
+          -- Efetua os inserts para apresentacao na tela VERLOG
+          gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => ' '
+                            ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                            ,pr_dstransa => 'Cancelamento do serviço de protesto'
+                            ,pr_dttransa => trunc(SYSDATE)
+                            ,pr_flgtrans => 1
+                            ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                            ,pr_idseqttl => 1
+                            ,pr_nmdatela => 'ATENDA'
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_rowid_log);                 
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
         --> Verificar se situacao permite continuar
         --A=Apto, I=Inapto, E=Em análise
-        IF VR_INSITIF IN ('A','E') THEN
+        ELSIF VR_INSITIF IN ('A','E') THEN
           --> Gravar o log de adesao ou bloqueio do convenio
           COBR0008.pc_gera_log_ceb 
                           (pr_idorigem  => vr_idorigem,
@@ -1924,6 +1963,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.cdhomolo = vr_cdoperad
               ,crapceb.qtdfloat = pr_qtdfloat
               ,crapceb.flprotes = pr_flprotes
+			  ,crapceb.insrvprt = pr_insrvprt
+              ,crapceb.qtlimaxp = pr_qtlimaxp
+              ,crapceb.qtlimmip = pr_qtlimmip
               ,crapceb.qtdecprz = pr_qtdecprz
               ,crapceb.idrecipr = pr_idrecipr
 							,crapceb.inenvcob = pr_inenvcob
@@ -2118,6 +2160,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                  ,pr_nmdcampo => 'Envio de Protesto'
                                  ,pr_dsdadant => CASE WHEN rw_crapceb.flprotes = 1 THEN 'ATIVO' ELSE 'INATIVO' END
                                  ,pr_dsdadatu => CASE WHEN pr_flprotes = 1 THEN 'ATIVO' ELSE 'INATIVO' END);
+      END IF;
+
+	  -- Se alterou o Serviço de Protesto
+      IF rw_crapceb.insrvprt <> pr_insrvprt THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Serviço de Protesto'
+                                 ,pr_dsdadant => rw_crapceb.insrvprt
+                                 ,pr_dsdadatu => pr_insrvprt);
+      END IF;
+      
+      -- Se a quantidade de dias para poder protestar
+      IF rw_crapceb.qtlimmip <> pr_qtlimmip THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Quantidade de dias para poder protestar'
+                                 ,pr_dsdadant => rw_crapceb.qtlimmip
+                                 ,pr_dsdadatu => pr_qtlimmip);
+      END IF;
+      
+      -- Se o limite a maximo de dias para pode protestar
+      IF rw_crapceb.qtlimaxp <> pr_qtlimaxp THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Limite a maximo de dias para pode protestar'
+                                 ,pr_dsdadant => rw_crapceb.qtlimaxp
+                                 ,pr_dsdadatu => pr_qtlimaxp);
       END IF;
 
       -- Se alterou Float a aplicar
@@ -2344,6 +2410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,prc.perdesconto_maximo perdesconto_maximo_recipro
               ,cco.flgapvco
               ,cco.flprotes
+			  ,cco.insrvprt
               ,cco.flserasa
               ,cco.qtdecini
               ,cco.qtdecate
@@ -2354,7 +2421,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
      WHERE cco.idprmrec = prc.idparame_reciproci (+) -- Outer pois nem sempre havera PRC
        AND cco.cdcooper = pr_cdcooper
        AND cco.nrconven = pr_nrconven;
+	 CURSOR cr_parprot(pr_cdcooper IN crapcco.cdcooper%TYPE) IS
+        SELECT parprot.QTLIMITEMIN_TOLERANCIA
+              ,parprot.QTLIMITEMAX_TOLERANCIA
+      FROM TBCOBRAN_PARAM_PROTESTO parprot
+     WHERE parprot.cdcooper = pr_cdcooper;
+
       rw_cco_prc cr_cco_prc%ROWTYPE;
+	  rw_cr_parprot cr_parprot%ROWTYPE;
 
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2388,6 +2462,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       OPEN cr_cco_prc(pr_cdcooper => vr_cdcooper
                      ,pr_nrconven => pr_nrconven);
       FETCH cr_cco_prc INTO rw_cco_prc;
+
+	  OPEN cr_parprot(pr_cdcooper => vr_cdcooper);
+      FETCH cr_parprot INTO rw_cr_parprot;
+      -- Fecha cursor
+      CLOSE cr_parprot;
       
       -- Criar cabecalho do XML
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -2462,6 +2541,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_tag_cont => rw_cco_prc.flprotes
                             ,pr_des_erro => vr_dscritic);
 
+	  GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'insrvprt'
+                            ,pr_tag_cont => rw_cco_prc.insrvprt
+                            ,pr_des_erro => vr_dscritic);
+                            
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'flgregis'
+                            ,pr_tag_cont => rw_cco_prc.flgregis
+                            ,pr_des_erro => vr_dscritic);
+
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                             ,pr_tag_pai  => 'Dados'
                             ,pr_posicao  => 0
@@ -2496,6 +2589,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_tag_nova => 'flgregis'
                             ,pr_tag_cont => rw_cco_prc.flgregis
                             ,pr_des_erro => vr_dscritic);
+	  
+	  GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'insrvprt'
+                            ,pr_tag_cont => rw_cco_prc.insrvprt
+                            ,pr_des_erro => vr_dscritic);
+                        
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'QTLIMITEMIN_TOLERANCIA'
+                            ,pr_tag_cont => rw_cr_parprot.QTLIMITEMIN_TOLERANCIA
+                            ,pr_des_erro => vr_dscritic);
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'QTLIMITEMAX_TOLERANCIA'
+                            ,pr_tag_cont => rw_cr_parprot.QTLIMITEMAX_TOLERANCIA
+                            ,pr_des_erro => vr_dscritic);                           
 
     EXCEPTION
       WHEN vr_exc_saida THEN

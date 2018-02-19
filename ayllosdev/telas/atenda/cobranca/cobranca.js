@@ -170,7 +170,7 @@ function habilitaSetor(setorLogado) {
  }
 
 // Destacar convenio selecinado e setar valores do item selecionado
-function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flgregon, flgpgdiv, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtdecprz, idrecipr, inenvcob) {
+function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flgregon, flgpgdiv, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob) {
 
     var qtConvenios = $("#qtconven", "#divConteudoOpcao").val();
 
@@ -195,6 +195,8 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
     $("#flsercco", "#divConteudoOpcao").val(flsercco);
     $("#qtdfloat", "#divConteudoOpcao").val(qtdfloat);
     $("#flprotes", "#divConteudoOpcao").val(flprotes);
+    $("#qtlimaxp", "#divConteudoOpcao").val(qtlimaxp);
+    $("#qtlimmip", "#divConteudoOpcao").val(qtlimmip);
     $("#qtdecprz", "#divConteudoOpcao").val(qtdecprz);
     $("#idrecipr", "#divConteudoOpcao").val(idrecipr);
 	$("#inenvcob", "#divConteudoOpcao").val(inenvcob);
@@ -278,6 +280,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
     var flserasa = $("#flserasa", "#divConteudoOpcao").val();
     var qtdfloat = $("#qtdfloat", "#divConteudoOpcao").val();
     var flprotes = $("#flprotes", "#divConteudoOpcao").val();
+    var qtlimmip = $("#qtlimmip", "#divConteudoOpcao").val();
+    var qtlimaxp = $("#qtlimaxp", "#divConteudoOpcao").val();
     var qtdecprz = $("#qtdecprz", "#divConteudoOpcao").val();
     var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
 	var inenvcob = $("#inenvcob", "#divConteudoOpcao").val();
@@ -329,6 +333,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 		flgcruni = "SIM";
 		flgcebhm = "NAO";
         flprotes = "NAO";
+        qtlimmip = "";
+        qtlimaxp = "";
         qtdfloat = "";
         qtdecprz = "";
         idrecipr = 0;
@@ -375,6 +381,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 			flsercco: flsercco, /* Indica se Convenio Possui Serasa*/
             qtdfloat: qtdfloat,
             flprotes: flprotes,
+            qtlimaxp: qtlimaxp,
+            qtlimmip: qtlimmip,
             qtdecprz: qtdecprz,
             idrecipr: idrecipr,
 			inenvcob: inenvcob,
@@ -537,7 +545,7 @@ function confirmaHabilitacao(cddopcao) {
 	tpdtermo_imprimir = (insitceb == 1) ? 1 : 2;
 
     //showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaHabilitacaoSerasa("' + cddopcao + '")', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
-    showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaInativacaoProtesto("' + cddopcao + '")', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+	showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaInativacaoProtesto("' + cddopcao + '")', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
 }
 
 function confirmaCancelamentoBoletos(cddopcao) {
@@ -581,7 +589,7 @@ function cancelaSustaBoletos(fltipo, cddopcao) { // 0 = cancela | 1 = susta
             cdcooper: cdcooper,
             nrdconta: nrdconta,
             nrconven: nrconven,
-            fltipo  : fltipo,
+            fltipo: fltipo,
             flgregis: $("#flgregis", "#divOpcaoConsulta").val(),
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
@@ -591,11 +599,11 @@ function cancelaSustaBoletos(fltipo, cddopcao) { // 0 = cancela | 1 = susta
         },
         success: function (response) {
             try {
-				eval(response);
+                eval(response);
             } catch (error) {
-				hideMsgAguardo();
+                hideMsgAguardo();
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-			}
+            }
         }
     });
 }
@@ -623,8 +631,8 @@ function confirmaInativacaoProtesto(cddopcao) {
 function imprimeRelatorio() {
 
     if (confirmaCancelamentoSustacao) {
-        var nmprimtl = $('#nmprimtl','#frmCabAtenda').val(),
-            cdagenci = $('#cdagenci','#frmCabAtenda').val(),
+        var nmprimtl = $('#nmprimtl', '#frmCabAtenda').val(),
+            cdagenci = $('#cdagenci', '#frmCabAtenda').val(),
             action = UrlSite + 'telas/atenda/cobranca/imprimir_relatorio.php';
 
         $("#nrdconta", "#frmRelatorio").val(nrdconta);
@@ -632,7 +640,7 @@ function imprimeRelatorio() {
         $("#cdagenci", "#frmRelatorio").val(cdagenci);
 
         //carregaImpressaoAyllos("frmRelatorio",action,"bloqueiaFundo(divRotina);");
-        carregaImpressaoAyllos("frmRelatorio",action,"");
+        carregaImpressaoAyllos("frmRelatorio", action, "");
     }
 }
 
@@ -766,6 +774,9 @@ function realizaHabilitacao() {
     var cddbanco = $("#cddbanco", "#divOpcaoConsulta").val();
     var qtdfloat = $("#qtdfloat", "#divOpcaoConsulta").val();
     var qtdecprz = $("#qtdecprz", "#divOpcaoConsulta").val();
+    var qtlimmip = $("#qtlimmip", "#divOpcaoConsulta").val();
+    var insrvprt = $("#insrvprt", "#divOpcaoConsulta").val();
+    var qtlimaxp = $("#qtlimaxp", "#divOpcaoConsulta").val();
     var idrecipr = $("#idrecipr", "#divOpcaoConsulta").val();
 	var inenvcob = $("#inenvcob", "#divOpcaoConsulta").val();
     var idreciprold = $("#idreciprold", "#divOpcaoConsulta").val();
@@ -773,6 +784,9 @@ function realizaHabilitacao() {
     nrconven = normalizaNumero(nrconven);
     qtdfloat = normalizaNumero(qtdfloat);
     qtdecprz = normalizaNumero(qtdecprz);
+    insrvprt = normalizaNumero(insrvprt);
+    qtlimmip = normalizaNumero(qtlimmip);
+    qtlimaxp = normalizaNumero(qtlimaxp);
 
     if ($("#flgregon", "#divOpcaoConsulta").prop("checked") == true) {
 		var flgregon = 1;
@@ -843,6 +857,9 @@ function realizaHabilitacao() {
             qtdfloat: qtdfloat,
             flprotes: flprotes,
             flproalt: flproalt,
+            insrvprt: insrvprt,
+            qtlimaxp: qtlimaxp,
+            qtlimmip: qtlimmip,
             qtdecprz: qtdecprz,
             idrecipr: idrecipr,
 			inenvcob: inenvcob,
@@ -864,6 +881,17 @@ function realizaHabilitacao() {
 			}
 		}
 	});
+}
+
+function onChangeProtesto() {
+	if($('#flprotes', '#divOpcaoSerasaProtesto').prop("checked")){
+	    $('#qtlimmip', '#divOpcaoSerasaProtesto').habilitaCampo();
+	    $('#qtlimaxp', '#divOpcaoSerasaProtesto').habilitaCampo();
+		        
+	} else {
+	    $('#qtlimmip', '#divOpcaoSerasaProtesto').desabilitaCampo();
+	    $('#qtlimaxp', '#divOpcaoSerasaProtesto').desabilitaCampo();
+	}	
 }
 
 // Perguntar se quer fazer a impressao do termo
@@ -1074,6 +1102,7 @@ function controlaLayout(nomeForm) {
         var Lflgcebhm = $('label[for="flgcebhm"]', '#' + nomeForm);
         var Lqtdfloat = $('label[for="qtdfloat"]', '#' + nomeForm);
         var Lflprotes = $('label[for="flprotes"]', '#' + nomeForm);
+        var Lqtlimmip = $('label[for="qtlimmip"]', '#' + nomeForm);
         var Lqtdecprz = $('label[for="qtdecprz"]', '#' + nomeForm);
 		var Linenvcob = $('label[for="inenvcob"]', '#' + nomeForm);
 
@@ -1088,6 +1117,8 @@ function controlaLayout(nomeForm) {
         var Ccddopcao = $('#cddopcao', '#' + nomeForm);
         var Cqtdfloat = $('#qtdfloat', '#' + nomeForm);
         var Cqtdecprz = $('#qtdecprz', '#' + nomeForm);
+        var Cqtlimmip = $('#qtlimmip', '#' + nomeForm);
+        var Cqtlimaxp = $('#qtlimaxp', '#' + nomeForm);
         var Cperdesconto = $('.clsPerDesconto', '#' + nomeForm);
 		var Cinenvcob = $('#inenvcob', '#' + nomeForm);
 
@@ -1106,6 +1137,7 @@ function controlaLayout(nomeForm) {
         Lflgcebhm.addClass('rotulo').css('width', '210px');
         Lqtdfloat.addClass('rotulo').css('width', '210px');
         Lflprotes.addClass('rotulo').css('width', '210px');
+        Lqtlimmip.addClass('rotulo').css('width', '210px');
         Lqtdecprz.addClass('rotulo').css('width', '210px');
         Linenvcob.addClass('rotulo').css('width', '210px');
 
@@ -1118,6 +1150,8 @@ function controlaLayout(nomeForm) {
         Cflgcebhm.css({ 'width': '50px' });
         Cqtdfloat.css({ 'width': '70px' });
         Cqtdecprz.css({ 'width': '50px' }).attr('maxlength', '5').setMask("INTEGER", "zzzzz", ".", "");
+        Cqtlimmip.css({ 'width': '30px' }).attr('maxlength', '3').setMask("INTEGER", "zzz", ".", "");
+        Cqtlimaxp.css({ 'width': '30px' }).attr('maxlength', '3').setMask("INTEGER", "zzz", ".", "");
         Cperdesconto.css({ 'width': '50px' }).setMask('DECIMAL','zz9,99','.','');
 		Cinenvcob.css({ 'width': '155px' });
 		if (Cinsitceb.val() == 1) {

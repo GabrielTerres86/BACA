@@ -54,7 +54,7 @@ var registro;
 var cdcooper, nrinssac, nrnosnum, dsdoccop, nmdsacad, flgcbdda, flgsacad, flgreaux, dsendsac, complend, nmbaisac, nmcidsac, cdufsaca, nrcepsac,
 	dscjuros, dscmulta, dscdscto, dtdocmto, dsdespec, flgaceit, dsstacom, dtvencto, vltitulo, vldesabt, qtdiaprt, dtdpagto, vldpagto,
 	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg,
-    dsavisms, dssmsant, dssmsvct, dssmspos, flgdprot;
+    dsavisms, dssmsant, dssmsvct, dssmspos, flgdprot, insitcrt;
 
 $(document).ready(function () {
     estadoInicial();
@@ -1207,6 +1207,13 @@ function selecionaTabela(tr) {
         flserasa = $('#flserasa', tr).val();
         qtdianeg = $('#qtdianeg', tr).val();
         flgdprot = $('#flgdprot', tr).val();
+        insitcrt = $('#insitcrt', tr).val();
+		
+        if (insitcrt == 5) {
+		    $('#carta_anuencia', '#frmReport').habilitaCampo();
+		} else {
+		    $('#carta_anuencia', '#frmReport').desabilitaCampo();
+		}
     }
 
     dsavisms = $('#dsavisms', tr).val();
@@ -1215,6 +1222,21 @@ function selecionaTabela(tr) {
     dssmspos = $('#dssmspos', tr).val();
 
     return false;
+}
+
+function geraCartaAnuencia(){
+    var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
+	
+    $('input,select', '#frmReport').habilitaCampo();
+    $('#cdcooper', '#frmReport').val(cdcooper);
+    $('#nrdconta', '#frmReport').val(nrdconta);
+    $('#nrdocmto', '#frmReport').val(nrdocmto);
+    $('#cdbandoc', '#frmReport').val(cdbandoc);
+
+    var action = $('#frmReport').attr('action');
+    var callafter = "$('input, select', '#frmReport,.classDisabled').desabilitaCampo();";
+
+	carregaImpressaoAyllos("frmReport", action, callafter);
 }
 
 // opcao C - consulta

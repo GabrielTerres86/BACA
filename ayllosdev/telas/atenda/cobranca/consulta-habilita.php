@@ -86,6 +86,10 @@ $emails_titular = $_POST["emails"];
 $flsercco    = $_POST["flsercco"];
 $qtdfloat    = trim($_POST["qtdfloat"]);
 $flprotes    = trim($_POST["flprotes"]);
+$qtlimaxp    = trim($_POST["qtlimaxp"]);
+$qtlimmip    = trim($_POST["qtlimmip"]);
+$flproaut    = trim($_POST["flproaut"]);
+$insrvprt    = trim($_POST["insrvprt"]);
 $qtdecprz    = trim($_POST["qtdecprz"]);
 $idrecipr	 = trim($_POST["idrecipr"]);
 $inenvcob	 = trim($_POST["inenvcob"]);
@@ -117,6 +121,8 @@ $cco_cddbanco = getByTagName($xmlDados->tags,"CDDBANCO");
 $cco_qtdfloat = getByTagName($xmlDados->tags,"QTDFLOAT");
 $cco_qtfltate = getByTagName($xmlDados->tags,"QTFLTATE");
 $cco_flprotes = getByTagName($xmlDados->tags,"FLPROTES");
+$cco_insrvprt = getByTagName($xmlDados->tags,"INSRVPRT");
+$cco_flproaut = getByTagName($xmlDados->tags,"FLPROAUT");
 $cco_flserasa = getByTagName($xmlDados->tags,"FLSERASA");
 $cco_qtdecini = getByTagName($xmlDados->tags,"QTDECINI");
 $cco_qtdecate = getByTagName($xmlDados->tags,"QTDECATE");
@@ -127,10 +133,19 @@ $cco_perdctmx = getByTagName($xmlDados->tags,"PERDCTMX");
 $cco_flgapvco = getByTagName($xmlDados->tags,"FLGAPVCO");
 $cco_idprmrec = getByTagName($xmlDados->tags,"IDPRMREC");
 $cco_dcmaxrec = getByTagName($xmlDados->tags,"PERDESCONTO_MAXIMO_RECIPRO");
+$cco_qtlimmip = getByTagName($xmlDados->tags,"QTLIMITEMIN_TOLERANCIA");
+$cco_qtlimaxp = getByTagName($xmlDados->tags,"QTLIMITEMAX_TOLERANCIA");
+	
+$insrvprt = $cco_insrvprt;
 
 if ($cddopcao == "I") {
     $qtdecprz = $cco_qtdecini;
     $flgregis = $cco_flgregis == 1 ? 'SIM' : 'NAO';
+}
+
+if ($cco_flprotes == 1 && $cco_insrvprt == 1 && ($qtlimmip == 0 || $qtlimaxp == 0)){
+    $qtlimmip   = $cco_qtlimmip;
+    $qtlimaxp   = $cco_qtlimaxp;
 }
 
 // Montar o xml de Requisicao
@@ -271,8 +286,16 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                 <input name="flserasa" id="flserasa" type="checkbox" class="checkbox" readonly <?php if ($flserasa == "SIM" ) { ?> checked <?php } ?> />
                                 <br />
                                 <label for="flprotes"><? echo utf8ToHtml('Envio de Protesto:') ?></label>		
-                                <input name="flprotes" id="flprotes" type="checkbox" class="checkbox" readonly <?php if ($flprotes == "SIM" ) { ?> checked <?php } ?> />
+                                <input name="flprotes" id="flprotes" onchange="onChangeProtesto()" type="checkbox" class="checkbox" readonly <?php if ($flprotes == "SIM" ) { ?> checked <?php } ?> />
                                 <br />
+		                        <input type="hidden" id="insrvprt" value="<?php echo $insrvprt; ?>" />
+		
+		                        <label for="qtlimmip"><? echo utf8ToHtml('Intervalo de Protesto:') ?></label>
+		                        <input name= "qtlimmip" id="qtlimmip" class="<?php echo $campo; ?>" value = " <?php echo $qtlimmip; ?>" <?php if ($flprotes != "SIM" ) { ?> readonly <?php } ?>/>
+		
+		                        <label for="qtlimaxp" style="margin-left:10px;"><? echo utf8ToHtml('At&eacute;:') ?></label>		
+		                        <input name= "qtlimaxp" id="qtlimaxp" class="<?php echo $campo; ?>" value = " <?php echo $qtlimaxp; ?>" <?php if ($flprotes != "SIM" ) { ?> readonly <?php } ?>/>
+		                        <label style="margin-left:10px;">dias</label>
                             </div>
                         
                             <label for="qtdecprz"><? echo utf8ToHtml('Decurso de Prazo:') ?></label>
@@ -574,6 +597,26 @@ $("#flprotes","#frmConsulta").unbind('click').bind('click', function(e) {
     }
 });
 
+$("#qtlimmip","#frmConsulta").unbind('blur').bind('blur', function(e) {
+    var cco_qtlimmip = '<?php echo $cco_qtlimmip; ?>';
+    if ($(this).val() == '' ||
+        $(this).val() < parseInt(cco_qtlimmip)) {
+        $(this).val(cco_qtlimmip);
+        showError('error', 'Intervalo protesto inv&aacute;lido! Favor selecionar um per&iacute;odo de <?php echo $cco_qtlimmip; ?> at&eacute; <?php echo $cco_qtlimaxp; ?>!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina);$("#qtlimmip","#frmConsulta").focus();');
+        return false;
+    }
+});
+			
+$("#qtlimaxp","#frmConsulta").unbind('blur').bind('blur', function(e) {
+    var cco_qtlimaxp = '<?php echo $cco_qtlimaxp; ?>';
+    if ($(this).val() == '' ||
+        $(this).val() > parseInt(cco_qtlimaxp)) {
+        $(this).val(cco_qtlimaxp);
+        showError('error', 'Intervalo protesto inv&aacute;lido! Favor selecionar um per&iacute;odo de <?php echo $cco_qtlimmip; ?> at&eacute; <?php echo $cco_qtlimaxp; ?>!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina);$("#qtlimaxp","#frmConsulta").focus();');
+        return false;
+    }
+});
+
 // Se foi informado Decurso de Prazo
 $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
     var cco_qtdecini = '<?php echo $cco_qtdecini; ?>';
@@ -639,6 +682,9 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
         $("#flprotes","#divOpcaoConsulta").prop("disabled",true);
         $("#qtdecprz","#divOpcaoConsulta").prop("disabled",true);
         $("#inenvcob","#divOpcaoConsulta").prop("disabled",true);
+        $("#qtlimmip","#divOpcaoConsulta").prop("disabled",true);
+		$("#insrvprt","#divOpcaoConsulta").prop("disabled",true);
+		$("#qtlimaxp","#divOpcaoConsulta").prop("disabled",true);
         $(".clsPerDesconto","#divOpcaoConsulta").prop("disabled",true);
         <?php
     } else if ($dsdmesag != "" && $dsorgarq == "INTERNET" ) { // Nao tem senha liberada para Internet

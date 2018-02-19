@@ -59,6 +59,8 @@ DEF TEMP-TABLE tt-cadastro-bloqueto
     FIELD flsercco AS   INTE
     FIELD qtdfloat LIKE crapceb.qtdfloat
     FIELD flprotes LIKE crapceb.flprotes
+	FIELD qtlimaxp LIKE crapceb.qtlimaxp
+	FIELD qtlimmip LIKE crapceb.qtlimmip
     FIELD qtdecprz LIKE crapceb.qtdecprz
     FIELD idrecipr LIKE crapceb.idrecipr
     FIELD inenvcob LIKE crapceb.inenvcob.

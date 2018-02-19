@@ -1,11 +1,11 @@
 /***********************************************************************
  Fonte: cadcco.js                                                  
  Autor: Jonathan - RKAM
- Data : Marco/2016                Última Alteração: 12/09/2017
+ Data : Marco/2016                Ãšltima AlteraÃ§Ã£o: 12/09/2017
                                                                    
  Objetivo  : Cadastro de servicos ofertados na tela CADCCO
                                                                    	 
- Alterações: 10/08/2016 - Ajuste para controlar corretamente o tamanho das
+ AlteraÃ§Ãµes: 10/08/2016 - Ajuste para controlar corretamente o tamanho das
                           janela de pesquisa
                           (Adriano);
 
@@ -21,7 +21,7 @@ var motivo = new Object();
 var cFlgativo, cDsorgarq, cNrdctabb, cCddbanco, cNmextbcc, cCdbccxlt, cCdagenci, cNrdolote, cCdhistor, cFlserasa,
     cFlgregis, cNmarquiv, cFlcopcob, cTamannro, cNmdireto, cNrbloque, cFlgcnvcc, cCdcartei, cNrvarcar, cNrlotblq,
     cDtmvtolt, cCdoperad, cFlprotes, cFlserasa, cQtdfloat, cQtfltate, cQtdecini, cQtdecate, cFldctman, cPerdctmx,
-    cFlgapvco, cFlrecipr, cCdagedbb;
+    cFlgapvco, cFlrecipr, cCdagedbb, cInsrvprt;
 
 
 
@@ -48,6 +48,24 @@ function estadoInicial() {
 
 }
 
+function onChangeProtesto() {
+	var flprotes = document.getElementById("flprotes");
+	if(flprotes.value == 1){
+	    $('#insrvprt_2').attr('selected', 'selected');
+	
+	    $('#insrvprt_0').attr('disabled', true);
+	    $('#insrvprt_1').attr('disabled', false);
+	    $('#insrvprt_2').attr('disabled', false);
+	        
+	} else {
+	    $('#insrvprt_0').attr('selected', 'selected');
+	
+	    $('#insrvprt_0').attr('disabled', false);
+	    $('#insrvprt_1').attr('disabled', true);
+	    $('#insrvprt_2').attr('disabled', true);
+	}	
+}
+
 function formataCabecalho() {
 
     $('label[for="cddopcao"]', '#frmCabCadcco').css('width', '50px').addClass('rotulo');
@@ -64,7 +82,7 @@ function formataCabecalho() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB
+        // Se Ã© a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
             $('#btOK', '#frmCabCadcco').click();
@@ -89,7 +107,7 @@ function formataCabecalho() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB
+        // Se Ã© a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
 
@@ -129,7 +147,7 @@ function formataFiltro(){
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB
+        // Se Ã© a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
             $('#btProsseguir', '#divBotoesFiltro').click();
@@ -274,17 +292,17 @@ function controlaPesquisaConvenio() {
     /* Remove foco de erro */
     $('input', '#frmFiltro').removeClass('campoErro');
 
-    // Variável local para guardar o elemento anterior
+    // VariÃ¡vel local para guardar o elemento anterior
     var campoAnterior = '';
     var bo, procedure, titulo, qtReg, filtrosPesq, colunas;    
 
     var nrconven = normalizaNumero($('#nrconven', '#frmFiltro').val());
     
-    //Definição dos filtros
-    var filtros = "Convênios;nrconven;120px;S;;;";
+    //DefiniÃ§Ã£o dos filtros
+    var filtros = "ConvÃªnios;nrconven;120px;S;;;";
 
-    //Campos que serão exibidos na tela
-    var colunas = 'Convênios;nrconven;15%;right|Conta Base;nrdctabb;15%;right|Banco;cddbanco;10%;right;|Situação;flgativo;10%;left;|Origem;dsorgarq;40%;left';
+    //Campos que serÃ£o exibidos na tela
+    var colunas = 'ConvÃªnios;nrconven;15%;right|Conta Base;nrdctabb;15%;right|Banco;cddbanco;10%;right;|SituaÃ§Ã£o;flgativo;10%;left;|Origem;dsorgarq;40%;left';
 
     //Exibir a pesquisa
     mostraPesquisa("zoom0001", "CONSPRMCNVCOB", "Conv&ecirc;nios", "30", filtros, colunas,'','$(\'#nrconven\',\'#frmFiltro\').focus();','frmFiltro');
@@ -310,15 +328,15 @@ function controlaPesquisaBanco() {
     /* Remove foco de erro */
     $('input,select', '#frmCadcco').removeClass('campoErro');
 
-    // Variável local para guardar o elemento anterior
+    // VariÃ¡vel local para guardar o elemento anterior
     var campoAnterior = '';
     var bo, procedure, titulo, qtReg, filtrosPesq, colunas;
 
-    //Definição dos filtros
-    var filtros = 'Cód. Banco;cddbanco;30px;S;0;|Nome Banco;nmextbcc;200px;S;';
+    //DefiniÃ§Ã£o dos filtros
+    var filtros = 'CÃ³d. Banco;cddbanco;30px;S;0;|Nome Banco;nmextbcc;200px;S;';
 
-    //Campos que serão exibidos na tela
-    var colunas = 'Código;cdbccxlt;20%;right|Banco;nmextbcc;80%;left';
+    //Campos que serÃ£o exibidos na tela
+    var colunas = 'CÃ³digo;cdbccxlt;20%;right|Banco;nmextbcc;80%;left';
 
     //Exibir a pesquisa
     mostraPesquisa("zoom0001", "CONSBANCOS", "Banco", "30", filtros, colunas, '', '$(\'#cddbanco\',\'#frmCadcco\').focus();', 'frmCadcco');
@@ -333,7 +351,7 @@ function controlaPesquisaBanco() {
 
 }
 
-// Consulta Histórico
+// Consulta HistÃ³rico
 function controlaPesquisaHistorico() {
     
     // Se esta desabilitado o campo 
@@ -344,18 +362,18 @@ function controlaPesquisaHistorico() {
     /* Remove foco de erro */
     $('input,select', '#frmCadcco').removeClass('campoErro');
 
-    // Variável local para guardar o elemento anterior
+    // VariÃ¡vel local para guardar o elemento anterior
     var campoAnterior = '';
     var bo, procedure, titulo, qtReg, filtrosPesq, colunas;
 
-    //Definição dos filtros
-    var filtros = 'Cód. Hist;cdhistor;30px;S;0;|Histórico;dshistor;200px;S;';
+    //DefiniÃ§Ã£o dos filtros
+    var filtros = 'CÃ³d. Hist;cdhistor;30px;S;0;|HistÃ³rico;dshistor;200px;S;';
    
-    //Campos que serão exibidos na tela
-    var colunas = 'Código;cdhistor;20%;right|Histórico;dshistor;80%;left';
+    //Campos que serÃ£o exibidos na tela
+    var colunas = 'CÃ³digo;cdhistor;20%;right|HistÃ³rico;dshistor;80%;left';
 
     //Exibir a pesquisa
-    mostraPesquisa("zoom0001", "CONSHISTORICOS", "Histórico", "30", filtros, colunas, '', '$(\'#cdhistor\',\'#frmCadcco\').focus();', 'frmCadcco');
+    mostraPesquisa("zoom0001", "CONSHISTORICOS", "HistÃ³rico", "30", filtros, colunas, '', '$(\'#cdhistor\',\'#frmCadcco\').focus();', 'frmCadcco');
 
     $("#divCabecalhoPesquisa > table").css("width", "500px");
     $("#divResultadoPesquisa > table").css("width", "500px");
@@ -379,15 +397,15 @@ function controlaPesquisaBancoCaixa() {
     /* Remove foco de erro */
     $('input,select', '#frmCadcco').removeClass('campoErro');
 
-    // Variável local para guardar o elemento anterior
+    // VariÃ¡vel local para guardar o elemento anterior
     var campoAnterior = '';
     var bo, procedure, titulo, qtReg, filtrosPesq, colunas;
 
-    //Definição dos filtros
-    var filtros = 'Cód. Hist;cdbccxlt;30px;S;0;|Histórico;nmbcolot;200px;S;';
+    //DefiniÃ§Ã£o dos filtros
+    var filtros = 'CÃ³d. Hist;cdbccxlt;30px;S;0;|HistÃ³rico;nmbcolot;200px;S;';
 
-    //Campos que serão exibidos na tela
-    var colunas = 'Código;cdbccxlt;20%;right|Histórico;nmextbcc;80%;left';
+    //Campos que serÃ£o exibidos na tela
+    var colunas = 'CÃ³digo;cdbccxlt;20%;right|HistÃ³rico;nmextbcc;80%;left';
 
     //Exibir a pesquisa
     mostraPesquisa("zoom0001", "CONSBANCOCAIXA", "Banco Caixa", "30", filtros, colunas, '', '$(\'#cdbccxlt\',\'#frmCadcco\').focus();', 'frmCadcco');
@@ -414,17 +432,17 @@ function controlaPesquisaPA() {
     /* Remove foco de erro */
     $('input,select', '#frmCadcco').removeClass('campoErro');
 
-    // Variável local para guardar o elemento anterior
+    // VariÃ¡vel local para guardar o elemento anterior
     var campoAnterior = '';
 
-    //Definição dos filtros
-    var filtros = 'Cód. PA;cdagenci;30px;S;0;;codigo;|Agência PA;nmresage;200px;S;;;descricao;';
+    //DefiniÃ§Ã£o dos filtros
+    var filtros = 'CÃ³d. PA;cdagenci;30px;S;0;;codigo;|AgÃªncia PA;nmresage;200px;S;;;descricao;';
 
-    //Campos que serão exibidos na tela
-    var colunas = 'Código;cdagepac;20%;right|Histórico;dsagepac;80%;left';
+    //Campos que serÃ£o exibidos na tela
+    var colunas = 'CÃ³digo;cdagepac;20%;right|HistÃ³rico;dsagepac;80%;left';
 
     //Exibir a pesquisa
-    mostraPesquisa("b1wgen0059.p", "busca_pac", "Agência PA", "30", filtros, colunas, '', '$(\'#cdagenci\',\'#frmCadcco\').focus();', 'frmCadcco');
+    mostraPesquisa("b1wgen0059.p", "busca_pac", "AgÃªncia PA", "30", filtros, colunas, '', '$(\'#cdagenci\',\'#frmCadcco\').focus();', 'frmCadcco');
 
     $("#divCabecalhoPesquisa > table").css("width", "500px");
     $("#divResultadoPesquisa > table").css("width", "500px");
@@ -483,6 +501,7 @@ function incluirConvenio() {
     var flgativo = $('#flgativo', '#frmCadcco').val();
     var flgregis = $('#flgregis', '#frmCadcco').val();	
 	var flprotes = $('#flprotes', '#frmCadcco').val();
+    var insrvprt = $('#insrvprt', '#frmCadcco').val();
 	var flserasa = $('#flserasa', '#frmCadcco').val();
 	var qtdfloat = $('#qtdfloat', '#frmCadcco').val();
 	var qtfltate = $('#qtfltate', '#frmCadcco').val();
@@ -526,6 +545,7 @@ function incluirConvenio() {
             flgativo: flgativo,
             flgregis: flgregis,
 			flprotes: flprotes,
+            insrvprt: insrvprt,
 			flserasa: flserasa,
 			qtdfloat: qtdfloat,
 			qtfltate: qtfltate,
@@ -580,6 +600,7 @@ function alterarConvenio() {
     var flgativo = $('#flgativo', '#frmCadcco').val();
     var flgregis = $('#flgregis', '#frmCadcco').val();
 	var flprotes = $('#flprotes', '#frmCadcco').val();
+    var insrvprt = $('#insrvprt', '#frmCadcco').val();
 	var flserasa = $('#flserasa', '#frmCadcco').val();
 	var qtdfloat = $('#qtdfloat', '#frmCadcco').val();
 	var qtfltate = $('#qtfltate', '#frmCadcco').val();
@@ -624,6 +645,7 @@ function alterarConvenio() {
             flgativo: flgativo,
             flgregis: flgregis,
 			flprotes: flprotes,
+            insrvprt: insrvprt,
 			flserasa: flserasa,
 			qtdfloat: qtdfloat,
 			qtfltate: qtfltate,
@@ -664,7 +686,7 @@ function consultaParametros() {
     var cddopcao = $('#cddopcao', '#frmCabCadcco').val();
     var nrconven = normalizaNumero($('#nrconven', '#frmFiltro').val());
 
-    //Inicializa variável sempre que fizer a consulta
+    //Inicializa variÃ¡vel sempre que fizer a consulta
     exisbole = 0;	
 	
 
@@ -956,6 +978,7 @@ function formataInformacoes() {
 	var rNrlotblq = $('label[for="nrlotblq"]', '#frmCadcco');
 	var rDtmvtolt = $('label[for="dtmvtolt"]', '#frmCadcco');
 	var rFlprotes = $('label[for="flprotes"]', '#frmCadcco');
+    var rInsrvprt = $('label[for="insrvprt"]', '#frmCadcco');
 	var rFlserasa = $('label[for="flserasa"]', '#frmCadcco');
 	var rQtdfloat = $('label[for="qtdfloat"]', '#frmCadcco');
 	var rQtfltate = $('label[for="qtfltate"]', '#frmCadcco');
@@ -989,7 +1012,8 @@ function formataInformacoes() {
     rDtmvtolt.addClass('rotulo').css('width', '170px');
     rCdoperad.addClass('rotulo-linha').css('width', '70px');
 	rFlprotes.addClass('rotulo').css('width', '170px');
-	rFlserasa.addClass('rotulo-linha').css('width', '220px');
+    rInsrvprt.css('width', '179px');
+	rFlserasa.addClass('rotulo-linha').css('width', '158px');
 	rQtdfloat.addClass('rotulo').css('width', '170px');
 	rQtfltate.addClass('rotulo-linha').css('width', '25px');
 	rQtdecini.addClass('rotulo').css('width', '170px');
@@ -1026,6 +1050,7 @@ function formataInformacoes() {
     cDtmvtolt = $('#dtmvtolt', '#frmCadcco');
     cCdoperad = $('#cdoperad', '#frmCadcco');
 	cFlprotes = $('#flprotes', '#frmCadcco');
+    cInsrvprt = $('#insrvprt', '#frmCadcco');
 	cFlserasa = $('#flserasa', '#frmCadcco');
 	cQtdfloat = $('#qtdfloat', '#frmCadcco');
 	cQtfltate = $('#qtfltate', '#frmCadcco');
@@ -1057,6 +1082,7 @@ function formataInformacoes() {
     cNrvarcar.css('width', '30px').addClass('inteiro').attr('maxlength', '3').setMask("INTEGER", "zz9", ".", "");
     cNrlotblq.css('width', '76px').addClass('inteiro').attr('maxlength', '7').setMask("INTEGER", "zzz.zz9", ".", "");
 	cFlprotes.css('width', '60px');
+    cInsrvprt.css('width', '120px');
 	cFlserasa.css('width', '60px');
 	cQtdfloat.css('width', '40px');
 	cQtfltate.css('width', '40px');
@@ -1070,6 +1096,17 @@ function formataInformacoes() {
     cCdoperad.css('width', '260px').desabilitaCampo();       
     cCdagedbb.css('width', '60px').addClass('inteiro').attr('maxlength','10').setMask("INTEGER", "zzzzz-9", ".", "");
       
+    var flprotes = document.getElementById("flprotes");
+	if(flprotes.value == 1){
+	    $('#insrvprt_0').attr('disabled', true);
+	    $('#insrvprt_1').attr('disabled', false);
+	    $('#insrvprt_2').attr('disabled', false);
+		        
+	} else {
+	    $('#insrvprt_0').attr('disabled', false);
+	    $('#insrvprt_1').attr('disabled', true);
+	    $('#insrvprt_2').attr('disabled', true);
+	}
 
     cFlgativo.unbind('keypress').bind('keypress', function (e) {
 
@@ -1077,7 +1114,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+        // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1094,7 +1131,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+        // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1111,7 +1148,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+        // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1128,7 +1165,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+        // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             if ($(this).val() == 0) {
@@ -1157,7 +1194,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1174,7 +1211,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1192,7 +1229,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1210,14 +1247,14 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             bo = 'zoom0001';
             procedure = 'CONSBANCOS';
             titulo = 'Banco';
             qtReg = '30';
-            colunas = 'Código;cdbccxlt;20%;right|Banco;nmextbcc;80%;left';
+            colunas = 'CÃ³digo;cdbccxlt;20%;right|Banco;nmextbcc;80%;left';
 
             $(this).removeClass('campoErro');
             buscaDescricao(bo, procedure, titulo, 'cdbccxlt', 'nmextbcc', $('#cddbanco', '#frmCadcco').val(), 'nmextbcc', 'nriniseq|1;nrregist|30', 'frmCadcco');
@@ -1236,7 +1273,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1253,7 +1290,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1270,7 +1307,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1288,7 +1325,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1305,7 +1342,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1323,7 +1360,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1340,7 +1377,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1358,7 +1395,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1375,7 +1412,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1392,7 +1429,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1409,7 +1446,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1426,7 +1463,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1443,7 +1480,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1460,7 +1497,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1477,7 +1514,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1494,7 +1531,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1511,7 +1548,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1528,7 +1565,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1545,7 +1582,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1562,7 +1599,7 @@ function formataInformacoes() {
 
         $('input,select').removeClass('campoErro');
 
-        // Se é a tecla ENTER, TAB, F1
+         // Se Ã© a tecla ENTER, TAB, F1
         if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
@@ -1695,7 +1732,7 @@ function formataTabelaTarifas() {
 
     });
     
-    //Já deixa um registro pré-selecionado
+    //JÃ¡ deixa um registro prÃ©-selecionado
     $('table > tbody > tr', divRegistro).each(function (i) {
 
         if ($(this).hasClass('corSelecao')) {
@@ -1706,7 +1743,7 @@ function formataTabelaTarifas() {
 
     });
 
-    //seleciona o lancamento que é clicado
+    //seleciona o lancamento que Ã© clicado
     $('table > tbody > tr', divRegistro).click(function () {
 
         selecionaTarifa($(this));
@@ -1827,6 +1864,7 @@ function validarDados(){
     var flgativo = $('#flgativo', '#frmCadcco').val();
     var flgregis = $('#flgregis', '#frmCadcco').val();
 	var flprotes = $('#flprotes', '#frmCadcco').val();
+    var insrvprt = $('#insrvprt', '#frmCadcco').val();
 	var flserasa = $('#flserasa', '#frmCadcco').val();
 	var qtdfloat = $('#qtdfloat', '#frmCadcco').val();
 	var qtfltate = $('#qtfltate', '#frmCadcco').val();
@@ -1869,6 +1907,7 @@ function validarDados(){
             flgativo: flgativo,
             flgregis: flgregis,
 			flprotes: flprotes,
+            insrvprt: insrvprt,
 			flserasa: flserasa,
 			qtdfloat: qtdfloat,
 			qtfltate: qtfltate,
@@ -1910,7 +1949,7 @@ function mostraConfrp() {
         executaDepoisConfrp = 'confirma()';
 	}
 	
-	// Carrega conteúdo da opção através do Ajax
+    // Carrega conteÃºdo da opÃ§Ã£o atravÃ©s do Ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',

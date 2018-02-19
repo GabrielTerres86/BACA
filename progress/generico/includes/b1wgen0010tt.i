@@ -125,6 +125,7 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD nrinsava LIKE crapcob.nrinsava
     FIELD cdtpinav LIKE crapcob.cdtpinav
     FIELD nrcnvcob LIKE crapcob.nrcnvcob
+	FIELD insitcrt LIKE crapcob.insitcrt
     FIELD nrcnvceb LIKE crapceb.nrcnvceb
     FIELD nrdctabb LIKE crapcob.nrdctabb
     FIELD nrcpfcgc LIKE crapass.nrcpfcgc

@@ -2,23 +2,23 @@
 	/*******************************************************************************
 	 Fonte: validar_convenio.php                                                 
 	 Autor: Jonathan - RKAM                                                    
-	 Data : Marco/2016                   Última Alteração:  
+	 Data : Marco/2016                   Ãšltima AlteraÃ§Ã£o:  
 	                                                                  
-	 Objetivo  : Efetua a validacao do convenio de cobrança.                                  
+	 Objetivo  : Efetua a validacao do convenio de cobranÃ§a.                                  
 	                                                                  
-	 Alterações: 30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
-                              código do departamento ao invés da descrição (Renato Darosci - Supero)
+	 AlteraÃ§Ãµes: 30/11/2016 - P341-AutomatizaÃ§Ã£o BACENJUD - Alterado para passar como parametro o  
+                              cÃ³digo do departamento ao invÃ©s da descriÃ§Ã£o (Renato Darosci - Supero)
 							  
 	********************************************************************************/
 	
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");		
 	require_once("../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mÃ©todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
@@ -31,7 +31,7 @@
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
 
-	// Guardo os parâmetos do POST em variáveis	
+	// Guardo os parÃ¢metos do POST em variÃ¡veis		
 	$nrconven = (isset($_POST['nrconven'])) ? $_POST['nrconven'] : 0;
 	$cddbanco = (isset($_POST['cddbanco'])) ? $_POST['cddbanco'] : 0;
 	$nrdctabb = (isset($_POST['nrdctabb'])) ? $_POST['nrdctabb'] : 0;
@@ -52,6 +52,7 @@
 	$flgativo = (isset($_POST['flgativo'])) ? $_POST['flgativo'] : 0;
 	$flgregis = (isset($_POST['flgregis'])) ? $_POST['flgregis'] : 0;
 	$flprotes = (isset($_POST['flprotes'])) ? $_POST['flprotes'] : 0;
+	$insrvprt = (isset($_POST['insrvprt'])) ? $_POST['insrvprt'] : 0;
 	$flserasa = (isset($_POST['flserasa'])) ? $_POST['flserasa'] : 0;
 	$qtdfloat = (isset($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : 0;
 	$qtfltate = (isset($_POST['qtfltate'])) ? $_POST['qtfltate'] : 0;
@@ -65,7 +66,7 @@
 	
 	validaDados();
 
-	// Monta o xml de requisição
+	// Monta o xml de requisiÃ§Ã£o
 	$xml  		= "";
 	$xml 	   .= "<Root>";
 	$xml 	   .= " <Dados>";
@@ -90,6 +91,7 @@
 	$xml       .=		"<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";	
 	$xml       .=		"<flgregis>".$flgregis."</flgregis>";
 	$xml       .=		"<flprotes>".$flprotes."</flprotes>";
+	$xml       .=		"<insrvprt>".$insrvprt."</insrvprt>";
 	$xml       .=		"<flserasa>".$flserasa."</flserasa>";
 	$xml       .=		"<qtdfloat>".$qtdfloat."</qtdfloat>";
 	$xml       .=		"<qtfltate>".$qtfltate."</qtfltate>";
@@ -108,7 +110,7 @@
 	$xmlResult = mensageria($xml, "TELA_CADCCO", "VALIDACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjAltera = getObjectXML($xmlResult);
 
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjAltera->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro = $xmlObjAltera->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -146,7 +148,7 @@
 			exibirErro('error','Banco/Caixa inv&aacute;lido.','Alerta - Ayllos','formataInformacoes();$(\'#cdbccxlt\',\'#frmCadcco\').focus();',false);
 		}
 
-		//Agência
+		//AgÃªncia
 		if ( $GLOBALS["cdagenci"] == 0){ 
 			exibirErro('error','Ag&ecirc;ncia inv&aacute;lida.','Alerta - Ayllos','formataInformacoes();$(\'#cdagenci\',\'#frmCadcco\').focus();',false);
 		}
@@ -157,7 +159,7 @@
 		
 		}
 
-		//Histórico
+		//HistÃ³rico
 		if ( $GLOBALS["cdhistor"] == 0){ 
 			exibirErro('error','Hist&oacute;rico inv&aacute;lido.','Alerta - Ayllos','formataInformacoes();$(\'#cdhistor\',\'#frmCadcco\').focus();',false);
 		}

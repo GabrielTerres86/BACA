@@ -53,7 +53,8 @@
 								  <input type="hidden" id="nmprimtl" name="nmprimtl" value="<? echo stringTabela(formataContaDV(getByTagName($r->tags,'nrdconta')) ." - ". getByTagName($r->tags,'nmprimtl'),41,'maiuscula') ?> " />								  
 								  <input type="hidden" id="nrnosnum" name="nrnosnum" value="<? echo getByTagName($r->tags,'nrnosnum') ?>" />								  
 								  <input type="hidden" id="dsorgarq" name="dsorgarq" value="<? echo getByTagName($r->tags,'dsorgarq') ?>" />								  
-								  <input type="hidden" id="nrdctabb" name="nrdctabb" value="<? echo getByTagName($r->tags,'nrdctabb') ?>" />								  
+								  <input type="hidden" id="nrdctabb" name="nrdctabb" value="<? echo getByTagName($r->tags,'nrdctabb') ?>" />
+								  <input type="hidden" id="insitcrt" name="insitcrt" value="<? echo getByTagName($r->tags,'insitcrt') ?>" />									  
 								  
 								  <input type="hidden" id="cdcooper" name="cdcooper" value="<? echo getByTagName($r->tags,'cdcooper') ?>" />								  
 								  <input type="hidden" id="cdsituac" name="cdsituac" value="<? echo getByTagName($r->tags,'cdsituac') ?>" />								  
@@ -218,6 +219,14 @@
 		<a href="#" class="botao" onclick="buscaConsulta('log'); return false;">Log Boleto</a>
 		<a href="#" class="botao" onclick="buscaConsulta('instrucoes'); return false;"><? echo utf8ToHtml('Instruções');  ?></a>
 		<a href="#" class="botao" onclick="buscaExportar(); return false;">Exportar Consulta</a>
+		<form action="<?php echo $UrlSite;?>telas/cobran/imprimir_carta_anuencia.php" method="post" id="frmReport" name="frmReport">
+			<input type="hidden" name="cdcooper" id="cdcooper">
+			<input type="hidden" name="nrdconta" id="nrdconta">
+			<input type="hidden" name="nrdocmto" id="nrdocmto">
+			<input type="hidden" name="cdbandoc" id="cdbandoc">
+			<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+			<input type="button"  id="carta_anuencia" disabled class="botao" onclick="geraCartaAnuencia(); return false;" value="<? echo utf8ToHtml('Imprimir carta anuência');  ?>">
+		</form>
 	<?php
 	}
 	?>
