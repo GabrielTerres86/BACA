@@ -1,5 +1,6 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                                             ,pr_flgresta  IN PLS_INTEGER             --> Flag padrão para utilização de restart
+                                             ,pr_flgresta  IN PLS_INTEGER             --> Flag padrão para utilização de restart
+
                                              ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                              ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
@@ -4228,7 +4229,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   IF vr_caracesp IS NOT NULL THEN
                     vr_caracesp := vr_caracesp||';';
                   END IF;
-                  vr_caracesp := vr_caracesp || vr_tab_crapepr(vr_ind_epr).idquaprc;
+                  vr_caracesp := vr_caracesp || '01';
                 END IF;
                 
               END IF; --Não BNDES
