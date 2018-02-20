@@ -109,7 +109,7 @@ begin
   
   CLOSE cr_crapaca;
 
-   -- TELA_ATENDA_OCORRENCIAS - ACAO BUSCA CONTRATOS DO ACORDO
+  -- TELA_ATENDA_OCORRENCIAS - ACAO BUSCA CONTRATOS DO ACORDO
   OPEN cr_crapaca(pr_nmdeacao => 'BUSCA_CONTRATOS_ACORDO'
                  ,pr_nmpackag => 'TELA_ATACOR'
                  ,pr_nmproced => 'pc_busca_contratos_acordo'
@@ -133,6 +133,93 @@ begin
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> BUSCA_CONTRATOS_ACORDO -> TELA_ATACOR.pc_busca_contratos_acordo');
+    
+  END IF;
+  
+  CLOSE cr_crapaca;
+
+  -- TELA_ATENDA_OCORRENCIAS - INCLUSÃO DE CONTRATO NO ACORDO
+  OPEN cr_crapaca(pr_nmdeacao => 'INCLUI_CONTRATO_ACORDO'
+                 ,pr_nmpackag => 'TELA_ATACOR'
+                 ,pr_nmproced => 'pc_inclui_contrato_acordo'
+                 ,pr_nrseqrdr => rw_craprdr.nrseqrdr);
+                   
+  FETCH cr_crapaca INTO rw_crapaca;
+    
+  -- Verifica se existe a ação tela do ayllos web
+  IF cr_crapaca%NOTFOUND THEN
+    
+    -- Insere ação da tela do ayllos web
+    INSERT INTO crapaca(nmdeacao, 
+                        nmpackag, 
+                        nmproced, 
+                        lstparam, 
+                        nrseqrdr) 
+                 VALUES('INCLUI_CONTRATO_ACORDO',
+                        'TELA_ATACOR',
+                        'pc_inclui_contrato_acordo',
+                        'pr_nracordo, pr_nrctremp',
+                        rw_craprdr.nrseqrdr);
+                             
+    dbms_output.put_line('Insere CRAPACA -> INCLUI_CONTRATO_ACORDO -> TELA_ATACOR.pc_inclui_contrato_acordo');
+    
+  END IF;
+  
+  CLOSE cr_crapaca;
+
+  -- TELA_ATENDA_OCORRENCIAS - ATUALIZAÇÃO DE CONTRATO NO ACORDO
+  OPEN cr_crapaca(pr_nmdeacao => 'ATUALIZA_CONTRATO_ACORDO'
+                 ,pr_nmpackag => 'TELA_ATACOR'
+                 ,pr_nmproced => 'pc_atualiza_contrato_acordo'
+                 ,pr_nrseqrdr => rw_craprdr.nrseqrdr);
+                   
+  FETCH cr_crapaca INTO rw_crapaca;
+    
+  -- Verifica se existe a ação tela do ayllos web
+  IF cr_crapaca%NOTFOUND THEN
+    
+    -- Insere ação da tela do ayllos web
+    INSERT INTO crapaca(nmdeacao, 
+                        nmpackag, 
+                        nmproced, 
+                        lstparam, 
+                        nrseqrdr) 
+                 VALUES('ATUALIZA_CONTRATO_ACORDO',
+                        'TELA_ATACOR',
+                        'pc_atualiza_contrato_acordo',
+                        'pr_nracordo, pr_nrctremp, pr_indpagar',
+                        rw_craprdr.nrseqrdr);
+                             
+    dbms_output.put_line('Insere CRAPACA -> ATUALIZA_CONTRATO_ACORDO -> TELA_ATACOR.pc_atualiza_contrato_acordo');
+    
+  END IF;
+  
+  CLOSE cr_crapaca;
+
+  -- TELA_ATENDA_OCORRENCIAS - REMOÇÃO DE CONTRATO DO ACORDO
+  OPEN cr_crapaca(pr_nmdeacao => 'EXCLUI_CONTRATO_ACORDO'
+                 ,pr_nmpackag => 'TELA_ATACOR'
+                 ,pr_nmproced => 'pc_exclui_contrato_acordo'
+                 ,pr_nrseqrdr => rw_craprdr.nrseqrdr);
+                   
+  FETCH cr_crapaca INTO rw_crapaca;
+    
+  -- Verifica se existe a ação tela do ayllos web
+  IF cr_crapaca%NOTFOUND THEN
+    
+    -- Insere ação da tela do ayllos web
+    INSERT INTO crapaca(nmdeacao, 
+                        nmpackag, 
+                        nmproced, 
+                        lstparam, 
+                        nrseqrdr) 
+                 VALUES('EXCLUI_CONTRATO_ACORDO',
+                        'TELA_ATACOR',
+                        'pc_exclui_contrato_acordo',
+                        'pr_nracordo, pr_nrctremp',
+                        rw_craprdr.nrseqrdr);
+                             
+    dbms_output.put_line('Insere CRAPACA -> EXCLUI_CONTRATO_ACORDO -> TELA_ATACOR.pc_exclui_contrato_acordo');
     
   END IF;
   
