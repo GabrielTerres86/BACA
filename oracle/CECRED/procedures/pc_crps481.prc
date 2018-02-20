@@ -107,7 +107,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                             Chamar pc_internal_exception na when others
                             Utilizar mensagens cadastradas na CRAPCRI
                             (Belli - Envolti - Chamado 786752)
-                                       
+               
+			   20/02/2018 11:23:36	20/02/2018 - Recompilação do fonte em produção (Jean Michel)                      
+
      ............................................................................. */
 
      DECLARE
