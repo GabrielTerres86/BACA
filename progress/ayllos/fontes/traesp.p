@@ -26,7 +26,7 @@
                
                20/09/2006 - Modificado help dos campos (Elton).
                
-               04/05/2010 - Ajustado programa para as movimentações em
+               04/05/2010 - Ajustado programa para as movimentaç?es em
                             espécie criadas na rotina 20 (a partir da
                             craptvl). (Fernando)  
 
@@ -47,7 +47,7 @@
                18/07/2012 - Adicionado campo tel_nrdconta quando opcao "I" e 
                             tipo 0 .   (Jorge)
                
-               15/08/2013 - Nova forma de chamar as agências, de PAC agora 
+               15/08/2013 - Nova forma de chamar as ag?ncias, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
                             
                12/11/2013 - Adequacao da regra de negocio a b1wgen0135.p
@@ -55,6 +55,8 @@
                             
                17/01/2014 - Alterado cdcritic ao nao encontrar PA para "962 - PA
                             nao cadastrado.". (Reinert)                            
+               
+               28/11/2017 - Alteracoes melhoria 458 - Antonio R Junior - Mouts
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -70,6 +72,7 @@ DEF        VAR tel_tpdocmto AS INT     FORMAT "z9"                   NO-UNDO.
 DEF        VAR tel_cddopcao AS LOGICAL FORMAT "S/N"                  NO-UNDO.
 DEF        VAR tel_cdcooper AS CHAR    FORMAT "x(12)" VIEW-AS COMBO-BOX   
                                        INNER-LINES 11  NO-UNDO.
+
 DEF        VAR tel_nrdcaixa AS INTE    FORMAT "zz9"                  NO-UNDO.
 DEF        VAR tel_cdbccxlt AS INTE    FORMAT "zz9"                  NO-UNDO.
 
@@ -98,6 +101,7 @@ DEF        VAR aux_flinfdst LIKE crapcme.flinfdst FORMAT "Sim/Nao"   NO-UNDO.
 DEF        VAR aux_recursos LIKE crapcme.recursos                    NO-UNDO.
 DEF        VAR aux_dstrecur LIKE crapcme.dstrecur                    NO-UNDO.
 DEF        VAR tel_dsdjusti LIKE crapcme.dsdjusti                    NO-UNDO.
+DEF        VAR aux_nrcpfcgc AS CHAR                                  NO-UNDO.
 
 DEF        VAR h_bo_depos AS HANDLE                                  NO-UNDO.
 DEF        VAR h_bo_saque AS HANDLE                                  NO-UNDO.
@@ -200,7 +204,9 @@ FORM tel_cdcooper AT 07 LABEL "Cooperativa"
                         HELP "Selecione a Cooperativa"
      WITH ROW 6 COLUMN 12 SIDE-LABELS OVERLAY NO-BOX FRAME f_dscoop.
 
-
+FORM tel_dtmvtolt AT 07  LABEL "Data"
+                         HELP "Informe a data."
+     WITH ROW 6 COLUMN 50 SIDE-LABELS OVERLAY NO-BOX FRAME f_data2.
 
 FORM "Pa   Lote  Conta/dv Titular/Valor(R$)              Docmto/Data "
      "Oper/COAF"
@@ -210,7 +216,8 @@ FORM "Pa   Lote  Conta/dv Titular/Valor(R$)              Docmto/Data "
 FORM aux_nmprimtl LABEL "Cooperado"     FORMAT "x(15)"
      aux_dtmvtolt AT 46 LABEL "Dt Mvto"
      SKIP
-     aux_flinfdst LABEL "Informações foram prestadas"
+     aux_flinfdst LABEL "Informaçoes foram prestadas"
+     aux_nrcpfcgc AT 45 LABEL "CPF/CNPJ" FORMAT "x(18)"
      aux_recursos LABEL "Origem"
      aux_dstrecur LABEL "Destino"       FORMAT "x(35)"
      tel_dsdjusti LABEL "Justificativa" FORMAT "x(55)"
@@ -226,7 +233,7 @@ FORM SKIP
      tt-transacoes-especie.nrdconta  AT 11 FORMAT "x(10)"
      tt-transacoes-especie.nmprimtl  AT 22 FORMAT "x(26)" 
      tt-transacoes-especie.nrdocmto  AT 49 FORMAT "x(10)"
-     tt-transacoes-especie.tpoperac  AT 66 FORMAT "x(08)"
+     tt-transacoes-especie.tpoperac  AT 66 FORMAT "x(09)"
      SKIP
      tt-transacoes-especie.vllanmto  AT 21 FORMAT "x(14)"
      tt-transacoes-especie.dtmvtolt  AT 60       
@@ -240,7 +247,7 @@ DEF BROWSE b_crapcme QUERY q_crapcme
            tt-crapcme.cdagenci COLUMN-LABEL "PA"  
            tt-crapcme.nrdconta COLUMN-LABEL "Conta" 
            tt-crapcme.nrdocmto COLUMN-LABEL "Docmto"
-           tt-crapcme.tpoperac COLUMN-LABEL "Ope"   
+           tt-crapcme.tpoperac COLUMN-LABEL "Operacao"  FORMAT "x(09)"  
            tt-crapcme.vllanmto COLUMN-LABEL "Valor"  
            tt-crapcme.infrepcf COLUMN-LABEL "COAF" SPACE (5)
            WITH 5 DOWN WIDTH 76 NO-BOX.
@@ -269,6 +276,7 @@ ON VALUE-CHANGED, ENTRY OF b_crapcme
        IF AVAIL tt-crapcme THEN
           DO:
              ASSIGN aux_nmprimtl = tt-crapcme.nmprimtl
+                    aux_nrcpfcgc = tt-crapcme.nrcpfcgc
                     aux_dtmvtolt = tt-crapcme.dtmvtolt
                     aux_flinfdst = tt-crapcme.flinfdst
                     aux_recursos = tt-crapcme.recursos
@@ -277,6 +285,7 @@ ON VALUE-CHANGED, ENTRY OF b_crapcme
                     
           
              DISP aux_nmprimtl 
+                  aux_nrcpfcgc
                   aux_dtmvtolt 
                   aux_flinfdst 
                   aux_recursos 
@@ -334,6 +343,8 @@ DO:
                      RETURN.
                
                   END.
+			   
+			   EMPTY TEMP-TABLE tt-reg-crapcme.
 
                IF aux_confirma = "S" THEN
                   DO:
@@ -342,6 +353,31 @@ DO:
                   
                      IF AVAIL crapcme THEN 
                         DO:
+                          
+                            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                                 
+                                 UPDATE tel_dsdjusti 
+                                        WITH FRAME f_detalhes.
+                                 
+                                 LEAVE.
+                                        
+                              END.
+
+                              IF KEYFUNCTION(LAST-KEY) = "END-ERROR" THEN
+                                 DO: 
+                                     ASSIGN tel_dsdjusti = "".
+
+                                     glb_cdcritic = 79.
+                                     RUN fontes/critic.p.
+                                     BELL.
+                                     MESSAGE glb_dscritic.
+                                     PAUSE 2 NO-MESSAGE.
+                                     glb_cdcritic = 0.
+                                     HIDE MESSAGE.
+                                     RETURN.
+                              
+                                 END.
+                                 
                             CREATE tt-reg-crapcme.
                             ASSIGN tt-reg-crapcme.cdcooper = crapcme.cdcooper
                                    tt-reg-crapcme.cdagenci = crapcme.cdagenci
@@ -355,7 +391,7 @@ DO:
                                                              INPUT glb_cdoperad,
                                                              INPUT 0,
                                                              INPUT TRUE,
-                                                             INPUT "",
+                                                             INPUT tel_dsdjusti,
                                                              INPUT TABLE tt-reg-crapcme,
                                                             OUTPUT TABLE tt-erro).
 
@@ -368,6 +404,8 @@ DO:
                                 CLEAR FRAME f_crapcme ALL NO-PAUSE.
                                 RETURN.
                             END.
+
+                            ASSIGN tel_dsdjusti = "".
 
                             DELETE tt-crapcme.
                  
@@ -540,6 +578,7 @@ DO WHILE TRUE:
       HIDE FRAME f_transacoes.
       HIDE FRAME f_browse.
       HIDE FRAME f_dscoop.
+      HIDE FRAME f_data2.
       HIDE FRAME f_justificativa.
       
       
@@ -588,6 +627,7 @@ DO WHILE TRUE:
                      HIDE FRAME f_opcao2.
                      HIDE FRAME f_conta.
                      HIDE FRAME f_data.
+                     HIDE FRAME f_data2.
                      HIDE FRAME f_transacoes.
                      HIDE FRAME f_moldura.
                      HIDE FRAME f_nrdconta.
@@ -647,6 +687,14 @@ DO WHILE TRUE:
 
              END.
 
+             tel_dtmvtolt = glb_dtmvtoan.
+             
+             DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                UPDATE tel_dtmvtolt  
+                       WITH FRAM f_data2.
+                LEAVE.
+             END.
+
              IF KEYFUNCTION(LAST-KEY) = "END-ERROR" THEN
                 NEXT.
 
@@ -656,6 +704,7 @@ DO WHILE TRUE:
                                                 (INPUT INT(tel_cdcooper),
                                                  INPUT glb_cdagenci,
                                                  INPUT 1,
+                                                 INPUT tel_dtmvtolt,
                                                 OUTPUT aux_qtregist,
                                                 OUTPUT TABLE tt-crapcme,
                                                 OUTPUT TABLE tt-erro).
