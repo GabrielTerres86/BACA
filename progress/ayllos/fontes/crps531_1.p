@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 18/08/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 14/02/2018
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -211,6 +211,8 @@
 							(Adriano - SD 733103).
 
 
+              14/02/2018 - Tratar mensagens CIR0020 e CIR0021, incluir o tratamento junto com a mensagem STR0003R2
+                           SD 805540 - Marcelo Telles Coelho-Mouts 
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
@@ -305,6 +307,13 @@ DEF VAR aux_CodMunicOrigem AS CHAR                                  NO-UNDO.
 DEF VAR aux_CodMunicDest  AS CHAR                                   NO-UNDO.
 DEF VAR aux_CtPgtoDebtd   AS CHAR                                   NO-UNDO.
 DEF VAR aux_TpCtDebtd    AS CHAR                                    NO-UNDO.
+DEF VAR aux_ISPBIF        AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumCtrlCIROr  AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumCtrlSTR    AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumCtrlCIR    AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumRemessaOr  AS CHAR                                   NO-UNDO.
+DEF VAR aux_AgIF          AS CHAR                                   NO-UNDO.
+DEF VAR aux_FinlddCIR     AS CHAR                                   NO-UNDO.
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -755,6 +764,8 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
          
          "STR0010R2,PAG0111R2," +     /* Devolucao TED/TEC enviado com erro */
          "STR0003R2," +        /* Liquidacao de transferencia de numerarios */
+         "CIR0020,"   +        /* Pagamento de Lançamento Devido MECIR */ /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+         "CIR0021,"   +        /* Lançamento a Crédito Efetivado do MECIR */ /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
          "STR0004R1,STR0005R1,STR0008R1,STR0037R1," + 
          "PAG0107R1,PAG0108R1,PAG0137R1," + /* Confirma envio */
          "STR0010R1,PAG0111R1," + /*Confirma devolucao enviada*/
@@ -1262,19 +1273,39 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                   END.
          END.
     ELSE
+      IF   CAN-DO("CIR0020",aux_CodMsg) THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
          DO:
-             INT(aux_AgCredtd) NO-ERROR.
+             /* Busca cooperativa */ 
+             FIND crabcop WHERE crabcop.cdcooper = glb_cdcooper
+                                NO-LOCK NO-ERROR.
+          END.
+      ELSE
+      IF   CAN-DO("CIR0021",aux_CodMsg) THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+         DO:
+            INT(aux_AgIF) NO-ERROR.
+			
+            IF   ERROR-STATUS:ERROR   THEN   /* Caracter invalido */ 
+                 ASSIGN aux_flgderro = TRUE. 
+            ELSE
+                 /* Busca cooperativa de destino */ 
+                 FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgIF)  AND
+                                    crabcop.flgativo = TRUE
+                                    NO-LOCK NO-ERROR.
+         END.
+      ELSE
+         DO:
+              INT(aux_AgCredtd) NO-ERROR.
 
              IF   ERROR-STATUS:ERROR   THEN   /* Caracter invalido */ 
                   ASSIGN aux_flgderro = TRUE. 
              ELSE
+      			   DO:
                   /* Busca cooperativa de destino */ 
                   FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)  AND
                                      crabcop.flgativo = TRUE
                                      NO-LOCK NO-ERROR.
                                         
              IF   NOT AVAIL crabcop   THEN
-			      DO:
 				      /* Tratamento incorporacao TRANSULCRED */ 
                       IF   INT(aux_AgCredtd) = 116 and
 					       TODAY < 03/21/2017 THEN   /* Data de corte */ 
@@ -1289,6 +1320,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 				      ELSE
 					       ASSIGN aux_flgderro = TRUE.
 				  END.
+         END.                                        
              
              IF  aux_flestcri > 0  THEN
                  DO:
@@ -1394,7 +1426,6 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                               NEXT.
                           END.
                   END.
-         END.
     
     IF   aux_CodMsg  MATCHES "*R1"  THEN  /* Confirmacao */
          DO:        
@@ -1971,6 +2002,12 @@ PROCEDURE importa_xml.
       IF  hNode:NAME = "STR0003R2" THEN
           RUN trata_numerario.
       ELSE
+      IF  hNode:NAME = "CIR0020" THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+          RUN trata_numerario_cir0020.
+      ELSE
+      IF  hNode:NAME = "CIR0021" THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+          RUN trata_numerario_cir0021.
+      ELSE
           RUN trata_dados_transferencia.
             
    END. /** Fim do DO ... TO **/    
@@ -2190,6 +2227,8 @@ PROCEDURE verifica_conta.
 
    /* Nao recebemos conta e nem cpf para esta mensagem */
    IF  aux_CodMsg = "STR0003R2" THEN    
+       RETURN "OK".
+   IF  CAN-DO("CIR0020,CIR0021",aux_CodMsg) THEN    /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
        RETURN "OK".
 
    IF   LENGTH(STRING(DEC(val_nrdconta))) > 9  THEN
@@ -3418,6 +3457,90 @@ PROCEDURE trata_numerario.
 
 END PROCEDURE.
 
+PROCEDURE trata_numerario_cir0020.
+/* SD 805540 - 14/02/2018 - Marcelo (Mouts) */       
+   DO  aux_contado1 = 1 TO hNode:NUM-CHILDREN:
+    
+       /** Obtem a TAG **/
+       hNode:GET-CHILD(hSubNode,aux_contado1).
+                                             
+       IF   hSubNode:SUBTYPE <> 'ELEMENT' THEN
+            NEXT.                     
+                             
+       /** Obtem conteudo da Tag **/
+       hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
+
+       ASSIGN aux_descrica = hSubNode2:NODE-VALUE.
+                 
+       IF hSubNode:NAME = "CodMsg" THEN
+          ASSIGN aux_CodMsg = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "NumCtrlIF" THEN
+          ASSIGN aux_NumCtrlIF = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "ISPBIF" THEN
+          ASSIGN aux_ISPBIF = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "NumCtrlCIROr" THEN
+          ASSIGN aux_NumCtrlCIROr = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "VlrLanc" THEN
+          ASSIGN aux_VlrLanc = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "DtMovto" THEN
+          ASSIGN aux_DtMovto = aux_descrica.
+   END.
+
+END PROCEDURE.
+
+PROCEDURE trata_numerario_cir0021.
+/* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+   DO  aux_contado1 = 1 TO hNode:NUM-CHILDREN:
+    
+       /** Obtem a TAG **/
+       hNode:GET-CHILD(hSubNode,aux_contado1).
+                                             
+       IF   hSubNode:SUBTYPE <> 'ELEMENT' THEN
+            NEXT.                     
+                             
+       /** Obtem conteudo da Tag **/
+       hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
+
+       ASSIGN aux_descrica = hSubNode2:NODE-VALUE.
+                 
+       IF hSubNode:NAME = "CodMsg" THEN
+          ASSIGN aux_CodMsg = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "NumCtrlCIR" THEN
+          ASSIGN aux_NumCtrlCIR = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "ISPBIF" THEN
+          ASSIGN aux_ISPBIF = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "NumCtrlSTR" THEN
+          ASSIGN aux_NumCtrlSTR = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "NumRemessaOr" THEN
+          ASSIGN aux_NumRemessaOr = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "AgIF" THEN
+          ASSIGN aux_AgIF = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "VlrLanc" THEN
+          ASSIGN aux_VlrLanc = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "FinlddCIR" THEN
+          ASSIGN aux_FinlddCIR = aux_descrica.
+       ELSE       
+       IF hSubNode:NAME = "DtHrBC" THEN
+          ASSIGN aux_DtHRBC = aux_descrica.
+       ELSE
+       IF hSubNode:NAME = "DtMovto" THEN
+          ASSIGN aux_DtMovto = aux_descrica.
+   END.
+ 
+END PROCEDURE.
+
 PROCEDURE trata_dados_transferencia.
 
    /** Efetua leitura dos dados da mensagem **/
@@ -3592,6 +3715,10 @@ PROCEDURE trata_lancamentos.
    IF   RETURN-VALUE <> "OK"   THEN
         RETURN.       
                                 
+   IF  CAN-DO("CIR0020",aux_CodMsg) THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+      .
+   ELSE
+   DO:
    ASSIGN aux_dtmvtolt = IF   aux_flestcri = 0
                          THEN crabdat.dtmvtolt
                          ELSE aux_dtintegr.
@@ -3622,6 +3749,7 @@ PROCEDURE trata_lancamentos.
             RUN deleta_objetos.
             RETURN.
         END.
+   END.
 
    /**** Como no campo CodMsg do XML de rejeicao vem o codigo da 
          mensagem gerada pela cooperativa, sera gravado 
@@ -4413,6 +4541,96 @@ PROCEDURE trata_lancamentos.
                 NEXT.
             END.
 
+            IF   CAN-DO("CIR0020",aux_CodMsg) THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+                 DO:
+                     ASSIGN aux_dsmensag = "Código Mensagem: " + aux_CodMsg + " <br>" +
+                                           "Número Controle IF: " + aux_NumCtrlIF + " <br>" +
+                                           "ISPB IF: " + aux_ISPBIF + " <br>" +
+                                           "Número Controle CIR Original: " + aux_NumCtrlCIROr + " <br>" +
+                                           "Valor Lançamento: " + aux_VlrLanc + " <br>" +
+                                           "Data Movimento: " + aux_DtMovto + " <br><br>".
+                                           
+                     RUN sistema/generico/procedures/b1wgen0011.p
+                         PERSISTENT SET h-b1wgen0011.
+
+                     RUN solicita_email_oracle IN h-b1wgen0011
+                                             ( INPUT crabcop.cdcooper /* par_cdcooper */
+                                              ,INPUT "CRPS531" /* par_cdprogra */
+                                              ,INPUT "carroforte@cecred.coop.br" 
+                                              ,INPUT "Pagamento de Lançamento Devido MECIR - CECRED" /* par_des_assunto */
+                                              ,INPUT aux_dsmensag /* par_des_corpo */
+                                              ,INPUT "" /* par_des_anexo */
+                                              ,INPUT "N" /* par_flg_remove_anex */
+                                              ,INPUT "N" /* par_flg_remete_coop */
+                                              ,INPUT "" /* par_des_nome_reply */
+                                              ,INPUT "" /* par_des_email_reply */
+                                              ,INPUT "N" /* par_flg_log_batch */
+                                              ,INPUT "S" /* par_flg_enviar */
+                                              ,OUTPUT aux_dscritic). /* par_des_erro */
+
+                     DELETE PROCEDURE h-b1wgen0011.
+
+                     IF  aux_dscritic <> "" THEN
+                         DO:
+                             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                             " - CRPS531 ' --> '" +
+                             "Erro ao rodar: " +
+                             "'" + aux_dscritic + "'" +  " >> log/proc_batch.log").
+                             aux_dscritic = "".
+                         END.
+                    
+                RUN salva_arquivo.
+                RUN deleta_objetos.
+                NEXT.
+            END.
+
+            IF   CAN-DO("CIR0021",aux_CodMsg) THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+                 DO:
+                     ASSIGN aux_dsmensag = "Código Mensagem: " + aux_CodMsg + " <br>" +
+                                           "Número Controle CIR: " + aux_NumCtrlCIR + " <br>" +
+                                           "ISPB IF: " + aux_ISPBIF + " <br>" +
+                                           "Número Controle STR: " + aux_NumCtrlSTR + " <br>" +
+                                           "Número Remessa Original: " + aux_NumRemessaOr + " <br>" +
+                                           "Agencia IF: " + aux_AgIF + " <br>" +
+                                           "Valor Lançamento: " + aux_VlrLanc + " <br>" +
+                                           "Finalidade CIR: " + aux_FinlddCIR + " <br>" +
+                                           "Data Hora Bacen: " + aux_DtHrBC + " <br>" +
+                                           "Data Movimento: " + aux_DtMovto + " <br><br>".
+                                           
+                     RUN sistema/generico/procedures/b1wgen0011.p
+                         PERSISTENT SET h-b1wgen0011.
+
+                     RUN solicita_email_oracle IN h-b1wgen0011
+                                             ( INPUT crabcop.cdcooper /* par_cdcooper */
+                                              ,INPUT "CRPS531" /* par_cdprogra */
+                                              ,INPUT "carroforte@cecred.coop.br"
+                                              ,INPUT "Lançamento a Crédito Efetivado do MECIR - CECRED" /* par_des_assunto */
+                                              ,INPUT aux_dsmensag /* par_des_corpo */
+                                              ,INPUT "" /* par_des_anexo */
+                                              ,INPUT "N" /* par_flg_remove_anex */
+                                              ,INPUT "N" /* par_flg_remete_coop */
+                                              ,INPUT "" /* par_des_nome_reply */
+                                              ,INPUT "" /* par_des_email_reply */
+                                              ,INPUT "N" /* par_flg_log_batch */
+                                              ,INPUT "S" /* par_flg_enviar */
+                                              ,OUTPUT aux_dscritic). /* par_des_erro */
+
+                     DELETE PROCEDURE h-b1wgen0011.
+ 
+                    IF  aux_dscritic <> "" THEN
+                         DO:
+                             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                             " - CRPS531 ' --> '" +
+                             "Erro ao rodar: " +
+                             "'" + aux_dscritic + "'" +  " >> log/proc_batch.log").
+                             aux_dscritic = "".
+                         END.
+                    
+                RUN salva_arquivo.
+                RUN deleta_objetos.
+                NEXT.
+            END.
+
             /* Caso seja estorno de TED de BACENJUD entao despreza*/
             IF CAN-DO("STR0025,PAG0121",aux_CodMsg) THEN
             DO:
@@ -4491,6 +4709,7 @@ PROCEDURE trata_lancamentos.
                                                                  "   Identificacao Dep.: " + STRING(craptvl.nrcctrcb)
 
                                                           ,INPUT "TED BacenJud: Rejeitada pela cabine"
+                            														  ,INPUT "N"
                                                           ,OUTPUT ?               /* Status do erro */
                                                           ,OUTPUT ?).             /* Retorno do Erro */
 
@@ -4629,6 +4848,7 @@ PROCEDURE trata_lancamentos.
                                                                      "   Valor: " + STRING(aux_VlrLanc) +
                                                                      "   Identificacao Dep.: " + STRING(craptvl.nrcctrcb)
                                                               ,INPUT "TED BacenJud: Devolvida"
+															  ,INPUT "N"
                                                               ,OUTPUT ?               /* Status do erro */
                                                               ,OUTPUT ?).             /* Retorno do Erro */
 
