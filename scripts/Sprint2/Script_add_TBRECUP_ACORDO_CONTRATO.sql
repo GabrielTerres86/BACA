@@ -11,5 +11,5 @@ comment on column CECRED.TBRECUP_ACORDO_CONTRATO.CDOPERAD is 'Operador que inclu
 alter table CECRED.TBRECUP_ACORDO_CONTRATO add (
     DTDINCLU DATE))
 /
-comment on column CECRED.TBRECUP_ACORDO_CONTRATO.DTDINCLU is 'Data da inclusão do contrato no acordo'
+comment on column CECRED.TBRECUP_ACORDO_CONTRATO.DTDINCLU is 'Data da incluão do contrato no acordo'
 /
