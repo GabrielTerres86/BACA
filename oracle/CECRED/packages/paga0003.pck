@@ -213,7 +213,7 @@ END paga0003;
   
    Programa: PAGA0003
    Autor   : Dionathan
-   Data    : 19/07/2016                        Ultima atualizacao: 01/11/2017
+   Data    : 19/07/2016                        Ultima atualizacao: 19/02/2018
   
    Dados referentes ao programa: 
   
@@ -238,6 +238,9 @@ END paga0003;
                       
        01/11/2017 - Validar corretamente o horario da debsic em caso de agendamentos
                     e também validar data do pagamento menor que o dia atual (Lucas Ranghetti #775900)
+                    
+       19/02/2018 - Tratamento para validacao do pagamento de darf/das em caso que 
+                    for através do processo JOB(Lucas Ranghetti #843167)
 ..............................................................................*/
 CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
@@ -1023,7 +1026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
      Programa: pc_verifica_darf_das
      Autor   : Dionathan
-     Data    : Julho/2016.                    Ultima atualizacao: 14/09/2017
+     Data    : Julho/2016.                    Ultima atualizacao: 19/02/2018
 
      Objetivo  : Procedure para validação de pagamento de DARF/DAS
 
@@ -1036,6 +1039,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                  14/09/2017 - Adicionar no campo nrrefere como varchar2 (Lucas Ranghetti #756034)
 
 	 --          02/10/2017 - Alteração da mensagem de validação de pagamento GPS (prj 356.2 - Ricardo Linhares)
+   
+               19/02/2018 - Tratamento para validacao do pagamento de darf/das em caso que 
+                            for através do processo JOB(Lucas Ranghetti #843167)
     ..............................................................................*/
     
     --Selecionar contas migradas
@@ -1177,12 +1183,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_nrdcaixa  NUMBER;
     vr_dtmvtopg  DATE;
     vr_datdodia  DATE;
-	vr_dttolera  DATE;
+    vr_dttolera  DATE;
     vr_foco      VARCHAR2(3);    
     vr_dtminage  DATE;    
-	vr_lindigit  NUMBER;
+    vr_lindigit  NUMBER;
     vr_nrdigito  INTEGER;
-	vr_flgretor  BOOLEAN;
+    vr_flgretor  BOOLEAN;
+    vr_idagenda  INTEGER;
     
     --Tipo de registro de data
     rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
@@ -1522,6 +1529,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
            vr_dscritic := 'A data de efetivação do pagamento não pode ser superior ao vencimento da guia.';
            RAISE vr_exc_erro;
         END IF;
+      END IF;      
+      
+      IF pr_indvalid = 2 THEN
+        vr_idagenda:= 2; -- se for atraves do processo vamos validar como agendamento
+      ELSE
+        vr_idagenda:= pr_idagenda;
       END IF;
       
       -- Verificar regras gerais para pagamento da guia
@@ -1538,7 +1551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                        ,pr_vllanmto => pr_vlrprinc -- Valor de Lancamento
                                        ,pr_vlrmulta => pr_vlrmulta -- Valor de Multa
                                        ,pr_vlrjuros => pr_vlrjuros -- Valor de Juros
-                                       ,pr_idagenda => pr_idagenda -- Indentificador de Agendamento
+                                       ,pr_idagenda => vr_idagenda -- Indentificador de Agendamento
                                        ,pr_foco     => vr_foco
                                        ,pr_cdseqfat => pr_cdseqfat -- Codigo Sequencial da DARF
                                        ,pr_cdcritic => vr_cdcritic -- Codigo do erro
