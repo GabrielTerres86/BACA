@@ -550,12 +550,12 @@ function buscaDados(){
     cTparrecd.val("");
     
     if (cdempcon == "" ){
-        showError("error","Empresa deve ser informada informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdempcon.focus();");        
+        showError("error","Empresa deve ser informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdempcon.focus();");        
         return false;
     }
     
     if (cdsegmto == "" ){
-        showError("error","Segmento deve ser informada informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdsegmto.focus();");        
+        showError("error","Segmento deve ser informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdsegmto.focus();");        
         return false;
     }
            
@@ -620,12 +620,12 @@ function confirmaOpe() {
         }
         
         if (cNmextcon.val() == ""){
-            showError("error","Razao Social deve ser informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cNmextcon.focus();");        
+            showError("error","Razão Social deve ser informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cNmextcon.focus();");        
             return false;
         }
         
         if (cCdhistor.val() == ""){
-            showError("error","Historico deve ser informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdhistor.focus();");        
+            showError("error", "Histórico deve ser informada.", "Alerta - Ayllos", "blockBackground(); unblockBackground(); cCdhistor.focus();");
             return false;
         }
         
