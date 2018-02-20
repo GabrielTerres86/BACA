@@ -597,6 +597,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             2277 - CREDITO PARCIAL PREJUIZO
                             2278 - CREDITO LIQUIDAÇÃO PREJUIZO
                            (Marcelo Telles Coelho - Mouts - 15/01/2018 - SD 818020)
+                           
+               20/02/2018 - Ajuste de condição no loop:
+                             Liberacao de cheques descontados do dia -- envio para a COMPE
+                             incluido em pc_grava_crapopc_bulk
+                            (Belli - Envolti - Chamado 841064)
+                                                      
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -2668,39 +2674,69 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
     GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_grava_crapopc_bulk', pr_action => NULL);
 
-    forall i in 1 .. rw_crapcdb.count
+    for i in 1 .. rw_crapcdb.count
+    loop
+      -- Ajuste de condição - Chamado 841064 - 20/02/2018
+      if rw_crapcdb(i).inchqcop <> 1 then
 
-    -- Gravar Dados de Operacoes Contabeis
-    INSERT INTO crapopc(cdcooper,
-                        dtrefere,
-                        nrdconta,
-                        tpregist,
-                        nrborder,
-                        cdagenci,
-                        nrdocmto,
-                        vldocmto,
-                        cdtipope,
-                        cdprogra)
-                values (pr_cdcooper,
-                        pr_dtrefere,
-                        rw_crapcdb(i).nrdconta,
-                        pr_tpregist,
-                        rw_crapcdb(i).nrborder,
-                        rw_crapcdb(i).cdagenci,
-                        rw_crapcdb(i).nrcheque,
-                        rw_crapcdb(i).vlcheque,
-                        pr_cdtipope,
-                        Lower(pr_cdprogra));
+        vr_vlcdbban := vr_vlcdbban + rw_crapcdb(i).vlcheque;
+        vr_qtcdbban := vr_qtcdbban + 1;
+      else
+        vr_vlcdbcop := vr_vlcdbcop + rw_crapcdb(i).vlcheque;
+      end if;   
+    
+      BEGIN
+        -- Gravar Dados de Operacoes Contabeis
+        INSERT INTO crapopc(cdcooper,
+                            dtrefere,
+                            nrdconta,
+                            tpregist,
+                            nrborder,
+                            cdagenci,
+                            nrdocmto,
+                            vldocmto,
+                            cdtipope,
+                            cdprogra)
+                    values (pr_cdcooper,
+                            pr_dtrefere,
+                            rw_crapcdb(i).nrdconta,
+                            pr_tpregist,
+                            rw_crapcdb(i).nrborder,
+                            rw_crapcdb(i).cdagenci,
+                            rw_crapcdb(i).nrcheque,
+                            rw_crapcdb(i).vlcheque,
+                            pr_cdtipope,
+                            Lower(pr_cdprogra));
+      EXCEPTION
+        WHEN OTHERS THEN
+          --Inclusão na tabela de erros Oracle - Chamado 734422
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+          vr_cdcritic := 1034;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||
+                         ' crapopc '||
+                         'para o cheque:'||rw_crapcdb(i).nrcheque||
+                         ' cdcooper:' ||pr_cdcooper||', dtrefere:'||pr_dtrefere||
+                         ', nrdconta:'||rw_crapcdb(i).nrdconta||
+                         ', tpregist:'||pr_tpregist||
+                         ', borderô:' ||rw_crapcdb(i).nrborder||
+                         ', agência:' ||rw_crapcdb(i).cdagenci||
+                         ', vldocmto:'||rw_crapcdb(i).vlcheque||
+                         ', cdtipope:'||pr_cdtipope||
+                         ', cdprogra:'||Lower(pr_cdprogra)||'. '||sqlerrm;
+        RAISE vr_exc_saida;
+      END;
+    END LOOP;
   EXCEPTION
     WHEN OTHERS THEN
       --Inclusão na tabela de erros Oracle - Chamado 734422
       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
-      vr_cdcritic := 1034;
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapopc '||'para o cheque:'||rw_crapcdb(rw_crapcdb.count).nrcheque||
-                     ' cdcooper:'||pr_cdcooper||', dtrefere:'||pr_dtrefere||
-                     ', nrdconta:'||rw_crapcdb(rw_crapcdb.count).nrdconta||', tpregist:'||pr_tpregist||
-                     ', borderô:'||rw_crapcdb(rw_crapcdb.count).nrborder||', agência:'||rw_crapcdb(rw_crapcdb.count).cdagenci||
-                     ', vldocmto:'||rw_crapcdb(rw_crapcdb.count).vlcheque||', cdtipope:'||pr_cdtipope||
+      vr_cdcritic := 9999;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||
+                     ' crapopc '  ||
+                     ' cdcooper:' ||pr_cdcooper||
+                     ', dtrefere:'||pr_dtrefere||
+                     ', tpregist:'||pr_tpregist||
+                     ', cdtipope:'||pr_cdtipope||
                      ', cdprogra:'||Lower(pr_cdprogra)||'. '||sqlerrm;
       RAISE vr_exc_saida;
   END pc_grava_crapopc_bulk;
