@@ -1206,7 +1206,6 @@ function buscaConsulta(operacao) {
             flserasa: flserasa,
             qtdianeg: qtdianeg,
 			flgdprot: flgdprot,
-			qtdiaprt: qtdiaprt,
 			cdtpinsc: cdtpinsc,
 			nrinssac: nrinssac,
             redirect: 'script_ajax'
