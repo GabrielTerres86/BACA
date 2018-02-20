@@ -213,16 +213,16 @@ function formataCampos() {
     cFlpjzemi.addClass('editcooper');//FLAG
     cFlpdctcp.addClass('editcooper');//FLAG
     cQttliqcp.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
-    cVltliqcp.css('width',  '100px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
+    cVltliqcp.css('width',  '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtmintgc.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
-    cVlmintgc.css('width',  '100px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
+    cVlmintgc.css('width',  '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
 
     cQtmitdcl.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cVlmintcl.css('width',  '100px').addClass('moeda').addClass('editcooper');// DECI
 
     cQtmesliq.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
-    cVlmxprat.css('width',  '100px').addClass('moeda').addClass('editcooper');// DECI
-    cpcmxctip.css('width',  '100px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
+    cVlmxprat.addClass('editcooper');// DECI
+    cpcmxctip.css('width',  '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cFlcocpfp.addClass('editcooper');
     cQtmxdene.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtdiexbo.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
@@ -255,16 +255,16 @@ function formataCampos() {
     cFlpjzemi_c.addClass('editcecred');//FLAG
     cFlpdctcp_c.addClass('editcecred');//FLAG
     cQttliqcp_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
-    cVltliqcp_c.css('width',  '100px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
+    cVltliqcp_c.css('width',  '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtmintgc_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
-    cVlmintgc_c.css('width',  '100px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
+    cVlmintgc_c.css('width',  '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     
     cQtmitdcl_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cVlmintcl_c.css('width',  '100px').addClass('moeda').addClass('editcecred');// DECI
 
     cQtmesliq_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
-    cVlmxprat_c.css('width',  '100px').addClass('moeda').addClass('editcecred');// DECI
-    cpcmxctip_c.css('width',  '100px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
+    cVlmxprat_c.addClass('editcecred');// DECI
+    cpcmxctip_c.css('width',  '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cFlcocpfp_c.addClass('editcecred');
     cQtmxdene_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtdiexbo_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
