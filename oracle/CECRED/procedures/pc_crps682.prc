@@ -804,6 +804,7 @@ BEGIN
   vr_idparale      integer;
   -- Qtde parametrizada de Jobs
   vr_qtdjobs       number;
+  vr_dia_exec      number;
   -- Job name dos processos criados
   vr_jobname       varchar2(30);
   -- Bloco PLSQL para chamar a execução paralela do pc_crps750
@@ -1022,12 +1023,17 @@ BEGIN
     vr_qtdjobs := gene0001.fn_retorna_qt_paralelo( pr_cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
                                                  , vr_cdprogra --pr_cdprogra  IN crapprg.cdprogra%TYPE    --> Código do programa
                                                  ); 
+                                                 
+    -- Procedimento para buscar o dia parametrizado para executar o programa com paralelismo.                                              
+    vr_dia_exec:= gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                           ,pr_cdcooper => pr_cdcooper
+                                           ,pr_cdacesso => 'DIA_EXEC_CRPS682');                                                 
 
     /* Paralelismo visando performance Rodar Somente no processo Noturno */
     --IF ((rw_crapdat.inproces = 1) -- Caso seja uma geracao manual (carga ou SPC/Serasa) e o processo esteja on-line
     --If acima retirado, pois quando for geração manual, não roda vom paralelismo.
     
-    IF TO_CHAR(Sysdate,'D')= 1  -- Tratamento para execução aos Domingos - Será parelelismo
+    IF TO_CHAR(Sysdate,'D')= Nvl(vr_dia_exec,1)  -- Tratamento para execução aos Domingos - Será parelelismo
       AND vr_qtdjobs          > 0 
       AND pr_cdagenci         = 0   
       AND pr_flgexpor         = 0   then    
