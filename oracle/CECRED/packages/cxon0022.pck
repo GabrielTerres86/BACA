@@ -170,7 +170,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 26/04/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 12/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -211,6 +211,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 			                  crapass, crapttl, crapjur 
 							 (Adriano - P339).
 
+                 12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                              pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -481,7 +483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --  Sistema  : Procedure para realizar transferencia
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 14/11/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 12/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -510,6 +512,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --
   --                14/11/2016 - Alterado cdorigem 9 para 10, novo cdorigem especifico para mobile
   --                             PRJ335 - Analise de Fraude(Odirlei-AMcom)
+  --
+  --                 12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+  --                              pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -2302,7 +2307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 									                ,pr_indtipo_cartao 	=> pr_idtipcar         -- Tipo de cartao utilizado. (0-Sem cartao/1-Magnetico/2-Cartao Cecred) Alterar Andrino
 									                ,pr_nrdocmto 	      => pr_nro_docto        -- Numero do documento utilizado no lancamento
 									                ,pr_cdhistor 	      => vr_cdhisdeb         -- Codigo do historico utilizado no lancamento
-									                ,pr_nrcartao 	      => pr_nrcartao         -- Numero do cartao utilizado. Zeros quando nao existe cartao
+									                ,pr_nrcartao 	      => to_char(pr_nrcartao) -- Numero do cartao utilizado. Zeros quando nao existe cartao
 									                ,pr_vllanmto 	      => pr_valor            -- Valor do lancamento
 									                ,pr_cdoperad 	      => pr_cod_operador     -- Codigo do operador
 									                ,pr_cdbccrcb 	      => 0                   -- Codigo do banco de destino para os casos de TED e DOC
