@@ -213,7 +213,7 @@ function formataCampos(){
     rNmrescon.addClass('rotulo').css({'width':'150px','padding-right':'2px'});
     rNmextcon.addClass('rotulo').css({'width':'150px','padding-right':'2px'});
     rCdhistor.addClass('rotulo').css({'width':'150px','padding-right':'2px'});
-    rNrdolote.addClass('rotulo-linha').css({'padding-left':'115px'});
+    rNrdolote.addClass('rotulo-linha').css({'padding-left':'135px'});
     rFlginter.addClass('rotulo').css({'width':'150px','padding-right':'2px'});
     
     rFlgaccec.addClass('rotulo').css({'width':'150px','padding-right':'2px'});
@@ -222,7 +222,7 @@ function formataCampos(){
         
     cNmrescon.css('width','200px').attr('maxlength', '15');
     cNmrescon.addClass('alpha');
-    cNmextcon.css('width','300px').attr('maxlength', '40');
+    cNmextcon.css('width','320px').attr('maxlength', '40');
     cNmextcon.addClass('alpha');
     cCdhistor.addClass('codigo').css('width','50px');
     cNrdolote.css('width','80px').setMask('INTEGER', 'zzz.zz9', '.', '');
@@ -370,7 +370,7 @@ function controlaPesquisas(nomeFormulario){
 		});
 	});
     
-    
+    /* Nao sera necessario pos campo de nome nao é exibido no cabeçalho
     cCdempcon.unbind('change').bind('change', function() { 	
     
         // Para inclusao nao deve buscar descrição
@@ -383,7 +383,7 @@ function controlaPesquisas(nomeFormulario){
             buscaDescricao(bo,procedure,titulo,'cdempcon','nmextcon',cCdempcon.val(),'nmextcon',filtrosDesc,'frmCab','fechaRotina(divRotina);');
             return false;
         }
-    });
+    });*/
 	
 	return false;
 	
@@ -515,6 +515,10 @@ function selecionarTparrecd(Tparrecd){
         return false;     
     } 
     
+    if (cTparrecd.val() == Tparrecd) {
+        return false;
+    }
+
     if (cTparrecd.val() != "" ){
         showError("error","Opção não permitida.","Alerta - Ayllos","");        
         // Voltar valor antigo
