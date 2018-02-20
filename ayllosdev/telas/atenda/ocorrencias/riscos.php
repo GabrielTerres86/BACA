@@ -167,7 +167,7 @@
 
 				foreach ($riscosOperacao as $cpfCnpj => $niveisRisco) {
 					// Calcula o risco CPF como o maior risco das operações do mesmo CPF
-					$riscoCpfCnpj = max($niveisRisco);
+					$riscoCpfCnpj = max('A', max($niveisRisco));
 
 					foreach ($dadosRisco[$cpfCnpj] as $risco) {
 						$riscoGrupo = $risco['risco_grupo'];
