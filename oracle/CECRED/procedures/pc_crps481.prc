@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Junho/2007                      Ultima atualizacao: 10/06/2016
+   Data    : Junho/2007                      Ultima atualizacao: 20/02/2018
    
    Dados referentes ao programa:
 
@@ -96,6 +96,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
 
                10/06/2016 - Ajustado para utilizar a procedure padrao TABE0001.pc_carrega_ctablq
                             para carregar as contas que estao bloqueadas (Douglas - Chamado 454248)
+														
+							 20/02/2018 - Recompilação do fonte em produção (Jean Michel)
+														
      ............................................................................. */
 
      DECLARE
