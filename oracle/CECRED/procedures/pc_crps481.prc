@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Junho/2007                      Ultima atualizacao: 27/10/2017
+   Data    : Junho/2007                      Ultima atualizacao: 20/02/2018
    
    Dados referentes ao programa:
 
@@ -108,6 +108,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                             Utilizar mensagens cadastradas na CRAPCRI
                             (Belli - Envolti - Chamado 786752)
                                        
+			   20/02/2018 11:23:36	20/02/2018 - Recompilação do fonte em produção (Jean Michel)                      
+
      ............................................................................. */
 
      DECLARE
