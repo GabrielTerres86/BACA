@@ -25,8 +25,6 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
                             (Jonata - RKAM).
 
-			   09/02/2018 - Inclusão de rotina pc_consultar_limite_cc - Daniel(AMcom)                                   
-
   ---------------------------------------------------------------------------------------------------------------*?
 
   /* Tabela para guardar os operadores */
@@ -464,16 +462,6 @@ PROCEDURE pc_busca_qualif_oper_web(pr_xmllog    IN VARCHAR2                --XML
                                    ,pr_nmdcampo  OUT VARCHAR2               --Nome do Campo
                                    ,pr_des_erro  OUT VARCHAR2);             --Saida OK/NOK
 
-PROCEDURE pc_consultar_limite_cc(pr_cdcooper IN NUMBER             --> Cooperativa
-                                ,pr_nrdconta IN NUMBER             --> Conta
-                                -- OUT
-                                ,pr_tipo     OUT NUMBER            --> Tipo do registro
-                                ,pr_data     OUT VARCHAR2          --> Data
-                                ,pr_contrato OUT NUMBER            --> Contrato 
-                                ,pr_saldo    OUT NUMBER            --> Saldo à liquidar
-                                ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
-                                ,pr_dscritic OUT VARCHAR2);      --> Erros do processo
-
 END ZOOM0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
@@ -510,9 +498,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                             (Jonata - RKAM).
 
          04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).
-
-		 09/02/2018 - Inclusão da pc_consultar_limite_cc 
-		              Rotina para consultar informações de limite e adp - Daniel(AMcom)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -6464,120 +6449,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
   END pc_busca_qualif_oper_web;
-
-   PROCEDURE pc_consultar_limite_cc(pr_cdcooper IN NUMBER             --> Cooperativa
-                                   ,pr_nrdconta IN NUMBER             --> Conta
-                                   -- OUT
-                                   ,pr_tipo     OUT NUMBER            --> Tipo do registro
-                                   ,pr_data     OUT VARCHAR2          --> Data
-                                   ,pr_contrato OUT NUMBER            --> Contrato 
-                                   ,pr_saldo    OUT NUMBER            --> Saldo à liquidar
-                                   ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
-                                   ,pr_dscritic OUT VARCHAR2) IS      --> Erros do processo
-    /* .............................................................................
-
-        Programa: pc_consultar_limite_cc
-        Sistema : CECRED
-        Sigla   : EMPR
-        Autor   : Daniel/AMcom
-        Data    : Fevereiro/2018                 Ultima atualizacao:
-
-        Dados referentes ao programa:
-        Frequencia: Sempre que for chamado
-        Objetivo  : Rotina para consultar informações de limite e adp
-        Observacao: -----
-        Alteracoes:
-      ..............................................................................*/
------------>>> VARIAVEIS <<<--------
-      -- Variável de críticas
-      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
-      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
-
-      -- Tratamento de erros
-      vr_exc_saida EXCEPTION;
-
-      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
-
-      vr_dstextab craptab.dstextab%TYPE;
-
-      -- Variaveis retornadas da gene0004.pc_extrai_dados
-      vr_cdcooper INTEGER;
-      vr_cdoperad VARCHAR2(100);
-      vr_nmdatela VARCHAR2(100);
-      vr_nmeacao  VARCHAR2(100);
-      vr_cdagenci VARCHAR2(100);
-      vr_nrdcaixa VARCHAR2(100);
-      vr_idorigem VARCHAR2(100);
-      vr_contador INTEGER := 0;
-
-      ---------->> CURSORES <<--------
-      CURSOR cr_consulta_limite_cc (pr_cdcooper IN NUMBER
-                                   ,pr_nrdconta IN NUMBER) IS
-      SELECT 2 Tipo
-           , CASE WHEN (adiantamento_deposito.saldo+lim.vllim < 0) THEN
-             (SELECT to_char(dat.dtmvtolt,'DD/MM/YYYY') FROM crapdat dat WHERE dat.cdcooper = pr_cdcooper) ELSE lim.dtlim END Data
-           , CASE WHEN adiantamento_deposito.saldo+lim.vllim < 0 THEN
-              ass.nrdconta ELSE lim.cntlim END Contrato
-           , adiantamento_deposito.saldo Saldo
-           /*, CASE WHEN adiantamento_deposito.saldo+lim.vllim < 0 THEN
-             'ADP' ELSE 'LIMITE' END TPADP*/
-        FROM crapass ass
-           , (SELECT l.nrdconta
-                   , l.cdcooper
-                   , to_char(l.dtrenova, 'DD/MM/YYYY') dtlim
-                   , l.nrctrlim cntlim
-                   , l.vllimite vllim     
-                FROM craplim l
-               WHERE l.tpctrlim = 1
-                 AND l.insitlim = 2) lim
-           , (SELECT lcmaux.vllancamentos
-                   + (SELECT sld.vlsddisp saldo
-                        FROM crapsld sld
-                       WHERE sld.cdcooper = pr_cdcooper
-                         AND sld.nrdconta = pr_nrdconta) saldo
-                FROM (SELECT SUM(decode( his.indebcre, 'D', lcm.vllanmto*-1,lcm.vllanmto)) vllancamentos
-                        FROM craplcm lcm
-                           , craphis his
-                       WHERE lcm.cdcooper = his.cdcooper
-                         AND lcm.cdhistor = his.cdhistor
-                         AND lcm.cdcooper = pr_cdcooper
-                         AND lcm.nrdconta = pr_nrdconta
-                         AND lcm.dtmvtolt = (SELECT dat.dtmvtolt FROM crapdat dat WHERE dat.cdcooper = pr_cdcooper)
-                         AND lcm.cdhistor <> 289 ) lcmaux
-               WHERE (lcmaux.vllancamentos
-                   + (SELECT sld.vlsddisp saldo
-                        FROM crapsld sld
-                       WHERE sld.cdcooper = pr_cdcooper
-                         AND sld.nrdconta = pr_nrdconta)) < 0) adiantamento_deposito
-       WHERE ass.nrdconta = lim.nrdconta(+)
-         AND ass.cdcooper = lim.cdcooper(+)
-         AND ass.nrdconta = pr_nrdconta  --905887
-         AND ass.cdcooper = pr_cdcooper; --1
-     rw_consulta_limite_cc cr_consulta_limite_cc%ROWTYPE;
-
-    BEGIN
-
-      OPEN cr_consulta_limite_cc(pr_cdcooper => pr_cdcooper
-                                ,pr_nrdconta => pr_nrdconta);
-     FETCH cr_consulta_limite_cc
-      INTO rw_consulta_limite_cc;
-     CLOSE cr_consulta_limite_cc;
-     
-    -- CAMPOS
-    -- Busca os dados
-      pr_tipo     := rw_consulta_limite_cc.Tipo;
-      pr_data     := rw_consulta_limite_cc.Data;
-      pr_contrato := rw_consulta_limite_cc.Contrato;
-      pr_saldo    := rw_consulta_limite_cc.Saldo;
-      pr_cdcritic := NULL;
-      pr_dscritic := NULL;
-      
-  EXCEPTION
-    WHEN OTHERS THEN
-      pr_cdcritic := 999;
-      pr_dscritic := 'Erro pc_consultar_limite_cc: '||SQLERRM;
-      ROLLBACK;
-  END pc_consultar_limite_cc;  
 
 END ZOOM0001;
 /
