@@ -57,6 +57,10 @@ var aux_inconfi4 = ""; /*Variável usada para controlar validações que serão 
 var aux_inconfi5 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
 var aux_inconfi6 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
 
+var tpctrlim = "";
+var idcobope = "";
+var cdageori = "";
+
 
 // ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
@@ -547,6 +551,108 @@ function mostraTelaAltera() {
     return false;
 }
 
+function confirmaEnvioAnalise(){
+	showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validaAnaliseTitulo();', 'return false;', 'sim.gif', 'nao.gif');
+}
+
+//OPÇÂO ANALISAR
+//Avaliar se é possível executar a ação de analisar
+function validaAnaliseTitulo(){
+
+	// INICIO MOCK - (remover trecho quando subir - utilizado apenas para mock)
+	var insitapr = 'REJEITADO AUTOMATICAMENTE'; 
+	var dssitest = 'ANALISE FINALIZADA'; 
+
+	// FIM MOCK - (remover trecho quando subir - utilizado apenas para mock)
+
+	// pega os valores conforme o status que está na tabela (descomentar quando não estiver usando o mock)
+	//var insitapr = $('#insitapr').val();
+	//var dssitest = $("#dssitest").val();
+	/*
+	if (dssitest == 'ANALISE FINALIZADA' && insitapr == 'REJEITADO AUTOMATICAMENTE'){				
+		showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'enviarPropostaAnaliseComLIberacaoCordenador()\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+	}else{
+		enviarPropostaAnalise();
+	}*/
+	enviarPropostaAnalise();
+    return false;
+}
+
+// funcao que é chamada caso seja aprovado com senha coordenador
+function enviarPropostaAnaliseComLIberacaoCordenador(){
+	alert("Proposta enviada para analise após liberação do coordenador.\nObs.: Função ainda em desenvolvimento!");
+
+	/*
+	showMsgAguardo("Aguarde, enviando dados para esteira ...");
+
+	var operacao = "ENVIAR_ESTEIRA";
+
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+		dataType: "html",
+		data: {
+			operacao: operacao,
+			nrdconta: nrdconta,
+			nrctrlim: nrcontrato,
+
+			redirect: "html_ajax"
+		},
+		success: function(response) {
+			$("#divOpcoesDaOpcao3").html(response);
+		},	
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		}
+						
+	});	
+	*/
+
+}
+
+
+// OPÇÃO ANALISAR
+// Carregar os dados para consulta de limite de desconto de títulos
+function enviarPropostaAnalise() {
+	//alert("Proposta enviada para analise.\nObs.: Função ainda em desenvolvimento!");
+
+	
+	showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
+
+	var operacao = "ENVIAR_ANALISE";
+
+	
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+		dataType: "html",
+		data: {
+			operacao: operacao,
+			nrdconta: nrdconta,
+			nrctrlim: nrcontrato,
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+                eval(response);
+                return false;
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            }
+			
+		}				
+	});	
+	
+
+	
+}
+
 function exibeAlteraNumero() {
 
     showMsgAguardo('Aguarde, abrindo altera&ccedil;&atilde;o...');
@@ -578,6 +684,14 @@ function exibeAlteraNumero() {
 }
 
 function fechaRotinaAltera() {
+
+    fechaRotina($('#divUsoGenerico'), $('#divRotina'));
+    carregaLimitesTitulos();
+    return false;
+
+}
+
+function fechaRotinaDetalhe() {
 
     fechaRotina($('#divUsoGenerico'), $('#divRotina'));
     carregaLimitesTitulos();
@@ -1191,4 +1305,84 @@ function mostraMsgsGenericas(){
 	
 	return false;
 	
+}
+
+function carregaDadosDetalhesProposta(){
+	showMsgAguardo("Aguarde, carregando detalhes da proposta ...");
+	
+	exibeRotina($('#divOpcoesDaOpcao2'));
+
+    //limpaDivGenerica();
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_detalhes_proposta.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			nrctrlim: nrcontrato,
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			//$('#divUsoGenerico').html(response);
+
+			if (response.indexOf('showError("error"') == -1) {
+				$('#divOpcoesDaOpcao2').html(response);
+				$("#divConteudoOpcao").css('display','none');
+				formataDetalhesProposta();
+	            //layoutPadrao();
+	            //hideMsgAguardo();
+	            //bloqueiaFundo($('#divUsoGenerico'));
+	        } else {
+	        	eval(response);
+	        }
+	        return false;
+		}				
+	});	
+	
+}
+
+function formataDetalhesProposta() {
+	var divRegistro = $('div.divRegistros', '#divResultadoAciona');
+    var tabela = $('table', divRegistro);
+    var tabelaHeader = $('table > thead > tr > th', divRegistro);
+    var fonteLinha = $('table > tbody > tr > td', divRegistro);
+
+    tabelaHeader.css({'font-size': '11px'});
+    fonteLinha.css({'font-size': '11px'});
+
+    $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '10px 3px 5px 3px'});
+    $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
+
+    divRegistro.css({'height':'205px', 'width':'930px'});
+	
+    var ordemInicial = new Array();
+
+    var arrayLargura = new Array();
+
+    arrayLargura[0] = '80px';
+	arrayLargura[1] = '110px';
+    arrayLargura[2] = '100px';
+    arrayLargura[3] = '196px';
+    arrayLargura[4] = '120px';
+    //arrayLargura[5] = '20px';
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'left';
+    arrayAlinha[2] = 'center';
+    arrayAlinha[3] = 'left';
+    arrayAlinha[4] = 'center';
+    arrayAlinha[5] = 'left';
+
+    var metodoTabela = '';
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
+	
+    return false;
 }

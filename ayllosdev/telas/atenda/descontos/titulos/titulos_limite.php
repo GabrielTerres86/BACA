@@ -165,6 +165,7 @@
 
 	<input type="button" class="botao gft" value="Analisar"  id="btnAnalisarLimite" name="btnAnalisarLimite" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="carregaDadosAnalisarTitulo();return false;"'; } ?>/>
 	<input type="button" class="botao gft" value="Imprimir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> />
+	<input type="button" class="botao gft" value="Detalhes Proposta"  id="btnDetalhesProposta" name="btnDetalhesProposta" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="carregaDadosDetalhesProposta();return false;"'; } ?>/>
 </div>
 
 <script type="text/javascript">
