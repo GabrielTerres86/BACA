@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 04/12/2017
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 29/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -90,6 +90,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --
   -- 04/12/2017 - Remoção do paralelismo nas queries envolvendo as tabelas craptrd e crapmfx nos processos
   --              online - pc_saldo_rdc_pos (Rodrigo)
+  --
+  -- 29/01/2018 - #770327 Na rotina pc_consulta_aplicacoes, inclusão do INTERNETBANK para filtrar os 
+  --              lançamentos no período informado (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -12539,7 +12542,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Inicializa o conteudo do registro rw_crapdtc
       rw_crapdtc := NULL;
 
-      IF UPPER(pr_cdprogra) = 'IMPRES'  AND
+      IF (UPPER(pr_cdprogra) = 'IMPRES' OR 
+          UPPER(pr_cdprogra) = 'INTERNETBANK') AND
          pr_dtinicio IS NOT NULL AND
          pr_dtfim    IS NOT NULL THEN
         -- Busca sobre o cadastro dos lancamentos de aplicacoes RDCA.
@@ -12935,6 +12939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Retorno não OK
       pr_des_reto := 'NOK';
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       -- Retorno não OK
       pr_des_reto := 'NOK';
       -- Gerar erro montado
