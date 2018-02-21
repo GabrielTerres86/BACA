@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 25/01/2018
+   Data    : Agosto/2007                      Ultima atualizacao: 21/02/2018
 
    Dados referentes ao programa:
 
@@ -181,6 +181,9 @@
 
 			  25/01/2018 - Inclusão do FIELD NIVRIORI na tt-proposta-epr.
 			               (Reginaldo AMcom)
+
+			  21/02/2018 - Inclusão do FIELD IDENEMPR na tt-dados-epr.
+			               (Simas AMcom)
               
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
@@ -255,6 +258,7 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD nrdrecid AS RECID
     FIELD tplcremp LIKE craplcr.tpctrato
     FIELD tpemprst LIKE crapepr.tpemprst
+	FIELD idenempr LIKE crapepr.tpemprst
     FIELD cdtpempr AS CHAR
     FIELD dstpempr AS CHAR
     FIELD permulta AS DECI FORMAT "zz9.99"

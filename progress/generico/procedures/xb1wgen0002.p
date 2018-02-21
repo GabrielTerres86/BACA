@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
-   Data    : Junho/2007                     Ultima atualizacao: 02/05/2017
+   Data    : Junho/2007                     Ultima atualizacao: 21/02/2018
 
    Dados referentes ao programa:
 
@@ -125,6 +125,9 @@
               01/03/2016 - PRJ Esteira de Credito. (Jaison/Oscar)
 
 			  25/04/2017 - Tratamentos para o projeto 337 - Motor de crédito. (Reinert)
+
+			  21/02/2018 - Alterado a rotina obtem-dados-liquidacoes para ao final da listagem 
+						   trazer limite/adp para liquidar.
 
 ..............................................................................*/
 
@@ -334,6 +337,7 @@ DEF VAR aux_dsjusren AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_qtprecal LIKE crapepr.qtprecal                             NO-UNDO.
 DEF VAR aux_tpemprst AS INTE                                           NO-UNDO.
+DEF VAR aux_idenempr AS INTE										   NO-UNDO.	
 DEF VAR aux_dtlibera AS DATE                                           NO-UNDO.
 
 DEF VAR aux_nrdgrupo AS INT                                            NO-UNDO.
@@ -575,6 +579,7 @@ PROCEDURE valores_entrada:
             WHEN "nmcidade" THEN aux_nmcidade = tt-param.valorCampo.
             WHEN "flgerlog" THEN aux_flgerlog = LOGICAL(tt-param.valorCampo).
             WHEN "tpemprst" THEN aux_tpemprst = INTE(tt-param.valorCampo).
+			WHEN "idenempr" THEN aux_idenempr = INTE(tt-param.valorCampo).
             WHEN "dsjusren" THEN aux_dsjusren = tt-param.valorCampo.
             WHEN "dtlibera" THEN aux_dtlibera = DATE(tt-param.valorCampo).
             WHEN "dtmvtolt" THEN aux_dtmvtolt = DATE(tt-param.valorCampo).
@@ -1669,6 +1674,15 @@ PROCEDURE obtem-dados-liquidacoes:
         END.
 
     EMPTY TEMP-TABLE tt-erro.
+	
+	RUN obtem-dados-limite-adp IN hBO 
+							 ( INPUT aux_cdcooper,
+							   INPUT aux_nrdconta,
+							  OUTPUT TABLE tt-erro,
+					  	       INPUT-OUTPUT TABLE tt-dados-epr ).
+
+	IF  RETURN-VALUE <> "OK"   THEN
+        RETURN "NOK".
 
     /* Pre-selecao das linhas do browse */
     RUN obtem-emprestimos-selecionados IN hBO
@@ -1732,7 +1746,8 @@ PROCEDURE valida-liquidacao-emprestimos:
                                        INPUT aux_vlemprst,
                                        INPUT aux_vlsdeved,
                                        INPUT aux_tosdeved,  
-                                       INPUT TRUE,          
+                                       INPUT TRUE, 
+									   INPUT aux_idenempr,     /* identificador limite/adp */    
                                       OUTPUT aux_tpdretor,
                                       OUTPUT aux_msgretor,
                                       OUTPUT TABLE tt-erro ).

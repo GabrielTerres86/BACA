@@ -10,6 +10,7 @@
  * 000: [21/09/2011] Ajuste do tratamento do retorno da valida-liquidacao-emprestimo - Marcelo L. Pereira (GATI)
    001: [10/07/2012] Validar sempre os contratos a serem liquidados (Gabriel).
    002: [25/02/2013] Enviar o numero do contrato para validacao (Gabriel).
+   003: [21/02/2018] Incluído campo identificador do empréstimo a liquidar(Simas-AMcom).
  */
 ?>
  
@@ -31,6 +32,7 @@
 	$vlsdeved = (isset($_POST['vlsdeved'])) ? $_POST['vlsdeved'] : '';
 	$tosdeved = (isset($_POST['tosdeved'])) ? $_POST['tosdeved'] : '';
 	$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : '';
+	$idenempr = (isset($_POST['idenempr'])) ? $_POST['idenempr'] : '';
 			
 	$vlsdeved = str_replace(".","",$vlsdeved);
 	$vlemprst = str_replace(".","",$vlemprst);
@@ -58,6 +60,7 @@
 	$xml .= "		<vlemprst>".$vlemprst."</vlemprst>";            
 	$xml .= "		<vlsdeved>".$vlsdeved."</vlsdeved>";
 	$xml .= "		<tosdeved>".$tosdeved."</tosdeved>";
+	$xml .= "		<idenempr>".$idenempr."</idenempr>";
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	
@@ -74,7 +77,7 @@
 	$msgretor = trim($xmlObj->roottag->tags[0]->attributes['MSGRETOR']);
 	$tpdretor = trim($xmlObj->roottag->tags[0]->attributes['TPDRETOR']);
 	
-	// exibirErro('error',$msgretor.' | '.$tpdretor,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	//exibirErro('error',$msgretor.' | '.$tpdretor,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	
 	if( $tpdretor == 'D' ){
 		

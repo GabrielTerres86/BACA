@@ -118,8 +118,9 @@
  * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
  * 096: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
  * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom)  
- * 099: [21/12/2017] Alterado para quando a linha de cr�dito for (6901 - Cess�o Cart�o Cr�dito) a 
- *                   qualifica��o da opera��o seja (5 - Cess�o de Cart�o) (Diego Simas - AMcom)
+ * 099: [21/01/2018] Alterado para quando a linha de crédito for (6901 - Cessão Cartão Crédito) a 
+ *                   qualificação da operação seja (5 - Cessão de Cartão) (Simas - AMcom)
+ * 100: [21/02/2018] Alterado para tratar limite/adp na tela de seleção para liquidar (Simas - AMcom)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -3391,8 +3392,6 @@ function controlaLayout(operacao) {
 
         cFinalidEmpr.val(arrayStatusApprov['cdfinemp']);
         cLinhaCredit.val(arrayStatusApprov['cdlcremp']);
-        console.log(arrayStatusApprov['nivriori']);
-        console.log(arrayStatusApprov['nivrisco']);
         cNivelRisco.val(arrayStatusApprov['nivriori'] != '' ? arrayStatusApprov['nivriori'] : arrayStatusApprov['nivriris']);
         cValorEmpr.val(arrayStatusApprov['vlemprst']);
         cValorParc.val(arrayStatusApprov['vlpreemp']);
@@ -7504,8 +7503,8 @@ function validaLiquidacoes(flgContinuar, operacao) {
     var vlemprst = $("#vlemprst", "#frmNovaProp").val();
     var vlsdeved = (flgContinuar) ? 0 : arrayLiquidacoes[indarray]['vlsdeved'];
     var tosdeved = number_format(tot_vlsdeved, 2, ',', '');
-    var nrctremp = (flgContinuar) ? 0 : arrayLiquidacoes[indarray]['nrctremp'];
-
+    var nrctremp = (flgContinuar) ? 0 : arrayLiquidacoes[indarray]['nrctremp'];    
+    var idenempr = (flgContinuar) ? 0 : arrayLiquidacoes[indarray]['idenempr'];
 
     if (!flgContinuar && vlsdeved == '0') {
         return;
@@ -7520,7 +7519,7 @@ function validaLiquidacoes(flgContinuar, operacao) {
             dtmvtoep: dtmvtoep, qtlinsel: qtlinsel,
             vlemprst: vlemprst, vlsdeved: vlsdeved,
             tosdeved: tosdeved, operacao: operacao,
-            nrctremp: nrctremp,
+            nrctremp: nrctremp, idenempr: idenempr,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -7582,7 +7581,11 @@ function mostraLiquidacoes(opLiq, operacao) {
 
 function controlaLayoutLiq(operacao) {
 
-    var aux_nrctremp, aux_vlemprst, aux_vlpreemp, aux_vlsdeved;
+    var aux_nrctremp, aux_vlemprst, 
+        aux_vlpreemp, aux_vlsdeved, 
+        aux_tpemprst, aux_dstipemp,
+        aux_cdfinemp, aux_cdlcremp,
+        aux_idenempr;
 
     // Formata o tamanho da tabela
     $('#divTabLiquidacoes').css({'height': '208px', 'width': '625px'});
@@ -7596,26 +7599,40 @@ function controlaLayoutLiq(operacao) {
         aux_vlemprst = number_format(parseFloat(arrayLiquidacoes[i]['vlemprst'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
         aux_vlpreemp = number_format(parseFloat(arrayLiquidacoes[i]['vlpreemp'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
         aux_vlsdeved = number_format(parseFloat(arrayLiquidacoes[i]['vlsdeved'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
+        
+        aux_idenempr = arrayLiquidacoes[i]['idenempr'];           
+        aux_cdfinemp = arrayLiquidacoes[i]['cdfinemp'];
+        aux_cdlcremp = arrayLiquidacoes[i]['cdlcremp'];
+        aux_qtpreemp = arrayLiquidacoes[i]['qtpreemp'];
+        
 
-        // Tratamento para verificar Tipo de Emprestimo
         if (arrayLiquidacoes[i]['tpemprst'] == 0) {
-            aux_tpemprst = 'TR';
-        } else {
-            aux_tpemprst = 'PP';
+            aux_dstipemp = 'TR';
+        } else {            
+            aux_dstipemp = 'PP';
         }
-
+        
+        if (aux_idenempr == 2){
+            aux_cdfinemp = ' - ';
+            aux_cdlcremp = ' - ';
+            aux_vlemprst = ' - ';
+            aux_qtpreemp = ' - ';
+            aux_vlpreemp = ' - '; 
+            aux_dstipemp = 'CC';
+        }
+ 
         $('#divTabLiquidacoes > div > table > tbody').append('<tr></tr>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td><span>' + arrayLiquidacoes[i]['idseleca'] + '</span>' + arrayLiquidacoes[i]['idseleca'] + '<input type="hidden" id="indarray" name="indarray" value="' + i + '" /></td>');
-        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + arrayLiquidacoes[i]['cdfinemp'] + '</td>');
-        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + arrayLiquidacoes[i]['cdlcremp'] + '</td>');
+        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_cdfinemp + '</td>');
+        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_cdlcremp + '</td>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_nrctremp + '</td>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + arrayLiquidacoes[i]['dtmvtolt'] + '</td>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_vlemprst + '</td>');
-        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + arrayLiquidacoes[i]['qtpreemp'] + '</td>');
+        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_qtpreemp + '</td>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_vlpreemp + '</td>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_vlsdeved + '</td>');
-        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_tpemprst + '</td>');
-
+        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_dstipemp + '</td>'); 
+ 
     }
 
     var divRegistro = $('#divTabLiquidacoes > div.divRegistros');
@@ -7687,16 +7704,16 @@ function fechaLiquidacoes(operacao) {
 
     dsctrliq = dsctrliq.slice(0, -1);
 	
-	if (dsctrliq != '' && qtmesblq != 0 && operacao[0] == 'I')
+	if (dsctrliq != '' && qtmesblq != 0 && operacao[0] == 'I')        
 		showConfirmacao('Deseja bloquear a oferta de cr&eacute;dito pr&eacute;-aprovado na conta durante o per&iacute;odo de ' + qtmesblq + ' mes(es)?',
 						'Confirma&ccedil;&atilde;o - Ayllos', 
-						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = true;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
+						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = true;fechaLiquidacoesAposConfirmacao("' + dsctrliq + '", "' + operacao + '");',
 						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = false;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
 						'sim.gif', 
 						'nao.gif');
-	else
+    else
 		fechaLiquidacoesAposConfirmacao(dsctrliq, operacao);
-	return false;
+    return false;
 }
 
 function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao){
