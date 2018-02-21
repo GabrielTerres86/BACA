@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                       Ultima atualizacao: 29/01/2018
+   Data    : Julho/2013                       Ultima atualizacao: 21/02/2018
 
    Dados referentes ao programa:
 
@@ -35,14 +35,16 @@
                             log quando debcns for executada manualmente
                             (Tiago SD338533).
 
-		       24/10/2016 - Ajustes para que tenha uma terceira execucao
-			                da DEBCNS - Melhoria349 (Tiago/Elton).
+               24/10/2016 - Ajustes para que tenha uma terceira execucao
+                            da DEBCNS - Melhoria349 (Tiago/Elton).
                             
                23/10/2017 - Ajustes para lançamentos duplicados e tambem para que 
                             tenhamos uma execucao matutina (Lucas Ranghetti #739738)
                             
                29/01/2018 - Ajustar DEBCNS conforme solicitaçao do chamado (Lucas Ranghetti #837834) 
                            
+               21/02/2018 - Ajustar relatorio e gravar critica na lau caso 
+                            tenha alguma (Lucas Ranghetti #852207)
 .............................................................................*/
 
 
@@ -154,7 +156,7 @@ PROCEDURE efetua-debito-consorcio:
 
     TRANS_1:
     
-    FOR EACH tt-obtem-consorcio NO-LOCK 
+    FOR EACH tt-obtem-consorcio EXCLUSIVE-LOCK 
         BREAK BY tt-obtem-consorcio.cdcooper 
               BY tt-obtem-consorcio.tpconsor:  
                    
@@ -452,8 +454,8 @@ PROCEDURE efetua-debito-consorcio:
                 
                 END. /* fim else */
                 
-                /* Para aparecer na debcon devemos gravar a critica */
-                IF  glb_cdcritic = 717 THEN
+                /* Para aparecer na debcon devemos gravar a critica 717 */
+                IF  glb_cdcritic <> 0 THEN
                     ASSIGN craplau.cdcritic = glb_cdcritic.
         END. /* fim for each craplau */
 

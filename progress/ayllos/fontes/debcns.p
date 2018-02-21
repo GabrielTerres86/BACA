@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                        Ultima atualizacao: 14/02/2018
+   Data    : Julho/2013                        Ultima atualizacao: 21/02/2018
 
    Dados referentes ao programa:
 
@@ -42,6 +42,8 @@
    29/01/2018 - Ajustar DEBCNS conforme solicitaçao do chamado (Lucas Ranghetti #837834)
    
    14/02/2018 - Retirar validaçao do horario de pagamento SICREDI (Lucas Ranghetti #838937)
+   
+   21/02/2018 - Ajustar layout do relatorio conforme o crps662 (Lucas Ranghetti #852207)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -162,18 +164,19 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
          SKIP
          " --- --------- ---------------------- ----------"
          "--------------------------- --------- ------ ---------- ----------"
-         WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao.
+     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_transacao.
     
     FORM SKIP(1)
          "->"
          aux_dstiptra FORMAT "x(19)" SKIP
          "--->"
          aux_dscooper
-         WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao1.    
+     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_transacao1.    
 
     FORM SKIP(1)
          " PA  "
          "CONTA/DV"
+     "DOCUMENTO"
          "CTA.CONSOR"
          "NOME                         "
          "TIPO     "
@@ -182,12 +185,14 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
          "     VALOR"
          "CRITICA"
          SKIP
-         " --- --------- ---------- --------------------------- ---------"
-         "------ ---------- ---------- ---------------------------------------"
-         WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao2.
+     " --- --------- ---------------------- ----------"
+     "--------------------------- --------- ------ ---------- ----------"
+     "---------------------------------------"
+     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_transacao2.
 
     FORM tt-obtem-consorcio.cdagenci FORMAT "zz9"        
          tt-obtem-consorcio.nrdconta FORMAT "zzzz,zzz,9" 
+     tt-obtem-consorcio.nrdocmto FORMAT "9999999999999999999999"
          tt-obtem-consorcio.nrctacns FORMAT "zzzz,zzz,9" 
          tt-obtem-consorcio.nmprimtl FORMAT "x(27)"      
          tt-obtem-consorcio.dsconsor FORMAT "x(9)"       
@@ -195,7 +200,7 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
          tt-obtem-consorcio.nrcotcns FORMAT "zzzz,zzz,9" 
          tt-obtem-consorcio.vlparcns FORMAT "zzz,zz9.99"
          tt-obtem-consorcio.dscritic FORMAT "x(39)"
-         WITH NO-BOX NO-LABEL DOWN WIDTH 132 FRAME f_nao_efetuados.
+     WITH NO-BOX NO-LABEL DOWN WIDTH 234 FRAME f_nao_efetuados.
 
     FORM tt-obtem-consorcio.cdagenci FORMAT "zz9"          
          tt-obtem-consorcio.nrdconta FORMAT "zzzz,zzz,9"   
@@ -206,7 +211,7 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
          tt-obtem-consorcio.nrdgrupo FORMAT "999999"
          tt-obtem-consorcio.nrcotcns FORMAT "zzzz,zzz,9"   
          tt-obtem-consorcio.vlparcns FORMAT "zzz,zz9.99" 
-         WITH NO-BOX NO-LABEL DOWN WIDTH 132 FRAME f_efetuados.
+     WITH NO-BOX NO-LABEL DOWN WIDTH 234 FRAME f_efetuados.
 
     FORM SKIP(2)
          "TOTAIS --> Quantidade: "                                      AT 01
@@ -214,7 +219,7 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
          SKIP
          "                Valor: "                                      AT 01
          aux_vlefetua FORMAT "zzz,zzz,zz9.99"                           AT 24
-         WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_total.
+     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_total.
 
 
  { includes/crps663.i } 
