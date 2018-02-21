@@ -51,8 +51,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
   --             27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
   --
-  --             15/02/2018 - Ajuste para alterar somente acordos setados para pagamento = 'S'
-  --                          Daniel(AMcom)                     
   ---------------------------------------------------------------------------------------------------------------*/
 
   vr_flgerlog BOOLEAN := FALSE;
@@ -1330,16 +1328,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                  END IF;
 
                  BEGIN
-                   UPDATE tbrecup_acordo aco
-                      SET aco.vlbloqueado = 0,
-                          aco.cdsituacao  = 2,
-                          aco.dtliquid    = vr_dtquitac
-                    WHERE aco.nracordo = vr_nracordo
-                      -- Ajuste para alterar somente acordos setados para pagamento = 'S'  Daniel(AMcom)
-                      AND EXISTS (SELECT 1
-                                    FROM tbrecup_acordo_contrato acordoctr
-                                   WHERE acordoctr.nracordo = aco.nracordo
-                                     AND acordoctr.indpagar = 'S');
+                   UPDATE tbrecup_acordo
+                      SET vlbloqueado = 0,
+                          cdsituacao  = 2,
+                          dtliquid    = vr_dtquitac
+                    WHERE tbrecup_acordo.nracordo = vr_nracordo;
                  EXCEPTION
                    WHEN OTHERS THEN
                      vr_dscritic := 'Erro ao atualizar registro na tabela TBRECUP_ACORDO: ' || SQLERRM;
