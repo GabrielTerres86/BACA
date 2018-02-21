@@ -403,7 +403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 27/11/2017
+   Data     : 27/08/2015                        Ultima atualizacao: 18/12/2017
 
    Dados referentes ao programa:
 
@@ -458,6 +458,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             
                13/11/2017 - Enviar e-mail para a area de convenios caso a validacao do xml
                             com o WebService do Sicredi ocorra erro (Lucas Ranghetti #751056)
+                
+               18/12/2017 - Buscar data anterior antes da chamada da verifica_operacao na
+                            procedure pc_gps_validar_sicredi (Lucas Ranghetti #809954)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -1272,7 +1275,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           vr_nrcpfcgc := rw_crapsnh.nrcpfcgc;
         END LOOP;      
       END IF;
-      --
+      
+      -- Buscar data anterior para a validacao correta nos finais de semana 
+      -- e final de ano
+      vr_dtdebito := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
+																							   pr_dtmvtolt => vr_dtdebito, 
+																							   pr_tipo     => 'A');
       --Verificar Operacao
       INET0001.pc_verifica_operacao (pr_cdcooper => pr_cdcooper          --Código Cooperativa
                                     ,pr_cdagenci => pr_cdagenci          --Agencia do Associado
@@ -5051,8 +5059,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        -- Retornar valores
        pr_dslitera := vr_literal;
        pr_cdultseq := vr_nrseqaut;
-     END IF;
-
+      END IF;
+       
      IF NVL(pr_nrdconta,0) > 0 THEN
         -- Se for pessoa fisica
         IF rw_crapass.inpessoa = 1 THEN
@@ -7309,17 +7317,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          vr_ano_competencia := SUBSTR(pr_dtcompet,3,4);       
 
          vr_dtcompet := TO_DATE('01/'||vr_mes_competencia||'/'||vr_ano_competencia,'dd/mm/RRRR');             
-                  END IF;                 
-          
+              END IF;
+
        -- Obtém a data de apuração mínima para agendamento
        vr_dtminage := ADD_MONTHS(TRUNC(rw_crapdat.dtmvtocd,'MM'),-1);
        
        IF vr_dtcompet < vr_dtminage THEN
          pr_dscritic := 'GPS com competência inferior a #dtminage# não pode ser agendada. Para efetivar o pagamento utilize a rotina de Pagamento de GPS.';
          pr_dscritic := REPLACE(pr_dscritic, '#dtminage#', TO_CHAR(vr_dtminage,'fmMonth/YYYY','nls_date_language =''brazilian portuguese'''));
-                    RAISE vr_exc_saida;
-                  END IF;
-                END IF;
+                RAISE vr_exc_saida;
+              END IF;
+            END IF;
 
             -- Validar dia útil
             vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,

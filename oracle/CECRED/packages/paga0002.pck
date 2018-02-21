@@ -8591,7 +8591,7 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Jean Michel
-    --  Data     : Julho/2016.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Julho/2016.                   Ultima atualizacao: 15/02/2018
     --
     --  Dados referentes ao programa:
     --
@@ -8601,6 +8601,13 @@ create or replace package body cecred.PAGA0002 is
     --  Alteração : 06/12/2017 Adicionado filtro por tipo de transação
     --                         (p285 - Ricardo Linhares)
     --
+    --              23/01/2018 - Incluido log no "WHEN OTHERS THEN" para tentar solucionar
+    --                           um erro que não foi possível simular em desenvolvimento. 
+    --                           (SD 830373 - Kelvin)
+    --                           
+    --              15/02/2018 - Ajuste realizado para corrigir o problema do chamado 
+    --                           830373. (Kelvin)
+    --  
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -8664,6 +8671,7 @@ create or replace package body cecred.PAGA0002 is
           ,lau.dslindig
           ,lau.idlancto
           ,lau.nrseqagp
+          ,lau.progress_recid
       FROM craplau lau
     WHERE (pr_cdtiptra IS NULL OR lau.cdtiptra IN(SELECT regexp_substr(pr_cdtiptra, '[^;]+', 1, LEVEL)
                                                     FROM dual
@@ -8870,6 +8878,7 @@ create or replace package body cecred.PAGA0002 is
     vr_vlrrecbr tbpagto_agend_darf_das.vlreceita_bruta%TYPE := 0;
     vr_vlrperce tbpagto_agend_darf_das.vlpercentual%TYPE := 0;
     vr_idlstdom NUMBER := 0;
+    vr_prorowid craplau.progress_recid%TYPE := NULL;
 
     -- GPS
     vr_gps_cddpagto craplgp.cddpagto%TYPE; -- 03 - Código de pagamento
@@ -8934,6 +8943,9 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_dtageini => pr_dtageini
                                 ,pr_dtagefim => pr_dtagefim) LOOP
 
+      
+      vr_prorowid := rw_craplau.progress_recid;
+      
       vr_tpcaptur := 0;
 
       IF rw_craplau.insitlau = 2 AND -- EFETIVADO
@@ -9078,7 +9090,7 @@ create or replace package body cecred.PAGA0002 is
         ELSIF rw_craplau.cdtiptra = 4 THEN
           vr_dstiptra := 'TED';
           vr_idlstdom := 4; -- TED         
-        ELSE          
+        ELSE
           vr_dstiptra := '';
         END IF;
 
@@ -9241,9 +9253,9 @@ create or replace package body cecred.PAGA0002 is
             vr_gps_cddpagto := rw_gps.cddpagto;
             vr_gps_dscompet := rw_gps.dscompet;
             vr_gps_cdidenti := rw_gps.cdidenti;
-            vr_gps_vlrdinss := to_number(rw_gps.vlrdinss,'9G999D99');
-            vr_gps_vlrouent := to_number(rw_gps.vlrouent,'9G999D99');
-            vr_gps_vlrjuros := to_number(rw_gps.vlrjuros,'9G999D99');
+            vr_gps_vlrdinss := to_number(rw_gps.vlrdinss,'999G999D99');
+            vr_gps_vlrouent := to_number(rw_gps.vlrouent,'999G999D99');
+            vr_gps_vlrjuros := to_number(rw_gps.vlrjuros,'999G999D99');
           END IF;
 
         ELSE
@@ -9331,6 +9343,7 @@ create or replace package body cecred.PAGA0002 is
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em PAGA0002.pc_obtem_agendamentos: ' || SQLERRM;
+        cecred.pc_internal_exception(pr_compleme => 'PAGA0002.PC_OBTEM_AGENDAMENTOS progress_recid: '|| vr_prorowid);
         ROLLBACK;
 
   END pc_obtem_agendamentos;
@@ -10139,7 +10152,7 @@ create or replace package body cecred.PAGA0002 is
       -- Gravar a solictação do e-mail para envio posterior
       COMMIT;
   END pc_apura_lcm_his_emprestimo;
-  
+
 
 END PAGA0002;
 /

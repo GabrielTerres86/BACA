@@ -12,7 +12,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Deborah/Edson
- Data    : Janeiro/92.                         Ultima atualizacao: 27/12/2017
+ Data    : Janeiro/92.                         Ultima atualizacao: 06/02/2018
  Dados referentes ao programa:
 
  Frequencia: Mensal (Batch - Background).
@@ -163,6 +163,8 @@ BEGIN
                       (Jonata - RKAM P364).
 
           27/12/2017 - #806757 Incluídos os logs de trace dos erros nas principais exceptions others (Carlos)
+          
+          06/02/2018 - #842836 Inclusão do hint FULL no cursor cr_craplem para melhoria de performance (Carlos)
    ............................................................................. */
    DECLARE
 
@@ -621,7 +623,8 @@ BEGIN
 
      -- Selecionar informacoes dos lancamentos do emprestimos
      CURSOR cr_craplem (pr_cdcooper IN crapepr.cdcooper%TYPE) IS
-       SELECT craplem.nrdconta
+       SELECT /*+ FULL(craplem) */
+              craplem.nrdconta
              ,craplem.nrctremp
              ,max(craplem.dtmvtolt) keep (dense_rank last order by craplem.dtmvtolt) dtmvtolt
              ,sum(craplem.vllanmto) keep (dense_rank last order by craplem.dtmvtolt) vllanmto

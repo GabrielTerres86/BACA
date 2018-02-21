@@ -146,7 +146,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                05/06/2017 - Ajustes para incrementar/zerar variaveis quando craplau também
                             (Lucas Ranghetti/Thiago Rodrigues)
                             
-               21/11/2017 - Adequar a cobranca de IOF para a nova legislacao. (James)                                     
+               21/11/2017 - Adequar a cobranca de IOF para a nova legislacao. (James)   
+                                                 
+               19/01/2018 - Corrigido cálculo de saldo bloqueado (Luis Fernando-Gft)                                 
      ............................................................................. */
 
      DECLARE
@@ -190,7 +192,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
        -- Definicao do vetor de memoria
        vr_tab_craplrt  typ_tab_craplrt;
        vr_tab_craplcm  typ_tab_craplcm;
-	     vr_tab_crapsld  typ_tab_crapsld;
+       vr_tab_crapsld  typ_tab_crapsld;
        vr_tab_crapjur  typ_tab_crapjur;
 
        /* Cursores da pc_crps008 */
@@ -445,7 +447,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
          AND    craplot.nrdolote = pr_nrdolote;
        rw_craplot cr_craplot%ROWTYPE;
 
-	     --Selecionar informacoes dos lançamentos da conta
+       --Selecionar informacoes dos lançamentos da conta
        CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE
                          ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
                          ,pr_cdhistor IN craplcm.cdhistor%TYPE) IS
@@ -475,8 +477,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
        rw_craplcm cr_craplcm%ROWTYPE;
 
        --Selecionar saldos negativos
-       CURSOR cr_crapneg2 (pr_cdcooper	IN crapneg.cdcooper%TYPE
-  												,pr_nrdconta	IN crapneg.nrdconta%TYPE
+       CURSOR cr_crapneg2 (pr_cdcooper  IN crapneg.cdcooper%TYPE
+                          ,pr_nrdconta  IN crapneg.nrdconta%TYPE
                           ,pr_cdhisest  IN crapneg.cdhisest%TYPE
                           ,pr_vlestour  IN crapneg.vlestour%TYPE) IS
          SELECT crapneg.ROWID
@@ -1177,7 +1179,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
              --vlsddisp = valor do saldo disponivel
              --vllimcre = valor do limite de credito do associado
              vr_tot_vlsldant:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdchsl,0) +
-                               Nvl(rw_crapsld.ass_vllimcre,0);
+                               Nvl(rw_crapsld.vlsdbloq,0) + Nvl(rw_crapsld.vlsdblpr,0) +
+                               Nvl(rw_crapsld.vlsdblfp,0) + Nvl(rw_crapsld.ass_vllimcre,0);
 
              --Zerar Numero sequencial tabela
              vr_nrseqneg:= 0;
@@ -1197,15 +1200,15 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                --Flag saldo negativo recebe true
                vr_flghaneg:= TRUE;
 
-               --Selecionar	informacoes	de saldos	negativos	e	controles	de cheque
-  						 OPEN	cr_crapneg2 (pr_cdcooper	=> pr_cdcooper
-  												  	  ,pr_nrdconta	=> rw_crapsld.nrdconta
+               --Selecionar informacoes de saldos negativos e controles de cheque
+               OPEN cr_crapneg2 (pr_cdcooper  => pr_cdcooper
+                                ,pr_nrdconta  => rw_crapsld.nrdconta
                                 ,pr_cdhisest => 5
                                 ,pr_vlestour => (vr_tot_vlsldant * -1));
-  						 --Posicionar	no proximo registro
-  						 FETCH cr_crapneg2	INTO rw_crapneg2;
-  						 --Se	nao	encontrar
-  						 IF	cr_crapneg2%NOTFOUND	THEN
+               --Posicionar no proximo registro
+               FETCH cr_crapneg2  INTO rw_crapneg2;
+               --Se nao encontrar
+               IF cr_crapneg2%NOTFOUND  THEN
                  --Buscar mensagem de erro da critica
                  vr_cdcritic := 419;
                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld.nrdconta);
@@ -1213,12 +1216,12 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                  CLOSE cr_crapneg2;
                  --Sair do programa
                  RAISE vr_exc_saida;
-  						 ELSE
+               ELSE
                  --Inicializar numero sequencial lancamento com o já existente
-  							 vr_nrseqneg:= Nvl(rw_crapneg2.nrseqdig,0);
-  						 END IF;
-  						 --Fechar	Cursor
-  						 CLOSE cr_crapneg2;
+                 vr_nrseqneg:= Nvl(rw_crapneg2.nrseqdig,0);
+               END IF;
+               --Fechar Cursor
+               CLOSE cr_crapneg2;
              ELSE
                -- Usar cadastro sequenciador para geração da crapneg
                vr_nrseqneg := fn_sequence('CRAPNEG','NRSEQDIG',pr_cdcooper||';'||rw_crapsld.nrdconta);
@@ -1663,7 +1666,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                --Se for negativo
                IF vr_flghaneg THEN
 
-                 --Atualizar informacoes	de saldos	negativos	e	controles	de cheque
+                 --Atualizar informacoes  de saldos negativos e controles de cheque
                  BEGIN
                    UPDATE crapneg SET crapneg.vlestour = (vr_tot_vlsldatu * -1)
                    WHERE crapneg.cdcooper = pr_cdcooper
@@ -1685,48 +1688,48 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                      RAISE vr_exc_saida;
                  END;
                ELSE
-  							 --Inserir saldos	e	cheques
-  							 BEGIN
-  								 INSERT	INTO crapneg (crapneg.nrdconta
-  																	   ,crapneg.nrseqdig
-  																	   ,crapneg.cdhisest
-  																     ,crapneg.cdobserv
-  																	   ,crapneg.dtiniest
-  																	   ,crapneg.nrdctabb
-  																	   ,crapneg.nrdocmto
-  																	   ,crapneg.qtdiaest
-  																	   ,crapneg.vlestour
-  																	   ,crapneg.vllimcre
-  																	   ,crapneg.cdtctant
-  																	   ,crapneg.cdtctatu
-  																	   ,crapneg.dtfimest
-  																	   ,crapneg.cdbanchq
-  																	   ,crapneg.cdagechq
-  																	   ,crapneg.nrctachq
-  																	   ,crapneg.cdcooper)
-  													  VALUES	 (rw_crapsld.ass_nrdconta 
-  																	   ,vr_nrseqneg
-  																	   ,5
-  																	   ,0
-  																	   ,vr_dtmvtolt
-  																	   ,0
-  																	   ,0
-  																	   ,1
-  																	   ,(vr_tot_vlsldatu * -1)
-  																	   ,rw_crapsld.ass_vllimcre
-  																	   ,0
-  																	   ,0
-  																	   ,vr_dtmvtolt
-  																	   ,0
-  																	   ,0
-  																	   ,0
-  																	   ,pr_cdcooper);
-  							 EXCEPTION
-  								 WHEN	OTHERS THEN
-  								 vr_dscritic := 'Erro ao	inserir	na tabela	crapneg. Cdhisest=5 '||SQLERRM;
-  								 --Levantar Exceção
-  								 RAISE vr_exc_saida;
-  							 END;
+                 --Inserir saldos e cheques
+                 BEGIN
+                   INSERT INTO crapneg (crapneg.nrdconta
+                                       ,crapneg.nrseqdig
+                                       ,crapneg.cdhisest
+                                       ,crapneg.cdobserv
+                                       ,crapneg.dtiniest
+                                       ,crapneg.nrdctabb
+                                       ,crapneg.nrdocmto
+                                       ,crapneg.qtdiaest
+                                       ,crapneg.vlestour
+                                       ,crapneg.vllimcre
+                                       ,crapneg.cdtctant
+                                       ,crapneg.cdtctatu
+                                       ,crapneg.dtfimest
+                                       ,crapneg.cdbanchq
+                                       ,crapneg.cdagechq
+                                       ,crapneg.nrctachq
+                                       ,crapneg.cdcooper)
+                              VALUES   (rw_crapsld.ass_nrdconta 
+                                       ,vr_nrseqneg
+                                       ,5
+                                       ,0
+                                       ,vr_dtmvtolt
+                                       ,0
+                                       ,0
+                                       ,1
+                                       ,(vr_tot_vlsldatu * -1)
+                                       ,rw_crapsld.ass_vllimcre
+                                       ,0
+                                       ,0
+                                       ,vr_dtmvtolt
+                                       ,0
+                                       ,0
+                                       ,0
+                                       ,pr_cdcooper);
+                 EXCEPTION
+                   WHEN OTHERS THEN
+                   vr_dscritic := 'Erro ao  inserir na tabela crapneg. Cdhisest=5 '||SQLERRM;
+                   --Levantar Exceção
+                   RAISE vr_exc_saida;
+                 END;
 
                  --Incrementar quantidade dias devedor
                  rw_crapsld.qtddsdev:= Nvl(rw_crapsld.qtddsdev,0) + 1;
@@ -1749,48 +1752,48 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                    -- Usar cadastro sequenciador para geração da crapneg
                    vr_nrseqneg := fn_sequence('CRAPNEG','NRSEQDIG',pr_cdcooper||';'||rw_crapsld.nrdconta);
 
-  							   --Inserir saldos	e	cheques
-  							   BEGIN
-  								   INSERT	INTO crapneg (crapneg.nrdconta
-  									  								   ,crapneg.nrseqdig
-  										  							   ,crapneg.cdhisest
-  											  					     ,crapneg.cdobserv
-  												  					   ,crapneg.dtiniest
-  													  				   ,crapneg.nrdctabb
-  														  			   ,crapneg.nrdocmto
-  															  		   ,crapneg.qtdiaest
-  																 	     ,crapneg.vlestour
-  																   	   ,crapneg.vllimcre
-  	  																   ,crapneg.cdtctant
-  		  															   ,crapneg.cdtctatu
-  			  														   ,crapneg.dtfimest
-  					  												   ,crapneg.cdbanchq
-  						  											   ,crapneg.cdagechq
-  							  										   ,crapneg.nrctachq
-  								  									   ,crapneg.cdcooper)
-  									  				  VALUES	 (rw_crapsld.ass_nrdconta 
-  										  							   ,vr_nrseqneg
-  											  						   ,4
-  												  					   ,0
-  													  				   ,vr_dtmvtolt
-  														  			   ,0
-  															  		   ,0
-  																  	   ,0
-  																	     ,0
-  																	     ,rw_crapsld.ass_vllimcre 
-  									  								   ,0
-  										  							   ,0
-  											  						   ,NULL
-  													  				   ,0
-  														  			   ,0
-  															  		   ,0
-  																  	   ,pr_cdcooper);
-  							   EXCEPTION
-  						  		 WHEN	OTHERS THEN
-  							  	 vr_dscritic := 'Erro ao	inserir	na tabela	crapneg. Cdhisest=4 '||SQLERRM;
-  								   --Levantar Exceção
-  								   RAISE vr_exc_saida;
-  							   END;
+                   --Inserir saldos e cheques
+                   BEGIN
+                     INSERT INTO crapneg (crapneg.nrdconta
+                                         ,crapneg.nrseqdig
+                                         ,crapneg.cdhisest
+                                         ,crapneg.cdobserv
+                                         ,crapneg.dtiniest
+                                         ,crapneg.nrdctabb
+                                         ,crapneg.nrdocmto
+                                         ,crapneg.qtdiaest
+                                         ,crapneg.vlestour
+                                         ,crapneg.vllimcre
+                                         ,crapneg.cdtctant
+                                         ,crapneg.cdtctatu
+                                         ,crapneg.dtfimest
+                                         ,crapneg.cdbanchq
+                                         ,crapneg.cdagechq
+                                         ,crapneg.nrctachq
+                                         ,crapneg.cdcooper)
+                                VALUES   (rw_crapsld.ass_nrdconta 
+                                         ,vr_nrseqneg
+                                         ,4
+                                         ,0
+                                         ,vr_dtmvtolt
+                                         ,0
+                                         ,0
+                                         ,0
+                                         ,0
+                                         ,rw_crapsld.ass_vllimcre 
+                                         ,0
+                                         ,0
+                                         ,NULL
+                                         ,0
+                                         ,0
+                                         ,0
+                                         ,pr_cdcooper);
+                   EXCEPTION
+                     WHEN OTHERS THEN
+                     vr_dscritic := 'Erro ao  inserir na tabela crapneg. Cdhisest=4 '||SQLERRM;
+                     --Levantar Exceção
+                     RAISE vr_exc_saida;
+                   END;
 
                  END IF;
                END IF;
@@ -1828,8 +1831,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
            --Salario liquido mes anterior recebe salario liquido
            rw_crapsld.vltsalan:= Nvl(rw_crapsld.vltsallq,0);
            --saldo final do mes anterior recebe valor disponivel + bloqueado + salario liquido + bloqueado praca + bloqueado fora praca
-           rw_crapsld.vlsdmesa:= Nvl(rw_crapsld.vlsddisp,0) + 
-                                 Nvl(rw_crapsld.vlsdchsl,0);
+           rw_crapsld.vlsdmesa:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdbloq,0) +
+                                 Nvl(rw_crapsld.vlsdchsl,0) + Nvl(rw_crapsld.vlsdblpr,0) +
+                                 Nvl(rw_crapsld.vlsdblfp,0);
            --Data referencia extrato recebe o ultimo dia do mes
            rw_crapsld.dtrefext:= vr_dtultdia;         /* Para uso do sist. CASH  */
            --Referencia do saldo para extrato recebe a data referencia saldo anterior

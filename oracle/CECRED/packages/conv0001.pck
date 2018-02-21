@@ -485,6 +485,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             16/10/2017 - Adicionar procedure pc_retorna_referencia_conv para formatar a referencia
   --                          do convenio de acordo com o cadastrado na tabela crapprm 
   --                          (Lucas Ranghetti #712492)
+  --
+  --             31/01/2018 - Ajustar para buscar critica do arquivo baseado no pr_codcriti
+  --                          (Lucas Ranghetti #840602)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1633,7 +1636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 16/10/2017
+  --  Data     : Agosto/98.                  Ultima atualizacao: 31/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1753,6 +1756,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             16/10/2017 - Adicionar chamada da procedure pc_retorna_referencia_conv para 
   --                          formatar a referencia do convenio de acordo com o cadastrado
   --                          na tabela crapprm (Lucas Ranghetti #712492)
+  --
+  --             31/01/2018 - Ajustar para buscar critica do arquivo baseado no pr_codcriti
+  --                          (Lucas Ranghetti #840602)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1952,15 +1958,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         END IF;
 
         -- VERIFICACAO DE CRITICA
-        IF vr_cdcritic IN (453,447) THEN -- AUTORIZACAO NAO ENCONTRADA / AUTORIZACAO CANCELADA
+        IF pr_codcriti IN (453,447) THEN -- AUTORIZACAO NAO ENCONTRADA / AUTORIZACAO CANCELADA
           vr_auxcdcri := '30'; -- SEM CONTRATO DE DÉBITO
-        ELSIF vr_cdcritic = 967 THEN -- VALOR LIMITE ULTRAPASSADO
+        ELSIF pr_codcriti = 967 THEN -- VALOR LIMITE ULTRAPASSADO
           vr_auxcdcri := '05';
-        ELSIF vr_cdcritic = '64' THEN -- Cooperado demitido
+        ELSIF pr_codcriti = '64' THEN -- Cooperado demitido
           vr_auxcdcri := '15'; -- Conta corrente invalida
-		ELSIF vr_cdcritic = '964' THEN -- Lançamento bloqueado
+        ELSIF pr_codcriti = '964' THEN -- Lançamento bloqueado
           vr_auxcdcri := '04'; -- Outros
-        ELSIF rw_tbconv_det_agendamento.cdlayout = 5 AND (vr_cdcritic = '1001' OR vr_cdcritic = '1002' OR vr_cdcritic = '1003') THEN 
+        ELSIF rw_tbconv_det_agendamento.cdlayout = 5 AND (pr_codcriti = '1001' OR pr_codcriti = '1002' OR pr_codcriti = '1003') THEN 
           vr_auxcdcri := '19'; -- Outros
         ELSE
           vr_auxcdcri := '01'; -- INSUFICIENCIAS DE FUNDOS

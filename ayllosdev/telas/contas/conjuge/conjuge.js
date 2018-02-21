@@ -17,6 +17,7 @@
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
  * 018: [25/09/2017] Kelvin			     : Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
+ * 019: [07/02/2018] Lucas Ranghetti     : Aumentar o tamanho do campo cdnatopc para 90px pois estava estourando o tamanho no label (SD )
  */
 
 // Definindo variáveis globais 
@@ -305,7 +306,7 @@ function controlaLayout(operacao) {
 	var cDescricao = $('#dsescola,#rsfrmttl,#rsnatocp,#rsdocupa','#'+nomeForm );	
 	var cCodigo_2  = $('#grescola,#cdnatopc,#cdfrmttl,#cdocpcje','#'+nomeForm );	
 	
-	rotulos_2.addClass('rotulo').css('width','80px');
+	rotulos_2.addClass('rotulo').css('width','90px');
 	rLinha_2.css('width','70px');
 	cDescricao.addClass('descricao').css('width','134px');
 	cCodigo_2.addClass('codigo pesquisa');
@@ -330,7 +331,7 @@ function controlaLayout(operacao) {
 	cCNPJ.addClass('cnpj');
 	cEmpresa.addClass('alphanum').attr('maxlength','35').css('width','258px');
 	cFuncao.addClass('alphanum').attr('maxlength','20').css('width','258px');
-	cTelComerc.addClass('telefone').attr('maxlength','20').css('width','175px');
+	cTelComerc.attr('maxlength','20').css('width','175px');
 	cRamal.addClass('inteiro').attr('maxlength','4').css('width','41px');
 	cDtAdmissao.addClass('data').css('width','75px');
 	cRendimento.addClass('moeda_6').css('width','129px');	
@@ -621,7 +622,7 @@ function controlaPesquisas() {
 				// Natureza Ocupação
 				} else if ( campoAnterior == 'cdnatopc' ) {
 					filtrosPesq = "Cód. Nat. Ocupação;cdnatopc;30px;S;0|Natureza da Ocupação;rsnatocp;200px;S;";
-					colunas 	= 'Código;cdnatocp;25%;right|Natureza da Ocupação;rsnatocp;75%;left';
+                    colunas = 'Código;cdnatocp;25%;right|Natureza da Ocupação;rsnatocp;75%;left';
                     mostraPesquisa("ZOOM0001", "BUSCANATOCU", "Natureza da Ocupa&ccedil;&atilde;o", "30", filtrosPesq, colunas, divRotina);
 
 					return false;
@@ -698,4 +699,4 @@ function proximaRotina () {
 	hideMsgAguardo();
 	encerraRotina(false);
 	acessaRotina('CONTATOS','Contatos','contatos_pf');				
-}			   
+}

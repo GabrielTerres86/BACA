@@ -180,7 +180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     -- Verifica se ja existe bloqueio ativo para este oficio
     OPEN cr_crapblj;
     FETCH cr_crapblj INTO rw_crapblj;
-         
+      
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -276,7 +276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     END IF;
 
     -- Busca o numero do oficio que sera utilizado
-    vr_nroficio := pr_nroficio;
+      vr_nroficio := pr_nroficio;
     -- Inclui o bloqueio judicial
     blqj0001.pc_inclui_bloqueio_jud(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
@@ -2113,7 +2113,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     CURSOR cr_crapblj(pr_cdcooper crapblj.cdcooper%TYPE,
                       pr_nrdconta crapass.nrdconta%TYPE,
                       pr_nroficio crapblj.nroficio%TYPE,
-                      pr_cdmodali crapblj.cdmodali%TYPE) IS
+                      pr_cdmodali crapblj.cdmodali%TYPE,
+                      pr_vlbloque crapblj.vlbloque%TYPE) IS
       SELECT nrdconta,
              nroficio,
              nrproces,
@@ -2123,6 +2124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        WHERE a.cdcooper = pr_cdcooper
          AND a.nrdconta = pr_nrdconta
          AND a.cdmodali = pr_cdmodali
+         AND a.vlbloque = pr_vlbloque
          AND a.nroficio LIKE pr_nroficio||'%'
          AND a.dtblqfim IS NULL; -- Que nao esteja finalizada
     rw_crapblj cr_crapblj%ROWTYPE;
@@ -2242,7 +2244,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         OPEN cr_crapblj(pr_cdcooper => rw_solicitacao.cdcooper,
                         pr_nrdconta => rw_solicitacao.nrdconta,
                         pr_nroficio => rw_solicitacao.dsoficio,
-                        pr_cdmodali => rw_solicitacao.cdmodali);
+                        pr_cdmodali => rw_solicitacao.cdmodali,
+                        pr_vlbloque => rw_solicitacao.vlordem);
         FETCH cr_crapblj INTO rw_crapblj;
         
         -- se nao encontrar bloqueio gera inconsistencia

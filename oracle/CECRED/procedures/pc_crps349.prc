@@ -1,5 +1,7 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps349 (pr_cdcooper   IN crapcop.cdcooper%TYPE --> Coopeerativa
                                               ,pr_flgresta  IN PLS_INTEGER            --> Flag 0/1 para utilizar restart na chamada
+                                              ,pr_cdagenci  IN PLS_INTEGER
+                                              ,pr_idparale  IN PLS_INTEGER
                                               ,pr_stprogra  OUT PLS_INTEGER           --> Saída de termino da execução
                                               ,pr_infimsol  OUT PLS_INTEGER           --> Saída de termino da solicitação
                                               ,pr_cdcritic  OUT NUMBER                --> Código crítica
@@ -11,7 +13,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Fernando Hilgenstieler
- Data    : Agosto/2003.                    Ultima atualizacao: 26/11/2014
+ Data    : Agosto/2003.                    Ultima atualizacao: 13/02/2018
 
  Dados referentes ao programa:
 
@@ -129,6 +131,7 @@ BEGIN
 						 dia, o somatario nao estava sendo efetuado.
 			             Rafael (Mouts) - Chamado 581361
                          
+            13/02/2018 - Projeto Ligeirinho. Rangel Decker AMcom. Alterado para paralelizar a execução deste relatorio.
   ............................................................................. */
   DECLARE
     -- Tipo para totalização de valores (utilizados para criar totais dos relatórios)
@@ -322,16 +325,19 @@ BEGIN
     /* Cadastro aplicações RDCA */
     CURSOR cr_craprda (pr_cdcooper IN craptab.cdcooper%TYPE
                       ,pr_cdageass IN craprda.cdageass%TYPE) IS          --> Código da cooperativa
-      select /*+ index (cr CRAPRDA##CRAPRDA6)*/
-             cr.tpaplica
+      select cr.tpaplica
             ,cr.nrdconta
             ,cr.nraplica
             ,cr.cdageass
             ,count(1) over() registros
-      FROM craprda cr
-      WHERE cr.cdcooper = pr_cdcooper
+      FROM craprda cr,
+           crapass ass
+      WHERE cr.cdcooper = ass.cdcooper
+        AND cr.nrdconta = ass.nrdconta
+        AND cr.cdcooper = pr_cdcooper
         AND cr.insaqtot = 0
         AND cr.cdageass = pr_cdageass
+        AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
       ORDER BY cr.cdageass, cr.nrdconta;
 			
 		-- Busca aplicações de captação
@@ -356,6 +362,7 @@ BEGIN
 						 crapass.cdcooper = craprac.cdcooper AND
 						 crapass.nrdconta = craprac.nrdconta AND
 						 crapass.cdagenci = pr_cdagenci      AND
+             crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci) AND
 						 craprac.cdprodut = crapcpc.cdprodut;
 
     /* Descrição dos tipos de captação oferecidos aos cooperados */
@@ -396,8 +403,12 @@ BEGIN
             ,cm.cdhistor
             ,cm.vllanmto
             ,cm.nrdconta
-      FROM craplcm cm
-      WHERE cm.cdcooper = pr_cdcooper
+      FROM craplcm cm,
+           crapass ass
+      WHERE cm.cdcooper = ass.cdcooper
+        AND cm.nrdconta = ass.nrdconta
+        AND cm.cdcooper = pr_cdcooper
+        AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
         AND cm.dtmvtolt BETWEEN pr_dtmvtini AND pr_dtmvtfim
         AND ',' || pr_cdhistor || ',' LIKE ('%,' || cm.cdhistor || ',%');
 
@@ -407,7 +418,8 @@ BEGIN
             ,cs.nrdconta
             ,cs.rowid
       FROM crapass cs
-      WHERE cs.cdcooper = pr_cdcooper;
+      WHERE cs.cdcooper = pr_cdcooper
+        AND cs.cdagenci = decode(pr_cdagenci,0,cs.cdagenci,pr_cdagenci);
 
     /* Busca para popular TEMP TABLE */
     CURSOR cr_crapage (pr_cdcooper IN craptab.cdcooper%TYPE        --> Código da cooperativa
@@ -430,10 +442,14 @@ BEGIN
             ,ci.dtmvtolt
             ,ci.cdhistor
             ,ci.vllanmto
-      FROM craplci ci
-      WHERE ci.cdcooper = pr_cdcooper
+      FROM craplci ci,
+           crapass ass
+      WHERE ci.cdcooper = ass.cdcooper
+        AND ci.nrdconta = ass.nrdconta
+        AND ci.cdcooper = pr_cdcooper
         AND ci.dtmvtolt BETWEEN pr_dtmvtini AND pr_dtmvtfim
-        AND ci.cdhistor in (490, 491);
+        AND ci.cdhistor in (490, 491)
+        AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci);
 				
 		-- Busca cadastro de produtos de captação
 		CURSOR cr_crapcpc IS
@@ -442,6 +458,43 @@ BEGIN
        ,(SELECT rtrim(sys.stragg(to_char(cdhscacc) || ','), ',') cdhscacc FROM (SELECT crapcpc.cdhscacc cdhscacc FROM crapcpc GROUP BY cdhscacc)) AS cdhscacc
       FROM DUAL;
 		rw_crapcpc cr_crapcpc%ROWTYPE;
+   
+    --Início - Projeto Ligeirinho 
+    vr_jobname        VARCHAR2(500);
+    vr_dsplsql        VARCHAR2(3000);
+    vr_qtdjobs        NUMBER;
+    vr_qterro         NUMBER;
+    vr_idparale       NUMBER;
+    vr_idlog_ini_ger  NUMBER;
+    vr_idlog_ini_par  NUMBER;
+    vr_tpexecucao     tbgen_prglog.tpexecucao%type;    
+    --Código de controle retornado pela rotina gene0001.pc_grava_batch_controle
+    vr_idcontrole     tbgen_batch_controle.idcontrole%TYPE; 
+    vr_dsinformacao   tbgen_batch_relatorio_wrk.dscritic%TYPE;
+  
+    --Cursor buscar a informação de todas as agências que o programa será executado.
+    --Controlando também a re-execução de uma agência através do parametro pr_qterro
+    CURSOR cr_crapagepar (pr_cdcooper IN crapass.cdcooper%TYPE
+                         ,pr_cdagenci IN crapass.cdagenci%TYPE
+                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                         ,pr_cdprogra IN tbgen_batch_controle.cdprogra%TYPE
+                         ,pr_qterro   IN NUMBER) IS 
+      select age.cdagenci 
+        from crapage age 
+       where age.cdcooper = pr_cdcooper
+         and age.cdagenci = decode(pr_cdagenci,0,age.cdagenci,pr_cdagenci) 
+         and (pr_qterro = 0 or 
+             (pr_qterro > 0 and exists (select 1
+                                          from tbgen_batch_controle
+                                         where tbgen_batch_controle.cdcooper    = pr_cdcooper
+                                           and tbgen_batch_controle.cdprogra    = pr_cdprogra
+                                           and tbgen_batch_controle.tpagrupador = 1
+                                           and tbgen_batch_controle.cdagrupador = age.cdagenci
+                                           and tbgen_batch_controle.insituacao  = 1
+                                           and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)))
+      order by age.cdagenci asc; 
+    
+    --Fim - Projeto Ligeirinho
    
     -- Procedure para criar registros na TEMP TABLE na WAPLI
     PROCEDURE pc_cria_wapli(pr_cdcooper    IN craprda.cdcooper%TYPE
@@ -525,6 +578,314 @@ BEGIN
       END;
     END pc_cria_crawlcm;
 
+    
+    PROCEDURE pc_insere_tab_wrk(pr_cdcooper     in tbgen_batch_relatorio_wrk.cdcooper%type 
+                               ,pr_cdprogra     in tbgen_batch_relatorio_wrk.cdprograma%type
+                               ,pr_dsrelatorio  in tbgen_batch_relatorio_wrk.dsrelatorio%type
+                               ,pr_dtmvtolt     in tbgen_batch_relatorio_wrk.dtmvtolt%type
+                               ,pr_dschave      in tbgen_batch_relatorio_wrk.dschave%type
+                               ,pr_dsinformacao in tbgen_batch_relatorio_wrk.dscritic%type
+                               ,pr_cdagenci     in tbgen_batch_relatorio_wrk.cdagenci%type
+                               ,pr_dscritic    out varchar2) IS
+      
+    BEGIN
+      
+      begin
+  
+        insert into tbgen_batch_relatorio_wrk(cdcooper,
+                                              cdprograma,
+                                              dsrelatorio,
+                                              dtmvtolt,
+                                              dschave,
+                                              dscritic,
+                                              cdagenci)
+                                       values(pr_cdcooper,
+                                              pr_cdprogra,
+                                              pr_dsrelatorio,
+                                              pr_dtmvtolt,
+                                              pr_dschave,
+                                              pr_dsinformacao,
+                                              pr_cdagenci);
+      exception
+        when others then
+          pr_dscritic := 'Erro ao inserir tbgen_batch_relatorio_wrk: '||sqlerrm;            
+      end;  
+    
+    END pc_insere_tab_wrk;
+    
+    
+    PROCEDURE pc_gera_crrl294_total IS
+     
+      CURSOR cr_mov_dia IS
+        SELECT tb.dscritic ds_xml
+          FROM tbgen_batch_relatorio_wrk tb
+         WHERE tb.cdcooper    = pr_cdcooper
+           AND tb.cdprograma  = vr_cdprogra
+           AND tb.dsrelatorio = 'MOVIMENTOS_DIA'
+           AND tb.dtmvtolt    = rw_crapdat.dtmvtolt
+        ORDER BY tb.cdagenci;
+        
+      CURSOR cr_mov_mes IS
+        SELECT tb.dscritic ds_xml
+          FROM tbgen_batch_relatorio_wrk tb
+         WHERE tb.cdcooper    = pr_cdcooper
+           AND tb.cdprograma  = vr_cdprogra
+           AND tb.dsrelatorio = 'MOVIMENTOS_MES'
+           AND tb.dtmvtolt    = rw_crapdat.dtmvtolt
+        ORDER BY tb.cdagenci;    
+
+      CURSOR cr_resumo_mes IS
+        SELECT TO_DATE(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1),'MM/DD/RRRR') dtmvdia,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,2)+1,instr(a.dscritic,';',1,3)-instr(a.dscritic,';',1,2)-1))) vlaplico,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,3)+1,instr(a.dscritic,';',1,4)-instr(a.dscritic,';',1,3)-1))) vlresgte,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,4)+1,instr(a.dscritic,';',1,5)-instr(a.dscritic,';',1,4)-1))) vltotadi,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,5)+1,instr(a.dscritic,';',1,6)-instr(a.dscritic,';',1,5)-1))) qtaplico,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,6)+1,instr(a.dscritic,';',1,7)-instr(a.dscritic,';',1,6)-1))) qtresgte           
+          FROM tbgen_batch_relatorio_wrk a
+         WHERE a.cdcooper    = pr_cdcooper
+           AND a.cdprograma  = vr_cdprogra
+           AND a.dsrelatorio = 'RESUMO_MES'
+           AND a.dtmvtolt    = rw_crapdat.dtmvtolt
+        GROUP BY TO_DATE(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1),'MM/DD/RRRR') 
+        ORDER BY TO_DATE(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1),'MM/DD/RRRR') ;
+        
+      CURSOR cr_total_mes IS
+        SELECT sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1))) qttotapl,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,2)+1,instr(a.dscritic,';',1,3)-instr(a.dscritic,';',1,2)-1))) vltotapl,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,3)+1,instr(a.dscritic,';',1,4)-instr(a.dscritic,';',1,3)-1))) qttotres,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,4)+1,instr(a.dscritic,';',1,5)-instr(a.dscritic,';',1,4)-1))) vltotres,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,5)+1,instr(a.dscritic,';',1,6)-instr(a.dscritic,';',1,5)-1))) vltotsld           
+          FROM tbgen_batch_relatorio_wrk a
+         WHERE a.cdcooper    = pr_cdcooper
+           AND a.cdprograma  = vr_cdprogra
+           AND a.dsrelatorio = 'TOTAL_MES'
+           AND a.dtmvtolt    = rw_crapdat.dtmvtolt;    
+           
+      CURSOR cr_rdca_rdca60 IS
+        SELECT sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1))) qttotrdc,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,2)+1,instr(a.dscritic,';',1,3)-instr(a.dscritic,';',1,2)-1))) vltotrdc,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,3)+1,instr(a.dscritic,';',1,4)-instr(a.dscritic,';',1,3)-1))) qttotrii,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,4)+1,instr(a.dscritic,';',1,5)-instr(a.dscritic,';',1,4)-1))) vltotrii          
+          FROM tbgen_batch_relatorio_wrk a
+         WHERE a.cdcooper    = pr_cdcooper
+           AND a.cdprograma  = vr_cdprogra
+           AND a.dsrelatorio = 'RDCA_RDCA60'
+           AND a.dtmvtolt    = rw_crapdat.dtmvtolt;  
+           
+           
+      CURSOR cr_faixa_rdca_ate IS
+        SELECT TO_NUMBER(a.dschave) vlfaixas,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1))) qttotfxa,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,2)+1,instr(a.dscritic,';',1,3)-instr(a.dscritic,';',1,2)-1))) vltotfxa          
+          FROM tbgen_batch_relatorio_wrk a
+         WHERE a.cdcooper    = pr_cdcooper
+           AND a.cdprograma  = vr_cdprogra
+           AND a.dsrelatorio = 'FAIXAS_RDCA'
+           AND a.dtmvtolt    = rw_crapdat.dtmvtolt 
+        GROUP BY TO_NUMBER(a.dschave)  
+        ORDER BY TO_NUMBER(a.dschave);    
+        
+      CURSOR cr_faixa_rdca_acima IS
+        SELECT sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1))) qttotfxa,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,2)+1,instr(a.dscritic,';',1,3)-instr(a.dscritic,';',1,2)-1))) vltotfxa          
+          FROM tbgen_batch_relatorio_wrk a
+         WHERE a.cdcooper    = pr_cdcooper
+           AND a.cdprograma  = vr_cdprogra
+           AND a.dsrelatorio = 'FAIXA_ACIMA_DE'
+           AND a.dtmvtolt    = rw_crapdat.dtmvtolt 
+        GROUP BY TO_NUMBER(a.dschave)  
+        ORDER BY TO_NUMBER(a.dschave);  
+        
+      CURSOR cr_totger_rdc IS
+        SELECT sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1))) qtrdcpre,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,2)+1,instr(a.dscritic,';',1,3)-instr(a.dscritic,';',1,2)-1))) vlrdcpre,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,3)+1,instr(a.dscritic,';',1,4)-instr(a.dscritic,';',1,3)-1))) qtrdcpos,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,4)+1,instr(a.dscritic,';',1,5)-instr(a.dscritic,';',1,4)-1))) vlrdcpos          
+          FROM tbgen_batch_relatorio_wrk a
+         WHERE a.cdcooper    = pr_cdcooper
+           AND a.cdprograma  = vr_cdprogra
+           AND a.dsrelatorio = 'TOTAL_GERAL_RDC'
+           AND a.dtmvtolt    = rw_crapdat.dtmvtolt;  
+     
+      CURSOR cr_total_rac IS
+        SELECT a.dschave faixa,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,1)+1,instr(a.dscritic,';',1,2)-instr(a.dscritic,';',1,1)-1))) qtaplica,
+               sum(to_number(substr(a.dscritic,instr(a.dscritic,';',1,2)+1,instr(a.dscritic,';',1,3)-instr(a.dscritic,';',1,2)-1))) vlsldtot          
+          FROM tbgen_batch_relatorio_wrk a
+         WHERE a.cdcooper    = pr_cdcooper
+           AND a.cdprograma  = vr_cdprogra
+           AND a.dsrelatorio = 'TOTAL_GERAL_RAC'
+           AND a.dtmvtolt    = rw_crapdat.dtmvtolt 
+        GROUP BY a.dschave  
+        ORDER BY a.dschave;                  
+
+  BEGIN
+    
+      -- Iniciar processo para criar XML para agencia 99
+      -- Nome do arquivo XML
+      vr_nmarqimp := 'crrl294_'||gene0001.fn_param_sistema('CRED',pr_cdcooper,'SUFIXO_RELATO_TOTAL');
+      
+      -- Inicializar o CLOB
+      dbms_lob.createtemporary(vr_des_xml, TRUE);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      vr_dstexto := NULL;
+          
+      -- Inicializar a raiz do XML
+      gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<?xml version="1.0" encoding="UTF-8"?><base><pacs>');
+      
+      --Cria tags valores movimentos dia
+      FOR rw_mov_dia in cr_mov_dia LOOP
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,rw_mov_dia.ds_xml);  
+      END LOOP; 
+      
+      --Cria tags movimentos Mês
+      FOR rw_mov_mes in cr_mov_mes LOOP
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,rw_mov_mes.ds_xml);  
+      END LOOP;   
+      
+      gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</pacs><totalPacs>');
+      
+      --Cria tags do resumo do mes
+      FOR rw_resumo_mes IN cr_resumo_mes LOOP
+        
+        -- Cria nodo filho no XML
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
+                   '<totalPac>
+                      <dtmvdia>'  || to_char(rw_resumo_mes.dtmvdia, 'DD/MM/RR')              || '</dtmvdia>
+                      <vlaplico>' || to_char(rw_resumo_mes.vlaplico, 'FM999G999G999G990D90') || '</vlaplico>
+                      <vlresgte>' || to_char(rw_resumo_mes.vlresgte, 'FM999G999G999G990D90') || '</vlresgte>
+                      <vltotadi>' || to_char(rw_resumo_mes.vltotadi, 'FM999G999G999G990D90') || '</vltotadi>
+                      <qtaplico>' || to_char(rw_resumo_mes.qtaplico, 'FM999G999G999G990')    || '</qtaplico>
+                      <qtresgte>' || to_char(rw_resumo_mes.qtresgte, 'FM999G999G999G990')    || '</qtresgte>
+                    </totalPac>');  
+      
+      END LOOP;
+      
+      gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</totalPacs>');
+      
+      FOR rw_total_mes IN cr_total_mes LOOP
+        
+        -- Cria nodo filho no XML
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
+                      '<total99>
+                        <qttotapl>' || to_char(rw_total_mes.qttotapl, 'FM999G999G999G990')    || '</qttotapl>
+                        <vltotapl>' || to_char(rw_total_mes.vltotapl, 'FM999G999G999G990D90') || '</vltotapl>
+                        <qttotres>' || to_char(rw_total_mes.qttotres, 'FM999G999G999G990')    || '</qttotres>
+                        <vltotres>' || to_char(rw_total_mes.vltotres, 'FM999G999G999G990D90') || '</vltotres>
+                        <vltotsld>' || to_char(rw_total_mes.vltotsld, 'FM999G999G999G990D90') || '</vltotsld>
+                      </total99>'); 
+                         
+      END LOOP;  
+
+      
+      FOR rw_rdca_rdca60 IN cr_rdca_rdca60 LOOP
+        
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
+                   '<totalGeral>
+                      <faixa>RDCA</faixa>
+                      <faixa1>RDCA60</faixa1>
+                      <qttotrdc>' || to_char(rw_rdca_rdca60.qttotrdc, 'FM999G999G999G990MI')    || '</qttotrdc>
+                      <vltotrdc>' || to_char(rw_rdca_rdca60.vltotrdc, 'FM999G999G999G990D90MI') || '</vltotrdc>
+                      <qttotrii>' || to_char(rw_rdca_rdca60.qttotrii, 'FM999G999G999G990MI')    || '</qttotrii>
+                      <vltotrii>' || to_char(rw_rdca_rdca60.vltotrii, 'FM999G999G999G990D90MI') || '</vltotrii>
+                    </totalGeral>');
+                    
+      END LOOP;  
+      
+      gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<totais>');
+      
+      
+      FOR rw_faixa_rdca_ate IN cr_faixa_rdca_ate LOOP
+      
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
+                    '<totalAte>
+                      <faixa>ATE:</faixa>
+                      <vlfaixas>' || to_char(rw_faixa_rdca_ate.vlfaixas, 'FM999G999G999G990D90MI') || '</vlfaixas>
+                      <qttotfxa>' || to_char(rw_faixa_rdca_ate.qttotfxa, 'FM999G999G999G990MI')    || '</qttotfxa>
+                      <vltotfxa>' || to_char(rw_faixa_rdca_ate.vltotfxa, 'FM999G999G999G990D90MI') || '</vltotfxa>
+                    </totalAte>');  
+        
+      END LOOP;  
+      
+
+
+      FOR rw_faixa_rdca_acima IN cr_faixa_rdca_acima LOOP  
+       
+        -- Cria nodo filho no XML (totalizador)
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
+                   '<totalAcima>
+                      <faixa>ACIMA DE:</faixa>
+                      <qttotfxa>' || to_char(rw_faixa_rdca_acima.qttotfxa, 'FM999G999G999G990MI')    || '</qttotfxa>
+                      <vltotfxa>' || to_char(rw_faixa_rdca_acima.vltotfxa, 'FM999G999G999G990D90MI') || '</vltotfxa>
+                    </totalAcima>');                
+
+      END LOOP;
+      
+      gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</totais>');  
+      
+      FOR rw_totger_rdc IN cr_totger_rdc LOOP
+            
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
+                   '<totalGeralRDC>
+                      <faixa>RDCPRE</faixa>
+                      <faixa1>RDCPOS</faixa1>
+                      <qtrdcpre>' || to_char(rw_totger_rdc.qtrdcpre, 'FM999G999G999G990MI')    || '</qtrdcpre>
+                      <vlrdcpre>' || to_char(rw_totger_rdc.vlrdcpre, 'FM999G999G999G990D90MI') || '</vlrdcpre>
+                      <qtrdcpos>' || to_char(rw_totger_rdc.qtrdcpos, 'FM999G999G999G990MI')    || '</qtrdcpos>
+                      <vlrdcpos>' || to_char(rw_totger_rdc.vlrdcpos, 'FM999G999G999G990D90MI') || '</vlrdcpos>
+                    </totalGeralRDC>');
+                           
+      END LOOP;
+      
+      FOR rw_total_rac IN cr_total_rac LOOP
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<totalGeralRAC>
+                      <faixa>'   || rw_total_rac.faixa                                       ||'</faixa>
+                      <qtaplica>'|| to_char(rw_total_rac.qtaplica, 'FM999G999G999G990MI')    ||'</qtaplica>
+                      <vlsldtot>'|| to_char(rw_total_rac.vlsldtot, 'FM999G999G999G990D90MI') ||'</vlsldtot>
+                    </totalGeralRAC>');  
+      END LOOP; 
+      
+      
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</base>',true);
+
+                                      
+        -- Gerar XML sobre o relatório por agência
+        -- Efetuar chamada de geração do PDF do relatório
+        gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper
+                                   ,pr_cdprogra  => vr_cdprogra
+                                   ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
+                                   ,pr_dsxml     => vr_des_xml
+                                   ,pr_dsxmlnode => '/base'
+                                   ,pr_dsjasper  => 'crrl294_total.jasper'
+                                   ,pr_dsparams  => NULL
+                                   ,pr_dsarqsaid => vr_nom_dir || '/' || vr_nmarqimp || '.lst'
+                                   ,pr_flg_gerar => 'N'
+                                   ,pr_qtcoluna  => 80
+                                   ,pr_sqcabrel  => 1
+                                   ,pr_cdrelato  => NULL
+                                   ,pr_flg_impri => 'S'
+                                   ,pr_nmformul  => vr_nmformul
+                                   ,pr_nrcopias  => vr_nrcopias
+                                   ,pr_dspathcop => NULL
+                                   ,pr_dsmailcop => NULL
+                                   ,pr_dsassmail => NULL
+                                   ,pr_dscormail => NULL
+                                   ,pr_des_erro  => vr_dscritic);
+
+        -- Verifica se o processo de criar arquivo retornou erro
+        IF trim(vr_dscritic) IS NOT NULL THEN
+          vr_cdcritic := 0;
+          RAISE vr_exc_saida;
+        END IF;
+          
+        -- Liberar dados do CLOB da memória
+        dbms_lob.close(vr_des_xml);
+        dbms_lob.freetemporary(vr_des_xml);
+      
+      
+    END pc_gera_crrl294_total;        
+    
+
   BEGIN
     
     -- Código do programa, padrão para agência e número de caixa
@@ -539,6 +900,8 @@ BEGIN
     GENE0001.pc_informa_acesso(pr_module => 'PC_' || vr_cdprogra
                               ,pr_action => NULL);
 
+    --Apenas valida a cooperativa quando for o programa principal, paralelos não tem necessidade.
+    IF pr_idparale = 0 THEN
     -- Verifica se a cooperativa esta cadastrada
     OPEN  cr_crapcop(pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
@@ -553,11 +916,13 @@ BEGIN
     ELSE
       CLOSE cr_crapcop;
     END IF;
+    END IF;
 
     --Selecionar informacoes das datas
     OPEN  btch0001.cr_crapdat (pr_cdcooper => pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
     CLOSE btch0001.cr_crapdat;
+
 
     -- Validações iniciais do programa
     BTCH0001.pc_valida_iniprg (pr_cdcooper => pr_cdcooper
@@ -572,6 +937,169 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
 
+    -- Projeto Ligeirinho - Início da alteração para executar o paralelismo  
+    
+    -- Projeto Ligeirinho 
+    -- Buscar quantidade parametrizada de Jobs
+    vr_qtdjobs := 0;
+    vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper --> Código da coopertiva
+                                                 ,pr_cdprogra => vr_cdprogra --> Código do programa
+                                                 ); 
+                                                 
+    /* Paralelismo visando performance Rodar Somente no processo Noturno */
+    if rw_crapdat.inproces  > 2 and
+       vr_qtdjobs           > 0 and 
+       pr_cdagenci          = 0 then 
+    
+      -- Gerar o ID para o paralelismo
+      vr_idparale := gene0001.fn_gera_id_paralelo;
+      
+      -- Se houver algum erro, o id vira zerado
+      IF vr_idparale = 0 THEN
+         -- Levantar exceção
+         vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_id_paralelo.';
+         RAISE vr_exc_saida;
+      END IF;
+
+      --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
+      pc_log_programa(pr_dstiplog   => 'I',    
+                      pr_cdprograma => vr_cdprogra,           
+                      pr_cdcooper   => pr_cdcooper, 
+                      pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_idprglog   => vr_idlog_ini_ger);
+                      
+      -- Verifica se algum job paralelo executou com erro
+      vr_qterro := 0;
+      vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                    pr_cdprogra    => vr_cdprogra,
+                                                    pr_dtmvtolt    => rw_crapdat.dtmvtolt,
+                                                    pr_tpagrupador => 1,
+                                                    pr_nrexecucao  => 1);  
+                                                    
+      -- Retorna todas as Agências para criação dos Jobs.
+      for rw_crapage in cr_crapagepar (pr_cdcooper => pr_cdcooper
+                                      ,pr_cdagenci => pr_cdagenci
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                      ,pr_cdprogra => vr_cdprogra
+                                      ,pr_qterro   => vr_qterro
+                                      ) loop 
+        -- Montar o prefixo do código do programa para o jobname
+        vr_jobname := vr_cdprogra ||'_'|| rw_crapage.cdagenci || '$'; 
+          
+        -- Cadastra o programa paralelo
+        gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
+                                  ,pr_idprogra => LPAD(rw_crapage.cdagenci,3,'0') --> Utiliza a agência como id programa
+                                  ,pr_des_erro => vr_dscritic);
+                                    
+        -- Testar saida com erro
+        if vr_dscritic is not null then
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if; 
+          
+        -- Montar o bloco PLSQL que será executado
+        -- Ou seja, executaremos a geração dos dados
+        -- para a agência atual atraves de Job no banco
+        vr_dsplsql := 'DECLARE' || chr(13) || --
+                      '  wpr_stprogra NUMBER;' || chr(13) || --
+                      '  wpr_infimsol NUMBER;' || chr(13) || --
+                      '  wpr_cdcritic NUMBER;' || chr(13) || --
+                      '  wpr_dscritic VARCHAR2(1500);' || chr(13) || --
+                      'BEGIN' || chr(13) || --         
+                      '  pc_crps349( '|| pr_cdcooper             || ',' ||
+                                         '0'                     || ',' ||
+                                         rw_crapage.cdagenci     || ',' ||
+                                         vr_idparale             || ',' ||
+                                         ' wpr_stprogra, wpr_infimsol, wpr_cdcritic, wpr_dscritic);' || chr(13) ||
+                      'END;';
+                        
+        -- Faz a chamada ao programa paralelo atraves de JOB
+        gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper  --> Código da cooperativa
+                              ,pr_cdprogra => vr_cdprogra  --> Código do programa
+                              ,pr_dsplsql  => vr_dsplsql   --> Bloco PLSQL a executar
+                              ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
+                              ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                              ,pr_jobname  => vr_jobname   --> Nome randomico criado
+                              ,pr_des_erro => vr_dscritic);    
+                                 
+        -- Testar saida com erro
+        if vr_dscritic is not null then 
+           -- Levantar exceçao
+           raise vr_exc_saida;
+        end if;
+          
+        -- Chama rotina que irá pausar este processo controlador
+        -- caso tenhamos excedido a quantidade de JOBS em execuçao
+        gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                    ,pr_qtdproce => vr_qtdjobs --> Máximo de 10 jobs neste processo
+                                    ,pr_des_erro => vr_dscritic);
+        -- Testar saida com erro
+        if  vr_dscritic is not null then 
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if; 
+      end loop;
+      
+      -- Chama rotina de aguardo agora passando 0, para esperarmos
+      -- até que todos os Jobs tenha finalizado seu processamento
+      gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                  ,pr_qtdproce => 0
+                                  ,pr_des_erro => vr_dscritic);
+                                
+      -- Testar saida com erro
+      if  vr_dscritic is not null then 
+        -- Levantar exceçao
+        raise vr_exc_saida;
+      end if; 
+
+      -- Verifica se algum job paralelo executou com erro
+      vr_qterro := 0;
+      vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                    pr_cdprogra    => vr_cdprogra,
+                                                    pr_dtmvtolt    => rw_crapdat.dtmvtolt,
+                                                    pr_tpagrupador => 1,
+                                                    pr_nrexecucao  => 1);
+      if vr_qterro > 0 then 
+        vr_cdcritic := 0;
+        vr_dscritic := 'Paralelismo possui job executado com erro. Verificar na tabela tbgen_batch_controle e tbgen_prglog';
+        raise vr_exc_saida;
+      end if;         
+       
+    else    
+      
+      --Classifica o tipo de execução de acordo com a informação no campo agência.    
+      if pr_cdagenci <> 0 then
+        vr_tpexecucao := 2;
+      else
+        vr_tpexecucao := 1;
+      end if;                           
+      
+      -- Grava controle de batch por agência
+      gene0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper               -- Codigo da Cooperativa
+                                      ,pr_cdprogra    => vr_cdprogra               -- Codigo do Programa
+                                      ,pr_dtmvtolt    => rw_crapdat.dtmvtolt       -- Data de Movimento
+                                      ,pr_tpagrupador => 1                         -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                      ,pr_cdagrupador => pr_cdagenci               -- Codigo do agrupador conforme (tpagrupador)
+                                      ,pr_cdrestart   => null                      -- Controle do registro de restart em caso de erro na execucao
+                                      ,pr_nrexecucao  => 1                         -- Numero de identificacao da execucao do programa
+                                      ,pr_idcontrole  => vr_idcontrole             -- ID de Controle
+                                      ,pr_cdcritic    => pr_cdcritic               -- Codigo da critica
+                                      ,pr_dscritic    => vr_dscritic              
+                                       );   
+      -- Testar saida com erro
+      if  vr_dscritic is not null then 
+        -- Levantar exceçao
+        raise vr_exc_saida;
+      end if;                                         
+    
+      --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
+      pc_log_programa(pr_dstiplog   => 'I',    
+                      pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                      pr_cdcooper   => pr_cdcooper, 
+                      pr_tpexecucao => vr_tpexecucao,     -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_idprglog   => vr_idlog_ini_par); 
+    
+                                               
     -- Consultar taxas de uso comum nas aplicações
     apli0001.pc_busca_faixa_ir_rdca(pr_cdcooper);
 
@@ -602,6 +1130,15 @@ BEGIN
       vr_nrcopias := 3;
     END IF;
 
+      -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+      pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 4,
+                      pr_dsmensagem         => 'Início - cursor cr_crapdtc. AGENCIA: '||pr_cdagenci,
+                      PR_IDPRGLOG           => vr_idlog_ini_par); 
+                      
     -- Buscar tipo de captação oferecido aos correntistas
     FOR vr_crapdtc IN cr_crapdtc(pr_cdcooper) LOOP
       vr_regis := vr_regis + 1;
@@ -609,6 +1146,15 @@ BEGIN
       vr_tab_crapdtc(vr_regis).tpaplica := vr_crapdtc.tpaplica;
       vr_tab_crapdtc(vr_regis).tpaplrdc := vr_crapdtc.tpaplrdc;
     END LOOP;
+
+      -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+      pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 4,
+                      pr_dsmensagem         => 'Fim - cursor cr_crapdtc. AGENCIA: '||pr_cdagenci,
+                      PR_IDPRGLOG           => vr_idlog_ini_par);       
 
     -- Limpar a quantidade de registros processados
     vr_regis := 0;
@@ -1470,24 +2016,11 @@ BEGIN
     vr_rel_qttotapl := 0;
     vr_rel_qttotres := 0;
 
-    -- Iniciar processo para criar XML para agencia 99
-    -- Nome do arquivo XML
-    vr_nmarqimp := 'crrl294_'||gene0001.fn_param_sistema('CRED',pr_cdcooper,'SUFIXO_RELATO_TOTAL');
-
-    -- Inicializar o CLOB
-    dbms_lob.createtemporary(vr_des_xml, TRUE);
-    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-    vr_dstexto:= NULL;
-    
-    -- Inicializar a raiz do XML
-    gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<?xml version="1.0" encoding="UTF-8"?><base><pacs>');
-
     -- Verificar registros na PL TABLE CRATLCM para criar XML
     FOR idx IN 1..vr_tab_cratlcm.count() LOOP
       FOR vr_crapage IN cr_crapage(pr_cdcooper, NULL, vr_tab_cratlcm(idx).cdagenci) LOOP
-        -- Cria nodo filho no XML para Movto Dia
-        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-                   '<movtoDia>
+          
+          vr_dsinformacao := '<movtoDia>
                       <cdagencia>' || to_char(vr_tab_cratlcm(idx).cdagenci, 'FM999G999G999G990') || '</cdagencia>
                       <nmeres>' || vr_crapage.nmresage || '</nmeres>
                       <vlaplica>' || to_char(vr_tab_cratlcm(idx).vlaplica, 'FM999G999G999G990D90') || '</vlaplica>
@@ -1495,10 +2028,24 @@ BEGIN
                       <vltotdia>' || to_char(vr_tab_cratlcm(idx).vltotdia, 'FM999G999G999G990D90') || ' </vltotdia>
                       <qtdaplic>' || to_char(vr_tab_cratlcm(idx).qtdaplic, 'FM999G999G999G990') || '</qtdaplic>
                       <qtresgat>' || to_char(vr_tab_cratlcm(idx).qtresgat, 'FM999G999G999G990') || '</qtresgat>
-                    </movtoDia>');
+                            </movtoDia>';
+        
+          -- Cria nodo filho no XML para Movto Dia
+          pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper
+                           ,pr_cdprogra     => vr_cdprogra
+                           ,pr_dsrelatorio  => 'MOVIMENTOS_DIA'
+                           ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                           ,pr_dschave      => null
+                           ,pr_dsinformacao => vr_dsinformacao
+                           ,pr_cdagenci     => vr_tab_cratlcm(idx).cdagenci
+                           ,pr_dscritic     => vr_dscritic); 
+                           
+          IF vr_dscritic IS NOT NULL THEN
+            raise vr_exc_saida;  
+          END IF;         
+          
         -- Cria nodo filho no XML para Movto Mês
-        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-                   '<movtoMes>
+          vr_dsinformacao := '<movtoMes>
                       <cdagencia>' || to_char(vr_tab_cratlcm(idx).cdagenci, 'FM999G999G999G990') || '</cdagencia>
                       <nmeres>' || vr_crapage.nmresage || '</nmeres>
                       <vlaplica>' || to_char(vr_tab_cratlcm(idx).vltotapl, 'FM999G999G999G990D90') || '</vlaplica>
@@ -1506,61 +2053,94 @@ BEGIN
                       <vltotdia>' || to_char(vr_tab_cratlcm(idx).vltotsld, 'FM999G999G999G990D90') || ' </vltotdia>
                       <qtdaplic>' || to_char(vr_tab_cratlcm(idx).qttotapl, 'FM999G999G999G990') || '</qtdaplic>
                       <qtresgat>' || to_char(vr_tab_cratlcm(idx).qttotres, 'FM999G999G999G990') || '</qtresgat>
-                    </movtoMes>');
+                            </movtoMes>';
+                      
+          -- Cria nodo filho no XML para Movto Dia
+          pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper
+                           ,pr_cdprogra     => vr_cdprogra
+                           ,pr_dsrelatorio  => 'MOVIMENTOS_MES'
+                           ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                           ,pr_dschave      => null
+                           ,pr_dsinformacao => vr_dsinformacao
+                           ,pr_cdagenci     => vr_tab_cratlcm(idx).cdagenci
+                           ,pr_dscritic     => vr_dscritic); 
+                           
+          IF vr_dscritic IS NOT NULL THEN
+            raise vr_exc_saida;  
+          END IF;                        
+                      
       END LOOP;
     END LOOP;
-
-    gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</pacs><totalPacs>');
 
     -- Laço para iteração de dias do mês
     FOR cont IN 1..gene0002.fn_char_para_number(to_char(last_day(rw_crapdat.dtmvtolt), 'DD')) LOOP
       -- Verificar valores específicos para cada dia do mês
       IF vr_typ_total(cont).vr_vlaplica <> 0 OR vr_typ_total(cont).vr_vlresgat <> 0 OR vr_typ_total(cont).vr_vltotdia <> 0 THEN
+                    
+          pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper
+                           ,pr_cdprogra     => vr_cdprogra
+                           ,pr_dsrelatorio  => 'RESUMO_MES' 
+                           ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                           ,pr_dschave      => cont                                  
+                           ,pr_dsinformacao => ';'||vr_typ_total(cont).vr_dtmvtdia||';'||     
+                                                    vr_typ_total(cont).vr_vlaplica||';'||
+                                                    vr_typ_total(cont).vr_vlresgat||';'||
+                                                    vr_typ_total(cont).vr_vltotdia||';'||
+                                                    vr_typ_total(cont).vr_qtaplica||';'||
+                                                    vr_typ_total(cont).vr_qtresgat||';'
+                           ,pr_cdagenci     => pr_cdagenci
+                           ,pr_dscritic     => vr_dscritic); 
+                           
+          IF vr_dscritic IS NOT NULL THEN
+            raise vr_exc_saida;  
+          END IF;                                     
+          
         vr_rel_vltotapl := vr_rel_vltotapl + vr_typ_total(cont).vr_vlaplica;
         vr_rel_vltotres := vr_rel_vltotres + vr_typ_total(cont).vr_vlresgat;
         vr_rel_vltotsld := vr_rel_vltotsld + vr_typ_total(cont).vr_vltotdia;
         vr_rel_qttotapl := vr_rel_qttotapl + vr_typ_total(cont).vr_qtaplica;
         vr_rel_qttotres := vr_rel_qttotres + vr_typ_total(cont).vr_qtresgat;
 
-        -- Cria nodo filho no XML
-        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-                   '<totalPac>
-                      <dtmvdia>' || to_char(vr_typ_total(cont).vr_dtmvtdia, 'DD/MM/RR') || '</dtmvdia>
-                      <vlaplico>' || to_char(vr_typ_total(cont).vr_vlaplica, 'FM999G999G999G990D90') || '</vlaplico>
-                      <vlresgte>' || to_char(vr_typ_total(cont).vr_vlresgat, 'FM999G999G999G990D90') || '</vlresgte>
-                      <vltotadi>' || to_char(vr_typ_total(cont).vr_vltotdia, 'FM999G999G999G990D90') || ' </vltotadi>
-                      <qtaplico>' || to_char(vr_typ_total(cont).vr_qtaplica, 'FM999G999G999G990') || '</qtaplico>
-                      <qtresgte>' || to_char(vr_typ_total(cont).vr_qtresgat, 'FM999G999G999G990') || '</qtresgte>
-                    </totalPac>');
       END IF;
     END LOOP;
 
-    gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</totalPacs>');
-
     -- Cria nodo filho no XML
-    gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-                '<total99>
-                  <qttotapl>' || to_char(vr_rel_qttotapl, 'FM999G999G999G990') || '</qttotapl>
-                  <vltotapl>' || to_char(vr_rel_vltotapl, 'FM999G999G999G990D90') || '</vltotapl>
-                  <qttotres>' || to_char(vr_rel_qttotres, 'FM999G999G999G990') || '</qttotres>
-                  <vltotres>' || to_char(vr_rel_vltotres, 'FM999G999G999G990D90') || '</vltotres>
-                  <vltotsld>' || to_char(vr_rel_vltotsld, 'FM999G999G999G990D90') || ' </vltotsld>
-                </total99>');
+      pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper
+                       ,pr_cdprogra     => vr_cdprogra
+                       ,pr_dsrelatorio  => 'TOTAL_MES' 
+                       ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                       ,pr_dschave      => NULL                                  
+                       ,pr_dsinformacao => ';'||vr_rel_qttotapl||';'||     
+                                                vr_rel_vltotapl||';'||
+                                                vr_rel_qttotres||';'||
+                                                vr_rel_vltotres||';'||
+                                                vr_rel_vltotsld||';'
+                       ,pr_cdagenci     => pr_cdagenci                                                
+                       ,pr_dscritic     => vr_dscritic); 
 
+      IF vr_dscritic IS NOT NULL THEN
+        raise vr_exc_saida;  
+      END IF;  
 
     IF (vr_qttotrdc + vr_vltotrdc + vr_qttotrii + vr_vltotrii) <> 0 THEN
       -- Cria nodo filho no XML
-      gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-                 '<totalGeral>
-                    <faixa>RDCA</faixa>
-                    <faixa1>RDCA60</faixa1>
-                    <qttotrdc>' || to_char(vr_qttotrdc, 'FM999G999G999G990MI') || '</qttotrdc>
-                    <vltotrdc>' || to_char(vr_vltotrdc, 'FM999G999G999G990D90MI') || '</vltotrdc>
-                    <qttotrii>' || to_char(vr_qttotrii, 'FM999G999G999G990MI') || '</qttotrii>
-                    <vltotrii>' || to_char(vr_vltotrii, 'FM999G999G999G990D90MI') || '</vltotrii>
-                  </totalGeral>');
+        pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper
+                         ,pr_cdprogra     => vr_cdprogra
+                         ,pr_dsrelatorio  => 'RDCA_RDCA60' 
+                         ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                         ,pr_dschave      => NULL                                  
+                         ,pr_dsinformacao => ';'||vr_qttotrdc||';'||     
+                                                  vr_vltotrdc||';'||
+                                                  vr_qttotrii||';'||
+                                                  vr_vltotrii||';'
+                         ,pr_cdagenci     => pr_cdagenci
+                         ,pr_dscritic     => vr_dscritic); 
+                             
+        IF vr_dscritic IS NOT NULL THEN
+          raise vr_exc_saida;  
     END IF;
-    gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<totais>');
+
+      END IF;
 
     -- Gravar valor total do RDCA60 para efetuar cálculo no final
     vr_qtdto60 := vr_qttotrii;
@@ -1575,13 +2155,20 @@ BEGIN
 
         IF vr_typ_total(cont).vr_qttotfxa <> 0 THEN
           -- Cria nodo filho no XML
-          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-                      '<totalAte>
-                        <faixa>ATE:</faixa>
-                        <vlfaixas>' || to_char(vr_typ_total(cont + 1).vr_rel_vlfaixas, 'FM999G999G999G990D90MI') || '</vlfaixas>
-                        <qttotfxa>' || to_char(vr_typ_total(cont).vr_qttotfxa, 'FM999G999G999G990MI') || '</qttotfxa>
-                        <vltotfxa>' || to_char(vr_typ_total(cont).vr_vltotfxa, 'FM999G999G999G990D90MI') || '</vltotfxa>
-                      </totalAte>');
+            pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper
+                             ,pr_cdprogra     => vr_cdprogra
+                             ,pr_dsrelatorio  => 'FAIXAS_RDCA' 
+                             ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                             ,pr_dschave      => vr_typ_total(cont + 1).vr_rel_vlfaixas                                  
+                             ,pr_dsinformacao => ';'||vr_typ_total(cont).vr_qttotfxa||';'||     
+                                                      vr_typ_total(cont).vr_vltotfxa||';'
+                             ,pr_cdagenci     => pr_cdagenci
+                             ,pr_dscritic     => vr_dscritic); 
+                                 
+            IF vr_dscritic IS NOT NULL THEN
+              raise vr_exc_saida;  
+            END IF;                
+
         END IF;
       ELSE
         -- Subtrai do total do RDCA60 para exibir total no final
@@ -1590,13 +2177,20 @@ BEGIN
 
         IF vr_typ_total(cont).vr_qttotfxa <> 0 THEN
           -- Cria nodo filho no XML
-          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-                     '<totalAte>
-                        <faixa>ATE:</faixa>
-                        <vlfaixas>' || to_char(vr_typ_total(cont).vr_rel_vlfaixas, 'FM999G999G999G990D90MI') || '</vlfaixas>
-                        <qttotfxa>' || to_char(vr_typ_total(cont).vr_qttotfxa, 'FM999G999G999G990MI') || '</qttotfxa>
-                        <vltotfxa>' || to_char(vr_typ_total(cont).vr_vltotfxa, 'FM999G999G999G990D90MI') || '</vltotfxa>
-                      </totalAte>');
+            pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper
+                             ,pr_cdprogra     => vr_cdprogra
+                             ,pr_dsrelatorio  => 'FAIXAS_RDCA' 
+                             ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                             ,pr_dschave      => vr_typ_total(cont).vr_rel_vlfaixas                                  
+                             ,pr_dsinformacao => ';'||vr_typ_total(cont).vr_qttotfxa||';'||     
+                                                      vr_typ_total(cont).vr_vltotfxa||';'
+                             ,pr_cdagenci     => pr_cdagenci
+                             ,pr_dscritic     => vr_dscritic); 
+                                 
+            IF vr_dscritic IS NOT NULL THEN
+              raise vr_exc_saida;  
+            END IF;  
+
         END IF;
       END IF;
 
@@ -1605,27 +2199,39 @@ BEGIN
 
     IF vr_qtdto60 <> 0 THEN
       -- Cria nodo filho no XML (totalizador)
-      gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-                 '<totalAcima>
-                    <faixa>ACIMA DE:</faixa>
-                    <qttotfxa>' || to_char(vr_qtdto60, 'FM999G999G999G990MI') || '</qttotfxa>
-                    <vltotfxa>' || to_char(vr_vlrto60, 'FM999G999G999G990D90MI') || '</vltotfxa>
-                  </totalAcima>');
+        pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper
+                         ,pr_cdprogra     => vr_cdprogra
+                         ,pr_dsrelatorio  => 'FAIXA_ACIMA_DE' 
+                         ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                         ,pr_dschave      => NULL                                  
+                         ,pr_dsinformacao => ';'||vr_qtdto60||';'||     
+                                                  vr_vlrto60||';'
+                         ,pr_cdagenci     => pr_cdagenci
+                         ,pr_dscritic     => vr_dscritic); 
+                             
+        IF vr_dscritic IS NOT NULL THEN
+          raise vr_exc_saida;  
     END IF;
 
-    gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</totais>');
+      END IF;
 
     IF (vr_tot_qtrdcpre + vr_tot_vlrdcpre + vr_tot_qtrdcpos + vr_tot_vlrdcpos) <> 0 THEN
       -- Cria nodo filho no XML (totalizador)
-      gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-                 '<totalGeralRDC>
-                    <faixa>RDCPRE</faixa>
-                    <faixa1>RDCPOS</faixa1>
-                    <qtrdcpre>' || to_char(vr_tot_qtrdcpre, 'FM999G999G999G990MI') || '</qtrdcpre>
-                    <vlrdcpre>' || to_char(vr_tot_vlrdcpre, 'FM999G999G999G990D90MI') || '</vlrdcpre>
-                    <qtrdcpos>' || to_char(vr_tot_qtrdcpos, 'FM999G999G999G990MI') || '</qtrdcpos>
-                    <vlrdcpos>' || to_char(vr_tot_vlrdcpos, 'FM999G999G999G990D90MI') || '</vlrdcpos>
-                  </totalGeralRDC>');
+        pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper
+                         ,pr_cdprogra     => vr_cdprogra
+                         ,pr_dsrelatorio  => 'TOTAL_GERAL_RDC' 
+                         ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                         ,pr_dschave      => NULL                                  
+                         ,pr_dsinformacao => ';'||vr_tot_qtrdcpre||';'||     
+                                                  vr_tot_vlrdcpre||';'||
+                                                  vr_tot_qtrdcpos||';'||
+                                                  vr_tot_vlrdcpos||';'
+                         ,pr_cdagenci     => pr_cdagenci
+                         ,pr_dscritic     => vr_dscritic); 
+                             
+        IF vr_dscritic IS NOT NULL THEN
+          raise vr_exc_saida;  
+        END IF;         
 
     END IF;
 		
@@ -1640,61 +2246,109 @@ BEGIN
 				CONTINUE;
 			END IF;
 			-- Escreve informações do produto no xml
-			gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<totalGeralRAC>
-										<faixa>'   || vr_tot_craprac(vr_indice_craprac).nmprodut ||'</faixa>
-										<qtaplica>'|| to_char(vr_tot_craprac(vr_indice_craprac).qtaplica, 'FM999G999G999G990MI') ||'</qtaplica>
-										<vlsldtot>'|| to_char(vr_tot_craprac(vr_indice_craprac).vlsldtot, 'FM999G999G999G990D90MI') ||'</vlsldtot>
-									</totalGeralRAC>');
+        pc_insere_tab_wrk(pr_cdcooper     => pr_cdcooper
+                         ,pr_cdprogra     => vr_cdprogra
+                         ,pr_dsrelatorio  => 'TOTAL_GERAL_RAC' 
+                         ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                         ,pr_dschave      => vr_tot_craprac(vr_indice_craprac).nmprodut                                  
+                         ,pr_dsinformacao => ';'||vr_tot_craprac(vr_indice_craprac).qtaplica||';'||     
+                                                  vr_tot_craprac(vr_indice_craprac).vlsldtot||';'
+                         ,pr_cdagenci     => pr_cdagenci                        
+                         ,pr_dscritic     => vr_dscritic); 
+                                 
+        IF vr_dscritic IS NOT NULL THEN
+          raise vr_exc_saida;  
+        END IF; 
 					    					
 			vr_indice_craprac := vr_tot_craprac.next(vr_indice_craprac);
 					
 		END LOOP;
 
+      --Grava data fim para o JOB na tabela de LOG 
+      pc_log_programa(pr_dstiplog   => 'F',    
+                      pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                      pr_cdcooper   => pr_cdcooper, 
+                      pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_idprglog   => vr_idlog_ini_par,
+                      pr_flgsucesso => 1);      
+                      
+    
+    end if;
 		
-    gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</base>',true);
 
+    -- Projeto Ligeirinho - Fim do paralelismo
 																	
-    -- Gerar XML sobre o relatório por agência
-    -- Efetuar chamada de geração do PDF do relatório
-    gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper
-                               ,pr_cdprogra  => vr_cdprogra
-                               ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
-                               ,pr_dsxml     => vr_des_xml
-                               ,pr_dsxmlnode => '/base'
-                               ,pr_dsjasper  => 'crrl294_total.jasper'
-                               ,pr_dsparams  => NULL
-                               ,pr_dsarqsaid => vr_nom_dir || '/' || vr_nmarqimp || '.lst'
-                               ,pr_flg_gerar => 'N'
-                               ,pr_qtcoluna  => 80
-                               ,pr_sqcabrel  => 1
-                               ,pr_cdrelato  => NULL
-                               ,pr_flg_impri => 'S'
-                               ,pr_nmformul  => vr_nmformul
-                               ,pr_nrcopias  => vr_nrcopias
-                               ,pr_dspathcop => NULL
-                               ,pr_dsmailcop => NULL
-                               ,pr_dsassmail => NULL
-                               ,pr_dscormail => NULL
-                               ,pr_des_erro  => vr_dscritic);
+    --Se for o programa principal - executado no batch
+    if pr_idparale = 0 then
 
-    -- Liberar dados do CLOB da memória
-    dbms_lob.close(vr_des_xml);
-    dbms_lob.freetemporary(vr_des_xml);
+      --Gera relatório crrl294_999
+      pc_gera_crrl294_total;
 
-    -- Verifica se o processo de criar arquivo retornou erro
-    IF trim(vr_dscritic) IS NOT NULL THEN
+      begin                        
+        --Limpa os registros da tabela de trabalho 
+        delete from tbgen_batch_relatorio_wrk
+          where cdcooper   = pr_cdcooper
+            and cdprograma = 'CRPS349'
+            and dtmvtolt   = rw_crapdat.dtmvtolt;    
+      exception
+        when others then
       vr_cdcritic := 0;
-      RAISE vr_exc_saida;
-    END IF;
+          vr_dscritic := 'Erro ao deletar tabela tbgen_batch_relatorio_wrk: '||sqlerrm;
+          raise vr_exc_saida;            
+      end;        
 
     -- Processo OK, devemos chamar a fimprg
-    btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
+      btch0001.pc_valida_fimprg (pr_cdcooper => pr_cdcooper
                              ,pr_cdprogra => vr_cdprogra
                              ,pr_infimsol => pr_infimsol
                              ,pr_stprogra => pr_stprogra);
     
+      if vr_idcontrole <> 0 then
+        -- Atualiza finalização do batch na tabela de controle 
+        gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                           ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                           ,pr_dscritic   => vr_dscritic);
+                                           
+        -- Testar saida com erro
+        if  vr_dscritic is not null then 
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if; 
+                                                        
+      end if;    
+      
+      if rw_crapdat.inproces > 2 and vr_qtdjobs > 0 then 
+        --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_ger,
+                        pr_flgsucesso => 1);                 
+      end if;
+
+      -- Salvar informacoes
+      COMMIT;
+
+    --Se for job chamado pelo programa do batch     
+    else
+      -- Atualiza finalização do batch na tabela de controle 
+      gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                         ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                         ,pr_dscritic   => vr_dscritic);  
+                                             
+      -- Encerrar o job do processamento paralelo dessa agência
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                  ,pr_des_erro => vr_dscritic);  
     
+      -- Salvar informacoes
     COMMIT;
+
+    end if;
+    
+    
+    
   EXCEPTION
     WHEN vr_exc_saida THEN
        -- Se foi retornado apenas código
@@ -1705,15 +2359,68 @@ BEGIN
        -- Devolvemos código e critica encontradas
        pr_cdcritic := NVL(vr_cdcritic,0);
        pr_dscritic := vr_dscritic;
+       
+       
+      if pr_idparale <> 0 then 
+        -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+        pc_log_programa(PR_DSTIPLOG           => 'E',
+                        PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 2,
+                        pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                 'pr_dscritic:'||pr_dscritic,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);  
+
+        --Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 0);  
+                        
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);
+      end if;    
+       
+       
        -- Efetuar rollback
        ROLLBACK;
      WHEN OTHERS THEN
        -- Efetuar retorno do erro não tratado
        pr_cdcritic := 0;
        pr_dscritic := SQLERRM;
+       
+      if pr_idparale <> 0 then 
+        -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+        pc_log_programa(PR_DSTIPLOG           => 'E',
+                        PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 2,
+                        pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                 'pr_dscritic:'||pr_dscritic,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);   
+
+        --Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 0);  
+      
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);
+      end if;         
+       
        -- Efetuar rollback
        ROLLBACK;
      END;
 END PC_CRPS349;
 /
-

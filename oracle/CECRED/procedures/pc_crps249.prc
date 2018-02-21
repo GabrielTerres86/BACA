@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 21/11/2017
+   Data    : Novembro/98                     Ultima atualizacao: 16/01/2018
 
    Dados referentes ao programa:
 
@@ -597,6 +597,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             2277 - CREDITO PARCIAL PREJUIZO
                             2278 - CREDITO LIQUIDAÇÃO PREJUIZO
                            (Marcelo Telles Coelho - Mouts - 15/01/2018 - SD 818020)
+
+			   16/01/2018 - Alteração no codigo da critica de 1033 para 1113 
+                            pelo motivo que alguém criou em produção o codigo 1033 ...
+                          - Troca de return por raise
+                            (Belli - Envolti - Chamado 832035)
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -3583,7 +3588,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
               fetch cr_crapcob into rw_crapcob;
               -- Se naum encontrar titulo em desconto
               if cr_crapcob%notfound then
-                vr_cdcritic := 1033;
+                -- Alteração no codigo da critica de 1033 para 1113 - Chamado 832035 - 16/01/2018
+                vr_cdcritic := 1113;
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' no crapcob - ROWID(craptdb) = '||to_char(rw_craptdb6.rowid);
                 btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                           ,pr_ind_tipo_log  => 2 -- Erro de negócio
@@ -3641,7 +3647,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
               fetch cr_crapcob into rw_crapcob;
               -- Se naum encontrar titulo em desconto
               if cr_crapcob%notfound then
-                vr_cdcritic := 1033;
+                -- Alteração no codigo da critica de 1033 para 1113 - Chamado 832035 - 16/01/2018
+                vr_cdcritic := 1113;
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' no crapcob - ROWID(crapljt) = '||to_char(rw_crapljt.rowid);
                 btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                           ,pr_ind_tipo_log  => 2 -- Erro de Negócio
@@ -5105,7 +5112,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1037).nrctaori_jur := 7122;
         vr_tab_historico(1037).nrctades_jur := 7017;
         vr_tab_historico(1037).dsrefere_jur := 'APROPRIACAO JUROS CONTRATO EMPR. TX. PRE-FIXADA - PESSOA JURIDICA';
-        
+
         vr_tab_historico(1040).nrctaori_fis := 7122;
         vr_tab_historico(1040).nrctades_fis := 7016;
         vr_tab_historico(1040).dsrefere_fis := 'AJUSTE DB. JUROS CONTRATO EMPR. TX. PRE-FIXADA - PESSOA FISICA';
@@ -5133,7 +5140,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1543).nrctaori_jur := 7123;
         vr_tab_historico(1543).nrctades_jur := 7019;
         vr_tab_historico(1543).dsrefere_jur := 'JURO MORA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
-        
+
         vr_tab_historico(1060).nrctaori_fis := 7124;
         vr_tab_historico(1060).nrctades_fis := 7020;
         vr_tab_historico(1060).dsrefere_fis := 'MULTA CONTRATO EMPRESTIMO TX. PRE-FIXADA - PESSOA FISICA';
@@ -5161,7 +5168,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1038).nrctaori_jur := 7135;
         vr_tab_historico(1038).nrctades_jur := 7029;
         vr_tab_historico(1038).dsrefere_jur := 'APROPR.JUROS CONTRATO FINANC. TX. PRE-FIXADA - PESSOA JURIDICA';
-        
+
         vr_tab_historico(1042).nrctaori_fis := 7028;
         vr_tab_historico(1042).nrctades_fis := 7135;
         vr_tab_historico(1042).dsrefere_fis := 'AJUSTE CR. JUROS CONTRATO FINANC. TX. PRE-FIXADA - PESSOA FISICA';
@@ -5189,7 +5196,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1544).nrctaori_jur := 7136;
         vr_tab_historico(1544).nrctades_jur := 7031;
         vr_tab_historico(1544).dsrefere_jur := 'JURO MORA FINANCIAM. PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
-        
+
         vr_tab_historico(1070).nrctaori_fis := 7138;
         vr_tab_historico(1070).nrctades_fis := 7032;
         vr_tab_historico(1070).dsrefere_fis := 'MULTA CONTRATO FINANCIAMENTO TX. PRE-FIXADA - PESSOA FISICA';
@@ -5203,7 +5210,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1542).nrctaori_jur := 7138;
         vr_tab_historico(1542).nrctades_jur := 7033;
         vr_tab_historico(1542).dsrefere_jur := 'MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
-        
+     
         vr_tab_historico(1508).nrctaori_fis := 7018;
         vr_tab_historico(1508).nrctades_fis := 7123;
         vr_tab_historico(1508).dsrefere_fis := 'ESTORNO JUROS DE MORA CONTR. EMPR. TX. PRE-FIXADA - PESSOA FISICA';
@@ -7516,7 +7523,9 @@ BEGIN
                                   ,pr_cdmensagem    => vr_cdcritic
                                   ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
                                                       ||vr_cdprogra||' --> '||vr_dscritic);
-        return;
+        -- Troca de return por raise - Chamado 832035 - 16/01/2018 
+        --return;
+        RAISE vr_exc_saida;                    
       end if;
     close cr_crapthi;
     --
@@ -9036,7 +9045,9 @@ BEGIN
                                   ,pr_cdmensagem    => vr_cdcritic
                                   ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
                                                       || vr_cdprogra || ' --> '|| vr_dscritic);
-        return;
+        -- Troca de return por raise - Chamado 832035 - 16/01/2018 
+        --return;
+        RAISE vr_exc_saida;                    
       end if;
     close cr_crapthi;
     --
@@ -9391,7 +9402,9 @@ BEGIN
                                     ,pr_cdmensagem    => vr_cdcritic
                                     ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
                                                         || vr_cdprogra || ' --> '|| vr_dscritic);
-          return;
+          -- Troca de return por raise - Chamado 832035 - 16/01/2018 
+          --return;
+          RAISE vr_exc_saida;                    
         end if;
       close cr_crapthi;
       --
@@ -9681,7 +9694,8 @@ BEGIN
       --
       if cr_crapcob%notfound then
         close cr_crapcob;
-        vr_cdcritic := 1033;
+        -- Alteração no codigo da critica de 1033 para 1113 - Chamado 832035 - 16/01/2018
+        vr_cdcritic := 1113;
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' no crapcob - ROWID(craptdb) = '||rw_craptdb.rowid;
         btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro de negócio
@@ -9776,7 +9790,8 @@ BEGIN
       --
       if cr_crapcob%notfound then
         close cr_crapcob;
-        vr_cdcritic := 1033;
+        -- Alteração no codigo da critica de 1033 para 1113 - Chamado 832035 - 16/01/2018
+        vr_cdcritic := 1113;
         vr_dscritic := 'Pagos pelo cedente '||gene0001.fn_busca_critica(vr_cdcritic)||' no crapcob - ROWID(craptdb) = '||rw_craptdb.rowid;
         btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro de negócio
@@ -9876,7 +9891,8 @@ BEGIN
       --
       if cr_crapcob%notfound then
         close cr_crapcob;
-        vr_cdcritic := 1033;
+        -- Alteração no codigo da critica de 1033 para 1113 - Chamado 832035 - 16/01/2018
+        vr_cdcritic := 1113;
         vr_dscritic := 'Nao eh considerada '||gene0001.fn_busca_critica(vr_cdcritic)||' no crapcob - ROWID(craptdb) = '||rw_craptdb.rowid;
         btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro de negócio

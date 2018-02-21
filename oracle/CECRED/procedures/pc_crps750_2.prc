@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao: 31/10/2017
+  Data    : Abril/2017.                    Ultima atualizacao: 13/12/2017
 
   Dados referentes ao programa:
 
@@ -29,6 +29,9 @@ BEGIN
               08/08/2017 - #728202 Não logar críticas 995 (Carlos)
               
               31/10/2017 - #778578 Não logar críticas 1033 (Carlos)
+              
+              13/12/2017 - Melhorar performance da rotina filtrando corretamente
+                           os acordos, conforme chamado 807093. (Kelvin).
     ............................................................................. */
 
   DECLARE
@@ -155,7 +158,9 @@ BEGIN
     rw_ret cr_ret%ROWTYPE;
     
    -- Consulta contratos ativos de acordos
-   CURSOR cr_ctr_acordo IS
+   CURSOR cr_ctr_acordo(pr_cdcooper tbrecup_acordo.cdcooper%TYPE
+                       ,pr_nrdconta tbrecup_acordo.nrdconta%TYPE
+                       ,pr_nrctremp tbrecup_acordo_contrato.nrctremp%TYPE) IS
    SELECT tbrecup_acordo_contrato.nracordo
          ,tbrecup_acordo.cdcooper
          ,tbrecup_acordo.nrdconta
@@ -164,7 +169,10 @@ BEGIN
      JOIN tbrecup_acordo
        ON tbrecup_acordo.nracordo   = tbrecup_acordo_contrato.nracordo
     WHERE tbrecup_acordo.cdsituacao = 1
-      AND tbrecup_acordo_contrato.cdorigem IN (2,3);
+      AND tbrecup_acordo_contrato.cdorigem IN (2,3)
+      AND tbrecup_acordo.cdcooper = pr_cdcooper
+      AND tbrecup_acordo.nrdconta = pr_nrdconta
+      AND tbrecup_acordo_contrato.nrctremp = pr_nrctremp;
 
    rw_ctr_acordo cr_ctr_acordo%ROWTYPE;
    
@@ -365,7 +373,9 @@ BEGIN
     pc_limpa_tabela;
     
       -- Carregar Contratos de Acordos
-    FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
+    FOR rw_ctr_acordo IN cr_ctr_acordo(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_nrctremp => pr_nrctremp) LOOP
       vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
                      LPAD(rw_ctr_acordo.nrctremp,10,'0');
       vr_tab_acordo(vr_cdindice) := rw_ctr_acordo.nracordo;

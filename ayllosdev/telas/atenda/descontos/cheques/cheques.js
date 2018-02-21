@@ -32,7 +32,8 @@
  *                                        Desabilitado o campo nrctrlim na inclusao de limite. - PRJ300 - Desconto de cheque
  * 017: [31/05/2017] Odirlei   (AMcom)  : Ajuste para verificar se possui cheque custodiado no dia de hoje. - PRJ300 - Desconto de cheque 
  * 018: [26/06/2017] Jonata     (RKAM)  : Ajuste para rotina ser chamada através da tela ATENDA > Produtos - P364. 
- * 019: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque 
+ * 019: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque  
+ * 018: [06/02/2018] Mateus Z  (Mouts)  : Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia.
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -2786,7 +2787,7 @@ function verificaAssinaturaBordero(){
 	});
 }
 
-function efetivaBordero(){
+function efetivaBordero(flgImpressao){
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, verificando se border&ocirc; necessita de assinatura...");
 
@@ -2809,6 +2810,12 @@ function efetivaBordero(){
 		success: function(response) {
 			hideMsgAguardo();
 			try {
+				if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+					if (flgImpressao) {
+						var action = UrlSite + "telas/atenda/descontos/cheques/comprovante_pdf.php";
+	                	carregaImpressaoAyllos("formImpres",action,'estadoInicial();');
+					}
+				}
 				eval( response );
 			} catch(error) {
 				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
@@ -3356,4 +3363,314 @@ function incluiEmitente(){
 	
 	return false;
 	
+}
+
+function mostraAutorizaResgate(){
+
+    // Executa script através de ajax
+    $.ajax({        
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/descontos/cheques/autorizar_resgate.php', 
+        data: {         
+            redirect: 'html_ajax'           
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+            $("#divOpcoesDaOpcao2").html(response);
+            formataAutorizarRegaste();
+        }               
+    });
+    
+    return false;
+    
+}
+
+function formataAutorizarRegaste(){
+
+    $('#divAutSenha').css('display', 'none');
+    $('#divNomeDoc').css('display', 'none');
+
+    if (inpessoa > 1 && idastcjt == 1) {
+        $('#divAutIB').css('display', 'block');
+    } else {
+        $('#divAutIB').css('display', 'none');
+    }
+    
+    // label
+    var rSenha     = $('label[for="dssencar"]', '#frmAutorizar');
+    var rNome      = $('label[for="nomeresg"]', '#frmAutorizar');
+    var rDocumento = $('label[for="docuresg"]', '#frmAutorizar');
+
+    rSenha.addClass('rotulo').css('width', '40px');
+    rNome.addClass('rotulo').css('width', '40px');
+    rDocumento.addClass('rotulo').css('width', '40px');
+
+    // input
+    var cSenha                  = $('#dssencar', '#frmAutorizar');
+    var cFlgAutorizaSenha       = $('#flgAutorizaSenha', '#frmAutorizar');
+    var cFlgAutorizaIB          = $('#flgAutorizaIB', '#frmAutorizar');
+    var cFlgAutorizaComprovante = $('#flgAutorizaComprovante', '#frmAutorizar');
+    var cNome                   = $('#nomeresg', '#frmAutorizar');
+    var cDocumento              = $('#docuresg', '#frmAutorizar');
+    
+    cSenha.css('width', '100px').addClass('campo');
+    cFlgAutorizaSenha.css('clear', 'left');
+    cFlgAutorizaIB.css('clear', 'left');
+    cFlgAutorizaComprovante.css('clear', 'left');
+    cNome.css('width', '220px').addClass('campo');
+    cDocumento.css('width', '220px').addClass('campo');
+}
+
+function alteraOpcaoAutorizar(){
+    var opcaoSelecionada = $('input[type=radio][name=flgautoriza]:checked', '#frmAutorizar').val();
+    if (opcaoSelecionada == 'senha') {
+        $('#divAutSenha').css('display', 'block');
+        $('#divNomeDoc').css('display', 'none');
+    } else if (opcaoSelecionada == 'ib') {
+        $('#divAutSenha').css('display', 'none');
+        $('#divNomeDoc').css('display', 'none');
+    } else if (opcaoSelecionada == 'comprovante') {
+        $('#divAutSenha').css('display', 'none');
+        $('#divNomeDoc').css('display', 'block');
+    }
+}
+
+function prosseguirAutorizacao(){
+
+    hideMsgAguardo();
+
+    var opcaoSelecionada = $('input[type=radio][name=flgautoriza]:checked', '#frmAutorizar').val();
+
+    if (opcaoSelecionada == 'senha') {
+        // Validar a senha digitada
+        var dssencar = $('#dssencar', '#frmAutorizar').val();
+
+        showMsgAguardo('Aguarde, validando ...');
+
+        $.ajax({
+            type: 'POST',
+            async: true,
+            url: UrlSite + 'telas/atenda/descontos/cheques/valida_senha_cooperado.php',
+            data: {
+                nrdconta: nrdconta,
+                dssencar: dssencar,
+                inpessoa: inpessoa,
+                idastcjt: idastcjt,
+                redirect: 'script_ajax'
+            },
+            error: function(objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+            },
+            success: function(response) {
+                try {
+                    eval(response);
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            }
+        });
+    } else if(opcaoSelecionada == 'ib'){
+        criaTransPendenteCheque('ib');
+    } else if(opcaoSelecionada == 'comprovante'){
+        geraImpressaoComprovante();
+    }
+
+    return false;
+
+}
+
+function geraImpressaoComprovante(){
+
+    showMsgAguardo('Aguarde, buscando cheque(s) resgatados(s) ...');
+
+    $('#formImpres').html('');
+
+    $('#formImpres').append('<input type="hidden" id="nrdconta" name="nrdconta" value="'+nrdconta+'"/>');
+    $('#formImpres').append('<input type="hidden" id="nmprimtl" name="nmprimtl" value="'+nmprimtl+'"/>');
+    $('#formImpres').append('<input type="hidden" id="sidlogin" name="sidlogin" value="'+ $('#sidlogin','#frmMenu').val() + '"/>');
+    $('#formImpres').append('<input type="hidden" id="inpessoa" name="inpessoa" value="'+inpessoa+'"/>');
+    $('#formImpres').append('<input type="hidden" id="idastcjt" name="idastcjt" value="'+idastcjt+'"/>');
+
+    buscarChequesCustodiadosHoje();
+}
+
+function buscarChequesCustodiadosHoje(){
+    
+    // Executa script através de ajax
+    $.ajax({        
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/descontos/cheques/busca_cheques_cust_hj.php', 
+        data: {         
+            nrdconta: nrdconta,
+            nrborder: nrbordero,
+            redirect: 'html_ajax'           
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try{
+
+                    $('#formImpres').append(response);
+                    
+                    buscarResponsaveisAssinatura();
+
+                } catch(error){
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }else{
+                try {
+                    eval( response );                   
+                } catch(error) {                        
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }
+        }
+    });
+    
+    return false;
+    
+}
+
+function buscarResponsaveisAssinatura(){
+    
+    // Executa script através de ajax
+    $.ajax({        
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/descontos/cheques/busca_responsaveis_assinatura.php', 
+        data: {         
+            nrdconta: nrdconta,
+            redirect: 'html_ajax'           
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try{
+
+                    $('#formImpres').append(response);
+                    efetivaBordero(true);
+
+                } catch(error){
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }else{
+                try {
+                    eval( response );                   
+                } catch(error) {                        
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }
+        }
+    });
+    
+    return false;
+    
+}
+
+function selecionarResponsavel(){
+    var nrcpfcgc = $('input[type=radio][name=nrcpfcgc]:checked', '#tabelaResponsaveis').val();
+
+    criaTransPendenteCheque('senha', nrcpfcgc);
+}
+
+function criaTransPendenteCheque(opcao, nrcpfcgc){
+    
+    showMsgAguardo('Aguarde, criando pendências para os outros responsáveis...');
+
+    $.ajax({
+      type: 'POST',
+      dataType: 'html',
+      url: UrlSite + 'telas/atenda/descontos/cheques/cria_trans_pend_resgate_cst.php', 
+        async: false,
+        data: {
+            nrdconta: nrdconta,
+            nrcpfcgc: nrcpfcgc,
+            nrborder: nrbordero,
+            redirect: 'html_ajax'
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+            try {
+                eval( response );                   
+            } catch(error) {                    
+                showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+            }
+        }
+    });
+}
+
+function formRespAssinatura(){
+    
+    // Executa script através de ajax
+    $.ajax({        
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/descontos/cheques/form_resp_assinatura.php', 
+        data: {         
+            nrdconta: nrdconta,
+            redirect: 'html_ajax'           
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+            hideMsgAguardo();  
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try{
+                    $('#divAutorizar').html(response);           
+                    formataTabelaResponsaveisAssinatura();
+                } catch(error){
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }else{
+                try {
+                    eval( response );                   
+                } catch(error) {                        
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }         
+        }               
+    });
+    
+    return false;
+    
+}
+
+function formataTabelaResponsaveisAssinatura(){
+    
+    // tabela
+    var divRegistro = $('div.divRegistros', '#divAutorizar');
+    var tabela = $('table', divRegistro);
+
+    var ordemInicial = new Array();
+
+    var arrayLargura = new Array();
+	arrayLargura[0] = '13px';
+    
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+    
 }

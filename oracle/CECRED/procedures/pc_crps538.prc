@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 04/01/2018
+   Data    : Novembro/2009.                   Ultima atualizacao: 26/01/2018
 
    Dados referentes ao programa:
 
@@ -389,6 +389,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                04/01/2018 - #824283 Verificação de parâmetro para saber se o programa aborta o
                             processo caso não encontre arquivos de retorno (Carlos)
+
+               26/01/2018 - Adicionar validação para carregar a data em que boleto pode ser pago
+                            (Douglas - Chamado 824706)
 
                14/02/2018 - Retirar regra de devolução do título pelo motivo 63
                             (código de barras em desacordo com as especificacoes).
@@ -1094,81 +1097,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
        END pc_controla_log_batch;    
 
-       --Procedimento para validar vencimento titulo
-       PROCEDURE pc_verifica_vencto_titulo (pr_cdcooper   IN INTEGER
-                                           ,pr_dtvencto   IN DATE
-                                           ,pr_nmtelant   IN VARCHAR2
-                                           ,pr_rw_crapdat IN BTCH0001.rw_crapdat%type
-                                           ,pr_critdata   OUT BOOLEAN
-                                           ,pr_cdcritic   OUT INTEGER
-                                           ,pr_dscritic   OUT VARCHAR2) IS
-       BEGIN
-         DECLARE
-           --Variaveis Locais
-           vr_dtdiautil DATE;
-           vr_dtferiado DATE;
-           vr_dtrefere  DATE;
-           vr_nranoant  VARCHAR2(4);
-         BEGIN
-           --Inicialiar variaveis erro
-           pr_cdcritic:= NULL;
-           pr_dscritic:= NULL;
-           --Marcar Critica
-           pr_critdata:= FALSE;
-           --Verificar proximo dia util
-           IF pr_dtvencto IS NOT NULL THEN
-             vr_dtferiado:= gene0005.fn_valida_dia_util (pr_cdcooper => pr_cdcooper
-                                                        ,pr_dtmvtolt => pr_dtvencto
-                                                        ,pr_tipo => 'P');
-           END IF;
-           --Determinar Data Referencia
-           IF pr_nmtelant = 'COMPEFORA' THEN
-             vr_dtrefere:= pr_rw_crapdat.dtmvtoan;
-           ELSE
-             vr_dtrefere:= pr_rw_crapdat.dtmvtolt;
-           END IF;
-           --Proximo dia util Maior data atual
-           IF vr_dtferiado >= vr_dtrefere THEN
-             RETURN;
-           END IF;
-
-           --Marcar para criticar data
-           pr_critdata:= TRUE;
-           /** Tratamento para permitir pagamento no primeiro dia util do **/
-           /** ano de titulos vencidos no ultimo dia util do ano anterior **/
-
-           --Montar ano da dtmvtoan
-           vr_nranoant:= to_char(pr_rw_crapdat.dtmvtoan,'YYYY');
-           --Ano anterior diferente Ano Pagamento
-           IF vr_nranoant != to_char(pr_rw_crapdat.dtmvtocd,'YYYY') THEN
-             --Montar ultimo dia ano anterior
-             vr_dtdiautil:= to_date('3112'||vr_nranoant,'DDMMYYYY');
-             /** Se dia 31/12 for segunda-feira obtem data do sabado **/
-             /** para aceitar vencidos do ultimo final de semana     **/
-             CASE to_number(to_char(vr_dtdiautil,'D'))
-               WHEN 1 THEN vr_dtdiautil:= to_date('2912'||vr_nranoant,'DDMMYYYY');
-               WHEN 2 THEN vr_dtdiautil:= to_date('2912'||vr_nranoant,'DDMMYYYY');
-               WHEN 7 THEN vr_dtdiautil:= to_date('3012'||vr_nranoant,'DDMMYYYY');
-               ELSE NULL;
-             END CASE;
-             /** Verifica se pode aceitar o titulo vencido **/
-             IF pr_dtvencto >= vr_dtdiautil THEN
-               --Retorna FALSE
-               pr_critdata:= FALSE;
-             END IF;
-           END IF;
-         EXCEPTION
-           WHEN OTHERS THEN
-             -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
-             CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-             --Variavel de erro recebe erro ocorrido
-             pr_cdcritic:= 0;
-             pr_dscritic:= 'Erro na rotina pc_CRPS538.pc_verifica_vencto_titulo. '||sqlerrm;
-             --Sair do programa
-             RAISE vr_exc_saida;
-         END;
-       END pc_verifica_vencto_titulo;
-
        PROCEDURE pc_verifica_vencto  (pr_cdcooper IN INTEGER  --Codigo da cooperativa
                               ,pr_dtmvtolt IN DATE     --Data para verificacao
                               ,pr_cddbanco IN INTEGER  --Codigo do Banco
@@ -1263,8 +1191,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                 RAISE vr_exc_erro;
             END IF;
 
-            -- vencto
-            vr_proxutil:= pr_dtboleto;
+            -- busca a maxima data em que o boleto pode ser pago sem ser considerado vencido
+            -- considerando somente feriados nacionais e último dia útil do ano (SD#824706)
+            vr_proxutil := npcb0001.fn_titulo_vencimento_pagamento(pr_cdcooper => pr_cdcooper
+                                                                  ,pr_dtvencto => pr_dtboleto);
+
             --Flag vencida
             pr_flgvenci:= FALSE;
 
@@ -2929,7 +2860,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    --Pular proxima linha arquivo
                    RAISE vr_exc_proximo;
                  END IF; --vr_crapaceb
-                 
+
                  --limpar registro
                  rw_crapcob := null;
 
@@ -3686,16 +3617,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  vr_vldescto:= 0;
                  vr_vlabatim:= rw_crapcob.vlabatim;
                  vr_vlfatura:= rw_crapcob.vltitulo;
-                 /*
-                 --Verificar Vencimento Titulo
-                 pc_verifica_vencto_titulo (pr_cdcooper   => rw_crapcop.cdcooper --Cooperativa
-                                           ,pr_dtvencto   => rw_crapcob.dtvencto --Vencimento
-                                           ,pr_nmtelant   => pr_nmtelant         --Tela Anterior
-                                           ,pr_rw_crapdat => rw_crapdat          --Registro Tipo Data
-                                           ,pr_critdata   => vr_flgvenci         --Retorno/Vencido
-                                           ,pr_cdcritic   => vr_cdcritic         --Codigo Erro
-                                           ,pr_dscritic   => vr_dscritic);       --Descricao Erro
-                 */
+
                  IF pr_nmtelant = 'COMPEFORA' THEN
                     vr_dtrefere:= rw_crapdat.dtmvtoan;
                  ELSE

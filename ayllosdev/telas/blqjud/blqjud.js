@@ -24,6 +24,9 @@
                   29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)
 				  
 				  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
+
+                  02/01/2018 - Melhoria 460 - (Diogo - Mouts) - Ajuste no valor de desbloqueio, pois sem a validação, 
+                               sempre desbloqueava o valor total
  * --------------
  */
  
@@ -140,12 +143,13 @@ function controlaLayout() {
 	rDsinfdes           = $('label[for="dsinfdes"]' ,'#frmDesbloqueio');
 	rFldestrf			= $('label[for="fldestrf"]' ,'#frmDesbloqueio');
 	rVldesblo           = $('label[for="vldesblo"]', '#frmDesbloqueio');
-
+	
 	cNrofides           = $('#nrofides' ,'#frmDesbloqueio');
 	cNrprodes           = $('#nrprodes' ,'#frmDesbloqueio');
 	cDsjuides           = $('#dsjuides' ,'#frmDesbloqueio');
     cDtenvdes           = $('#dtenvdes' ,'#frmDesbloqueio');
     cDsinfdes           = $('#dsinfdes' ,'#frmDesbloqueio');
+    cVldesblo           = $('#vldesblo' ,'#frmDesbloqueio');
     cFldestrf			= $('input[id="#fldestrf"]' ,'#frmDesbloqueio');	
 
     // CAMPOS frmConsulta
@@ -202,10 +206,10 @@ function controlaLayout() {
 			rDsinfadc.addClass('rotulo').css({'width':'170px'});
             rVlbloque.addClass('rotulo').css({'width':'170px'});
             rVlsaldo.addClass('rotulo-linha').css({ 'width': '180px' });
-			
+
             rVlbloque.show();
             rVlbloque.next().show();
-
+			
             cNroficio.addClass('rotulo').css({'width':'200px'});
             cNrproces.addClass('rotulo').css({'width':'200px'});
             cDsjuizem.addClass('rotulo').css({'width':'350px'});
@@ -239,7 +243,7 @@ function controlaLayout() {
             rNrctacon.addClass('rotulo-linha').css({'width':'125px'});
             cNroficon.addClass('rotulo').css({'width':'200px'});
             cNrctacon.addClass('rotulo-linha').css({ 'width': '110px' }).setMask('INTEGER', 'zzzzzzzzzzzzz9', '', '');
-			
+
             rVlbloque.hide();
             rVlbloque.next().hide();
 			
@@ -1306,11 +1310,12 @@ function efetuaDesbloqueio() {
 	var flblcrft = $("#flblcrft","#frmAcaojud").val();
 	var dsinfadc = $("#dsinfadc","#frmAcaojud").val();
 	var cdmodali = $("#cdmodali","#frmAcaojud").val();
-
+	
 	var nrofides = $("#nrofides","#frmDesbloqueio").val();
 	var dtenvdes = $("#dtenvdes","#frmDesbloqueio").val();
 	var dsinfdes = $("#dsinfdes", "#frmDesbloqueio").val();
 	var vldesblo = converteMoedaFloat($("#vldesblo", "#frmDesbloqueio").val());
+	var vltmpbloque = converteMoedaFloat($("#vltmpbloque", "#frmDesbloqueio").val());
 
     // cpf pode ter mais de uma conta, por isso, pegar a conta selecionada
 	nrdconta = normalizaNumero($('#frmConsultaDados .divRegistros tr.corSelecao td:first span').text());
@@ -1342,6 +1347,17 @@ function efetuaDesbloqueio() {
 	}
 	cDsinfdes.removeClass('campoErro');
 		
+	if (vldesblo == '' || vldesblo == '0' || vldesblo == '0.00' || vldesblo == '0,00' || vldesblo <= 0) {
+		showError('error','Valor do Desbloqueio não informado.','Alerta - BLQJUD','focaCampoErro(\'vldesblo\',\'frmDesbloqueio\');');
+		return false;
+	}
+	
+	if (vldesblo > vltmpbloque) {
+		showError('error','Valor do Desbloqueio está limitado ao valor bloqueado ('+$("#vltmpbloque", "#frmDesbloqueio").val()+').','Alerta - BLQJUD','focaCampoErro(\'vldesblo\',\'frmDesbloqueio\');');
+		return false;
+	}
+	cVldesblo.removeClass('campoErro');
+
 	showMsgAguardo("Aguarde, efetuando opera&ccedil;&atilde;o ...");
 	
 	// Executa script de consulta através de ajax
@@ -1374,8 +1390,8 @@ function efetuaDesbloqueio() {
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
+				$('#btnDesbloqueio','#divBotoes').hide();
 				eval(response);
-				$('#btnDesbloqueio','#divBotoes').hide();		
 			}
 		
 	});
@@ -1793,8 +1809,12 @@ function selecionaBloqueio(seq, cdmodali) {
 	if(cCddopcao.val() == "T"){
 		$('#divDesbloqueio').css({'display':'none'});
 	}else if (arrbloqueios[seq]['dtblqfim'] != "" || cCdoperac.val() == "A" || cCdoperac.val() == "C" || cCdoperac.val() == "D") {
+		$('#vldesblo','#frmDesbloqueio').val('');//valor bloqueio, preencho o máximo
+		$('#vltmpbloque','#frmDesbloqueio').val(''); //campo para controle e validação do valor
 		if((($('#div_tabblqjud').css('display') == "block") && (arrbloqueios[seq]['dtblqfim'] != "" || cCdoperac.val() == "D"))){
 			$('#divDesbloqueio').css({'display':'block'});
+			$('#vldesblo','#frmDesbloqueio').val(arrbloqueios[seq]['vlbloque']);//valor bloqueio, preencho o máximo
+			$('#vltmpbloque','#frmDesbloqueio').val(arrbloqueios[seq]['vlbloque']); //campo para controle e validação do valor
 		}
 	}
 	
