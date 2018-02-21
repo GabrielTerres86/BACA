@@ -6,16 +6,24 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB052 AS
   --  Sistema  : Rotinas utilizadas pela Tela TAB052
   --  Sigla    : DSCT
   --  Autor    : Gustavo Guedes de Sene - Company: GFT
-  --  Data     : Janeiro - 2018           Ultima atualizacao:
+  --  Data     : Janeiro - 2018           Ultima atualizacao: 21/02/2018
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: Diario (on-line)
   -- Objetivo  : Centralizar rotinas relacionadas a Tela TAB052
   --
-  -- Alteracoes:
   --
-  ---------------------------------------------------------------------------
+  -- Histórico de Alterações:
+  --  25/01/2017 - Versão Inicial: Conversão Progress para Oracle
+  --              (Gustavo Sene - GFT)
+  --
+  --  01/02/2018 - Inclusão de Parâmetro de entrada por tipo de pessoa: Física / Jurídica
+  --              (Gustavo Sene - GFT)
+  --
+  --  21/02/2018 - Inclusão do campo "Qtd. máxima de títulos por borderô Ayllos" (qtmxtbay / qtmxtbay_c)
+  --              (Gustavo Sene - GFT)  
+  -----------------------------------------------------------------------------------------
 
   ------------------------- ESTRUTURAS DE REGISTRO --------------------------
   --
@@ -231,6 +239,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
   --
   --  01/02/2018 - Inclusão de Parâmetro de entrada por tipo de pessoa: Física / Jurídica
   --              (Gustavo Sene - GFT)
+  --
+  --  21/02/2018 - Inclusão do campo "Qtd. máxima de títulos por borderô Ayllos" (qtmxtbay / qtmxtbay_c)
+  --              (Gustavo Sene - GFT)  
   -----------------------------------------------------------------------------------------
 
 
@@ -2166,7 +2177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô de' ||
+                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô IB de' ||
                                     to_char(vr_tab_dados_dsctit(1).qtmxtbib) ||
                                     ' para ' || to_char(pr_qtmxtbib));
     END IF;
@@ -2177,7 +2188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô de ' ||
+                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô IB - CECRED de ' ||
                                     to_char(vr_tab_cecred_dsctit(1).qtmxtbib) ||
                                     ' para ' || to_char(pr_qtmxtbib_c));
 
@@ -2189,7 +2200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô de' ||
+                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô Ayllos de' ||
                                     to_char(vr_tab_dados_dsctit(1).qtmxtbay) ||
                                     ' para ' || to_char(pr_qtmxtbay));
     END IF;
@@ -2200,7 +2211,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o qtmxtbay de ' ||
+                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô Ayllos - CECRED de ' ||
                                     to_char(vr_tab_cecred_dsctit(1).qtmxtbay) ||
                                     ' para ' || to_char(pr_qtmxtbay_c));
 
