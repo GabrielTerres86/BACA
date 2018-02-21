@@ -1151,7 +1151,9 @@ function liberaCamposCecred() {
 
 function back(){
     if($("#idctrlab", "#frmTab052").val() == 'CECRED'){
-        liberaCamposCooper();
+        if (validarCampos()){
+            liberaCamposCooper();
+        }
         return false;
     }else{
         estadoInicial();
