@@ -344,8 +344,8 @@
 			<tr>
 				<!-- vlmintcl -->
 				<td width="300px"><label for="vlmintcl" class='labelPri'><?php echo utf8ToHtml('Valor Mínimo para Cálculo de Liquidez:') ?></label></td>
-				<td width="170px"><input type="text" id="vlmintcl" name="vlmintcl" value="<?php echo $vlmintcl == 0 ? '' : $vlmintcl ?>" maxlength="3" style="text-align:right;"/></td>
-				<td width="170px"><input type="text" id="vlmintcl_c" name="vlmintcl_c" value="<?php echo $vlmintcl == 0 ? '' : $vlmintcl_c ?>" maxlength="3" style="text-align:right;"/></td>
+				<td width="170px"><input type="text" id="vlmintcl" name="vlmintcl" value="<?php echo $vlmintcl == 0 ? '' : $vlmintcl ?>"/></td>
+				<td width="170px"><input type="text" id="vlmintcl_c" name="vlmintcl_c" value="<?php echo $vlmintcl == 0 ? '' : $vlmintcl_c ?>"/></td>
 			</tr>
 
 
