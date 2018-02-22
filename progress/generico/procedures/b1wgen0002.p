@@ -10279,7 +10279,7 @@ PROCEDURE obtem-dados-limite-adp:
 	{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                
 		/* Efetuar a chamada a rotina Oracle  */
-		RUN STORED-PROCEDURE pc_consultar_limite_cc
+		RUN STORED-PROCEDURE pc_consultar_limite_adp
 			aux_handproc = PROC-HANDLE NO-ERROR (
                             INPUT par_cdcooper, 
 				   		    INPUT par_nrdconta,
@@ -10291,7 +10291,7 @@ PROCEDURE obtem-dados-limite-adp:
 						   OUTPUT "").  /* Descrição da crítica */  
 
 		/* Fechar o procedimento para buscarmos o resultado */ 
-		CLOSE STORED-PROC pc_consultar_limite_cc
+		CLOSE STORED-PROC pc_consultar_limite_adp
 			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
 	{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
@@ -10302,18 +10302,18 @@ PROCEDURE obtem-dados-limite-adp:
 		   aux_data     = ""
 		   aux_contrato = 0
 		   aux_saldo    = 0
-		   aux_tipo     = pc_consultar_limite_cc.pr_tipo 
-                          WHEN pc_consultar_limite_cc.pr_tipo <> ?
-		   aux_data     = pc_consultar_limite_cc.pr_data 
-                          WHEN pc_consultar_limite_cc.pr_data <> ?
-		   aux_contrato = pc_consultar_limite_cc.pr_contrato 
-                          WHEN pc_consultar_limite_cc.pr_contrato <> ?
-		   aux_saldo    = pc_consultar_limite_cc.pr_saldo 
-                          WHEN pc_consultar_limite_cc.pr_saldo <> ?                         
-		   aux_cdcritic = pc_consultar_limite_cc.pr_cdcritic 
-                          WHEN pc_consultar_limite_cc.pr_cdcritic <> ?
-           aux_dscritic = pc_consultar_limite_cc.pr_dscritic 
-                          WHEN pc_consultar_limite_cc.pr_dscritic <> ?.
+		   aux_tipo     = pc_consultar_limite_adp.pr_tipo 
+                          WHEN pc_consultar_limite_adp.pr_tipo <> ?
+		   aux_data     = pc_consultar_limite_adp.pr_data 
+                          WHEN pc_consultar_limite_adp.pr_data <> ?
+		   aux_contrato = pc_consultar_limite_adp.pr_contrato 
+                          WHEN pc_consultar_limite_adp.pr_contrato <> ?
+		   aux_saldo    = pc_consultar_limite_adp.pr_saldo 
+                          WHEN pc_consultar_limite_adp.pr_saldo <> ?                         
+		   aux_cdcritic = pc_consultar_limite_adp.pr_cdcritic 
+                          WHEN pc_consultar_limite_adp.pr_cdcritic <> ?
+           aux_dscritic = pc_consultar_limite_adp.pr_dscritic 
+                          WHEN pc_consultar_limite_adp.pr_dscritic <> ?.
     IF  aux_cdcritic <> 0   OR
         aux_dscritic <> ""  THEN
         DO:                                  
