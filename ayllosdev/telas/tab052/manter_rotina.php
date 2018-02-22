@@ -63,13 +63,13 @@ $vlmxprat = (isset($_POST['vlmxprat'])) ? $_POST['vlmxprat'] : 0;
 $pcmxctip = (isset($_POST['pcmxctip'])) ? $_POST['pcmxctip'] : 0;
 $flcocpfp = (isset($_POST['flcocpfp'])) ? $_POST['flcocpfp'] : 0;
 $qtmxdene = (isset($_POST['qtmxdene'])) ? $_POST['qtmxdene'] : 0;
+$qtdiexbo = (isset($_POST['qtdiexbo'])) ? $_POST['qtdiexbo'] : 0; 
+$qtmxtbay = (isset($_POST['qtmxtbay'])) ? $_POST['qtmxtbay'] : 0;
+
 //$pctitpag = (isset($_POST['pctitpag'])) ? $_POST['pctitpag'] : 0;
 
 
-
-$qtdiexbo = (isset($_POST['qtdiexbo'])) ? $_POST['qtdiexbo'] : 0; // {removido}
-//$qtmxtbay = (isset($_POST['qtmxtbay'])) ? $_POST['qtmxtbay'] : 0; // {removido}
-
+/*_c*/
 $vllimite_c = (isset($_POST['vllimite_c'])) ? $_POST['vllimite_c'] : 0;
 $vlconsul_c = (isset($_POST['vlconsul_c'])) ? $_POST['vlconsul_c'] : 0;
 $vlminsac_c = (isset($_POST['vlminsac_c'])) ? $_POST['vlminsac_c'] : 0;
@@ -107,9 +107,10 @@ $pcmxctip_c = (isset($_POST['pcmxctip_c'])) ? $_POST['pcmxctip_c'] : 0;
 $flcocpfp_c = (isset($_POST['flcocpfp_c'])) ? $_POST['flcocpfp_c'] : 0;
 $qtmxdene_c = (isset($_POST['qtmxdene_c'])) ? $_POST['qtmxdene_c'] : 0;
 $qtdiexbo_c = (isset($_POST['qtdiexbo_c'])) ? $_POST['qtdiexbo_c'] : 0;
-//$pctitpag_c = (isset($_POST['pctitpag_c'])) ? $_POST['pctitpag_c'] : 0;
 
-//$qtmxtbay_c = (isset($_POST['qtmxtbay_c'])) ? $_POST['qtmxtbay_c'] : 0;  // {removido}
+$qtmxtbay_c = (isset($_POST['qtmxtbay_c'])) ? $_POST['qtmxtbay_c'] : 0;
+
+//$pctitpag_c = (isset($_POST['pctitpag_c'])) ? $_POST['pctitpag_c'] : 0;
 
 $cdopcao = '';
 
@@ -247,14 +248,14 @@ if ($cdopcao == 'C') {
     $xml .= "   <pcmxctip_c>". converteFloat($pcmxctip_c)."</pcmxctip_c>";
 
 
-
     $xml .= "   <qtmxdene>". $qtmxdene."</qtmxdene>";
     $xml .= "   <qtmxdene_c>". $qtmxdene_c."</qtmxdene_c>";
 
     $xml .= "   <qtdiexbo>". $qtdiexbo."</qtdiexbo>";
     $xml .= "   <qtdiexbo_c>". $qtdiexbo_c."</qtdiexbo_c>";
 
-
+    $xml .= "   <qtmxtbay>".$qtmxtbay."</qtmxtbay>";
+    $xml .= "   <qtmxtbay_c>".$qtmxtbay_c."</qtmxtbay_c>";
     
 
     /* inicio campos excluidos */
@@ -271,8 +272,7 @@ if ($cdopcao == 'C') {
     $xml .= "   <qtrenova>0</qtrenova>";
     $xml .= "   <qtrenova_c>0</qtrenova_c>";
     
-    $xml .= "   <qtmxtbay>0</qtmxtbay>";
-    $xml .= "   <qtmxtbay_c>0</qtmxtbay_c>";
+
     
      /*  fim campos excluidos */
     
@@ -423,11 +423,9 @@ if ($cdopcao == 'C') {
 		
 		echo '$("#qtmxtbib", "#frmTab052").val("' . getByTagName($r->tags, 'qtmxtbib') . '");';
         echo '$("#qtmxtbib_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtmxtbib_c') . '");'; 
-		
-        /*
-		echo '$("#qtmxtbay", "#frmTab052").val("' . getByTagName($r->tags, 'qtmxtbay') . '");';
+
+        echo '$("#qtmxtbay", "#frmTab052").val("' . getByTagName($r->tags, 'qtmxtbay') . '");';
         echo '$("#qtmxtbay_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtmxtbay_c') . '");'; 
-        */
 
         //echo '$("#pctitpag", "#frmTab052").val("' . getByTagName($r->tags, 'pctitpag') . '");';
         //echo '$("#pctitpag_c", "#frmTab052").val("' . getByTagName($r->tags, 'pctitpag_c') . '");'; 
