@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 05/04/2017
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 13/10/2017
 
     Dados referente ao programa:
 
@@ -108,6 +108,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                               P307 - (Jonatas - Supero)
 
                  05/04/2017 - Inclusão do código da Cooperativa no arquivo Contab (Jonata-Mouts)
+                 
+                 13/10/2017 - Ajustes no crrl634 e crrl635 para apresentarmos os valores corretos
+                              das tarifas (Lucas Ranghetti #743401)
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -488,6 +491,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   BEGIN 
     -- Montar indice para gravação na(s) PLTABLE(s)
     vr_ind_rel63X := RPAD(pr_nmconven,35,' ')||RPAD(pr_dsmeiarr,15,' ');
+    
     -- 634 emite somente o dial atual 
     IF rw_crapdat.dtmvtolt = pr_dtmvtolt THEN 
       -- Se já existe registro
@@ -511,12 +515,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
         vr_tab_rel634(vr_ind_rel63X).dsmeiarr := substr(pr_dsmeiarr,1,8);
       END IF;
       -- Tarifa Sicredi 
-      IF vr_tab_rel634(vr_ind_rel63X).vlrecliq < 0 THEN  
-        vr_tab_rel634(vr_ind_rel63X).vltrfsic := vr_tab_rel634(vr_ind_rel63X).vltottar;
-      ELSE 
         vr_tab_rel634(vr_ind_rel63X).vltrfsic := vr_tab_rel634(vr_ind_rel63X).vltottar - vr_tab_rel634(vr_ind_rel63X).vlrecliq;
       END IF; 
-    END IF;
     -- 635 e 636 emite todos os dias do mês e somente é alimentada no processo mensal 
     IF TRUNC(rw_crapdat.dtmvtolt,'mm') <> TRUNC(rw_crapdat.dtmvtopr,'mm') THEN 
       -- 635 só é alimentada quando a execução não for na Central
@@ -548,11 +548,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := 0;
         END IF;
         -- Tarifa Sicredi 
-        IF vr_tab_rel635(vr_ind_rel63X).vlrecliq < 0 THEN  
-          vr_tab_rel635(vr_ind_rel63X).vltrfsic := vr_tab_rel635(vr_ind_rel63X).vltottar;
-        ELSE 
           vr_tab_rel635(vr_ind_rel63X).vltrfsic := vr_tab_rel635(vr_ind_rel63X).vltottar - vr_tab_rel635(vr_ind_rel63X).vlrecliq;
-        END IF;      
         
         -- Tratamento PF / PJ 
         IF pr_inpessoa = 0 THEN 
@@ -580,13 +576,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           -- Gravar nos campos de PF         
           vr_tab_rel635(vr_ind_rel63X).vlrtrfpf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf + (pr_vltrfuni * pr_qtfatura);
           vr_tab_rel635(vr_ind_rel63X).vlrliqpf := vr_tab_rel635(vr_ind_rel63X).vlrliqpf + (pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa);
-          
-          IF vr_tab_rel635(vr_ind_rel63X).vlrliqpf < 0 THEN  
-            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
-          ELSE 
             vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf - vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
-          END IF;  
-                   
           
           --Acumular valor tarifa sicredi por pessoa fisica
           IF ((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)) < 0 THEN
@@ -621,12 +611,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           -- Gravar nos campos de PJ         
           vr_tab_rel635(vr_ind_rel63X).vlrtrfpj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj + (pr_vltrfuni * pr_qtfatura);
           vr_tab_rel635(vr_ind_rel63X).vlrliqpj := vr_tab_rel635(vr_ind_rel63X).vlrliqpj + (pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa);
-
-          IF vr_tab_rel635(vr_ind_rel63X).vlrliqpj < 0 THEN  
-            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
-          ELSE 
             vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj - vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
-          END IF; 
           
           --Acumular valor tarifa sicredi por pessoa fisica
           IF ((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)) < 0 THEN
@@ -1157,14 +1142,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
         IF vr_tab_rel634(vr_ind_rel63X).vltotfat < 0 THEN
           vr_tab_rel634(vr_ind_rel63X).vltotfat := 0;
         END IF;
-        IF vr_tab_rel634(vr_ind_rel63X).vlrecliq < 0 THEN
-          vr_tab_rel634(vr_ind_rel63X).vlrecliq := 0;
-        END IF;
         IF vr_tab_rel634(vr_ind_rel63X).vltottar < 0 THEN
           vr_tab_rel634(vr_ind_rel63X).vltottar := 0;
-        END IF;
-        IF vr_tab_rel634(vr_ind_rel63X).vltrfsic < 0 THEN
-          vr_tab_rel634(vr_ind_rel63X).vltrfsic := 0;
         END IF;
 
         -- TOTAIS INTERNET
@@ -1385,26 +1364,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             IF vr_tab_rel635(vr_ind_rel63X).vltotfat < 0 THEN
               vr_tab_rel635(vr_ind_rel63X).vltotfat := 0;
             END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vlrecliq < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vlrecliq := 0;
-            END IF;
             IF vr_tab_rel635(vr_ind_rel63X).vltottar < 0 THEN
               vr_tab_rel635(vr_ind_rel63X).vltottar := 0;
-            END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vlrtrfpf < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vlrtrfpf := 0;
-            END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vlrliqpf < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vlrliqpf := 0;
-            END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vlrtrfpj < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vlrtrfpj := 0;
-            END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vlrliqpj < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vlrliqpj := 0;
-            END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vltrfsic < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vltrfsic := 0;
             END IF;
 
             -- TOTAIS INTERNET
