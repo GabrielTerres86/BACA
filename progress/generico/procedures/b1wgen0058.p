@@ -5275,7 +5275,7 @@ PROCEDURE Busca_Dados_Poderes:
                                                crapavt.nrdconta = par_nrdconta AND
                                                crapavt.nrdctato = par_nrdctpro AND
                                                crapavt.nrcpfcgc = par_cpfprocu AND
-											   crapavt.nrctremp = par_idseqttl
+											   crapavt.nrctremp = IF crapass.inpessoa = 1 THEN par_idseqttl ELSE 0
                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
                             
