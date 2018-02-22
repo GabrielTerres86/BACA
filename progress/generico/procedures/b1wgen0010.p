@@ -9178,7 +9178,8 @@ PROCEDURE p_calc_codigo_barras:
         ELSE
            aux_ftvencto = (par_dtvencto - dtini).
 
-    ASSIGN aux = string(par_cdbandoc,"999")
+	IF par_cdbandoc = 085 OR LENGTH(par_nrcnvcob) <= 6 THEN
+       ASSIGN aux = string(par_cdbandoc,"999")
                            + "9" /* moeda */
                            + "1" /* nao alterar - constante */
                            + STRING(aux_ftvencto, "9999") 
@@ -9186,7 +9187,17 @@ PROCEDURE p_calc_codigo_barras:
                            + string(par_nrcnvcob, "999999")
                            + string(par_nrnosnum, "99999999999999999")
                            + string(par_cdcartei, "99")
-               glb_nrcalcul = DECI(aux).
+              glb_nrcalcul = DECI(aux).
+	ELSE
+	   ASSIGN aux = string(par_cdbandoc,"999")
+		 				   + "9" /* moeda */
+						   + "1" /* nao alterar - constante */
+						   + STRING(aux_ftvencto, "9999") 
+						   + string(par_vltitulo * 100, "9999999999")
+						   + "000000"
+						   + string(par_nrnosnum, "99999999999999999")
+						   + string(par_cdcartei, "99")
+			  glb_nrcalcul = DECI(aux).
 
     RUN sistema/ayllos/fontes/digcbtit.p.
         ASSIGN par_cod_barras = STRING(glb_nrcalcul, 
