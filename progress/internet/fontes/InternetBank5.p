@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 07/12/2017
+   Data    : Marco/2007                        Ultima atualizacao: 26/01/2018
 
    Dados referentes ao programa:
 
@@ -45,16 +45,16 @@
                             do XML. (Projeto Boleto formato carne - Douglas)
 
                04/02/2016 - Ajustes Projeto Negativação Serasa (Daniel) 
-                           
-                           15/08/2016 - Removido validacao de convenio na consulta da tela
-                                                        manutencao, conforme solicitado no chamado 497079.
-                                                        (Kelvin)
+			   
+			   15/08/2016 - Removido validacao de convenio na consulta da tela
+							manutencao, conforme solicitado no chamado 497079.
+							(Kelvin)
 
-                           03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
                02/01/2017 - Melhorias referentes a performance no IB na parte 
-                                        de cobrança, incluido flprotes no xml de retorno
-                                                        (Tiago/Ademir SD573538).                  
+			                de cobrança, incluido flprotes no xml de retorno
+							(Tiago/Ademir SD573538).  			   
 
                20/04/2017 - Adicionado vencimento original (dtvctori) e 
                             flag de boleto dda (flgcbdda) no xml de retorno
@@ -68,6 +68,8 @@
 
                07/12/2017 - Adicionado o retorno dos campo dtmvtatu e flgvenci
                             (Douglas - Chamado 805008)
+
+			    26/01/2018 - Ajustes referente ao novo IB (PRJ285 - Rafael)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -120,7 +122,7 @@ DEF VAR aux_dstextab LIKE craptab.dstextab                             NO-UNDO.
 DEF VAR aux_dtmvtolt LIKE crapdat.dtmvtolt                             NO-UNDO.
 DEF VAR aux_vltitulo LIKE crapcob.vltitulo                             NO-UNDO.
 DEF VAR aux_npc_cip       AS INTE                                      NO-UNDO.
-DEF VAR aux_vldescto      AS DEC                       			   	   NO-UNDO.
+DEF VAR aux_vldescto      AS DEC                                                             NO-UNDO.
 
 /* determinando tipo de consulta */
 IF par_flgregis = 1 THEN
@@ -319,7 +321,7 @@ DO:
                           "</dsmsgerr>".  
     RETURN "NOK".
 END.
-	
+        
 FOR EACH tt-consulta-blt NO-LOCK:
 
     ASSIGN aux_nmprimtl_ben = tt-consulta-blt.nmprimtl
@@ -334,11 +336,11 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                                 OUTPUT aux_npc_cip). 
 
     IF tt-consulta-blt.cdmensag = 0 /*OR 
-	   tt-consulta-blt.cdmensag = 1*/ THEN
-		ASSIGN aux_vldescto = 0.
-	ELSE
-		ASSIGN aux_vldescto = tt-consulta-blt.vldescto.										   
-		
+           tt-consulta-blt.cdmensag = 1*/ THEN
+                ASSIGN aux_vldescto = 0.
+        ELSE
+                ASSIGN aux_vldescto = tt-consulta-blt.vldescto.                                                                                   
+
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "<BOLETO><nossonro>" +
                                    tt-consulta-blt.nossonro +
@@ -482,7 +484,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                     "<vltitulo_atualizado>" + STRING(tt-consulta-blt.vltitulo_atualizado,"zzzzzzzzz9.99") + "</vltitulo_atualizado>" +
                                     "<vlmormul_atualizado>" + STRING(tt-consulta-blt.vlmormul_atualizado,"zzzzzzzzz9.99") + "</vlmormul_atualizado>" +
                                     "<flg2viab>" + STRING(tt-consulta-blt.flg2viab) + "</flg2viab>" +
-                                                                        "<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
+									"<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
                                     /* Aviso SMS */
                                     "<inavisms>" + STRING(tt-consulta-blt.inavisms) + "</inavisms>" +
                                     "<insmsant>" + STRING(tt-consulta-blt.insmsant) + "</insmsant>" +
@@ -494,11 +496,15 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                       ELSE 
                                         tt-consulta-blt.dtvctori, "99/99/9999") + "</dtvctori>" + 
                                    "<flgcbdda>" + STRING(IF aux_npc_cip = 1 THEN "S" ELSE "N") + "</flgcbdda>" +
-								   "<vldocmto>" + STRING(tt-consulta-blt.vldocmto)+ "</vldocmto>" +
-                                   "<dtmvtatu>" + STRING(tt-consulta-blt.dtmvtatu,"99/99/9999") + "</dtmvtatu>" +
-                                   "<flgvenci>" + STRING(tt-consulta-blt.flgvenci) + "</flgvenci>" +
-                                   "</BOLETO>".       
-  
+                                   "<vldocmto>" + STRING(tt-consulta-blt.vldocmto)+ "</vldocmto>" +
+                                   "<vldocmto_boleto>" + STRING(tt-consulta-blt.vldocmto_boleto,"zzzzzzzzz9.99") + "</vldocmto_boleto>" +
+                                   "<vlcobrado_boleto>" + STRING(tt-consulta-blt.vlcobrado_boleto,"zzzzzzzzz9.99") + "</vlcobrado_boleto>" +
+                                   "<dtvencto_boleto>" + STRING(tt-consulta-blt.dtvencto_boleto,"99/99/9999") + "</dtvencto_boleto>" +
+                                   "<linhadigitavel>" + tt-consulta-blt.dslindig + "</linhadigitavel>" + 
+                                   "<codigobarras>" + tt-consulta-blt.dscodbar + "</codigobarras>" +
+                                   "<dsdespec>" + tt-consulta-blt.dsdespec + "</dsdespec>" +
+                                   "<nrborder>" + STRING(tt-consulta-blt.nrborder) + "</nrborder>" +
+                                   "</BOLETO>".
 END.
 
 DELETE PROCEDURE h-b1wgen0010.

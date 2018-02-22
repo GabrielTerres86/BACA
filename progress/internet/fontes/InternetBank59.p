@@ -61,6 +61,8 @@
                             
                20/03/2017 - Alteraçao filtro relatório e adiçao de campo
 	                          PRJ319 - SMS Cobrança(Ricardo Linhares)                                          
+
+               30/01/2018 - Adicionado novas tags devido ao projeto 285 - Novo IB (Rafael).                                         
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -516,10 +518,6 @@ IF  par_idrelato = 1 OR
                                                "99/99/99") +
                                         "</dtocorre><dtcredit>" + 
                                         (IF tt-consulta-blt.dtcredit = ? THEN 
-                                           IF tt-consulta-blt.cdocorre = 6 AND 
-                                              tt-consulta-blt.flgdesco = "*" THEN 
-                                              "* TD *"
-                                           ELSE
                                                " "
                                         ELSE 
                                            STRING(tt-consulta-blt.dtcredit,
@@ -527,13 +525,14 @@ IF  par_idrelato = 1 OR
                                         "</dtcredit><dsmotivo>" +
                                         tt-consulta-blt.dsmotivo +
                                         "</dsmotivo>" +
-                                        "<dsorigem>" +
-                                        tt-consulta-blt.dsorigem +
-                                        "</dsorigem><dtdocmto>" +
-                                        STRING(tt-consulta-blt.dtdocmto, "99/99/9999") +
-                                        "</dtdocmto><nossonro>" +
-										tt-consulta-blt.nossonro +
-                                        "</nossonro></boleto>".   
+                                        "<dsorigem>" + tt-consulta-blt.dsorigem + "</dsorigem>" + 
+                                        "<dsorigem_proc>" + tt-consulta-blt.dsorigem_proc + "</dsorigem_proc>" +
+                                        "<dtdocmto>" + STRING(tt-consulta-blt.dtdocmto, "99/99/9999") + "</dtdocmto>" + 
+                                        "<nossonro>" + tt-consulta-blt.nossonro + "</nossonro>" + 
+                                        "<nrborder>" + STRING(tt-consulta-blt.nrborder) + "</nrborder>" +
+                                        "<dscredit>" + tt-consulta-blt.dscredit + "</dscredit>" +
+                                        "<dsbcoage>" + tt-consulta-blt.dsbcoage + "</dsbcoage>" +
+                                        "</boleto>".   
 
                                              
                 

@@ -2296,14 +2296,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     .................................................................................*/                           
                                
     --Cursor para obter os 10 bancos mais utilizados
-    CURSOR cr_crapban (pr_cdbcoctl IN crapcop.cdbcoctl%TYPE) IS
+    CURSOR cr_crapban (pr_cdbcoctl IN crapcop.cdbcoctl%TYPE
+                      ,pr_flmobile IN INTEGER) IS
     SELECT REPLACE(UPPER(TRIM(b.nmresbcc)),'&','e') nmresbcc
           ,b.cdbccxlt
           ,b.nrispbif      
       FROM crapban b
      WHERE b.flgdispb = 1
        AND b.cdbccxlt <> pr_cdbcoctl
-       AND b.cdbccxlt IN (1,104,237,341,33,756,399,748,41,136); --Lista dos bancos mais utilizados na TED
+       AND (pr_flmobile = 0 OR b.cdbccxlt IN (1,104,237,341,33,756,399,748,41,136)); --Lista dos bancos mais utilizados na TED para mobile
     rw_crapban cr_crapban%ROWTYPE;
     
     --Cursor para obter os tipos de conta para TED
@@ -2653,7 +2654,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                            ,pr_texto_novo     => '<BANCOS>');
                            
     -- Vamos listar somente os top 10 bancos ativos
-    FOR rw_crapban IN cr_crapban (pr_cdbcoctl => rw_crapcop.cdbcoctl) LOOP
+    FOR rw_crapban IN cr_crapban (pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                 ,pr_flmobile => pr_flmobile) LOOP
 
       gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
                              ,pr_texto_completo => vr_xml_temp 
@@ -19031,7 +19033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         pr_dscritic:= 'Erro na rotina PAGA0001.pc_gera_arq_cooperado. '||sqlerrm;
     END;
   END pc_gera_arq_cooperado;
-/* Procedure para verificar o tipo de retorno do arquivo do cooperado */
+  /* Procedure para verificar o tipo de retorno do arquivo do cooperado */
   PROCEDURE pc_verifica_ret_arq_coop(pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
                                     ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE   --Numero Convenio
                                     ,pr_nrdconta IN crapcob.nrdconta%TYPE   --Numero da Conta

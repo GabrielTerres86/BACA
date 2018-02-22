@@ -412,6 +412,9 @@
                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
               08/02/2018 - Na procedure atualizar-preposto foi atualizado as transacoes pendentes
                            de aprovacao para o novo preposto qdo for PJ sem ass conjunta(Tiago #775776).
+
+	          30/01/2018 - Adicionado tratamento na valida-inclusao-conta-transferencia
+                           para trocar a mensagem quando a origem for InternetBank (Anderson).
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -7752,7 +7755,7 @@ PROCEDURE atualizar-preposto:
                          INPUT-OUTPUT aux_dscritic).
                                        
           UNDO TRANSACAO, LEAVE TRANSACAO.                                   
-        END.
+            END.
         
         ASSIGN aux_flgtrans = TRUE.
         
@@ -9760,12 +9763,20 @@ PROCEDURE valida-inclusao-conta-transferencia:
     IF aux_cdcritic <> 0  OR
        aux_dscritic <> "" THEN
         DO:
+          EMPTY TEMP-TABLE tt-erro.
 
-            IF aux_dscritic <> ""  OR 
-        aux_cdcritic <> 0   THEN
+          /* Se for InternetBank, monta critica mais adequada e grava no log a critica real */
+          IF par_idorigem = 3 THEN
         DO: 
-                EMPTY TEMP-TABLE tt-erro.
-
+               ASSIGN aux_dsibcrit = "Conta não encontrada no Sistema CECRED".
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,            /** Sequencia **/
+                              INPUT 0,            /** cdcritic  **/
+                              INPUT-OUTPUT aux_dsibcrit).
+             END.
+          ELSE
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
                            INPUT par_nrdcaixa,
@@ -9786,7 +9797,6 @@ PROCEDURE valida-inclusao-conta-transferencia:
                                    OUTPUT aux_nrdrowid).
                                                    
             RETURN "NOK".                           
-        END.
       
         END.
       
