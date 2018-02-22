@@ -1,7 +1,9 @@
 <!-----------------------------------------------------------------------------------------------------------
   Alterações: 28/07/2017 - Criaçao da tela, Prj. 322. (Jean Michel) 
               08/02/2018 - PJ 322 - SM 8 - Mateus(Mouts)
-			               Permitir incluir participante mesmo com o evento encerrado (desde que não esteja fechada a conatbilização)  
+   			               Permitir incluir participante mesmo com o evento encerrado (desde que não esteja fechada a conatbilização)  
+              15/02/2018 - PJ 322 - SM 7 - (Mateus) Se só exitir um titular na conta, trazer o mesmo como default
+                           Permitir ordenação por comentários						   
 ----------------------------------------------------------------------------------------------------------->
 
 <html>
@@ -1198,6 +1200,7 @@
               document.form.aux_nrseqeve.focus();
               return false; 
             }
+            document.form.aux_cddopcao.value = 'carcop';   //PJ 322 - SM 7 - Mateus
             document.form.aux_cdcooper.disabled = false;
             document.form.submit();
           }
@@ -1689,7 +1692,7 @@
 				}
 			}
 				
-			$("#aux_nmcooper").val(99);
+			//$("#aux_nmcooper").val(99);	   // Linha comentada PJ 322 - SM 7 - Mateus 
 		}
             
             function carregaContaNrcpccgc(idseq) {            
