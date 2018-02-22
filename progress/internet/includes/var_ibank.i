@@ -412,8 +412,9 @@ DEF TEMP-TABLE xml_operacao146                                           NO-UNDO
     FIELD iddstipo AS CHAR
     FIELD vlrpagto AS CHAR
     FIELD dscritic AS CHAR
-    FIELD nrseqpag AS CHAR.
-
+    FIELD nrseqpag AS CHAR
+    FIELD idanalis AS CHAR.
+    
 DEF TEMP-TABLE xml_operacao143                                           NO-UNDO
     FIELD nrdconta AS CHAR
     FIELD nrcpfemp AS CHAR

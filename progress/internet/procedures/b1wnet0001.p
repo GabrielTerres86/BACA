@@ -3468,99 +3468,102 @@ PROCEDURE gerencia-sacados:
                 UNDO TRANSACAO, LEAVE TRANSACAO.       
             END.
             
-        IF  crapass.inpessoa = 1  THEN
+        IF  par_tprotina <> 2  THEN /* Excluir */
             DO:
-                FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
-                                   crapttl.nrdconta = par_nrdconta AND
-                                   crapttl.nrcpfcgc = par_nrinssac 
-                                   NO-LOCK NO-ERROR.
-                               
-                IF  AVAILABLE crapttl  THEN
+                IF  crapass.inpessoa = 1  THEN
                     DO:
-                        ASSIGN aux_cdcritic = 0
-                               aux_dscritic = "CPF/CNPJ do pagador deve ser " +
-                                              "diferente do CPF/CNPJ do " +
-                                              "beneficiario.".
-                     
-                        UNDO TRANSACAO, LEAVE TRANSACAO.         
+                        FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+                                           crapttl.nrdconta = par_nrdconta AND
+                                           crapttl.nrcpfcgc = par_nrinssac 
+                                           NO-LOCK NO-ERROR.
+                                       
+                        IF  AVAILABLE crapttl  THEN
+                            DO:
+                                ASSIGN aux_cdcritic = 0
+                                       aux_dscritic = "CPF/CNPJ do pagador deve ser " +
+                                                      "diferente do CPF/CNPJ do " +
+                                                      "beneficiario.".
+                             
+                                UNDO TRANSACAO, LEAVE TRANSACAO.         
+                            END.
                     END.
-            END.
-        ELSE
-            DO:
-                IF  crapass.nrcpfcgc = par_nrinssac  THEN
+                ELSE
+                    DO:
+                        IF  crapass.nrcpfcgc = par_nrinssac  THEN
+                            DO:
+                                ASSIGN aux_cdcritic = 0
+                                       aux_dscritic = "CPF/CNPJ do pagador deve ser " +
+                                                      "diferente do CPF/CNPJ do " +
+                                                      "beneficiario.".
+                                
+                                UNDO TRANSACAO, LEAVE TRANSACAO.
+                            END.  
+                    END.
+                
+                IF  par_cdtpinsc < 1 OR par_cdtpinsc > 2  THEN
                     DO:
                         ASSIGN aux_cdcritic = 0
-                               aux_dscritic = "CPF/CNPJ do pagador deve ser " +
-                                              "diferente do CPF/CNPJ do " +
-                                              "beneficiario.".
-                        
+                               aux_dscritic = "Tipo de documento invalido.".
+                               
                         UNDO TRANSACAO, LEAVE TRANSACAO.
-                    END.  
-            END.
-        
-        IF  par_cdtpinsc < 1 OR par_cdtpinsc > 2  THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Tipo de documento invalido.".
-                       
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.
-            
-        IF  TRIM(par_nmdsacad) = ""  THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Informe o nome do pagador.".
-                       
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.
+                    END.
+                    
+                IF  TRIM(par_nmdsacad) = ""  THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Informe o nome do pagador.".
+                               
+                        UNDO TRANSACAO, LEAVE TRANSACAO.
+                    END.
 
-        IF  TRIM(par_dsendsac) = ""  THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Informe o endereco do pagador.".
-                       
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.
-            
-        IF  par_nrcepsac <= 0  THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Informe o CEP do pagador.".
-                       
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.    
+                IF  TRIM(par_dsendsac) = ""  THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Informe o endereco do pagador.".
+                               
+                        UNDO TRANSACAO, LEAVE TRANSACAO.
+                    END.
+                    
+                IF  par_nrcepsac <= 0  THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Informe o CEP do pagador.".
+                               
+                        UNDO TRANSACAO, LEAVE TRANSACAO.
+                    END.    
 
-        IF  TRIM(par_nmbaisac) = ""  THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Informe o bairro do pagador.".
-                       
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.
-            
-        IF  TRIM(par_nmcidsac) = ""  THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Informe a cidade do pagador.".
-                       
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.    
+                IF  TRIM(par_nmbaisac) = ""  THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Informe o bairro do pagador.".
+                               
+                        UNDO TRANSACAO, LEAVE TRANSACAO.
+                    END.
+                    
+                IF  TRIM(par_nmcidsac) = ""  THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Informe a cidade do pagador.".
+                               
+                        UNDO TRANSACAO, LEAVE TRANSACAO.
+                    END.    
 
-        IF  TRIM(par_cdufsaca) = ""  THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Informe o estado do pagador.".
-                       
-                UNDO TRANSACAO, LEAVE TRANSACAO.
+                IF  TRIM(par_cdufsaca) = ""  THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Informe o estado do pagador.".
+                               
+                        UNDO TRANSACAO, LEAVE TRANSACAO.
+                    END.
+                    
+                IF  par_cdsitsac < 1 OR par_cdsitsac > 2  THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Situacao invalida.".
+                               
+                        UNDO TRANSACAO, LEAVE TRANSACAO.
+                    END.        
             END.
-            
-        IF  par_cdsitsac < 1 OR par_cdsitsac > 2  THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Situacao invalida.".
-                       
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.        
         
         IF  par_tprotina = 0  THEN /** Cadastrar **/
             DO:
