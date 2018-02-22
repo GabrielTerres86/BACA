@@ -10322,12 +10322,15 @@ PROCEDURE obtem-dados-limite-adp:
                    tt-erro.dscritic = aux_dscritic.
             RETURN "NOK".
         END.
-   
-	CREATE tt-dados-epr.
-        ASSIGN tt-dados-epr.idenempr = aux_tipo
-               tt-dados-epr.dtmvtolt = date(aux_data) 
-               tt-dados-epr.nrctremp = aux_contrato
-               tt-dados-epr.vlsdeved = aux_saldo. 
+    
+	IF  aux_tipo > 0 THEN
+		DO:
+			CREATE tt-dados-epr.
+			ASSIGN tt-dados-epr.idenempr = aux_tipo
+				   tt-dados-epr.dtmvtolt = date(aux_data) 
+				   tt-dados-epr.nrctremp = aux_contrato
+				   tt-dados-epr.vlsdeved = aux_saldo. 
+		END.
     
     RETURN "OK".
 
