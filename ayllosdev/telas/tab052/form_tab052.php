@@ -175,7 +175,7 @@
 
 			<!-- qtmxtbib -->
 			<tr>
-				<td width="300px"><label for="qtmxtbib" class='labelPri'><?php echo utf8ToHtml('Qtd. Máxima de Títulos por Borderô:') ?></label></td>
+				<td width="300px"><label for="qtmxtbib" class='labelPri'><?php echo utf8ToHtml('Quantidade máxima de títulos por borderô IB:') ?></label></td>
 				<td width="170px"><input type="text" id="qtmxtbib" name="qtmxtbib" value="<?php echo $qtmxtbib == 0 ? '' : $qtmxtbib ?>" maxlength="4" style="text-align:right;"/></td>
 				<td width="170px"><input type="text" id="qtmxtbib_c" name="qtmxtbib_c" value="<?php echo $qtmxtbib_c == 0 ? '' : $qtmxtbib_c ?>" maxlength="4" style="text-align:right;"/></td>
 			</tr>
@@ -284,8 +284,8 @@
 			<!-- vlmintcl-->
 			<tr>
 				<td width="300px"><label for="vlmintcl" class='labelPri'><?php echo utf8ToHtml('Valor Mínimo para Cálculo de Liquidez:') ?></label></td>
-				<td width="170px"><input type="text" id="vlmintcl" name="vlmintcl" value="<?php echo $vlmintcl == 0 ? '' : $vlmintcl ?>" maxlength="3" style="text-align:right;"/></td>
-				<td width="170px"><input type="text" id="vlmintcl_c" name="vlmintcl_c" value="<?php echo $vlmintcl == 0 ? '' : $vlmintcl_c ?>" maxlength="3" style="text-align:right;"/></td>
+				<td width="170px"><input type="text" id="vlmintcl" name="vlmintcl" value="<?php echo $vlmintcl == 0 ? '' : $vlmintcl ?>"/></td>
+				<td width="170px"><input type="text" id="vlmintcl_c" name="vlmintcl_c" value="<?php echo $vlmintcl == 0 ? '' : $vlmintcl_c ?>"/></td>
 			</tr>
 
 
@@ -353,6 +353,14 @@
 					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 				<td width="170px"><input type="text" id="pctitemi_c" name="pctitemi_c" value="<?php echo $pctitemi_c == 0 ? '' : $pctitemi_c ?>" maxlength="3" style="text-align:right;"/>	
 					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
+			</tr>
+
+
+			<!-- qtmxtbay -->
+			<tr>
+				<td width="300px"><label for="qtmxtbay" class='labelPri'><?php echo utf8ToHtml('Quantidade máxima de títulos por borderô Ayllos:') ?></label></td>
+				<td width="170px"><input type="text" id="qtmxtbay" name="qtmxtbay" value="<?php echo $qtmxtbay == 0 ? '' : $qtmxtbay ?>" maxlength="4" style="text-align:right;"/></td>
+				<td width="170px"><input type="text" id="qtmxtbay_c" name="qtmxtbay_c" value="<?php echo $qtmxtbay_c == 0 ? '' : $qtmxtbay_c ?>" maxlength="4" style="text-align:right;"/></td>
 			</tr>
 
 		</table>

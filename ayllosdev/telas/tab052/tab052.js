@@ -147,7 +147,7 @@ function formataCampos() {
     cQtmxdene = $('#qtmxdene', '#frmTab052');
     cQtdiexbo = $('#qtdiexbo', '#frmTab052');
     cQtmxtbib = $('#qtmxtbib', '#frmTab052');
-    //cQtmxtbay = $('#qtmxtbay', '#frmTab052');
+    cQtmxtbay = $('#qtmxtbay', '#frmTab052');
     //cPctitpag = $('#pctitpag', '#frmTab052');
 
     cVllimite_c = $('#vllimite_c', '#frmTab052');
@@ -187,7 +187,7 @@ function formataCampos() {
     cQtmxdene_c = $('#qtmxdene_c', '#frmTab052');
     cQtdiexbo_c = $('#qtdiexbo_c', '#frmTab052');
     cQtmxtbib_c = $('#qtmxtbib_c', '#frmTab052');
-    //cQtmxtbay_c = $('#qtmxtbay_c', '#frmTab052');
+    cQtmxtbay_c = $('#qtmxtbay_c', '#frmTab052');
     //cPctitpag_c = $('#pctitpag_c', '#frmTab052');
 
     cVllimite.css('width',  '100px').addClass('moeda').addClass('editcooper');// DECI
@@ -228,7 +228,7 @@ function formataCampos() {
     cQtmxdene.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtdiexbo.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtmxtbib.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzzz','','');// INTE
-    //cQtmxtbay.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
+    cQtmxtbay.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzzz','','');// INTE
     //cPctitpag.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
 
    
@@ -270,7 +270,7 @@ function formataCampos() {
     cQtmxdene_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtdiexbo_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtmxtbib_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzzz','','');// INTE
-    //cQtmxtbay_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
+    cQtmxtbay_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzzz','','');// INTE
     //cPctitpag_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
 
         
@@ -278,8 +278,6 @@ function formataCampos() {
 
     return false;
 }
-
-
 
 function controlaFoco() {
 
@@ -565,14 +563,22 @@ function controlaFoco() {
         }
     });
 
-     $('#pctitemi', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
+    $('#pctitemi', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtmxtbay', '#frmTab052').focus();
+            return false;
+        }
+    });
+
+    $('#qtmxtbay', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             confirmaOperacao();
             return false;
         }
     });
 
-
+    
+    /* _c */
     $('#vllimite_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             $('#vlconsul_c', '#frmTab052').focus();
@@ -822,10 +828,18 @@ function controlaFoco() {
 
     $('#pctitemi_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtmxtbay_c', '#frmTab052').focus();
+            return false;
+        }
+    });
+
+    $('#qtmxtbay_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
             confirmaOperacao();
             return false;
         }
     });
+
 
 }
 
@@ -874,7 +888,6 @@ function controlaOperacao() {
 
 }
 
-
 function manterRotina(cddopcao) {
 
     var mensagem = '';
@@ -922,7 +935,7 @@ function manterRotina(cddopcao) {
     var qtdiexbo = normalizaNumero($('#qtdiexbo', '#frmTab052').val());
     var qtmxtbib = normalizaNumero($('#qtmxtbib', '#frmTab052').val());
 
-    //var qtmxtbay = normalizaNumero($('#qtmxtbay', '#frmTab052').val());
+    var qtmxtbay = normalizaNumero($('#qtmxtbay', '#frmTab052').val());
     //var pctitpag = normalizaNumero($('#pctitpag', '#frmTab052').val());
     
 
@@ -963,7 +976,7 @@ function manterRotina(cddopcao) {
     var qtmxdene_c = normalizaNumero($('#qtmxdene_c', '#frmTab052').val());
     var qtdiexbo_c = normalizaNumero($('#qtdiexbo_c', '#frmTab052').val());
     var qtmxtbib_c = normalizaNumero($('#qtmxtbib_c', '#frmTab052').val());
-    //var qtmxtbay_c = normalizaNumero($('#qtmxtbay_c', '#frmTab052').val());
+    var qtmxtbay_c = normalizaNumero($('#qtmxtbay_c', '#frmTab052').val());
 
     //var pctitpag_c = normalizaNumero($('#pctitpag_c', '#frmTab052').val());
 
@@ -1016,7 +1029,7 @@ function manterRotina(cddopcao) {
             qtmxdene: qtmxdene,
             qtdiexbo: qtdiexbo,
             qtmxtbib: qtmxtbib,
-            //qtmxtbay: qtmxtbay,
+            qtmxtbay: qtmxtbay,
             //pctitpag: pctitpag,
 
 			vllimite_c: vllimite_c,
@@ -1056,7 +1069,7 @@ function manterRotina(cddopcao) {
             qtmxdene_c: qtmxdene_c,
             qtdiexbo_c: qtdiexbo_c,
             qtmxtbib_c: qtmxtbib_c,
-            //qtmxtbay_c: qtmxtbay_c,
+            qtmxtbay_c: qtmxtbay_c,
             //pctitpag_c: pctitpag_c,
 
             redirect: 'script_ajax'
@@ -1276,12 +1289,12 @@ function validarCampos() {
     }
     
     /* qtmxtbay > qtmxtbay_c o valor deve ser inferior ou igual ao estipulado pela CECRED */
-    /*
+    
     if( converteMoedaFloat($('#qtmxtbay', '#frmTab052').val()) > converteMoedaFloat($('#qtmxtbay_c', '#frmTab052').val())  ){
         showError('error','A quantidade m&aacute;xima de t&iacute;tulos por border&ocirc; Ayllos deve ser inferior ou igual ao estipulado pela CECRED','Alerta - Ayllos',"$(\'#qtmxtbay\',\'#frmTab052\').focus();");
         return false;
     }
-    */
+    
     /* Validações de % */
     /* pctolera > 100% o valor deve ser inferior ou igual a 100
     
