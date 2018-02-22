@@ -30,6 +30,9 @@
 //***                          quando conta demitida                    ***//
 //***                         (Jonata - RKAM P364).                     ***//
 //***                                                                   ***//
+//***            21/02/2018 - Correção do login enviado para a tela     ***//
+//***                         poupanca_resgate_valida.php               ***//
+//***                         (Antonio R Jr)-Chamado 852162             ***//
 //*************************************************************************//
 
 var nrctrrpp = 0;        // Variável para armazenar número da poupança selecionada
@@ -510,7 +513,7 @@ function validarResgate() {
     var flgctain = $("#flgctain", "#frmResgate").val();
     var cdopera2 = $("#cdopera2", "#frmResgate").val();
     var cddsenha = $("#cddsenha", "#frmResgate").val();
-	
+    var fvisivel = $("#dvautoriza").is(':visible') ? 1 : 0;	
 	
 	if (tpresgat == "P") {
 		// Valida valor do resgate
@@ -541,6 +544,7 @@ function validarResgate() {
 			flgctain: flgctain,
 			cdopera2: cdopera2,
 			cddsenha: cddsenha,
+			fvisivel: fvisivel,
 			redirect: "script_ajax"
 		}, 
         error: function (objAjax, responseError, objExcept) {
