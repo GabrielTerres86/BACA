@@ -59,6 +59,12 @@ ASSIGN aux_cdcritic = 0
                       WHEN pc_valida_comprovante.pr_dscritic <> ?
        xml_req      = pc_valida_comprovante.pr_pagto_xml.
 
+IF  aux_dscritic <> ""  THEN
+    DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".
+    END.
+
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = xml_req.
 

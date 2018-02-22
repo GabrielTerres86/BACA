@@ -407,7 +407,7 @@
 
 			   26/06/2017 - Ajuste para chamar rotina convertida na procedure cancelar-senha-internet
 			                (Jonata - RKAM P364).
-                      
+                           
               12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
               08/02/2018 - Na procedure atualizar-preposto foi atualizado as transacoes pendentes
@@ -7755,7 +7755,7 @@ PROCEDURE atualizar-preposto:
                          INPUT-OUTPUT aux_dscritic).
                                        
           UNDO TRANSACAO, LEAVE TRANSACAO.                                   
-            END.
+        END.
         
         ASSIGN aux_flgtrans = TRUE.
         
@@ -9701,6 +9701,8 @@ PROCEDURE valida-inclusao-conta-transferencia:
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
+	DEF VAR aux_dsibcrit AS CHAR                                    NO-UNDO.
+
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
     RUN STORED-PROCEDURE pc_val_inclui_conta_transf
         aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,
@@ -9766,8 +9768,9 @@ PROCEDURE valida-inclusao-conta-transferencia:
           EMPTY TEMP-TABLE tt-erro.
 
           /* Se for InternetBank, monta critica mais adequada e grava no log a critica real */
-          IF par_idorigem = 3 THEN
-        DO: 
+          IF par_idorigem = 3 AND 
+             aux_cdcritic <> 979 THEN /* 979 - Conta de transferencia ja cadastrada [possui tratamento dif. na operacao 80] */
+             DO:
                ASSIGN aux_dsibcrit = "Conta não encontrada no Sistema CECRED".
                RUN gera_erro (INPUT par_cdcooper,
                               INPUT par_cdagenci,
@@ -9777,26 +9780,26 @@ PROCEDURE valida-inclusao-conta-transferencia:
                               INPUT-OUTPUT aux_dsibcrit).
              END.
           ELSE
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
+             RUN gera_erro (INPUT par_cdcooper,
+                            INPUT par_cdagenci,
+                            INPUT par_nrdcaixa,
+                            INPUT 1,            /** Sequencia **/
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).
          
-            IF  par_flgerlog  THEN
-                RUN proc_gerar_log (INPUT par_cdcooper,
-                                    INPUT par_cdoperad,
-                                    INPUT aux_dscritic,
-                                    INPUT aux_dsorigem,
-                                    INPUT aux_dstransa,
-                                    INPUT FALSE,
-                                    INPUT par_idseqttl,
-                                    INPUT par_nmdatela,
-                                    INPUT par_nrdconta,
-                                   OUTPUT aux_nrdrowid).
-                                                   
-            RETURN "NOK".                           
+          IF  par_flgerlog  THEN
+              RUN proc_gerar_log (INPUT par_cdcooper,
+                                  INPUT par_cdoperad,
+                                  INPUT aux_dscritic,
+                                  INPUT aux_dsorigem,
+                                  INPUT aux_dstransa,
+                                  INPUT FALSE,
+                                  INPUT par_idseqttl,
+                                  INPUT par_nmdatela,
+                                  INPUT par_nrdconta,
+                                 OUTPUT aux_nrdrowid).
+                                             
+          RETURN "NOK".
       
         END.
       

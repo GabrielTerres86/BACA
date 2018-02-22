@@ -156,6 +156,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
                                   ,pr_dsdireto  IN VARCHAR2
                                   ,pr_dssessao  IN VARCHAR2 -- Passar NULL quando origem for diferente de 3 - Internet Banking
                                   ,pr_dtcredit  IN VARCHAR2
+                                  ,pr_iddspscp  IN NUMBER                                  
                                   ,pr_dscritic  OUT VARCHAR2
                                   ,pr_retxml    OUT CLOB);
   
@@ -178,6 +179,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
                                   ,pr_nrseqpag  IN NUMBER
                                   ,pr_dsarquiv  IN VARCHAR2
                                   ,pr_dsdireto  IN VARCHAR2
+                                  ,pr_iddspscp  IN NUMBER                                  
                                   ,pr_dscritic  OUT VARCHAR2
                                   ,pr_retxml    OUT CLOB);          --> Erros do processo
   
@@ -1217,7 +1219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
              ,emp.dsdemail
              ,trunc(pfp.dtsolest)
              ,ass.vllimcre;
-  
+
   rw_crapemp_debito_pendente cr_crapemp_debito_pendente%ROWTYPE;
   
   -- Variaveis
@@ -7919,7 +7921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       FROM crapcop
      WHERE flgativo = 1
        AND cdcooper <> 3;
-  
+
   CURSOR cr_existe_folha_antiga(pr_cdcooper crapcop.cdcooper%TYPE
                                ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
     SELECT 1 
@@ -8172,8 +8174,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                
                  ELSE
                CLOSE cr_existe_folha_antiga;
-                 END IF;     
-               
+            END IF;
+
             END IF;
 
             -- Acionar a rotina 06.03
@@ -8305,7 +8307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                              ' - FOLH0001 --> Rotina pc_processo_controlador.' || SQLERRM);
         -- Desfazer a operacao
         ROLLBACK;
-
+        
       END;
     END LOOP;
 
@@ -8712,6 +8714,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                           ,pr_dsdireto => pr_dsdireto
                           ,pr_dssessao => NULL
                           ,pr_dtcredit => NULL -- Valida apenas para IB
+                          ,pr_iddspscp => 0
                           ,pr_dscritic => pr_dscritic
                           ,pr_retxml   => vr_retxml);
 
@@ -8748,6 +8751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                   ,pr_dsdireto  IN VARCHAR2
                                   ,pr_dssessao  IN VARCHAR2 -- Passar NULL quando origem for diferente de 3 - Internet Banking
                                   ,pr_dtcredit  IN VARCHAR2
+                                  ,pr_iddspscp  IN NUMBER
                                   ,pr_dscritic  OUT VARCHAR2
                                   ,pr_retxml    OUT CLOB) IS
   ---------------------------------------------------------------------------------------------------------------
@@ -8779,6 +8783,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   ---------------------------------------------------------------------------------------------------------------
 
     -- CURSORES
+    CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cop.dsdircop
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;  
+        
     -- Buscar os dados de Origens para Pagamentos de Folha
     CURSOR cr_crapofp(pr_cdcooper  crapofp.cdcooper%TYPE
                      ,pr_cdorigem  crapofp.cdorigem%TYPE) IS
@@ -8853,6 +8863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_excerror    EXCEPTION;
 
     vr_dsdireto    VARCHAR2(100);
+    vr_dsdirgra    VARCHAR2(100);
     vr_dsdlinha    VARCHAR2(500);
     vr_dscrilot    VARCHAR2(500); -- Critica a ser replicada no arquivo
     vr_dscriarq    VARCHAR2(500); -- Critica a ser replicada no arquivo
@@ -8934,6 +8945,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
   BEGIN
 
+    --> Verificar cooperativa
+    OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);    
+    FETCH cr_crapcop INTO rw_crapcop;
+      
+    --> verificar se encontra registro
+    IF cr_crapcop%NOTFOUND THEN      
+      CLOSE cr_crapcop;    
+        
+      pr_dscritic := 'Cooperativa de destino nao cadastrada.';      
+      RAISE vr_excerror;      
+    ELSE
+      CLOSE cr_crapcop;
+    END IF;   
+
+    IF pr_iddspscp = 0 THEN -- Diretorio de upload do gnusites
     -- Busca o diretório do upload do arquivo
     vr_dsdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C'
                                         ,pr_cdcooper => pr_cdcooper
@@ -8950,6 +8976,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       pr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
       RAISE vr_excerror;
     END IF;
+    ELSE
+      vr_dsdireto := gene0001.fn_diretorio('C',0)                                ||
+                     gene0001.fn_param_sistema('CRED',0,'PATH_DOWNLOAD_ARQUIVO') ||
+                     '/'                                                         ||
+                     rw_crapcop.dsdircop                                         ||
+                     '/upload';
+    END IF;  
 
     -- Verifica se o arquivo existe
     IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdireto||'/'||pr_dsarquiv) THEN
@@ -9931,6 +9964,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                                     ||'<dscritic>'||vr_dscritic ||'</dscritic>'
                                                     ||'<dsorigem>'||NVL(vr_tbcritic(ind).dsorigem, ' ')||'</dsorigem>'
                                                     ||'<vlrpagto>'||vr_tbcritic(ind).vlrpagto||'</vlrpagto>'
+                                                    ||'<idanalis>'||vr_tbcritic(ind).inderror||'</idanalis>'                                                    
                                                     ||'</critica>'||chr(13));
 
         END LOOP; -- Loop das críticas
@@ -9994,9 +10028,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
           END LOOP;
 
+          vr_dsdirgra := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                              ,pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsubdir => 'upload');
+                                            
           -- Gravar o xml gerado em um arquivo que será lido pela rotina gravar
           GENE0002.pc_xml_para_arquivo(pr_xml      => vr_retxml
-                                      ,pr_caminho  => vr_dsdireto
+                                      ,pr_caminho  => vr_dsdirgra
                                       ,pr_arquivo  => vr_nmarquiv
                                       ,pr_des_erro => pr_dscritic);
 
@@ -10136,6 +10174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                           ,pr_nrseqpag => pr_nrseqpag
                           ,pr_dsarquiv => pr_dsarquiv
                           ,pr_dsdireto => pr_dsdireto
+                          ,pr_iddspscp => 0
                           ,pr_dscritic => pr_dscritic
                           ,pr_retxml   => vr_retxml);
 
@@ -10171,6 +10210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                    ,pr_nrseqpag  IN NUMBER
                                    ,pr_dsarquiv  IN VARCHAR2
                                    ,pr_dsdireto  IN VARCHAR2
+                                   ,pr_iddspscp  IN NUMBER
                                    ,pr_dscritic  OUT VARCHAR2
                                    ,pr_retxml    OUT CLOB) IS        --> Erros do processo
   ---------------------------------------------------------------------------------------------------------------
@@ -10246,6 +10286,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                ,ofp.dsorigem ;
     rw_craplfp  cr_craplfp%ROWTYPE;
 
+    CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cop.dsdircop
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;    
+
     -- Registros
     TYPE typ_reccritc IS RECORD (nrdlinha NUMBER
                                 ,dsdconta VARCHAR2(20)
@@ -10299,6 +10345,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     -- Variaveis
     vr_excerror    EXCEPTION;
     vr_dsdireto    VARCHAR2(100);
+    vr_dsdirgra    VARCHAR2(100);
     vr_dsdlinha    VARCHAR2(500);
     vr_dserhead    VARCHAR2(500); -- Critica a ser replicada no arquivo
     vr_dserrfun    VARCHAR2(500); -- Critica a ser replicada para o funcionario
@@ -10426,6 +10473,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
   BEGIN
 
+    --> Verificar cooperativa
+    OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);    
+    FETCH cr_crapcop INTO rw_crapcop;
+      
+    --> verificar se encontra registro
+    IF cr_crapcop%NOTFOUND THEN      
+      CLOSE cr_crapcop;    
+        
+      pr_dscritic := 'Cooperativa de destino nao cadastrada.';      
+      RAISE vr_excerror;      
+    ELSE
+      CLOSE cr_crapcop;
+    END IF;  
+
+    IF pr_iddspscp = 0 THEN -- Diretorio de upload do gnusites                                           
     -- Busca o diretório do upload do arquivo
     vr_dsdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C'
                                         ,pr_cdcooper => pr_cdcooper
@@ -10442,6 +10504,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         pr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
         RAISE vr_excerror;
       END IF;
+    ELSE
+      vr_dsdireto := gene0001.fn_diretorio('C',0)                                ||
+                     gene0001.fn_param_sistema('CRED',0,'PATH_DOWNLOAD_ARQUIVO') ||
+                     '/'                                                         ||
+                     rw_crapcop.dsdircop                                         ||
+                     '/upload';
+    END IF;
 
     -- Verifica se o arquivo existe
     IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdireto||'/'||pr_dsarquiv) THEN
@@ -11335,9 +11404,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                              ,pr_texto_completo => vr_dsauxml
                              ,pr_texto_novo     => ('</folhas></Root>'||chr(10))
                              ,pr_fecha_xml      => TRUE);
+                             
+        vr_dsdirgra := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_nmsubdir => 'upload');
+       
         -- Ao final, iremos gravar o XML na pasta Upload para gravação caso o usuário clique no botão gravar
         gene0002.pc_XML_para_arquivo(pr_XML      => pr_retxml
-                                    ,pr_caminho  => vr_dsdireto              -- Diretório Upload
+                                    ,pr_caminho  => vr_dsdirgra              -- Diretório Upload
                                     ,pr_arquivo  => pr_dsarquiv||'.proc.xml' -- Nome Original + .proc.xml
                                     ,pr_des_erro => pr_dscritic);
         IF pr_dscritic IS NOT NULL THEN

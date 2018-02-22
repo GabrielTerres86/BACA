@@ -467,9 +467,9 @@ IF  par_idrelato = 1 OR
                 ASSIGN xml_operacao.dslinxml = "<boleto><cdbanpag>" +
                                         STRING(tt-consulta-blt.cdbanpag) +
                                         "</cdbanpag><iniemiss>" +
-                                        STRING(par_iniemiss,"99/99/99") + 
+                                        STRING(par_iniemiss,"99/99/9999") + 
                                         "</iniemiss><fimemiss>" + 
-                                        STRING(par_fimemiss,"99/99/99") + 
+                                        STRING(par_fimemiss,"99/99/9999") + 
                                         "</fimemiss><cdocorre>" +
                                         STRING(tt-consulta-blt.cdocorre) +
                                         "</cdocorre><dsocorre>" +
@@ -488,7 +488,7 @@ IF  par_idrelato = 1 OR
                                         tt-consulta-blt.nmdsacad +
                                         "</nmdsacad><dtvencto>" +
                                         STRING(tt-consulta-blt.dtvencto,
-                                               "99/99/99") +
+                                               "99/99/9999") +
                                         "</dtvencto><vltitulo>" +
                                         TRIM(STRING(tt-consulta-blt.vltitulo,
                                                     "zzzzzzzzz9.99")) +
@@ -515,13 +515,13 @@ IF  par_idrelato = 1 OR
                                                     "zzzzzzzzz9.99")) +
                                         "</vltarifa><dtocorre>" +
                                         STRING(tt-consulta-blt.dtocorre,
-                                               "99/99/99") +
+                                               "99/99/9999") +
                                         "</dtocorre><dtcredit>" + 
                                         (IF tt-consulta-blt.dtcredit = ? THEN 
                                                " "
                                         ELSE 
                                            STRING(tt-consulta-blt.dtcredit,
-                                               "99/99/99")) + 
+                                               "99/99/9999")) + 
                                         "</dtcredit><dsmotivo>" +
                                         tt-consulta-blt.dsmotivo +
                                         "</dsmotivo>" +

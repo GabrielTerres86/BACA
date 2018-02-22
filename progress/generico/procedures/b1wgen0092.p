@@ -3786,6 +3786,7 @@ PROCEDURE exclui_suspensao_autorizacao:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_contador AS INTE INIT 0  NO-UNDO.
+    DEF VAR aux_dtinisus AS DATE         NO-UNDO.
     DEF VAR aux_dtfimsus AS DATE         NO-UNDO.
     DEF VAR aux_retornvl AS CHAR INIT "NOK"                        NO-UNDO.
 
@@ -3836,7 +3837,8 @@ PROCEDURE exclui_suspensao_autorizacao:
             CREATE tt-autori-ant.
             BUFFER-COPY crapatr TO tt-autori-ant.
             
-            ASSIGN aux_dtfimsus     = crapatr.dtfimsus
+            ASSIGN aux_dtinisus     = crapatr.dtinisus
+                   aux_dtfimsus     = crapatr.dtfimsus
                    crapatr.dtfimsus = par_dtmvtolt.
 
             IF  crapatr.dtinisus > par_dtmvtolt THEN
@@ -3931,7 +3933,7 @@ PROCEDURE exclui_suspensao_autorizacao:
                                       "zzzzzzzzzzzzzzzz9") + "#" +
                                       STRING(crapatr.vlrmaxdb,
                                       "zzz,zzz,zz9.99")    + "#" +
-                                      STRING(crapatr.dtinisus,
+                                      STRING(aux_dtinisus,
                                       "99/99/9999")        + "#" +
                                       STRING(aux_dtfimsus,
                                       "99/99/9999").

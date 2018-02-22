@@ -218,12 +218,12 @@ PROCEDURE cancelar_agendamento:
 									 INPUT "INTERNET",  /** ORIGEM   **/
 									 INPUT aux_dtmvtage,
 									 INPUT aux_nrdocmto,
-                                     INPUT 0,
+                   INPUT 0,
 									 INPUT aux_nmdatela,
                                      INPUT aux_nrcpfope,
 									 OUTPUT aux_dstransa,
 									 OUTPUT aux_dscritic).
-         message RETURN-VALUE   aux_dscritic.                 
+                        
     IF  RETURN-VALUE <> "OK" OR
 	    aux_dscritic <> ""    THEN
         DO:

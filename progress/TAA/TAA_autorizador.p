@@ -9432,8 +9432,8 @@ PROCEDURE lancamentos-futuros:
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(tt-totais-futuros.vllaudeb).
     xField:APPEND-CHILD(xText).
-    
-    /* ---------- */
+	
+	  /* ---------- */
     xDoc:CREATE-NODE(xField,"vllaucre","ELEMENT").
     xRoot:APPEND-CHILD(xField).
     
