@@ -26,7 +26,7 @@ PROCEDURE pc_busca_contratos_acordo(pr_nracordo tbrecup_acordo.nracordo%TYPE
                                   , pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                   , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                   , pr_des_erro OUT VARCHAR2);
-																	
+
 PROCEDURE pc_inclui_contrato_acordo(pr_nracordo tbrecup_acordo.nracordo%TYPE    --> Número do acordo
                                   , pr_nrctremp crapepr.nrctremp%TYPE           --> Código da cooperativa
                                   , pr_xmllog   IN VARCHAR2                     --> XML com informações de LOG
@@ -35,7 +35,7 @@ PROCEDURE pc_inclui_contrato_acordo(pr_nracordo tbrecup_acordo.nracordo%TYPE    
                                   , pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
                                   , pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
                                   , pr_des_erro OUT VARCHAR2);
-	
+
 PROCEDURE pc_exclui_contrato_acordo(pr_nracordo tbrecup_acordo.nracordo%TYPE    --> Número do acordo
                                   , pr_nrctremp crapepr.nrctremp%TYPE           --> Código da cooperativa
                                   , pr_xmllog   IN VARCHAR2                     --> XML com informações de LOG
@@ -43,8 +43,8 @@ PROCEDURE pc_exclui_contrato_acordo(pr_nracordo tbrecup_acordo.nracordo%TYPE    
                                   , pr_dscritic OUT VARCHAR2                    --> Descrição da crítica
                                   , pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
                                   , pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
-                                  , pr_des_erro OUT VARCHAR2);																
-																	
+                                  , pr_des_erro OUT VARCHAR2);
+
 PROCEDURE pc_atualiza_contrato_acordo(pr_nracordo tbrecup_acordo.nracordo%TYPE          --> Número do acordo
                                     , pr_nrctremp crapepr.nrctremp%TYPE                 --> Código da cooperativa
 																		, pr_indpagar tbrecup_acordo_contrato.indpagar%TYPE --> Pagar (S/N)
@@ -129,7 +129,7 @@ DECLARE
          , c.dtmvtolt
          , c.vlemprst
       FROM tbrecup_acordo a
-			   , crapepr c			    
+			   , crapepr c
      WHERE a.cdcooper = pr_cdcooper
 		   AND a.nracordo = pr_nracordo
 		   AND c.cdcooper = a.cdcooper
@@ -168,7 +168,7 @@ BEGIN
                             pr_tag_nova => 'Linhas',
                             pr_tag_cont => NULL,
                             pr_des_erro => vr_dscritic);
-   
+
     -- Percorre os contratos LC100 da conta fornecida
     FOR rw_contratos_lc100
       IN cr_contratos_lc100(vr_cdcooper, pr_nracordo) LOOP
@@ -312,7 +312,7 @@ DECLARE
        AND c.nrctremp = pr_nrctremp
        AND c.cdlcremp = 100
        AND c.inliquid = 0;
-			 
+
 		IF (vr_qtd_contratos_validos = 0) THEN
 		   vr_contrato_valido := 'N';
 		END IF;
@@ -387,7 +387,7 @@ DECLARE
     vr_contcont INTEGER := 0; -- Contador dos contratos para uso no XML
 
     ----------->>> CURSORES <<<--------
-		
+
 		-- Dados da conta vinculada ao acordo
 		CURSOR cr_dados_conta(pr_cdcooper tbrecup_acordo.cdcooper%TYPE
                         , pr_nracordo tbrecup_acordo.nracordo%TYPE) IS
@@ -451,27 +451,27 @@ DECLARE
                             pr_tag_nova => 'Dados',
                             pr_tag_cont => NULL,
                             pr_des_erro => vr_dscritic);
-														
+
 		OPEN cr_dados_conta(pr_cdcooper, pr_nracordo);
-		
+
 		FETCH cr_dados_conta INTO rw_dados_conta;
-		
+
 		CLOSE cr_dados_conta;
-		
+
 		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                            pr_tag_pai  => 'Dados',
                            pr_posicao  => 0,
                            pr_tag_nova => 'Titular',
                            pr_tag_cont => rw_dados_conta.nmprimtl,
                            pr_des_erro => pr_dscritic);
-													 
+
 		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                            pr_tag_pai  => 'Dados',
                            pr_posicao  => 0,
                            pr_tag_nova => 'Conta',
                            pr_tag_cont => rw_dados_conta.nrdconta,
                            pr_des_erro => pr_dscritic);
-													 
+
 		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                            pr_tag_pai  => 'Dados',
                            pr_posicao  => 0,
@@ -580,22 +580,22 @@ BEGIN
 
 DECLARE
     ----------->>> VARIAVEIS <<<--------
-		
+
 		-- Busca número da conta do acordo em que o contrato está sendo incluído
     CURSOR cr_acordo(pr_cdcooper NUMBER, pr_nracordo NUMBER) IS
-    SELECT a.nrdconta 
+    SELECT a.nrdconta
 		  FROM tbrecup_acordo a
-		 WHERE a.cdcooper = pr_cdcooper 
+		 WHERE a.cdcooper = pr_cdcooper
 		   AND a.nracordo = pr_nracordo;
 		rw_acordo cr_acordo%ROWTYPE;
-		
+
 		-- Busca calendário para a cooperativa de trabalho
 		CURSOR cr_dat(pr_cdcooper NUMBER) IS
 		SELECT *
 		  FROM crapdat
 		 WHERE cdcooper = pr_cdcooper;
-		rw_dat cr_dat%ROWTYPE;	
-		
+		rw_dat cr_dat%ROWTYPE;
+
 		-- Busca calendário para a cooperativa de trabalho
 		CURSOR cr_contrato_valido(pr_cdcooper NUMBER, pr_nrdconta NUMBER, pr_nrctremp NUMBER) IS
 		SELECT COUNT(1) qtd_contratos
@@ -605,7 +605,7 @@ DECLARE
 			 AND e.nrctremp = pr_nrctremp
 			 AND e.cdlcremp = 100;
 		rw_contrato_valido cr_contrato_valido%ROWTYPE;
-		
+
     ----------->>> VARIAVEIS <<<--------
 
     -- Variável de críticas
@@ -622,10 +622,10 @@ DECLARE
     vr_nmeacao  VARCHAR2(100);
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100); 
-		
+    vr_idorigem VARCHAR2(100);
+
     BEGIN
-			
+
 			pr_des_erro := 'OK';
 
 			-- Extrai dados do xml
@@ -653,28 +653,28 @@ DECLARE
 															pr_tag_nova => 'Dados',
 															pr_tag_cont => NULL,
 															pr_des_erro => vr_dscritic);
-															
+
 			OPEN cr_dat(vr_cdcooper);
-			
+
 			FETCH cr_dat INTO rw_dat;
-			
+
 			CLOSE cr_dat;
-															
+
 			OPEN cr_acordo(vr_cdcooper, pr_nracordo);
-			
+
 			FETCH cr_acordo INTO rw_acordo;
-			
-			CLOSE cr_acordo;		
-			
+
+			CLOSE cr_acordo;
+
 			OPEN cr_contrato_valido(vr_cdcooper, rw_acordo.nrdconta, pr_nrctremp);
-			
+
 			FETCH cr_contrato_valido INTO rw_contrato_valido;
-			
+
 			CLOSE cr_contrato_valido;
-			
-			IF rw_contrato_valido.qtd_contratos > 0 THEN												
-												
-				-- Insere o novo contrato vinculado com o acordo		
+
+			IF rw_contrato_valido.qtd_contratos > 0 THEN
+
+				-- Insere o novo contrato vinculado com o acordo
 				INSERT INTO tbrecup_acordo_contrato (
 					 nracordo
 				 , nrctremp
@@ -683,8 +683,6 @@ DECLARE
 				 , indpagar
 				 , cdoperad
 				 , dtdinclu
-				 , flgehvip
-				 , cdmotcin				 
 				)
 				VALUES (
 					 pr_nracordo
@@ -694,10 +692,8 @@ DECLARE
 				 , 'S'
 				 , vr_cdoperad
 				 , rw_dat.dtmvtolt
-				 , 0
-				 , 0	 
 				);
-				
+
 				-- Replica registro da tabela CRAPCYC para o novo contrato inserido
 				INSERT INTO crapcyc (
 					 cdcooper
@@ -728,24 +724,24 @@ DECLARE
 				 FROM crapcyc c
 				WHERE c.cdcooper = vr_cdcooper
 					AND c.nrdconta = rw_acordo.nrdconta
-					AND c.cdorigem = 1; 
-					
+					AND c.cdorigem = 1;
+
 				COMMIT;
-				
+
 				gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 															 pr_tag_pai  => 'Dados',
 															 pr_posicao  => 0,
 															 pr_tag_nova => 'Inserido',
 															 pr_tag_cont => 'S',
 															 pr_des_erro => vr_dscritic);
-															 
+
 				gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 															 pr_tag_pai  => 'Dados',
 															 pr_posicao  => 0,
 															 pr_tag_nova => 'valido',
 															 pr_tag_cont => 'S',
 															 pr_des_erro => vr_dscritic);
-		     
+
 			ELSE
 				gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 															 pr_tag_pai  => 'Dados',
@@ -793,14 +789,14 @@ BEGIN
         Alteracoes:
     ..............................................................................*/
 
-DECLARE		
-    ----------->>> CURSORES <<<--------    
+DECLARE
+    ----------->>> CURSORES <<<--------
 
 		-- Busca número da conta do acordo em que o contrato está sendo incluído
     CURSOR cr_acordo(pr_cdcooper NUMBER, pr_nracordo NUMBER) IS
-    SELECT a.nrdconta 
+    SELECT a.nrdconta
 		  FROM tbrecup_acordo a
-		 WHERE a.cdcooper = pr_cdcooper 
+		 WHERE a.cdcooper = pr_cdcooper
 		   AND a.nracordo = pr_nracordo;
 		rw_acordo cr_acordo%ROWTYPE;
 
@@ -820,10 +816,10 @@ DECLARE
     vr_nmeacao  VARCHAR2(100);
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100); 
-		
+    vr_idorigem VARCHAR2(100);
+
     BEGIN
-			
+
 			pr_des_erro := 'OK';
 
 			-- Extrai dados do xml
@@ -851,37 +847,37 @@ DECLARE
 															pr_tag_nova => 'Dados',
 															pr_tag_cont => NULL,
 															pr_des_erro => vr_dscritic);
-			
-			
+
+
 			OPEN cr_acordo(vr_cdcooper, pr_nracordo);
-			
+
 			FETCH cr_acordo INTO rw_acordo;
-			
+
 			CLOSE cr_acordo;
-															
+
 			-- Exclui o registro da tabela CRAPCYC relativo ao contrato que será removido
-			DELETE 
+			DELETE
 			  FROM crapcyc
 			 WHERE cdcooper = vr_cdcooper
 			   AND nrdconta = rw_acordo.nrdconta
 				 AND nrctremp = pr_nrctremp
-				 AND cdorigem = 3;	
-															
+				 AND cdorigem = 3;
+
 			-- Exclui o vínculo entre o contrato e o acordo
-			DELETE 
+			DELETE
 			  FROM tbrecup_acordo_contrato
 			 WHERE nracordo = pr_nracordo
-			   AND nrctremp = pr_nrctremp;	 
-				 
+			   AND nrctremp = pr_nrctremp;
+
 		  COMMIT;
-			
+
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 															pr_tag_pai  => 'Dados',
 															pr_posicao  => 0,
 															pr_tag_nova => 'Excluido',
 															pr_tag_cont => 'S',
 															pr_des_erro => vr_dscritic);
-			
+
 		EXCEPTION
       WHEN vr_exc_saida THEN
         pr_dscritic := 'Erro geral na rotina da tela TELA_ATACOR - pc_exclui_contrato_acordo: ' ||vr_dscritic;
@@ -905,7 +901,7 @@ PROCEDURE pc_atualiza_contrato_acordo(pr_nracordo tbrecup_acordo.nracordo%TYPE  
                                     , pr_retxml   IN OUT NOCOPY XMLType                 --> Arquivo de retorno do XML
                                     , pr_nmdcampo OUT VARCHAR2                          --> Nome do campo com erro
                                     , pr_des_erro OUT VARCHAR2) IS
-  
+
 BEGIN
 
     /* ............................................................................
@@ -922,7 +918,7 @@ BEGIN
         Alteracoes:
     ..............................................................................*/
 
-DECLARE		
+DECLARE
     ----------->>> VARIAVEIS <<<--------
 
     -- Variável de críticas
@@ -939,10 +935,10 @@ DECLARE
     vr_nmeacao  VARCHAR2(100);
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100); 
-		
+    vr_idorigem VARCHAR2(100);
+
     BEGIN
-			
+
 			pr_des_erro := 'OK';
 
 			-- Extrai dados do xml
@@ -970,29 +966,29 @@ DECLARE
 															pr_tag_nova => 'Dados',
 															pr_tag_cont => NULL,
 															pr_des_erro => vr_dscritic);
-															
+
 			-- Atualiza o INDPAGAR para o contrato no acordo
 			UPDATE tbrecup_acordo_contrato
 			   SET indpagar = pr_indpagar
 			 WHERE nracordo = pr_nracordo
-			   AND (nrctremp IS NOT NULL AND nrctremp = pr_nrctremp) OR (pr_nrctremp IS NULL AND cdorigem = 1);	
-				 
-			COMMIT; 
-			
+			   AND (nrctremp IS NOT NULL AND nrctremp = pr_nrctremp) OR (pr_nrctremp IS NULL AND cdorigem = 1);
+
+			COMMIT;
+
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 															pr_tag_pai  => 'Dados',
 															pr_posicao  => 0,
 															pr_tag_nova => 'Atualizado',
 															pr_tag_cont => 'S',
 															pr_des_erro => vr_dscritic);
-															
+
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 															pr_tag_pai  => 'Dados',
 															pr_posicao  => 0,
 															pr_tag_nova => 'indpagar',
 															pr_tag_cont => pr_indpagar,
 															pr_des_erro => vr_dscritic);
-			
+
 		EXCEPTION
       WHEN vr_exc_saida THEN
         pr_dscritic := 'Erro geral na rotina da tela TELA_ATACOR - pc_atualiza_contrato_acordo: ' ||vr_dscritic;
