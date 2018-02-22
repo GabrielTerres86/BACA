@@ -25,7 +25,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
                             (Jonata - RKAM).
 
-         09/02/2018 - Inclusão de rotina pc_consultar_limite_cc - Daniel(AMcom)
+         09/02/2018 - Inclusão de rotina pc_consultar_limite_adp - Daniel(AMcom)
 
   ---------------------------------------------------------------------------------------------------------------*?
 
@@ -7181,9 +7181,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       ---------->> CURSORES <<--------
       CURSOR cr_consulta_limite_adp (pr_cdcooper IN NUMBER
                                    ,pr_nrdconta IN NUMBER) IS
-      SELECT 2 Tipo
+       SELECT 2 Tipo
            , CASE WHEN (adiantamento_deposito.saldo+lim.vllim < 0) THEN
-             (SELECT to_char(dat.dtmvtolt,'DD/MM/YYYY') FROM crapdat dat WHERE dat.cdcooper = pr_cdcooper) ELSE lim.dtlim END DATA
+             (SELECT to_char(max(lcm2.dtmvtolt), 'DD/MM/YYYY') FROM craplcm lcm2 WHERE lcm2.cdcooper = pr_cdcooper
+                         AND lcm2.nrdconta = pr_nrdconta) ELSE lim.dtlim END DATA
            , CASE WHEN adiantamento_deposito.saldo+lim.vllim < 0 THEN
               ass.nrdconta ELSE lim.cntlim END Contrato
            , (adiantamento_deposito.saldo*-1) saldo
@@ -7192,35 +7193,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
         FROM crapass ass
            , (SELECT l.nrdconta
                    , l.cdcooper
-                   , to_char(l.dtrenova, 'DD/MM/YYYY') dtlim
+                   , to_char(l.dtinivig, 'DD/MM/YYYY') dtlim
                    , l.nrctrlim cntlim
                    , l.vllimite vllim     
                 FROM craplim l
                WHERE l.tpctrlim = 1
                  AND l.insitlim = 2) lim
-           , (SELECT lcmaux.vllancamentos
-                   + (SELECT sld.vlsddisp saldo
+           , (SELECT nvl(lcmaux.vllancamentos,0)
+                   + (SELECT nvl(sld.vlsddisp,0) saldo
                         FROM crapsld sld
                        WHERE sld.cdcooper = pr_cdcooper
                          AND sld.nrdconta = pr_nrdconta) saldo
-                FROM (SELECT SUM(decode( his.indebcre, 'D', lcm.vllanmto*-1,lcm.vllanmto)) vllancamentos
+                FROM (SELECT nvl(SUM(decode( his.indebcre, 'D', lcm.vllanmto*-1,lcm.vllanmto)),0) vllancamentos
                         FROM craplcm lcm
                            , craphis his
                        WHERE lcm.cdcooper = his.cdcooper
                          AND lcm.cdhistor = his.cdhistor
                          AND lcm.cdcooper = pr_cdcooper
                          AND lcm.nrdconta = pr_nrdconta
-                         AND lcm.dtmvtolt = (SELECT dat.dtmvtolt FROM crapdat dat WHERE dat.cdcooper = pr_cdcooper)
+                         AND lcm.dtmvtolt = (SELECT max(lcm2.dtmvtolt) FROM craplcm lcm2 WHERE lcm2.cdcooper = pr_cdcooper
+                         AND lcm2.nrdconta = pr_nrdconta)
                          AND lcm.cdhistor <> 289 ) lcmaux
-               WHERE (lcmaux.vllancamentos
-                   + (SELECT sld.vlsddisp saldo
+               WHERE (nvl(lcmaux.vllancamentos,0)
+                   + (SELECT nvl(sld.vlsddisp,0) saldo
                         FROM crapsld sld
                        WHERE sld.cdcooper = pr_cdcooper
                          AND sld.nrdconta = pr_nrdconta)) < 0) adiantamento_deposito
        WHERE ass.nrdconta = lim.nrdconta(+)
          AND ass.cdcooper = lim.cdcooper(+)
-         AND ass.nrdconta = pr_nrdconta  --905887
-         AND ass.cdcooper = pr_cdcooper; --1
+         AND ass.nrdconta = pr_nrdconta  --859001
+         AND ass.cdcooper = pr_cdcooper;  --1
      rw_consulta_limite_adp cr_consulta_limite_adp%ROWTYPE;
 
     BEGIN
