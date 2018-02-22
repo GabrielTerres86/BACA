@@ -343,12 +343,12 @@ function formataCabecalho() {
 
 function formataDados() {
 
-	rNmprimtl.addClass('rotulo').css({'width':'90px'});
-	rDtvctopp.addClass('rotulo').css({'width':'90px'});
-	rVlbloque.addClass('rotulo').css({'width':'90px'});
+	rNmprimtl.addClass('rotulo').css({'width':'100px'});
+	rDtvctopp.addClass('rotulo').css({'width':'100px'});
+	rVlbloque.addClass('rotulo').css({'width':'100px'});
 	rVlblqpou.addClass('rotulo-linha').css({'width':'235px'});
     rDddebito.addClass('rotulo-linha').css({'width':'284px'});	
-    rVlrdcapp.addClass('rotulo').css({'width':'90px'});
+    rVlrdcapp.addClass('rotulo').css({'width':'100px'});
     
 
 	cNmprimtl.addClass('alphanum').css({'width':'482px'}).attr('maxlength','48');

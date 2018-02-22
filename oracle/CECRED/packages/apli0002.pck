@@ -17090,7 +17090,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             IF vr_vldispon_resgate > 0 THEN
               vr_cdcritic := 640;
               vr_dscritic := vr_dscritic || 'Valor disponível para Resgate é de R$ '
-                             || to_char(vr_vldispon_resgate,'fm999g999g999g990d00');
+                             || to_char(vr_vldispon_resgate,'fm999g999g999g990d00')||'.';
             END IF;
             RAISE vr_exc_erro;
           END IF;
@@ -17251,7 +17251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         -- Tenta buscar o erro no vetor de erro
         IF vr_tab_erro.COUNT > 0 THEN
           vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic || ' Conta: '||rw_crapass.nrdconta;
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
         ELSE
           vr_cdcritic := 0;
           vr_dscritic := 'Retorno "NOK" na APLI0002.pc_ver_val_bloqueio_aplica e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta||' Aplica: 0.';
