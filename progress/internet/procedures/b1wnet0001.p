@@ -2874,20 +2874,20 @@ PROCEDURE seleciona-sacados:
                            crapsab.nmdsacad MATCHES "*" + par_nmdsacad + "*" 
                            NO-LOCK BY crapsab.nmdsacad:
         
-		/* Se nao foi passado nada para a pesquisa limito os resultados a 400 senao 2000 */
-		IF TRIM(par_nmdsacad) = "" AND
-		   aux_qtregcon >= 400     THEN
-		   DO:			   
-			   LEAVE.
-			END.
-		ELSE
-			DO:
-				IF TRIM(par_nmdsacad) <> "" AND
-		           aux_qtregcon >= 2000     THEN
-				   DO:
-						LEAVE.
-				   END.
-			END.
+        /* Se nao foi passado nada para a pesquisa limito os resultados a 400 senao 2000 */
+        IF TRIM(par_nmdsacad) = "" AND
+           aux_qtregcon >= 400     THEN
+           DO:			   
+              LEAVE.
+           END.
+        ELSE
+           DO:
+              IF TRIM(par_nmdsacad) <> "" AND
+                 aux_qtregcon >= 2000     THEN
+                 DO:
+                   LEAVE.
+                 END.
+           END.
 
         ASSIGN aux_qtregcon = aux_qtregcon + 1.
         
@@ -3468,6 +3468,8 @@ PROCEDURE gerencia-sacados:
                 UNDO TRANSACAO, LEAVE TRANSACAO.       
             END.
             
+        IF  par_tprotina <> 2  THEN /* Excluir */
+            DO:
         IF  crapass.inpessoa = 1  THEN
             DO:
                 FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
@@ -3561,6 +3563,7 @@ PROCEDURE gerencia-sacados:
                        
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.        
+            END.
         
         IF  par_tprotina = 0  THEN /** Cadastrar **/
             DO:

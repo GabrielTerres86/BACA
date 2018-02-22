@@ -537,7 +537,8 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Validar arquivo de pagamentos */
                       xml_operacao146.dscpfcgc = STRING(xText:NODE-VALUE) WHEN xField:NAME = "dscpfcgc"
                       xml_operacao146.dscritic = STRING(xText:NODE-VALUE) WHEN xField:NAME = "dscritic"
                       xml_operacao146.dsorigem = STRING(xText:NODE-VALUE) WHEN xField:NAME = "dsorigem"
-                      xml_operacao146.vlrpagto = STRING(xText:NODE-VALUE) WHEN xField:NAME = "vlrpagto". 
+                      xml_operacao146.vlrpagto = STRING(xText:NODE-VALUE) WHEN xField:NAME = "vlrpagto"
+                      xml_operacao146.idanalis = STRING(xText:NODE-VALUE) WHEN xField:NAME = "idanalis".
             END. 
         END.
         SET-SIZE(ponteiro_xml) = 0. 
@@ -563,6 +564,7 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Validar arquivo de pagamentos */
                                      <dscritic>" + xml_operacao146.dscritic + "</dscritic>
                                      <dsorigem>" + xml_operacao146.dsorigem + "</dsorigem>
                                      <vlrpagto>" + xml_operacao146.vlrpagto + "</vlrpagto>
+                                     <idanalis>" + xml_operacao146.idanalis + "</idanalis>
                                      </critica>".                                     
        
     END.
