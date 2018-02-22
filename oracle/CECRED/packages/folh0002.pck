@@ -494,7 +494,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
                19/01/2017 - Adicionado novo limite de horario para pagamento no dia
                             para contas da cooperativa. (M342 - Kelvin)  
-
+               
                30/03/2017 - Ajuste referente a segunda fase da melhoria 342. (Kelvin)
                
                12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
@@ -3393,7 +3393,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                   ,ass.nrdconta
                   ,ass.vllimcre;
       rw_crappfp cr_crappfp%ROWTYPE;
-
+      
       -- Busca os dados de convenios
       CURSOR cr_crappfp_aprovados(p_cdcooper crapcop.cdcooper%TYPE
                                  ,p_cdempres crapemp.cdempres%TYPE) IS
@@ -3538,7 +3538,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
             -- Adquire saldo disponível total da conta
             vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp;
-
+            
             OPEN cr_crappfp_aprovados(p_cdcooper => vr_cdcooper
                                      ,p_cdempres => rw_crappfp.cdempres);
               FETCH cr_crappfp_aprovados
@@ -5692,7 +5692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                 SELECT pfp.cdempres
                                       ,pfp.idtppagt
                ,pfp.dtmvtolt
-               ,DECODE(pfp.flsitcre,1,'Creditado',2,'Cred. Parcial',DECODE(pfp.flsitdeb,1,'Debitado','Agendado')) dssitpgt
+                                      ,DECODE(pfp.flsitcre,1,'Creditado',2,'Cred. Parcial',DECODE(pfp.flsitdeb,1,'Debitado','Agendado')) dssitpgt
                ,pfp.qtregpag qtlctpag
                ,pfp.vllctpag
                ,pfp.qtlctpag * pfp.vltarapr vltarifa
@@ -5700,8 +5700,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                ,pfp.dtcredit
                ,pfp.idsitapr
                                       ,pfp.rowid dsrowid
-               ,to_char(pfp.dtmvtolt,'dd/mm/rr hh24:mi') dthoragen
-                                      /* Detalhes (On-click) */     
+                                      ,to_char(pfp.dtmvtolt,'dd/mm/rr hh24:mi') dthoragen
+                                      /* Detalhes (On-click) */
                ,'Pagamento aprovado por '||
                        DECODE(pfp.nrcpfapr,0,(SELECT emp.nmresemp
                                                 FROM crapemp emp
@@ -5752,7 +5752,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                     OR TRUNC(pfp.dtcredit) BETWEEN p_dtiniper AND p_dtfimper
                                     OR TRUNC(pfp.dthorcre) BETWEEN p_dtiniper AND p_dtfimper
                                     OR TRUNC(pfp.dthordeb) BETWEEN p_dtiniper AND p_dtfimper)) dados
-                         ORDER BY dados.idsitapr, dados.dtmvtolt DESC) dados2) dados3
+                         ORDER BY dados.idsitapr, dados.dtmvtolt DESC) dados2) dados3	
          WHERE dados3.linha >= p_nriniseq
            AND dados3.linha <  p_nrregist;
 
@@ -5804,10 +5804,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_qtregist  := 0;      
       vr_flgprime  := 0;
       vr_flgpende  := 0;
-
+     
       vr_nriniseq := pr_nriniseq;
       vr_nrregist := pr_nrregist + pr_nriniseq;
-      
+
       -- Verificamos se os parametros de data estao corretos
       -- Primeiramente verificamos se os campos estao null
       IF pr_dtiniper IS NULL THEN
@@ -5863,6 +5863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
           -- Popula a tabela
           vr_tab_pagamento(vr_idx_pagto).tpregist := 0;
+          vr_tab_pagamento(vr_idx_pagto).envcompr := vr_qtdiaenv;
           vr_tab_pagamento(vr_idx_pagto).indrowid := rw_registros.dsrowid;
           vr_tab_pagamento(vr_idx_pagto).dtmvtolt := rw_registros.dtmvtolt;
           vr_tab_pagamento(vr_idx_pagto).dssitpgt := rw_registros.dssitpgt;
@@ -5892,7 +5893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).cdempres := rw_registros.cdempres;
           vr_tab_pagamento(vr_idx_pagto).idtppagt := rw_registros.idtppagt;
           vr_tab_pagamento(vr_idx_pagto).dstpapgt := CASE WHEN rw_registros.idtppagt = 'A' THEN 'Arquivo' ELSE 'Convencional' END;
-          vr_tab_pagamento(vr_idx_pagto).idsitapr := rw_registros.idsitapr;
+          vr_tab_pagamento(vr_idx_pagto).idsitapr := rw_registros.idsitapr;          
           vr_tab_pagamento(vr_idx_pagto).nrseqpag := rw_registros.nrseqpag;
           
           vr_idx_pagto := vr_idx_pagto + 1;
@@ -5901,35 +5902,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
         ELSE
           --Adicionado linha em branco para gerar separação na grid
           /*IF vr_tab_pagamento.COUNT()> 0 AND vr_flgprime = 0 AND vr_flgpende = 1 THEN
-          -- Popula a tabela
-          vr_tab_pagamento(vr_idx_pagto).indrowid := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dtmvtolt := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dssitpgt := NULL;
+            -- Popula a tabela
+            vr_tab_pagamento(vr_idx_pagto).indrowid := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dtmvtolt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dssitpgt := NULL;
             vr_tab_pagamento(vr_idx_pagto).idsitpgt := NULL;
-          vr_tab_pagamento(vr_idx_pagto).qtlctpag := NULL;
-          vr_tab_pagamento(vr_idx_pagto).vllctpag := NULL;
-          vr_tab_pagamento(vr_idx_pagto).vltarifa := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dtdebito := NULL;
-          vr_tab_pagamento(vr_idx_pagto).imgdebto := NULL;
-          vr_tab_pagamento(vr_idx_pagto).hintdebt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).qtlctpag := NULL;
+            vr_tab_pagamento(vr_idx_pagto).vllctpag := NULL;
+            vr_tab_pagamento(vr_idx_pagto).vltarifa := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dtdebito := NULL;
+            vr_tab_pagamento(vr_idx_pagto).imgdebto := NULL;
+            vr_tab_pagamento(vr_idx_pagto).hintdebt := NULL;
             vr_tab_pagamento(vr_idx_pagto).idsitdeb := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dtcredit := NULL;
-          vr_tab_pagamento(vr_idx_pagto).imgcredt := NULL;
-          vr_tab_pagamento(vr_idx_pagto).hintcred := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dtcredit := NULL;
+            vr_tab_pagamento(vr_idx_pagto).imgcredt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).hintcred := NULL;
             vr_tab_pagamento(vr_idx_pagto).idsitcre := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dscomprv := NULL;
-          vr_tab_pagamento(vr_idx_pagto).idtppagt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dscomprv := NULL;
+            vr_tab_pagamento(vr_idx_pagto).idtppagt := NULL;
             vr_tab_pagamento(vr_idx_pagto).dstpapgt := NULL;
-          vr_idx_pagto := vr_idx_pagto + 1;
+            vr_idx_pagto := vr_idx_pagto + 1;
             vr_flgprime := 1;
           END IF; */
-
-          -- Se passou do limite do envio de comprovante
-          IF rw_registros.qtsubtra > vr_qtdiaenv THEN
-              vr_tab_pagamento(vr_idx_pagto).envcompr := vr_qtdiaenv;
-          ELSE
-              vr_tab_pagamento(vr_idx_pagto).envcompr := 0;
-          END IF;
 
           IF  rw_registros.idsitapr = 5 THEN
               vr_tab_pagamento(vr_idx_pagto).exibestr := 1;
@@ -6021,6 +6015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
           -- Popula a tabela
           vr_tab_pagamento(vr_idx_pagto).tpregist := 1;
+          vr_tab_pagamento(vr_idx_pagto).envcompr := vr_qtdiaenv;
           vr_tab_pagamento(vr_idx_pagto).indrowid := rw_registros.dsrowid;
           vr_tab_pagamento(vr_idx_pagto).dtmvtolt := rw_registros.dtmvtolt;
           vr_tab_pagamento(vr_idx_pagto).qtlctpag := rw_registros.qtlctpag;
@@ -6052,7 +6047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             WHEN LENGTH(rw_registros.dthordeb) = 16 THEN vr_tab_pagamento(vr_idx_pagto).dthrdebi := rw_registros.dthordeb;
             ELSE vr_tab_pagamento(vr_idx_pagto).dthrdebi := rw_registros.dthordeb || ' 00:00';
           END CASE;
-          
+
           CASE 
             WHEN NVL(rw_registros.dthorcre,'') = '' THEN vr_tab_pagamento(vr_idx_pagto).dthrcred := '';
             WHEN LENGTH(rw_registros.dthorcre) = 16 THEN vr_tab_pagamento(vr_idx_pagto).dthrcred := rw_registros.dthorcre;
@@ -6111,7 +6106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                                    || '<idtpapgt>' ||vr_tab_pagamento(vr_idx_pagto).idtppagt||'</idtpapgt>'
                                                    || '<idsitapr>' ||vr_tab_pagamento(vr_idx_pagto).idsitapr||'</idsitapr>'
                                                    || '<envcompr>' ||vr_tab_pagamento(vr_idx_pagto).envcompr||'</envcompr>'
-                                                   || '<qtregist>' || vr_qtregist || '</qtregist>'
+                                                   || '<qtregist>' || vr_qtregist || '</qtregist>' 
                                                    || '<dtcrefmt>'||TO_CHAR(vr_tab_pagamento(vr_idx_pagto).dtcredit,'DD/MM/YYYY') ||'</dtcrefmt>'
                                                    || '<nrseqpag>'||vr_tab_pagamento(vr_idx_pagto).nrseqpag ||'</nrseqpag>'
                                                    
@@ -6823,7 +6818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          ELSE
            vr_nrseqpag := vr_nrseqpag || ',' || rw_crappfp.nrseqpag;  
          END IF;
-
+          
          -- Caso NAO esteja como Pendente(1), Reprovado(3)
          -- Se for Solicitacao De Estouro(2), devemos deixar processeguir
          -- pois usuario pode ter ajustado o saldo da conta e desaja tentar
@@ -10410,7 +10405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                          ,pr_dtmvtolt  crapdat.dtmvtolt%TYPE ) IS
 
             SELECT lfp.cdcooper
-                  ,NVL(TO_CHAR(lfp.dtrefenv,'MM/RRRR'),TO_CHAR(pfp.dthorcre,'DD/MM/RRRR'))  dtrefenv  -- dtrefere
+                  ,NVL(TO_CHAR(lfp.dtrefenv,'DD/MM/RRRR'),TO_CHAR(pfp.dthorcre,'DD/MM/RRRR'))  dtrefenv  -- dtrefere
                   ,lfp.dsxmlenv  -- dsdpagto
                   ,ofp.dsorigem
                   ,lfp.rowid     -- nrdrowid

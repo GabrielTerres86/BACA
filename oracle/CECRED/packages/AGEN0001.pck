@@ -277,8 +277,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                              ,pr_texto_novo     => '<Agendamentos>');       
 
       IF vr_agendm_fltr.count > 0 THEN
-				FOR vr_idx IN vr_agendm_fltr.first..vr_agendm_fltr.last LOOP          
-          
+				FOR vr_idx IN vr_agendm_fltr.first..vr_agendm_fltr.last LOOP
+	      
 					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																 ,pr_texto_completo => vr_xml_temp      
 																 ,pr_texto_novo     => 
@@ -411,7 +411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                    WHEN 3 THEN 'Cancelado'
                    WHEN 4 THEN 'Nao Efetivado'
               END AS dssitlau
-            ,TO_CHAR(lau.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') AS vllanaut
+            ,lau.vllanaut AS vllanaut
 						,to_char(lau.dtdebito, 'DD/MM/RRRR') AS dtdebito
             ,NVL2(ban.cdbccxlt, LPAD(ban.cdbccxlt,4,'0') || ' - ' || REPLACE(UPPER(TRIM(ban.nmextbcc)),'&','e'),'Nao cadastrado') AS dsdbanco
             ,NVL2(agb.cdageban, LPAD(agb.cdageban,4,'0') || ' - ' || REPLACE(UPPER(TRIM(agb.nmageban)),'&','e'),'Nao cadastrado') AS dsdagenc
@@ -691,7 +691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				END IF;
 				
 				vr_info_sac := COMP0002.fn_info_sac(pr_cdcooper => rw_agendamento.cdcooper);
-        
+
         IF rw_agendamento.cdtiptra = 1 THEN
           vr_idlstdom := 5; -- Transf. Intracoop
         ELSIF rw_agendamento.cdtiptra = 5 THEN
@@ -731,7 +731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                 '<hrautent>' || rw_agendamento.hrtransa || '</hrautent>' ||
 																'<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>' ||																
 																'<vldocmto>' || to_char(rw_agendamento.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||																
-																'<dssituac>' || rw_agendamento.dssitlau || '</dssituac>' ||                                
+																'<dssituac>' || rw_agendamento.dssitlau || '</dssituac>' ||
                                 '<infosac>'  ||
                                     '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                     '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 

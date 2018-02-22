@@ -614,11 +614,12 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
       vr_cdagenci VARCHAR2(100);
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
-      vr_aux      VARCHAR2(255);
+      vr_aux      VARCHAR2(255);                     
       vr_dsprotocolo crappro.dsprotoc%TYPE;                     
       vr_nrregist NUMBER;
       vr_qtregist NUMBER;
       vr_aloc     NUMBER;
+      vr_insit_prov tbcc_provisao_especie.insit_provisao%TYPE;
       vr_tempcooper NUMBER;                     
       
       ---------->> CURSORES <<--------
@@ -763,6 +764,10 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
         RAISE vr_exc_saida;
       END IF;   
       
+      vr_insit_prov := pr_insit_prov;
+      IF vr_insit_prov = 0 THEN -- Conta Online envia com valor 0 para todos
+        vr_insit_prov := NULL;        
+      END IF; 
       
       IF(pr_cdagenci_saque IS NOT NULL)THEN
         OPEN cr_agencia(pr_cdcooper => pr_cdcooper, 
@@ -856,7 +861,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                    pr_peri_ini       => pr_peri_ini,
                                    pr_peri_fim       => pr_peri_fim,                                                               
                                    pr_cdagenci_saque => pr_cdagenci_saque,
-                                   pr_insit_prov     => pr_insit_prov,                                            
+                                   pr_insit_prov     => vr_insit_prov,                                            
                                    pr_dtsaqpagto     => pr_dtsaqpagto,
                                    pr_idorigem       => vr_idorigem,                      
                                    pr_vlsaqpagto     => pr_vlsaqpagto,
@@ -1122,7 +1127,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                pr_tag_nova => 'dsfinalidade',
                                pr_tag_cont => rw_prv_saq.dsfinalidade,
                                pr_des_erro => vr_dscritic);
-        
+                                                                                             
         gene0007.pc_insere_tag(pr_xml     => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_auxconta,
@@ -1302,10 +1307,10 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                                       pr_dtSaqPagto IN tbcc_provisao_especie.dhprevisao_operacao%TYPE,
                                       pr_nrContTit  IN tbcc_provisao_especie.nrdconta%TYPE) IS
         SELECT m.cdcooper
-        FROM tbcc_provisao_especie m
+          FROM tbcc_provisao_especie m
         WHERE m.cdcooper = pr_cdcooper  AND
-              m.nrcpfcgc = pr_nrCpfCnpj AND
-              m.nrdconta = pr_nrContTit AND
+               m.nrcpfcgc = pr_nrCpfCnpj AND
+               m.nrdconta = pr_nrContTit AND
               TRUNC(m.dhprevisao_operacao) = TRUNC(pr_dtSaqPagto)  AND
               m.insit_provisao = 1;
         rw_tbcc_provisao_especie cr_tbcc_provisao_especie%ROWTYPE;
@@ -1383,7 +1388,6 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
     
     BEGIN                                           
-    pr_des_erro := 'OK';              
       -- Extrai dados do xml
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
                                pr_cdcooper => vr_cdcooper,
@@ -1690,7 +1694,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
           RAISE vr_exc_saida;
         ELSE    
           CLOSE cr_tbcc_provisao_especie;
-        END IF;
+      END IF;
       
       gene0006.pc_gera_protocolo(pr_cdcooper => vr_cdcooper, 
                                  pr_dtmvtolt => vr_dtmvtolt, 
@@ -1884,6 +1888,8 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                              pr_tag_cont => vr_pedesenha,
                              pr_des_erro => vr_dscritic); 
                                                                                           
+      pr_des_erro := 'OK';
+                                                                                         
   EXCEPTION
     WHEN vr_exc_pedesenha THEN
        --retorno protocolo
@@ -3393,7 +3399,7 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE) IS
           
       ROLLBACK;
   END pc_job_cancela_provisao;
-  
+
   FUNCTION fn_retorna_data_util(pr_cdcooper IN crapcop.cdcooper%TYPE        --> Cooperativa
                                ,pr_dtiniper IN DATE                        --> Data de Inicio do Periodo
                                ,pr_qtdialib IN PLS_INTEGER) RETURN DATE IS --> Quantidade de dias para acrescentar

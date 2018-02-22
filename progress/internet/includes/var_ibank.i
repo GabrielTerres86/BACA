@@ -142,7 +142,7 @@
                            xml_operacao38 (Projeto 321 - Lombardi).
                            
 			  12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
-                           
+        
               21/08/2017 - Inclusao dos campos qtdiacal e vlrdtaxa na
                            xml_operacao14b. (Jaison/James - PRJ298)
 
@@ -179,6 +179,10 @@ DEF TEMP-TABLE xml_operacao9                                            NO-UNDO
     FIELD nrdocmto AS CHAR
     FIELD indebcre AS CHAR
     FIELD vllanmto AS CHAR
+    FIELD cdtiptra AS CHAR
+    FIELD idlstdom AS CHAR
+    FIELD idlancto AS CHAR
+    FIELD incancel AS CHAR
     FIELD dscabfim AS CHAR.
  
 DEF TEMP-TABLE xml_operacao10                                           NO-UNDO
@@ -202,7 +206,7 @@ DEF TEMP-TABLE xml_operacao14a                                          NO-UNDO
     FIELD vlpreemp AS CHAR
     FIELD vlsdeved AS CHAR
     FIELD dslcremp AS CHAR
-    FIELD dsfinemp AS CHAR
+    FIELD dsfinemp AS CHAR    
     FIELD qtpreres AS CHAR
     FIELD dsprodut AS CHAR
     FIELD cddlinha AS CHAR
@@ -225,9 +229,9 @@ DEF TEMP-TABLE xml_operacao14b                                          NO-UNDO
     FIELD vldebito AS CHAR
     FIELD vlcredit AS CHAR
     FIELD cdorigem AS CHAR
-    FIELD qtdiacal AS CHAR
+    FIELD qtdiacal AS CHAR 
     FIELD vlrdtaxa AS CHAR.
-  
+    
 DEF TEMP-TABLE xml_operacao24                                           NO-UNDO
     FIELD dscabini AS CHAR
     FIELD dtrefere AS CHAR
@@ -283,7 +287,7 @@ DEF TEMP-TABLE xml_operacao26                                           NO-UNDO
     FIELD nrdctabb AS CHAR
     FIELD dttransa AS CHAR
     FIELD dscabfim AS CHAR.
-    
+ 
 DEF TEMP-TABLE xml_operacao30                                           NO-UNDO
     FIELD dscabini AS CHAR
     FIELD nmextcon AS CHAR

@@ -413,8 +413,11 @@ PROCEDURE pc_ret_dados_serv_sms (pr_cdcooper      IN crapcop.cdcooper%TYPE  --> 
                                      ,pr_cdoperad    IN crapope.cdoperad%TYPE  --> Codigo do operador
                                      ,pr_nmdatela    IN craptel.nmdatela%TYPE  --> Identificador da tela da operacao
                                      ,pr_dsiduser    IN VARCHAR2               --> id do usuario
+                                     ,pr_iddspscp    IN INTEGER                --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo                                                                                                        
                                      -----> OUT <----                                   
                                      ,pr_nmarqpdf   OUT VARCHAR2               --> Retorna o nome do relatorio gerado
+                                     ,pr_dssrvarq   OUT VARCHAR2               --> Nome do servidor para download do arquivo
+                                     ,pr_dsdirarq   OUT VARCHAR2               --> Nome do diretório para download do arquivo                                                                                                                                                                        
                                      ,pr_cdcritic   OUT  INTEGER               --> Retorna codigo de critica
                                      ,pr_dscritic   OUT  VARCHAR2);            --> Retorno de critica
 
@@ -3612,7 +3615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     rw_contrato_sms cr_contrato_sms%ROWTYPE;
     
     --> Buscar pacote de sms
-    CURSOR cr_pacotes IS
+    CURSOR cr_pacotes (pr_idpacote tbcobran_sms_pacotes.idpacote%TYPE) IS
       SELECT pct.idpacote,
              pct.cdtarifa
         FROM tbcobran_sms_pacotes pct,
@@ -3622,7 +3625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta
          AND pct.flgstatus = 1
-         AND pct.idpacote IN (1,2);      
+         AND ((pr_idpacote = 0 AND pct.idpacote IN (1,2)) OR pct.idpacote = pr_idpacote);      
     
     --> Buscar Valor tarifa
     CURSOR cr_crapfco(pr_cdcooper crapcop.cdcooper%TYPE,
@@ -3720,9 +3723,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     --> Verificar se nao gerou novo contrato pela troca de pacote
     IF nvl(pr_idcontrato,0) = 0 THEN
       --> buscar pacote caso nao seja informado
-      IF nvl(pr_idpacote,0) = 0 THEN
+      IF nvl(pr_idpacote,0) <= 2 THEN
         --> Buscar pacote de sms
-        OPEN cr_pacotes;
+        OPEN cr_pacotes (pr_idpacote => nvl(pr_idpacote,0));
         FETCH cr_pacotes INTO vr_idpacote, vr_cdtarifa;
         CLOSE cr_pacotes;
         
@@ -4664,8 +4667,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                    ,pr_cdoperad    IN crapope.cdoperad%TYPE  --> Codigo do operador
                                    ,pr_nmdatela    IN craptel.nmdatela%TYPE  --> Identificador da tela da operacao
                                    ,pr_dsiduser    IN VARCHAR2               --> id do usuario
+                                   ,pr_iddspscp    IN INTEGER                --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo                                                                   
                                    -----> OUT <----                                   
                                    ,pr_nmarqpdf   OUT VARCHAR2               --> Retorna o nome do relatorio gerado
+                                   ,pr_dssrvarq   OUT VARCHAR2               --> Nome do servidor para download do arquivo
+                                   ,pr_dsdirarq   OUT VARCHAR2               --> Nome do diretório para download do arquivo                                                                                                                                   
                                    ,pr_cdcritic   OUT  INTEGER               --> Retorna codigo de critica
                                    ,pr_dscritic   OUT  VARCHAR2) IS          --> Retorno de critica
 
@@ -4993,6 +4999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     dbms_lob.freetemporary(vr_des_xml);
 
       
+    IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino    
     --> AyllosWeb
     IF pr_idorigem = 5 THEN
       -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
@@ -5034,7 +5041,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         RAISE vr_exc_erro;
       END IF;
     END IF;  
+    ELSE
+      gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
+                                         ,pr_dsdirecp => vr_dsdireto||'/'
+                                         ,pr_nmarqucp => pr_nmarqpdf
+                                         ,pr_flgcopia => 0
+                                         ,pr_dssrvarq => pr_dssrvarq
+                                         ,pr_dsdirarq => pr_dsdirarq
+                                         ,pr_des_erro => vr_dscritic);
     
+      IF vr_dscritic IS NOT NULL AND TRIM(vr_dscritic) <> ' ' THEN
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;    
     
     -- Gerar log ao cooperado (b1wgen0014 - gera_log);
     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -5150,6 +5169,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_cdagenci   VARCHAR2(100);
     vr_nrdcaixa   VARCHAR2(100);
     vr_idorigem   VARCHAR2(100);
+    vr_dssrvarq VARCHAR2(200);
+    vr_dsdirarq VARCHAR2(200);    
 
     vr_nmarqpdf VARCHAR2(100);
     
@@ -5175,8 +5196,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                            ,pr_cdoperad    => vr_cdoperad    --> Codigo do operador
                            ,pr_nmdatela    => vr_nmdatela    --> Identificador da tela da operacao
                            ,pr_dsiduser    => pr_dsiduser    --> id do usuario
+                           ,pr_iddspscp    => 0              --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo                                                                   
                            -----> OUT <----                                   
                            ,pr_nmarqpdf    => vr_nmarqpdf    --> Retorna o nome do relatorio gerado
+                           ,pr_dssrvarq    => vr_dssrvarq    --> Nome do servidor para download do arquivo
+                           ,pr_dsdirarq    => vr_dsdirarq    --> Nome do diretório para download do arquivo                        
                            ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
                            ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
                                    
@@ -6498,7 +6522,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_nmarqlog  VARCHAR2(50);
     vr_cdprodut  tbgen_sms_lote.cdproduto%TYPE;
     vr_dsassunt  VARCHAR2(100);
-        
+    
   BEGIN
     
     --> Atualizar registro
@@ -6691,14 +6715,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         vr_sucess := vr_tab_campos(vr_idx)('Success');  
         vr_Detail := vr_tab_campos(vr_idx)('Detail');  
         
-          IF upper(vr_sucess) = 'TRUE' THEN
-            vr_cdretorn := 00;
-          ELSIF upper(vr_sucess) = 'FALSE' THEN 
-            vr_cdretorn := 10;
-          ELSE
-            vr_dscritic := 'Valor invalido para o campo "Sucess": '||vr_sucess;
-            RAISE vr_exc_erro;
-          END IF;
+        IF upper(vr_sucess) = 'TRUE' THEN
+          vr_cdretorn := 00;
+        ELSIF upper(vr_sucess) = 'FALSE' THEN 
+          vr_cdretorn := 10;
+        ELSE
+          vr_dscritic := 'Valor invalido para o campo "Sucess": '||vr_sucess;
+          RAISE vr_exc_erro;
+        END IF;
         
         pc_atualiza_status_msg (pr_idlotsms   => pr_idlotsms  --> Numer do lote de SMS
                                ,pr_idsms      => vr_idsms     --> Identificador do SMS

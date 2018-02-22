@@ -409,10 +409,10 @@
 							 
                 10/07/2016 - inclusão do campo vllimcpa na tabela tt-saldos  (M441 - Roberto Holz (Mouts))
 
-				18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
-
+                18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                             crapass, crapttl, crapjur 
+                             (Adriano - P339).
+                             
                 17/01/2018 - Ajustar chamada da rotina carrega_dados_tarifa_vigente
                              pois haviam casos em que nao estavamos entrando na rotina
                              na procedure gera-tarifa-extrato (Lucas Ranghetti #787894)
@@ -676,6 +676,9 @@ PROCEDURE consulta-extrato:
                     ASSIGN tt-extrato_conta.vlblqjud = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlblqjud".
                     ASSIGN tt-extrato_conta.cdcoptfn = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdcoptfn".
                     ASSIGN tt-extrato_conta.nrseqlmt = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrseqlmt".
+                    ASSIGN tt-extrato_conta.cdtippro = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdtippro".
+                    ASSIGN tt-extrato_conta.dsprotoc = xText:NODE-VALUE WHEN xField:NAME = "dsprotoc".
+                    ASSIGN tt-extrato_conta.flgdetal = INT(xText:NODE-VALUE) WHEN xField:NAME = "flgdetal".
 
                 END. 
 
@@ -1465,49 +1468,49 @@ PROCEDURE gera-tarifa-extrato:
         
      
     /** Lista apenas para impres.p atenda/extrato exceto crps029.p **/
-
+   
     IF  par_dtrefere < ( crapdat.dtmvtocd - 30 ) THEN /* Periodo */
-            DO:
-                IF par_nrterfin <> 0 THEN /* TAA */ 
-                    DO:
-					  ASSIGN aux_tipotari = 9. 
+        DO:
+            IF par_nrterfin <> 0 THEN /* TAA */ 
+                DO:
+                    ASSIGN aux_tipotari = 9.
 
-                      IF crapass.inpessoa = 1 THEN /* Fisica */
-                          ASSIGN aux_cdbattar = "EXTPETAAPF".
-                      ELSE
-                          ASSIGN aux_cdbattar = "EXTPETAAPJ".
-                  END.
-              ELSE
-                  DO:
-					  ASSIGN aux_tipotari = 8. 
+                    IF crapass.inpessoa = 1 THEN /* Fisica */
+                        ASSIGN aux_cdbattar = "EXTPETAAPF".
+                    ELSE
+                        ASSIGN aux_cdbattar = "EXTPETAAPJ".
+                END.
+            ELSE
+                DO:
+                    ASSIGN aux_tipotari = 8.
 
-                      IF crapass.inpessoa = 1 THEN /* Fisica */
-                          ASSIGN aux_cdbattar = "EXTPEPREPF".
-                      ELSE
-                          ASSIGN aux_cdbattar = "EXTPEPREPJ".
-                  END. 
-          END.
-        ELSE
-          DO:
-              IF par_nrterfin <> 0 THEN /* TAA */ 
-                  DO:
-					  ASSIGN aux_tipotari = 7. 
+                    IF crapass.inpessoa = 1 THEN /* Fisica */
+                        ASSIGN aux_cdbattar = "EXTPEPREPF".
+                    ELSE
+                        ASSIGN aux_cdbattar = "EXTPEPREPJ".
+                END. 
+        END.
+    ELSE
+        DO:
+            IF par_nrterfin <> 0 THEN /* TAA */ 
+                DO:
+                    ASSIGN aux_tipotari = 7.
 
-                      IF crapass.inpessoa = 1 THEN /* Fisica */
-                          ASSIGN aux_cdbattar = "EXTMETAAPF".
-                      ELSE
-                          ASSIGN aux_cdbattar = "EXTMETAAPJ".
-                  END.
-              ELSE
-                  DO:
-					  ASSIGN aux_tipotari = 6. 
-					  		
-                      IF crapass.inpessoa = 1 THEN /* Fisica */
-                          ASSIGN aux_cdbattar = "EXTMEPREPF".
-                      ELSE
-                          ASSIGN aux_cdbattar = "EXTMEPREPJ".
-                  END.
-          END.
+                    IF crapass.inpessoa = 1 THEN /* Fisica */
+                        ASSIGN aux_cdbattar = "EXTMETAAPF".
+                    ELSE
+                        ASSIGN aux_cdbattar = "EXTMETAAPJ".
+                END.
+            ELSE
+                DO:
+                    ASSIGN aux_tipotari = 6.
+
+                    IF crapass.inpessoa = 1 THEN /* Fisica */
+                        ASSIGN aux_cdbattar = "EXTMEPREPF".
+                    ELSE
+                        ASSIGN aux_cdbattar = "EXTMEPREPJ".
+                END.
+        END.
 
     IF  par_flgtarif  THEN
         DO:

@@ -59,17 +59,17 @@
                20/04/2017 - Adicionado vencimento original (dtvctori) e 
                             flag de boleto dda (flgcbdda) no xml de retorno
                             (P340 - Rafael)
-														
-               05/07/2017 - Ajuste da flgcbdda, inserido condicao de ROLLOUT
-                            e tratamento para descontos, Prj. 340 (Jean Michel)
+                                                                                                                
+                           05/07/2017 - Ajuste da flgcbdda, inserido condicao de ROLLOUT
+                                                        e tratamento para descontos, Prj. 340 (Jean Michel)
 
-               30/10/2017 - Trocar a chamada da rotina verifica-rollout pela
+                           30/10/2017 - Trocar a chamada da rotina verifica-rollout pela
                             verifica-titulo-npc-cip (SD784234 - AJFink)
-
+                            
                07/12/2017 - Adicionado o retorno dos campo dtmvtatu e flgvenci
                             (Douglas - Chamado 805008)
 
-			    26/01/2018 - Ajustes referente ao novo IB (PRJ285 - Rafael)
+                           26/01/2018 - Ajustes referente ao novo IB (PRJ285 - Rafael)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -504,6 +504,11 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    "<codigobarras>" + tt-consulta-blt.dscodbar + "</codigobarras>" +
                                    "<dsdespec>" + tt-consulta-blt.dsdespec + "</dsdespec>" +
                                    "<nrborder>" + STRING(tt-consulta-blt.nrborder) + "</nrborder>" +
+                                   "<dsdinst1>" + STRING(tt-consulta-blt.dsdinst1) + "</dsdinst1>" +                                   
+                                   "<dsdinst2>" + STRING(tt-consulta-blt.dsdinst2) + "</dsdinst2>" +                                   
+                                   "<dsdinst3>" + STRING(tt-consulta-blt.dsdinst3) + "</dsdinst3>" +                                   
+                                   "<dsdinst4>" + STRING(tt-consulta-blt.dsdinst4) + "</dsdinst4>" +                                   
+                                   "<dsdinst5>" + STRING(tt-consulta-blt.dsdinst5) + "</dsdinst5>" +                                                                      
                                    "</BOLETO>".
 END.
 

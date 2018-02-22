@@ -163,7 +163,13 @@ IF  par_flglsext  THEN
                                    TRIM(STRING(tt-extrato_conta.cdhistor)) +
                                    "</cdhistor><nrseqlmt>" +
                                    TRIM(STRING(tt-extrato_conta.nrseqlmt)) +
-                                   "</nrseqlmt></DADOS>".
+                                   "</nrseqlmt><cdtippro>" +
+                                   STRING(tt-extrato_conta.cdtippro) +
+                                   "</cdtippro><dsprotoc>" +
+                                   tt-extrato_conta.dsprotoc +
+                                   "</dsprotoc><flgdetal>" +
+                                   STRING(tt-extrato_conta.flgdetal) +                                
+                                   "</flgdetal></DADOS>".
         
         END. /** Fim do FOR EACH tt-extrato_conta **/
     END.

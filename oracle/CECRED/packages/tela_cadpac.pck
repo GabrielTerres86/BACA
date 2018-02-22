@@ -130,9 +130,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                                ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
                                ,pr_des_erro    OUT VARCHAR2); --> Erros do processo
-                               
+
   PROCEDURE pc_lista_pas(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
-                        ,pr_flgpaaut  IN BOOLEAN DEFAULT TRUE  --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
+                        ,pr_flgpaaut  IN INTEGER DEFAULT 1     --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
                         ,pr_retxml   OUT NOCOPY xmltype        --> Arquivo de retorno do XML
                         ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                                                              
 
@@ -1237,8 +1237,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_tag_nova => 'hrfimpaa'
                               ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).hrfimpaa
                               ,pr_des_erro => vr_dscritic);
-															
-		    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
                               ,pr_tag_nova => 'indspcxa'
@@ -4306,8 +4306,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_dsdcampo => 'inicio horario de atendimento'
                  ,pr_vldantes => vr_tab_crapage(pr_cdagenci).hrinipaa
                  ,pr_vldepois => NVL(vr_hrinipaa, ' '));
-								 
-			pc_item_log(pr_cdcooper => vr_cdcooper
+
+      pc_item_log(pr_cdcooper => vr_cdcooper
                  ,pr_cddopcao => 'A'
                  ,pr_cdoperad => vr_cdoperad
                  ,pr_cdagenci => pr_cdagenci
@@ -4362,7 +4362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                     || '<b>Horário inicio atendimento:</b> de ''' || vr_tab_crapage(pr_cdagenci).hrinipaa
                     || ''' para ''' || vr_hrinipaa || '''<br>';
       END IF;
-			
+
 			IF NVL(vr_tab_crapage(pr_cdagenci).hrfimpaa, ' ') <> NVL(vr_hrfimpaa, ' ') THEN
 
         vr_dscnteml := vr_dscnteml
@@ -4450,9 +4450,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
     END;
 
   END pc_grava_dados_site;
-  
+
   PROCEDURE pc_lista_pas(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
-                        ,pr_flgpaaut  IN BOOLEAN DEFAULT TRUE  --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
+                        ,pr_flgpaaut  IN INTEGER DEFAULT 1  --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
                         ,pr_retxml   OUT NOCOPY xmltype        --> Arquivo de retorno do XML
                         ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo  
   BEGIN
@@ -4478,7 +4478,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       vr_exc_saida EXCEPTION;
       
       vr_qtregist  NUMBER; 
-      vr_flgpaaut  NUMBER;     
       
       -- Selecionar os dados
       CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE,
@@ -4504,10 +4503,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                             ,pr_des_erro => vr_dscritic);
       
       vr_qtregist := 0;
-      vr_flgpaaut := CASE WHEN pr_flgpaaut THEN 1 ELSE 0 END;
       
       FOR rw_crapage IN cr_crapage(pr_cdcooper => pr_cdcooper
-                                  ,pr_flgpaaut => vr_flgpaaut) LOOP          
+                                  ,pr_flgpaaut => pr_flgpaaut) LOOP          
         
         gene0007.pc_insere_tag(pr_xml => pr_retxml
                               ,pr_tag_pai => 'Dados'
