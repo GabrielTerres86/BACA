@@ -560,21 +560,21 @@ function confirmaEnvioAnalise(){
 function validaAnaliseTitulo(){
 
 	// INICIO MOCK - (remover trecho quando subir - utilizado apenas para mock)
-	var insitapr = 'REJEITADO AUTOMATICAMENTE'; 
-	var dssitest = 'ANALISE FINALIZADA'; 
+	//var insitapr = 'REJEITADO AUTOMATICAMENTE'; 
+	//var dssitest = 'ANALISE FINALIZADA'; 
 
 	// FIM MOCK - (remover trecho quando subir - utilizado apenas para mock)
 
 	// pega os valores conforme o status que está na tabela (descomentar quando não estiver usando o mock)
-	//var insitapr = $('#insitapr').val();
-	//var dssitest = $("#dssitest").val();
-	/*
+	var insitapr = $('#insitapr').val();
+	var dssitest = $("#dssitest").val();
+	
 	if (dssitest == 'ANALISE FINALIZADA' && insitapr == 'REJEITADO AUTOMATICAMENTE'){				
 		showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'enviarPropostaAnaliseComLIberacaoCordenador()\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
 	}else{
 		enviarPropostaAnalise();
-	}*/
-	enviarPropostaAnalise();
+	}
+	//enviarPropostaAnalise();
     return false;
 }
 
@@ -651,6 +651,61 @@ function enviarPropostaAnalise() {
 	
 
 	
+}
+
+function confirmarNovoLimite(){
+	// pega os valores conforme o status que está na tabela (descomentar quando não estiver usando o mock)
+	var insitapr = $('#insitapr').val();
+	var dssitest = $("#dssitest").val();
+	var insitlim = $('#insitlim').val();
+	
+	// insitapr == 'REJEITADO AUTOMATICAMENTE'
+	if (insitlim == 'APROVADO' && dssitest == 'ANALISE FINALIZADA'){				
+		showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
+
+		var operacao = "CONFIMAR_NOVO_LIMITE";
+
+		alert("Novo Limite Confirmado");
+		hideMsgAguardo();
+
+		
+		$.ajax({		
+			type: "POST", 
+			url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+			dataType: "html",
+			data: {
+				operacao: operacao,
+				nrdconta: nrdconta,
+				nrctrlim: nrcontrato,
+
+				//situacao atual
+				insitlim: insitlim,
+				dssitest: dssitest,
+				insitapr: insitapr,
+				redirect: "html_ajax"
+			},		
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			},
+			success: function(response) {
+				try {
+	                eval(response);
+	                return false;
+	            } catch (error) {
+	                hideMsgAguardo();
+	                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+	            }
+				
+			}				
+		});	
+
+	}else{
+		showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar situa&ccedil', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+	}
+	
+	//enviarPropostaAnalise();
+    return false;
 }
 
 function exibeAlteraNumero() {

@@ -95,7 +95,11 @@
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
-	}	
+	}
+
+	$insitlim = $limites[$i]->tags[7]->cdata;
+	$dssitest = $limites[$i]->tags[8]->cdata;
+	$insitapr = $limites[$i]->tags[9]->cdata;
 	
 ?>
 
@@ -103,8 +107,9 @@
 
 ?>
 
-	<input type="hidden" id="insitapr" name="insitapr" value="<? echo $limites[$i]->tags[8]->cdata; ?>" />
-	<input type="hidden" id="dssitest" name="dssitest" value="<? echo $limites[$i]->tags[9]->cdata; ?>" />
+	<input type="hidden" id="insitlim" name="insitlim" value="<? echo $limites[$i]->tags[7]->cdata; ?>" />
+	<input type="hidden" id="dssitest" name="dssitest" value="<? echo $limites[$i]->tags[8]->cdata; ?>" />
+	<input type="hidden" id="insitapr" name="insitapr" value="<? echo $limites[$i]->tags[9]->cdata; ?>" />
 
 <?
 }
@@ -180,6 +185,16 @@
 	<input type="button" class="botao gft" value="Analisar"  id="btnAnalisarLimite" name="btnAnalisarLimite" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="confirmaEnvioAnalise();"'; } ?>/>
 	<input type="button" class="botao gft" value="Imprimir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> />
 	<input type="button" class="botao gft" value="Detalhes Proposta"  id="btnDetalhesProposta" name="btnDetalhesProposta" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="carregaDadosDetalhesProposta();return false;"'; } ?>/>
+
+	<?php
+	if($insitlim == 'APROVADO' && $dssitest == 'ANALISE FINALIZADA'){
+	?>
+		<input type="button" class="botao gft" value="Confirmar Novo Limite"  id="btnConfirmarNovoLimite" name="btnConfirmarNovoLimite" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="confirmarNovoLimite();"'; } ?>/>
+	<?php
+		}
+	?>
+
+	
 </div>
 
 <script type="text/javascript">

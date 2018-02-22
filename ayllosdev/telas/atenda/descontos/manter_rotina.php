@@ -24,8 +24,12 @@
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '' ;
 	$nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : '' ;
+	$insitlim = (isset($_POST['insitlim'])) ? $_POST['insitlim'] : '' ;
+	$dssitest = (isset($_POST['dssitest'])) ? $_POST['dssitest'] : '' ;
+	$insitapr = (isset($_POST['insitapr'])) ? $_POST['insitapr'] : '' ;
 	
 	if ($operacao == 'ENVIAR_ANALISE' ) {
+		
 		$xml = "<Root>";
 	    $xml .= " <Dados>";
 	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
@@ -40,7 +44,6 @@
 	    $xmlObj = getObjectXML($xmlResult);
 
 	    //print_r($xmlObj);
-
 
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){		   
            echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';           
@@ -60,7 +63,6 @@
 		}
 		*/
 		
-
 		//$registros = $xmlObj->roottag->tags[0]->tags;
 
 		echo 'showError("inform","Análise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
@@ -75,6 +77,31 @@
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
+	    // FAZER O INSERT CRAPRDR e CRAPACA
+	    $xmlResult = mensageria($xml,"XXXXX","XXXXX", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlObj = getObjectXML($xmlResult);
+
+	    // Se ocorrer um erro, mostra mensagem
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodoErro,false);
+		}
+
+		$registros = $xmlObj->roottag->tags[0]->tags;
+
+		exit;
+		
+	}else if ($operacao == 'CONFIMAR_NOVO_LIMITE' ) {
+
+		$xml = "<Root>";
+	    $xml .= " <Dados>";
+	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	    $xml .= "   <nrctrlim>".$nrctrlim."</nrctrlim>";
+	    $xml .= "   <insitlim>".$insitlim."</insitlim>";
+	    $xml .= "   <dssitest>".$dssitest."</dssitest>";
+	    $xml .= "   <insitapr>".$insitapr."</insitapr>";
+	    $xml .= " </Dados>";
+	    $xml .= "</Root>";
+
 
 	    // FAZER O INSERT CRAPRDR e CRAPACA
 	    $xmlResult = mensageria($xml,"XXXXX","XXXXX", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
@@ -82,29 +109,12 @@
 
 
 	    // Se ocorrer um erro, mostra mensagem
-	    
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodoErro,false);
 		}
 
-		/*
-	    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-	    	$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		    if ($msgErro == "") {
-		        $msgErro = $xmlObj->roottag->tags[0]->cdata;
-		       
-		    }
-		     $nmdcampo = $xmlObj->roottag->tags[0]->attributes['NMDCAMPO'];
-		    exibeErroNew($msgErro,$nmdcampo);
-		    exit();
-		}
-		*/
-
 		$registros = $xmlObj->roottag->tags[0]->tags;
-
 		exit;
-
-	    
 		
 	}
 
