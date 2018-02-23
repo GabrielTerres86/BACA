@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-02-21T13:25:32 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="carta_anuencia" pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="40" rightMargin="40" topMargin="20" bottomMargin="20" uuid="099b5fed-fa6d-4786-93fc-157639faf347">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="NEW_DATAADAPTER.xml"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<queryString language="XPath">
+		<![CDATA[/carta_anuencia]]>
+	</queryString>
+	<field name="dscidade_cooper" class="java.lang.String">
+		<fieldDescription><![CDATA[dscidade_cooper]]></fieldDescription>
+	</field>
+	<field name="dscidade_tabelionato" class="java.lang.String">
+		<fieldDescription><![CDATA[dscidade_tabelionato]]></fieldDescription>
+	</field>
+	<field name="dsuf_tabelionato" class="java.lang.String">
+		<fieldDescription><![CDATA[dsuf_tabelionato]]></fieldDescription>
+	</field>
+	<field name="nmcooper" class="java.lang.String">
+		<fieldDescription><![CDATA[nmcooper]]></fieldDescription>
+	</field>
+	<field name="cnpj" class="java.lang.String">
+		<fieldDescription><![CDATA[cnpj]]></fieldDescription>
+	</field>
+	<field name="dsrua" class="java.lang.String">
+		<fieldDescription><![CDATA[dsrua]]></fieldDescription>
+	</field>
+	<field name="vlnumero" class="java.lang.String">
+		<fieldDescription><![CDATA[vlnumero]]></fieldDescription>
+	</field>
+	<field name="dsbairro" class="java.lang.String">
+		<fieldDescription><![CDATA[dsbairro]]></fieldDescription>
+	</field>
+	<field name="dscidade" class="java.lang.String">
+		<fieldDescription><![CDATA[dscidade]]></fieldDescription>
+	</field>
+	<field name="dsuf" class="java.lang.String">
+		<fieldDescription><![CDATA[dsuf]]></fieldDescription>
+	</field>
+	<field name="nmsocioadm" class="java.lang.String">
+		<fieldDescription><![CDATA[nmsocioadm]]></fieldDescription>
+	</field>
+	<field name="nmpagador" class="java.lang.String">
+		<fieldDescription><![CDATA[nmpagador]]></fieldDescription>
+	</field>
+	<field name="iddocumento" class="java.lang.String">
+		<fieldDescription><![CDATA[iddocumento]]></fieldDescription>
+	</field>
+	<field name="dsruaadm" class="java.lang.String">
+		<fieldDescription><![CDATA[dsruaadm]]></fieldDescription>
+	</field>
+	<field name="vlnumadm" class="java.lang.String">
+		<fieldDescription><![CDATA[vlnumadm]]></fieldDescription>
+	</field>
+	<field name="dsbairroadm" class="java.lang.String">
+		<fieldDescription><![CDATA[dsbairroadm]]></fieldDescription>
+	</field>
+	<field name="dscidadeadm" class="java.lang.String">
+		<fieldDescription><![CDATA[dscidadeadm]]></fieldDescription>
+	</field>
+	<field name="dsufadm" class="java.lang.String">
+		<fieldDescription><![CDATA[dsufadm]]></fieldDescription>
+	</field>
+	<field name="nrboleto" class="java.lang.String">
+		<fieldDescription><![CDATA[nrboleto]]></fieldDescription>
+	</field>
+	<field name="nrnossonmr" class="java.lang.String">
+		<fieldDescription><![CDATA[nrnossonmr]]></fieldDescription>
+	</field>
+	<field name="vlboleto" class="java.lang.String">
+		<fieldDescription><![CDATA[vlboleto]]></fieldDescription>
+	</field>
+	<field name="vr_dtvencimento" class="java.lang.String">
+		<fieldDescription><![CDATA[vr_dtvencimento]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="31" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="10" width="480" height="21" uuid="7ebb0566-d7e7-492d-9f9b-012ea8125206"/>
+				<textFieldExpression><![CDATA[$F{dscidade} + ", " +  (new SimpleDateFormat("dd")).format(new Date()) + " de " +  (new SimpleDateFormat("MM")).format(new Date())  + " de " +  (new SimpleDateFormat("yyyy")).format(new Date()) + "."]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<detail>
+		<band height="249" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="31" width="520" height="30" uuid="9046ae30-700c-4c80-9a73-aa699b92b367"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Carta de Anuência]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="80" width="520" height="80" uuid="d3d02b6c-c26c-4788-854e-12d7930f0517"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["Pelo(a) presente, " + $F{nmcooper}+", CNPJ "+ $F{cnpj} +", com endereço à Rua "+ $F{dsrua} +", nº " + $F{vlnumero} + ", bairro " + $F{dsbairro} +", " + $F{dscidade} +" – " + $F{dsuf} + ", neste ato " + "representadapelo sócio (a), " + $F{nmsocioadm} + " declara que o (a) " + $F{nmpagador} + ", CNPJ/CPF " + $F{iddocumento} +", residente à Rua " + $F{dsruaadm} +", nº " + $F{vlnumadm} +", Bairro " + $F{dsbairroadm} + ", " + $F{dscidadeadm} + " - " + $F{dsufadm} + ", efetuou pagamento referente aos boletos nº " + $F{nrboleto} + " (" + $F{nrnossonmr} + ") no valor de " + $F{vlboleto}.toUpperCase() + " com vencimento no dia " + $F{vr_dtvencimento} +"."]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="160" width="182" height="20" uuid="553d34ee-280e-427f-92c6-13a7b47b989d"/>
+				<text><![CDATA[Termos em que, pede deferimento.]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="150" y="200" width="240" height="30" uuid="7e4d1426-4cec-45e1-9665-da98c349fac1"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmcooper}]]></textFieldExpression>
+			</textField>
+			<textField pattern="##.###.###/####-##">
+				<reportElement x="196" y="230" width="158" height="17" uuid="90702105-5b7d-40be-bfe2-a67cea51b698"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{cnpj}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement mode="Opaque" x="147" y="202" width="245" height="1" uuid="c9ab7398-dfdd-477d-b50d-c095dfd3e797"/>
+				<graphicElement>
+					<pen lineWidth="1.0" lineStyle="Solid"/>
+				</graphicElement>
+			</line>
+		</band>
+	</detail>
+</jasperReport>

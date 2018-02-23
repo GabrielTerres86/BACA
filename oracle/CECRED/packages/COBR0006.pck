@@ -345,6 +345,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                                       ,pr_dtmvtolt IN DATE    --Data Movimento
                                       ,pr_cdoperad IN VARCHAR2 --Codigo Operador
                                       ,pr_nrremass IN INTEGER --Numero Remessa
+                                      ,pr_dtcatanu IN crapret.dtcatanu%TYPE DEFAULT null --Data de referencia a quitacao da divida.
                                       ,pr_cdcritic OUT INTEGER --Codigo Critica
                                       ,pr_dscritic OUT VARCHAR2);  --Descricao Critica
                                       
@@ -7191,6 +7192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                       ,pr_dtmvtolt IN DATE     --Data Movimento
                                       ,pr_cdoperad IN VARCHAR2 --Codigo Operador
                                       ,pr_nrremass IN INTEGER  --Numero Remessa
+                                      ,pr_dtcatanu IN crapret.dtcatanu%TYPE DEFAULT null --Data de referencia a quitacao da divida.
                                       ,pr_cdcritic OUT INTEGER --Codigo Critica
                                       ,pr_dscritic OUT VARCHAR2) IS --Descricao Critica
     /* .........................................................................
@@ -7574,7 +7576,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           ,crapret.nrnosnum
           ,crapret.dsdoccop
           ,crapret.nrremass
-          ,crapret.dtvencto)
+          ,crapret.dtvencto
+          ,crapret.dtcatanu)
         VALUES
           (rw_crapcob.cdcooper
           ,rw_crapcob.nrcnvcob
@@ -7598,7 +7601,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           ,rw_crapcob.nrnosnum
           ,rw_crapcob.dsdoccop
           ,pr_nrremass
-          ,rw_crapcob.dtvencto);
+          ,rw_crapcob.dtvencto
+          ,pr_dtcatanu);
       EXCEPTION
         WHEN Others THEN
           vr_cdcritic:= 0;

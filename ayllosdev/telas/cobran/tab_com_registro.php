@@ -219,14 +219,7 @@
 		<a href="#" class="botao" onclick="buscaConsulta('log'); return false;">Log Boleto</a>
 		<a href="#" class="botao" onclick="buscaConsulta('instrucoes'); return false;"><? echo utf8ToHtml('Instruções');  ?></a>
 		<a href="#" class="botao" onclick="buscaExportar(); return false;">Exportar Consulta</a>
-		<form action="<?php echo $UrlSite;?>telas/cobran/imprimir_carta_anuencia.php" method="post" id="frmReport" name="frmReport">
-			<input type="hidden" name="cdcooper" id="cdcooper">
-			<input type="hidden" name="nrdconta" id="nrdconta">
-			<input type="hidden" name="nrdocmto" id="nrdocmto">
-			<input type="hidden" name="cdbandoc" id="cdbandoc">
-			<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
-			<input type="button"  id="carta_anuencia" disabled class="botao" onclick="geraCartaAnuencia(); return false;" value="<? echo utf8ToHtml('Imprimir carta anuência');  ?>">
-		</form>
+		<a href="#" class="botao" onclick="geraCartaAnuencia(); return false;"><? echo utf8ToHtml('Imprimir carta anuência');  ?></a>
 	<?php
 	}
 	?>

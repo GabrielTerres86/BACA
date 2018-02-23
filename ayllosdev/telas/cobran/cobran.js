@@ -1,34 +1,34 @@
 /*!
  * FONTE        : cobran.js
- * CRIAÇÃO      : Rogerius Militão (DB1) 
- * DATA CRIAÇÃO : 17/04/2015
- * OBJETIVO     : Biblioteca de funções da tela COBRAN
+ * CRIAÃ‡ÃƒO      : Rogerius MilitÃ£o (DB1) 
+ * DATA CRIAÃ‡ÃƒO : 17/04/2015
+ * OBJETIVO     : Biblioteca de funÃ§Ãµes da tela COBRAN
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÃ‡Ã•ES   :
  * --------------
- * [29/03/2012] Rogérius Militão (DB1) : Ajuste no layout padrão
+ * [29/03/2012] RogÃ©rius MilitÃ£o (DB1) : Ajuste no layout padrÃ£o
  * [28/06/2012] Jorge I. H.   (CECRED) : Ajuste em esquema de impressao em funcao Gera_Impressao()
- * [19/10/2012] Jorge I. H.   (CECRED) : Alterações e ajustes em tela COBRAN  
+ * [19/10/2012] Jorge I. H.   (CECRED) : AlteraÃ§Ãµes e ajustes em tela COBRAN  
  * [03/05/2013] Jorge I. H.   (CECRED) : Adicionado campo vldescto em funcao manterRotina(). 
- * [14/08/2013] Carlos        (CECRED) : Alteração da sigla PAC para PA.
+ * [14/08/2013] Carlos        (CECRED) : AlteraÃ§Ã£o da sigla PAC para PA.
  * [03/12/2014] Jean Reddiga  (RKAM)   : De acordo com a circula 3.656 do Banco Central,substituir nomenclaturas Cedente
- *	             			             por Beneficiário e  Sacado por Pagador  Chamado 229313 (Jean Reddiga - RKAM).
+ *	             			             por BeneficiÃ¡rio e  Sacado por Pagador  Chamado 229313 (Jean Reddiga - RKAM).
  * [17/04/2015] Lucas Reinert (CECRED) : Adicionado campo Tp. Emissao. (Reinert)
  * [16/11/2015] Jorge Hamaguchi(CECRED): Adicionado campo Somente Crise. (Jorge/Andrino)
- * 30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
+ * 30/12/2015 - AlteraÃ§Ãµes Referente Projeto NegativaÃ§Ã£o Serasa (Daniel)	
  * 03/05/2016 - Ajustes para inclusao da opcao S. PRJ318 - Nova Plataforma de cobranca (Odirlei-AMcom)
  * 09/05/2016 - Adicionar o filtro numero da conta para os tipos: 2 - Numero do Boleto, 3 - Data de Emissao, 4 - Data de Pagamento
  *              5 - Data de Vencimento, 6 - Nome do Pagador (Douglas - Chamado 441759)
- * [11/10/2016] Odirlei Busana(AMcom)  : Inclusao dos campos de aviso por SMS. PRJ319 - SMS Cobrança.
+ * [11/10/2016] Odirlei Busana(AMcom)  : Inclusao dos campos de aviso por SMS. PRJ319 - SMS CobranÃ§a.
  * 08/01/2017 - Adicionar o campo flgdprot para definir label e informacao a mostrar (Protesto x Negativacao (Heitor - Mouts) - Chamado 574161
  * 26/06/2017 - Incluido campo de Sacado DDA, Prj. 340 (Jean Michel)
- * 03/07/2017 - Incluido nova instância do campo Cobrança Registrada, Prj. 340 (Jean Michel)
- * 14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
+ * 03/07/2017 - Incluido nova instÃ¢ncia do campo CobranÃ§a Registrada, Prj. 340 (Jean Michel)
+ * 14/07/2017 - AlteraÃ§Ã£o para o cancelamento manual de produtos. Projeto 364 (Reinert)
  * 27/09/2017 - Adicionar o campo qtdiaprt, inserasa como parametro para a tela de instrucoes (Douglas - Chamado 754911)
- * 21/12/2017 - Adicionar validação para que sejam informados os campos de data inicial e final na opção "R" da tela (Douglas - Chamado 807531)
+ * 21/12/2017 - Adicionar validaÃ§Ã£o para que sejam informados os campos de data inicial e final na opÃ§Ã£o "R" da tela (Douglas - Chamado 807531)
  */
 
-//Formulários e Tabela
+//FormulÃ¡rios e Tabela
 var frmCab = 'frmCab';
 var frmOpcao = 'frmOpcao';
 var frmTabela = 'frmTabela';
@@ -121,7 +121,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
     var mensagem = 'Aguarde, buscando dados ...';
     showMsgAguardo(mensagem);
 
-    // Carrega dados da conta através de ajax
+    // Carrega dados da conta atravÃ©s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -157,7 +157,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
 				},
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            showError('error', 'N&atilde;o foi possÃ­vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
         },
         success: function (response) {
             hideMsgAguardo();
@@ -363,7 +363,7 @@ function formataCabecalho() {
         if (divError.css('display') == 'block') { return false; }
         if (cCddopcao.hasClass('campoTelaSemBorda')) { return false; }
 
-        trocaBotao('Avançar');
+        trocaBotao('AvanÃ§ar');
 
         //
         cddopcao = cCddopcao.val();
@@ -383,7 +383,7 @@ function formataCabecalho() {
     // opcao
     cCddopcao.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
-        // Se é a tecla ENTER, 
+        // Se Ã© a tecla ENTER, 
         if (e.keyCode == 13) {
             btnOK1.click();
             return false;
@@ -400,7 +400,7 @@ function buscaOpcao() {
 
     showMsgAguardo('Aguarde, buscando dados ...');
 
-    // Executa script de confirmação através de ajax
+    // Executa script de confirmaÃ§Ã£o atravÃ©s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -410,7 +410,7 @@ function buscaOpcao() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function (response) {
             $('#divTela').html(response);
@@ -520,7 +520,7 @@ function formataOpcaoC() {
 
         var auxtpcon = normalizaNumero(cTpconsul.val())
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if ((e.keyCode == 9 || e.keyCode == 13) && validaCampo('tpconsul', auxtpcon)) {
             tipoOptionC();
             cFlgregis.focus();
@@ -534,7 +534,7 @@ function formataOpcaoC() {
     cFlgregis.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if (e.keyCode == 9 || e.keyCode == 13) {
             cConsulta.focus();
             return false;
@@ -545,7 +545,7 @@ function formataOpcaoC() {
     // Tipo 
     cConsulta.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if (e.keyCode == 9 || e.keyCode == 13) {
             cInestcri.focus();
             return false;
@@ -557,7 +557,7 @@ function formataOpcaoC() {
     cInestcri.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if (e.keyCode == 9 || e.keyCode == 13) {
             btnContinuar();
             return false;
@@ -719,7 +719,7 @@ function formataTipo1() {
         var auxconta = normalizaNumero(cNrdconta.val());
 		var consulta = $('#consulta', '#' + frmOpcao).val();
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if (e.keyCode == 9 || e.keyCode == 13) {
 			if( auxconta != 0 ){
 				if (validaCampo('nrdconta', auxconta)){
@@ -775,7 +775,7 @@ function formataTipo2() {
     cIninrdoc.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if ((e.keyCode == 9 || e.keyCode == 13) && tpconsul != '3') {
             btnContinuar();
             return false;
@@ -792,7 +792,7 @@ function formataTipo2() {
     cFimnrdoc.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if ((e.keyCode == 9 || e.keyCode == 13) && tpconsul == '3') {
             btnContinuar();
             return false;
@@ -823,7 +823,7 @@ function formataTipo3() {
 
     // de
     cInidtmvt.unbind('keydown').bind('keydown', function (e) {
-        // Se é a tecla TAB ou ENTER, 
+        // Se Ã© a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
             cFimdtmvt.focus();
             return false;
@@ -835,7 +835,7 @@ function formataTipo3() {
     cFimdtmvt.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB ou ENTER, 
+        // Se Ã© a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
             btnContinuar();
             return false;
@@ -867,7 +867,7 @@ function formataTipo4() {
 
     // de
     cInidtdpa.unbind('keydown').bind('keydown', function (e) {
-        // Se é a tecla TAB ou ENTER, 
+        // Se Ã© a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
             cFimdtdpa.focus();
             return false;
@@ -879,7 +879,7 @@ function formataTipo4() {
     cFimdtdpa.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB ou ENTER, 
+        // Se Ã© a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
             btnContinuar();
             return false;
@@ -912,7 +912,7 @@ function formataTipo5() {
 
     // de
     cInidtven.unbind('keydown').bind('keydown', function (e) {
-        // Se é a tecla TAB ou ENTER, 
+        // Se Ã© a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
             cFimdtven.focus();
             return false;
@@ -924,7 +924,7 @@ function formataTipo5() {
     cFimdtven.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB ou ENTER, 
+        // Se Ã© a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
             btnContinuar();
             return false;
@@ -954,7 +954,7 @@ function formataTipo6() {
 
         var auxnmpri = cNmprimtl.val();
 
-        // Se é a tecla TAB ou ENTER, 
+        // Se Ã© a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') && (validaCampo('nmprimtl', auxnmpri))) {
             controlaOperacao('CB', nriniseq, nrregist);
             return false;
@@ -1002,7 +1002,7 @@ function formataTipo8() {
 
         var auxconta = normalizaNumero(cNrdconta.val());
 
-        // Se é a tecla TAB ou ENTER, 
+        // Se Ã© a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') && (validaCampo('nrdconta', auxconta))) {
             manterRotina('BA');
             return false;
@@ -1014,7 +1014,7 @@ function formataTipo8() {
     cDsdoccop.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB ou ENTER, 
+        // Se Ã© a tecla TAB ou ENTER, 
         if (e.keyCode == 9 || e.keyCode == 13) {
             btnContinuar();
             return false;
@@ -1128,7 +1128,7 @@ function formataTabela() {
 	  EVENTO COMPLEMENTO	
 	*********************/
 
-    // seleciona o registro que é clicado
+    // seleciona o registro que Ã© clicado
     $('table > tbody > tr', divRegistro).die("click").live("click", function () {
         selecionaTabela($(this));
     });
@@ -1225,13 +1225,49 @@ function selecionaTabela(tr) {
 }
 
 function geraCartaAnuencia(){
+    var callafter = "$('input, select', '#frmReport,.classDisabled').desabilitaCampo();";
+    var aux_mensagem = "Deseja efetuar impress&atilde;o da carta de anuencia?"; // Mensagem de confirmacao de impressao;
+    showConfirmacao(aux_mensagem,
+					'Confirma&ccedil;&atilde;o - Ayllos',
+					'dataPagamentoDivida();',
+					callafter,
+					'sim.gif',
+					'nao.gif');
+
+}
+
+function dataPagamentoDivida() {
+	var nmrotina = "imprimirCartaAnuencia";
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/cobran/form_carta_anuencia.php',
+		data: {
+			nmrotina: nmrotina,
+			redirect: 'ajax_html'
+		},
+        error: function (objAjax, responseError, objExcept) {
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+        success: function (response) {
+            $('#divRotina').html(response);
+            exibeRotina($('#divRotina'));
+            formataConsulta();
+            formataLog();
+		}
+	});
+}
+
+function imprimirCartaAnuencia(){
     var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
-	
+	var dtcatanu = $('#dtcatanu', '#frmDataPag').val();
     $('input,select', '#frmReport').habilitaCampo();
     $('#cdcooper', '#frmReport').val(cdcooper);
     $('#nrdconta', '#frmReport').val(nrdconta);
     $('#nrdocmto', '#frmReport').val(nrdocmto);
     $('#cdbandoc', '#frmReport').val(cdbandoc);
+    $('#dtcatanu', '#frmReport').val(dtcatanu);
 
     var action = $('#frmReport').attr('action');
     var callafter = "$('input, select', '#frmReport,.classDisabled').desabilitaCampo();";
@@ -1272,7 +1308,7 @@ function buscaConsulta(operacao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
+            showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
         },
         success: function (response) {
 
@@ -1551,7 +1587,7 @@ function buscaCampo() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divUsoGenerico\') ); bloqueiaFundo($(\'#divRotina\')); ");
+            showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "fechaRotina( $(\'#divUsoGenerico\') ); bloqueiaFundo($(\'#divRotina\')); ");
         },
         success: function (response) {
 
@@ -1708,7 +1744,7 @@ function buscaExportar() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
+            showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
         },
         success: function (response) {
 
@@ -1834,7 +1870,7 @@ function buscaArquivo() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
+            showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
         },
         success: function (response) {
 
@@ -1967,7 +2003,7 @@ function formataOpcaoR() {
     cFlgregis.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if (e.keyCode == 9 || e.keyCode == 13) {
             tipoOptionR();
             cTprelato.habilitaCampo().focus();
@@ -1980,7 +2016,7 @@ function formataOpcaoR() {
     cTprelato.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if (e.keyCode == 9 || e.keyCode == 13) {
             btnContinuar();
             return false;
@@ -1992,7 +2028,7 @@ function formataOpcaoR() {
     cInidtmvt.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if (e.keyCode == 9 || e.keyCode == 13) {
             cFimdtmvt.focus();
             return false;
@@ -2004,7 +2040,7 @@ function formataOpcaoR() {
     cFimdtmvt.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if (e.keyCode == 9 || e.keyCode == 13) {
 
             if (cTprelato.val() == '1' || cTprelato.val() == '3') {
@@ -2026,7 +2062,7 @@ function formataOpcaoR() {
     cCdstatus.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if (e.keyCode == 9 || e.keyCode == 13) {
             cInserasa.focus();
             return false;
@@ -2037,7 +2073,7 @@ function formataOpcaoR() {
     cInserasa.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if (e.keyCode == 9 || e.keyCode == 13) {
             cNrdconta.focus();
             return false;
@@ -2051,7 +2087,7 @@ function formataOpcaoR() {
 
         var auxconta = normalizaNumero(cNrdconta.val());
 
-        // Se é a tecla TAB, 
+        // Se Ã© a tecla TAB,
         if (e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') {
 
             if ((tprelato == 6 || tprelato == 8) && normalizaNumero(cNrdconta.val()) == 0) {
@@ -2088,8 +2124,8 @@ function tipoOptionR() {
         if (flgregis == 'yes') {
             option = option + '<option value="5">5- Relatorio Beneficiario</option>';
             option = option + '<option value="6">6- Relatorio Movimento de Cobranca Registrada</option>';
-            option = option + '<option value="7">7- Relatório analítico de envio de SMS</option>';
-            option = option + '<option value="8">8- Relatório de títulos cancelados</option>';
+            option = option + '<option value="7">7- RelatÃ³rio analÃ­tico de envio de SMS</option>';
+            option = option + '<option value="8">8- RelatÃ³rio de tÃ­tulos cancelados</option>';
             
 
         } else if (flgregis == 'no') {
@@ -2297,7 +2333,7 @@ function mostraImprimir(arquivo1, arquivo2) {
     var mensagem = 'Aguarde, buscando dados ...';
     showMsgAguardo(mensagem);
 
-    // Executa script de confirmação através de ajax
+    // Executa script de confirmaÃ§Ã£o atravÃ©s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -2309,7 +2345,7 @@ function mostraImprimir(arquivo1, arquivo2) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function (response) {
             hideMsgAguardo();
@@ -2352,7 +2388,7 @@ function validaCampo(campo, valor) {
 
     // conta
     if (campo == 'nrdconta' && !validaNroConta(valor)) {
-        showError('error', 'Dígito errado.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
+        showError('error', 'DÃ­gito errado.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
         return false;
     } else if (campo == 'nmprimtl' && valor == '') {
         showError('error', 'O campo deve ser preenchido.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
@@ -2394,7 +2430,7 @@ function btnVoltar() {
     if (cddopcao === 'C' && $('#frmTabela').length) {
         $('#' + frmTabela).remove();
         $('#divPesquisaRodape', '#divTela').remove();
-        trocaBotao('Avançar');
+        trocaBotao('AvanÃ§ar');
 
 		for(var x = 1; x < 8; x++) {
 			$('input, select', '#' + frmOpcao + ' fieldset:eq(' + x + ')').limpaFormulario();
@@ -2550,7 +2586,7 @@ function EfetuaPesquisaOpS(nriniseq,nrregist,insitceb_atu) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
+            showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
         },
         success: function (response) {
                       
@@ -2634,7 +2670,7 @@ function buscaExportarOpS(cddopcao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
+            showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
         },
         success: function (response) {
 
@@ -2690,9 +2726,9 @@ function ConfirmaAtualizacao(insitceb){
     }
     
     if (insitceb == 5){
-        msgconfi = "Confirma aprovação do convenio " + nrconven + "?";        
+        msgconfi = "Confirma aprovaÃ§Ã£o do convenio " + nrconven + "?";
     }else if (insitceb == 6){
-        msgconfi = "Confirma reprovação do convenio " + nrconven + "?";        
+        msgconfi = "Confirma reprovaÃ§Ã£o do convenio " + nrconven + "?";
     }
     showConfirmacao(msgconfi, 'Confirma&ccedil;&atilde;o - Ayllos', 'EfetuaPesquisaOpS(1,100,'+insitceb+');', 'fechaRotina( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
     
