@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 21/09/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 23/02/2018
   --
   -- Dados referentes ao programa:
   --
@@ -77,6 +77,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --                          ativas para não solicitar relatórios para as inativas (Carlos)
   --
   --             21/09/2017 - Validar ultima linha do arquivo corretamente no pc_crps672 (Lucas Ranghetti #753170)
+  --
+  --             23/02/2018 - Criar no relatorio 676 a critica Representante nao encontrado
+  --                          (Lucas Ranghetti #847282)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6750,7 +6753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 21/09/2017
+       Data    : Abril/2014.                     Ultima atualizacao: 23/02/2018
 
        Dados referentes ao programa:
 
@@ -6887,6 +6890,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                    23/08/2017 - Alterar o recebimento de informações de alteração de limites. 
                                 (Renato Darosci - Projeto 360)
+                                
+                   23/02/2018 - Criar no relatorio 676 a critica Representante nao encontrado
+                                (Lucas Ranghetti #847282)
     ............................................................................ */
 
     DECLARE
@@ -7057,8 +7063,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               
          
         WHERE rej.dshistor = 'CCR3'
-          AND rej.cdcritic > 10 
-          AND rej.cdcritic < 900  
+          AND (rej.cdcritic > 10 
+          AND rej.cdcritic < 900
+           OR rej.cdcritic = 999)
           AND rej.dtmvtolt = pr_dtmvtolt
           AND rej.cdcooper = pr_cdcooper                  
                   
@@ -9613,15 +9620,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                           -- Se o cartão possui conta vinculada e nao encontramos o 
                           -- representante, vamos levantar a exceção
 
-                        -- Montar mensagem de critica
-                        vr_dscritic := 'Representante nao encontrado. Conta/DV: ' || rw_crapass.nrdconta ||
-                                       ' CPF: '                                   || vr_nrcpfcgc;
-                        -- gravar log do erro
-                        pc_log_message;
+                          -- Montar mensagem de critica
+                          vr_dscritic := 'Representante nao encontrado. Conta/DV: ' || rw_crapass.nrdconta ||
+                                         ' CPF: '                                   || vr_nrcpfcgc;
+                          -- gravar log do erro
+                          pc_log_message;
 
-                        -- fecha cursor 
-                        CLOSE cr_crapass;
-                        CLOSE cr_crawcrd;
+                          -- fecha cursor 
+                          CLOSE cr_crapass;
+                          CLOSE cr_crawcrd;
+                          
+                          BEGIN
+                            INSERT INTO craprej
+                                       (cdcooper,
+                                        cdagenci,
+                                        cdpesqbb,
+                                        dshistor,
+                                        dtmvtolt,
+                                        cdcritic,
+                                        dtrefere,
+                                        nrdconta,
+                                        nrdctitg,
+                                        nrdocmto)
+                                    VALUES
+                                        (vr_cdcooper,
+                                         rw_crapass.cdagenci,
+                                         '',
+                                         'CCR3',
+                                         rw_crapdat.dtmvtolt,
+                                         999, -- Representante nao encontrado
+                                         vr_dtoperac,
+                                         vr_nrdconta,
+                                         vr_nrdctitg,
+                                         vr_nroperac);
+                          EXCEPTION
+                            WHEN OTHERS THEN
+                              vr_dscritic := 'Erro ao inserir craprej: '||SQLERRM;
+                            RAISE vr_exc_saida;
+                          END;  
+                        
                         CONTINUE;
                         END IF;
                       ELSE
