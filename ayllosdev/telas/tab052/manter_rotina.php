@@ -434,7 +434,7 @@ if ($cdopcao == 'C') {
 }
 
 if ($cddopcao == "A") {
-    echo 'showError("inform","Par&acirc;metros alterados com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
+    echo 'showError("inform","Par&acirc;metros Alterados com Sucesso","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
 }
 
 function exibeErroNew($msgErro,$nmdcampo) {
