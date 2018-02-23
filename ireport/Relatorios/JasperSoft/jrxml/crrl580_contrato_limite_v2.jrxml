@@ -1,0 +1,1153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-02-23T13:56:11 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="aditiv" language="groovy" pageWidth="480" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Key" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl580"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/contrato]]>
+	</queryString>
+	<field name="nmextcop" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperativa/nmextcop]]></fieldDescription>
+	</field>
+	<field name="nmrescop" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperativa/nmrescop]]></fieldDescription>
+	</field>
+	<field name="nrdocnpj" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperativa/nrdocnpj]]></fieldDescription>
+	</field>
+	<field name="dsendcop" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperativa/dsendcop]]></fieldDescription>
+	</field>
+	<field name="nrendcop" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperativa/nrendcop]]></fieldDescription>
+	</field>
+	<field name="nmbairro" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperativa/nmbairro]]></fieldDescription>
+	</field>
+	<field name="nrcepend" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperativa/nrcepend]]></fieldDescription>
+	</field>
+	<field name="nmcidade" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperativa/nmcidade]]></fieldDescription>
+	</field>
+	<field name="cdufdcop" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperativa/cdufdcop]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperado/nrdconta]]></fieldDescription>
+	</field>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperado/cdagenci]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperado/nmprimtl]]></fieldDescription>
+	</field>
+	<field name="nrcpfcgc" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperado/nrcpfcgc]]></fieldDescription>
+	</field>
+	<field name="dsendere" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperado/dsendere]]></fieldDescription>
+	</field>
+	<field name="nrendere" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperado/nrendere]]></fieldDescription>
+	</field>
+	<field name="complend" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperado/complend]]></fieldDescription>
+	</field>
+	<field name="nmcidade_1" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperado/nmcidade]]></fieldDescription>
+	</field>
+	<field name="nmbairro_1" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperado/nmbairro]]></fieldDescription>
+	</field>
+	<field name="cdufende" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperado/cdufende]]></fieldDescription>
+	</field>
+	<field name="nrcepend_1" class="java.lang.String">
+		<fieldDescription><![CDATA[cooperado/nrcepend]]></fieldDescription>
+	</field>
+	<field name="nrctrlim" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato/nrctrlim]]></fieldDescription>
+	</field>
+	<field name="dtinivig" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato/dtinivig]]></fieldDescription>
+	</field>
+	<field name="vllimite" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato/vllimite]]></fieldDescription>
+	</field>
+	<field name="dsencfin1" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato/dsencfin1]]></fieldDescription>
+	</field>
+	<field name="dsencfin2" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato/dsencfin2]]></fieldDescription>
+	</field>
+	<field name="dsencfin3" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato/dsencfin3]]></fieldDescription>
+	</field>
+	<field name="nmcidade_2" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato/nmcidade]]></fieldDescription>
+	</field>
+	<field name="dscetano" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato/dscetano]]></fieldDescription>
+	</field>
+	<field name="perminimo" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato/perminimo]]></fieldDescription>
+	</field>
+	<field name="qtdias_atraso_permitido" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato/qtdias_atraso_permitido]]></fieldDescription>
+	</field>
+	<field name="qtdiavig" class="java.lang.String">
+		<fieldDescription><![CDATA[contrato/qtdiavig]]></fieldDescription>
+	</field>
+	<field name="avalistas" class="java.lang.String">
+		<fieldDescription><![CDATA[/contrato/avalistas]]></fieldDescription>
+	</field>
+	<field name="dsqrcode" class="java.lang.String">
+		<fieldDescription><![CDATA[/contrato/dsqrcode]]></fieldDescription>
+	</field>
+	<field name="qtd_avalistas" class="java.lang.Integer">
+		<fieldDescription><![CDATA[qtd_avalistas]]></fieldDescription>
+	</field>
+	<field name="nmdavali" class="java.lang.String">
+		<fieldDescription><![CDATA[avalistas/avalista1/nmdavali]]></fieldDescription>
+	</field>
+	<field name="cpfavali" class="java.lang.String">
+		<fieldDescription><![CDATA[avalistas/avalista1/cpfavali]]></fieldDescription>
+	</field>
+	<field name="nmdavali_1" class="java.lang.String">
+		<fieldDescription><![CDATA[avalistas/avalista2/nmdavali]]></fieldDescription>
+	</field>
+	<field name="cpfavali_1" class="java.lang.String">
+		<fieldDescription><![CDATA[avalistas/avalista2/cpfavali]]></fieldDescription>
+	</field>
+	<field name="dsendava" class="java.lang.String">
+		<fieldDescription><![CDATA[avalistas/avalista1/dsendava]]></fieldDescription>
+	</field>
+	<field name="dsendava_1" class="java.lang.String">
+		<fieldDescription><![CDATA[avalistas/avalista2/dsendava]]></fieldDescription>
+	</field>
+	<field name="nminterv" class="java.lang.String">
+		<fieldDescription><![CDATA[interveniente/nminterv]]></fieldDescription>
+	</field>
+	<field name="nrcpfcgc_1" class="java.lang.String">
+		<fieldDescription><![CDATA[interveniente/nrcpfcgc]]></fieldDescription>
+	</field>
+	<field name="dsendere_1" class="java.lang.String">
+		<fieldDescription><![CDATA[interveniente/dsendere]]></fieldDescription>
+	</field>
+	<field name="nrendere_1" class="java.lang.String">
+		<fieldDescription><![CDATA[interveniente/nrendere]]></fieldDescription>
+	</field>
+	<field name="complend_1" class="java.lang.String">
+		<fieldDescription><![CDATA[interveniente/complend]]></fieldDescription>
+	</field>
+	<field name="nmbairro_2" class="java.lang.String">
+		<fieldDescription><![CDATA[interveniente/nmbairro]]></fieldDescription>
+	</field>
+	<field name="nmcidade_3" class="java.lang.String">
+		<fieldDescription><![CDATA[interveniente/nmcidade]]></fieldDescription>
+	</field>
+	<field name="cdufende_1" class="java.lang.String">
+		<fieldDescription><![CDATA[interveniente/cdufende]]></fieldDescription>
+	</field>
+	<field name="nrcepend_2" class="java.lang.String">
+		<fieldDescription><![CDATA[interveniente/nrcepend]]></fieldDescription>
+	</field>
+	<field name="interveniente" class="java.lang.String">
+		<fieldDescription><![CDATA[interveniente]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="55">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="20" y="16" width="380" height="19" uuid="77595cda-9ec7-4fb2-ac86-bbd1f9d9ce36">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["TERMO DE ADESÃO ÀS CONDIÇÕES GERAIS DO CONTRATO DE ABERTURA DE CRÉDITO EM CONTA CORRENTE"]]></textFieldExpression>
+			</textField>
+			<componentElement>
+				<reportElement x="410" y="5" width="50" height="50" isPrintInFirstWholeBand="true" uuid="acc379cf-8b68-45f4-acff-2fd5137eaf1c">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.margin" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<jr:QRCode xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" margin="0" errorCorrectionLevel="H">
+					<jr:codeExpression><![CDATA[$F{dsqrcode}]]></jr:codeExpression>
+				</jr:QRCode>
+			</componentElement>
+		</band>
+		<band height="88">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="20" y="0" width="440" height="12" uuid="a25f068f-1c48-4e4b-a4f0-b41dc7f138e6">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 1. DA IDENTIFICAÇÃO</style>"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="20" y="12" width="440" height="38" uuid="8ae74ce4-7f2e-46f9-838c-c1fc18d66590">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 1.1 COOPERATIVA \n \n " + $F{nmextcop} + " - " + $F{nmrescop} + "</style>, sociedade Cooperativa de crédito, inscrita no CNPJ sob nº " + $F{nrdocnpj} + ", estabelecida  na " + $F{dsendcop} + ", nº " + $F{nrendcop} + ", bairro " + $F{nmbairro} +  ",  CEP " + $F{nrcepend} + ", cidade de " + $F{nmcidade} + "-" + $F{cdufdcop} +"."]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="20" y="50" width="440" height="38" uuid="d3de0f5c-fa7a-4891-b623-407219fa1619">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 1.2 COOPERADO(A) \n \n </style>" + $F{nmprimtl} + ", inscrito(a) no CPF/CNPJ sob nº " + $F{nrcpfcgc} + ", com Sede/Residência na " + $F{dsendere} + ", nº " + $F{nrendere} + ", bairro " + $F{nmbairro_1} + ", cidade de " + $F{nmcidade_1} +  " - " + $F{cdufende} + ", CEP: " + $F{nrcepend_1}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="12">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{qtd_avalistas}>0 || !$F{interveniente}.isEmpty()]]></printWhenExpression>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="20" y="0" width="440" height="12" isRemoveLineWhenBlank="true" uuid="370064f6-06b7-46f3-b049-89384b1c640b">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 1.3 GARANTIDOR(ES)</style>"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="20" y="0" width="1" height="12" uuid="6793e912-3eb9-457c-ac62-d20d7972832a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="459" y="0" width="1" height="12" uuid="352a20de-56bd-450a-a770-e0693a51368c">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+			</line>
+		</band>
+		<band height="60">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{qtd_avalistas}>0]]></printWhenExpression>
+			<textField>
+				<reportElement isPrintRepeatedValues="false" x="30" y="0" width="420" height="30" isRemoveLineWhenBlank="true" uuid="65d79e58-bab9-4124-8564-ec2e2cdc5a53">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 1.3.1</style>  " + $F{nmdavali} + ",CPF/CNPJ nº " + $F{cpfavali} + ", endereço " + $F{dsendava} + " ,na condição de <style isBold='true' pdfFontName='Courier-Bold'>FIADOR.</style>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="30" y="30" width="420" height="30" isRemoveLineWhenBlank="true" uuid="1593c1a5-1cc5-4599-a6a6-9b3eeb0db5a0">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n<style isBold='true' pdfFontName='Courier-Bold'> 1.3.2</style>  " + $F{nmdavali_1} + ",CPF/CNPJ nº " + $F{cpfavali_1} + ", endereço " + $F{dsendava_1} + ",na condição de <style isBold='true' pdfFontName='Courier-Bold'>FIADOR2.</style>"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="20" y="0" width="1" height="60" uuid="6fd5fb78-513a-4403-aea0-a311428517ac">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="459" y="0" width="1" height="60" uuid="1e25e23e-ec2a-44b5-ac83-2258fb5e929e">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+			</line>
+		</band>
+		<band height="50">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[!$F{interveniente}.isEmpty()]]></printWhenExpression>
+			<textField>
+				<reportElement x="30" y="0" width="420" height="50" isRemoveLineWhenBlank="true" uuid="46c34a56-7254-4479-8954-226c82fcbd18">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[!$F{interveniente}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n<style isBold='true' pdfFontName='Courier-Bold'> 1.3.3</style>  " + $F{nminterv} + ",CPF/CNPJ nº " + $F{nrcpfcgc_1} + ", endereço " + $F{dsendere} + ", nº " + $F{nrendere_1} +  ((($F{complend}!=null)?($F{complend} + ","):"")) + ",bairro " + $F{nmbairro_2} + ", da cidade de " + $F{nmcidade_3} + "/" + $F{cdufende_1} +  ", CEP " + $F{nrcepend_2} + ", na condição de <style isBold='true' pdfFontName='Courier-Bold'>INTERVENIENTE/GARANTIDOR.</style>"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="459" y="0" width="1" height="50" uuid="5d91e0dc-2856-4da8-87e3-96a043e00bf2">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="20" y="0" width="1" height="50" uuid="bfd3163a-c531-4885-9535-24ac28865248">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+			</line>
+		</band>
+		<band height="12">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="20" y="0" width="440" height="12" uuid="4825d9fd-7d5e-4e3a-aca3-f254899d9a8f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2. CONDIÇÕES ESPECÍFICAS DESTE CONTRATO DE ABERTURA DE CRÉDITO EM CONTA CORRENTE</style>"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="25">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="67" y="0" width="99" height="25" uuid="bd4bd511-9308-4043-81de-147ba590cadc">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.2. </style>Conta Corrente \n " + $F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="20" y="0" width="47" height="25" uuid="44ac1a61-9db6-4dce-b6f8-3180fbd18e65">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.1. </style> PA \n " + $F{cdagenci}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="166" y="0" width="164" height="25" uuid="c8cfee06-50e7-4e97-973c-4e4ec6fe3370">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.3. </style> Valor do Limite de Crédito \n " + $F{vllimite}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="330" y="0" width="130" height="25" uuid="ddd7a452-f3bc-4279-92c8-7e817b47d1ac">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.4. </style> Data de contratação \n" +$F{dtinivig}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="43">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="20" y="0" width="130" height="43" uuid="125313ef-fad3-4b9c-8937-b7ae301a195a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.5. </style>Prazo de vigência \n" + $F{qtdiavig} + " dia(s)"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="300" y="0" width="160" height="43" uuid="3cf17800-16f8-4f20-86dc-45a0e12a6904">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.7. </style>Juros de Capitalização \n     Aplicável " + $F{dsencfin2}  + "% sobre " + $F{vllimite}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="150" y="0" width="150" height="43" uuid="e1b294dc-76aa-4310-b52d-554610bf0638">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.6. </style>Encargos Financeiros \n    TR (Taxa Referencial de Juros) \n" + $F{dsencfin1}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="43">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="20" y="0" width="180" height="43" uuid="c2f7c9cb-4ff5-47d7-8672-b1ae4c947d89">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.8. </style>Periodicidade da capitalização(Mensal) \n" + $F{dsencfin3}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="200" y="0" width="115" height="43" uuid="eaca4412-4a65-4509-b6e4-80341853d5ca">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.9.</style>Lugar do Pagamento \n" + $F{nmcidade_2}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="315" y="0" width="145" height="43" uuid="414e1a87-93dc-49a9-94e7-80f526ccb08e">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.10. </style>Liberação do Crédito \n Mediante concessão de limite \n na conta acima informada \n" + $F{dtinivig}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="36">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" stretchType="RelativeToBandHeight" x="20" y="0" width="440" height="36" uuid="137c7130-de65-401d-8f81-d14c9bd9c5c8">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.11 </style>Custo Efetivo Total(CET) da operação: " + $F{dscetano}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="43">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="20" y="0" width="440" height="43" uuid="bec85af1-7c29-4ff1-9cc0-5634f720fd8a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.12. </style>Descrição da garantia - Valor(es) da aplicação(ões) financeira(s) bloqueada(s): \n " + $F{perminimo} + "% do limite de crédito concedido, vinculado à conta corrente nº " + $F{nrdconta} + ", de titularidade de " + $F{nmprimtl}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="43">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true" evaluationTime="Page">
+				<reportElement positionType="Float" x="20" y="0" width="440" height="43" uuid="25cbb414-23c4-457a-be9a-c86c39db60bd">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'> 2.13. </style>Carência para resgate automático da(s) aplicação(ões) financeira(s) bloqueada(s): \n " + $F{qtdias_atraso_permitido} + " dias, contados do excesso do uso do limite pelo <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO</style>"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="55">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="20" y="0" width="440" height="55" uuid="cb6ba676-c7f1-4e2a-a63b-f2d0d505c53f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n Pelo presente instrumento, o (a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO (A)</style> acima identificado(a) e qualificado(a), adere às Condições Gerais do Contrato de Abertura de Crédito em Conta Corrente que integram este contrato, para os devidos fins, formando um documento único e indivisível, disponível no site da <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, em caráter irrevogável e irretratável, para todos os efeitos legais, declarando estar ciente e de pleno acordo com as seguintes regras e condições:"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="50">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="400" height="50" uuid="194ef88b-ad5d-4c7d-8d57-6b999e3284d7">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n <style isBold='true' pdfFontName='Courier-Bold'>1.</style> A <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> está expressamente autorizada a efetuar toda e quaisquer consultas cadastrais, tanto do (a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>, assim como dos seus Representante(s) Legal(is) e do(s) <style isBold='true' pdfFontName='Courier-Bold'>FIADOR(ES)</style>, junto aos órgãos de proteção/restrição ao Crédito, ao Sistemas Central de Risco do Banco Central do Brasil, dentre outros, assim como enviar os seus dados aos órgãos públicos ou privados, administradores de bancos de dados na hipótese de inadimplemento e/ou excesso do uso do limite ora contratado. \n"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="50">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="400" height="50" uuid="2d2781b9-789b-45c3-8209-721eb8c8f3cb">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n <style isBold='true' pdfFontName='Courier-Bold'>2.</style>A incidência das tarifas estão estabelecidas nas Condições Gerais do Contrato de Abertura de Crédito em Conta Corrente e seus valores na Tabela de Tarifas afixadas nos Postos de Atendimento da <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, a qual é parte integrante do presente Contrato/Termo de Adesão, serão integralmente debitados da conta do <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A) </style> pela utilização do limite contratado e/ou pelo excesso/estouro na sua utilização."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="50" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="400" height="50" uuid="df21dd73-0cec-47f1-b348-02a112a136ff">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n <style isBold='true' pdfFontName='Courier-Bold'>3.</style> O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>, o(s) <style isBold='true' pdfFontName='Courier-Bold'>FIADORS(ES)</style> e o(a) <style isBold='true' pdfFontName='Courier-Bold'>INTERVENIENTE GARANTIDOR</style>, se houver, dá(ão) à <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, em cessão fiduciária, todos os direitos sobre suas aplicações financeiras e poupança programada mantidas nesta <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, além de suas quotas-parte subscritas, atuais e futuras."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="37">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="400" height="37" uuid="358d29fb-42ce-482c-b409-a0d0b440a60d">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n <style isBold='true' pdfFontName='Courier-Bold'>3.1.</style>    As aplicações financeiras e poupança programada atuais cedidas em garantia são aquelas consolidadas em extrato disponível nesta data e as futuras integrarão automaticamente esta garantia assim que realizadas, servindo o respectivo extrato para identificá-las e aperfeiçoar esta cessão fiduciária."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="37">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="400" height="37" uuid="537f8ef0-2888-4e18-83ed-955b048b9f97">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n <style isBold='true' pdfFontName='Courier-Bold'>3.2.</style>    Até o cumprimento integral das obrigações assumidas pelo(a) <style isBold='true' pdfFontName='Courier-Bold'>O(A) COOPERADO(A), FIADORS(ES)</style> e ou <style isBold='true' pdfFontName='Courier-Bold'>INTERVENIENTE GARANTIDOR</style>, decorrentes deste Contrato/Termo de Adesão, a posse direta e indireta das aplicações, poupança programada e quotas-parte, cujos direitos são cedidos em garantia, serão detidas pela <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="37">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="400" height="37" uuid="82b1af7e-3f6e-4897-9620-0bc6bb1b41e2">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n <style isBold='true' pdfFontName='Courier-Bold'>4.</style> No caso do(a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> utilizar valor superior ao limite contratado, a <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> poderá excutir extrajudicialmente a garantia, sem prévia comunicação, resgatando o saldo das aplicações, poupanças programadas e/ou das quotas-partes, podendo praticar todos os atos necessários para evitar o acúmulo de encargos."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="27">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="400" height="27" uuid="3c22a46d-31ba-4910-8e18-29cbb88e5e6c">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n <style isBold='true' pdfFontName='Courier-Bold'>4.1.</style>    A <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> utilizará o produto do resgate das aplicações financeiras, poupança programada e quotas-parte para amortizar o excesso de uso do limite, bem como para se ressarcir das respectivas despesas incorridas."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="67">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="400" height="67" uuid="dbbd8c5e-2fe2-4277-b5cd-09a21b77a228">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n <style isBold='true' pdfFontName='Courier-Bold'>4.2.</style>    A <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> poderá, a seu critério, conceder ao(a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> prazo de carência para resgate automático da(s) aplicação(ões) financeira(s) dada(s) em garantia neste Contrato/Termo de Adesão. O prazo de carência, se houver, será descrito no item 2.13 acima. Durante tal prazo, a <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> verificará diariamente a existência de saldos e, a partir do momento em que a conta do(a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> apresentar saldo disponível, independentemente do valor, realizará o débito."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="57">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="400" height="57" uuid="83afd850-591d-48ed-85c2-334daa1636df">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n <style isBold='true' pdfFontName='Courier-Bold'>4.3.</style>    Não havendo saldo em aplicações, suficiente para pagamento do estouro da conta, a <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> poderá utilizar o valor correspondente de outras aplicações financeiras, inclusive poupança programada, para liquidação, total ou parcial, do excesso de utilização do limite de crédito, sem qualquer necessidade de comunicação prévia e, ainda, poderá realizar o débito dos respectivos valores em qualquer outra conta de titularidade do(a)<style isBold='true' pdfFontName='Courier-Bold'> COOPERADO(A)</style> e do(s) <style isBold='true' pdfFontName='Courier-Bold'>FIADORS(ES).</style>"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="30">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="400" height="30" uuid="aa129d8e-ef42-4e0c-9364-497fb0487013">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n E, por estarem assim justas e contratadas, firmam o presente Contrato/Termo de Adesão em tantas vias quantas forem necessárias, na presença das duas testemunhas abaixo identificadas. \n"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band>
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+		</band>
+		<band height="90">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<line>
+				<reportElement x="40" y="29" width="190" height="1" uuid="6c2d586f-8451-4388-a26a-e99c62113f6f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" mode="Opaque" x="240" y="46" width="190" height="17" uuid="37e0c5b9-0ca9-48b1-be53-3b6ecdef3307">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>" + $F{nmextcop} + "</style>"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" mode="Opaque" x="240" y="63" width="190" height="17" uuid="60188af0-a2c0-4e18-bd42-3e3086984e47">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdocnpj}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="240" y="29" width="190" height="1" uuid="99177c33-d551-40e5-ba19-606f46fd9e51">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+			</line>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" mode="Opaque" x="40" y="63" width="190" height="17" uuid="b383042e-f1c5-49d0-9d09-5e3689a38bc0">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrcpfcgc}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" mode="Opaque" x="40" y="46" width="190" height="17" uuid="7c51a6ad-462d-4710-a395-862d02a1617f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>" + $F{nmprimtl} + "</style>"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="30" width="190" height="17" uuid="fd40e0fc-36cc-4735-b6a4-6b63f3b12be7">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box topPadding="1" leftPadding="1" bottomPadding="1" rightPadding="1">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>COOPERADO</style>"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="240" y="30" width="190" height="17" uuid="c533df3f-8ec3-489c-b554-3a295a9ae123">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box topPadding="1" leftPadding="1" bottomPadding="1" rightPadding="1">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="98">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{qtd_avalistas}>0 || !$F{interveniente}.isEmpty()]]></printWhenExpression>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" mode="Opaque" x="40" y="29" width="190" height="17" uuid="4148498d-4998-4392-a03b-37a3fde75ec5">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{qtd_avalistas}>0]]></printWhenExpression>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cpfavali}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" mode="Opaque" x="40" y="12" width="190" height="17" uuid="f4062148-4c7c-4b03-9b13-cc04676b0bb8">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{qtd_avalistas}>0]]></printWhenExpression>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>" + $F{nmdavali} + "</style>"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" mode="Opaque" x="240" y="12" width="190" height="17" uuid="2ca07ed5-df01-4746-a228-abbd147bb7a6">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{qtd_avalistas} > 1]]></printWhenExpression>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>" + $F{nmdavali_1} + "</style>"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" mode="Opaque" x="240" y="29" width="190" height="17" uuid="f6c3720a-0a5d-46a1-9250-2fe8a50c42af">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{qtd_avalistas} > 1]]></printWhenExpression>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cpfavali_1}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="40" y="10" width="190" height="1" uuid="caeec3c5-eac3-434e-be5a-0d5c828d3f1b">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="241" y="10" width="190" height="1" uuid="c41b747d-1651-4b5c-9ef5-6cd3c15fe22a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{qtd_avalistas}>1]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" mode="Opaque" x="40" y="76" width="190" height="17" uuid="799e366f-8569-49b8-a834-2f52c77ae019">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[!$F{interveniente}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrcpfcgc_1}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" mode="Opaque" x="40" y="59" width="190" height="17" uuid="60ac62d2-4830-4ad4-bfc4-50cf472b7fc0">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[!$F{interveniente}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>" + $F{nminterv} + "</style>"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="40" y="57" width="190" height="1" uuid="604360e2-a8c2-45c5-a5e0-9b8081344d18">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[!$F{interveniente}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+			</line>
+		</band>
+		<band height="82">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="63" width="40" height="13" uuid="3ecfd444-9cf6-4f18-b54f-4508cba2173d">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["CPF:"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="48" width="40" height="12" uuid="bd3d3287-eba4-40a0-b9dd-49714b221903">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Nome:"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="0" width="120" height="17" uuid="7d146b31-92e1-41e7-9d7b-468932738e20">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box topPadding="1" leftPadding="1" bottomPadding="1" rightPadding="1">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["\n<style isBold='true' pdfFontName='Courier-Bold'>TESTEMUNHAS</style>"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="40" y="41" width="190" height="1" uuid="5d884cdd-af4c-41ba-aca4-c2c731fea72b">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="67" y="57" width="163" height="1" uuid="277a1219-5adf-4e74-8a8a-1708422fc099">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="67" y="73" width="163" height="1" uuid="a25db6a5-694c-498b-b788-aae440e3a8c1">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="241" y="41" width="190" height="1" uuid="7ce5563f-596d-440c-b70b-3ecfe34b5df1">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="241" y="63" width="40" height="13" uuid="1b621693-dbaf-4b18-945c-e6add9b4ddb1">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["CPF:"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="241" y="48" width="40" height="12" uuid="cfd82081-38ac-4966-a246-25ff9f7458c4">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Nome:"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="268" y="57" width="163" height="1" uuid="0758b321-4a4f-4624-9395-101b77ce2309">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="268" y="73" width="163" height="1" uuid="2f6fa52d-62bc-4afa-9ec3-21daa8ec771e">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+		</band>
+	</detail>
+</jasperReport>
