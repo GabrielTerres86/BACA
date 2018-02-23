@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 13/10/2017
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 23/02/2018
 
     Dados referente ao programa:
 
@@ -111,6 +111,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                  
                  13/10/2017 - Ajustes no crrl634 e crrl635 para apresentarmos os valores corretos
                               das tarifas (Lucas Ranghetti #743401)
+                              
+                 23/02/2018 - Ajustar crrl636 para contabilizar a receita liquida da mesma forma 
+                              que o 634 e 635 (Lucas Ranghetti #846567)
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -1900,9 +1903,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             -- Corrigir valores negativos
             IF vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vltotfat < 0 THEN
               vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vltotfat := 0;
-            END IF;
-            IF vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vlrecliq < 0 THEN
-              vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vlrecliq := 0;
             END IF;
             IF vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vltottar < 0 THEN
               vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vltottar := 0;
