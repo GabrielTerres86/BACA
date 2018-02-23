@@ -707,8 +707,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
         vr_cd_qtmesest := 'QTD_MES_HIST_ESTOUROS'; 
         vr_cd_qtmesemp := 'QTD_MES_HIST_EMPREST'; 
       ELSE -- caso contrário, será desconto de títulos
-        vr_cd_incomite := 'CONTIGENCIA_ESTEIRA_DESC'; 
-        vr_cd_contigen := 'ENVIA_EMAIL_COMITE_DESC'; 
+        vr_cd_incomite := 'ENVIA_EMAIL_COMITE_DESC'; 
+        vr_cd_contigen := 'CONTIGENCIA_ESTEIRA_DESC'; 
         vr_cd_anlautom := 'ANALISE_OBRIG_MOTOR_DESC'; 
         vr_cd_nmregmpf := 'REGRA_ANL_MOTOR_PF_DESC'; 
         vr_cd_nmregmpj := 'REGRA_ANL_MOTOR_PJ_DESC'; 
