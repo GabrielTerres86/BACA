@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 27/12/2017
+    Data    : Fevereiro/2011               ultima Atualizacao: 23/02/2018
 
     Dados referentes ao programa:
 
@@ -285,6 +285,9 @@
                            
               27/12/2017 - Ajuste transferencia para prejuizo permitir transferir a partir 180 dias 
                            para prejuizo. (Oscar)
+
+			  23/02/2018 - Alteração da procedure grava_efetivacao_proposta para gravar o risco 
+			               original (DSNIVORI) (Reginaldo - AMcom)
                            
 ............................................................................. */
 
@@ -3561,7 +3564,8 @@ PROCEDURE grava_efetivacao_proposta:
                                         crawepr.dsnivris +
                                         '" e o do contrato sera de "' +
                                         aux_dsnivris + '".'
-                         crawepr.dsnivris = aux_dsnivris.
+                         crawepr.dsnivris = aux_dsnivris
+						 crawepr.dsnivori = aux_dsnivris.
 
                END.
 
