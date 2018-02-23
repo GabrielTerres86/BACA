@@ -7182,13 +7182,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       CURSOR cr_consulta_limite_adp (pr_cdcooper IN NUMBER
                                    ,pr_nrdconta IN NUMBER) IS
       SELECT 2 Tipo
-           , CASE WHEN (adiantamento_deposito.saldo+lim.vllim < 0) THEN
-             (SELECT to_char(dat.dtmvtolt,'DD/MM/YYYY') FROM crapdat dat WHERE dat.cdcooper = pr_cdcooper) ELSE lim.dtlim END DATA
-           , CASE WHEN adiantamento_deposito.saldo+lim.vllim < 0 THEN
-              ass.nrdconta ELSE lim.cntlim END Contrato
+           , NVL(lim.dtlim
+                ,(SELECT to_char(dat.dtmvtolt,'DD/MM/YYYY') FROM crapdat dat WHERE dat.cdcooper = pr_cdcooper)) DATA
+           , NVL(lim.cntlim, ass.nrdconta) Contrato
            , (adiantamento_deposito.saldo*-1) saldo
-           /*, CASE WHEN adiantamento_deposito.saldo+lim.vllim < 0 THEN
-             'ADP' ELSE 'LIMITE' END TPADP*/
+           /*, CASE WHEN lim.vllim > 0 THEN
+             'LIMITE' ELSE 'ADP' END TPADP*/
         FROM crapass ass
            , (SELECT l.nrdconta
                    , l.cdcooper
