@@ -28,6 +28,7 @@
  * 015: [23/08/2017] - Lucas Reinert (Cecred)	: Removido campo senha; removido campo Operador nos ambientes que não são produção; alterado para 
  *												  efetuar login através do usuário do AD. (PRJ339)
  * 016: [23/02/2018] - Tiago (Cecred)           : Setar o foco no campo PA de Trabalho e carrega o PA assim que entrar na tela #851204
+ * 017: [23/02/2018] - Reinert (Cecred)         : Ajuste de segurança para validar operador informado.
  */
 ?> 
 <?php	
@@ -51,6 +52,10 @@
 	$mtccserver = isset($_POST["mtccserver"]) ? $_POST["mtccserver"] : "";
 	$cdoperad   = isset($_POST["des_login"]) ? $_POST["des_login"] : (isset($_POST["cdoperad"]) ? $_POST["cdoperad"] : "");
 
+	if (isset($_POST["des_login"])){
+		$_SESSION["des_login"] = $_POST["des_login"];
+	}
+	
 	// Se método de requisição for post, encaminha dados para BO
 	if (isset($_POST["cdoperad"]) && isset($_POST["cdpactra"])) {
 		/* Se ambiente conectado não for produção, utilizar operador informado */
@@ -60,6 +65,8 @@
 		$cdpactra = $_POST["cdpactra"];
 		
 		if (trim($cdoperad) == "" || trim($cdpactra) == "") {
+			$dsmsgerr = "Dados n&atilde;o informados corretamente.";
+		} elseif ($_SESSION["des_login"] != $cdoperad && $arr['DataServer'] == 'pkgprod'){
 			$dsmsgerr = "Dados n&atilde;o informados corretamente.";
 		} else {		
 			// Monta o xml de requisição
