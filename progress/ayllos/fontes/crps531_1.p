@@ -907,7 +907,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                                                                   " CodMsg em branco. Registro será desconsiderado." + " >> log/proc_batch.log").
                                 END.
                         ELSE
-                           IF aux_CodMsg = "STR0006R2" and aux_FinlddCli <> "15" and aux_CNPJ_CPFDeb<>"01027058000191" THEN
+                           IF aux_CodMsg = "STR0006R2" and (aux_FinlddCli <> "15" or aux_CNPJ_CPFDeb<>"01027058000191") THEN
                             DO:
                                 
                                 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
