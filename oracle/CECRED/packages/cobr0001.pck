@@ -3301,9 +3301,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
           vr_exc_erro EXCEPTION;
           vr_cdcritic crapcri.cdcritic%TYPE := 0;
           vr_dscritic   VARCHAR2(4000) := NULL;
-          vr_tab_erro GENE0001.typ_tab_erro;    
-          
+          vr_tab_erro GENE0001.typ_tab_erro;
     BEGIN
+          
+          BEGIN
             /* Parametros de saida da cobranca registrada */
             vr_vlrjuros := 0;
             vr_vlrmulta := 0;
