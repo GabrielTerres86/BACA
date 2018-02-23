@@ -1076,7 +1076,7 @@ function manterRotina(cddopcao) {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            showError('error', 'N&atilde;o foi Poss&iacute;vel Concluir a Requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
         },
         success: function(response) {
 
@@ -1096,7 +1096,7 @@ function manterRotina(cddopcao) {
 
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi Poss&iacute;vel Concluir a Requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
                 }
             } else {
                 try {
@@ -1104,7 +1104,7 @@ function manterRotina(cddopcao) {
 
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi Poss&iacute;vel Concluir a Requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
                 }
             }
 
@@ -1164,6 +1164,10 @@ function liberaCamposCecred() {
 }
 
 function back(){
+    if ($('#cddopcao', '#frmCab').val() != 'A') {
+        estadoInicial();
+        return false;
+    }
     if ($("#idctrlab", "#frmTab052").val() == 'CECRED') {
         if (validarCampos()) {
             liberaCamposCooper();
@@ -1210,88 +1214,142 @@ function confirmaOperacao() {
 
 function validarCampos() {
 
-    /* qtprzmin > qtprzmax  = Quantidade errada.*/
-    if( converteMoedaFloat($('#qtprzmin', '#frmTab052').val()) > converteMoedaFloat($('#qtprzmax', '#frmTab052').val())){
-        showError('error','O valor de vig&ecirc;ncia m&iacute;nima deve ser menor ou igual o valor de vig&ecirc;ncia m&aacute;xima','Alerta - Ayllos',"$(\'#qtprzmax\',\'#frmTab052\').focus();");
-        return false;
+    var isCECRED = ($("#idctrlab", "#frmTab052").val() == 'CECRED');
+
+    /* coop */
+    if(!isCECRED){
+        
+        /* qtprzmax > 360 = Quantidade errada.*/
+        if( converteMoedaFloat($('#qtprzmax', '#frmTab052').val()) > 360 ){
+            showError(
+                'error',
+                'O valo de vig&ecirc;ncia m&aacute;xima deve ser menor ou igual que 360','Alerta - Ayllos',
+                "$(\'#qtprzmax\',\'#frmTab052\').focus();");
+            return false;
+        }
+
+        /* cardbtit > 5 = A quantidade de dias de car&ecirc;ncia de debito de t&iacute;tulo deve ser menor ou igual a 5*/
+        if( converteMoedaFloat($('#cardbtit', '#frmTab052').val()) > 5 ){
+            showError('error','A quantidade de dias de car&ecirc;ncia de debito de t&iacute;tulo deve ser menor ou igual a 5','Alerta - Ayllos',"$(\'#cardbtit\',\'#frmTab052\').focus();");
+            return false;
+        }
+
+        /* pcdmulta > 2 = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
+        if( converteMoedaFloat($('#pcdmulta', '#frmTab052').val()) > 2 ){
+            showError('error','O percentual de multa nao deve ser superior a 2% (Exig&ecirc;ncia  Legal).','Alerta - Ayllos',"$(\'#pcdmulta\',\'#frmTab052\').focus();");
+            return false;
+        }
+
+        /* qtprzmin > qtprzmax  = Quantidade errada.*/
+        if( converteMoedaFloat($('#qtprzmin', '#frmTab052').val()) > converteMoedaFloat($('#qtprzmax', '#frmTab052').val())){
+            showError(
+                'error',
+                'O prazo m&iacute;nimo deve ser menor ou igual o prazo m&aacute;ximo',
+                'Alerta - Ayllos',"$(\'#qtprzmin\',\'#frmTab052\').focus();");
+            return false;
+        }
+
     }
 
-    /* qtprzmin_c > qtprzmax_c  = Quantidade errada.*/
-    if( converteMoedaFloat($('#qtprzmin_c', '#frmTab052').val()) > converteMoedaFloat($('#qtprzmax_c', '#frmTab052').val())){
-        showError('error','O valor de vig&ecirc;ncia m&iacute;nima da CECRED deve ser menor ou igual o valor de vig&ecirc;ncia m&aacute;xima da CECRED','Alerta - Ayllos',"$(\'#qtprzmax_c\',\'#frmTab052\').focus();");
-        return false;
-    }
-
-     /* qtprzmax > 360 = Quantidade errada.*/
-    if( converteMoedaFloat($('#qtprzmax', '#frmTab052').val()) > 360 ){
-        showError('error','O valo de vig&ecirc;ncia m&aacute;xima deve ser menor ou igual que 360','Alerta - Ayllos',"$(\'#qtprzmax\',\'#frmTab052\').focus();");
-        return false;
-    }
-
-     /* qtprzmax_c > 360 = Quantidade errada.*/
-    if( converteMoedaFloat($('#qtprzmax_c', '#frmTab052').val()) > 360 ){
-        showError('error','O valo de vig&ecirc;ncia m&aacute;xima da CECRED deve ser menor ou igual que 360','Alerta - Ayllos',"$(\'#qtprzmax_c\',\'#frmTab052\').focus();");
-        return false;
-    }
-
+    /* coop / cecred */
     /* vllimite > vllimite_c = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
     if( converteMoedaFloat($('#vllimite', '#frmTab052').val()) > converteMoedaFloat($('#vllimite_c', '#frmTab052').val())  ){
-        showError('error','O valor do limite m&aacute;ximo do contrato deve ser inferior ou igual ao estipulado pela CECRED','Alerta - Ayllos',"$(\'#vllimite\',\'#frmTab052\').focus();");
+        showError(
+            'error',
+        'O valor do limite m&aacute;ximo do contrato deve ser inferior ou igual ao estipulado pela CECRED',
+        'Alerta - Ayllos',
+         (isCECRED)? "$(\'#vllimite_c\',\'#frmTab052\').focus();" :"$(\'#vllimite\',\'#frmTab052\').focus();");
         return false;
     }
 
+    
     /* qtprzmax > qtprzmax_c = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
     if( converteMoedaFloat($('#qtprzmax', '#frmTab052').val()) > converteMoedaFloat($('#qtprzmax_c', '#frmTab052').val())  ){
-        showError('error','O prazo m&aacute;ximo deve ser inferior ou igual ao estipulado pela CECRED','Alerta - Ayllos',"$(\'#qtprzmax\',\'#frmTab052\').focus();");
-        return false;
-    }
-
-    /* cardbtit > 5 = A quantidade de dias de car&ecirc;ncia de debito de t&iacute;tulo deve ser menor ou igual a 5*/
-    if( converteMoedaFloat($('#cardbtit', '#frmTab052').val()) > 5 ){
-        showError('error','A quantidade de dias de car&ecirc;ncia de debito de t&iacute;tulo deve ser menor ou igual a 5','Alerta - Ayllos',"$(\'#cardbtit\',\'#frmTab052\').focus();");
+        showError(
+            'error',
+            'O prazo m&aacute;ximo deve ser inferior ou igual ao estipulado pela CECRED',
+            'Alerta - Ayllos',
+            (isCECRED)? "$(\'#qtprzmax_c\',\'#frmTab052\').focus();" :"$(\'#qtprzmax\',\'#frmTab052\').focus();");
         return false;
     }
 
     /* pctolera > pctolera_c = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
     if( converteMoedaFloat($('#pctolera', '#frmTab052').val()) > converteMoedaFloat($('#pctolera_c', '#frmTab052').val())  ){
-        showError('error','A toler&acirc;ncia para limite excedido deve ser inferior ou igual ao estipulado pela CECRED','Alerta - Ayllos',"$(\'#pctolera\',\'#frmTab052\').focus();");
-        return false;
-    }
-
-    /* pcdmulta > 2 = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
-    if( converteMoedaFloat($('#pcdmulta', '#frmTab052').val()) > 2 ){
-        showError('error','O percentual de multa nao deve ser superior a 2% (Exig&ecirc;ncia  Legal).','Alerta - Ayllos',"$(\'#pcdmulta\',\'#frmTab052\').focus();");
-        return false;
-    }
-
-        /* pcdmulta_c > 2 = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
-    if( converteMoedaFloat($('#pcdmulta_c', '#frmTab052').val()) > 2 ){
-        showError('error','O percentual de multa da CECRED nao deve ser superior a 2% (Exig&ecirc;ncia Legal).','Alerta - Ayllos',"$(\'#pcdmulta_c\',\'#frmTab052\').focus();");
+        showError(
+            'error',
+            'A toler&acirc;ncia para limite excedido deve ser inferior ou igual ao estipulado pela CECRED',
+            'Alerta - Ayllos',
+            (isCECRED)? "$(\'#pctolera_c\',\'#frmTab052\').focus();" :"$(\'#pctolera\',\'#frmTab052\').focus();");
         return false;
     }
 
     /* qtmxdene > qtmxdene_c o valor deve ser inferior ou igual ao estipulado pela CECRED */
     if( converteMoedaFloat($('#qtmxdene', '#frmTab052').val()) > converteMoedaFloat($('#qtmxdene_c', '#frmTab052').val())  ){
-        showError('error','A quantidade m&aacute;ximo de dias deve ser inferior ou igual ao estipulado pela CECRED','Alerta - Ayllos',"$(\'#qtmxdene\',\'#frmTab052\').focus();");
+        showError(
+            'error',
+            'A quantidade m&aacute;ximo de dias deve ser inferior ou igual ao estipulado pela CECRED',
+            'Alerta - Ayllos',
+           (isCECRED)? "$(\'#qtmxdene_c\',\'#frmTab052\').focus();" :"$(\'#qtmxdene\',\'#frmTab052\').focus();");
         return false;
     }
 
     /* qtmxtbib > qtmxtbib_c o valor deve ser inferior ou igual ao estipulado pela CECRED */
     if( converteMoedaFloat($('#qtmxtbib', '#frmTab052').val()) > converteMoedaFloat($('#qtmxtbib_c', '#frmTab052').val())  ){
-        showError('error','A quantidade m&aacute;xima de t&iacute;tulos por border&ocirc; IB deve ser inferior ou igual ao estipulado pela CECRED','Alerta - Ayllos',"$(\'#qtmxtbib\',\'#frmTab052\').focus();");
+        showError(
+            'error',
+            'A quantidade m&aacute;xima de t&iacute;tulos por border&ocirc; IB deve ser inferior ou igual ao estipulado pela CECRED',
+            'Alerta - Ayllos',
+            (isCECRED)? "$(\'#qtmxtbib_c\',\'#frmTab052\').focus();" :"$(\'#qtmxtbib\',\'#frmTab052\').focus();");
         return false;
     }
 
+    
     /* qtdiavig > qtdiavig_c o valor deve ser inferior ou igual ao estipulado pela CECRED */
     if( converteMoedaFloat($('#qtdiavig', '#frmTab052').val()) > converteMoedaFloat($('#qtdiavig_c', '#frmTab052').val())  ){
-        showError('error','O valor de Vig&ecirc;ncia M&iacute;nima deve ser inferior ou igual ao estipulado pela CECRED','Alerta - Ayllos',"$(\'#qtdiavig\',\'#frmTab052\').focus();");
+        showError(
+            'error',
+            'O valor de Vig&ecirc;ncia M&iacute;nima deve ser inferior ou igual ao estipulado pela CECRED',
+            'Alerta - Ayllos',
+            (isCECRED)? "$(\'#qtdiavig_c\',\'#frmTab052\').focus();" :"$(\'#qtdiavig\',\'#frmTab052\').focus();");
         return false;
     }
     
     /* qtmxtbay > qtmxtbay_c o valor deve ser inferior ou igual ao estipulado pela CECRED */
-    
     if( converteMoedaFloat($('#qtmxtbay', '#frmTab052').val()) > converteMoedaFloat($('#qtmxtbay_c', '#frmTab052').val())  ){
-        showError('error','A quantidade m&aacute;xima de t&iacute;tulos por border&ocirc; Ayllos deve ser inferior ou igual ao estipulado pela CECRED','Alerta - Ayllos',"$(\'#qtmxtbay\',\'#frmTab052\').focus();");
+        showError(
+            'error',
+            'A quantidade m&aacute;xima de t&iacute;tulos por border&ocirc; Ayllos deve ser inferior ou igual ao estipulado pela CECRED',
+            'Alerta - Ayllos',
+            (isCECRED)? "$(\'#qtmxtbay_c\',\'#frmTab052\').focus();" :"$(\'#qtmxtbay\',\'#frmTab052\').focus();");
+        return false;
+    }
+
+    /* cecred */
+    if(!isCECRED){return true;}
+
+    /* qtprzmin_c > qtprzmax_c  = Quantidade errada.*/
+    if( converteMoedaFloat($('#qtprzmin_c', '#frmTab052').val()) > converteMoedaFloat($('#qtprzmax_c', '#frmTab052').val())){
+        showError(
+            'error',
+            'O prazo m&iacute;nimo da CECRED deve ser menor ou igual ao prazo m&aacute;ximo da CECRED',
+            'Alerta - Ayllos',"$(\'#qtprzmax_c\',\'#frmTab052\').focus();");
+        return false;
+    }
+     
+
+     /* qtprzmax_c > 360 = Quantidade errada.*/
+    if( converteMoedaFloat($('#qtprzmax_c', '#frmTab052').val()) > 360 ){
+        showError(
+            'error',
+            'O valo de vig&ecirc;ncia m&aacute;xima da CECRED deve ser menor ou igual que 360',
+            'Alerta - Ayllos',"$(\'#qtprzmax_c\',\'#frmTab052\').focus();");
+        return false;
+    }
+
+    
+    /* pcdmulta_c > 2 = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
+    if( converteMoedaFloat($('#pcdmulta_c', '#frmTab052').val()) > 2 ){
+        showError('error','O percentual de multa da CECRED nao deve ser superior a 2% (Exig&ecirc;ncia Legal).','Alerta - Ayllos',"$(\'#pcdmulta_c\',\'#frmTab052\').focus();");
         return false;
     }
     
