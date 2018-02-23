@@ -5,15 +5,15 @@
     	Autor: Guilherme
 	    Data : Fevereiro/2008                     Última Alterção: 29/10/2012
 
-    	Objetivo  : Mostrar rotina de OCORRÊNCIAS da tela ATENDA
+    	Objetivo  : Mostrar rotina de OCORRENCIAS da tela ATENDA
 
-    	AlteraÃ§Ãµes: 13/07/2011 - Alterado para layout padrÃ£o (Rogerius - DB1). 	
+    	Alterações: 13/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
 		
-					29/10/2012 - InclusÃ£o da opção "Grupo Economico" (Adriano)
+					29/10/2012 - Inclusão da opção "Grupo Economico" (Adriano)
 
 					25/07/2016 - Adicionado classe (SetWindow) - necessaria para naveção com teclado - (Evandro - RKAM)
 
-					28/09/2016 - InclusÃ£o da opção "Acordos", Prj. 302 (Jean Michel)
+					28/09/2016 - Inclusão da opção "Acordos", Prj. 302 (Jean Michel)
 
 					24/01/2018 - Inclusão da opção "Riscos" (Reginaldo - AMcom)
 

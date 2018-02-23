@@ -1,21 +1,21 @@
 <?php
 /*!
  * FONTE        : principal.php
- * CRIA√á√ÉO      : Andr√© Socoloski - DB1
- * DATA CRIA√á√ÉO : 25/03/2011 
- * OBJETIVO     : Mostrar opcao Principal da rotina de presta√ß√µes da tela ATENDA 
+ * CRIA«√O      : AndrÈ Socoloski - DB1
+ * DATA CRIA«√O : 25/03/2011 
+ * OBJETIVO     : Mostrar opcao Principal da rotina de prestaÁıes da tela ATENDA 
  * 
   * --------------
- * ALTERA√á√ïES   : 
+ * ALTERA«’ES   : 
  * --------------
  * 001: [29/04/2011] Rogerius (DB1): adiciona no array de avalista e interveniente anuente os novos campos do endereco.  
  * 002: [24/08/2011] Marcelo L. Pereira (GATI): adicionado chamada para pagamento
  * 003: [29/08/2011] Marcelo L. Pereira (GATI): alterando listagem do extrato
- * 004: [16/09/2011] David G. Kistner (CECRED): incluir par√¢metro flgcondc no xml de requisi√ß√£o
- * 005: [01/03/2012] Tiago            (CECRED): incluir par√¢metro txmensal no xml de requisi√ß√£o 
+ * 004: [16/09/2011] David G. Kistner (CECRED): incluir par‚metro flgcondc no xml de requisiÁ„o
+ * 005: [01/03/2012] Tiago            (CECRED): incluir par‚metro txmensal no xml de requisiÁ„o 
  * 006: [13/04/2012] Gabriel		  (CECRED): Incluir campo dtlibera.
  * 007: [22/02/2013] Gabriel		  (CECRED): Incluir valor do desconto parcial (Gabriel).
- * 008: [07/05/2013] Lucas Lunelli	  (CECRED): Altera√ß√µes para Consultar Imagem de docmto. digitalizado.
+ * 008: [07/05/2013] Lucas Lunelli	  (CECRED): AlteraÁıes para Consultar Imagem de docmto. digitalizado.
  * 009: [24/05/2013] Lucas R.		  (CECRED): Incluir camada nas includes "../".
  * 010: [18/09/2013] Gabriel 		  (CECRED): Mandar como parametro para a BO a opcao (Gabriel)
  * 011: [19/02/2014] Jorge			  (CECRED): Ajuste para incluir paginacao dos resultados.
@@ -37,12 +37,14 @@
  * 027: [23/11/2015] Carlos Rafael Tanholi: Merge de implementacoes de Portabilidade.
  * 028: [04/01/2016] Heitor             (RKAM): Inclusao do tipo de risco na tela de prejuizo
  * 029:  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
- * 030: [15/12/2016] Tiago            (CECRED): Ajustes na hora da consulta das presta√ß√µes pois nao carrega dados corretamente(SD531549)
- * 031: [03/04/2017] - Jean             (MOut¬¥S): Chamado 643208 - tratamento de caracteres especiais dos campos descritivos, pois estava
+ * 030: [15/12/2016] Tiago            (CECRED): Ajustes na hora da consulta das prestaÁıes pois nao carrega dados corretamente(SD531549)
+ * 031: [03/04/2017] - Jean             (MOut¥S): Chamado 643208 - tratamento de caracteres especiais dos campos descritivos, pois estava
  *                                                causando travamento na tela
- * 032: [17/01/2018] IncluÌdo novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 032: [23/06/2017] Inclusao dos campos do produto Pos-Fixado. (Jaison/James - PRJ298)
+ * 032: [05/10/2017] - Diogo            (MoutS): Adicionado campo vliofcpl no formul·rio (Projeto 410 - RF 23)
+ * 033: [11/10/2017] - Heitor          (Mouts): Liberacao da melhoria 442
+ * 034: [17/01/2018] IncluÌdo novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  */
- 
 ?>
 
 <?
@@ -55,15 +57,15 @@
 
 	$cddopcao = ( isset($_POST['cddopcao']) && $_POST['cddopcao'] != '') ? $_POST['cddopcao'] : '@';
 	
-	// Verifica permiss√µes de acessa a tela
+	// Verifica permissıes de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos',"controlaOperacao('');",false);
 	}		
 	
-	// Verifica se o n√∫mero da conta e o titular foram informados
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par√¢metros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
+	// Verifica se o n˙mero da conta e o titular foram informados
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par‚metros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
 	
-	// Guardo os par√¢metos do POST em vari√°veis	
+	// Guardo os par‚metos do POST em vari·veis	
 	$nrdconta = $_POST['nrdconta'] == '' ? 0 : $_POST['nrdconta'];
 	$idseqttl = $_POST['idseqttl'] == '' ? 1 : $_POST['idseqttl'];	
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
@@ -81,11 +83,15 @@
 	$inpessoa_busca = (isset($_POST['inpessoa_busca'])) ? $_POST['inpessoa_busca'] : '';
 	$nrdconta_busca = (isset($_POST['nrdconta_busca'])) ? $_POST['nrdconta_busca'] : 0;
 	$nrcpfcgc_busca = (isset($_POST['nrcpfcgc_busca'])) ? $_POST['nrcpfcgc_busca'] : 0;
+	$nrparepr_pos = (isset($_POST['nrparepr_pos'])) ? $_POST['nrparepr_pos'] : 0;
+	$vlpagpar_pos = (isset($_POST['vlpagpar_pos'])) ? $_POST['vlpagpar_pos'] : 0;
+    $cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : 0;
+	$qttolatr = (isset($_POST['qttolatr'])) ? $_POST['qttolatr'] : 0;
+    $dtvencto = (isset($_POST['dtvencto'])) ? $_POST['dtvencto'] : '';
 	
-	
-	// Verifica se o n√∫mero da conta e o titular s√£o inteiros v√°lidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv√°lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inv√°lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	// Verifica se o n˙mero da conta e o titular s„o inteiros v·lidos
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv·lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inv·lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
 	
 	$dtiniper = isset($_POST["dtpesqui"]) && validaData($_POST["dtpesqui"]) ? $_POST["dtpesqui"] : "01/01/0001";
 	$dtfimper = $glbvars["dtmvtolt"];
@@ -108,7 +114,7 @@
 	
 	if (in_array($operacao,array('C_EXTRATO','TC','C_NOVA_PROP',''))) {
 	    if ($procedure ==  'obtem-dados-emprestimos' )  {
-            // Monta o xml de requisi√ß√£o
+            // Monta o xml de requisiÁ„o
             $xml  = "";
             $xml .= "<Root>";
             $xml .= "  <Dados>";
@@ -132,7 +138,7 @@
             $xmlResult = mensageria($xml, "ATENDA", "OBTDADEMPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
             
         } else {     
-            // Monta o xml de requisi√ß√£o
+            // Monta o xml de requisiÁ„o
             $xml  = "";
             $xml .= "<Root>";
             $xml .= "  <Cabecalho>";
@@ -261,6 +267,14 @@
 			arrayRegistros['vltotpag'] = '<? echo formataMoeda(getByTagName($registros,'vltotpag')); ?>';
 			arrayRegistros['qtimpctr'] = '<? echo getByTagName($registros,'qtimpctr'); ?>';
                         
+            // Se for Pos-Fixado
+            if (arrayRegistros['tpemprst'] == 2) {
+                arrayRegistros['tpatuidx'] = '<? echo getByTagName($registros,'tpatuidx'); ?>';
+                arrayRegistros['idcarenc'] = '<? echo getByTagName($registros,'idcarenc'); ?>';
+                arrayRegistros['dtcarenc'] = '<? echo getByTagName($registros,'dtcarenc'); ?>';
+                arrayRegistros['nrdiacar'] = '<? echo getByTagName($registros,'nrdiacar'); ?>';
+            }
+                        
                         
 			/* Daniel */
 			arrayRegistros['vlttmupr'] = '<? echo getByTagName($registros,'vlttmupr'); ?>';
@@ -269,6 +283,7 @@
 			arrayRegistros['vlpgjmpr'] = '<? echo getByTagName($registros,'vlpgjmpr'); ?>';
 			arrayRegistros['vlsdpjtl'] = '<? echo getByTagName($registros,'vlsdpjtl'); ?>';
 			
+			arrayRegistros['vliofcpl'] = '<? echo formataMoeda(getByTagName($registros,'vliofcpl')); ?>';
 			</script><?
 			
 		} else if (in_array($operacao,array('C_NOVA_PROP'))) {
@@ -365,6 +380,12 @@
 			arrayProposta['cdtpempr'] = '<? echo getByTagName($proposta,'cdtpempr'); ?>';
 			arrayProposta['dstpempr'] = '<? echo retiraCharEsp(getByTagName($proposta,'dstpempr')); ?>';
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
+
+            // Se for Pos-Fixado
+            if (arrayProposta['tpemprst'] == 2) {
+                arrayProposta['idcarenc'] = '<? echo getByTagName($proposta,'idcarenc'); ?>';
+                arrayProposta['dtcarenc'] = '<? echo getByTagName($proposta,'dtcarenc'); ?>';
+            }
 
 
 			var arrayRendimento = new Object();
@@ -614,6 +635,37 @@
 							
 			</script><?
 		
+		    // Monta o xml de requisiÁ„o
+            $xml  = "";
+            $xml .= "<Root>";
+            $xml .= "  <Dados>";
+            $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+            $xml .= "    <idseqttl>".$idseqttl."</idseqttl>";
+            $xml .= "    <dtcalcul></dtcalcul>";	
+            $xml .= "    <nrctremp>".$nrctremp."</nrctremp>";
+            $xml .= "    <cdprogra>".$glbvars["nmdatela"]."</cdprogra>";
+            $xml .= "    <flgcondc>1</flgcondc>";
+            $xml .= "	 <nrregist>".$nrregist."</nrregist>";
+            
+                      if($nrctremp == '0'){
+            $xml .= "    <nriniseq>".$nriniseq."</nriniseq>";
+                      }else{
+                          $xml .= "    <nriniseq>1</nriniseq>";
+                      }
+
+            $xml .= "  </Dados>";
+            $xml .= "</Root>";
+            
+            $xmlResult = mensageria($xml, "ATENDA", "OBTDADEMPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		    $xmlObjeto = getObjectXML($xmlResult);
+			$registros = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
+			
+			?><script type="text/javascript">
+			
+			arrayProposta['dsratpro'] = '<? echo getByTagName($registros,'dsratpro'); ?>';
+			arrayProposta['dsratatu'] = '<? echo getByTagName($registros,'dsratatu'); ?>';
+			
+			</script><?
 		}
 	}else if (in_array($operacao,array('C_PAG_PREST','C_DESCONTO'))){
 
@@ -667,6 +719,72 @@
 		
 		}
 		
+	} else if(in_array($operacao,array('C_PAG_PREST_POS'))) {
+
+		// Montar o xml de Requisicao
+		$xml  = "<Root>";
+		$xml .= "	<Dados>";
+		$xml .= "       <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+		$xml .= "		<dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
+		$xml .= "		<cdlcremp>".$cdlcremp."</cdlcremp>";
+		$xml .= "		<qttolatr>".$qttolatr."</qttolatr>";
+		$xml .= "	</Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "EMPR0011", "EMPR0011_BUSCA_PARC_POS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObject = getObjectXML($xmlResult);
+
+		//-----------------------------------------------------------------------------------------------
+		// Controle de Erros
+		//-----------------------------------------------------------------------------------------------
+
+		if(strtoupper($xmlObject->roottag->tags[0]->name == 'ERRO')){	
+			$msgErro = $xmlObject->roottag->tags[0]->cdata;
+			if($msgErro == null || $msgErro == ''){
+				$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	}
+			exibirErro('error',$msgErro,'Alerta - Ayllos',"controlaOperacao('')",false);
+		}
+
+        $registros = $xmlObject->roottag->tags[0]->tags;
+
+	} else if(in_array($operacao,array('C_DESCONTO_POS'))) {
+
+		// Montar o xml de Requisicao
+		$xml  = "<Root>";
+		$xml .= "	<Dados>";
+		$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+		$xml .= "		<dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";
+		$xml .= "       <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
+		$xml .= "		<nrparepr>".$nrparepr_pos."</nrparepr>";
+		$xml .= "		<dtvencto>".$dtvencto."</dtvencto>";
+		$xml .= "		<vlsdvpar>".$vlpagpar_pos."</vlsdvpar>";
+		$xml .= "	</Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "EMPR0011", "EMPR0011_BUSCA_DESC_POS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObject = getObjectXML($xmlResult);
+
+		//-----------------------------------------------------------------------------------------------
+		// Controle de Erros
+		//-----------------------------------------------------------------------------------------------
+
+		if(strtoupper($xmlObject->roottag->tags[0]->name == 'ERRO')){	
+			$msgErro = $xmlObject->roottag->tags[0]->cdata;
+			if($msgErro == null || $msgErro == ''){
+				$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			}
+			exibirErro('error',$msgErro,'Alerta - Ayllos',"controlaOperacao('')",false);
+		}
+
+        $registro = $xmlObject->roottag->tags[0];
+
+        echo "$('#vldespar_".$nrparepr_pos."','#divTabela').html('".getByTagName($registro->tags,'vldescto')."');";
 	}
 	else if(in_array($operacao,array('C_TRANSF_PREJU','C_DESFAZ_PREJU'))) {
 	
@@ -705,7 +823,7 @@
 		
 	}
 	else if(in_array($operacao,array('D_EFETIVA', 'TD_EFETIVA'))) {
-		// Monta o xml de requisi√ß√£o
+		// Monta o xml de requisiÁ„o
 		if($operacao == 'D_EFETIVA') {
 			$procedure = 'busca_desfazer_efetivacao_emprestimo';
 		}else if($operacao == 'TD_EFETIVA') {
@@ -788,9 +906,9 @@
 		$xml_dados = simplexml_load_string($xmlResult);
 
 		if ($xml_dados->instatus == '') {
-			$tpdrisco = 'N√£o se aplica';
+			$tpdrisco = 'N„o se aplica';
 		} elseif ($xml_dados->instatus == '1') {
-			$tpdrisco = 'Risco de Cr√©dito';
+			$tpdrisco = 'Risco de CrÈdito';
 		} else {
 			$tpdrisco = 'Risco Operacional';
 		}
@@ -832,6 +950,8 @@
 		include('form_hipoteca.php');
 	}else if (in_array($operacao,array('C_PAG_PREST'))){
 		include('tabela_pagamento.php');
+	}else if (in_array($operacao,array('C_PAG_PREST_POS'))){
+		include('tabela_pagamento_pos.php');
 	} else if (in_array($operacao,array('C_MICRO_PERG'))) {
 		include ('questionario.php');
 	} else if (in_array($operacao,array('PORTAB_CRED_C'))) {
@@ -856,7 +976,7 @@
 		
 	}
 	
-	if (!(in_array($operacao,array('C_DESCONTO','C_TRANSF_PREJU','C_DESFAZ_PREJU','C_LIQ_MESMO_DIA')))) {
+	if (!(in_array($operacao,array('C_DESCONTO','C_DESCONTO_POS','C_TRANSF_PREJU','C_DESFAZ_PREJU','C_LIQ_MESMO_DIA')))) {
 ?>	
 	<script type="text/javascript">
 		var operacao = '<? echo $operacao; ?>';
