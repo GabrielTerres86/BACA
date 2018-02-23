@@ -123,7 +123,8 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,flglista BOOLEAN DEFAULT TRUE
       ,nranomes INTEGER
       ,cdorigem VARCHAR2(100)
-      ,qtdiacal craplem.qtdiacal%TYPE);
+      ,qtdiacal craplem.qtdiacal%TYPE
+      ,vltaxprd craplem.vltaxprd%TYPE);
     TYPE typ_tab_extrato_epr IS TABLE OF typ_reg_extrato_epr INDEX BY PLS_INTEGER;
     
     --Tipo de Registro para Extrato de Emprestimo Auxiliar (b1wgen0112tt.i/tt-extrato_epr_aux) 
@@ -147,7 +148,8 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,dsextrat VARCHAR2(4000)
       ,flglista BOOLEAN DEFAULT TRUE
       ,cdorigem VARCHAR2(100)
-      ,qtdiacal craplem.qtdiacal%TYPE);  
+      ,qtdiacal craplem.qtdiacal%TYPE
+      ,vltaxprd craplem.vltaxprd%TYPE);  
     TYPE typ_tab_extrato_epr_aux IS TABLE OF typ_reg_extrato_epr_aux INDEX BY PLS_INTEGER;
 
     --Tipo de Tabela para armazenar decimais  
@@ -771,19 +773,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         01/03/2017 - Adicionar origem ADIOFJUROS para podermos debitar estes agendamentos
                      na procedure pc_consulta_lancamento (Lucas Ranghetti M338.1) 
 					 
-        22/03/2017 - Adicionado tratamento na pc_consulta_lancamento para listar
-                     reacarga de celular. (PRJ321 Reinert)                   
+		22/03/2017 - Adicionado tratamento na pc_consulta_lancamento para listar
+				     reacarga de celular. (PRJ321 Reinert)                   
 
         05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa
                      e nrcpfcgc para não consultar novamente o associado nos packages 
                      apli0001 e imut0001 (Carlos)
 
         26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                     crapass, crapttl, crapjur 
-                     (Adriano - P339).
-                   
+			         crapass, crapttl, crapjur 
+					(Adriano - P339).
+                     
         11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
-        
+      
         28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40 pois estava estourando (Tiago #724513).      
                    
         17/01/2018 - Ajustar chamada da rotina TARI0001.pc_carrega_dados_tar_vigente
@@ -1093,47 +1095,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       
       /** Lista apenas para impres.p atenda/extrato exceto crps029.p **/
       
-      --Data referencia anterior 30 dias
-      IF pr_dtrefere < ( rw_crapdat.dtmvtocd - 30 ) THEN /* Periodo */
-        --Se terminal for TAA
-        IF pr_nrterfin <> 0 THEN /* TAA */ 
-          vr_tipotari := 9;
-          --Se for pessoa fisica
-          IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-            vr_cdbattar:= 'EXTPETAAPF';
+        --Data referencia anterior 30 dias
+        IF pr_dtrefere < ( rw_crapdat.dtmvtocd - 30 ) THEN /* Periodo */
+          --Se terminal for TAA
+          IF pr_nrterfin <> 0 THEN /* TAA */ 
+            vr_tipotari := 9;
+            --Se for pessoa fisica
+            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
+              vr_cdbattar:= 'EXTPETAAPF';
+            ELSE
+              vr_cdbattar:= 'EXTPETAAPJ';
+            END IF;
           ELSE
-            vr_cdbattar:= 'EXTPETAAPJ';
+            vr_tipotari := 8;
+            --Se for pessoa fisica
+            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
+              vr_cdbattar:= 'EXTPEPREPF';
+            ELSE
+              vr_cdbattar:= 'EXTPEPREPJ';
+            END IF;
           END IF;
         ELSE
-          vr_tipotari := 8;
-          --Se for pessoa fisica
-          IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-            vr_cdbattar:= 'EXTPEPREPF';
+          --Se terminal for TAA
+          IF pr_nrterfin <> 0 THEN /* TAA */ 
+            vr_tipotari := 7;
+            --Se for pessoa fisica
+            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
+              vr_cdbattar:= 'EXTMETAAPF';
+            ELSE
+              vr_cdbattar:= 'EXTMETAAPJ';
+            END IF;
           ELSE
-            vr_cdbattar:= 'EXTPEPREPJ';
+            vr_tipotari := 6;
+            --Se for pessoa fisica
+            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
+              vr_cdbattar:= 'EXTMEPREPF';
+            ELSE
+              vr_cdbattar:= 'EXTMEPREPJ';
+            END IF;
           END IF;
         END IF;
-      ELSE
-        --Se terminal for TAA
-        IF pr_nrterfin <> 0 THEN /* TAA */ 
-          vr_tipotari := 7;
-          --Se for pessoa fisica
-          IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-            vr_cdbattar:= 'EXTMETAAPF';
-          ELSE
-            vr_cdbattar:= 'EXTMETAAPJ';
-          END IF;
-        ELSE
-          vr_tipotari := 6;
-          --Se for pessoa fisica
-          IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-            vr_cdbattar:= 'EXTMEPREPF';
-          ELSE
-            vr_cdbattar:= 'EXTMEPREPJ';
-          END IF;
-        END IF;
-      END IF;         
-      
+       
       --Cobrar Tarifa
       IF pr_flgtarif THEN
         
@@ -2926,6 +2928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplem.txjurepr
               ,craplem.nrseqava
               ,craplem.qtdiacal
+              ,craplem.vltaxprd
             --  ,DECODE(craplem.cdorigem,1,'Ayllos',2,'Caixa',3,'Internet',4,'Cash',5,'Ayllos WEB',6,'URA',7,'Batch',8,'Mensageria',' ') cdorigem
               ,DECODE(craplem.cdorigem,1,'Debito CC',2,'Caixa',3,'Internet',4,'Cash',5,'Debito CC',6,'URA',7,'Debito CC',8,'Mensageria',' ') cdorigem
               ,count(*) over (partition by  craplem.cdcooper,craplem.nrdconta,craplem.dtmvtolt) nrtotdat
@@ -3037,7 +3040,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           END LOOP;  
         END IF;                             
         /* Desprezando historicos de concessao de credito com juros a apropriar e lancamendo para desconto */                                   
-        IF rw_craplem.cdhistor IN (1032,1033,1034,1035,1048,1049) THEN
+        IF rw_craplem.cdhistor IN (1032,1033,1034,1035,1048,1049,2566,2567) THEN
           --Proximo registro
           CONTINUE;
         END IF;
@@ -3063,7 +3066,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_extrato_epr(vr_index).qtpresta:= 0;
         END IF;    
         /*Historicos que nao vao compor o saldo, mas vao aparecer no relatorio*/
-        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711) THEN 
+        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567) THEN 
           --marcar para nao mostrar saldo
           pr_extrato_epr(vr_index).flgsaldo:= FALSE;                           
         END IF;
@@ -3099,7 +3102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1619; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1620; /* Aval */ 
+                 vr_cdhistor := 1620; /* Aval */                 
             ELSE     
                  vr_cdhistor := 1078; /* Devedor */
             END CASE;
@@ -3126,7 +3129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1540; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1618; /* Aval */ 
+                 vr_cdhistor := 1618; /* Aval */                 
             ELSE     
                  vr_cdhistor := 1076; /* Devedor */
             END CASE;
@@ -3197,6 +3200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_extrato_epr(vr_index).txjurepr:= rw_craplem.txjurepr;
         pr_extrato_epr(vr_index).tpemprst:= rw_crapepr.tpemprst;
         pr_extrato_epr(vr_index).qtdiacal:= rw_craplem.qtdiacal;
+        pr_extrato_epr(vr_index).vltaxprd:= rw_craplem.vltaxprd;        
         
         IF rw_craplem.cdhistor IN(1039,1044,1045,1057 /* PP */
                                  ,2331,2330,2336,2335 /* POS */) THEN
@@ -9421,7 +9425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
     vr_vlmoefix     NUMBER(35,8);
     vr_vlmoefi1     NUMBER(35,8);
     vr_nmcidade     VARCHAR2(100);
-	  vr_nmsegntl     crapttl.nmextttl%TYPE;
+	vr_nmsegntl     crapttl.nmextttl%TYPE;
 
     vr_ant_vlirfcot NUMBER;
     vr_ant_vlprepag NUMBER;
@@ -11317,7 +11321,7 @@ END pc_consulta_ir_pj_trim;
       vr_rel_nrtelcop VARCHAR2(100);
       vr_ant_dtrefere DATE;
       vr_sol_dtrefere DATE;
-	    vr_nmsegntl     crapttl.nmextttl%TYPE;
+	  vr_nmsegntl     crapttl.nmextttl%TYPE;
 
 
       vr_dsdomes1     VARCHAR(10);
@@ -11567,8 +11571,8 @@ END pc_consulta_ir_pj_trim;
              vr_rel_dsendcop##2:= gene0002.fn_mask_cep(rw_crapcop.nrcepend)||' - '|| rw_crapcop.nmcidade||
                                   ' - '||rw_crapcop.cdufdcop;
           ELSE
-             vr_rel_dsendcop##2:= gene0002.fn_mask_cep(rw_crapcop.nrcepend)||' - '|| rw_crapcop.nmcidade||
-                                  ' - '||rw_crapcop.cdufdcop ||'  - TELEFONE: '||rw_crapcop.nrtelvoz;
+          vr_rel_dsendcop##2:= gene0002.fn_mask_cep(rw_crapcop.nrcepend)||' - '|| rw_crapcop.nmcidade||
+                               ' - '||rw_crapcop.cdufdcop ||'  - TELEFONE: '||rw_crapcop.nrtelvoz;
           END IF;
           vr_rel_nrtelcop:= rw_crapcop.nrtelvoz;
           vr_rel_dscpmfpg:= vr_tab_extrato_ir(vr_index).dscpmfpg;
@@ -11651,7 +11655,7 @@ END pc_consulta_ir_pj_trim;
              vr_index_retenc:= vr_tab_retencao_ir.NEXT(vr_index_retenc);
           END LOOP;
           --Junta todos os textos para colocar no XML
-          vr_dstexto:= vr_dstexto||vr_texto_retenc||'</retencoes></conta>';          
+           vr_dstexto:= vr_dstexto||vr_texto_retenc||'</retencoes></conta>';
           
           --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
@@ -12898,7 +12902,7 @@ END pc_consulta_ir_pj_trim;
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_erro => pr_tab_erro);
       END;
-    END pc_imprime_extrato;  
+    END pc_imprime_extrato;
 
     -- Subrotina para Imprimir Extrato Emprestimo
     PROCEDURE pc_extrato_pos_fixado(pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
@@ -13060,6 +13064,7 @@ END pc_consulta_ir_pj_trim;
         vr_vlpraven  NUMBER(25,2);
         vr_vlmtapar  NUMBER(25,2);
         vr_vlmrapar  NUMBER(25,2);        
+        vr_vliofcpl  NUMBER(25,2);
 
         --Variaveis de Erro
         vr_cdcritic INTEGER;
@@ -13239,9 +13244,9 @@ END pc_consulta_ir_pj_trim;
         --Verificar Quantidade de Parcelas para gerar linhas 
         vr_contalin:= ROUND(vr_tab_parcela_epr.COUNT / 2);
         --Se for numero impar de parcelas aumenta em 1
-        IF MOD(rw_crapepr.qtpreemp,2) <> 0 THEN
+     /*   IF MOD(rw_crapepr.qtpreemp,2) <> 0 THEN
           vr_contalin:= vr_contalin+1;
-        END IF;
+        END IF;*/
         --Percorrer todas as parcelas
         FOR vr_contaesq IN 1..vr_contalin LOOP
           --Verificar qual a parcela da direita
@@ -13363,6 +13368,7 @@ END pc_consulta_ir_pj_trim;
             pr_tab_extrato_epr_aux(vr_index_epr_aux).flglista:= vr_tab_extrato_epr_novo(vr_index_novo).flglista;
             pr_tab_extrato_epr_aux(vr_index_epr_aux).cdorigem:= vr_tab_extrato_epr_novo(vr_index_novo).cdorigem;
             pr_tab_extrato_epr_aux(vr_index_epr_aux).qtdiacal:= vr_tab_extrato_epr_novo(vr_index_novo).qtdiacal;
+            pr_tab_extrato_epr_aux(vr_index_epr_aux).vltaxprd:= vr_tab_extrato_epr_novo(vr_index_novo).vltaxprd;            
 
             --Primeira Ocorrencia
             IF vr_flgloop = FALSE THEN
@@ -13413,13 +13419,12 @@ END pc_consulta_ir_pj_trim;
                                                ,pr_dtmvtoan => TO_CHAR(pr_dtmvtoan,'DD/MM/RRRR')
                                                ,pr_nrdconta => pr_nrdconta
                                                ,pr_nrctremp => pr_nrctremp
-                                               ,pr_cdlcremp => rw_crapepr.cdlcremp
-                                               ,pr_qttolatr => rw_crapepr.qttolatr
                                                ,pr_vlsdeved => vr_vlsdeved
                                                ,pr_vlprvenc => vr_vlprvenc
                                                ,pr_vlpraven => vr_vlpraven
                                                ,pr_vlmtapar => vr_vlmtapar
                                                ,pr_vlmrapar => vr_vlmrapar
+                                               ,pr_vliofcpl => vr_vliofcpl
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
                                 
@@ -13452,18 +13457,8 @@ END pc_consulta_ir_pj_trim;
                 END IF;
 
                 vr_dsvltaxa := '';
-                -- Lancamento de Juros de Correcao
-                IF pr_tab_extrato_epr_aux(vr_index_epr_aux).cdhistor IN (2344,2345) THEN
-                  
-                  OPEN cr_crappep_taxa (pr_cdcooper => pr_cdcooper
-                                       ,pr_nrdconta => pr_nrdconta
-                                       ,pr_nrctremp => pr_nrctremp
-                                       ,pr_nrparepr => pr_tab_extrato_epr_aux(vr_index_epr_aux).nrparepr);
-                  FETCH cr_crappep_taxa INTO rw_crappep_taxa;
-                  IF cr_crappep_taxa%FOUND THEN
-                    vr_dsvltaxa := to_char(rw_crappep_taxa.vltaxatu,'fm990d00')||'%';  
-                  END IF;                    
-                  CLOSE cr_crappep_taxa;
+                IF pr_tab_extrato_epr_aux(vr_index_epr_aux).vltaxprd > 0 THEN
+                  vr_dsvltaxa := to_char(pr_tab_extrato_epr_aux(vr_index_epr_aux).vltaxprd * 100,'fm999g999g990d00')||'%';
                 END IF;                
 
                 --Montar Texto
@@ -13964,7 +13959,7 @@ END pc_consulta_ir_pj_trim;
 
                 --Levantar Excecao
                 RAISE vr_exc_sair;
-               END IF;            
+               END IF;
 
             ELSIF vr_tab_dados_epr(vr_index).tpemprst = 2 THEN -- POS-FIXADO
 
@@ -13997,7 +13992,7 @@ END pc_consulta_ir_pj_trim;
                 --se tem erro na tabela 
                 IF pr_tab_erro.COUNT > 0 THEN
                   vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic;
-            ELSE
+                ELSE
                   vr_dscritic:= 'Nao foi possivel carregar o extrato.';
                 END IF;  
                 --Colocar todo o texto na variavel auxiliar

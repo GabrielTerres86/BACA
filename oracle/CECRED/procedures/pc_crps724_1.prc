@@ -72,6 +72,9 @@ BEGIN
             ,crappep.vltaxatu
             ,crapass.vllimcre
             ,crawepr.dtdpagto
+            ,crapepr.dtrefcor
+            ,crapepr.idfiniof
+            ,crapepr.vlemprst
             ,ROW_NUMBER() OVER (PARTITION BY crapepr.nrdconta, crapepr.nrctremp ORDER BY crapepr.cdcooper, crapepr.nrdconta, crappep.nrctremp, crappep.nrparepr) AS numconta
             ,COUNT(1) OVER (PARTITION BY crapepr.nrdconta, crapepr.nrctremp) qtdconta
         FROM crapepr
@@ -320,7 +323,8 @@ BEGIN
 
         -- Efetua o pagamento da parcela em Dia
         EMPR0011.pc_efetua_pagamento_em_dia(pr_cdcooper => pr_cdcooper
-                                           ,pr_dtcalcul => rw_crapdat.dtmvtolt
+                                           ,pr_dtmvtoan => rw_crapdat.dtmvtoan
+                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                            ,pr_cdagenci => rw_epr_pep.cdagenci
                                            ,pr_cdpactra => rw_epr_pep.cdagenci
                                            ,pr_cdoperad => 1
@@ -350,6 +354,7 @@ BEGIN
                                            ,pr_vljura60 => rw_epr_pep.vljura60
                                            ,pr_ehmensal => vr_flmensal
                                            ,pr_vlsldisp => vr_vlsldisp
+                                           ,pr_dtrefcor => rw_epr_pep.dtrefcor
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
         -- Se houve erro
@@ -434,6 +439,7 @@ BEGIN
                                               ,pr_qttolatr => rw_epr_pep.qttolatr
                                               ,pr_floperac => vr_floperac
                                               ,pr_nrseqava => 0
+                                              ,pr_cdlcremp => rw_epr_pep.cdlcremp
                                               ,pr_nrparepr => rw_epr_pep.nrparepr
                                               ,pr_dtvencto => rw_epr_pep.dtvencto
                                               ,pr_dtultpag => rw_epr_pep.dtultpag
@@ -446,6 +452,8 @@ BEGIN
                                               ,pr_perjurmo => vr_tab_craplcr(rw_epr_pep.cdlcremp).perjurmo
                                               ,pr_percmult => vr_percmult
                                               ,pr_txmensal => rw_epr_pep.txmensal
+                                              ,pr_idfiniof => rw_epr_pep.idfiniof
+                                              ,pr_vlemprst => rw_epr_pep.vlemprst
                                               ,pr_cdcritic => vr_cdcritic
                                               ,pr_dscritic => vr_dscritic);
         -- Se houve erro
@@ -489,7 +497,8 @@ BEGIN
           vr_anorefju := rw_epr_pep.anorefju;          
           -- Efetua o lancamento de Juros Remuneratorio
           EMPR0011.pc_efetua_lcto_juros_remun(pr_cdcooper => pr_cdcooper
-                                             ,pr_dtcalcul => rw_crapdat.dtmvtolt
+                                             ,pr_dtmvtoan => rw_crapdat.dtmvtoan
+                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                              ,pr_cdagenci => rw_epr_pep.cdagenci
                                              ,pr_cdpactra => rw_epr_pep.cdagenci
                                              ,pr_cdoperad => 1
@@ -502,6 +511,7 @@ BEGIN
                                              ,pr_dtrefjur => rw_epr_pep.dtrefjur
                                              ,pr_floperac => vr_floperac
                                              ,pr_dtvencto => vr_dtvencto_niv
+                                             ,pr_insitpar => 1
                                              ,pr_vlsprojt => rw_epr_pep.vlsprojt
                                              ,pr_ehmensal => vr_flmensal
                                              ,pr_txdiaria => vr_txdiaria
@@ -519,7 +529,8 @@ BEGIN
 
           -- Efetuar o lancameto de Juros de Correcao
           EMPR0011.pc_efetua_lcto_juros_correc (pr_cdcooper => pr_cdcooper
-                                               ,pr_dtcalcul => rw_crapdat.dtmvtolt
+                                               ,pr_dtmvtoan => rw_crapdat.dtmvtoan
+                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                ,pr_cdagenci => rw_epr_pep.cdagenci
                                                ,pr_cdpactra => rw_epr_pep.cdagenci
                                                ,pr_cdoperad => 1
@@ -529,14 +540,19 @@ BEGIN
                                                ,pr_nrctremp => rw_epr_pep.nrctremp
                                                ,pr_dtlibera => rw_epr_pep.dtmvtolt
                                                ,pr_dtrefjur => rw_epr_pep.dtrefjur
+                                               ,pr_diarefju => rw_epr_pep.diarefju
+                                               ,pr_mesrefju => rw_epr_pep.mesrefju
+                                               ,pr_anorefju => rw_epr_pep.anorefju
                                                ,pr_vlrdtaxa => rw_epr_pep.vltaxatu
                                                ,pr_txjuremp => rw_epr_pep.txjuremp
                                                ,pr_vlpreemp => rw_epr_pep.vlpreemp
                                                ,pr_dtvencto => vr_dtvencto_niv
+                                               ,pr_insitpar => 1
                                                ,pr_vlsprojt => rw_epr_pep.vlsprojt
                                                ,pr_ehmensal => vr_flmensal
                                                ,pr_floperac => vr_floperac
                                                ,pr_nrparepr => rw_epr_pep.nrparepr
+                                               ,pr_dtrefcor => rw_epr_pep.dtrefcor
                                                ,pr_vljurcor => vr_vljurcor
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
@@ -620,7 +636,7 @@ BEGIN
 
     -- Grava os dados restantes conforme PL Table
     pc_grava_dados(pr_cdrestart => vr_ultconta);
-
+    
     -- Finaliza agencia no controle do batch
     GENE0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole
                                        ,pr_cdcritic   => vr_cdcritic

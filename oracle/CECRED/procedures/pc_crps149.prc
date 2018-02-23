@@ -1,15 +1,15 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Coop conectada
-                                      ,pr_flgresta IN PLS_INTEGER            --> Indicador para utilização de restart
-                                      ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
-                                      ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
-                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
-                                      ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
+                                             ,pr_flgresta IN PLS_INTEGER            --> Indicador para utilização de restart
+                                             ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
+                                             ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
+                                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
+                                             ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
   /* ............................................................................
    Programa: PC_CRPS149 (Antigo Fontes/crps149.p)
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/96.                       Ultima atualizacao: 10/05/2017
+   Data    : Marco/96.                       Ultima atualizacao: 04/02/2018
 
    Dados referentes ao programa:
 
@@ -229,9 +229,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                01/04/2017 - Ajuste no calculo do IOF. (James)             
                
                07/04/2017 - Ajuste no calculo do IOF para empréstimos do tipo TR ( Renato Darosci )
-
+               
                10/05/2017 - Inclusao do produto Pos-Fixado. Passagem do codigo da Finalidade. 
                             (Jaison/James - PRJ298)
+
+	           04/02/2018 - Ajuste na procedure para buscar o saldo atualizado para o produto pos-fixado. (James)
 
   ............................................................................. */
   
@@ -421,6 +423,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.dtdpagto
           ,epr.qttolatr
           ,crawepr.txmensal
+          ,crawepr.dtdpagto dtprivencto
+          ,epr.vlsprojt
+          ,epr.vlemprst
           ,epr.ROWID
        FROM crapepr epr 
        JOIN crawepr
@@ -614,7 +619,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_vldmulta NUMBER;
   vr_cdhismor INTEGER;
   vr_vljumora NUMBER;
-
+  
   vr_tab_price EMPR0011.typ_tab_price;
 
   -- Calculo Conta Integração
@@ -973,7 +978,7 @@ BEGIN
     -- Apenas fechar o cursor
     CLOSE BTCH0001.cr_crapdat;
   END IF;
-  
+
   -- Validações iniciais do programa
   BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                            ,pr_flgbatch => 1
@@ -1052,7 +1057,7 @@ BEGIN
                               ,pr_cdacesso => 'DIADOPAGTO') LOOP
     vr_tab_diadopagto(rw_craptab.tpregist):= rw_craptab.dstextab;
   END LOOP;  
-
+        
   -- Carregar tabela de carencia
   FOR rw_carencia IN cr_carencia LOOP
     vr_tab_carencia(rw_carencia.idcarencia):= rw_carencia.qtddias;
@@ -1869,8 +1874,8 @@ BEGIN
     vr_tab_nrctrliq(8):=  NVL(rw_crawepr.nrctrliq##8,0);
     vr_tab_nrctrliq(9):=  NVL(rw_crawepr.nrctrliq##9,0);
     vr_tab_nrctrliq(10):= NVL(rw_crawepr.nrctrliq##10,0);
-
-        
+    
+    
     FOR vr_contador IN 1..10 LOOP
       
       IF vr_tab_nrctrliq(vr_contador) > 0 THEN
@@ -1941,7 +1946,7 @@ BEGIN
         vr_inliquid := rw_crapepr.inliquid;
         vr_qtprepag := rw_crapepr.qtprepag;
         vr_dtcalcul := NULL;
-
+        
         IF rw_crapepr.tpemprst = 0 THEN  -- Somente Emprestimo Antigo
           IF vr_tab_inusatab  THEN
             
@@ -2093,7 +2098,10 @@ BEGIN
                                           ,pr_nrctremp => rw_crapepr.nrctremp
                                           ,pr_dtefetiv => rw_crapepr.dtmvtolt
                                           ,pr_cdlcremp => rw_crapepr.cdlcremp
+                                          ,pr_vlemprst => rw_crapepr.vlemprst
                                           ,pr_txmensal => rw_crapepr.txmensal
+                                          ,pr_dtdpagto => rw_crapepr.dtprivencto
+                                          ,pr_vlsprojt => rw_crapepr.vlsprojt
                                           ,pr_qttolatr => rw_crapepr.qttolatr
                                           ,pr_tab_parcelas => vr_tab_parcelas_pos
                                           ,pr_cdcritic => vr_cdcritic
@@ -2108,7 +2116,7 @@ BEGIN
                                                           ' - Contrato = ' || TO_CHAR(rw_crapepr.nrctremp, 'FM99G999G999'));
             RAISE vr_exc_saida;
           END IF;
-
+          
           -- Carregar as variveis de retorno
           vr_index_pos := vr_tab_parcelas_pos.FIRST;
           WHILE vr_index_pos IS NOT NULL LOOP
@@ -2238,8 +2246,8 @@ BEGIN
                       , craplot.nrseqdig
                    INTO rw_craplot.qtinfoln
                       , rw_craplot.qtcompln
-                      , rw_craplot.nrseqdig;
-                   
+                      , rw_craplot.nrseqdig;                   
+              
               
             EXCEPTION
               WHEN OTHERS THEN
@@ -2613,7 +2621,7 @@ BEGIN
                 END;      
               END LOOP; --rw_crapavs
             END IF; --nvl(vr_vlavsdeb,0) > 0
-          END IF; --rw_crapepr.flgpagto = 1
+          END IF; --rw_crapepr.flgpagto = 1             
 
         ELSIF rw_crapepr.tpemprst = 1 THEN  -- Price Pre-Fixado
 
@@ -2727,7 +2735,6 @@ BEGIN
           END LOOP;
 
         END IF;
-
       END IF; -- Fim vr_tab_crawepr(vr_contador).nrctrliq > 0
     END LOOP; -- vr_contador 1..10
     
@@ -2864,7 +2871,7 @@ BEGIN
       IF NVL(vr_totliqui,0) > 0 AND rw_crabepr.tpemprst = 0 THEN
         vr_vlemprst := GREATEST(rw_crabepr.vlemprst - vr_totliqui, 0);
       END IF;
-
+    
       vr_qtdias_carencia := 0; -- Inicializa
 
       -- Se for Pos-Fixado e existir carencia
@@ -2872,23 +2879,23 @@ BEGIN
         vr_qtdias_carencia := vr_tab_carencia(rw_crawepr.idcarenc);
       END IF;
     
-      EMPR0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
-                                 ,pr_nrdconta        => rw_crabepr.nrdconta
-                                 ,pr_dtmvtolt        => rw_crapdat.dtmvtolt
-                                 ,pr_inpessoa        => rw_crapass.inpessoa
-                                 ,pr_cdlcremp        => rw_crabepr.cdlcremp
-                                 ,pr_qtpreemp        => rw_crabepr.qtpreemp
-                                 ,pr_vlpreemp        => rw_crabepr.vlpreemp
-                                 ,pr_vlemprst        => vr_vlemprst
-                                 ,pr_dtdpagto        => rw_crabepr.dtdpagto
-                                 ,pr_dtlibera        => rw_crapdat.dtmvtolt
-                                 ,pr_tpemprst        => rw_crabepr.tpemprst
+      EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper                  
+                                 ,pr_nrdconta => rw_crabepr.nrdconta          
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt          
+                                 ,pr_inpessoa => rw_crapass.inpessoa          
+                                 ,pr_cdlcremp => rw_crabepr.cdlcremp          
+                                 ,pr_qtpreemp => rw_crabepr.qtpreemp          
+                                 ,pr_vlpreemp => rw_crabepr.vlpreemp          
+                                 ,pr_vlemprst => vr_vlemprst                  
+                                 ,pr_dtdpagto => rw_crabepr.dtdpagto          
+                                 ,pr_dtlibera => rw_crapdat.dtmvtolt          
+                                 ,pr_tpemprst => rw_crabepr.tpemprst          
                                  ,pr_dtcarenc        => rw_crawepr.dtcarenc
                                  ,pr_qtdias_carencia => vr_qtdias_carencia
-                                 ,pr_valoriof        => vr_vliofaux
-                                 ,pr_dscritic        => vr_dscritic);
-                                
-      IF vr_dscritic IS NOT NULL THEN
+                                 ,pr_valoriof => vr_vliofaux                  
+                                 ,pr_dscritic => vr_dscritic);                
+                                                                             
+      IF vr_dscritic IS NOT NULL THEN                                        
         RAISE vr_exc_saida;
       END IF;
       

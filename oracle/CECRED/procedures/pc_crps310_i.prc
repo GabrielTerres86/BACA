@@ -273,10 +273,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  21/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
                  26/12/2017 - Auditoria BACEN ajustar a quantidade de dias em atraso da central de risco produto PP e TR após a transferência para prejuizo. (Oscar/Odirlei-AMcom)
-                 
+            
                  05/02/2018 - Alterado o cursor cr_cessao_carga para considerar contratos transferidos para prejuizo, 
                               não estava considerando a sessaão de credito no calculo de dias em atraso. (Oscar)
-            
+                 04/02/2018 - Ajuste para calcular o valor dos juros60 para o produto pos-fixado. (James)            
+
 
   ............................................................................ */
 
@@ -350,6 +351,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       CURSOR cr_craplcr IS
         SELECT lcr.cdlcremp
               ,lcr.dsoperac
+              ,lcr.perjurmo
           FROM craplcr lcr
          WHERE lcr.cdcooper = pr_cdcooper;
 
@@ -406,8 +408,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,crapepr.diarefju
               ,crapepr.mesrefju
               ,crapepr.anorefju
-              ,crapepr.txjuremp
+              ,crapepr.txjuremp                                       
               ,crawepr.dtlibera                                       
+              ,crapepr.txmensal
+              ,crapepr.qttolatr
+              ,crapepr.vlemprst
           FROM crapepr
           JOIN crawepr
             ON crawepr.cdcooper = crapepr.cdcooper
@@ -724,8 +729,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       -- Definição de tipo para armazenar os dados de linhas de credito
       -- sendo a chave o código da linha de crédito e armazenaremos apenas a
       -- sua descrição
+      TYPE typ_reg_craplcr IS
+        RECORD(perjurmo craplcr.perjurmo%TYPE
+              ,dsoperac craplcr.dsoperac%TYPE);
       TYPE typ_tab_craplcr IS
-        TABLE OF craplcr.dsoperac%TYPE
+        TABLE OF typ_reg_craplcr
           INDEX BY PLS_INTEGER;
       vr_tab_craplcr typ_tab_craplcr;
 
@@ -984,7 +992,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       END;
       
       -- Funcao para calcular o Juros 60 do produto PP
-      FUNCTION fn_calculas_juros_60d(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+      FUNCTION fn_calcula_juros_60d_pp(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                     ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE
                                     ,pr_dtdpagto IN crapepr.dtdpagto%TYPE
                                     ,pr_diarefju IN crapepr.diarefju%TYPE
@@ -1007,9 +1015,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         --Dia/Mes/Ano Referencia
         IF pr_diarefju <> 0 AND pr_mesrefju <> 0 AND pr_anorefju <> 0 THEN
           --Setar Dia/mes?ano
-          vr_diavtolt := pr_diarefju;
-          vr_mesvtolt := pr_mesrefju;
-          vr_anovtolt := pr_anorefju;
+        vr_diavtolt := pr_diarefju;
+        vr_mesvtolt := pr_mesrefju;
+        vr_anovtolt := pr_anorefju;        
         ELSE
           --Setar dia/mes/ano
           vr_diavtolt := to_number(to_char(pr_dtlibera, 'DD'));
@@ -1049,6 +1057,132 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 		
 		    RETURN vr_vljurmes;        
       END;
+      
+      -- Procedure para calcular o Juros 60 do produto Pos Fixado
+      PROCEDURE pc_calcula_juros_60d_pos(pr_cdcooper IN craplem.cdcooper%TYPE
+                                        ,pr_nrdconta IN craplem.nrdconta%TYPE
+                                        ,pr_nrctremp IN craplem.nrctremp%TYPE
+                                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                                        ,pr_qtdiaatr IN PLS_INTEGER
+                                        ,pr_txmensal IN crapepr.txmensal%TYPE
+                                        ,pr_qttolatr IN crapepr.qttolatr%TYPE
+                                        ,pr_cdlcremp IN crapepr.cdlcremp%TYPE
+                                        ,pr_vlemprst IN crapepr.vlemprst%TYPE
+                                        ,pr_vlmrapar OUT crappep.vlmrapar%TYPE
+                                        ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
+                                        
+        -- Busca as parcelas atrasadas
+        CURSOR cr_crappep(pr_cdcooper IN crappep.cdcooper%TYPE
+                         ,pr_nrdconta IN crappep.nrdconta%TYPE
+                         ,pr_nrctremp IN crappep.nrctremp%TYPE
+                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                         ,pr_qtdiaatr IN PLS_INTEGER) IS
+          SELECT crappep.nrparepr
+                ,crappep.vlparepr
+                ,crappep.dtvencto
+                ,crappep.dtultpag
+                ,crappep.vlsdvpar
+            FROM crappep
+           WHERE crappep.cdcooper = pr_cdcooper
+             AND crappep.nrdconta = pr_nrdconta
+             AND crappep.nrctremp = pr_nrctremp
+             AND crappep.inliquid = 0 
+             AND crappep.dtvencto > pr_dtmvtolt - (pr_qtdiaatr - 59);
+                
+        -- Lancamentos do Juros de Mora
+        CURSOR cr_craplem_mora (pr_cdcooper	IN craplem.cdcooper%TYPE
+                               ,pr_nrdconta IN craplem.nrdconta%TYPE
+                               ,pr_nrctremp IN craplem.nrctremp%TYPE
+                               ,pr_nrparepr IN craplem.nrparepr%TYPE) IS
+          SELECT nvl(SUM(decode(cdhistor,
+                                2373, vllanmto,
+                                2371, vllanmto,
+                                2377, vllanmto,
+                                2375, vllanmto,
+                                2347, vllanmto * -1,
+                                2346, vllanmto * -1)), 0) vllanmto
+            FROM craplem
+           WHERE craplem.cdcooper = pr_cdcooper
+             AND craplem.nrdconta = pr_nrdconta
+             AND craplem.nrctremp = pr_nrctremp
+             AND craplem.nrparepr = pr_nrparepr
+             AND craplem.cdhistor IN (2373,2371,2377,2375,2347,2346);        
+                
+        vr_vljuros_mora_debito NUMBER(25,2);
+        vr_vlmrapar            NUMBER(25,2);
+        vr_vlmtapar	           NUMBER(25,2);
+        vr_vliofcpl            NUMBER(25,2);
+        vr_perjurmo            craplcr.perjurmo%TYPE;
+           
+        -- Variaveis para controle de critica
+        vr_exc_saida           exception;
+        vr_cdcritic            PLS_INTEGER;
+        vr_dscritic            VARCHAR(4000);
+      BEGIN
+        vr_vlmrapar := 0;
+        
+        -- Condicao para verificar se a linha de credito existe
+        vr_perjurmo := 0;
+        IF vr_tab_craplcr.EXISTS(pr_cdlcremp) THEN
+          vr_perjurmo := vr_tab_craplcr(pr_cdlcremp).perjurmo;
+        END IF;
+          
+        -- Listagem das parcelas vencidas
+        FOR rw_crappep IN cr_crappep(pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_nrctremp => pr_nrctremp
+                                    ,pr_dtmvtolt => pr_dtmvtolt
+                                    ,pr_qtdiaatr => pr_qtdiaatr) LOOP
+
+          -- Procedure para calcular o Valor de Juros de Mora
+          EMPR0011.pc_calcula_atraso_pos_fixado(pr_cdcooper => pr_cdcooper
+                                               ,pr_nrdconta => pr_nrdconta
+                                               ,pr_nrctremp => pr_nrctremp
+                                               ,pr_cdlcremp => pr_cdlcremp         
+                                               ,pr_dtcalcul => pr_dtmvtolt
+                                               ,pr_vlemprst => pr_vlemprst
+                                               ,pr_nrparepr => rw_crappep.nrparepr
+                                               ,pr_vlparepr => rw_crappep.vlparepr
+                                               ,pr_dtvencto => rw_crappep.dtvencto
+                                               ,pr_dtultpag => rw_crappep.dtultpag
+                                               ,pr_vlsdvpar => rw_crappep.vlsdvpar
+                                               ,pr_perjurmo => vr_perjurmo
+                                               ,pr_vlpagmta => 0
+                                               ,pr_percmult => 0
+                                               ,pr_txmensal => pr_txmensal
+                                               ,pr_qttolatr => pr_qttolatr
+                                               ,pr_vlmrapar => vr_vlmrapar
+                                               ,pr_vlmtapar => vr_vlmtapar
+                                               ,pr_vliofcpl => vr_vliofcpl
+                                               ,pr_cdcritic => vr_cdcritic
+                                               ,pr_dscritic => vr_dscritic);
+          -- Se houve erro
+          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          vr_vljuros_mora_debito := 0;
+          OPEN cr_craplem_mora(pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrctremp => pr_nrctremp
+                              ,pr_nrparepr => rw_crappep.nrparepr);
+          FETCH cr_craplem_mora INTO vr_vljuros_mora_debito;
+          CLOSE cr_craplem_mora;
+        
+          -- Somente lancar a diferenca do Juros de Mora do que jah foi lancado
+          pr_vlmrapar := NVL(pr_vlmrapar,0) + NVL(vr_vlmrapar,0) + NVL(vr_vljuros_mora_debito,0);
+        END LOOP;
+        
+      EXCEPTION
+        WHEN vr_exc_saida THEN
+          -- Apenas retornar a variável de saida
+          IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          END IF;
+          pr_dscritic := vr_dscritic;
+        WHEN OTHERS THEN
+          pr_dscritic := 'pc_calcula_juros_60d_pos --> Erro ao calcular o Juros.'||sqlerrm;       
+      END pc_calcula_juros_60d_pos;
       
       -- Subrotina para calculo do código de vencimento
       FUNCTION fn_calc_codigo_vcto(pr_diasvenc IN OUT NUMBER
@@ -2049,7 +2183,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- Se existe informação na tabela de linhas de crédito cfme a linha do empréstimo
           IF vr_tab_craplcr.EXISTS(pr_rw_crapepr.cdlcremp) THEN
             -- Se for uma operação de financiamento
-            IF vr_tab_craplcr(pr_rw_crapepr.cdlcremp) = 'FINANCIAMENTO' THEN
+            IF vr_tab_craplcr(pr_rw_crapepr.cdlcremp).dsoperac = 'FINANCIAMENTO' THEN
               vr_cdmodali := 0499;
             ELSE
               vr_cdmodali := 0299;
@@ -2417,7 +2551,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Se existe informação na tabela de linhas de crédito cfme a linha do empréstimo
         IF vr_tab_craplcr.EXISTS(pr_rw_crapepr.cdlcremp) THEN
           -- Se for uma operação de financiamento
-          IF vr_tab_craplcr(pr_rw_crapepr.cdlcremp) = 'FINANCIAMENTO' THEN
+          IF vr_tab_craplcr(pr_rw_crapepr.cdlcremp).dsoperac = 'FINANCIAMENTO' THEN
             vr_cdmodali := 0499;
           ELSE
             vr_cdmodali := 0299;
@@ -2552,14 +2686,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           
           -- Diario
           IF to_char(pr_rw_crapdat.dtmvtolt,'mm') = to_char(pr_rw_crapdat.dtmvtopr,'mm') THEN
-            -- Obter valor de juros a mais de 60 dias
-            vr_totjur60 := nvl(vr_totjur60,0) + nvl(fn_calculas_juros_60d(pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
-                                                                         ,pr_dtmvtopr => pr_rw_crapdat.dtmvtopr
-                                                                         ,pr_dtdpagto => pr_rw_crapepr.dtdpagto
-                                                                         ,pr_diarefju => pr_rw_crapepr.diarefju
-                                                                         ,pr_mesrefju => pr_rw_crapepr.mesrefju
-                                                                         ,pr_anorefju => pr_rw_crapepr.anorefju
-                                                                         ,pr_txjuremp => pr_rw_crapepr.txjuremp
+          -- Obter valor de juros a mais de 60 dias
+            vr_totjur60 := nvl(vr_totjur60,0) + nvl(fn_calcula_juros_60d_pp(pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                                                                       ,pr_dtmvtopr => pr_rw_crapdat.dtmvtopr
+                                                                       ,pr_dtdpagto => pr_rw_crapepr.dtdpagto
+                                                                       ,pr_diarefju => pr_rw_crapepr.diarefju
+                                                                       ,pr_mesrefju => pr_rw_crapepr.mesrefju
+                                                                       ,pr_anorefju => pr_rw_crapepr.anorefju
+                                                                       ,pr_txjuremp => pr_rw_crapepr.txjuremp
                                                                          ,pr_dtlibera => pr_rw_crapepr.dtlibera
                                                                          ,pr_vlsdeved => nvl(pr_rw_crapepr.vlsdevat,0)),0);
           END IF;
@@ -2835,7 +2969,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Se existe informação na tabela de linhas de crédito cfme a linha do empréstimo
         IF vr_tab_craplcr.EXISTS(pr_rw_crapepr.cdlcremp) THEN
           -- Se for uma operação de financiamento
-          IF vr_tab_craplcr(pr_rw_crapepr.cdlcremp) = 'FINANCIAMENTO' THEN
+          IF vr_tab_craplcr(pr_rw_crapepr.cdlcremp).dsoperac = 'FINANCIAMENTO' THEN
             vr_cdmodali := 0499;
           ELSE
             vr_cdmodali := 0299;
@@ -3004,14 +3138,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_vlprxpar      crapris.vlprxpar%TYPE; --> Valor da proxima parcela
         vr_dtprxpar      crapris.dtprxpar%TYPE; --> Data da proxima parcela
 
-        -- Cursor para juros em atraso ha mais de 60 dias
-        CURSOR cr_craplem_60 (pr_qtdiaatr IN NUMBER) IS
+        -- Cursor para juros mora em atraso ha mais de 60 dias
+        CURSOR cr_craplem_60_mora(pr_qtdiaatr IN NUMBER) IS
           SELECT NVL(SUM(vllanmto),0)
             FROM craplem
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_rw_crapepr.nrdconta
              AND nrctremp = pr_rw_crapepr.nrctremp
-             AND cdhistor IN (2342,2343)
+             AND cdhistor IN (2347,2346)
              AND dtmvtolt > pr_rw_crapdat.dtmvtolt - (pr_qtdiaatr - 59);
 
         -- Busca da ultima nao liquidada
@@ -3041,7 +3175,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Se existe informacao na tabela de linhas de credito cfme a linha do emprestimo
         IF vr_tab_craplcr.EXISTS(pr_rw_crapepr.cdlcremp) THEN
           -- Se for uma operacao de financiamento
-          IF vr_tab_craplcr(pr_rw_crapepr.cdlcremp) = 'FINANCIAMENTO' THEN
+          IF vr_tab_craplcr(pr_rw_crapepr.cdlcremp).dsoperac = 'FINANCIAMENTO' THEN
             vr_cdmodali := 0499;
           ELSE
             vr_cdmodali := 0299;
@@ -3128,17 +3262,36 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
         -- Calculo dos Juros em atraso a mais de 60 dias
         vr_totjur60 := 0;
+        vr_vlju60mo := 0;
+        -- Calcular o valor dos juros a mais de 60 dias
+        IF vr_qtdiaatr >= 60  THEN
+          -- Obter valor de juros mora a mais de 60 dias          
+          OPEN  cr_craplem_60_mora (pr_qtdiaatr => vr_qtdiaatr);
+          FETCH cr_craplem_60_mora INTO vr_vlju60mo;
+          CLOSE cr_craplem_60_mora;
 
-        -- Calcular somente na mensal
-        --IF  to_char(pr_rw_crapdat.dtmvtolt,'mm') != to_char(pr_rw_crapdat.dtmvtopr,'mm')  THEN
-          -- Calcular o valor dos juros a mais de 60 dias
-          IF  vr_qtdiaatr >= 60  THEN
+          -- Valor Total do Juros60
+          vr_totjur60 := NVL(vr_vlju60mo,0);          
+          -- Diario
+          IF to_char(pr_rw_crapdat.dtmvtolt,'mm') = to_char(pr_rw_crapdat.dtmvtopr,'mm') THEN
             -- Obter valor de juros a mais de 60 dias
-            OPEN  cr_craplem_60 (pr_qtdiaatr => vr_qtdiaatr);
-            FETCH cr_craplem_60 INTO vr_totjur60;
-            CLOSE cr_craplem_60;
+            pc_calcula_juros_60d_pos(pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_rw_crapepr.nrdconta
+                                    ,pr_nrctremp => pr_rw_crapepr.nrctremp
+                                    ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                                    ,pr_qtdiaatr => vr_qtdiaatr
+                                    ,pr_txmensal => pr_rw_crapepr.txmensal
+                                    ,pr_qttolatr => pr_rw_crapepr.qttolatr
+                                    ,pr_cdlcremp => pr_rw_crapepr.cdlcremp
+                                    ,pr_vlemprst => pr_rw_crapepr.vlemprst
+                                    ,pr_vlmrapar => vr_totjur60
+                                    ,pr_dscritic => vr_des_erro);
+            -- Condicao para verificar se houve erro
+            IF vr_des_erro IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;          
           END IF; 
-        --END IF;
 
         -- Montar a data prevista do ultimo vencimento com base na data do 
         -- primeiro pagamento * qtde de parcelas do emprestimo
@@ -4036,8 +4189,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       -- Busca do cadastro de linhas de crédito de empréstimo
       FOR rw_craplcr IN cr_craplcr LOOP
         -- Armazenar na tabela de memória a descrição
-        vr_tab_craplcr(rw_craplcr.cdlcremp) := rw_craplcr.dsoperac;
+        vr_tab_craplcr(rw_craplcr.cdlcremp).dsoperac := rw_craplcr.dsoperac;
+        -- Percentual de Juros de Mora
+        vr_tab_craplcr(rw_craplcr.cdlcremp).perjurmo := rw_craplcr.perjurmo;
       END LOOP;
+      
       -- Buscar notas de rating do contrado da conta
       FOR rw_crapnrc IN cr_crapnrc LOOP
         -- Carregar a temp-table com as informações do

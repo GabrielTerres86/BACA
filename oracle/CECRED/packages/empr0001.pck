@@ -509,6 +509,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                   ,pr_nrseqava IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                   ,pr_cdorigem IN NUMBER DEFAULT 0 --> Origem do Movimento
                                   ,pr_qtdiacal IN NUMBER DEFAULT 0 --> Quantidade dias usado no calculo
+                                  ,pr_vltaxprd IN NUMBER DEFAULT 0 --> Valor da Taxa no Periodo
                                   ,pr_cdcritic OUT INTEGER --Codigo Erro
                                   ,pr_dscritic OUT VARCHAR2);
                                   
@@ -816,7 +817,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                               ,pr_qtdias_carencia IN tbepr_posfix_param_carencia.qtddias%TYPE
                               ,pr_valoriof       OUT craplcm.vllanmto%TYPE -- Valor calculado com o iof
                              ,pr_dscritic OUT VARCHAR2);
-                                                                   
+                                                 
   /* Calcular a quantidade de dias que o emprestimo está em atraso */
   FUNCTION fn_busca_dias_atraso_epr(pr_cdcooper IN crappep.cdcooper%TYPE --> Código da Cooperativa
                                    ,pr_nrdconta IN crappep.nrdconta%TYPE --> Numero da Conta do empréstimo
@@ -824,7 +825,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do Movimento Atual
                                    ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) --> Data do Movimento Anterior
    RETURN INTEGER;
-                                                                   
+
 END empr0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
@@ -3953,21 +3954,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                              ,pr_dtmvtoan => TO_CHAR(pr_rw_crapdat.dtmvtoan,'DD/MM/RRRR')
                                              ,pr_nrdconta => pr_nrdconta
                                              ,pr_nrctremp => pr_nrctremp
-                                             ,pr_cdlcremp => rw_crapepr.cdlcremp
-                                             ,pr_qttolatr => rw_crapepr.qttolatr
                                              ,pr_vlsdeved => pr_vlsdeved
                                              ,pr_vlprvenc => pr_vlpreapg
                                              ,pr_vlpraven => pr_vlpraven
                                              ,pr_vlmtapar => pr_vlmtapar
                                              ,pr_vlmrapar => pr_vlmrapar
+                                             ,pr_vliofcpl => pr_vliofcpl
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);
         -- Se houve erro
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
-        pr_vlprvenc := pr_vlpreapg;
 
       -- Price TR
       ELSIF rw_crapepr.tpemprst = 0 THEN
@@ -4555,8 +4553,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  553330. (Kelvin)
 
                     23/06/2017 - Inclusao dos campos do produto Pos-Fixado. (Jaison/James - PRJ298)
-
-                    06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo
+					
+					06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo
 					             convertida (Marcos-Supero)
 
                     19/10/2017 - Inclusão campo vliofcpl no XML de retorno (Diogo - MoutS - Proj. 410 - RF 41/42)
@@ -4616,7 +4614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,vlpgjmpr
               ,cdorigem
               ,qtimpctr
-			  ,vliofcpl
+			  ,vliofcpl	
               ,qttolatr
           FROM crapepr
          WHERE cdcooper = pr_cdcooper
@@ -5332,7 +5330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_tab_dados_epr(vr_indadepr).vlpgjmpr := nvl(rw_crapepr.vlpgjmpr
                                                        ,0);
 
-          pr_tab_dados_epr(vr_indadepr).vliofcpl := nvl(rw_crapepr.vliofcpl, 0);
+		  pr_tab_dados_epr(vr_indadepr).vliofcpl := nvl(rw_crapepr.vliofcpl, 0);	
           -- Para Pre-Fixada
           IF rw_crapepr.tpemprst = 1 THEN
             -- Enviar a taxa do empréstimo
@@ -6087,7 +6085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<qtimpctr>' || vr_tab_dados_epr(vr_index).qtimpctr || '</qtimpctr>' ||
                         '<portabil>' || vr_tab_dados_epr(vr_index).portabil || '</portabil>' ||
                         '<vliofcpl>' || vr_tab_dados_epr(vr_index).vliofcpl || '</vliofcpl>' ||
-                        '<tpatuidx>' || vr_tab_dados_epr(vr_index).tpatuidx || '</tpatuidx>' ||
+						'<tpatuidx>' || vr_tab_dados_epr(vr_index).tpatuidx || '</tpatuidx>' ||
                         '<idcarenc>' || vr_tab_dados_epr(vr_index).idcarenc || '</idcarenc>' ||
                         '<dtcarenc>' || to_char(vr_tab_dados_epr(vr_index).dtcarenc,'DD/MM/RRRR') || '</dtcarenc>' ||
                         '<nrdiacar>' || vr_tab_dados_epr(vr_index).nrdiacar || '</nrdiacar>' ||
@@ -6370,13 +6368,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                              ,pr_dtmvtoan => TO_CHAR(pr_rw_crapdat.dtmvtoan,'DD/MM/RRRR')
                                              ,pr_nrdconta => rw_crapepr.nrdconta
                                              ,pr_nrctremp => rw_crapepr.nrctremp
-                                             ,pr_cdlcremp => rw_crapepr.cdlcremp
-                                             ,pr_qttolatr => rw_crapepr.qttolatr
                                              ,pr_vlsdeved => pr_vlsdeved
                                              ,pr_vlprvenc => vr_vlprvenc
                                              ,pr_vlpraven => vr_vlpraven
                                              ,pr_vlmtapar => vr_vlmtapar
                                              ,pr_vlmrapar => vr_vlmrapar
+                                             ,pr_vliofcpl => vr_vliofcpl
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);
         -- Se houve erro
@@ -7409,6 +7406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                   ,pr_nrseqava IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                   ,pr_cdorigem IN NUMBER DEFAULT 0 --> Origem do Movimento
                                   ,pr_qtdiacal IN NUMBER DEFAULT 0 --> Quantidade dias usado no calculo
+                                  ,pr_vltaxprd IN NUMBER DEFAULT 0 --> Valor da Taxa no Periodo
                                   ,pr_cdcritic OUT INTEGER --Codigo Erro
                                   ,pr_dscritic OUT VARCHAR2) IS --Descricao Erro
   BEGIN
@@ -7430,6 +7428,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    16/06/2014 - Ajuste para atualizar o campo nrseqava. (James)
 
                    15/08/2017 - Inclusao do campo qtdiacal. (Jaison/James - PRJ298)
+                   
+                   01/02/2018 - Inclusao do campo vltaxprd. (James)
     ............................................................................. */
   
     DECLARE
@@ -7491,7 +7491,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           ,craplem.nrparepr
           ,craplem.nrseqava
           ,craplem.cdorigem
-          ,craplem.qtdiacal)
+          ,craplem.qtdiacal
+          ,craplem.vltaxprd)
         VALUES
           (pr_dtmvtolt
           ,pr_cdpactra
@@ -7511,7 +7512,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           ,pr_nrparepr
           ,pr_nrseqava
           ,pr_cdorigem
-          ,pr_qtdiacal);
+          ,pr_qtdiacal
+          ,pr_vltaxprd);
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
@@ -8807,7 +8809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    
                    20/10/2015 - Incluir os históricos de ajuste o contrato 
                                 liquidado pode ser reaberto (Oscar).
-    
+
     ............................................................................. */
   
     DECLARE

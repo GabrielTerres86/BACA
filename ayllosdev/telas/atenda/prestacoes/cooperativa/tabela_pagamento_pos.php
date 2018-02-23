@@ -46,14 +46,7 @@
 						$insitpar = getByTagName($registro->tags,'insitpar'); // (1 - Em dia, 2 - Vencida, 3 - A Vencer)
 				?>
 					<tr>
-						<td>
-                            <?php
-                                // Se NAO for antecipacao exibe campo de selecao
-                                if ($insitpar <> 3) {
-                                    ?><input type="checkbox" id="check_<? echo $nrparepr; ?>" vldescto="<? echo $vldescto; ?>" name="checkParcelas[]" /><?php
-                                }
-                            ?>
-                        </td>
+						<td><input type="checkbox" id="check_<? echo $nrparepr; ?>" vldescto="<? echo $vldescto; ?>" name="checkParcelas[]" /></td>
 						<td><? echo $nrparepr; ?></td>
 						<td><? echo $dtvencto; ?></td>
 						<td><? echo $vlparepr; ?></td>
@@ -62,7 +55,7 @@
 						<td><? echo $vlmrapar; ?></td>
 						<td id="vldespar_<? echo $nrparepr; ?>">0,00</td>
 						<td><? echo $vlatupar; ?></td>
-						<td style="width:70px;"><input type="text" id="vlpagpar_<? echo $nrparepr; ?>" name="vlpagpar[]" size="10" onblur="verificaDescontoPos($(this),'<? echo $insitpar; ?>','<? echo $nrparepr; ?>','<? echo $dtvencto; ?>'); return false;" value="0,00" />
+						<td style="width:70px;"><input type="text" id="vlpagpar_<? echo $nrparepr; ?>" name="vlpagpar[]" size="10" value="0,00" />
 						<td style="width:10px;"><input type="image" id="btDesconto" src="<?php echo $UrlImagens; ?>geral/refresh.png" onClick="descontoPos('<? echo $nrparepr ?>','<? echo $vldescto; ?>'); return false;" /></td>
 
 						<input type="hidden" id="vlmtapar_<? echo $nrparepr; ?>" name="vlmtapar[]" value="<? echo $vlmtapar; ?>">
