@@ -21,6 +21,8 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
   --                 
   --                 08/08/2017 - Melhoria 438 - Majoracao automatica de limite de credito
   --                              Heitor (Mouts)
+  --
+  --                 05/02/2018 - Adicionados campos novos (qtcarpag e qtaltlim) - (Luis Fernando - GFT)
   ---------------------------------------------------------------------------------------------------------------
   --> Armazenar dados do contrato de limite (antigo b1wge0019tt.i - tt-dados-ctr)
   TYPE typ_rec_dados_ctr 
@@ -116,7 +118,9 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                   ,pr_dsrisdop IN craprli.dsrisdop%TYPE --> Riscos que englobam a operacao
                                   ,pr_tplimite IN craprli.tplimite%TYPE --> Tipo de limite de crédito
                                   ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual mínimo de liquidez
-                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez                                  
+                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez
+                                  ,pr_qtcarpag IN craprli.qtcarpag%TYPE --> Contem o periodo de carencia de pagamento
+                                  ,pr_qtaltlim IN craprli.qtaltlim%TYPE --> Contem o periodo de alteracao de limites rejeitados                               
                                   ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no código, 0 – Não / 1 - Sim)         
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -278,7 +282,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                  11/08/2016 - Inclusão do parâmetro pr_tplmite para filtro por tipo de limite
                             - Inclusão dos campos pcliqdez e qtdialiq na consulta
                               (Linhares - Projeto 300)
-           
+
+                 05/02/2018 - Adicionados campos novos (qtcarpag e qtaltlim) - (Luis Fernando - GFT)
      ..............................................................................*/ 
     DECLARE
 
@@ -296,7 +301,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                dssitdop,
                dsrisdop,
                pcliqdez,
-               qtdialiq
+               qtdialiq,
+               qtcarpag,
+               qtaltlim
           FROM craprli
          WHERE cdcooper = pr_cdcooper
            AND inpessoa = pr_inpessoa
@@ -397,6 +404,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dsrisdop', pr_tag_cont => rw_craprli.dsrisdop, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'pcliqdez', pr_tag_cont => rw_craprli.pcliqdez, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdialiq', pr_tag_cont => rw_craprli.qtdialiq, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtcarpag', pr_tag_cont => rw_craprli.qtcarpag, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtaltlim', pr_tag_cont => rw_craprli.qtaltlim, pr_des_erro => vr_dscritic);
       
     EXCEPTION      
       WHEN vr_exc_saida THEN
@@ -438,7 +447,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                   ,pr_dsrisdop IN craprli.dsrisdop%TYPE --> Riscos que englobam a operacao
                                   ,pr_tplimite IN craprli.tplimite%TYPE --> Tipo de limite de crédito
                                   ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual mínimo de liquidez
-                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez                                  
+                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez
+                                  ,pr_qtcarpag IN craprli.qtcarpag%TYPE --> Contem o periodo de carencia de pagamento
+                                  ,pr_qtaltlim IN craprli.qtaltlim%TYPE --> Contem o periodo de alteracao de limites rejeitados
                                   ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no código, 0 – Não / 1 - Sim)         
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -469,6 +480,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                  11/08/2016 - Inclusão do parâmetro pr_tplmite para filtro por tipo de limite
                             - Inclusão dos parâmetros pr_pcliqdez e pr_qtdialiq para busca e atualização
                  (Linhares - Projeto 300)
+
+                 05/02/2018 - Adicionados campos novos (qtcarpag e qtaltlim) - (Luis Fernando - GFT)
+
      ..............................................................................*/ 
     DECLARE
 
@@ -485,7 +499,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                dssitdop,
                dsrisdop,
                pcliqdez,
-               qtdialiq               
+               qtdialiq,
+               qtcarpag,
+               qtaltlim
           FROM craprli
          WHERE cdcooper = pr_cdcooper
            AND inpessoa = pr_inpessoa
@@ -578,6 +594,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       
       IF pr_tplimite = 2 THEN
         vr_tpaltcad := ' --> Limite Desconto de Cheque';
+      ELSIF pr_tplimite = 3 THEN
+        vr_tpaltcad := ' --> Limite Desconto de Titulo';
       ELSE
         vr_tpaltcad := ' --> Limite de Credito';
       END IF;
@@ -719,7 +737,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         vr_dsclinha := vr_dtaltcad || vr_tpaltcad
                                    || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Quantidade de Dias para Calculo Percentual Liquidez de ' 
-                                   || rw_craprli.qtdialiq || ' para ' || pr_qtdialiq;                                 
+                                   || rw_craprli.qtdialiq || ' para ' || pr_qtdialiq;
+                                     
+        -- Gravar linha no arquivo
+        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                      ,pr_des_text => vr_dsclinha);
+        
+      END IF;
+     
+      IF rw_craprli.qtcarpag <> pr_qtcarpag THEN
+
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
+                                   || ' alterou o campo Periodo de carencia de pagamento ' 
+                                   || rw_craprli.qtcarpag || ' para ' || pr_qtcarpag;
+                                     
+        -- Gravar linha no arquivo
+        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                      ,pr_des_text => vr_dsclinha);
+        
+      END IF;
+     
+      IF rw_craprli.qtaltlim <> pr_qtaltlim THEN
+
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad 
+                                   || ' alterou o campo Periodo de alteracao de limites rejeitados ' 
+                                   || rw_craprli.qtaltlim || ' para ' || pr_qtaltlim;
                                      
         -- Gravar linha no arquivo
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
@@ -742,7 +786,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                dssitdop = pr_dssitdop,
                dsrisdop = pr_dsrisdop,
                pcliqdez = pr_pcliqdez,
-               qtdialiq = pr_qtdialiq               
+               qtdialiq = pr_qtdialiq,
+               qtcarpag = pr_qtcarpag,
+               qtaltlim = pr_qtaltlim
          WHERE cdcooper = vr_cdcooper
            AND inpessoa = pr_inpessoa
            AND tplimite = pr_tplimite;
