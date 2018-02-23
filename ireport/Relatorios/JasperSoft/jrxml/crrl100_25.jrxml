@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-01-15T14:13:22 -->
+<!-- 2018-02-20T11:27:08 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_25" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="17"/>
 	<property name="ireport.y" value="6265"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl100"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl100_25"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -21,6 +21,9 @@
 	</queryString>
 	<field name="ind_add_item" class="java.lang.Integer">
 		<fieldDescription><![CDATA[ind_add_item]]></fieldDescription>
+	</field>
+	<field name="ind_add_bem" class="java.lang.Integer">
+		<fieldDescription><![CDATA[ind_add_bem]]></fieldDescription>
 	</field>
 	<field name="negociavel" class="java.lang.String">
 		<fieldDescription><![CDATA[negociavel]]></fieldDescription>
@@ -801,8 +804,9 @@
 				</textField>
 			</frame>
 			<frame>
-				<reportElement positionType="Float" x="7" y="517" width="467" height="16" uuid="370cce3c-6981-47ce-98a4-0cb0487c91f4">
+				<reportElement positionType="Float" x="7" y="517" width="467" height="16" isRemoveLineWhenBlank="true" uuid="370cce3c-6981-47ce-98a4-0cb0487c91f4">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{ind_add_bem} > 0]]></printWhenExpression>
 				</reportElement>
 				<box>
 					<pen lineWidth="1.0"/>
@@ -822,12 +826,13 @@
 				</textField>
 			</frame>
 			<subreport>
-				<reportElement positionType="Float" x="6" y="533" width="467" height="45" uuid="db1652da-787c-4768-9b1a-2489b664317c">
+				<reportElement positionType="Float" x="6" y="533" width="467" height="45" isRemoveLineWhenBlank="true" uuid="db1652da-787c-4768-9b1a-2489b664317c">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{ind_add_bem} > 0]]></printWhenExpression>
 				</reportElement>
 				<subreportParameter name="PR_SQSOLICI"/>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//bens/bem")]]></dataSourceExpression>
-				<subreportExpression><![CDATA["crrl100_20.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA["crrl100_19.jasper"]]></subreportExpression>
 			</subreport>
 			<frame>
 				<reportElement positionType="Float" x="7" y="578" width="467" height="44" uuid="205ecaa6-427a-479b-86f0-e325b2f4eaa4">
@@ -848,7 +853,7 @@
 					<textElement markup="html">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["<b>" + (3 + $F{ind_add_item}) + ".19.</b> Custo Efetivo Total (CET) da Operação<br>Ao ano (365 dias)"]]></textFieldExpression>
+					<textFieldExpression><![CDATA["<b>" + (3 + $F{ind_add_item}) + ".1" + (8 + $F{ind_add_bem}) + ".</b> Custo Efetivo Total (CET) da Operação<br>Ao ano (365 dias)"]]></textFieldExpression>
 				</textField>
 				<textField pattern="#,##0.00;#,##0.00-">
 					<reportElement positionType="Float" x="3" y="27" width="187" height="11" uuid="361f4c3d-0a73-4010-a25e-fed1592a1846">
@@ -943,7 +948,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b><u>5. Carência e periodicidade</u></b> – A <b>Credora/Cooperativa</b> poderá, a seu critério, conceder ao <b>Emitente/Cooperado</b> prazo de carência para o pagamento da primeira parcela do empréstimo. O prazo de carência é fixado no item " + (3 + $F{ind_add_item}) + ".15 e " + (3 + $F{ind_add_item}) + ".16 das Condições Específicas desta Cédula. Durante o prazo de carência, ou seja, sem pagamento do valor principal (valor da parcela), quando pactuado, os juros/encargos deverão ser pagos mensalmente/bimestralmente/trimestralmente/semestralmente ou anualmente pelo Emitente/Cooperado, vencendo-se o primeiro encargo antes do pagamento da primeira parcela."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b><u>5. Carência e periodicidade</u></b> – A <b>Credora/Cooperativa</b> poderá, a seu critério, conceder ao <b>Emitente/Cooperado</b> prazo de carência para o pagamento da primeira parcela do empréstimo. O prazo de carência dos encargos é fixado no item " + (3 + $F{ind_add_item}) + ".15 e " + (3 + $F{ind_add_item}) + ".16 das Condições Específicas desta Cédula. Durante o prazo de carência, ou seja, sem pagamento do valor principal (valor da parcela), quando pactuado, os juros/encargos deverão ser pagos mensalmente/bimestralmente/trimestralmente/semestralmente ou anualmente pelo Emitente/Cooperado, vencendo-se o primeiro encargo antes do pagamento da primeira parcela."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="115" width="466" height="11" uuid="726ffc38-c056-495b-8de5-dcfe906d9e41">

@@ -1829,14 +1829,15 @@ BEGIN
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison Fernando
-       Data    : Junho/2017                         Ultima atualizacao: 
+       Data    : Junho/2017                         Ultima atualizacao: 01/02/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que for chamado.
        Objetivo  : Gerar XML do contrato de emprestimo POS-FIXADO
 
-       Alteracoes: 
+       Alteracoes: 01/02/2018 - Ajustes na geração do XML de contratos. (Jaison/James - PRJ298)
+
     ............................................................................. */
 
       -- Cursor sobre as informacoes de emprestimo
@@ -2022,6 +2023,7 @@ BEGIN
       vr_cdtipdoc       INTEGER;                      --> Codigo do tipo de documento
       vr_dstextab       craptab.dstextab%TYPE;        --> Descritivo da tab
       vr_ind_add_item   INTEGER := 0;                 --> Indicador se possui terceiro garantidor (0-Nao / 1-Sim)
+      vr_ind_add_bem    INTEGER := 0;                 --> Indicador se possui bem como garantia (0-Nao / 1-Sim)
       vr_tab_aval       DSCT0002.typ_tab_dados_avais; --> PL Table dos avalistas
       vr_ind_aval       PLS_INTEGER;                  --> Indice da PL Table
       vr_vlpreemp       NUMBER;                       --> Valor da parcela
@@ -2142,6 +2144,8 @@ BEGIN
         vr_ind_aval := vr_tab_aval.FIRST;
         -- Percorrer todos os registros
         WHILE vr_ind_aval IS NOT NULL LOOP
+          -- monta descricao para o relatorio com os dados do emitente
+          IF vr_tab_aval(vr_ind_aval).inpessoa = 1 THEN
           -- Se possuir conta
           IF nvl(vr_tab_aval(vr_ind_aval).nrctaava,0) > 0 THEN
             -- Busca estado civil e profissao
@@ -2150,7 +2154,7 @@ BEGIN
             FETCH cr_gnetcvl INTO rw_gnetcvl;
             CLOSE cr_gnetcvl;
           END IF;
-          -- monta descricao para o relatorio com os dados do emitente
+
           vr_tab_avl(vr_ind_aval).descricao := '<terceiro_0' || vr_ind_aval || '>'
                                             || vr_tab_aval(vr_ind_aval).nmdavali || ', ' 
                                             || (CASE WHEN TRIM(vr_tab_aval(vr_ind_aval).dsnacion) IS NOT NULL THEN 'nacionalidade '||LOWER(vr_tab_aval(vr_ind_aval).dsnacion) || ', ' ELSE '' END)
@@ -2162,11 +2166,24 @@ BEGIN
                                             || 'da cidade de ' || vr_tab_aval(vr_ind_aval).nmcidade || '/' || vr_tab_aval(vr_ind_aval).cdufresd || ', '
                                             || 'CEP ' || gene0002.fn_mask_cep(vr_tab_aval(vr_ind_aval).nrcepend)
                                             || (CASE WHEN vr_tab_aval(vr_ind_aval).nrctaava > 0 THEN ', titular da conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_tab_aval(vr_ind_aval).nrctaava)) ELSE '' END)
-                                            || '.</terceiro_0' || vr_ind_aval || '>'
+                                              || '.</terceiro_0' || vr_ind_aval || '>';
+          ELSE
+            vr_tab_avl(vr_ind_aval).descricao := '<terceiro_0' || vr_ind_aval || '>'
+                                              || vr_tab_aval(vr_ind_aval).nmdavali || ', '
+                                              || 'inscrita no CNPJ sob n° '|| gene0002.fn_mask_cpf_cnpj(vr_tab_aval(vr_ind_aval).nrcpfcgc, vr_tab_aval(vr_ind_aval).inpessoa)
+                                              || ' com sede na ' || vr_tab_aval(vr_ind_aval).dsendere || ', n° ' || vr_tab_aval(vr_ind_aval).nrendere || ', '
+                                              || 'bairro ' || vr_tab_aval(vr_ind_aval).dsendcmp || ', da cidade de ' || vr_tab_aval(vr_ind_aval).nmcidade || '/' || vr_tab_aval(vr_ind_aval).cdufresd || ', '
+                                              || 'CEP ' || gene0002.fn_mask_cep(vr_tab_aval(vr_ind_aval).nrcepend) 
+                                              || (CASE WHEN vr_tab_aval(vr_ind_aval).nrctaava > 0 THEN ', conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_tab_aval(vr_ind_aval).nrctaava)) ELSE '' END)
+                                              || '.</terceiro_0' || vr_ind_aval || '>';
+          END IF;
+
+          vr_tab_avl(vr_ind_aval).descricao := vr_tab_avl(vr_ind_aval).descricao
                                             || '<nmaval0' || vr_ind_aval || '>' || vr_tab_aval(vr_ind_aval).nmdavali || '</nmaval0' || vr_ind_aval || '>'
                                             || '<cpfava0' || vr_ind_aval || '>' || gene0002.fn_mask_cpf_cnpj(vr_tab_aval(vr_ind_aval).nrcpfcgc, vr_tab_aval(vr_ind_aval).inpessoa) || '</cpfava0' || vr_ind_aval || '>'
-                                            || '<nmcjg0' || vr_ind_aval || '>' || vr_tab_aval(vr_ind_aval).nmconjug || '</nmcjg0' || vr_ind_aval || '>'
+                                            || '<nmcjg0'  || vr_ind_aval || '>' || vr_tab_aval(vr_ind_aval).nmconjug || '</nmcjg0' || vr_ind_aval || '>'
                                             || '<cpfcjg0' || vr_ind_aval || '>' || gene0002.fn_mask_cpf_cnpj(vr_tab_aval(vr_ind_aval).nrcpfcjg, 1) || '</cpfcjg0' || vr_ind_aval || '>';
+
           -- Proximo Registro
           vr_ind_aval := vr_tab_aval.NEXT(vr_ind_aval);
         END LOOP;
@@ -2271,6 +2288,7 @@ BEGIN
       vr_des_chave := vr_tab_bens.first;
       -- Verifica se relatorio possui bens
       IF vr_des_chave IS NOT NULL THEN
+        vr_ind_add_bem := 1;
         gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, '<bens>');
         WHILE vr_des_chave IS NOT NULL LOOP  -- varre temp table de bens
           -- Gera xml para cada bem encontrado
@@ -2326,6 +2344,7 @@ BEGIN
       -- Gera corpo do xml
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                              '<ind_add_item>' || vr_ind_add_item                             || '</ind_add_item>' || -- Indicador se possui terceiro garantidor (0-Nao / 1-Sim)
+                             '<ind_add_bem>'  || vr_ind_add_bem                              || '</ind_add_bem>'  || -- Indicador se possui bem como garantia (0-Nao / 1-Sim)
                              '<negociavel>'   || vr_negociavel                               || '</negociavel>'   || -- Indicador de impressao do texto "nao negociavel"
                              '<titulo>'       || vr_dstitulo                                 || '</titulo>'       ||
                              '<dsqrcode>'     || vr_qrcode                                   || '</dsqrcode>'     ||
@@ -2333,7 +2352,7 @@ BEGIN
                              '<emitente>'     || vr_emitente                                 || '</emitente>'     ||
                              '<nmemitente>'   || rw_crawepr.nmprimtl                         || '</nmemitente>'   ||
                              '<nminterven>'   || vr_nminterv                                 || '</nminterven>'   ||
-                             '<nmconjug>'     || TRIM(rw_crapcje.nmconjug)                   || '</nmconjug>'   ||                             
+                             '<nmconjug>'     || TRIM(rw_crapcje.nmconjug)                   || '</nmconjug>'     ||                             
                              '<conta>'        || TRIM(gene0002.fn_mask_conta(pr_nrdconta))   || '</conta>'        ||
                              '<pa>'           || rw_crawepr.cdagenci                         || '</pa>'           ||
                              '<vlemprst>'     || 'R$ '|| to_char(rw_crawepr.vlemprst,'FM99G999G990D00')  || '</vlemprst>' ||
