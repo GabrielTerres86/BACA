@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/96.                       Ultima atualizacao: 21/11/2017
+   Data    : Marco/96.                       Ultima atualizacao: 04/02/2018
 
    Dados referentes ao programa:
 
@@ -236,6 +236,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                20/12/2017 - Criar lançamento de valor de repasse para o Lojista de forma automática,
                             criar fluxo contábil para os lançamentos de empréstimos e conta corrente,
                             Prj. 402 (Jean Michel).
+
+               04/02/2018 - Ajuste na procedure para buscar o saldo atualizado para o produto pos-fixado. (James)
                
   ............................................................................. */
   
@@ -302,6 +304,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,wepr.tpemprst
           ,wepr.nrctremp
           ,wepr.dtlibera
+          ,wepr.dtcarenc
+          ,wepr.idcarenc
           ,wepr.nrctrliq##1
           ,wepr.nrctrliq##2
           ,wepr.nrctrliq##3
@@ -426,12 +430,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.dtmvtolt
           ,epr.vlpreemp
           ,epr.dtdpagto
+          ,epr.qttolatr
+          ,crawepr.txmensal
+          ,crawepr.dtdpagto dtprivencto
+          ,epr.vlsprojt
+          ,epr.vlemprst
           ,epr.ROWID
        FROM crapepr epr 
+       JOIN crawepr
+         ON crawepr.cdcooper = epr.cdcooper
+        AND crawepr.nrdconta = epr.nrdconta
+        AND crawepr.nrctremp = epr.nrctremp
       WHERE epr.cdcooper = pr_cdcooper
         AND epr.nrdconta = pr_nrdconta
         AND epr.nrctremp = pr_nrctremp
-      ORDER BY CDCOOPER,NRDCONTA,NRCTREMP;
+      ORDER BY epr.CDCOOPER, epr.NRDCONTA, epr.NRCTREMP;
   rw_crapepr cr_crapepr%ROWTYPE; 
   
   -- Cursor do Cadastro dos Avisos de Debito em Conta Corrente.
@@ -494,6 +507,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
          AND nrctrpro = pr_nrctremp
          AND flgalien = 1; -- TRUE;
     --rw_crapbpr cr_crapbpr%ROWTYPE;
+
+    -- Busca os dados da carencia
+    CURSOR cr_carencia IS
+      SELECT param.idcarencia,
+             param.qtddias
+        FROM tbepr_posfix_param_carencia param
+       WHERE param.idparametro = 1;
 
     -- CDC Prj. 402
     CURSOR cr_rapassecdc(pr_cdcooper crapepr.cdcooper%TYPE
@@ -567,15 +587,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_des_erro VARCHAR2(4000);
   vr_dsreturn VARCHAR2(4000);
   vr_des_reto VARCHAR2(3);
+  vr_index_pos PLS_INTEGER;
   
   --tabela de Memoria dos detalhes de emprestimo
   vr_tab_crawepr EMPR0001.typ_tab_crawepr;
   -- Tabela Temporaria
   vr_tab_erro GENE0001.typ_tab_erro;
+  vr_tab_carencia CADA0001.typ_tab_number;
   
   --Tabelas de Memoria para Pagamentos das Parcelas Emprestimo
   vr_tab_pgto_parcel EMPR0001.typ_tab_pgto_parcel;
   vr_tab_calculado   EMPR0001.typ_tab_calculado;
+  vr_tab_parcelas_pos EMPR0011.typ_tab_parcelas;
   
   -- Rowid de retorno lançamento de tarifa
   vr_rowid    ROWID;
@@ -595,6 +618,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_cdbattar VARCHAR2(100) := ' ';
   vr_cdhistmp craphis.cdhistor%TYPE;
   vr_cdfvltmp crapfco.cdfvlcop%TYPE;
+  vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE;
   
   -- Variaveis Envio de Email
   vr_nmrescop    VARCHAR2(100);
@@ -665,6 +689,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_cdhismor INTEGER;
   vr_vljumora NUMBER;
   
+  vr_tab_price EMPR0011.typ_tab_price;
+
   -- Calculo Conta Integração
   vr_dsdctitg VARCHAR2(8);
   vr_stsnrcal NUMBER;
@@ -1101,6 +1127,11 @@ BEGIN
     vr_tab_diadopagto(rw_craptab.tpregist):= rw_craptab.dstextab;
   END LOOP;  
         
+  -- Carregar tabela de carencia
+  FOR rw_carencia IN cr_carencia LOOP
+    vr_tab_carencia(rw_carencia.idcarencia):= rw_carencia.qtddias;
+  END LOOP;
+
   --Busca as tarifas
   vr_dstextab:= tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                           ,pr_nmsistem => 'CRED'
@@ -1148,6 +1179,52 @@ BEGIN
     -- Valor do Emprestimo.
     vr_vlrsaldo := rw_crabepr.vlemprst;
     
+    -- Leitura da proposta do emprestimo
+    OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => rw_crabepr.nrdconta
+                   ,pr_nrctremp => rw_crabepr.nrctremp);
+    FETCH cr_crawepr INTO rw_crawepr;
+    
+    -- Se nao encontrou proposta
+    IF cr_crawepr%NOTFOUND THEN
+      vr_cdcritic:= 535; -- 535 - Proposta Não Encontrada.
+      vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic) ||
+                    gene0002.fn_mask(rw_crabepr.nrdconta,'zzzz.zzz.9');
+      -- Fechar Cursor
+      CLOSE cr_crawepr;
+      
+      -- Gera Log
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                 pr_ind_tipo_log => 2, -- Erro Tratado
+                                 pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss')  ||
+                                                    ' -' || vr_cdprogra || ' --> '  ||
+                                                    vr_dscritic);
+      
+      --Sair do programa
+      RAISE vr_exc_saida;
+    END IF;
+    -- Fechar Cursor
+    CLOSE cr_crawepr;
+
+    -- Se for Pos-Fixado
+    IF rw_crawepr.tpemprst = 2 THEN
+
+      -- Se NAO for Refinanciamento
+      IF NVL(rw_crawepr.nrctrliq##1, 0) = 0 AND
+         NVL(rw_crawepr.nrctrliq##2, 0) = 0 AND
+         NVL(rw_crawepr.nrctrliq##3, 0) = 0 AND
+         NVL(rw_crawepr.nrctrliq##4, 0) = 0 AND
+         NVL(rw_crawepr.nrctrliq##5, 0) = 0 AND
+         NVL(rw_crawepr.nrctrliq##6, 0) = 0 AND
+         NVL(rw_crawepr.nrctrliq##7, 0) = 0 AND
+         NVL(rw_crawepr.nrctrliq##8, 0) = 0 AND
+         NVL(rw_crawepr.nrctrliq##9, 0) = 0 AND
+         NVL(rw_crawepr.nrctrliq##10,0) = 0 THEN
+         CONTINUE; -- Proximo registro
+      END IF;
+
+    END IF;
+
     --Selecionar Associado
     OPEN cr_crapass (pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => rw_crabepr.nrdconta);
@@ -1675,36 +1752,9 @@ BEGIN
       END IF;
     END IF; -- Fim cobranca da tarifa de avaliacao de bens em garantia
     
-    -- Leitura da proposta do emprestimo
-    OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
-                   ,pr_nrdconta => rw_crabepr.nrdconta
-                   ,pr_nrctremp => rw_crabepr.nrctremp);
-    FETCH cr_crawepr INTO rw_crawepr;
-    
-    -- Se nao encontrou proposta
-    IF cr_crawepr%NOTFOUND THEN
-      vr_cdcritic:= 535; -- 535 - Proposta Não Encontrada.
-      vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic) ||
-                    gene0002.fn_mask(rw_crabepr.nrdconta,'zzzz.zzz.9');
-      -- Fechar Cursor
-      CLOSE cr_crawepr;
-      
-      -- Gera Log
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- Erro Tratado
-                                 pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss')  ||
-                                                    ' -' || vr_cdprogra || ' --> '  ||
-                                                    vr_dscritic);
-      
-      --Sair do programa
-      RAISE vr_exc_saida;
-    END IF;
-    -- Fechar Cursor
-    CLOSE cr_crawepr;
-    
     -- Credita valor do emprestimo (Se não Bloqueado)
     IF (rw_crawepr.qtdialib <= 0  AND rw_crawepr.tpemprst = 0) OR
-       (rw_crawepr.dtlibera = rw_crapdat.dtmvtolt AND rw_crawepr.tpemprst = 1) THEN
+       (rw_crawepr.dtlibera = rw_crapdat.dtmvtolt AND rw_crawepr.tpemprst IN (1,2)) THEN
         
       IF vr_flgcrcta = 1 THEN -- TRUE
         
@@ -2035,7 +2085,7 @@ BEGIN
           -- Saldo Devedor Acumulado
           vr_vlsderel := vr_vlsdeved;
           
-        ELSE 
+        ELSIF rw_crapepr.tpemprst = 1 THEN -- Price Pre-Fixado
           
           -- Limpar tabelas de Memorias de Pagamentos de parcelas
           vr_tab_pgto_parcel.DELETE;
@@ -2107,6 +2157,51 @@ BEGIN
             vr_vlsderel := NVL(vr_tab_calculado(vr_index_calculado).vlsderel, 0);
           END IF;            
           
+        ELSIF rw_crapepr.tpemprst = 2 THEN -- Pos-Fixado
+
+          -- Inicializa
+          vr_vlsdeved := 0;
+          vr_vlsderel := 0;
+
+          -- Busca as parcelas para pagamento
+          EMPR0011.pc_busca_pagto_parc_pos(pr_cdcooper => rw_crapepr.cdcooper
+                                          ,pr_flgbatch => TRUE
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                          ,pr_dtmvtoan => rw_crapdat.dtmvtoan
+                                          ,pr_nrdconta => rw_crapepr.nrdconta
+                                          ,pr_nrctremp => rw_crapepr.nrctremp
+                                          ,pr_dtefetiv => rw_crapepr.dtmvtolt
+                                          ,pr_cdlcremp => rw_crapepr.cdlcremp
+                                          ,pr_vlemprst => rw_crapepr.vlemprst
+                                          ,pr_txmensal => rw_crapepr.txmensal
+                                          ,pr_dtdpagto => rw_crapepr.dtprivencto
+                                          ,pr_vlsprojt => rw_crapepr.vlsprojt
+                                          ,pr_qttolatr => rw_crapepr.qttolatr
+                                          ,pr_tab_parcelas => vr_tab_parcelas_pos
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+          -- Se houve erro
+          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            -- Gera Log
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2
+                                      ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic ||
+                                                          ' - Conta =  ' || TO_CHAR(rw_crapepr.nrdconta, 'FM9999G999G9') ||
+                                                          ' - Contrato = ' || TO_CHAR(rw_crapepr.nrctremp, 'FM99G999G999'));
+            RAISE vr_exc_saida;
+          END IF;
+
+          -- Carregar as variveis de retorno
+          vr_index_pos := vr_tab_parcelas_pos.FIRST;
+          WHILE vr_index_pos IS NOT NULL LOOP
+            -- Saldo para relatorios
+            vr_vlsderel := vr_vlsderel + vr_tab_parcelas_pos(vr_index_pos).vlatupar;
+            -- Saldo devedor total do emprestimo
+            vr_vlsdeved := vr_vlsdeved + vr_tab_parcelas_pos(vr_index_pos).vlatrpag;
+            -- Proximo indice
+            vr_index_pos := vr_tab_parcelas_pos.NEXT(vr_index_pos);
+          END LOOP;
+
         END IF;
           
         --Saldo Devedor Negativo
@@ -2226,6 +2321,7 @@ BEGIN
                    INTO rw_craplot.qtinfoln
                       , rw_craplot.qtcompln
                       , rw_craplot.nrseqdig;                   
+              
               
             EXCEPTION
               WHEN OTHERS THEN
@@ -2600,7 +2696,9 @@ BEGIN
               END LOOP; --rw_crapavs
             END IF; --nvl(vr_vlavsdeb,0) > 0
           END IF; --rw_crapepr.flgpagto = 1             
-        ELSE
+
+        ELSIF rw_crapepr.tpemprst = 1 THEN  -- Price Pre-Fixado
+
           /* Verificar se o contrato que esta sendo liquidado está na tabela temporaria */
           --Montar Indice acesso
           vr_index_crawepr := lpad(rw_crapepr.cdcooper, 10,'0') ||
@@ -2675,6 +2773,41 @@ BEGIN
             --Sair do programa
             RAISE vr_exc_saida;
           END IF;
+
+        ELSIF rw_crapepr.tpemprst = 2 THEN  -- Pos-Fixado
+
+          -- Limpa PLTable
+          vr_tab_price.DELETE;
+          
+          -- Carregar as variveis de retorno
+          vr_index_pos := vr_tab_parcelas_pos.FIRST;
+          WHILE vr_index_pos IS NOT NULL LOOP
+            -- Chama pagamento da parcela
+            EMPR0011.pc_gera_pagto_pos(pr_cdcooper  => rw_crapepr.cdcooper
+                                      ,pr_dtcalcul  => rw_crapdat.dtmvtolt
+                                      ,pr_nrdconta  => rw_crapepr.nrdconta
+                                      ,pr_nrctremp  => rw_crapepr.nrctremp
+                                      ,pr_nrparepr  => vr_tab_parcelas_pos(vr_index_pos).nrparepr
+                                      ,pr_vlpagpar  => vr_tab_parcelas_pos(vr_index_pos).vlatrpag
+                                      ,pr_idseqttl  => 1
+                                      ,pr_cdagenci  => rw_crapepr.cdagenci
+                                      ,pr_cdpactra  => rw_crapepr.cdagenci
+                                      ,pr_nrdcaixa  => 0
+                                      ,pr_cdoperad  => '1'
+                                      ,pr_nrseqava  => 0
+                                      ,pr_idorigem  => 7 -- BATCH
+                                      ,pr_nmdatela  => vr_cdprogra
+                                      ,pr_tab_price => vr_tab_price
+                                      ,pr_cdcritic  => vr_cdcritic
+                                      ,pr_dscritic  => vr_dscritic);
+            -- Se houve erro
+            IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+            END IF;
+            -- Proximo index
+            vr_index_pos := vr_tab_parcelas_pos.NEXT(vr_index_pos);
+          END LOOP;
+
         END IF;
       END IF; -- Fim vr_tab_crawepr(vr_contador).nrctrliq > 0
     END LOOP; -- vr_contador 1..10
@@ -2813,6 +2946,13 @@ BEGIN
         vr_vlemprst := GREATEST(rw_crabepr.vlemprst - vr_totliqui, 0);
       END IF;
     
+      vr_qtdias_carencia := 0; -- Inicializa
+
+      -- Se for Pos-Fixado e existir carencia
+      IF rw_crabepr.tpemprst = 2 AND vr_tab_carencia.EXISTS(rw_crawepr.idcarenc) THEN
+        vr_qtdias_carencia := vr_tab_carencia(rw_crawepr.idcarenc);
+      END IF;
+    
       EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper                  
                                  ,pr_nrdconta => rw_crabepr.nrdconta          
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt          
@@ -2824,8 +2964,8 @@ BEGIN
                                  ,pr_dtdpagto => rw_crabepr.dtdpagto          
                                  ,pr_dtlibera => rw_crapdat.dtmvtolt          
                                  ,pr_tpemprst => rw_crabepr.tpemprst          
-                                 ,pr_dtcarenc => SYSDATE --pr_dtcarenc                JMD
-                                 ,pr_qtdias_carencia => 99 -- pr_qtdias_carencia JMD
+                                 ,pr_dtcarenc        => rw_crawepr.dtcarenc
+                                 ,pr_qtdias_carencia => vr_qtdias_carencia
                                  ,pr_valoriof => vr_vliofaux                  
                                  ,pr_dscritic => vr_dscritic);                
                                                                              

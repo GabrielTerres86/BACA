@@ -138,9 +138,7 @@ ELSE IF crapepr.tpemprst = 2 THEN /* Price Pos-Fixado */
                                                 INPUT STRING(par_dtmvtolt),
                                                 INPUT STRING(crapdat.dtmvtoan),
                                                 INPUT crapepr.nrdconta,
-                                                INPUT crapepr.nrctremp,
-                                                INPUT crapepr.cdlcremp,
-                                                INPUT crapepr.qttolatr,
+                                                INPUT crapepr.nrctremp,                                                
                                                OUTPUT 0,   /* pr_vlpreapg */
                                                OUTPUT 0,   /* pr_vlprvenc */
                                                OUTPUT 0,   /* pr_vlpraven */

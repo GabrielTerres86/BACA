@@ -224,9 +224,6 @@
 							(Adriano - P339).       
 
                 21/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
-                
-    29/01/2018 - #770327 Chamada da rotina pc_lista_aplicacoes_car alterada para 
-                 pc_lista_demons_apli, rotina Gera_Impressao_Aplicacao (Carlos)
 
 ............................................................................*/
 
@@ -2387,7 +2384,7 @@ PROCEDURE Gera_Impressao_Aplicacao:
          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
          
          /* Efetuar a chamada a rotina Oracle */ 
-         RUN STORED-PROCEDURE pc_lista_demons_apli
+         RUN STORED-PROCEDURE pc_lista_aplicacoes_car
              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
                                                   INPUT par_cdoperad, /* Código do Operador */
                                                   INPUT par_nmdatela, /* Nome da Tela */
@@ -2401,15 +2398,13 @@ PROCEDURE Gera_Impressao_Aplicacao:
                                                   INPUT 0,            /* Código do Produto – Parâmetro Opcional */ 
                                                   INPUT par_dtmvtolt, /* Data de Movimento */
                                                   INPUT 5,            /* Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas) */
-                                                  INPUT 1,            /* Identificador de Log (0 – Não / 1 – Sim) */
-                                                  INPUT aux_dtiniper,
-                                                  INPUT aux_dtfimper,
+                                                  INPUT 1,            /* Identificador de Log (0 – Não / 1 – Sim) */                                                                                                                                  
                                                  OUTPUT ?,            /* XML com informações de LOG */
                                                  OUTPUT 0,            /* Código da crítica */
                                                  OUTPUT "").          /* Descrição da crítica */
         
          /* Fechar o procedimento para buscarmos o resultado */ 
-         CLOSE STORED-PROC pc_lista_demons_apli
+         CLOSE STORED-PROC pc_lista_aplicacoes_car
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
         
          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
@@ -2417,10 +2412,10 @@ PROCEDURE Gera_Impressao_Aplicacao:
          /* Busca possíveis erros */ 
          ASSIGN aux_cdcritic = 0
                 aux_dscritic = ""
-                aux_cdcritic = pc_lista_demons_apli.pr_cdcritic 
-                               WHEN pc_lista_demons_apli.pr_cdcritic <> ?
-                aux_dscritic = pc_lista_demons_apli.pr_dscritic 
-                               WHEN pc_lista_demons_apli.pr_dscritic <> ?.
+                aux_cdcritic = pc_lista_aplicacoes_car.pr_cdcritic 
+                               WHEN pc_lista_aplicacoes_car.pr_cdcritic <> ?
+                aux_dscritic = pc_lista_aplicacoes_car.pr_dscritic 
+                               WHEN pc_lista_aplicacoes_car.pr_dscritic <> ?.
     
     
          IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
@@ -2436,7 +2431,7 @@ PROCEDURE Gera_Impressao_Aplicacao:
          EMPTY TEMP-TABLE tt-saldo-rdca.
         
          /* Buscar o XML na tabela de retorno da procedure Progress */ 
-         ASSIGN xml_req = pc_lista_demons_apli.pr_clobxmlc. 
+         ASSIGN xml_req = pc_lista_aplicacoes_car.pr_clobxmlc. 
         
          /* Efetuar a leitura do XML*/ 
          SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
@@ -4369,20 +4364,6 @@ PROCEDURE extrato_pos_fixado:
 
         BUFFER-COPY tt-extrato_epr TO tt-extrato_epr_aux.
 
-        ASSIGN tt-extrato_epr_aux.vlrdtaxa = 0.
-        
-        /* Lancamento de Juros de Correcao */
-        IF CAN-DO("2344,2345",STRING(tt-extrato_epr.cdhistor)) THEN
-           DO:
-                FOR crappep FIELDS(vltaxatu) WHERE crappep.cdcooper = par_cdcooper            AND
-                                                   crappep.nrdconta = par_nrdconta            AND
-                                                   crappep.nrctremp = par_nrctremp            AND
-                                                   crappep.nrparepr = INTE(tt-extrato_epr.nrparepr)
-                                                   NO-LOCK:
-                  ASSIGN tt-extrato_epr_aux.vlrdtaxa = crappep.vltaxatu.
-                END.
-           END.
-           
         IF FIRST (tt-extrato_epr.dtmvtolt) THEN
            DO:
                /* Saldo Inicial */

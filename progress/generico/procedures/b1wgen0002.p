@@ -726,8 +726,8 @@
 
               14/12/2017 - Inclusão dos campo flintcdc, inintegra_cont na tt tt-proposta-epr
                            utilizada nas procedures obtem-propostas-emprestimo e 
-                           obtem-dados-proposta-emprestimo, Prj. 402 (Jean Michel).
-              
+                           obtem-dados-proposta-emprestimo, Prj. 402 (Jean Michel).                     
+                       
               16/02/2018 - Ajuste na procedure obtem-dados-proposta-emprestimo para verificar se existe valor 
                            na coluna nrrenavo, caso sim, retorna esse valor, senao retorna o nrrenava.
                            Chamado 845869 - (Mateus Z - Mouts)
@@ -1691,7 +1691,7 @@ PROCEDURE obtem-extrato-emprestimo:
             RETURN "NOK".
         END.
 
-    ASSIGN aux_dshistor = "1032,1033,1034,1035,1048,1049".
+    ASSIGN aux_dshistor = "1032,1033,1034,1035,1048,1049,2566,2567".
 
     FOR EACH craplem WHERE craplem.cdcooper  = par_cdcooper AND
                            craplem.nrdconta  = par_nrdconta AND
@@ -1736,7 +1736,7 @@ PROCEDURE obtem-extrato-emprestimo:
 
         /*Historicos que nao vao compor o saldo,
           mas vao aparecer no relatorio*/
-        IF  CAN-DO("1048,1049,1050,1051,1717,1720,1708,1711",
+        IF  CAN-DO("1048,1049,1050,1051,1717,1720,1708,1711,2566,2567",
                    STRING(craplem.cdhistor)) THEN
             ASSIGN tt-extrato_epr.flgsaldo = FALSE.
 
@@ -1863,7 +1863,8 @@ PROCEDURE obtem-extrato-emprestimo:
                tt-extrato_epr.vllanmto = aux_vllantmo
                tt-extrato_epr.txjurepr = craplem.txjurepr
                tt-extrato_epr.tpemprst = crapepr.tpemprst
-               tt-extrato_epr.cdorigem = craplem.cdorigem.
+               tt-extrato_epr.cdorigem = craplem.cdorigem
+			   tt-extrato_epr.vlrdtaxa = craplem.vltaxprd.
 
         IF   craplem.nrparepr <> 0 THEN
              tt-extrato_epr.nrparepr = STRING(craplem.nrparepr,"zz9").

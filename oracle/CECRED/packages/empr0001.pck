@@ -510,6 +510,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                   ,pr_nrseqava IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                   ,pr_cdorigem IN NUMBER DEFAULT 0 --> Origem do Movimento
                                   ,pr_qtdiacal IN NUMBER DEFAULT 0 --> Quantidade dias usado no calculo
+                                  ,pr_vltaxprd IN NUMBER DEFAULT 0 --> Valor da Taxa no Periodo
                                   ,pr_cdcritic OUT INTEGER --Codigo Erro
                                   ,pr_dscritic OUT VARCHAR2);
                                   
@@ -3961,13 +3962,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                              ,pr_dtmvtoan => TO_CHAR(pr_rw_crapdat.dtmvtoan,'DD/MM/RRRR')
                                              ,pr_nrdconta => pr_nrdconta
                                              ,pr_nrctremp => pr_nrctremp
-                                             ,pr_cdlcremp => rw_crapepr.cdlcremp
-                                             ,pr_qttolatr => rw_crapepr.qttolatr
                                              ,pr_vlpreapg => pr_vlpreapg
                                              ,pr_vlprvenc => pr_vlprvenc
                                              ,pr_vlpraven => pr_vlpraven
                                              ,pr_vlmtapar => pr_vlmtapar
                                              ,pr_vlmrapar => pr_vlmrapar
+                                             ,pr_vliofcpl => pr_vliofcpl
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);
         -- Se houve erro
@@ -6354,13 +6354,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                              ,pr_dtmvtoan => TO_CHAR(pr_rw_crapdat.dtmvtoan,'DD/MM/RRRR')
                                              ,pr_nrdconta => rw_crapepr.nrdconta
                                              ,pr_nrctremp => rw_crapepr.nrctremp
-                                             ,pr_cdlcremp => rw_crapepr.cdlcremp
-                                             ,pr_qttolatr => rw_crapepr.qttolatr
                                              ,pr_vlpreapg => vr_vlpreapg
                                              ,pr_vlprvenc => vr_vlprvenc
                                              ,pr_vlpraven => vr_vlpraven
                                              ,pr_vlmtapar => vr_vlmtapar
                                              ,pr_vlmrapar => vr_vlmrapar
+                                             ,pr_vliofcpl => vr_vliofcpl
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);
         -- Se houve erro
@@ -7394,6 +7393,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                   ,pr_nrseqava IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                   ,pr_cdorigem IN NUMBER DEFAULT 0 --> Origem do Movimento
                                   ,pr_qtdiacal IN NUMBER DEFAULT 0 --> Quantidade dias usado no calculo
+                                  ,pr_vltaxprd IN NUMBER DEFAULT 0 --> Valor da Taxa no Periodo
                                   ,pr_cdcritic OUT INTEGER --Codigo Erro
                                   ,pr_dscritic OUT VARCHAR2) IS --Descricao Erro
   BEGIN
@@ -7415,6 +7415,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    16/06/2014 - Ajuste para atualizar o campo nrseqava. (James)
 
                    15/08/2017 - Inclusao do campo qtdiacal. (Jaison/James - PRJ298)
+                   
+                   01/02/2018 - Inclusao do campo vltaxprd. (James)
     ............................................................................. */
   
     DECLARE
@@ -7476,7 +7478,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           ,craplem.nrparepr
           ,craplem.nrseqava
           ,craplem.cdorigem
-          ,craplem.qtdiacal)
+          ,craplem.qtdiacal
+          ,craplem.vltaxprd)
         VALUES
           (pr_dtmvtolt
           ,pr_cdpactra
@@ -7496,7 +7499,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           ,pr_nrparepr
           ,pr_nrseqava
           ,pr_cdorigem
-          ,pr_qtdiacal);
+          ,pr_qtdiacal
+          ,pr_vltaxprd);
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;

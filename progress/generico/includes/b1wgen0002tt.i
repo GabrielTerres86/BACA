@@ -186,6 +186,8 @@
               
               14/12/2017 - Inclusao de campos na tt tt-proposta-epr, campos
                            flintcdc e inintegra_cont,Prj. 402 (Jean Michel)
+
+              05/02/2018 - Inclusao do campo vlrdtaxa na tt tt-extrato_epr. (James)
               
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
@@ -209,7 +211,8 @@ DEF TEMP-TABLE tt-extrato_epr NO-UNDO
     FIELD dsextrat AS CHAR
     FIELD flglista AS LOGICAL INITIAL TRUE
     FIELD cdorigem AS INTE
-    FIELD qtdiacal LIKE craplem.qtdiacal.
+    FIELD qtdiacal LIKE craplem.qtdiacal
+	FIELD vlrdtaxa LIKE craplem.vltaxprd.
 
 DEF TEMP-TABLE tt-dados-epr   NO-UNDO  
     FIELD nrdconta AS INTE    FORMAT "zzzz,zzz,9"
