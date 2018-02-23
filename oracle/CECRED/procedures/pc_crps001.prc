@@ -2074,30 +2074,35 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            -- Se NAO possui saldo
            IF rw_crapsld.vlsddisp < 0 THEN
 
-             -- Somente se o contrato de limite tem cobertura de operação
-             IF vr_tab_craplim(rw_crapsld.nrdconta).idcobope > 0 THEN
-
-               -- Tentar resgatar o valor negativo
-               vr_vlresgat := ABS(rw_crapsld.vlsddisp);
-
-               -- Acionaremos rotina para solicitar o resgate afim de cobrir os valores negativos
-               BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => vr_tab_craplim(rw_crapsld.nrdconta).idcobope
-                                                    ,pr_flgerlog => 1
-                                                    ,pr_cdoperad => '1'
-                                                    ,pr_idorigem => 5
-                                                    ,pr_cdprogra => vr_cdprogra
-                                                    ,pr_qtdiaatr => rw_crapsld.qtddusol + 1
-                                                    ,pr_vlresgat => vr_vlresgat
-                                                    ,pr_dscritic => vr_dscritic);
-               -- Em caso de erro
-               IF TRIM(vr_dscritic) IS NOT NULL THEN
-                 --Sair do programa
-                 RAISE vr_exc_saida;
-               ELSE
-                 -- Decrementar do saldo negativo o valor resgatado
-                 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp - vr_vlresgat;
+             --Se encontrou limite de credito para a conta
+             IF vr_tab_craplim.EXISTS(rw_crapsld.nrdconta) THEN
+             
+               -- Somente se o contrato de limite tem cobertura de operação
+               IF vr_tab_craplim(rw_crapsld.nrdconta).idcobope > 0 THEN
+			   
+                 -- Tentar resgatar o valor negativo
+                 vr_vlresgat := ABS(rw_crapsld.vlsddisp);
+  
+                 -- Acionaremos rotina para solicitar o resgate afim de cobrir os valores negativos
+                 BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => vr_tab_craplim(rw_crapsld.nrdconta).idcobope
+                                                      ,pr_flgerlog => 1
+                                                      ,pr_cdoperad => '1'
+                                                      ,pr_idorigem => 5
+                                                      ,pr_cdprogra => vr_cdprogra
+                                                      ,pr_qtdiaatr => rw_crapsld.qtddusol + 1
+                                                      ,pr_vlresgat => vr_vlresgat
+                                                      ,pr_dscritic => vr_dscritic);
+                 -- Em caso de erro
+                 IF TRIM(vr_dscritic) IS NOT NULL THEN
+                   --Sair do programa
+                   RAISE vr_exc_saida;
+                 ELSE
+                   -- Decrementar do saldo negativo o valor resgatado
+                   rw_crapsld.vlsddisp := rw_crapsld.vlsddisp - vr_vlresgat;
+                 END IF;
+		    
                END IF;
-
+  
              END IF;
 
            END IF;
