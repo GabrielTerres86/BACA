@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Janeiro/2005                    Ultima atualizacao: 18/01/2017
+   Data    : Janeiro/2005                    Ultima atualizacao: 19/02/2018
 
    Dados referentes ao programa:
 
@@ -31,6 +31,7 @@
 			   18/01/2017 - Ajustado para nao gerar as informacoes das contas incorporadas 
                             no dia 31/12/2016 no arquivo DIRF da Transpocred 
                             (Douglas - Chamado 595087)
+               19/02/2018 - Na linha BPFDEC inlcuido a informaçao fixa |N|N| (#839408 Tiago)
 ............................................................................ */
 
 { includes/var_batch.i }
@@ -456,7 +457,7 @@ FOR EACH crapdrf WHERE crapdrf.cdcooper = glb_cdcooper  AND
                                  crapdrf.nrcpfbnf FORMAT "99999999999"  "|".
 
                       PUT STREAM str_1 UNFORMATTED rel_nmbenefi  "|"
-                                                   "|"
+                                                   "|N|N|"
                                                    SKIP.
                   END.
              ELSE
