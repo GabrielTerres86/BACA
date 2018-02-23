@@ -96,6 +96,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
     CURSOR cr_crapjur (p_cdcooper IN crapass.cdcooper%TYPE     -- Cód. cooperativa
                       ,p_nrdconta IN crapass.nrdconta%TYPE) IS -- Nr da conta  
       SELECT DECODE(TRIM(jur.nmfansia),NULL,1,2) tpfansia
+            ,jur.nmfansia
         FROM crapjur jur
        WHERE jur.cdcooper = p_cdcooper
          AND jur.nrdconta = p_nrdconta;     
@@ -200,6 +201,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
     gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                            ,pr_texto_completo => vr_xml_temp 
                            ,pr_texto_novo     => '<tpfansia>' || rw_crapjur.tpfansia || '</tpfansia>');
+    
+    gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_texto_novo     => '<nmfansia>' || rw_crapjur.nmfansia || '</nmfansia>');
     
     -- Encerrar a tag raiz
     gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
