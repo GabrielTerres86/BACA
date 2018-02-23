@@ -17,7 +17,10 @@
 					13/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
 					
 					31/10/2012 - Incluido o campo "Risco Grupo Economico" (Adriano).
-		
+
+					30/01/2018 - Remo??o dos campos migrados para a nova aba "Riscos" 
+					             (Reginaldo - AMcom)
+								 		
 	 *****************************************************************************************/
 	
 	session_start();
