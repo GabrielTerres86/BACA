@@ -569,7 +569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : COBR0005
-  --  Sistema  : Procedimentos para  gerais da cobranca
+  --  Sistema  : Procedimentos gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Rafael Cechet
   --  Data     : Agosto/2015.                   Ultima atualizacao: 22/11/2016
@@ -586,7 +586,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --              22/11/2016 - #554528 Melhoria do dscritic (inclusão dos parâmetros e seus valores) na 
   --                           exception vr_exc_semresultado (pc_buscar_titulo_cobranca) para o caso de a 
   --                           mesma voltar a ocorrer (Carlos)
+  --
+  --              20/02/2018 - Inclusão rotina pc_gera_log
+  --                           (Ana - Envolti - Ch 839539)
   ---------------------------------------------------------------------------------------------------------------
+
+  --Ch 839539
+  vr_cdprogra      tbgen_prglog.cdprograma%type := 'COBR0005';
+
+  --> Grava informações para resolver erro de programa/ sistema
+  PROCEDURE pc_gera_log(pr_cdcooper      IN PLS_INTEGER           --> Cooperativa
+                       ,pr_dstiplog      IN VARCHAR2              --> Tipo Log
+                       ,pr_dscritic      IN VARCHAR2 DEFAULT NULL --> Descricao da critica
+                       ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
+                       ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0
+                       ,pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2
+                       ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL) IS
+    -----------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_gera_log
+    --  Sistema  : Rotina para gravar logs em tabelas
+    --  Sigla    : CRED
+    --  Autor    : Ana Lúcia E. Volles - Envolti
+    --  Data     : Janeiro/2018           Ultima atualizacao: 23/02/2018
+    --  Chamado  : 788828
+    --
+    -- Dados referentes ao programa:
+    -- Frequencia: Rotina executada em qualquer frequencia.
+    -- Objetivo  : Controla gravação de log em tabelas.
+    --
+    -- Alteracoes:  
+    --             
+    ------------------------------------------------------------------------------------------------------------   
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+    --
+  BEGIN         
+    --> Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
+                           pr_cdcooper      => pr_cdcooper, 
+                           pr_tpocorrencia  => pr_ind_tipo_log, 
+                           pr_cdprograma    => vr_cdprogra, 
+                           pr_tpexecucao    => 1, --cadeia
+                           pr_cdcriticidade => pr_cdcriticidade,
+                           pr_cdmensagem    => pr_cdmensagem,    
+                           pr_dsmensagem    => pr_dscritic,               
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => pr_nmarqlog);
+  EXCEPTION
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+  END pc_gera_log;
     
   PROCEDURE pc_gera_pedido_remessa( pr_rowidcob IN ROWID
                                    ,pr_dtmvtolt IN DATE
@@ -669,10 +718,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        WHEN vr_exc_erro THEN
          NULL;  
        WHEN OTHERS THEN
-         pr_cdcritic := 0;
-         pr_dscritic := 'Erro nao tratado na COBR0005.pc_gera_pedido_remessa: ' || SQLERRM;
+         --Ch 839539
+         pr_cdcritic := 9999;
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0007.pc_gera_pedido_remessa. '||sqlerrm;
     END;
-
 
   END;
   
@@ -871,7 +920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lombardi
-     Data    : Agosto/2015                     Ultima atualizacao: 28/08/2017
+     Data    : Agosto/2015                     Ultima atualizacao: 23/02/2018
 
      Dados referentes ao programa:
 
@@ -883,7 +932,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 						 	 (Andrei - RKAM).
 
                  28/08/2017 - Ajuste para possibilitar envio do boleto à CIP (Rafael)
-
+                 
+                 23/02/2018 - Ajuste para tratar retorno de rotinas com erro
+                              Inclusão raise nos erros de insert/update/delete
+                              Susbtituição de algumas mensagens por cadastro na CRAPCRI
+                              Inclusão pc_set_modulo
+                              Tratamento exceptions
+                              (Ana - Envolti - Ch 839539)
   ............................................................................ */      
 
       vr_cdbarras VARCHAR2(44);
@@ -951,7 +1006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       rw_crapceb cr_crapceb%ROWTYPE;                  
       
       vr_exc_critica EXCEPTION;
-      vr_exc_erro EXCEPTION;
+      vr_exc_erro    EXCEPTION;
       
       vr_dsdinstr crapcob.dsdinstr%TYPE;
       vr_nrremret crapret.nrremret%TYPE;
@@ -961,29 +1016,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_qtdiaprt INTEGER;
       vr_indiaprt INTEGER;
 
-
   BEGIN    
+      -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
+
       OPEN cr_crapcco (pr_cdcooper => pr_cdcooper
                       ,pr_nrconven => pr_nrcnvcob);
       FETCH cr_crapcco INTO rw_crapcco;
-      
       IF cr_crapcco%NOTFOUND THEN
           CLOSE cr_crapcco;
-          pr_cdcritic := 0;
-          pr_dscritic := 'Convenio nao encontrado.';        
+          pr_cdcritic := 563;  --Convenio nao encontrado
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
           RAISE vr_exc_critica;        
       END IF;
-      
       CLOSE cr_crapcco;                    
 
       /* Testar parametro em relacao ao convenio */
       IF  rw_crapcco.flgregis <> pr_flgregis THEN
-          pr_cdcritic := 0;
-          pr_dscritic := 'Tipo de cobranca invalida.';        
+          pr_cdcritic := 1184;  --Tipo de cobranca invalida
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
           RAISE vr_exc_critica;
       END IF;
 
-      
       vr_busca := TRIM(to_char(pr_cdcooper)) || ';' ||
                   TRIM(to_char(pr_nrdconta)) || ';' ||
                   TRIM(to_char(pr_nrcnvcob)) || ';' ||
@@ -998,8 +1052,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       END IF;
 
       IF  vr_nrdocmto = 0 THEN 
-          pr_cdcritic := 0;
-          pr_dscritic := 'Erro ao gerar numero do documento.';
+          pr_cdcritic := 1185;  --Erro ao gerar numero do documento
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
           RAISE vr_exc_critica;
       END IF;
 
@@ -1022,31 +1076,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                            to_char(vr_nrdocmto, 'fm000000');    
          END IF;
       ELSE
-          vr_nrnosnum := to_char(pr_nrdconta,'fm00000000') ||
-                         to_char(vr_nrdocmto,'fm000000000');
+         vr_nrnosnum := to_char(pr_nrdconta,'fm00000000') ||
+                        to_char(vr_nrdocmto,'fm000000000');
       END IF;
-      
 
       OPEN cr_crapsab (pr_cdcooper => pr_cdcooper
                       ,pr_nrdconta => pr_nrdconta
                       ,pr_nrinssac => pr_nrinssac);
       FETCH cr_crapsab INTO rw_crapsab;                    
-
       IF cr_crapsab%NOTFOUND THEN
-        CLOSE cr_crapsab;        
-        pr_cdcritic := 0;
-        pr_dscritic := 'Pagador nao encontrado.';
+        CLOSE cr_crapsab;  
+        pr_cdcritic := 1187;  --Pagador nao encontrado
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
         RAISE vr_exc_critica;
       END IF;        
-      
       CLOSE cr_crapsab;
-      
+
       vr_flgdprot := pr_flgdprot;
       vr_qtdiaprt := pr_qtdiaprt;
       vr_indiaprt := pr_indiaprt;
       
       IF pr_flgregis = 1 THEN
-         
          /**** validação praça não executante de protesto ****/      
          OPEN cr_crappnp (pr_nmextcid => rw_crapsab.nmcidsac
                          ,pr_cduflogr => rw_crapsab.cdufsaca);
@@ -1059,9 +1109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             vr_indiaprt := 3;
             
             /* Obs.: cursor será fechado apos a inclusao na crapcob */
-                                               
           END IF;
-          
       END IF;         
      
       /* se inst aut de protesto, cob registrada e banco 085 */
@@ -1074,103 +1122,147 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          vr_dsdinstr := pr_dsdinstr;
       END IF;
 
-        /* se banco emite e expede, nosso num conv+ceb+doctmo -
-           Rafael Cechet 29/03/11 */
+      /* se banco emite e expede, nosso num conv+ceb+doctmo -
+         Rafael Cechet 29/03/11 */
 
       vr_dtdemiss := pr_dtmvtolt;
+      BEGIN
+        INSERT INTO crapcob 
+               (cdcooper, nrdconta, nrdocmto, idseqttl, dtmvtolt, cdbandoc, incobran, nrcnvcob, nrdctabb, cdcartei, 
+                cddespec, cdtpinsc, nrinssac, nmdavali, cdtpinav, nrinsava, dtretcob, dtdocmto, dtvencto, vldescto, 
+                vlabatim, cdmensag, dsdoccop, vltitulo, dsdinstr, dsinform, cdimpcob, flgimpre, nrctasac, nrctremp, 
+                nrnosnum, flgdprot, qtdiaprt, indiaprt, vljurdia, vlrmulta, flgaceit, flgregis, inemiten, insitcrt, 
+                insitpro, flgcbdda, tpjurmor, tpdmulta, idopeleg, idtitleg, inemiexp, inregcip, inenvcip, dtvctori)
+        VALUES ( pr_cdcooper
+                ,pr_nrdconta
+                ,vr_nrdocmto
+                ,pr_idseqttl
+                ,vr_dtdemiss
+                ,pr_cdbandoc
+                ,0 -- incobran
+                ,pr_nrcnvcob
+                ,rw_crapcco.nrdctabb
+                ,pr_cdcartei -- 10
+                ,pr_cddespec
+                ,pr_cdtpinsc
+                ,pr_nrinssac
+                ,upper(pr_nmdavali)
+                ,pr_cdtpinav
+                ,pr_nrinsava
+                ,pr_dtmvtolt
+                ,pr_dtdocmto
+                ,pr_dtvencto
+                ,pr_vldescto -- 20
+                ,pr_vlabatim
+                ,pr_cdmensag
+                ,upper(TRIM(pr_dsdoccop)) || (CASE pr_nrpartit WHEN 0 THEN ' ' ELSE '/' || to_char(pr_nrpartit,'0000') END)
+                ,pr_vltitulo
+                ,upper(vr_dsdinstr)
+                ,upper(pr_dsinform)
+                ,3 -- cdimpcob
+                ,1 -- flgimpre
+                ,pr_nrctasac
+                ,pr_nrctremp -- 30
+                ,vr_nrnosnum
+                ,vr_flgdprot -- 
+                ,vr_qtdiaprt -- 
+                ,vr_indiaprt -- 
+                ,pr_vljurdia -- 
+                ,pr_vlrmulta -- 
+                ,pr_flgaceit -- 
+                ,pr_flgregis -- 
+                ,pr_inemiten -- 
+                ,0 -- 40
+                ,(CASE pr_cdbandoc WHEN 85 THEN 1 ELSE 0 END) -- 
+                ,pr_flgsacad -- 
+               /* 1=vlr 'R$' diario, 2= '%' Mensal, 3=isento */
+                ,(CASE WHEN pr_vljurdia = 0 THEN 3 ELSE pr_tpjurmor END) -- 
+               /* 1=vlr 'R$', 2= '%' , 3=isento */
+                ,(CASE pr_vlrmulta WHEN 0 THEN 3 ELSE pr_tpdmulta END) -- 
+                ,(CASE pr_flgsacad WHEN 1 THEN seqcob_idopeleg.nextval ELSE 0 END) -- 
+                ,(CASE pr_flgsacad WHEN 1 THEN seqcob_idtitleg.nextval ELSE 0 END) -- 
+                ,(CASE WHEN pr_inemiten = 3 THEN 1 /* a enviar à PG */ ELSE 0 END )
+                ,2 -- registro batch CIP
+                ,1 -- CIP a enviar
+                ,pr_dtvencto -- vencimento original
+                ) RETURNING 
+                    cdcooper, nrdconta, nrdocmto, idseqttl, dtmvtolt, cdbandoc, incobran, nrcnvcob, nrdctabb, cdcartei, 
+                    cddespec, cdtpinsc, nrinssac, nmdavali, cdtpinav, nrinsava, dtretcob, dtdocmto, dtvencto, vldescto, 
+                    vlabatim, cdmensag, dsdoccop, vltitulo, dsdinstr, dsinform, cdimpcob, flgimpre, nrctasac, nrctremp, 
+                    nrnosnum, flgdprot, qtdiaprt, indiaprt, vljurdia, vlrmulta, flgaceit, flgregis, inemiten, insitcrt, 
+                    insitpro, flgcbdda, tpjurmor, tpdmulta, idopeleg, idtitleg, inemiexp, crapcob.ROWID
+                INTO 
+                    rw_cob.cdcooper, rw_cob.nrdconta, rw_cob.nrdocmto, rw_cob.idseqttl, rw_cob.dtmvtolt, rw_cob.cdbandoc, rw_cob.incobran, rw_cob.nrcnvcob, rw_cob.nrdctabb, rw_cob.cdcartei, 
+                    rw_cob.cddespec, rw_cob.cdtpinsc, rw_cob.nrinssac, rw_cob.nmdavali, rw_cob.cdtpinav, rw_cob.nrinsava, rw_cob.dtretcob, rw_cob.dtdocmto, rw_cob.dtvencto, rw_cob.vldescto, 
+                    rw_cob.vlabatim, rw_cob.cdmensag, rw_cob.dsdoccop, rw_cob.vltitulo, rw_cob.dsdinstr, rw_cob.dsinform, rw_cob.cdimpcob, rw_cob.flgimpre, rw_cob.nrctasac, rw_cob.nrctremp, 
+                    rw_cob.nrnosnum, rw_cob.flgdprot, rw_cob.qtdiaprt, rw_cob.indiaprt, rw_cob.vljurdia, rw_cob.vlrmulta, rw_cob.flgaceit, rw_cob.flgregis, rw_cob.inemiten, rw_cob.insitcrt, 
+                    rw_cob.insitpro, rw_cob.flgcbdda, rw_cob.tpjurmor, rw_cob.tpdmulta, rw_cob.idopeleg, rw_cob.idtitleg, rw_cob.inemiexp, rw_cob.rowid;              
+      EXCEPTION
+        WHEN OTHERS THEN
+            --Gravar tabela especifica de log - 23/02/2018 - Ch 839539
+            CECRED.pc_internal_exception;
 
-      INSERT INTO crapcob 
-             (cdcooper, nrdconta, nrdocmto, idseqttl, dtmvtolt, cdbandoc, incobran, nrcnvcob, nrdctabb, cdcartei, 
-              cddespec, cdtpinsc, nrinssac, nmdavali, cdtpinav, nrinsava, dtretcob, dtdocmto, dtvencto, vldescto, 
-              vlabatim, cdmensag, dsdoccop, vltitulo, dsdinstr, dsinform, cdimpcob, flgimpre, nrctasac, nrctremp, 
-              nrnosnum, flgdprot, qtdiaprt, indiaprt, vljurdia, vlrmulta, flgaceit, flgregis, inemiten, insitcrt, 
-              insitpro, flgcbdda, tpjurmor, tpdmulta, idopeleg, idtitleg, inemiexp, inregcip, inenvcip, dtvctori)
-      VALUES ( pr_cdcooper
-              ,pr_nrdconta
-              ,vr_nrdocmto
-              ,pr_idseqttl
-              ,vr_dtdemiss
-              ,pr_cdbandoc
-              ,0 -- incobran
-              ,pr_nrcnvcob
-              ,rw_crapcco.nrdctabb
-              ,pr_cdcartei -- 10
-              ,pr_cddespec
-              ,pr_cdtpinsc
-              ,pr_nrinssac
-              ,upper(pr_nmdavali)
-              ,pr_cdtpinav
-              ,pr_nrinsava
-              ,pr_dtmvtolt
-              ,pr_dtdocmto
-              ,pr_dtvencto
-              ,pr_vldescto -- 20
-              ,pr_vlabatim
-              ,pr_cdmensag
-              ,upper(TRIM(pr_dsdoccop)) || (CASE pr_nrpartit WHEN 0 THEN ' ' ELSE '/' || to_char(pr_nrpartit,'0000') END)
-              ,pr_vltitulo
-              ,upper(vr_dsdinstr)
-              ,upper(pr_dsinform)
-              ,3 -- cdimpcob
-              ,1 -- flgimpre
-              ,pr_nrctasac
-              ,pr_nrctremp -- 30
-              ,vr_nrnosnum
-              ,vr_flgdprot -- 
-              ,vr_qtdiaprt -- 
-              ,vr_indiaprt -- 
-              ,pr_vljurdia -- 
-              ,pr_vlrmulta -- 
-              ,pr_flgaceit -- 
-              ,pr_flgregis -- 
-              ,pr_inemiten -- 
-              ,0 -- 40
-              ,(CASE pr_cdbandoc WHEN 85 THEN 1 ELSE 0 END) -- 
-              ,pr_flgsacad -- 
-             /* 1=vlr 'R$' diario, 2= '%' Mensal, 3=isento */
-              ,(CASE WHEN pr_vljurdia = 0 THEN 3 ELSE pr_tpjurmor END) -- 
-             /* 1=vlr 'R$', 2= '%' , 3=isento */
-              ,(CASE pr_vlrmulta WHEN 0 THEN 3 ELSE pr_tpdmulta END) -- 
-              ,(CASE pr_flgsacad WHEN 1 THEN seqcob_idopeleg.nextval ELSE 0 END) -- 
-              ,(CASE pr_flgsacad WHEN 1 THEN seqcob_idtitleg.nextval ELSE 0 END) -- 
-              ,(CASE WHEN pr_inemiten = 3 THEN 1 /* a enviar à PG */ ELSE 0 END )
-              ,2 -- registro batch CIP
-              ,1 -- CIP a enviar
-              ,pr_dtvencto -- vencimento original
-              ) RETURNING 
-                  cdcooper, nrdconta, nrdocmto, idseqttl, dtmvtolt, cdbandoc, incobran, nrcnvcob, nrdctabb, cdcartei, 
-                  cddespec, cdtpinsc, nrinssac, nmdavali, cdtpinav, nrinsava, dtretcob, dtdocmto, dtvencto, vldescto, 
-                  vlabatim, cdmensag, dsdoccop, vltitulo, dsdinstr, dsinform, cdimpcob, flgimpre, nrctasac, nrctremp, 
-                  nrnosnum, flgdprot, qtdiaprt, indiaprt, vljurdia, vlrmulta, flgaceit, flgregis, inemiten, insitcrt, 
-                  insitpro, flgcbdda, tpjurmor, tpdmulta, idopeleg, idtitleg, inemiexp, crapcob.ROWID
-              INTO 
-                  rw_cob.cdcooper, rw_cob.nrdconta, rw_cob.nrdocmto, rw_cob.idseqttl, rw_cob.dtmvtolt, rw_cob.cdbandoc, rw_cob.incobran, rw_cob.nrcnvcob, rw_cob.nrdctabb, rw_cob.cdcartei, 
-                  rw_cob.cddespec, rw_cob.cdtpinsc, rw_cob.nrinssac, rw_cob.nmdavali, rw_cob.cdtpinav, rw_cob.nrinsava, rw_cob.dtretcob, rw_cob.dtdocmto, rw_cob.dtvencto, rw_cob.vldescto, 
-                  rw_cob.vlabatim, rw_cob.cdmensag, rw_cob.dsdoccop, rw_cob.vltitulo, rw_cob.dsdinstr, rw_cob.dsinform, rw_cob.cdimpcob, rw_cob.flgimpre, rw_cob.nrctasac, rw_cob.nrctremp, 
-                  rw_cob.nrnosnum, rw_cob.flgdprot, rw_cob.qtdiaprt, rw_cob.indiaprt, rw_cob.vljurdia, rw_cob.vlrmulta, rw_cob.flgaceit, rw_cob.flgregis, rw_cob.inemiten, rw_cob.insitcrt, 
-                  rw_cob.insitpro, rw_cob.flgcbdda, rw_cob.tpjurmor, rw_cob.tpdmulta, rw_cob.idopeleg, rw_cob.idtitleg, rw_cob.inemiexp, rw_cob.rowid;              
-                    
+            pr_cdcritic:= 1034;
+            pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic)||'crapcob: '||
+                         'cdcooper:'||pr_cdcooper||           ', nrdconta:'||pr_nrdconta||
+                         ', nrdocmto:'||vr_nrdocmto||         ', idseqttl:'||pr_idseqttl||
+                         ', dtmvtolt:'||vr_dtdemiss||         ', cdbandoc:'||pr_cdbandoc||
+                         ', incobran:0'||                     ', nrcnvcob:'||pr_nrcnvcob||
+                         ', nrdctabb:'||rw_crapcco.nrdctabb|| ', cdcartei:'||pr_cdcartei||
+                         ', cddespec:'||pr_cddespec||         ', cdtpinsc:'||pr_cdtpinsc||
+                         ', nrinssac:'||pr_nrinssac||         ', nmdavali:'||upper(pr_nmdavali)||
+                         ', cdtpinav:'||pr_cdtpinav||         ', nrinsava:'||pr_nrinsava||
+                         ', dtretcob:'||pr_dtmvtolt||         ', dtdocmto:'||pr_dtdocmto||
+                         ', dtvencto:'||pr_dtvencto||         ', vldescto:'||pr_vldescto||
+                         ', vlabatim:'||pr_vlabatim||         ', cdmensag:'||pr_cdmensag||
+                         ', dsdoccop:'||upper(TRIM(pr_dsdoccop)) || (CASE pr_nrpartit WHEN 0 THEN ' ' ELSE '/' || to_char(pr_nrpartit,'0000') END)||
+                         ', vltitulo:'||pr_vltitulo||         ', dsdinstr:'||upper(vr_dsdinstr)||
+                         ', dsinform:'||upper(pr_dsinform)||  ', cdimpcob:3'||
+                         ', flgimpre:1'||                     ', nrctasac:'||pr_nrctasac||
+                         ', nrctremp:'||pr_nrctremp||         ', nrnosnum:'||vr_nrnosnum||
+                         ', flgdprot:'||vr_flgdprot||         ', qtdiaprt:'||vr_qtdiaprt||
+                         ', indiaprt:'||vr_indiaprt||         ', vljurdia:'||pr_vljurdia||
+                         ', vlrmulta:'||pr_vlrmulta||         ', flgaceit:'||pr_flgaceit||
+                         ', flgregis:'||pr_flgregis||         ', inemiten:'||pr_inemiten||
+                         ', insitcrt:0'||                     ', flgcbdda:'||pr_flgsacad||
+                         ', insitpro:'||(CASE pr_cdbandoc WHEN 85 THEN 1 ELSE 0 END)||
+                         ', tpjurmor:'||(CASE WHEN pr_vljurdia = 0 THEN 3 ELSE pr_tpjurmor END)||
+                         ', tpdmulta:'||(CASE pr_vlrmulta WHEN 0 THEN 3 ELSE pr_tpdmulta END)||
+                         ', idopeleg:'||(CASE pr_flgsacad WHEN 1 THEN seqcob_idopeleg.nextval ELSE 0 END)||
+                         ', idtitleg:'||(CASE pr_flgsacad WHEN 1 THEN seqcob_idtitleg.nextval ELSE 0 END)||
+                         ', inemiexp:'||(CASE WHEN pr_inemiten = 3 THEN 1 ELSE 0 END)||
+                         ', inregcip:2'||                     ', inenvcip:1'||
+                         ', dtvctori:'||pr_dtvencto||
+                          '. '||sqlerrm;
+            RAISE vr_exc_erro;
+      END;
+        
       IF pr_flgregis = 1 THEN
-         
-         IF cr_crappnp%FOUND THEN
 
-            CLOSE cr_crappnp;
-      
-            paga0001.pc_cria_log_cobranca(rw_cob.rowid
-                                         ,pr_cdoperad => pr_cdoperad
-                                         ,pr_dtmvtolt => SYSDATE
-                                         ,pr_dsmensag => 'Obs.: Praca nao executante de protesto'
-                                         ,pr_des_erro => vr_des_erro
-                                         ,pr_dscritic => pr_dscritic);
-                                         
+        IF cr_crappnp%FOUND THEN
+          CLOSE cr_crappnp;
+          paga0001.pc_cria_log_cobranca(rw_cob.rowid
+                                       ,pr_cdoperad => pr_cdoperad
+                                       ,pr_dtmvtolt => SYSDATE
+                                       ,pr_dsmensag => 'Obs.: Praca nao executante de protesto'
+                                       ,pr_des_erro => vr_des_erro
+                                       ,pr_dscritic => pr_dscritic);
+          --Tratamento de erro - Ch 839539
+          IF TRIM(pr_dscritic) IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
           END IF;
+
+          -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
+        END IF;
           
-          IF cr_crappnp%ISOPEN THEN
-             CLOSE cr_crappnp;
-          END IF;
+        IF cr_crappnp%ISOPEN THEN
+          CLOSE cr_crappnp;
+        END IF;
 
       END IF;         
-  
+
       /** Validacoes de Cobranca Registrada **/
       IF  pr_cdbandoc = 1 AND pr_flgregis = 1 THEN 
 
@@ -1180,12 +1272,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                  ,pr_cdcritic => pr_cdcritic
                                  ,pr_dscritic => pr_dscritic);
       
+          --Tratamento de erro - Ch 839539
+          IF NVL(pr_cdcritic,0) <> 0 OR TRIM(pr_dscritic) IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+
+        -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
+
       ELSE 
          IF rw_cob.cdbandoc = 085 AND 
             pr_flgregis = 1       AND 
             pr_inemiten <> 3      THEN /* nao gerar confirmacao de retorno
                                               qdo emissao Cooperativa/EE */
-                                              
           OPEN cr_cop;
           FETCH cr_cop INTO rw_cop;
           CLOSE cr_cop;
@@ -1202,9 +1302,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                              ,pr_nrremass => pr_nrremass --Numero Remessa
                                              ,pr_cdcritic => pr_cdcritic   --Codigo Critica
                                              ,pr_dscritic => pr_dscritic); --Descricao Critica          
+
+          --Tratamento de erro - Ch 839539
+          IF NVL(pr_cdcritic,0) <> 0 OR TRIM(pr_dscritic) IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+           
+          -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
+
          END IF;
       END IF;
-
       /*** Criando log do processo - Cobranca Registrada ***/
       IF pr_flgregis = 1 THEN 
         
@@ -1212,9 +1321,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                      , pr_cdoperad => pr_cdoperad
                                      , pr_dtmvtolt => SYSDATE
                                      , pr_dsmensag => (CASE WHEN pr_tpemitir = 1 THEN 'Titulo gerado'
-                                     ELSE 'Titulo gerado - Carne' END)
+                                                       ELSE 'Titulo gerado - Carne' END)
                                      , pr_des_erro => vr_des_erro
                                      , pr_dscritic => pr_dscritic);
+         --Tratamento de erro - Ch 839539
+         IF TRIM(pr_dscritic) IS NOT NULL THEN
+           --Levantar Excecao
+           RAISE vr_exc_erro;
+         END IF;
+
+         -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
+         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
+
       END IF;
 
       IF pr_flgregis = 1 AND pr_inemiten = 3 THEN /* cooperativa emite e expede */ 
@@ -1226,9 +1344,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                      , pr_dsmensag => 'Titulo a enviar para PG'
                                      , pr_des_erro => vr_des_erro
                                      , pr_dscritic => pr_dscritic);
+          --Tratamento de erro - Ch 839539
+          IF TRIM(pr_dscritic) IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+
+        -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
 
       END IF;
-      
+
       cobr0005.pc_buscar_titulo_cobranca(pr_cdcooper => pr_cdcooper
 --                                            ,pr_rowidcob => rw_crapcob.rowidcob
                                         ,pr_nrdconta => rw_cob.nrdconta
@@ -1240,19 +1366,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                         ,pr_cdcritic => pr_cdcritic
                                         ,pr_dscritic => pr_dscritic
                                         ,pr_tab_cob  => pr_tab_cob);      
+
+        --Tratamento de erro - Ch 839539
+        IF NVL(pr_cdcritic,0) <> 0 OR TRIM(pr_dscritic) IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
       
-
-  /*    ASSIGN pr_lsdoctos = pr_lsdoctos + 
-                           (IF  pr_lsdoctos <> ''  THEN
-                                ','
-                            ELSE
-                                '') + to_char(aux_nrdocmto) 
-             pr_nrdocmto = pr_nrdocmto + 1
-             pr_nrdoccop = pr_nrdoccop + 1.*/
-
-  --    RETURN 'OK'.  
-  
-
+      -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
   EXCEPTION
     WHEN vr_exc_critica THEN
       IF cr_crappnp%ISOPEN THEN CLOSE cr_crappnp; END IF;
@@ -1262,6 +1384,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       IF cr_crapsab%ISOPEN THEN CLOSE cr_crapsab; END IF;
       -- RETURN "NOK".
       -- Efetuar Rollback
+
+      IF NVL(pr_cdcritic,0) > 0 AND pr_dscritic IS NULL THEN
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      END IF;
+
+      --Grava tabela de log - Ch 788828
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+
     WHEN vr_exc_erro THEN
       IF cr_crappnp%ISOPEN THEN CLOSE cr_crappnp; END IF;
       IF cr_crapass%ISOPEN THEN CLOSE cr_crapass; END IF;
@@ -1269,7 +1404,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       IF cr_crapcob%ISOPEN THEN CLOSE cr_crapcob; END IF;
       IF cr_crapsab%ISOPEN THEN CLOSE cr_crapsab; END IF;
       
-      pr_dscritic := pr_dscritic || ' - ' || SQLERRM;
+      IF NVL(pr_cdcritic,0) > 0 AND pr_dscritic IS NULL THEN
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      END IF;
+
+      --Grava tabela de log - Ch 788828
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
 
     WHEN OTHERS THEN
       IF cr_crappnp%ISOPEN THEN CLOSE cr_crappnp; END IF;
@@ -1278,9 +1423,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       IF cr_crapcob%ISOPEN THEN CLOSE cr_crapcob; END IF;
       IF cr_crapsab%ISOPEN THEN CLOSE cr_crapsab; END IF;
       
-      -- Efetuar retorno do erro não tratado
-      pr_cdcritic := 0;
-      pr_dscritic := sqlerrm;
+      --Gravar tabela especifica de log - 23/02/2018 - Ch 839539
+      CECRED.pc_internal_exception;
+
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0007.pc_inst_pedido_baixa. '||sqlerrm;
+
+      --Grava tabela de log - Ch 839539
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
       
   END pc_gerar_titulo_cobranca;
   
@@ -1332,6 +1488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
      Alteracoes: 05/10/2016 -  Ajustes referente a melhoria M271 (Kelvin).
 
+	             10/01/2018 - Buscar se eh carne pelo texto completo (Andrino Mouts)
   ............................................................................ */      
 
 	DECLARE
@@ -1482,7 +1639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                         AND col.nrdconta (+) = cob.nrdconta
                         AND col.nrcnvcob (+) = cob.nrcnvcob
                         AND col.nrdocmto (+) = cob.nrdocmto
-                        AND upper(col.dslogtit(+)) LIKE '%CARNE%'),0) flgcarne
+                        AND col.dslogtit (+) = 'Titulo gerado - Carne'),0) flgcarne
                ,nvl((SELECT 1 FROM craptdb tdb
                       WHERE tdb.cdcooper (+) = cob.cdcooper
                         AND tdb.nrdconta (+) = cob.nrdconta
@@ -2012,14 +2169,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     EXCEPTION
       
       WHEN vr_exc_semresultado THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'pr_cdcooper: ' || to_char(pr_cdcooper) || 
-        ' pr_nrdconta: ' || to_char(pr_nrdconta) || 
-        ' pr_nrctremp: ' || to_char(pr_nrctremp) || 
-        ' pr_nrcnvcob: ' || to_char(pr_nrcnvcob) || 
-        ' pr_nrdocmto: ' || to_char(pr_nrdocmto) || 
+        --Ch 839539
+        pr_cdcritic := 1188;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||
+        ' cdcooper:' || to_char(pr_cdcooper) || 
+        ', nrdconta:' || to_char(pr_nrdconta) || 
+        ', nrctremp:' || to_char(pr_nrctremp) || 
+        ', nrcnvcob:' || to_char(pr_nrcnvcob) || 
+        ', nrdocmto:' || to_char(pr_nrdocmto) || 
         ' Boletos nao encontrados.';
-      
+
       WHEN vr_exc_saida THEN
         -- Se possui código de crítica e não foi informado a descrição
         IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
@@ -2031,11 +2190,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
+        --Grava tabela de log - Ch 788828
+        pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic,
+                    pr_cdcriticidade => 1,
+                    pr_cdmensagem    => nvl(pr_cdcritic,0),
+                    pr_ind_tipo_log  => 1);
+
       WHEN OTHERS THEN
     				
-        -- Atribui exceção para os parametros de crítica				
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na COBR0005.pc_buscar_titulo_cobranca: ' || SQLERRM;
+        --Gravar tabela especifica de log - 23/02/2018 - Ch 839539
+        CECRED.pc_internal_exception;
+
+        -- Montar descrição de erro não tratado
+--        pr_cdcritic := vr_cdcritic;
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_buscar_titulo_cobranc. '||sqlerrm;
+
+        --Grava tabela de log - Ch 839539
+        pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic,
+                    pr_cdcriticidade => 2,
+                    pr_cdmensagem    => nvl(pr_cdcritic,0),
+                    pr_ind_tipo_log  => 2);
 
     END;
       
@@ -6494,18 +6673,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     vr_dsdemail  VARCHAR2(500);
     vr_dsdcorpo  VARCHAR2(1000);
-    vr_nmarqlog     VARCHAR2(50);
-    
-    
+    vr_nmarqlog  VARCHAR2(50);
+    vr_cdprodut  tbgen_sms_lote.cdproduto%TYPE;
+    vr_dsassunt  VARCHAR2(100);
+        
   BEGIN
     
     --> Atualizar registro
     UPDATE tbgen_sms_lote lote
        SET lote.idsituacao = pr_idsituacao,
            lote.dhretorno  = SYSDATE
-     WHERE lote.cdproduto = 19
+     WHERE /*lote.cdproduto = 19
        AND lote.idtpreme = 'SMSCOBRAN'
-       AND idlote_sms = pr_idlotsms;         
+       AND */idlote_sms = pr_idlotsms
+     RETURNING lote.cdproduto INTO vr_cdprodut;         
+    
+    -- Ajustar mensagem de alerta conforme produto
+    IF vr_cdprodut = 19 THEN
+      vr_dsassunt := 'SMS COBRANÇA - ERRO AO ENVIAR LOTE';
+    ELSIF vr_cdprodut = 21 THEN
+      vr_dsassunt := 'SMS LIMITE CRÉDITO - ERRO AO ENVIAR LOTE';
+    ELSE -- Seta mensagem padrão 
+      vr_dsassunt := 'SMS - ERRO AO ENVIAR LOTE';
+    END IF;
     
     --> Diferente de processado
     IF pr_idsituacao <> 'P' THEN
@@ -6521,7 +6711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       gene0003.pc_solicita_email(pr_cdcooper => 3 
                                 ,pr_cdprogra => 'COBR0005'
                                 ,pr_des_destino => vr_dsdemail
-                                ,pr_des_assunto => 'SMS COBRANÇA - ERRO AO ENVIAR LOTE'
+                                ,pr_des_assunto => vr_dsassunt
                                 ,pr_des_corpo => vr_dsdcorpo 
                                 ,pr_des_anexo => '' --> Não tem anexo.
                                 ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
@@ -6679,14 +6869,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         vr_sucess := vr_tab_campos(vr_idx)('Success');  
         vr_Detail := vr_tab_campos(vr_idx)('Detail');  
         
-        IF upper(vr_sucess) = 'TRUE' THEN
-          vr_cdretorn := 00;
-        ELSIF upper(vr_sucess) = 'FALSE' THEN 
-          vr_cdretorn := 10;
-        ELSE
-          vr_dscritic := 'Valor invalido para o campo "Sucess": '||vr_sucess;
-          RAISE vr_exc_erro;
-        END IF;
+          IF upper(vr_sucess) = 'TRUE' THEN
+            vr_cdretorn := 00;
+          ELSIF upper(vr_sucess) = 'FALSE' THEN 
+            vr_cdretorn := 10;
+          ELSE
+            vr_dscritic := 'Valor invalido para o campo "Sucess": '||vr_sucess;
+            RAISE vr_exc_erro;
+          END IF;
         
         pc_atualiza_status_msg (pr_idlotsms   => pr_idlotsms  --> Numer do lote de SMS
                                ,pr_idsms      => vr_idsms     --> Identificador do SMS
