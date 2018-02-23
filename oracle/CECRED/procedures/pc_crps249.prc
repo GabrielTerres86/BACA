@@ -1555,7 +1555,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            crapcon.nmextcon
       from crapcon
      where crapcon.cdcooper = pr_cdcooper
-       and crapcon.flgcnvsi = 1 -- Contem a situacao do convenio com o SICREDI (SIM/NAO).
+       and crapcon.tparrecd = 1 -- Convenio com o SICREDI.
      order by crapcon.progress_recid;
   rw_crapcon     cr_crapcon%rowtype;
 

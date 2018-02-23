@@ -55,8 +55,8 @@
 		<input name="nrdconta" id="nrdconta" type="text" />
 	
 		<br/>
-		<label for="nmresage"><? echo utf8ToHtml('Ag. Arrecada.:') ?></label>
-		<input name="nmresage" id="nmresage" type="text" />
+		<label for="nmarrecd"><? echo utf8ToHtml('Ag. Arrecada.:') ?></label>
+		<input name="nmarrecd" id="nmarrecd" type="text" />
     
     <br/>
 		<label for="dscodbar"><? echo utf8ToHtml('Cod. de Barras:') ?></label>

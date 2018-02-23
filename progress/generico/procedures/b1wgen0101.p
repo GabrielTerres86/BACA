@@ -387,14 +387,24 @@ PROCEDURE consulta_faturas:
                                    NO-LOCK NO-ERROR.
                 
                 IF crapcon.tparrecd = 2 THEN
-                  ASSIGN tt-dados-pesqti.nmempres = crapcon.nmextcon.
+                DO:
+                  ASSIGN tt-dados-pesqti.nmempres = crapcon.nmextcon
+                         /* Agente arrecadador */
+                         tt-dados-pesqti.nmarrecd = 'BANCOOB'.
+                END.  
                 ELSE IF crapcon.tparrecd = 3 THEN /* Convenios CECRED */ 
                 DO:
                     FIND FIRST gnconve WHERE gnconve.cdhiscxa = craplft.cdhistor NO-LOCK NO-ERROR.
-                    ASSIGN tt-dados-pesqti.nmempres = gnconve.nmempres.
+                    ASSIGN tt-dados-pesqti.nmempres = gnconve.nmempres
+                         /* Agente arrecadador */
+                         tt-dados-pesqti.nmarrecd = 'CECRED'.
                 END.
                 ELSE /* Convenios SICREDI */
                 DO: 
+                     
+                    /* Agente arrecadador */                        
+                    ASSIGN tt-dados-pesqti.nmarrecd = 'SICREDI'.
+                
                     IF craplft.tpfatura <> 2 OR 
                        craplft.cdempcon <> 0 THEN  
                     DO: 

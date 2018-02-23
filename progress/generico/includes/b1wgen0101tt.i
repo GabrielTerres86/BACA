@@ -75,7 +75,8 @@ DEF TEMP-TABLE tt-dados-pesqti NO-UNDO
     FIELD dscptdoc AS CHAR FORMAT "x(30)"
     FIELD dslindig AS CHAR
     FIELD dsnomfon LIKE craplft.dsnomfon
-    FIELD nmresage LIKE crapage.nmresage.
+    FIELD nmresage LIKE crapage.nmresage
+    FIELD nmarrecd AS CHAR. /* Agente Arrecadador*/
 
 
 DEF TEMP-TABLE tt-historicos NO-UNDO

@@ -6353,6 +6353,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                        
       SELECT scn.cdempres
             ,scn.dsnomcnv
+            ,scn.cdempcon
+            ,scn.cdsegmto
         FROM crapscn scn
        WHERE ( pr_descricao IS NULL OR 
                upper(scn.dsnomcnv) LIKE '%'||upper(pr_descricao)||'%'
@@ -6445,8 +6447,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                  ,pr_texto_novo     => '<convenio>'||
                                                          '<cdempres>'||  rw_crapscn.cdempres ||'</cdempres>'||
                                                          '<nmextcon>'||  rw_crapscn.dsnomcnv ||'</nmextcon>'||
-                                                         --'<cdempcon>'||  rw_crapscn.cdempcon ||'</cdempcon>'||
-                                                         --'<cdsegmto>'||  rw_crapscn.cdsegmto ||'</cdsegmto>'||
+                                                         '<cdempcon>'||  rw_crapscn.cdempcon ||'</cdempcon>'||
+                                                         '<cdsegmto>'||  rw_crapscn.cdsegmto ||'</cdsegmto>'||
                                                        '</convenio>');
         END IF;
 
@@ -6504,7 +6506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
 
     -- Insere atributo na tag banco com a quantidade de registros
     gene0007.pc_gera_atributo(pr_xml   => pr_retxml        --> XML que ira receber o novo atributo
-                             ,pr_tag   => 'limites'        --> Nome da TAG XML
+                             ,pr_tag   => 'convenios'      --> Nome da TAG XML
                              ,pr_atrib => 'qtregist'       --> Nome do atributo
                              ,pr_atval => vr_qtregist      --> Valor do atributo
                              ,pr_numva => 0                --> Numero da localizacao da TAG na arvore XML

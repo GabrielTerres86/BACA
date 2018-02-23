@@ -272,7 +272,7 @@ function alteraExibicaoCampos(){
 					if($('#cddopcao','#frmCabPesqti').val() == 'C'){
 						showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#tpdpagto","#frmFiltroPesqti").focus()','sim.gif','nao.gif');
 					}else{
-						showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#flgcnvsi","#frmFiltroPesqti").focus()','sim.gif','nao.gif');
+						showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#vldpagto","#divFiltroFatura").focus()','sim.gif','nao.gif');
 					}
 					
 					return false;
@@ -392,7 +392,7 @@ function alteraExibicaoCampos(){
 					if($('#cddopcao','#frmCabPesqti').val() == 'C'){
 						showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#tpdpagto","#fsetTipoPagto").focus()','sim.gif','nao.gif');
 					}else{
-						showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#flgcnvsi","#fsetTipoPagto").focus()','sim.gif','nao.gif');
+						showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#dtipagto","#divFiltroFaturaSicredi").focus()','sim.gif','nao.gif');
 					}
 					
 					return false;
@@ -419,11 +419,11 @@ function alteraExibicaoCampos(){
 		$('#vldpagto','#divFiltroTitulos').setMask('DECIMAL','z.zzz.zzz.zz9,99','.','');
 	
 		$('#dtdpagto','#divFiltroTitulos').val(dtmvtolt);		
-		$('#flgcnvsi','#frmTipoPagto').desabilitaCampo();
+		// Campo removido $('#flgcnvsi','#frmTipoPagto').desabilitaCampo();
 		$('#fsetFiltro').css('display','block');
 		$('#divFiltroTitulos').css('display','block');
 		
-		$('#flgcnvsi','#frmFiltroPesqti').desabilitaCampo();
+		// Campo removido $('#flgcnvsi','#frmFiltroPesqti').desabilitaCampo();
 		
 		// Se pressionar dtdpagto
 		$('#dtdpagto','#divFiltroTitulos').unbind('keypress').bind('keypress', function(e) { 		
@@ -468,7 +468,7 @@ function alteraExibicaoCampos(){
 				if($('#cddopcao','#frmCabPesqti').val() == 'C'){
 					showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#tpdpagto","#frmFiltroPesqti").focus()','sim.gif','nao.gif');
 				}else{
-					showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#flgcnvsi","#frmFiltroPesqti").focus()','sim.gif','nao.gif');
+					showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#dtdpagto","#divFiltroTitulos").focus()','sim.gif','nao.gif');
 				}
 				
 				return false;
@@ -487,14 +487,14 @@ function alteraExibicaoCampos(){
 function formataFiltro() {
 	
 	//Inicializa variáveis de label dos objetos
-	var rFlgcnvsi = $('label[for="flgcnvsi"]','#divTipoPagto');	
+	// Campo removido var rFlgcnvsi = $('label[for="flgcnvsi"]','#divTipoPagto');	
 	var rTpdpagto = $('label[for="tpdpagto"]','#divTipoPagto');	
 		
 	rTpdpagto.addClass('rotulo').css('width','75px');
-	rFlgcnvsi.addClass('rotulo-linha').css('width','50px');
+	// Campo removido rFlgcnvsi.addClass('rotulo-linha').css('width','50px');
 		
 	//Inicializa variáveis com o objeto campos
-	var cFlgcnvsi  	= $('#flgcnvsi','#divTipoPagto');
+	// Campo removido var cFlgcnvsi  	= $('#flgcnvsi','#divTipoPagto');
 	var cTpdpagto   = $('#tpdpagto','#divTipoPagto');	
 		
 	cTpdpagto.css({'width':'100px','text-align':'left'});
@@ -529,15 +529,15 @@ function formataFiltro() {
 			$(this).triggerHandler('blur');
 			alteraExibicaoCampos();
 			
-			if( $(this).val() == 'no'){
+			/* Campo removido  if( $(this).val() == 'no'){
 				
 				$('#flgcnvsi','#divTipoPagto').focus();				
 				
-			}else{
+			}else{ */
 				
 				$('#dtdpagto','#divFiltroTitulos').focus();
 				
-			}
+			//}
 			
 			return false;			
 		}  		
@@ -548,61 +548,20 @@ function formataFiltro() {
 		
 		alteraExibicaoCampos();
 		
-		if( $(this).val() == 'no'){
+		/* Campo removido  if( $(this).val() == 'no'){
 			$('#flgcnvsi','#divTipoPagto').focus();
-		}else{
+		}else{ */
 			$('#dtdpagto','#divFiltroTitulos').focus();
-		}
+		//}
 		
 		return false;		
 		
 	});	
 		
-	cFlgcnvsi.unbind('keypress').bind('keypress', function(e) {
+	// Campo removido cFlgcnvsi.unbind('keypress').bind('keypress', function(e) {
 		
-		if ( divError.css('display') == 'block' ) { return false; }		
-
-		// Se é a tecla TAB, 
-		if ( e.keyCode === 9 || e.keyCode == 13 ) {
-			
-			$(this).triggerHandler('blur');
-			alteraExibicaoCampos();
-		
-			if($(this).val() == "no"){
-			    if ($('#cddopcao', '#frmCabPesqti').val() == "A") {
-			        $('#cdagenci', '#divFiltroFaturaSicredi').focus();
-			    } else {
-			        $('#dtdpagto', '#divFiltroFatura').focus();
-			    }
-
-			}else{
-			    if ($('#cddopcao', '#frmCabPesqti').val() == "A") {
-			        $('#cdagenci', '#divFiltroFaturaSicredi').focus();
-			    } else {
-			        $('#dtdpagto', '#divFiltroFaturaSicredi').focus();
-			    }
-
-			}
-						
-			return false;			
-			
-		}  		
-		
-	});		
 	
-	cFlgcnvsi.unbind('change').bind('change', function() {
-		
-		alteraExibicaoCampos();
-		
-		if($(this).val() == "no"){
-			$('#dtdpagto','#divFiltroFatura').focus();				
-		}else{
-			$('#dtdpagto','#divFiltroFaturaSicredi').focus();				
-		}
-		
-		return false;		
-		
-	});	
+	// Campo removido cFlgcnvsi.unbind('change').bind('change', function() {		
 	
 	// Se pressionar btConsulta
 	$('#btConsultar','#divBotoes').unbind('keypress').bind('keypress', function(e) { 		
@@ -615,7 +574,7 @@ function formataFiltro() {
 			if($('#cddopcao','#frmCabPesqti').val() == 'C'){
 				showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#tpdpagto","#divTipoPagto").focus()','sim.gif','nao.gif');
 			}else{
-				showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#flgcnvsi","#divTipoPagto").focus()','sim.gif','nao.gif');
+				showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#dtdpagto","#frmFiltroPesqti").focus()','sim.gif','nao.gif');
 			}
 				
 			return false;
@@ -625,10 +584,10 @@ function formataFiltro() {
 	// Se clicar no btConsulta
 	$('#btConsultar','#divBotoes').unbind('click').bind('click', function() { 		
 		
-		if($('#cddopcao','#frmCabPesqti').val() == 'C'){
-			showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#tpdpagto","#divTipoPagto").focus()','sim.gif','nao.gif');
+		if($('#cddopcao','#frmCabPesqti').val() == 'C'){            
+			showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)',' $("#tpdpagto","#frmFiltroPesqti").focus()','sim.gif','nao.gif');
 		}else{
-			showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#flgcnvsi","#divTipoPagto").focus()','sim.gif','nao.gif');
+			showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#dtdpagto","#frmFiltroPesqti").focus()','sim.gif','nao.gif');
 		}
 				
 		return false;
@@ -694,7 +653,7 @@ function formataFiltro() {
 	if($('#cddopcao','#frmCabPesqti').val() == 'A' ){
 	
 		cTpdpagto.desabilitaCampo();
-		cFlgcnvsi.habilitaCampo().focus();
+		// Campo removido cFlgcnvsi.habilitaCampo().focus();
 	
 	}else{
 	
@@ -710,7 +669,7 @@ function obtemConsulta( nriniseq , nrregist ) {
 
 	var cddopcao = $("#cddopcao","#frmCabPesqti").val();
 	var tpdpagto = $("#tpdpagto","#divTipoPagto").val();
-	var flgcnvsi = $("#flgcnvsi","#divTipoPagto").val();
+	// Campo removido var flgcnvsi = $("#flgcnvsi","#divTipoPagto").val();
 	var nomeDoForm = '';
 	
 	if($('#divFiltroFatura').css('display') == 'block' ){
@@ -757,7 +716,7 @@ function obtemConsulta( nriniseq , nrregist ) {
 				cdsegmto: cdsegmto,
 				nriniseq: nriniseq,
 				nrregist: nrregist,
-        flgcnvsi: flgcnvsi,
+        // Campo removido flgcnvsi: flgcnvsi,
 				//PJ406
         dtipagto: dtipagto,
         dtfpagto: dtfpagto,
@@ -953,7 +912,7 @@ function controlaLayout(operacao) {
 										
 					if ( cddopcao == "C" 								  && 
 					     $('#tpdpagto','#frmFiltroPesqti').val() == "no"  &&
-					     $('#flgcnvsi','#frmFiltroPesqti').val() == "yes" &&					 
+					    //Campo removido $('#flgcnvsi','#frmFiltroPesqti').val() == "yes" &&					 
 						 $('#dscodbar', $(this)).val()			 == ""    ) {
 						
 						acessaRotina();
@@ -1093,7 +1052,7 @@ function formataFormularios() {
 	rNmempres  	= $('label[for="nmempres"]', '#'+frmFaturas);
 	rNrdconta  	= $('label[for="nrdconta"]', '#'+frmFaturas);
 	rDscodbar  	= $('label[for="dscodbar"]', '#'+frmFaturas); 
-  rNmresage   = $('label[for="nmresage"]', '#'+frmFaturas);
+    rNmarrecd   = $('label[for="nmarrecd"]', '#'+frmFaturas);
   rDslindig  	= $('label[for="dslindig"]', '#'+frmFaturas);    
 	rDscptdoc  	= $('label[for="dscptdoc"]', '#'+frmFaturas);    
 	rInsitfat  	= $('label[for="insitfat"]', '#'+frmFaturas);
@@ -1103,7 +1062,7 @@ function formataFormularios() {
 	rNrautdoc.addClass('rotulo').css({'width':'95px'});
 	rCdbandst.addClass('rotulo').css({'width':'105px'});
 	rDscodbar.addClass('rotulo').css({'width':'95px'});
-  rNmresage.addClass('rotulo').css({'width':'95px'});
+  rNmarrecd.addClass('rotulo').css({'width':'95px'});
   rDslindig.addClass('rotulo').css({'width':'95px'});
 	rDscptdoc.addClass('rotulo').css({'width':'95px'});
   rNmempres.addClass('rotulo').css({'width':'95px'});
@@ -1130,7 +1089,7 @@ function formataFormularios() {
 	cCdbandst  	= $('#cdbandst', '#'+frmFaturas);
 	cNrdconta  	= $('#nrdconta', '#'+frmFaturas);
 	cDscodbar  	= $('#dscodbar', '#'+frmFaturas);
-  cNmresage  	= $('#nmresage', '#'+frmFaturas);
+    cNmarrecd  	= $('#nmarrecd', '#'+frmFaturas);
 	cDslindig   = $('#dslindig', '#'+frmFaturas);
 	cDscptdoc  	= $('#dscptdoc', '#'+frmFaturas);
   cNmempres  	= $('#nmempres', '#'+frmFaturas);
@@ -1144,7 +1103,7 @@ function formataFormularios() {
 	cCdbandst.css({'width':'320px'}).desabilitaCampo();
 	cNrdconta.css({'width':'90px'}).desabilitaCampo();
 	cDscodbar.setMask("STRING","44",charPermitido(),"");
-  cNmresage.css({'width':'320px'}).desabilitaCampo();
+  cNmarrecd.css({'width':'320px'}).desabilitaCampo();
   cNmempres.css({'width':'320px'}).desabilitaCampo();
 	cDsnomfon.css({'width':'381px'}).desabilitaCampo();
 
@@ -1367,7 +1326,7 @@ function selecionaFaturas(tr){
 	$('#cdbandst','#'+frmFaturas).val( $('#cdbandst', tr ).val() );
 	$('#nrdconta','#'+frmFaturas).val( $('#nrdconta', tr ).val() );
 	$('#dscodbar','#'+frmFaturas).val( $('#dscodbar', tr ).val() );
-    $('#nmresage','#'+frmFaturas).val( $('#nmresage', tr ).val() );
+    $('#nmarrecd','#'+frmFaturas).val( $('#nmarrecd', tr ).val() );
     $('#dslindig','#'+frmFaturas).val( $('#dslindig', tr ).val() );
 	$('#dscptdoc','#'+frmFaturas).val( $('#dscptdoc', tr ).val() );
 	$('#dsnomfon','#'+frmFaturas).val( $('#dsnomfon', tr ).val() );

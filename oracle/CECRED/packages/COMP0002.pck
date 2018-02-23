@@ -4858,11 +4858,11 @@ END pc_comprovantes_recebidos;
 
       vr_dsdlinha := NULL;      
       vr_dsdlinha := '<infbancoob>'||
-                       '<dscopcen>'|| vr_protocolo(vr_ind).nmrescop_central ||
-                                      ' – '|| vr_protocolo(vr_ind).nmextcop_central ||'</dscopcen>'||
-                       '<dscopsin>'|| 'COOP.'|| to_char(vr_protocolo(vr_ind).cdagectl,'fm0000') ||
-                                      ' – '||vr_protocolo(vr_ind).nmrescop ||'</dscopsin>'||
-                       '<cdtipdoc>'|| vr_cdtipdoc                   ||'</cdtipdoc>';
+                       '<nmrescen>'|| vr_protocolo(vr_ind).nmrescop_central || '</nmrescen>'||
+                       '<nmextcen>'|| vr_protocolo(vr_ind).nmextcop_central || '</nmextcen>'||
+                       '<nmressin>'|| vr_protocolo(vr_ind).nmrescop         || '</nmressin>'||
+                       '<dsresdoc>'|| vr_cdtipdoc                           || '</dsresdoc>';
+                       
       IF vr_tab_campos.exists('DSORIGEM') THEN
         vr_dsdlinha := vr_dsdlinha || '<dsdcanal>'|| vr_tab_campos('DSORIGEM') ||'</dsdcanal>	';
       END IF;
@@ -5110,8 +5110,7 @@ END pc_comprovantes_recebidos;
                      
       vr_dsdlinha := NULL;      
       vr_dsdlinha := '<infbancoob>'||                       
-                       '<dscopsin>'|| 'CI:'|| to_char(vr_protocolo(vr_ind).cdagectl,'fm0000')  ||
-                                      ' – '||    vr_protocolo(vr_ind).nmrescop ||'</dscopsin>';
+                       '<nmressin>'|| vr_protocolo(vr_ind).nmrescop || '</nmressin>';
       IF vr_tab_campos.exists('DSORIGEM') THEN
         vr_dsdlinha := vr_dsdlinha || '<dsdcanal>'|| vr_tab_campos('DSORIGEM') ||'</dsdcanal>	';
       END IF;

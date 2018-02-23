@@ -170,10 +170,12 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCOP is
                                   ,pr_taamaxer IN crapcop.taamaxer%TYPE --> Qtd. Max. de tentivas da senha no TAA
                                   ,pr_vllimapv IN crapcop.vllimapv%TYPE --> Limite necessita de aprovacao
                                   ,pr_qtmeatel IN crapcop.qtmeatel%TYPE --> Quantidade de Meses para atualizacao Telefone
-                                  ,pr_nrctabcb IN crapcop.nrctabcb%TYPE --> Conta convenio no Bancoob
+                                  ,pr_vllimpag IN crapcop.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
+								  ,pr_nrctabcb IN crapcop.nrctabcb%TYPE --> Conta convenio no Bancoob
                                   ,pr_vltarbcb IN crapcop.vltarbcb%TYPE --> Valor de tarida Bancoob
                                   ,pr_vlgarbcb IN crapcop.vlgarbcb%TYPE --> Valor Garantia Bancoob
-                                  ,pr_vllimpag IN crapcop.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
+                                  ,pr_nrsacbcb IN crapcop.nrsacbcb%TYPE --> Numero sac do bancoob
+                                  ,pr_nrouvbcb IN crapcop.nrouvbcb%TYPE --> Numero de ouvidoria do bancoon                                                                    
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
@@ -643,6 +645,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.vltarbcb
           ,crapcop.vlgarbcb
           ,crapcop.vllimpag
+		  ,crapcop.nrsacbcb
+          ,crapcop.nrouvbcb 
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -958,6 +962,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'nrctabcb', pr_tag_cont => to_char(rw_crapcop.nrctabcb,'fm9g999g990'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'vltarbcb', pr_tag_cont => to_char(rw_crapcop.vltarbcb,'fm990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);    
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'vlgarbcb', pr_tag_cont => to_char(rw_crapcop.vlgarbcb,'fm999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'nrsacbcb', pr_tag_cont => rw_crapcop.nrsacbcb, pr_des_erro => vr_dscritic);    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'nrouvbcb', pr_tag_cont => rw_crapcop.nrouvbcb, pr_des_erro => vr_dscritic);        
     
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'qttmpsgr', pr_tag_cont => to_char(to_date(rw_crapcop.qttmpsgr,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'flgkitbv', pr_tag_cont => rw_crapcop.flgkitbv, pr_des_erro => vr_dscritic);
@@ -1142,10 +1148,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
                                   ,pr_taamaxer IN crapcop.taamaxer%TYPE --> Qtd. Max. de tentivas da senha no TAA
                                   ,pr_vllimapv IN crapcop.vllimapv%TYPE --> Limite necessita de aprovacao
                                   ,pr_qtmeatel IN crapcop.qtmeatel%TYPE --> Quantidade de Meses para atualizacao Telefone
-                                  ,pr_nrctabcb IN crapcop.nrctabcb%TYPE --> Conta convenio no Bancoob
+                                  ,pr_vllimpag IN crapcop.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
+								  ,pr_nrctabcb IN crapcop.nrctabcb%TYPE --> Conta convenio no Bancoob
                                   ,pr_vltarbcb IN crapcop.vltarbcb%TYPE --> Valor de tarida Bancoob
                                   ,pr_vlgarbcb IN crapcop.vlgarbcb%TYPE --> Valor Garantia Bancoob
-                                  ,pr_vllimpag IN crapcop.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
+                                  ,pr_nrsacbcb IN crapcop.nrsacbcb%TYPE --> Numero sac do bancoob
+                                  ,pr_nrouvbcb IN crapcop.nrouvbcb%TYPE --> Numero de ouvidoria do bancoob                                                                    
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
@@ -1244,6 +1252,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.nrctabcb
           ,crapcop.vltarbcb
           ,crapcop.vlgarbcb
+          ,crapcop.nrsacbcb
+          ,crapcop.nrouvbcb
           
           ,crapcop.vllimpag
       FROM crapcop
@@ -2631,7 +2641,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
             ,crapcop.nrctabcb = pr_nrctabcb
             ,crapcop.vltarbcb = pr_vltarbcb
             ,crapcop.vlgarbcb = pr_vlgarbcb
-            
+            ,crapcop.nrsacbcb = pr_nrsacbcb
+            ,crapcop.nrouvbcb = pr_nrouvbcb
             ,crapcop.vllimpag = pr_vllimpag
        WHERE crapcop.cdcooper = vr_cdcooper;
 
@@ -4288,6 +4299,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
       RAISE vr_exc_saida;
 
     END IF;    
+    
+    pc_gera_log(pr_cdcooper => vr_cdcooper -- Código da cooperativa
+               ,pr_cdoperad => vr_cdoperad -- Operador
+               ,pr_dsdcampo => 'Número de telefone do sac no bancoob'  --Descrição do campo
+               ,pr_vlrcampo => rw_crapcop.nrsacbcb --Valor antigo
+               ,pr_vlcampo2 => pr_nrsacbcb --Valor atual
+               ,pr_des_erro => vr_des_erro); --Erro
+
+    IF vr_des_erro <> 'OK' THEN
+
+      -- Montar mensagem de critica
+      vr_cdcritic := 0;
+      vr_dscritic := 'Erro ao registar no log.';
+      -- volta para o programa chamador
+      RAISE vr_exc_saida;
+
+    END IF; 
+    
+    pc_gera_log(pr_cdcooper => vr_cdcooper -- Código da cooperativa
+               ,pr_cdoperad => vr_cdoperad -- Operador
+               ,pr_dsdcampo => 'Número de telefone da ouvidoria no bancoob'  --Descrição do campo
+               ,pr_vlrcampo => rw_crapcop.nrouvbcb --Valor antigo
+               ,pr_vlcampo2 => pr_nrouvbcb   --Valor atual
+               ,pr_des_erro => vr_des_erro); --Erro
+
+    IF vr_des_erro <> 'OK' THEN
+
+      -- Montar mensagem de critica
+      vr_cdcritic := 0;
+      vr_dscritic := 'Erro ao registar no log.';
+      -- volta para o programa chamador
+      RAISE vr_exc_saida;
+
+    END IF; 
+    
+       
 
     --Realiza commit das alterações
     COMMIT;

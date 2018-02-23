@@ -102,6 +102,7 @@ function estadoInicial() {
 	
 	cddopcao = "C";
     cCddopcao.val(cddopcao);
+    cCdsegmto_I.val(0);
     cTodosCampos.desabilitaCampo();
     $('#divConv').css({'display': 'none'});
     $('#divBotoes').css({'display': 'none'});
@@ -123,6 +124,8 @@ function controlaLayout() {
     
 	
 	layoutPadrao();
+    
+    $('#linkEmp','#' + frmCab).prop('tabindex','0');	
 	return false;	
 }
 
@@ -209,6 +212,7 @@ function LiberaCampos(tipo) {
     $('#divBotoes').css({'display': 'block'});
     
     layoutPadrao();
+    $('#linkEmp','#' + frmCab).prop('tabindex','0');	
     return false;
 
 }
@@ -227,7 +231,7 @@ function formataCabecalho() {
     cTparrecd.css({'width':'100px'}); 
 
     rCdempres.addClass('rotulo').css({'width':'90px'});
-    cCdempres.addClass('alphanum' ).css({'width':'40px'});     
+    cCdempres.addClass('alphanum' ).css({'width':'95px'}).attr('maxlength','10');     
     
     cNmextcon.css({'width':'350px','padding-right':'2px'});
     
@@ -267,11 +271,21 @@ function formataCabecalho() {
     
     cCdempres.unbind('keydown').bind('keydown', function(e) {
 		if ( e.keyCode == 13 || e.keyCode == 9) {                    
-			if (cCddopcao.val() != 'I'){
-                buscaDados();
+			if (cCddopcao.val() == 'I'){
+                //buscaDados();                
+                $('#linkEmp','#' + frmCab).focus();                
                 return false;
             }
             
+		}
+	}); 
+    
+    $('#linkEmp','#' + frmCab).unbind('keydown').bind('keydown', function(e) {
+		if ( e.keyCode == 13 ) {                    
+			if (cCddopcao.val() == 'I'){
+                abrePesqCdempcon(frmCab)
+                return false;
+            }            
 		}
 	}); 
     
@@ -282,46 +296,44 @@ function formataCampos(){
     
     
     rCdempcon.addClass('rotulo').css({'width':'85px'});
-    cCdempcon.css({'width':'40px'});
-    cNmrescon.addClass('alpha').css({'width':'200px'});
+    cCdempcon.addClass('inteiro').css({'width':'40px'});
+    cNmrescon.addClass('alpha').css({'width':'200px'}).attr('maxlength','20');;
     
     rCdsegmto.addClass('rotulo-linha').css({'padding-left':'10px'});
 	cCdsegmto.css('width','200px');
     
-    rVltarint.addClass('rotulo').css({'width':'180px'});
+    rVltarint.addClass('rotulo').css({'width':'200px'});
     cVltarint.addClass('taxa').css({'width':'80px'});
         
-    rVltartaa.addClass('rotulo-linha').css({'padding-left':'125px'});
+    rVltartaa.addClass('rotulo').css({'width':'200px'});
     cVltartaa.addClass('taxa').css({'width':'80px'});
     
-    rVltarcxa.addClass('rotulo').css({'width':'180px'});
+    rVltarcxa.addClass('rotulo').css({'width':'200px'});
     cVltarcxa.addClass('taxa').css({'width':'80px'});
     
-    rVltardeb.addClass('rotulo-linha').css({'padding-left':'55px'});
+    rVltardeb.addClass('rotulo').css({'width':'200px'});
     cVltardeb.addClass('taxa').css({'width':'80px'});
     
-    rVltarcor.addClass('rotulo').css({'width':'180px'});
+    rVltarcor.addClass('rotulo').css({'width':'200px'});
     cVltarcor.addClass('taxa').css({'width':'80px'});
     
-    rVltararq.addClass('rotulo-linha').css({'padding-left':'40px'});
+    rVltararq.addClass('rotulo').css({'width':'200px'});
     cVltararq.addClass('taxa').css({'width':'80px'});
     
-    rNrrenorm.addClass('rotulo').css({'width':'180px'});
-    cNrrenorm.addClass('inteiro').css({'width':'40px'});
-    
-    rNrtolera.addClass('rotulo-linha').css({'padding-left':'50px'});
-    cNrtolera.addClass('inteiro').css({'width':'40px'});
-    
-    rDsdianor.addClass('rotulo').css({'width':'180px'});
+    rNrrenorm.addClass('rotulo-linha').css({'padding-left':'132px'});
+    cNrrenorm.addClass('inteiro').css({'width':'40px'}).attr('maxlength','2');
+        
+    rDsdianor.addClass('rotulo-linha').css({'padding-left':'100px'});
     cDsdianor.css({'width':'95px'});
     
-    rDtcancel.addClass('rotulo-linha').css({'padding-left':'77px'});
+    rNrtolera.addClass('rotulo-linha').css({'padding-left':'50px'});
+    cNrtolera.addClass('inteiro').css({'width':'40px'}).attr('maxlength','2');
+        
+    rDtcancel.addClass('rotulo-linha').css({'padding-left':'80px'});
     cDtcancel.addClass('data').css({'width':'80px'});
     
-    rNrlayout.addClass('rotulo').css({'width':'180px'});
+    rNrlayout.addClass('rotulo-linha').css({'padding-left':'395px'});
     cNrlayout.addClass('inteiro').css({'width':'60px'}).attr('maxlength','4');
-    
-    
     
     cTodosCampos.desabilitaCampo();     
     controlaPesquisas(frmCampos);
@@ -412,20 +424,20 @@ function formataCampos(){
     
     cNrrenorm.unbind('keydown').bind('keydown', function(e) {
         if ( e.keyCode == 13 || e.keyCode == 9) {	
-            cNrtolera.focus();           
+            cDsdianor.focus();           
             return false;
         }
 		
 	});
     
-    cNrtolera.unbind('keydown').bind('keydown', function(e) {
+    cDsdianor.unbind('keydown').bind('keydown', function(e) {
         if ( e.keyCode == 13 || e.keyCode == 9) {	
-            cDsdianor.focus();           
+            cNrtolera.focus();           
             return false;
         }    
 	});
     
-    cDsdianor.unbind('keydown').bind('keydown', function(e) {
+    cNrtolera.unbind('keydown').bind('keydown', function(e) {
         if ( e.keyCode == 13 || e.keyCode == 9) {	
             cDtcancel.focus();           
             return false;
@@ -448,7 +460,6 @@ function formataCampos(){
         }
          
 	});
-    
         
 }
 
@@ -472,11 +483,18 @@ function controlaPesquisas(nomeFormulario){
 		if ( !$(this).prev().hasClass('campoTelaSemBorda') ) $(this).css('cursor','pointer');
 				
 		$(this).unbind('click').bind('click', function() {
-			if ( $(this).prev().hasClass('campoTelaSemBorda') &&
-                ( nomeFormulario = 'frmCab' && campoAnterior == 'cdempcon' )) {
-                
+            campoAnterior = $(this).prev().attr('name');
+            
+			if ( $(this).prev().hasClass('campoTelaSemBorda') && campoAnterior != 'cdempcon') {
+                 
 				return false;
-			} else {						
+                
+			}else if ( nomeFormulario == 'frmCab' && 
+                       campoAnterior == 'cdempcon' && 
+                       cCdempres.hasClass('campoTelaSemBorda') ){
+                
+                return false;
+            }else {						
 				campoAnterior = $(this).prev().attr('name');
 			
 				
@@ -484,7 +502,8 @@ function controlaPesquisas(nomeFormulario){
                     abrePesqCdempres();
 					return false;
 				}else if (campoAnterior == 'cdempcon' ) {
-					abrePesqCdempcon(nomeFormulario)
+                    
+					abrePesqCdempcon(nomeFormulario);
 					return false;
 				}
                 
@@ -504,16 +523,16 @@ function controlaPesquisas(nomeFormulario){
             filtros 	= 'tparrecd|'+ cTparrecd.val();
             buscaDescricao(bo,procedure,titulo,'cdempres','nmextcon',cCdempres.val(),'nmextcon',filtros,'frmCab','fechaRotina(divRotina);');
             return false;
-        }else if (cTparrecd.val() == 2){
+        }/*else if (cTparrecd.val() == 2){
             abrePesqCdempcon('frmCab');
-        }
+        }*/
     });
 	
     cCdempcon.unbind('change').bind('change', function() { 	
         bo			= 'b1wgen0101.p';
         procedure	= 'lista-empresas-conv';
         titulo      = 'Empr.Conven.';
-        filtrosDesc = '';
+        filtrosDesc = 'cdsegmto|'+ cCdsegmto.val()  + ';tparrecd|'+ cTparrecd.val() ;
         buscaDescricao(bo,procedure,titulo,'cdempcon','nmrescon',cCdempcon.val(),'nmrescon',filtrosDesc,'frmCab','fechaRotina(divRotina);');
         return false;
     });
@@ -530,11 +549,11 @@ function abrePesqCdempres(){
     qtReg		= '20';
     filtros 	= 'Cod.Conv&ecircnio;cdempres;45px;S;;S|Conv&ecircnio;nmextcon;200px;S|Empresa;cdempcon;200px;N;;N|'+
                   'Segmento;cdsegmto;200px;N;;N|tparrecd;tparrecd;35px;N;'+ cTparrecd.val() +';N';
-    if (cTparrecd.val() == 1){
+    /*if (cTparrecd.val() == 1){
       colunas 	= 'Codigo;cdempres;15%;right|Nome;nmextcon;85%;left';
-    }else{
+    }else{*/
       colunas 	= 'Codigo;cdempres;15%;right|Nome;nmextcon;55%;left|Empresa;cdempcon;15%;left|Segmento;cdsegmto;15%;left';  
-    }
+    //}
     mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,'frmCab');
     
 }
@@ -542,23 +561,24 @@ function abrePesqCdempres(){
 function abrePesqCdempcon(nomeFormulario){
     var bo, procedure, titulo, qtReg, filtros, colunas, cdhiscxa;	
    
-    if ( nomeFormulario = 'frmCab' ) {
+    if ( nomeFormulario == 'frmCab' ) {
         bo			= 'b1wgen0101.p';
         procedure	= 'lista-empresas-conv';
         titulo      = 'Empr.Conven.';
         qtReg		= '20';
         filtros 	= 'Empresa;cdempcon;45px;S;0;S|Conv&ecircnio;nmextcon;200px;S|nome;nmrescon;200px;N;;N|Segmento;cdsegmto;35px;N;;N';
         colunas 	= 'Codigo;cdempcon;15%;right|Conv&ecircnio;nmextcon;30%;left|Nome res.;nmrescon;30%;left|Segmento;cdsegmto;15%;left';
-        mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,nomeFormulario);
+        mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,'', '',nomeFormulario);
         return false;
-    }else if (  nomeFormulario = 'frmCampos') {
+    }else if (  nomeFormulario == 'frmCampos') {
+        
         bo			= 'b1wgen0101.p';
         procedure	= 'lista-empresas-conv';
         titulo      = 'Empr.Conven.';
         qtReg		= '20';
-        filtros 	= 'Empresa;cdempcon;45px;S;0;S|Segmento;cdsegmto;35px;S|Conv&ecircnio;nmrescon;200px;S';
+        filtros 	= 'Empresa;cdempcon;45px;S;0;S|Conv&ecircnio;nmrescon;200px;S|Segmento;cdsegmto;35px;S';
         colunas 	= 'Codigo;cdempcon;15%;right|Conv&ecircnio;nmrescon;70%;left|Segmento;cdsegmto;18%;left';
-        mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,nomeFormulario);
+        mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,'', '',nomeFormulario);
         return false;
     }
     

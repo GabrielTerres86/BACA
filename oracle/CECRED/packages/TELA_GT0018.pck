@@ -398,7 +398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
             --> Validar se permite alteracao
             IF rw_crapscn.dsoparre <> 'E' OR 
                rw_crapscn.cddmoden NOT IN ('A','C') THEN
-              vr_dsalerta := 'Nao permitido alteracao deste tipo de Convenio.';
+              vr_dsalerta := 'Não permitido alteração deste tipo de Convênio.';
             END IF;   
           END IF;
           
@@ -658,22 +658,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
         
         IF nvl(pr_cdempcon,0) <> nvl(rw_crapscn.cdempcon,0) THEN
           pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
-                             ,pr_dscdolog => 'alterou para o convenio Sicredi ' || pr_cdempres ||' - ' || pr_nmextcon ||
-                                               ' o codigo de empresa ' ||rw_crapscn.cdempcon ||
+                             ,pr_dscdolog => 'alterou para o convenio Sicredi, Codigo: ' || pr_cdempres ||
+                                               ' --> codigo de empresa ' ||rw_crapscn.cdempcon ||
                                                ' para '|| pr_cdempcon);
         END IF;
         
         IF nvl(pr_cdsegmto,'0') <> nvl(rw_crapscn.cdsegmto,'0') THEN
           pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
-                             ,pr_dscdolog => 'alterou para o convenio Sicredi ' || pr_cdempres ||' - ' || pr_nmextcon ||
-                                               ' o codigo de segmento ' ||rw_crapscn.cdsegmto ||
+                             ,pr_dscdolog => 'alterou para o convenio Sicredi, Codigo: ' || pr_cdempres ||
+                                               ' --> codigo de segmento ' ||rw_crapscn.cdsegmto ||
                                                ' para '|| pr_cdsegmto);
         END IF;
         
         IF nvl(pr_nmrescon,' ') <> nvl(rw_crapscn.dsnomres,' ') THEN
           pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
-                             ,pr_dscdolog => 'alterou para o convenio Sicredi ' || pr_cdempres ||' - ' || pr_nmextcon ||
-                                               ' o nome resumido ' ||rw_crapscn.dsnomres ||
+                             ,pr_dscdolog => 'alterou para o convenio Sicredi, Codigo: ' || pr_cdempres ||
+                                               ' --> nome resumido ' ||rw_crapscn.dsnomres ||
                                                ' para '|| pr_nmrescon);
         END IF;
       
@@ -787,13 +787,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           
           
           
-          vr_dscdolog := 'alterou para o convenio Bancoob ' || pr_cdempres ||' - ' || pr_nmextcon;
+          vr_dscdolog := 'alterou para o convenio Bancoob, Codigo: ' || pr_cdempres;
           
           --> codigo de empresa 
           IF nvl(pr_cdempcon,0) <> nvl(rw_arrecad.cdempcon,0) THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o codigo de empresa ' ||rw_arrecad.cdempcon ||
+                                                 ' --> Codigo de empresa ' ||rw_arrecad.cdempcon ||
                                                  ' para '|| pr_cdempcon);
           END IF;
           
@@ -801,7 +801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           IF nvl(pr_cdsegmto,0) <> nvl(rw_arrecad.cdsegmto,0) THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o segmento de empresa ' ||rw_arrecad.cdsegmto ||
+                                                 ' --> Segmento de empresa ' ||rw_arrecad.cdsegmto ||
                                                  ' para '|| pr_cdsegmto);
           END IF;
           
@@ -809,7 +809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           IF nvl(to_date(pr_dtcancel,'DD/MM/RRRR'),SYSDATE+999) <> nvl(rw_arrecad.dtencemp,SYSDATE+999) THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' a data de cancelamento de ' ||to_date(rw_arrecad.dtencemp,'DD/MM/RRR') ||
+                                                 ' --> Data de cancelamento de ' ||to_date(rw_arrecad.dtencemp,'DD/MM/RRR') ||
                                                  ' para '|| pr_dtcancel);
           END IF;
           
@@ -817,7 +817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           IF nvl(pr_dsdianor,'') <> nvl(rw_arrecad.tpdias_repasse,'') THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o tipo de repasse ' ||rw_arrecad.tpdias_repasse ||
+                                                 ' --> Tipo de repasse ' ||rw_arrecad.tpdias_repasse ||
                                                  ' para '|| pr_dsdianor);
           END IF;
           
@@ -825,7 +825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           IF nvl(pr_nrrenorm ,0) <> nvl(rw_arrecad.nrdias_float,0) THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' Dias de Float ' ||rw_arrecad.nrdias_float ||
+                                                 ' --> Dias de Float ' ||rw_arrecad.nrdias_float ||
                                                  ' para '|| pr_nrrenorm);
           END IF;
           
@@ -833,7 +833,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           IF nvl(pr_nrtolera ,0) <> nvl(rw_arrecad.nrdias_tolerancia,0) THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' Dias de Tolerancia ' ||rw_arrecad.nrdias_tolerancia ||
+                                                 ' --> Dias de Tolerancia ' ||rw_arrecad.nrdias_tolerancia ||
                                                  ' para '|| pr_nrtolera);
           END IF;
           
@@ -841,7 +841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           IF nvl(to_number(pr_vltarcxa, 'FM9999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ,0) <> nvl(rw_arrecad.vltarifa_caixa,0) THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' Valor Tarifa Caixa ' ||rw_arrecad.vltarifa_caixa ||
+                                                 ' --> Valor Tarifa Caixa ' ||to_char(rw_arrecad.vltarifa_caixa,'FM990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
                                                  ' para '|| pr_vltarcxa);
           END IF;
           
@@ -849,7 +849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           IF nvl(to_number(pr_vltardeb, 'FM9999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ,0) <> nvl(rw_arrecad.vltarifa_debaut,0) THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' Valor Tarifa Déb. Automático ' ||rw_arrecad.vltarifa_debaut ||
+                                                 ' --> Valor Tarifa Déb. Automático ' ||to_char(rw_arrecad.vltarifa_debaut,'FM990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
                                                  ' para '|| pr_vltardeb);
           END IF;
         
@@ -857,7 +857,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           IF nvl(to_number(pr_vltarint, 'FM9999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ,0) <> nvl(rw_arrecad.vltarifa_internet,0) THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' Valor Tarifa Internet ' ||rw_arrecad.vltarifa_internet ||
+                                                 ' --> Valor Tarifa Internet ' ||to_char(rw_arrecad.vltarifa_internet,'FM990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
                                                  ' para '|| pr_vltarint);
           END IF;
         
@@ -865,7 +865,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           IF nvl(to_number(pr_vltartaa, 'FM9999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ,0) <> nvl(rw_arrecad.vltarifa_taa,0) THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' Valor Tarifa TAA ' ||rw_arrecad.vltarifa_taa ||
+                                                 ' --> Valor Tarifa TAA ' ||to_char(rw_arrecad.vltarifa_taa,'FM990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
                                                  ' para '|| pr_vltartaa);
           END IF;
           
@@ -874,7 +874,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           IF nvl(pr_nrlayout,0) <> nvl(rw_arrecad.nrlayout,0) THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' Layout febraban ' ||rw_arrecad.nrlayout ||
+                                                 ' --> Layout febraban ' ||rw_arrecad.nrlayout ||
                                                  ' para '|| pr_nrlayout);
           END IF;
           

@@ -51,6 +51,7 @@
 						<input type="hidden" id="cdbandst" name="cdbandst" value="<? echo getByTagName($result->tags,'cdbandst')." - ".getByTagName($result->tags,'nmextbcc') ?>" />								  
 						<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo formataNumericos('zzzz.zzz-9',getByTagName($result->tags,'nrdconta'),'.-') ?>" />								  
 						<input type="hidden" id="nmresage" name="nmresage" value="<? echo getByTagName($result->tags,'nmresage') ?>" />
+                        <input type="hidden" id="nmarrecd" name="nmarrecd" value="<? echo getByTagName($result->tags,'nmarrecd') ?>" />                        
 						<input type="hidden" id="dscodbar" name="dscodbar" value="<? echo getByTagName($result->tags,'dscodbar') ?>" />
 						<input type="hidden" id="dslindig" name="dslindig" value="<? echo getByTagName($result->tags,'dslindig') ?>" />
 						<input type="hidden" id="nmextbcc" name="nmextbcc" value="<? echo getByTagName($result->tags,'nmextbcc') ?>" />								  															  						

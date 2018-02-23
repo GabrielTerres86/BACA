@@ -4180,7 +4180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        WHERE crapcon.cdcooper = pr_cdcooper
          AND crapcon.cdempcon = pr_cdempcon
          AND crapcon.cdsegmto = pr_cdsegmto
-         AND crapcon.tparrecd = 1; -- Sicredi
+         AND crapcon.tparrecd <> 1; -- Diferente Sicredi
 
       -- Buscas dados da capa de lote
       CURSOR cr_craplot(pr_cdcooper craplot.cdcooper%TYPE,

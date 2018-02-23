@@ -6295,15 +6295,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     ----------------> CURSORES <---------------  
     --> Buscar dados da agencia  
     CURSOR cr_crapage( pr_cdcooper crapage.cdcooper%TYPE,
-                       pr_cdagenci crapage.cdagenci%TYPE) IS
-      SELECT age.cdagefgt,
-             cop.nrtelsac
+                       pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT age.cdagefgt           
         FROM crapage age,
-             crapcop cop
-       WHERE age.cdcooper = cop.cdcooper
-         AND age.cdcooper = pr_cdcooper
-         AND age.cdagenci = pr_cdagenci;
+             crapass ass
+       WHERE age.cdcooper = ass.cdcooper
+         AND age.cdagenci = ass.cdagenci  
+         AND ass.cdcooper = pr_cdcooper
+         and ass.nrdconta = pr_nrdconta
+         ;
     rw_crapage cr_crapage%ROWTYPE;
+ 
+    --> Buscar dados da cooperativa
+    CURSOR cr_crapcop( pr_cdcooper crapage.cdcooper%TYPE) IS
+      SELECT cop.nrtelsac             
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;
  
     --> Arrecadacao
     CURSOR cr_tbarrecd (pr_cdcooper crapage.cdcooper%TYPE,
@@ -6370,10 +6378,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         RAISE vr_exc_erro;
       END IF;
       
-      --> Buscar dados da agencia 
+      --> Buscar dados da agencia do cooperado
       rw_crapage := NULL;
       OPEN cr_crapage( pr_cdcooper => pr_cdcooper,
-                       pr_cdagenci => pr_cdagenci);
+                       pr_nrdconta => pr_nrdconta);
       FETCH cr_crapage INTO rw_crapage;
       CLOSE cr_crapage;
      
@@ -6592,8 +6600,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           vr_dscritic := vr_dscritic ||  ' Para consultar o canal de recebimento, verificar na tela PESQTI.';
         ELSE -- senao, é internet/mobile (cdagenci = 90) ou TA (cdagenci = 91)
           IF pr_flgpgag = FALSE THEN
+            --> Buscar dados da agencia 
+            rw_crapcop := NULL;
+            OPEN cr_crapcop( pr_cdcooper => pr_cdcooper);
+            FETCH cr_crapcop INTO rw_crapcop;
+            CLOSE cr_crapcop;  
+          
             vr_dscritic := vr_dscritic || ' Duvidas entrar em contato com o SAC pelo telefone ' ||
-                           rw_crapage.nrtelsac || '.';
+                           rw_crapcop.nrtelsac || '.';
           END IF;
         END IF;
 

@@ -1956,17 +1956,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
             RAISE vr_exc_saida;
         END;
         
+        IF nvl(vr_hhini_bancoob,0) = 0 AND
+           nvl(vr_hhfim_bancoob,0) = 0 THEN
+           
+          vr_dscritic := 'Horário para pagamento BANCOOB não pode ser nulo.###hhini_bancoob###2';
+          RAISE vr_exc_saida;
+        END IF;   
+          
+        
+        
         -- Valida se hora inicial eh maior que final
         IF vr_hhini_bancoob >= vr_hhfim_bancoob THEN
           vr_cdcritic := 687;
           vr_dsabacmp := '###hhini_bancoob###2';
           RAISE vr_exc_saida;
+        
         END IF;
         
         BEGIN
           vr_hhcan_bancoob := to_char(to_date(pr_hhcan_bancoob,'HH24:MI'),'SSSSS');
           
+          -- Se NAO foi informado algum valor
+          IF nvl(vr_hhcan_bancoob,0) = 0 THEN
+            vr_dscritic := 'Horário para cancelamento de pagamento BANCOOB não pode ser nulo.###hhcan_bancoob###2';
+            RAISE vr_exc_saida;
+          END IF;
+          
         EXCEPTION
+          WHEN vr_exc_saida THEN
+            RAISE vr_exc_saida;
           WHEN OTHERS THEN
             vr_dscritic := 'Hora inválida.###hhcan_bancoob###2';
             RAISE vr_exc_saida;
@@ -4691,7 +4709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       vr_dscritic  VARCHAR2(10000);
       vr_exc_saida EXCEPTION;
       
-      vr_qtregist  NUMBER;     
+      vr_qtregist  NUMBER; 
       
       -- Selecionar os dados
       CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE,
@@ -4716,7 +4734,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                             ,pr_tag_cont => ''
                             ,pr_des_erro => vr_dscritic);
       
-      vr_qtregist := 0;      
+      vr_qtregist := 0;
       
       FOR rw_crapage IN cr_crapage(pr_cdcooper => pr_cdcooper
                                   ,pr_flgpaaut => pr_flgpaaut) LOOP          

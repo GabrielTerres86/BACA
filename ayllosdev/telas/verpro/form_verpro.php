@@ -144,32 +144,32 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
   
 } elseif ($cdtippro == 24) { //FGTS
     
-    $cdbarras = trim(substr($aux_dslinha3[1], strpos($aux_dslinha3[1], ":") + 1));
+    $cdbarras = trim(substr($aux_dslinha3[2], strpos($aux_dslinha3[1], ":") + 1));
     $tpdocmto = trim(substr($aux_dslinha3[0], strpos($aux_dslinha3[0], ":") + 1));
-    $dslindig = trim(substr($aux_dslinha3[2], strpos($aux_dslinha3[2], ":") + 1));
+    $dslindig = trim(substr($aux_dslinha3[3], strpos($aux_dslinha3[2], ":") + 1));
     
     $nrconven = substr($cdbarras, 15, 4);
     
     if ($nrconven == '0179' || $nrconven == '0180' || $nrconven == '0181' || $nrconven == '0178' || $nrconven == '0240') { // Modelo 01 e 02
       
-      $nrdocpes = trim(substr($aux_dslinha3[3], strpos($aux_dslinha3[3], ":") + 1));
+      $nrdocpes = trim(substr($aux_dslinha3[4], strpos($aux_dslinha3[4], ":") + 1));
+      $cdconven = trim(substr($aux_dslinha3[5], strpos($aux_dslinha3[5], ":") + 1));
+      $dtvalida = trim(substr($aux_dslinha3[6], strpos($aux_dslinha3[6], ":") + 1));
+      $cdcompet = trim(substr($aux_dslinha3[7], strpos($aux_dslinha3[7], ":") + 1));
+      $vltotfat = trim(substr($aux_dslinha3[8], strpos($aux_dslinha3[8], ":") + 1));
+      $dsidepag = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
+      $dtpagmto = trim(substr($aux_dslinha3[10], strpos($aux_dslinha3[10], ":") + 1));
+      $hrpagmto = trim(substr($aux_dslinha3[11], strpos($aux_dslinha3[11], ":") + 1));
+      
+    } elseif ($nrconven == '0239' || $nrconven == '0451') { // Modelo 03
+
       $cdconven = trim(substr($aux_dslinha3[4], strpos($aux_dslinha3[4], ":") + 1));
       $dtvalida = trim(substr($aux_dslinha3[5], strpos($aux_dslinha3[5], ":") + 1));
-      $cdcompet = trim(substr($aux_dslinha3[6], strpos($aux_dslinha3[6], ":") + 1));
+      $cdidenti = trim(substr($aux_dslinha3[6], strpos($aux_dslinha3[6], ":") + 1));
       $vltotfat = trim(substr($aux_dslinha3[7], strpos($aux_dslinha3[7], ":") + 1));
       $dsidepag = trim(substr($aux_dslinha3[8], strpos($aux_dslinha3[8], ":") + 1));
       $dtpagmto = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
       $hrpagmto = trim(substr($aux_dslinha3[10], strpos($aux_dslinha3[10], ":") + 1));
-      
-    } elseif ($nrconven == '0239' || $nrconven == '0451') { // Modelo 03
-
-      $cdconven = trim(substr($aux_dslinha3[3], strpos($aux_dslinha3[3], ":") + 1));
-      $dtvalida = trim(substr($aux_dslinha3[4], strpos($aux_dslinha3[4], ":") + 1));
-      $cdidenti = trim(substr($aux_dslinha3[5], strpos($aux_dslinha3[5], ":") + 1));
-      $vltotfat = trim(substr($aux_dslinha3[6], strpos($aux_dslinha3[6], ":") + 1));
-      $dsidepag = trim(substr($aux_dslinha3[7], strpos($aux_dslinha3[7], ":") + 1));
-      $dtpagmto = trim(substr($aux_dslinha3[8], strpos($aux_dslinha3[8], ":") + 1));
-      $hrpagmto = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
       
     }
     
