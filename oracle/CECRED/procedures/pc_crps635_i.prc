@@ -253,6 +253,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
         -- Variaveis auxiliares
         vr_dsmsgerr     VARCHAR2(200);
         vr_chave_ass    VARCHAR2(14);
+        vr_maxrisco     INTEGER:=-10;
 
         -- LISTAR CONTAS DO GRUPO ECON. QUE ESTÃO COM RISCO MENOR QUE DO GRUPO
         CURSOR cr_contas_grupo IS
@@ -329,31 +330,38 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
         -- CONTAS DO GRUPO COM RISCO MENOR QUE O GRUPO (Serão arrastadas)
         FOR rw_contas_grupo IN cr_contas_grupo LOOP          
 
+          IF rw_contas_grupo.innivrge = 10 THEN
+            vr_maxrisco := 9;
+          ELSE 
+            vr_maxrisco := rw_contas_grupo.innivrge;
+          END IF;
+
           vr_dsmensag := 'CPF/CNPJ: '  || rw_contas_grupo.cpf_cnpj
                        ||' GRUPO: '    || rw_contas_grupo.nrdgrupo
                        ||' RIS_GRP: '  || rw_contas_grupo.innivrge
+                       ||' MAX RIS: '  || vr_maxrisco
                        ||' RIS_ASS: '  || rw_contas_grupo.innivris
                        ||' DTREFERE: ' || pr_dtrefere
                        ;
           pc_grava_log(vr_dsmensag,vr_dsmsgerr);
-
+          
           -- PERCORRER TODOS CONTRATOS DA RIS - COM RISCO DIFERENTE DO GRUPO  
           FOR rw_riscos_cpfcnpj IN cr_riscos_cpfcnpj( pr_nrcpfcgc => rw_contas_grupo.cpf_cnpj
                                                      ,pr_inpessoa => rw_contas_grupo.inpessoa
-                                                     ,pr_innivris => rw_contas_grupo.innivrge) LOOP
+                                                     ,pr_innivris => vr_maxrisco) LOOP
 
 
             -- Efetuar atualização da CENTRAL RISCO cfme os valores maior risco
             BEGIN
               vr_dsmensag := '=> Atualizando RIS: '
                            ||' RISCO de '  || rw_riscos_cpfcnpj.innivris
-                           ||' para '      || rw_contas_grupo.innivrge 
+                           ||' para '      || vr_maxrisco 
                            ||' ROWID: '    || rw_riscos_cpfcnpj.rowid
                            ||' SEQ: '      || rw_riscos_cpfcnpj.SEQ_CTA ;
               pc_grava_log(vr_dsmensag,vr_dsmsgerr);
               UPDATE crapris
-                 SET innivris = rw_contas_grupo.innivrge
-                    ,inindris = rw_contas_grupo.innivrge
+                 SET innivris = vr_maxrisco
+                    ,inindris = vr_maxrisco
                     ,dtdrisco = pr_dtrefere
                WHERE rowid = rw_riscos_cpfcnpj.rowid;
             EXCEPTION
@@ -370,14 +378,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             BEGIN
               vr_dsmensag := '=> Atualizando VRI: '
                            ||' CONTA: '    || rw_riscos_cpfcnpj.nrdconta
-                           ||' RISCO: '    || rw_contas_grupo.innivrge 
+                           ||' RISCO: '    || vr_maxrisco 
                            ||' CDMODALI: ' || rw_riscos_cpfcnpj.cdmodali
                            ||' NRCTREMP: ' || rw_riscos_cpfcnpj.nrctremp
                            ||' NRSEQCTR: ' || rw_riscos_cpfcnpj.nrseqctr
                            ;
               pc_grava_log(vr_dsmensag,vr_dsmsgerr);
               UPDATE crapvri
-                 SET innivris = rw_contas_grupo.innivrge
+                 SET innivris = vr_maxrisco
                WHERE cdcooper = pr_cdcooper
                  AND dtrefere = pr_dtrefere
                  AND nrdconta = rw_riscos_cpfcnpj.nrdconta
@@ -404,14 +412,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                          ||' GRUPO: '    || rw_contas_grupo.nrdgrupo 
                          ||' CPF/CNPJ: ' || rw_contas_grupo.nrcpfcgc
                          ||' CONTA: '    || rw_contas_grupo.nrctasoc
-                         ||' RISCO:    ' || rw_contas_grupo.innivrge
-                         ||' - ' || vr_tab_risco_num(rw_contas_grupo.innivrge)
+                         ||' RISCO:    ' || vr_maxrisco
+                         ||' - ' || vr_tab_risco_num(vr_maxrisco)
                          ;
             pc_grava_log(vr_dsmensag,vr_dsmsgerr);
             -- APENAS DO GRUPO ATUAL
             UPDATE crapgrp cr
-               SET cr.innivris = rw_contas_grupo.innivrge
-                  ,cr.dsdrisco = vr_tab_risco_num(rw_contas_grupo.innivrge)
+               SET cr.innivris = vr_maxrisco
+                  ,cr.dsdrisco = vr_tab_risco_num(vr_maxrisco)
                   ,cr.dtrefere = pr_dtrefere
              WHERE cr.cdcooper = pr_cdcooper
                AND cr.nrdgrupo = rw_contas_grupo.nrdgrupo
@@ -429,12 +437,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
           -- Atualiza todas as contas do CPF/CNPJ
           vr_dsmensag := 'CPF/CNPJ: ' || rw_contas_grupo.cpf_cnpj
-                       ||' RISCO: '   || rw_contas_grupo.innivrge ;
+                       ||' RISCO: '   || vr_maxrisco ;
           pc_grava_log(vr_dsmensag,vr_dsmsgerr);
           
           pc_popula_ass_arrasto(rw_contas_grupo.cpf_cnpj
                                ,rw_contas_grupo.inpessoa
-                               ,rw_contas_grupo.innivrge
+                               ,vr_maxrisco
                                ,pr_des_erro => vr_dscritic);
           -- Se retornou derro
           IF vr_dscritic IS NOT NULL THEN

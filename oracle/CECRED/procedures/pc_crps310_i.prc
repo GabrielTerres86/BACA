@@ -3447,7 +3447,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                    ,innivris DESC --> Retornar o ultimo gravado
                    ,dtdrisco DESC;*/ --> Retornar o ultimo gravado
              
-		rw_crapris_last cr_crapris_last%ROWTYPE;
         -- Busca de todos os riscos Doctos 3020/3030
         -- com valor superior ao de arrasto e data igual a de referência
         -- retornando dentro da conta os riscos com nível mais elevado primeiro
@@ -3962,7 +3961,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- Se não encontrou, procura baseado na ultima central
           IF cr_max_risco_cpfcnpj%NOTFOUND THEN
             CLOSE cr_max_risco_cpfcnpj;
---            dbms_output.put_line('310_I: ' ||'NOTFOUND 1');
             -- Com base no ultimo dia do mes anterior
             OPEN cr_max_risco_cpfcnpj(pr_cpf_cnpj => rw_cpfcnpj_contas.cpf_cnpj
                                      ,pr_dtrefere => pr_rw_crapdat.dtultdma);
@@ -3971,19 +3969,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             IF cr_max_risco_cpfcnpj%NOTFOUND THEN
               vr_maxrisco := vr_tab_risco(rw_cpfcnpj_contas.dsnivris); -- Recebe o que está no ASS
                -- Não encontrou, é Risco A
---              dbms_output.put_line('310_I: ' ||'NOTFOUND 2: ' || vr_maxrisco);
             ELSE
               vr_maxrisco := rw_max_risco_cpfcnpj.maior_risco;
---              dbms_output.put_line('310_I: ' ||'ELSE 1: ' || vr_maxrisco);
             END IF;
           ELSE
             vr_maxrisco := rw_max_risco_cpfcnpj.maior_risco;
---            dbms_output.put_line('310_I: ' ||'ELSE 2: ' || vr_maxrisco);
           END IF;
           CLOSE cr_max_risco_cpfcnpj;          
-          
 
-          vr_dsmensag := 'CPF/CNPJ: ' || rw_cpfcnpj_contas.cpf_cnpj
+          vr_dsmensag := 'CPF/CNPJ[1]: ' || rw_cpfcnpj_contas.cpf_cnpj
+                       ||' RISCO: '   || vr_maxrisco ;
+          pc_grava_log(vr_dsmensag,vr_dsmsgerr);
+          -- NAO LEVA PARA O PREJUIZO          
+          IF vr_maxrisco = 10 THEN
+            vr_maxrisco := 9;
+          END IF;
+          vr_dsmensag := 'CPF/CNPJ[2]: ' || rw_cpfcnpj_contas.cpf_cnpj
                        ||' RISCO: '   || vr_maxrisco ;
           pc_grava_log(vr_dsmensag,vr_dsmsgerr);
           
