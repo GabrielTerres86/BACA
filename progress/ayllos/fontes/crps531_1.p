@@ -896,7 +896,11 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
         DO:
          
                         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                                           " - " + "vai inserir " + aux_CodMsg +  " valor = " + aux_VlrLanc + "' --> '"  +
+                                                           " - " + "vai inserir " + aux_CodMsg + 
+                                                           "aux_FinlddCli " + aux_FinlddCli + 
+														   "aux_CNPJ_CPFDeb " + aux_CNPJ_CPFDeb +
+														   
+														   " valor = " + aux_VlrLanc + "' --> '"  +
                                                            glb_dscritic + " >> log/proc_batch.log"). 
                         
                         /* Validar campos sem conteúdo (NULL). Esses campos serão enviados com valor -1 para serem tratados no Oracle */
@@ -907,7 +911,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                                                                   " CodMsg em branco. Registro será desconsiderado." + " >> log/proc_batch.log").
                                 END.
                         ELSE
-                           IF aux_CodMsg = "STR0006R2" and (aux_FinlddCli <> "15" or aux_CNPJ_CPFDeb<>"01027058000191") THEN
+                           IF aux_CodMsg = "STR0006R2" and (aux_FinlddCli <> "15" OR aux_CNPJ_CPFDeb<>"01027058000191") THEN
                             DO:
                                 
                                 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
@@ -6042,13 +6046,13 @@ PROCEDURE verifica_processo:
                                crapcop.cdcooper.
     
     FIND crabdat WHERE crabdat.cdcooper = aux_cdcooper NO-LOCK NO-ERROR.
-/*
+
     IF   TODAY > crabdat.dtmvtolt   THEN    
          DO:
              RUN deleta_objetos.
              RETURN "NOK".
          END.
-*/
+
     RETURN "OK".
 
 END PROCEDURE.
