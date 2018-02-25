@@ -14,6 +14,9 @@ require_once('../../includes/funcoes.php');
 require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 
+$vlPagamentos = str_replace(',', '.', $vlPagamentos);
+$vlCreditado  = str_replace(',', '.', $vlCreditado);
+
 //pagamento maior que creditado
 $vl_pagar = ($vlPagamentos > $vlCreditado) ? ($vlPagamentos - $vlCreditado) : 0;
 //creditado maior que pagamento
