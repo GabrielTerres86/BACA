@@ -1782,7 +1782,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_qtparcel := pr_tab_price.COUNT + 1;
         vr_dtvencto := pr_dtvencto;
       ELSE 
-        vr_qtparcel := ROUND(months_between(pr_dtvencto,pr_dtcalcul)) + 1;
+        IF TO_NUMBER(TO_CHAR(pr_dtcalcul,'DD')) >= TO_NUMBER(TO_CHAR(pr_dtvencto,'DD')) THEN
+          vr_qtparcel := ROUND(months_between(pr_dtvencto,pr_dtcalcul));
+        ELSE
+          vr_qtparcel := ROUND(months_between(pr_dtvencto,pr_dtcalcul)) + 1;
+        END IF;
         IF NVL(vr_qtparcel,0) = 0 THEN
           vr_qtparcel := 1;          
         END IF;
@@ -6429,7 +6433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                        ,pr_nrctremp IN crawepr.nrctremp%TYPE) IS
         SELECT tpemprst
               ,dtlibera
-              ,dtdpagto
+              ,dtdpagto              
               ,nrctrliq##1
               ,nrctrliq##2
               ,nrctrliq##3
@@ -6576,6 +6580,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         RAISE vr_exc_erro;
       END IF;
       
+      /*
       -- Busca as parcelas para pagamento
       pc_busca_pagto_parc_pos(pr_cdcooper => vr_cdcooper
                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -6597,6 +6602,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
+      */
       
       /*
       -- Bloquear para não permitir antecipar uma parcela total do Juros da Carência
@@ -7591,6 +7597,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                   ,2367,2369           -- Multa Aval
                   ,2371,2373,2347,2346 -- Juros de Mora
                   ,2375,2377           -- Juros de Mora Aval
+                  ,2566,2567           -- Desconto
                );
 
       -- Variaveis gerais

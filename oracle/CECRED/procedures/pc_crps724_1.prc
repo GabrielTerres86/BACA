@@ -159,7 +159,6 @@ BEGIN
     vr_ultconta          INTEGER;
     vr_idcontrole        tbgen_batch_controle.idcontrole%TYPE;
     vr_dtvencto_niv      crappep.dtvencto%TYPE;
-    vr_dtrefjur          crapepr.dtrefjur%TYPE;
     vr_diarefju          crapepr.diarefju%TYPE;
     vr_mesrefju          crapepr.mesrefju%TYPE;
     vr_anorefju          crapepr.anorefju%TYPE;
@@ -561,22 +560,14 @@ BEGIN
             RAISE vr_exc_saida;
           END IF;
           
-          vr_dtrefjur := rw_crapdat.dtmvtolt;
-          -- Condicao para verificar se foi lancado Juros Remuneratorio no contrato de Emprestimo
-          IF NVL(vr_vljuremu,0) <= 0 THEN
-            vr_dtrefjur := rw_epr_pep.dtrefjur;
-            vr_diarefju := rw_epr_pep.diarefju;
-            vr_mesrefju := rw_epr_pep.mesrefju;
-            vr_anorefju := rw_epr_pep.anorefju;
-          END IF;
-          
           -- Atualizar Emprestimo
           BEGIN
             UPDATE crapepr
-               SET crapepr.dtrefjur = vr_dtrefjur
+               SET crapepr.dtrefjur = rw_crapdat.dtmvtolt
                   ,crapepr.diarefju = vr_diarefju
                   ,crapepr.mesrefju = vr_mesrefju
                   ,crapepr.anorefju = vr_anorefju
+                  ,crapepr.dtrefcor = rw_crapdat.dtmvtolt
                   ,crapepr.vlsdeved = NVL(crapepr.vlsdeved,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)
                   ,crapepr.vljuratu = NVL(crapepr.vljuratu,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)
                   ,crapepr.vljuracu = NVL(crapepr.vljuracu,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)

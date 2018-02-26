@@ -92,7 +92,8 @@ BEGIN
        WHERE crappep.cdcooper = pr_cdcooper
          AND crappep.nrdconta = pr_nrdconta
          AND crappep.nrctremp = pr_nrctremp
-         AND crappep.dtvencto <= pr_dtvencto;
+         AND crappep.dtvencto <= pr_dtvencto
+         AND crappep.vldespar = 0;
          
     -- Soma valor total de Juros     
     CURSOR cr_vltotal_juros(pr_cdcooper IN crappep.cdcooper%TYPE
