@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 10/07/2017
+   Data    : Agosto/2007                      Ultima atualizacao: 14/12/2017
 
    Dados referentes ao programa:
 
@@ -183,6 +183,7 @@
               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                            PRJ339 - CRM (Odirlei-AMcom)
               
+			  05/02/2018 - Inclusao do campo vlrdtaxa na tt tt-extrato_epr. (James)
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
     FIELD nrdconta LIKE crapass.nrdconta

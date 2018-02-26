@@ -35,9 +35,7 @@
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
 
-                21/08/2017 - Inclusao dos campos qtdiacal e vlrdtaxa na
-                             tt-extrato_epr_aux. (Jaison/James - PRJ298)
-
+				05/02/2018 - Inclusao do campo vlrdtaxa na tt tt-extrato_epr_aux. (James)
 .............................................................................
 .............................................................................*/
 
@@ -136,7 +134,7 @@ DEF TEMP-TABLE tt-extrato_epr_aux
     FIELD cdorigem LIKE craplem.cdorigem
     FIELD cdhistor LIKE craplem.cdhistor
     FIELD qtdiacal LIKE craplem.qtdiacal
-    FIELD vlrdtaxa LIKE craplem.txjurepr.
+    FIELD vlrdtaxa LIKE craplem.vltaxprd.
 
 DEF TEMP-TABLE tt-demonstrativo NO-UNDO
     FIELD nraplica LIKE craprda.nraplica
