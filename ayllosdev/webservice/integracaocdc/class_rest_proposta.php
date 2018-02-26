@@ -88,6 +88,7 @@ class RestCDC extends RestServerJson{
 									 $mensagemDetalhe, 
 									 $numeroTransacao = '00000000000000000000', 
 									 $dsjsonan = '',
+									 $nrctrprp = '0',
 									 $cdcritic = '0', 
 									 $dscritic = ''){		
         $aRetorno = array();
@@ -110,6 +111,7 @@ class RestCDC extends RestServerJson{
 		$xml .= "	<flgreenvia>0</flgreenvia>";
 		$xml .= "	<idacionamento>".$numeroTransacao."</idacionamento>";
 		$xml .= "	<dsresposta_requisicao>".json_encode($aRetorno)."</dsresposta_requisicao>";
+		$xml .= "	<nrctrprp>".$nrctrprp."</nrctrprp>";
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
 		$sXmlResult = mensageria($xml, "WEBS0003", "ATUALIZA_ACIONAMENTO", 0, 0, 0, 5, 0, "</Root>");		
@@ -373,7 +375,7 @@ class RestCDC extends RestServerJson{
 				$xml .= "		<nrctaloj>".$oDados->contaLojistaNumero.$oDados->contaLojistaDV."</nrctaloj>";
 				$xml .= "		<inpessoa>".$oDados->tipoPessoa."</inpessoa>";
 				$xml .= "		<tpemprst>".$oDados->tipoEmprestimo."</tpemprst>";
-				$xml .= "		<vlemprst>".formataMoeda($oDados->valorTotalEmprestimo)."</vlemprst>";
+				$xml .= "		<vlemprst>".formataMoeda($oDados->valorLiquidoEmprestimo)."</vlemprst>";
 				$xml .= "		<vlliqemp>".formataMoeda($oDados->valorLiquidoEmprestimo)."</vlliqemp>";
 				$xml .= "		<vliofepr>".formataMoeda($oDados->IOFValor)."</vliofepr>";
 				$xml .= "		<percetop>".formataMoeda($oDados->CETValor)."</percetop>";
@@ -438,6 +440,7 @@ class RestCDC extends RestServerJson{
                                           $msgsucesso,
                                           $idacionamento,
 										  $dsjsonan,
+										  $nrctremp,
                                           0,
                                           '');
 

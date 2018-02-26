@@ -106,7 +106,12 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2);         --> Erros do processo
-				 
+																
+ --> Rotina responsavel por validar se cooperativa está em contingência
+  PROCEDURE pc_verifica_contingencia_cdc(pr_cdcooper IN crapcop.cdcooper%TYPE
+																				,pr_incdccon OUT tbepr_cdc_parametro.inintegra_cont%TYPE
+																				,pr_cdcritic OUT NUMBER
+																				,pr_dscritic OUT VARCHAR2);				 
 END EMPR0012;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
@@ -539,8 +544,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 				RAISE vr_exc_erro;										
 			END IF;
 			
-			-- Se veículo for zero KM e não possuir nr. do chassi
-			IF rw_dsbensal.tipoBem = '1' AND rw_dsbensal.chassibem IS NULL THEN
+			-- Se não possuir nr. do chassi
+			IF rw_dsbensal.chassibem IS NULL THEN
 				-- Devemos buscar o número do chassi
 				vr_nrchassi := fn_retorna_chassi_seq(pr_cdcooper => pr_cdcopass);
 			ELSE 
@@ -1998,5 +2003,72 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     END; 
   END pc_processa_analise;	                                                     	
 
+  --> Rotina responsavel por validar se cooperativa está em contingência
+  PROCEDURE pc_verifica_contingencia_cdc(pr_cdcooper IN crapcop.cdcooper%TYPE
+																				,pr_incdccon OUT tbepr_cdc_parametro.inintegra_cont%TYPE
+																				,pr_cdcritic OUT NUMBER
+																				,pr_dscritic OUT VARCHAR2) IS
+  BEGIN																				
+    /* ..........................................................................
+      Programa : pc_verifica_contingencia_cdc
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Lucas Reinert
+      Data     : Fevereiro/2018.                   Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamada
+      Objetivo  : Verificar se cooperativa está em contingencia
+          
+      Alteração : 
+    ..........................................................................*/
+    DECLARE
+			-- Variáveis para tratamento de erros
+			vr_exc_erro EXCEPTION;
+			vr_cdcritic crapcri.cdcritic%TYPE;
+			vr_dscritic crapcri.dscritic%TYPE;
+			
+	    -- Buscar parâmetro do cdc
+			CURSOR cr_param_cdc(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+				SELECT par.inintegra_cont
+					FROM tbepr_cdc_parametro par
+				 WHERE par.cdcooper = pr_cdcooper;		
+			rw_param_cdc cr_param_cdc%ROWTYPE;
+
+		BEGIN
+			
+			-- Buscar parâmetros CDC da cooperativa
+			OPEN cr_param_cdc(pr_cdcooper => pr_cdcooper);
+			FETCH cr_param_cdc INTO rw_param_cdc;
+		
+			-- Se não encontrou parâmetros de integração CDC
+			IF cr_param_cdc%NOTFOUND THEN
+				-- Fechar cursor
+				CLOSE cr_param_cdc;
+				-- Gerar crítica
+				vr_cdcritic := 0;
+				vr_dscritic := 'Parametros de CDC nao cadastrado.';
+				-- Levantar exceção
+				RAISE vr_exc_erro;
+			END IF;
+			-- Fechar cursor
+			CLOSE cr_param_cdc;	
+			
+			-- Retornar se cooperativa está em contingencia
+			pr_incdccon := rw_param_cdc.inintegra_cont;
+			
+		EXCEPTION
+			WHEN vr_exc_erro THEN		
+				-- Atribuir críticas
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := vr_dscritic;
+			WHEN OTHERS THEN      
+				-- Erro
+				pr_cdcritic := 0;
+				pr_dscritic := 'Erro geral do sistema ' || SQLERRM;
+		END;
+  END pc_verifica_contingencia_cdc;
+	
 END EMPR0012;
 /

@@ -77,6 +77,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0003 IS
                                    ,pr_idacionamento         IN tbgen_webservice_aciona.idacionamento%TYPE         --> Identificador do acionamento																
                                    ,pr_dsresposta_requisicao IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE --> Conteúdo resposta
 																	 ,pr_nrreenvio             IN tbgen_webservice_aciona.nrreenvio%TYPE DEFAULT NULL --> Número de reenvios
+																	 ,pr_nrctrprp              IN tbgen_webservice_aciona.nrctrprp%TYPE DEFAULT 0    --> Nr. do contrato da proposta																	 
                                    ,pr_dscritic              OUT VARCHAR2);                                        --> Desc. crítica
 																	 
 	--> Rotina responsavel por atualizar registro de log de acionamento
@@ -84,6 +85,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0003 IS
 																       ,pr_flgreenvia            IN tbgen_webservice_aciona.flgreenvia%TYPE            --> Flag reenvio (0-Não, 1-Sim)																
                                        ,pr_idacionamento         IN tbgen_webservice_aciona.idacionamento%TYPE         --> Identificador do acionamento																
                                        ,pr_dsresposta_requisicao IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE --> Conteúdo resposta
+																	     ,pr_nrctrprp              IN tbgen_webservice_aciona.nrctrprp%TYPE DEFAULT 0    --> Nr. do contrato da proposta																			 
 																			 ,pr_xmllog                IN VARCHAR2                                            --> XML com informações de LOG
 																			 ,pr_cdcritic              OUT PLS_INTEGER                                        --> Código da crítica
 																			 ,pr_dscritic              OUT VARCHAR2                                           --> Descrição da crítica
@@ -340,6 +342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
                                    ,pr_idacionamento         IN tbgen_webservice_aciona.idacionamento%TYPE         --> Identificador do acionamento																
                                    ,pr_dsresposta_requisicao IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE --> Conteúdo resposta
 																	 ,pr_nrreenvio             IN tbgen_webservice_aciona.nrreenvio%TYPE DEFAULT NULL --> Número de reenvios
+																	 ,pr_nrctrprp              IN tbgen_webservice_aciona.nrctrprp%TYPE DEFAULT 0    --> Nr. do contrato da proposta
                                    ,pr_dscritic              OUT VARCHAR2) IS                                      --> Desc. crítica
 		/* ..........................................................................
           
@@ -364,6 +367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
 				    ,flgreenvia            = pr_flgreenvia
 						,dsresposta_requisicao = replace(pr_dsresposta_requisicao, '&quot;', '"')
 						,nrreenvio             = nvl(pr_nrreenvio, nrreenvio)
+						,nrctrprp              = CASE WHEN pr_nrctrprp > 0 THEN pr_nrctrprp ELSE nrctrprp END
 			 WHERE idacionamento = pr_idacionamento;
 		
 			--> Commit para garantir que guarde as informações do log de acionamento
@@ -379,6 +383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
 																       ,pr_flgreenvia            IN tbgen_webservice_aciona.flgreenvia%TYPE            --> Flag reenvio (0-Não, 1-Sim)																
                                        ,pr_idacionamento         IN tbgen_webservice_aciona.idacionamento%TYPE         --> Identificador do acionamento																
                                        ,pr_dsresposta_requisicao IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE --> Conteúdo resposta
+																	     ,pr_nrctrprp              IN tbgen_webservice_aciona.nrctrprp%TYPE DEFAULT 0    --> Nr. do contrato da proposta
 																			 ,pr_xmllog                IN VARCHAR2                                           --> XML com informações de LOG
 																			 ,pr_cdcritic              OUT PLS_INTEGER                                       --> Código da crítica
 																			 ,pr_dscritic              OUT VARCHAR2                                          --> Descrição da crítica
@@ -415,6 +420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
 			                       ,pr_flgreenvia            => pr_flgreenvia
 														 ,pr_idacionamento         => pr_idacionamento
 														 ,pr_dsresposta_requisicao => pr_dsresposta_requisicao
+														 ,pr_nrctrprp              => pr_nrctrprp
 														 ,pr_dscritic              => vr_dscritic);
 			-- Se retornou alguma crítica								 
 		  IF TRIM(vr_dscritic) IS NOT NULL THEN

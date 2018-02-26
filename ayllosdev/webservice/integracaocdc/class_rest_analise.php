@@ -182,8 +182,8 @@ class RestCDC extends RestServerJson{
 			// Monta retorno da proposta a partir do motor de crédito
 			$xml  = "<Root>";
 			$xml .= " <Dados>";
-			$xml .= "	<cdcooper>".$oDados->codigoCooperativa."</cdcooper>";
-			$xml .= "	<cdcoploj>".$oDados->codigoCooperativa."</cdcoploj>";
+			$xml .= "	<cdcooper>".$oDados->cooperativaCodigo."</cdcooper>";
+			$xml .= "	<cdcoploj>".$oDados->cooperativaCodigo."</cdcoploj>";
 			$xml .= "   <dsusuari>".$this->getUsuario()."</dsusuari>";
 			$xml .= "   <dsdsenha>".$this->getSenha()."</dsdsenha>";
 			$xml .= "   <cdcliente>1</cdcliente>";
@@ -209,12 +209,12 @@ class RestCDC extends RestServerJson{
             // Gravar acionamento do serviço
             $xml  = "<Root>";
             $xml .= " <Dados>";
-			$xml .= "	<cdcooper>".$oDados->codigoCooperativa."</cdcooper>";
+			$xml .= "	<cdcooper>".$oDados->cooperativaCodigo."</cdcooper>";
 			$xml .= "	<cdagenci>1</cdagenci>";
 			$xml .= "	<cdoperad>AUTOCDC</cdoperad>";
 			$xml .= "	<cdorigem>5</cdorigem>";			
 			$xml .= "	<nrctrprp>".$nrctremp."</nrctrprp>";
-			$xml .= "	<nrdconta>".$oDados->contaDebito.$oDados->digitoContaDebito."</nrdconta>";
+			$xml .= "	<nrdconta>".$oDados->contaNumero.$oDados->contaDV."</nrdconta>";
 			$xml .= "	<cdcliente>1</cdcliente>";
 			$xml .= "	<tpacionamento>1</tpacionamento>";
 			$xml .= "	<dsoperacao>".$dsoperacao."</dsoperacao>";

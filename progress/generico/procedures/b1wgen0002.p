@@ -1927,6 +1927,7 @@ PROCEDURE obtem-propostas-emprestimo:
     DEF  VAR         aux_err_efet AS INTE                           NO-UNDO.
 
     DEF   VAR        aux_inobriga AS CHAR                           NO-UNDO.
+    DEF   VAR        aux_incdccon AS INTE                           NO-UNDO.            
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
@@ -2197,12 +2198,28 @@ PROCEDURE obtem-propostas-emprestimo:
 		           tt-proposta-epr.idcobope = crawepr.idcobope
                tt-proposta-epr.flintcdc = crapcop.flintcdc.
 
-               /*FIND tbepr_cdc_parametro WHERE tbepr_cdc_parametro.cdcooper = par_cdcooper NO-LOCK NO-ERROR NO-WAIT.
+               
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+               RUN STORED-PROCEDURE pc_verifica_contingencia_cdc
+                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                                      OUTPUT 0,           /* Indicador de contingencia CDC */
+                                                      OUTPUT 0,            /* Código da crítica */
+                                                      OUTPUT "").          /* Descrição da crítica */
+            
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC pc_verifica_contingencia_cdc
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
                            
-               IF AVAILABLE tbepr_cdc_parametro THEN
-                 ASSIGN tt-proposta-epr.inintegra_cont = tbepr_cdc_parametro.inintegra_cont.
-               ELSE*/
-                 ASSIGN tt-proposta-epr.inintegra_cont = 0.
+                ASSIGN aux_incdccon = pc_verifica_contingencia_cdc.pr_incdccon
+                                                                         WHEN pc_verifica_contingencia_cdc.pr_incdccon <> ?
+                       aux_cdcritic = pc_verifica_contingencia_cdc.pr_cdcritic
+                                                                         WHEN pc_verifica_contingencia_cdc.pr_cdcritic <> ?
+                       aux_dscritic = pc_verifica_contingencia_cdc.pr_dscritic
+                                                                         WHEN pc_verifica_contingencia_cdc.pr_dscritic <> ?.
+               
+                 ASSIGN tt-proposta-epr.inintegra_cont = aux_incdccon.
 
                FIND crapfin where crapfin.cdcooper = par_cdcooper
                               AND crapfin.cdfinemp = crawepr.cdfinemp NO-LOCK NO-ERROR NO-WAIT.
