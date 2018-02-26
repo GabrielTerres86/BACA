@@ -188,221 +188,108 @@ function alteraExibicaoCampos(){
 	$('#divFiltroFatura').css('display','none');
 	$('#divFiltroFaturaSicredi').css('display','none');
 	$('#divFiltroTitulos').css('display','none');
-  
-  $('#flgcnvsi').css('display','none'); //PJ406
 		
 	//Faturas
 	if ($('#tpdpagto','#divTipoPagto').val() == "no") { 	
-	
-		$('#flgcnvsi','#divTipoPagto').habilitaCampo();
-		
-		//Não SICREDI
-		if ( $('#flgcnvsi','#divTipoPagto').val() == "no"){ 
-		
-			//Formata os labels
-			$('label[for="dtdpagto"]','#divFiltroFatura').addClass('rotulo').css('width','75px');
-			$('label[for="cdagenci"]','#divFiltroFatura').addClass('rotulo-linha').css('width','25px');
-			$('label[for="cdhiscxa"]','#divFiltroFatura').addClass('rotulo-linha').css({'width':'70px','display':'block'});
-			$('label[for="vldpagto"]','#divFiltroFatura').addClass('rotulo-linha').css('width','45px');
+
+		//Formata os labels
       
-      $('#dtdpagto','#divFiltroFatura').addClass('data').css({'width':'75px'});
-			$('#cdagenci','#divFiltroFatura').addClass('pesquisa codigo').css({'width':'35px','text-align':'right'});
-			$('#cdhiscxa','#divFiltroFatura').css({'display':'block','width':'100px'});								
-			$('#lupahist','#divFiltroFatura').css('display','block');
-			$('#vldpagto','#divFiltroFatura').css({'width':'100px','text-align':'right'}).attr('maxlength','16');
-			$('#vldpagto','#divFiltroFatura').setMask('DECIMAL','z.zzz.zzz.zz9,99','.','');
-			
-			$('#dtdpagto','#divFiltroFatura').val(dtmvtolt);
-			
-			$('#fsetFiltro').css('display','block');
-			$('#divFiltroFatura').css('display','block');
-			
-			// Se pressionar dtdpagto
-			$('#dtdpagto','#divFiltroFatura').unbind('keypress').bind('keypress', function(e) { 		
-
-				if ( divError.css('display') == 'block' ) { return false; }		
-					
-				// Se é a tecla ENTER, F1 ou TAB 
-				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
-					
-					$('#cdagenci','#divFiltroFatura').focus();		
-					return false;
-				}
-			});	
-
-			// Se pressionar cdagenci
-			$('#cdagenci','#divFiltroFatura').unbind('keypress').bind('keypress', function(e) { 	
-
-				if ( divError.css('display') == 'block' ) { return false; }		
-								
-				// Se é a tecla ENTER, F1 ou TAB 
-				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
-					if($(this).val() == ''){
-						$(this).val('0');				
-					}
-					
-					$('#cdhiscxa','#divFiltroFatura').focus();
-										
-					return false;		
-				}
-				
-			});	
-
-			// Se pressionar cdhiscxa
-			$('#cdhiscxa','#divFiltroFatura').unbind('keypress').bind('keypress', function(e) { 	
-
-				if ( divError.css('display') == 'block' ) { return false; }		
-					
-				// Se é a tecla ENTER, F1 ou TAB 
-				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
-					$('#vldpagto','#divFiltroFatura').focus();		
-					return false;
-				}
-				
-			});		
-
-			// Se pressionar vldpagto
-			$('#vldpagto','#divFiltroFatura').unbind('keypress').bind('keypress', function(e) { 			
-
-				if ( divError.css('display') == 'block' ) { return false; }		
-					
-				// Se é a tecla ENTER, F1 ou TAB 
-				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
-					
-					if($('#cddopcao','#frmCabPesqti').val() == 'C'){
-						showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#tpdpagto","#frmFiltroPesqti").focus()','sim.gif','nao.gif');
-					}else{
-						showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#vldpagto","#divFiltroFatura").focus()','sim.gif','nao.gif');
-					}
-					
-					return false;
-				}
-				
-			});	
-			
-			controlaPesquisas('divFiltroFatura');
-						
-		//SICREDI
-		} else {			
-
-			//Formata os labels
+		//PJ406
+		$('label[for="dtipagto"]','#divFiltroFaturaSicredi').addClass('rotulo').css('width','55px');
+		$('label[for="dtfpagto"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css('width','10px');
       
-      //PJ406
-      $('label[for="dtipagto"]','#divFiltroFaturaSicredi').addClass('rotulo').css('width','55px');
-      $('label[for="dtfpagto"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css('width','10px');
+		$('label[for="cdempcon"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css({'width':'62px','display':'block'});
+		$('label[for="cdsegmto"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css({'width':'128px','display':'block'});
+		$('label[for="cdagenci"]','#divFiltroFaturaSicredi').addClass('rotulo').css('width','55px');
+		$('label[for="nrdconta"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css('width','55px');
+		$('label[for="vldpagto"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css('width','40px');
+		$('label[for="nrautdoc"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css({'width':'85px','display':'block'});
       
-			//$('label[for="dtdpagto"]','#divFiltroFaturaSicredi').addClass('rotulo').css('width','45px'); //PJ406
-			$('label[for="cdempcon"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css({'width':'62px','display':'block'});
-			$('label[for="cdsegmto"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css({'width':'128px','display':'block'});
-      $('label[for="cdagenci"]','#divFiltroFaturaSicredi').addClass('rotulo').css('width','55px');
-      $('label[for="nrdconta"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css('width','55px');
-			$('label[for="vldpagto"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css('width','40px');
-      $('label[for="nrautdoc"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css({'width':'85px','display':'block'});
+		//PJ406
+		$('#dtipagto','#divFiltroFaturaSicredi').addClass('data').css({'width':'75px'});
+		$('#dtfpagto','#divFiltroFaturaSicredi').addClass('data').css({'width':'75px'});
       
-			//PJ406
-      $('#dtipagto','#divFiltroFaturaSicredi').addClass('data').css({'width':'75px'});
-      $('#dtfpagto','#divFiltroFaturaSicredi').addClass('data').css({'width':'75px'});
+		$('#cdempcon','#divFiltroFaturaSicredi').css({'width':'60px','text-align':'right'}).attr('maxlength','6');
+		$('#cdsegmto','#divFiltroFaturaSicredi').css({'width':'60px','text-align':'right'}).attr('maxlength','6');
+		$('#cdagenci','#divFiltroFaturaSicredi').addClass('pesquisa codigo').css({'width':'35px','text-align':'right'});
+		$('#nrdconta','#divFiltroFaturaSicredi').addClass('conta pesquisa').css({'width':'75px','text-align':'right'});
+		$('#vldpagto','#divFiltroFaturaSicredi').css({'width':'120px','text-align':'right'}).attr('maxlength','16');
+		$('#vldpagto','#divFiltroFaturaSicredi').setMask('DECIMAL','z.zzz.zzz.zz9,99','.','');
+		$('#nrautdoc','#divFiltroFaturaSicredi').css({'width':'120px','text-align':'right'}).attr('maxlength','6');
       
-			//$('#dtdpagto','#divFiltroFaturaSicredi').addClass('data').css({'width':'75px'}); //PJ406
-			$('#cdempcon','#divFiltroFaturaSicredi').css({'width':'60px','text-align':'right'}).attr('maxlength','6');
-			$('#cdsegmto','#divFiltroFaturaSicredi').css({'width':'60px','text-align':'right'}).attr('maxlength','6');
-      $('#cdagenci','#divFiltroFaturaSicredi').addClass('pesquisa codigo').css({'width':'35px','text-align':'right'});
-      $('#nrdconta','#divFiltroFaturaSicredi').addClass('conta pesquisa').css({'width':'75px','text-align':'right'});
-			$('#vldpagto','#divFiltroFaturaSicredi').css({'width':'120px','text-align':'right'}).attr('maxlength','16');
-			$('#vldpagto','#divFiltroFaturaSicredi').setMask('DECIMAL','z.zzz.zzz.zz9,99','.','');
-			$('#nrautdoc','#divFiltroFaturaSicredi').css({'width':'120px','text-align':'right'}).attr('maxlength','6');
-      
-			//$('#dtdpagto','#divFiltroFaturaSicredi').val(dtmvtolt); //PJ406
-      
-      //PJ406
-      $('#dtipagto','#divFiltroFaturaSicredi').val(dtmvtolt);
-      $('#dtfpagto','#divFiltroFaturaSicredi').val(dtmvtolt);
+		//PJ406
+		$('#dtipagto','#divFiltroFaturaSicredi').val(dtmvtolt);
+		$('#dtfpagto','#divFiltroFaturaSicredi').val(dtmvtolt);
 			
-			$('#fsetFiltro').css('display','block');
-			$('#divFiltroFaturaSicredi').css('display','block');
+		$('#fsetFiltro').css('display','block');
+		$('#divFiltroFaturaSicredi').css('display','block');
 			
-			/* PJ406
-      // Se pressionar dtdpagto
-			$('#dtdpagto','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 		
+		// Se pressionar cdagenci
+		$('#cdagenci','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 	
 			
-				if ( divError.css('display') == 'block' ) { return false; }		
-					
-				// Se é a tecla ENTER, F1 ou TAB 
-				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
-					
-					$('#cdagenci','#divFiltroFaturaSicredi').focus();		
-					return false;
-				}
-			});
-      */
-			
-			// Se pressionar cdagenci
-			$('#cdagenci','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 	
-			
-				if ( divError.css('display') == 'block' ) { return false; }		
-								
-				// Se é a tecla ENTER, F1 ou TAB 
-				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
-					
-					if($(this).val() == ''){
-						$(this).val('0');				
-					}
-					
-					$('#cdempcon','#divFiltroFaturaSicredi').focus();
+			if ( divError.css('display') == 'block' ) { return false; }		
 									
-					return false;		
+			// Se é a tecla ENTER, F1 ou TAB 
+			if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
+						
+				if($(this).val() == ''){
+					$(this).val('0');				
 				}
+						
+				$('#cdempcon','#divFiltroFaturaSicredi').focus();
+										
+				return false;		
+			}
 				
-			});	
+		});	
 			
-			// Se pressionar cdempcon
-			$('#cdempcon','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 
+		// Se pressionar cdempcon
+		$('#cdempcon','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 
 			
-				if ( divError.css('display') == 'block' ) { return false; }		
+			if ( divError.css('display') == 'block' ) { return false; }		
 					
-				// Se é a tecla ENTER, F1 ou TAB 
-				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
-					$('#cdsegmto','#divFiltroFaturaSicredi').focus();		
-					return false;
-				}
+			// Se é a tecla ENTER, F1 ou TAB 
+			if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
+				$('#cdsegmto','#divFiltroFaturaSicredi').focus();		
+				return false;
+			}
 				
-			});	
+		});	
 			
-			// Se pressionar cdsegmto
-			$('#cdsegmto','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 	
+		// Se pressionar cdsegmto
+		$('#cdsegmto','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 	
 			
-				if ( divError.css('display') == 'block' ) { return false; }		
+			if ( divError.css('display') == 'block' ) { return false; }		
 					
-				// Se é a tecla ENTER, F1 ou TAB 
-				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
-					$('#vldpagto','#divFiltroFaturaSicredi').focus();		
-					return false;
-				}
+			// Se é a tecla ENTER, F1 ou TAB 
+			if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
+				$('#vldpagto','#divFiltroFaturaSicredi').focus();		
+				return false;
+			}
 				
-			});	
+		});	
 
-			// Se pressionar vldpagto
-			$('#vldpagto','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 			
+		// Se pressionar vldpagto
+		$('#vldpagto','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 			
 			
-				if ( divError.css('display') == 'block' ) { return false; }		
+			if ( divError.css('display') == 'block' ) { return false; }		
 					
-				// Se é a tecla ENTER, F1 ou TAB 
-				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
+			// Se é a tecla ENTER, F1 ou TAB 
+			if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
 					
-					if($('#cddopcao','#frmCabPesqti').val() == 'C'){
-						showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#tpdpagto","#fsetTipoPagto").focus()','sim.gif','nao.gif');
-					}else{
-						showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#dtipagto","#divFiltroFaturaSicredi").focus()','sim.gif','nao.gif');
-					}
-					
-					return false;
+				if($('#cddopcao','#frmCabPesqti').val() == 'C'){
+					showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#tpdpagto","#fsetTipoPagto").focus()','sim.gif','nao.gif');
+				}else{
+					showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#dtipagto","#divFiltroFaturaSicredi").focus()','sim.gif','nao.gif');
 				}
+					
+				return false;
+			}
 				
-			});	
+		});	
 			
-			controlaPesquisas('divFiltroFaturaSicredi');
+		controlaPesquisas('divFiltroFaturaSicredi');
 			
-		}
 		
 	}else{//Titulos
 	
@@ -419,11 +306,8 @@ function alteraExibicaoCampos(){
 		$('#vldpagto','#divFiltroTitulos').setMask('DECIMAL','z.zzz.zzz.zz9,99','.','');
 	
 		$('#dtdpagto','#divFiltroTitulos').val(dtmvtolt);		
-		// Campo removido $('#flgcnvsi','#frmTipoPagto').desabilitaCampo();
 		$('#fsetFiltro').css('display','block');
 		$('#divFiltroTitulos').css('display','block');
-		
-		// Campo removido $('#flgcnvsi','#frmFiltroPesqti').desabilitaCampo();
 		
 		// Se pressionar dtdpagto
 		$('#dtdpagto','#divFiltroTitulos').unbind('keypress').bind('keypress', function(e) { 		
@@ -487,14 +371,11 @@ function alteraExibicaoCampos(){
 function formataFiltro() {
 	
 	//Inicializa variáveis de label dos objetos
-	// Campo removido var rFlgcnvsi = $('label[for="flgcnvsi"]','#divTipoPagto');	
 	var rTpdpagto = $('label[for="tpdpagto"]','#divTipoPagto');	
 		
 	rTpdpagto.addClass('rotulo').css('width','75px');
-	// Campo removido rFlgcnvsi.addClass('rotulo-linha').css('width','50px');
 		
 	//Inicializa variáveis com o objeto campos
-	// Campo removido var cFlgcnvsi  	= $('#flgcnvsi','#divTipoPagto');
 	var cTpdpagto   = $('#tpdpagto','#divTipoPagto');	
 		
 	cTpdpagto.css({'width':'100px','text-align':'left'});
@@ -528,16 +409,8 @@ function formataFiltro() {
 			
 			$(this).triggerHandler('blur');
 			alteraExibicaoCampos();
-			
-			/* Campo removido  if( $(this).val() == 'no'){
-				
-				$('#flgcnvsi','#divTipoPagto').focus();				
-				
-			}else{ */
 				
 				$('#dtdpagto','#divFiltroTitulos').focus();
-				
-			//}
 			
 			return false;			
 		}  		
@@ -548,20 +421,14 @@ function formataFiltro() {
 		
 		alteraExibicaoCampos();
 		
-		/* Campo removido  if( $(this).val() == 'no'){
-			$('#flgcnvsi','#divTipoPagto').focus();
-		}else{ */
 			$('#dtdpagto','#divFiltroTitulos').focus();
-		//}
 		
 		return false;		
 		
 	});	
 		
-	// Campo removido cFlgcnvsi.unbind('keypress').bind('keypress', function(e) {
 		
-	
-	// Campo removido cFlgcnvsi.unbind('change').bind('change', function() {		
+
 	
 	// Se pressionar btConsulta
 	$('#btConsultar','#divBotoes').unbind('keypress').bind('keypress', function(e) { 		
@@ -653,7 +520,6 @@ function formataFiltro() {
 	if($('#cddopcao','#frmCabPesqti').val() == 'A' ){
 	
 		cTpdpagto.desabilitaCampo();
-		// Campo removido cFlgcnvsi.habilitaCampo().focus();
 	
 	}else{
 	
@@ -669,7 +535,6 @@ function obtemConsulta( nriniseq , nrregist ) {
 
 	var cddopcao = $("#cddopcao","#frmCabPesqti").val();
 	var tpdpagto = $("#tpdpagto","#divTipoPagto").val();
-	// Campo removido var flgcnvsi = $("#flgcnvsi","#divTipoPagto").val();
 	var nomeDoForm = '';
 	
 	if($('#divFiltroFatura').css('display') == 'block' ){
@@ -716,7 +581,6 @@ function obtemConsulta( nriniseq , nrregist ) {
 				cdsegmto: cdsegmto,
 				nriniseq: nriniseq,
 				nrregist: nrregist,
-        // Campo removido flgcnvsi: flgcnvsi,
 				//PJ406
         dtipagto: dtipagto,
         dtfpagto: dtfpagto,
@@ -912,7 +776,6 @@ function controlaLayout(operacao) {
 										
 					if ( cddopcao == "C" 								  && 
 					     $('#tpdpagto','#frmFiltroPesqti').val() == "no"  &&
-					    //Campo removido $('#flgcnvsi','#frmFiltroPesqti').val() == "yes" &&					 
 						 $('#dscodbar', $(this)).val()			 == ""    ) {
 						
 						acessaRotina();

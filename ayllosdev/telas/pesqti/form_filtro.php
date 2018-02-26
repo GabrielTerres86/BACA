@@ -29,14 +29,6 @@
 				<option value="no" selected> F - Faturas</option>
 			</select>
 
-			<!-- PJ406
-      <label for="flgcnvsi" ><? //echo utf8ToHtml('Sicredi:') ?></label>
-			<select name="flgcnvsi" id="flgcnvsi" class="campo" >
-				<option value="yes">Sim</option>
-				<option value="no" selected>N&atilde;o</option> 		
-			</select>
-      -->
-
 			<br style="clear:both" />
 
 		</div>
@@ -76,11 +68,6 @@
       <label for="dtfpagto"><? echo utf8ToHtml('a') ?></label>
       <input name='dtfpagto' type='text' class='campo' id='dtfpagto'>
       <!-- Incluido PJ406 -->
-
-      <!-- PJ406
-			<label for="dtdpagto"><? echo utf8ToHtml('Data:') ?></label>
-			<input name='dtdpagto' type='text' class='campo' id='dtdpagto'>
-      -->
 
       <label for="cdempcon"><? echo utf8ToHtml('Empresa:') ?></label>
 			<input name="cdempcon" type="text" class="campo" id="cdempcon" value="0">
