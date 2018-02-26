@@ -10,7 +10,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --
   --  Alteracoes: 14/06/2017 - Criação da rotina.
   --              13/12/2017 - Criação da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
-
+  
 
   --  Variáveis globais
   vr_database_name           VARCHAR2(50);
@@ -10088,20 +10088,15 @@ from  (
                 FROM (SELECT count(1) AS qdecreditado
                            , sum(pdv.vlpagamento) AS vlcreditado
                         FROM cecred.tbdomic_liqtrans_pdv pdv
-                           , cecred.tbdomic_liqtrans_centraliza ctl
-                           , cecred.tbdomic_liqtrans_lancto lct
-                           , cecred.tbdomic_liqtrans_arquivo arq
                        WHERE pdv.tpforma_transf = 5 --somente tipo 5
-                         AND ctl.idcentraliza = pdv.idcentraliza
-                         AND lct.idlancto = ctl.idlancto
-                         AND arq.idarquivo = lct.idarquivo
-                         AND arq.tparquivo IN (1, 2, 3) --somente CR/DB/AT
-                         AND pdv.dtpagamento = to_char(to_date(pr_dtlcto, 'DD/MM/YYYY'), 'YYYY-MM-DD')) cred
-                     , (SELECT count(1) AS qdepagamentos
-                             , sum(str.vllancamento) vlpagamentos
-                          FROM cecred.tbdomic_liqtrans_msg_ltrstr str
-                         WHERE str.cdmsg = 'STR0006R2'
-                           AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;                              
+                         AND pdv.dtpagamento = to_char(to_date(pr_dtlcto, 'DD/MM/YYYY'), 'YYYY-MM-DD')
+                         AND pdv.cdocorrencia = 0
+                      ) cred
+                   , (SELECT count(1) AS qdepagamentos
+                           , sum(str.vllancamento) vlpagamentos
+                        FROM cecred.tbdomic_liqtrans_msg_ltrstr str
+                       WHERE str.cdmsg = 'STR0006R2'
+                         AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;                              
 
                            
   BEGIN
