@@ -52,7 +52,7 @@
            exit;
 		}
 
-		echo 'showError("inform","Análise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
+		echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
         exit;
 
 	}else if ($operacao == 'ENVIAR_ESTEIRA' ) {
@@ -125,7 +125,7 @@
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
-				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesCheques();");';
+				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulos();");';
 			}
 		}
 		

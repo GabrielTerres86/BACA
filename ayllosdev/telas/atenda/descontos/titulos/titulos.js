@@ -586,7 +586,6 @@ function validaAnaliseTitulo(){
 	}else{
 		enviarPropostaAnalise();
 	}
-	//enviarPropostaAnalise();
     return false;
 }
 
