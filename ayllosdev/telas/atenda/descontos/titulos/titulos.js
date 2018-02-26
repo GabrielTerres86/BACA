@@ -62,6 +62,12 @@ var idcobope = "";
 var cdageori = "";
 
 
+//novos
+var situacao_analise = ""; // Variável para armazenar a situação da análise atualmente selecionado
+var decisao = ""; // Variável para armazenar a decisão atualmente selecionado
+var valor_limite = ""; // Variável para armazenar  o valor do limite atualmente selecionado
+
+
 // ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
 
@@ -344,7 +350,13 @@ function carregaLimitesTitulos() {
 }
 
 // Função para seleção do limite
-function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim) {
+
+function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim, dssitest, insitapr, vlLimite) {
+
+	situacao_analise = dssitest;
+	decisao = insitapr;
+	valor_limite = vlLimite;
+
 	var cor = "";
 	
 	// Formata cor da linha da tabela que lista os limites de descto titulos
@@ -616,7 +628,6 @@ function enviarPropostaAnaliseComLIberacaoCordenador(){
 // Carregar os dados para consulta de limite de desconto de títulos
 function enviarPropostaAnalise() {
 	//alert("Proposta enviada para analise.\nObs.: Função ainda em desenvolvimento!");
-
 	
 	showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
 
@@ -648,26 +659,17 @@ function enviarPropostaAnalise() {
 			
 		}				
 	});	
-	
-
-	
 }
 
 function confirmarNovoLimite(){
-	// pega os valores conforme o status que está na tabela (descomentar quando não estiver usando o mock)
-	var insitapr = $('#insitapr').val();
-	var dssitest = $("#dssitest").val();
-	var insitlim = $('#insitlim').val();
-	
-	// insitapr == 'REJEITADO AUTOMATICAMENTE'
-	if (insitlim == 'APROVADO' && dssitest == 'ANALISE FINALIZADA'){				
+
+	if (situacao_limite == 'APROVADO' && situacao_analise == 'ANALISE FINALIZADA'){
 		showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
 
 		var operacao = "CONFIMAR_NOVO_LIMITE";
 
-		alert("Novo Limite Confirmado");
+		
 		hideMsgAguardo();
-
 		
 		$.ajax({		
 			type: "POST", 
@@ -677,11 +679,9 @@ function confirmarNovoLimite(){
 				operacao: operacao,
 				nrdconta: nrdconta,
 				nrctrlim: nrcontrato,
+				vllimite: valor_limite,
+				//cddopera: cddopera,
 
-				//situacao atual
-				insitlim: insitlim,
-				dssitest: dssitest,
-				insitapr: insitapr,
 				redirect: "html_ajax"
 			},		
 			error: function(objAjax,responseError,objExcept) {
@@ -690,23 +690,69 @@ function confirmarNovoLimite(){
 			},
 			success: function(response) {
 				try {
-	                eval(response);
-	                return false;
-	            } catch (error) {
-	                hideMsgAguardo();
-	                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-	            }
-				
-			}				
+					hideMsgAguardo();
+					eval(response);
+				} catch(error) {
+					hideMsgAguardo();
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				}
+			}			
 		});	
 
 	}else{
-		showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar situa&ccedil', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar a situa&ccedil;&atilde;o da an&aacute;lise.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
 	}
 	
-	//enviarPropostaAnalise();
     return false;
 }
+
+function aceitarRejeicao(){
+
+	alert("Rejeição Aceita");
+
+	
+	/*
+	if (situacao_limite == 'NAO APROVADO' && situacao_analise == 'ANALISE FINALIZADA'){
+		showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
+		var operacao = "ACEITAR_REJEICAO_LIMITE";
+		
+		hideMsgAguardo();
+
+		
+		
+		$.ajax({		
+			type: "POST", 
+			url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+			dataType: "html",
+			data: {
+				operacao: operacao,
+				nrdconta: nrdconta,
+				nrctrlim: nrcontrato
+
+				redirect: "html_ajax"
+			},		
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			},
+			success: function(response) {
+				try {
+					hideMsgAguardo();
+					eval(response);
+				} catch(error) {
+					hideMsgAguardo();
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				}
+			}			
+		});	
+
+	}else{
+		showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar a situa&ccedil;&atilde;o da an&aacute;lise.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+	}
+	*/
+	
+}
+
 
 function exibeAlteraNumero() {
 

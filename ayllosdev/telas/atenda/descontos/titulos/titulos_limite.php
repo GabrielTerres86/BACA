@@ -106,7 +106,7 @@
 <?  for ($i = 0; $i < $qtLimites; $i++) {
 
 ?>
-
+	<input type="hidden" id="vlLimite" name="vlLimite" value="<? echo $limites[$i]->tags[2]->cdata; ?>" />
 	<input type="hidden" id="insitlim" name="insitlim" value="<? echo $limites[$i]->tags[7]->cdata; ?>" />
 	<input type="hidden" id="dssitest" name="dssitest" value="<? echo $limites[$i]->tags[8]->cdata; ?>" />
 	<input type="hidden" id="insitapr" name="insitapr" value="<? echo $limites[$i]->tags[9]->cdata; ?>" />
@@ -134,8 +134,8 @@
 			</thead>
 			<tbody>
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
-												
-						$mtdClick = "selecionaLimiteTitulos('".($i + 1)."','".$qtLimites."','".($limites[$i]->tags[3]->cdata)."','".($limites[$i]->tags[7]->cdata)."');";
+						
+						$mtdClick = "selecionaLimiteTitulos('".($i + 1)."', '".$qtLimites."', '".($limites[$i]->tags[3]->cdata)."', '".($limites[$i]->tags[7]->cdata)."', '".($limites[$i]->tags[8]->cdata)."', '".($limites[$i]->tags[9]->cdata)."', '".($limites[$i]->tags[2]->cdata)."');";
 									
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
@@ -193,6 +193,16 @@
 	<?php
 		}
 	?>
+
+	<?php
+	if($insitlim == 'NAO APROVADO' && $dssitest == 'ANALISE FINALIZADA'){
+	?>
+		<input type="button" class="botao gft" value="Negar"  id="btnAceitarRejeicao" name="btnAceitarRejeicao" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="aceitarRejeicao();"'; } ?>/>
+	<?php
+		}
+	?>
+
+
 
 	
 </div>
