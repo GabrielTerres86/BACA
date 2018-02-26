@@ -1100,7 +1100,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 22/01/2018
+   Data    : 27/08/2013                        Ultima atualizacao: 26/02/2018
 
    Dados referentes ao programa:
 
@@ -1203,6 +1203,9 @@ create or replace package body cecred.INSS0001 as
               
          22/01/2018 - Ajustar a rotina pc_consulta_log para ler via DB apartir de 22/11/2017
                       (Belli - Envolti - Chamado 828247)
+                      
+         26/02/2018 - Buscar data e hora do lugar correto na procedure pc_consulta_log, 
+                      pois estavamos buscando a hora errado. (Lucas Ranghetti #848876)
                       
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -18881,7 +18884,7 @@ create or replace package body cecred.INSS0001 as
   Sistema  : Conta-Corrente - Cooperativa de Credito
   Sigla    : CRED
   Autor    : Lombardi
-  Data     : Outubro/2015                           Ultima atualizacao: 22/01/2018
+  Data     : Outubro/2015                           Ultima atualizacao: 26/02/2018
   
   Dados referentes ao programa:
   
@@ -18893,6 +18896,8 @@ create or replace package body cecred.INSS0001 as
          22/01/2018 - Ajustar a rotina pc_consulta_log para ler via DB apartir de 22/11/2017
                       (Belli - Envolti - Chamado 828247)
               
+         26/02/2018 - Buscar date e hora do lugar correto, pois estavamos buscando a hora
+                      errado. (Lucas Ranghetti #848876)
   -------------------------------------------------------------------------------------------------------------*/
     
     -- Campos para o XML
@@ -18979,8 +18984,8 @@ create or replace package body cecred.INSS0001 as
     )
     IS
 		SELECT t.dhinicio
-          ,TO_CHAR(t.dhinicio,'DD/MM/YYYY') dtocorre
-          ,TO_CHAR(t.dhinicio,'HH24:MI:SS') hrocorre
+          ,TO_CHAR(t2.dhocorrencia,'DD/MM/YYYY') dtocorre
+          ,TO_CHAR(t2.dhocorrencia,'HH24:MI:SS') hrocorre
           , substr(t2.dsmensagem
             , ( instr(t2.dsmensagem, 'Conta:') + 7 )
             , ( instr(t2.dsmensagem, 'Nome:')  - instr(t2.dsmensagem, 'Conta:') - 7 - 3)
