@@ -3791,6 +3791,9 @@ PROCEDURE trata_dados_transferencia.
        IF  hNameTag:NAME = "FinlddCli"  THEN
            ASSIGN aux_FinlddCli = aux_descrica.
            ElSE
+       IF hNameTag:NAME = "CNPJ_CPFCliDebtd_Remet" THEN
+           ASSIGN aux_CNPJ_CPFDeb  = aux_descrica.
+           ElSE
        IF  hNameTag:NAME = "NumCtrlLTR"  THEN
            ASSIGN aux_NumCtrlLTR = aux_descrica.
            ElSE
