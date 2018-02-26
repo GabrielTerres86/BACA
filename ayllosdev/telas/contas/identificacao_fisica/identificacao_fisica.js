@@ -28,6 +28,7 @@
  * 018: [25/09/2017] Kelvin			     : Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  * 019: [08/01/2018] Evandro G.(Mout's)  : Ajuste para carregar nome do titular do cadastro unificado e 
                                            não permitir alterar caso possua cadastro completo.(P339)
+ * 020:[26/02/2018] Odirlei(AMcom)       : Permitir alterar nome do talao do segundo titular (Andrino-mouts)
                                 
  
  */
@@ -362,7 +363,9 @@ function liberaOperacao() {
 	var cNatureza		= $('#inpessoa','#'+nomeForm);
 	var cUfNatural      = $('#cdufnatu','#'+nomeForm);
 	var camposGrupo1	= $('#cdgraupr, #nrcpfcgc','#'+nomeForm);
-	var camposGrupo2	= $('#nmextttl,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#cdnacion,#dtnasttl,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#nmtalttl,#qtfoltal,input[name=\'cdsexotl\']','#'+nomeForm);
+	var camposGrupo2	= $('#nmextttl,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#cdnacion,#dtnasttl,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#qtfoltal,input[name=\'cdsexotl\']','#'+nomeForm);
+    var camposGrupo3	= $('#nmtalttl','#'+nomeForm);	
+    
 
 
 	// ALTERAÇÃO
@@ -372,6 +375,7 @@ function liberaOperacao() {
 		// Se NÃO É o primeiro titular, libera libera somente os campos tipo relacionamento e CPF
 		if ( retornaRelacionamento() == 0 ) {
 			camposGrupo2.habilitaCampo();
+            camposGrupo3.habilitaCampo(); 
 			cNomeTitular.desabilitaCampo();
 
 			if( $('#cdestcvl','#'+nomeForm).val() == "2" ||
@@ -392,6 +396,7 @@ function liberaOperacao() {
 
 		} else {
 			camposGrupo1.habilitaCampo();
+            camposGrupo3.habilitaCampo(); 
 		}
 
 	// INCLUSÃO
@@ -405,6 +410,7 @@ function liberaOperacao() {
 			formulario.limpaFormulario();
 			cUfNatural.val("");
 			camposGrupo1.habilitaCampo();
+            camposGrupo3.habilitaCampo(); 
 			camposGrupo2.desabilitaCampo();
 			cNatureza.val('1 - FISICA');
 		}
@@ -629,12 +635,14 @@ function controlaLayout() {
 
 	// DEFININDO OS GRUPOS DE VARIÁVEIS
 	var camposGrupo1	= $('#cdgraupr, #nrcpfcgc','#'+nomeForm);
-	var camposGrupo2	= $('#nmextttl,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#cdnacion,#dtnasttl,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#nmtalttl,#qtfoltal','#'+nomeForm);
+	var camposGrupo2	= $('#nmextttl,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#cdnacion,#dtnasttl,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#qtfoltal','#'+nomeForm);
+    var camposGrupo3	= $('#nmtalttl','#'+nomeForm);
 	var nrctattl 		= $('#nrctattl','#'+nomeForm).val();
 
 	// INICIA COM TUDO BLOQUEADO
 	camposGrupo1.desabilitaCampo();
 	camposGrupo2.desabilitaCampo();
+    camposGrupo3.desabilitaCampo();
 	cSexo.desabilitaCampo();
     cDesNacional.desabilitaCampo();
 	cNatureza.desabilitaCampo();
@@ -651,6 +659,7 @@ function controlaLayout() {
 
 			} else {
 				camposGrupo1.habilitaCampo();
+                camposGrupo3.habilitaCampo();
 			}
 			break;
 
@@ -664,10 +673,12 @@ function controlaLayout() {
 			// então habilitar os campos para edição.
 			if ( (nrctattl == nrdconta) || (nrctattl == 0) ) {
 				camposGrupo2.habilitaCampo();
+                camposGrupo3.habilitaCampo();
 				cSexo.habilitaCampo();
 				cNatureza.val('1 - FISICA');
 
 			} else {
+                camposGrupo3.habilitaCampo();                
 				// if ( operacao == 'BI' ) camposGrupo1.habilitaCampo();
 			}
 			if ( cRelacionamento.val() == '' ) {
