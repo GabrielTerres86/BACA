@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
 
    Programa : INSS0001                       Antiga: generico/procedures/b1wgen0091.p
    Autor   : Andre - DB1
-   Data    : 16/05/2011                        Ultima atualizacao: 13/02/2017
+   Data    : 16/05/2011                        Ultima atualizacao: 22/01/2018
 
    Dados referentes ao programa:
 
@@ -129,6 +129,9 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
                             Incluido tipo de falha variavel na Procedure pc_retorna_linha_log implica em alterar 10 procedures que a disparam
                             Colocado no padrão todas chamadas pc_gera_log_batch em torno de 60 chamadas
                             (Belli - Envolti - Chamado 660327 e 664301)              
+                            
+               22/01/2018 - Ajustar a rotina pc_consulta_log para ler via DB apartir de 22/11/2017
+                            (Belli - Envolti - Chamado 828247)             
                             
   --------------------------------------------------------------------------------------------------------------- */
 
@@ -1097,7 +1100,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 07/08/2017
+   Data    : 27/08/2013                        Ultima atualizacao: 22/01/2018
 
    Dados referentes ao programa:
 
@@ -1197,6 +1200,10 @@ create or replace package body cecred.INSS0001 as
 			   07/08/2017 - Ajuste para efetuar log (temporário) de pontos criticos da rotina de pagamentos para tentarmos
 				            identificar lentidões que estão ocorrendo
 							(Adriano).
+              
+         22/01/2018 - Ajustar a rotina pc_consulta_log para ler via DB apartir de 22/11/2017
+                      (Belli - Envolti - Chamado 828247)
+                      
   ---------------------------------------------------------------------------------------------------------------*/
 
   /*Procedimento para gerar lote e lancamento, para gerar credito em conta*/
@@ -18874,7 +18881,7 @@ create or replace package body cecred.INSS0001 as
   Sistema  : Conta-Corrente - Cooperativa de Credito
   Sigla    : CRED
   Autor    : Lombardi
-  Data     : Outubro/2015                           Ultima atualizacao: ---/--/----
+  Data     : Outubro/2015                           Ultima atualizacao: 22/01/2018
   
   Dados referentes ao programa:
   
@@ -18882,6 +18889,9 @@ create or replace package body cecred.INSS0001 as
   Objetivo   : Consultar log.
   
   Alterações : 
+              
+         22/01/2018 - Ajustar a rotina pc_consulta_log para ler via DB apartir de 22/11/2017
+                      (Belli - Envolti - Chamado 828247)
               
   -------------------------------------------------------------------------------------------------------------*/
     
@@ -18927,19 +18937,144 @@ create or replace package body cecred.INSS0001 as
     vr_cdcritic  INTEGER;
     vr_exc_saida EXCEPTION;
     
+    -- Ajustar a rotina pc_consulta_log para ler via DB - 22/01/2018 - Chamado 828247 
+    -- Data de entrada do novo padrao de Log
+    vr_exc_erro   EXCEPTION;
+    vr_dtbanco    DATE       := to_date('23/08/2017','DD/MM/YYYY');
+    vr_idprglog   NUMBER;
+    vr_dsparame   VARCHAR2(4000);
+    
+    -- Gera Log - 22/01/2018 - Chamado 828247
+    PROCEDURE pc_grava_log 
+    ( pr_cdmensagem     IN NUMBER   -- Codigo do Log
+     ,pr_dsmensagem     IN VARCHAR2 -- Descrição do Log 
+    )
+      IS
     BEGIN
-      CECRED.GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+      CECRED.pc_log_programa(pr_dstiplog      => 'E'
+                           , pr_cdprograma    => 'INSS'
                                      ,pr_cdcooper => vr_cdcooper
-                                     ,pr_nmdatela => vr_nmdatela
-                                     ,pr_nmeacao  => vr_nmeacao
-                                     ,pr_cdagenci => vr_cdagenci
-                                     ,pr_nrdcaixa => vr_nrdcaixa
-                                     ,pr_idorigem => vr_idorigem
-                                     ,pr_cdoperad => vr_cdoperad
-                                     ,pr_dscritic => vr_dscritic);
+                           , pr_tpexecucao    => 3
+                           , pr_tpocorrencia  => 2
+                           , pr_cdcriticidade => 2 
+                           , pr_cdmensagem    => pr_cdmensagem
+                           , pr_dsmensagem    => pr_dsmensagem
+                           , pr_idprglog      => vr_idprglog
+                           , pr_nmarqlog      => 'inss_historico.log');
+    EXCEPTION        
+      WHEN OTHERS
+       THEN
+        -- No caso de erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => NVL(vr_cdcooper,3)); 
+    END pc_grava_log;    
                                      
-  	  -- Incluir nome do módulo logado - Chamado 664301
-		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_consulta_log');
+    -- Processa informações geradas em banco de dados - 22/01/2018 - Chamado 828247   
+    PROCEDURE pc_banco 
+      IS      
+      
+	  -- Busca dados do log	
+	  CURSOR cr_tbgen_prglog 
+    ( pr_nrdnblog IN VARCHAR2  -- parametro obrigatorio
+     ,pr_dtmvtlog IN DATE      -- parametro opcional
+    )
+    IS
+		SELECT t.dhinicio
+          ,TO_CHAR(t.dhinicio,'DD/MM/YYYY') dtocorre
+          ,TO_CHAR(t.dhinicio,'HH24:MI:SS') hrocorre
+          , substr(t2.dsmensagem
+            , ( instr(t2.dsmensagem, 'Conta:') + 7 )
+            , ( instr(t2.dsmensagem, 'Nome:')  - instr(t2.dsmensagem, 'Conta:') - 7 - 3)
+             ) nrdconta 
+          , substr(t2.dsmensagem
+            , ( instr(t2.dsmensagem, 'Nome:') + 6 )
+            , ( instr(t2.dsmensagem, 'NB:')  - instr(t2.dsmensagem, 'Nome:') - 6 - 3)
+             ) nmdconta 
+          , substr(t2.dsmensagem
+            , ( instr(t2.dsmensagem, 'NB:') + 4 )
+            , ( instr(t2.dsmensagem, 'operador:')  - instr(t2.dsmensagem, 'NB:') - 4 - 3)
+             ) nrrecben 
+          , substr(t2.dsmensagem
+            , ( instr(t2.dsmensagem, 'operador:') + 10 )
+            , ( instr(t2.dsmensagem, 'Alteracao:')  - instr(t2.dsmensagem, 'operador:') - 10 - 3)
+             ) operador 
+          , substr(t2.dsmensagem
+            , ( instr(t2.dsmensagem, 'Alteracao:') + 11 )
+            , ( instr(t2.dsmensagem, '- Module:')  - instr(t2.dsmensagem, 'Alteracao:') - 11 - 3)
+             ) alteracao 
+          ,t.cdcooper
+          ,t2.dsmensagem
+    FROM tbgen_prglog t
+        ,tbgen_prglog_ocorrencia t2
+    WHERE ( pr_dtmvtlog       IS NULL      OR
+            TRUNC(t.dhinicio) = pr_dtmvtlog ) 
+    AND   t.dhinicio  >= vr_dtbanco        
+    AND   t.nmarqlog  = 'inss_historico.log'
+    AND   t2.idprglog = t.idprglog 
+    AND   t2.dsmensagem LIKE '%' || pr_nrdnblog || '%'
+    ORDER BY t.dhinicio, t2.dhocorrencia;         
+    vr_date date;
+      
+    BEGIN
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_banco');
+
+      IF to_char(pr_dtmvtlog) != '0' THEN
+        vr_date := to_date(pr_dtmvtlog,'DD/MM/YYYY');        
+      ELSE
+        vr_date := null;
+      END IF;
+
+			-- Percorre dados do beneficiario
+		  FOR rw_tbgen_prglog IN 
+      cr_tbgen_prglog( pr_nrdnblog => pr_nrdnblog
+				              ,pr_dtmvtlog => vr_date
+                     ) LOOP        
+        -- Data
+        vr_dtmvtolt := rw_tbgen_prglog.dtocorre;        
+        -- Hora
+        vr_hrmvtolt := rw_tbgen_prglog.hrocorre;              
+        -- Conta
+        vr_nrdconta := rw_tbgen_prglog.nrdconta;
+        -- Nome
+        vr_nmdconta := rw_tbgen_prglog.nmdconta;              
+        -- Numero do Beneficiario
+        vr_nrrecben := rw_tbgen_prglog.nrrecben;              
+        -- Operador
+        vr_operador := rw_tbgen_prglog.operador;                            
+        -- Alteracao
+        vr_historic := rw_tbgen_prglog.alteracao;
+            
+        -- Cria sequncial com a data e as horas
+        vr_qtregist := vr_qtregist + 1;
+        
+        -- Popula tabela
+        vr_tab_log(vr_qtregist).dtmvtolt := vr_dtmvtolt;
+        vr_tab_log(vr_qtregist).hrmvtolt := vr_hrmvtolt;
+        vr_tab_log(vr_qtregist).nrdconta := vr_nrdconta;
+        vr_tab_log(vr_qtregist).nmdconta := substr(vr_nmdconta,1,20);
+        vr_tab_log(vr_qtregist).nrrecben := vr_nrrecben;
+        vr_tab_log(vr_qtregist).historic := substr(vr_historic,1,200);
+        vr_tab_log(vr_qtregist).operador := vr_operador;      
+      END LOOP;
+
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => NULL);
+    EXCEPTION        
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 22/01/2018 - Chamado 828247 
+        CECRED.pc_internal_exception (pr_cdcooper => NVL(vr_cdcooper,3)); 
+        vr_cdcritic:= 9999;
+        vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                      'pc_banco, erro: ' || SQLERRM;
+        RAISE vr_exc_erro;
+    END pc_banco;
+
+    -- Processa informações geradas em arquivo - 22/01/2018 - Chamado 828247    
+    PROCEDURE pc_arq
+      IS
+    BEGIN
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_arq');
       
       -- Pega o diretorio do log
       vr_caminho := cecred.gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
@@ -18951,9 +19086,11 @@ create or replace package body cecred.INSS0001 as
       IF to_char(pr_dtmvtlog) != '0'THEN
         vr_comando := vr_comando || ' | grep "' || REPLACE(pr_dtmvtlog,'/','\/') || '"';
       END IF;
+  
       -- Filtrar pelo nb
       IF to_char(pr_nrdnblog) != '0' THEN
-        vr_comando := vr_comando || ' | grep "' || lpad(pr_nrdnblog,10,'0') || '"';
+        -- Ajustar a rotina pc_consulta_log para ler via DB - 22/01/2018 - Chamado 828247 
+        vr_comando := vr_comando || ' | grep "' || pr_nrdnblog || '"';
       END IF;
       -- Filtrar pela conta
       IF pr_nrdctlog != '0000.000-0' OR pr_nrdctlog != '0' THEN
@@ -18966,12 +19103,18 @@ create or replace package body cecred.INSS0001 as
       gene0001.pc_OSCommand_Shell(pr_des_comando => vr_comando
                                  ,pr_typ_saida   => vr_typ_saida
                                  ,pr_des_saida   => vr_des_saida);
-      
       --Se ocorreu erro dar RAISE
       IF vr_typ_saida = 'ERR' THEN
-        vr_dscritic := 'Nenhum registro encontrado.';
-        RAISE vr_exc_saida;    
+        --Ajuste mensagem de erro - 22/01/2018 - Chamado 828247
+        -- Montar mensagem de critica
+        -- excluida mensagem - Nenhum registro encontrado 
+        vr_cdcritic := 1054;       
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                       ' - ' || vr_des_saida;
+        RAISE vr_exc_erro; 
       END IF;
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_arq');
       
       -- Leitura do arquivo de log
       gene0001.pc_abre_arquivo(pr_nmdireto => vr_caminho   --> Diretorio do arquivo
@@ -18979,11 +19122,17 @@ create or replace package body cecred.INSS0001 as
                               ,pr_tipabert => 'R'          --> Modo de abertura (R,W,A)
                               ,pr_utlfileh => log          --> Handle do arquivo aberto
                               ,pr_des_erro => vr_dscritic);--> Descricão da critica
-         
       IF vr_dscritic IS NOT NULL THEN
-        vr_dscritic := 'Nenhum registro encontrado.';
-        RAISE vr_exc_saida;
+        -- excluida mensagem - Nenhum registro encontrado
+        -- Ajuste mensagem de erro - 22/01/2018 - Chamado 828247
+        -- Montar mensagem de critica 
+        vr_cdcritic := 1038; 
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
+                       ' - ' || vr_dscritic;
+        RAISE vr_exc_erro;
       END IF;
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_arq');
       
       BEGIN
         LOOP
@@ -18992,10 +19141,18 @@ create or replace package body cecred.INSS0001 as
             -- Ler linha
             gene0001.pc_le_linha_arquivo(pr_utlfileh => log --> Handle do arquivo aberto
                                         ,pr_des_text => linha);  --> Texto lido
+            -- Retorno nome do módulo logado - Chamado 828247
+            GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_arq');
+            
             -- Data
             vr_dtmvtolt := substr(linha, 1, 10);
             linha := substr(linha, INSTR(linha, 'Horario: ') + 9);
                
+            -- Ajustar a rotina pc_consulta_log para ler via DB - 22/01/2018 - Chamado 828247                           
+            IF  substr(vr_dtmvtolt, 3, 1) <> '/' THEN 
+              CONTINUE;   
+            END IF;
+                           
             -- Hora
             vr_posicao := instr(linha, ' ');
             vr_hrmvtolt := substr(linha, 1, vr_posicao - 1);
@@ -19042,23 +19199,97 @@ create or replace package body cecred.INSS0001 as
         WHEN no_data_found THEN
           -- Fechar o arquivo
           gene0001.pc_fecha_arquivo(log); --> Handle do arquivo aberto;
-        WHEN OTHERS THEN
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Erro na rotina inss0001.pc_solicita_log. '|| SQLERRM;
+        WHEN vr_exc_saida THEN
           RAISE vr_exc_saida;
+        WHEN vr_exc_erro THEN
+          RAISE vr_exc_erro;   
+        WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 22/01/2018 - Chamado 828247 
+          CECRED.pc_internal_exception (pr_cdcooper => NVL(vr_cdcooper,3)); 
+          vr_cdcritic:= 9999;
+          vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                        'pc_arq - Loop, erro: ' || SQLERRM;
+          RAISE vr_exc_erro;      
       END;
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => NULL);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+          RAISE vr_exc_saida;
+      WHEN vr_exc_erro THEN
+        RAISE vr_exc_erro;     
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 22/01/2018 - Chamado 828247 
+        CECRED.pc_internal_exception (pr_cdcooper => NVL(vr_cdcooper,3)); 
+        vr_cdcritic:= 9999;
+        vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                      'pc_arq, erro: ' || SQLERRM;
+        RAISE vr_exc_erro;      
+    END pc_arq;
+    
+    --                                INICIO PROCESSO
+    BEGIN
+  	  -- Incluir nome do módulo logado - Chamado 664301
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_consulta_log');
+      vr_dsparame := ' pr_dtmvtlog:' || pr_dtmvtlog || 
+                     ' ,pr_nrdnblog:' || pr_nrdnblog || 
+                     ' ,pr_nrdctlog:' || pr_nrdctlog || 
+                     ' ,pr_nriniseq:' || pr_nriniseq ||
+                     ' ,pr_qtregist:' || pr_qtregist || 
+                     ' ,pr_xmllog  :' || pr_xmllog  ;
+
+      CECRED.GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                                     ,pr_cdcooper => vr_cdcooper
+                                     ,pr_nmdatela => vr_nmdatela
+                                     ,pr_nmeacao  => vr_nmeacao
+                                     ,pr_cdagenci => vr_cdagenci
+                                     ,pr_nrdcaixa => vr_nrdcaixa
+                                     ,pr_idorigem => vr_idorigem
+                                     ,pr_cdoperad => vr_cdoperad
+                                     ,pr_dscritic => vr_dscritic);
+      -- Ajuste mensagem de erro - 22/01/2018 - Chamado 828247
+      IF vr_dscritic IS NOT NULL THEN
+        -- Montar mensagem de critica 
+        vr_cdcritic := 1138; 
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
+                       ' - ' || vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;
+  	  -- Retorno nome do módulo logado - Chamado 664301
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_consulta_log');
+
+      -- Ajustar a rotina pc_consulta_log para ler via DB - 22/01/2018 - Chamado 828247
+      IF to_char(pr_dtmvtlog) != '0' THEN   
+        IF to_date(pr_dtmvtlog,'DD/MM/YYYY') >= vr_dtbanco THEN
+          pc_banco;
+        ELSE    
+          pc_arq;
+        END IF;
+      ELSE
+        pc_banco;
+        pc_arq;
+      END IF;
+
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_consulta_log');
       
       --Remove o arquivo XML fisico de retorno
       GENE0001.pc_OScommand (pr_typ_comando => 'S'
                             ,pr_des_comando => 'rm '|| vr_caminho || '/'|| vr_nmlog ||' 2> /dev/null'
                             ,pr_typ_saida   => vr_typ_saida
                             ,pr_des_saida   => vr_des_saida);
-      
       --Se ocorreu erro dar RAISE
       IF vr_typ_saida = 'ERR' THEN
-        vr_dscritic := vr_des_saida;
-        RAISE vr_exc_saida;    
+        -- Ajuste mensagem de erro - 22/01/2018 - Chamado 828247
+        -- Montar mensagem de critica 
+        vr_cdcritic := 1137; 
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
+                       ' - ' || vr_des_saida;
+        RAISE vr_exc_erro;    
       END IF;
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_consulta_log');
       
       vr_contador := 0;
       -- Popula xml
@@ -19081,22 +19312,55 @@ create or replace package body cecred.INSS0001 as
       -- Retorna lista
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados><registros>' || vr_xml || '</registros><qtregistros>' || vr_qtregist || '</qtregistros></Dados>');
       
+      -- Mensagem quando não encontra regsitro no Log - 22/01/2018 - Chamado 828247
+      IF vr_qtregist = 0 THEN
+        -- Montar mensagem de critica 
+        vr_cdcritic := 1135; --Nenhum registro encontrado
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        RAISE vr_exc_saida;
+      END IF;
+      
     EXCEPTION
+      -- Ajuste na exception - 22/01/2018 - Chamado 828247 
       WHEN vr_exc_saida THEN
         -- Retorno não OK          
         pr_des_erro:= 'NOK';
-        
         --Se nao tem a descricao do erro
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
+	      -- Incluido nome do módulo logado
+		    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+
+      WHEN vr_exc_erro THEN
+        -- Retorno não OK          
+        pr_des_erro:= 'NOK';        
+        pr_cdcritic:= 1136; --Nao foi possivel concluir a requisicao
+        pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+        --> Geração de log                             
+        pc_grava_log( pr_cdmensagem    => vr_cdcritic  -- Codigo do Log
+                     ,pr_dsmensagem    => vr_dscritic ||
+                                          vr_dsparame ||
+                                          ' ,rotina inss0001.pc_consulta_log' 
+                    );                             
+	      -- Incluido nome do módulo logado
+		    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
         
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => NVL(vr_cdcooper,3)); 
         -- Retorno não OK
         pr_des_erro:= 'NOK';
-        
-        -- Chamar rotina de gravação de erro
-        pr_cdcritic:= 0;
-        pr_dscritic:= 'Erro na rotina inss0001.pc_solicita_log. '|| SQLERRM;
+        --> Geração de log                             
+        pc_grava_log( pr_cdmensagem    => 9999  -- Codigo do Log
+                     ,pr_dsmensagem    => gene0001.fn_busca_critica(pr_cdcritic => 9999) ||
+                                          vr_dsparame ||
+                                          ' ,rotina inss0001.pc_consulta_log erro:' ||sqlerrm
+                     );      
+        -- Ajuste mensagem de erro
+        pr_cdcritic:= 1136; --Nao foi possivel concluir a requisicao
+        pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);                 
+	      -- Incluido nome do módulo logado
+		    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
         
   END pc_consulta_log;
   
