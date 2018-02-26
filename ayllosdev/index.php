@@ -27,6 +27,8 @@
  * 014: [21/11/2016] - Guilherme/SUPERO         : P341 - Validacao Departamento - Inclusao da variavel CDDEPART
  * 015: [23/08/2017] - Lucas Reinert (Cecred)	: Removido campo senha; removido campo Operador nos ambientes que não são produção; alterado para 
  *												  efetuar login através do usuário do AD. (PRJ339)
+ * 016: [23/02/2018] - Tiago (Cecred)           : Setar o foco no campo PA de Trabalho e carrega o PA assim que entrar na tela #851204
+ * 017: [23/02/2018] - Reinert (Cecred)         : Ajuste de segurança para validar operador informado.
  */
 ?> 
 <?php	
@@ -50,6 +52,10 @@
 	$mtccserver = isset($_POST["mtccserver"]) ? $_POST["mtccserver"] : "";
 	$cdoperad   = isset($_POST["des_login"]) ? $_POST["des_login"] : (isset($_POST["cdoperad"]) ? $_POST["cdoperad"] : "");
 
+	if (isset($_POST["des_login"])){
+		$_SESSION["des_login"] = $_POST["des_login"];
+	}
+	
 	// Se método de requisição for post, encaminha dados para BO
 	if (isset($_POST["cdoperad"]) && isset($_POST["cdpactra"])) {
 		/* Se ambiente conectado não for produção, utilizar operador informado */
@@ -59,6 +65,8 @@
 		$cdpactra = $_POST["cdpactra"];
 		
 		if (trim($cdoperad) == "" || trim($cdpactra) == "") {
+			$dsmsgerr = "Dados n&atilde;o informados corretamente.";
+		} elseif ($_SESSION["des_login"] != $cdoperad && $arr['DataServer'] == 'pkgprod'){
 			$dsmsgerr = "Dados n&atilde;o informados corretamente.";
 		} else {		
 			// Monta o xml de requisição
@@ -189,10 +197,10 @@
 <script type="text/javascript"> 
 $(document).ready(function () { 
 	<?php if (isset($dsmsgerr)) { ?>
-	showError("error","<?php echo addslashes($dsmsgerr); ?>","Alerta - Ayllos","$('#cdoperad').focus()");
+	showError("error","<?php echo addslashes($dsmsgerr); ?>","Alerta - Ayllos","$('#cdpactra').focus()");
 	<?php } else { ?>
 	// Setar foco no campo Operador
-	$("#cdoperad").focus();	
+	$("#cdpactra").focus();	
 	<?php } ?>
 
 	// Validar dados do formulário de login
@@ -284,6 +292,39 @@ $(document).ready(function () {
 				}
 }); 
 			return false;
+		});
+		
+		
+		
+		
+		var cdcooper = $("#cdcooper").val();
+		var cdoperad = '<?php echo $cdoperad; ?>';
+		
+		showMsgAguardo("Aguarde, carregando PA de trabalho ...");
+	   
+		// Carrega dados da conta através de ajax
+		$.ajax({		
+			type: "POST",			
+			async : true ,
+			url: UrlSite + "consulta_pac_ope.php", 
+			data: {
+				cdcooper: cdcooper,
+				cdoperad: cdoperad,							
+				redirect: 'script_ajax' // Tipo de retorno do ajax
+			},
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();					
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","unblockBackground()");
+			},
+			success: function(response) {				
+				try {				    
+					eval(response);										
+					return false;
+				} catch(error) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+				}
+			}
 		});
 	<?php
 	}
