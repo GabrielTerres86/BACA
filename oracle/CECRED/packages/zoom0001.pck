@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     Sistema  : Rotinas genericas referente a zoom de pesquisa
     Sigla    : ZOOM
     Autor    : Adriano Marchi
-    Data     : 30/11/2015.                   Ultima atualizacao: 04/08/2017
+    Data     : 30/11/2015.                   Ultima atualizacao: 09/02/2018
 
    Dados referentes ao programa:
 
@@ -25,9 +25,11 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
                             (Jonata - RKAM).
 
-         09/02/2018 - Inclusão de rotina pc_consultar_limite_adp - Daniel(AMcom)
+			   29/01/2018 - Inclusão da rotina pc_busca_qualif_oper_web - Diego Simas (AMcom).
 
-  ---------------------------------------------------------------------------------------------------------------*?
+			   09/02/2018 - Inclusão de rotina pc_consultar_limite_adp - Daniel(AMcom).			   
+
+  ---------------------------------------------------------------------------------------------------------------*/
 
   /* Tabela para guardar os operadores */
   TYPE typ_operadores IS RECORD
