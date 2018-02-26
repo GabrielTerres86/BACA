@@ -3944,13 +3944,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
              AND ((pr_inpessoa = 1 AND ris.nrcpfcgc  = to_number(pr_nrcpfcgc)) Or
                   (pr_inpessoa = 2 AND ris.nrcpfcgc >= to_number(pr_nrcpfcgc||'000000') 
                                    AND ris.nrcpfcgc <= to_number(pr_nrcpfcgc||'999999'))  )
-             AND (ris.innivris <> pr_innivris);
+             AND (ris.innivris < pr_innivris);
 
       BEGIN
 
         vr_tab_ass_cpfcnpj.delete;
 
---        dbms_output.put_line('310_I: ' ||vr_maxrisco);  
         -- PERCORRER TODOS OS CPF/CNPJ(RAIZ) COM MAIS DE UMA CONTA - ARRASTO
         FOR rw_cpfcnpj_contas IN cr_cpfcnpj_contas LOOP
 

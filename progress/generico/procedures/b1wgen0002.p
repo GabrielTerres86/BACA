@@ -728,6 +728,8 @@
               22/01/2018 - Inclusao de trava para testes em producao do produto Pos-Fixado. 
                            (Jaison/James - PRJ298)
 
+              21/02/2018 - Liberar o produto Pós-Fixado para todas as contas da cooperativa Viacredi. (James)
+
 			  23/01/2018 - PRJ450 - Alterada Regras para retorno da Qualificação da Operação de acordo com dias de atraso. 
 						   (Diego Simas - AMcom) (Projeto Regulatório Crédito).
 
@@ -1498,7 +1500,7 @@ PROCEDURE valida-liquidacao-emprestimos:
                           STRING(par_dtmvtolt,"99/99/9999") + "~n".
                LEAVE Valida.
             END.
-        END. 				
+        
 
             /* Validar a quantidade de linhas selecionadas */
 			IF  par_qtlinsel >= 10 THEN DO:
@@ -1526,7 +1528,7 @@ PROCEDURE valida-liquidacao-emprestimos:
 				END.
 
 			LEAVE Valida.
-	    END.
+		END. /* nrcremp <> 0  <>*/
 		ELSE DO:
 			ASSIGN par_tpdretor = "C".
 			LEAVE Valida.

@@ -1,6 +1,5 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                                              ,pr_flgresta  IN PLS_INTEGER             --> Flag padrão para utilização de restart
-
                                              ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                              ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
@@ -3822,6 +3821,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_tab_crapepr(vr_ind_epr).inprejuz := rw_crapepr.inprejuz;
         vr_tab_crapepr(vr_ind_epr).tpemprst := rw_crapepr.tpemprst;
         vr_tab_crapepr(vr_ind_epr).cddindex := rw_crapepr.cddindex;
+        vr_tab_crapepr(vr_ind_epr).idquaprc := TRIM(TO_CHAR(rw_crapepr.idquaprc,'00'));
+        vr_tab_crapepr(vr_ind_epr).idquapro := TRIM(TO_CHAR(rw_crapepr.idquapro,'00'));
       END LOOP;
 
       -- Carregar PLTABLE de Linhas de Credito
