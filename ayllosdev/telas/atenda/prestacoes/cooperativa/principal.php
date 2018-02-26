@@ -1,21 +1,21 @@
 <?php
 /*!
  * FONTE        : principal.php
- * CRIA«√O      : AndrÈ Socoloski - DB1
- * DATA CRIA«√O : 25/03/2011 
- * OBJETIVO     : Mostrar opcao Principal da rotina de prestaÁıes da tela ATENDA 
+ * CRIA√á√ÉO      : Andr√© Socoloski - DB1
+ * DATA CRIA√á√ÉO : 25/03/2011 
+ * OBJETIVO     : Mostrar opcao Principal da rotina de presta√ß√µes da tela ATENDA 
  * 
   * --------------
- * ALTERA«’ES   : 
+ * ALTERA√á√ïES   : 
  * --------------
  * 001: [29/04/2011] Rogerius (DB1): adiciona no array de avalista e interveniente anuente os novos campos do endereco.  
  * 002: [24/08/2011] Marcelo L. Pereira (GATI): adicionado chamada para pagamento
  * 003: [29/08/2011] Marcelo L. Pereira (GATI): alterando listagem do extrato
- * 004: [16/09/2011] David G. Kistner (CECRED): incluir par‚metro flgcondc no xml de requisiÁ„o
- * 005: [01/03/2012] Tiago            (CECRED): incluir par‚metro txmensal no xml de requisiÁ„o 
+ * 004: [16/09/2011] David G. Kistner (CECRED): incluir par√¢metro flgcondc no xml de requisi√ß√£o
+ * 005: [01/03/2012] Tiago            (CECRED): incluir par√¢metro txmensal no xml de requisi√ß√£o 
  * 006: [13/04/2012] Gabriel		  (CECRED): Incluir campo dtlibera.
  * 007: [22/02/2013] Gabriel		  (CECRED): Incluir valor do desconto parcial (Gabriel).
- * 008: [07/05/2013] Lucas Lunelli	  (CECRED): AlteraÁıes para Consultar Imagem de docmto. digitalizado.
+ * 008: [07/05/2013] Lucas Lunelli	  (CECRED): Altera√ß√µes para Consultar Imagem de docmto. digitalizado.
  * 009: [24/05/2013] Lucas R.		  (CECRED): Incluir camada nas includes "../".
  * 010: [18/09/2013] Gabriel 		  (CECRED): Mandar como parametro para a BO a opcao (Gabriel)
  * 011: [19/02/2014] Jorge			  (CECRED): Ajuste para incluir paginacao dos resultados.
@@ -37,13 +37,13 @@
  * 027: [23/11/2015] Carlos Rafael Tanholi: Merge de implementacoes de Portabilidade.
  * 028: [04/01/2016] Heitor             (RKAM): Inclusao do tipo de risco na tela de prejuizo
  * 029:  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
- * 030: [15/12/2016] Tiago            (CECRED): Ajustes na hora da consulta das prestaÁıes pois nao carrega dados corretamente(SD531549)
- * 031: [03/04/2017] - Jean             (MOut¥S): Chamado 643208 - tratamento de caracteres especiais dos campos descritivos, pois estava
+ * 030: [15/12/2016] Tiago            (CECRED): Ajustes na hora da consulta das presta√ß√µes pois nao carrega dados corretamente(SD531549)
+ * 031: [03/04/2017] - Jean             (MOut¬¥S): Chamado 643208 - tratamento de caracteres especiais dos campos descritivos, pois estava
  *                                                causando travamento na tela
  * 032: [23/06/2017] Inclusao dos campos do produto Pos-Fixado. (Jaison/James - PRJ298)
- * 032: [05/10/2017] - Diogo            (MoutS): Adicionado campo vliofcpl no formul·rio (Projeto 410 - RF 23)
+ * 032: [05/10/2017] - Diogo            (MoutS): Adicionado campo vliofcpl no formul√°rio (Projeto 410 - RF 23)
  * 033: [11/10/2017] - Heitor          (Mouts): Liberacao da melhoria 442
- * 034: [17/01/2018] IncluÌdo novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 034: [17/01/2018] Inclu√≠do novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  */
 ?>
 
@@ -57,15 +57,15 @@
 
 	$cddopcao = ( isset($_POST['cddopcao']) && $_POST['cddopcao'] != '') ? $_POST['cddopcao'] : '@';
 	
-	// Verifica permissıes de acessa a tela
+	// Verifica permiss√µes de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos',"controlaOperacao('');",false);
 	}		
 	
-	// Verifica se o n˙mero da conta e o titular foram informados
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par‚metros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
+	// Verifica se o n√∫mero da conta e o titular foram informados
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par√¢metros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
 	
-	// Guardo os par‚metos do POST em vari·veis	
+	// Guardo os par√¢metos do POST em vari√°veis	
 	$nrdconta = $_POST['nrdconta'] == '' ? 0 : $_POST['nrdconta'];
 	$idseqttl = $_POST['idseqttl'] == '' ? 1 : $_POST['idseqttl'];	
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
@@ -89,9 +89,9 @@
 	$qttolatr = (isset($_POST['qttolatr'])) ? $_POST['qttolatr'] : 0;
     $dtvencto = (isset($_POST['dtvencto'])) ? $_POST['dtvencto'] : '';
 	
-	// Verifica se o n˙mero da conta e o titular s„o inteiros v·lidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv·lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inv·lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	// Verifica se o n√∫mero da conta e o titular s√£o inteiros v√°lidos
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv√°lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inv√°lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
 	
 	$dtiniper = isset($_POST["dtpesqui"]) && validaData($_POST["dtpesqui"]) ? $_POST["dtpesqui"] : "01/01/0001";
 	$dtfimper = $glbvars["dtmvtolt"];
@@ -114,7 +114,7 @@
 	
 	if (in_array($operacao,array('C_EXTRATO','TC','C_NOVA_PROP',''))) {
 	    if ($procedure ==  'obtem-dados-emprestimos' )  {
-            // Monta o xml de requisiÁ„o
+            // Monta o xml de requisi√ß√£o
             $xml  = "";
             $xml .= "<Root>";
             $xml .= "  <Dados>";
@@ -138,7 +138,7 @@
             $xmlResult = mensageria($xml, "ATENDA", "OBTDADEMPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
             
         } else {     
-            // Monta o xml de requisiÁ„o
+            // Monta o xml de requisi√ß√£o
             $xml  = "";
             $xml .= "<Root>";
             $xml .= "  <Cabecalho>";
@@ -173,7 +173,7 @@
             
             $xmlResult = getDataXML($xml);
 
-			//Chama a aÁ„o de consultar o controle da qualificaÁ„o da operaÁ„o
+			//Chama a a√ß√£o de consultar o controle da qualifica√ß√£o da opera√ß√£o
 			$xmlC  = "";
 			$xmlC .= "<Root>";
 			$xmlC .= "  <Dados>";
@@ -341,7 +341,7 @@
 			arrayProposta['vlpreemp'] = '<? echo getByTagName($proposta,'vlpreemp'); ?>';     
 			arrayProposta['qtpreemp'] = '<? echo getByTagName($proposta,'qtpreemp'); ?>';     
 			arrayProposta['nivrisco'] = '<? echo getByTagName($proposta,'nivrisco'); ?>';     
-			arrayProposta['nivriori'] = '<? echo getByTagName($proposta,'nivriori'); ?>'; // nÌvel de risco original
+			arrayProposta['nivriori'] = '<? echo getByTagName($proposta,'nivriori'); ?>'; // n√≠vel de risco original
 			arrayProposta['nivcalcu'] = '<? echo getByTagName($proposta,'nivcalcu'); ?>';     
 			arrayProposta['cdlcremp'] = '<? echo getByTagName($proposta,'cdlcremp'); ?>';     
 			arrayProposta['cdfinemp'] = '<? echo getByTagName($proposta,'cdfinemp'); ?>';     
@@ -635,7 +635,7 @@
 							
 			</script><?
 		
-		    // Monta o xml de requisiÁ„o
+		    // Monta o xml de requisi√ß√£o
             $xml  = "";
             $xml .= "<Root>";
             $xml .= "  <Dados>";
@@ -823,7 +823,7 @@
 		
 	}
 	else if(in_array($operacao,array('D_EFETIVA', 'TD_EFETIVA'))) {
-		// Monta o xml de requisiÁ„o
+		// Monta o xml de requisi√ß√£o
 		if($operacao == 'D_EFETIVA') {
 			$procedure = 'busca_desfazer_efetivacao_emprestimo';
 		}else if($operacao == 'TD_EFETIVA') {
@@ -906,9 +906,9 @@
 		$xml_dados = simplexml_load_string($xmlResult);
 
 		if ($xml_dados->instatus == '') {
-			$tpdrisco = 'N„o se aplica';
+			$tpdrisco = 'N√£o se aplica';
 		} elseif ($xml_dados->instatus == '1') {
-			$tpdrisco = 'Risco de CrÈdito';
+			$tpdrisco = 'Risco de Cr√©dito';
 		} else {
 			$tpdrisco = 'Risco Operacional';
 		}
@@ -1001,27 +1001,27 @@
 <? } ?>
 
 <?php
-	//FunÁ„o para opÁıes da QualificaÁ„o da OperaÁ„o
+	//Fun√ß√£o para op√ß√µes da Qualifica√ß√£o da Opera√ß√£o
 	function obtemDescricaoQualificacao($idQuaOpe){
 		$dsquaprc = "";
 		switch ($idQuaOpe) {
 			case 1:
-				$dsquaprc = "OperaÁ„o Normal";
+				$dsquaprc = "Opera√ß√£o Normal";
 				break;
 			case 2:
-				$dsquaprc = "RenovaÁ„o CrÈdito";
+				$dsquaprc = "Renova√ß√£o Cr√©dito";
 				break;
 			case 3:
-				$dsquaprc = "RenegociaÁ„o CrÈdito";
+				$dsquaprc = "Renegocia√ß√£o Cr√©dito";
 				break;
 			case 4:
-				$dsquaprc = "ComposiÁ„o DÌvida";				
+				$dsquaprc = "Composi√ß√£o D√≠vida";				
 				break;
 			case 5:
-				$dsquaprc = "Cess„o de Cart„o";				
+				$dsquaprc = "Cess√£o de Cart√£o";				
 				break;
 			default:
-				$dsquaprc = "OperaÁ„o Inexistente";				;
+				$dsquaprc = "Opera√ß√£o Inexistente";				;
 				break;
 		}
 		return $dsquaprc;

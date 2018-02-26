@@ -1,16 +1,16 @@
 /*!
  * FONTE        : prestacoes.js
- * CRIA«√O      : AndrÈ Socoloski - DB1
- * DATA CRIA«√O : 29/03/2011
- * OBJETIVO     : Biblioteca de funÁıes na rotina PrestaÁıes da tela ATENDA
+ * CRIA√á√ÉO      : Andr√© Socoloski - DB1
+ * DATA CRIA√á√ÉO : 29/03/2011
+ * OBJETIVO     : Biblioteca de fun√ß√µes na rotina Presta√ß√µes da tela ATENDA
  * --------------
- * ALTERA«’ES   :
+ * ALTERA√á√ïES   :
  * --------------
- * 001: [29/04/2011] Rogerius (DB1): alterado a funÁ„o controlaLayout() para formata os campos de endereco e contato.
- * 002: [29/04/2011] Rogerius (DB1): alterado a funÁ„o contIntervis atualizaTela() para que seja colocado os valores nos 3 novos campos do endereco
- * 003: [23/08/2011] Marcelo L. Pereira (GATI): criaÁ„o de rotinas para pagamento
+ * 001: [29/04/2011] Rogerius (DB1): alterado a fun√ß√£o controlaLayout() para formata os campos de endereco e contato.
+ * 002: [29/04/2011] Rogerius (DB1): alterado a fun√ß√£o contIntervis atualizaTela() para que seja colocado os valores nos 3 novos campos do endereco
+ * 003: [23/08/2011] Marcelo L. Pereira (GATI): cria√ß√£o de rotinas para pagamento
  * 004: [29/08/2011] Marcelo L. Pereira (GATI): alterando listagem do extrato
- * 005: [22/07/2011] Adicionado funcionalidades de rotina do bot„o 'Desfazer EfetivaÁ„o'. ( Marcelo/Gati )
+ * 005: [22/07/2011] Adicionado funcionalidades de rotina do bot√£o 'Desfazer Efetiva√ß√£o'. ( Marcelo/Gati )
  * 006: [14/06/2012] Jorge Hamaguchi  (CECRED): Alterado funcoes carregarImpresso() e imprimirExtrato(), novo esquema de impressao, retirado campo "redirect" popup
  * 007: [04/07/2012] Nao mostrar a tela de data do extrato no tipo 1 do emprestimo (Gabriel)
  * 008: [14/12/2012] Alterar descricao tipo de emprestimo por Produto (Gabriel).
@@ -25,11 +25,11 @@
  * 017: [20/03/2014] Ajuste para passar cddopcao como parametro para principal.php. (James)
  * 018: [23/04/2014] Ajuste para somente liberar a tela de pagamento, quando todas as parcelas estiver carregada. (James)
  * 019: [05/06/2014] Ajuste para permitir o avalista efetuar o pagamento. (James)
- * 020: [26/06/2014] CriaÁ„o das rotinas para geraÁ„o do relatorio de antecipaÁ„o. (Daniel Zimmermann/Odirlei AMcom)
+ * 020: [26/06/2014] Cria√ß√£o das rotinas para gera√ß√£o do relatorio de antecipa√ß√£o. (Daniel Zimmermann/Odirlei AMcom)
  * 021: [21/07/2014] Incluido mensagem de informacao quando efetuado o pagamento da parcela. (James)
  * 022: [14/08/2014] Ajuste informacoes do avalista, incluso novos campos (Daniel)
  * 023: [26/08/2014] Ajuste informacoes do pagamento de prestacoes confirmaPagamento()(Vanessa)
- * 024: [01/09/2014] Lucas R./Gielow (CECRED) : Ajustes para validar tipo de impress„o do tipo 6, Projeto CET.
+ * 024: [01/09/2014] Lucas R./Gielow (CECRED) : Ajustes para validar tipo de impress√£o do tipo 6, Projeto CET.
  * 025: [12/09/2014] Projeto Contratos de Emprestimos: Inclusao da passagem do numero do contrato. (Tiago Castro - RKAM)
  * 026: [30/11/2014] Projeto de consultas automatizadas (Jonata-RKAM)
  * 027: [25/11/2014] Inclusao do campo cdorigem na funcao controlaOperacao. (Jaison)
@@ -43,18 +43,18 @@
  * 034: [09/06/2015] Impresao da Revisao dos contratos (Gabriel-RKAM).
  * 035: [24/06/2015] Projeto 215 - Dv 3 (Daniel)
  * 036: [28/08/2015] Chamado 288513 - Inclusao do tipo de risco (Heitor - RKAM)
- * 037: [12/01/2015] Impressao do demonstrativo de empres. pre-aprovado feito no TAA e Int.Bank.(Carlos Rafael Tanholi - PrÈ-Aprovado fase II).
+ * 037: [12/01/2015] Impressao do demonstrativo de empres. pre-aprovado feito no TAA e Int.Bank.(Carlos Rafael Tanholi - Pr√©-Aprovado fase II).
  * 038: [15/03/2016] Odirlei (AMCOM): Alterado rotina mostraEmail para verificar se deve permitir o envio de email para o comite. PRJ207 - Esteira
- * 039: [27/07/2016] Alterado funÁ„o controlaFoco(Evandro - RKAM)
+ * 039: [27/07/2016] Alterado fun√ß√£o controlaFoco(Evandro - RKAM)
  * 040: [25/05/2017] Permitir gerar extrato de Pos-Fixado. (Jaison/James - PRJ298)
- * 040: [22/06/2017] Alterado para mostrar frame de portabilidade independente de ter selecionado um contrato ou n„o. (Projeto 357 - Reinert)
+ * 040: [22/06/2017] Alterado para mostrar frame de portabilidade independente de ter selecionado um contrato ou n√£o. (Projeto 357 - Reinert)
  * 041: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
- * 042: [05/10/2017] Adicionado campo vliofcpl no formul·rio (Diogo - MoutS - Projeto 410 - RF 23)
+ * 042: [05/10/2017] Adicionado campo vliofcpl no formul√°rio (Diogo - MoutS - Projeto 410 - RF 23)
  * 043: [11/10/2017] Liberacao da melhoria 442 (Heitor - Mouts)
- * 044: [17/01/2018] IncluÌdo novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
- * 045: [24/01/2018] IncluÌdo tratamento para o nÌvel de risco original (Reginaldo - AMcom)
+ * 044: [17/01/2018] Inclu√≠do novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 045: [24/01/2018] Inclu√≠do tratamento para o n√≠vel de risco original (Reginaldo - AMcom)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -63,7 +63,7 @@ $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
 //campo que valida existencia de portabilidade no contrato
 var possuiPortabilidade = 'N';
 
-/* Vari·veis para impress„o */
+/* Vari√°veis para impress√£o */
 var idimpres  = 0;
 var promsini  = 1;
 var flgemail  = false;
@@ -119,7 +119,7 @@ var valorTotAPagar, valorAtual , valorTotAtual;
 
 var nrctremp1, qtdregis1, nrdconta1, lstdtvcto1, lstdtpgto1, lstparepr1, lstvlrpag1;
 
-// FunÁ„o para acessar opÁıes da rotina
+// Fun√ß√£o para acessar op√ß√µes da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao,nriniseq, nrregist) {
 	
 	operacao = "";
@@ -129,13 +129,13 @@ function acessaOpcaoAba(nrOpcoes,id,opcao,nriniseq, nrregist) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo('Aguarde, carregando ...');
 
-	// Atribui cor de destaque para aba da opÁ„o
+	// Atribui cor de destaque para aba da op√ß√£o
 	for (var i = 0; i < nrOpcoes; i++) {
 		if (!$('#linkAba' + id)) {
 			continue;
 		}
 
-		if (id == i) { // Atribui estilos para foco da opÁ„o
+		if (id == i) { // Atribui estilos para foco da op√ß√£o
 			$('#linkAba' + id).attr('class','txtBrancoBold');
 			$('#imgAbaEsq' + id).attr('src',UrlImagens + 'background/mnu_sle.gif');
 			$('#imgAbaDir' + id).attr('src',UrlImagens + 'background/mnu_sld.gif');
@@ -150,7 +150,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao,nriniseq, nrregist) {
 	}
 	
 
-	// Carrega conte˙do da opÁ„o atravÈs do Ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s do Ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -165,7 +165,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao,nriniseq, nrregist) {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possÌvel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss√≠vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -182,8 +182,8 @@ function acessaOpcaoAba(nrOpcoes,id,opcao,nriniseq, nrregist) {
 
 
 /*!
- * OBJETIVO : FunÁ„o de controle das aÁıes/operaÁıes da Rotina de Bens da tela de CONTAS
- * PAR¬METRO: OperaÁ„o que deseja-se realizar
+ * OBJETIVO : Fun√ß√£o de controle das a√ß√µes/opera√ß√µes da Rotina de Bens da tela de CONTAS
+ * PAR√ÇMETRO: Opera√ß√£o que deseja-se realizar
  */
 function controlaOperacao(operacao) {
 
@@ -454,7 +454,7 @@ function controlaOperacao(operacao) {
 			mensagem = "Carregando Consulta de Portabilidade";
 			break;
 		case 'C_LIQ_MESMO_DIA' :		
-			mensagem = 'Efetuando LiquidaÁ„o do Contrato...';
+			mensagem = 'Efetuando Liquida√ß√£o do Contrato...';
 			cddopcao = 'P'; /* Daniel */
 			break;	
 			
@@ -483,7 +483,7 @@ function controlaOperacao(operacao) {
 	
 	showMsgAguardo('Aguarde, ' + mensagem);
 	
-	// Carrega conte˙do da opÁ„o atravÈs do Ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s do Ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -521,7 +521,7 @@ function controlaOperacao(operacao) {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possÌvel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss√≠vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 		
@@ -554,16 +554,16 @@ function controlaOperacao(operacao) {
 }
 
 /*!
- * OBJETIVO : Controlar o layout da tela de acordo com a operaÁ„o
- *            Algumas formataÁıes CSS que n„o funcionam, s„o contornadas por esta funÁ„o
- * PAR¬METRO: Valores v·lidos: [C] Consultando [A] Alterando [I] Incluindo
+ * OBJETIVO : Controlar o layout da tela de acordo com a opera√ß√£o
+ *            Algumas formata√ß√µes CSS que n√£o funcionam, s√£o contornadas por esta fun√ß√£o
+ * PAR√ÇMETRO: Valores v√°lidos: [C] Consultando [A] Alterando [I] Incluindo
  */
 function controlaLayout(operacao) {
 
 	altura  = '230px';
 	largura = '870px';
 
-	// OperaÁ„o consultando
+	// Opera√ß√£o consultando
 	if ( in_array(operacao,['']) ) {
 
 		var divRegistro = $('div.divRegistros');
@@ -948,7 +948,7 @@ function controlaLayout(operacao) {
 		cTodos_1.desabilitaCampo();
 		cTodos_2.desabilitaCampo();
 
-	// * 001: alterado a funÁ„o controlaLayout() para formata os campos de endereco e contato.
+	// * 001: alterado a fun√ß√£o controlaLayout() para formata os campos de endereco e contato.
 	} else if (in_array(operacao,['C_DADOS_AVAL'])){
 
 		nomeForm = 'frmDadosAval';
@@ -1311,7 +1311,7 @@ function controlaLayout(operacao) {
 		if ( operacao == 'C_ALIENACAO'){
 			cTodos.desabilitaCampo();
 		}
-	//* 001: alterado a funÁ„o controlaLayout() para formata os campos de endereco e contato.
+	//* 001: alterado a fun√ß√£o controlaLayout() para formata os campos de endereco e contato.
 	}else if (in_array(operacao,['C_INTEV_ANU'])){
 
 		nomeForm = 'frmIntevAnuente';
@@ -1472,7 +1472,7 @@ function controlaLayout(operacao) {
 			cPagtaval.hide();
 		}
 		
-		// ConfiguraÁıes da tabela
+		// Configura√ß√µes da tabela
 		var divTabela    = $('#divTabela');
 		var divRegistro = $('div.divRegistros', divTabela );
 		var tabela      = $('table', divRegistro );
@@ -1514,7 +1514,7 @@ function controlaLayout(operacao) {
 		$("th:eq(0)", tabela).removeClass();
 		$("th:eq(0)", tabela).unbind('click');
 
-		// Adiciona funÁ„o que ao selecionar o checkbox header, marca/desmarca todos os checkboxs da tabela
+		// Adiciona fun√ß√£o que ao selecionar o checkbox header, marca/desmarca todos os checkboxs da tabela
 
 		// Click do chekbox de Todas as parcelas
 		 $("input[type=checkbox][name='checkTodos']").unbind('click').bind('click', function (){
@@ -1581,7 +1581,7 @@ function controlaLayout(operacao) {
 		});
 
 		cVlpagmto.unbind('keypress').bind('keypress', function(e) {			
-			// Se È a tecla ENTER, 
+			// Se √© a tecla ENTER, 
 			if (( e.keyCode == 13 ) || (e.keyCode == 9)){
 				desconto(0);
 			}
@@ -1657,7 +1657,7 @@ function controlaLayout(operacao) {
 			cPagtaval.hide();
 		}
 		
-		// ConfiguraÁıes da tabela
+		// Configura√ß√µes da tabela
 		var divTabela    = $('#divTabela');
 		var divRegistro = $('div.divRegistros', divTabela );
 		var tabela      = $('table', divRegistro );
@@ -1697,7 +1697,7 @@ function controlaLayout(operacao) {
 		$("th:eq(0)", tabela).removeClass();
 		$("th:eq(0)", tabela).unbind('click');
 
-		// Adiciona funÁ„o que ao selecionar o checkbox header, marca/desmarca todos os checkboxs da tabela
+		// Adiciona fun√ß√£o que ao selecionar o checkbox header, marca/desmarca todos os checkboxs da tabela
 
 		// Click do chekbox de Todas as parcelas
 		 $("input[type=checkbox][name='checkTodos']").unbind('click').bind('click', function (){
@@ -1850,7 +1850,7 @@ function controlaLayout(operacao) {
 }
 
 /**
-* FunÁ„o para recarregar as informaÁıes dos contratos aprovados (EmprÈstimos)
+* Fun√ß√£o para recarregar as informa√ß√µes dos contratos aprovados (Empr√©stimos)
 * 
 */
 function voltarAgendamentoDetalhes() {
@@ -1858,7 +1858,7 @@ function voltarAgendamentoDetalhes() {
 	recarregaAgendamento();
 }
 
-//FunÁ„o para controle de navegaÁ„o
+//Fun√ß√£o para controle de navega√ß√£o
 function controlaFoco() {
     $('#divConteudoOpcao').each(function () {
         $(this).find("#divBotoes > a").addClass("FluxoNavega");
@@ -2041,7 +2041,7 @@ function atualizaTela(){
 		}
 		$('#vlalugue','#frmDadosProp').val( arrayRendimento['vlalugue'] );
 
-	// * 002: alterado a funÁ„o contIntervis atualizaTela() para que seja colocado os valores nos 3 novos campos do endereco
+	// * 002: alterado a fun√ß√£o contIntervis atualizaTela() para que seja colocado os valores nos 3 novos campos do endereco
 	}else if (in_array(operacao,['C_DADOS_AVAL'])){
 
 		$('#nrctaava','#frmDadosAval').val( arrayAvalistas[contAvalistas]['nrctaava'] );
@@ -2106,7 +2106,7 @@ function atualizaTela(){
 
 		contAlienacao++;
 
-	// * 002: alterado a funÁ„o contIntervis atualizaTela() para que seja colocado os valores nos 3 novos campos do endereco
+	// * 002: alterado a fun√ß√£o contIntervis atualizaTela() para que seja colocado os valores nos 3 novos campos do endereco
 	}else if (in_array(operacao,['C_INTEV_ANU','A_INTEV_ANU'])){
 
 		$('#nrctaava','#frmIntevAnuente').val( arrayIntervs[contIntervis]['nrctaava'] );
@@ -2204,7 +2204,7 @@ function mostraTabelaBens( operacaoBem, operacao ) {
 
 	limpaDivGenerica();
 
-	// Executa script de confirmaÁ„o atravÈs de ajax
+	// Executa script de confirma√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -2215,7 +2215,7 @@ function mostraTabelaBens( operacaoBem, operacao ) {
 			},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$('#divUsoGenerico').html(response);
@@ -2231,7 +2231,7 @@ function mostraTelaPagamentoAvalista() {
 	exibeRotina($('#divUsoGenerico'));	
 	limpaDivGenerica();
 	
-	// Executa script de confirmaÁ„o atravÈs de ajax
+	// Executa script de confirma√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -2244,7 +2244,7 @@ function mostraTelaPagamentoAvalista() {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -2296,7 +2296,7 @@ function controlaLayoutPagamentoAvalista(){
 	return false;
 }
 
-//Controla as operaÁıes da descriÁ„o de bens
+//Controla as opera√ß√µes da descri√ß√£o de bens
 function controlaOperacaoBens(operacao, operacaoPrinc) {
 
 	var msgOperacao = '';
@@ -2315,7 +2315,7 @@ function controlaOperacaoBens(operacao, operacaoPrinc) {
 	return false;
 }
 
-// Controla o layout da descriÁ„o de bens
+// Controla o layout da descri√ß√£o de bens
 function controlaLayoutBens( operacao, operacaoPrinc ) {
 
 	$('#divProcBensTabela').css('display','block');
@@ -2442,7 +2442,7 @@ function mostraExtrato( operacao ) {
 		return;
 	}
 
-	// Executa script de confirmaÁ„o atravÈs de ajax
+	// Executa script de confirma√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -2454,7 +2454,7 @@ function mostraExtrato( operacao ) {
 			},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$('#divUsoGenerico').html(response);
@@ -2469,9 +2469,9 @@ function mostraExtrato( operacao ) {
 
 function validaImpressao( operacao ){
 
-	showMsgAguardo('Aguarde, validando impress„o...');
+	showMsgAguardo('Aguarde, validando impress√£o...');
         
-	// Executa script de confirmaÁ„o atravÈs de ajax
+	// Executa script de confirma√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/valida_impressao.php',
@@ -2511,7 +2511,7 @@ function validaImpressao( operacao ){
 	return false;
 }
 
-//FunÁ„o para chamar ConfirmaÁ„o 
+//Fun√ß√£o para chamar Confirma√ß√£o 
 function confirmaPagamento() {
 	var metodoSim = "verificaAbreTelaPagamentoAvalista();";
 	var metodoNao = "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));";
@@ -2528,14 +2528,14 @@ function confirmaPagamento() {
 		parcelasPagas.push(nrParcela);
 	});
 	if (parcelasPagar.length == parcelasPagas.length) {
-		showConfirmacao("Confirma liquidaÁ„o do contrato?","Confirma&ccedil;&atilde;o - Ayllos",metodoSim,metodoNao,"sim.gif","nao.gif");
+		showConfirmacao("Confirma liquida√ß√£o do contrato?","Confirma&ccedil;&atilde;o - Ayllos",metodoSim,metodoNao,"sim.gif","nao.gif");
 	}else{
 		showConfirmacao("Confirma o pagamento da(s) parcela(s): "+parcelasPagas+"?","Confirma&ccedil;&atilde;o - Ayllos",metodoSim,metodoNao,"sim.gif","nao.gif");
 	}
 	return false;
 }
 
-// FunÁ„o para verificar se abre a tela de pagamento de avalista
+// Fun√ß√£o para verificar se abre a tela de pagamento de avalista
 function verificaAbreTelaPagamentoAvalista(){
 
 	var cPagtaval  = $('input:checkbox[name=pagtaval]:checked','#frmVlParc');
@@ -2550,7 +2550,7 @@ function verificarImpAntecip() {
 
 	var nmfuncao;
 
-	// Se h· dados de antecipaÁ„o
+	// Se h√° dados de antecipa√ß√£o
 	if (qtdregis1 > 0){
 		nmfuncao = "showMsgAutorizacaoAntecipacao();";
 	} else {
@@ -2563,7 +2563,7 @@ function verificarImpAntecip() {
 }
 
 function showMsgAutorizacaoAntecipacao(){
-	showConfirmacao('Deseja imprimir a autorizaÁ„o para antecipaÁ„o?','Confirma&ccedil;&atilde;o - Ayllos','realizaImpressao(true);','realizaImpressao(false);','sim.gif','nao.gif');
+	showConfirmacao('Deseja imprimir a autoriza√ß√£o para antecipa√ß√£o?','Confirma&ccedil;&atilde;o - Ayllos','realizaImpressao(true);','realizaImpressao(false);','sim.gif','nao.gif');
 }
 
 function validaPagamento(){
@@ -2572,10 +2572,10 @@ function validaPagamento(){
 	showMsgAguardo('Aguarde, validando pagamento...');
 	var vlapagar = $('#totpagto', '#frmVlParc').val();
 	
-	// Carregar os dados de antecipaÁ„o
+	// Carregar os dados de antecipa√ß√£o
 	verificaAntecipacaopgto();
 	
-	// Executa script de confirmaÁ„o atravÈs de ajax
+	// Executa script de confirma√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/valida_pagamentos_geral.php',
@@ -2603,10 +2603,10 @@ function validaPagamentoPos(){
 	showMsgAguardo('Aguarde, validando pagamento...');
 	var vlapagar = $('#totpagto', '#frmVlParc').val();
 	
-	// Carregar os dados de antecipaÁ„o
+	// Carregar os dados de antecipa√ß√£o
 	verificaAntecipacaopgto();
 	
-	// Executa script de confirmaÁ„o atravÈs de ajax
+	// Executa script de confirma√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/valida_pagamentos_pos.php',
@@ -2636,7 +2636,7 @@ function mostraDivPortabilidade( operacao ) {
 
     exibeRotina($('#divUsoGenerico'));
 
-    // Executa script de confirmaÁ„o atravÈs de ajax
+    // Executa script de confirma√ß√£o atrav√©s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -2649,7 +2649,7 @@ function mostraDivPortabilidade( operacao ) {
             },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
             $('#divUsoGenerico').html(response);
@@ -2673,7 +2673,7 @@ function mostraDivQualificaControle(operacao) {
 	var idquaprc = $('#idquaprc').val();	
 	var idquapro = $('#idquapro').val();	
 
-	// Executa script de confirmaÁ„o atravÈs de ajax
+	// Executa script de confirma√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -2688,7 +2688,7 @@ function mostraDivQualificaControle(operacao) {
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N√£o foi poss√≠vel concluir a requisi√ß√£o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError('error', 'N√É¬£o foi poss√É¬≠vel concluir a requisi√É¬ß√É¬£o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function (response) {
 			$('#divUsoGenerico').html(response);
@@ -2717,7 +2717,7 @@ function aprovarPortabilidade() {
     
     var nrunico_portabilidade = $('#nrunico_portabilidade','#frmPortAprv').val();
 
-    // Executa script de confirmaÁ„o atravÈs de ajax
+    // Executa script de confirma√ß√£o atrav√©s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -2731,7 +2731,7 @@ function aprovarPortabilidade() {
             },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
             $('#divUsoGenerico').html(response);
@@ -2752,7 +2752,7 @@ function mostraDivPortabilidadeAprovar( operacao ) {
 
     exibeRotina($('#divUsoGenerico'));
 
-    // Executa script de confirmaÁ„o atravÈs de ajax
+    // Executa script de confirma√ß√£o atrav√©s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -2765,7 +2765,7 @@ function mostraDivPortabilidadeAprovar( operacao ) {
             },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
             $('#divUsoGenerico').html(response);
@@ -2782,13 +2782,13 @@ function mostraDivPortabilidadeAprovar( operacao ) {
 
 function mostraDivImpressao( operacao ) {
 
-	showMsgAguardo('Aguarde, abrindo impress„o...');
+	showMsgAguardo('Aguarde, abrindo impress√£o...');
 
     limpaDivGenerica();
 
     exibeRotina($('#divUsoGenerico'));
 
-    // Executa script de confirmaÁ„o atravÈs de ajax
+    // Executa script de confirma√ß√£o atrav√©s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -2802,7 +2802,7 @@ function mostraDivImpressao( operacao ) {
             },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
             $('#divUsoGenerico').html(response);
@@ -2820,7 +2820,7 @@ function mostraDivImpressao( operacao ) {
 	return false;
 }
 
-// FunÁ„o para verificar a opÁ„o de impress„o
+// Fun√ß√£o para verificar a op√ß√£o de impress√£o
 function verificaImpressao(par_idimpres){
     
 	idimpres = par_idimpres;
@@ -2878,13 +2878,13 @@ function verificaImpressao(par_idimpres){
 			}
 		}
 	}else{
-		showError('error','OpÁ„o de impress„o inv·lida','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+		showError('error','Op√ß√£o de impress√£o inv√°lida','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 	}
 
 	return false;
 }
 
-// FunÁ„o para fechamento da tela de impress„o
+// Fun√ß√£o para fechamento da tela de impress√£o
 function fechaImpressao(operacao){
 
 	fechaRotina($('#divUsoGenerico'),$('#divRotina'));
@@ -2895,15 +2895,15 @@ function fechaImpressao(operacao){
 
 }
 
-// FunÁ„o para n˙mero inicial de nota promissÛria
+// Fun√ß√£o para n√∫mero inicial de nota promiss√≥ria
 function mostraNP( operacao ) {
 
-	showMsgAguardo('Aguarde, abrindo impress„o...');
+	showMsgAguardo('Aguarde, abrindo impress√£o...');
 	exibeRotina($('#divUsoGenerico'));
     
 	limpaDivGenerica();
      
-	// Executa script de confirmaÁ„o atravÈs de ajax
+	// Executa script de confirma√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -2914,7 +2914,7 @@ function mostraNP( operacao ) {
 			},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$('#divUsoGenerico').html(response);
@@ -2927,11 +2927,11 @@ function mostraNP( operacao ) {
 	return false;
 }
 
-// FunÁ„o que tratar fechamento da confirmaÁ„o da promissÛria inicial
+// Fun√ß√£o que tratar fechamento da confirma√ß√£o da promiss√≥ria inicial
 function fechaNP(operacao){
 
 	if ( qtpromis < $('#nrpromini' , '#frmNotaini').val() ){
-		showError('error','N˙mero de nota promissÛria inicial inv·lido','Alerta - Ayllos',"bloqueiaFundo($('#divUsoGenerico'));");
+		showError('error','N√∫mero de nota promiss√≥ria inicial inv√°lido','Alerta - Ayllos',"bloqueiaFundo($('#divUsoGenerico'));");
 		return false;
 	}
 
@@ -2945,7 +2945,7 @@ function fechaNP(operacao){
 
 }
 
-//FunÁ„o para chamar ConfirmaÁ„o de E-mail
+//Fun√ß√£o para chamar Confirma√ß√£o de E-mail
 function mostraEmail() {
 
 	// Verificar se deve permitir envio de email para o comite
@@ -2963,7 +2963,7 @@ function mostraEmail() {
 
 }
 
-// FunÁ„o para envio de formul·rio de impressao
+// Fun√ß√£o para envio de formul√°rio de impressao
 function carregarImpresso(){
 
 	fechaRotina($('#divUsoGenerico'),$('#divRotina'));
@@ -2975,7 +2975,7 @@ function carregarImpresso(){
 	$('#nrdconta','#formEmpres').remove();
 	$('#sidlogin','#formEmpres').remove();
 
-	// Insiro input do tipo hidden do formul·rio para envi·-los posteriormente
+	// Insiro input do tipo hidden do formul√°rio para envi√°-los posteriormente
 	$('#formEmpres').append('<input type="hidden" id="idimpres" name="idimpres" />');
 	$('#formEmpres').append('<input type="hidden" id="promsini" name="promsini" />');
 	$('#formEmpres').append('<input type="hidden" id="flgemail" name="flgemail" />');
@@ -3009,7 +3009,7 @@ function verificaTipoEmprestimo()
 	showConfirmacao('Escolha o tipo de relat&oacute;rio','Confirma&ccedil;&atilde;o - Ayllos',mtSimplificado,mtDetalhado,'simplificado.gif','detalhado.gif');
 }
 
-// FunÁ„o para envio de formul·rio de impressao
+// Fun√ß√£o para envio de formul√°rio de impressao
 function imprimirExtrato(){
 
 	fechaRotina($('#divUsoGenerico'),$('#divRotina'));
@@ -3020,7 +3020,7 @@ function imprimirExtrato(){
 	$('#nrdconta','#formEmpres').remove();
 	$('#intpextr','#formEmpres').remove();
 
-	// Insiro input do tipo hidden do formul·rio para envi·-los posteriormente
+	// Insiro input do tipo hidden do formul√°rio para envi√°-los posteriormente
 	$('#formEmpres').append('<input type="hidden" id="sidlogin" name="sidlogin" />');
 	$('#formEmpres').append('<input type="hidden" id="idseqttl" name="idseqttl" />');
 	$('#formEmpres').append('<input type="hidden" id="nrctremp" name="nrctremp" />');
@@ -3060,7 +3060,7 @@ function habilitaDesabilitaCampo(object, flgRecalcula , nrParcela)
 	if($('#check_'+nrParcela+':checked', tabela).val() == 'on'){
 
 		$('#vlpagpar_'+nrParcela , tabela).habilitaCampo();
-		// ManipulaÁ„o de dados referente aos campos do valor de antecipaÁ„o de parcelas
+		// Manipula√ß√£o de dados referente aos campos do valor de antecipa√ß√£o de parcelas
 		valorAtual    = retiraMascara($('#vlatupar_'+nrParcela , tabela).val());
 		valorMulta    = retiraMascara($('#vlmtapar_'+nrParcela , tabela).val());
 		valorMora	  = retiraMascara($('#vlmrapar_'+nrParcela , tabela).val());
@@ -3199,7 +3199,7 @@ function geraPagamentos()
 	// Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, gerando pagamento ...");
 
-	// Carrega conte˙do da opÁ„o atravÈs de ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: "POST",
 		dataType: 'html',
@@ -3269,22 +3269,22 @@ function descontoPos (parcela,valor) {
 function atribuiDescControle (idQuaPrc) {
 	switch(idQuaPrc){		
 		case 1:
-			return "OperaÁ„o Normal";
+			return "Opera√ß√£o Normal";
 			break;
 		case 2:
-			return "RenovaÁ„o CrÈdito";
+			return "Renova√ß√£o Cr√©dito";
 			break;
 		case 3:
-			return "RenegociaÁ„o CrÈdito";
+			return "Renegocia√ß√£o Cr√©dito";
 			break;
 		case 4:
-			return "ComposiÁ„o DÌvida";
+			return "Composi√ß√£o D√≠vida";
 			break;
 		case 5:
-			return "Cess„o de Cart„o";
+			return "Cess√£o de Cart√£o";
 			break;
 		default:
-			return "OperaÁ„o Inexistente";
+			return "Opera√ß√£o Inexistente";
 			break;
 	}
 }
@@ -3292,12 +3292,12 @@ function atribuiDescControle (idQuaPrc) {
 
 function verificaAntecipacao() {
 
-    showMsgAguardo('Aguarde, abrindo impress„o...');
+    showMsgAguardo('Aguarde, abrindo impress√£o...');
 	//exibeRotina($('#divUsoGenerico'));
 
 	limpaDivGenerica();
 
-	// Executa script de confirmaÁ„o atravÈs de ajax
+	// Executa script de confirma√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -3308,7 +3308,7 @@ function verificaAntecipacao() {
 			},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$('#divUsoGenerico').html(response);
@@ -3336,7 +3336,7 @@ function carregaAntecipacao() {
 	var nrdconta = normalizaNumero($('#nrdconta','#frmCabAtenda').val());
 	var nrctremp = normalizaNumero($('#nrctremp','#frmAntecipacao').val());
 		
-	// Executa script de confirmaÁ„o atravÈs de ajax
+	// Executa script de confirma√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -3348,7 +3348,7 @@ function carregaAntecipacao() {
 			},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			
@@ -3444,7 +3444,7 @@ function verificaAntecipacaopgto() {
 	var nrctremp    = 0;
 	var qtdregis 	= 0;
 	var dtmvtolt    = $('#glbdtmvtolt','#frmAntecipapgto').val();
-	var dtparcel	= dtmvtolt; // recebe dtmvtolt, apenas para inicializaÁ„o
+	var dtparcel	= dtmvtolt; // recebe dtmvtolt, apenas para inicializa√ß√£o
 	
 	// Limpa variaveis das listas
 	lstdtvcto = '';
@@ -3452,7 +3452,7 @@ function verificaAntecipacaopgto() {
 	lstparepr = '';
 	lstvlrpag = '';	
 	
-	// ler informaÁıes dos registros marcados
+	// ler informa√ß√µes dos registros marcados
 	$("input[type=checkbox][name='checkParcelas[]']").each(function() {
 		checked = false;
 		checked = this.checked;
@@ -3461,10 +3461,10 @@ function verificaAntecipacaopgto() {
 			// Guardar o indice da parcela
 			nrParcela = this.id.split("_")[1];	
 			
-			// carrega a data da parcela para a vari·vel
+			// carrega a data da parcela para a vari√°vel
 			dtparcel = $('#dtvencto_'+nrParcela , tabela).val();
 		   
-			// Criar as vari·veis com as datas para comparaÁ„o
+			// Criar as vari√°veis com as datas para compara√ß√£o
 			// Movimento
 	        var dtcompar1 = parseInt(dtmvtolt.split("/")[2].toString() + dtmvtolt.split("/")[1].toString() + dtmvtolt.split("/")[0].toString()); 
 		    // Parcela
@@ -3474,7 +3474,7 @@ function verificaAntecipacaopgto() {
 			// incluir como antecipado somente se a data de vencto for maior que a data de movimento(pagamento)
 			if (dtcompar1 <  dtcompar2) 
 			{
-				// montar listas que ser„o passadas por parametro
+				// montar listas que ser√£o passadas por parametro
 				nrctremp  = normalizaNumero($('#nrctremp_'+nrParcela , tabela).val());
 				lstdtvcto += $('#dtvencto_'+nrParcela , tabela).val() + ';';							     
 				lstdtpgto += ';'; 	
@@ -3510,7 +3510,7 @@ function verificaAntecipacaopgto() {
 
 function realizaImpressao(idAntecipacao) {
 
-	// Se estiver indicado true para a antecipaÁ„o
+	// Se estiver indicado true para a antecipa√ß√£o
 	if (idAntecipacao == true) {
 		carregarImpressoAntecipacao('frmAntecipapgto');
 	} else {
@@ -3518,7 +3518,7 @@ function realizaImpressao(idAntecipacao) {
         if (tpemprst == 2) { // Pos-Fixado
             nmoperac = 'C_PAG_PREST_POS';
         }
-		//Controlar a operaÁ„o da tela
+		//Controlar a opera√ß√£o da tela
 		controlaOperacao(nmoperac);
 	}
 	
@@ -3598,7 +3598,7 @@ function carregarImpressoAntecipacao(vr_nmform){
 	$('#lstparepr1','#' + vr_nmform).remove();
 	$('#lstvlrpag1','#' + vr_nmform).remove();
 
-	// Insiro input do tipo hidden do formul·rio para envi·-los posteriormente
+	// Insiro input do tipo hidden do formul√°rio para envi√°-los posteriormente
 	$('#' + vr_nmform).append('<input type="hidden" id="nrctremp1" name="nrctremp1" />');
 	$('#' + vr_nmform).append('<input type="hidden" id="qtdregis1" name="qtdregis1" />');
 	$('#' + vr_nmform).append('<input type="hidden" id="nrdconta1" name="nrdconta1" />');
@@ -3814,7 +3814,7 @@ function validarLiquidacao(){
 		controlaOperacao('C_PAG_PREST_POS');
 	} else {
 	if ( liquidia == 1 ) {
-		showConfirmacao('Deseja Realizar LiquidaÁ„o do Contrato?','Confirma&ccedil;&atilde;o - Ayllos','exibeValorLiquidacao();','controlaOperacao(\'C_PAG_PREST\');','sim.gif','nao.gif');
+		showConfirmacao('Deseja Realizar Liquida√ß√£o do Contrato?','Confirma&ccedil;&atilde;o - Ayllos','exibeValorLiquidacao();','controlaOperacao(\'C_PAG_PREST\');','sim.gif','nao.gif');
 		return false;
 	} else {
 		controlaOperacao('C_PAG_PREST');
@@ -3837,7 +3837,7 @@ function exibeValorLiquidacao(){
 			}
 		});
 
-	msg = 'Valor para LiquidaÁ„o R$ ' + vlemprstMsg;
+	msg = 'Valor para Liquida√ß√£o R$ ' + vlemprstMsg;
 
 	showConfirmacao(msg,'Confirma&ccedil;&atilde;o - Ayllos','bloqueiaFundo($(\'#divRotina\'));','confirmarLiquidacao();','voltar.gif','continuar.gif');
 	return false;
@@ -3846,7 +3846,7 @@ function exibeValorLiquidacao(){
 
 function confirmarLiquidacao(){
 
-	showConfirmacao('Confirma LiquidaÁ„o do Contrato?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'C_LIQ_MESMO_DIA\');','cancelaLiquidacao();','sim.gif','nao.gif');
+	showConfirmacao('Confirma Liquida√ß√£o do Contrato?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'C_LIQ_MESMO_DIA\');','cancelaLiquidacao();','sim.gif','nao.gif');
 	return false;
 
 	/* 'bloqueiaFundo($(\'#divRotina\'));' */

@@ -1,18 +1,19 @@
 <? 
 /*!
  * FONTE        : form_nova_prop.php
- * CRIAÇÃO      : André Socoloski - DB1
- * DATA CRIAÇÃO : 29/03/2011 
- * OBJETIVO     : Formulário da rotina Prestações da tela ATENDA
- * ALTERAÇÕES   : 
+ * CRIAÃ‡ÃƒO      : AndrÃ© Socoloski - DB1
+ * DATA CRIAÃ‡ÃƒO : 29/03/2011 
+ * OBJETIVO     : FormulÃ¡rio da rotina PrestaÃ§Ãµes da tela ATENDA
+ * ALTERAÃ‡Ã•ES   : 
  * --------------
- * 000: [20/09/2011] Correções de acentuação - Marcelo L. Pereira (GATI)
+ * 000: [20/09/2011] CorreÃ§Ãµes de acentuaÃ§Ã£o - Marcelo L. Pereira (GATI)
  * 001: [13/04/2012] Incluir campo dtlibera (Gabriel)
  * 002: [08/04/2014] Alterado fluxo do botao Continuar. (Jorge)
  * 003: [17/06/2014] Trocado posicao dos campos "Linha Credito" por "Finalidade". (Reinert)
  * 004: [11/05/2017] Troca de posicao da Linha de Credito e Finalidade. (Jaison/James - PRJ298)
  * 004: [11/10/2017] Liberacao melhoria 442 (Heitor - Mouts)
- * 005: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 005: [17/01/2018] IncluÃ­do novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 006: [24/01/2018] AlteraÃ§Ã£o para exibiÃ§Ã£o do campo DSNIVORI como risco de inclusÃ£o (Reginaldo - AMcom)
  */	
  ?>
 
@@ -21,9 +22,9 @@
 	<input id="nrctremp" name="nrctremp" type="hidden" value="" />
 	
 	<fieldset>
-		<legend><? echo utf8ToHtml('Nova Proposta de Empréstimo') ?></legend>
+		<legend><? echo utf8ToHtml('Nova Proposta de EmprÃ©stimo') ?></legend>
 	
-		<label for="nivrisco"><? echo utf8ToHtml('Nível Risco:') ?></label>
+		<label for="nivrisco"><? echo utf8ToHtml('NÃ­vel Risco:') ?></label>
 		<select name="nivrisco" id="nivrisco">
 			<option value="" > - </option>
 			<option value="A">A</option>
@@ -53,7 +54,7 @@
 		<label for="vlemprst"><? echo utf8ToHtml('Vl. do Empr.:') ?></label>
 		<input name="vlemprst" id="vlemprst" type="text" value="" />
 		
-		<label for="cdlcremp"><? echo utf8ToHtml('Linha Crédito:') ?></label>
+		<label for="cdlcremp"><? echo utf8ToHtml('Linha CrÃ©dito:') ?></label>
 		<input name="cdlcremp" id="cdlcremp" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dslcremp" id="dslcremp" type="text" value="" />
@@ -69,7 +70,7 @@
 		<input name="dsquapro" id="dsquapro" type="text" value="" />
 		<br />
 
-		<!--- Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) -->
+		<!--- AdiÃ§Ã£o de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) -->
 		<label for="idquaprc"><? echo utf8ToHtml('Qualif. Op. Contr:') ?></label>
 		<input name="idquaprc" id="idquaprc" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
@@ -91,10 +92,10 @@
 		
 		<label for="qtdialib">Liberar em:</label>
 		<input name="qtdialib" id="qtdialib" type="text" value="" />
-		<label id="duteis"><? echo utf8ToHtml('dias úteis') ?></label>
+		<label id="duteis"><? echo utf8ToHtml('dias Ãºteis') ?></label>
 		<br />
 													
-		<label for="dtlibera"> <? echo utf8ToHtml("Data Liberação:"); ?> </label>
+		<label for="dtlibera"> <? echo utf8ToHtml("Data LiberaÃ§Ã£o:"); ?> </label>
 		<input name="dtlibera" id="dtlibera" type="text" value="">				
 		</br>	
 													
@@ -103,7 +104,7 @@
 		<br />
 		
 		<div id="linCarencia">
-			<label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
+			<label for="idcarenc"><? echo utf8ToHtml("CarÃªncia:") ?></label>
 			<select name="idcarenc" id="idcarenc">
             <?php
                 $xml  = "<Root>";
@@ -120,7 +121,7 @@
             ?>
 			</select>
 		
-			<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1ª Carência:") ?> </label>
+			<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1Âª CarÃªncia:") ?> </label>
 			<input name="dtcarenc" id="dtcarenc" type="text" value="" />
 		</div>
 		
@@ -128,15 +129,15 @@
 		<select name="flgimppr" id="flgimppr">
 			<option value=""   > - </option>
 			<option value="yes" >Imprime</option>
-			<option value="no"><? echo utf8ToHtml('Não Imprime') ?></option>
+			<option value="no"><? echo utf8ToHtml('NÃ£o Imprime') ?></option>
 		</select>
 		<br />
 						
-		<label for="flgimpnp"><? echo utf8ToHtml('Nota Promissória:') ?></label>
+		<label for="flgimpnp"><? echo utf8ToHtml('Nota PromissÃ³ria:') ?></label>
 		<select name="flgimpnp" id="flgimpnp">
 			<option value=""   > - </option>
 			<option value="yes" >Imprime</option>
-			<option value="no"><? echo utf8ToHtml('Não Imprime') ?></option>
+			<option value="no"><? echo utf8ToHtml('NÃ£o Imprime') ?></option>
 		</select>
 		<br />
 		
@@ -147,7 +148,7 @@
 		<input name="dsratatu" id="dsratatu" type="text" value="" />
 		<br />
 		
-		<label for="dsctrliq"><? echo utf8ToHtml('Liquidações:') ?></label>
+		<label for="dsctrliq"><? echo utf8ToHtml('LiquidaÃ§Ãµes:') ?></label>
 		<input name="dsctrliq" id="dsctrliq" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<br />

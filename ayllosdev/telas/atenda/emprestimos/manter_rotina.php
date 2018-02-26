@@ -1,13 +1,13 @@
 <?
 /*!
  * FONTE        : manter_rotina.php 
- * CRIAÇÃO      : Gabriel Capoia (DB1)
- * DATA CRIAÇÃO : 06/05/2011
+ * CRIAÃ‡ÃƒO      : Gabriel Capoia (DB1)
+ * DATA CRIAÃ‡ÃƒO : 06/05/2011
  * OBJETIVO     : Rotina para validar/alterar/incluir/excluir os dados emprestimos
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÃ‡Ã•ES   :
  * --------------
- * 000: [08/08/2011] Inserido na rotina o campo 'tpemprst' referente ao tipo de empréstimo -  Marcelo L. Pereira (GATI)
+ * 000: [08/08/2011] Inserido na rotina o campo 'tpemprst' referente ao tipo de emprÃ©stimo -  Marcelo L. Pereira (GATI)
  * 001: [10/10/2011] Exibir mensagem de alerta -  Marcelo L. Pereira (GATI)
  * 002: [31/10/2011] Incluido a chamada da procedure alerta_fraude (Adriano).
  * 003: [29/11/2011] Ajuste para a inclusao do campo Justificativa (Adriano).
@@ -16,7 +16,7 @@
  * 006: [08/01/2014] Adicionado tratamento para retirar quebra de linha da justificativa e observacao. (Jorge)
  * 007: [01/04/2014] Adicionado conversao de caracteres especiais em seus equivalentes em campos string. (Jorge)
  * 008: [15/07/2014] Incluso novos parametros inpessoa e dtnascto na chamata xml (Daniel).
- * 009: [08/09/2014] Projeto Automatização de Consultas em Propostas de Crédito (Jonata-RKAM).
+ * 009: [08/09/2014] Projeto AutomatizaÃ§Ã£o de Consultas em Propostas de CrÃ©dito (Jonata-RKAM).
  * 010: [08/01/2015] Projeto microcredito (Jonata-RKAM).
  * 011: [23/01/2015] Incluso o parametro vleprori, para passar a informacao na alteracao do contrato (Vanessa SD 245702).
  * 012: [13/02/2015] Analise credito. (Jonata-RKAM).
@@ -27,12 +27,13 @@
  * 017: [01/03/2016] Adicionado cdpactra na chamada da rotina grava-proposta-completa PRJ Esteira de Credito. (Odirlei-AMcom/Oscar) 
  * 018: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 019: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
- * 020: [30/11/2016] P341-Automatização BACENJUD - Remover o envio da descrição do departamento, pois não utiliza na BO (Renato Darosci - Supero)
+ * 020: [30/11/2016] P341-AutomatizaÃ§Ã£o BACENJUD - Remover o envio da descriÃ§Ã£o do departamento, pois nÃ£o utiliza na BO (Renato Darosci - Supero)
  * 021: [05/04/2017] Cadastro dos campos Carencia. (Jaison/James - PRJ298)
  * 021: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
  * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 023: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
- * 024: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 024: [16/01/2018] IncluÃ­do novo campo em EmprÃ©stimos (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 025: [24/01/2018] Processamento do campo DSNIVORI (risco original da proposta) (Reginaldo - AMcom)
  */
 ?>
 
@@ -44,7 +45,7 @@
 	require_once('../../../class/xmlfile.php');
 	isPostMethod();
 
-	// Guardo os parâmetos do POST em variáveis
+	// Guardo os parÃ¢metos do POST em variÃ¡veis
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '' ;
 	$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : '' ;
 	$vllimapv = (isset($_POST['vllimapv'])) ? $_POST['vllimapv'] : '' ;
@@ -166,10 +167,10 @@
 	
 	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1' ;
 	
-	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
-	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
-				   ,"&","¨","~","^","*","#","%","$","!","?",";",">","<","|","+","=","£","¢","¬","§","`","´","¹","²"
-				   ,"³","ª","º","°","\"","'","\\","","?");
+	$array1 = array("Ã¡","Ã ","Ã¢","Ã£","Ã¤","Ã©","Ã¨","Ãª","Ã«","Ã­","Ã¬","Ã®","Ã¯","Ã³","Ã²","Ã´","Ãµ","Ã¶","Ãº","Ã¹","Ã»","Ã¼","Ã§","Ã±"
+	               ,"Ã","Ã€","Ã‚","Ãƒ","Ã„","Ã‰","Ãˆ","ÃŠ","Ã‹","Ã","ÃŒ","ÃŽ","Ã","Ã“","Ã’","Ã”","Ã•","Ã–","Ãš","Ã™","Ã›","Ãœ","Ã‡","Ã‘"
+				   ,"&","Â¨","~","^","*","#","%","$","!","?",";",">","<","|","+","=","Â£","Â¢","Â¬","Â§","`","Â´","Â¹","Â²"
+				   ,"Â³","Âª","Âº","Â°","\"","'","\\","","?");
 	$array2 = array("a","a","a","a","a","e","e","e","e","i","i","i","i","o","o","o","o","o","u","u","u","u","c","n"
                    ,"A","A","A","A","A","E","E","E","E","I","I","I","I","O","O","O","O","O","U","U","U","U","C","N"
 				   ,"e"," "," "," "," "," "," "," "," "," ",";"," "," ","|"," "," "," "," "," "," "," "," "," "," "
@@ -207,7 +208,7 @@
 	$complen2 = trim(str_replace( $array1, $array2, $complen2));
 	$dsjusren = trim(str_replace( $array1, $array2, $dsjusren));	
 	
-	// Dependendo da operação, chamo uma procedure diferente cddopcao
+	// Dependendo da operaÃ§Ã£o, chamo uma procedure diferente cddopcao
 	$procedure   = 'grava-proposta-completa';
 	$cddopcao    = $_POST['cddopcao'];
 	$i_mensagens = 0;
@@ -231,7 +232,7 @@
               $i_mensagens = 1;
 	}
 
-	//Tratado separa paranão ter que "zerar" todas as outras variaveis
+	//Tratado separa paranÃ£o ter que "zerar" todas as outras variaveis
 	else if ( $operacao == 'E'        ) {
 		$procedure = 'excluir-proposta';
 		$cddopcao = 'E';
@@ -332,7 +333,7 @@
 	$dsobserv = str_replace("\r", '', $dsobserv);
 	$dsobserv = str_replace("\n", ' ', $dsobserv);	
 
-	// Monta o xml dinâmico de acordo com a operação
+	// Monta o xml dinÃ¢mico de acordo com a operaÃ§Ã£o
 	$xml  = '';
 	$xml .= '<Root>';
 	$xml .= '	<Cabecalho>';
@@ -419,7 +420,7 @@
 	$xml .= '		<cdlcremp>'.$cdlcremp.'</cdlcremp>';
 	$xml .= '		<flgimppr>'.$flgimppr.'</flgimppr>';
 	$xml .= '		<idquapro>'.$idquapro.'</idquapro>';
-	//Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) 
+	//AdiÃ§Ã£o de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) 
 	//$xml .= '		<idquaprc>'.$idquaprc.'</idquaprc>';
 	$xml .= '		<flgpagto>'.$flgpagto.'</flgpagto>';
 	$xml .= '		<nrctaav2>'.$nrctaav2.'</nrctaav2>';
@@ -583,9 +584,9 @@
 	$tpAtlCad = 2;
 	
 	if ($procedure == 'grava-proposta-completa') {
-		exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\');' . $metodoConsultas ,'verificaCriticasRating(\'\'); ' . $metodoConsultas ,false);
+		exibirConfirmacao($msgAtCad,'ConfirmaÃ§Ã£o - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\');' . $metodoConsultas ,'verificaCriticasRating(\'\'); ' . $metodoConsultas ,false);
 	} else {
-		exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\')','verificaCriticasRating(\'\')',false);
+		exibirConfirmacao($msgAtCad,'ConfirmaÃ§Ã£o - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\')','verificaCriticasRating(\'\')',false);
 	}
 
 ?>
