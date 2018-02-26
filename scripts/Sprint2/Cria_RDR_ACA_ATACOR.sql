@@ -71,7 +71,7 @@ begin
                  VALUES('BUSCA_CONTRATOS_LC100',
                         'TELA_ATACOR',
                         'pc_busca_contratos_lc100',
-                        'pr_nracordo, pr_cdcooper',
+                        'pr_nracordo',
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> BUSCA_CONTRATOS_LC100 -> TELA_ATACOR.pc_busca_contratos_lc100');
