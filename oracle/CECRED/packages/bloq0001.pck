@@ -888,8 +888,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         vr_valor_selecionado := vr_valor_selecionado + pr_vlpoupa_terceiro;
       END IF;
       
-      IF pr_inaplica_propria = 0 AND pr_inpoupa_propria = 0 AND pr_resgate_automa = 1 THEN
-          vr_dscritic := 'Resgate Automatico so pode ser selecionado para Aplicacao ou Poup. Programada Propria!';
+      IF pr_inaplica_propria = 0 AND pr_resgate_automa = 1 THEN
+          vr_dscritic := 'O resgate automatico e permitido apenas para o tipo Aplicacao Propria!';
           RAISE vr_exc_erro;
       END IF;
       
@@ -909,7 +909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
       -- se foi selecionado pelo menos uma opção, deve haver cobertura da operação também:
       IF pr_tpctrato <> 4 AND (pr_inaplica_propria + pr_inpoupa_propria+ pr_inaplica_terceiro + pr_inpoupa_terceiro) > 0 AND
          vr_vlgarnec  > vr_valor_selecionado THEN
-        vr_dscritic := 'Valor da garantia sugerida nao e suficiente!';
+        vr_dscritic := 'Valor de garantia sugerida insuficiente!';
         RAISE vr_exc_erro;
       END IF;
       

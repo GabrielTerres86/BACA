@@ -2465,7 +2465,9 @@ BEGIN
                crawepr.dtlibera,
                crawepr.dtdpagto,
                crawepr.txmensal,
-               crawepr.nrseqrrq
+               crawepr.nrseqrrq,
+               crawepr.dtmvtolt,
+               crawepr.idcobefe
           FROM crapass,
                crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
@@ -2484,6 +2486,16 @@ BEGIN
            AND nrctremp = pr_nrctremp;
       rw_crapepr cr_crapepr%ROWTYPE;--armazena informacoes do cursor cr_crapepr
 
+      -- Garantia Operacoes de Credito
+      CURSOR cr_cobertura (pr_idcobert IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
+        SELECT tco.perminimo,
+               tco.nrconta_terceiro,
+               tco.inresgate_automatico,
+               tco.qtdias_atraso_permitido
+          FROM tbgar_cobertura_operacao tco
+         WHERE tco.idcobertura = pr_idcobert;
+      rw_cobertura cr_cobertura%ROWTYPE;
+
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
@@ -2500,6 +2512,10 @@ BEGIN
       vr_dsjasper       VARCHAR2(100);               --> nome do jasper a ser usado
       vr_dtlibera       DATE;                        --> Data de liberacao do contrato
       vr_nmarqimp       VARCHAR2(50);                --> nome do arquivo PDF
+      vr_flgachou       BOOLEAN;
+      vr_inaddcob       INTEGER := 0;
+      vr_inresaut       INTEGER := 0;
+      vr_nrctater       INTEGER := 0;
 
       -- variaveis de críticas
       vr_tab_erro       GENE0001.typ_tab_erro;
@@ -2569,6 +2585,35 @@ BEGIN
 
       -- Inicializa o XML
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,'<?xml version="1.0" encoding="utf-8"?><contrato>', TRUE);
+
+      -- Se for PP ou POS-FIXADO
+      IF rw_crawepr.tpemprst IN (1,2) THEN
+        -- Se possuir cobertura e data for superior ao do novo contrato
+        IF rw_crawepr.idcobefe > 0 AND
+           rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                                   ,pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN
+          --> Garantia Operacoes de Credito
+          OPEN  cr_cobertura(pr_idcobert => rw_crawepr.idcobefe);
+          FETCH cr_cobertura INTO rw_cobertura;
+          vr_flgachou := cr_cobertura%FOUND;
+          CLOSE cr_cobertura;
+          -- Se achou
+          IF vr_flgachou THEN
+             vr_inaddcob := 1;
+             vr_nrctater := rw_cobertura.nrconta_terceiro;
+             vr_inresaut := rw_cobertura.inresgate_automatico;
+             GENE0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
+                                    '<cob_qtdiatraso>' || rw_cobertura.qtdias_atraso_permitido || '</cob_qtdiatraso>' ||
+                                    '<cob_perminimo>'  || TO_CHAR(rw_cobertura.perminimo,'FM999G999G999G990D00') || '</cob_perminimo>');
+          END IF;
+        END IF;
+      END IF;
+
+      -- Cria nos de cobertura de operacao e resgate automatico
+      GENE0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
+                             '<cob_nrctater>' || vr_nrctater || '</cob_nrctater>' ||
+                             '<cob_inaddcob>' || vr_inaddcob || '</cob_inaddcob>' ||
+                             '<cob_inresaut>' || vr_inresaut || '</cob_inresaut>');
 
       -- Concatena com xml contratos
       dbms_lob.append(vr_des_xml, vr_des_xml2);

@@ -90,6 +90,10 @@ if (cGar_tipaber.val() != 'C') {
     cGar_campos2.unbind('click').bind('click', function (){
         mostraImagemGAROPC(1);
         limpaCamposGAROPC('T');
+        // Se NAO foi selecionado aplicacao propria reseta o resgate automatico
+        if ($('input[name=gar_pro_apli]:radio:checked', '#frmGAROPC').val() == 0) {
+            $('#gar_pro_raut_0').prop("checked", true);
+        }
     });
 
     // Se foi clicado no campo resgate automatico
@@ -199,7 +203,7 @@ function mostraImagemGAROPC(gar_invalida) {
     var gar_vlselect = 0;
     var gar_urlimage = $('#imgGAROPC', '#frmGAROPC').attr('urlimage');
     var gar_nomimage = 'motor_REPROVAR.png';
-    var gar_altimage = 'Valor da garantia não é suficiente!';
+    var gar_altimage = 'Valor de garantia insuficiente!';
     var gar_pro_apli = $('input[name=gar_pro_apli]:radio:checked', '#frmGAROPC').val();
     var gar_pro_poup = $('input[name=gar_pro_poup]:radio:checked', '#frmGAROPC').val();
     var gar_ter_apli = $('input[name=gar_ter_apli]:radio:checked', '#frmGAROPC').val();

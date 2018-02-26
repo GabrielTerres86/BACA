@@ -392,9 +392,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARGOC AS
         RAISE vr_exc_erro;
       END IF;
       
-      IF pr_peminimo_cobertura < 0.01 OR
+      IF pr_peminimo_cobertura < 0 OR
          pr_peminimo_cobertura > 300  THEN
-        vr_dscritic := 'Percentual Míninimo Cobertura para Garantia deve ser entre 0.01 e 300.00%.';
+        vr_dscritic := 'Percentual Míninimo Cobertura para Garantia deve ser entre 0.00 e 300.00%.';
         RAISE vr_exc_erro;
       END IF;
       

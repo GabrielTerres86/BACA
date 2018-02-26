@@ -358,6 +358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
         END IF;
       ELSE
         vr_labgaran := 'Garantia Sugerida:';
+        vr_inresgate_permitido := 0;
       END IF;
 
       -- Se for Consulta ou Alteracao
@@ -850,6 +851,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
          NVL(pr_inaplter,0) = 0 AND
          NVL(pr_inpouter,0) = 0 THEN
          vr_dscritic := 'Não é possível criar este tipo de Aditivo Contratual sem Cobertura da Operação.';
+         RAISE vr_exc_erro;
+      END IF;
+
+      -- Se for um percentual invalido
+      IF pr_permingr > 999.99 THEN
+         vr_dscritic := 'Percentual da garantia sugerida não permitida!';
+         RAISE vr_exc_erro;
+      END IF;
+
+      -- Se o percentual for zero e foi selecionado aplicacao ou poupanca programada
+      IF pr_permingr = 0 AND 
+        (NVL(pr_inaplpro,0) = 1 OR
+         NVL(pr_inpoupro,0) = 1 OR
+         NVL(pr_inaplter,0) = 1 OR
+         NVL(pr_inpouter,0) = 1) THEN
+         vr_dscritic := 'Não será permitido utilizar Aplicação ou Poupança Programada com valor de cobertura de garantia igual a 0!';
+         RAISE vr_exc_erro;
+      END IF;
+
+      -- Se conta do proponente for a mesma do terceiro
+      IF pr_nrdconta = pr_nrctater THEN
+         vr_dscritic := 'Não é permitido utilizar a conta do proponente como garantia de aplicação de terceiro!';
          RAISE vr_exc_erro;
       END IF;
 
