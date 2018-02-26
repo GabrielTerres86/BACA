@@ -57,6 +57,8 @@
                             nao cadastrado.". (Reinert)                            
                
                28/11/2017 - Alteracoes melhoria 458 - Antonio R Junior - Mouts
+
+			   20/02/2018 - Alterado valor do tamanho do campo NRDOCMTO de 10 para 11 caracteres - Antonio R. Junior (mouts) - chamado 851313
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -232,7 +234,7 @@ FORM SKIP
      tt-transacoes-especie.nrdolote  AT  4 FORMAT "zzz,zz9"
      tt-transacoes-especie.nrdconta  AT 11 FORMAT "x(10)"
      tt-transacoes-especie.nmprimtl  AT 22 FORMAT "x(26)" 
-     tt-transacoes-especie.nrdocmto  AT 49 FORMAT "x(10)"
+     tt-transacoes-especie.nrdocmto  AT 49 FORMAT "x(11)"
      tt-transacoes-especie.tpoperac  AT 66 FORMAT "x(09)"
      SKIP
      tt-transacoes-especie.vllanmto  AT 21 FORMAT "x(14)"

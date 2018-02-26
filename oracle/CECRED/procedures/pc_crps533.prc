@@ -294,9 +294,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             96,257,414,439,950
                             (Adriano - SD 745649).                        
                             
-               03/10/2017 - SD761624 - Inclusão de tratamento da Critica 811 - Marcos(Supero)           
-                            
+               03/10/2017 - SD761624 - Inclusão de tratamento da Critica 811 - Marcos(Supero)
+
+               04/01/2018 - #824564 Tratamento para incrementar nrseqdig em 100.000 ao tentar inserir índice
+                           duplicado na craplcm (dup_val_on_index) (Carlos)
+
 			   09/02/2018 - Adicionado coluna cdagenci no relatorio 526 - Chamado 771338 - Mateus Zimmermann (Mouts)
+                            
+               14/02/2018 - SD813179 - Verificar se existe devolucao alinea 70 igual a alinea 21 - Demetrius (Mouts)
                             
 ............................................................................. */
 
@@ -517,7 +522,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
          WHERE tbchq.cdcooper = pr_cdcooper
            AND tbchq.nrdconta = pr_nrdconta;
         rw_tbchq_param_conta cr_tbchq_param_conta%ROWTYPE;
-
 
        /* Variaveis Locais da pc_crps533 */
 
@@ -2050,13 +2054,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
             --Selecionar os lancamentos
             CURSOR cr_craplcm2 (pr_cdcooper IN craplcm.cdcooper%TYPE
                                ,pr_nrdconta IN craplcm.nrdconta%TYPE
-                               ,pr_nrdocmto IN craplcm.nrdocmto%TYPE) IS
+                               ,pr_nrdocmto IN craplcm.nrdocmto%TYPE
+                               ,pr_cdpesqbb IN craplcm.cdpesqbb%TYPE) IS
               SELECT craplcm.dtmvtolt
                 FROM craplcm craplcm
                WHERE craplcm.cdcooper = pr_cdcooper
                  AND craplcm.nrdconta = pr_nrdconta
                  AND craplcm.nrdocmto = pr_nrdocmto
-                 AND craplcm.cdpesqbb = '21'
+                 AND craplcm.cdpesqbb = pr_cdpesqbb -- '21'
                  AND craplcm.cdhistor IN (47, 191, 338, 573)
                ORDER BY craplcm.progress_recid DESC;
             rw_craplcm2 cr_craplcm2%ROWTYPE;
@@ -2270,7 +2275,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  AND dpb.cdhistor = lcm.cdhistor
                  AND dpb.inlibera = 1;
             rw_crapdpb cr_crapdpb%ROWTYPE;
-
+			
 			CURSOR cr_crapass_pa(pr_cdcooper crapass.cdcooper%TYPE
                                 ,pr_nrdconta crapass.nrdconta%TYPE) IS
              SELECT crapass.cdagenci
@@ -2317,7 +2322,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
             vr_nrdolot2   NUMBER:= 0;
             vr_qtcompln   NUMBER:= 0;
             vr_vlcompdb   NUMBER:= 0;
-
+			
 			vr_cdagenci_pa NUMBER:= 0;
 
             vr_nrdctitg   VARCHAR2(40);
@@ -3703,6 +3708,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             IF cr_craptco%FOUND THEN
                               --Fechar Cursor
                               CLOSE cr_craptco;
+                              IF vr_cdalinea = 70 THEN
+                                /* Se ja existir devolucao com a alinea 70, devolver com a alinea 43 */
+                                OPEN cr_craplcm2 (pr_cdcooper => rw_craptco.cdcopant
+                                                 ,pr_nrdconta => rw_craptco.nrdconta
+                                                 ,pr_nrdocmto => vr_nrdocmto
+                                                 ,pr_cdpesqbb => vr_cdalinea);
+                                --Posicionar no proximo registro
+                                FETCH cr_craplcm2 INTO rw_craplcm2;
+                                --Se encontrou registro
+                                IF cr_craplcm2%FOUND THEN
+                                  vr_cdalinea:= 43;
+                                END IF;
+                                --Fechar cursor
+                                CLOSE cr_craplcm2;
+                              END IF;
+
                               --Executar rotina
                               pc_cria_dev(pr_cdcooper => rw_craptco.cdcopant
                                          ,pr_dtmvtopr => (CASE pr_nmtelant
@@ -3747,12 +3768,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                               --Fechar Cursor
                               CLOSE cr_craptco;
 
-                              IF  vr_cdalinea = 21 THEN
+                              IF  vr_cdalinea in (21,70) THEN
                                 /* Se ja existir devolucao com a alinea 21, devolver com a alinea 43 */
                                 --Selecionar os lancamentos
                                 OPEN cr_craplcm2 (pr_cdcooper => pr_cdcooper
                                                  ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                 ,pr_nrdocmto => vr_nrdocmto);
+                                                 ,pr_nrdocmto => vr_nrdocmto
+                                                 ,pr_cdpesqbb => vr_cdalinea);
                                 --Posicionar no proximo registro
                                 FETCH cr_craplcm2 INTO rw_craplcm2;
                                 --Se encontrou registro
@@ -4950,6 +4972,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       
                         vr_flg_criou_lcm := FALSE;
                         vr_nrseqdig := nvl(vr_nrseqarq, 0);
+                         IF vr_alinea_96 = 70 THEN
+                          /* Se ja existir devolucao com a alinea 70, devolver com a alinea 43 */
+                          OPEN cr_craplcm2 (pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => nvl(nvl(vr_nrdconta_incorp, vr_nrdconta), 0)
+                                           ,pr_nrdocmto => nvl(vr_nrdocmto, 0)
+                                           ,pr_cdpesqbb => vr_alinea_96);
+                          --Posicionar no proximo registro
+                          FETCH cr_craplcm2 INTO rw_craplcm2;
+                          --Se encontrou registro
+                          IF cr_craplcm2%FOUND THEN
+                            vr_alinea_96:= 43;
+                          END IF;
+                          --Fechar cursor
+                          CLOSE cr_craplcm2;
+                        END IF;
 
                         WHILE NOT vr_flg_criou_lcm LOOP
                         BEGIN
@@ -5336,7 +5373,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       END IF;
 
                     END IF;  --vr_cdcritic IN (811,757)
-
+					
 					-- Buscar o numero do PA(cdagenci)
                     OPEN cr_crapass_pa(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => rw_craprej.nrdconta);
@@ -5624,7 +5661,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                       vr_tot_qtregrec:= Nvl(vr_tot_qtregrec,0) + 1;
                       vr_tot_vlregrec:= Nvl(vr_tot_vlregrec,0) + rw_craprej.vllanmto;
-
+					  
 					  -- Buscar o numero do PA(cdagenci)
                       OPEN cr_crapass_pa(pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => rw_craprej.nrdconta);
