@@ -1,10 +1,9 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-         pc_crps646 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                    ,pr_flgresta  IN PLS_INTEGER            --> Flag padr„o para utilizaÁ„o de restart
-                    ,pr_stprogra OUT PLS_INTEGER            --> SaÌda de termino da execuÁ„o
-                    ,pr_infimsol OUT PLS_INTEGER            --> SaÌda de termino da solicitaÁ„o
-                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                    ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps646 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+                                              ,pr_flgresta  IN PLS_INTEGER            --> Flag padr√£o para utiliza√ß√£o de restart
+                                              ,pr_stprogra OUT PLS_INTEGER            --> Sa√≠da de termino da execu√ß√£o
+                                              ,pr_infimsol OUT PLS_INTEGER            --> Sa√≠da de termino da solicita√ß√£o
+                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                              ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
     /* .............................................................................
 
@@ -12,22 +11,27 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Carlos Henrique Weinhold - CECRED
-       Data    : JULHO/2013
+       Data    : JULHO/2013                               Ultima atualizacao: 19/02/2018
 
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
-   Objetivo  : Listar os tÌtulos a pagar e receber dos prÛximos 7 dias corridos
-               para o setor Financeiro, que ir· auxiliar na provisao de caixa
-               necess·rio para realizar liquidaÁoes bi-laterais e
+   Objetivo  : Listar os t√≠tulos a pagar e receber dos pr√≥ximos 7 dias corridos
+               para o setor Financeiro, que ir√° auxiliar na provisao de caixa
+               necess√°rio para realizar liquida√ßoes bi-laterais e
                multi-laterais.
 
-  AlteraÁoes: 11/11/2013 - Nova forma de chamar as agencias, de PAC agora
-                           a escrita ser· PA (Guilherme Gielow)
+  Altera√ßoes: 11/11/2013 - Nova forma de chamar as agencias, de PAC agora
+                           a escrita ser√° PA (Guilherme Gielow)
 
               16/12/2013 - Conversao Progress => PL/SQL (Andrino - RKAM).
 
-
+              19/02/2018 - Mehora da query principal da tabela cob
+                         - Ajustando nome do m√≥dulo logado
+                         - No caso de erro de programa gravar tabela especifica de log 
+                         - Ajuste mensagem de erro para inicio e fim de programa
+                           (Belli - Envolti - Chamado 769624)
+                         - Inclus√£o log nas exceptions
 
 ............................................................................ */
 
@@ -36,16 +40,16 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
 
-      -- CÛdigo do programa
+      -- C√≥digo do programa
       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS646';
 
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
-      vr_exc_fimprg EXCEPTION;
+      -- Excluida rotina condi√ß√£o de exece√ß√£o vr_exc_fimprg - Chamado 769624 - 19/02/2018 
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
 
-      -- Vari·vel de Controle de XML
+      -- Vari√°vel de Controle de XML
       vr_des_xml    CLOB;
       vr_path_arquivo VARCHAR2(200);
 
@@ -65,12 +69,14 @@ CREATE OR REPLACE PROCEDURE CECRED.
           FROM crapcop cop
          WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
-      -- Cursor genÈrico de calend·rio
+      -- Cursor gen√©rico de calend√°rio
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
+      -- Mehora da query principal da tabela cob - Chamado 769624 - 19/02/2018
       -- Busca os titulos a receber
       CURSOR cr_crapcob (pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
-        SELECT crapcop.nmrescop
+        SELECT /*+index CRAPCOB##CRAPCOB9(crapcob) */
+               crapcop.nmrescop
               ,crapcco.cdagenci
               ,crapcob.nrdconta
               ,crapcob.nrcnvcob
@@ -83,7 +89,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
                crapceb,
                crapcco,
                crapcop
-         WHERE crapcop.cdcooper <> 3
+         WHERE crapcop.cdcooper IN 
+                         ( SELECT t.cdcooper FROM crapcop t 
+                           WHERE  t.flgativo = 1 
+                           AND    t.cdcooper <> 3 ) 
            AND crapcco.cdcooper = crapcop.cdcooper
            AND crapcco.cddbanco = 085
            AND crapcco.flgregis = 1
@@ -100,7 +109,34 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       ------------------------------- VARIAVEIS -------------------------------
 
-      --------------------------- SUBROTINAS INTERNAS --------------------------
+      --------------------------- SUBROTINAS INTERNAS -------------------------- 
+
+    -- Inclusao do log padr√£o - Chamado 769624 - 19/02/2018
+    -- Controla Controla log em banco de dados
+    PROCEDURE pc_controla_log_programa(pr_dstiplog      IN VARCHAR2, -- Tipo de Log
+                                       pr_tpocorrencia  IN NUMBER,   -- Tipo de ocorrencia
+                                       pr_dscritic      IN VARCHAR2, -- Descri√ß√£o do Log
+                                       pr_cdcritic      IN NUMBER,   -- Codigo da cr√≠tica
+                                       pr_cdcriticidade IN VARCHAR2)
+    IS
+      vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+    BEGIN         
+      --> Controlar gera√ß√£o de log de execu√ß√£o dos jobs                                
+      CECRED.pc_log_programa(pr_dstiplog      => pr_dstiplog, 
+                             pr_cdprograma    => vr_cdprogra, 
+                             pr_cdcooper      => pr_cdcooper, 
+                             pr_tpexecucao    => 1, --1-Batch
+                             pr_tpocorrencia  => pr_tpocorrencia,
+                             pr_cdcriticidade => 0, --baixa
+                             pr_dsmensagem    => pr_dscritic,
+                             pr_cdmensagem    => pr_cdcritic,
+                             pr_idprglog      => vr_idprglog);
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log  
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+    END pc_controla_log_programa;
+    
 	    --Procedure que escreve linha no arquivo CLOB
 	    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
       BEGIN
@@ -112,16 +148,20 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       --------------- VALIDACOES INICIAIS -----------------
 
-      -- Incluir nome do mÛdulo logado
+      -- Incluir nome do m√≥dulo logado
       GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
-                                ,pr_action => null);
+                                ,pr_action => null);                                      
+
+      --Programa iniciado - Chamado 769624 - 19/02/2018
+      pc_controla_log_programa('I', NULL, NULL, 0, NULL);
+
       -- Verifica se a cooperativa esta cadastrada
       OPEN cr_crapcop;
       FETCH cr_crapcop
        INTO rw_crapcop;
-      -- Se n„o encontrar
+      -- Se n√£o encontrar
       IF cr_crapcop%NOTFOUND THEN
-        -- Fechar o cursor pois haver· raise
+        -- Fechar o cursor pois haver√° raise
         CLOSE cr_crapcop;
         -- Montar mensagem de critica
         vr_cdcritic := 651;
@@ -131,11 +171,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
         CLOSE cr_crapcop;
       END IF;
 
-      -- Leitura do calend·rio da cooperativa
+      -- Leitura do calend√°rio da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
        INTO rw_crapdat;
-      -- Se n„o encontrar
+      -- Se n√£o encontrar
       IF btch0001.cr_crapdat%NOTFOUND THEN
         -- Fechar o cursor pois efetuaremos raise
         CLOSE btch0001.cr_crapdat;
@@ -147,13 +187,13 @@ CREATE OR REPLACE PROCEDURE CECRED.
         CLOSE btch0001.cr_crapdat;
       END IF;
 
-      -- ValidaÁıes iniciais do programa
+      -- Valida√ß√µes iniciais do programa
       BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                                ,pr_flgbatch => 1
                                ,pr_cdprogra => vr_cdprogra
                                ,pr_infimsol => pr_infimsol
                                ,pr_cdcritic => vr_cdcritic);
-      -- Se a variavel de erro È <> 0
+      -- Se a variavel de erro √© <> 0
       IF vr_cdcritic <> 0 THEN
         -- Envio centralizado de log de erro
         RAISE vr_exc_saida;
@@ -166,7 +206,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
 
       -------------------------------------------
-      -- Iniciando a geraÁ„o do XML
+      -- Iniciando a gera√ß√£o do XML
       -------------------------------------------
       pc_escreve_xml('<?xml version="1.0" encoding="WINDOWS-1252"?>'||
                         '<crrl656>'||
@@ -184,7 +224,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
           -- Atualiza variavel informando que tem informacoes para gerar o arquivo
           vr_flgdados := TRUE;
         END IF;
-
+        
         -- Insere os detalhes
         pc_escreve_xml('<detalhe>'||
                         '<cdagenci>'||rw_crapcob.cdagenci||'</cdagenci>'  ||
@@ -210,6 +250,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       ddda0001.pc_titulos_a_pagar(pr_dtvcnini => rw_crapdat.dtmvtolt,
                                   pr_tt_pagar => vr_tt_pagar);
+                                  
+      -- Retorna nome do m√≥dulo logado - Chamado 769624 - 19/02/2018
+      GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
+                                ,pr_action => null);  
 
       -- Se existir registros
       vr_index := vr_tt_pagar.first;
@@ -254,12 +298,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
         vr_index := vr_tt_pagar.next(vr_index);
       END LOOP;
 
-      -- Finaliza o nÛ do XML
+      -- Finaliza o n√≥ do XML
       pc_escreve_xml('</pagar></crrl656>');
 
       -- Vai imprimir somente se tiver dados para gerar
       IF vr_flgdados THEN
-        -- Busca do diretÛrio base da cooperativa e a subpasta de relatÛrios
+        -- Busca do diret√≥rio base da cooperativa e a subpasta de relat√≥rios
         vr_path_arquivo := gene0001.fn_diretorio( pr_tpdireto => 'C' -- /usr/coop
                                                ,pr_cdcooper => pr_cdcooper
                                                ,pr_nmsubdir => '/rl'); --> Gerado no diretorio /rl
@@ -272,19 +316,22 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                     pr_dsjasper  => 'crrl656.jasper',               --> Arquivo de layout do iReport
                                     pr_dsparams  => null,                           --> Nao enviar parametro
                                     pr_dsarqsaid => vr_path_arquivo||'/crrl656.lst', --> Arquivo final
-                                    pr_flg_gerar => 'N',                            --> N„o gerar o arquivo na hora
+                                    pr_flg_gerar => 'N',                            --> N√£o gerar o arquivo na hora
                                     pr_qtcoluna  => 132,                            --> Quantidade de colunas
                                     pr_nmformul  => '132col',                       --> Nome do formulario
                                     pr_sqcabrel  => 1,                              --> Sequencia do cabecalho
-                                    pr_flg_impri => 'S',                            --> Chamar a impress„o (Imprim.p)
+                                    pr_flg_impri => 'S',                            --> Chamar a impress√£o (Imprim.p)
                                     pr_nrcopias  => 1,                              --> Numero de copias
                                     pr_des_erro  => vr_dscritic);                   --> Saida com erro
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
         END IF;
+        -- Retorna nome do m√≥dulo logado - Chamado 769624 - 19/02/2018
+        GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
+                                  ,pr_action => null);  
       END IF;
 
-      -- Liberando a memÛria alocada pro CLOB
+      -- Liberando a mem√≥ria alocada pro CLOB
       dbms_lob.close(vr_des_xml);
       dbms_lob.freetemporary(vr_des_xml);
 
@@ -296,48 +343,44 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                ,pr_infimsol => pr_infimsol
                                ,pr_stprogra => pr_stprogra);
 
-      -- Salvar informaÁıes atualizadas
+      --Programa finalizado - Chamado 769624 - 19/02/2018
+      pc_controla_log_programa('F', NULL, NULL, 0, NULL);
+
+      -- Salvar informa√ß√µes atualizadas
       COMMIT;
 
     EXCEPTION
-      WHEN vr_exc_fimprg THEN
-        -- Se foi retornado apenas cÛdigo
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descriÁ„o
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || vr_dscritic );
-        -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-        btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdprogra => vr_cdprogra
-                                 ,pr_infimsol => pr_infimsol
-                                 ,pr_stprogra => pr_stprogra);
-        -- Efetuar commit
-        COMMIT;
+      -- Excluida rotina condi√ß√£o de exece√ß√£o vr_exc_fimprg - Chamado 769624 - 19/02/2018      
       WHEN vr_exc_saida THEN
-        -- Se foi retornado apenas cÛdigo
+        -- Se foi retornado apenas c√≥digo
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descriÁ„o
+          -- Buscar a descri√ß√£o
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
-        -- Devolvemos cÛdigo e critica encontradas das variaveis locais
+        -- Devolvemos c√≥digo e critica encontradas das variaveis locais
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
+
+        --Grava erro na tabela de logs
+        pc_controla_log_programa('O', 1, pr_dscritic, pr_cdcritic, 1);
+
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
-        -- Efetuar retorno do erro n„o tratado
-        pr_cdcritic := 0;
-        pr_dscritic := sqlerrm;
+        -- No caso de erro de programa gravar tabela especifica de log - Chamado 769624 - 19/02/2018 
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
+        -- Efetuar retorno do erro n√£o tratado
+        -- Ajuste mensagem de erro - Chamado 769624 - 19/02/2018
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ', crps646 erro:' ||sqlerrm; 
+
+
+        --Grava erro na tabela de logs
+        pc_controla_log_programa('O', 2, pr_dscritic, pr_cdcritic, 2);
+
         -- Efetuar rollback
         ROLLBACK;
     END;
 
   END pc_crps646;
-/
-
