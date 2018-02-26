@@ -7,12 +7,12 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             24/07/2009 - Novo campo v_msg_vencido (David).
             
             04/09/2013 - Nova forma de chamar as agências, de PAC agora 
-                            a escrita será PA (André Euzébio - Supero).
+                         a escrita será PA (André Euzébio - Supero).
 							
-			15/09/2014 - Alterações referentes ao Projeto Débito
-						 Automático Fácil, agora com campo de conta
-						 habilitado e opção de Cooperado e 
-						 Não Cooperado. (Lucas Lunelli - Out/2014)
+            15/09/2014 - Alterações referentes ao Projeto Débito
+                         Automático Fácil, agora com campo de conta
+                         habilitado e opção de Cooperado e 
+                         Não Cooperado. (Lucas Lunelli - Out/2014)
                          
             18/03/2015 - Removido campos de Conta e Nome para a
                          Melhoria SD 260475 (Lunelli).
@@ -85,6 +85,11 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
         $('#v_fmtcodbar').mask('00000000000000000000000000000000000000000000');
         $('#v_fmtcodbar').val('');
         $('#v_codbarras').val('');
+        
+        $('#v_cod').val('');
+        $('#v_senha').val('');
+        $("#v_cod").prop("disabled", true);
+        $("#v_senha").prop("disabled", true);
 
         $(cValor).prop("disabled", false);
     }	
@@ -467,6 +472,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 <input type="hidden" name="v_msg">
 <input type="hidden" name="vh_foco" value="6">
 <input type="hidden" name="v_msg_vencido" id="v_msg_vencido" value="no">
+<input type="hidden" name="hdnEstorno" id="hdnEstorno" value="">
+<input type="hidden" name="hdnVerifEstorno" id="hdnVerifEstorno" value="">
+<input type="hidden" name="hdnValorAcima" id="hdnValorAcima" value="">
 <p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
 <div align="center">
   <center>
@@ -545,11 +553,12 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
     </tr>
     <tr>
         <td width=15% align="right">Código:</td>
-        <td><input class="input" type="text" id="v_cod" name="v_cod" size="12" maxlength="10"></td>
+        <td><input class="input" type="text" id="v_cod" name="v_cod" size="12" maxlength="10" disabled></td>
     </tr>
     <tr>
         <td width="15%" align="right">Senha:</td>
-        <td><input class="input" type="password" id="v_senha" name="v_senha" size="12" maxlength="10"></td>
+        <td><input class="input" type="password" id="v_senha" name="v_senha" size="12" maxlength="10" disabled>
+        </td>
     </tr>
     <tr>
         <td align="right" class="linhaform" colspan="2" height="50">
@@ -573,9 +582,23 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 
 </form>
 </body>
+<script language=JavaScript>
+
+  if($("#hdnVerifEstorno").val() == 0 || $("#hdnVerifEstorno").val() == "" || $("#hdnVerifEstorno").val() == null){
+    $("#hdnVerifEstorno").val(0);
+  }
+  
+  function habilitarCampos(){     
+
+    if($("#hdnValorAcima").val() == 0 || $("#hdnValorAcima").val() == "" || $("#hdnValorAcima").val() == null){
+      $("#hdnValorAcima").val(0);
+      $("#v_cod").prop("disabled", true);
+      $("#v_senha").prop("disabled", true);
+    }else{
+      $("#hdnValorAcima").val(1);
+      $("#v_cod").prop("disabled", false);
+      $("#v_senha").prop("disabled", false);
+    }
+  }
+</script>
 </html>
-
-
-
-
-

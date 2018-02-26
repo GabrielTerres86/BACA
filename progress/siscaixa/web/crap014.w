@@ -163,7 +163,10 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_tpproces    AS CHARACTER FORMAT "X(256)":U
        FIELD v_flblqval    AS CHARACTER FORMAT "X(256)":U
        FIELD v_cod         AS CHARACTER FORMAT "X(256)":U
-       FIELD v_senha       AS CHARACTER FORMAT "X(256)":U.
+       FIELD v_senha       AS CHARACTER FORMAT "X(256)":U
+       FIELD hdnEstorno    AS CHARACTER FORMAT "X(256)":U
+       FIELD hdnVerifEstorno    AS CHARACTER FORMAT "X(256)":U
+       FIELD hdnValorAcima AS CHARACTER FORMAT "X(256)":U.
        
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -249,6 +252,10 @@ DEFINE VARIABLE glb_cdagenci LIKE crapass.cdagenci              NO-UNDO.
 DEFINE VARIABLE glb_cdbccxlt LIKE craptit.cdbccxlt              NO-UNDO.
 DEFINE VARIABLE glb_cdoperad LIKE crapope.cdoperad              NO-UNDO.
 
+DEFINE VARIABLE vr_cdcriticEstorno AS INTEGER NO-UNDO INIT 0.
+DEFINE VARIABLE vr_cdcriticValorAcima AS INTEGER NO-UNDO INIT 0.
+
+
 DEF VAR h_b1crap00           AS HANDLE     NO-UNDO.
                                       
 DEF TEMP-TABLE w-craperr  NO-UNDO
@@ -281,8 +288,17 @@ DEF TEMP-TABLE tt-crapcbl NO-UNDO LIKE crapcbl
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_valor ab_unmap.radio ab_unmap.v_codbarras ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_msg_vencido ab_unmap.v_fmtcodbar ab_unmap.v_tipdocto ab_unmap.v_tpproces ab_unmap.v_flblqval ab_unmap.v_senha  ab_unmap.v_cod 
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_valor ab_unmap.radio ab_unmap.v_codbarras ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_msg_vencido ab_unmap.v_fmtcodbar ab_unmap.v_tipdocto ab_unmap.v_tpproces ab_unmap.v_flblqval ab_unmap.v_senha ab_unmap.v_cod 
+&Scoped-Define ENABLED-OBJECTS ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_valor ~
+ab_unmap.radio ab_unmap.v_codbarras ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_coop ~
+ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_msg_vencido ~
+ab_unmap.v_fmtcodbar ab_unmap.v_tipdocto ab_unmap.v_tpproces ab_unmap.v_flblqval ~
+ab_unmap.v_senha  ab_unmap.v_cod ab_unmap.hdnEstorno ab_unmap.hdnVerifEstorno ab_unmap.hdnValorAcima
+
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_valor ~
+ab_unmap.radio ab_unmap.v_codbarras ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_coop ~
+ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_msg_vencido ~
+ab_unmap.v_fmtcodbar ab_unmap.v_tipdocto ab_unmap.v_tpproces ab_unmap.v_flblqval ~
+ab_unmap.v_senha ab_unmap.v_cod ab_unmap.hdnEstorno ab_unmap.hdnVerifEstorno ab_unmap.hdnValorAcima
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -379,6 +395,18 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.hdnEstorno AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN
+          SIZE 20 BY 1 
+     ab_unmap.hdnVerifEstorno AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN
+          SIZE 20 BY 1 
+     ab_unmap.hdnValorAcima AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN
+          SIZE 20 BY 1          
      WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -414,6 +442,9 @@ DEFINE FRAME Web-Frame
           FIELD v_msg_vencido AS CHARACTER FORMAT "X(256)":U
           FIELD v_cod AS CHARACTER FORMAT "X(256)":U
           FIELD v_senha AS CHARACTER FORMAT "X(256)":U
+          FIELD hdnEstorno AS CHARACTER FORMAT "X(256)":U
+          FIELD hdnVerifEstorno AS CHARACTER FORMAT "X(256)":U
+          FIELD hdnValorAcima AS CHARACTER FORMAT "X(256)":U
       END-FIELDS.
    END-TABLES.
  */
@@ -475,6 +506,12 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR FILL-IN ab_unmap.v_cod IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.v_senha IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.hdnEstorno IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.hdnVerifEstorno IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.hdnValorAcima IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
@@ -559,7 +596,13 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("v_cod":U,"ab_unmap.v_cod":U,ab_unmap.v_cod:HANDLE IN FRAME {&FRAME-NAME}).  
   RUN htmAssociate
-    ("v_senha":U,"ab_unmap.v_senha":U,ab_unmap.v_senha:HANDLE IN FRAME {&FRAME-NAME}).  
+    ("v_senha":U,"ab_unmap.v_senha":U,ab_unmap.v_senha:HANDLE IN FRAME {&FRAME-NAME}). 
+  RUN htmAssociate
+    ("hdnEstorno":U,"ab_unmap.hdnEstorno":U,ab_unmap.hdnEstorno:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("hdnVerifEstorno":U,"ab_unmap.hdnVerifEstorno":U,ab_unmap.hdnVerifEstorno:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("hdnValorAcima":U,"ab_unmap.hdnValorAcima":U,ab_unmap.hdnValorAcima:HANDLE IN FRAME {&FRAME-NAME}).    
 END PROCEDURE.
 
 
@@ -625,18 +668,21 @@ END PROCEDURE.
 PROCEDURE process-web-request:
 
   /* usar no lugar de c-fnc-javascript*/
-  DEF VAR aux_funcaojs  AS  CHAR                           NO-UNDO. 
-  DEF VAR aux_vltitulo  AS  DECI                           NO-UNDO. 
-  DEF VAR aux_vlrjuros  AS  DECI                           NO-UNDO. 
-  DEF VAR aux_vlrmulta  AS  DECI                           NO-UNDO. 
-  DEF VAR aux_fltitven  AS  INTE                           NO-UNDO. 
-  DEF VAR aux_nmbenefi  AS  CHAR                           NO-UNDO. 
-  DEF VAR aux_inpesbnf  AS  INTE                           NO-UNDO. 
-  DEF VAR aux_nrdocbnf  AS  DECI                           NO-UNDO. 
-  DEF VAR aux_cdctrlcs  AS  CHAR                           NO-UNDO. 
-  DEF VAR aux_des_erro  AS  CHAR                           NO-UNDO. 
-  DEF VAR aux_dscritic  AS  CHAR                           NO-UNDO. 
-
+  DEF VAR aux_funcaojs    AS  CHAR                           NO-UNDO. 
+  DEF VAR aux_vltitulo    AS  DECI                           NO-UNDO. 
+  DEF VAR aux_vlrjuros    AS  DECI                           NO-UNDO. 
+  DEF VAR aux_vlrmulta    AS  DECI                           NO-UNDO. 
+  DEF VAR aux_fltitven    AS  INTE                           NO-UNDO. 
+  DEF VAR aux_nmbenefi    AS  CHAR                           NO-UNDO. 
+  DEF VAR aux_inpesbnf    AS  INTE                           NO-UNDO. 
+  DEF VAR aux_nrdocbnf    AS  DECI                           NO-UNDO. 
+  DEF VAR aux_cdctrlcs    AS  CHAR                           NO-UNDO. 
+  DEF VAR aux_des_erro    AS  CHAR                           NO-UNDO. 
+  DEF VAR aux_dscritic    AS  CHAR                           NO-UNDO. 
+  DEF VAR hdnEstorno      AS  CHAR                           NO-UNDO.
+  DEF VAR hdnVerifEstorno AS  CHAR                           NO-UNDO.
+  DEF VAR hdnValorAcima   AS  CHAR                           NO-UNDO.
+  
 
   RUN outputHeader.
 
@@ -660,7 +706,8 @@ PROCEDURE process-web-request:
          glb_dtmvtoan = crapdat.dtmvtoan
          glb_cdagenci = INTE(get-value("user_pac"))
          glb_cdbccxlt = INTE(get-value("user_cx"))
-         glb_cdoperad = get-value("operador").
+         glb_cdoperad = get-value("operador")
+         ab_unmap.hdnVerifEstorno = get-value("hdnVerifEstorno ").
 
   ASSIGN vh_foco          = "8"
          v_msg_vencido    = "no"
@@ -672,7 +719,7 @@ PROCEDURE process-web-request:
                  v_fmtcodbar = GET-VALUE("v_fmtcodbar")
                  v_valor     = GET-VALUE("v_valor").
       END.
-
+     
   /* apaga tabela de erros include dbo/bo-erro1.i */
   RUN elimina-erro(INPUT glb_nmrescop,
                    INPUT glb_cdagenci,
@@ -712,6 +759,7 @@ PROCEDURE process-web-request:
                           INPUT glb_cdbccxlt).
          END.
          ELSE DO:
+              
              IF  get-value("cancela") = "NOK" THEN 
                  DO:
                      ASSIGN radio       = "1"
@@ -960,8 +1008,6 @@ PROCEDURE process-web-request:
      END.
      END.
 
-     /* aux_funcaojs = aux_funcaojs + "$('#v_fmtcodbar').val('');". */
-
      /*se houver retorno na var aux_funcaojs executar via OUT*/
      IF  aux_funcaojs <> "" THEN
          DO:
@@ -972,6 +1018,21 @@ PROCEDURE process-web-request:
      RUN enableFields.
      RUN outputFields.
 
+     IF vr_cdcriticEstorno = 1 AND INT(ab_unmap.hdnVerifEstorno) = 0 THEN
+      DO:
+        {&out} '<script>var conf = confirm("ATENCAO, este pagamento nao pode ser estornado, deseja continuar?");</script>'.
+        {&out} '<script>((!conf) ? $("#hdnVerifEstorno").val(0) : $("#hdnVerifEstorno").val(1))</script>'.
+        {&out} '<script>((!conf) ? window.location = "crap014.html" : document.forms[0].submit())</script>'.
+      END.
+     
+       
+     IF vr_cdcriticValorAcima = 1 THEN
+       {&out} '<script>$("#hdnValorAcima").val(1);</script>'.
+     ELSE
+       {&out} '<script>$("#hdnValorAcima").val(0);</script>'.       
+     
+     {&out} '<script>habilitarCampos();</script>'.
+          
   END. /* Form has been submitted. */
  
   /* REQUEST-METHOD = GET */ 
@@ -1493,6 +1554,7 @@ PROCEDURE processa-fatura:
                                  INPUT DEC(SUBSTR(c_codbarras,16,4)),
                                  OUTPUT aux_des_erro,
                                  OUTPUT aux_dscritic).
+                                 
         IF RETURN-VALUE = 'NOK' THEN  
          DO:
             ASSIGN vh_foco = "10".
@@ -2072,8 +2134,11 @@ PROCEDURE validar-valor-limite:
     DEF VAR aux_inssenha          AS INTEGER                         NO-UNDO.
     DEF VAR h_b1crap14            AS HANDLE                          NO-UNDO.
     
+    IF INT(ab_unmap.hdnVerifEstorno) = 1 THEN    
+       RETURN "OK".
+      
     RUN dbo/b1crap14.p PERSISTENT SET h_b1crap14.
-                           
+          
     RUN valida-valor-limite IN h_b1crap14(INPUT par_cdcooper,
                                           INPUT par_cdoperad,
                                           INPUT par_cdagenci,
@@ -2083,45 +2148,40 @@ PROCEDURE validar-valor-limite:
                                           OUTPUT par_des_erro,
                                           OUTPUT par_dscritic,
                                           OUTPUT aux_inssenha).
-    DELETE PROCEDURE h_b1crap14.
-    
-    IF RETURN-VALUE = 'NOK' THEN  
+  DELETE PROCEDURE h_b1crap14.
+
+  IF RETURN-VALUE = 'NOK' THEN  
+   DO:
+   
+      ASSIGN vr_cdcriticValorAcima = 1. 
+   
+      ASSIGN ab_unmap.vh_foco = "10".
+      RUN gerar-mensagem-tela(INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrocaixa,
+                              INPUT par_dscritic).
+                              
+      RETURN "NOK".
+   END.
+         
+   ASSIGN vr_cdcriticValorAcima = 0.
+
+   /* Solicita confirmaçao operacao depois de inserida a senha DO coordenador, mas apenas para os pagamentos que nao podem ser estornados */
+   IF (aux_inssenha > 0 AND (par_codconv = 119 OR par_codconv = 24 OR par_codconv = 98 OR par_codconv = 64 OR par_codconv = 153 OR par_codconv = 385 OR par_codconv = 328)) THEN
      DO:
-        ASSIGN ab_unmap.vh_foco = "10".
-        RUN gerar-mensagem-tela(INPUT par_cdcooper,
-                                INPUT par_cdagenci,
-                                INPUT par_nrocaixa,
-                                INPUT par_dscritic).
-        RETURN "NOK".
+       IF INT(ab_unmap.hdnVerifEstorno) = 1 THEN
+        DO:
+          RETURN "OK".
+        END.
+       ELSE
+         DO:
+           ASSIGN vr_cdcriticEstorno = 1.
+           RETURN "NOK".
+         END.         
      END.
      
-  
-    IF aux_inssenha > 0 THEN
-      DO:  
-         /* Solicita confirmaçao operacao depois de inserida a senha DO coordenador */
-         {&out}   '<script>if (confirm("Confirma operaçao?")) ~{' +
-                         'document.forms[0].v_msg_vencido.value = ' +
-                         '"yes";' +
-                         'preenchimento(event,0,document.forms[0].' +
-                         'v_codbarras,44,"submit");' +   
-                         '~} else ~{' +
-                         ' window.location = "crap014.html";' +
-                         '~}</script>'. 
-      END.
-        
-      IF (par_codconv = 64 OR par_codconv = 119 OR par_codconv = 153 OR par_codconv = 154) THEN
-        DO:
-          {&out}   '<script>if (confirm("ATENÇAO, este pagamento nao pode ser estornado, deseja continuar?")) ~{' +
-                           'document.forms[0].v_msg_vencido.value = ' +
-                           '"yes";' +
-                           'preenchimento(event,0,document.forms[0].' +
-                           'v_codbarras,44,"submit");' +   
-                           '~} else ~{' +
-                           ' window.location = "crap014.html";' +
-                           '~}</script>'. 
-    END.
-
-    RETURN "OK".
+  RETURN "OK".
+    
 END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME

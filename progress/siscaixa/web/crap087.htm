@@ -46,6 +46,9 @@ Alteracoes.....:
         <input type="hidden" name="h_inpesgps"  id="h_inpesgps"  value="0">
         <input type="hidden" name="h_tpdpagto"  id="h_tpdpagto"  value="0">
         <input type="hidden" name="h_idleitor"  id="h_idleitor"  value="0">
+        <input type="hidden" name="hdnEstorno" id="hdnEstorno" value="">
+        <input type="hidden" name="hdnVerifEstorno" id="hdnVerifEstorno" value="">
+        <input type="hidden" name="hdnValorAcima" id="hdnValorAcima" value="">
         <p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
         <div align="center">
             <center>
@@ -1045,6 +1048,23 @@ Alteracoes.....:
 
                         return true;
                 }
+            }
+            
+            if($("#hdnVerifEstorno").val() == 0 || $("#hdnVerifEstorno").val() == "" || $("#hdnVerifEstorno").val() == null){
+              $("#hdnVerifEstorno").val(0);
+            }
+  
+            function habilitarCampos(){     
+
+              if($("#hdnValorAcima").val() == 0 || $("#hdnValorAcima").val() == "" || $("#hdnValorAcima").val() == null){
+                $("#hdnValorAcima").val(0);
+                $("#v_cod").prop("disabled", true);
+                $("#v_senha").prop("disabled", true);
+              }else{
+                $("#hdnValorAcima").val(1);
+                $("#v_cod").prop("disabled", false);
+                $("#v_senha").prop("disabled", false);
+              }
             }
 
     </script>
