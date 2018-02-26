@@ -13,7 +13,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Fernando Hilgenstieler
- Data    : Agosto/2003.                    Ultima atualizacao: 13/02/2018
+ Data    : Agosto/2003.                    Ultima atualizacao: 26/02/2018
 
  Dados referentes ao programa:
 
@@ -132,6 +132,9 @@ BEGIN
 			             Rafael (Mouts) - Chamado 581361
                          
             13/02/2018 - Projeto Ligeirinho. Rangel Decker AMcom. Alterado para paralelizar a execução deste relatorio.
+            
+            26/02/2018 - Remocao de hint no cursor da LCM e da LCI para melhoria de performance.
+                         (Roberto - AMCOM / Fabricio - Cecred).
   ............................................................................. */
   DECLARE
     -- Tipo para totalização de valores (utilizados para criar totais dos relatórios)
@@ -398,8 +401,7 @@ BEGIN
                       ,pr_dtmvtini IN craplcm.dtmvtolt%TYPE      --> Data movimento inicial
                       ,pr_dtmvtfim IN craplcm.dtmvtolt%TYPE      --> Data movimento final
                       ,pr_cdhistor IN VARCHAR2) IS               --> Listagem de códigos para histórico
-      SELECT /*+ INDEX(cm craplcm##craplcm4) */
-             cm.dtmvtolt
+      SELECT cm.dtmvtolt
             ,cm.cdhistor
             ,cm.vllanmto
             ,cm.nrdconta
@@ -437,8 +439,7 @@ BEGIN
     CURSOR cr_craplci (pr_cdcooper IN craptab.cdcooper%TYPE      --> Código da cooperativa
                       ,pr_dtmvtini IN craplci.dtmvtolt%TYPE      --> Data inicial do movimento
                       ,pr_dtmvtfim IN craplci.dtmvtolt%TYPE) IS  --> Data final do movimento
-      SELECT /*+ INDEX(ci CRAPLCI##CRAPLCI1)*/
-             ci.nrdconta
+      SELECT ci.nrdconta
             ,ci.dtmvtolt
             ,ci.cdhistor
             ,ci.vllanmto
