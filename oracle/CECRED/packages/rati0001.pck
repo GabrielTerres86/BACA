@@ -7234,9 +7234,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   ............................................................................. */
   --------------- VARIAVEIS ----------------
   
-  aux_idqualif INTEGER := 0; -- Id da Qualificação da Operação 
-                             --(alterada ou não pelo controle)
-  
   BEGIN
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
