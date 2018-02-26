@@ -3681,7 +3681,8 @@ PROCEDURE trata_dados_transferencia.
                 IF   hNameTag:NAME = "CNPJ_CPFCliDebtd"  OR
                      hNameTag:NAME = "CNPJ_CPFCliDebtdTitlar1"  OR 
                      hNameTag:NAME = "CNPJ_CPFCliDebtdTitlar2"  OR
-                     hNameTag:NAME = "CNPJ_CPFRemet"  THEN
+                     hNameTag:NAME = "CNPJ_CPFRemet" OR
+                     hNameTag:NAME = "CNPJ_CPFCliDebtd_Remet" THEN
                      DO:
                          ASSIGN aux_CNPJ_CPFDeb  = aux_descrica.
                      END.
