@@ -1,0 +1,221 @@
+CREATE OR REPLACE PACKAGE cecred.lote0001 IS
+
+ /*..............................................................................
+   Programa: LOTE0001
+   Autor   : Odirlei
+   Data    : 28/07/2015                        Ultima atualizacao: 07/12/2017
+  
+   Dados referentes ao programa: 
+  
+   Objetivo  : Package com as procedures necessárias para pagamento de guias DARF e DAS
+  
+   Alteracoes: 07/12/2017 - Incluido novos campos no cursor da craplot (Tiago/Adriano #745339)
+  ..............................................................................*/
+
+  --Testar se o lote esta em lock
+  CURSOR cr_craplot_rowid (pr_rowid IN ROWID) IS
+  SELECT  1
+    FROM craplot craplot
+   WHERE craplot.rowid = pr_rowid
+     FOR UPDATE NOWAIT;
+  rw_craplot_rowid cr_craplot_rowid%ROWTYPE;
+
+  --Buscar informacoes de lote
+  CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
+                   ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                   ,pr_cdagenci IN craplot.cdagenci%TYPE
+                   ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                   ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
+    SELECT craplot.cdcooper
+          ,craplot.dtmvtolt
+          ,craplot.nrdolote
+          ,craplot.cdagenci
+          ,craplot.nrseqdig
+          ,craplot.cdbccxlt
+          ,craplot.qtcompln
+          ,craplot.tplotmov
+          ,craplot.cdhistor
+          ,craplot.cdoperad
+          ,craplot.qtinfoln
+          ,craplot.vlcompcr
+          ,craplot.vlinfocr
+          ,craplot.vlcompdb
+          ,craplot.vlinfodb
+          ,craplot.rowid
+      FROM craplot craplot
+     WHERE craplot.cdcooper = pr_cdcooper
+       AND craplot.dtmvtolt = pr_dtmvtolt
+       AND craplot.cdagenci = pr_cdagenci
+       AND craplot.cdbccxlt = pr_cdbccxlt
+       AND craplot.nrdolote = pr_nrdolote
+       FOR UPDATE NOWAIT;
+
+  PROCEDURE pc_insere_lote(pr_cdcooper IN craplot.cdcooper%TYPE
+                          ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                          ,pr_cdagenci IN craplot.cdagenci%TYPE
+                          ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                          ,pr_nrdolote IN craplot.nrdolote%TYPE
+                          ,pr_cdoperad IN craplot.cdoperad%TYPE
+                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE
+                          ,pr_tplotmov IN craplot.tplotmov%TYPE
+                          ,pr_cdhistor IN craplot.cdhistor%TYPE
+                          ,pr_craplot  OUT cr_craplot%ROWTYPE
+                          ,pr_dscritic OUT VARCHAR2);
+
+END lote0001;
+/
+CREATE OR REPLACE PACKAGE BODY cecred.lote0001 IS
+
+  -- Procedimento para inserir o lote e não deixar tabela lockada
+  PROCEDURE pc_insere_lote(pr_cdcooper IN craplot.cdcooper%TYPE
+                          ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                          ,pr_cdagenci IN craplot.cdagenci%TYPE
+                          ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                          ,pr_nrdolote IN craplot.nrdolote%TYPE
+                          ,pr_cdoperad IN craplot.cdoperad%TYPE
+                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE
+                          ,pr_tplotmov IN craplot.tplotmov%TYPE
+                          ,pr_cdhistor IN craplot.cdhistor%TYPE
+                          ,pr_craplot  OUT cr_craplot%ROWTYPE
+                          ,pr_dscritic OUT VARCHAR2) IS
+  /*..............................................................................
+  
+   Programa: LOTE0001
+   Autor   : Odirlei
+   Data    : 28/07/2015                        Ultima atualizacao: 
+  
+   Dados referentes ao programa: 
+  
+   Objetivo  : Package com as procedures necessárias para pagamento de guias DARF e DAS
+  
+   Alteracoes: 03/08/2016 - Procedure extraída da PAGA0001 para esta package. (Dionathan)
+  ..............................................................................*/
+  
+    -- Pragma - abre nova sessao para tratar a atualizacao
+    PRAGMA AUTONOMOUS_TRANSACTION;
+    -- criar rowtype controle
+    rw_craplot_ctl cr_craplot%ROWTYPE;
+  
+  BEGIN
+  
+    /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
+    FOR i IN 1 .. 100 LOOP
+      BEGIN
+        -- Leitura do lote
+        OPEN cr_craplot(pr_cdcooper => pr_cdcooper
+                       ,pr_dtmvtolt => pr_dtmvtolt
+                       ,pr_cdagenci => pr_cdagenci
+                       ,pr_cdbccxlt => pr_cdbccxlt
+                       ,pr_nrdolote => pr_nrdolote);
+        FETCH cr_craplot
+        INTO rw_craplot_ctl;
+        pr_dscritic := NULL;
+        EXIT;
+      EXCEPTION
+        WHEN OTHERS THEN
+          IF cr_craplot%ISOPEN THEN
+            CLOSE cr_craplot;
+          END IF;
+        
+          -- setar critica caso for o ultimo
+          IF i = 100 THEN
+            pr_dscritic := pr_dscritic || 'Registro de lote ' ||
+                           pr_nrdolote || ' em uso. Tente novamente.';
+          END IF;
+        
+          -- aguardar 0,5 seg. antes de tentar novamente
+          sys.dbms_lock.sleep(0.1);
+      END;
+    
+    END LOOP;
+  
+    -- se encontrou erro ao buscar lote, abortar programa
+    IF pr_dscritic IS NOT NULL THEN
+      ROLLBACK;
+      RETURN;
+    END IF;
+  
+    IF cr_craplot%NOTFOUND THEN
+      -- criar registros de lote na tabela
+      INSERT INTO craplot
+        (craplot.cdcooper
+        ,craplot.dtmvtolt
+        ,craplot.cdagenci
+        ,craplot.cdbccxlt
+        ,craplot.nrdolote
+        ,craplot.nrseqdig
+        ,craplot.tplotmov
+        ,craplot.cdoperad
+        ,craplot.cdhistor
+        ,craplot.nrdcaixa
+        ,craplot.cdopecxa)
+      VALUES
+        (pr_cdcooper
+        ,pr_dtmvtolt
+        ,pr_cdagenci
+        ,pr_cdbccxlt
+        ,pr_nrdolote
+        ,1 -- craplot.nrseqdig
+        ,pr_tplotmov
+        ,pr_cdoperad
+        ,pr_cdhistor
+        ,pr_nrdcaixa
+        ,pr_cdoperad)
+      RETURNING craplot.rowid
+               ,craplot.nrdolote
+               ,craplot.nrseqdig
+               ,craplot.cdbccxlt
+               ,craplot.tplotmov
+               ,craplot.dtmvtolt
+               ,craplot.cdagenci
+               ,craplot.cdhistor
+               ,craplot.cdoperad
+               ,craplot.qtcompln
+               ,craplot.qtinfoln
+               ,craplot.vlcompcr
+               ,craplot.vlinfocr
+           INTO rw_craplot_ctl.rowid
+               ,rw_craplot_ctl.nrdolote
+               ,rw_craplot_ctl.nrseqdig
+               ,rw_craplot_ctl.cdbccxlt
+               ,rw_craplot_ctl.tplotmov
+               ,rw_craplot_ctl.dtmvtolt
+               ,rw_craplot_ctl.cdagenci
+               ,rw_craplot_ctl.cdhistor
+               ,rw_craplot_ctl.cdoperad
+               ,rw_craplot_ctl.qtcompln
+               ,rw_craplot_ctl.qtinfoln
+               ,rw_craplot_ctl.vlcompcr
+               ,rw_craplot_ctl.vlinfocr;
+    
+    ELSE
+      -- ou atualizar o nrseqdig para reservar posição
+      UPDATE craplot
+         SET craplot.nrseqdig = NVL(craplot.nrseqdig, 0) + 1
+       WHERE craplot.rowid = rw_craplot_ctl.rowid
+      RETURNING craplot.nrseqdig
+           INTO rw_craplot_ctl.nrseqdig;
+    
+    END IF;
+  
+    CLOSE cr_craplot;
+  
+    -- retornar informações para o programa chamador
+    pr_craplot := rw_craplot_ctl;
+  
+    COMMIT;
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF cr_craplot%ISOPEN THEN
+        CLOSE cr_craplot;
+      END IF;
+    
+      ROLLBACK;
+      -- se ocorreu algum erro durante a criac?o
+      pr_dscritic := 'Erro ao gravar craplot(' || pr_nrdolote || '): ' ||
+                     SQLERRM;
+  
+  END pc_insere_lote;
+
+END lote0001;
+/
