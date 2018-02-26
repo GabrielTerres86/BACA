@@ -124,6 +124,7 @@
  * 100: [29/11/2017] Retirar caracteres especiais do campo Nome da tela Portabilidade - SD 779305 - Marcelo Telles Coelho - Mouts
  * 101: [25/01/2018] Inclusao do filtro de finalidade nas linhas de credito. (Jaison/James - PRJ298)
  * 102: [07/02/2017] Forçar o preenchimento da primeira categoria para emprestimos Imoveis ou Veiculos - Antonio R. Jr - Mouts - Chamado 809763
+ * 102: [26/02/2018] Ajuste na tela da simulacao da proposta para filtrar a linha de credito dos produtos TR/PP. (James)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -8049,7 +8050,7 @@ function controlaPesquisas() {
                     varFin = $('#cdfinemp', '#' + nomeForm).val();
                     varMod = (modalidade == 0) ? $("#cdmodali", '#' + nomeForm).val() : modalidade; //modalidade previamente carregada no cadastro da portabilidade
                     varTip = $("#tpemprst", '#' + nomeForm).val();
-                    if (varTip == 0) {
+                    if ((varTip == 0) || (varTip == undefined)) {	
                         varTip = 1;
                     }
                     filtros = 'C&oacuted. Linha Cr&eacutedito;cdlcremp;30px;S;0|Descri&ccedil&atildeo;dslcremp;200px;S|;' + null + ';;N;;N|;' + null + ';;N;;N|;' + null + ';;N;;N|;cdfinemp;;;' + varFin + ';N|;cdmodali;;;' + varMod + ';N|;flgstlcr;;;yes;N|;tpprodut;;;' + varTip + ';N';
@@ -8234,7 +8235,7 @@ function controlaPesquisas() {
         varMod = (modalidade == 0) ? $("#cdmodali", '#' + nomeForm).val() : modalidade; //modalidade previamente carregada no cadastro da portabilidade        
         varMod = (varMod == undefined) ? 0 : varMod;
         varTip = $("#tpemprst", '#' + nomeForm).val();
-        if (varTip == 0) {
+        if ((varTip == 0) || (varTip == undefined)) {
             varTip = 1;
         }
         filtrosDesc = 'flgstlcr|yes;cdfinemp|' + varAux + ';cdmodali|' + varMod + ';tpprodut|' + varTip;
