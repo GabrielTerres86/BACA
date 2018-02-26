@@ -29,6 +29,12 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --
 --             05/07/2017 - Ajuste nas procedures pc_rejeitar_arq_pgto e pc_gerar_arq_log_pgto
 --                          para buscarem tambem arquivos com extensao .TXT gerados no sistema MATERA (Diego).
+--
+--             11/12/2017 - Ajuste na pc_gerar_arq_ret_pgto para que não escreva no arquivo o CHR(13)
+--                          pois a procedure pc_escreve_linha ja adiciona a quebra de linha
+--                        - Ajuste na validação de retorno quando deve ser enviado para o FTP
+--                        - Ajuste para converter o arquivo de UNIX para WINDOWS
+--                        (Douglas - Chamado 805535) 
 ---------------------------------------------------------------------------------------------------------------
 
     -- Tabela de memoria que ira conter os titulos que foram marcados como retorno
@@ -507,7 +513,10 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
                               ,pr_dtfimper IN DATE                  --> Data final   de pesquisa
                               ,pr_idorigem IN INTEGER               --> Sistema de origem chamador
                               ,pr_tprelato IN INTEGER               --> Tipo do relatorio (1-PDF /2-CSV)
+                              ,pr_iddspscp IN INTEGER               --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                               ,pr_nmrelato OUT VARCHAR2             --> Nome do arquivo do relatorio com extensao
+                              ,pr_dssrvarq OUT VARCHAR2             --> Nome do servidor para download do arquivo
+                              ,pr_dsdirarq OUT VARCHAR2             --> Nome do diretório para download do arquivo                                                               
                               ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2);                             
                               
@@ -544,7 +553,10 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
                                  ,pr_dtfimper IN VARCHAR2              --> Data final   de pesquisa
                                  ,pr_idorigem IN INTEGER               --> Sistema de origem chamador
                                  ,pr_tprelato IN INTEGER               --> Tipo do relatorio (1-PDF /2-CSV)
+                                 ,pr_iddspscp IN INTEGER               --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                                  ,pr_nmrelato OUT VARCHAR2             --> Nome do arquivo do relatorio com extensao
+                                 ,pr_dssrvarq OUT VARCHAR2             --> Nome do servidor para download do arquivo
+                                 ,pr_dsdirarq OUT VARCHAR2             --> Nome do diretório para download do arquivo                                                                  
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2);           --> Descricao da critica
 
@@ -577,7 +589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Maio/2014.                   Ultima atualizacao: 27/10/2017
+--  Data     : Maio/2014.                   Ultima atualizacao: 18/12/2017
 --
 -- Dados referentes ao programa:
 --
@@ -616,6 +628,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --
 --             27/10/2017 - #781654 Na rotina pc_processar_arq_pgto, alterado o arquivo de log de null (proc_batch)
 --                          para proc_message (Carlos)
+--
+--             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -4125,7 +4139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
     --  Sigla    : PGTA
     --  Autor    : Desconhecido (Nao colocou cabeçalho quando criou a procedure)
-    --  Data     : Desconhecido                     Ultima atualizacao: 16/03/2017
+    --  Data     : Desconhecido                     Ultima atualizacao: 18/12/2017
     --
     -- Dados referentes ao programa:
     --
@@ -4133,6 +4147,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     -- Objetivo  : Cadastrar o agendamento do Pagamento do Titulo
 
     -- Alteracoes: 16/03/2017 - Ajustado a criacao do lote para gravar o codigo do PA (Douglas)
+    --
+    --             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
 
@@ -4183,7 +4199,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            AND craplot.dtmvtolt = pr_dtmvtolt
            AND craplot.cdagenci = pr_cdagenci
            AND craplot.cdbccxlt = 100
-           AND craplot.nrdolote = pr_nrdolote;
+           AND craplot.nrdolote = pr_nrdolote
+           FOR UPDATE NOWAIT;
       rw_craplot cr_craplot%ROWTYPE;
 
       vr_cdcritic_aux crapcri.cdcritic%TYPE;
@@ -4295,14 +4312,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
             END IF;
          END IF;
 
-         -- Verifica se existe capa de lote agendamento
-         OPEN cr_craplot(pr_cdcooper
-                        ,pr_dtmvtolt
-                        ,pr_cdagenci
-                        ,vr_nrdolote);
+         -- Tentar criar registro de lote ate 10 vezes
+         -- senao abortar
+         FOR i IN 1..10 LOOP
+           vr_dscritic := NULL;
+
+           BEGIN
+             --> buscar lote
+             OPEN cr_craplot (pr_cdcooper  => pr_cdcooper ,
+                              pr_dtmvtolt  => pr_dtmvtolt ,
+                              pr_cdagenci  => pr_cdagenci ,
+                              pr_nrdolote  => vr_nrdolote );
          FETCH cr_craplot INTO rw_craplot;
          IF cr_craplot%NOTFOUND THEN
-            -- Se nao existir cria a capa de lote
+               CLOSE cr_craplot;
+               -- se não localizou, deve criar o registro de lote
             BEGIN
                INSERT INTO craplot
                   (cdcooper,
@@ -4353,14 +4377,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   -- Levantar excecao
                   RAISE vr_exc_saida;
             END;
-         END IF;
-         -- Fecha o cursor de capas de lote
+ 
+             ELSE
          CLOSE cr_craplot;
+         END IF;
+             -- se não deu erro, sair do loop
+             EXIT;
+ 
+           EXCEPTION
+             WHEN vr_exc_saida THEN
+               RAISE vr_exc_saida;
+             WHEN OTHERS THEN
+ 
+               vr_dscritic := 'Tabela de lotes esta '||
+                              'sendo alterada. Tente novamente.';
+               -- aguardar um segundo e tentar novamente
+               sys.dbms_lock.sleep(1);
+               continue;
+           END;
+
+         END LOOP;
 
          vr_nmprepos := ' ';
          vr_nrcpfpre := 0;
-
-
 
          IF (vr_inpessoa = 2 OR vr_inpessoa = 3) AND 
               vr_idastcjt = 1 THEN
@@ -4410,6 +4449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                 RAISE vr_exc_saida;
               END IF;
          ELSE 
+           
          BEGIN
             INSERT INTO craplau
                (cdcooper
@@ -5952,8 +5992,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   '00000'                                                   || -- 21.0 - Densidade de Gravação do Arquivo
                   LPAD(' ',20,' ')                                          || -- 22.0 - Uso Reservado do Banco
                   LPAD(' ',20,' ')                                          || -- 23.0 - Uso Reservado da Empresa
-                  LPAD(' ',29,' ')                                          || -- 24.0 - Uso Exclusivo FEBRABAN
-                  CHR(13);
+                  LPAD(' ',29,' ');                                            -- 24.0 - Uso Exclusivo FEBRABAN
 
     -- Escrever Linha do Header do Arquivo CNAB240 - Item 1.0
     GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -5979,8 +6018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   LPAD(' ',40,' ')                                         || -- 18.1 - Mensagem
                   LPAD(' ',80,' ')                                         || -- 19.1 - Endereço da Empresa
                   LPAD(' ',08,' ')                                         || -- 26.1 - Uso Exclusivo FEBRABAN
-                  LPAD(' ',10,' ')                                         || -- 27.1 - Ocorrencias p/ Retorno
-                  CHR(13);
+                  LPAD(' ',10,' ');                                           -- 27.1 - Ocorrencias p/ Retorno
 
     -- Escreve Linha do header do Lote CNAB240 - Item 1.1
     GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -6020,8 +6058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           RPAD(rw_crapdpt.dsnosnum,20,' ')                                     || -- 18.3J - Nosso Numero - Uso Exclusivo do Banco
           '09'                                                                 || -- 19.3J - Código da Moeda
           LPAD(' ',06,' ')                                                     || -- 20.3J - Uso exclusivo FEBRABAN
-          NVL(vr_aux_cdocorre,'00') || LPAD(' ',08,' ')                        || -- 21.3J - Codigo das Ocorrencias
-          CHR(13);
+          NVL(vr_aux_cdocorre,'00') || LPAD(' ',08,' ');                        -- 21.3J - Codigo das Ocorrencias
 
       -- Escreve Linha do Trailer de Lote CNAB240 - Item 1.5
       GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -6054,8 +6091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           NVL(to_char(rw_crapdpt.dtmvtolt,'DDMMRRRR'),to_char(trunc(SYSDATE),'DDMMRRRR'))                                || -- 11.4J99 - Data do Pagamento
           GENE0002.fn_mask(rw_crapdpt.hrautent,'999999')                                                                 || -- 12.4J99 - Hora do Pagamento
           RPAD(rw_crapdpt.dsprotoc,70,' ')                                                                                 || -- 12.4J99 - Hora do Pagamento
-          LPAD(' ',102,' ')                                                                                              || -- 13.4J99 - CNAB Uso Exclusivo Cecred
-          CHR(13);  
+          LPAD(' ',102,' ');                                                                                                -- 13.4J99 - CNAB Uso Exclusivo Cecred
           
           -- Escreve Linha do Trailer de Lote CNAB240 - Item 1.5
           GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -6082,8 +6118,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   '000000000000000000'                                         || -- 07.5 - Somatoria Quantidade Moeda
                   LPAD('0',06,'0')                                             || -- 08.5 - Numero Aviso de Debito
                   LPAD(' ',165,' ')                                            || -- 09.5 - Uso Exclusivo FEBRABAN
-                  LPAD(' ',10,' ')                                             || -- 10.5 - Ocorrencias Lote
-                  CHR(13);
+                  LPAD(' ',10,' ');                                               -- 10.5 - Ocorrencias Lote
 
     -- Escreve Linha do Trailer de Lote CNAB240 - Item 1.5
     GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -6099,8 +6134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   '000001'                                   || -- 05.9 - Qtd de Lotes do Arquivo
                   GENE0002.fn_mask(vr_qtd_registro,'999999') || -- 06.9 - Qtd Registros do Arquivo
                   '000001'                                   || -- 07.9 - Qtd Contas p/ Conciliar
-                  LPAD(' ',205,' ')                          || -- 08.9 - Uso Exclusivo FEBRABAN
-                  CHR(13);
+                  LPAD(' ',205,' ');                            -- 08.9 - Uso Exclusivo FEBRABAN
 
     -- Escreve Linha do Trailer de Arquivo CNAB240 - Item 1.9
     GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
@@ -6108,6 +6142,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
     -- Fechar o arquivo
     GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
+
+    -- UX2DOS
+    GENE0003.pc_converte_arquivo(pr_cdcooper => pr_cdcooper                  --> Cooperativa
+                                ,pr_nmarquiv => vr_utlfileh||'/'||vr_nmarquiv --> Caminho e nome do arquivo a ser convertido
+                                ,pr_nmarqenv => vr_nmarquiv                  --> Nome desejado para o arquivo convertido
+                                ,pr_des_erro => vr_dscritic);                --> Retorno da critica
+
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Apos converte o arquivo, vamos buscar o arquivo convertido e sobrescrever o 
+    -- arquivo que acabamos de gerar
+    vr_comando:= 'mv '||vr_dir_coop||'/converte/'||vr_nmarquiv||' '||
+                 vr_utlfileh||'/'||vr_nmarquiv||' 2> /dev/null';
+    --Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_comando
+                         ,pr_typ_saida   => vr_typ_saida
+                         ,pr_des_saida   => vr_dscritic);
+    --Se ocorreu erro dar RAISE
+    IF vr_typ_saida = 'ERR' THEN
+      vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+      RAISE vr_exc_erro;
+    END IF;
 
     -- Verificar qual Tipo de Retorno o Cooperado Possui
     OPEN cr_crapcpt(pr_cdcooper => pr_cdcooper
@@ -6210,7 +6271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       END IF;
     ELSE
       --- Verificamos se o cooperado possui retorno pelo FTP
-      IF rw_crapcpt.idretorn = 1 THEN
+      IF rw_crapcpt.idretorn = 2 THEN
 
         -- Caminho script que envia/recebe arquivos via FTP
         vr_script_pgto := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
@@ -9841,7 +9902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                            ,pr_cdagenci => 90
                            ,pr_nrdolote => 11900       -- (11000 + nrdcaixa)
                            ,pr_cdbccxlt => 100         -- cdbccxlt
-                           ,pr_dtmvtolt => pr_dtmvtolt
+                           ,pr_dtmvtolt => vr_dtmvtolt
                            ,pr_nrdconta => rw_crapdpt.nrdconta
                            ,pr_cdtiptra => 2           -- PAGAMENTO
                            ,pr_dscodbar => rw_crapdpt.dscodbar
@@ -10167,10 +10228,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                   ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE --> Numero caixa
                                   ,pr_idorigem IN INTEGER               --> Sistema origem
                                   ,pr_cdoperad IN crapope.cdoperad%TYPE --> Cod Operador
+                                  ,pr_iddspscp IN INTEGER               --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                                   ,pr_tab_agend_rel  IN typ_tab_rel_arq       --> PLTABLE com os dados
                                   ,pr_tab_liqui_rel  IN typ_tab_rel_arq       --> PLTABLE com os dados
                                   ,pr_tab_rejei_rel  IN typ_tab_rel_arq       --> PLTABLE com os dados
                                   ,pr_nmarquiv OUT VARCHAR2             --> Nome do arquivo gerado
+                                  ,pr_dssrvarq OUT VARCHAR2             --> Nome do servidor para download do arquivo
+                                  ,pr_dsdirarq OUT VARCHAR2             --> Nome do diretório para download do arquivo                                                                                                 
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
     /* .............................................................................
@@ -10368,6 +10432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);
   
+    IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino
     CASE gene0001.vr_vet_des_origens(pr_idorigem)
       WHEN 'AYLLOS WEB' THEN
         gene0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
@@ -10382,6 +10447,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                        ,pr_des_erro => vr_des_erro);
       ELSE NULL;        
     END CASE;
+    ELSE     
+      gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
+                                         ,pr_dsdirecp => vr_nom_diretorio||'/'
+                                         ,pr_nmarqucp => vr_nom_arquivo
+                                         ,pr_flgcopia => 0
+                                         ,pr_dssrvarq => pr_dssrvarq
+                                         ,pr_dsdirarq => pr_dsdirarq
+                                         ,pr_des_erro => vr_dscritic);
+                                         
+      IF TRIM(vr_des_erro) <> '' THEN
+        RAISE vr_exc_saida;
+      END IF;
+    END IF;
   
     pr_nmarquiv := vr_nom_arquivo;
   
@@ -10421,10 +10499,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                   ,pr_nmbenefi IN VARCHAR2              --> Nome beneficiario
                                   ,pr_dscodbar IN VARCHAR2              --> Codigo barras
                                   ,pr_cdsittit IN VARCHAR2              --> Situacao do titulo                                   
+                                  ,pr_iddspscp IN INTEGER               --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo                                                                   
                                   ,pr_tab_agend_rel  IN typ_tab_rel_arq --> PLTABLE com os dados
                                   ,pr_tab_liqui_rel  IN typ_tab_rel_arq --> PLTABLE com os dados
                                   ,pr_tab_rejei_rel  IN typ_tab_rel_arq --> PLTABLE com os dados
                                   ,pr_nmarquiv OUT VARCHAR2             --> Nome do arquivo gerado
+                                  ,pr_dssrvarq OUT VARCHAR2             --> Nome do servidor para download do arquivo
+                                  ,pr_dsdirarq OUT VARCHAR2             --> Nome do diretório para download do arquivo                                                                                                                                   
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
     /* .............................................................................
@@ -10615,6 +10696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);             
 
+    IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino
     CASE gene0001.vr_vet_des_origens(pr_idorigem)
       WHEN 'AYLLOS WEB' THEN
         --Enviar arquivo para Web
@@ -10643,6 +10725,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                        ,pr_des_erro => vr_des_erro);
       ELSE NULL;        
     END CASE;
+    ELSE
+      gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
+                                         ,pr_dsdirecp => vr_nom_diretorio||'/'
+                                         ,pr_nmarqucp => vr_nom_arquivo
+                                         ,pr_flgcopia => 0
+                                         ,pr_dssrvarq => pr_dssrvarq
+                                         ,pr_dsdirarq => pr_dsdirarq
+                                         ,pr_des_erro => vr_dscritic);
+                                         
+      IF TRIM(vr_des_erro) <> '' THEN
+        RAISE vr_exc_saida;
+      END IF;
+    END IF;
   
     pr_nmarquiv := vr_nom_arquivo;
   
@@ -10683,7 +10778,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                               ,pr_dtfimper IN DATE                  --> Data final   de pesquisa
                               ,pr_idorigem IN INTEGER               --> Sistema de origem chamador
                               ,pr_tprelato IN INTEGER               --> Tipo do relatorio (1-PDF /2-CSV)
+                              ,pr_iddspscp IN INTEGER               --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                               ,pr_nmrelato OUT VARCHAR2             --> Nome do arquivo do relatorio com extensao
+                              ,pr_dssrvarq OUT VARCHAR2             --> Nome do servidor para download do arquivo
+                              ,pr_dsdirarq OUT VARCHAR2             --> Nome do diretório para download do arquivo                                                               
                               ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
     /* .............................................................................
@@ -11123,10 +11221,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                              ,pr_nmbenefi => pr_nmbenefi   --> Nome beneficiario
                              ,pr_dscodbar => pr_dscodbar   --> Codigo barras
                              ,pr_cdsittit => vr_dsstatus   --> Situacao do titulo
+                             ,pr_iddspscp => pr_iddspscp   --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                              ,pr_tab_agend_rel  => vr_tab_agend_rel    --> PLTABLE com os dados
                              ,pr_tab_liqui_rel  => vr_tab_liqui_rel    --> PLTABLE com os dados
                              ,pr_tab_rejei_rel  => vr_tab_rejei_rel    --> PLTABLE com os dados
                              ,pr_nmarquiv => pr_nmrelato   --> Nome do arquivo gerado
+                             ,pr_dssrvarq => pr_dssrvarq
+                             ,pr_dsdirarq => pr_dsdirarq                             
                              ,pr_cdcritic => vr_cdcritic   --> Código da crítica
                              ,pr_dscritic => vr_dscritic); --> Descricao da critica
     END IF;
@@ -11139,10 +11240,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                              ,pr_nrdcaixa => pr_nrdcaixa   --> Numero caixa
                              ,pr_idorigem => pr_idorigem   --> Sistema origem
                              ,pr_cdoperad => pr_cdoperad   --> Cod Operador
+                             ,pr_iddspscp => pr_iddspscp   --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                              ,pr_tab_agend_rel  => vr_tab_agend_rel    --> PLTABLE com os dados
                              ,pr_tab_liqui_rel  => vr_tab_liqui_rel    --> PLTABLE com os dados
                              ,pr_tab_rejei_rel  => vr_tab_rejei_rel    --> PLTABLE com os dados
                              ,pr_nmarquiv => pr_nmrelato   --> Nome do arquivo gerado
+                             ,pr_dssrvarq => pr_dssrvarq
+                             ,pr_dsdirarq => pr_dsdirarq                             
                              ,pr_cdcritic => vr_cdcritic   --> Código da crítica
                              ,pr_dscritic => vr_dscritic); --> Descricao da critica
        
@@ -11226,6 +11330,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
     vr_nmrelato VARCHAR2(100);
+    vr_dssrvarq VARCHAR2(200);
+    vr_dsdirarq VARCHAR2(200);    
     
     -- Variáveis para armazenar as informações em XML
     vr_des_xml         CLOB;
@@ -11281,7 +11387,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                       ,pr_dtfimper => TO_DATE(pr_dtfimper,'DD/MM/RRRR')
                       ,pr_idorigem => vr_idorigem
                       ,pr_tprelato => pr_tprelato
+                      ,pr_iddspscp => 0
                       ,pr_nmrelato => vr_nmrelato
+                      ,pr_dssrvarq => vr_dssrvarq
+                      ,pr_dsdirarq => vr_dsdirarq
                       ,pr_cdcritic => vr_cdcritic
                       ,pr_dscritic => vr_dscritic);
     
@@ -11353,7 +11462,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                  ,pr_dtfimper IN VARCHAR2              --> Data final   de pesquisa
                                  ,pr_idorigem IN INTEGER               --> Sistema de origem chamador
                                  ,pr_tprelato IN INTEGER               --> Tipo do relatorio (1-PDF /2-CSV)
+                                 ,pr_iddspscp IN INTEGER               --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                                  ,pr_nmrelato OUT VARCHAR2             --> Nome do arquivo do relatorio com extensao
+                                 ,pr_dssrvarq OUT VARCHAR2             --> Nome do servidor para download do arquivo
+                                 ,pr_dsdirarq OUT VARCHAR2             --> Nome do diretório para download do arquivo                                 
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
     /* .............................................................................
@@ -11398,7 +11510,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                       ,pr_dtfimper => vr_dtfimper
                       ,pr_idorigem => pr_idorigem
                       ,pr_tprelato => pr_tprelato
+                      ,pr_iddspscp => pr_iddspscp
                       ,pr_nmrelato => pr_nmrelato
+                      ,pr_dssrvarq => pr_dssrvarq
+                      ,pr_dsdirarq => pr_dsdirarq
                       ,pr_cdcritic => pr_cdcritic
                       ,pr_dscritic => pr_dscritic);
     
