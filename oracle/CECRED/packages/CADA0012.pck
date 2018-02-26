@@ -42,6 +42,7 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
   PROCEDURE pc_valida_acesso_operador(pr_cdcooper IN NUMBER, -- Codigo da cooperativa
                                       pr_cdoperad IN VARCHAR2, -- Codigo do operador
                                       pr_cdagenci IN NUMBER, -- Codigo da agencia
+                                      pr_fltoken  IN VARCHAR2 DEFAULT 'S', -- Flag se deve ser alterado o token
                                       pr_dstoken  OUT VARCHAR2, -- Token de retorno nos casos de sucesso na validacao
                                       pr_dscritic OUT VARCHAR2);  -- Retorno de Erro
 
@@ -844,6 +845,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
   PROCEDURE pc_valida_acesso_operador(pr_cdcooper IN NUMBER, -- Codigo da cooperativa
                                       pr_cdoperad IN VARCHAR2, -- Codigo do operador
                                       pr_cdagenci IN NUMBER, -- Codigo da agencia
+                                      pr_fltoken  IN VARCHAR2 DEFAULT 'S', -- Flag se deve ser alterado o token
                                       pr_dstoken  OUT VARCHAR2, -- Token de retorno nos casos de sucesso na validacao
                                       pr_dscritic OUT VARCHAR2) IS  -- Retorno de Erro
     /* ..........................................................................
@@ -889,13 +891,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 		vr_dscritic VARCHAR2(4000);
 
   BEGIN
-
-            btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                      ,pr_ind_tipo_log => 1 -- Processo normal
-                                      ,pr_nmarqlog => 'CRM' 
-                                      ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
-                                         'Operador ' || pr_cdoperad || ' cooperativa '|| pr_cdcooper);
-    
+   
     -- Buscar registro do PA
 		OPEN cr_crapage;
 		FETCH cr_crapage INTO rw_crapage;
@@ -945,8 +941,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 				-- Levantar exceção
 				RAISE vr_exc_erro;
       ELSE
-        -- Retorna o token de acesso
-        pr_dstoken := rw_crapope.cddsenha;
+        IF pr_fltoken = 'S' THEN
+          -- Gera o codigo do token
+          pr_dstoken := substr(dbms_random.random,1,10);
+          
+          -- Atualiza a tabela de senha do operador
+          BEGIN
+            UPDATE crapope
+               SET cddsenha = pr_dstoken
+             WHERE upper(cdoperad) = upper(pr_cdoperad);
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar CRAPOPE: '||SQLERRM;
+              RAISE vr_exc_erro;
+          END;
+        ELSE
+          -- Retorna o token de acesso
+          pr_dstoken := rw_crapope.cddsenha;
+        END IF;
 			END IF;
 		END IF;
 
