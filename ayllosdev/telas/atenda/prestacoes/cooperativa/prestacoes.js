@@ -1849,14 +1849,6 @@ function controlaLayout(operacao) {
 	return false;
 }
 
-/**
-* Função para recarregar as informações dos contratos aprovados (Empréstimos)
-* 
-*/
-function voltarAgendamentoDetalhes() {
-	showMsgAguardo("Aguarde, carregando os contratos do associado ...");
-	recarregaAgendamento();
-}
 
 //Função para controle de navegação
 function controlaFoco() {
