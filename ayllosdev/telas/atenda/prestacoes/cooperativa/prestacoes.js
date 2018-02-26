@@ -2409,7 +2409,7 @@ function limpaDivGenerica(){
 function mostraExtrato( operacao ) {
 
 	showMsgAguardo('Aguarde, abrindo extrato...');
-	exibeRotina($('#divUsoGenerico'));
+	//exibeRotina($('#divUsoGenerico'));
 
 	tpemprst = arrayRegistros['tpemprst'];
 
@@ -2788,7 +2788,7 @@ function verificaImpressao(par_idimpres){
 				metodo = $('#divAguardo');
 			}else{
 				metodo = $('#divRotina');
-			}
+		}
 
 			fechaRotina($('#divUsoGenerico'),metodo);
 		}
@@ -3109,7 +3109,7 @@ function geraPagamentos()
 	var campospc = 'cdcooper|nrdconta|nrctremp|nrparepr|vlpagpar';
 	var dadosprc = '';
     var nmscript = 'gera_pagamentos.php';
-    
+	
     if (tpemprst == 2) { // Se for Pos-Fixado
         nmscript = 'gera_pagamentos_pos.php';
     }

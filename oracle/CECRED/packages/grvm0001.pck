@@ -362,6 +362,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --                         - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
   --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
   --                           (Ana - Envolti) - SD: 660356 e 660394
+  --
+  --             18/12/2017 - Inclusão da procedure pc_consulta_situacao_cdc, Prj. 402 (Jean Michel)
+  --
+  --             22/02/2018 - Inclusão de Logs nas procedures pc_gravames_baixa_manual, pc_gravames_cancelar, pc_gravames_inclusao_manual
   ---------------------------------------------------------------------------------------------------------------
   
   /* Funcao para validacao dos caracteres */
@@ -3964,6 +3968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.dtatugrv
           ,crapbpr.flblqjud
           ,crapbpr.cdsitgrv  
+		  ,crapbpr.dtcancel
           ,ROWID rowid_bpr                 
       FROM crapbpr
      WHERE crapbpr.cdcooper = pr_cdcooper
@@ -3988,6 +3993,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
     
+    --Variaveis Locais  
+    vr_dstransa VARCHAR2(100);
+    vr_nrdrowid ROWID;
+    
     vr_tab_erro gene0001.typ_tab_erro;
         
     --Tipo de Dados para cursor data
@@ -4000,6 +4009,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
 
   BEGIN
+    vr_dstransa := 'Cancelamento do bem no gravames';
+
     --Incluir nome do módulo logado - Chamado 660394
     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_cancelar');
     
@@ -4134,7 +4145,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         --Levantar Excecao  
         RAISE vr_exc_erro; 
     END;
+    -- 
+    gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad 
+                        ,pr_dscritic => ''         
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => rw_crapdat.dtmvtolt
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => vr_nmdatela
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
     
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'dtcancel', 
+                              pr_dsdadant => TO_CHAR(rw_crapbpr.dtcancel), 
+                              pr_dsdadatu => TO_CHAR(rw_crapdat.dtmvtolt)); 
+                                
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'cdsitgrv', 
+                              pr_dsdadant => TO_CHAR(rw_crapbpr.cdsitgrv), 
+                              pr_dsdadatu => CASE pr_tpcancel
+                                                 WHEN 2 THEN '5'
+                                                 ELSE TO_CHAR(rw_crapbpr.cdsitgrv)
+                                             END);                                    
+    --        
     pr_des_erro := 'OK';
     
   EXCEPTION
@@ -4538,6 +4575,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                      ,pr_idseqbem IN crapbpr.idseqbem%TYPE) IS
     SELECT crapbpr.flblqjud
           ,crapbpr.cdsitgrv
+          ,crapbpr.dsjstbxa
+          ,crapbpr.dtdbaixa
           ,ROWID rowid_bpr                 
       FROM crapbpr
      WHERE crapbpr.cdcooper = pr_cdcooper
@@ -4576,6 +4615,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
     
+    --Variaveis Locais   
+    vr_dstransa VARCHAR2(100);  
+    vr_nrdrowid ROWID; 
+    
     vr_tab_erro gene0001.typ_tab_erro;
         
     --Tipo de Dados para cursor data
@@ -4585,6 +4628,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_exc_erro  EXCEPTION; 
   
   BEGIN
+    vr_dstransa := 'Baixa Manual do bem no gravames';
+
     --Incluir nome do módulo logado - Chamado 660394
     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_baixa_manual');
     
@@ -4725,7 +4770,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         --Levantar Excecao  
         RAISE vr_exc_erro; 
     END;
+    -- 
+    gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad 
+                        ,pr_dscritic => ''         
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => rw_crapdat.dtmvtolt
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => vr_nmdatela
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+    
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'dtdbaixa', 
+                              pr_dsdadant => to_char(rw_crapbpr.dtdbaixa), 
+                              pr_dsdadatu => to_char(rw_crapdat.dtmvtolt)); 
              
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'pr_dsjstbxa', 
+                              pr_dsdadant => rw_crapbpr.dsjstbxa, 
+                              pr_dsdadatu => pr_dsjstbxa); 
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'cdsitgrv', 
+                              pr_dsdadant => to_char(rw_crapbpr.cdsitgrv), 
+                              pr_dsdadatu => '4');                               
+    --              
     pr_des_erro := 'OK';
     
   EXCEPTION
@@ -4829,6 +4902,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     SELECT crapbpr.flblqjud
           ,crapbpr.tpinclus
           ,crapbpr.cdsitgrv
+          ,crapbpr.dtdinclu
+          ,crapbpr.dsjstinc
+          ,crapbpr.nrgravam
+          ,crapbpr.dtatugrv
           ,ROWID rowid_bpr                 
       FROM crapbpr
      WHERE crapbpr.cdcooper = pr_cdcooper
@@ -4873,6 +4950,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_dsmensag VARCHAR2(100);
     vr_dtmvttel DATE;
     
+    --Variaveis Locais   
+    vr_dstransa VARCHAR2(100);  
+    vr_nrdrowid ROWID;
+    
     vr_tab_erro gene0001.typ_tab_erro;
         
     --Tipo de Dados para cursor data
@@ -4882,6 +4963,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_exc_erro  EXCEPTION; 
   
   BEGIN
+    vr_dstransa := 'Inclusão Manual do bem no gravames';
+
     --Incluir nome do módulo logado - Chamado 660394
     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_inclusao_manual');
     
@@ -5095,7 +5178,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         --Levantar Excecao  
         RAISE vr_exc_erro; 
     END;
+    -- 
+    gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad 
+                        ,pr_dscritic => ''         
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => rw_crapdat.dtmvtolt
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => vr_nmdatela
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+    
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'dtdinclu', 
+                              pr_dsdadant => to_char(rw_crapbpr.dtdinclu), 
+                              pr_dsdadatu => to_char(rw_crapdat.dtmvtolt)); 
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'pr_dsjustif', 
+                              pr_dsdadant => rw_crapbpr.dsjstinc, 
+                              pr_dsdadatu => pr_dsjustif); 
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'cdsitgrv', 
+                              pr_dsdadant => to_char(rw_crapbpr.cdsitgrv), 
+                              pr_dsdadatu => '2');
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'nrgravam', 
+                              pr_dsdadant => to_char(rw_crapbpr.nrgravam), 
+                              pr_dsdadatu => to_char(pr_nrgravam));
              
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'dtatugrv', 
+                              pr_dsdadant => to_char(rw_crapbpr.dtatugrv), 
+                              pr_dsdadatu => to_char(vr_dtmvttel));
+    --              
     pr_des_erro := 'OK';
     
   EXCEPTION
@@ -6440,7 +6561,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     
       vr_cdcritic PLS_INTEGER := 0; -- Variavel interna para erros
       vr_dscritic varchar2(4000) := ''; -- Variavel interna para erros
-    
+
       vr_nrseqreg PLS_INTEGER;           -- Sequenciador do registro na cooperativa
       vr_nmarqdir VARCHAR2(200);         -- Nome do diretorio
       vr_nmarqsav VARCHAR2(200);         -- Nome do diretorio
