@@ -54,6 +54,11 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --                         - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
   --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
   --                           (Ana - Envolti) - SD: 660356 e 660394
+  --              23/02/2018 - Alterado a rotina pc_gravames_geracao_arquivo:  Foi alterado cursor cr_crapbpr, 
+  --                           incluido uma validação do inliquid = 0.
+  --						   Alterado rotina pc_gravames_baixa_manual: ao atualizar a crapbpr setar flginclu = 0
+  --					       Alterado rotina pc_gravames_processa_retorno: ao atualizar a crapbpr setar flginclu = 0
+ 
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicação de tipo e tabela para o arquivo do GRAVAMES
@@ -1427,7 +1432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,bpr.nrdplaca
               ,bpr.nrrenava
               ,ass.nrcpfcgc
-
+              ,epr.inliquid 
               ,ROW_NUMBER ()
                   OVER (PARTITION BY cop.cdcooper ORDER BY cop.cdcooper) nrseqcop
 
@@ -1435,7 +1440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,crapcop cop
               ,crawepr wpr
               ,crapbpr bpr
-
+         full outer join crapepr epr on (epr.cdcooper = bpr.cdcooper and epr.nrdconta = bpr.nrdconta and epr.nrctremp = bpr.nrctrpro)
          WHERE bpr.cdcooper = DECODE(pr_cdcoptel,0,bpr.cdcooper,pr_cdcoptel)
            AND bpr.flgalien   = 1 -- Sim
            AND wpr.cdcooper   = bpr.cdcooper
@@ -1445,14 +1450,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
            AND cop.cdcooper   = bpr.cdcooper
            AND ass.cdcooper   = bpr.cdcooper
            AND ass.nrdconta   = bpr.nrdconta
-
            AND (  -- Bloco INCLUSAO
                      (pr_tparquiv IN ('INCLUSAO','TODAS')
                  AND  bpr.tpctrpro   = 90
                  AND  wpr.flgokgrv   = 1
-                 AND  bpr.flginclu   = 1     -- INCLUSAO SOLICITADA
-                 AND  bpr.cdsitgrv in(0,3)   -- NAO ENVIADO ou PROCES.COM ERRO
-                 AND  bpr.tpinclus   = 'A')  -- AUTOMATICA
+                 AND  bpr.flgbaixa   = 0      -- APENAS NÃO BAIXADOS
+                 AND  nvl(epr.inliquid,0) = 0 -- APENAS NÃO LIQUIDADO, CASO NULO TRATAR COMO "0 - NÃO LIQUIDADO"
+                 AND  bpr.flginclu   = 1      -- INCLUSAO SOLICITADA
+                 AND  bpr.cdsitgrv in (0,3)   -- NAO ENVIADO ou PROCES.COM ERRO
+                 AND  bpr.tpinclus   = 'A')   -- AUTOMATICA
 
                   -- Bloco BAIXA --
                   OR (pr_tparquiv IN('BAIXA','TODAS')
@@ -1691,7 +1697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         IF pr_tparquiv = 'TODAS' THEN
           -- Inclusão
           IF rw_bpr.flgokgrv = 1 AND rw_bpr.flginclu = 1 AND rw_bpr.cdsitgrv in(0,3) AND rw_bpr.tpinclus = 'A' AND 
-             rw_bpr.flgbaixa = 0 THEN --Adicionado a alteração rw_bpr.flgbaixa = 0 pedido pelo análista Gielow
+             rw_bpr.flgbaixa = 0 AND nvl(rw_bpr.inliquid,0) = 0 THEN --Adicionado a alteração rw_bpr.flgbaixa = 0 pedido pelo análista Gielow
             vr_tparquiv := 'INCLUSAO';
           -- Cancelamento
           ELSIF rw_bpr.flcancel = 1 AND rw_bpr.tpcancel = 'A' AND rw_bpr.tpctrpro IN(90,99) THEN
@@ -4707,6 +4713,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       UPDATE crapbpr
          SET crapbpr.cdsitgrv = 4 -- Baixado
             ,crapbpr.flgbaixa = 1
+            ,crapbpr.flginclu = 0
             ,crapbpr.dtdbaixa = rw_crapdat.dtmvtolt
             ,crapbpr.dsjstbxa = pr_dsjstbxa
             ,crapbpr.tpdbaixa = 'M' --Manual              
@@ -6883,6 +6890,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                         UPDATE crapbpr
                            SET crapbpr.flgbaixa = 0
                               ,crapbpr.cdsitgrv = 4 --Baixado OK
+                              ,crapbpr.flginclu = 0
                         WHERE ROWID = rw_crapbpr.rowid_bpr;
                         
                       EXCEPTION
@@ -6912,6 +6920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                         UPDATE crapbpr
                            SET crapbpr.flcancel = 0
                               ,crapbpr.cdsitgrv = 5 --Cancelado OK
+                              ,crapbpr.flginclu = 0
                         WHERE ROWID = rw_crapbpr.rowid_bpr;
                         
                       EXCEPTION
