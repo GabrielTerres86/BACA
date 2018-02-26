@@ -9468,7 +9468,7 @@ PROCEDURE p_calc_codigo_barras:
         ELSE
            aux_ftvencto = (par_dtvencto - dtini).
 
-	IF par_cdbandoc = 085 OR LENGTH(par_nrcnvcob) <= 6 THEN
+	IF par_cdbandoc = 085 OR LENGTH(STRING(par_nrcnvcob)) <= 6 THEN
        ASSIGN aux = string(par_cdbandoc,"999")
                            + "9" /* moeda */
                            + "1" /* nao alterar - constante */
