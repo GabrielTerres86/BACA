@@ -37,6 +37,7 @@
 	    $xml .= " <Dados>";
 	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	    $xml .= "   <nrctrlim>".$nrctrlim."</nrctrlim>";
+	    $xml .= "   <tpctrlim>3</tpctrlim>";
 	    $xml .= "	<dtmovito>".$glbvars["dtmvtolt"]."</dtmovito>";
 	    $xml .= "   <tpenvest>I</tpenvest>"; // Tipo de envio para esteira I - Inclusao (Emprestimo)
 	    $xml .= " </Dados>";
@@ -46,27 +47,10 @@
 	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ENVIAR_ESTEIRA_DESCT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
-	    //print_r($xmlObj);
-
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){		   
            echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';           
            exit;
 		}
-		
-		/*
-		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-	    	$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		    if ($msgErro == "") {
-		        $msgErro = $xmlObj->roottag->tags[0]->cdata;
-		       
-		    }
-		     $nmdcampo = $xmlObj->roottag->tags[0]->attributes['NMDCAMPO'];
-		    exibeErroNew($msgErro,$nmdcampo);
-		    exit();
-		}
-		*/
-		
-		//$registros = $xmlObj->roottag->tags[0]->tags;
 
 		echo 'showError("inform","Análise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
         exit;
@@ -104,11 +88,8 @@
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
-
-	    // FAZER O INSERT CRAPRDR e CRAPACA
 	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","CONFIRMAR_NOVO_LIMITE_TIT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
-
 
 	    // Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
@@ -143,16 +124,12 @@
 			echo 'verificaMensagens("'.$mensagem_01.'","'.$mensagem_02.'","'.$mensagem_03.'","'.$mensagem_04.'","'.$qtctarel.'","'.$grupo.'");';
 		}
 		else{
-			if ($xmlObjRenovaLimite->roottag->tags[0]->cdata == 'OK') {
+			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
 				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesCheques();");';
 			}
 		}
 		
-	}
-
-
-
-}else if ($operacao == 'ACEITAR_REJEICAO_LIMITE' ) {
+	}else if ($operacao == 'ACEITAR_REJEICAO_LIMITE' ) {
 
 		$xml = "<Root>";
 	    $xml .= " <Dados>";
@@ -200,7 +177,7 @@
 			echo 'verificaMensagens("'.$mensagem_01.'","'.$mensagem_02.'","'.$mensagem_03.'","'.$mensagem_04.'","'.$qtctarel.'","'.$grupo.'");';
 		}
 		else{
-			if ($xmlObjRenovaLimite->roottag->tags[0]->cdata == 'OK') {
+			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
 				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesCheques();");';
 			}
 		}

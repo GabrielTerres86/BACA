@@ -667,9 +667,6 @@ function confirmarNovoLimite(){
 		showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
 
 		var operacao = "CONFIMAR_NOVO_LIMITE";
-
-		
-		hideMsgAguardo();
 		
 		$.ajax({		
 			type: "POST", 
@@ -690,12 +687,12 @@ function confirmarNovoLimite(){
 			},
 			success: function(response) {
 				try {
-					hideMsgAguardo();
-					eval(response);
-				} catch(error) {
-					hideMsgAguardo();
-					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-				}
+	                eval(response);
+	               	hideMsgAguardo();
+	            } catch (error) {
+	                hideMsgAguardo();
+	                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+	            }
 			}			
 		});	
 
