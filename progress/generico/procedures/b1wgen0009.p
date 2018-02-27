@@ -283,8 +283,8 @@
            17/07/2017 - Ajustes na geraçao do registro de LOG na exclusao do bordero
                         Projeto 300. (Lombardi)
 					                
-		       29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
-           
+		   29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+					                
            04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
                         de novo limite. (Chamado 768648) - (Fabricio)
 					                
@@ -324,6 +324,8 @@ DEFINE VARIABLE aux_dstransa AS CHARACTER   NO-UNDO.
 DEFINE VARIABLE aux_dsorigem AS CHARACTER   NO-UNDO.
 DEFINE VARIABLE aux_nrdrowid AS ROWID       NO-UNDO.
 
+DEFINE VARIABLE const_txiofpf AS DECIMAL DECIMALS 4 INITIAL 0.0082  NO-UNDO.
+DEFINE VARIABLE const_txiofpj AS DECIMAL DECIMALS 4 INITIAL 0.0041  NO-UNDO.
 FUNCTION linha-desc-chq RETURNS LOGICAL
         (INPUT par_cdcooper AS INT,
          INPUT par_cdagenci AS INT,                    
@@ -549,9 +551,9 @@ PROCEDURE busca_dados_dscchq:
             DELETE PROCEDURE h-b1wgen0001.
             RETURN "NOK".
             
-        END.        
-        DELETE PROCEDURE h-b1wgen0001.
-    END.
+        END.
+                DELETE PROCEDURE h-b1wgen0001.
+            END.
 
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper   AND
                              craplim.nrdconta = par_nrdconta   AND
@@ -692,7 +694,7 @@ PROCEDURE busca_dados_limite_incluir:
 
     IF RETURN-VALUE <> "OK" THEN
         RETURN "NOK".*/
-        
+
     RUN sistema/generico/procedures/b1wgen0001.p
         PERSISTENT SET h-b1wgen0001.
 
@@ -10335,7 +10337,7 @@ PROCEDURE efetua_exclusao_bordero:
                 
                     IF  AVAILABLE craplau  THEN
                         DELETE craplau.
-                END.
+				    END.
     
             DELETE crapcdb.                   
                            
@@ -10697,6 +10699,13 @@ PROCEDURE efetua_liber_anali_bordero:
                                       INPUT par_dtmvtolt,
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-iof).
+                                  
+       RUN busca_iof_simples_nacional IN h-b1wgen9999 (INPUT par_cdcooper,
+                                      INPUT 0, /* agenci */
+                                      INPUT 0, /* caixa  */
+                                      INPUT par_dtmvtolt,
+                                      OUTPUT TABLE tt-erro,
+                                      OUTPUT TABLE tt-iof-sn).
        DELETE PROCEDURE h-b1wgen9999.
     
        IF RETURN-VALUE = "NOK"  THEN
@@ -12309,6 +12318,13 @@ PROCEDURE efetua_liber_anali_bordero:
                     VALIDATE craplot.
                     VALIDATE craplcm.
 
+                    RUN buscar_valor_iof_simples_nacional(INPUT aux_vlborder,
+                                                          INPUT par_cdcooper,
+                                                          INPUT par_nrdconta,
+                                                          INPUT TABLE tt-iof,
+                                                          INPUT TABLE tt-iof-sn,
+                                                          OUTPUT aux_vltotaliofsn).
+                    aux_vltotiof = aux_vltotiof + aux_vltotaliofsn.
                     RUN sistema/generico/procedures/b1wgen0159.p
                             PERSISTENT SET h-b1wgen0159.
 
@@ -13605,3 +13621,79 @@ PROCEDURE busca_restricoes_coordenador:
 
 END PROCEDURE.
 /* .......................................................................... */
+
+
+/*****************************************************************************
+                Busca o valor do IOF para simples nacional                    
+*****************************************************************************/
+PROCEDURE buscar_valor_iof_simples_nacional:
+    DEF INPUT PARAM par_vlborder AS DECI NO-UNDO.
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
+    DEF INPUT PARAM TABLE FOR tt-iof.
+    DEF INPUT PARAM TABLE FOR tt-iof-sn.
+    DEF OUTPUT PARAM aux_vltotaliofsn AS DECI NO-UNDO.
+    /* Projeto 410 - RF 43 a 46:
+     - Se o valor do borderô for maior que 30K, usa a seguinte regra:
+        -> Para pessoa jurídica, taxa do IOF para simples nacional = 0.0041
+        -> Para pessoa física, taxa do IOF para simples nacional = 0.0082
+     - Se o valor do borderô for até 30K (inclusive), busca a taxa que estiver 
+       cadastrada. */
+    IF par_vlborder <= 30000 THEN
+      DO:
+        FIND crapjur FIELDS(idregtrb) 
+                     WHERE crapjur.cdcooper = par_cdcooper  AND
+                           crapjur.nrdconta = par_nrdconta       
+                           NO-LOCK NO-ERROR.
+        IF AVAILABLE crapjur AND (crapjur.idregtrb = 1 OR crapjur.idregtrb = 2) THEN
+          DO:
+            /* Calcula o IOF normal e com base no resultado, calcula o IOF do SN */
+            ASSIGN aux_vltotaliofsn = aux_vlborder + (ROUND(aux_vlborder * tt-iof.txccdiof, 2)).
+            ASSIGN aux_vltotaliofsn = ROUND(aux_vltotaliofsn * tt-iof-sn.txccdiof, 2).
+          END.
+        ELSE
+          DO:
+            ASSIGN aux_vltotaliofsn = 0.
+          END.
+        RELEASE crapjur.
+      END.
+    ELSE
+      DO:
+        FIND crapass FIELDS(inpessoa)
+                     WHERE crapass.cdcooper = par_cdcooper  AND
+                           crapass.nrdconta = par_nrdconta       
+                           NO-LOCK NO-ERROR.
+        IF AVAILABLE crapass THEN
+          DO:
+            IF crapass.inpessoa = 1 THEN /* Pessoa física */
+              DO:                
+                /* Calcula o IOF normal e com base no resultado, calcula o IOF do SN */
+                ASSIGN aux_vltotaliofsn = aux_vlborder + (ROUND(aux_vlborder * tt-iof.txccdiof, 2)).
+                ASSIGN aux_vltotaliofsn = ROUND(aux_vltotaliofsn * const_txiofpf, 2).
+              END.
+            ELSE  /* Pessoa jurídica */
+              DO:
+                /* Verifica se o associado é cooperativa. Se for, taxa iof simples nacional deve ser zero */
+                FIND crapjur FIELDS(natjurid)
+                             WHERE crapjur.cdcooper = par_cdcooper  AND
+                                   crapjur.nrdconta = par_nrdconta       
+                                   NO-LOCK NO-ERROR.
+                IF AVAILABLE crapjur AND (crapjur.natjurid = 2143) THEN /* 2143 = Coopertativa */
+                  DO:
+                    ASSIGN aux_vltotaliofsn = 0.
+                  END.
+                ELSE
+                  DO:
+                    /* Calcula o IOF normal e com base no resultado, calcula o IOF do SN */
+                    ASSIGN aux_vltotaliofsn = aux_vlborder + (ROUND(aux_vlborder * tt-iof.txccdiof, 2)).
+                    ASSIGN aux_vltotaliofsn = ROUND(aux_vltotaliofsn * const_txiofpj, 2).
+                  END.
+                RELEASE crapjur.
+              END.
+          END.
+        ELSE
+          ASSIGN aux_vltotaliofsn = 0.
+        RELEASE crapass.        
+      END.
+    RETURN "OK".
+END PROCEDURE.

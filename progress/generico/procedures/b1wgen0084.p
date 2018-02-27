@@ -23,10 +23,6 @@
 
 *******************************************************************************/
 
-
-
-
-
 /*............................................................................
 
     Programa: sistema/generico/procedures/b1wgen0084.p
@@ -269,6 +265,7 @@
 
 			  04/01/2016 - Validar se as informações de Imóvel foram devidamente preenchidas
 			               para o contrato de empréstimo (Renato Darosci - Supero) - M326
+                           
               28/09/2016 - Incluido verificacao de contratos de acordos na procedure
 						               transf_contrato_prejuizo e valida_dados_efetivacao_proposta,
                            Prj. 302 (Jean Michel).
@@ -291,9 +288,6 @@
               28/12/2017 - Buscar da central de risco do dia anterior inves do fechamento do mes anterior. (Oscar)
               
               29/12/2017 - Ajuste para desfazer prejuizo retirar agencia do loop. (Oscar)
-                           
-			  23/02/2018 - Alteração da procedure grava_efetivacao_proposta para gravar o risco 
-			               original (DSNIVORI) (Reginaldo - AMcom)
                            
 ............................................................................. */
 
@@ -3595,7 +3589,6 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.txmensal = crawepr.txmensal
               crapepr.cdempres = aux_cdempres
               crapepr.nrcadast = crapass.nrcadast
-			  crapepr.idquaprc = crawepr.idquapro
               crapepr.flgpagto = FALSE
               crapepr.dtdpagto = par_dtdpagto
               crapepr.qtmesdec = 0
@@ -3673,8 +3666,7 @@ PROCEDURE grava_efetivacao_proposta:
                                         crawepr.dsnivris +
                                         '" e o do contrato sera de "' +
                                         aux_dsnivris + '".'
-                         crawepr.dsnivris = aux_dsnivris
-						 crawepr.dsnivori = aux_dsnivris.
+                         crawepr.dsnivris = aux_dsnivris.
 
                END.
 

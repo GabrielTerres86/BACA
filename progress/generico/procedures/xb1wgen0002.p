@@ -383,6 +383,10 @@ DEF VAR aux_vlrtotal AS DECI                                           NO-UNDO.
 DEF VAR aux_idcarenc AS INTE                                           NO-UNDO.
 DEF VAR aux_dtcarenc AS DATE                                           NO-UNDO.
 
+/** ------------------------- Variaveis Lojista CDC ---------------------- **/
+DEF VAR aux_cdcoploj AS INTE                                           NO-UNDO.
+DEF VAR aux_nrcntloj AS DECI                                           NO-UNDO.
+
 { sistema/generico/includes/b1wgen0002tt.i }
 { sistema/generico/includes/b1wgen0024tt.i }
 { sistema/generico/includes/b1wgen0043tt.i }
@@ -618,6 +622,9 @@ PROCEDURE valores_entrada:
 
             WHEN "idcarenc" THEN aux_idcarenc = INTE(tt-param.valorCampo).
             WHEN "dtcarenc" THEN aux_dtcarenc = DATE(tt-param.valorCampo).
+
+            WHEN "cdcoploj" THEN aux_cdcoploj = INTE(tt-param.valorCampo).
+            WHEN "nrcntloj" THEN aux_nrcntloj = DECI(tt-param.valorCampo).
 
         END CASE.
     
@@ -1805,7 +1812,6 @@ PROCEDURE proc_qualif_operacao:
                              INPUT aux_dsctrliq,
                              INPUT aux_dtmvtolt,
                              INPUT aux_dtmvtopr,
-							 INPUT aux_dtmvtoan,
                             OUTPUT aux_idquapro,
                             OUTPUT aux_dsquapro ).
 
