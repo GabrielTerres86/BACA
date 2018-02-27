@@ -241,7 +241,7 @@
 	$xmlSetGravarLimite .= "		<vlsalcon>".$vlsalcon."</vlsalcon>";
 	$xmlSetGravarLimite .= "		<dsdbens1>".$dsdbens1."</dsdbens1>";
 	$xmlSetGravarLimite .= "		<dsdbens2>".$dsdbens2."</dsdbens2>";
-	$xmlSetGravarLimite .= "		<nrctrlim>".$nrctrlim."</nrctrlim>";
+	//$xmlSetGravarLimite .= "		<nrctrlim>".$nrctrlim."</nrctrlim>";
 	$xmlSetGravarLimite .= "		<cddlinha>".$cddlinha."</cddlinha>";
 	$xmlSetGravarLimite .= "		<dsobserv>".$dsobserv."</dsobserv>";
 	$xmlSetGravarLimite .= "		<qtdiavig>".$qtdiavig."</qtdiavig>";
@@ -290,6 +290,7 @@
 	$xmlSetGravarLimite .= "		<nrperger>".$nrperger."</nrperger>";	
 	$xmlSetGravarLimite .= "		<vltotsfn>".$vltotsfn."</vltotsfn>";
 	$xmlSetGravarLimite .= "		<perfatcl>".$perfatcl."</perfatcl>";
+	$xmlSetGravarLimite .= "		<idcobope>0</idcobope>";
 	$xmlSetGravarLimite .= "	</Dados>";
 	$xmlSetGravarLimite .= "</Root>";
 	
