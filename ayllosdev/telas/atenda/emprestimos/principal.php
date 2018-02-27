@@ -80,9 +80,11 @@
 	$tpemprst = (isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : 0;
 	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : 0;
 	$vlempres = (isset($_POST['vlempres'])) ? $_POST['vlempres'] : 0;
+	$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : 0;
 	$qtparepr = (isset($_POST['qtparepr'])) ? $_POST['qtparepr'] : 0;
 	$qtdialib = (isset($_POST['qtdialib'])) ? $_POST['qtdialib'] : 0;
 	$dtdpagto = (isset($_POST['dtdpagto'])) ? $_POST['dtdpagto'] : 0;
+	$dsctrliq = (isset($_POST['dsctrliq'])) ? $_POST['dsctrliq'] : 0;
 	$executandoProdutos = $_POST['executandoProdutos'];
 	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm'])?$_POST['sitaucaoDaContaCrm']:'');
 	
@@ -266,6 +268,7 @@
 			arrayProposta['vliofepr'] = '<? echo getByTagName($proposta,'vliofepr') != '' ? getByTagName($proposta,'vliofepr') : '0'; ?>';
 			arrayProposta['vlrtarif'] = '<? echo getByTagName($proposta,'vlrtarif') != '' ? getByTagName($proposta,'vlrtarif') : '0'; ?>';
 			arrayProposta['vlrtotal'] = '<? echo getByTagName($proposta,'vlrtotal') != '' ? getByTagName($proposta,'vlrtotal') : '0'; ?>';
+            arrayProposta['vlfinanc'] = '<? echo getByTagName($proposta,'vlfinanc') != '' ? getByTagName($proposta,'vlfinanc') : 0; ?>';
 			arrayProposta['flintcdc'] = '<? echo getByTagName($proposta,'flintcdc'); ?>';
 			arrayProposta['inintegra_cont'] = '<? echo getByTagName($proposta,'inintegra_cont'); ?>';
 			arrayProposta['tpfinali'] = '<? echo getByTagName($proposta,'tpfinali'); ?>';
@@ -687,6 +690,7 @@
 				arrayStatusApprov['avalist1'] = '<? echo getByTagName($insitapv[0]->tags,'avalist1'); ?>';
 				arrayStatusApprov['avalist2'] = '<? echo getByTagName($insitapv[0]->tags,'avalist2'); ?>';
 				arrayStatusApprov['altdtpgt'] = '<? echo getByTagName($insitapv[0]->tags,'altdtpgt'); ?>';
+				arrayStatusApprov['vlfinanc'] = '<? echo getByTagName($insitapv[0]->tags,'vlfinanc'); ?>';				
 
 				var arrayMensagemAval = new Array();
 
@@ -821,6 +825,160 @@
 		$registros = $xmlObj->roottag->tags[0]->tags;
 		$qtregist = $xmlObj->roottag->tags[1]->cdata;
 		
+	}else if (in_array($operacao, array('A_DEMONSTRATIVO_EMPRESTIMO', 'I_DEMONSTRATIVO_EMPRESTIMO'))){ 
+
+		$inpessoa = isset($_POST['inpessoa']) ? $_POST['inpessoa'] : '0';
+		$dscatbem = isset($_POST['dscatbem']) ? $_POST['dscatbem'] : '';
+		$idfiniof = isset($_POST['idfiniof']) ? $_POST['idfiniof'] : '0';
+		$cdfinemp = isset($_POST['cdfinemp']) ? $_POST['cdfinemp'] : '0';
+		$dtlibera = isset($_POST['qtdialib']) ? $_POST['qtdialib'] : '0';
+        $dsctrliq = isset($_POST['dsctrliq']) ? $_POST['dsctrliq'] : '0';	
+
+		//Busca valor da tarifa de empréstimo
+		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "   <cdlcremp>".$cdlcremp."</cdlcremp>";
+		$xml .= "   <cdmotivo>EM</cdmotivo>";
+		$xml .= "   <inpessoa>".$inpessoa."</inpessoa>";
+		$xml .= "   <vllanmto>".str_replace(',', '.', str_replace('.', '', $vlempres))."</vllanmto>";
+		$xml .= "   <dsbemgar>".$dscatbem."</dsbemgar>";
+		$xml .= "   <cdprogra></cdprogra>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "ATENDA", "CALC_TARIFA_CADASTRO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjTarifa = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
+
+		if (strtoupper($xmlObjTarifa->roottag->tags[0]->name) == "ERRO") {			
+			exibirErro('error','2 - '.$xmlObjTarifa->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		}
+		$tagTarifa = $xmlObjTarifa->roottag->tags[0]->tags;
+
+
+		//Busca valor do IOF e recálculo da parcela, de acordo com o campo de financiamento de IOF, bens em garantia, etc
+   		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "   <nrctremp>".$nrctremp."</nrctremp>";
+		$xml .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+		$xml .= "   <inpessoa>".$inpessoa."</inpessoa>";
+		$xml .= "   <cdlcremp>".$cdlcremp."</cdlcremp>";
+		$xml .= "   <qtpreemp>".$qtparepr."</qtpreemp>";
+		$xml .= "   <vlpreemp>".str_replace(',', '.', str_replace('.', '', $vlpreemp))."</vlpreemp>";
+		$xml .= "   <vlemprst>".str_replace(',', '.', str_replace('.', '', $vlempres))."</vlemprst>";
+		$xml .= "	<dtlibera>".$dtlibera."</dtlibera>";
+		$xml .= "	<dtdpagto>".$dtdpagto."</dtdpagto>";
+		$xml .= "   <tpemprst>".$tpemprst."</tpemprst>";
+		$xml .= "   <dtcarenc>".$glbvars["dtmvtolt"]."</dtcarenc>";
+		$xml .= "   <qtdias_carencia>0</qtdias_carencia>";
+		$xml .= "   <dscatbem>".$dscatbem."</dscatbem>";
+		$xml .= "   <idfiniof>".$idfiniof."</idfiniof>";
+		$xml .= "   <dsctrliq>".$dsctrliq."</dsctrliq>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "ATENDA", "CALC_IOF_EPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjIOF = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));		
+
+		if (strtoupper($xmlObjIOF->roottag->tags[0]->name) == "ERRO") {			
+		   exibirErro('error','3 - '.$xmlObjIOF->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		}
+		$tagIOF = $xmlObjIOF->roottag->tags[0]->tags;
+
+
+		//Ajusta os valores retornados no XML
+		$vltarifa = getByTagName($tagTarifa,'vltarifa');
+		$valoriof = getByTagName($tagIOF,'valoriof');
+		$vlpreemp = getByTagName($tagIOF,'vlpreemp');
+
+		if (empty($valoriof)){
+			$valoriof = 0;
+		}
+		
+
+		$valoriofF = str_replace(',', '', $valoriof); //Valor em "float"
+		$vltarifaF = str_replace(',', '', $vltarifa); //Valor em "float"
+		$vlpreempF = str_replace(',', '', $vlpreemp); //Valor em "float"
+
+		$valoriof = str_replace('.', ',', str_replace(',', '', $valoriof)); //Valor para exibir
+		$vltarifa = str_replace('.', ',', str_replace(',', '', $vltarifa)); //Valor para exibir
+		$vlpreemp = str_replace('.', ',', str_replace(',', '', $vlpreemp)); //Valor para exibir
+		
+		
+		//Aqui verifica se tem bens que são do tipo CASA ou APARTAMENTO. Se tiver, zera o valor de IOF.
+		//Já é feito na procedure do Oracle, mas busca da crapbpr, e na inclusão do contrato de empréstimo
+		//não existe registro nesta tabela ainda, apenas no array do javascript
+		if ($inpessoa == 1){
+			$tmp = explode('|', $dscatbem.'|');
+			foreach ($tmp as $bem) {
+				if ($bem == 'CASA' || $bem == 'APARTAMENTO'){
+					$valoriof = 0;
+					break;
+				}
+			}
+		}
+
+		$vlrtotal = str_replace(',', '.', str_replace('.', '', $vlempres));
+		if ($idfiniof > 0){				
+			$vlrtotal += $vltarifaF + $valoriofF;
+		}
+
+
+		//Recalcula o CET, levando em consideração o valor da parcela retornado no cálculo do IOF
+		$xml = "<Root>";
+		$xml .= "	<Cabecalho>";
+		$xml .= "		<Bo>b1wgen0002.p</Bo>";
+		$xml .= "		<Proc>calcula_cet_novo</Proc>";
+		$xml .= "	</Cabecalho>";
+		$xml .= "	<Dados>";
+		$xml .= "       <cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
+		$xml .= "		<cdagenci>" . $glbvars["cdpactra"] . "</cdagenci>";
+		$xml .= "		<nrdcaixa>" . $glbvars["nrdcaixa"] . "</nrdcaixa>";
+		$xml .= "		<cdoperad>" . $glbvars["cdoperad"] . "</cdoperad>";
+		$xml .= "		<nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
+		$xml .= "		<idorigem>" . $glbvars["idorigem"] . "</idorigem>";
+		$xml .= "		<dtmvtolt>" . $glbvars["dtmvtolt"] . "</dtmvtolt>";
+		$xml .= "		<inpessoa>" . $inpessoa . "</inpessoa>";
+		$xml .= "		<cdlcremp>" . $cdlcremp . "</cdlcremp>";
+		$xml .= "		<tpemprst>" . $tpemprst . "</tpemprst>";
+		$xml .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
+		$xml .= "		<vlemprst>" . str_replace('.', ',', $vlempres) . "</vlemprst>";
+		$xml .= "		<vlpreemp>" . str_replace('.', ',', $vlpreemp) . "</vlpreemp>";
+		$xml .= "		<dtdpagto>" . $dtdpagto . "</dtdpagto>";
+		$xml .= "		<cdfinemp>" . $cdfinemp . "</cdfinemp>";
+		$xml .= "		<dtlibera>" . $dtlibera . "</dtlibera>";
+		$xml .= "		<qtpreemp>" . $qtparepr . "</qtpreemp>";
+		$xml .= "		<cdusolcr>" . getByTagName($tagTarifa,'cdusolcr') . "</cdusolcr>";
+		$xml .= "   	<nrctremp>".$nrctremp."</nrctremp>";
+		$xml .= "   	<dscatbem>".$dscatbem."</dscatbem>";
+		$xml .= "   	<idfiniof>".$idfiniof."</idfiniof>";		
+		$xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";
+		$xml .= "	</Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = getDataXML($xml);
+		$xmlCET = getObjectXML($xmlResult);
+
+		if (strtoupper($xmlCET->roottag->tags[0]->name) == "ERRO") {			
+		   exibirErro('error','4 - '.$xmlCET->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		}
+
+		$txcetano = $xmlCET->roottag->tags[0]->attributes['TXCETANO'];
+
+		//Atualiza o array do javascript para exibir os valores atualizados no formulário do demonstrativo
+		?>
+		<script type="text/javascript">
+			arrayProposta['vlrtarif'] = '<? echo number_format(str_replace(",",".",$vltarifa),2,",",""); ?>';	
+			arrayProposta['vliofepr'] = '<? echo number_format(str_replace(",",".",$valoriof),2,",",""); ?>';	
+			arrayProposta['vlrtotal'] = '<? echo number_format(str_replace(",",".",$vlrtotal),2,",",""); ?>';
+			arrayProposta['vlpreemp'] = '<? echo number_format(str_replace(",",".",$vlpreemp),2,",",""); ?>';
+			arrayProposta['percetop'] = '<? echo number_format(str_replace(",",".",$txcetano),2,",",""); ?>';
+		</script>
+
+	<?
 	}
 
 ?>
@@ -866,6 +1024,8 @@
         	include('portabilidade/portabilidade.php');
 	} else if (in_array($operacao,array('ACIONAMENTOS'))) {
         	include('form_acionamentos.php');
+	} else if (in_array($operacao,array('A_DEMONSTRATIVO_EMPRESTIMO','I_DEMONSTRATIVO_EMPRESTIMO'))) {
+        	include('form_demonstracao_emprestimo.php');
 	}
 
 ?>

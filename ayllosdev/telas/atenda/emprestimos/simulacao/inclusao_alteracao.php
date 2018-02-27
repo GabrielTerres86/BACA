@@ -78,7 +78,17 @@ $xmlObj = getObjectXML($xmlResult);
 $nrgravad = $xmlObj->roottag->tags[0]->attributes["NRGRAVAD"];
 $txcetano = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
 
+//$vliofepr = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
+//$vlrtarif = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
+//$vlrtotal = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
+$vliofepr = '0';
+$vlrtarif = '0';
+$vlrtotal = '0';
+
 echo "$('#percetop','#frmSimulacao').val('" . $txcetano . "');";
+echo "$('#vliofepr','#frmSimulacao').val('" . $vliofepr . "');";
+echo "$('#vlrtarif','#frmSimulacao').val('" . $vlrtarif . "');";
+echo "$('#vlrtotal','#frmSimulacao').val('" . $vlrtotal . "');";
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
     echo 'hideMsgAguardo();';

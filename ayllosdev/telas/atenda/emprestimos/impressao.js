@@ -120,6 +120,7 @@ function verificaImpressao(par_idimpres){
 		showError('error','An&aacute;lise de Cr&eacute;dito ainda n&atilde;o foi efetuada! N&atilde;o ser&aacute; poss&iacute;vel gerar \'Proposta\', \'Rating\' ou \'Consultas\'!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 		return false;
 	}
+	
 	if ( idimpres >= 1 && idimpres <= 57 ) {
 	
 		if ( idimpres == 5 ) {
@@ -136,7 +137,7 @@ function verificaImpressao(par_idimpres){
 		}
 		else 
 		    if (idimpres == 7 || idimpres == 8 || idimpres == 9 || idimpres == 23 || idimpres == 57) {
-			carregarImpresso();
+			    carregarImpresso();
 		}
 		else {
             if (idimpres == 2 || idimpres == 3) {
@@ -308,8 +309,8 @@ function carregarImpresso(){
 	$('#nrdrecid','#formEmpres').val( nrdrecid );
 	$('#nrdconta','#formEmpres').val( nrdconta );
 	$('#nrctremp','#formEmpres').val( nrctremp );
-	$('#nrcpfcgc','#formEmpres').val( nrcpfcgc );
 	$('#sidlogin','#formEmpres').val( $('#sidlogin','#frmMenu').val() );
+	$('#nrcpfcgc','#formEmpres').val( nrcpfcgc );
 
 	var action = UrlSite + 'telas/atenda/emprestimos/imprimir_dados.php';
 	

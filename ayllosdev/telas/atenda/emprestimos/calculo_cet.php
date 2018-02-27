@@ -30,6 +30,8 @@ $tpemprst = $_POST['tpemprst'];
 $nrctremp = $_POST['nrctremp'];
 $nrdconta = $_POST['nrdconta'];
 $cdfinemp = $_POST['cdfinemp'];
+$dsctrliq = isset($_POST['dsctrliq']) ? $_POST['dsctrliq'] : '';
+$idfiniof = isset($_POST['idfiniof']) ? $_POST['idfiniof'] : '0';
 
 $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 
@@ -61,6 +63,8 @@ $xml .= "		<dtlibera>" . $dtlibera . "</dtlibera>";
 $xml .= "		<vlemprst>" . $vlemprst . "</vlemprst>";
 $xml .= "		<vlpreemp>" . $vlpreemp . "</vlpreemp>";
 $xml .= "		<qtpreemp>" . $qtpreemp . "</qtpreemp>";
+$xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";
+$xml .= "		<idfiniof>" . $idfiniof . "</idfiniof>";
 $xml .= "	</Dados>";
 $xml .= "</Root>";
 

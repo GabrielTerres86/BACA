@@ -10,8 +10,8 @@ ALTERACOES     : 30/03/2012 - Incluir campo %CET (Gabriel).
                  04/08/2014 - Ajustes referentes ao projeto CET (Lucas R./Gielow)
                  30/06/2015 - Ajustes referentes Projeto 215 DV 3 (Daniel)
                  03/02/2017 - Reposicionar a Linha de Credito. (Jaison/James - PRJ298)
-
                  20/09/2017 - Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+
 */	
 
 $retorno = array();
@@ -105,7 +105,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
             <label for="vlrtotal">Valor Total:</label>
             <input name="vlrtotal" id="vlrtotal" type="text" value=""/>
 
-			-->
         </fieldset>
     </form>
     <div id="divProcParcelasTabela" style="display:none">

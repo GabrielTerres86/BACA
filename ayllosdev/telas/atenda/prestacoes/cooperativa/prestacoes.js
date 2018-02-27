@@ -575,7 +575,6 @@ function controlaLayout(operacao) {
 		arrayLargura[5] = '97px';
 		arrayLargura[6] = '38px';
 		arrayLargura[7] = '85px';
-		arrayLargura[8] = '97px';
 
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
@@ -642,15 +641,13 @@ function controlaLayout(operacao) {
 		altura   = '270px';
 		largura  = '485px';
 		
-		var rRotulos     = $('label[for="dtprejuz"],label[for="vlprejuz"],label[for="slprjori"],label[for="vlrpagos"],label[for="vlttmupr"],label[for="vlpgmupr"],label[for="vliofcpl"],label[for="tpdrisco"]','#'+nomeForm);
+		var rRotulos     = $('label[for="dtprejuz"],label[for="vlprejuz"],label[for="slprjori"],label[for="vlrpagos"],label[for="vlsdprej"],label[for="vlttmupr"],label[for="vlpgmupr"],label[for="vliofcpl"]','#'+nomeForm);
 		var cTodos       = $('select,input','#'+nomeForm);
 
-		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlttjmpr"],label[for="vlpgjmpr"],label[for="vlsdprej"]','#'+nomeForm);
+		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlttjmpr"],label[for="vlpgjmpr"],label[for="tpdrisco"]','#'+nomeForm);
 
 		var cTodosMoeda  = $('#vlrabono,#vlprejuz,#vljrmprj,#slprjori,#vljraprj,#vlrpagos,#vlacresc,#vlsdprej,#vlttmupr,#vlpgmupr,#vlttjmpr,#vlpgjmpr,#vliofcpl','#'+nomeForm);
 
-
-		
 
 		cTodosMoeda.addClass('moeda');
 		cTodos.addClass('campo').css('width','123px');
@@ -663,7 +660,7 @@ function controlaLayout(operacao) {
 	} else if ( in_array(operacao,['TC']) ) {
 
 		nomeForm = 'frmDadosPrest';
-		altura   = '470px';
+		altura   = '500px';
 		largura  = '495px';
 
 		var rRotulos     = $('label[for="nrctremp"],label[for="qtaditiv"],label[for="vlemprst"],label[for="vlsdeved"],label[for="vlpreemp"],label[for="vlprepag"],label[for="vlpreapg"],label[for="dslcremp"],label[for="dsdaval1"],label[for="dsdaval2"],label[for="dsdpagto"],label[for="dsfinemp"],label[for="vlmtapar"],label[for="vlmrapar"],label[for="vltotpag"],label[for="vliofcpl"]','#'+nomeForm);
@@ -692,7 +689,6 @@ function controlaLayout(operacao) {
 		cTaxaJuros.addClass('porcento_7');
 		cContrato.setMask('INTEGER','zzz.zzz.zz9','.','');
 		cMesesDeco.addClass('inteiro');
-		cVlIofCpl.addClass('porcento');
 
 		cMoeda.addClass('moeda');
 		cTodos.addClass('campo').css('width','131px');
@@ -821,10 +817,6 @@ function controlaLayout(operacao) {
 		rRotulos.addClass('rotulo').css('width','75px');
 		rDtLiberar.css('width','321px');
 
-		rDsratpro.addClass('rotulo').css('width','75px');
-		rDsratatu.addClass('rotulo-linha').css('width','115px');
-		cDsratpro.addClass('rotulo').css('width','108px');
-		cDsratatu.addClass('rotulo').css('width','108px');
 
 		rLiberar.css('width','153px');
 		rProposta.css('width','75px');
@@ -839,6 +831,11 @@ function controlaLayout(operacao) {
 		rDiasUteis.addClass('rotulo-linha');
         rIdcarenc.addClass('rotulo').css('width', '75px');
         rDtcarenc.addClass('').css('width', '135px');
+
+		rDsratpro.addClass('rotulo').css('width','75px');
+		rDsratatu.addClass('rotulo-linha').css('width','115px');
+		cDsratpro.addClass('rotulo').css('width','108px');
+		cDsratatu.addClass('rotulo').css('width','108px');
 
 		tpemprst = arrayProposta['tpemprst'];
 		cdtpempr = arrayProposta['cdtpempr'];
@@ -1484,6 +1481,7 @@ function controlaLayout(operacao) {
 		arrayLargura[7] = '60px';
 		arrayLargura[8] = '45px';
 		arrayLargura[9] = '57px';
+		arrayLargura[9] = '42px';
 
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
@@ -1594,6 +1592,11 @@ function controlaLayout(operacao) {
 		});
 
 		$("input[type=hidden][name='vlmrapar[]']").each(function() {
+			// Valor total a atual
+			valorTotAtual +=  retiraMascara ( this.value );
+		});
+
+		$("input[type=hidden][name='vliofcpl[]']").each(function() {
 			// Valor total a atual
 			valorTotAtual +=  retiraMascara ( this.value );
 		});
@@ -1760,6 +1763,11 @@ function controlaLayout(operacao) {
 		});
 
 		$("input[type=hidden][name='vlmrapar[]']").each(function() {
+			// Valor total a atual
+			valorTotAtual +=  retiraMascara ( this.value );
+		});
+
+		$("input[type=hidden][name='vliofcpl[]']").each(function() {
 			// Valor total a atual
 			valorTotAtual +=  retiraMascara ( this.value );
 		});
@@ -3002,8 +3010,9 @@ function habilitaDesabilitaCampo(object, flgRecalcula , nrParcela)
 		valorAtual    = retiraMascara($('#vlatupar_'+nrParcela , tabela).val());
 		valorMulta    = retiraMascara($('#vlmtapar_'+nrParcela , tabela).val());
 		valorMora	  = retiraMascara($('#vlmrapar_'+nrParcela , tabela).val());
+		valorIOF	  = retiraMascara($('#vliofcpl_'+nrParcela , tabela).val());
 
-		valorAtual +=  valorMulta + valorMora;
+		valorAtual +=  valorMulta + valorMora + valorIOF;
 
 		$('#vlpagpar_'+nrParcela , tabela  ).val(valorAtual.toFixed(2).replace(".",","));
 

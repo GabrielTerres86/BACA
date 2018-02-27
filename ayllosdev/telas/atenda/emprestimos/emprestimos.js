@@ -406,6 +406,11 @@ function controlaOperacao(operacao) {
     qtdialib = '';
     dtdpagto = '';
     tpemprst = 0;
+    vlpreemp = '';
+    dscatbem = '';
+    idfiniof = '';
+    cdfinemp = '';
+    dsctrliq = '';
 
     var simula = false;
 
@@ -763,7 +768,8 @@ function controlaOperacao(operacao) {
                 controlaOperacao('A_HIPOTECA');
                 return false;
             } else {
-                controlaOperacao('A_FINALIZA');
+                //controlaOperacao('A_FINALIZA');
+                controlaOperacao('A_DEMONSTRATIVO_EMPRESTIMO');                
                 return false;
             }
             break;
@@ -940,7 +946,8 @@ function controlaOperacao(operacao) {
                 controlaOperacao('I_HIPOTECA');
                 return false;
             } else {
-                controlaOperacao('');
+                //controlaOperacao('');
+                controlaOperacao('I_DEMONSTRATIVO_EMPRESTIMO');
                 return false;
             }
             break;
@@ -995,7 +1002,9 @@ function controlaOperacao(operacao) {
             cddopcao = 'I';
             break;
         case 'I_CONTRATO' :
+            controlaOperacao('I_DEMONSTRATIVO_EMPRESTIMO');
             cddopcao = 'I';
+            return false;
             break;
         case 'I_MICRO_PERG':
             cddopcao = 'I';
@@ -1230,6 +1239,30 @@ function controlaOperacao(operacao) {
 			}
             return false;
             break;
+        //case 'DEMONSTRATIVO_EMPRESTIMO':
+        case 'A_DEMONSTRATIVO_EMPRESTIMO':
+        case 'I_DEMONSTRATIVO_EMPRESTIMO':
+            tpemprst = arrayProposta['tpemprst'];
+            cdlcremp = arrayProposta['cdlcremp'];
+            vlempres = number_format(parseFloat(arrayProposta['vlemprst'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+            qtparepr = arrayProposta['qtpreemp'];
+            qtdialib = arrayProposta['dtlibera'];
+            dtdpagto = arrayProposta['dtdpagto'];
+			dsctrliq = arrayProposta['dsctrliq'];
+            cddopcao = 'C';
+            vlpreemp = number_format(parseFloat(arrayProposta['vlpreemp'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+            mensagem = 'Carregando Demonstrativo da Proposta...';
+            dscatbem = '';
+            cdfinemp = arrayProposta['cdfinemp']
+            //Carrega a lista de bens para enviar junto no POST
+            for (i in arrayHipotecas) {
+                dscatbem += arrayHipotecas[i]['dscatbem'] + '|';
+            }
+            for (i in arrayAlienacoes) {
+                dscatbem += arrayAlienacoes[i]['dscatbem'] + '|';
+            }            
+            idfiniof = arrayProposta['idfiniof'];
+            break;
         default:
             operacao = '';
             nrctremp = '';
@@ -1274,12 +1307,14 @@ function controlaOperacao(operacao) {
             dtcnsspc: dtcnsspc, idSocio: idSocio,
             inconcje: inconcje, qtpergun: qtpergun,
             nrseqrrq: nrseqrrq, inprodut: 1,
-            nrdocmto: nrctremp,
+            nrdocmto: nrctremp, vlpreemp: vlpreemp,
             iddoaval_busca: iddoaval_busca,
             inpessoa_busca: inpessoa_busca,
             nrdconta_busca: nrdconta_busca,
             nrcpfcgc_busca: nrcpfcgc_busca,
-            inconfir: 1,
+            inpessoa: inpessoa, dscatbem: dscatbem,
+            idfiniof: idfiniof, cdfinemp: cdfinemp,
+            inconfir: 1, dsctrliq : dsctrliq,
             nomeAcaoCall: nomeAcaoCall,
 			executandoProdutos: executandoProdutos,
             redirect: 'html_ajax'
@@ -1413,6 +1448,7 @@ function manterRotina(operacao) {
 
     geraRegsDinamicos();
 
+    
     var flgcmtlc = (typeof arrayCooperativa['flgcmtlc'] == 'undefined') ? '' : arrayCooperativa['flgcmtlc'];
     var vllimapv = (typeof arrayCooperativa['vllimapv'] == 'undefined') ? '' : arrayCooperativa['vllimapv'];
 
@@ -1438,6 +1474,8 @@ function manterRotina(operacao) {
 	var vliofepr = (typeof arrayProposta['vliofepr'] == 'undefined') ? '' : arrayProposta['vliofepr'];
 	var vlrtarif = (typeof arrayProposta['vlrtarif'] == 'undefined') ? '' : arrayProposta['vlrtarif'];
 	var vlrtotal = (typeof arrayProposta['vlrtotal'] == 'undefined') ? '' : arrayProposta['vlrtotal'];
+    var vlfinanc = (typeof arrayProposta['vlfinanc'] == 'undefined') ? '' : arrayProposta['vlfinanc'];
+
     var nrctaava = (typeof aux_nrctaav0 == 'undefined') ? '' : aux_nrctaav0;
     var nrctaav2 = (typeof aux_nrctaav1 == 'undefined') ? '' : aux_nrctaav1;
     var idcarenc = (typeof arrayProposta['idcarenc'] == 'undefined') ? '' : arrayProposta['idcarenc'];
@@ -1603,6 +1641,15 @@ function manterRotina(operacao) {
     dsobserv = removeCaracteresInvalidos(dsobserv);
     }   
 
+    var dscatbem = "";
+    //Carrega a lista de bens para enviar junto no POST
+    for (i in arrayHipotecas) {
+        dscatbem += arrayHipotecas[i]['dscatbem'] + '|';
+    }
+    for (i in arrayAlienacoes) {
+        dscatbem += arrayAlienacoes[i]['dscatbem'] + '|';
+    }
+
     // Executa script de confirmação através de ajax
     $.ajax({
         type: 'POST',
@@ -1647,10 +1694,10 @@ function manterRotina(operacao) {
             blqpreap: (bloquear_pre_aprovado ? 1 : 0),
             idcarenc: idcarenc, dtcarenc: dtcarenc,
             // Daniel
-            inpesso1: inpesso1, dtnasct1: dtnasct1,
+            inpesso1: inpesso1, dtnasct1: dtnasct1, dscatbem: dscatbem,
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
             resposta: resposta, idfiniof: idfiniof, vliofepr: vliofepr,
-            vlrtarif: vlrtarif, vlrtotal: vlrtotal, 
+            vlrtarif: vlrtarif, vlrtotal: vlrtotal, vlfinanc: vlfinanc,
             executandoProdutos: executandoProdutos, redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1766,12 +1813,15 @@ function verificaQtDiaLib() {
                 $('#qtdialib').val('0');
                 $('#qtdialib').change();
             }
+            $("#idfiniof").desabilitaCampo();
+            $("#idfiniof").val(0);
             break;
         case '1': // Pre-Fixado
             $('#qtdialib').desabilitaCampo();
             $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
+            $("#idfiniof").habilitaCampo();
             break;
         case '2': // Pos-Fixado
             $('#flgpagto').desabilitaCampo();
@@ -1779,6 +1829,7 @@ function verificaQtDiaLib() {
             $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
+            $("#idfiniof").habilitaCampo();
             break;
     }
     return true;
@@ -1797,22 +1848,23 @@ function controlaLayout(operacao) {
         divRegistro.css('height', '150px');
 
         altura = '230px';
-        largura = '900px';
+        largura = '950px';
 
         var ordemInicial = new Array();
         //ordemInicial = [[0, 0]];
 
         var arrayLargura = new Array();
-        arrayLargura[0] = '55px';
+        arrayLargura[0] = '60px';
         arrayLargura[1] = '60px';
-        arrayLargura[2] = '150px';
-        arrayLargura[3] = '77px';
-        arrayLargura[4] = '65px';
-        arrayLargura[5] = '25px';
-        arrayLargura[6] = '28px';
-        arrayLargura[7] = '28px';
-        arrayLargura[8] = '50px';
-        arrayLargura[9] = '127px';
+        arrayLargura[2] = '130px';
+        arrayLargura[3] = '75px';
+        arrayLargura[4] = '75px';
+        arrayLargura[5] = '65px';
+        arrayLargura[6] = '35px';
+        arrayLargura[7] = '35px';
+        arrayLargura[8] = '35px';
+        arrayLargura[9] = '65px';
+        arrayLargura[10] = '120px';
 
 
         var arrayAlinha = new Array();
@@ -1820,13 +1872,14 @@ function controlaLayout(operacao) {
         arrayAlinha[1] = 'right';
         arrayAlinha[2] = 'center';
         arrayAlinha[3] = 'right';
-        arrayAlinha[4] = 'center';
-        arrayAlinha[5] = 'center';
+        arrayAlinha[4] = 'right';
+        arrayAlinha[5] = 'right';
         arrayAlinha[6] = 'center';
         arrayAlinha[7] = 'center';
         arrayAlinha[8] = 'center';
         arrayAlinha[9] = 'center';
         arrayAlinha[10] = 'center';
+        arrayAlinha[11] = 'center';
 
         var metodoTabela = 'controlaOperacao(\'TA\')';
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
@@ -1836,13 +1889,13 @@ function controlaLayout(operacao) {
 
 
         nomeForm = 'frmNovaProp';
-        altura = '330px';
+        altura = '340px';
         largura = '465px';
 
         inconfir = 1;
         inconfi2 = 30;
 
-        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="flgpagto"],label[for="tpemprst"],label[for="dsctrliq"]', '#' + nomeForm);
+        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="flgpagto"],label[for="tpemprst"],label[for="dsctrliq"],label[for="vlfinanc"]', '#' + nomeForm);
         var cTodos = $('select,input', '#' + nomeForm);
         var r_Linha1 = $('label[for="cdlcremp"]', '#' + nomeForm);
         var rCet = $('label[for="percetop"]', '#' + nomeForm);
@@ -1877,6 +1930,7 @@ function controlaLayout(operacao) {
         var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
         var rIdcarenc = $('label[for="idcarenc"]', '#' + nomeForm);
         var rDtcarenc = $('label[for="dtcarenc"]', '#' + nomeForm);
+		var rVlFinanc = $('label[for="vlfinanc"]', '#' + nomeForm);
 
         var cNivelRic = $('#nivrisco', '#' + nomeForm);
         var cRiscoCalc = $('#nivcalcu', '#' + nomeForm);
@@ -1894,6 +1948,7 @@ function controlaLayout(operacao) {
         var cVliofepr = $('#vliofepr', '#' + nomeForm);
         var cVlrtarif = $('#vlrtarif', '#' + nomeForm);
         var cVlrtotal = $('#vlrtotal', '#' + nomeForm);
+        var cVlFinanc = $('#vlfinanc', '#' + nomeForm);
 
         var cLiberar = $('#qtdialib', '#' + nomeForm);
         var cDtlibera = $('#dtlibera', '#' + nomeForm);
@@ -1941,23 +1996,25 @@ function controlaLayout(operacao) {
         cVlrtarif.addClass('rotulo moeda').css('width', '90px');
         rVlrtotal.addClass('rotulo').css('width', '75px');
         cVlrtotal.addClass('rotulo moeda').css('width', '90px');
+        rVlFinanc.addClass('rotulo').css('width', '75px');
+        cVlFinanc.addClass('rotulo moeda').css('width', '90px');
+
         rDtLiberar.css('width', '97px');
         rLiberar.css('width', '137px');
-        rProposta.css('width', '97px');
         rDtLiberar.css('width', '153px');
         rLiberar.css('width', '135px');
-        rProposta.css('width', '75px');
+        rProposta.css('width', '321px');
         rImgCalen.css('margin-top', '-5px');
 
         rRiscoCalc.addClass('').css('width', '153px');
         rLnCred.addClass('').css('width', '95px');
         rFinali.addClass('').css('width', '95px');
         rQualiParc.addClass('').css('width', '95px');
-        rPercCET.addClass('').css('width', '75px');
-        rDtPgmento.addClass('rotulo-linha').css('width', '190px');
-        rDtUltPag.addClass('rotulo').css('width', '321px');
+        rPercCET.addClass('').css('width', '153px');
+        rDtPgmento.addClass('').css('width', '159px');
+        rDtUltPag.addClass('').css('width', '321px');
         rDtLiquidacao.addClass('rotulo').css('width', '265px');
-        rNtPromis.addClass('rotulo-linha').css('width', '132px');
+        rNtPromis.addClass('rotulo-linha').css('width', '318px');
         rDiasUteis.addClass('rotulo-linha');
         rIdcarenc.addClass('rotulo').css('width', '75px');
         rDtcarenc.addClass('').css('width', '135px');
@@ -1991,8 +2048,11 @@ function controlaLayout(operacao) {
                 } else {
                     // no - Conta   yes - Folha
                     $('#flgpagto', '#frmNovaProp').val(arrayProposta['flgpagto']);
-
                 }
+
+                //Ajusta o tamanho do campo "Imprime proposta" de acordo com o tipo de empréstimo
+                var rProposta = $('label[for="flgimppr"]', '#frmNovaProp');
+                rProposta.css('width', '321px');
 
                 verificaQtDiaLib();
                 exibeLinhaCarencia();
@@ -2106,6 +2166,11 @@ function controlaLayout(operacao) {
                 $("#qtdialib").desabilitaCampo();
                 $("#qtdialib").datepicker('disable');
             }
+
+            if (arrayProposta['tpemprst'] == '0') {
+                $("#idfiniof").desabilitaCampo();
+                $("#idfiniof").val(0);
+            }            
 
             if (cDebitar.val() == 'yes') {
                 cDtPgmento.desabilitaCampo();
@@ -2252,6 +2317,8 @@ function controlaLayout(operacao) {
         cVlrtarif.desabilitaCampo();
         cVliofepr.desabilitaCampo();
         cVlrtotal.desabilitaCampo();
+        cVlFinanc.desabilitaCampo();
+
     } else if (in_array(operacao, ['C_DADOS_PROP', 'A_DADOS_PROP', 'I_DADOS_PROP'])) {
 
         nomeForm = 'frmDadosProp';
@@ -3435,7 +3502,7 @@ function controlaLayout(operacao) {
     } else if (in_array(operacao, ['T_EFETIVA'])) {
 
         $('#linkAba0').html('Principal');
-        altura = '195px';
+        altura = '215px';
         largura = '433px';
         nomeForm = 'frmEfetivaProp';
 
@@ -3453,6 +3520,7 @@ function controlaLayout(operacao) {
         var cDocAval1 = $('#avalist1', '#' + nomeForm);
         var cContaAval2 = $('#nrctaav2', '#' + nomeForm);
         var cDocAval2 = $('#avalist2', '#' + nomeForm);
+        var cVlFinanc = $('#vlfinanc', '#' + nomeForm);
 
         var rFinalidEmpr = $('label[for="cdfinemp"]', '#' + nomeForm);
         var rLinhaCredit = $('label[for="cdlcremp"]', '#' + nomeForm);
@@ -3466,6 +3534,7 @@ function controlaLayout(operacao) {
         var rDocAval1 = $('label[for="avalist1"]', '#' + nomeForm);
         var rContaAval2 = $('label[for="nrctaav2"]', '#' + nomeForm);
         var rDocAval2 = $('label[for="avalist2"]', '#' + nomeForm);
+        var rVlFinanc = $('label[for="vlfinanc"]', '#' + nomeForm);
 
         cFinalidEmpr.addClass('rotulo').css('width', '80px');
         cLinhaCredit.addClass('rotulo').css('width', '35px').attr('maxlength', '3');
@@ -3479,6 +3548,8 @@ function controlaLayout(operacao) {
         cDocAval1.addClass('').css('width', '90px');
         cContaAval2.addClass('rotulo').css('width', '90px');
         cDocAval2.addClass('').css('width', '90px');
+        cVlFinanc.addClass('rotulo moeda').css('width', '70px');
+
         rFinalidEmpr.addClass('rotulo').css('width', '110px');
         rLinhaCredit.css('width', '120px');
         rNivelRisco.addClass('rotulo').css('width', '110px');
@@ -3491,6 +3562,7 @@ function controlaLayout(operacao) {
         rDocAval1.css('width', '110px');
         rContaAval2.addClass('rotulo').css('width', '110px');
         rDocAval2.css('width', '110px');
+        rVlFinanc.addClass('rotulo').css('width', '110px');
 
         cTodos.addClass('campo');
         cFinalidEmpr.desabilitaCampo();
@@ -3505,6 +3577,7 @@ function controlaLayout(operacao) {
         cDocAval1.desabilitaCampo();
         cContaAval2.desabilitaCampo();
         cDocAval2.desabilitaCampo();
+        cVlFinanc.desabilitaCampo();
 
         if (arrayStatusApprov['flgpagto'] == 'yes')
             var tipoPagamento = 'Folha';
@@ -3523,6 +3596,7 @@ function controlaLayout(operacao) {
         cDocAval1.val(arrayStatusApprov['avalist1']);
         cContaAval2.val(arrayStatusApprov['nrctaav2']);
         cDocAval2.val(arrayStatusApprov['avalist2']);
+        cVlFinanc.val(arrayStatusApprov['vlfinanc']);
 
         $('#btSalvar', '#divBotoes').unbind('click').bind('click', function() {
             flggravp = true;
@@ -3761,7 +3835,47 @@ function controlaLayout(operacao) {
             $(this).val(removeCaracteresInvalidos($(this).val()));
         });
         // Fim SD 779305
-    }
+       } else if (in_array(operacao, ['I_DEMONSTRATIVO_EMPRESTIMO', 'A_DEMONSTRATIVO_EMPRESTIMO'])){
+        nomeForm = 'frmDemonstracaoEmprestimo';
+        largura = '345px';
+        altura = '205px';
+
+        var rVlemprst = $('label[for="vlemprst"]', '#' + nomeForm);
+        var rVliofepr = $('label[for="vliofepr"]', '#' + nomeForm);
+        var rVlrtarif = $('label[for="vlrtarif"]', '#' + nomeForm);
+        var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
+        var rVlpreemp = $('label[for="vlpreemp"]', '#' + nomeForm);
+        var rPercetop = $('label[for="percetop"]', '#' + nomeForm);
+
+        var cVlemprst = $('#vlemprst', '#' + nomeForm);
+        var cVliofepr = $('#vliofepr', '#' + nomeForm);
+        var cVlrtarif = $('#vlrtarif', '#' + nomeForm);
+        var cVlrtotal = $('#vlrtotal', '#' + nomeForm);
+        var cVlpreemp = $('#vlpreemp', '#' + nomeForm);
+        var cPercetop = $('#percetop', '#' + nomeForm);
+
+        rVlemprst.addClass('rotulo').css('width', '100px');
+        rVliofepr.addClass('rotulo').css('width', '100px');
+        rVlrtarif.addClass('rotulo').css('width', '100px');
+        rVlrtotal.addClass('rotulo').css('width', '100px');
+        rVlpreemp.addClass('rotulo').css('width', '100px');
+        rPercetop.addClass('rotulo').css('width', '100px');
+
+        cVlemprst.addClass('moeda');
+        cVliofepr.addClass('moeda');
+        cVlrtarif.addClass('moeda');
+        cVlrtotal.addClass('moeda');
+        cVlpreemp.addClass('moeda');
+        cPercetop.addClass('moeda');
+
+        cVlemprst.desabilitaCampo();
+        cVliofepr.desabilitaCampo();
+        cVlrtarif.desabilitaCampo();
+        cVlrtotal.desabilitaCampo();
+        cVlpreemp.desabilitaCampo();
+        cPercetop.desabilitaCampo();
+	  }
+    
     if (operacao == 'TC') {
         atualizaCampoData();
     }
@@ -3861,6 +3975,7 @@ function copiaProposta(novaOp) {
     arrayProposta['flgimpnp'] = $('#flgimpnp', '#frmNovaProp').val();
     arrayProposta['dsctrliq'] = $('#dsctrliq', '#frmNovaProp').val();
 	arrayProposta['idfiniof'] = $('#idfiniof', '#frmNovaProp').val();
+	arrayProposta['vlfinanc'] = $('#vlfinanc', '#frmNovaProp').val();
 
     flgimppr = arrayProposta['flgimppr'];
     flgimpnp = arrayProposta['flgimpnp'];
@@ -3918,6 +4033,7 @@ function attArray(novaOp, cdcooper) {
         arrayProposta['vlrtotal'] = $('#vlrtotal', '#frmNovaProp').val();
         arrayProposta['idcarenc'] = $('#idcarenc', '#frmNovaProp').val();
         arrayProposta['dtcarenc'] = $('#dtcarenc', '#frmNovaProp').val();
+		arrayProposta['vlfinanc'] = $('#vlfinanc', '#frmNovaProp').val();
 
         flgimppr = arrayProposta['flgimppr'];
         flgimpnp = arrayProposta['flgimpnp'];
@@ -4104,6 +4220,7 @@ function attArray(novaOp, cdcooper) {
         arrayProposta['flgimpnp'] = $('#flgimpnp', '#frmNovaProp').val();
         arrayProposta['dsctrliq'] = $('#dsctrliq', '#frmNovaProp').val();
         arrayProposta['tpemprst'] = $('#tpemprst', '#frmNovaProp').val();
+        arrayProposta['vlfinanc'] = $('#vlfinanc', '#frmNovaProp').val();
 
         flgimppr = arrayProposta['flgimppr'];
         flgimpnp = arrayProposta['flgimpnp'];
@@ -4202,6 +4319,7 @@ function atualizaTela() {
         $('#vlrtotal', '#frmNovaProp').val(arrayProposta['vlrtotal']);
         $('#idcarenc', '#frmNovaProp').val(arrayProposta['idcarenc']);
         $('#dtcarenc', '#frmNovaProp').val(arrayProposta['dtcarenc']);
+		$('#vlfinanc', '#frmNovaProp').val(arrayProposta['vlfinanc']);        
 
         if (operacao == 'TI') {
 
@@ -4411,6 +4529,13 @@ function atualizaTela() {
 
         contHipotecas++;
 
+    } else if (in_array(operacao, ['I_DEMONSTRATIVO_EMPRESTIMO', 'A_DEMONSTRATIVO_EMPRESTIMO'])) {
+        $('#vliofepr', '#frmDemonstracaoEmprestimo').val(arrayProposta['vliofepr']);
+        $('#vlrtarif', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlrtarif']);
+        $('#vlrtotal', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlrtotal']);
+        $('#percetop', '#frmDemonstracaoEmprestimo').val(arrayProposta['percetop']);
+        $('#vlemprst', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlemprst']);
+        $('#vlpreemp', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlpreemp']);
     }
 
     return false;
@@ -4930,6 +5055,7 @@ function validaDadosGerais() {
     var tpfinali = $("#frmNovaprop #tpfinali").val();
     var idcarenc = $('#idcarenc', '#frmNovaProp').val();
     var dtcarenc = $('#dtcarenc', '#frmNovaProp').val();
+    var idfiniof = $('#idfiniof', '#frmNovaProp').val();
 
     var tpaltera = (operacao == 'A_VALOR') ? '2' : '1';
 
@@ -4981,7 +5107,7 @@ function validaDadosGerais() {
             tpemprst: tpemprst, dtlibera: dtlibera,
             inconfi2: inconfi2, percetop: percetop,
             cdmodali: cdmodali, idcarenc: idcarenc,
-            dtcarenc: dtcarenc,
+            dtcarenc: dtcarenc, idfiniof: idfiniof,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -8696,6 +8822,7 @@ function calculaCet(operacao) {
             cdfinemp: cdfinemp,
             operacao: operacao,
        portabilidade: possuiPortabilidade,
+            dsctrliq: arrayProposta['dsctrliq'],
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {

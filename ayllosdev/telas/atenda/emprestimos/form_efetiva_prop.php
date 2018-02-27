@@ -32,27 +32,28 @@
 		
 		<label for="vlpreemp">Valor da parcela:</label>
 		<input name="vlpreemp" id="vlpreemp" type="text" value="" />
+		<br />
 		
 		<label for="qtpreemp">Qtde parcelas:</label>
 		<input name="qtpreemp" id="qtpreemp" type="text" value="" />
-		<br />
 		
 		<label for="dtdpagto">Data de pagamento:</label>
 		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
+		<br />
 		
 		<label for="flgpagto"><? echo utf8ToHtml('Débito em:') ?></label>
 		<input name="flgpagto" id="flgpagto" type="text" value="" />			
-		<br />
 		
 		<label for="nrctaav1">Conta avalista 1:</label>
 		<input name="nrctaav1" id="nrctaav1" type="text" value="" />
+		<br />
 		
 		<label for="avalist1">Doc. avalista 1:</label>
 		<input name="avalist1" id="avalist1" type="text" value="" />
-		<br />
 		
 		<label for="nrctaav2">Conta avalista 2:</label>
 		<input name="nrctaav2" id="nrctaav2" type="text" value="" />
+		<br />
 		
 		<label for="avalist2">Doc. avalista 2:</label>
 		<input name="avalist2" id="avalist2" type="text" value="" />

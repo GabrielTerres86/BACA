@@ -132,10 +132,6 @@
             }
         ?>
 		
-		<label for="vliofcpl">IOF Atraso:</label>
-        <input name="vliofcpl" id="vliofcpl" type="text" value="" />
-        <br />
-
 		<label for="vltotpag">Total Pagar:</label>
 		<input name="vltotpag" id="vltotpag" type="text" value="" />		
 		<br />
