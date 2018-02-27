@@ -6977,13 +6977,15 @@ END pc_gera_titulos_iptu_prog;
   ---------------------------------------------------------------------------------------------------------------
   
   --> Validar convenio
-  CURSOR cr_crapcon ( pr_cdempcon  crapcon.cdempcon%TYPE,
+  CURSOR cr_crapcon ( pr_cdcooper  crapcon.cdcooper%type,
+                      pr_cdempcon  crapcon.cdempcon%TYPE,
                       pr_cdsegmto  crapcon.cdsegmto%TYPE) IS
     SELECT con.tparrecd,
            con.cdempcon,
            con.cdsegmto
       FROM crapcon con
-     WHERE con.cdempcon = pr_cdempcon
+     WHERE con.cdcooper = pr_cdcooper
+       AND con.cdempcon = pr_cdempcon
        AND con.cdsegmto = pr_cdsegmto;
   rw_crapcon cr_crapcon%ROWTYPE;
   
@@ -7026,7 +7028,8 @@ END pc_gera_titulos_iptu_prog;
   
   BEGIN
     --> Validar convenio
-    OPEN cr_crapcon ( pr_cdempcon  => pr_cdempcon,
+    OPEN cr_crapcon ( pr_cdcooper  => pr_cdcooper,
+                      pr_cdempcon  => pr_cdempcon,
                       pr_cdsegmto  => pr_cdsegmto);
     FETCH cr_crapcon INTO rw_crapcon;
     IF cr_crapcon%NOTFOUND THEN

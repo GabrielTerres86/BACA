@@ -1934,7 +1934,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                               ,pr_tpdaguia  => pr_tpdaguia   -- Tipo da guia (1 – DARF, 2 – DAS, 3-FGTS, 4-DAE)  
                               ,pr_dscritic  => vr_dscritic); -- retorna critica
     
-      IF pr_dscritic IS NOT NULL THEN
+      IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
         END IF;
     
