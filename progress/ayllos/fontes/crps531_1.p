@@ -214,21 +214,6 @@
 
                            10/10/2017 - Alteracoes melhoria 407 (Mauricio - Mouts)
 
-                           06/11/2017 - Alteração no tratamento da mensagem LTR0005R2 (Mauricio - Mouts)
-                           
-                           24/11/2017 - Alteração no tratamento da mensagem LTR0005R2 e tratamento da mensagem SLC0001 (Mauricio - Mouts)
-                           		  
-                          11/12/2017 - Inclusão do parametro par_cdmensagem - Codigo da mensagem ou critica
-                            (Belli - Envolti - Chamado 786752)
-
-               14/12/2017 - Implementação procedure trata_arquivo_ldl        (Alexandre Borgmann - Mouts) 
-											 
-   19/12/2017 - Efetuado alteracao para validar corretamente o tipo de pessoa e conta (Jonata - MOUTS).
-
-                           29/12/2017 - Tratamento mensagem LDL0020R2,LDL0022,LTR0004        (Alexandre Borgmann - Mouts) 
-                           
-                           18/01/2018 - Tratar mensagem STR0006R2 para Cielo (Alexandre Borgmann - Mouts) 
-
               14/02/2018 - Tratar mensagens CIR0020 e CIR0021, incluir o tratamento junto com a mensagem STR0003R2
                            SD 805540 - Marcelo Telles Coelho-Mouts 
              #######################################################
@@ -349,6 +334,12 @@ DEF VAR aux_CNPJNLiqdantCredtd AS CHAR                              NO-UNDO.
 DEF VAR aux_IdentLinhaBilat AS CHAR                                 NO-UNDO.
 DEF VAR aux_TpDebCred     AS CHAR                                   NO-UNDO.
 DEF VAR aux_insere_msg    AS CHAR                                   NO-UNDO.
+
+DEF VAR aux_NumCtrlCIROr  AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+DEF VAR aux_NumCtrlCIR    AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+DEF VAR aux_NumRemessaOr  AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+DEF VAR aux_AgIF          AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+DEF VAR aux_FinlddCIR     AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -1490,7 +1481,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
          END.
       ELSE
          DO:
-             INT(aux_AgCredtd) NO-ERROR.
+              INT(aux_AgCredtd) NO-ERROR.
 
              IF   ERROR-STATUS:ERROR   THEN   /* Caracter invalido */ 
                   ASSIGN aux_flgderro = TRUE. 
@@ -1502,6 +1493,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                                      NO-LOCK NO-ERROR.
                                         
              IF   NOT AVAIL crabcop   THEN
+                              DO:
 				      /* Tratamento incorporacao TRANSULCRED */ 
                       IF   INT(aux_AgCredtd) = 116 and
 					       TODAY < 03/21/2017 THEN   /* Data de corte */ 
@@ -1622,6 +1614,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                               NEXT.
                           END.
                   END.
+         END.
     
     IF   aux_CodMsg  MATCHES "*R1"  THEN  /* Confirmacao */
          DO:        
@@ -2226,6 +2219,14 @@ PROCEDURE importa_xml.
       ELSE
       IF  hNode:NAME = "CIR0021" THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
           RUN trata_numerario_cir0021.
+          /* Inclusão tratamento mensagem SLC0001 - Mauricio - 03/11/2017 */
+      ELSE
+      IF  hNode:NAME = "SLC0001" THEN
+          RUN trata_arquivo_slc.
+      ELSE
+           /* Inclusão tratamento mensagem LDL0024 - Alexandre (Mouts) - 12/12/2017 */
+      IF  hNode:NAME = "LDL0024" THEN
+          RUN trata_arquivo_ldl. 
       ELSE
           RUN trata_dados_transferencia.
             
@@ -2628,7 +2629,7 @@ PROCEDURE verifica_conta.
 								IF NOT (val_tppessoa = "F" OR CAN-DO("STR0037R2,PAG0137R2",aux_CodMsg)) OR 
 								   NOT AVAIL crapttl                                                    THEN
                                   ASSIGN aux_codierro = 3.  /*CPF divergente*/
-				
+                                       
                          END.
                     ELSE
                          DO:
@@ -3932,285 +3933,6 @@ PROCEDURE trata_dados_transferencia.
 
 END PROCEDURE.
 
-PROCEDURE trata_arquivo_slc.
-
-ASSIGN aux_codmsg = "SLC0001".
-
-
-/** Efetua leitura dos dados da mensagem **/
-REPEAT  aux_contado1 = 1 TO hNode:NUM-CHILDREN:
-    /** Obtem a TAG **/
-        hNode:GET-CHILD(hSubNode,aux_contado1).
-
-        IF  hSubNode:SUBTYPE <> 'ELEMENT' THEN
-                NEXT.           
-
-        /* Numero de Controle do Remetente */
-        IF  hSubNode:NAME = "NumCtrlSLC" THEN 
-                DO:
-                        hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
-                        ASSIGN aux_NumCtrlSLC = hSubNode2:NODE-VALUE.
-                END.
-                
-        IF  hSubNode:NAME = "ISPBIF" THEN 
-                DO:
-                        hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
-                        ASSIGN aux_ISPBIF = hSubNode2:NODE-VALUE.
-                END.
-
-        IF  hSubNode:NAME = "TpInf" THEN 
-                DO:
-                        hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
-                        ASSIGN aux_TpInf = hSubNode2:NODE-VALUE.
-                END.
-
-        IF  hSubNode:NAME = "DtHrSLC" THEN 
-                DO:
-                        hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
-                        ASSIGN aux_DtHrSLC = hSubNode2:NODE-VALUE.
-                END.
-                
-        IF  hSubNode:NAME = "DtMovto" THEN 
-                DO:
-                        hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
-                        ASSIGN aux_DtMovto = hSubNode2:NODE-VALUE.
-                END.
-END. /* REPEAT  aux_contado1 */
-
-   /** Efetua leitura dos dados da mensagem **/
-        ASSIGN aux_insere_msg = 'N'.
-        REPEAT  aux_contado1 = 1 TO hNode:NUM-CHILDREN:
-       /** Obtem a TAG **/
-        hNode:GET-CHILD(hSubNode,aux_contado1).
-      
-        IF  hSubNode:SUBTYPE <> 'ELEMENT' THEN
-            NEXT.           
-
-                IF  hSubNode:NAME = "Grupo_SLC0001_Liquid" THEN 
-                DO:
-                        REPEAT  aux_contado2 = 1 TO hSubNode:NUM-CHILDREN:
-                                /** Obtem a TAG **/
-                                hSubNode:GET-CHILD(hSubNode2,aux_contado2).
-                          
-                                IF  hSubNode2:SUBTYPE <> 'ELEMENT' THEN
-                                        NEXT.           
-
-                                IF  hSubNode2:NAME = "DtLiquid" THEN 
-                                DO:
-                                        hSubNode2:GET-CHILD(hSubNode3,1) NO-ERROR.
-                                        ASSIGN aux_DtLiquid = hSubNode3:NODE-VALUE.
-                                END.
-                        
-                                IF  hSubNode2:NAME = "NumSeqCicloLiquid" THEN 
-                                DO:
-                                        hSubNode2:GET-CHILD(hSubNode3,1) NO-ERROR.
-                                        ASSIGN aux_NumSeqCicloLiquid = hSubNode3:NODE-VALUE.
-                                END.
-                                        
-                                IF  hSubNode2:NAME = "Grupo_SLC0001_Prodt" THEN 
-                                DO:
-                                        ASSIGN         aux_insere_msg = 'N'.
-                                        REPEAT  aux_contado3 = 1 TO hSubNode2:NUM-CHILDREN:
-                                           /** Obtem a TAG **/
-                                                hSubNode2:GET-CHILD(hSubNode3,aux_contado3).
-                                          
-                                                IF  hSubNode3:SUBTYPE <> 'ELEMENT' THEN
-                                                        NEXT.           
-
-                                                IF  hSubNode3:NAME = "CodProdt" THEN 
-                                                DO:
-                                                        hSubNode3:GET-CHILD(hSubNode4,1) NO-ERROR.
-                                                        ASSIGN aux_CodProdt = hSubNode4:NODE-VALUE.
-                                                END.
-
-                                                IF  hSubNode3:NAME = "Grupo_SLC0001_LiquidProdt" THEN 
-                                                DO:
-                                                        ASSIGN         aux_insere_msg = 'N'.
-                                                        REPEAT  aux_contado4 = 1 TO hSubNode3:NUM-CHILDREN:
-                                                                /** Obtem a TAG **/
-                                                                hSubNode3:GET-CHILD(hSubNode4,aux_contado4).
-                                                          
-                                                                IF  hSubNode4:SUBTYPE <> 'ELEMENT' THEN
-                                                                        NEXT.           
-
-                                                                IF  hSubNode4:NAME = "IdentdLinhaBilat" THEN 
-                                                                DO:
-                                                                        hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
-                 
-                                                                   /* Se nao vier conteudo na TAG */
-                                                                   IF ERROR-STATUS:ERROR             OR  
-                                                                          ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                                                                          NEXT.
-                                 
-                                                                        ASSIGN aux_IdentdLinhaBilat = hTextTag:NODE-VALUE.
-                                                                END.
-                                                                        
-                                                                IF  hSubNode4:NAME = "TpDeb_Cred" THEN 
-                                                                DO:
-                                                                        hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
-                 
-                                                                   /* Se nao vier conteudo na TAG */ 
-                                                                   IF ERROR-STATUS:ERROR             OR  
-                                                                          ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                                                                          NEXT.
-                                 
-                                                                        ASSIGN aux_TpDeb_Cred = hTextTag:NODE-VALUE.
-                                                                END.
-                                                                IF  hSubNode4:NAME = "ISPBIFCredtd" THEN 
-                                                                DO:
-                                                                        hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
-                 
-                                                                   /* Se nao vier conteudo na TAG */ 
-                                                                   IF ERROR-STATUS:ERROR             OR  
-                                                                          ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                                                                          NEXT.
-                                 
-                                                                        ASSIGN aux_ISPBIFCredtd = hTextTag:NODE-VALUE.
-                                                                END.
-                                                                IF  hSubNode4:NAME = "ISPBIFDebtd" THEN 
-                                                                DO:
-                                                                        hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
-                 
-                                                                   /* Se nao vier conteudo na TAG */ 
-                                                                   IF ERROR-STATUS:ERROR             OR  
-                                                                          ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                                                                          NEXT.
-                                 
-                                                                        ASSIGN aux_ISPBIFDebtd = hTextTag:NODE-VALUE.
-                                                                END.
-                                                                IF  hSubNode4:NAME = "VlrLanc" THEN 
-                                                                DO:
-                                                                        hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
-                 
-                                                                   /* Se nao vier conteudo na TAG */ 
-                                                                   IF ERROR-STATUS:ERROR             OR  
-                                                                          ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                                                                          NEXT.
-                                 
-                                                                        ASSIGN aux_VlrLanc = hTextTag:NODE-VALUE.
-                                                                        aux_VlrLanc   = REPLACE(aux_VlrLanc,".",",").
-                                                                END.
-                                                                IF  hSubNode4:NAME = "CNPJNLiqdantDebtd" THEN 
-                                                                DO:
-                                                                        hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
-                 
-                                                                   /* Se nao vier conteudo na TAG */ 
-                                                                   IF ERROR-STATUS:ERROR             OR  
-                                                                          ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                                                                          NEXT.
-                                 
-                                                                        ASSIGN aux_CNPJNLiqdantDebtd = hTextTag:NODE-VALUE.
-                                                                END.
-                                                                IF  hSubNode4:NAME = "NomCliDebtd" THEN 
-                                                                DO:
-                                                                        hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
-                 
-                                                                   /* Se nao vier conteudo na TAG */ 
-                                                                   IF ERROR-STATUS:ERROR             OR  
-                                                                          ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                                                                          NEXT.
-                                 
-                                                                        ASSIGN aux_NomCliDebtd = hTextTag:NODE-VALUE.
-                                                                END.
-                                                                IF  hSubNode4:NAME = "CNPJNLiqdantCredtd" THEN 
-                                                                DO:
-                                                                        hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
-                 
-                                                                   /* Se nao vier conteudo na TAG */ 
-                                                                   IF ERROR-STATUS:ERROR             OR  
-                                                                          ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                                                                          NEXT.
-                                 
-                                                                        ASSIGN aux_CNPJNLiqdantCredtd = hTextTag:NODE-VALUE.
-                                                                END.
-                                                                IF  hSubNode4:NAME = "NomCliCredtd" THEN 
-                                                                DO:
-                                                                        hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
-                 
-                                                                   /* Se nao vier conteudo na TAG */ 
-                                                                   IF ERROR-STATUS:ERROR             OR  
-                                                                          ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                                                                          NEXT.
-                                 
-                                                                        ASSIGN aux_NomCliCredtd = hTextTag:NODE-VALUE.
-                                                                        ASSIGN aux_insere_msg = 'S'.
-                                                                END.
-                                                                IF aux_contado4 = hSubNode3:NUM-CHILDREN THEN
-                                                                DO:
-                                                                        IF         aux_TpInf = "D" AND                                /* Apenas para mensagens com tipo = D - Definitiva */
-                                                                                aux_insere_msg = 'S' THEN
-                                                                        DO:
-                                                                                UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                                                                                           " - " + glb_cdprogra + "' --> '"  +
-                                                                                                           glb_dscritic + " >> log/proc_batch.log"). 
-                                                                                IF        aux_NumCtrlSLC = "" THEN
-                                                                                        aux_NumCtrlSLC = "-1".
-                                                                                IF        aux_ISPBIF = "" THEN
-                                                                                        aux_ISPBIF = "-1".
-                                                                                IF        aux_NumSeqCicloLiquid = "" THEN
-                                                                                        aux_NumSeqCicloLiquid = "-1".
-                                                                                IF        aux_CodProdt = "" THEN
-                                                                                        aux_CodProdt = "-1".
-                                                                                IF        aux_IdentLinhaBilat = "" THEN
-                                                                                        aux_IdentLinhaBilat = "-1".
-                                                                                IF        aux_TpDebCred = "" THEN
-                                                                                        aux_TpDebCred = "-1".
-                                                                                IF        aux_ISPBIFCredtd = "" THEN
-                                                                                        aux_ISPBIFCredtd = "-1".
-                                                                                IF        aux_ISPBIFDebtd = "" THEN
-                                                                                        aux_ISPBIFDebtd = "-1".
-                                                                                IF        aux_CNPJNLiqdantDebtd = "" THEN
-                                                                                        aux_CNPJNLiqdantDebtd = "-1".
-                                                                                IF        aux_NomCliDebtd = "" THEN
-                                                                                        aux_NomCliDebtd = "-1".
-                                                                                IF        aux_CNPJNLiqdantCredtd = "" THEN
-                                                                                        aux_CNPJNLiqdantCredtd = "-1".
-                                                                                IF        aux_NomCliCredtd = "" THEN
-                                                                                        aux_NomCliCredtd = "-1".
-                                                                                        
-                                                                                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-                                                                                
-                                                                                RUN STORED-PROCEDURE pc_insere_msg_slc
-                                                                                          aux_handproc = PROC-HANDLE NO-ERROR (INPUT DEC(aux_VlrLanc)                
-                                                                                                                                                                  ,INPUT aux_codmsg        
-                                                                                                                                                                  ,INPUT aux_NumCtrlSLC                        
-                                                                                                                                                                  ,INPUT aux_ISPBIF                                
-                                                                                                                                                                  ,INPUT aux_DtLiquid                        
-                                                                                                                                                                  ,INPUT aux_NumSeqCicloLiquid        
-                                                                                                                                                                  ,INPUT aux_CodProdt                        
-                                                                                                                                                                  ,INPUT aux_IdentLinhaBilat        
-                                                                                                                                                                  ,INPUT aux_TpDebCred                        
-                                                                                                                                                                  ,INPUT aux_ISPBIFCredtd                
-                                                                                                                                                                  ,INPUT aux_ISPBIFDebtd                
-                                                                                                                                                                  ,INPUT aux_CNPJNLiqdantDebtd        
-                                                                                                                                                                  ,INPUT aux_NomCliDebtd                
-                                                                                                                                                                  ,INPUT aux_CNPJNLiqdantCredtd        
-                                                                                                                                                                  ,INPUT aux_NomCliCredtd                
-                                                                                                                                                                  ,INPUT aux_DtHrSLC                        
-                                                                                                                                                                  ,INPUT aux_DtMovto                        
-                                                                                                                                                                  ,OUTPUT "").                             
-                                                                                                                                                                
-                                                                                CLOSE STORED-PROC pc_insere_msg_slc
-                                                                                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-                                                                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }.
-                                                                                ASSIGN         aux_insere_msg = 'N'.
-
-                                                                                END.
-                                                                END.
-                                                        END. /* REPEAT  aux_contado4 */
-                                                END.
-                                        END. /* REPEAT  aux_contado3 */
-                                END.
-                        END. /* REPEAT  aux_contado2 */
-                END.
-        END. /* REPEAT  aux_contado1 */
-        RUN salva_arquivo.
-        RUN deleta_objetos.
-    RUN gera_logspb (INPUT "RECEBIDA OK",
-                     INPUT "SLC RECEBIDA",
-                     INPUT TIME).
-        
-END PROCEDURE.
 
 PROCEDURE trata_lancamentos.
 
@@ -5217,7 +4939,7 @@ PROCEDURE trata_lancamentos.
                                                                  "   Identificacao Dep.: " + STRING(craptvl.nrcctrcb)
 
                                                           ,INPUT "TED BacenJud: Rejeitada pela cabine"
-                                                                                                                  ,INPUT "N"
+                            														  ,INPUT "N"
                                                           ,OUTPUT ?               /* Status do erro */
                                                           ,OUTPUT ?).             /* Retorno do Erro */
 
@@ -5356,7 +5078,7 @@ PROCEDURE trata_lancamentos.
                                                                      "   Valor: " + STRING(aux_VlrLanc) +
                                                                      "   Identificacao Dep.: " + STRING(craptvl.nrcctrcb)
                                                               ,INPUT "TED BacenJud: Devolvida"
-                                                                                                                          ,INPUT "N"
+															  ,INPUT "N"
                                                               ,OUTPUT ?               /* Status do erro */
                                                               ,OUTPUT ?).             /* Retorno do Erro */
 
@@ -5753,38 +5475,7 @@ PROCEDURE trata_lancamentos.
 
 END PROCEDURE.
 
-PROCEDURE trata_arquivo_ldl.
 
-ASSIGN aux_codmsg = "LDL0024".
-
-/** Efetua leitura dos dados da mensagem **/
-REPEAT  aux_contado1 = 1 TO hNode:NUM-CHILDREN:
-    /** Obtem a TAG **/
-        hNode:GET-CHILD(hSubNode,aux_contado1).
-  
-        IF  hSubNode:SUBTYPE <> 'ELEMENT' THEN
-                NEXT.
-                
-        IF  hSubNode:NAME = "CodProdt" THEN 
-                DO:
-                        hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
-                        ASSIGN aux_CodProdt = hSubNode2:NODE-VALUE.
-                END.
-
-        IF  hSubNode:NAME = "DtRef" THEN 
-                DO:
-                        hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
-                        ASSIGN aux_DtRef = hSubNode2:NODE-VALUE.
-                END.
-END. /* REPEAT  aux_contado1 */
-
-REPEAT  aux_contado1 = 1 TO hNode:NUM-CHILDREN:
-       /** Obtem a TAG **/
-        hNode:GET-CHILD(hSubNode,aux_contado1).
-      
-    IF  hSubNode:SUBTYPE <> 'ELEMENT' THEN
-        NEXT.           
-        
         IF  hSubNode:NAME = "Grupo_LDL0024_HrioCamr" THEN 
         DO:
                         REPEAT  aux_contado2 = 1 TO hSubNode:NUM-CHILDREN:
