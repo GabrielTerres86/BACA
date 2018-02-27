@@ -3271,7 +3271,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                                           ,pr_idorigem    => vr_idorigem         --Identificador Origem pagamento
                                           ,pr_nrdconta    => pr_nrdconta         --Numero da conta
                                           ,pr_indbaixa    => 1                   --Indicador Baixa /* 1-Pagamento 2- Vencimento */
-                                          ,pr_dtintegr    => rw_crapdat.dtmvtocd -- Data de integração do pagamento
                                           ,pr_tab_titulos => vr_tab_titulos      --Titulos a serem baixados
                                           ,pr_cdcritic    => vr_cdcritic         --Codigo Critica
                                           ,pr_dscritic    => vr_dscritic         --Descricao Critica
@@ -4902,8 +4901,6 @@ END pc_gera_titulos_iptu_prog;
   --                            do titulo para nao ocorrer critica 100 (Tiago/Elton #691470)
   --
   --               01/08/2017 - Ajustes contigencia CIP. PRJ340-NPC (Odirlei-AMcom)
-  -- 
-  --               30/10/2017 - Nao validar valor maximo do boleto ao verificar multiplos pagamentos. (Rafael)
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -4971,8 +4968,7 @@ END pc_gera_titulos_iptu_prog;
       CURSOR cr_crapcco (pr_codigo_barras IN VARCHAR2
                         ,pr_cddbanco      IN crapcco.cddbanco%TYPE) IS
         SELECT crapcco.cddbanco,
-               crapcco.dsorgarq,
-               crapcco.flgregis
+               crapcco.dsorgarq
         FROM crapcco
         WHERE SUBSTR(gene0002.fn_mask(crapcco.nrconven,'9999999'),2,4) = SUBSTR(pr_codigo_barras,20,4)
         AND crapcco.cddbanco = pr_cddbanco
@@ -4984,8 +4980,7 @@ END pc_gera_titulos_iptu_prog;
                          ,pr_nrconven IN crapcco.nrconven%type
                          ,pr_cddbanco IN crapcco.cddbanco%TYPE) IS
         SELECT crapcco.cddbanco,
-               crapcco.dsorgarq,
-               crapcco.flgregis
+               crapcco.dsorgarq
         FROM crapcco
         WHERE crapcco.cdcooper = pr_cdcooper
         AND   crapcco.nrconven = pr_nrconven
@@ -5010,17 +5005,12 @@ END pc_gera_titulos_iptu_prog;
               ,crapcob.dsinform
               ,crapcob.inpagdiv
               ,crapcob.vlminimo
-              ,crapceb.flgpgdiv
-        FROM crapcob,
-             crapceb
+        FROM crapcob
         WHERE crapcob.cdcooper = pr_cdcooper
         AND   crapcob.nrcnvcob = pr_nrcnvcob
         AND   crapcob.nrdconta = pr_nrdconta
         AND   crapcob.nrdocmto = pr_nrdocmto
-        AND   crapcob.nrdctabb = pr_nrdctabb
-        AND   crapcob.cdcooper = crapceb.cdcooper(+)
-        AND   crapcob.nrdconta = crapceb.nrdconta(+)
-        AND   crapcob.nrcnvcob = crapceb.nrconven(+);
+        AND   crapcob.nrdctabb = pr_nrdctabb;
       rw_crapcob cr_crapcob%ROWTYPE;
 
       -- Verificacao de codigo de barras fraudulento
@@ -5071,7 +5061,6 @@ END pc_gera_titulos_iptu_prog;
       vr_nridetit       NUMBER;
       vr_tpdbaixa       INTEGER;
       vr_flcontig       INTEGER;
-      vr_invalcon       INTEGER;
 
       --Variaveis Erro
       vr_des_erro VARCHAR2(1000);
@@ -6275,7 +6264,6 @@ END pc_gera_titulos_iptu_prog;
                            ,pr_dtagenda  => pr_dt_agendamento   --> Data agendada para pagmento do boleto
                            ,pr_vldpagto  => pr_valor_informado  --> Valor a ser pago
                            ,pr_vltitulo  => pr_vlfatura         --> Valor do titulo
-                           ,pr_idvlrmax  => 0                   --> *** Nao validar valor maximo ***
                            ,pr_nridenti  => vr_nridetit         --> Retornar numero de identificacao do titulo no npc
                            ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
                            ,pr_flcontig  => vr_flcontig         --> Retornar inf que a CIP esta em modo de contigencia
@@ -6477,48 +6465,8 @@ END pc_gera_titulos_iptu_prog;
             
             IF TRIM(vr_dstextab) IS NULL THEN
               
-              --> Validar valor no periodo de convivencia
-              vr_invalcon := cecred.npcb0002.fn_valid_val_conv ( pr_cdcooper => rw_crapcop.cdcooper,
-                                                                 pr_dtmvtolt => rw_crapdat.dtmvtocd,
-                                                                 pr_flgregis => rw_crapcco.flgregis,
-                                                                 pr_flgpgdiv => rw_crapcob.flgpgdiv,
-                                                                 pr_vlinform => pr_valor_informado,
-                                                                 pr_vltitulo => pr_vlfatura);
-              
-              --> Se retornou 1-permite ou 0-nao permite, deve validar pela rotina
-              --> caso retornar 3-nao validado, deve fazer as demais validações
-              IF vr_invalcon IN (1,0) THEN
-                -- se retornou 0-nao permite deve gerar cririca
-                IF vr_invalcon = 0 THEN 
-                  --Montar mensagem de erro
-                  vr_des_erro:= 'Cob. Reg. - Valor informado '||
-                                to_char(pr_valor_informado, 'fm999g999g990d00')||
-                                ' menor que valor doc. '||
-                                to_char(pr_vlfatura,'fm999g999g990D00');
-                  pr_msgalert := vr_des_erro;
-                  --Criar erro
-                  CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
-                                       ,pr_cdagenci => pr_cod_agencia
-                                       ,pr_nrdcaixa => vr_nrdcaixa
-                                       ,pr_cod_erro => 0
-                                       ,pr_dsc_erro => vr_des_erro
-                                       ,pr_flg_erro => TRUE
-                                       ,pr_cdcritic => vr_cdcritic
-                                       ,pr_dscritic => vr_dscritic);
-                  --Se ocorreu erro
-                  IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
-                  ELSE
-                    vr_cdcritic:= 0;
-                    vr_dscritic:= vr_des_erro;
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
-                  END IF;
-                
-                END IF;
               -- nao autoriza pagamento divergente
-              ELSIF nvl(rw_crapcob.inpagdiv,0) = 0 THEN                 
+              IF nvl(rw_crapcob.inpagdiv,0) = 0 THEN                 
               --Montar mensagem de erro
               vr_des_erro:= 'Cob. Reg. - Valor informado '||
                             to_char(pr_valor_informado, 'fm999g999g990d00')||
@@ -9717,45 +9665,7 @@ END pc_gera_titulos_iptu_prog;
   --               07/04/2017 - Ajustado para quando nao encontrar CEB e TCO rejeitar o pagamento com a 
   --                            mensagem "911 - Beneficiario nao cadastrado.", ao invés de aceitar o 
   --                            pagamento como sendo "Liquidação Interbancária" (Douglas - Chamado 619274)
-  --
-  --               14/11/2017 - Quando o convenio existe na cooperativa porém não encontra a conta
-  --                            que está no código de barras, então verificar se o convênio existe
-  --                            em outra singular para tratar como  "Liquidação Interbancária"
-  --                            (AJFink - Chamado 792324)
-  --
   ---------------------------------------------------------------------------------------------------------------
-    --
-    procedure pc_convenio_outra_singular(pr_cdcooper in  crapceb.cdcooper%type
-                                        ,pr_nrconven in  crapceb.nrconven%type
-                                        ,pr_idcnvsng out number) is
-      --
-      --verifica se o convenio existe em outra singular do sistema Cecred
-      cursor cr_crapcco(pr_cdcooper in crapceb.cdcooper%type
-                       ,pr_nrconven in crapceb.nrconven%type) is
-        select 1 idexiste
-        from crapcco cco
-        where cco.cdcooper <> pr_cdcooper
-          and cco.nrconven = pr_nrconven;
-      --
-      vr_idexiste number(1);
-      vr_idcnvsng number(1) := 0;
-      --
-    begin
-      --
-      open cr_crapcco(pr_cdcooper => pr_cdcooper
-                     ,pr_nrconven => pr_nrconven);
-      fetch cr_crapcco into vr_idexiste;
-      if cr_crapcco%found then
-        --
-        vr_idcnvsng := 1;
-        --
-      end if;
-      close cr_crapcco;
-      --
-      pr_idcnvsng := vr_idcnvsng;
-      --
-    end pc_convenio_outra_singular;
-    --
   BEGIN
     DECLARE
       --Cursores Locais
@@ -9922,7 +9832,6 @@ END pc_gera_titulos_iptu_prog;
       vr_exc_erro  EXCEPTION;
       vr_dtvencto DATE;
       vr_fv INTEGER;
-      vr_idcnvsng number(1);
 
       PROCEDURE pc_checa_convenio_cooperado
                 (pr_cdcooper IN crapcco.cdcooper%TYPE
@@ -10564,19 +10473,6 @@ END pc_gera_titulos_iptu_prog;
                 IF cr_crapceb1%ISOPEN THEN
                    CLOSE cr_crapceb1;
                 END IF;
-
-                --Se chegou até aqui é porque o convênio existe na cooperativa
-                --porém não foi localizada a conta que está no "nosso número".
-                --Nesse caso o convênio pode ser de outra cooperativa do sistema Cecred.
-                pc_convenio_outra_singular(pr_cdcooper => pr_cooper
-                                          ,pr_nrconven => vr_convenio
-                                          ,pr_idcnvsng => vr_idcnvsng);
-                --se o convênio também existe em outra singular do sistema Cecred então Liq Interbancária
-                if vr_idcnvsng = 1 then
-                  --
-                  RAISE vr_exc_saida;
-                  --
-                end if;
 
                 -- Se nao encontrou CEB e TCO, então a conta não existe
                 CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
