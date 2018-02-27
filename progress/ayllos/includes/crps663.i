@@ -35,8 +35,8 @@
                             log quando debcns for executada manualmente
                             (Tiago SD338533).
 
-		       24/10/2016 - Ajustes para que tenha uma terceira execucao
-			                da DEBCNS - Melhoria349 (Tiago/Elton).
+               24/10/2016 - Ajustes para que tenha uma terceira execucao
+                            da DEBCNS - Melhoria349 (Tiago/Elton).
                             
                23/10/2017 - Ajustes para lançamentos duplicados e tambem para que 
                             tenhamos uma execucao matutina (Lucas Ranghetti #739738)
@@ -199,6 +199,7 @@ PROCEDURE efetua-debito-consorcio:
                                craplau.cdhistor = 1233                        OR 
                                craplau.cdhistor = 1234)                       AND
                                craplau.insitlau = 1 
+                               EXCLUSIVE-LOCK
                                BREAK BY craplau.cdagenci
                                      BY craplau.cdbccxlt 
                                      BY craplau.cdbccxpg 
