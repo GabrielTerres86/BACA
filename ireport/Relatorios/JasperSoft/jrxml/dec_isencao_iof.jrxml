@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2017-11-10T14:08:01 -->
+<!-- 2018-02-01T14:03:35 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="dec_isencao_iof" pageWidth="442" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -90,15 +90,6 @@
 				<reportElement x="30" y="243" width="380" height="30" isPrintWhenDetailOverflows="true" uuid="b53b92f9-961d-4bfa-829a-2fe0665408f1">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
-				<textElement>
-					<font fontName="Courier New" size="9" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[E por ser expressão da verdade, dato e assino a presente declaração.]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="31" y="210" width="380" height="30" isPrintWhenDetailOverflows="true" uuid="b53b92f9-961d-4bfa-829a-2fe0665408f1">
-					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-				</reportElement>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="9" pdfFontName="Courier"/>
 				</textElement>
@@ -106,7 +97,7 @@
 (Local e Data)]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="30" y="303" width="380" height="20" isPrintWhenDetailOverflows="true" uuid="86b46b7f-a5e2-49c1-9ba6-f418e4a7e34e">
+				<reportElement x="30" y="304" width="380" height="20" isPrintWhenDetailOverflows="true" uuid="86b46b7f-a5e2-49c1-9ba6-f418e4a7e34e">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Center">
@@ -123,7 +114,7 @@
 					<font fontName="Courier New" size="9" pdfFontName="Courier" pdfEncoding=""/>
 					<paragraph lineSpacing="1_1_2" lineSpacingSize="1.0"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Eu, " + $F{nmprimtl} + ", " + $F{dsnacion} + ", " + ($F{dsestcvl} == null ? "" : $F{dsestcvl}.toString() + ",") + ($F{dsproftl} == null ? "" : $F{dsproftl}.toString() + ",") + " inscrito no CPF n. " + $F{nrcpfcgc} + ", residente e domiciliado na rua " + $F{dsendere} + ", " + $F{nrendere} + ",  " + ($F{complend}.equals("") ? "" : $F{complend}.toString() + ",") + ($F{nmbairro}.equals("") ? "" : " bairro " + $F{nmbairro}.toString() + ",") + ", na cidade de " + $F{nmcidade} + " / " + $F{cdufende} + ", declaro, para fins de isenção do Imposto sobre Operações de Crédito, Câmbio e Seguro, e sobre Operações relativas a Títulos e Valores Mobiliários (IOF), que os recursos financeiros oriundos da operação de crédito firmada com a " + $F{nmextcop} + ", contrato/cédula n° " + $F{nrctremp} + ", vinculado(a) à conta corrente n° " + $F{nrdconta} + ", serão utilizados para fins exclusivamente habitacionais, infra-estrutra e/ou saneamento básico, nos termos do Decreto-Lei n° 2.407/88 e Decreto n° 6.306/2007."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Eu, " + $F{nmprimtl} + ", " + $F{dsnacion} + ", " + (($F{dsestcvl} == null || $F{dsestcvl}.equals("") || $F{dsestcvl}.trim().equals("")) ? "" : $F{dsestcvl}.toString() + ",") + (($F{dsproftl} == null || $F{dsproftl}.equals("") || $F{dsproftl}.trim().equals(""))  ? "" : $F{dsproftl}.toString() + ",") + " inscrito no CPF n. " + $F{nrcpfcgc} + " residente e domiciliado na rua " + $F{dsendere} + ", " + $F{nrendere} + ",  " + (($F{complend} == null || $F{complend}.equals("") || $F{complend}.trim().equals("")) ? "" : $F{complend}.toString() + ",") + (($F{nmbairro} == null || $F{nmbairro}.equals("") || $F{nmbairro}.trim().equals("")) ? "" : " bairro " + $F{nmbairro}.toString() + ",") + " na cidade de " + $F{nmcidade} + " / " + $F{cdufende} + ", declaro, para fins de isenção do Imposto sobre Operações de Crédito, Câmbio e Seguro, e sobre Operações relativas a Títulos e Valores Mobiliários (IOF), que os recursos financeiros oriundos da operação de crédito firmada com a " + $F{nmextcop} + ", contrato/cédula n° " + $F{nrctremp} + ", vinculado(a) à conta corrente n° " + $F{nrdconta} + ", serão utilizados para fins exclusivamente habitacionais, infra-estrutra e/ou saneamento básico, nos termos do Decreto-Lei n° 2.407/88 e Decreto n° 6.306/2007."]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
