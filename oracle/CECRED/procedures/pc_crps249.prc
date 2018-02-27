@@ -602,6 +602,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             pelo motivo que alguém criou em produção o codigo 1033 ...
                           - Troca de return por raise
                             (Belli - Envolti - Chamado 832035)
+                           
+               20/02/2018 - Ajuste de condição no loop:
+                             Liberacao de cheques descontados do dia -- envio para a COMPE
+                             incluido em pc_grava_crapopc_bulk
+                            (Belli - Envolti - Chamado 841064)
+                                                      
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -2673,8 +2679,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
     GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_grava_crapopc_bulk', pr_action => NULL);
 
-    forall i in 1 .. rw_crapcdb.count
+    for i in 1 .. rw_crapcdb.count
+    loop
+      -- Ajuste de condição - Chamado 841064 - 20/02/2018
+      if rw_crapcdb(i).inchqcop <> 1 then
 
+        vr_vlcdbban := vr_vlcdbban + rw_crapcdb(i).vlcheque;
+        vr_qtcdbban := vr_qtcdbban + 1;
+      else
+        vr_vlcdbcop := vr_vlcdbcop + rw_crapcdb(i).vlcheque;
+      end if;   
+    
+      BEGIN
     -- Gravar Dados de Operacoes Contabeis
     INSERT INTO crapopc(cdcooper,
                         dtrefere,
@@ -2701,11 +2717,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       --Inclusão na tabela de erros Oracle - Chamado 734422
       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
       vr_cdcritic := 1034;
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapopc '||'para o cheque:'||rw_crapcdb(rw_crapcdb.count).nrcheque||
-                     ' cdcooper:'||pr_cdcooper||', dtrefere:'||pr_dtrefere||
-                     ', nrdconta:'||rw_crapcdb(rw_crapcdb.count).nrdconta||', tpregist:'||pr_tpregist||
-                     ', borderô:'||rw_crapcdb(rw_crapcdb.count).nrborder||', agência:'||rw_crapcdb(rw_crapcdb.count).cdagenci||
-                     ', vldocmto:'||rw_crapcdb(rw_crapcdb.count).vlcheque||', cdtipope:'||pr_cdtipope||
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||
+                         ' crapopc '||
+                         'para o cheque:'||rw_crapcdb(i).nrcheque||
+                         ' cdcooper:' ||pr_cdcooper||', dtrefere:'||pr_dtrefere||
+                         ', nrdconta:'||rw_crapcdb(i).nrdconta||
+                         ', tpregist:'||pr_tpregist||
+                         ', borderô:' ||rw_crapcdb(i).nrborder||
+                         ', agência:' ||rw_crapcdb(i).cdagenci||
+                         ', vldocmto:'||rw_crapcdb(i).vlcheque||
+                         ', cdtipope:'||pr_cdtipope||
+                         ', cdprogra:'||Lower(pr_cdprogra)||'. '||sqlerrm;
+        RAISE vr_exc_saida;
+      END;
+    END LOOP;
+  EXCEPTION
+    WHEN OTHERS THEN
+      --Inclusão na tabela de erros Oracle - Chamado 734422
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+      vr_cdcritic := 9999;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||
+                     ' crapopc '  ||
+                     ' cdcooper:' ||pr_cdcooper||
+                     ', dtrefere:'||pr_dtrefere||
+                     ', tpregist:'||pr_tpregist||
+                     ', cdtipope:'||pr_cdtipope||
                      ', cdprogra:'||Lower(pr_cdprogra)||'. '||sqlerrm;
       RAISE vr_exc_saida;
   END pc_grava_crapopc_bulk;
@@ -5237,7 +5273,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1037).nrctaori_jur := 7122;
         vr_tab_historico(1037).nrctades_jur := 7017;
         vr_tab_historico(1037).dsrefere_jur := 'APROPRIACAO JUROS CONTRATO EMPR. TX. PRE-FIXADA - PESSOA JURIDICA';
-
+        
         vr_tab_historico(2342).nrctaori_fis := 7587;
         vr_tab_historico(2342).nrctades_fis := 7585;
         vr_tab_historico(2342).dsrefere_fis := 'APROPR. JUROS REMUNERATORIOS EMPRESTIMO POS FIXADO - PESSOA FISICA';
@@ -5279,7 +5315,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1543).nrctaori_jur := 7123;
         vr_tab_historico(1543).nrctades_jur := 7019;
         vr_tab_historico(1543).dsrefere_jur := 'JURO MORA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
-
+        
         vr_tab_historico(2346).nrctaori_fis := 7593;
         vr_tab_historico(2346).nrctades_fis := 7591;
         vr_tab_historico(2346).dsrefere_fis := 'APROPR. JUROS DE MORA EMPRESTIMO POS FIXADO - PESSOA FISICA';
@@ -5321,7 +5357,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1038).nrctaori_jur := 7135;
         vr_tab_historico(1038).nrctades_jur := 7029;
         vr_tab_historico(1038).dsrefere_jur := 'APROPR.JUROS CONTRATO FINANC. TX. PRE-FIXADA - PESSOA JURIDICA';
-
+        
         vr_tab_historico(2343).nrctaori_fis := 7557;
         vr_tab_historico(2343).nrctades_fis := 7555;
         vr_tab_historico(2343).dsrefere_fis := 'APROPR. JUROS REMUNERATORIOS FINANC. POS FIXADO - PESSOA FISICA';
@@ -5363,7 +5399,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1544).nrctaori_jur := 7136;
         vr_tab_historico(1544).nrctades_jur := 7031;
         vr_tab_historico(1544).dsrefere_jur := 'JURO MORA FINANCIAM. PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
-
+        
         vr_tab_historico(2347).nrctaori_fis := 7563;
         vr_tab_historico(2347).nrctades_fis := 7561;
         vr_tab_historico(2347).dsrefere_fis := 'APROPR. JUROS DE MORA FINANCIAMENTO POS FIXADO - PESSOA FISICA';
@@ -5384,7 +5420,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1542).nrctaori_jur := 7138;
         vr_tab_historico(1542).nrctades_jur := 7033;
         vr_tab_historico(1542).dsrefere_jur := 'MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
-     
+        
         vr_tab_historico(2349).nrctaori_fis := 7566;
         vr_tab_historico(2349).nrctades_fis := 7564;
         vr_tab_historico(2349).dsrefere_fis := 'APROPR. MULTA FINANCINANCIAMENTO POS FIXADO - PESSOA FISICA';
