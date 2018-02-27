@@ -898,13 +898,13 @@ BEGIN
                       pr_tpexecucao => vr_tpexecucao,     -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                       pr_idprglog   => vr_idlog_ini_par); 
                           
-      -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+      -- Grava LOG de ocorrência inicial do cursor cr_crapext
       pc_log_programa(PR_DSTIPLOG           => 'O',
                       PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
                       pr_cdcooper           => pr_cdcooper,
                       pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                       pr_tpocorrencia       => 4,
-                      pr_dsmensagem         => 'Início - cursor cr_crapage. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
+                      pr_dsmensagem         => 'Início - cursor cr_crapext. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
                       PR_IDPRGLOG           => vr_idlog_ini_par); 
     
       /*  Leitura Arquivo de contas que deverao ter seus extratos impressos.  */
@@ -1128,7 +1128,7 @@ BEGIN
     
     IF pr_idparale = 0 THEN
       
-      IF vr_inproces  > 2 THEN
+      IF vr_qtdjobs  > 0 THEN
         pc_carregar_valor_wrk( pr_cdcooper   => pr_cdcooper
                               ,pr_idcontrole => vr_idcontrole
                               ,pr_clobxml1   => vr_clobxml1
