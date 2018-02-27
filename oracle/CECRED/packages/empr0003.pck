@@ -2484,7 +2484,8 @@ BEGIN
                crawepr.dtlibera,
                crawepr.dtdpagto,
                crawepr.txmensal,
-               crawepr.nrseqrrq
+               crawepr.nrseqrrq,
+               crawepr.idfiniof
           FROM crapass,
                crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
@@ -2496,7 +2497,7 @@ BEGIN
 
       -- Cursor sobre as informacoes de emprestimo
       CURSOR cr_crapepr IS
-        SELECT dtmvtolt
+        SELECT dtmvtolt, vltarifa, vliofepr
           FROM crapepr
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
@@ -2519,6 +2520,7 @@ BEGIN
       vr_dsjasper       VARCHAR2(100);               --> nome do jasper a ser usado
       vr_dtlibera       DATE;                        --> Data de liberacao do contrato
       vr_nmarqimp       VARCHAR2(50);                --> nome do arquivo PDF
+      vr_vlemprst       NUMBER;
 
       -- variaveis de críticas
       vr_tab_erro       GENE0001.typ_tab_erro;
@@ -2600,6 +2602,12 @@ BEGIN
 
       vr_dtlibera := nvl(nvl(rw_crapepr.dtmvtolt, rw_crawepr.dtlibera),rw_crapdat.dtmvtolt);
 
+          IF rw_crawepr.idfiniof > 0 THEN
+            vr_vlemprst := rw_crawepr.vlemprst + NVL(rw_crapepr.vltarifa, 0) + NVL(rw_crapepr.vliofepr, 0);
+          ELSE
+            vr_vlemprst := rw_crawepr.vlemprst;
+          END IF;          
+
       -- Chama rotina de CET
       ccet0001.pc_imprime_emprestimos_cet(pr_cdcooper => pr_cdcooper
                                         , pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -2612,7 +2620,7 @@ BEGIN
                                         , pr_nrctremp => pr_nrctremp
                                         , pr_dtlibera => vr_dtlibera
                                         , pr_dtultpag => trunc(SYSDATE)
-                                        , pr_vlemprst => rw_crawepr.vlemprst
+                                            , pr_vlemprst => vr_vlemprst
                                         , pr_txmensal => rw_crawepr.txmensal
                                         , pr_vlpreemp => rw_crawepr.vlpreemp
                                         , pr_qtpreemp => rw_crawepr.qtpreemp
@@ -3905,6 +3913,7 @@ BEGIN
                          '<qtlemcal>' || vr_tab_co_responsavel(vr_index).qtlemcal ||'</qtlemcal>'||
                          '<vlppagat>' || vr_tab_co_responsavel(vr_index).vlppagat ||'</vlppagat>'||
                          '<vlmrapar>' || vr_tab_co_responsavel(vr_index).vlmrapar ||'</vlmrapar>'||
+                         '<vliofcpl>' || vr_tab_co_responsavel(vr_index).vliofcpl ||'</vliofcpl>'||
                          '<vlmtapar>' || vr_tab_co_responsavel(vr_index).vlmtapar ||'</vlmtapar>'||
                          '<vltotpag>' || vr_tab_co_responsavel(vr_index).vltotpag ||'</vltotpag>'||
                          '<vlprvenc>' || vr_tab_co_responsavel(vr_index).vlprvenc ||'</vlprvenc>'||

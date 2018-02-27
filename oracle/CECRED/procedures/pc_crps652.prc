@@ -456,6 +456,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                   and x.nrctremp = crapcyb.nrctremp
 				  and crapcyb.cdorigem IN (2,3)
                   and x.inliquid = 0) vlmrapar
+        ,(select sum(x.vliofcpl)
+                 from crappep x
+                where x.cdcooper = crapcyb.cdcooper
+                  and x.nrdconta = crapcyb.nrdconta
+                  and x.nrctremp = crapcyb.nrctremp
+                  and crapcyb.cdorigem IN (2,3)
+                  and x.inliquid = 0) vliofcpl                         
               ,crapcyb.flgjudic
               ,crapcyb.flextjud
               ,crapcyb.flgehvip              
@@ -2296,7 +2303,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              pc_monta_linha(rpad(rw_craplcr.dslcremp,29,' '),110,pr_idarquivo);
            END IF;
 
-           pc_monta_linha(to_char((pr_rw_crapcyb.vlsdeved + nvl(pr_rw_crapcyb.vlmrapar, 0) + nvl(pr_rw_crapcyb.vlmtapar, 0))*100,'00000000000000'),139,pr_idarquivo);
+           pc_monta_linha(to_char((pr_rw_crapcyb.vlsdeved + nvl(pr_rw_crapcyb.vlmrapar, 0) + nvl(pr_rw_crapcyb.vlmtapar, 0) + nvl(pr_rw_crapcyb.vliofcpl, 0))*100,'00000000000000'),139,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vljura60*100,'00000000000000'),154,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vlpreemp*100,'00000000000000'),169,pr_idarquivo);
            pc_monta_linha(lpad(pr_rw_crapcyb.qtpreatr,3,' '),184,pr_idarquivo);

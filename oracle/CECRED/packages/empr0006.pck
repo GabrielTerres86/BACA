@@ -3422,7 +3422,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
       -- Seta o Saldo Devedor somando com Multa e Juros Mora
       vr_vlsdeved := vr_tab_dados_epr(1).vlsdeved + --> Saldo devedor acumulado
                      vr_tab_dados_epr(1).vlmtapar + --> Valor da Multa
-                     vr_tab_dados_epr(1).vlmrapar ; --> Valor do Juros de Mora
+                     vr_tab_dados_epr(1).vlmrapar +
+					 vr_tab_dados_epr(1).vliofcpl; --> Valor do Juros de Mora
 
 			-- Valor Saldo Devedor Contabil para Proposta
       pc_cria_tag(pr_dsnomtag => 'VlrSaldDevdrContb'
@@ -6747,13 +6748,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
 							   ,pr_nrctrato IN crawepr.nrctremp%TYPE) IS
 			SELECT crawepr.nrctremp
 			FROM crawepr
+            INNER JOIN crapass ON crapass.nrdconta = crawepr.nrdconta AND crawepr.cdcooper = crapass.cdcooper
 			INNER JOIN CRAPLCR ON CRAPLCR.CDLCREMP = crawepr.cdlcremp AND crawepr.cdcooper = craplcr.cdcooper
 			INNER JOIN CRAPBPR ON CRAPBPR.nrdconta = crawepr.nrdconta AND CRAPBPR.cdcooper = crawepr.cdcooper AND CRAPBPR.nrctrpro = crawepr.nrctremp
 			WHERE crawepr.cdcooper = pr_cdcooper
 				AND crawepr.nrdconta = pr_nrdconta
 				AND crawepr.nrctremp = pr_nrctrato
-				AND upper(CRAPBPR.dscatbem) IN ('APARTAMENTO', 'CASA')
-                AND crawepr.insitapr = 1; -- aprovada
+                AND crapass.inpessoa = 1 --somente PF
+				AND upper(CRAPBPR.dscatbem) IN ('APARTAMENTO', 'CASA');
+                --AND crawepr.insitapr = 1; -- aprovada
 		rw_pode_imprimir cr_pode_imprimir%ROWTYPE;
 		BEGIN
 			--Consulta

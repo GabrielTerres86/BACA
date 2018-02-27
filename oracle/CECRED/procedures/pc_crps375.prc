@@ -4974,6 +4974,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                                                 ,pr_idorigem    => vr_idorigem --Identificador Origem pagamento
                                                 ,pr_nrdconta    => vr_tab_descontar(vr_inddescontar_aux).nrdconta  --Numero da conta
                                                 ,pr_indbaixa    => 1 --Indicador Baixa /* 1-Pagamento 2- Vencimento */
+                                                ,pr_dtintegr    => pr_dtmvtopr -- Data de integração do pagamento
                                                 ,pr_tab_titulos => vr_tab_titulos --Titulos a serem baixados
                                                 ,pr_cdcritic    => pr_cdcritic     --Codigo Critica
                                                 ,pr_dscritic    => pr_dscritic     --Descricao Critica
@@ -5012,6 +5013,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                                               ,pr_idorigem    => vr_idorigem --Identificador Origem pagamento
                                               ,pr_nrdconta    => vr_tab_descontar(vr_inddescontar_aux).nrdconta  --Numero da conta
                                               ,pr_indbaixa    => 1 --Indicador Baixa /* 1-Pagamento 2- Vencimento */
+                                              ,pr_dtintegr    => pr_dtmvtopr -- Data de integração do pagamento
                                               ,pr_tab_titulos => vr_tab_titulos --Titulos a serem baixados
                                               ,pr_cdcritic    => pr_cdcritic     --Codigo Critica
                                               ,pr_dscritic    => pr_dscritic     --Descricao Critica

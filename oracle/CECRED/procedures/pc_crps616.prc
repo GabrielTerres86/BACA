@@ -52,6 +52,8 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
                21/05/2015 - Ajuste para verificar se Cobra Multa. (James)    
                
                09/10/2015 - Incluir históricos de estorno. (Oscar)         
+
+			   21/12/2017 - Projeto 410 - Incluir IOF complementar por atraso - (Jean / MOut´S)
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -185,6 +187,7 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
      vljura60 crappep.vljura60%type,
      vlmrapar crappep.vlmrapar%type,
      vlmtapar crappep.vlmtapar%type,
+     vliofcpl crappep.vliofcpl%type,
      vr_rowid rowid);
   TYPE typ_tab_crappep IS TABLE OF typ_reg_crappep INDEX BY PLS_INTEGER;
   vr_tab_crappep typ_tab_crappep;   
@@ -227,6 +230,7 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
   vr_vldespar      crappep.vldespar%type;
   vr_vlmrapar      crappep.vlmrapar%type; -- Valor do Juros de Mora
   vr_vlmtapar      crappep.vlmtapar%type; -- Valor da Multa
+  vr_vliofcpl      crappep.vliofcpl%type; -- Valor da Multa
   vr_percmultab      NUMBER; -- % de multa para o calculo
   vr_percmultab_calc NUMBER; -- % de multa para o calculo  
   vr_vlsdevat      NUMBER; -- Saldo devedor atualizado
@@ -258,7 +262,8 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
                                    pr_nrdiatol in INTEGER, --> Prazo para tolerancia da multa
                                    pr_vlatupar out NUMBER, --> Valor atual da parcela
                                    pr_vlmrapar out crappep.vlmrapar%type, --> Valor de mora
-                                   pr_vlmtapar out crappep.vlmtapar%type) IS  --> Valor de multa
+                                   pr_vlmtapar out crappep.vlmtapar%type,
+                                   pr_vliofcpl out crappep.vliofcpl%type) IS  --> Valor de multa
 
   BEGIN
     DECLARE
@@ -275,6 +280,16 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
          AND craplem.cdhistor in (1078,1620,1077,1619);
       rw_craplem cr_craplem_his%ROWTYPE;
       
+      cursor cr_crapepr_lcr (pr_cdcooper crapepr.cdcooper%type,
+                         pr_nrdconta crapepr.nrdconta%type,
+                         pr_nrctremp crapepr.nrctremp%type) is
+         select crapepr.cdlcremp
+         from   crapepr
+         where  crapepr.cdcooper = pr_cdcooper
+         and    crapepr.nrdconta = pr_nrdconta
+         and    crapepr.nrctremp = pr_nrctremp;
+      rw_crapepr_lcr cr_crapepr_lcr%rowtype;
+         
       vr_dtmvtolt DATE;    --> Data de pagamento
       vr_diavtolt INTEGER; --> Dia do pagamento
       vr_mesvtolt INTEGER; --> Mes do pagamento
@@ -285,6 +300,10 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
       vr_percmult NUMBER;  --> % de multa para o calculo
       vr_txdiaria NUMBER(18,10); --> Taxa para calculo de mora
       vr_vljinpar crappep.vlsdvatu%type; -- 10 decimais
+      vr_vliofpri crappep.vliofcpl%type; --> iof complementar por atraso
+      vr_vliofadc crappep.vliofadc%type; --> iof adicional
+      vr_flgimune pls_integer;
+      vr_vltxaiof number(18,8);
 
     BEGIN
       -- Se ainda nao pagou nada da parcela, pegar a data de vencimento dela
@@ -366,6 +385,29 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
         vr_txdiaria := vr_txdiaria / 100;
         -- Valor de juros de mora é relativo ao juros sem inadimplencia da parcela + taxa diaria calculada + quantidade de dias de mora
         pr_vlmrapar := pr_vlsdvsji * vr_txdiaria * vr_qtdiamor;
+        
+        open cr_crapepr_lcr(pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_nrctremp => pr_nrctremp);
+        fetch cr_crapepr_lcr into rw_crapepr_lcr;
+        close cr_crapepr_lcr;
+        
+        TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
+                                        , pr_nrdconta => pr_nrdconta
+                                        , pr_nrctremp => pr_nrctremp
+                                        , pr_vlemprst => pr_vlsdvsji
+                                        , pr_dscatbem => ''
+                                        , pr_cdlcremp => rw_crapepr_lcr.cdlcremp
+                                        , pr_dtmvtolt => pr_dtmvtolt
+                                        , pr_qtdiaiof => vr_qtdiamor
+                                        , pr_vliofpri => vr_vliofpri
+                                        , pr_vliofadi => vr_vliofpri
+                                        , pr_vliofcpl => pr_vliofcpl
+                                        , pr_vltaxa_iof_principal => vr_vltxaiof
+                                        , pr_flgimune => vr_flgimune
+                                        , pr_dscritic => vr_dscritic);
+        
+        
       END IF;
 
     END;
@@ -544,6 +586,7 @@ begin
                                     rw_crapepr.nrctremp) loop
         vr_vlmrapar := 0;
         vr_vlmtapar := 0;
+        vr_vliofcpl := 0;
 
         if rw_crapdat.dtmvtolt <= rw_crawepr.dtlibera then
           -- Nao liberado
@@ -579,7 +622,8 @@ begin
                                  pr_nrdiatol => vr_nrdiatol,
                                  pr_vlatupar => vr_vlatupar,
                                  pr_vlmrapar => vr_vlmrapar,
-                                 pr_vlmtapar => vr_vlmtapar);
+                                 pr_vlmtapar => vr_vlmtapar,
+                                 pr_vliofcpl => vr_vliofcpl);
 
           -- Regularizar
           vr_vlpreapg := vr_vlpreapg + vr_vlatupar;
@@ -619,6 +663,7 @@ begin
         vr_tab_crappep(vr_index).vljura60:= 0;
         vr_tab_crappep(vr_index).vlmrapar:= vr_vlmrapar;
         vr_tab_crappep(vr_index).vlmtapar:= vr_vlmtapar;
+        vr_tab_crappep(vr_index).vliofcpl:= vr_vliofcpl;
         vr_tab_crappep(vr_index).vr_rowid:= rw_crappep.rowid;
       end loop;
 
@@ -675,7 +720,8 @@ begin
          set vlsdvatu = vr_tab_crappep(idx).vlsdvatu,
              vljura60 = vr_tab_crappep(idx).vljura60,
              vlmrapar = vr_tab_crappep(idx).vlmrapar,
-             vlmtapar = vr_tab_crappep(idx).vlmtapar
+             vlmtapar = vr_tab_crappep(idx).vlmtapar,
+             vliofcpl = nvl(vr_tab_crappep(idx).vliofcpl,0)
       where rowid = vr_tab_crappep(idx).vr_rowid;
   EXCEPTION
     when others then

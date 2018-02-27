@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
   --
   --  Programa: TARI0001                         Antiga: generico/procedures/b1wgen0153.p
   --  Autor   : Tiago Machado/Daniel Zimmermann
-  --  Data    : Fevereiro/2013                  Ultima Atualizacao: 11/07/2017
+  --  Data    : Fevereiro/2013                  Ultima Atualizacao: 08/02/2018
   --
   --  Dados referentes ao programa:
   --
@@ -92,6 +92,9 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
   --
   --              08/06/2016 - Tratada procedure pc_verifica_tarifa_operacao para criar
   --                           lancamento automatico somente quando vr_vltarifa > 0 (Diego)
+  --
+  --              08/02/2018 - Inclusão da procedure PC_CALCULA_TARIFA
+  --                           Marcelo Telles Coelho - Projeto 410 - IOF
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -326,6 +329,21 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                   ,pr_dscritic  OUT VARCHAR2              --Descricao Critica
                                   ,pr_tab_erro  OUT GENE0001.typ_tab_erro); --Tabela erros
 
+  PROCEDURE pc_car_dados_tar_empr_web (pr_cdcooper  IN  INTEGER               --Codigo Cooperativa
+                                      ,pr_nrdconta  IN  INTEGER               --Conta do associado
+                                      ,pr_cdlcremp  IN  craplcr.cdlcremp%TYPE --Linha Emprestimo
+                                      ,pr_cdmotivo  IN  craptar.cdmotivo%TYPE --Codigo Motivo
+                                      ,pr_inpessoa  IN  craptar.inpessoa%TYPE --Tipo Pessoa                                      
+                                      ,pr_vllanmto  IN  NUMBER                --Valor Lancamento
+                                      ,pr_dsbemgar  IN  VARCHAR2              --Relação de categoria de bens em garantia
+                                      ,pr_cdprogra  IN VARCHAR2
+                                      ,pr_xmllog    IN VARCHAR2               --> XML com informações de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                                      ,pr_retxml    IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2);             --> Erros do processo
+                                      
   /* Procedure para buscar dados da tarifa emprestimo */
   PROCEDURE pc_carrega_dados_tarifa_empr (pr_cdcooper  IN  INTEGER               --Codigo Cooperativa
                                          ,pr_cdlcremp  IN  craplcr.cdlcremp%TYPE --Linha Emprestimo
@@ -522,6 +540,27 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                     ,pr_cdcritic OUT INTEGER      --> Codigo Critica
                                     ,pr_dscritic OUT VARCHAR2);   --> Descricao Critica
                                     
+                                    
+  PROCEDURE pc_calcula_tarifa (pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
+                              ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
+                              ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE --> Codigo da linha de credito do emprestimo.
+                              ,pr_vlemprst  IN crapepr.vlemprst%TYPE --> Valor do emprestimo.
+                              ,pr_cdusolcr  IN craplcr.cdusolcr%TYPE --> Codigo de uso da linha de credito (0-Normal/1-CDC/2-Boletos)
+                              ,pr_tpctrato  IN craplcr.tpctrato%TYPE --> Tipo de contrato utilizado por esta linha de credito.
+                              ,pr_dsbemgar  IN VARCHAR2              --> Relação de categoria de bens em garantia
+                              ,pr_cdprogra  IN VARCHAR2              --> Nome do programa chamador
+                              ,pr_flgemail  IN VARCHAR2              --> Envia e-mail S/N, se N interrompe o processo em caso de erro
+                              --
+                              ,pr_vlrtarif OUT crapfco.vltarifa%TYPE --> Valor da tarifa calculada
+                              ,pr_vltrfesp OUT craplcr.vltrfesp%TYPE --> Valor da tarifa especial calculada
+                              ,pr_vltrfgar OUT crapfco.vltarifa%TYPE --> Valor da tarifa garantia calculada
+                              ,pr_cdhistor OUT craphis.cdhistor%TYPE --> Codigo do historico do lancamento.
+                              ,pr_cdfvlcop OUT crapfco.cdfvlcop%TYPE --> Codigo da faixa de valor por cooperativa.
+                              ,pr_cdhisgar OUT craphis.cdhistor%TYPE --> Codigo do historico de bens em garantia
+                              ,pr_cdfvlgar OUT crapfco.cdfvlcop%TYPE --> Código da faixa de valor dos bens em garantia							  
+                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
+                              ,pr_dscritic OUT VARCHAR2              --> Texto de erro/critica encontrada
+                              );
 END TARI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
@@ -532,7 +571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   --  Sistema  : Procedimentos envolvendo tarifas bancarias
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 11/07/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 08/02/2018
   --
   -- Dados referentes ao programa:
   --
@@ -589,6 +628,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 			                  crapass, crapttl, crapjur 
 							  (Adriano - P339).
 
+                08/02/2018 - Inclusão da procedure PC_CALCULA_TARIFA
+                             Marcelo Telles Coelho - Projeto 410 - IOF
   */
  
   ---------------------------------------------------------------------------------------------------------------
@@ -1312,6 +1353,149 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         pr_dscritic:= 'Erro na rotina TARI0001.pc_carrega_dados_tarifa_cobr. '||sqlerrm;
     END;
   END pc_carrega_dados_tarifa_cobr;
+
+  /* Procedure para buscar dados da tarifa emprestimo */
+  PROCEDURE pc_car_dados_tar_empr_web (pr_cdcooper  IN  INTEGER               --Codigo Cooperativa
+                                      ,pr_nrdconta  IN  INTEGER               --Conta do associado
+                                      ,pr_cdlcremp  IN  craplcr.cdlcremp%TYPE --Linha Emprestimo
+                                      ,pr_cdmotivo  IN  craptar.cdmotivo%TYPE --Codigo Motivo
+                                      ,pr_inpessoa  IN  craptar.inpessoa%TYPE --Tipo Pessoa                                      
+                                      ,pr_vllanmto  IN  NUMBER                --Valor Lancamento
+                                      ,pr_dsbemgar  IN  VARCHAR2              --Relação de categoria de bens em garantia
+                                      ,pr_cdprogra  IN VARCHAR2
+                                      ,pr_xmllog    IN VARCHAR2               --> XML com informações de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                                      ,pr_retxml    IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2) IS           --> Erros do processo
+   BEGIN
+
+    -- ........................................................................
+    --
+    --  Programa : pc_car_dados_tar_empr_web          
+    --  Sistema  : Cred
+    --  Sigla    : TARI0001
+    --  Autor    : Diogo Carlassara (MoutS)
+    --  Data     : 19/01/2015.                      Ultima atualizacao: -
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Carregar dados da tarifa de empréstimo - chamada pela web
+    --
+    --.............................................................................*/
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      vr_cdhistor INTEGER;
+      vr_cdhisest INTEGER;
+      vr_vltarifa NUMBER;
+      vr_dtdivulg DATE;
+      vr_dtvigenc DATE;
+      vr_cdfvlcop INTEGER;
+      vr_tab_erro GENE0001.typ_tab_erro;
+      
+      VR_CDBATTAR VARCHAR2(100);
+       vr_vlrtarif number;
+       vr_vltrfesp number;
+       vr_vltrfgar number;
+       vr_des_erro VARCHAR2(100);
+       vr_des_corpo VARCHAR2(100);
+       vr_vltottar  number;
+
+   cursor cr_craplcr is
+      select *
+        from craplcr
+       where cdcooper = pr_cdcooper
+         and cdlcremp = pr_cdlcremp;
+
+     rw_craplcr cr_craplcr%rowtype;
+     
+  BEGIN 
+  -- Limpa Variaveis de Tarifa
+    vr_vlrtarif:= 0;
+    vr_vltrfesp:= 0;
+    vr_vltrfgar:= 0;
+
+    open cr_craplcr;
+    fetch cr_craplcr into rw_craplcr;
+    
+    if cr_craplcr%notfound then
+       raise vr_exc_saida;
+    end if;
+    CLOSE cr_craplcr;
+    
+    TARI0001.pc_calcula_tarifa (pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_cdlcremp => pr_cdcooper
+                               ,pr_vlemprst => pr_vllanmto
+                               ,pr_cdusolcr => rw_craplcr.cdusolcr
+                               ,pr_tpctrato => rw_craplcr.tpctrato 
+                               ,pr_dsbemgar => pr_dsbemgar
+                               ,pr_cdprogra => 'Rel CET'
+                               ,pr_flgemail => 'N'
+                               ,pr_vlrtarif => vr_vlrtarif
+                               ,pr_vltrfesp => vr_vltrfesp
+                               ,pr_vltrfgar => vr_vltrfgar
+                               ,pr_cdhistor => vr_cdhistor
+                               ,pr_cdfvlcop => vr_cdfvlcop
+                               ,pr_cdhisgar => vr_cdhistor
+                               ,pr_cdfvlgar => vr_cdfvlcop
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic
+                               );
+
+    -- Total Tarifa a ser Cobrado
+    vr_vltottar := NVL(vr_vlrtarif,0) + NVL(vr_vltrfesp,0) + nvl(vr_vltrfgar,0);
+      
+        -- Criar cabeçalho do XML
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+        -- Leitura da tabela temporaria para retornar XML para a WEB
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdcooper', pr_tag_cont => TO_CHAR(pr_cdcooper), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdmotivo', pr_tag_cont => TO_CHAR(pr_cdmotivo), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'inpessoa', pr_tag_cont => TO_CHAR(pr_inpessoa), pr_des_erro => vr_dscritic);        
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vllanmto', pr_tag_cont => TO_CHAR(pr_vllanmto,'fm999999999D00'), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdprogra', pr_tag_cont => TO_CHAR(pr_cdprogra), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdhistor', pr_tag_cont => TO_CHAR(vr_cdhistor), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdhisest', pr_tag_cont => TO_CHAR(vr_cdhisest), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vltarifa', pr_tag_cont => TO_CHAR(vr_vltottar,'fm999999999D00'), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dtdivulg', pr_tag_cont => TO_CHAR(vr_dtdivulg,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dtvigenc', pr_tag_cont => TO_CHAR(vr_dtvigenc,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdfvlcop', pr_tag_cont => TO_CHAR(vr_cdfvlcop), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdcritic', pr_tag_cont => TO_CHAR(vr_cdcritic), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdusolcr', pr_tag_cont => TO_CHAR(rw_craplcr.cdusolcr), pr_des_erro => vr_dscritic);
+        
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em TARI0001.pc_car_dados_tar_empr_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_car_dados_tar_empr_web;
+                                         
 
   /* Procedure para buscar dados da tarifa emprestimo */
   PROCEDURE pc_carrega_dados_tarifa_empr (pr_cdcooper  IN  INTEGER               --Codigo Cooperativa
@@ -2399,7 +2583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
         ELSE
           vr_cdcritic:= 0;
-          vr_dscritic:= 'Nao foi possivel carregar a tarifa.';
+          vr_dscritic:= '(1) Nao foi possivel carregar a tarifa.';
         END IF;
         --Levantar Excecao
         RAISE vr_exc_erro;
@@ -5604,7 +5788,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
       ELSE
         vr_cdcritic := 0;
-        vr_dscritic := 'Nao foi possivel carregar a tarifa.';
+        vr_dscritic := '(2) Nao foi possivel carregar a tarifa.';
       END IF;
       -- Levantar Excecao
       RAISE vr_exc_saida;
@@ -7237,7 +7421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
       ELSE
         vr_cdcritic:= 0;
-        vr_dscritic:= 'Nao foi possivel carregar a tarifa.';
+        vr_dscritic:= '(3) Nao foi possivel carregar a tarifa.';
       END IF;
       --Levantar Excecao
       RAISE vr_exc_saida;
@@ -7735,5 +7919,448 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     
   END pc_estorno_baixa_tarifa;
 
+  PROCEDURE pc_calcula_tarifa (pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
+                              ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
+                              ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE --> Codigo da linha de credito do emprestimo.
+                              ,pr_vlemprst  IN crapepr.vlemprst%TYPE --> Valor do emprestimo.
+                              ,pr_cdusolcr  IN craplcr.cdusolcr%TYPE --> Codigo de uso da linha de credito (0-Normal/1-CDC/2-Boletos)
+                              ,pr_tpctrato  IN craplcr.tpctrato%TYPE --> Tipo de contrato utilizado por esta linha de credito.
+                              ,pr_dsbemgar  IN VARCHAR2              --> Relação de categoria de bens em garantia
+                                                                     --- Deve iniciar com o primeiro tipo de bem em garantia
+                                                                     --- deve ser separado por |
+                                                                     --- deve terminar com |
+                              ,pr_cdprogra  IN VARCHAR2              --> Nome do programa chamador
+                              ,pr_flgemail  IN VARCHAR2              --> Envia e-mail S/N, se N interrompe o processo em caso de erro
+                              --
+                              ,pr_vlrtarif OUT crapfco.vltarifa%TYPE --> Valor da tarifa calculada
+                              ,pr_vltrfesp OUT craplcr.vltrfesp%TYPE --> Valor da tarifa especial calculada
+                              ,pr_vltrfgar OUT crapfco.vltarifa%TYPE --> Valor da tarifa garantia calculada
+                              ,pr_cdhistor OUT craphis.cdhistor%TYPE --> Codigo do historico do lancamento.
+                              ,pr_cdfvlcop OUT crapfco.cdfvlcop%TYPE --> Codigo da faixa de valor por cooperativa.
+                              ,pr_cdhisgar OUT craphis.cdhistor%TYPE --> Codigo do historico de bens em garantia
+                              ,pr_cdfvlgar OUT crapfco.cdfvlcop%TYPE --> Código da faixa de valor dos bens em garantia
+                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
+                              ,pr_dscritic OUT VARCHAR2              --> Texto de erro/critica encontrada
+                              ) IS
+    -- ........................................................................
+    --
+    --  Programa : pc_calcula_tarifa           Antigo: 
+    --  Sistema  : Cred
+    --  Sigla    : TARI0001
+    --  Autor    : Marcelo Telles Coelho
+    --  Data     : Fevereiro/2018.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para efetuar o cálculo de tarifa
+    --   Alterações
+    --
+    vr_cdbattar VARCHAR2(100) := ' ';
+    vr_cdhistor craphis.cdhistor%TYPE;
+    vr_cdhisgar craphis.cdhistor%type;
+    vr_cdhisest craphis.cdhistor%TYPE;
+    vr_cdfvlcop crapfco.cdfvlcop%TYPE;
+    vr_cdfvlgar crapfco.cdfvlcop%type;
+    vr_vltrfgar crapfco.vltarifa%TYPE;
+    vr_dtdivulg DATE;
+    vr_dtvigenc DATE;
+    vr_cdhistmp craphis.cdhistor%TYPE;
+    vr_cdfvltmp crapfco.cdfvlcop%TYPE;
+    -- Variaveis Envio de Email
+    vr_nmrescop    VARCHAR2(100);
+    vr_des_corpo   VARCHAR2(1000);
+    vr_des_destino VARCHAR2(1000);
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    vr_cdcritic PLS_INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_erro VARCHAR2(4000);
+    -- Flag para tarifas moveis diferente de carro, moto ou caminhao
+    vr_flgoutrosbens BOOLEAN;
+    -- Tabela Temporaria
+    vr_tab_erro GENE0001.typ_tab_erro;
+    -- Variaveis para separar os tipos de bens em garantia em pr_dsbemgar
+    w_dsbemgar VARCHAR2(32000);
+    w_nrposini NUMBER;
+    w_nrposfim NUMBER;
+    w_qtcaract NUMBER;
+    w_nrcatbem NUMBER;
+    w_dscatbem crapbpr.dscatbem%TYPE;
+    -- Tabela temporaria para tipos de bens em garantia
+    TYPE typ_reg_dscatbem IS
+     RECORD(dscatbem crapbpr.dscatbem%TYPE);
+    TYPE typ_tab_dscatbem IS
+      TABLE OF typ_reg_dscatbem
+        INDEX BY PLS_INTEGER;
+    -- Vetor para armazenar tipos de bens em garantia
+    vr_tab_dscatbem typ_tab_dscatbem;
+    -- Cursor Associado
+    CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE,
+                       pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT ass.inpessoa,
+             ass.nrdconta,
+             ass.cdsecext,
+             ass.cdagenci,
+             ass.cdtipsfx
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;  
+
+  BEGIN
+    -- Limpa Variaveis de Tarifa     
+    pr_vlrtarif := 0;
+    pr_vltrfesp := 0;
+    pr_vltrfgar := 0;
+/*    
+-- retirar a gravação do loh antes de ir para produção
+BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                          ,pr_ind_tipo_log => 2 -- Erro tratato
+                          ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '||chr(10)
+                                           || 'pr_cdcooper='||pr_cdcooper || ' - '||chr(10)
+                                           || 'pr_nrdconta='||pr_nrdconta || ' - '||chr(10)
+                                           || 'pr_cdlcremp='||pr_cdlcremp || ' - '||chr(10)
+                                           || 'pr_vlemprst='||pr_vlemprst || ' - '||chr(10)
+                                           || 'pr_cdusolcr='||pr_cdusolcr || ' - '||chr(10)
+                                           || 'pr_tpctrato='||pr_tpctrato || ' - '||chr(10)
+                                           || 'pr_dsbemgar='||pr_dsbemgar 
+                          ,pr_nmarqlog => 'TARIFA');
+-- FIM - retirar a gravação do loh antes de ir para produção
+*/
+    -- Separar os tipos de bens em garantia em pr_dsbemgar
+    BEGIN
+      vr_tab_dscatbem.delete;
+      w_dsbemgar := TRIM(pr_dsbemgar);
+      IF w_dsbemgar IS NOT NULL AND trim(pr_dsbemgar) <> '|' THEN
+        IF SUBSTR(w_dsbemgar,1,1) = '|' THEN
+          w_dsbemgar := SUBSTR(w_dsbemgar,2,LENGTH(w_dsbemgar));
+        END IF;
+        IF SUBSTR(w_dsbemgar,LENGTH(w_dsbemgar),1) <> '|' THEN
+          w_dsbemgar := w_dsbemgar || '|';
+        END IF;
+        --
+        w_nrcatbem := 0;
+        w_nrposini := 1;
+        w_nrposfim := INSTR(w_dsbemgar, '|', w_nrposini);
+        w_qtcaract := w_nrposfim - w_nrposini;
+        LOOP
+          w_nrcatbem := w_nrcatbem +1;
+          vr_tab_dscatbem(w_nrcatbem).dscatbem := NVL(SUBSTR(w_dsbemgar, w_nrposini, w_qtcaract),' ');
+          --
+          EXIT WHEN w_nrposfim = LENGTH(w_dsbemgar);
+          --
+          w_nrposini := w_nrposfim + 1;
+          w_nrposfim := INSTR(w_dsbemgar, '|', w_nrposini);
+          w_qtcaract := w_nrposfim - w_nrposini;
+        END LOOP;
+      END IF;
+    END;
+    -- Selecionar Associado
+    OPEN cr_crapass (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    CLOSE cr_crapass;
+    
+    IF pr_cdusolcr = 1 THEN
+      IF rw_crapass.inpessoa = 1 THEN
+        vr_cdbattar := 'MICROCREPF'; -- Microcredito Pessoa Fisica
+      ELSE
+        vr_cdbattar := 'MICROCREPJ'; -- Microcredito Pessoa Juridica
+      END IF;
+        
+      TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
+                                           ,pr_cdbattar => vr_cdbattar
+                                           ,pr_vllanmto => pr_vlemprst
+                                           ,pr_cdprogra => pr_cdprogra
+                                           ,pr_cdhistor => vr_cdhistor
+                                           ,pr_cdhisest => vr_cdhisest
+                                           ,pr_vltarifa => pr_vlrtarif
+                                           ,pr_dtdivulg => vr_dtdivulg
+                                           ,pr_dtvigenc => vr_dtvigenc
+                                           ,pr_cdfvlcop => vr_cdfvlcop
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic
+                                           ,pr_tab_erro => vr_tab_erro);
+                                                        
+      --Se ocorreu erro
+      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        --Se possui erro no vetor
+        IF vr_tab_erro.Count() > 0 THEN
+          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= '(4) Nao foi possivel carregar a tarifa.';
+        END IF;
+          
+        IF pr_flgemail = 'N' THEN
+          RAISE vr_exc_saida;
+        else
+          --Corpo para o Email
+          vr_des_corpo := to_char(sysdate,'hh24:mi:ss')||' - '
+                          || pr_cdprogra || ' --> '
+                          || vr_dscritic || ' - ' || vr_cdbattar;
+          
+          -- Envio do arquivo detalhado via e-mail
+          gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                    ,pr_cdprogra        => pr_cdprogra
+                                    ,pr_des_destino     => vr_des_destino
+                                    ,pr_des_assunto     => 'Erros log de tarifas(' || vr_nmrescop || ')'
+                                    ,pr_des_corpo       => vr_des_corpo
+                                    ,pr_des_anexo       => NULL
+                                    ,pr_des_erro        => vr_des_erro);
+          --Se ocorreu algum erro
+          IF vr_des_erro IS NOT NULL  THEN
+            RAISE vr_exc_saida;
+          END IF;
+           
+          -- Efetua Limpeza das variaveis de critica
+          vr_cdcritic  := 0;
+          vr_dscritic  := NULL;
+          vr_des_corpo := NULL;
+        END IF;
+      END IF;
+    ELSE
+      -- Buscar tarifa emprestimo
+      TARI0001.pc_carrega_dados_tarifa_empr(pr_cdcooper => pr_cdcooper
+                                           ,pr_cdlcremp => pr_cdlcremp
+                                           ,pr_cdmotivo => 'EM'
+                                           ,pr_inpessoa => rw_crapass.inpessoa
+                                           ,pr_vllanmto => pr_vlemprst
+                                           ,pr_cdprogra => pr_cdprogra
+                                           ,pr_cdhistor => vr_cdhistor
+                                           ,pr_cdhisest => vr_cdhisest
+                                           ,pr_vltarifa => pr_vlrtarif
+                                           ,pr_dtdivulg => vr_dtdivulg
+                                           ,pr_dtvigenc => vr_dtvigenc
+                                           ,pr_cdfvlcop => vr_cdfvlcop
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic
+                                           ,pr_tab_erro => vr_tab_erro);                                                                                            
+          
+      --Se ocorreu erro
+      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        --Se possui erro no vetor
+        IF vr_tab_erro.Count() > 0 THEN
+          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= '(5) Nao foi possivel carregar a tarifa. ' || vr_dscritic;
+        END IF;
+        IF pr_flgemail = 'N' THEN
+          RAISE vr_exc_saida;
+        ELSE
+          --Corpo do Email
+          vr_des_corpo := to_char(SYSDATE,'hh24:mi:ss')||' - '
+                          || pr_cdprogra || ' --> '
+                          || vr_dscritic || ' - ' || vr_cdbattar;
+          
+          
+          -- Envio do arquivo detalhado via e-mail
+          gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                    ,pr_cdprogra        => pr_cdprogra
+                                    ,pr_des_destino     => vr_des_destino
+                                    ,pr_des_assunto     => 'Erros log de tarifas(' || vr_nmrescop || ')'
+                                    ,pr_des_corpo       => vr_des_corpo
+                                    ,pr_des_anexo       => NULL
+                                    ,pr_des_erro        => vr_des_erro);
+          --Se ocorreu algum erro
+          IF vr_des_erro IS NOT NULL  THEN
+            RAISE vr_exc_saida;
+          END IF;
+
+          -- Efetua Limpeza das variaveis de critica
+          vr_cdcritic  := 0;
+          vr_dscritic  := NULL;
+          vr_des_corpo := NULL;
+        END IF;
+      END IF; 
+        
+      --Codigo historico
+      vr_cdhistmp := vr_cdhistor;
+      vr_cdfvltmp := vr_cdfvlcop;
+
+      -- Buscar tarifa emprestimo Especial
+      TARI0001.pc_carrega_dados_tarifa_empr(pr_cdcooper => pr_cdcooper
+                                           ,pr_cdlcremp => pr_cdlcremp
+                                           ,pr_cdmotivo => 'ES'
+                                           ,pr_inpessoa => rw_crapass.inpessoa
+                                           ,pr_vllanmto => pr_vlemprst
+                                           ,pr_cdprogra => pr_cdprogra
+                                           ,pr_cdhistor => vr_cdhistor
+                                           ,pr_cdhisest => vr_cdhisest
+                                           ,pr_vltarifa => pr_vltrfesp
+                                           ,pr_dtdivulg => vr_dtdivulg
+                                           ,pr_dtvigenc => vr_dtvigenc
+                                           ,pr_cdfvlcop => vr_cdfvlcop
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic
+                                           ,pr_tab_erro => vr_tab_erro);
+                                               
+      --Se ocorreu erro
+      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        --Se possui erro no vetor
+        IF vr_tab_erro.Count() > 0 THEN
+          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= '(6) Nao foi possivel carregar a tarifa.';
+        END IF;
+        IF pr_flgemail = 'N' THEN
+          RAISE vr_exc_saida;
+        ELSE
+          --Corpo do Email
+          vr_des_corpo := to_char(SYSDATE,'hh24:mi:ss')||' - '
+                          || pr_cdprogra || ' --> '
+                          || vr_dscritic || ' - ' || vr_cdbattar;
+        
+          -- Envio do arquivo detalhado via e-mail
+          gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                    ,pr_cdprogra        => pr_cdprogra
+                                    ,pr_des_destino     => vr_des_destino
+                                    ,pr_des_assunto     => 'Erros log de tarifas(' || vr_nmrescop || ')'
+                                    ,pr_des_corpo       => vr_des_corpo
+                                    ,pr_des_anexo       => NULL
+                                    ,pr_des_erro        => vr_des_erro);
+          --Se ocorreu algum erro
+          IF vr_des_erro IS NOT NULL  THEN
+            RAISE vr_exc_saida;
+          END IF;
+
+          -- Efetua Limpeza das variaveis de critica
+          vr_cdcritic  := 0;
+          vr_dscritic  := NULL;
+          vr_des_corpo := NULL;
+        END IF;
+      END IF; 
+
+      IF nvl(vr_cdhistor,0) = 0 AND nvl(vr_cdfvlcop,0) = 0 THEN
+        --Retornar Valores Salvos
+        vr_cdhistor:= vr_cdhistmp;
+        vr_cdfvlcop:= vr_cdfvltmp;
+      END IF;                 
+
+      pr_cdhistor := vr_cdhistor;
+      pr_cdfvlcop := vr_cdfvlcop;
+      
+    END IF;
+      
+    -- Cobranca da tarifa de avaliacao de bens em garantia
+    vr_cdhistor := 0;
+    vr_cdhisest := 0;
+    vr_cdfvlcop := 0;
+      
+    /*------------------------------------------
+    -- 2 - Avaliacao de garantia de bem movel
+    -- 3 - Avaliacao de garantia de bem imovel
+    --------------------------------------------*/
+    IF pr_tpctrato IN (2,3) THEN 
+      IF pr_tpctrato = 2 THEN -- Ben Movel
+        IF rw_crapass.inpessoa = 1 THEN -- Fisica 
+          vr_cdbattar := 'AVALBMOVPF'; -- Avaliacao de Garantia de Bem Movel - PF
+        ELSE
+          vr_cdbattar := 'AVALBMOVPJ'; -- Avaliacao de Garantia de Bem Movel - PJ
+        END IF;
+      ELSE -- Bens Imoveis
+        IF rw_crapass.inpessoa = 1 THEN -- Fisica
+          vr_cdbattar := 'AVALBIMVPF'; -- Avaliacao de Garantia de Bem Imovel - PF
+        ELSE
+          vr_cdbattar := 'AVALBIMVPJ'; -- Avaliacao de Garantia de Bem Imovel - PF
+        END IF;    
+      END IF;
+        
+      -- Busca Valor da Tarifa
+      TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
+                                           ,pr_cdbattar => vr_cdbattar
+                                           ,pr_vllanmto => 1
+                                           ,pr_cdprogra => pr_cdprogra
+                                           ,pr_cdhistor => vr_cdhisgar --vr_cdhistor
+                                           ,pr_cdhisest => vr_cdhisest
+                                           ,pr_vltarifa => vr_vltrfgar
+                                           ,pr_dtdivulg => vr_dtdivulg
+                                           ,pr_dtvigenc => vr_dtvigenc
+                                           ,pr_cdfvlcop => vr_cdfvlgar --vr_cdfvlcop
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic
+                                           ,pr_tab_erro => vr_tab_erro);
+                                                        
+      -- Se ocorreu erro
+      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Se possui erro no vetor
+        IF vr_tab_erro.Count() > 0 THEN
+          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= '(7) Nao foi possivel carregar a tarifa.';
+        END IF;
+        IF pr_flgemail = 'N' THEN
+          RAISE vr_exc_saida;
+        ELSE
+          --Concatenar Conta e tarifa
+          vr_dscritic:= vr_dscritic ||'Conta: '||gene0002.fn_mask_conta(pr_nrdconta)||'- '||vr_cdbattar;
+          -- Envio centralizado de log de erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
+                                                     || pr_cdprogra || ' --> '
+                                                     || vr_dscritic || ' - ' || vr_cdbattar);
+          -- Efetua Limpeza das variaveis de critica
+          vr_cdcritic := 0;
+          vr_dscritic := NULL;
+        END IF;
+      ELSE
+        IF pr_tpctrato = 2 THEN -- Ben Movel
+          vr_flgoutrosbens := FALSE;
+          IF vr_tab_dscatbem.count() > 0 THEN
+            FOR i IN 1..vr_tab_dscatbem.count()
+            LOOP
+              IF vr_tab_dscatbem(i).dscatbem <> ' ' THEN
+                IF vr_tab_dscatbem(i).dscatbem LIKE '%AUTOMOVEL%'
+                OR vr_tab_dscatbem(i).dscatbem LIKE '%MOTO%'
+                OR vr_tab_dscatbem(i).dscatbem LIKE '%CAMINHAO%' THEN 
+                  -- Acumula o valor da tarifa para cada um dos bens em garantia do tipo AUTOMOVEL, MOTO ou CAMINHAO
+                  pr_vltrfgar := pr_vltrfgar + vr_vltrfgar;
+                ELSE
+                  vr_flgoutrosbens := TRUE;
+                END IF;
+              END IF;
+            END LOOP;
+          END IF;
+          -- Se houver outros bens cobrar mais uma tarifa
+          IF vr_flgoutrosbens THEN
+            -- Acumula o valor da tarifa uma única vez para bens em garantia diferentes do tipo AUTOMOVEL, MOTO ou CAMINHAO
+            pr_vltrfgar := pr_vltrfgar + vr_vltrfgar;
+          END IF;
+        ELSE
+          -- Acumula o valor da tarifa uma única vez para o cálculo
+          pr_vltrfgar := pr_vltrfgar + vr_vltrfgar;
+        END IF;
+        pr_cdhisgar := vr_cdhisgar; -- Historico da tarifa de bens em garantia
+        pr_cdfvlgar := vr_cdfvlgar;
+      END IF;
+    END IF; -- Fim cobranca da tarifa de avaliacao de bens em garantia
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Devolvemos código e critica encontradas
+      pr_cdcritic := NVL(vr_cdcritic, 0);
+      pr_dscritic := vr_dscritic;
+      -- Efetuar rollback
+      ROLLBACK;
+    WHEN OTHERS THEN
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 0;
+      pr_dscritic := SQLERRM;
+      -- Efetuar rollback
+      ROLLBACK;
+  END pc_calcula_tarifa;
 END TARI0001;
 /

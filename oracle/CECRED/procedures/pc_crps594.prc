@@ -3828,6 +3828,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                                   ,pr_idorigem    => 1  /*AYLLOS*/       --Identificador Origem pagamento
                                                   ,pr_nrdconta    => vr_tab_descontar(vr_index_desc).nrdconta         --Numero da conta
                                                   ,pr_indbaixa    => 1                   --Indicador Baixa /* 1-Pagamento 2- Vencimento */
+                                                  ,pr_dtintegr    => vr_dtmvtaux         -- Data de integração do pagamento
                                                   ,pr_tab_titulos => vr_tab_titulos      --Titulos a serem baixados
                                                   ,pr_cdcritic    => vr_cdcritic         --Codigo Critica
                                                   ,pr_dscritic    => vr_dscritic         --Descricao Critica
