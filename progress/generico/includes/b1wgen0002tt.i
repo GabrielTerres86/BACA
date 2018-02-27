@@ -212,7 +212,8 @@ DEF TEMP-TABLE tt-extrato_epr NO-UNDO
     FIELD dsextrat AS CHAR
     FIELD flglista AS LOGICAL INITIAL TRUE
     FIELD cdorigem AS INTE
-    FIELD qtdiacal LIKE craplem.qtdiacal.
+    FIELD qtdiacal LIKE craplem.qtdiacal
+	FIELD vlrdtaxa LIKE craplem.vltaxprd.
 
 DEF TEMP-TABLE tt-dados-epr   NO-UNDO  
     FIELD nrdconta AS INTE    FORMAT "zzzz,zzz,9"
