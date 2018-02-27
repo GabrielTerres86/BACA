@@ -84,6 +84,10 @@ DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_contador AS INTE                                           NO-UNDO.
 DEF VAR aux_dsxmlout AS CHAR                                           NO-UNDO.
 DEF VAR aux_des_erro AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsdinstr AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsdinfor AS CHAR                                           NO-UNDO.
+DEF VAR aux_qtdinstr AS INTE                                           NO-UNDO.
+DEF VAR aux_qtdinfor AS INTE                                           NO-UNDO.
 
 /* sistema deve atribuir data do dia vindo da crapdat
    Rafael Cechet - 06/04/2011 */
@@ -362,7 +366,51 @@ IF  AVAILABLE tt-dados-blt  THEN
                                        "<flgregon>" + STRING(tt-dados-blt.flgregon) + "</flgregon>" +
                                        "<flgpgdiv>" + STRING(tt-dados-blt.flgpgdiv) + "</flgpgdiv>" +
                                        (IF aux_dsxmlout <> "" THEN aux_dsxmlout ELSE "") +
-                                       "</BOLETO>".
+                                       "<mensagens_pagador><instrucoes>".
+                               
+          ASSIGN aux_dsdinstr = ""                           
+                 aux_qtdinstr = 0.                         
+       
+          IF  NUM-ENTRIES(tt-dados-blt.dsdinstr,";") >= 1  THEN
+              ASSIGN aux_dsdinstr = ENTRY(1,tt-dados-blt.dsdinstr,";")
+                         aux_qtdinstr = NUM-ENTRIES(aux_dsdinstr,"_").                         
+              
+          DO aux_contador = 1 TO 5:
+
+              CREATE xml_operacao.
+              ASSIGN xml_operacao.dslinxml = "<instrucao" + STRING(aux_contador) + ">" +
+                                             (IF aux_qtdinstr >= aux_contador THEN
+                                                 ENTRY(aux_contador,aux_dsdinstr,"_") 
+                                              ELSE  
+                                                 " ") +
+                                             "</instrucao" + STRING(aux_contador) + ">".
+          
+          END.              
+          
+          CREATE xml_operacao.
+          ASSIGN xml_operacao.dslinxml = "</instrucoes><informacoes>".
+          
+          ASSIGN aux_dsdinfor = ""      
+                 aux_qtdinfor = 0.    
+          
+          IF  NUM-ENTRIES(tt-dados-blt.dsdinstr,";") = 2  THEN
+              ASSIGN aux_dsdinfor = ENTRY(2,tt-dados-blt.dsdinstr,";")
+                     aux_qtdinfor = NUM-ENTRIES(aux_dsdinfor,"_").              
+              
+          DO aux_contador = 1 TO 5:
+
+              CREATE xml_operacao.
+              ASSIGN xml_operacao.dslinxml = "<informacao" + STRING(aux_contador) + ">" +
+                                             (IF aux_qtdinfor >= aux_contador THEN
+                                                 ENTRY(aux_contador,aux_dsdinfor,"_") 
+                                              ELSE  
+                                                 " ") + 
+                                             "</informacao" + STRING(aux_contador) + ">".
+          
+          END.                        
+              
+          CREATE xml_operacao.
+          ASSIGN xml_operacao.dslinxml = "</informacoes></mensagens_pagador></BOLETO>".
 
     END.
                   
@@ -398,6 +446,7 @@ ASSIGN xml_operacao.dslinxml = "</nrdconta></EMPRESTIMOS_INTERNET>".
    (Tiago/Ademir SD566906)
    */
 
+ASSIGN aux_contador = 0.
 
 FOR EACH tt-sacados-blt NO-LOCK:
     ASSIGN aux_contador = aux_contador + 1.

@@ -75,7 +75,11 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,cdbccxlt craplau.cdbccxlt%TYPE
       ,nrdolote craplau.nrdolote%TYPE
       ,nrseqdig craplau.nrseqdig%TYPE
-      ,dtrefere craplau.dtmvtolt%TYPE);
+      ,dtrefere craplau.dtmvtolt%TYPE
+      ,cdtiptra craplau.cdtiptra%TYPE
+      ,idlancto craplau.idlancto%TYPE
+      ,idlstdom NUMBER
+      ,incancel INTEGER);
       
     TYPE typ_tab_lancamento_futuro IS TABLE OF typ_reg_lancamento_futuro INDEX BY PLS_INTEGER;
 
@@ -767,19 +771,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         01/03/2017 - Adicionar origem ADIOFJUROS para podermos debitar estes agendamentos
                      na procedure pc_consulta_lancamento (Lucas Ranghetti M338.1) 
 					 
-		22/03/2017 - Adicionado tratamento na pc_consulta_lancamento para listar
-				     reacarga de celular. (PRJ321 Reinert)                   
+        22/03/2017 - Adicionado tratamento na pc_consulta_lancamento para listar
+                     reacarga de celular. (PRJ321 Reinert)                   
 
         05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa
                      e nrcpfcgc para não consultar novamente o associado nos packages 
                      apli0001 e imut0001 (Carlos)
 
         26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			         crapass, crapttl, crapjur 
-					(Adriano - P339).
-                     
+                     crapass, crapttl, crapjur 
+                     (Adriano - P339).
+                   
         11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
-      
+        
         28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40 pois estava estourando (Tiago #724513).      
                    
         17/01/2018 - Ajustar chamada da rotina TARI0001.pc_carrega_dados_tar_vigente
@@ -1089,47 +1093,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       
       /** Lista apenas para impres.p atenda/extrato exceto crps029.p **/
       
-        --Data referencia anterior 30 dias
-        IF pr_dtrefere < ( rw_crapdat.dtmvtocd - 30 ) THEN /* Periodo */
-          --Se terminal for TAA
-          IF pr_nrterfin <> 0 THEN /* TAA */ 
-            vr_tipotari := 9;
-            --Se for pessoa fisica
-            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-              vr_cdbattar:= 'EXTPETAAPF';
-            ELSE
-              vr_cdbattar:= 'EXTPETAAPJ';
-            END IF;
+      --Data referencia anterior 30 dias
+      IF pr_dtrefere < ( rw_crapdat.dtmvtocd - 30 ) THEN /* Periodo */
+        --Se terminal for TAA
+        IF pr_nrterfin <> 0 THEN /* TAA */ 
+          vr_tipotari := 9;
+          --Se for pessoa fisica
+          IF rw_crapass.inpessoa = 1 THEN /* Fisica */
+            vr_cdbattar:= 'EXTPETAAPF';
           ELSE
-            vr_tipotari := 8;
-            --Se for pessoa fisica
-            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-              vr_cdbattar:= 'EXTPEPREPF';
-            ELSE
-              vr_cdbattar:= 'EXTPEPREPJ';
-            END IF;
+            vr_cdbattar:= 'EXTPETAAPJ';
           END IF;
         ELSE
-          --Se terminal for TAA
-          IF pr_nrterfin <> 0 THEN /* TAA */ 
-            vr_tipotari := 7;
-            --Se for pessoa fisica
-            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-              vr_cdbattar:= 'EXTMETAAPF';
-            ELSE
-              vr_cdbattar:= 'EXTMETAAPJ';
-            END IF;
+          vr_tipotari := 8;
+          --Se for pessoa fisica
+          IF rw_crapass.inpessoa = 1 THEN /* Fisica */
+            vr_cdbattar:= 'EXTPEPREPF';
           ELSE
-            vr_tipotari := 6;
-            --Se for pessoa fisica
-            IF rw_crapass.inpessoa = 1 THEN /* Fisica */
-              vr_cdbattar:= 'EXTMEPREPF';
-            ELSE
-              vr_cdbattar:= 'EXTMEPREPJ';
-            END IF;
+            vr_cdbattar:= 'EXTPEPREPJ';
           END IF;
         END IF;
-       
+      ELSE
+        --Se terminal for TAA
+        IF pr_nrterfin <> 0 THEN /* TAA */ 
+          vr_tipotari := 7;
+          --Se for pessoa fisica
+          IF rw_crapass.inpessoa = 1 THEN /* Fisica */
+            vr_cdbattar:= 'EXTMETAAPF';
+          ELSE
+            vr_cdbattar:= 'EXTMETAAPJ';
+          END IF;
+        ELSE
+          vr_tipotari := 6;
+          --Se for pessoa fisica
+          IF rw_crapass.inpessoa = 1 THEN /* Fisica */
+            vr_cdbattar:= 'EXTMEPREPF';
+          ELSE
+            vr_cdbattar:= 'EXTMEPREPJ';
+          END IF;
+        END IF;
+      END IF;         
+      
       --Cobrar Tarifa
       IF pr_flgtarif THEN
         
@@ -3831,6 +3835,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplau.dtmvtolt
               ,craplau.cdtiptra
               ,craplau.idlancto
+              ,craplau.nrseqagp
+              ,craplau.dslindig
               ,craplau.progress_recid
         FROM craplau craplau
         WHERE craplau.cdcooper = pr_cdcooper   
@@ -3857,6 +3863,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplau.dtmvtolt
               ,craplau.cdtiptra
               ,craplau.idlancto			  
+              ,craplau.nrseqagp		
+              ,craplau.dslindig              	  
               ,craplau.progress_recid
         FROM craplau craplau
         WHERE craplau.cdcooper = pr_cdcooper
@@ -4306,6 +4314,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_dtiniper01 DATE;
       vr_dtfimper01 DATE;
       vr_dscedent VARCHAR(300);
+      vr_idlstdom NUMBER;
+      vr_incancel INTEGER;
       --Variaveis para uso na craptab
       vr_dstextab    craptab.dstextab%TYPE;
       vr_lshistor    craptab.dstextab%TYPE;
@@ -4686,6 +4696,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_tab_lancamento_futuro(vr_index).nrdolote := rw_craplau.nrdolote;
         pr_tab_lancamento_futuro(vr_index).nrseqdig := rw_craplau.nrseqdig;
         pr_tab_lancamento_futuro(vr_index).dtrefere := rw_craplau.dtmvtolt;
+        pr_tab_lancamento_futuro(vr_index).cdtiptra := rw_craplau.cdtiptra;
+        pr_tab_lancamento_futuro(vr_index).idlancto := rw_craplau.idlancto;
+        
+        IF rw_craplau.cdtiptra <> 0 THEN
+          IF rw_craplau.cdtiptra = 1 THEN 
+            vr_idlstdom := 5; -- Transf. Intracooperativa
+          ELSIF rw_craplau.cdtiptra = 3 THEN
+            vr_idlstdom := 3; -- Crédito Salário
+          ELSIF rw_craplau.cdtiptra = 4 THEN
+            vr_idlstdom := 4; -- TED
+          ELSIF rw_craplau.cdtiptra = 5 THEN
+            vr_idlstdom := 6; -- Transf. Intercooperativa
+          ELSIF rw_craplau.cdtiptra = 2 THEN
+            IF NVL(rw_craplau.nrseqagp,0) <> 0 THEN 
+              vr_idlstdom := 9; -- GPS
+            ELSIF LENGTH(NVL(rw_craplau.dslindig,'')) = 55 THEN
+              vr_idlstdom := 2; -- Convênio
+            ELSE
+              vr_idlstdom := 1; -- Título
+            END IF;
+          ELSIF rw_craplau.cdtiptra = 10 THEN
+            IF rw_darf_das.tppagamento = 1 THEN 
+              vr_idlstdom := 7; -- DARF
+            ELSE 
+              vr_idlstdom := 8; -- DAS
+            END IF;
+          ELSE
+            vr_idlstdom := 0;
+          END IF;
+        END IF;
+        
+        pr_tab_lancamento_futuro(vr_index).idlstdom := vr_idlstdom;
+        pr_tab_lancamento_futuro(vr_index).incancel := 0;
         
         /* Pagtos INTERNET */  
         IF rw_craplau.cdhistor = 508 THEN
@@ -6061,6 +6104,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                                               'fm9999999999999999999999999');
         pr_tab_lancamento_futuro(vr_index).indebcre:= rw_craphis.indebcre;
         pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_recarga.vlrecarga;
+        pr_tab_lancamento_futuro(vr_index).cdtiptra:= 20;
+        pr_tab_lancamento_futuro(vr_index).idlancto:= rw_recarga.idoperacao;
+        pr_tab_lancamento_futuro(vr_index).idlstdom:= 20;
+        pr_tab_lancamento_futuro(vr_index).incancel:= 0;
         --Acumular valor automatico
         vr_vllautom:= nvl(vr_vllautom,0) - rw_recarga.vlrecarga;
         --Acumular valor Credito
@@ -20272,6 +20319,10 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
                                                       ||   '<nrdolote>'||nvl(to_char(vr_tab_lancamento_futuro(vr_contador).nrdolote),'0') ||'</nrdolote>'
                                                       ||   '<nrseqdig>'||nvl(to_char(vr_tab_lancamento_futuro(vr_contador).nrseqdig),'0') ||'</nrseqdig>'
                                                       ||   '<dtrefere>'||nvl(TO_CHAR(vr_tab_lancamento_futuro(vr_contador).dtrefere, 'DD/MM/RRRR'),' ')||'</dtrefere>'
+                                                      ||   '<cdtiptra>'||nvl(vr_tab_lancamento_futuro(vr_contador).cdtiptra,0)||'</cdtiptra>'
+                                                      ||   '<idlancto>'||nvl(vr_tab_lancamento_futuro(vr_contador).idlancto,0)||'</idlancto>'
+                                                      ||   '<idlstdom>'||nvl(vr_tab_lancamento_futuro(vr_contador).idlstdom,0)||'</idlstdom>'
+                                                      ||   '<incancel>'||nvl(vr_tab_lancamento_futuro(vr_contador).incancel,0)||'</incancel>'                                                      
                                                     || '</lancamento>');
         END LOOP;
          

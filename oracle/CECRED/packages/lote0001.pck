@@ -10,6 +10,9 @@ CREATE OR REPLACE PACKAGE cecred.lote0001 IS
    Objetivo  : Package com as procedures necessárias para pagamento de guias DARF e DAS
   
    Alteracoes: 07/12/2017 - Incluido novos campos no cursor da craplot (Tiago/Adriano #745339)
+   
+               26/02/2018 - Inclusao do campo cdcooper no returning do cursor
+                            da craplot. (Chamado 856240) - (Fabricio)
   ..............................................................................*/
 
   --Testar se o lote esta em lock
@@ -174,6 +177,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.lote0001 IS
                ,craplot.qtinfoln
                ,craplot.vlcompcr
                ,craplot.vlinfocr
+               ,craplot.cdcooper
            INTO rw_craplot_ctl.rowid
                ,rw_craplot_ctl.nrdolote
                ,rw_craplot_ctl.nrseqdig
@@ -186,7 +190,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.lote0001 IS
                ,rw_craplot_ctl.qtcompln
                ,rw_craplot_ctl.qtinfoln
                ,rw_craplot_ctl.vlcompcr
-               ,rw_craplot_ctl.vlinfocr;
+               ,rw_craplot_ctl.vlinfocr
+               ,rw_craplot_ctl.cdcooper;
     
     ELSE
       -- ou atualizar o nrseqdig para reservar posição
