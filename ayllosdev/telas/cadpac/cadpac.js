@@ -6,6 +6,7 @@
  * --------------
  * ALTERAÇÕES   : 08/08/2017 - Adicionado novo campo Habilitar Acesso CRM. (Reinert - Projeto 339)
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ *                03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  * --------------
  */
 $(document).ready(function() {
@@ -194,6 +195,7 @@ function formataCamposTela(cddopcao){
         var rQtmesage = $('label[for="qtmesage"]', '#frmCadpac');
         var rQtddlslf = $('label[for="qtddlslf"]', '#frmCadpac');
         var rFlsgproc = $('label[for="flsgproc"]', '#frmCadpac');
+        var rVllimpag = $('label[for="vllimpag"]', '#frmCadpac');
 
         var rVllimapv = $('label[for="vllimapv"]', '#frmCadpac');
         var rQtchqprv = $('label[for="qtchqprv"]', '#frmCadpac');
@@ -264,6 +266,7 @@ function formataCamposTela(cddopcao){
         var cQtmesage = $('#qtmesage', '#frmCadpac');
         var cQtddlslf = $('#qtddlslf', '#frmCadpac');
         var cFlsgproc = $('#flsgproc', '#frmCadpac');
+        var cVllimpag = $('#vllimpag', '#frmCadpac');
 
         var cVllimapv = $('#vllimapv', '#frmCadpac');
         var cQtchqprv = $('#qtchqprv', '#frmCadpac');
@@ -335,6 +338,7 @@ function formataCamposTela(cddopcao){
         rQtmesage.addClass('rotulo').css({'width': '490px'});
         rQtddlslf.addClass('rotulo').css({'width': '490px'});
         rFlsgproc.addClass('rotulo').css({'width': '490px'});
+        rVllimpag.addClass('rotulo').css({'width': '230px'});
 
         rVllimapv.addClass('rotulo').css({'width': '260px'});
         rQtchqprv.addClass('rotulo').css({'width': '260px'});
@@ -405,6 +409,7 @@ function formataCamposTela(cddopcao){
         cQtmesage.addClass('campo').css({'width':'60px'}).attr('maxlength','3').setMask('INTEGER','zzz','','');
         cQtddlslf.addClass('campo').css({'width':'60px'}).attr('maxlength','3').setMask('INTEGER','zzz','','');
         cFlsgproc.addClass('campo').css({'width':'60px'});
+        cVllimpag.addClass('campo').css({'width':'120px','text-align':'right'}).setMask("DECIMAL","zzz.zzz.zz9,99","","");
 
         cHhsicini.mask('00:00');
         cHhsicfim.mask('00:00');
@@ -1584,6 +1589,7 @@ function gravarPAC() {
     var vlminsgr = $('#vlminsgr','#frmCadpac').val();
     var vlmaxsgr = $('#vlmaxsgr','#frmCadpac').val();
 	var flmajora = $('#flmajora','#frmCadpac').val();
+    var vllimpag = $('#vllimpag','#frmCadpac').val();
 
     showMsgAguardo("Aguarde, processando...");
 
@@ -1660,6 +1666,7 @@ function gravarPAC() {
             vlminsgr: vlminsgr,
             vlmaxsgr: vlmaxsgr,
 			flmajora: flmajora,
+            vllimpag: vllimpag,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {

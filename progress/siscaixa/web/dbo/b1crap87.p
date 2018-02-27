@@ -10,6 +10,11 @@ Dados referentes ao programa:
 Objetivo  : Validacoes de Arrecadacoes GPS SICREDI - Faturas.
 
 Alteracoes: 12/09/2017 - Ajustes melhoria 397 - Rafael (Mouts)
+
+            03/01/2018 - M307 - Solicitaçao de senha do coordenador quando 
+                         valor do pagamento for superior ao limite cadastrado 
+                         na CADCOP / CADPAC
+                         (Diogo - MoutS)
 ..............................................................................*/
 
 {dbo/bo-erro1.i}
@@ -740,7 +745,7 @@ PROCEDURE pc-efetua-gps-pagamento:
                          INPUT p-vlrtotal,
                          INPUT p-dtvencim,
                          INPUT p-idfisjur,
-                         INPUT 0, /* NRSEQAGP */
+                         INPUT 0, /* NRSEQAGP */ 
                          INPUT 0,
 						 INPUT 0, /* Mobile */
 						 INPUT "", /* pr_dshistor */
@@ -782,6 +787,64 @@ PROCEDURE pc-efetua-gps-pagamento:
     ASSIGN p-dslitera = aux_dslitera 
            p-nrultaut = aux_nrultaut.
 
+    RETURN "OK".
+
+END PROCEDURE.
+
+
+PROCEDURE validar-valor-limite:
+
+    DEF INPUT PARAM par_nmrescop  AS CHARACTER                       NO-UNDO.
+    DEF INPUT PARAM par_cdoperad  AS CHARACTER                       NO-UNDO.
+    DEF INPUT PARAM par_cdagenci  AS INTEGER                         NO-UNDO.
+    DEF INPUT PARAM par_nrocaixa  AS INTEGER                         NO-UNDO.
+    DEF INPUT PARAM par_vltitfat  AS DECIMAL                         NO-UNDO.
+    DEF INPUT PARAM par_senha     AS CHARACTER                       NO-UNDO.
+    DEF OUTPUT PARAM par_des_erro AS CHARACTER                       NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHARACTER                       NO-UNDO.
+    DEF OUTPUT PARAM par_inssenha AS INTEGER                         NO-UNDO.
+
+    DEF VAR aux_inssenha          AS INTEGER                         NO-UNDO.
+    DEF VAR h_b1crap14            AS HANDLE                          NO-UNDO.
+    
+    
+    FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
+    IF NOT AVAILABLE crapcop THEN
+      DO: 
+        RUN cria-erro (INPUT par_nmrescop,
+                       INPUT par_cdagenci,
+                       INPUT par_nrocaixa,
+                       INPUT 0,
+                       INPUT "Cooperativa nao encontrada.",
+                       INPUT YES).
+        RETURN "NOK".
+      END.
+      
+    
+    RUN dbo/b1crap14.p PERSISTENT SET h_b1crap14.
+                           
+    RUN valida-valor-limite IN h_b1crap14(INPUT crapcop.cdcooper,
+                                          INPUT par_cdoperad,
+                                          INPUT par_cdagenci,
+                                          INPUT par_nrocaixa,
+                                          INPUT par_vltitfat,
+                                          INPUT par_senha,
+                                          OUTPUT par_des_erro,
+                                          OUTPUT par_dscritic,
+                                          OUTPUT par_inssenha).
+    DELETE PROCEDURE h_b1crap14.
+    
+    IF RETURN-VALUE = 'NOK' THEN  
+     DO:
+        RUN cria-erro (INPUT par_nmrescop,
+                       INPUT par_cdagenci,
+                       INPUT par_nrocaixa,
+                       INPUT 0,
+                       INPUT par_dscritic,
+                       INPUT YES).
+        RETURN "NOK".
+     END.
+     
     RETURN "OK".
 
 END PROCEDURE.

@@ -170,6 +170,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCOP is
                                   ,pr_taamaxer IN crapcop.taamaxer%TYPE --> Qtd. Max. de tentivas da senha no TAA
                                   ,pr_vllimapv IN crapcop.vllimapv%TYPE --> Limite necessita de aprovacao
                                   ,pr_qtmeatel IN crapcop.qtmeatel%TYPE --> Quantidade de Meses para atualizacao Telefone
+                                  ,pr_vllimpag IN crapcop.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
@@ -208,6 +209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --
   --             15/09/2017 - Alteracao na mascara da Agencia do Banco do Brasil. (Jaison/Elton - M459)
   --
+  --             03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Funcao para validacao dos caracteres */
@@ -632,6 +634,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.flrecpct
           ,crapcop.dsdempst
           ,crapcop.qtmeatel
+          ,crapcop.vllimpag
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -955,6 +958,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
 
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'vlmiplco', pr_tag_cont => to_char(rw_crapcop.vlmiplco,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'vlmidbco', pr_tag_cont => to_char(rw_crapcop.vlmidbco,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'vllimpag', pr_tag_cont => to_char(rw_crapcop.vllimpag,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'cdfingrv', pr_tag_cont => to_char(rw_crapcop.cdfingrv,'000000000000000'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'cdsubgrv', pr_tag_cont => rw_crapcop.cdsubgrv, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'cdloggrv', pr_tag_cont => rw_crapcop.cdloggrv, pr_des_erro => vr_dscritic);
@@ -1125,6 +1129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
                                   ,pr_taamaxer IN crapcop.taamaxer%TYPE --> Qtd. Max. de tentivas da senha no TAA
                                   ,pr_vllimapv IN crapcop.vllimapv%TYPE --> Limite necessita de aprovacao
                                   ,pr_qtmeatel IN crapcop.qtmeatel%TYPE --> Quantidade de Meses para atualizacao Telefone
+                                  ,pr_vllimpag IN crapcop.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
@@ -1220,6 +1225,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.flgargps
           ,crapcop.qtdiaenl
           ,crapcop.qtmeatel
+          ,crapcop.vllimpag
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -2602,6 +2608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
             ,crapcop.hriniouv = to_number(to_char(to_date(pr_hriniouv,'hh24:mi'),'sssss'))
             ,crapcop.hrfimouv = to_number(to_char(to_date(pr_hrfimouv,'hh24:mi'),'sssss'))
             ,crapcop.flgargps = pr_flgargps
+            ,crapcop.vllimpag = pr_vllimpag
        WHERE crapcop.cdcooper = vr_cdcooper;
 
     EXCEPTION
