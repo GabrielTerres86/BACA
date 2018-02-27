@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gabriel
-   Data    : Agosto/2012                       Ultima atualizacao: 06/12/2013
+   Data    : Agosto/2012                       Ultima atualizacao: 26/02/2018
 
    Dados referentes ao programa:
 
@@ -18,6 +18,9 @@
                12/07/2013 - Ajuste na gravacao de juros + 60 (Gabriel).
                
                06/12/2013 - Ajuste para melhorar a performance (James).
+               
+               26/02/2018 - Inclusao de 2 parametros para o paralelismo 
+                          - Projeto Ligeirinho
 .............................................................................*/
 
 { includes/var_batch.i }
@@ -43,6 +46,8 @@ ETIME(TRUE).
 
 RUN STORED-PROCEDURE pc_crps616 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,                                                  
+    INPUT 0,
+    INPUT 0,
     INPUT INT(STRING(glb_flgresta,"1/0")),
     OUTPUT 0,
     OUTPUT 0,

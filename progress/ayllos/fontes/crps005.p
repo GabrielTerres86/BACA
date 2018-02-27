@@ -36,7 +36,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 01/09/2017
+   Data    : Novembro/91.                    Ultima atualizacao: 27/02/2018
 
    Dados referentes ao programa:
 
@@ -294,10 +294,12 @@
                            
                06/06/2013 - Migracao PROGRESS/ORACLE - Incluido chamada de
                             procedure (Andre Santos - SUPERO)
-                           
+                            
                01/09/2017 - Inclusao de log de fim de execucao do programa 
                             (Carlos)
-                           
+               27/02/2018 - Inclusao de novos parametros para o paralelismo
+                          - Projeto Ligeirinho
+                            (Josiane AMcom)                           
 ..............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -325,6 +327,8 @@ ETIME(TRUE).
 RUN STORED-PROCEDURE pc_crps005 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,
     INPUT INT(STRING(glb_flgresta,"1/0")),
+    INPUT 0,
+    INPUT 0,
     OUTPUT 0,
     OUTPUT 0,
     OUTPUT 0, 
@@ -369,7 +373,7 @@ UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    +
                   "Stored Procedure rodou em "         + 
                   STRING(INT(ETIME / 1000),"HH:MM:SS") + 
                   " >> log/proc_batch.log").
-                  
+
 { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
    (INPUT "PF",
