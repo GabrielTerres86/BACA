@@ -20,7 +20,9 @@
  * 009: [07/04/2014] Trocado posicao dos campos "Linha Credito" por "Finalidade". (Reinert)
  * 010: [30/07/2014] Ajustado ordem dos labels para ficar de acordo com Projeto CET (Lucas R./Gielow).
  * 011: [26/06/2015] Criei a funcionalidade de atualizacao da "Data últ. pagto" a partir do numero de parcelas com base na "Data pagto" (Carlos R.)
- * 012: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 012: [26/06/2017] Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
+ * 013: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 012: [31/01/2017] Troca de posicao da Linha de Credito e Finalidade. Criacao dos campos Carencia e Data da primeira Carencia. (Jaison/James - PRJ298)
  */
  ?> 
 
@@ -201,6 +203,13 @@
 		<label for="dtlibera"> <? echo utf8ToHtml("Data Liberação:") ?> </label>
 		<input name="dtlibera" id="dtlibera" type="text" value="">
 		<br />
+		<input type=hidden name="idfiniof" id="idfiniof">
+		<input type=hidden name="vliofepr" id="vliofepr">
+		<input type=hidden name="vlrtarif" id="vlrtarif">
+		<input type=hidden name="vlrtotal" id="vlrtotal">
+		
+		<label for="percetop">CET(%a.a.):</label>
+		<input name="percetop" id="percetop" type="text" value="" />
 		
         <label for="idfiniof">Financiar IOF e Tarifa:</label>
         <select name="idfiniof" id="idfiniof">
@@ -219,7 +228,29 @@
                 <input name="dtultpag" id="dtultpag" type="text" disabled="disabled" value="" />
 		<br />
 		
-        <label for="vlrtarif">Tarifa:</label>
+		<div id="linCarencia">
+			<label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
+			<select name="idcarenc" id="idcarenc">
+            <?php
+                $xml  = "<Root>";
+                $xml .= " <Dados>";
+                $xml .= "   <flghabilitado>1</flghabilitado>"; // Habilitado (0-Nao/1-Sim/2-Todos)
+                $xml .= " </Dados>";
+                $xml .= "</Root>";
+                $xmlResult = mensageria($xml, "TELA_PRMPOS", "PRMPOS_BUSCA_CARENCIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+                $xmlObject = getObjectXML($xmlResult);
+                $xmlCarenc = $xmlObject->roottag->tags[0]->tags;
+                foreach ($xmlCarenc as $reg) {
+                    echo '<option value="'.getByTagName($reg->tags,'IDCARENCIA').'">'.getByTagName($reg->tags,'DSCARENCIA').'</option>';
+                }
+            ?>
+			</select>
+		
+			<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1ª Carência:") ?> </label>
+			<input name="dtcarenc" id="dtcarenc" type="text" value="" />
+		</div>
+
+		<label for="vlrtarif">Tarifa:</label>
         <input name="vlrtarif" id="vlrtarif" type="text" value=""/>
 
 		<label for="percetop">CET(%a.a.):</label>
@@ -272,8 +303,20 @@
 	<? } else if ($operacao == 'TE') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
 		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('E_COMITE_APROV'); return false;">Continuar</a>
-	<? } else if ($operacao == 'TI' || $operacao == 'I_INICIO' ) { ?>
+	<? } else if ($operacao == 'TI' || $operacao == 'I_INICIO' ) { 
+	
+	    //Se esta tela foi chamada através da rotina "Produtos" então ao clicar em voltar deve retornar diretamente para a tela de Produtos
+		if($executandoProdutos == 'true'){?>
+			
+			<a href="#" class="botao" id="btVoltar" onClick="encerraRotina(true); return false;">Voltar</a>
+		
+		<?}else{?>
+			
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('IT'); return false;">Voltar</a>
+			
+	    <?}?>
+		
 		<a href="#" class="botao" id="btSalvar" onClick="buscaLiquidacoes('I_DADOS_AVAL'); return false;">Continuar</a>
+		
 	<? } ?>
 </div>

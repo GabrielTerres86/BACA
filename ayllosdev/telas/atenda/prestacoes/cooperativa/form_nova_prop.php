@@ -10,6 +10,8 @@
  * 001: [13/04/2012] Incluir campo dtlibera (Gabriel)
  * 002: [08/04/2014] Alterado fluxo do botao Continuar. (Jorge)
  * 003: [17/06/2014] Trocado posicao dos campos "Linha Credito" por "Finalidade". (Reinert)
+ * 004: [11/05/2017] Troca de posicao da Linha de Credito e Finalidade. (Jaison/James - PRJ298)
+ * 004: [11/10/2017] Liberacao melhoria 442 (Heitor - Mouts)
  */	
  ?>
 
@@ -45,7 +47,7 @@
 		<input name="cdfinemp" id="cdfinemp" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsfinemp" id="dsfinemp" type="text" value="" />
-		<br />		
+		<br />
 		
 		<label for="vlemprst"><? echo utf8ToHtml('Vl. do Empr.:') ?></label>
 		<input name="vlemprst" id="vlemprst" type="text" value="" />
@@ -54,6 +56,7 @@
 		<input name="cdlcremp" id="cdlcremp" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dslcremp" id="dslcremp" type="text" value="" />
+		
 		<br />
 		
 		<label for="vlpreemp"><? echo utf8ToHtml('Vl. da Prest.:') ?></label>
@@ -91,6 +94,28 @@
 		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
 		<br />
 		
+		<div id="linCarencia">
+			<label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
+			<select name="idcarenc" id="idcarenc">
+            <?php
+                $xml  = "<Root>";
+                $xml .= " <Dados>";
+                $xml .= "   <flghabilitado>1</flghabilitado>"; // Habilitado (0-Nao/1-Sim/2-Todos)
+                $xml .= " </Dados>";
+                $xml .= "</Root>";
+                $xmlResult = mensageria($xml, "TELA_PRMPOS", "PRMPOS_BUSCA_CARENCIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+                $xmlObject = getObjectXML($xmlResult);
+                $xmlCarenc = $xmlObject->roottag->tags[0]->tags;
+                foreach ($xmlCarenc as $reg) {
+                    echo '<option value="'.getByTagName($reg->tags,'IDCARENCIA').'">'.getByTagName($reg->tags,'DSCARENCIA').'</option>';
+                }
+            ?>
+			</select>
+		
+			<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1ª Carência:") ?> </label>
+			<input name="dtcarenc" id="dtcarenc" type="text" value="" />
+		</div>
+		
 		<label for="flgimppr">Proposta:</label>
 		<select name="flgimppr" id="flgimppr">
 			<option value=""   > - </option>
@@ -105,6 +130,13 @@
 			<option value="yes" >Imprime</option>
 			<option value="no"><? echo utf8ToHtml('Não Imprime') ?></option>
 		</select>
+		<br />
+		
+		<label for="dsratpro"> <? echo utf8ToHtml("Rat. Pro:"); ?> </label>
+		<input name="dsratpro" id="dsratpro" type="text" value="">				
+
+		<label for="dsratatu"><? echo utf8ToHtml("Rat. Atu:"); ?></label>
+		<input name="dsratatu" id="dsratatu" type="text" value="" />
 		<br />
 		
 		<label for="dsctrliq"><? echo utf8ToHtml('Liquidações:') ?></label>

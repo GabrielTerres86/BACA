@@ -121,7 +121,7 @@
 		$xml .= '</Root>';
 	}
 	// verifica se opcao eh contrato
-	if ($idimpres == '23'){
+	if ($idimpres == '57'){
 		// Executa script para envio do XML
 		$xmlResult = mensageria($xml, "EMPR0003", "IMP_DECUTRECISIOF", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 

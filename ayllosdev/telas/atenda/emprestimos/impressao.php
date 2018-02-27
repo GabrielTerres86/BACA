@@ -81,7 +81,7 @@
 		$msg = $xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibirErro('error', $msg, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', true);
 	}
-
+    
 	
 	//Busca se deve mostrar o botão para impressão da declaração de isenção de IOF
 	$xml = '';
@@ -89,7 +89,7 @@
 	$xml .= '	<Dados>';
 	$xml .= '		<cdcooper>' . $glbvars['cdcooper'] . '</cdcooper>';
 	$xml .= '		<nrdconta>' . $_POST['nrdconta'] . '</nrdconta>';
-	$xml .= '		<nrctremp>' . $_POST['nrctremp'] . '</nrctremp>';
+	$xml .= '		<nrctrato>' . $_POST['nrctremp'] . '</nrctrato>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 
@@ -173,12 +173,12 @@
                                                     echo '<a href="#" class="botao" onClick="verificaImpressao(9); return false;">Termo Portabilidade</a>';
                                                 }
                                             ?>
-
-											<?php
+											<!--
+											<php
                                                 if ($isencaoIOF == 'S') {
-                                                    echo '<a href="#" class="botao" onClick="verificaImpressao(23);return false;">Declara&ccedil;&atilde;o de Utiliza&ccedil;&atilde;o de Recursos</a>';
+                                                    echo '<a href="#" class="botao" onClick="verificaImpressao(57);return false;">Declara&ccedil;&atilde;o de Utiliza&ccedil;&atilde;o de Recursos</a>';
                                                 }
-                                            ?>
+                                            >-->
 											<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Voltar</a>
 										</div>
 										

@@ -28,6 +28,7 @@
  * 018: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 019: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
  * 020: [30/11/2016] P341-Automatização BACENJUD - Remover o envio da descrição do departamento, pois não utiliza na BO (Renato Darosci - Supero)
+ * 021: [05/04/2017] Cadastro dos campos Carencia. (Jaison/James - PRJ298)
  * 021: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
  * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 023: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
@@ -154,6 +155,8 @@
 	$flgconsu = (isset($_POST['flgconsu'])) ? $_POST['flgconsu'] : '' ;
 	$resposta = (isset($_POST['resposta'])) ? $_POST['resposta'] : '' ;
 	$blqpreap = (isset($_POST['blqpreap'])) ? $_POST['blqpreap'] : '' ;
+    $idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : '' ;
+    $dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '' ;
 	
 	// Daniel
 	$inpesso1 = (isset($_POST['inpesso1'])) ? $_POST['inpesso1'] : '' ;
@@ -452,6 +455,8 @@
 	$xml .= '		<operacao>'.$operacao.'</operacao>';
 	$xml .= '		<flgconsu>'.$flgconsu.'</flgconsu>';
 	$xml .= '		<vleprori>'.$vlpreant.'</vleprori>';
+    $xml .= '		<idcarenc>'.$idcarenc.'</idcarenc>';
+    $xml .= '		<dtcarenc>'.$dtcarenc.'</dtcarenc>';
 	
 	// Daniel 
 	$xml .= '		<inpesso1>'.$inpesso1.'</inpesso1>';
@@ -500,7 +505,7 @@
 	$mensagens = $xmlObjeto->roottag->tags[$i_mensagens]->tags;
 				
 	foreach( $mensagens as $mensagem ) {
-		$msg[] = getByTagName($mensagem->tags,'dsmensag');
+		$msg[] = str_replace('|@|','<br>',getByTagName($mensagem->tags,'dsmensag'));		
 	}
 	
 	$stringArrayMsg  = implode( "|", $msg);

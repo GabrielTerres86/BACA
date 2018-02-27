@@ -19,7 +19,7 @@
 				  27/06/2014 - Inclusão do formulario frmAntecipapgto para tratar 
 							   geração do relatorio de antecipação. (Odirlei/AMcom)
 
-				  05/10/2017 - Inclusão da coluna para demonsgrar valor do IOF em 
+				  05/10/2017 - Inclusão da coluna para demonstrar valor do IOF em 
 				  			atraso (Diogo - MoutS - Projeto 410 - RF 30)
  */
  

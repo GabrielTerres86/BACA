@@ -30,7 +30,7 @@ var aux_cdmodali_simulacao = '';
 //Controla as operações da descrição de simulações
 function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
     var aux_tpfinali = 0;
-
+		
     if (operacao == 'A_SIMULACAO' || operacao == 'E_SIMULACAO' || operacao == 'C_SIMULACAO' || operacao == 'IMP_SIMULACAO' || operacao == 'GPR') {
 
         indarray = '';
@@ -230,11 +230,11 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
 		//consiste simulacao de portabilidade para PJ
 		cCdmodali.unbind('change').bind('change', function() {
 			if ( $.trim(inpessoa) == 2 ) {
-				showError('error', 'Finalidade não permitida para conta PJ.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'qtparepr\',\'frmSimulacao\')');
+				showError('error', 'Finalidade não permitida para conta PJ.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'qtparepr\',\'frmSimulacao\')');	
 				cCdmodali.val('0');
 			}
-		});
-
+		});	
+	
         // Se inclusão, limpar dados do formulário
         if (operacao == 'I_SIMULACAO') {
             $('#frmSimulacao').limpaFormulario();
@@ -302,7 +302,7 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     } else {
         $('#btContinuar', '#divProcSimulacoesTabela').focus();
     }
-
+    
     bloqueiaFundo($('#divUsoGenerico'));
     return false;
 }
@@ -329,18 +329,18 @@ function buscarDadosSimulacao(nrsimula, operacao, tela) {
         },
         success: function(response) {
             try {
-
+				
 				if ( tela != '') {
 					$('#divConteudoOpcao').html(tela);
-				}
-
+				}		
+				
                 eval(response);
                 hideMsgAguardo();
                 if (operacao == 'GPR' || operacao == 'TI')
                     bloqueiaFundo($('#divRotina'));
                 else
                     bloqueiaFundo($('#divUsoGenerico'));
-
+					
             } catch (error) {
                 hideMsgAguardo();
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -363,18 +363,18 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
     var tpfinali = $("#tpfinali", "#divProcSimulacoesFormulario").val();
     var cdmodali = $("#cdmodali option:selected", "#divProcSimulacoesFormulario").val();
     var idfiniof = $("#idfiniof option:selected", "#divProcSimulacoesFormulario").val();
-    
+	
     if ( tpfinali == 2 && cdmodali == 0 ) {
-        showError("error", "Selecione uma modalidade", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Selecione uma modalidade", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");        
         return false;
     }
 
-
+	
 	if ( dtlibera == "" ) {
 		 showError('error', 'Data de Liberação deve ser informada.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'dtlibera\',\'frmSimulacao\')');
 		return false;
 	}
-
+	
 	if ( dtdpagto == "" ) {
 		 showError('error', 'Data do Pagamento da Primeira Parcela deve ser informada.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'dtdpagto\',\'frmSimulacao\')');
 		return false;

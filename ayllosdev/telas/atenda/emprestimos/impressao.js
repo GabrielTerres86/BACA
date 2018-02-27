@@ -23,7 +23,7 @@ $.getScript(UrlSite + "includes/rating/rating.js");
 
 // Função para Mostrar Div de Impressão
 function mostraDivImpressao( operacao ) {
-
+	
 	showMsgAguardo('Aguarde, abrindo impressão...');
     
     limpaDivGenerica();
@@ -68,7 +68,7 @@ function mostraDivImpressao( operacao ) {
 function validaImpressao( operacao ){
 	
 	showMsgAguardo('Aguarde, carregando...');
-	
+		
 	// Executa script de confirmação através de ajax
 	$.ajax({		
 		type: 'POST',
@@ -81,7 +81,7 @@ function validaImpressao( operacao ){
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-
+						
 			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
@@ -120,7 +120,7 @@ function verificaImpressao(par_idimpres){
 		showError('error','An&aacute;lise de Cr&eacute;dito ainda n&atilde;o foi efetuada! N&atilde;o ser&aacute; poss&iacute;vel gerar \'Proposta\', \'Rating\' ou \'Consultas\'!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 		return false;
 	}
-	if ( idimpres >= 1 && idimpres <= 23 ) {
+	if ( idimpres >= 1 && idimpres <= 57 ) {
 	
 		if ( idimpres == 5 ) {
 			var metodo = '';
@@ -135,7 +135,7 @@ function verificaImpressao(par_idimpres){
 			fechaRotina($('#divUsoGenerico'),metodo);
 		}
 		else 
-		if  (idimpres == 7 || idimpres == 8 || idimpres == 9 || idimpres == 23) {
+		    if (idimpres == 7 || idimpres == 8 || idimpres == 9 || idimpres == 23 || idimpres == 57) {
 			carregarImpresso();
 		}
 		else {
@@ -278,7 +278,7 @@ function mostraEmail() {
 // Função para envio de formulário de impressao
 function carregarImpresso(){
 	var nrcpfcgc = normalizaNumero($("#nrcpfcgc", "#frmCabAtenda").val());
-	
+
 	fechaRotina($('#divUsoGenerico'),$('#divRotina'));
 	
 	$('#idimpres','#formEmpres').remove();
@@ -289,6 +289,7 @@ function carregarImpresso(){
 	$('#nrctremp','#formEmpres').remove();
 	$('#sidlogin','#formEmpres').remove();
 	$('#nrcpfcgc','#formEmpres').remove();
+	
 	
 	// Insiro input do tipo hidden do formulário para enviá-los posteriormente
 	$('#formEmpres').append('<input type="hidden" id="idimpres" name="idimpres" />');
