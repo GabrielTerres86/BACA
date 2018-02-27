@@ -468,6 +468,8 @@ DEF VAR aux_flgsenha AS INTE                                           NO-UNDO.
 DEF VAR aux_dsmensag AS CHAR                                           NO-UNDO.
 DEF VAR aux_nsenhaok AS LOGI                                           NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
+DEF VAR aux_dscatbem AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsctrliq AS CHAR                                           NO-UNDO.
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/b1wgen0056tt.i }
@@ -1012,6 +1014,18 @@ IF   FRAME-FIELD = "cdfinemp"  THEN
                    END.
             END.
 
+        ASSIGN aux_dscatbem = "".
+         FOR EACH crapbpr WHERE crapbpr.cdcooper = glb_cdcooper  AND
+                               crapbpr.nrdconta = par_nrdconta  AND
+                               crapbpr.nrctrpro = tt-proposta-epr.nrctremp  AND 
+                               crapbpr.tpctrpro = 90 NO-LOCK:
+            ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
+         END.
+         
+         RUN buscar_liquidacoes_contrato IN h-b1wgen0002(INPUT glb_cdcooper,
+                                                         INPUT par_nrdconta,
+                                                         INPUT tt-proposta-epr.nrctremp,
+                                                         OUTPUT aux_dsctrliq).  
         /* Calcular o cet automaticamente */
         RUN calcula_cet_novo IN h-b1wgen0002(
                              INPUT glb_cdcooper,
@@ -1036,6 +1050,9 @@ IF   FRAME-FIELD = "cdfinemp"  THEN
                              INPUT tt-proposta-epr.qtpreemp, 
                              INPUT tt-proposta-epr.dtdpagto, 
                              INPUT tt-proposta-epr.cdfinemp, /* finalidade */  
+                             INPUT aux_dscatbem, /* dscatbem */
+                             INPUT tt-proposta-epr.idfiniof, /* idfiniof */
+                             INPUT aux_dsctrliq, /* dsctrliq */
                             OUTPUT aux_percetop, /* taxa cet ano */
                             OUTPUT aux_txcetmes, /* taxa cet mes */
                             OUTPUT TABLE tt-erro). 

@@ -18,6 +18,8 @@
                08/11/2017 - Calcular valores totais com base nas parcelas 
                             selecionadas para pagamento (David).
 
+               12/12/2017 - Projeto 410 - Inclusão IOF complementar atraso (Jean -MOut´S)
+
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -160,7 +162,8 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
 
            vlatraso = vlatraso + tt-pagamentos-parcelas.vlmtapar +
                                  tt-pagamentos-parcelas.vljinpar +
-                                 tt-pagamentos-parcelas.vlmrapar.
+                                 tt-pagamentos-parcelas.vlmrapar +
+								 tt-pagamentos-parcelas.vliofcpl.
 
            vlatrpag = vlatrpag +  tt-pagamentos-parcelas.vlatrpag.
 

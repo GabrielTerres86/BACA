@@ -49,7 +49,8 @@ DEF TEMP-TABLE tt-efetiv-epr       NO-UNDO
     FIELD nrctaav2 LIKE crawepr.nrctaav2
     FIELD avalist1 AS CHAR
     FIELD avalist2 AS CHAR
-    FIELD altdtpgt AS LOGICAL.
+    FIELD altdtpgt AS LOGICAL
+    FIELD idfiniof AS INTE.
 
 DEF TEMP-TABLE tt-msg-aval        NO-UNDO
     FIELD cdavalis AS INTE
