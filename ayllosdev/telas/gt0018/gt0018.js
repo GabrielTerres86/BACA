@@ -296,7 +296,7 @@ function formataCampos(){
     
     
     rCdempcon.addClass('rotulo').css({'width':'85px'});
-    cCdempcon.addClass('inteiro').css({'width':'40px'});
+    cCdempcon.addClass('inteiro').css({'width':'40px'}).attr('maxlength','5');
     cNmrescon.addClass('alpha').css({'width':'200px'}).attr('maxlength','20');;
     
     rCdsegmto.addClass('rotulo-linha').css({'padding-left':'10px'});

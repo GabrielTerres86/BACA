@@ -728,7 +728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Nao foi possivel incluir convenio: '||SQLERRM;
+              vr_dscritic := 'Nao foi possivel alterar convenio: '||SQLERRM;
               RAISE vr_exc_erro;
           END;
           

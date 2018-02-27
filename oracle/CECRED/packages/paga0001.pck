@@ -10573,8 +10573,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
       IF pr_idagenda = 2 THEN /** Agendamento **/
       									 
-        -- Se for convenio sicredi
-        IF rw_crapcon.tparrecd = 1 THEN 
+        -- Se for convenio 1-sicredi 2-Bancoob
+        IF rw_crapcon.tparrecd IN (1,2) THEN 
           /* Validação referente aos dias de tolerancia */
           cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
                                                ,pr_cdagenci      => vr_cdagenci

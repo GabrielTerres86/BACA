@@ -314,8 +314,55 @@ PROCEDURE retorna-valores-fatura.
     
                 END.
         END.
+    ELSE
+    /* Se for conv. BANCOOB */
+    IF  crapcon.tparrecd = 2 THEN
+        DO:
+            
+            /* Validação relativa ao horario de canc. de pgto de Convenios BANCOOB  */
+            FIND craptab WHERE craptab.cdcooper = crapcop.cdcooper  AND
+                               craptab.nmsistem = "CRED"            AND
+                               craptab.tptabela = "GENERI"          AND
+                               craptab.cdempres = 00                AND
+                               craptab.cdacesso = "HRPGBANCOOB"      AND
+                               craptab.tpregist = p-cod-agencia 
+                               NO-LOCK NO-ERROR.
     
-    IF crapcon.cdhistor <> 1154 THEN
+            IF  NOT AVAIL craptab  THEN
+                DO:
+                    ASSIGN i-cod-erro  = 0 
+                           c-desc-erro = "Parametros nao cadastrados.".
+             
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT p-nro-caixa,
+                                   INPUT i-cod-erro,
+                                   INPUT c-desc-erro,
+                                   INPUT YES).
+                    RETURN "NOK".
+                END.
+    
+            /* Verifica se a hora atual é maior do que a do cancelamento */
+            IF  TIME > INT(ENTRY(3,craptab.dstextab," ")) THEN
+                DO:
+                    ASSIGN i-cod-erro  = 0 
+                           c-desc-erro = "Nao permitido estornar faturas do Bancoob apos as " +
+                                          STRING(INT(ENTRY(3,craptab.dstextab," ")),"HH:MM") + " hrs.".
+             
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT p-nro-caixa,
+                                   INPUT i-cod-erro,
+                                   INPUT c-desc-erro,
+                                   INPUT YES).
+                    RETURN "NOK".
+    
+                END.
+        END.
+    
+    
+    IF crapcon.tparrecd <> 1 AND  
+       crapcon.tparrecd <> 2 THEN
     DO:
 
         FIND FIRST gnconve WHERE gnconve.cdhiscxa = crapcon.cdhistor
