@@ -75,7 +75,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
                                    ,pr_nrdconta    IN INTEGER  --Numero da conta
                                    ,pr_indbaixa    IN INTEGER  --Indicador Baixa /* 1-Pagamento 2- Vencimento */
                                    ,pr_tab_titulos IN PAGA0001.typ_tab_titulos --Titulos a serem baixados
-                                   ,pr_dtintegr    IN DATE         --Data da integração do pagamento
                                    ,pr_cdcritic    OUT INTEGER     --Codigo Critica
                                    ,pr_dscritic    OUT VARCHAR2     --Descricao Critica
                                    ,pr_tab_erro    OUT GENE0001.typ_tab_erro); --Tabela erros
@@ -183,9 +182,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+
+               22/11/2017 - Adicionado regra para não debitar títulos vencidos no primeiro dia util do ano e
+                            que venceram no dia útil anterior. (Rafael)
               
                25/11/2017 - Ajuste para cobrar IOF. (James - P410)
-
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
 
@@ -468,7 +469,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
            AND nrdconta = pr_nrdconta
            AND nrborder = pr_nrborder;
       vr_vltotal_liquido craptdb.vlliquid%TYPE;
-      
+
       --Registro de memoria do tipo lancamento
       rw_craplcm craplcm%ROWTYPE;
       
@@ -478,6 +479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_dtrefere     DATE;                --> Data de referencia para buscar os titulos que vao ser debitados
       vr_dtvcttdb     DATE;                --> Data de vencimento como dia util
       vr_nrseqdig     NUMBER;              --> Nr Sequencia
+      vr_dtultdia     DATE;                --> Variavel para armazenar o ultimo dia util do ano
       vr_indice       VARCHAR2(13);
       vr_cdpesqbb     VARCHAR2(1000);
       vr_tab_saldo    EXTR0001.typ_tab_saldos;     --> Temp-Table com o saldo do dia
@@ -497,14 +499,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_vliofadi     NUMBER(25,2);
       vr_vliofcpl     NUMBER(25,2);
       vr_qtdiaiof     PLS_INTEGER;                          
-      vr_flgimune     PLS_INTEGER;
       vr_dtmvtolt_lcm craplcm.dtmvtolt%TYPE;
       vr_cdagenci_lcm craplcm.cdagenci%TYPE;
       vr_cdbccxlt_lcm craplcm.cdbccxlt%TYPE;
       vr_nrdolote_lcm craplcm.nrdolote%TYPE;
       vr_nrseqdig_lcm craplcm.nrseqdig%TYPE;
       vr_vltaxa_iof_principal NUMBER := 0;
-      
+
       --vr_seq_tit      PLS_INTEGER := 0;    --> Sequencial do indice vr_ind_tit
       vr_tab_tar      typ_tab_tarifa;
       
@@ -867,6 +868,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                pr_cdcooper => pr_cdcooper,
                                                pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');      
       
+      -- Rotina para achar o ultimo dia útil do ano
+      vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;    
+      CASE to_char(vr_dtultdia,'d') 
+        WHEN '1' THEN vr_dtultdia := vr_dtultdia - 2;
+        WHEN '7' THEN vr_dtultdia := vr_dtultdia - 1;
+        ELSE vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;
+      END CASE;        
+      
 /*######################Loop Principal Pegando os titulos para Processamento######################################*/
       FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper
                                   ,pr_dtmvtolt => pr_dtmvtolt
@@ -883,7 +892,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         IF gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                        pr_dtmvtolt => rw_craptdb.dtvencto) > rw_crapdat.dtmvtoan THEN
           CONTINUE;
-        END IF; 
+        END IF; 					  
+        
+        -- #################################################################################################
+        --   REGRA PARA NÃO DEBITAR TÍTULOS VENCIDOS NO PRIMEIRO DIA UTIL DO ANO E QUE VENCERAM NO
+        --   DIA UTIL ANTERIOR.
+        --   Ex: Boleto com vencto  = 29/12/2017  (ultimo dia útil do ano)
+        --       Se o movimento for = 02/01/2018  (primeiro dia util do ano) -- nao debitar --
+        --       Se o movimento for = 03/01/2018  (segundo dia util do ano)  -- debitar --
+        -- #################################################################################################        
+        -- se o titulo vencer no último dia útil do ano e também no dia útil anterior,
+        -- entao "não" deverá debitar o título
+        IF rw_craptdb.dtvencto = vr_dtultdia AND
+           rw_craptdb.dtvencto = rw_crapdat.dtmvtoan THEN
+           CONTINUE;
+        END IF;
+        -- #################################################################################################
         
         --Verifica se a conta existe
         OPEN cr_crapass(pr_cdcooper => rw_craptdb.cdcooper
@@ -1073,15 +1097,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                      ,pr_vliofadi   => vr_vliofadi
                                      ,pr_vliofcpl   => vr_vliofcpl                                     
                                      ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                     ,pr_dscritic   => vr_dscritic
-                                     ,pr_flgimune   => vr_flgimune);
+                                     ,pr_dscritic   => vr_dscritic);
 
         -- Condicao para verificar se houve critica
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
         
-        IF (NVL(vr_vliofcpl,0) > 0) AND vr_flgimune <= 0 THEN
+        IF NVL(vr_vliofcpl,0) > 0 THEN
           -- Grava na tabela de lancamentos
           BEGIN
             INSERT INTO craplcm
@@ -1143,7 +1166,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                               ,pr_nrdolote_lcm => vr_nrdolote_lcm
                               ,pr_nrseqdig_lcm => vr_nrseqdig_lcm
                               ,pr_vliofcpl     => vr_vliofcpl
-                              ,pr_flgimune     => vr_flgimune
                               ,pr_cdcritic     => vr_cdcritic
                               ,pr_dscritic     => vr_dscritic);
                                 
@@ -1617,7 +1639,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                    ,pr_nrdconta    IN INTEGER  --Numero da conta
                                    ,pr_indbaixa    IN INTEGER  --Indicador Baixa /* 1-Pagamento 2- Vencimento */
                                    ,pr_tab_titulos IN PAGA0001.typ_tab_titulos --Titulos a serem baixados
-                                   ,pr_dtintegr    IN DATE     --Data da integração do pagamento
                                    ,pr_cdcritic    OUT INTEGER     --Codigo Critica
                                    ,pr_dscritic    OUT VARCHAR2     --Descricao Critica
                                    ,pr_tab_erro    OUT GENE0001.typ_tab_erro) IS --Tabela erros
@@ -1702,8 +1723,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         AND   crapcob.nrdconta = pr_nrdconta
         AND   crapcob.nrcnvcob = pr_nrcnvcob
         AND   crapcob.nrdocmto = pr_nrdocmto
-        AND   crapcob.flgregis = pr_flgregis
-        ORDER BY crapcob.progress_recid ASC;
+              AND   crapcob.flgregis = pr_flgregis
+         ORDER BY crapcob.progress_recid ASC;
       rw_crapcob cr_crapcob%ROWTYPE;
       
       --Selecionar Bordero de titulos
@@ -1740,7 +1761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         AND   crapljt.nrcnvcob = pr_nrcnvcob
         AND   crapljt.nrdocmto = pr_nrdocmto;
       rw_crapljt cr_crapljt%ROWTYPE;
-      
+
       -- Sumarizar os juros no desconto do cheque
       CURSOR cr_craptdb_total(pr_cdcooper IN craptdb.cdcooper%TYPE
                              ,pr_nrdconta IN craptdb.nrdconta%TYPE
@@ -1751,24 +1772,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
            AND nrdconta = pr_nrdconta
            AND nrborder = pr_nrborder;
       vr_vltotal_liquido craptdb.vlliquid%TYPE;
-      
-      -- Cursor para informações da cobrança do título
-      CURSOR cr_crapcob_iof (pr_cdcooper IN craptdb.cdcooper%type
-                            ,pr_cdbandoc IN craptdb.cdbandoc%type
-                            ,pr_nrdctabb IN craptdb.nrdctabb%type
-                            ,pr_nrcnvcob IN craptdb.nrcnvcob%type
-                            ,pr_nrdconta IN craptdb.nrdconta%type
-                            ,pr_nrdocmto IN craptdb.nrdocmto%type) IS
-        SELECT crapcob.dtdpagto,       
-               crapcob.dtdbaixa
-        FROM crapcob
-        WHERE crapcob.cdcooper = pr_cdcooper
-               AND crapcob.nrdconta = pr_nrdconta
-               AND crapcob.nrdocmto = pr_nrdocmto
-               AND crapcob.cdbandoc = pr_cdbandoc
-               AND crapcob.nrdctabb = pr_nrdctabb
-               AND crapcob.nrcnvcob = pr_nrcnvcob;
-        rw_crapcob_iof cr_crapcob_iof%ROWTYPE;
       
       --Variaveis Locais
       vr_vllanmto     NUMBER;
@@ -1810,7 +1813,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_vliofadi     NUMBER(25,2);
       vr_vliofcpl     NUMBER(25,2);
       vr_qtdiaiof     PLS_INTEGER;                          
-      vr_flgimune     PLS_INTEGER;
       vr_dtmvtolt_lcm craplcm.dtmvtolt%TYPE;
       vr_cdagenci_lcm craplcm.cdagenci%TYPE;
       vr_cdbccxlt_lcm craplcm.cdbccxlt%TYPE;
@@ -1949,7 +1951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           ELSE
             vr_tottitul_sr:= Nvl(vr_tottitul_sr,0) + 1;
           END IF;
-          
+
           --Selecionar Bordero de titulos
           OPEN cr_crapbdt (pr_cdcooper => rw_craptdb.cdcooper
                           ,pr_nrborder => rw_craptdb.nrborder);
@@ -2294,19 +2296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               CLOSE cr_craptdb_total;
               
               -- Quantidade de Dias em atraso
-              OPEN cr_crapcob_iof (pr_cdcooper => pr_cdcooper
-                                  ,pr_cdbandoc => pr_tab_titulos(vr_index_titulo).cdbandoc
-                                  ,pr_nrdctabb => pr_tab_titulos(vr_index_titulo).nrdctabb
-                                  ,pr_nrcnvcob => pr_tab_titulos(vr_index_titulo).nrcnvcob
-                                  ,pr_nrdconta => pr_tab_titulos(vr_index_titulo).nrdconta
-                                  ,pr_nrdocmto => pr_tab_titulos(vr_index_titulo).nrdocmto);
-              FETCH cr_crapcob_iof
-                INTO rw_crapcob_iof;
-              CLOSE cr_crapcob_iof;
-                        
-              /*vr_qtdiaiof := vr_dtmvtolt - rw_craptdb.dtvencto;*/
-              -- Para cálculo dos dias de atraso, usar a data de pagamento do boleto x data de vencimento
-              vr_qtdiaiof := CASE WHEN rw_crapcob_iof.dtdpagto IS NOT NULL THEN rw_crapcob_iof.dtdpagto ELSE pr_dtintegr END - rw_craptdb.dtvencto;
+              vr_qtdiaiof := vr_dtmvtolt - rw_craptdb.dtvencto;
               
               TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 2 --> Desconto de Titulo
                                            ,pr_tpoperacao => 2 --> Pagamento Em Atraso
@@ -2324,8 +2314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                            ,pr_vliofadi   => vr_vliofadi
                                            ,pr_vliofcpl   => vr_vliofcpl
                                            ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                           ,pr_dscritic   => vr_dscritic
-                                           ,pr_flgimune   => vr_flgimune);
+                                           ,pr_dscritic   => vr_dscritic);
 
               -- Condicao para verificar se houve critica
               IF vr_dscritic IS NOT NULL THEN
@@ -2333,7 +2322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               END IF;
               
               -- Vamos verificar se o valo do IOF complementar é maior que 0
-              IF NVL(vr_vliofcpl,0) > 0 AND vr_flgimune <= 0 THEN              
+              IF NVL(vr_vliofcpl,0) > 0 THEN              
                 /* Leitura do lote */
                 OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => vr_dtmvtolt
@@ -2460,7 +2449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 END;
 
               END IF;
-              
+
               -- Procedure para inserir o valor do IOF
               TIOF0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
                                     ,pr_nrdconta     => rw_craptdb.nrdconta
@@ -2473,7 +2462,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                     ,pr_nrdolote_lcm => vr_nrdolote_lcm
                                     ,pr_nrseqdig_lcm => vr_nrseqdig_lcm
                                     ,pr_vliofcpl     => vr_vliofcpl
-                                    ,pr_flgimune     => vr_flgimune
                                     ,pr_cdcritic     => vr_cdcritic
                                     ,pr_dscritic     => vr_dscritic);
                                       
