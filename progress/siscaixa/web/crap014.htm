@@ -1,36 +1,36 @@
-<!-- saved from url=(0022)http://internet.e-mail
+<!-- saved from url=(0022)http://internet.e-mail 
 
 Programa: crap014.htm
 
 Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 
             24/07/2009 - Novo campo v_msg_vencido (David).
-
-            04/09/2013 - Nova forma de chamar as agências, de PAC agora
+            
+            04/09/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
-
-            15/09/2014 - Alterações referentes ao Projeto Débito
-                         Automático Fácil, agora com campo de conta
-                         habilitado e opção de Cooperado e
-                         Não Cooperado. (Lucas Lunelli - Out/2014)
-
+							
+			15/09/2014 - Alterações referentes ao Projeto Débito
+						 Automático Fácil, agora com campo de conta
+						 habilitado e opção de Cooperado e 
+						 Não Cooperado. (Lucas Lunelli - Out/2014)
+                         
             18/03/2015 - Removido campos de Conta e Nome para a
                          Melhoria SD 260475 (Lunelli).
-
+                         
             11/09/2015 - Melhoria 21 (Tiago/Fabricio).
-
+    
             12/02/2016 - Ajustes para nao editar o campo de valor quando
-                         for pagamento de fatura (Tiago/Fabricio SD385720)
+                         for pagamento de fatura (Tiago/Fabricio SD385720)           
 
-            12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).
-
-            03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
-
-            01/12/2016 - Ajuste na navegacao dos campos (correcao M271)
+            12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                
+   
+            03/10/2016 - Ajustes referente a melhoria M271. (Kelvin) 
+    
+            01/12/2016 - Ajuste na navegacao dos campos (correcao M271) 
                         (Douglas - Chamado 563281)
-
-            29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)
-
+                        
+            29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)                 
+            
             08/12/2017 - MELHORIA 458, incluir campo para cadastrar o tipo do PAGAMENTO
                          ANTONIO R. JUNIOR (mouts)
 -->
@@ -38,66 +38,71 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 <html>
 
 <head>
-    <meta http-equiv="Content-Language" content="pt-br">
-    <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-    <meta name="ProgId" content="FrontPage.Editor.Document">
-    <meta http-equiv="cache-control" content="no-cache">
+<meta http-equiv="Content-Language" content="pt-br">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="cache-control" content="no-cache">
     <meta http-equiv="Pragma" content="No-Cache">
     <meta http-equiv="Expires" content="0">
-    <script language=JavaScript src="/script/formatadadosie.js"></script>
-    <script language=JavaScript src="/script/jquery.js"></script>
-    <script language=JavaScript src="/script/jquery.mask.mv.js"></script>
-    <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
-    <title>CONSULTA CONTA ASSOCIADO</title>
+<script language=JavaScript src="/script/formatadadosie.js"></script>
+<script language=JavaScript src="/script/jquery.js"></script>
+<script language=JavaScript src="/script/jquery.mask.mv.js"></script>
+<link rel=StyleSheet type="text/css" href="/script/viacredi.css">
+<title>CONSULTA CONTA ASSOCIADO</title>
 
-    <script language=JavaScript>
+<script language=JavaScript>
 
-        var leitora = true;
-        var running = false;
+    var leitora = true;
+    var running = false;
         var count = 0;
         var run_for = 300;
         var fim = false;
         var fatura = false;
         var flmask = false;
 
-        /*nome de campos para serem usados pelo jquery*/
-        var cCodBarras = "#v_fmtcodbar";
-        var cHcodBarra = "#v_codbarras";
+    /*nome de campos para serem usados pelo jquery*/
+    var cCodBarras = "#v_fmtcodbar";
+    var cHcodBarra = "#v_codbarras";
         var cTpProces = "#v_tpproces";
         var cTipDocto = "#v_tipdocto";
-        var btnCancela = "#btnCancela";
-        var btnOk = "#btnOk";
+    var btnCancela = "#btnCancela";
+    var btnOk = "#btnOk";
         var cValor = "#v_valor";
         var flblqval = "#v_flblqval";
 
         function resetaCampo() {
-            running = false;
+    	running = false;
             count = 0;
-            run_for = 300;
+    	run_for = 300;
             fim = false;
             fatura = false;
-            flmask = false;
+    	flmask = false;
+    
+    	$('#v_fmtcodbar').unmask();			
+        $('#v_fmtcodbar').mask('00000000000000000000000000000000000000000000');
+        $('#v_fmtcodbar').val('');
+        $('#v_codbarras').val('');
 
-            $('#v_fmtcodbar').unmask();
-            $('#v_fmtcodbar').mask('00000000000000000000000000000000000000000000');
-            $('#v_fmtcodbar').val('');
-            $('#v_codbarras').val('');
+        $('#v_cod').val('');
+        $('#v_senha').val('');
+        $("#v_cod").prop("disabled", true);
+        $("#v_senha").prop("disabled", true);
 
-            $(cValor).prop("disabled", false);
-        }
+        $(cValor).prop("disabled", false);
+    }	
 
-
-        // Submit do formulario
-        function submitFormulario() {
-            document.forms[0].submit();
-
+    
+    // Submit do formulario
+    function submitFormulario() {
+       document.forms[0].submit();
+               
             for (var i = 0; i < document.forms[0].length; i++) {
                 document.forms[0].elements[i].disabled = true;
-            }
-
-        }
-
+       }
+       
+    }
+    
 
         $(document).ready(function () {
 
@@ -105,198 +110,198 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             $(btnOk).unbind("click").bind("click", function () { document.forms[0].submit(); });
 
             $(cCodBarras).attr("maxlength", "57");
-            //$(cCodBarras).css("width","350px");
+        //$(cCodBarras).css("width","350px");
 
-            if ($(cCodBarras).val() == "") {
-                $(cTpProces).val("1"); /*1-AUTOMATICO|2-MANUAL*/
-                $(cTipDocto).val("1"); /*1-TITULO|2-FATURA*/
-                $(cCodBarras).unmask();
-                $(cCodBarras).mask('00000000000000000000000000000000000000000000');
+        if ($(cCodBarras).val() == "") {
+            $(cTpProces).val("1"); /*1-AUTOMATICO|2-MANUAL*/    
+            $(cTipDocto).val("1"); /*1-TITULO|2-FATURA*/
+            $(cCodBarras).unmask();
+            $(cCodBarras).mask('00000000000000000000000000000000000000000000');
             } else {
-
-                if ($(cTpProces).val() == '2') {
-
-                    /*Verificar fatura ou titulo*/
+            
+            if ($(cTpProces).val() == '2') {
+            
+                /*Verificar fatura ou titulo*/
                     if ($(cCodBarras).val().substr(0, 1) == '8') {
-                        $(cCodBarras).unmask();
-                        $(cCodBarras).mask('00000000000-0 00000000000-0 00000000000-0 00000000000-0'); /*FATURA*/
+                    $(cCodBarras).unmask();
+                    $(cCodBarras).mask('00000000000-0 00000000000-0 00000000000-0 00000000000-0'); /*FATURA*/
                         $(cCodBarras).attr("maxlength", "55");
-                        $(cTipDocto).val("2");
-                        $(cValor).val("");
+                    $(cTipDocto).val("2");
+                    $(cValor).val("");
                     } else {
-                        $(cCodBarras).unmask();
-                        $(cCodBarras).mask('00000.00000 00000.000000 00000.000000 0 00000000000000'); /*TITULO*/
+                    $(cCodBarras).unmask();
+                    $(cCodBarras).mask('00000.00000 00000.000000 00000.000000 0 00000000000000'); /*TITULO*/
                         $(cCodBarras).attr("maxlength", "54");
-                        $(cTipDocto).val("1");
-                    }
-
-                    flmask = true;
-                    leitora = false;
-
+                    $(cTipDocto).val("1");							
                 }
-            }
+    
+                flmask = true;
+                leitora = false;
 
-            // Caso marcado para bloquear campo de valor
+            }
+        }
+
+        // Caso marcado para bloquear campo de valor 
             if (flblqval == 1) {
-                $(cValor).prop("disabled", true);
-            }
-
+          $(cValor).prop("disabled", true);
+        }
+        
             var end_counter = function () {
-                if (running) {
-                    running = false;
+			if (running) {
+				running = false;
                     fim = true;
-                    started_at = 0;
-
-                    /*Identifica se eh leitora*/
+				started_at = 0;
+                
+                /*Identifica se eh leitora*/
                     if (count >= 4) {
-                        leitora = true;
+					leitora = true;	
                     } else {
-                        leitora = false;
-                    }
-                }
-            };
-
+					leitora = false;
+				}				
+			}
+		};
+		
             $(cCodBarras).keypress(function (e) {
 
                 if ($(cCodBarras).val().length == 0) {
-                    /*zera variaveis de controle*/
-                    running = false;
+                /*zera variaveis de controle*/
+                running = false;
                     count = 0;
-                    run_for = 300;
+                run_for = 300;
                     fim = false;
                     fatura = false;
                     flmask = false;
-                    leitora = true;
+                leitora = true;
 
                     if (flblqval != 1) {
-                        $(cValor).prop("disabled", false);
-                    }
-
-                    $(cCodBarras).unmask();
-                    $(cCodBarras).mask('00000000000000000000000000000000000000000000');
+                $(cValor).prop("disabled", false);
                 }
+
+                $(cCodBarras).unmask();
+                $(cCodBarras).mask('00000000000000000000000000000000000000000000');
+            }
 
 
                 if (!fim) {
-                    if (running) {
-                        count++;
-                    } else {
-                        running = true;
-                        count = 0;
-                        setTimeout(end_counter, run_for);
-                    }
+				if (running) {
+					count++;  
+				} else {
+					running = true;
+					count = 0;
+					setTimeout(end_counter, run_for);
+				}
                 } else {
-                    /*Verificar leitora ou digitacao manual*/
+				/*Verificar leitora ou digitacao manual*/
                     if (leitora) {
+                    
+                    $(cTpProces).val('1');
 
-                        $(cTpProces).val('1');
-
-                        $(cCodBarras).unmask();
-                        $(cCodBarras).mask('00000000000000000000000000000000000000000000');
-
+                    $(cCodBarras).unmask();
+                    $(cCodBarras).mask('00000000000000000000000000000000000000000000'); 
+                    
                         if ($(cCodBarras).val().substr(0, 1) == '8') {
-                            $(cTipDocto).val("2"); /*FATURA*/
-                            $(cValor).val("");
+					    $(cTipDocto).val("2"); /*FATURA*/
+					    $(cValor).val("");
                         } else {
-                            $(cTipDocto).val("1"); /*TITULO*/
-                        }
+						$(cTipDocto).val("1"); /*TITULO*/
+					}
 
                     } else {
-
+					
                         if ($(cCodBarras).val().length > 4 && !flmask) {
-
-                            $(cTpProces).val('2');
-
-                            /*Verificar fatura ou titulo*/
+						
+                        $(cTpProces).val('2');
+                        
+						/*Verificar fatura ou titulo*/
                             if ($(cCodBarras).val().substr(0, 1) == '8') {
-                                $(cCodBarras).unmask();
-                                $(cCodBarras).mask('00000000000-0 00000000000-0 00000000000-0 00000000000-0'); /*FATURA*/
+							$(cCodBarras).unmask();
+							$(cCodBarras).mask('00000000000-0 00000000000-0 00000000000-0 00000000000-0'); /*FATURA*/
                                 $(cCodBarras).attr("maxlength", "55");
-                                $(cTipDocto).val("2");
+							$(cTipDocto).val("2");
                             } else {
-                                $(cCodBarras).unmask();
-                                $(cCodBarras).mask('00000.00000 00000.000000 00000.000000 0 00000000000000'); /*TITULO*/
+							$(cCodBarras).unmask();
+							$(cCodBarras).mask('00000.00000 00000.000000 00000.000000 0 00000000000000'); /*TITULO*/
                                 $(cCodBarras).attr("maxlength", "54");
-                                $(cTipDocto).val("1");
-                            }
-
-                            flmask = true;
-                        }
-
-                    }
-                }
-            });
+							$(cTipDocto).val("1");							
+						}
+						
+						flmask = true;
+					}
+						
+				}				
+			}           
+		});	
 
 
             $(cCodBarras).keyup(function (event) {
-
-
+		
+            
                 if ($(cCodBarras).val().length == 0) {
-                    /*zera variaveis de controle*/
-                    running = false;
+				/*zera variaveis de controle*/
+				running = false;
                     count = 0;
-                    run_for = 300;
+				run_for = 300;
                     fim = false;
                     fatura = false;
                     flmask = false;
-                    leitora = true;
+                leitora = true;
 
                     if (flblqval != 1) {
-                        $(cValor).prop("disabled", false);
-                    }
-
-                    $(cCodBarras).unmask();
-                    $(cCodBarras).mask('00000000000000000000000000000000000000000000');
+                $(cValor).prop("disabled", false);
                 }
 
-                $(cHcodBarra).val($(cCodBarras).cleanVal());
+                $(cCodBarras).unmask();
+                $(cCodBarras).mask('00000000000000000000000000000000000000000000');
+			}
+			
+            $(cHcodBarra).val($(cCodBarras).cleanVal());
 
 
-                /*****************permitidos****************************/
+            /*****************permitidos****************************/
 
-                // Atribuir caracteres numericos
-                var keyCodesPermitidos = new Array();
-
-                //numeros e 0 a 9 do teclado alfanumerico
+            // Atribuir caracteres numericos
+            var keyCodesPermitidos = new Array();
+             
+            //numeros e 0 a 9 do teclado alfanumerico
                 for (x = 48; x <= 57; x++) {
-                    keyCodesPermitidos.push(x);
-                }
-
-                //numeros e 0 a 9 do teclado numerico
+                keyCodesPermitidos.push(x);
+            }
+             
+            //numeros e 0 a 9 do teclado numerico
                 for (x = 96; x <= 105; x++) {
-                    keyCodesPermitidos.push(x);
-                }
-
-                // Verificar se ja esta completo a quantidade de caracteres,
-                // para assim pular para o proximo campo
-                // somente testar se for um numerico
-                event = event || window.event;
-                var keyCode = event.keyCode;
-                /**********************************************************/
+                keyCodesPermitidos.push(x);
+            }
+            
+            // Verificar se ja esta completo a quantidade de caracteres, 
+            // para assim pular para o proximo campo     
+            // somente testar se for um numerico
+            event = event || window.event;
+            var keyCode = event.keyCode;
+          /**********************************************************/
 
                 if (($.inArray(keyCode, keyCodesPermitidos) >= 0)) {
 
-                    /* tratamento para lancamento via leitora */
+                /* tratamento para lancamento via leitora */
                     if ($(cCodBarras).cleanVal().length == 44 && leitora) {
-
-                        /*zera variaveis de controle */
-
-                        running = false;
+                    
+                    /*zera variaveis de controle */
+                    
+                    running = false;
                         count = 0;
-                        run_for = 300;
+                    run_for = 300;
                         fatura = false;
                         flmask = false;
 
-                        //resetaCampo();
+                    //resetaCampo();
+    
+                    /*
+                    if ($(cCodBarras).cleanVal() == $(cHcodBarra).val()) {
+                        $("#manual").val("");
+                        document.forms[0].submit();
+                    } 
+                    */
 
-                        /*
-                        if ($(cCodBarras).cleanVal() == $(cHcodBarra).val()) {
-                            $("#manual").val("");
-                            document.forms[0].submit();
-                        }
-                        */
-
-                        /*tiago*/   /*
+                    /*tiago*/   /*
                     if( $(cCodBarras).val().substr(0,1) == '8' ){
                        $(cIdtpdpag).val("1"); //FATURA
                     }else{
@@ -304,221 +309,224 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                     }             */
 
                         setTimeout(function () {
-                            $("#manual").val("");
-                            $(cTpProces).val('1');
+                        $("#manual").val("");
+                        $(cTpProces).val('1');
 
                             if ($(cCodBarras).val().substr(0, 1) == '8') {
-                                $(cTipDocto).val("2"); /*FATURA*/
+                            $(cTipDocto).val("2"); /*FATURA*/
                             } else {
-                                $(cTipDocto).val("1"); /*TITULO*/
-                            }
-
-
-                            if ($(cCodBarras).cleanVal() == $(cHcodBarra).val()) {
-                                //document.forms[0].submit();
-                                submitFormulario();
-                            }
-                        }, 300);
-
-                    } else {
-
-                        if (($(cTipDocto).val() == "1" && $(cCodBarras).cleanVal().length == 47) ||
-                            ($(cTipDocto).val() == "2" && $(cCodBarras).cleanVal().length == 48) &&
-                            !leitora) {
-
-                            /*zera variaveis de controle */
-                            running = false;
-                            count = 0;
-                            run_for = 300;
-                            fatura = false;
-                            flmask = false;
-
-                            $(cHcodBarra).val($(cCodBarras).cleanVal());
-
-                            setTimeout(function () {
-                                $("#manual").val("manual");
-
-                                if ($(cCodBarras).cleanVal() == $(cHcodBarra).val()) {
-                                    //document.forms[0].submit();
-                                    submitFormulario();
-                                }
-                            }, 300);
-
-
+                            $(cTipDocto).val("1"); /*TITULO*/
                         }
 
-                    }
+                             
+                        if ($(cCodBarras).cleanVal() == $(cHcodBarra).val()) {
+                            //document.forms[0].submit();
+                            submitFormulario();
+                        }    
+                        }, 300);
+    
+                    } else {
+    
+                    if (($(cTipDocto).val() == "1" && $(cCodBarras).cleanVal().length == 47) || 
+                        ($(cTipDocto).val() == "2" && $(cCodBarras).cleanVal().length == 48) &&
+                        !leitora) {
+                        
+                        /*zera variaveis de controle */
+                        running = false;
+                            count = 0;
+                        run_for = 300;
+                            fatura = false;
+                            flmask = false;
+    
+                        $(cHcodBarra).val($(cCodBarras).cleanVal());
+    
+                            setTimeout(function () {
+                            $("#manual").val("manual");
+                             
+                            if ($(cCodBarras).cleanVal() == $(cHcodBarra).val()) {
+                               //document.forms[0].submit();
+                               submitFormulario();
+                            } 
+                            }, 300);
+                    
+      
+                    }                              
+    
                 }
+            }
+		});
+		
+        /* ctrl + v AUTOMATICO
+		$(cCodBarras).bind('paste', function(event) {		
+            //aumentar campo antes de copiar para que nao seja perdido nenhuma informação
+            $(cCodBarras).attr("maxlength","44");
+            $(cCodBarras).unmask();
+            $(cCodBarras).mask('00000000000000000000000000000000000000000000'); // para não perder informações
+
+            leitora = true;
+            $(cTpProces).val("1"); //1-AUTOMATICO|2-MANUAL    
+
+            setTimeout(function () {
+                // qnd copiar verificar qual mascara deverá ser utilizada 
+                if ($(cCodBarras).val().substr(0,1) == '8'){
+                    
+                    //$(cCodBarras).attr("maxlength","55");
+                    // antes de atribuir nova mascara, limpar a atual
+                    //$(cCodBarras).unmask();
+                    //$(cCodBarras).mask('00000000000-0 00000000000-0 00000000000-0 00000000000-0'); //FATURA
+                    $(cTipDocto).val("2"); //1-TITULO|2-FATURA
+                    
+                }else{
+                    //$(cCodBarras).attr("maxlength","54");
+                    //$(cCodBarras).unmask();
+                    // antes de atribuir nova mascara, limpar a atual
+                    //$(cCodBarras).mask('00000.00000 00000.000000 00000.000000 0 00000000000000'); //TITULO
+                    $(cTipDocto).val("1"); //1-TITULO|2-FATURA
+                } 
+                flmask  = false;
             });
 
-            /* ctrl + v AUTOMATICO
-            $(cCodBarras).bind('paste', function(event) {
-                //aumentar campo antes de copiar para que nao seja perdido nenhuma informação
-                $(cCodBarras).attr("maxlength","44");
-                $(cCodBarras).unmask();
-                $(cCodBarras).mask('00000000000000000000000000000000000000000000'); // para não perder informações
-
-                leitora = true;
-                $(cTpProces).val("1"); //1-AUTOMATICO|2-MANUAL
-
-                setTimeout(function () {
-                    // qnd copiar verificar qual mascara deverá ser utilizada
-                    if ($(cCodBarras).val().substr(0,1) == '8'){
-
-                        //$(cCodBarras).attr("maxlength","55");
-                        // antes de atribuir nova mascara, limpar a atual
-                        //$(cCodBarras).unmask();
-                        //$(cCodBarras).mask('00000000000-0 00000000000-0 00000000000-0 00000000000-0'); //FATURA
-                        $(cTipDocto).val("2"); //1-TITULO|2-FATURA
-
-                    }else{
-                        //$(cCodBarras).attr("maxlength","54");
-                        //$(cCodBarras).unmask();
-                        // antes de atribuir nova mascara, limpar a atual
-                        //$(cCodBarras).mask('00000.00000 00000.000000 00000.000000 0 00000000000000'); //TITULO
-                        $(cTipDocto).val("1"); //1-TITULO|2-FATURA
-                    }
-                    flmask  = false;
-                });
-
-            });	*/
-
-
+		});	*/
+        
+                    
             $(cCodBarras).bind('paste', function (event) {
-                //aumentar campo antes de copiar para que nao seja perdido nenhuma informação
+            //aumentar campo antes de copiar para que nao seja perdido nenhuma informação
                 $(cCodBarras).attr("maxlength", "57");
-                $(cCodBarras).unmask();
-                $(cCodBarras).mask('000000000000000000000000000000000000000000000000000000000'); // para não perder informações
+            $(cCodBarras).unmask();
+            $(cCodBarras).mask('000000000000000000000000000000000000000000000000000000000'); // para não perder informações
 
-                leitora = false;
-                $(cTpProces).val("2"); //1-AUTOMATICO|2-MANUAL
+            leitora = false;
+            $(cTpProces).val("2"); //1-AUTOMATICO|2-MANUAL    
 
-                setTimeout(function () {
-                    // qnd copiar verificar qual mascara deverá ser utilizada
+            setTimeout(function () {
+                // qnd copiar verificar qual mascara deverá ser utilizada 
                     if ($(cCodBarras).val().substr(0, 1) == '8') {
-
+                    
                         $(cCodBarras).attr("maxlength", "55");
-                        // antes de atribuir nova mascara, limpar a atual
-                        $(cCodBarras).unmask();
-                        $(cCodBarras).mask('00000000000-0 00000000000-0 00000000000-0 00000000000-0'); //FATURA
-                        $(cTipDocto).val("2"); //1-TITULO|2-FATURA
-                        fatura = true;
-
+                    // antes de atribuir nova mascara, limpar a atual
+                    $(cCodBarras).unmask();
+                    $(cCodBarras).mask('00000000000-0 00000000000-0 00000000000-0 00000000000-0'); //FATURA
+                    $(cTipDocto).val("2"); //1-TITULO|2-FATURA
+                    fatura = true;
+                    
                     } else {
                         $(cCodBarras).attr("maxlength", "54");
-                        $(cCodBarras).unmask();
-                        // antes de atribuir nova mascara, limpar a atual
-                        $(cCodBarras).mask('00000.00000 00000.000000 00000.000000 0 00000000000000'); //TITULO
-                        $(cTipDocto).val("1"); //1-TITULO|2-FATURA
-                        fatura = false;
-                    }
+                    $(cCodBarras).unmask();
+                    // antes de atribuir nova mascara, limpar a atual
+                    $(cCodBarras).mask('00000.00000 00000.000000 00000.000000 0 00000000000000'); //TITULO
+                    $(cTipDocto).val("1"); //1-TITULO|2-FATURA
+                    fatura = false;
+                } 
                     flmask = true;
 
-                    //setTimeout(function(){document.forms[0].submit();},100);
+                //setTimeout(function(){document.forms[0].submit();},100);
                     setTimeout(function () { submitFormulario(); }, 100);
-
-                    //document.forms[0].submit();
-                });
-
-                //$(cCodBarras).trigger('keyup');
-                //$(cCodBarras).keyup();
-
+                
+                //document.forms[0].submit(); 
             });
+            
+            //$(cCodBarras).trigger('keyup');
+            //$(cCodBarras).keyup();
 
-            $(cCodBarras).bind('blur', function (event) {
+		});		
+		
+		$(cCodBarras).bind('blur', function (event) {
 
-                //FATURA
-                if ($(cTipDocto).val() == "2") {
-                    $(cValor).val("");
-                    $(cValor).prop("disabled", true);
+		    //FATURA
+		    if ($(cTipDocto).val() == "2") {
+		        $(cValor).val("");
+		        $(cValor).prop("disabled", true);
                 } else if (flblqval != 1) {
-                    $(cValor).prop("disabled", false);
-                }
+		        $(cValor).prop("disabled", false);
+		    }
 
 
-                if ($(cCodBarras).val().length == 0) {
-                    resetaCampo();
-                }
+		    if ($(cCodBarras).val().length == 0) {
+		        resetaCampo();
+		    }
 
 
-            });
+		});
 
-            /* Controle do foco no campo */
+        /* Controle do foco no campo */
             if ($(cValor).val().length > 0) {
-                // $(cValor).focus();
-                document.forms[0].vh_foco.value = "11";
-            } else {
-                // $(cCodBarras).focus();
-                document.forms[0].vh_foco.value = "10";
-            }
+		       // $(cValor).focus();
+           document.forms[0].vh_foco.value = "11";
+        } else {
+           // $(cCodBarras).focus();
+           document.forms[0].vh_foco.value = "10";
+        }
+        
+		//$("#key").css('width','390px');     
 
-            //$("#key").css('width','390px');
-
-        });
-    </script>
+    });
+</script>
 
 </head>
 
 
 <body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onload="JavaScript: mudaFoco(); click();" onkeyup="callBlass(event); callBLini(event); callBLsal(event);">
     <form onkeydown="change_page(event)" method=post>
-        <input type="hidden" name="v_msg">
-        <input type="hidden" name="vh_foco" value="6">
-        <input type="hidden" name="v_msg_vencido" id="v_msg_vencido" value="no">
-        <p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
-        <div align="center">
-            <center>
-                <table width="100%" class=cabtab>
-                    <tr>
+<input type="hidden" name="v_msg">
+<input type="hidden" name="vh_foco" value="6">
+<input type="hidden" name="v_msg_vencido" id="v_msg_vencido" value="no">
+<input type="hidden" name="hdnEstorno" id="hdnEstorno" value="">
+<input type="hidden" name="hdnVerifEstorno" id="hdnVerifEstorno" value="">
+<input type="hidden" name="hdnValorAcima" id="hdnValorAcima" value="">
+<p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
+<div align="center">
+  <center>
+  <table width="100%" class=cabtab>
+    <tr>
                         <td width="15%" align="center">
                             <input type="text" name="v_coop" size="11" class="transp" readonly>
-                        </td>
+      </td>
                         <td width="20%" align="center">
                             PA&nbsp; <input type="text" name="v_pac" size="1" class="transp" readonly>
-                        </td>
+      </td>
                         <td width="20%" align="center">
                             CAIXA&nbsp; <input type="text" name="v_caixa" size="1" class="transp" readonly>
-                        </td>
+      </td>
                         <td width="30%" align="center">
                             OPERADOR&nbsp; <input type="text" name="v_operador" size="7" class="transp" readonly>
-                        </td>
+      </td>
                         <td width="15%" align="center">
                             <input type="text" name="v_data" size="10" class="transp" readonly>
-                        </td>
-                    </tr>
-                </table>
-            </center>
-        </div>
-        <div align="center">
-            <center>
-                <table width="100%" class=cabtab>
-                    <tr>
-                        <td class=titulo>ENTRADA DE ARRECADAÇÕES</td>
-                        <td width="21%" class=programa align="right">P.014&nbsp; V.1.00</td>
-                    </tr>
-                </table>
-            </center>
-        </div>
-        <div align="center">
+      </td>
+    </tr>
+  </table>
+  </center>
+</div>
+<div align="center">
+  <center>
+  <table width="100%" class=cabtab>
+    <tr>
+      <td class=titulo>ENTRADA DE ARRECADAÇÕES</td>
+      <td width="21%" class=programa align="right">P.014&nbsp; V.1.00</td>
+    </tr>
+  </table>
+  </center>
+</div>
+<div align="center">
             <table cellspacing=1 cellpadding=1 width=115% class=tcampo>
-                <tr>
+	<tr> 
                     <td width=15%>&nbsp;</td>
-                </tr>
-                <!--
-                 <tr>
-                      <td width=15%> </td>
-                      <td>
-                         <input type="radio" value="1" checked name="radio">
-                         Título
-                      </td>
-                 </tr>
-                 <tr>
-                      <td width=15%> </td>
-                      <td>
-                          <input type="radio" value="2" name="radio">
-                          Fatura
-                      </td>
-                  </tr>  -->
+	</tr>  
+    <!--
+   <tr> 
+        <td width=15%> </td>
+        <td> 
+           <input type="radio" value="1" checked name="radio">
+           Título
+        </td>
+   </tr>
+   <tr>
+        <td width=15%> </td>
+        <td>
+            <input type="radio" value="2" name="radio">
+            Fatura
+        </td>
+    </tr>  -->
 
                 <tr>
                     <td width=14% align="right"> </td>
@@ -538,54 +546,82 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                     </td>
                 </tr>
 
-                <tr height=40 valign="bottom">
-                    <td align="right" width=15%>Conta/DV:</td>
-                    <td>
+    <tr height=40 valign="bottom"> 
+        <td align="right" width=15%>Conta/DV:</td>
+        <td>
                         <input type="text" name="v_conta" maxlength="12" onkeydown="JavaScript:return false;" size="20" class="input" style="text-align: right;" disabled>
-                        <input type="text" name="v_nome" size="45" class="input" style="font-weight: bold" disabled>
-                    </td>
-                </tr>
-                <tr>
-                    <td width=15% align="right">Cod Barra: </td>
-                    <td>
-                        <input type="text" id="v_fmtcodbar" name="v_fmtcodbar" size="79" class="input" style="text-align: Right" />
-                        <input type="hidden" id="v_codbarras" name="v_codbarras" size="52" class="input" style="text-align: Right" />
-                        <input type="hidden" name="v_tpproces" id="v_tpproces" class="input" />
-                        <input type="hidden" name="v_tipdocto" id="v_tipdocto" class="input" />
-                        <input type="hidden" name="v_flblqval" id="v_flblqval" class="input" />
-
-                        <!-- inicio do comentario
-                                <input type="text" name="v_codbarras" size="52" class="input" maxlength="44" OnKeyDown="JavaScript:validaInteiro(event)" OnKeyUp="Javascript:preenchimento(event,0,this,44,'submit')" style="text-align: Right">
-                                <input type="submit" value="Manual" name="Manual" class="button">
-                        Fim do comentario -->
-
-                    </td>
-                </tr>
-                <tr>
-                    <td width=15% align="right">Valor:</td>
-                    <td> <input type="text" name="v_valor" id="v_valor" size="20" class="input" onkeyup="callCalc(event, this)" onkeydown="JavaScript:FormataValor(this,14,event)" maxlength="18" style="text-align: right"></td>
-                </tr>
-                <tr>
-                    <td align="right" class="linhaform" colspan="2" height="50">
-                        <p align="center">
+            <input type="text" name="v_nome" size="45" class="input" style="font-weight: bold" disabled>
+        </td>
+    </tr>
+    <tr>
+        <td width=15% align="right">Cod Barra: </td>
+                  <td>
+                     <input type="text" id="v_fmtcodbar" name="v_fmtcodbar" size="79" class="input" style="text-align: Right" />
+                     <input type="hidden" id="v_codbarras" name="v_codbarras" size="52" class="input" style="text-align: Right" />
+                     <input type="hidden" name="v_tpproces" id="v_tpproces" class="input" />
+                     <input type="hidden" name="v_tipdocto" id="v_tipdocto" class="input" />
+                     <input type="hidden" name="v_flblqval" id="v_flblqval" class="input" />
+                     
+             <!-- inicio do comentario
+                     <input type="text" name="v_codbarras" size="52" class="input" maxlength="44" OnKeyDown="JavaScript:validaInteiro(event)" OnKeyUp="Javascript:preenchimento(event,0,this,44,'submit')" style="text-align: Right">
+                     <input type="submit" value="Manual" name="Manual" class="button"> 
+             Fim do comentario -->        
+             
+          </td>
+    </tr>
+    <tr>
+        <td width=15% align="right">Valor:</td>
+                <td> <input type="text" name="v_valor" id="v_valor" size="20" class="input" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,14,event)" maxlength="18" style="text-align: right"></td>
+    </tr>
+    <tr>
+        <td width=15% align="right">Código:</td>
+        <td><input class="input" type="text" id="v_cod" name="v_cod" size="12" maxlength="10" disabled></td>
+    </tr>
+    <tr>
+        <td width="15%" align="right">Senha:</td>
+        <td><input class="input" type="password" id="v_senha" name="v_senha" size="12" maxlength="10" disabled>
+        </td>
+    </tr>
+    <tr>
+        <td align="right" class="linhaform" colspan="2" height="50">
+           <p align="center">
                             <input type="button" value="Ok" name="btnOk" id="btnOk" class="button" id="btnOk" name="btnOk">
-                            <input type="button" value="Cancelar" name="btnCancela" id="btnCancela" class="button">
-                        </p>
-                    </td>
-                </tr>
-            </table>
-        </div>
+                <input type="button" value="Cancelar" name="btnCancela" id="btnCancela" class="button">
+           </p>
+        </td>
+    </tr>
+ </table>
+</div>
 
-        <div align="center">
-            <table width="100%">
-                <tr>
-                    <td align="right" class="linhaform">
+ <div align="center">
+  <table width="100%">
+      <tr>
+         <td align="right" class="linhaform">
                         <input type="button" value="Estorno" name="estorno" class="button" onclick="JavaScript:redir_login('crap015.w')">
                     </td>
-                </tr>
-            </table>
-        </div>
+      </tr>
+  </table>      
+</div>
 
-    </form>
+</form>
 </body>
+<script language=JavaScript>
+
+  if($("#hdnVerifEstorno").val() == 0 || $("#hdnVerifEstorno").val() == "" || $("#hdnVerifEstorno").val() == null){
+    $("#hdnVerifEstorno").val(0);
+  }
+  
+  function habilitarCampos(){     
+
+    if($("#hdnValorAcima").val() == 0 || $("#hdnValorAcima").val() == "" || $("#hdnValorAcima").val() == null){
+      $("#hdnValorAcima").val(0);
+      $("#v_cod").prop("disabled", true);
+      $("#v_senha").prop("disabled", true);
+    }else{
+      $("#hdnValorAcima").val(1);
+      $("#v_cod").prop("disabled", false);
+      $("#v_senha").prop("disabled", false);
+    }
+  }
+</script>
 </html>
