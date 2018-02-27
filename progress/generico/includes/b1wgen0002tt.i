@@ -262,8 +262,7 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD idseleca AS CHAR
     FIELD nrdrecid AS RECID
     FIELD tplcremp LIKE craplcr.tpctrato
-    FIELD tpemprst LIKE crapepr.tpemprst
-	FIELD idenempr LIKE crapepr.tpemprst
+    FIELD tpemprst LIKE crapepr.tpemprst	
     FIELD cdtpempr AS CHAR
     FIELD dstpempr AS CHAR
     FIELD permulta AS DECI FORMAT "zz9.99"
@@ -294,7 +293,9 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD tipoempr AS CHAR
     FIELD qtimpctr LIKE crapepr.qtimpctr
     FIELD dtapgoib AS DATE    FORMAT "99/99/9999"
-	FIELD vliofcpl LIKE crapepr.vliofcpl.
+	FIELD vliofcpl LIKE crapepr.vliofcpl
+
+	FIELD idenempr LIKE crapepr.tpemprst.
     
 DEF TEMP-TABLE tt-dados-epr-out NO-UNDO LIKE tt-dados-epr.
 
@@ -326,8 +327,7 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD vlemprst LIKE crawepr.vlemprst
     FIELD vlpreemp LIKE crawepr.vlpreemp
     FIELD qtpreemp LIKE crawepr.qtpreemp
-    FIELD nivrisco LIKE crawepr.dsnivris
-	FIELD nivriori LIKE crawepr.dsnivori
+    FIELD nivrisco LIKE crawepr.dsnivris	
     FIELD nivcalcu LIKE crawepr.dsnivcal
     FIELD cdlcremp LIKE crawepr.cdlcremp
     FIELD cdfinemp LIKE crawepr.cdfinemp
@@ -381,7 +381,9 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD vlrtarif AS DECI
     FIELD vlrtotal AS DECI
 	FIELD idcarenc LIKE crawepr.idcarenc
-    FIELD dtcarenc LIKE crawepr.dtcarenc.
+    FIELD dtcarenc LIKE crawepr.dtcarenc
+
+	FIELD nivriori LIKE crawepr.dsnivori.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR
