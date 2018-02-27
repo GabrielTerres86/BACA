@@ -4297,127 +4297,71 @@ PROCEDURE proc_qualif_operacao:
     DEF  INPUT PARAM par_dsctrliq AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtopr AS DATE                           NO-UNDO.
-	DEF  INPUT PARAM par_dtmvtoan AS DATE                           NO-UNDO.
-	
+    DEF  INPUT PARAM par_dtmvtoan AS DATE                           NO-UNDO.
+
     DEF OUTPUT PARAM par_idquapro AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dsquapro AS CHAR                           NO-UNDO.
-    
+
     DEF VAR aux_nrctremp          AS CHAR                           NO-UNDO.
     DEF VAR aux_qtprecal          AS DECI                           NO-UNDO.
     DEF VAR aux_atraso            AS INTE                           NO-UNDO.
     DEF VAR aux_mai_atraso        AS DECI                           NO-UNDO.
-	DEF VAR aux_qtd_dias_atraso   AS INTE							NO-UNDO.
-	DEF VAR aux_dias_atraso       AS INTE                           NO-UNDO.	
-	DEF VAR aux_contaliq	      AS INTE							NO-UNDO.		
-	DEF VAR aux_emp_a_liq	      AS INTE							NO-UNDO.
-	
-	
+
+    DEF VAR aux_qtd_dias_atraso   AS INTE                           NO-UNDO.
+    DEF VAR aux_dias_atraso       AS INTE                           NO-UNDO.
     DEF VAR par_vlsdeved          AS DECI                           NO-UNDO.
     DEF VAR par_vltotpre          AS DECI                           NO-UNDO.
     DEF VAR par_qtprecal          AS INTE                           NO-UNDO.
-	
+ 
     DEF BUFFER crabepr FOR crapepr.
 
     ASSIGN aux_cdcritic = 0
-           aux_dscritic = "".		   
+           aux_dscritic = "".
 
     ASSIGN par_dsctrliq = " " + par_dsctrliq.
 
-	DO  aux_contaliq = 1 TO NUM-ENTRIES(par_dsctrliq):		
-		aux_qtd_dias_atraso  = 0.
-		aux_emp_a_liq = INTEGER(ENTRY(aux_contaliq,par_dsctrliq)).
-		
-		/* ADP												  */			
-		IF aux_emp_a_liq = par_nrdconta	THEN									
-			DO:				
-				/* Ver se existe na central de risco		  */
-				FIND FIRST crapris 
-				     WHERE crapris.cdcooper = par_cdcooper 
-					   AND crapris.nrdconta = par_nrdconta
-					   AND crapris.cdorigem = 1
-					   AND crapris.cdmodali = 101
-					   AND crapris.nrctremp = aux_emp_a_liq
-					   AND crapris.inddocto = 1
-					   AND crapris.dtrefere = par_dtmvtoan
-					       NO-LOCK NO-ERROR. 
-				IF  AVAIL crapris  THEN
-					DO:
-						ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-					END.
-				ELSE
-					DO:
-						ASSIGN aux_qtd_dias_atraso = 0.
-					END.  
-			END.		
+    /* Usar buffer para nao conflitar na chamada da procedure do saldo */
+    FOR EACH crabepr WHERE crabepr.cdcooper = par_cdcooper   AND
+                           crabepr.nrdconta = par_nrdconta   AND
+                           crabepr.inliquid = 0              NO-LOCK:
 
-		/* LIMITE OU LIMITE/ADP								 */
-		FIND FIRST craplim 
-		     WHERE craplim.cdcooper = par_cdcooper   
-			   AND craplim.nrdconta = par_nrdconta   
-			   AND craplim.nrctrlim = aux_emp_a_liq  
-			   AND craplim.tpctrlim = 1              
-			   AND craplim.insitlim = 2  
-				   NO-LOCK NO-ERROR.
+        ASSIGN aux_nrctremp = " " + TRIM(STRING(crabepr.nrctremp,">>,>>>,>>9")).
 
-		IF  AVAIL craplim THEN
-			DO:	
-				/* LIMITE/ADP                                */
-				FIND crapris
-				     WHERE crapris.cdcooper = par_cdcooper 
-					   AND crapris.nrdconta = par_nrdconta
-					   AND crapris.cdorigem = 1
-					   AND crapris.cdmodali = 201
-					   AND crapris.nrctremp = aux_emp_a_liq
-					   AND crapris.inddocto = 1
-					   AND crapris.dtrefere = par_dtmvtoan
-					       NO-LOCK NO-ERROR. 
-				IF AVAIL crapris THEN
-					ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-				ELSE
-					ASSIGN aux_qtd_dias_atraso = 0.
-			END.
+        /** Somente verifica os emprestimos a serem liquidados **/
+        IF  NOT CAN-DO(par_dsctrliq, aux_nrctremp)   THEN
+            NEXT.
 
-		FIND FIRST crabepr 
-			 WHERE crabepr.cdcooper = par_cdcooper   
-			   AND crabepr.nrdconta = par_nrdconta   
-			   AND crabepr.nrctremp = aux_emp_a_liq
-			   AND crabepr.inliquid = 0  
-				   NO-LOCK NO-ERROR.
+        aux_qtd_dias_atraso = 0.
 
-		IF  AVAIL crabepr THEN
-			DO:
-				FOR FIRST crapris FIELDS(qtdiaatr) 
-					WHERE crapris.cdcooper = par_cdcooper 
-					  AND crapris.nrdconta = par_nrdconta
-					  AND crapris.cdorigem = 3
-					  AND crapris.nrctremp = crabepr.nrctremp
-					  AND crapris.inddocto = 1
-					  AND crapris.dtrefere = par_dtmvtoan
-						  NO-LOCK: 
-							ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-				END.
-			END.
-		
-		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
-		   aux_dias_atraso = aux_qtd_dias_atraso.
-	END.
+        FOR FIRST crapris FIELDS(qtdiaatr)
+            WHERE crapris.cdcooper = par_cdcooper
+              AND crapris.nrdconta = par_nrdconta
+              AND crapris.cdorigem = 3
+			  AND crapris.nrctremp = crabepr.nrctremp
+              AND crapris.inddocto = 1
+              AND crapris.dtrefere = par_dtmvtoan
+              NO-LOCK:
+            ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
+        END.
 
-	/* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
+        IF aux_dias_atraso < aux_qtd_dias_atraso THEN
+           aux_dias_atraso = aux_qtd_dias_atraso.
+    END. 
+
+    /* De 0 a 4 dias de atraso - Renovação de Crédito                             */
     IF  aux_dias_atraso < 5 THEN
         ASSIGN par_idquapro = 2
                par_dsquapro = "Renovacao de credito".
     ELSE
-	
-	/*  De 5 a 60 dias de atraso - Renegociação de Crédito		            */ 
-    IF  aux_dias_atraso > 4 AND aux_dias_atraso < 61 THEN
-        ASSIGN par_idquapro = 3               
-               par_dsquapro = "Renegociacao de credito".
+       /*  De 5 a 60 dias de atraso - Renegociação de Crédito                         */
+       IF  aux_dias_atraso > 4 AND aux_dias_atraso < 61 THEN
+           ASSIGN par_idquapro = 3              
+                  par_dsquapro = "Renegociacao de credito".
     ELSE
-	
-	/*  Igual ou acima de 61 dias - Composição de dívida			        */
-	IF aux_dias_atraso >= 61 THEN
-        ASSIGN par_idquapro = 4
-               par_dsquapro = "Composicao da divida".
+       /*  Igual ou acima de 61 dias - Composição de dívida                       */
+       IF aux_dias_atraso >= 61 THEN
+           ASSIGN par_idquapro = 4
+                  par_dsquapro = "Composicao da divida".
 
     RETURN "OK".
 
