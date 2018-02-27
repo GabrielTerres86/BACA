@@ -739,9 +739,17 @@ BEGIN
       -- Envio centralizado de log de erro
       RAISE vr_exc_saida;
     END IF;
+
+    --FM - Inicio paralelismo
+    -- Buscar quantidade parametrizada de Jobs
+    vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
+                                                 ,pr_cdprogra => vr_cdprogra --pr_cdprogra  IN crapprg.cdprogra%TYPE    --> Código do programa
+                                                 ); 
+        
   
     --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
-    IF pr_idparale <> 0 OR vr_inproces  <= 2 THEN
+	--Apenas inicia clob quando é um job paralelo ou quando nãom roda em paralelo
+    IF pr_idparale <> 0 OR vr_qtdjobs  = 0 THEN
       --habilitar CLOBs
       pc_habilita_clob(1);  
     END IF;
@@ -751,13 +759,6 @@ BEGIN
 							    									   	    ,pr_cdcooper => pr_cdcooper   --> Cooperativa
 							  	   									      ,pr_nmsubdir => 'rl');        --> Utilizaremos o rl
     
-
-		--FM - Inicio paralelismo
-    -- Buscar quantidade parametrizada de Jobs
-    vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
-                                                 ,pr_cdprogra => vr_cdprogra --pr_cdprogra  IN crapprg.cdprogra%TYPE    --> Código do programa
-                                                 ); 
-        
 
     if vr_inproces  > 2 and
        vr_qtdjobs   > 0 and 
