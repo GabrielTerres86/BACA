@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 28/04/2017
+   Data    : AGOSTO/2013                      Ultima atualizacao: 09/01/2018
 
    Dados referentes ao programa:
 
@@ -205,6 +205,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             "Pagto. Boleto Prejuízo", "Descto. Boleto Prejuízo" e "Pagto. de Boleto".
                             Inclusão de verificação dos historicos 2277, 2278 e 2279. Prj. 210.2 (Lombardi)
 
+               09/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
+               17/09/2017 - Ajuste para efetuar a regularização do contrato quando o mesmo for liquidado
+                            (Jonata - SD 742850). 
+                            
+               14/11/2017 - Log de trace da exception others (Carlos)
+               
+               09/01/2018 - #826598 Concatenação da crítica no parâmetro de retorno do crps (Carlos)
+			   
+			   01/02/2018 - Nao enviar lancamentos efetuados na tabela CRAPLCM, somente devem ser enviados lancamentos
+                            feitos na CRAPLEM e parametrizados na tela PARCYB.
+							Zerar o saldo devedor de registros que tenha sido efetuado acordo.
+                            Heitor (Mouts) - Chamado 798744
      ............................................................................. */
 
      DECLARE
@@ -558,17 +571,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craplem.nrctremp = pr_nrctremp
             AND craplem.dtmvtolt = pr_dtmvtolt
             AND craphis.indcalem = 'S'
-         GROUP BY craplem.cdhistor,craphis.dshistor
+         GROUP BY craplem.cdhistor,craphis.dshistor;
+         /* Nao devem ser enviados registros da CRAPLCM, somente da CRAPLEM
          --Melhoria 155
          UNION
-         SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */ 
+         SELECT \*+ index(craplcm CRAPLCM##CRAPLCM2) *\
                SUM(craplcm.vllanmto) vllanmto
                ,craplcm.cdhistor
                ,craphis.dshistor
            FROM craplcm, craphis, crapepr
           WHERE crapepr.cdcooper = craplcm.cdcooper
             AND crapepr.nrdconta = craplcm.nrdconta
-            and crapepr.tpemprst = 1
+            and crapepr.tpemprst IN (1,2) -- PP ou POS
             AND craphis.cdcooper = craplcm.cdcooper
             AND craphis.cdhistor = craplcm.cdhistor
             AND craplcm.cdcooper = pr_cdcooper
@@ -579,7 +593,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craphis.cdhistor in (1070, 1060, 1071, 1072)
          GROUP BY craplcm.cdhistor,craphis.dshistor
          UNION
-         SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */ 
+         SELECT \*+ index(craplcm CRAPLCM##CRAPLCM2) *\
                SUM(craplcm.vllanmto) vllanmto
                ,craplcm.cdhistor
                ,craphis.dshistor
@@ -593,7 +607,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND crapepr.nrctremp = pr_nrctremp
             AND craplcm.dtmvtolt = pr_dtmvtolt
             AND craphis.cdhistor in (2277, 2278, 2279)
-         GROUP BY craplcm.cdhistor,craphis.dshistor;
+         GROUP BY craplcm.cdhistor,craphis.dshistor;*/
        --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
@@ -619,7 +633,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                    crawepr.nrctrliq##8 ,
                    crawepr.nrctrliq##9 ,
                    crawepr.nrctrliq##10 );
-
+   
        
        CURSOR cr_boleto (pr_cdcooper IN crapcyb.cdcooper%TYPE
                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
@@ -692,6 +706,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        vr_index           INTEGER;
        vr_idindice        VARCHAR2(40) := ''; -- Indice da tabela de acordos
        vr_idboleto        VARCHAR2(40) := '';
+       vr_flacordo        NUMBER(1);
 
        --Tabela de Erros
        vr_tab_erro       gene0001.typ_tab_erro;
@@ -1853,7 +1868,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                           LPAD(pr_rw_crapcyb.nrdconta,10,'0') || LPAD(pr_rw_crapcyb.nrctremp,10,'0');
 
            IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
-             RETURN;
+             vr_flacordo := 1;
+           ELSE
+             vr_flacordo := 0;
            END IF;
 
            -- Buscar os dados cadastrado na tela CADCYB
@@ -1863,21 +1880,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                            ,pr_nrctremp => pr_rw_crapcyb.nrctremp);
                            
            FETCH cr_crapcyc1 INTO rw_crapcyc1;           
-           IF cr_crapcyc1%FOUND THEN
+            
              CLOSE cr_crapcyc1;             
-             -- Caso o contrato estiver em Cobrança Judicial nao será enviado a baixa para o CYBER
-             IF NVL(rw_crapcyc1.flgjudic,0) = 1 THEN
-               RETURN;
-           END IF;
-           ELSE
-             CLOSE cr_crapcyc1;
-           END IF;
 
            --Se a origem = Conta
            IF pr_rw_crapcyb.cdorigem = 1 THEN
              BEGIN
-
-               UPDATE crapcyb SET crapcyb.dtdbaixa = pr_dtmvtolt
+               -- Caso o contrato estiver em Cobrança Judicial (rw_crapcyc1.flgjudic = 1) nao deve atualizar a data da baixa, apenas os valores para efetuar a regularização do contrato
+               UPDATE crapcyb SET crapcyb.dtdbaixa = case when nvl(rw_crapcyc1.flgjudic,0) = 0 and vr_flacordo = 0 then pr_dtmvtolt
+                                                          else crapcyb.dtdbaixa end
                                  ,crapcyb.vlprapga = pr_rw_crapcyb.vlpreapg
                                  ,crapcyb.vlpreapg = 0
                                  ,crapcyb.vlsdevan = pr_rw_crapcyb.vlsdeved
@@ -1902,7 +1913,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              END;
            ELSE
              BEGIN
-               UPDATE crapcyb SET crapcyb.dtdbaixa = pr_dtmvtolt
+               -- Caso o contrato estiver em Cobrança Judicial (rw_crapcyc1.flgjudic = 1) nao deve atualizar a data da baixa, apenas os valores para efetuar a regularização do contrato
+               UPDATE crapcyb SET crapcyb.dtdbaixa = case when nvl(rw_crapcyc1.flgjudic,0) = 0 and vr_flacordo = 0 then pr_dtmvtolt
+                                                          else crapcyb.dtdbaixa end
                                  ,crapcyb.vlprapga = nvl(pr_rw_crapcyb.vlpreapg,0)
                                  ,crapcyb.vlpreapg = 0
                WHERE crapcyb.rowid = pr_rw_crapcyb.rowid
@@ -1922,8 +1935,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            END IF;
 
+           -- Caso o contrato estiver em Cobrança Judicial ou existir acordo, nao será enviado a baixa para o CYBER
+           IF vr_flacordo = 1 or NVL(rw_crapcyc1.flgjudic,0) = 1 THEN
+             RETURN;
+           END IF;
+
            --Incrementar Contador
            pc_incrementa_linha(pr_nrolinha => 7);
+           
            --Montar Linha para arquivo
            pc_monta_linha('302',1,7);
            pc_monta_linha('1',4,7);
@@ -1932,8 +1951,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrdconta,'99999999'),13,7);
            pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrctremp,'99999999'),21,7);
            pc_monta_linha(pr_dtmvtlt2,30,7);
+           
            --Escrever no Clob
            pc_escreve_xml(NULL,7);
+           
          EXCEPTION
            WHEN vr_exc_erro THEN
              pr_cdcritic:= vr_cdcritic;
@@ -2036,8 +2057,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          END IF;
          CLOSE cr_crapcyb;
 
-         -- Se for produto novo, deve-se fazer o calculo antigo
-         IF rw_crapcyb.tpemprst = 1 THEN
+         -- Se for PP ou POS, deve-se fazer o calculo antigo
+         IF rw_crapcyb.tpemprst IN (1,2) THEN
            --Data Pagamento preenchida e Data de Baixa nula
            IF rw_crapcyb.dtdpagto IS NOT NULL AND rw_crapcyb.dtdbaixa IS NULL THEN
              IF rw_crapcyb.cdlcremp = 100 AND rw_crapcyb.flgpreju = 1 THEN
@@ -5387,11 +5408,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
      EXCEPTION
        WHEN vr_exc_fimprg THEN
-         -- Se foi retornado apenas codigo
-         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
            -- Buscar a descricao da critica
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-         END IF;
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
          -- Se foi gerada critica para envio ao log
          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
            -- Envio centralizado de log de erro
@@ -5412,11 +5431,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          -- Efetuar commit pois gravaremos o que foi processado ate entao
          COMMIT;
        WHEN vr_exc_saida THEN
-         -- Se foi retornado apenas codigo
-         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+
            -- Buscar a descricao
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-         END IF;
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
          -- Devolvemos codigo e critica encontradas
          pr_cdcritic := NVL(vr_cdcritic,0);
          pr_dscritic := vr_dscritic;
@@ -5425,9 +5443,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          --Zerar tabela de memoria auxiliar
          pc_limpa_tabela;
        WHEN OTHERS THEN
+
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+       
+         cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
+                                      pr_compleme => vr_dscritic);
+
          -- Efetuar retorno do erro nao tratado
          pr_cdcritic := 0;
-         pr_dscritic := sqlerrm;
+         pr_dscritic := vr_dscritic || ' - ' || sqlerrm;
          -- Efetuar rollback
          ROLLBACK;
          --Zerar tabela de memoria auxiliar
