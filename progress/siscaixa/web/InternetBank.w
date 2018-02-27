@@ -7104,6 +7104,9 @@ PROCEDURE proc_operacao141:
            aux_xmldados = GET-VALUE("xmldados")
            aux_dssessao = GET-VALUE("dssessao")
            aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
+           
+    IF  aux_tpoperac = 3 OR aux_tpoperac = 6  THEN
+        ASSIGN aux_dtmvtocd = DATE(GET-VALUE("dtmvtolt")).       
 
     RUN sistema/internet/fontes/InternetBank141.p (INPUT aux_cdcooper,
                                                    INPUT aux_dtmvtocd,
