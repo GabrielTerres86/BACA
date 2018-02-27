@@ -199,6 +199,7 @@ PROCEDURE efetua-debito-consorcio:
                                craplau.cdhistor = 1233                        OR 
                                craplau.cdhistor = 1234)                       AND
                                craplau.insitlau = 1 
+                               EXCLUSIVE-LOCK
                                BREAK BY craplau.cdagenci
                                      BY craplau.cdbccxlt 
                                      BY craplau.cdbccxpg 
