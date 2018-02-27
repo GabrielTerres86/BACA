@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 16/01/2018
+     Data    : Fevereiro/2006                  Ultima atualizacao: 19/01/2018
 
      Dados referentes ao programa:
 
@@ -348,6 +348,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                  16/01/2018 - Somente chamar a rotina de atualizacao dos dados financeiros para o Cyber
                               caso a cooperativa conectada seja uma singular. (Chamado 831629) - (Fabricio)
                               
+
+                 19/01/2017 - Regra (IF pr_cdprogra = 'CRPS280' THEN) comentada para o projeto Contratação de Crédito 
+		                      Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
+							  (Daniel Junior - AMcom)
   ............................................................................. */
 
    DECLARE
@@ -3098,7 +3102,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          END IF;
 
          -- Somente em caso de chamada pelo crps280
-         IF pr_cdprogra = 'CRPS280' THEN
+         
+		 --IF pr_cdprogra = 'CRPS280' THEN
+		 -- Regra (IF) comentada para o projeto Contratação de Crédito 
+		 -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
          
             -- Renato Darosci - 30/08/2016 - ao invés de utilizar o percentual de 0.5 na 
             -- condição, vamos verificar o nível de risco "A".
@@ -3194,7 +3201,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                  END IF; --> Sem estou de conta
                END IF; --> Nivel <> A               
             END IF; --> Somente com risco em dia, que não seja do tipo A, Sem Prejuízo e somente Empréstimo
-         END IF; --> Somente para crps280
+         --END IF; --> Somente para crps280
+		 -- Regra (END IF) comentada para o projeto Contratação de Crédito 
+		 -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
+
 
          -- Alimentar varíaveis para detalhamento dos riscos atual e anterior
          vr_dtdrisco := NULL;

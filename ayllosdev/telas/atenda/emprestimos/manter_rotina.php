@@ -32,6 +32,8 @@
  * 021: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
  * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 023: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 024: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 025: [24/01/2018] Processamento do campo DSNIVORI (risco original da proposta) (Reginaldo - AMcom)
  */
 ?>
 
@@ -418,6 +420,8 @@
 	$xml .= '		<cdlcremp>'.$cdlcremp.'</cdlcremp>';
 	$xml .= '		<flgimppr>'.$flgimppr.'</flgimppr>';
 	$xml .= '		<idquapro>'.$idquapro.'</idquapro>';
+	//Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) 
+	//$xml .= '		<idquaprc>'.$idquaprc.'</idquaprc>';
 	$xml .= '		<flgpagto>'.$flgpagto.'</flgpagto>';
 	$xml .= '		<nrctaav2>'.$nrctaav2.'</nrctaav2>';
 	$xml .= '		<dtcnsspc>'.$dtcnsspc.'</dtcnsspc>';

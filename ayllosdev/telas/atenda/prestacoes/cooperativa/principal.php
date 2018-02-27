@@ -43,6 +43,7 @@
  * 032: [23/06/2017] Inclusao dos campos do produto Pos-Fixado. (Jaison/James - PRJ298)
  * 032: [05/10/2017] - Diogo            (MoutS): Adicionado campo vliofcpl no formulário (Projeto 410 - RF 23)
  * 033: [11/10/2017] - Heitor          (Mouts): Liberacao da melhoria 442
+ * 034: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  */
 ?>
 
@@ -171,6 +172,23 @@
             $xml .= "</Root>";
             
             $xmlResult = getDataXML($xml);
+
+			//Chama a ação de consultar o controle da qualificação da operação
+			$xmlC  = "";
+			$xmlC .= "<Root>";
+			$xmlC .= "  <Dados>";
+			$xmlC .= "    <nrdconta>".$nrdconta."</nrdconta>";
+			$xmlC .= "    <nrctremp>".$nrctremp."</nrctremp>";
+			$xmlC .= "  </Dados>";
+			$xmlC .= "</Root>";
+
+			$xmlResultC = mensageria($xmlC, "TELA_ATENDA_PRESTACOES", "CONSULTAR_CONTROLE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+			$xmlObjetoC = getObjectXML($xmlResultC);	
+			
+			$paramC = $xmlObjetoC->roottag->tags[0]->tags[0];
+			
+			$idquaprc = getByTagName($paramC->tags,'idquaprc');	
+			$dsquaprc = obtemDescricaoQualificacao($idquaprc);			
 		}
         
 		$xmlObjeto = getObjectXML($xmlResult);
@@ -323,6 +341,7 @@
 			arrayProposta['vlpreemp'] = '<? echo getByTagName($proposta,'vlpreemp'); ?>';     
 			arrayProposta['qtpreemp'] = '<? echo getByTagName($proposta,'qtpreemp'); ?>';     
 			arrayProposta['nivrisco'] = '<? echo getByTagName($proposta,'nivrisco'); ?>';     
+			arrayProposta['nivriori'] = '<? echo getByTagName($proposta,'nivriori'); ?>'; // nível de risco original
 			arrayProposta['nivcalcu'] = '<? echo getByTagName($proposta,'nivcalcu'); ?>';     
 			arrayProposta['cdlcremp'] = '<? echo getByTagName($proposta,'cdlcremp'); ?>';     
 			arrayProposta['cdfinemp'] = '<? echo getByTagName($proposta,'cdfinemp'); ?>';     
@@ -344,7 +363,9 @@
 			arrayProposta['dslcremp'] = '<? echo retiraCharEsp(getByTagName($proposta,'dslcremp')); ?>';
 			arrayProposta['dsfinemp'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsfinemp')); ?>';
 			arrayProposta['idquapro'] = '<? echo getByTagName($proposta,'idquapro'); ?>';
+			arrayProposta['idquaprc'] = '<? echo $idquaprc; ?>';
 			arrayProposta['dsquapro'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsquapro')); ?>';
+			arrayProposta['dsquaprc'] = '<? echo $dsquaprc; ?>';
 			arrayProposta['percetop'] = '<? echo getByTagName($proposta,'percetop'); ?>';
 			arrayProposta['dtmvtolt'] = '<? echo getByTagName($proposta,'dtmvtolt'); ?>';
 			arrayProposta['nrctremp'] = '<? echo getByTagName($proposta,'nrctremp'); ?>';
@@ -978,6 +999,34 @@
 		bloqueiaFundo($('#divRotina'));
 	</script>
 <? } ?>
+
+<?php
+	//Função para opções da Qualificação da Operação
+	function obtemDescricaoQualificacao($idQuaOpe){
+		$dsquaprc = "";
+		switch ($idQuaOpe) {
+			case 1:
+				$dsquaprc = "Operação Normal";
+				break;
+			case 2:
+				$dsquaprc = "Renovação Crédito";
+				break;
+			case 3:
+				$dsquaprc = "Renegociação Crédito";
+				break;
+			case 4:
+				$dsquaprc = "Composição Dívida";				
+				break;
+			case 5:
+				$dsquaprc = "Cessão de Cartão";				
+				break;
+			default:
+				$dsquaprc = "Operação Inexistente";				;
+				break;
+		}
+		return $dsquaprc;
+	}
+?>
 
 <?php
 	function retiraCharEsp($valor){

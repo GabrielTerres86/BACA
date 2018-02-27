@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --  Sistema  : Rotinas para Rating dos Cooperados
   --  Sigla    : RATI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Maio/2013.                   Ultima atualizacao: 28/06/2017
+  --  Data     : Maio/2013.                   Ultima atualizacao: 31/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -157,6 +157,11 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --
   --            30/01/2018 - Ajuste na flgcriar para que faca o update na tabela crapnrc antes da rotina de limpeza de ratings antigos.
   --                         Heitor (Mouts) - Chamado 839107.
+
+  --			31/01/2018 - Criado função nova para qualificação da operação. 
+  --			             Alterado pc_natureza_operacao para demais parâmetros. 
+  --						 (Diego Simas - AMcom) 
+  --
   ---------------------------------------------------------------------------------------------------------------
   -- Tipo de Tabela para dados provisao CL
   TYPE typ_tab_dsdrisco IS TABLE OF VARCHAR2(5) INDEX BY PLS_INTEGER;
@@ -701,6 +706,16 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                                        ,pr_nrctrato     IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
                                        ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro						   
                                     
+  /***************************************************************************     
+    Função para retornar ID Qualificação quando alterado pelo controle.                                       
+  ****************************************************************************/       
+                    
+  FUNCTION fn_verifica_qualificacao(pr_nrdconta IN NUMBER  --> Número da conta
+                                   ,pr_nrctremp IN NUMBER  --> Contrato
+                                   ,pr_idquapro IN NUMBER  --> Id Qualif Operacao
+                                   ,pr_cdcooper IN NUMBER) --> Código da Cooperativa
+                            RETURN INTEGER;
+    
 END RATI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
@@ -710,7 +725,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   --  Sistema  : Rotinas para Rating dos Cooperados
   --  Sigla    : RATI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Maio/2013.                   Ultima atualizacao: 28/06/2017
+  --  Data     : Maio/2013.                   Ultima atualizacao: 31/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -726,6 +741,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   --                       - Inclusão para setar o modulo de todas procedures da Package
   --                         ( Belli - Envolti - 28/06/2017 - Chamado 660306).
   --
+  --            31/01/2018 - Criado função nova para qualificação da operação. 
+  --				         Alterado pc_natureza_operacao para demais parâmetros. 
+  --						 (Diego Simas - AMcom) 
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo que compreende o vetor com valor do rating da TAB036 por coop */
@@ -6520,6 +6538,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     rw_crapprp4 cr_crapprp%ROWTYPE;
     rw_craplcr3 cr_craplcr%ROWTYPE;
     rw_craplim4 cr_craplim%ROWTYPE;
+	vr_idqualif NUMBER;
     
   BEGIN
 
@@ -6617,7 +6636,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         rat_cdsubmod := rw_craplcr3.cdsubmod;
         rat_dstpoper := rw_craplcr3.dsoperac;
         -- Renegociacao / Composicao de divida
-        IF rw_crawepr5.idquapro > 2 THEN
+		
+		--simas--
+		vr_idqualif := fn_verifica_qualificacao(pr_nrdconta => pr_nrdconta,
+												pr_nrctremp => pr_nrctrato,
+												pr_idquapro => rw_crawepr5.idquapro,
+												pr_cdcooper => pr_cdcooper);
+		
+        -- IF rw_crawepr5.idquapro > 2 THEN
+		IF vr_idqualif > 2 THEN
           vr_nrseqite := 6;
         ELSE
           -- Buscar conforme linha de credito
@@ -7176,6 +7203,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   PROCEDURE pc_natureza_operacao(pr_tpctrato IN crapnrc.tpctrrat%TYPE --> Tipo Contrato Rating
                                 ,pr_idquapro IN INTEGER       --> Numero Contrato Rating
                                 ,pr_dsoperac IN VARCHAR2      --> Indicado se deve criar o rating
+                                ,pr_cdcooper IN INTEGER       --> Código da cooperativa
+                                ,pr_nrctrato IN INTEGER       --> Número do Contrato
+                                ,pr_nrdconta IN INTEGER       --> Número da Conta
                                 ,pr_nrseqite OUT NUMBER       --> Valor da dívida
                                 ,pr_dscritic OUT VARCHAR2) IS --> Descricao do erro
 
@@ -7197,6 +7227,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                  28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                               ( Belli - Envolti - 28/06/2017 - Chamado 660306).
 
+                 31/01/2018 - Alteração para novos parâmetros de entrada 
+                              (Atendendo a qualificação da Oper. Controle)
+                              (Diego Simas - AMcom)  
 
   ............................................................................. */
   --------------- VARIAVEIS ----------------
@@ -7207,8 +7240,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       
     IF pr_tpctrato = 90 THEN  -- Emprestimo / Financiamento
       IF pr_idquapro > 2 THEN
-        -- Renegociacao / Composicao de divida
-        IF pr_idquapro in (3,4) THEN
+        -- Renegociacao / Composicao de divida / Cessao de Cartao
+        IF pr_idquapro in (3,4,5) THEN
           pr_nrseqite := 4;
         END IF;
       ELSE
@@ -7815,6 +7848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     vr_index varchar2(100);
     vr_cdcooper crapass.cdcooper%TYPE;
     vr_nrdconta crapass.nrdconta%TYPE;
+	vr_idqualif NUMBER;
 
     rw_crawepr8 cr_crawepr%ROWTYPE;
     rw_crapepr2 cr_crapepr%ROWTYPE;
@@ -8003,8 +8037,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     END IF;
 
     IF pr_tpctrato = 90  THEN  /* Emprestimo / Financiamento */
-      IF vr_fcrawepr AND
-         rw_crawepr8.idquapro = 3   THEN  /* Renegociacao */
+	   vr_idqualif := fn_verifica_qualificacao(pr_nrdconta => pr_nrdconta,
+												pr_nrctremp => pr_nrctrato,
+												pr_idquapro => rw_crawepr8.idquapro,
+												pr_cdcooper => pr_cdcooper);
+												 
+      IF vr_fcrawepr AND vr_idqualif = 3 THEN
+	     -- simas 
+	     -- rw_crawepr8.idquapro = 3   THEN  /* Renegociacao */
+		 -- vr_idqualif = 3 THEN /* Renegociacao */ 
         vr_nrseqite := 3;
       END IF;
     END IF;
@@ -8808,6 +8849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   -- Classificação e Nota do cooperado
   vr_notacoop NUMBER;
   vr_clascoop VARCHAR2(10);
+  vr_idqualif NUMBER;
   ----------------- CURSOR ------------------
 
   rw_crawepr9 cr_crawepr%ROWTYPE;
@@ -8901,6 +8943,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     /**********************************************************************
      Item 2_1 - Finalidade da operacao
     **********************************************************************/
+
+	vr_idqualif := fn_verifica_qualificacao(pr_nrdconta => pr_nrdconta,
+												pr_nrctremp => pr_nrctrato,
+												pr_idquapro => rw_crawepr9.idquapro,
+												pr_cdcooper => pr_cdcooper);
+
     IF pr_tpctrato = 90 THEN  /* Emprestimo / Financiamento */
       -- se encontrou registro na crawepr
       IF vr_fcrawepr THEN
@@ -8910,8 +8958,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         rat_cdsubmod := rw_craplcr6.cdsubmod;
         rat_dstpoper := rw_craplcr6.dsoperac;
         pc_natureza_operacao ( pr_tpctrato => pr_tpctrato          --> Tipo Contrato Rating
-                              ,pr_idquapro => rw_crawepr9.idquapro  --> Numero Contrato Rating
+                              ,pr_idquapro => vr_idqualif          --> Numero Contrato Rating
                               ,pr_dsoperac => rw_craplcr6.dsoperac  --> Indicado se deve criar o rating
+                              ,pr_cdcooper => pr_cdcooper          --> Código da cooperativa
+                              ,pr_nrctrato => pr_nrctrato          --> Número do Contrato
+                              ,pr_nrdconta => pr_nrdconta          --> Número da Conta      
                               ,pr_nrseqite => vr_nrseqite          --> Valor da dívida
                               ,pr_dscritic => vr_dscritic);        --> Descricao do erro
 
@@ -8931,6 +8982,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         pc_natureza_operacao ( pr_tpctrato => pr_tpctrato          --> Tipo Contrato Rating
                               ,pr_idquapro => 1  /* Normal */      --> Numero Contrato Rating
                               ,pr_dsoperac => 'FINANCIAMENTO'      --> Indicado se deve criar o rating
+                              ,pr_cdcooper => pr_cdcooper          --> Código da Cooperativa 
+                              ,pr_nrctrato => pr_nrctrato          --> Número do Contrato
+                              ,pr_nrdconta => pr_nrdconta          --> Número da Conta
                               ,pr_nrseqite => vr_nrseqite          --> Valor da dívida
                               ,pr_dscritic => vr_dscritic);        --> Descricao do erro
         -- Se retornou erro
@@ -8952,6 +9006,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       pc_natureza_operacao ( pr_tpctrato => pr_tpctrato          --> Tipo Contrato Rating
                             ,pr_idquapro => 0                    --> Numero Contrato Rating
                             ,pr_dsoperac => null                 --> Indicado se deve criar o rating
+                            ,pr_cdcooper => pr_cdcooper          --> Código da Cooperativa
+                            ,pr_nrctrato => pr_nrctrato          --> Número do Contrato
+                            ,pr_nrdconta => pr_nrdconta          --> Número da Conta
                             ,pr_nrseqite => vr_nrseqite          --> Valor da dívida
                             ,pr_dscritic => vr_dscritic);        --> Descricao do erro
 
@@ -13011,5 +13068,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       pr_dscritic := 'Erro não tratado na pc_grava_his_crapras ' ||
                      SQLERRM;
   END pc_grava_his_crapras;
+  
+  
+  /* Rotina responsavel por buscar a qualificacao da operacao alterada pelo controle */
+  FUNCTION fn_verifica_qualificacao (pr_nrdconta IN NUMBER  --> Número da conta
+                                    ,pr_nrctremp IN NUMBER  --> Contrato
+                                    ,pr_idquapro IN NUMBER  --> Id Qualif Operacao
+                                    ,pr_cdcooper IN NUMBER) RETURN INTEGER IS
+  BEGIN
+  /* ..........................................................................
+
+     Programa: pc_verifica_qualificacao         Antigo: b1wgen0043.p/verificaQualificacao
+     Sistema : Conta-Corrente - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Diego Simas (AMcom)
+     Data    : Janeiro/2018.                          Ultima Atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que chamado por outros programas.
+     Objetivo  : Buscar o id da qualificação da operação
+                 quando alterada pelo Controle.
+
+     Alteracoes: 
+
+  ............................................................................. */
+    DECLARE
+
+    CURSOR cr_consulta_qualificacao (pr_nrdconta IN crapepr.nrdconta%TYPE
+                                    ,pr_nrctremp IN crapepr.nrctremp%TYPE                                                 
+                                    ,pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+				select crapepr.idquaprc
+          from crapepr
+         where crapepr.cdcooper = pr_cdcooper
+           and crapepr.nrdconta = pr_nrdconta
+           and crapepr.nrctremp = pr_nrctremp;
+           rw_consulta_qualificacao cr_consulta_qualificacao%ROWTYPE;      
+    BEGIN
+      OPEN cr_consulta_qualificacao(pr_nrdconta => pr_nrdconta  --> Número da conta
+                                   ,pr_nrctremp => pr_nrctremp  --> Contrato
+                                   ,pr_cdcooper => pr_cdcooper);
+                     
+      FETCH cr_consulta_qualificacao INTO rw_consulta_qualificacao;
+      
+      IF cr_consulta_qualificacao%NOTFOUND THEN
+         
+        --Fechar o cursor
+        CLOSE cr_consulta_qualificacao;
+        
+        RETURN pr_idquapro;
+      
+      ELSE
+        --Fechar o cursor
+        CLOSE cr_consulta_qualificacao;
+        
+        RETURN rw_consulta_qualificacao.idquaprc;        
+      END IF;    
+    EXCEPTION
+      WHEN OTHERS THEN
+        RETURN NULL;
+    END;
+  END;  
+  
 END RATI0001;
 /

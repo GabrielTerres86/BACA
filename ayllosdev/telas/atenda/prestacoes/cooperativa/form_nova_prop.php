@@ -12,6 +12,8 @@
  * 003: [17/06/2014] Trocado posicao dos campos "Linha Credito" por "Finalidade". (Reinert)
  * 004: [11/05/2017] Troca de posicao da Linha de Credito e Finalidade. (Jaison/James - PRJ298)
  * 004: [11/10/2017] Liberacao melhoria 442 (Heitor - Mouts)
+ * 005: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 006: [24/01/2018] Alteração para exibição do campo DSNIVORI como risco de inclusão (Reginaldo - AMcom)
  */	
  ?>
 
@@ -67,6 +69,13 @@
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsquapro" id="dsquapro" type="text" value="" />
 		<br />
+
+		<!--- Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) -->
+		<label for="idquaprc"><? echo utf8ToHtml('Qualif. Op. Contr:') ?></label>
+		<input name="idquaprc" id="idquaprc" type="text" value="" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dsquaprc" id="dsquaprc" type="text" value="" />
+		<br/>		
 		
 		<label for="qtpreemp">Qtd. de Parc.:</label>
 		<input name="qtpreemp" id="qtpreemp" type="text" value="" />		

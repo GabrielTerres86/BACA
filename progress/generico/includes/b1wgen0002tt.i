@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 14/12/2017
+   Data    : Agosto/2007                      Ultima atualizacao: 21/02/2018
 
    Dados referentes ao programa:
 
@@ -184,6 +184,12 @@
                            PRJ339 - CRM (Odirlei-AMcom)
               
 			  05/02/2018 - Inclusao do campo vlrdtaxa na tt tt-extrato_epr. (James)
+			  25/01/2018 - Inclusão do FIELD NIVRIORI na tt-proposta-epr.
+			               (Reginaldo AMcom)
+
+			  21/02/2018 - Inclusão do FIELD IDENEMPR na tt-dados-epr.
+			               (Simas AMcom)
+              
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
     FIELD nrdconta LIKE crapass.nrdconta
@@ -288,7 +294,9 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD tipoempr AS CHAR
     FIELD qtimpctr LIKE crapepr.qtimpctr
     FIELD dtapgoib AS DATE    FORMAT "99/99/9999"
-	FIELD vliofcpl LIKE crapepr.vliofcpl.
+	FIELD vliofcpl LIKE crapepr.vliofcpl
+    
+	FIELD idenempr LIKE crapepr.tpemprst.
     
 DEF TEMP-TABLE tt-dados-epr-out NO-UNDO LIKE tt-dados-epr.
 
@@ -374,7 +382,9 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD vlrtarif AS DECI
     FIELD vlrtotal AS DECI
 	FIELD idcarenc LIKE crawepr.idcarenc
-    FIELD dtcarenc LIKE crawepr.dtcarenc.
+    FIELD dtcarenc LIKE crawepr.dtcarenc
+
+	FIELD nivriori LIKE crawepr.dsnivori.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR
