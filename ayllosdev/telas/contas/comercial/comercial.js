@@ -17,6 +17,9 @@
  *                             ao inves de removidos. (Heitor - Chamado 614746)
  *                03/03/2017 - Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
  *				  27/03/2017 - Ajuste realizado para corrigir o filtro da ocupação. (Kelvin - SD 636559)	
+ *                11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
+ *                05/12/2017 - Alteração para buscar o Nome da Empresa a partir do CNPJ digitado e regra de alteração do nome da empresa.
+ *                             (Mateus Z - Mouts)
  * --------------
  */
 
@@ -184,6 +187,9 @@ function controlaOperacao(operacao, flgConcluir) {
                 eval(response);
                 controlaFoco(operacao);
             }
+			if(operacao == 'CA' || operacao == 'CAE'){
+                buscaNomePessoa();
+            }
             return false;
         }
     });
@@ -228,7 +234,6 @@ function manterRotina(operacao) {
     bairoct1 = $('#bairoct1', '#' + nomeForm).val();
     cidadct1 = $('#cidadct1', '#' + nomeForm).val();
     ufresct1 = $('#ufresct1', '#' + nomeForm).val();
-    cxpotct1 = $('#cxpotct1', '#' + nomeForm).val();
     inpolexp = $('#inpolexp', '#' + nomeForm).val();
     inpolexpAnt = $('#inpolexpAnt', '#' + nomeForm).val();
 
@@ -237,7 +242,6 @@ function manterRotina(operacao) {
     cdturnos = normalizaNumero(cdturnos);
     nrcadast = normalizaNumero(nrcadast);
     cepedct1 = normalizaNumero(cepedct1);
-    cxpotct1 = normalizaNumero(cxpotct1);
     inpolexp = normalizaNumero(inpolexp);
 
     nmextemp = trim(nmextemp);
@@ -255,7 +259,7 @@ function manterRotina(operacao) {
             vldrendi: vldrendi, vldrend4: vldrend4, vldrend2: vldrend2, vldrend3: vldrend3,
             cdturnos: cdturnos, cepedct1: cepedct1, endrect1: endrect1, nrendcom: nrendcom,
             complcom: complcom, bairoct1: bairoct1, cidadct1: cidadct1, ufresct1: ufresct1,
-            cxpotct1: cxpotct1, flgcadas: flgcadas, flgContinuar: flgContinuar,
+			flgcadas: flgcadas, flgContinuar: flgContinuar,
             inpolexp: inpolexp, inpolexpAnt: inpolexpAnt,
             redirect: 'script_ajax'
         },
@@ -282,10 +286,11 @@ function controlaLayout(operacao) {
     $('#divConteudoOpcao').css('height', altura);
 
     // FIELDSET INF. PROFISSIONAIS
-    var rotulos_1 = $('label[for="cdnatopc"],label[for="tpcttrab"],label[for="nmextemp"]', '#' + nomeForm);
+    var rotulos_1 = $('label[for="cdnatopc"],label[for="tpcttrab"],label[for="nrcpfemp"]', '#' + nomeForm);
     var rColFS1_60 = $('label[for="cdocpttl"],label[for="cdempres"]', '#' + nomeForm);
-    var rColFS1_70 = $('label[for="nrcpfemp"],label[for="cdnvlcgo"]', '#' + nomeForm);
+    var rColFS1_70 = $('label[for="cdnvlcgo"]', '#' + nomeForm);
     var rColFS1_53 = $('label[for="dsproftl"],label[for="dtadmemp"]', '#' + nomeForm);
+    var rColFS1_90 = $('label[for="nmextemp"]', '#' + nomeForm);
     var rLinha_1 = $('label[for="vlsalari"],label[for="nrcadast"]', '#' + nomeForm);
     var rTurno = $('label[for="cdturnos"]', '#' + nomeForm);
     var rOtrsrend = $('label[for="otrsrend"]', '#' + nomeForm);
@@ -295,6 +300,7 @@ function controlaLayout(operacao) {
     rColFS1_60.css('width', '60px');
     rColFS1_70.css('width', '70px');
     rColFS1_53.css('width', '53px');
+    rColFS1_90.css('width', '90px');
     rLinha_1.addClass('rotulo-linha');
     rOtrsrend.addClass('rotulo-linha').css('width', '217px');
     rTurno.addClass('rotulo').css('width', '40px');
@@ -324,7 +330,7 @@ function controlaLayout(operacao) {
     cDescOcupacao.addClass('descricao').css('width', '135px');
     cDescEmpresa.addClass('descricao').css('width', '135px');
     cTpCrtTrb.css('width', '185px');
-    cNomeEmp.css('width', '248px').attr('maxlength', '35').addClass('alphanum');
+    cNomeEmp.css('width', '228px').attr('maxlength', '35').addClass('alphanum');
     cCnpj.addClass('cnpj').css('width', '120px');
     cFuncao.css('width', '117px').attr('maxlength', '20').addClass('alphanum');
     cNivelCargo.css('width', '120px');
@@ -341,7 +347,6 @@ function controlaLayout(operacao) {
     var rEnd = $('label[for="endrect1"]', '#' + nomeForm);
     var rNum = $('label[for="nrendcom"]', '#' + nomeForm);
     var rCom = $('label[for="complcom"]', '#' + nomeForm);
-    var rCax = $('label[for="cxpotct1"]', '#' + nomeForm);
     var rBai = $('label[for="bairoct1"]', '#' + nomeForm);
     var rEst = $('label[for="ufresct1"]', '#' + nomeForm);
     var rCid = $('label[for="cidadct1"]', '#' + nomeForm);
@@ -350,17 +355,15 @@ function controlaLayout(operacao) {
     rEnd.addClass('rotulo-linha').css('width', '33px');
     rNum.addClass('rotulo').css('width', '55px');
     rCom.addClass('rotulo-linha').css('width', '52px');
-    rCax.addClass('rotulo').css('width', '55px');
-    rBai.addClass('rotulo-linha').css('width', '52px');
-    rEst.addClass('rotulo').css('width', '55px');
-    rCid.addClass('rotulo-linha').css('width', '52px');
+    rBai.addClass('rotulo').css('width', '55px');
+    rEst.addClass('rotulo-linha').css('width', '55px');
+    rCid.addClass('rotulo').css('width', '55px');
 
     var cTodos_2 = $('input,select', '#' + nomeForm + ' fieldset:eq(1)');
     var cCep = $('#cepedct1', '#' + nomeForm);
     var cEnd = $('#endrect1', '#' + nomeForm);
     var cNum = $('#nrendcom', '#' + nomeForm);
     var cCom = $('#complcom', '#' + nomeForm);
-    var cCax = $('#cxpotct1', '#' + nomeForm);
     var cBai = $('#bairoct1', '#' + nomeForm);
     var cEst = $('#ufresct1', '#' + nomeForm);
     var cCid = $('#cidadct1', '#' + nomeForm);
@@ -369,7 +372,6 @@ function controlaLayout(operacao) {
     cEnd.addClass('alphanum').css('width', '353px').attr('maxlength', '40');
     cNum.addClass('numerocasa').css('width', '65px').attr('maxlength', '7');
     cCom.addClass('alphanum').css('width', '353px').attr('maxlength', '40');
-    cCax.addClass('caixapostal').css('width', '65px').attr('maxlength', '6');
     cBai.addClass('alphanum').css('width', '353px').attr('maxlength', '40');
     cEst.css('width', '65px');
     cCid.addClass('alphanum').css('width', '353px').attr('maxlength', '25');
@@ -597,17 +599,6 @@ function controlaLayout(operacao) {
                 return false;
             }
         });
-
-        // Acionar o botao Salvar no enter do ultinmo campo
-        cCax.unbind("keydown").bind("keydown", function (e) {
-            if (e.keyCode == 13) {
-                $("#btSalvar", "#divBotoes").trigger("click");
-                return false;
-            }
-        });
-
-		
-
     }
 
     cValores_3.unbind("keydown").bind("keydown", function (e) {
@@ -630,7 +621,6 @@ function controlaLayout(operacao) {
     layoutPadrao();
     cCadEmp.trigger('blur');
     cCep.trigger('blur');
-    cCax.trigger('blur');
     cCnpj.trigger('blur');
     hideMsgAguardo();
     bloqueiaFundo(divRotina);
@@ -645,11 +635,12 @@ function controlaFoco(operacao) {
     if (in_array(operacao, [''])) {
         $('#btAlterar', '#divBotoes').focus();
     } else if (operacao == 'CAE') {
-        if ((cooperativa == 2 && $('#cdempres', '#' + nomeForm).val() == 88) || $('#cdempres', '#' + nomeForm).val() == 81) {
-            $('#nmextemp', '#' + nomeForm).focus();
-        } else {
-            $('#dsproftl', '#' + nomeForm).focus();
-        }
+        $('#nrcpfemp', '#' + nomeForm).focus();
+        // if ((cooperativa == 2 && $('#cdempres', '#' + nomeForm).val() == 88) || $('#cdempres', '#' + nomeForm).val() == 81) {
+        //     $('#nmextemp', '#' + nomeForm).focus();
+        // } else {
+        //     $('#dsproftl', '#' + nomeForm).focus();
+        // }
     } else {
         $('#cdnatopc', '#' + nomeForm).focus();
     }
@@ -1227,4 +1218,51 @@ function voltarRotina() {
 function proximaRotina() {
     hideMsgAguardo();
     acessaOpcaoAbaDados(3, 1, '@');
+}
+
+function buscaNomePessoa(){
+
+    var nrcpfemp = $('#nrcpfemp').val();
+
+    hideMsgAguardo();
+
+    var mensagem = '';
+
+    mensagem = 'Aguarde, buscando nome da pessoa ...';
+
+    showMsgAguardo(mensagem);
+
+    var nrcpfemp = $('#nrcpfemp').val();
+
+    nrcpfemp = normalizaNumero(nrcpfemp);
+    
+    // Nao deve buscar nome caso campo esteja zerado/em branco
+    if (nrcpfemp == "" || nrcpfemp == "0" ){        
+        hideMsgAguardo();
+        return false;
+    }
+    
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + 'telas/contas/comercial/busca_nome_pessoa.php',
+        data: {
+            nrcpfemp: nrcpfemp,
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+        },
+        success: function (response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+            }
+        }
+    });
 }
