@@ -23,7 +23,7 @@
 
    Programa: b1wgen0003.p
    Autora  : Junior.
-   Data    : 20/10/2005                     Ultima atualizacao: 28/06/2016 
+   Data    : 20/10/2005                     Ultima atualizacao: 09/08/2017
    
 
    Dados referentes ao programa:
@@ -208,6 +208,11 @@
 
 			   28/06/2016 - Incluir conta na busca do maximo Float na consulta-lancamento-periodo
 			                (Marcos-Supero #477843)
+
+               09/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
+         05/10/2017 - Ajuste para desconsiderar a situacao da folha de pagamento quando esta em 
+                      Transacao Pendente (Rafael Monteiro - Mouts)
 
 ............................................................................ */
 
@@ -518,7 +523,12 @@ PROCEDURE consulta-lancto-car.
                         tt-lancamento_futuro.cdbccxlt = INT(xText:NODE-VALUE)  WHEN xField:NAME = "cdbccxlt"
                         tt-lancamento_futuro.nrdolote = INT(xText:NODE-VALUE)  WHEN xField:NAME = "nrdolote"
                         tt-lancamento_futuro.nrseqdig = INT(xText:NODE-VALUE)  WHEN xField:NAME = "nrseqdig"
-                        tt-lancamento_futuro.dtrefere = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtrefere".
+                        tt-lancamento_futuro.dtrefere = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtrefere"
+                        tt-lancamento_futuro.cdtiptra = INT(xText:NODE-VALUE)  WHEN xField:NAME = "cdtiptra"
+                        tt-lancamento_futuro.idlancto = INT(xText:NODE-VALUE)  WHEN xField:NAME = "idlancto"
+                        tt-lancamento_futuro.idlstdom = INT(xText:NODE-VALUE)  WHEN xField:NAME = "idlstdom"
+                        tt-lancamento_futuro.incancel = INT(xText:NODE-VALUE)  WHEN xField:NAME = "incancel".
+                        
                END.              
              
            END.    
@@ -1094,6 +1104,7 @@ PROCEDURE consulta-lancamento-periodo.
     /* Lancamentos de Debito de Folha */
     FOR EACH crappfp WHERE crappfp.cdcooper = p-cdcooper
                        AND crappfp.idsitapr > 3 /* Aprovados */
+                       AND crappfp.idsitapr <> 6 /*Transacao Pendente*/
                        AND crappfp.flsitdeb = 0 /* Ainda nao debitado */
                        NO-LOCK
        ,EACH craplfp WHERE craplfp.cdcooper = crappfp.cdcooper
@@ -1170,6 +1181,7 @@ PROCEDURE consulta-lancamento-periodo.
     /* Lancamentos de Debitos de Tarifas */
     FOR EACH crappfp WHERE crappfp.cdcooper =  p-cdcooper
                        AND crappfp.idsitapr > 3 /* Aprovados */
+                       AND crappfp.idsitapr <> 6 /*Transacao Pendente*/
                        AND crappfp.flsittar = 0 /* Ainda nao debitado a tarifa */
                        AND crappfp.vltarapr > 0 /* Com tarifa a cobrar */
                        NO-LOCK
@@ -1267,6 +1279,7 @@ PROCEDURE consulta-lancamento-periodo.
     /* Lancamentos de Creditos de Folha */
     FOR EACH crappfp WHERE crappfp.cdcooper =  p-cdcooper
                        AND crappfp.idsitapr > 3 /* Aprovados */
+                       AND crappfp.idsitapr <> 6 /*Transacao Pendente*/
                        AND crappfp.flsitcre = 0 /* Pagamento ainda não creditado */
                        NO-LOCK
        ,EACH craplfp WHERE craplfp.cdcooper = crappfp.cdcooper
@@ -1598,8 +1611,8 @@ PROCEDURE consulta-lancamento-periodo.
         IF   par_indebcre = "C"    THEN
              NEXT.
 
-        /* Emprestimo novo */
-        IF tt-dados-epr.tpemprst = 1 THEN
+        IF tt-dados-epr.tpemprst = 1 OR   /* PP */
+           tt-dados-epr.tpemprst = 2 THEN /* POS */
            DO:
                /* Valor da parcela vencida */
                IF tt-dados-epr.vlprvenc > 0 THEN
@@ -1655,7 +1668,7 @@ PROCEDURE consulta-lancamento-periodo.
 
                   END. /* END IF tt-dados-epr.vlpraven > 0 */
               
-           END. /* END IF tt-dados-epr.tpemprst = 1 */
+           END. /* END IF tt-dados-epr.tpemprst = 1 ou 2 */
         ELSE
            DO:
               /**  Magui quando a pessoa estava em atraso nao mostrava tudo */

@@ -23,7 +23,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 15/09/2017
+   Data    : 23/03/2011                        Ultima atualizacao: 06/10/2017
     
    Dados referentes ao programa:
 
@@ -275,6 +275,8 @@
 
                15/09/2017 - Ajuste na variavel de retorno dos co-responsaveis
                             pois estourava para conta com muitos AVAIS (Marcos-Supero)               
+                            
+               06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo convertida (Marcos-Supero)                            
                             
 .............................................................................*/
 
@@ -997,8 +999,11 @@ PROCEDURE gera-impressao-empr:
     DEF VAR  par_vltotccr AS DECI                                   NO-UNDO.
     DEF VAR  par_vltotpre AS DECI                                   NO-UNDO.
     DEF VAR  aux_flimpcet AS LOG                                    NO-UNDO.
-    DEF VAR aux_nmdoarqv AS CHAR                                    NO-UNDO.
-    DEF VAR aux_dtlibera AS DATE                                    NO-UNDO.
+
+    DEF VAR  aux_nmdoarqv AS CHAR                                   NO-UNDO.
+    DEF VAR  aux_dtlibera AS DATE                                   NO-UNDO.
+    DEF VAR  aux_dssrvarq AS CHAR                                   NO-UNDO.
+    DEF VAR  aux_dsdirarq AS CHAR                                   NO-UNDO.
 
     ASSIGN aux_nrpagina = par_nrpagina
            aux_flgentra = par_flgentra
@@ -1431,7 +1436,6 @@ PROCEDURE gera-impressao-empr:
 			par_idorigem = 9) THEN  /** Esteira de credito **/ 
             DO:
                 Email: DO WHILE TRUE:
-    
                     RUN sistema/generico/procedures/b1wgen0024.p PERSISTENT
                         SET h-b1wgen0024.
     
@@ -1484,6 +1488,9 @@ PROCEDURE gera-impressao-empr:
                             LEAVE Gera.                      
                         END.
               
+                        /* Regra para permitir a liberacao do piloto do novo IB 
+                           Barramento SOA fara o download o PDF */
+                        IF  par_cdprogra = "" THEN DO:              
                         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
                         RUN STORED-PROCEDURE pc_efetua_copia_arq_ib 
@@ -1508,6 +1515,62 @@ PROCEDURE gera-impressao-empr:
                             
                             LEAVE Gera.
                         END.            
+                        END.
+                        ELSE DO:
+                            FOR FIRST crapprm WHERE crapprm.cdcooper = 0              AND
+                                                    crapprm.nmsistem = "CRED"         AND
+                                                    crapprm.cdacesso = "ROOT_DIRCOOP" NO-LOCK. END.
+                                                    
+                            IF  NOT AVAIL crapprm  THEN
+                                DO:
+                                    ASSIGN aux_dscritic = "Diretorio da cooperativa nao parametrizado.".
+                    
+                                    IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                        DELETE PROCEDURE h-b1wgen0024.    
+                                
+                                    LEAVE Gera.
+                    END.
+
+                            /* Separar nome do arquivo do diretorio.
+                               Diretorio ROOT /usr/coop/ deve ser substituido pelo parametrizado pois o comando sera executado em PLSQL. */
+                            ASSIGN aux_dsdirarq = REPLACE(SUBSTR(aux_nmarqpdf,1,R-INDEX(aux_nmarqpdf,"/")),"/usr/coop/",crapprm.dsvlrprm)
+                                   aux_nmdoarqv = SUBSTR(aux_nmarqpdf,R-INDEX(aux_nmarqpdf,"/") + 1).
+                            
+                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }                                                                               
+                            
+                            RUN STORED-PROCEDURE pc_copia_arq_para_download 
+                                aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (INPUT par_cdcooper, /* Cooperativa                       */
+                                                  INPUT aux_dsdirarq, /* Diretorio do arquivo              */
+                                                  INPUT aux_nmdoarqv, /* Nome do arquivo                   */
+                                                  INPUT 0,        /* Mover arquivo para novo diretorio */
+                                                 OUTPUT "",
+                                                 OUTPUT "",
+                                                 OUTPUT "").
+        
+                            CLOSE STORED-PROC pc_copia_arq_para_download 
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+                            ASSIGN aux_dscritic = ""
+                                   aux_dssrvarq = ""
+                                   aux_dsdirarq = ""
+                                   aux_dscritic = pc_copia_arq_para_download.pr_des_erro 
+                                                  WHEN pc_copia_arq_para_download.pr_des_erro <> ?
+                                   aux_dssrvarq = pc_copia_arq_para_download.pr_dssrvarq 
+                                                  WHEN pc_copia_arq_para_download.pr_dssrvarq <> ?
+                                   aux_dsdirarq = pc_copia_arq_para_download.pr_dsdirarq 
+                                                  WHEN pc_copia_arq_para_download.pr_dsdirarq <> ?.
+        
+                            IF  aux_dscritic <> ""  THEN
+                            DO:                                
+                               IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                   DELETE PROCEDURE h-b1wgen0024.    
+                                
+                                LEAVE Gera.
+                            END.                           
+                        END.
                     
                     END.
 
@@ -1567,7 +1630,7 @@ PROCEDURE gera-impressao-empr:
                             UNIX SILENT VALUE ("rm " + aux_nmarquiv + "* 2>/dev/null").
                     END.
                 ELSE
-				  IF par_idorigem = 9  THEN
+                IF  par_idorigem = 9  THEN
 				    DO:
 					  UNIX SILENT VALUE ("rm " + aux_nmarqimp + " 2>/dev/null").
 				    END.
@@ -1576,14 +1639,20 @@ PROCEDURE gera-impressao-empr:
          END. 
          
 		 /* Para esteira deve enviar tambem o caminho */
-		 IF par_idorigem = 9 THEN
+        IF  par_idorigem = 3 AND par_cdprogra = "INTERNETBANK"  THEN
+            ASSIGN par_nmarqpdf = aux_dsdirarq + aux_nmdoarqv
+                   par_nmarqimp = aux_dssrvarq
+                   par_flgentrv = aux_flgentra.
+        ELSE
+            DO:
+                IF  par_idorigem = 9 THEN
 		   ASSIGN par_nmarqpdf = aux_nmarqpdf.
 		 ELSE
-		   ASSIGN par_nmarqpdf = 
-                          ENTRY(NUM-ENTRIES(aux_nmarqpdf,"/"),aux_nmarqpdf,"/").
+                    ASSIGN par_nmarqpdf = ENTRY(NUM-ENTRIES(aux_nmarqpdf,"/"),aux_nmarqpdf,"/").
 
          ASSIGN par_nmarqimp = aux_nmarqimp
                 par_flgentrv = aux_flgentra.
+            END.
 
     END. /* Gera */
 
@@ -8330,19 +8399,83 @@ PROCEDURE gera_co_responsavel:
                                      NEXT.
                                      
                     ASSIGN w-co-responsavel.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta". 
+                    ASSIGN w-co-responsavel.cdagenci = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagenci". 
+                    ASSIGN w-co-responsavel.nmprimtl =    (xText:NODE-VALUE) WHEN xField:NAME = "nmprimtl". 
                     ASSIGN w-co-responsavel.nrctremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp". 
+                    ASSIGN w-co-responsavel.vlemprst = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlemprst".
                     ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved". 
-                    ASSIGN w-co-responsavel.dsfinemp =    (xText:NODE-VALUE) WHEN xField:NAME = "dsfinemp". 
-                    ASSIGN w-co-responsavel.dslcremp =    (xText:NODE-VALUE) WHEN xField:NAME = "dslcremp". 
-                    ASSIGN w-co-responsavel.cdlcremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdlcremp". 
                     ASSIGN w-co-responsavel.vlpreemp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpreemp".
-                    
-                    ASSIGN w-co-responsavel.qtmesdec = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtmesdec". 
-                    ASSIGN w-co-responsavel.qtprecal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtprecal". 
-                    ASSIGN w-co-responsavel.qtpreemp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtpreemp". 
-
+                    ASSIGN w-co-responsavel.vlprepag = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprepag".
+                    ASSIGN w-co-responsavel.vljurmes = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vljurmes".
+                    ASSIGN w-co-responsavel.vljuracu = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vljuracu".
+                    ASSIGN w-co-responsavel.vlprejuz = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprejuz".
+                    ASSIGN w-co-responsavel.vlsdprej = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdprej".
+                    ASSIGN w-co-responsavel.dtprejuz = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtprejuz".
+                    ASSIGN w-co-responsavel.vljrmprj = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vljrmprj".
+                    ASSIGN w-co-responsavel.vljraprj = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vljraprj". 
+                    ASSIGN w-co-responsavel.inprejuz = INT(xText:NODE-VALUE) WHEN xField:NAME = "inprejuz".
+                    ASSIGN w-co-responsavel.vlprovis = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprovis". 
+                    ASSIGN w-co-responsavel.flgpagto = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgpagto". 
+                    ASSIGN w-co-responsavel.dtdpagto = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdpagto".
+                    ASSIGN w-co-responsavel.cdpesqui =    (xText:NODE-VALUE) WHEN xField:NAME = "cdpesqui". 
                     ASSIGN w-co-responsavel.dspreapg =    (xText:NODE-VALUE) WHEN xField:NAME = "dspreapg". 
-                    ASSIGN w-co-responsavel.inprejuz = INT(xText:NODE-VALUE) WHEN xField:NAME = "inprejuz". 
+                    ASSIGN w-co-responsavel.cdlcremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdlcremp". 
+                    ASSIGN w-co-responsavel.dslcremp =    (xText:NODE-VALUE) WHEN xField:NAME = "dslcremp". 
+                    ASSIGN w-co-responsavel.cdfinemp = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdfinemp". 
+                    ASSIGN w-co-responsavel.dsfinemp =    (xText:NODE-VALUE) WHEN xField:NAME = "dsfinemp". 
+                    ASSIGN w-co-responsavel.dsdaval1 =    (xText:NODE-VALUE) WHEN xField:NAME = "dsdaval1". 
+                    ASSIGN w-co-responsavel.dsdaval2 =    (xText:NODE-VALUE) WHEN xField:NAME = "dsdaval2". 
+                    ASSIGN w-co-responsavel.vlpreapg = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpreapg". 
+                    ASSIGN w-co-responsavel.qtmesdec = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtmesdec". 
+                    ASSIGN w-co-responsavel.qtprecal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtprecal". 
+                    ASSIGN w-co-responsavel.vlacresc = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlacresc". 
+                    ASSIGN w-co-responsavel.vlrpagos = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlrpagos". 
+                    ASSIGN w-co-responsavel.slprjori = DECI(xText:NODE-VALUE) WHEN xField:NAME = "slprjori". 
+                    ASSIGN w-co-responsavel.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt".
+                    ASSIGN w-co-responsavel.qtpreemp = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtpreemp". 
+                    ASSIGN w-co-responsavel.dtultpag = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtultpag".
+                    ASSIGN w-co-responsavel.vlrabono = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlrabono". 
+                    ASSIGN w-co-responsavel.qtaditiv = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtaditiv". 
+                    ASSIGN w-co-responsavel.dsdpagto =    (xText:NODE-VALUE) WHEN xField:NAME = "dsdpagto". 
+                    ASSIGN w-co-responsavel.dsdavali =    (xText:NODE-VALUE) WHEN xField:NAME = "dsdavali". 
+                    ASSIGN w-co-responsavel.qtmesatr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtmesatr". 
+                    ASSIGN w-co-responsavel.qtpromis = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtpromis". 
+                    ASSIGN w-co-responsavel.flgimppr = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgimppr". 
+                    ASSIGN w-co-responsavel.flgimpnp = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgimpnp". 
+                    ASSIGN w-co-responsavel.idseleca =    (xText:NODE-VALUE) WHEN xField:NAME = "idseleca". 
+                    ASSIGN w-co-responsavel.nrdrecid = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdrecid". 
+                    ASSIGN w-co-responsavel.tplcremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "tplcremp". 
+                    ASSIGN w-co-responsavel.tpemprst = INT(xText:NODE-VALUE) WHEN xField:NAME = "tpemprst". 
+                    ASSIGN w-co-responsavel.cdtpempr =    (xText:NODE-VALUE) WHEN xField:NAME = "cdtpempr". 
+                    ASSIGN w-co-responsavel.dstpempr =    (xText:NODE-VALUE) WHEN xField:NAME = "dstpempr". 
+                    ASSIGN w-co-responsavel.permulta = DECI(xText:NODE-VALUE) WHEN xField:NAME = "permulta". 
+                    ASSIGN w-co-responsavel.perjurmo = DECI(xText:NODE-VALUE) WHEN xField:NAME = "perjurmo".                     
+                    ASSIGN w-co-responsavel.dtpripgt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtpripgt".
+                    ASSIGN w-co-responsavel.inliquid = INT(xText:NODE-VALUE) WHEN xField:NAME = "inliquid". 
+                    ASSIGN w-co-responsavel.txmensal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "txmensal".
+                    ASSIGN w-co-responsavel.flgatras = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgatras". 
+                    ASSIGN w-co-responsavel.dsidenti =    (xText:NODE-VALUE) WHEN xField:NAME = "dsidenti". 
+                    ASSIGN w-co-responsavel.flgdigit = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgdigit". 
+                    ASSIGN w-co-responsavel.tpdocged = INT(xText:NODE-VALUE) WHEN xField:NAME = "tpdocged".
+                    ASSIGN w-co-responsavel.qtlemcal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtlemcal".                     
+                    ASSIGN w-co-responsavel.vlmrapar = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlmrapar".                     
+                    ASSIGN w-co-responsavel.vlmtapar = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlmtapar".                     
+                    ASSIGN w-co-responsavel.vltotpag = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vltotpag".                     
+                    ASSIGN w-co-responsavel.vlprvenc = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprvenc".                     
+                    ASSIGN w-co-responsavel.vlpraven = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpraven". 
+                    ASSIGN w-co-responsavel.flgpreap = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgpreap".                     
+                    ASSIGN w-co-responsavel.vlttmupr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlttmupr".                     
+                    ASSIGN w-co-responsavel.vlttjmpr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlttjmpr".                     
+                    ASSIGN w-co-responsavel.vlpgmupr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpgmupr".                     
+                    ASSIGN w-co-responsavel.vlpgjmpr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpgjmpr".                     
+                    ASSIGN w-co-responsavel.vlsdpjtl = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdpjtl".  
+                    ASSIGN w-co-responsavel.cdorigem = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdorigem".
+                    ASSIGN w-co-responsavel.nrseqrrq = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrseqrrq".
+                    ASSIGN w-co-responsavel.portabil =    (xText:NODE-VALUE) WHEN xField:NAME = "portabil". 
+                    ASSIGN w-co-responsavel.liquidia = INT(xText:NODE-VALUE) WHEN xField:NAME = "liquidia".
+                    ASSIGN w-co-responsavel.tipoempr =    (xText:NODE-VALUE) WHEN xField:NAME = "tipoempr". 
+                    ASSIGN w-co-responsavel.qtimpctr = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtimpctr". 
+                    ASSIGN w-co-responsavel.dtapgoib = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtapgoib".
 
                         END.
 

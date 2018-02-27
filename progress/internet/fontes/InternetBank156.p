@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Daniel Zimmermann
-   Data    : Setembro/2015.                       Ultima atualizacao: 16/03/2017
+   Data    : Setembro/2015.                       Ultima atualizacao: 08/11/2017
    
    Dados referentes ao programa:
    
@@ -14,6 +14,9 @@
    Alteracoes: 21/11/2016 - Incluido a verificaçao de acordos, Prj. 302 (Jean Michel)
 
                16/03/2017 - Alteracao de mensagem de Contrato em acordo. (Jaison/James)
+
+               08/11/2017 - Calcular valores totais com base nas parcelas 
+                            selecionadas para pagamento (David).
 
 ..............................................................................*/
 
@@ -47,12 +50,16 @@ DEF  INPUT PARAM par_nrctremp AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_dtmvtolt AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_dtmvtoan AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_dtmvtocd AS DATE                                  NO-UNDO.
+DEF  INPUT PARAM par_listapar AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_tipopgto AS INTE                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
 DEF VAR aux_cdcritic AS INTE NO-UNDO.
 DEF VAR aux_dscritic AS CHAR NO-UNDO.
 DEF VAR aux_flgativo AS INTE NO-UNDO.
+DEF VAR aux_flgparce AS LOGI NO-UNDO.
+DEF VAR aux_cont     AS INTE NO-UNDO.
 
 { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
@@ -77,15 +84,22 @@ ASSIGN aux_cdcritic = 0
        aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
        aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
         
-IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+IF  aux_dscritic <> ? AND aux_dscritic <> "" THEN
     DO:
 		ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
         RETURN "NOK".
     END.
 
-IF aux_flgativo = 1 THEN
+IF  aux_flgativo = 1 THEN
     DO:
 		ASSIGN xml_dsmsgerr = "<dsmsgerr>Contrato em acordo. Pagamento permitido somente por boleto.</dsmsgerr>".
+        RETURN "NOK".
+    END.
+    
+/* Pagamento de parcelas deve ter lista de parcelas selecionadas */    
+IF  par_tipopgto = 2 AND NUM-ENTRIES(par_listapar,',') = 0 THEN 
+    DO:
+        ASSIGN xml_dsmsgerr = "Não foi possível efetuar a operação.".
         RETURN "NOK".
     END.
     
@@ -93,7 +107,6 @@ RUN sistema/generico/procedures/b1wgen0084a.p PERSISTENT SET h-b1wgen0084a.
 
 IF VALID-HANDLE(h-b1wgen0084a) THEN
    DO: 
-
        RUN busca_pagamentos_parcelas IN h-b1wgen0084a
                                  (INPUT par_cdcooper,
                                   INPUT par_cdagenci,
@@ -113,6 +126,7 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
                                  OUTPUT TABLE tt-calculado).
 
        DELETE PROCEDURE h-b1wgen0084a.
+       
        IF RETURN-VALUE = "NOK" THEN
           DO:
               ASSIGN xml_dsmsgerr = "<dsmsgerr>Não foi possível consultar as " +
@@ -123,6 +137,25 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
 
        FOR EACH tt-pagamentos-parcelas NO-LOCK:
 
+           IF  par_tipopgto = 2  THEN /* Pagamento de parcelas */
+               DO:
+                   ASSIGN aux_flgparce = FALSE.
+                   
+                   DO aux_cont = 1 TO NUM-ENTRIES(par_listapar,','):
+
+                      /* Retornar somente os valores da parcela selecionada */
+                      IF  tt-pagamentos-parcelas.nrparepr = INTE(ENTRY(aux_cont,par_listapar,','))  THEN
+                          DO:
+                              ASSIGN aux_flgparce = TRUE.
+                              LEAVE.
+                          END.
+                           
+                   END.
+                   
+                   IF  NOT aux_flgparce  THEN
+                       NEXT.
+               END.    
+           
            parcelas = parcelas + 1.
 
            vlatraso = vlatraso + tt-pagamentos-parcelas.vlmtapar +
@@ -175,10 +208,11 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
                    + "<vlpreemp>" + TRIM(STRING(crapepr.vlpreemp * parcelas ,"zzz,zzz,zzz,zz9.99")) + "</vlpreemp>"
                    + "<exibir>" + aux_exibir +  "</exibir>"
                    + "<declaracao>" + aux_declaracao + "</declaracao>" 
-                   + "<dtmvtdeb>" + STRING(par_dtmvtocd) + "</dtmvtdeb>" 
+                   + "<dtmvtdeb>" + STRING(par_dtmvtocd,"99/99/9999") + "</dtmvtdeb>" 
+                   + "<dttransa>" + STRING(aux_datdodia,"99/99/9999") + "</dttransa>"
                    + "</VALORES>". 
 
-       IF  VALID-HANDLE(h-b1wgen0084a) THEN
+       IF VALID-HANDLE(h-b1wgen0084a) THEN
             DELETE PROCEDURE h-b1wgen0084a.
        
        RETURN "OK".

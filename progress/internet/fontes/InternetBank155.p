@@ -162,6 +162,7 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
                    + "<vlatrpag>" + STRING(tt-pagamentos-parcelas.vlatrpag,"zzz,zzz,zzz,zz9.99") + "</vlatrpag>"
                    + "<vlpreemp>" + TRIM(STRING(crapepr.vlpreemp,"zzz,zzz,zzz,zz9.99")) + "</vlpreemp>"
                    + "<vencida>" + aux_vencida + "</vencida>"
+                   + "<dtmvtolt>" + STRING(crapdat.dtmvtolt,"99/99/9999") + "</dtmvtolt>"
                    + "</PARCELA>".
        END.
 

@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
-   Data    : Junho/2007                     Ultima atualizacao: 02/05/2017
+   Data    : Junho/2007                     Ultima atualizacao: 21/02/2018
 
    Dados referentes ao programa:
 
@@ -124,7 +124,15 @@
 
               01/03/2016 - PRJ Esteira de Credito. (Jaison/Oscar)
 
+              04/04/2017 - Adicionado parametros de carencia do produto Pos-Fixado. (Jaison/James - PRJ298)
+
 			  25/04/2017 - Tratamentos para o projeto 337 - Motor de crédito. (Reinert)
+
+              21/09/2017 - Projeto 410 - Incluir campo Indicador de 
+                            financiamento do IOF (Diogo - Mouts)
+
+			  21/02/2018 - Novo parametro na chamada da proc_qualif_operacao
+                           (Diego/AMcom)
 
 ..............................................................................*/
 
@@ -367,6 +375,13 @@ DEF VAR aux_flgsenha AS INTE                                           NO-UNDO.
 DEF VAR aux_dsmensag AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_inobriga AS CHAR                                           NO-UNDO.
+DEF VAR aux_idfiniof AS INTE                                           NO-UNDO.
+DEF VAR aux_vliofepr LIKE crapepr.vliofepr                             NO-UNDO.
+DEF VAR aux_vlrtarif AS DECI                                           NO-UNDO.
+DEF VAR aux_vlrtotal AS DECI                                           NO-UNDO.
+
+DEF VAR aux_idcarenc AS INTE                                           NO-UNDO.
+DEF VAR aux_dtcarenc AS DATE                                           NO-UNDO.
 
 /** ------------------------- Variaveis Lojista CDC ---------------------- **/
 DEF VAR aux_cdcoploj AS INTE                                           NO-UNDO.
@@ -399,7 +414,7 @@ PROCEDURE valores_entrada:
 
             WHEN "cdcooper" THEN aux_cdcooper = INTE(tt-param.valorCampo).
             WHEN "cdagenci" THEN aux_cdagenci = INTE(tt-param.valorCampo).
-            WHEN "cdpactra" THEN aux_cdpactra = INTE(tt-param.valorCampo).			
+			WHEN "cdpactra" THEN aux_cdpactra = INTE(tt-param.valorCampo).			
             WHEN "nrdcaixa" THEN aux_nrdcaixa = INTE(tt-param.valorCampo).
             WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.
             WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
@@ -599,7 +614,15 @@ PROCEDURE valores_entrada:
             WHEN "uflicenc" THEN aux_uflicenc = tt-param.valorCampo.      
             WHEN "dstipbem" THEN aux_dstipbem = tt-param.valorCampo.
             WHEN "cdmodali" THEN aux_cdmodali = tt-param.valorCampo.
-            
+
+            WHEN "idfiniof" THEN aux_idfiniof = INTE(tt-param.valorCampo).
+            WHEN "vliofepr" THEN aux_vliofepr = DECI(tt-param.valorCampo).
+            WHEN "vlrtarif" THEN aux_vlrtarif = DECI(tt-param.valorCampo).
+            WHEN "vlrtotal" THEN aux_vlrtotal = DECI(tt-param.valorCampo).
+
+            WHEN "idcarenc" THEN aux_idcarenc = INTE(tt-param.valorCampo).
+            WHEN "dtcarenc" THEN aux_dtcarenc = DATE(tt-param.valorCampo).
+
             WHEN "cdcoploj" THEN aux_cdcoploj = INTE(tt-param.valorCampo).
             WHEN "nrcntloj" THEN aux_nrcntloj = DECI(tt-param.valorCampo).
 
@@ -1128,6 +1151,8 @@ PROCEDURE valida-dados-gerais:
                             INPUT aux_inconfi2,
                             INPUT aux_nrcpfope,
                             INPUT aux_cdmodali,
+                            INPUT aux_idcarenc,
+                            INPUT aux_dtcarenc,
                             OUTPUT TABLE tt-erro,
                             OUTPUT TABLE tt-msg-confirma,
                             OUTPUT TABLE tt-ge-epr,
@@ -1485,7 +1510,7 @@ PROCEDURE grava-proposta-completa:
     RUN grava-proposta-completa IN hBO
                                (INPUT aux_cdcooper,
                                 INPUT aux_cdagenci,
-                                INPUT aux_cdpactra,
+								INPUT aux_cdpactra,
                                 INPUT aux_nrdcaixa,
                                 INPUT aux_cdoperad,
                                 INPUT aux_nmdatela,
@@ -1518,6 +1543,8 @@ PROCEDURE grava-proposta-completa:
                                 INPUT aux_dsctrliq,
                                 INPUT aux_nrctaava,
                                 INPUT aux_nrctaav2,
+                                INPUT aux_idcarenc,
+                                INPUT aux_dtcarenc,
                                 INPUT aux_nrgarope,
                                 INPUT aux_nrperger,
                                 INPUT aux_dtcnsspc,
@@ -1787,6 +1814,7 @@ PROCEDURE proc_qualif_operacao:
                              INPUT aux_dsctrliq,
                              INPUT aux_dtmvtolt,
                              INPUT aux_dtmvtopr,
+							 INPUT aux_dtmvtoan,
                             OUTPUT aux_idquapro,
                             OUTPUT aux_dsquapro ).
 

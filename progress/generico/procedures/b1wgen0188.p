@@ -73,12 +73,12 @@
 
                 16/03/2016 - Adição do campo vllimctr na tt-dados-cpa (Dionathan)
 				
-                05/05/2016 - Ajustar FORMAT da variável aux_nrcpfcgc na procedure
-                             imprime_previa_demonstrativo (David).
+				05/05/2016 - Ajustar FORMAT da variável aux_nrcpfcgc na procedure
+				             imprime_previa_demonstrativo (David).
                 
-                11/03/2016 - Inclusao do parametro par_cdpactra na chamada da rotina
-                             grava-proposta-completa.
-                             PRJ 207 - Esteira de credito (Odirlei-AMcom)
+				11/03/2016 - Inclusao do parametro par_cdpactra na chamada da rotina
+				             grava-proposta-completa.
+							 PRJ 207 - Esteira de credito (Odirlei-AMcom)
                 
                 14/07/2016 - Ajuste nas procedures calcula_parcelas_emprestimo, calcula_taxa_emprestimo,
                              imprime_previa_demonstrativo, grava_dados para buscar a linha de crédito do
@@ -91,11 +91,13 @@
                              agora é preciso passar nrdconta na procedure "busca_carga_ativa" para buscar a 
                              carga ativa mais atual. Projeto 299/3 Pre aprovado fase 3 (Lombardi).
                 
+                10/05/2017 - Passagem dos campos de carencia. (Jaison/James - PRJ298)
+
                 12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
 
                 13/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-                             crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-                             (Adriano - P339).
+			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							 (Adriano - P339).
                 
                 21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                              grava-proposta-completa. PRJ402 - Integracao CDC
@@ -894,6 +896,8 @@ PROCEDURE grava_dados:
                                                INPUT 30,   /* par_inconfi2 */
                                                INPUT par_nrcpfope,
 											   INPUT "", /* cdmodali */
+                                               INPUT ?,
+                                               INPUT ?,                                               
                                                OUTPUT TABLE tt-erro,
                                                OUTPUT TABLE tt-msg-confirma,
                                                OUTPUT TABLE tt-ge-epr,
@@ -971,7 +975,7 @@ PROCEDURE grava_dados:
 
        RUN grava-proposta-completa IN h-b1wgen0002(INPUT par_cdcooper,
                                                    INPUT par_cdagenci,
-                                                   INPUT par_cdagenci, /*par_cdpactra*/
+												   INPUT par_cdagenci, /*par_cdpactra*/
                                                    INPUT par_nrdcaixa,
                                                    INPUT par_cdoperad,
                                                    INPUT par_nmdatela,
@@ -1005,6 +1009,8 @@ PROCEDURE grava_dados:
                                                    INPUT "", /* par_dsctrliq */
                                                    INPUT 0,  /* par_nrctaava */
                                                    INPUT 0,  /* par_nrctaav2 */
+                                                   INPUT ?,
+                                                   INPUT ?,
                                                    /*-------Rating------ */
                                                    INPUT aux_nrgarope,
                                                    INPUT aux_nrperger,
@@ -1672,7 +1678,9 @@ PROCEDURE calcula_iof:
                                                  INPUT par_vlemprst,
                                                  INPUT par_dtvencto,
                                                  INPUT par_dtmvtolt,
-												 INPUT 1,    /* par_tpemprst */
+                                                 INPUT 1, /* pr_tpemprst */
+                                                 INPUT ?, /* pr_dtcarenc */
+                                                 INPUT 0, /* pr_qtdias_carencia */
                                                 OUTPUT 0,
                                                 OUTPUT "").
            

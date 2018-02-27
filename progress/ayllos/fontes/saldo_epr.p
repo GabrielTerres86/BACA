@@ -53,7 +53,7 @@
                              da include b1wgen0002a.i (James)
 
                 08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
-                
+
                 23/02/2018 - Ajuste no parametros de entrada. (James)
 
 ............................................................................. */
@@ -283,7 +283,7 @@ ELSE IF crapepr.tpemprst = 2 THEN /* POS */
                                                   INPUT STRING(glb_dtmvtolt),
                                                   INPUT STRING(glb_dtmvtoan),
                                                   INPUT par_nrdconta,
-                                                  INPUT par_nrctremp,                                                  
+                                                  INPUT par_nrctremp,
                                                  OUTPUT 0,   /* pr_vlpreapg */
                                                  OUTPUT 0,   /* pr_vlprvenc */
                                                  OUTPUT 0,   /* pr_vlpraven */

@@ -27,7 +27,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 20/12/2017
+    Data    : Fevereiro/2011               ultima Atualizacao: 23/02/2018
 
     Dados referentes ao programa:
 
@@ -228,7 +228,7 @@
               29/06/2015 - Ajuste na passagem de parametros da procedure
                            "obtem_emprestimo_risco". (James)
                            											 
-              10/07/2015 - Alterada PROCEDURE grava_efetivacao_proposta para 
+			  10/07/2015 - Alterada PROCEDURE grava_efetivacao_proposta para 
                            tratar operacoes de portabilidade de credito. (Reinert)
 
               30/09/2015 - Desenvolvimento do Projeto 215 - Estorno. (James/Reinert)
@@ -263,8 +263,8 @@
                            apenas os antigos e impactando na geracao do rating.
                            Heitor (Mouts)
 
-              04/01/2016 - Validar se as informações de Imóvel foram devidamente preenchidas
-                           para o contrato de empréstimo (Renato Darosci - Supero) - M326
+			  04/01/2016 - Validar se as informações de Imóvel foram devidamente preenchidas
+			               para o contrato de empréstimo (Renato Darosci - Supero) - M326
                            
               28/09/2016 - Incluido verificacao de contratos de acordos na procedure
 						               transf_contrato_prejuizo e valida_dados_efetivacao_proposta,
@@ -281,6 +281,17 @@
 
               28/07/2017 - Ajuste na procedure valida_dados_efetivacao_proposta para nao validar
                            o capital minimo para as cessoes de credito (Anderson).
+                           
+              27/12/2017 - Ajuste transferencia para prejuizo permitir transferir a partir 180 dias 
+                           para prejuizo. (Oscar)
+                           
+              28/12/2017 - Buscar da central de risco do dia anterior inves do fechamento do mes anterior. (Oscar)
+              
+              29/12/2017 - Ajuste para desfazer prejuizo retirar agencia do loop. (Oscar)
+                           
+			  23/02/2018 - Alteração da procedure grava_efetivacao_proposta para gravar o risco 
+			               original (DSNIVORI) (Reginaldo - AMcom)
+                           
 
               03/10/2017 - Passagem do campo idquapro. (Jaison/James - M444)
               
@@ -2630,6 +2641,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
         END.
     END.
 
+/*
     /* Nao permitir utilizar linha 100, quando possuir acordo de estouro de conta ativo */
     IF   crawepr.cdlcremp = 100  THEN
          DO:
@@ -2685,6 +2697,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
                        RETURN "NOK".
                    END.
          END.
+         */
 
     /* Condicao para a Finalidade for Cessao de Credito */
     FOR FIRST crapfin FIELDS(tpfinali)
@@ -3393,37 +3406,19 @@ PROCEDURE grava_efetivacao_proposta:
            DO:
                ASSIGN aux_nrdolote = 650004.
 
-               IF   aux_floperac   THEN             /* Financiamento*/
+			   IF   aux_floperac   THEN             /* Financiamento*/
                     ASSIGN aux_cdhistor = 2327.
                ELSE                                 /* Emprestimo */
                     ASSIGN aux_cdhistor = 2326.
            END.
        ELSE
            DO:
-              FIND crapfin WHERE crapfin.cdcooper = crawepr.cdcooper
-                             AND crapfin.cdfinemp = crawepr.cdfinemp NO-LOCK NO-ERROR NO-WAIT.
-           
-              IF AVAILABLE crapfin THEN
-                ASSIGN aux_tpfinali = crapfin.tpfinali.                
-           
-              IF aux_floperac THEN /* Financiamento*/
-                DO:
-                  IF aux_tpfinali = 3 THEN /* CDC */
-                    ASSIGN aux_cdhistor = 2014.
-                  ELSE
-                    ASSIGN aux_cdhistor = 1059.
-                    
-                  ASSIGN  aux_nrdolote = 600030.
-                END.
-             ELSE /* Emprestimo */
-               DO:
-                IF aux_tpfinali = 3 THEN /* CDC */
-                  ASSIGN aux_cdhistor = 2013.
-                ELSE
-                  ASSIGN aux_cdhistor = 1036.
-                
-                ASSIGN aux_nrdolote = 600005.
-               END.
+               IF   aux_floperac   THEN             /* Financiamento*/
+            ASSIGN aux_cdhistor = 1059
+                   aux_nrdolote = 600030.
+				ELSE                                 /* Emprestimo */
+            ASSIGN aux_cdhistor = 1036
+                   aux_nrdolote = 600005.
            END.
 
        RUN sistema/generico/procedures/b1wgen0134.p PERSISTENT SET h-b1wgen0134.
@@ -3610,6 +3605,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.txmensal = crawepr.txmensal
               crapepr.cdempres = aux_cdempres
               crapepr.nrcadast = crapass.nrcadast
+			  crapepr.idquaprc = crawepr.idquapro
               crapepr.flgpagto = FALSE
               crapepr.dtdpagto = par_dtdpagto
               crapepr.qtmesdec = 0
@@ -3688,7 +3684,8 @@ PROCEDURE grava_efetivacao_proposta:
                                         crawepr.dsnivris +
                                         '" e o do contrato sera de "' +
                                         aux_dsnivris + '".'
-                         crawepr.dsnivris = aux_dsnivris.
+                         crawepr.dsnivris = aux_dsnivris
+						 crawepr.dsnivori = aux_dsnivris.
 
                END.
 
@@ -3932,7 +3929,7 @@ PROCEDURE grava_efetivacao_proposta:
 END PROCEDURE. /*   grava efetivacao proposta */
 
 
-PROCEDURE busca_desfazer_efetivacao_emprestimo: 
+PROCEDURE busca_desfazer_efetivacao_emprestimo:
 
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
@@ -4114,7 +4111,7 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
                            craplem.nrdconta = par_nrdconta     AND
                            craplem.nrctremp = par_nrctremp     NO-LOCK:
 
-        IF   NOT CAN-DO("1036,1059,2013,2014,2326,2327",STRING(craplem.cdhistor)) THEN
+        IF   NOT CAN-DO("1036,1059,2326,2327",STRING(craplem.cdhistor)) THEN
              DO:
                  ASSIGN aux_cdcritic = 368
                         aux_dscritic = "".
@@ -4444,7 +4441,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
           
           ASSIGN aux_nrdolote = 600005.
          END.
-        
+
         RUN sistema/generico/procedures/b1craplot.p PERSISTENT SET h-b1craplot.
 
         /* Lançamento de Liberar valor de Emprestimo  */
@@ -4607,6 +4604,7 @@ PROCEDURE transf_contrato_prejuizo.
        END.
             
        /* Verificacao de contrato de acordo */  
+       /*
       
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -4658,6 +4656,7 @@ PROCEDURE transf_contrato_prejuizo.
            RETURN "NOK".
              
        END.
+       */
           
        /* Fim verificacao contrato acordo */     
           
@@ -4676,7 +4675,7 @@ PROCEDURE transf_contrato_prejuizo.
            /* Precisa estar 181 dias com risco em H */
            ASSIGN aux_qtdiaris = par_dtmvtolt - crapris.dtdrisco.
            
-           IF crapris.innivris = 9 AND aux_qtdiaris >= 181 THEN
+           IF crapris.innivris = 9 AND aux_qtdiaris > 179 THEN
            DO:
                FOR FIRST crapepr
                    WHERE crapepr.cdcooper = par_cdcooper
@@ -5091,7 +5090,7 @@ PROCEDURE transf_contrato_prejuizo.
        ELSE
        DO:
            ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Erro ao lista Ocorrencias!".
+                  aux_dscritic = "Operacao nao permitida. Verifique Risco e Dias no Risco!".
 
                RUN gera_erro (INPUT par_cdcooper,
                               INPUT par_cdagenci,
@@ -5354,7 +5353,6 @@ PROCEDURE desfaz_transferencia_prejuizo.
             FOR EACH craplem
                 WHERE craplem.cdcooper = par_cdcooper
                   AND craplem.dtmvtolt = par_dtmvtolt
-                  AND craplem.cdagenci = par_cdagenci
                   AND craplem.cdbccxlt = 100
                   AND craplem.nrdolote = 600029
                   AND craplem.nrdconta = par_nrdconta

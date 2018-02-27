@@ -103,9 +103,10 @@
 				             rotina pc_calcula_iof_epr, pois todas as simulações são 
 							 empréstimos PP  ( Renato Darosci )
 
+                09/05/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
 				27/09/2017 - Projeto 410 - Incluir campo Indicador de 
                             financiamento do IOF (Diogo - Mouts) e valor total da simulação
-
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -258,7 +259,7 @@ PROCEDURE busca_dados_simulacao:
                   ASSIGN tt-crapsim.dsfinemp = crapfin.dsfinemp.
 
              ASSIGN tt-crapsim.vlrtotal = tt-crapsim.vlemprst + tt-crapsim.vliofepr + tt-crapsim.vlrtarif.
-
+             
              IF (AVAIL crapfin) AND (AVAIL craplcr) THEN
              DO:
                 /* guarda o tipo da finalidade */
@@ -679,6 +680,7 @@ PROCEDURE grava_simulacao:
                                              tt-parcelas-epr.vlparepr
                                     ELSE 0, 
                              INPUT  par_dtlibera,
+                             INPUT  1, /* tpemprst */
                              OUTPUT var_vliofepr,
                              OUTPUT TABLE tt-erro).
 
@@ -1687,10 +1689,11 @@ PROCEDURE consulta_iof:
     DEF INPUT        PARAM par_vlemprst AS DEC                      NO-UNDO.
     DEF INPUT        PARAM par_nrdconta AS INTE                     NO-UNDO.
     DEF INPUT        PARAM par_dtdpagto AS DATE                     NO-UNDO.
-    DEF INPUT        PARAM par_qtpreemp AS INTE                     NO-UNDO.
+    DEF INPUT        PARAM par_qtpreemp AS INTE                     NO-UNDO.        
     DEF INPUT        PARAM par_cdlcremp AS INTEGER                  NO-UNDO.
     DEF INPUT        PARAM par_vlpreemp AS DECI                     NO-UNDO.
     DEF INPUT        PARAM par_dtlibera AS DATE                     NO-UNDO.
+    DEF INPUT        PARAM par_tpemprst AS INTE                     NO-UNDO.
     DEF OUTPUT       PARAM par_vliofepr AS DEC                      NO-UNDO.        
     DEF OUTPUT       PARAM TABLE FOR tt-erro.
     
@@ -1718,7 +1721,9 @@ PROCEDURE consulta_iof:
                                           INPUT par_vlemprst,
                                           INPUT par_dtdpagto,
                                           INPUT par_dtlibera,
-                                          INPUT 1, /* tpemprst -> 1-PP */
+                                          INPUT par_tpemprst,
+                                          INPUT ?, /* pr_dtcarenc */
+                                          INPUT 0, /* pr_qtdias_carencia */
                                          OUTPUT 0,
                                          OUTPUT "").
     
