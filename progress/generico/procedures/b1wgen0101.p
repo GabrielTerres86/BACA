@@ -373,7 +373,26 @@ PROCEDURE consulta_faturas:
                         ELSE
                             tt-dados-pesqti.dscptdoc = "".
                     END.
-
+                    
+                /* Agente arrecadador */
+                IF craplft.cdhistor = 2515 THEN
+                DO:
+                  /* Convenios BANCOOB */
+                  ASSIGN tt-dados-pesqti.nmarrecd = 'BANCOOB'.
+                END. 
+                /* Convenios SICREDI */
+                ELSE IF craplft.cdhistor = 1154 THEN 
+                DO:                  
+                    ASSIGN tt-dados-pesqti.nmarrecd = 'SICREDI'.
+                    
+                END.
+                /* Convenios CECRED */ 
+                ELSE                     
+                DO: 
+                    ASSIGN tt-dados-pesqti.nmarrecd = 'CECRED'.
+                END.    
+                
+                
                 
                 FIND crapage WHERE crapage.cdagenci = craplft.cdagenci AND
                                    crapage.cdcooper = craplft.cdcooper
@@ -388,23 +407,16 @@ PROCEDURE consulta_faturas:
                 
                 IF crapcon.tparrecd = 2 THEN
                 DO:
-                  ASSIGN tt-dados-pesqti.nmempres = crapcon.nmextcon
-                         /* Agente arrecadador */
-                         tt-dados-pesqti.nmarrecd = 'BANCOOB'.
+                  ASSIGN tt-dados-pesqti.nmempres = crapcon.nmextcon.
                 END.  
                 ELSE IF crapcon.tparrecd = 3 THEN /* Convenios CECRED */ 
                 DO:
                     FIND FIRST gnconve WHERE gnconve.cdhiscxa = craplft.cdhistor NO-LOCK NO-ERROR.
-                    ASSIGN tt-dados-pesqti.nmempres = gnconve.nmempres
-                         /* Agente arrecadador */
-                         tt-dados-pesqti.nmarrecd = 'CECRED'.
+                    ASSIGN tt-dados-pesqti.nmempres = gnconve.nmempres.
                 END.
                 ELSE /* Convenios SICREDI */
                 DO: 
-                     
-                    /* Agente arrecadador */                        
-                    ASSIGN tt-dados-pesqti.nmarrecd = 'SICREDI'.
-                
+                    
                     IF craplft.tpfatura <> 2 OR 
                        craplft.cdempcon <> 0 THEN  
                     DO: 

@@ -2304,13 +2304,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 			END IF;
         -- FGTS
         ELSIF vr_cratpro(vr_ind).cdtippro = 24 THEN
-          vr_tab_dados(vr_index)('cdbarras') := gene0002.fn_busca_entrada(3, vr_cratpro(vr_ind).dsinform##3, '#');
-          vr_tab_dados(vr_index)('lndigita') := gene0002.fn_busca_entrada(4, vr_cratpro(vr_ind).dsinform##3, '#');
+          vr_tab_dados(vr_index)('cdbarras') := TRIM(gene0002.fn_busca_entrada(2,gene0002.fn_busca_entrada(3, vr_cratpro(vr_ind).dsinform##3, '#'), ':'));
+          vr_tab_dados(vr_index)('lndigita') := TRIM(gene0002.fn_busca_entrada(2,gene0002.fn_busca_entrada(4, vr_cratpro(vr_ind).dsinform##3, '#'), ':'));
           --
         -- DAE
         ELSIF vr_cratpro(vr_ind).cdtippro = 23 THEN
-          vr_tab_dados(vr_index)('cdbarras') := gene0002.fn_busca_entrada(3, vr_cratpro(vr_ind).dsinform##3, '#'); 
-          vr_tab_dados(vr_index)('lndigita') := gene0002.fn_busca_entrada(4, vr_cratpro(vr_ind).dsinform##3, '#');
+          vr_tab_dados(vr_index)('cdbarras') := TRIM(gene0002.fn_busca_entrada(2,gene0002.fn_busca_entrada(3, vr_cratpro(vr_ind).dsinform##3, '#'), ':'));
+          vr_tab_dados(vr_index)('lndigita') := TRIM(gene0002.fn_busca_entrada(2,gene0002.fn_busca_entrada(4, vr_cratpro(vr_ind).dsinform##3, '#'), ':'));
         ELSE
           vr_tab_dados(vr_index)('cdbarras') := '';
           vr_tab_dados(vr_index)('lndigita') := '';

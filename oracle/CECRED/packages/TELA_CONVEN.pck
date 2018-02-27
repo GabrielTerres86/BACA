@@ -238,8 +238,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
                     --'<cnpescto>' || rw_crapcon.cnpescto  || '</cnpescto>' 
                     ;
                     
-        IF vr_dsalerta IS NOT NULL THEN
-          IF rw_crapcon.flgacsic = 1 THEN
+        IF vr_dsalerta IS NULL THEN
+          IF rw_crapcon.tparrecd = 1 THEN
             IF pr_cddopcao = 'A' AND vr_cdcooper <> 3 THEN
               vr_dsalerta := 'Convênios SICREDI não podem ser alterados.';  
             ELSIF pr_cddopcao = 'E' THEN
@@ -247,6 +247,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
             ELSIF pr_cddopcao = 'X' THEN
               vr_dsalerta := 'Não e possivel replicar convênios SICREDI.';  
             END IF;          
+          --> Bancoob  
+          ELSIF rw_crapcon.tparrecd = 2 THEN
+            IF pr_cddopcao = 'A' AND vr_cdcooper <> 3 THEN
+              vr_dsalerta := 'Convênios Bancoob não podem ser alterados.';  
+            END IF;              
           END IF;              
         END IF;
         vr_retxml := vr_retxml ||
@@ -681,6 +686,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
                    nrccdrcb = rw_crapcon.nrccdrcb, 
                    cdfinrcb = rw_crapcon.cdfinrcb, 
                    flginter = rw_crapcon.flginter, 
+                   flgcnvsi = rw_crapcon.flgcnvsi, 
                    tparrecd = rw_crapcon.tparrecd, 
                    flgaccec = rw_crapcon.flgaccec, 
                    flgacsic = rw_crapcon.flgacsic, 
@@ -712,6 +718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
                           cdcooper, 
                           cdsegmto, 
                           flginter, 
+                          flgcnvsi, 
                           tparrecd, 
                           flgaccec, 
                           flgacsic, 
@@ -730,6 +737,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
                         ,cop.cdcooper
                         ,cdsegmto
                         ,flginter
+                        ,flgcnvsi
                         ,tparrecd
                         ,flgaccec
                         ,flgacsic

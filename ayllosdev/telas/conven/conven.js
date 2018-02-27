@@ -17,6 +17,8 @@ var cddopcao = '';
 
 var rCddopcao, rCdempcon, rCdsegmto, rNmrescon, rNmextcon, rCdhistor, rNrdolote, rFlginter, rFlgaccec, rFlgacsic, rFlgacbcb, 
     cCddopcao, cCdempcon, cCdsegmto, cNmrescon, cNmextcon, cCdhistor, cNrdolote, cFlginter, cFlgaccec, cFlgacsic, cFlgacbcb, cTparrecd, cCamposAltera, cRadio;
+
+var cCdcooper;
     
 var cTparrecd_3, cTparrecd_N3, cTparrecd_1, cTparrecd_N1, cTparrecd_2, cTparrecd_N2;
 	
@@ -28,11 +30,12 @@ $(document).ready(function() {
     cTodosCabecalho = $('input[type="text"],select', '#' + frmCab);
 	rCddopcao		= $('label[for="cddopcao"]'	,'#' + frmCab); 
 	rCdempcon       = $('label[for="cdempcon"]'	,'#' + frmCab);
-    rCdsegmto       = $('label[for="cdsegmto"]'	,'#' + frmCab);        
+    rCdsegmto       = $('label[for="cdsegmto"]'	,'#' + frmCab); 
     
     cCddopcao		= $('#cddopcao'	,'#' + frmCab); 
     cCdempcon       = $('#cdempcon'	,'#' + frmCab);    
     cCdsegmto       = $('#cdsegmto'	,'#' + frmCab);          
+    cCdcooper       = $('#cdcooper'	,'#' + frmCab);          
     
     // Form Campos
     cTodosCampos  = $('input[type="text"],input[type="radio"],select', '#frmCampos');
@@ -134,9 +137,12 @@ function LiberaCampos(tipo) {
         cTodosCampos.habilitaCampo();           
         
         // Manter Sicredi desabilitado
-        cFlgacsic.prop('readonly', true).prop('disabled', true);
-        cTparrecd_1.prop('readonly', true).prop('disabled', true);
-        cTparrecd_N1.prop('readonly', true).prop('disabled', true);
+        if ( cCddopcao.val() != 'A' || 
+             cCdcooper.val() != 3 ){
+            cFlgacsic.prop('readonly', true).prop('disabled', true);
+            cTparrecd_1.prop('readonly', true).prop('disabled', true);
+            cTparrecd_N1.prop('readonly', true).prop('disabled', true);
+        }
         
         if (cCddopcao.val() == 'I'){
             // setar valores padrão

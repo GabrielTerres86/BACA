@@ -1946,7 +1946,7 @@ PROCEDURE paga_convenio:
                         ELSE IF  crapcon.tparrecd = 2 THEN
                             DO:                                            
                                 /* Bancoob nao possui deb.aut. */
-                                NULL.
+                                .
                             END. 
 
                         IF  AVAIL gnconve OR

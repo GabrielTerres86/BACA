@@ -1199,7 +1199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                     
       --> Modelo 3
       IF vr_cdempcon NOT IN (0239,0451) THEN
-        vr_dsinfor3 := vr_dsinfor3 || '#CNPJ/CEI Empresa: '  || pr_nrcpfcgc;
+        vr_dsinfor3 := vr_dsinfor3 || '#CNPJ/CEI Empresa: '  || vr_nrinsemp;
       END IF;
       
       vr_dsinfor3 := vr_dsinfor3 || '#Cod. Convênio: '     || vr_cdempcon;
@@ -1207,11 +1207,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       
       --> Modelo 1  
       IF vr_cdempcon IN (0179,0180,0181) THEN
-        vr_dsinfor3 := vr_dsinfor3 || '#Competência: '     || to_char(pr_dtapurac,'MM/RRRR');
+        vr_dsinfor3 := vr_dsinfor3 || '#Competência: '     || to_char(vr_dtcompet,'MM/RRRR');
       
       --> Modelo 2 -GRDE
       ELSIF vr_cdempcon IN (0178,0240) THEN
-        vr_dsinfor3 := vr_dsinfor3 || '#Competência: '     || vr_nrsqgrde;
+        vr_dsinfor3 := vr_dsinfor3 || '#Competência: '     || to_char(vr_nrsqgrde,'FM000');
       
       --> Modelo 3
       ELSIF vr_cdempcon IN (0239,0451) THEN
@@ -1224,8 +1224,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_dsinfor3 := vr_dsinfor3 || '#Data do Pagamento: ' || pr_dtmvtolt;
       vr_dsinfor3 := vr_dsinfor3 || '#Horario do Pagamento: ' || to_char(to_date(pr_hrautent,'SSSSS'),'HH24:MI:SS');
       vr_dsinfor3 := vr_dsinfor3 || '#Canal de Recebimento: ' || (CASE pr_idorigem
-                                                                    WHEN 90 THEN 'Internet Banking'
-                                                                    WHEN 91 THEN 'TAA'
+                                                                    WHEN 3 THEN 'Internet Banking'
+                                                                    WHEN 4 THEN 'TAA'
                                                                     ELSE 'Caixa'  
                                                                   END);
     
@@ -5109,10 +5109,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_nrinsemp := SUBSTR(pr_cdbarras,33,12); 
     
       --> CNPJ/CEI/ CPF
-      IF vr_cdempcon IN ('0178','0179','0180','0181','0240') THEN 
+      IF vr_cdempcon IN ('0178','0240') THEN 
+        IF vr_tpidempr IN (1)THEN
+          vr_nrdigito:= GENE0005.fn_retorna_digito_cnpj(pr_nrcalcul => vr_nrinsemp); 
+          vr_nrinsemp:= vr_nrinsemp || GENE0002.fn_mask(vr_nrdigito,'99');
+        ELSIF vr_tpidempr IN (2) THEN
+          --> valor ja esta atribuido na variavel vr_nrinsemp, apenas para detalhar regra
+          NULL;
+        ELSE
+          vr_dscritic := 'Cod.Barras invalido.';
+          RAISE vr_exc_erro;        
+        END IF;
+      
+      ELSIF vr_cdempcon IN ('0179','0180','0181') THEN 
       
         --> CNPJ
-        IF vr_tpidempr IN (0,1,4,6,8) THEN
+        IF vr_tpidempr IN (0,4,6,8) THEN
         
           vr_nrdigito:= GENE0005.fn_retorna_digito_cnpj(pr_nrcalcul => vr_nrinsemp); 
           vr_nrinsemp:= vr_nrinsemp || GENE0002.fn_mask(vr_nrdigito,'99');

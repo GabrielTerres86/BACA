@@ -46,6 +46,7 @@ function exibeErroNew($msgErro) {
 
 	<input id="registro" name="registro" type="hidden" value=""  />
 	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+    <input type="hidden" name="cdcooper" id="cdcooper" value="<?php echo $glbvars["cdcooper"]; ?>">
 		
 	<label for="cddopcao"><? echo utf8ToHtml('Opção:') ?></label>
 	<select id="cddopcao" name="cddopcao" >
