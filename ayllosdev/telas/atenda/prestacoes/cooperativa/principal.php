@@ -211,7 +211,8 @@
             
             $vlsldliq = str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlsdeved'))) +
                         str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlmtapar'))) +
-                        str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlmrapar')));
+                        str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlmrapar'))) +
+                        str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vliofcpl')));
 		
 			?><script type="text/javascript">
 			var arrayRegistros = new Object();

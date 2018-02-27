@@ -82,7 +82,6 @@
 		exibirErro('error', $msg, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', true);
 	}
     
-	
 	//Busca se deve mostrar o botão para impressão da declaração de isenção de IOF
 	$xml = '';
 	$xml .= '<Root>';
@@ -172,13 +171,11 @@
                                                 if ($portabil == 'S') {
                                                     echo '<a href="#" class="botao" onClick="verificaImpressao(9); return false;">Termo Portabilidade</a>';
                                                 }
-                                            ?>
-											<!--
-											<php
+
                                                 if ($isencaoIOF == 'S') {
-                                                    echo '<a href="#" class="botao" onClick="verificaImpressao(57);return false;">Declara&ccedil;&atilde;o de Utiliza&ccedil;&atilde;o de Recursos</a>';
+                                                    echo '<a href="#" class="botao" onClick="verificaImpressao(57);return false;">Declara&ccedil;&atilde;o Financ. Im&oacute;veis</a>';
                                                 }
-                                            >-->
+                                            ?>
 											<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Voltar</a>
 										</div>
 										

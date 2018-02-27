@@ -674,8 +674,10 @@ function formataContratos() {
     arrayLargura[6] = '90px';
     arrayLargura[7] = '60px';
     arrayLargura[8] = '70px';
-    arrayLargura[9] = '90px';
+    arrayLargura[9] = '70px';
     arrayLargura[10] = '90px';
+    arrayLargura[11] = '90px';
+    arrayLargura[12] = '90px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
@@ -690,6 +692,7 @@ function formataContratos() {
     arrayAlinha[9] = 'right';
     arrayAlinha[10] = 'right';
     arrayAlinha[11] = 'right';
+    arrayAlinha[12] = 'right';
 
     var metodoTabela = '';
 
@@ -2241,6 +2244,11 @@ function formataParcelasPP() {
     });
 
     $("input[type=hidden][name='vlmrapar[]']").each(function() {
+        // Valor total a atual
+        valorAtraso += retiraMascara(this.value);
+    });
+
+    $("input[type=hidden][name='vliofcpl[]']").each(function() {
         // Valor total a atual
         valorAtraso += retiraMascara(this.value);
     });

@@ -120,6 +120,8 @@
 		$xml .= '	</Dados>';
 		$xml .= '</Root>';
 	}
+	
+
 	// verifica se opcao eh contrato
 	if ($idimpres == '57'){
 		// Executa script para envio do XML
@@ -138,7 +140,8 @@
 		// Obtém nome do arquivo PDF 
 		$nmarqpdf = $xmlObj;
 	}
-	else if ($idimpres == '2' || $idimpres == '8') {
+	else // verifica se opcao eh contrato
+	if ($idimpres == '2' || $idimpres == '8') {
 		// Executa script para envio do XML
 		$xmlResult = mensageria($xml, "EMPR0003", "IMPCONTR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 

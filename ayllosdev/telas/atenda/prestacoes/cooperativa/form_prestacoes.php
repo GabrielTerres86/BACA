@@ -83,7 +83,7 @@
 		<label for="vlmtapar">Multa:</label>
 		<input name="vlmtapar" id="vlmtapar" type="text" value="" />		
 		<br />
-
+		
         <?php
             // Se for Pos-Fixado
             if ($tpemprst == 2) {
@@ -102,7 +102,7 @@
 		<label for="vlmrapar">Juros Mora:</label>
 		<input name="vlmrapar" id="vlmrapar" type="text" value="" />		
 		<br />
-
+		
 		<label for="vliofcpl">IOF Atraso:</label>
         <input name="vliofcpl" id="vliofcpl" type="text" value="" />
 
@@ -134,7 +134,7 @@
 		<label for="vltotpag">Total Pagar:</label>
 		<input name="vltotpag" id="vltotpag" type="text" value="" />		
 		<br />
-
+		
         <?php
             // Se for Pos-Fixado
             if ($tpemprst == 2) {

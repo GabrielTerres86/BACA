@@ -57,6 +57,7 @@
 	$cdmodali = (isset($_POST['cdmodali'])) ? $_POST['cdmodali'] : '0';
 	$idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : 0;
 	$dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '';
+	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1';
 	$cddopcao = 'A';
 	
 	if( $operacao == 'TI' ){ $cddopcao = 'I'; }
@@ -112,6 +113,7 @@
 	$xml .= "		<cdmodali>".$cdmodali."</cdmodali>";
     $xml .= "		<idcarenc>".$idcarenc."</idcarenc>";
     $xml .= "		<dtcarenc>".$dtcarenc."</dtcarenc>";
+    $xml .= "		<idfiniof>".$idfiniof."</idfiniof>";    
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	

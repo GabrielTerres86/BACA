@@ -22,7 +22,7 @@
  * 011: [26/06/2015] Criei a funcionalidade de atualizacao da "Data últ. pagto" a partir do numero de parcelas com base na "Data pagto" (Carlos R.)
  * 012: [26/06/2017] Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 013: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
- * 012: [31/01/2017] Troca de posicao da Linha de Credito e Finalidade. Criacao dos campos Carencia e Data da primeira Carencia. (Jaison/James - PRJ298)
+ * 014: [31/01/2017] Troca de posicao da Linha de Credito e Finalidade. Criacao dos campos Carencia e Data da primeira Carencia. (Jaison/James - PRJ298)
  */
  ?> 
 
@@ -177,8 +177,12 @@
 		<input name="dslcremp" id="dslcremp" type="text" value="" />
 		<br />
 		
-		<label for="vlpreemp"><? echo utf8ToHtml('Vl. da Prest.:') ?></label>
+		<input name="vlfinanc" id="vlfinanc" type="hidden" value="" />
+		
+        <label for="vlpreemp">Prest. Estim.:</label>
 		<input name="vlpreemp" id="vlpreemp" type="text" value="" />
+		
+		<br />
 		
 		<label for="idquapro"><? echo utf8ToHtml('Qualif. Oper.:') ?></label>
 		<input name="idquapro" id="idquapro" type="text" value="" />
@@ -203,21 +207,23 @@
 		<label for="dtlibera"> <? echo utf8ToHtml("Data Liberação:") ?> </label>
 		<input name="dtlibera" id="dtlibera" type="text" value="">
 		<br />
-		<input type=hidden name="idfiniof" id="idfiniof">
-		<input type=hidden name="vliofepr" id="vliofepr">
-		<input type=hidden name="vlrtarif" id="vlrtarif">
-		<input type=hidden name="vlrtotal" id="vlrtotal">
-		
-		<label for="percetop">CET(%a.a.):</label>
-		<input name="percetop" id="percetop" type="text" value="" />
 		
 		<label for="dtdpagto">Data pagto:</label>
 		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
 		<br />
 		
+        <input name="vliofepr" id="vliofepr" type="hidden" value=""/>
+
                 <label for="dtultpag">Data &uacute;lt. pagto:</label>
                 <input name="dtultpag" id="dtultpag" type="text" disabled="disabled" value="" />
 		<br />
+		
+		<input name="vlrtarif" id="vlrtarif" type="hidden" value=""/>
+
+		<input name="percetop" id="percetop" type="hidden" value="" />
+		<br />
+		
+		<input name="vlrtotal" id="vlrtotal" type="hidden" value=""/>
 		
 		<div id="linCarencia">
 			<label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
@@ -240,6 +246,7 @@
 			<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1ª Carência:") ?> </label>
 			<input name="dtcarenc" id="dtcarenc" type="text" value="" />
 		</div>
+		<br />
 		
 		<label for="flgimppr">Proposta:</label>
 		<select name="flgimppr" id="flgimppr">
@@ -276,6 +283,7 @@
 		<a href="#" class="botao" id="btSalvar" onClick="validaDadosAlterarSomenteValorProposta(); return false;">Concluir</a>	
 	<? } else if ( $operacao == 'A_FINALIZA' || $operacao == 'I_CONTRATO' || $operacao == 'I_FINALIZA'  ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
+		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('DEMONSTRATIVO_EMPRESTIMO'); return false;">Continuar</a>
 	<? } else if ( $operacao == 'A_NUMERO' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
 	<? } else if ($operacao == 'TC' || $operacao == 'CF') { ?>
@@ -298,6 +306,5 @@
 	    <?}?>
 		
 		<a href="#" class="botao" id="btSalvar" onClick="buscaLiquidacoes('I_DADOS_AVAL'); return false;">Continuar</a>
-		
 	<? } ?>
 </div>

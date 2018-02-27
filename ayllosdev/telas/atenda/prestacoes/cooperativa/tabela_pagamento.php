@@ -73,7 +73,7 @@
 						<td><? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vlmtapar')),2,",","."); ?></td>
 						<td><? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vljinpar')),2,",","."); ?></td>
 						<td><? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vlmrapar')),2,",","."); ?></td>
-						<!--<td>< echo number_format(floatval(str_replace(",",".",getByTagName($registro->tags,'vliofcpl'))),2,",","."); ?></td>-->
+						<td><? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vliofcpl')),2,",","."); ?></td>
 						<td id="vldespar_<? echo $nrparepr; ?>" ><? echo  "0,00"; /*number_format(str_replace(",",".",getByTagName($registro->tags,'vldespar')),2,",","."); */  ?></td>
 						<td><? echo $vlatupar; ?></td>			
 						<td style="width:70px;"><input type="text" id="vlpagpar_<? echo $nrparepr; ?>" name="vlpagpar[]" size="10" onblur="verificaDesconto( $(this) , '<? echo $flgantec; ?>' , <? echo $nrparepr; ?>); return false;" value = "<? echo number_format(0); ?>" >

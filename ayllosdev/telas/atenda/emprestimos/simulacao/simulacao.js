@@ -76,6 +76,11 @@ function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
             //Preencho o formulario com os dados da simulação selecionada
             buscarDadosSimulacao(auxind, operacao,'');
             break;
+        case 'D_SIMULACAO':
+            showMsgAguardo("Aguarde, Abrindo visualiza&ccedil;&atilde;o de dados...");
+            //Preencho o formulario com os dados da simulação selecionada
+            buscarDadosSimulacao(auxind, operacao,'');
+            break;
         case 'E_SIMULACAO':
             showConfirmacao('Deseja excluir simula&ccedil;&atilde;o ' + auxind + ' ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirSimulacao(' + auxind + ')', 'bloqueiaFundo($(\'#divUsoGenerico\'))', 'sim.gif', 'nao.gif');
             break;
