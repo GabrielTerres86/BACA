@@ -35,7 +35,7 @@
 			<legend>Dados do Limite</legend>
 			
 			<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
-			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo">
+			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
 			<br />
 			
 			<label></label>
@@ -123,19 +123,7 @@
 	
 		<? 	// ALTERAÇÃO 001: Substituido formulário antigo pelo include				
 			include('../../../../includes/avalistas/form_avalista.php'); 
-		?>	
-		
-		<div id="divDscChq_Confirma">					
-		
-			<fieldset>
-			
-				<legend>Contrato</legend>
-				<label for="antnrctr" class="rotulo" style="width:250px;">Confirme o n&uacute;mero do contrato:</label>
-				<input type="text" name="antnrctr" id="antnrctr" value="" style="width: 80px; text-align: right;" class="campo">
-				
-			</fieldset>
-			
-		</div>									
+		?>
 		
 	</div>
 		

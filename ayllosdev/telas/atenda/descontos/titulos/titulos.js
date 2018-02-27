@@ -1016,6 +1016,7 @@ function validaNrContrato() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando n&uacute;mero do contrato ...");
 	
+	/* Campo para confirmar numero removido	 
 	var antnrctr = $("#antnrctr","#frmDadosLimiteDscTit").val().replace(/\./g,"");
 	
 	// Valida número do contrato
@@ -1024,6 +1025,7 @@ function validaNrContrato() {
 		showError("error","Confirme o n&uacute;mero do contrato.","Alerta - Ayllos","$('#antnrctr','#frmDadosLimiteDscTit').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	} 
+	*/
 	
 	$.ajax({		
 		type: "POST", 
@@ -1031,7 +1033,7 @@ function validaNrContrato() {
 		data: {
 			nrdconta: nrdconta,
             nrctrlim: $("#nrctrlim","#frmDadosLimiteDscTit").val().replace(/\./g,""),
-			antnrctr: antnrctr,
+
 			nrctaav1: 0,
 			nrctaav2: 0,
 			redirect: "script_ajax"
