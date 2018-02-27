@@ -384,8 +384,7 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD vlrtotal AS DECI
 	FIELD idcarenc LIKE crawepr.idcarenc
     FIELD dtcarenc LIKE crawepr.dtcarenc
-
-	FIELD nivriori LIKE crawepr.dsnivori.
+    FIELD vlfinanc AS DECI.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

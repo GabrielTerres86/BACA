@@ -298,6 +298,8 @@ DEF VAR aux_percetop         AS DECI                 NO-UNDO.
 DEF VAR aux_txcetmes         AS DECI                 NO-UNDO.
 DEF VAR aux_flctrliq         AS LOGI                 NO-UNDO.
 DEF VAR aux_flgativo         AS INTE                 NO-UNDO.
+DEF VAR aux_dscatbem         AS CHAR                 NO-UNDO.
+DEF VAR aux_dsctrliq         AS CHAR                 NO-UNDO.
 /*DEF VAR aux_flimovel         AS INTE	             NO-UNDO. 17/02/2017 - Validaçao removida */
 
 DEF BUFFER b_crawepr FOR crawepr.
@@ -1312,6 +1314,19 @@ DO WHILE TRUE:
                                        crapass.nrdconta = tel_nrdconta
                                        NO-LOCK NO-ERROR.
 
+              ASSIGN aux_dscatbem = "".
+               FOR EACH crapbpr WHERE crapbpr.cdcooper = crawepr.cdcooper  AND
+                                     crapbpr.nrdconta = crawepr.nrdconta  AND
+                                     crapbpr.nrctrpro = crawepr.nrctremp  AND 
+                                     crapbpr.tpctrpro = 90 NO-LOCK:
+                  ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
+               END.
+               
+               RUN buscar_liquidacoes_contrato IN h-b1wgen0002(INPUT crawepr.cdcooper,
+                                                              INPUT crawepr.nrdconta,
+                                                              INPUT crawepr.nrctremp,
+                                                              OUTPUT aux_dsctrliq).  
+       
               /* Calcular o cet automaticamente */
               RUN calcula_cet_novo IN h-b1wgen0002(
                                    INPUT glb_cdcooper,
@@ -1334,6 +1349,9 @@ DO WHILE TRUE:
                                    INPUT tel_qtpreemp,
                                    INPUT tel_dtdpagto,
                                    INPUT crawepr.cdfinemp,
+                                   INPUT aux_dscatbem, /* dscatbem */
+                                   INPUT crawepr.idfiniof, /* IDFINIOF */
+                                   INPUT aux_dsctrliq, /* dsctrliq */
                                   OUTPUT aux_percetop, /* taxa cet ano */
                                   OUTPUT aux_txcetmes, /* taxa cet mes */
                                   OUTPUT TABLE tt-erro).
