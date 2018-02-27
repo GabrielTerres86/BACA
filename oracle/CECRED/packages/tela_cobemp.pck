@@ -273,7 +273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
   --  Sistema  : Rotinas da Tela Ayllos Web COBEMP
   --  Sigla    : TELA
   --  Autor    : Daniel Zimmermann
-  --  Data     : Agosto - 2015.                   Ultima atualizacao: 27/09/2016
+  --  Data     : Agosto - 2015.                   Ultima atualizacao: 14/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -283,6 +283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
   -- Alteracoes: 27/09/2016 - Inclusao de verificacao de contratos de acordos
   --                          nas procedures pc_verifica_gerar_boleto, Prj. 302 (Jean Michel).
   --
+  --             14/11/2017 - Ajsute para devolver informacao de liquidacao do contrato (Jonata - RKAM P364).
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_buscar_email(pr_nrdconta IN INTEGER
@@ -1329,7 +1330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Sistema : CECRED
       Sigla   : TELA
       Autor   : Lucas Reinert
-      Data    : Agosto/15.                    Ultima atualizacao: 01/03/2017
+      Data    : Agosto/15.                    Ultima atualizacao: 14/11/2017
 
       Dados referentes ao programa:
 
@@ -1340,6 +1341,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Observacao: -----
 
       Alteracoes: 01/03/2017 - Inclusao de indicador se possui avalista e coluna de Saldo Prejuizo. (P210.2 - Jaison/Daniel)
+
+                  09/08/2017 - Nao permitir geracao para produto Pos-Fixado. (Jaison/James - PRJ298)
+      Alteracoes: 14/11/2017 - Ajsute para devolver informacao de liquidacao do contrato (Jonata - RKAM P364).
     ..............................................................................*/
 			DECLARE
 			----------------------------- VARIAVEIS ---------------------------------
@@ -1380,6 +1384,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       vr_inusatab BOOLEAN;
       vr_vlsdeved    crapepr.vlsdeved%TYPE;
       vr_avalista    INTEGER;
+
+      --IOF
+      vr_vliofpri NUMBER;
+      vr_vliofadi NUMBER;
+      vr_vliofcpl_tmp NUMBER;
+      vr_vliofcpl NUMBER;
+      vr_vltaxa_iof_principal VARCHAR2(20);
+      vr_qtdiaiof NUMBER;
+      vr_flgimune PLS_INTEGER;
+      vr_dscatbem VARCHAR2(100);
 
       -- cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -1426,6 +1440,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
            AND cyc.nrctremp = pr_nrctremp
            AND cyc.cdorigem = 3;
       rw_cyc cr_cyc%ROWTYPE;     
+
+      -- Cursor para bens do contrato: 
+      /*Faz o order by dscatbem pois "CASA" e "APARTAMENTO" reduzem as 3 aliquotas de IOF (principal, adicional e complementar) a zero.
+      Já "MOTO" reduz apenas as alíquotas de IOF principal e complementar..
+      Dessa forma, se tiver um bem que seja CASA ou APARTAMENTO, não precisa mais verificar os outros bens..*/
+      CURSOR cr_crapbpr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_nrdconta IN crapass.nrdconta%TYPE
+                       ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS      
+        SELECT b.dscatbem, t.cdlcremp
+        FROM crapepr t
+        INNER JOIN crapbpr b ON b.nrdconta = t.nrdconta AND b.cdcooper = t.cdcooper AND b.nrctrpro = t.nrctremp
+        WHERE t.cdcooper = pr_cdcooper
+              AND t.nrdconta = pr_nrdconta
+              AND t.nrctremp = pr_nrctremp
+              AND upper(b.dscatbem) IN ('APARTAMENTO', 'CASA', 'MOTO')
+        ORDER BY upper(b.dscatbem) ASC;
+      rw_crapbpr cr_crapbpr%ROWTYPE;
+      
+      
+      --Cursor de parcelas dos Emprestimos
+      CURSOR cr_crappep(pr_cdcooper IN crapepr.cdcooper%TYPE
+                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                       ,pr_nrctremp IN crapepr.nrctremp%TYPE
+                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+       SELECT crappep.dtvencto, crappep.vlsdvpar
+       FROM crappep
+       WHERE crappep.cdcooper = pr_cdcooper
+           AND crappep.nrdconta = pr_nrdconta
+           AND crappep.nrctremp = pr_nrctremp
+           AND crappep.inliquid = 0
+           AND crappep.dtvencto < pr_dtmvtolt;
+      rw_crappep cr_crappep%ROWTYPE;
 
 			BEGIN
 
@@ -1556,11 +1602,76 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
 						LOOP
               
+              -- Se for Pos-Fixado, vai para proximo
+              IF vr_tab_dados_epr(vr_ind_cde).tpemprst = 2 THEN
+                -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
+                EXIT WHEN (vr_ind_cde = vr_tab_dados_epr.LAST OR vr_ind_cde = (pr_nriniseq + pr_nrregist) - 1);
+                vr_ind_cde := vr_tab_dados_epr.NEXT(vr_ind_cde);
+                CONTINUE;
+              END IF;
+
               vr_dstipcob := '';
               vr_vlsdeved := 0;
-              vr_vlsdeved := (vr_tab_dados_epr(vr_ind_cde).vlsdeved + 
-                              vr_tab_dados_epr(vr_ind_cde).vlmtapar +
-                              vr_tab_dados_epr(vr_ind_cde).vlmrapar);   
+
+              -- Novo cálculo de IOF
+              vr_dscatbem := NULL;
+              --Verifica o primeiro bem do contrato para saber se tem isenção de alíquota
+              OPEN cr_crapbpr(pr_cdcooper => vr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrctremp => vr_tab_dados_epr(vr_ind_cde).nrctremp);
+              FETCH cr_crapbpr INTO rw_crapbpr;
+              IF cr_crapbpr%FOUND THEN
+                vr_dscatbem := rw_crapbpr.dscatbem;                
+              END IF;
+              CLOSE cr_crapbpr;
+              
+              vr_vliofcpl := 0;
+              vr_vliofcpl_tmp := 0;
+              FOR rw_crappep IN cr_crappep(pr_cdcooper => vr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_nrctremp => vr_tab_dados_epr(vr_ind_cde).nrctremp 
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+                                          
+                  --Dias de atraso
+                  vr_qtdiaiof := rw_crapdat.dtmvtolt - rw_crappep.dtvencto;
+                              
+                  --Calcula o IOF
+                  TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => vr_cdcooper                             --> Código da cooperativa referente ao contrato de empréstimos
+                                                    ,pr_nrdconta => pr_nrdconta                            --> Número da conta referente ao empréstimo
+                                                    ,pr_nrctremp => vr_tab_dados_epr(vr_ind_cde).nrctremp  --> Número do contrato de empréstimo
+                                                    --,pr_vlemprst => vr_tab_dados_epr(vr_ind_cde).vlsdeved  --> Valor do empréstimo para efeito de cálculo
+                                                    ,pr_vlemprst => rw_crappep.vlsdvpar  --> Valor do empréstimo para efeito de cálculo
+                                                    ,pr_dscatbem => vr_dscatbem                            --> Descrição da categoria do bem, valor default NULO 
+                                                    ,pr_cdlcremp => vr_tab_dados_epr(vr_ind_cde).cdlcremp  --> Linha de crédito do empréstimo
+                                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt                    --> Data do movimento
+                                                    ,pr_qtdiaiof => vr_qtdiaiof                            --> Quantidade de dias em atraso
+                                                    ,pr_vliofpri => vr_vliofpri                            --> Valor do IOF principal
+                                                    ,pr_vliofadi => vr_vliofadi                            --> Valor do IOF adicional
+                                                    ,pr_vliofcpl => vr_vliofcpl_tmp                        --> Valor do IOF complementar
+                                                    ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal    --> Valor da Taxa do IOF Principal
+                                                    ,pr_flgimune => vr_flgimune                            --> Possui imunidade tributária
+                                                    ,pr_dscritic => vr_dscritic);                          --> Descrição da crítica
+                  IF NVL(vr_dscritic,' ') <> ' ' THEN
+                    --Sair com erro
+                    RAISE vr_exc_saida;
+                  END IF;
+                                              
+                  --Imunidade....
+                  IF vr_flgimune > 0 THEN
+                    vr_vliofpri := 0;
+                    vr_vliofadi := 0;
+                    vr_vliofcpl_tmp := 0;
+                  ELSE
+                    vr_vliofcpl := NVL(vr_vliofcpl, 0) + ROUND(NVL(vr_vliofcpl_tmp, 0), 2);
+                  END IF;
+                        
+              END LOOP;
+                           
+              vr_vlsdeved := (NVL(vr_tab_dados_epr(vr_ind_cde).vlsdeved,0) + 
+                              NVL(vr_tab_dados_epr(vr_ind_cde).vlmtapar,0) +
+                              NVL(vr_tab_dados_epr(vr_ind_cde).vlmrapar,0) + 
+                              NVL(vr_vliofcpl,0));
+                            
               
               OPEN cr_epr (pr_cdcooper => vr_cdcooper
                           ,pr_nrdconta => pr_nrdconta
@@ -1625,6 +1736,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
               ELSE
                 vr_vlatraso := vr_tab_dados_epr(vr_ind_cde).vlprvenc + vr_tab_dados_epr(vr_ind_cde).vlmtapar + vr_tab_dados_epr(vr_ind_cde).vlmrapar;                
               END IF;
+              vr_vlatraso := vr_vlatraso + NVL(vr_vliofcpl,0);
+              
 
               IF vr_tab_dados_epr(vr_ind_cde).dsdavali <> ' ' THEN
                 vr_avalista := 1;
@@ -1650,6 +1763,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'avalista', pr_tag_cont => vr_avalista, pr_des_erro => vr_dscritic);
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'inprejuz', pr_tag_cont => nvl(vr_tab_dados_epr(vr_ind_cde).inprejuz,0), pr_des_erro => vr_dscritic);
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'vlsdprej', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).vlsdprej, pr_des_erro => vr_dscritic);
+							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'inliquid', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).inliquid, pr_des_erro => vr_dscritic);              
+              gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'vliofcpl', pr_tag_cont => vr_vliofcpl, pr_des_erro => vr_dscritic);
 
               --IF ( vr_tab_dados_epr(vr_ind_cde).vltotpag > 0 ) THEN
                  vr_auxconta := vr_auxconta + 1;
@@ -2067,6 +2182,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
 			-- Tratamento de erros
 			vr_exc_saida EXCEPTION;
+			vr_tab_erro  gene0001.typ_tab_erro;
 
 			 -- Variaveis de log
 			vr_cdcooper INTEGER;
@@ -3601,7 +3717,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lombardi
-      Data    : Marco/2017                    Ultima atualizacao: 
+      Data    : Marco/2017                    Ultima atualizacao: 06/11/2017
 
       Dados referentes ao programa:
 
@@ -3612,7 +3728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
       Observacao: -----
 
-      Alteracoes: 
+      Alteracoes: Ajuste leitura crapcob (Daniel)
     ..............................................................................*/
 		DECLARE
 
@@ -3735,13 +3851,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
             ,crapcop cop
             ,crapass ass
             ,crapsab sab
+			,crapcco cco
        WHERE imp.idarquivo = pr_idarquiv
          AND epr.idarquivo = imp.idarquivo
          AND epr.idboleto  = imp.idboleto
+
+		 -- Leitura CCO
+         AND cco.cdcooper = epr.cdcooper
+         AND cco.nrconven = epr.nrcnvcob
+
          AND cob.cdcooper = epr.cdcooper
          AND cob.nrdconta = epr.nrdconta_cob
          AND cob.nrcnvcob = epr.nrcnvcob
          AND cob.nrdocmto = epr.nrboleto
+
+		 AND cob.cdbandoc = cco.cddbanco
+         AND cob.nrdctabb = cco.nrdctabb
+
          AND cop.cdcooper = imp.cdcooper
          AND ass.cdcooper = imp.cdcooper
          AND ass.nrdconta = imp.nrdconta
@@ -3758,13 +3884,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
             ,crapcop cop
             ,crapass ass
             ,crapsab sab
+			,crapcco cco
        WHERE imp.idarquivo = pr_idarquiv
          AND epr.idarquivo = imp.idarquivo
          AND epr.idboleto  = imp.idboleto
+
+		 -- Leitura CCO
+         AND cco.cdcooper = epr.cdcooper
+         AND cco.nrconven = epr.nrcnvcob
+
          AND cob.cdcooper = epr.cdcooper
          AND cob.nrdconta = epr.nrdconta_cob
          AND cob.nrcnvcob = epr.nrcnvcob
          AND cob.nrdocmto = epr.nrboleto
+
+		 AND cob.cdbandoc = cco.cddbanco
+         AND cob.nrdctabb = cco.nrdctabb
+
          AND cop.cdcooper = imp.cdcooper
          AND ass.cdcooper = imp.cdcooper
          AND ass.nrdconta = imp.nrdconta
@@ -3999,7 +4135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                                             ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
       -- Nome do arquivo
       vr_nom_arquivo := 'crrl733' || to_char( gene0002.fn_busca_time) || '.pdf';
-      
+      /*
       -- Escreve o clob no arquivo físico
       gene0002.pc_clob_para_arquivo(pr_clob => vr_des_xml
                                    ,pr_caminho => vr_nom_direto
@@ -4008,7 +4144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-      
+      */
       -- Efetuar solicitacao de geracao de relatorio --
       gene0002.pc_solicita_relato (pr_cdcooper  => vr_cdcooper         --> Cooperativa conectada
                                   ,pr_cdprogra  => 'COBEMP'        --> Programa chamador
@@ -4777,6 +4913,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
     vr_tab_dados_epr empr0001.typ_tab_dados_epr;
     vr_qtregist    INTEGER;
     
+    --IOF
+      vr_vliofpri NUMBER;
+      vr_vliofadi NUMBER;
+      vr_vliofcpl NUMBER;
+      vr_vltaxa_iof_principal VARCHAR2(20);
+      vr_qtdiaiof NUMBER;
+      vr_flgimune PLS_INTEGER;
+      vr_dscatbem VARCHAR2(100);
+	  
+	   -- Cursor para bens do contrato: 
+      /*Faz o order by dscatbem pois "CASA" e "APARTAMENTO" reduzem as 3 aliquotas de IOF (principal, adicional e complementar) a zero.
+      Já "MOTO" reduz apenas as alíquotas de IOF principal e complementar..
+      Dessa forma, se tiver um bem que seja CASA ou APARTAMENTO, não precisa mais verificar os outros bens..*/
+      CURSOR cr_crapbpr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_nrdconta IN crapass.nrdconta%TYPE
+                       ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS      
+        SELECT b.dscatbem, t.cdlcremp
+        FROM crapepr t
+        INNER JOIN crapbpr b ON b.nrdconta = t.nrdconta AND b.cdcooper = t.cdcooper AND b.nrctrpro = t.nrctremp
+        WHERE t.cdcooper = pr_cdcooper
+              AND t.nrdconta = pr_nrdconta
+              AND t.nrctremp = pr_nrctremp
+              AND upper(b.dscatbem) IN ('APARTAMENTO', 'CASA', 'MOTO')
+        ORDER BY upper(b.dscatbem) ASC;
+      rw_crapbpr cr_crapbpr%ROWTYPE;
     
   BEGIN
       
@@ -4912,12 +5073,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
     
       -- Condicao para verificar se encontrou contrato de emprestimo
       IF vr_tab_dados_epr.COUNT > 0 THEN
+        
+        -- Novo cálculo de IOF
+        vr_dscatbem := NULL;
+        --Verifica o primeiro bem do contrato para saber se tem isenção de alíquota
+        OPEN cr_crapbpr(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_nrctremp => vr_tab_dados_epr(1).nrctremp);
+        FETCH cr_crapbpr INTO rw_crapbpr;
+        IF cr_crapbpr%FOUND THEN
+          vr_dscatbem := rw_crapbpr.dscatbem;
+        END IF;
+        CLOSE cr_crapbpr;
+      
+        --Dias de atraso
+        vr_qtdiaiof := pr_rw_crapdat.dtmvtolt - vr_tab_dados_epr(1).dtdpagto;
+        IF vr_qtdiaiof < 0 THEN
+          vr_qtdiaiof := 0;
+        END IF;
+                              
+        --Calcula o IOF
+        TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper                             --> Código da cooperativa referente ao contrato de empréstimos
+                                          ,pr_nrdconta => pr_nrdconta                            --> Número da conta referente ao empréstimo
+                                          ,pr_nrctremp => vr_tab_dados_epr(1).nrctremp           --> Número do contrato de empréstimo
+                                          ,pr_vlemprst => vr_tab_dados_epr(1).vlsdeved           --> Valor do empréstimo para efeito de cálculo
+                                          ,pr_dscatbem => vr_dscatbem                            --> Descrição da categoria do bem, valor default NULO 
+                                          ,pr_cdlcremp => vr_tab_dados_epr(1).cdlcremp           --> Linha de crédito do empréstimo
+                                          ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt                 --> Data do movimento
+                                          ,pr_qtdiaiof => vr_qtdiaiof                            --> Quantidade de dias em atraso
+                                          ,pr_vliofpri => vr_vliofpri                            --> Valor do IOF principal
+                                          ,pr_vliofadi => vr_vliofadi                            --> Valor do IOF adicional
+                                          ,pr_vliofcpl => vr_vliofcpl                            --> Valor do IOF complementar
+                                          ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal    --> Valor da Taxa do IOF Principal
+                                          ,pr_flgimune => vr_flgimune                            --> Possui imunidade tributária
+                                          ,pr_dscritic => vr_dscritic);                          --> Descrição da crítica
+                           
+        IF NVL(vr_dscritic,' ') <> ' ' THEN
+          --Sair com erro
+          RAISE vr_exc_erro;
+        END IF;
+                                                
+        --Imunidade....
+        IF vr_flgimune > 0 THEN
+          vr_vliofpri := 0;
+          vr_vliofadi := 0;
+          vr_vliofcpl := 0;
+        ELSE
+          vr_vliofcpl := ROUND(NVL(vr_vliofcpl, 0), 2);
+        END IF;  
+      
         -- Saldo Devedor
-        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) + nvl(vr_tab_dados_epr(1).vlmrapar,0);
+        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) + nvl(vr_tab_dados_epr(1).vlmrapar,0) + vr_vliofcpl;
         -- Saldo Prejuizo
         pr_vlsdprej := nvl(vr_tab_dados_epr(1).vlsdprej,0);
         -- Valor em Atraso
-        pr_vlatraso := nvl(vr_tab_dados_epr(1).vltotpag,0);
+        pr_vlatraso := nvl(vr_tab_dados_epr(1).vltotpag,0) + vr_vliofcpl;
+        
       END IF;
         
     END IF;

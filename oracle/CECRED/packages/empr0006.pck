@@ -293,19 +293,17 @@ PROCEDURE pc_atualizar_situacao(pr_cdcooper IN crapcop.cdcooper%TYPE            
                                        ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                        ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                        ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
-
-									   
+                                       
 	/* verifica se pode imprimir a declaração de isenção de IOF */
 	PROCEDURE pc_pode_impr_dec_isencao_iof(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo Cooperativa
 										  ,pr_nrdconta IN crapcop.nrdconta%TYPE --> Numero da Conta
-										  ,pr_nrctremp IN crawepr.nrctremp%TYPE --> Numero de Emprestimo
+										  ,pr_nrctrato IN crawepr.nrctremp%TYPE --> Numero de Emprestimo
 										  ,pr_xmllog   IN VARCHAR2 --> XML com informac?es de LOG
 										  ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
 										  ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
 										  ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
 										  ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
 										  ,pr_des_erro OUT VARCHAR2); --> Erros do processo
-                                       
 end EMPR0006;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
@@ -3424,7 +3422,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
       -- Seta o Saldo Devedor somando com Multa e Juros Mora
       vr_vlsdeved := vr_tab_dados_epr(1).vlsdeved + --> Saldo devedor acumulado
                      vr_tab_dados_epr(1).vlmtapar + --> Valor da Multa
-                     vr_tab_dados_epr(1).vlmrapar ; --> Valor do Juros de Mora
+                     vr_tab_dados_epr(1).vlmrapar +
+					 vr_tab_dados_epr(1).vliofcpl; --> Valor do Juros de Mora
 
 			-- Valor Saldo Devedor Contabil para Proposta
       pc_cria_tag(pr_dsnomtag => 'VlrSaldDevdrContb'
@@ -6712,11 +6711,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
     END;
 
   END pc_verifica_dados_JDCTC_prt;
-  
   /* verifica se pode imprimir a declaração de isenção de IOF */
   PROCEDURE pc_pode_impr_dec_isencao_iof(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo Cooperativa
 										,pr_nrdconta IN crapcop.nrdconta%TYPE --> Numero da Conta
-										,pr_nrctremp IN crawepr.nrctremp%TYPE --> Numero de Emprestimo
+										,pr_nrctrato IN crawepr.nrctremp%TYPE --> Numero de Emprestimo
 										,pr_xmllog   IN VARCHAR2 --> XML com informac?es de LOG
 										,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
 										,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -6730,57 +6728,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
         Sigla   : EMPR
         Autor   : Diogo (MoutS)
         Data    : Outubro/17.                    Ultima atualizacao: 11/10/2017
-        
         Dados referentes ao programa:
-        
         Frequencia: Sempre que for chamado
-        
         Objetivo  : Rotina de verificacao de pode imprimir a DECLARAÇÃO DE UTILIZAÇÃO DE RECURSOS PARA ISENÇAO DE IOF
-        
         Observacao: -----
-        
         Alteracoes:
         ..............................................................................*/
-		
 	DECLARE				
 		--Variaveis
 		vr_des_reto VARCHAR2(1);
 		vr_err_efet INTEGER;
-				
 		-- Variável de críticas
 		vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic VARCHAR2(10000);
-		
 		-- Tratamento de erros
 		vr_exc_saida EXCEPTION;
-				
 		CURSOR cr_pode_imprimir(pr_cdcooper IN crapcop.cdcooper%TYPE
 							   ,pr_nrdconta IN crapcop.nrdconta%TYPE
-							   ,pr_nrctremp IN crawepr.nrctremp%TYPE) IS
+							   ,pr_nrctrato IN crawepr.nrctremp%TYPE) IS
 			SELECT crawepr.nrctremp
 			FROM crawepr
+            INNER JOIN crapass ON crapass.nrdconta = crawepr.nrdconta AND crawepr.cdcooper = crapass.cdcooper
 			INNER JOIN CRAPLCR ON CRAPLCR.CDLCREMP = crawepr.cdlcremp AND crawepr.cdcooper = craplcr.cdcooper
 			INNER JOIN CRAPBPR ON CRAPBPR.nrdconta = crawepr.nrdconta AND CRAPBPR.cdcooper = crawepr.cdcooper AND CRAPBPR.nrctrpro = crawepr.nrctremp
 			WHERE crawepr.cdcooper = pr_cdcooper
 				AND crawepr.nrdconta = pr_nrdconta
-				AND crawepr.nrctremp = pr_nrctremp
+				AND crawepr.nrctremp = pr_nrctrato
+                AND crapass.inpessoa = 1 --somente PF
 				AND upper(CRAPBPR.dscatbem) IN ('APARTAMENTO', 'CASA');
-				
+                --AND crawepr.insitapr = 1; -- aprovada
 		rw_pode_imprimir cr_pode_imprimir%ROWTYPE;
-				
 		BEGIN
 			--Consulta
-			OPEN cr_pode_imprimir(pr_cdcooper, pr_nrdconta, pr_nrctremp);				
+			OPEN cr_pode_imprimir(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta, pr_nrctrato => pr_nrctrato);
 			FETCH cr_pode_imprimir INTO rw_pode_imprimir;
-				
 			IF cr_pode_imprimir%FOUND THEN
 				vr_des_reto := 'S';
 			ELSE
 				vr_des_reto := 'N';
 			END IF;
-				
 			CLOSE cr_pode_imprimir;
-				
 			-- Criar cabeçalho do XML
 			pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -6789,7 +6776,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
 								   pr_tag_nova => 'ConfereDados',
 								   pr_tag_cont => vr_des_reto,
 								   pr_des_erro => vr_dscritic);
-				
 		EXCEPTION
 			WHEN vr_exc_saida THEN
 				pr_cdcritic := vr_cdcritic;
@@ -6800,7 +6786,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
 				pr_dscritic := 'Erro Geral em Consulta de Declaração de Isenção de IOF: ' || SQLERRM;
 				pr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
 		END;
-		
   END pc_pode_impr_dec_isencao_iof;
   
 END EMPR0006;

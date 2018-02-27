@@ -30,6 +30,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0002 IS
   --             29/09/2016 - Incluida validacao de contratos de acordos na procedure
   --                          pc_gerar_acordo, Prj. 302 (Jean Michel).
   --             
+  --            18/12/2017 - Projeto 410 - incluir tratamento IOF por atraso (Jean - MOut´S)
   ---------------------------------------------------------------------------
   
   TYPE typ_rec_parcelas 
@@ -91,7 +92,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --  Sistema  : Rotinas referentes ao WebService de Acordos
   --  Sigla    : EMPR
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Julho - 2016.                   Ultima atualizacao: 29/09/2016
+  --  Data     : Julho - 2016.                   Ultima atualizacao: 30/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -115,6 +116,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --
   --             29/09/2016 - Incluida validacao de contratos de acordos na procedure
   --                          pc_gerar_acordo, Prj. 302 (Jean Michel).
+  --
+  --             30/11/2017 - Ajuste para fixar o número de parcelar como 0 - zero ao chamar
+  --                          a rotina que efetua o lançamento
+  --                          (Adriano - SD 804308).
   --
   ---------------------------------------------------------------------------
   -- Formato de retorno para numerico no xml
@@ -326,7 +331,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       -- Condicao para verificar se encontrou contrato de emprestimo
       IF vr_tab_dados_epr.COUNT > 0 THEN
         -- Saldo Devedor
-        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) + nvl(vr_tab_dados_epr(1).vlmrapar,0);
+        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) 
+                     + nvl(vr_tab_dados_epr(1).vlmrapar,0) + nvl(vr_tab_dados_epr(1).vliofcpl,0);
         -- Saldo Prejuizo
         pr_vlsdprej := nvl(vr_tab_dados_epr(1).vlsdprej,0);
         -- Valor em Atraso
@@ -756,7 +762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
    Sistema : Rotinas referentes ao WebService
    Sigla   : WEBS
    Autor   : Odirlei Busana - AMcom
-   Data    : Julho/2016.                    Ultima atualizacao: 20/07/2016
+   Data    : Julho/2016.                    Ultima atualizacao: 30/01/2017
 
    Dados referentes ao programa:
 
@@ -765,7 +771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
    Objetivo  : Rotina para gravar os contratos do acordo
 
    Observacao: -----
-   Alteracoes:
+   Alteracoes: 30/01/2017 - Nao permitir gerar boleto para Pos-Fixado. (Jaison/James - PRJ298)
    ..............................................................................*/                                    
    
     ---------------> CURSORES <-------------
@@ -783,17 +789,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
          AND crapcyb.cdorigem = pr_cdorigem;
     rw_crapcyb cr_crapcyb%ROWTYPE;
     
-    --> Verificar se é emprestimo consignado
+    --> Buscar dados emprestimo
     CURSOR cr_crapepr (pr_cdcooper  crapcyb.cdcooper%TYPE,
                        pr_nrdconta  crapcyb.nrdconta%TYPE,
                        pr_nrctremp  crapcyb.nrctremp%TYPE) IS
     
-      SELECT 1
+      SELECT tpdescto
+            ,tpemprst
         FROM crapepr
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
-         AND nrctremp = pr_nrctremp
-         AND tpdescto = 2; --- Consignado
+         AND nrctremp = pr_nrctremp;
     rw_crapepr cr_crapepr%ROWTYPE;
     
     --> Verificar se o contrato ja esta em algum acordo ativo
@@ -835,17 +841,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     END IF;
     CLOSE cr_crapcyb;  
     
-    --> Verificar se é emprestimo consignado
+    --> Buscar dados emprestimo
     OPEN cr_crapepr (pr_cdcooper  => pr_cdcooper,
                      pr_nrdconta  => pr_nrdconta,
                      pr_nrctremp  => pr_nrctremp);
     FETCH cr_crapepr INTO rw_crapepr;
-    IF cr_crapepr%FOUND THEN
       CLOSE cr_crapepr;
-      vr_cdcritic := 987; -- Operação não permitida para emprestimos consignados.
+
+    -- Operacao nao permitida para emprestimos consignados
+    IF rw_crapepr.tpdescto = 2 THEN
+      vr_cdcritic := 987;
       RAISE vr_exc_erro;  
     END IF;
-    CLOSE cr_crapepr;  
+
+    -- Se for emprestimo Pos-Fixado
+    IF rw_crapepr.tpemprst = 2 THEN
+      vr_dscritic := 'Operacao nao permitida para emprestimo Pos-Fixado.';
+      RAISE vr_exc_erro;  
+    END IF;
     
     --> Verificar se o contrato ja esta em algum acordo ativo
     OPEN cr_tbrecup_contrato (pr_cdcooper  => pr_cdcooper,
@@ -1089,6 +1102,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                   
                   21/10/2016 - Incluir validação de cooperativa habilitada para gerar
                                acordos ( Renato Darosci - Supero )
+
+                  11/09/2017 - Incluido substr na busca do campo bairro, limitando em 30 posicoes
+                               pois o campo na CRAPENC e maior que o campo na CRAPSAB
+                               Heitor (Mouts) - Chamado 752022
+
+			      11/12/2017 - Limitar o campo de complemento em 40 posicoes, devido ao tamanho do campo
+				               na tabela CRAPSAB.
+                               Marcelo Coelho (Mouts) - Chamado 785483
+
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1102,11 +1124,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
              ass.inpessoa,
              ass.nmprimtl,
              enc.dsendere,
-             enc.nmbairro,
+             substr(enc.nmbairro,1,30) nmbairro,
              enc.nrcepend,
              enc.nmcidade,
              enc.nrendere,
-             enc.complend,
+             substr(enc.complend,1,40) complend,
              enc.cdufende,
              ass.cdcooper
                        
@@ -1578,10 +1600,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       
     WHEN OTHERS THEN
       pr_cdcritic := 993;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic); 
       pr_dscritic := vr_dscritic;      
       pr_dsdetcri := SQLERRM; 
-            
+	  pc_internal_exception(vr_cdcooper);
   END pc_gerar_acordo;
   
   --> Rotina responsavel por cancelar acordo
@@ -1595,7 +1617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       Sistema : Rotinas referentes ao WebService
       Sigla   : WEBS
       Autor   : Odirlei Busana - AMcom
-      Data    : Julho/2016.                    Ultima atualizacao: 22/02/2017
+      Data    : Julho/2016.                    Ultima atualizacao: 30/11/2017
 
       Dados referentes ao programa:
 
@@ -1613,6 +1635,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                Prj. 302 (Jean Michel). 
 
                   22/02/2017 - Passagem de parametros rw_tbacordo para cr_crapass. (Jaison/James)
+
+                  30/11/2017 - Ajuste para fixar o número de parcelar como 0 - zero ao chamar
+                               a rotina que efetua o lançamento
+                               (Adriano - SD 804308).
 
     ..............................................................................*/                                    
     
@@ -1773,7 +1799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                     ,pr_nrdconta => rw_crapass.nrdconta             --> Número da conta
                                     ,pr_cdhistor => 2194                    --> Codigo historico 2194 - CR.DESB.ACORD
                                     ,pr_vllanmto => rw_tbacordo.vlbloqueado --> Valor da parcela emprestimo
-                                    ,pr_nrparepr => rw_tbacordo.nracordo    --> Número parcelas empréstimo
+                                    ,pr_nrparepr => 0                       --> Número parcelas empréstimo
                                     ,pr_nrctremp => 0                       --> Número do contrato de empréstimo
                                     ,pr_des_reto => vr_des_reto             --> Retorno OK / NOK
                                     ,pr_tab_erro => vr_tab_erro);           --> Tabela com possíves erros
