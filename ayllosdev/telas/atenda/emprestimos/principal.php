@@ -41,6 +41,7 @@
  * 030: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 031: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
  * 032: [26/01/2018] Alteração para exibição do nível de risco original (Reginaldo - AMcom).
+
  */
 
 	session_start();
@@ -121,6 +122,29 @@
 		$xml .= "		<inconfir>".$inconfir."</inconfir>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
+
+
+		// Monta o xml de requisição
+		$xmlFuncao  = "";
+		$xmlFuncao .= "<Root>";
+		$xmlFuncao .= "   <Dados>";
+		$xmlFuncao .= "	   	<nrdconta>".$nrdconta."</nrdconta>";
+		$xmlFuncao .= "   </Dados>";
+		$xmlFuncao .= "</Root>";
+
+		// Executa script para envio do XML	
+		$xmlFuncaoResult = mensageria($xmlFuncao, "TELA_ATENDA_EMPRESTIMO", "OBTEM_DADOS_CONSIGNADO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjFuncao = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlFuncaoResult)));
+		//$xmlObjFuncao = simplexml_load_string($xmlFuncaoResult);
+
+
+		// Se ocorrer um erro, mostra cr&iacute;tica
+		
+		if (isset($xmlObjFuncao->roottag->tags[0]->name) && strtoupper($xmlObjFuncao->roottag->tags[0]->name) == "ERRO") {
+			exibirErro('error',$xmlObjFuncao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		}
+		
+		
 		
 		$xmlResult = getDataXML($xml);
 		
@@ -142,6 +166,11 @@
 
 			$registros = $xmlObjeto->roottag->tags[0]->tags;
 			$gerais    = $xmlObjeto->roottag->tags[1]->tags[0]->tags;
+
+			// registro da procedure que retorna os dados da FUNCAO(SOFTPAR)
+			//$registrosFuncao = $xmlObjFuncao->roottag;
+			$registrosFuncao = $xmlObjFuncao->roottag->tags[0]->tags;
+
 
 			$ddmesnov = getByTagName($gerais,'ddmesnov');
 			$dtdpagt2 = getByTagName($gerais,'dtdpagto');
@@ -224,7 +253,7 @@
 			arrayProposta['vlpreemp'] = '<? echo getByTagName($proposta,'vlpreemp'); ?>';
 			arrayProposta['qtpreemp'] = '<? echo getByTagName($proposta,'qtpreemp'); ?>';
 			arrayProposta['nivrisco'] = '<? echo getByTagName($proposta,'nivrisco'); ?>';
-			arrayProposta['nivriori'] = '<? echo getByTagName($proposta,'nivriori'); ?>'; // n�vel de risco original
+			arrayProposta['nivriori'] = '<? $riscoOrig = getByTagName($proposta,'nivriori'); $riscoCalc = getByTagName($proposta,'nivrisco'); echo !empty($riscoOrig) ? $riscoOrig : $riscoCalc; ?>'; // n�vel de risco original
 			arrayProposta['nivcalcu'] = '<? echo getByTagName($proposta,'nivcalcu'); ?>';
 			arrayProposta['cdlcremp'] = '<? echo getByTagName($proposta,'cdlcremp'); ?>';
 			arrayProposta['cdfinemp'] = '<? echo getByTagName($proposta,'cdfinemp'); ?>';
@@ -693,7 +722,9 @@
 					mensagemAval<? echo $i; ?>['cdavalis'] = '<? echo getByTagName($mensagem_aval[$i]->tags,'cdavalis'); ?>';
 					mensagemAval<? echo $i; ?>['dsmensag'] = '<? echo retiraCharEsp(getByTagName($mensagem_aval[$i]->tags,'dsmensag')); ?>';
 					arrayMensagemAval[<? echo $i; ?>] = mensagemAval<? echo $i; ?>;
-				<?}?>
+				<? 
+				}
+				?>
 
 				var arrayEmprestimosAvalista1 = new Array();
 
