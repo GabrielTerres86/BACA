@@ -741,7 +741,7 @@ BEGIN
     END IF;
   
     --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
-    IF pr_idparale <> 0 THEN
+    IF pr_idparale <> 0 OR vr_inproces  <= 2 THEN
       --habilitar CLOBs
       pc_habilita_clob(1);  
     END IF;
@@ -1127,31 +1127,33 @@ BEGIN
     
     IF pr_idparale = 0 THEN
       
-      pc_carregar_valor_wrk( pr_cdcooper   => pr_cdcooper
-                            ,pr_idcontrole => vr_idcontrole
-                            ,pr_clobxml1   => vr_clobxml1
-                            ,pr_dstexto1   => vr_dstexto1
-                            ,pr_clobxml2   => vr_clobxml2
-                            ,pr_dstexto2   => vr_dstexto2
-                            ,pr_clobxml3   => vr_clobxml3
-                            ,pr_dstexto3   => vr_dstexto3
-                            ,pr_clobxml4   => vr_clobxml4
-                            ,pr_dstexto4   => vr_dstexto4
-                            ,pr_clobxml5   => vr_clobxml5
-                            ,pr_dstexto5   => vr_dstexto5
-                            ,pr_clobxml6   => vr_clobxml6
-                            ,pr_dstexto6   => vr_dstexto6
-                            ,pr_clobxml7   => vr_clobxml7
-                            ,pr_dstexto7   => vr_dstexto7
-                            ,pr_clobxml8   => vr_clobxml8
-                            ,pr_dstexto8   => vr_dstexto8
-                            ,pr_clobxml9   => vr_clobxml9
-                            ,pr_dstexto9   => vr_dstexto9
-                            ,pr_dscritic   => vr_dscritic
-                            );
-      
-      IF vr_dscritic IS NOT NULL THEN
-         RAISE vr_exc_saida;
+      IF vr_inproces  > 2 THEN
+        pc_carregar_valor_wrk( pr_cdcooper   => pr_cdcooper
+                              ,pr_idcontrole => vr_idcontrole
+                              ,pr_clobxml1   => vr_clobxml1
+                              ,pr_dstexto1   => vr_dstexto1
+                              ,pr_clobxml2   => vr_clobxml2
+                              ,pr_dstexto2   => vr_dstexto2
+                              ,pr_clobxml3   => vr_clobxml3
+                              ,pr_dstexto3   => vr_dstexto3
+                              ,pr_clobxml4   => vr_clobxml4
+                              ,pr_dstexto4   => vr_dstexto4
+                              ,pr_clobxml5   => vr_clobxml5
+                              ,pr_dstexto5   => vr_dstexto5
+                              ,pr_clobxml6   => vr_clobxml6
+                              ,pr_dstexto6   => vr_dstexto6
+                              ,pr_clobxml7   => vr_clobxml7
+                              ,pr_dstexto7   => vr_dstexto7
+                              ,pr_clobxml8   => vr_clobxml8
+                              ,pr_dstexto8   => vr_dstexto8
+                              ,pr_clobxml9   => vr_clobxml9
+                              ,pr_dstexto9   => vr_dstexto9
+                              ,pr_dscritic   => vr_dscritic
+                              );
+        
+        IF vr_dscritic IS NOT NULL THEN
+           RAISE vr_exc_saida;
+        END IF;
       END IF;
       
       -- Fechar CLOBs
