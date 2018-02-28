@@ -4487,7 +4487,6 @@ PROCEDURE efetua_inclusao_limite:
     DEF  INPUT PARAM par_vlsalcon AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_dsdbens1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dsdbens2 AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctrlim AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cddlinha AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsobserv AS CHAR                           NO-UNDO.   
     DEF  INPUT PARAM par_qtdiavig AS INTE                           NO-UNDO. 
@@ -4540,15 +4539,17 @@ PROCEDURE efetua_inclusao_limite:
     DEF  INPUT PARAM par_nrperger AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vltotsfn AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_perfatcl AS DECI                           NO-UNDO.
-                                       
+    DEF OUTPUT PARAM par_nrctrlim AS INTE                           NO-UNDO.                                   
     DEF OUTPUT PARAM TABLE FOR tt-erro.
-    DEFINE OUTPUT PARAM TABLE FOR tt-msg-confirma.
+    DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
         
     DEF VAR h-b1wgen0021 AS HANDLE  NO-UNDO.
     DEF VAR h-b1wgen9999 AS HANDLE  NO-UNDO.
     DEF VAR aux_contador AS INTE    NO-UNDO.
     DEF VAR aux_lscontas AS CHAR    NO-UNDO.
     DEF VAR aux_flgderro AS LOGI    NO-UNDO.
+    DEF VAR aux_nrctrlim AS INTE    NO-UNDO.
+    DEF VAR aux_nrseqcar AS INTE	NO-UNDO.
     DEF VAR aux_mensagens AS CHAR    NO-UNDO.    
     
     EMPTY TEMP-TABLE tt-erro.
@@ -4648,6 +4649,43 @@ PROCEDURE efetua_inclusao_limite:
 
     TRANS_INCLUI:    
     DO  TRANSACTION ON ERROR UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI:
+    
+        DO WHILE TRUE:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+          /* Busca a proxima sequencia do campo crapldt.nrsequen */
+          RUN STORED-PROCEDURE pc_sequence_progress
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLIM"
+                                              ,INPUT "NRCTRLIM"
+                                              ,STRING(par_cdcooper) + ";" + "3" /* tpctrlim */
+                                              ,INPUT "N"
+                                              ,"").
+
+          CLOSE STORED-PROC pc_sequence_progress
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN aux_nrseqcar = INTE(pc_sequence_progress.pr_sequence)
+                                WHEN pc_sequence_progress.pr_sequence <> ?.
+          
+          ASSIGN aux_nrctrlim = aux_nrseqcar.
+                            
+          
+          
+          FIND FIRST craplim 
+               WHERE craplim.cdcooper = par_cdcooper
+                 AND craplim.tpctrlim = 3
+                 AND craplim.nrctrlim = aux_nrctrlim
+                 NO-LOCK NO-ERROR.
+          IF NOT AVAILABLE craplim THEN       
+          DO:
+            LEAVE.
+          END.
+                 
+        END.       
+        
+        ASSIGN par_nrctrlim = aux_nrctrlim.
     
         RUN cria-tabelas-avalistas IN h-b1wgen9999 (INPUT par_cdcooper,
                                                     INPUT par_cdoperad,
