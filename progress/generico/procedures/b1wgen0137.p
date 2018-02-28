@@ -3979,84 +3979,9 @@ PROCEDURE efetua_batimento_ged_termos:
     END. /* fim tipo de documento 115 */
     
     
-    /* TIPO DE DOCUMENTO: 106_2 (Provisório) - Termo de Adesao de Cobrança (PF) */
+    /* TIPO DE DOCUMENTO: 167 (PROVISORIO) - Termo de Adesao de Cobrança (PJ) */
     ASSIGN aux_tpdocmto = 0
-           aux_conttabs = 106.
-    /* Buscar valor parametrizado p/ digitalizacao de declaracao pep */
-    FIND tt-documentos WHERE 
-         tt-documentos.idseqite = aux_conttabs NO-LOCK NO-ERROR.
-    IF  AVAIL tt-documentos  THEN
-        ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
-    DO  aux_data = par_datainic TO par_datafina:
-    FOR EACH crapceb 
-       WHERE crapceb.cdcooper = par_cdcooper 
-         AND crapceb.dtinsexc = aux_data
-         AND crapceb.flgdigit = FALSE
-         AND crapceb.fltercan = FALSE NO-LOCK:
-         /*AND crapceb.tpdocmto = aux_conttabs */
-        
-        /* Se cooperado estiver demitido nao gera no relatorio */
-        FIND FIRST crapass 
-             WHERE crapass.cdcooper = crapceb.cdcooper 
-               AND crapass.nrdconta = crapceb.nrdconta NO-LOCK NO-ERROR.
-        IF  NOT AVAIL crapass THEN 
-            NEXT.
-        IF  crapass.dtdemiss <> ? THEN
-            NEXT.
-        /* Verifica se a declaracao de pep foi digitalizada */
-        FIND FIRST tt-documento-digitalizado 
-             WHERE tt-documento-digitalizado.cdcooper  = crapceb.cdcooper 
-               AND tt-documento-digitalizado.nrdconta  = crapceb.nrdconta 
-               AND tt-documento-digitalizado.dtpublic >= crapceb.dtinsexc NO-LOCK NO-ERROR NO-WAIT.
-               /*AND tt-documento-digitalizado.tpdocmto = aux_tpdocmto */
-
-        /*Verifica se registro existe*/
-        IF  AVAIL tt-documento-digitalizado  THEN DO:
-            /*Verifica se documento foi digitalizado*/
-            FIND FIRST b-crapceb
-                 WHERE b-crapceb.cdcooper = crapceb.cdcooper
-                   AND b-crapceb.nrdconta = crapceb.nrdconta
-                   AND b-crapceb.dtinsexc = crapceb.dtinsexc EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                   /*AND b-crapceb.tpdocmto = crapceb.tpdocmto*/
-
-            /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
-            IF  AVAIL b-crapceb THEN
-                ASSIGN b-crapceb.fltercan = TRUE.
-            NEXT.
-        END.
-        ELSE DO:
-            FIND FIRST tt-documentos-termo
-                 WHERE tt-documentos-termo.cdcooper = crapceb.cdcooper
-                   AND tt-documentos-termo.nrdconta = crapceb.nrdconta
-                   AND tt-documentos-termo.dstpterm = "TERMOCANCELAMENTOCOBRANCA"  NO-LOCK NO-ERROR.
-                   /* Termo de Adesao de Cobrança (PF) */
-               
-            /*Verifica se registro existe*/
-            IF  NOT AVAIL tt-documentos-termo  THEN DO:
-                        /* Buscar agencia em que o operador trabalha */
-                        FIND FIRST crapope 
-                             WHERE crapope.cdcooper = crapceb.cdcooper
-                               AND crapope.cdoperad = crapceb.cdoperad NO-LOCK NO-ERROR.
-                /* Criar registro para listar no relatorio */
-                CREATE tt-documentos-termo.
-                ASSIGN tt-documentos-termo.cdcooper = crapceb.cdcooper
-                       tt-documentos-termo.cdagenci = crapass.cdagenci
-                       tt-documentos-termo.nrdconta = crapceb.nrdconta
-                       tt-documentos-termo.cdoperad = crapceb.cdoperad
-                       tt-documentos-termo.nmcontat = " "
-                       tt-documentos-termo.dstpterm = "TERMOCANCELAMENTOCOBRANCA" /* Termo de Adesao de Cobrança (PF) */
-                       tt-documentos-termo.dsempres = crapass.nmprimtl
-                       tt-documentos-termo.dtincalt = crapceb.dtinsexc
-                       tt-documentos-termo.idseqite = aux_conttabs.
-            END.
-        END.
-    END. /* fim for each crapceb */
-    END. /* fim tipo de documento 106_2 */
-    
-    
-    /* TIPO DE DOCUMENTO: 115_2 (PROVISORIO) - Termo de Adesao de Cobrança (PJ) */
-    ASSIGN aux_tpdocmto = 0
-           aux_conttabs = 115.
+           aux_conttabs = 167.
     /* Buscar valor parametrizado p/ digitalizacao de declaracao pep */
     FIND tt-documentos WHERE 
          tt-documentos.idseqite = aux_conttabs NO-LOCK NO-ERROR.
@@ -4128,7 +4053,7 @@ PROCEDURE efetua_batimento_ged_termos:
             END.
         END.
     END. /* fim for each crapdoc */
-    END. /* fim tipo de documento 115_2 */
+    END. /* fim tipo de documento 167 */
     
     
         
