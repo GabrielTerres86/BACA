@@ -733,7 +733,6 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_vlsalcon,
                                        INPUT aux_dsdbens1,
                                        INPUT aux_dsdbens2,
-                                       INPUT aux_nrctrlim,
                                        INPUT aux_cddlinha,
                                        INPUT aux_dsobserv,
                                        INPUT aux_qtdiavig,
@@ -786,6 +785,7 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrperger,
                                        INPUT aux_vltotsfn,
                                        INPUT aux_perfatcl,
+                                      OUTPUT aux_nrctrlim, 
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-msg-confirma).
                                     
@@ -806,6 +806,7 @@ PROCEDURE efetua_inclusao_limite:
     ELSE 
         DO:
             RUN piXmlNew.
+            RUN piXmlAtributo (INPUT "nrctrlim", INPUT STRING(aux_nrctrlim)).            
             RUN piXmlExport (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,
                              INPUT "Mensagens").
             RUN piXmlSave.
