@@ -1204,6 +1204,15 @@ create or replace package body cecred.INSS0001 as
          22/01/2018 - Ajustar a rotina pc_consulta_log para ler via DB apartir de 22/11/2017
                       (Belli - Envolti - Chamado 828247)
                       
+         26/02/2018 - Buscar data e hora do lugar correto na procedure pc_consulta_log, 
+                      pois estavamos buscando a hora errado. (Lucas Ranghetti #848876)
+
+         28/02/2018 - #827612 Comando rm com user grid inserido no package gene001 conforme o padrão da rotina 
+                      pc_oscommand. Retirada a passagem da pl table tab_crapdat da rotina 
+                      INSS0001.pc_proces_pagto_benef_inss e realizada a consulta da crapdat dentro da rotina para 
+                      pegar a data sempre atualizada e começar a realizar o pagamento assim que o processo da 
+                      cooperativa terminar. (Carlos)
+                      
   ---------------------------------------------------------------------------------------------------------------*/
 
   /*Procedimento para gerar lote e lancamento, para gerar credito em conta*/
@@ -2066,11 +2075,8 @@ create or replace package body cecred.INSS0001 as
                                                     
         /** MOVE SEM CRIPTOGRAFAR **/
         -- Comando para mover arquivo
-        vr_comando:= 'mv '||pr_nmarquiv||' '||pr_arqdesti||' 2> /dev/null';
-                     
-        --Executar o comando no unix
-        GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                              ,pr_des_comando => vr_comando
+        GENE0001.pc_mv_arquivo(pr_dsarqori => pr_nmarquiv 
+                              ,pr_dsarqdes => pr_arqdesti
                               ,pr_typ_saida   => vr_typ_saida
                               ,pr_des_saida   => vr_dscritic);
                               
@@ -2078,7 +2084,8 @@ create or replace package body cecred.INSS0001 as
         IF vr_typ_saida = 'ERR' THEN
           
           --Monta mensagem de critica
-          vr_dscritic:= 'Nao foi possivel executar comando unix: '||vr_comando||' - '||vr_dscritic;
+          vr_dscritic:= 'Nao foi possivel executar comando unix: '||
+                         'mv '||pr_nmarquiv||' '||pr_arqdesti||' - '||vr_dscritic;
           
           -- retornando ao programa chamador
           RAISE vr_exc_erro;
@@ -2087,11 +2094,8 @@ create or replace package body cecred.INSS0001 as
       ELSE
         /** MOVE ARQ CRIPTOGRAFADO **/
         -- Comando para mover arquivo
-        vr_comando:= 'mv '||vr_nmarqcri||' '||pr_arqdesti||'.crypto 2> /dev/null';
-                     
-        --Executar o comando no unix
-        GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                              ,pr_des_comando => vr_comando
+        GENE0001.pc_mv_arquivo(pr_dsarqori => vr_nmarqcri 
+                              ,pr_dsarqdes => pr_arqdesti||'.crypto'
                               ,pr_typ_saida   => vr_typ_saida
                               ,pr_des_saida   => vr_dscritic);
                               
@@ -2099,7 +2103,8 @@ create or replace package body cecred.INSS0001 as
         IF vr_typ_saida = 'ERR' THEN
           
           --Monta mensagem de critica
-          vr_dscritic:= 'Nao foi possivel executar comando unix: '||vr_comando||' - '||vr_dscritic;
+          vr_dscritic:= 'Nao foi possivel executar comando unix: '||
+                        'mv '||vr_nmarqcri||' '||pr_arqdesti||'.crypto'||' - '||vr_dscritic;
           
           -- retornando ao programa chamador
           RAISE vr_exc_erro;
@@ -4339,7 +4344,6 @@ create or replace package body cecred.INSS0001 as
                                        ,pr_tab_salvar       IN INSS0001.typ_tab_salvar    -- Tabela de Diretorios
                                        ,pr_tab_dircoop      IN INSS0001.typ_tab_salvar    -- Tabela de Diretorios
                                        ,pr_tab_cdagesic     IN INSS0001.typ_tab_cdagesic  -- Tabela de Agencias Sicredi
-                                       ,pr_tab_crapdat      IN OUT INSS0001.typ_tab_crapdat   -- Tabela de Datas por Cooperativa
                                        ,pr_tab_rejeicoes    IN OUT NOCOPY INSS0001.typ_tab_rejeicoes -- Tabela de Rejeicoes
                                        -- Identificacao de Processo Automatico
                                        ,pr_proc_aut         IN INTEGER                    -- Identifica se esta rodando o processo automatico (0-Nao/1-Sim)
@@ -4706,14 +4710,14 @@ create or replace package body cecred.INSS0001 as
         script mqcecred_processa_sicredi_648.pl. 
         */ 
         -- Leitura do calendário da cooperativa
-        IF NOT pr_tab_crapdat.EXISTS(vr_cdcooper)       OR 
-           pr_tab_crapdat(vr_cdcooper) < TRUNC(SYSDATE) THEN                
+        OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);          
+        FETCH btch0001.cr_crapdat INTO rw_crapdat;
                  
-          --Proximo Arquivo
+        IF btch0001.cr_crapdat%NOTFOUND OR rw_crapdat.inproces <> 1 THEN
+          CLOSE btch0001.cr_crapdat;
           RAISE vr_exc_proximo;
-        ELSE
-          rw_crapdat.dtmvtolt:= pr_tab_crapdat(vr_cdcooper);  
         END IF;
+        CLOSE btch0001.cr_crapdat;
                                                              
         /* VALIDAR CPF */
         --Selecionar Titular
@@ -4881,15 +4885,11 @@ create or replace package body cecred.INSS0001 as
                              
                                                             
               -- Comando para mover arquivo
-              vr_comando:= 'mv '||pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
-                           vr_nmdireto_salvar||'/'||'INSS.MQ.RREJ.'||
+              gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||'/'||pr_nmarquiv
+                                    ,pr_dsarqdes => vr_nmdireto_salvar || '/'||'INSS.MQ.RREJ.'||
                            LPAD(pr_tab_creditos(pr_index_creditos).nrrecben,11,'0')||'.'||
                            LPAD(gene0002.fn_busca_time,5,'0')||
-                           LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml 2> /dev/null';
-                  
-              --Executar o comando no unix
-              GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                                    ,pr_des_comando => vr_comando
+                                                    LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml'
                                     ,pr_typ_saida   => vr_typ_saida
                                     ,pr_des_saida   => vr_dscritic);
                                         
@@ -4897,7 +4897,9 @@ create or replace package body cecred.INSS0001 as
               IF vr_typ_saida = 'ERR' THEN
                   
                 --Monta mensagem de critica
-                vr_dscritic:= 'Nao foi possivel executar comando unix: '||vr_comando;
+                vr_dscritic:= 'Nao foi possivel mover o arquivo: '||
+                              pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
+                              vr_nmdireto_salvar;
                   
                 -- retornando ao programa chamador
                 RAISE vr_exc_erro;
@@ -4963,15 +4965,11 @@ create or replace package body cecred.INSS0001 as
                              
                                                                      
               -- Comando para mover arquivo
-              vr_comando:= 'mv '||pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
-                           vr_nmdireto_salvar||'/'||'INSS.MQ.RPAG.'||
+              gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||'/'||pr_nmarquiv
+                                    ,pr_dsarqdes => vr_nmdireto_salvar||'/'||'INSS.MQ.RPAG.'||
                            LPAD(pr_tab_creditos(pr_index_creditos).nrrecben,11,'0')||'.'||
                            LPAD(gene0002.fn_busca_time,5,'0')||
-                           LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml 2> /dev/null';
-                  
-              --Executar o comando no unix
-              GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                                    ,pr_des_comando => vr_comando
+                                                    LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml'
                                     ,pr_typ_saida   => vr_typ_saida
                                     ,pr_des_saida   => vr_dscritic);
                                         
@@ -4979,7 +4977,9 @@ create or replace package body cecred.INSS0001 as
               IF vr_typ_saida = 'ERR' THEN
                   
                 --Mensagem de Critica
-                vr_dscritic:= 'Nao foi possivel executar comando unix: '||vr_comando;
+                vr_dscritic:= 'Nao foi possivel mover o arquivo: '||
+                              pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
+                              vr_nmdireto_salvar;
                   
                 -- retornando ao programa chamador
                 RAISE vr_exc_erro;
@@ -5137,22 +5137,20 @@ create or replace package body cecred.INSS0001 as
         de processamento do Sicredi pois, o NB em questao ja foi tratado... 
         */
         -- Comando para mover arquivo
-        vr_comando:= 'mv '||pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
-                     vr_nmdireto_salvar||'/'||'INSS.MQ.RREJ.'||
+        gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||'/'||pr_nmarquiv
+                              ,pr_dsarqdes => vr_nmdireto_salvar||'/'||'INSS.MQ.RREJ.'||
                      LPAD(pr_tab_creditos(pr_index_creditos).nrrecben,11,'0')||'.'||
                      LPAD(gene0002.fn_busca_time,5,'0')||
-                     LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml 2> /dev/null';
-            
-        --Executar o comando no unix
-        GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                              ,pr_des_comando => vr_comando
+                                              LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml'
                               ,pr_typ_saida   => vr_typ_saida
                               ,pr_des_saida   => vr_nmarqcri);
                                   
         --Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
               
-          vr_dscritic:= 'Nao foi possivel executar comando unix: '||vr_comando;
+          vr_dscritic:= 'Nao foi possivel mover o arquivo: '||
+                        pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
+                        vr_nmdireto_salvar;
               
           -- Escrever no log qual arquivo processou com erro
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
@@ -5343,8 +5341,6 @@ create or replace package body cecred.INSS0001 as
     vr_tab_dircoop   INSS0001.typ_tab_salvar;
     --Tabela de Agencias Sicredi
     vr_tab_cdagesic  INSS0001.typ_tab_cdagesic;
-    --Tabela de Datas por Cooperativa
-    vr_tab_crapdat   INSS0001.typ_tab_crapdat; 
     --Tabela de Memoria de Creditos
     vr_tab_creditos  INSS0001.typ_tab_creditos;
     --Tabela de Memoria de Arquivos 
@@ -5370,7 +5366,6 @@ create or replace package body cecred.INSS0001 as
     --Procedure para limpar tabelas temporarias
     PROCEDURE pc_limpa_tabela IS
     BEGIN
-      vr_tab_crapdat.DELETE;
       vr_tab_salvar.DELETE;
       vr_tab_dircoop.DELETE;
       vr_tab_creditos.DELETE;
@@ -5419,9 +5414,8 @@ create or replace package body cecred.INSS0001 as
       CLOSE cr_crapcop;
     END IF;
 
-    --Carregar tabela de datas
+    --Carregar diretórios das coops
     FOR rw_crapdat_cooper IN cr_crapdat_cooper LOOP
-      vr_tab_crapdat(rw_crapdat_cooper.cdcooper):= rw_crapdat_cooper.dtmvtolt;
       
       --Montar Diretorio Padrao de cada cooperativa    
       vr_tab_dircoop(rw_crapdat_cooper.cdcooper):= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
@@ -5931,7 +5925,6 @@ create or replace package body cecred.INSS0001 as
                                    ,pr_tab_salvar      => vr_tab_salvar     -- Tabela de Diretorios
                                    ,pr_tab_dircoop     => vr_tab_dircoop    -- Tabela de Diretorios
                                    ,pr_tab_cdagesic    => vr_tab_cdagesic   -- Tabela de Agencias Sicredi
-                                   ,pr_tab_crapdat     => vr_tab_crapdat    -- Tabela de Datas por Cooperativa
                                    ,pr_tab_rejeicoes   => vr_tab_rejeicoes  -- Tabela de Rejeicoes
                                    ,pr_proc_aut        => 1                 -- Essa procedure esta apenas no CRPS, e é executado com os arquivos do MQ
                                    -- Arquivo e Diretorio
@@ -18109,8 +18102,6 @@ create or replace package body cecred.INSS0001 as
     vr_tab_dircoop   INSS0001.typ_tab_salvar;
     --Tabela de Agencias Sicredi
     vr_tab_cdagesic  INSS0001.typ_tab_cdagesic;
-    --Tabela de Datas por Cooperativa
-    vr_tab_crapdat   INSS0001.typ_tab_crapdat; 
     --Tabela de Memoria de Creditos
     vr_tab_creditos  INSS0001.typ_tab_creditos;
     --Tabela de Memoria de Arquivos 
@@ -18138,7 +18129,6 @@ create or replace package body cecred.INSS0001 as
     --Procedure para limpar tabelas temporarias
     PROCEDURE pc_limpa_tabela IS
     BEGIN
-      vr_tab_crapdat.DELETE;
       vr_tab_salvar.DELETE;
       vr_tab_dircoop.DELETE;
       vr_tab_creditos.DELETE;
@@ -18186,9 +18176,8 @@ create or replace package body cecred.INSS0001 as
       RAISE vr_exc_erro;
     END IF;
 
-    --Carregar tabela de datas
+    --Carregar diretórios das coops
     FOR rw_crapdat_cooper IN cr_crapdat_cooper LOOP
-      vr_tab_crapdat(rw_crapdat_cooper.cdcooper):= rw_crapdat_cooper.dtmvtolt;
       
       --Montar Diretorio Padrao de cada cooperativa    
       vr_tab_dircoop(rw_crapdat_cooper.cdcooper):= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
@@ -18347,7 +18336,6 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_tab_salvar      => vr_tab_salvar     -- Tabela de Diretorios
                                      ,pr_tab_dircoop     => vr_tab_dircoop    -- Tabela de Diretorios
                                      ,pr_tab_cdagesic    => vr_tab_cdagesic   -- Tabela de Agencias Sicredi
-                                     ,pr_tab_crapdat     => vr_tab_crapdat    -- Tabela de Datas por Cooperativa
                                      ,pr_tab_rejeicoes   => vr_tab_rejeicoes  -- Tabela de Rejeicoes
                                      ,pr_proc_aut        => 0                 -- Essa procedure esta apenas no CRPS, e é executado com os arquivos do MQ
                                      -- Arquivo e Diretorio
@@ -18979,8 +18967,8 @@ create or replace package body cecred.INSS0001 as
     )
     IS
 		SELECT t.dhinicio
-          ,TO_CHAR(t.dhinicio,'DD/MM/YYYY') dtocorre
-          ,TO_CHAR(t.dhinicio,'HH24:MI:SS') hrocorre
+          ,TO_CHAR(t2.dhocorrencia,'DD/MM/YYYY') dtocorre
+          ,TO_CHAR(t2.dhocorrencia,'HH24:MI:SS') hrocorre
           , substr(t2.dsmensagem
             , ( instr(t2.dsmensagem, 'Conta:') + 7 )
             , ( instr(t2.dsmensagem, 'Nome:')  - instr(t2.dsmensagem, 'Conta:') - 7 - 3)
@@ -19075,7 +19063,7 @@ create or replace package body cecred.INSS0001 as
     BEGIN
   	  -- Retorno nome do módulo logado - Chamado 828247
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_arq');
-             
+      
       -- Pega o diretorio do log
       vr_caminho := cecred.gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                                 ,pr_cdcooper => vr_cdcooper
@@ -19200,7 +19188,7 @@ create or replace package body cecred.INSS0001 as
           -- Fechar o arquivo
           gene0001.pc_fecha_arquivo(log); --> Handle do arquivo aberto;
         WHEN vr_exc_saida THEN
-          RAISE vr_exc_saida;  
+          RAISE vr_exc_saida;
         WHEN vr_exc_erro THEN
           RAISE vr_exc_erro;   
         WHEN OTHERS THEN
@@ -20199,8 +20187,8 @@ create or replace package body cecred.INSS0001 as
 
     IF vr_msgenvio IS NOT NULL THEN
       --Move o arquivo XML fisico de envio
-      GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                            ,pr_des_comando => 'mv '||vr_msgenvio||' '||vr_movarqto||' 2> /dev/null'
+      GENE0001.pc_mv_arquivo(pr_dsarqori => vr_msgenvio
+                            ,pr_dsarqdes => vr_movarqto
                             ,pr_typ_saida   => vr_des_reto
                             ,pr_des_saida   => vr_dscritic);
       --Se ocorreu erro dar RAISE
@@ -20211,8 +20199,8 @@ create or replace package body cecred.INSS0001 as
 
     IF vr_msgreceb IS NOT NULL THEN
       --Move o arquivo XML fisico de recebimento
-      GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                            ,pr_des_comando => 'mv '||vr_msgreceb||' '||vr_movarqto||' 2> /dev/null'
+      GENE0001.pc_mv_arquivo(pr_dsarqori => vr_msgreceb
+                            ,pr_dsarqdes => vr_movarqto
                             ,pr_typ_saida   => vr_des_reto
                             ,pr_des_saida   => vr_dscritic);
       --Se ocorreu erro dar RAISE
