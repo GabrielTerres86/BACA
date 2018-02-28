@@ -258,7 +258,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
                                ,pr_hrvalida    IN DATE DEFAULT SYSDATE) RETURN BOOLEAN;
 END FOLH0001;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
+ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
   /*..............................................................................
 
@@ -5545,7 +5545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : Ayllos
   --  Sigla    : CRED
   --  Autor    : Kelvin
-  --  Data     : Janeiro/2017.                   Ultima atualizacao: 
+  --  Data     : Janeiro/2017.                   Ultima atualizacao:27/02/2018 
   --
   -- Dados referentes ao programa:
   --
@@ -5575,6 +5575,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --                          dia da dtmvtopr for anterior ao dia limite para debitos. 
   --                          (Jaison/Marcos - Supero)
   --
+  --             27/02/2018 - Ajuste para que a central receba e-mail caso aconteca
+  --                          problemas nos pagamentos para outras instituincoes financeiras
+  --                          e tambem alterado o conteudo, conforme solicitado no chamado
+  --                          845975. (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
 
     -- Busca os dados do lote
@@ -6432,13 +6436,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                   vr_dsmensag := 'Houveram erros inesperados no sistema e as transferências TEC salário ' ||
                                  'da empresa não puderam ser efetuadas automaticamente. Abaixo trazemos o ' ||
                                  'erro ocorrido:<br>' || vr_cdcritic || '-' || vr_dscritic || '<br><br>' ||
-                                 'Lembramos que estes pagamentos continuam pendentes de processamento e ' ||
-                                 'sugerimos que os mesmos sejam gerados pela tela TRFSAL, opção B.';
+                                 'Consulte a tela TRFSAL, opção C para verificar se ainda há lançamentos ' ||
+                                 'pendentes.';
 
                   -- Solicita envio do email
                   GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
                                             ,pr_cdprogra        => 'FOLH0001'
-                                            ,pr_des_destino     => TRIM(vr_emailds2)
+                                            ,pr_des_destino     => TRIM(vr_emailds2) || ';' || TRIM(vr_emailds1)
                                             ,pr_des_assunto     => 'Folha de Pagamento - Problema com as TECs – Empresa ' || rw_crapemp.cdempres || ' - ' || rw_crapemp.nmresemp
                                             ,pr_des_corpo       => vr_dsmensag
                                             ,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
