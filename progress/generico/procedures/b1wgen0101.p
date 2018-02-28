@@ -812,7 +812,7 @@ PROCEDURE grava-dados-fatura:
                               INPUT 1,            /** Sequencia **/
                               INPUT 0,
                               INPUT-OUTPUT aux_dscritic).
-               RETURN "NOK".
+               
                UNDO TRANS_FAT, LEAVE TRANS_FAT.
              END.
          END.
