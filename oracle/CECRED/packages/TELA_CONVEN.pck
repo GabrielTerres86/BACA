@@ -685,8 +685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
                    cpfcgrcb = rw_crapcon.cpfcgrcb, 
                    nrccdrcb = rw_crapcon.nrccdrcb, 
                    cdfinrcb = rw_crapcon.cdfinrcb, 
-                   flginter = rw_crapcon.flginter, 
-                   flgcnvsi = rw_crapcon.flgcnvsi, 
+                   flginter = rw_crapcon.flginter,                    
                    tparrecd = rw_crapcon.tparrecd, 
                    flgaccec = rw_crapcon.flgaccec, 
                    flgacsic = rw_crapcon.flgacsic, 
@@ -718,7 +717,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
                           cdcooper, 
                           cdsegmto, 
                           flginter, 
-                          flgcnvsi, 
                           tparrecd, 
                           flgaccec, 
                           flgacsic, 
@@ -737,7 +735,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
                         ,cop.cdcooper
                         ,cdsegmto
                         ,flginter
-                        ,flgcnvsi
                         ,tparrecd
                         ,flgaccec
                         ,flgacsic

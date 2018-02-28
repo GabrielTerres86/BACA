@@ -7101,31 +7101,33 @@ END pc_gera_titulos_iptu_prog;
         END IF;
         
         /* Se nao for tolerancia ilimitada */
-        IF rw_tbarrecd.nrdias_tolerancia <> 99 OR NOT pr_flnrtole THEN 
-          vr_dttolera := vr_dtvencto + rw_tbarrecd.nrdias_tolerancia;
-          LOOP
-            --Verifica se eh feriado ou final de semana
-            vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-                                                      ,pr_dtmvtolt => vr_dttolera --> Data do movimento
-                                                      ,pr_tipo     => 'P');       --> Proximo dia util
-            --Se for dia util
-            IF vr_dtferiado = vr_dttolera THEN
-              --Sair loop
-              EXIT;
-            END IF;
-            --Incrementar data
-            vr_dttolera:= vr_dttolera + 1;
-          END LOOP;
+        IF vr_dtvencto IS NOT NULL THEN
+          IF rw_tbarrecd.nrdias_tolerancia <> 99 OR NOT pr_flnrtole THEN 
+            vr_dttolera := vr_dtvencto + rw_tbarrecd.nrdias_tolerancia;
+            LOOP
+              --Verifica se eh feriado ou final de semana
+              vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                                        ,pr_dtmvtolt => vr_dttolera --> Data do movimento
+                                                        ,pr_tipo     => 'P');       --> Proximo dia util
+              --Se for dia util
+              IF vr_dtferiado = vr_dttolera THEN
+                --Sair loop
+                EXIT;
+              END IF;
+              --Incrementar data
+              vr_dttolera:= vr_dttolera + 1;
+            END LOOP;
                         
-          --> validar data limite para pagamento 
-          IF vr_dttolera < pr_dtmvtopg THEN
-            pr_cdcritic:= 0;
-            pr_dscritic:= 'Prazo para pagamento apos o vencimento excedido.';
-            RAISE vr_exc_erro;
-          END IF;
+            --> validar data limite para pagamento 
+            IF vr_dttolera < pr_dtmvtopg THEN
+              pr_cdcritic:= 0;
+              pr_dscritic:= 'Prazo para pagamento apos o vencimento excedido.';
+              RAISE vr_exc_erro;
+            END IF;
         
-          -- sem críticas, devolve data calculada
-          pr_dttolera := vr_dttolera;		
+            -- sem críticas, devolve data calculada
+            pr_dttolera := vr_dttolera;		
+          END IF;
         END IF;
       END IF;
     
