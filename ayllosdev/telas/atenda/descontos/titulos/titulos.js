@@ -1485,3 +1485,36 @@ function formataDetalhesProposta() {
 	
     return false;
 }
+
+function abreProtocoloAcionamento(dsprotocolo) {
+
+    showMsgAguardo('Aguarde, carregando...');
+
+    // Executa script de através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        //url: UrlSite + 'telas/atenda/emprestimos/form_acionamentos.php',
+        url: UrlSite + 'telas/atenda/descontos/titulos/titulos_limite_protocolo_acionamento.php',
+        data: {
+            dsprotocolo: dsprotocolo,
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function(response) {
+            hideMsgAguardo();
+			if (response.substr(0,4) == "hide") {
+				eval(response);
+			} else {
+                $('#nmarquiv', '#frmImprimir').val(response);
+                //var action = UrlSite + 'telas/atenda/emprestimos/form_acionamentos.php';
+                var action = UrlSite + 'telas/atenda/descontos/titulos/titulos_limite_protocolo_acionamento.php';
+                carregaImpressaoAyllos("frmImprimir",action,"bloqueiaFundo(divRotina);");
+			}
+            return false;
+        }
+    });
+}
