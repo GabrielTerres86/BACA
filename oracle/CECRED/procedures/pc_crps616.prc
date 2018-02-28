@@ -161,7 +161,7 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
   CURSOR cr_craplem_carga (pr_cdcooper IN craplem.cdcooper%TYPE,
                            pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
                            pr_cdagenci IN craplem.cdagenci%TYPE) IS
-    SELECT /*+ index (craplem craplem##craplem4) */
+    SELECT 
        craplem.nrdconta,
        craplem.nrctremp,
        SUM(DECODE(craplem.cdhistor,
