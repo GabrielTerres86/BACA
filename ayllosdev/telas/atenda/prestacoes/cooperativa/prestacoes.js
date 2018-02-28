@@ -816,7 +816,9 @@ function controlaLayout(operacao) {
         cDsFinali.css('width','108px');
         cQtParc.addClass('rotulo').css('width','50px').setMask('INTEGER','zz9','','');
         cQualiParc.addClass('rotulo').css('width','35px');
-        cDsQualiParc.addClass('').css('width','108');
+        cDsQualiParc.addClass('').css('width','108px');
+        cQualiParcC.addClass('rotulo').css('width', '35px');
+		cDsQualiParcC.addClass('').css('width', '108px');
         cDebitar.addClass('rotulo').css('width','90px');
         cPercCET.addClass('porcento').css('width','45px');
         cTipoEmpr.addClass('rotulo').css('width','90px');
@@ -844,6 +846,7 @@ function controlaLayout(operacao) {
 		rLnCred.addClass('').css('width','95px');
 		rFinali.addClass('').css('width','95px');
 		rQualiParc.addClass('').css('width','95px');
+        rQualiParcC.addClass('').css('width', '263px');
 		rPercCET.addClass('').css('width','193px');
 		rDtPgmento.addClass('rotulo').css('width','321px');
 		rNtPromis.addClass('rotulo-linha').css('width', '132px');
@@ -3261,22 +3264,22 @@ function descontoPos (parcela,valor) {
 function atribuiDescControle (idQuaPrc) {
 	switch(idQuaPrc){		
 		case 1:
-			return "Operação Normal";
+			return "Operacao Normal";
 			break;
 		case 2:
-			return "Renovação Crédito";
+			return "Renovacao Credito";
 			break;
 		case 3:
-			return "Renegociação Crédito";
+			return "Renegociacao Credito";
 			break;
 		case 4:
-			return "Composição Dívida";
+			return "Composicao Divida";
 			break;
 		case 5:
-			return "Cessão de Cartão";
+			return "Cessao de Cartao";
 			break;
 		default:
-			return "Operação Inexistente";
+			return "Operacao Inexistente";
 			break;
 	}
 }

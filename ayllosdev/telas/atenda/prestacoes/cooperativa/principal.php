@@ -1006,22 +1006,22 @@
 		$dsquaprc = "";
 		switch ($idQuaOpe) {
 			case 1:
-				$dsquaprc = "Operação Normal";
+				$dsquaprc = "Operacao Normal";
 				break;
 			case 2:
-				$dsquaprc = "Renovação Crédito";
+				$dsquaprc = "Renovacao Credito";
 				break;
 			case 3:
-				$dsquaprc = "Renegociação Crédito";
+				$dsquaprc = "Renegociacao Credito";
 				break;
 			case 4:
-				$dsquaprc = "Composição Dívida";				
+				$dsquaprc = "Composicao Divida";				
 				break;
 			case 5:
-				$dsquaprc = "Cessão de Cartão";				
+				$dsquaprc = "Cessao de Cartao";				
 				break;
 			default:
-				$dsquaprc = "Operação Inexistente";				;
+				$dsquaprc = "Operacao Inexistente";				;
 				break;
 		}
 		return $dsquaprc;
