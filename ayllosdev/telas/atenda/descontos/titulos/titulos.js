@@ -62,6 +62,12 @@ var idcobope = "";
 var cdageori = "";
 
 
+//novos
+var situacao_analise = ""; // Variável para armazenar a situação da análise atualmente selecionado
+var decisao = ""; // Variável para armazenar a decisão atualmente selecionado
+var valor_limite = ""; // Variável para armazenar  o valor do limite atualmente selecionado
+
+
 // ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
 
@@ -344,7 +350,13 @@ function carregaLimitesTitulos() {
 }
 
 // Função para seleção do limite
-function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim) {
+
+function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim, dssitest, insitapr, vlLimite) {
+
+	situacao_analise = dssitest;
+	decisao = insitapr;
+	valor_limite = vlLimite;
+
 	var cor = "";
 	
 	// Formata cor da linha da tabela que lista os limites de descto titulos
@@ -560,21 +572,20 @@ function confirmaEnvioAnalise(){
 function validaAnaliseTitulo(){
 
 	// INICIO MOCK - (remover trecho quando subir - utilizado apenas para mock)
-	var insitapr = 'REJEITADO AUTOMATICAMENTE'; 
-	var dssitest = 'ANALISE FINALIZADA'; 
+	//var insitapr = 'REJEITADO AUTOMATICAMENTE'; 
+	//var dssitest = 'ANALISE FINALIZADA'; 
 
 	// FIM MOCK - (remover trecho quando subir - utilizado apenas para mock)
 
 	// pega os valores conforme o status que está na tabela (descomentar quando não estiver usando o mock)
-	//var insitapr = $('#insitapr').val();
-	//var dssitest = $("#dssitest").val();
-	/*
+	var insitapr = $('#insitapr').val();
+	var dssitest = $("#dssitest").val();
+	
 	if (dssitest == 'ANALISE FINALIZADA' && insitapr == 'REJEITADO AUTOMATICAMENTE'){				
 		showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'enviarPropostaAnaliseComLIberacaoCordenador()\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
 	}else{
 		enviarPropostaAnalise();
-	}*/
-	enviarPropostaAnalise();
+	}
     return false;
 }
 
@@ -616,7 +627,6 @@ function enviarPropostaAnaliseComLIberacaoCordenador(){
 // Carregar os dados para consulta de limite de desconto de títulos
 function enviarPropostaAnalise() {
 	//alert("Proposta enviada para analise.\nObs.: Função ainda em desenvolvimento!");
-
 	
 	showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
 
@@ -648,10 +658,97 @@ function enviarPropostaAnalise() {
 			
 		}				
 	});	
+}
+
+function confirmarNovoLimite(){
+
+	if (situacao_limite == 'APROVADO' && situacao_analise == 'ANALISE FINALIZADA'){
+		showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
+
+		var operacao = "CONFIMAR_NOVO_LIMITE";
+		
+		$.ajax({		
+			type: "POST", 
+			url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+			dataType: "html",
+			data: {
+				operacao: operacao,
+				nrdconta: nrdconta,
+				nrctrlim: nrcontrato,
+				vllimite: valor_limite,
+				//cddopera: cddopera,
+
+				redirect: "html_ajax"
+			},		
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			},
+			success: function(response) {
+				try {
+	                eval(response);
+	               	hideMsgAguardo();
+	            } catch (error) {
+	                hideMsgAguardo();
+	                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+	            }
+			}			
+		});	
+
+	}else{
+		showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar a situa&ccedil;&atilde;o da an&aacute;lise.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+	}
 	
+    return false;
+}
+
+function aceitarRejeicao(){
+
+	alert("Rejeição Aceita");
 
 	
+	/*
+	if (situacao_limite == 'NAO APROVADO' && situacao_analise == 'ANALISE FINALIZADA'){
+		showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
+		var operacao = "ACEITAR_REJEICAO_LIMITE";
+		
+		hideMsgAguardo();
+
+		
+		
+		$.ajax({		
+			type: "POST", 
+			url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+			dataType: "html",
+			data: {
+				operacao: operacao,
+				nrdconta: nrdconta,
+				nrctrlim: nrcontrato
+
+				redirect: "html_ajax"
+			},		
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			},
+			success: function(response) {
+				try {
+					hideMsgAguardo();
+					eval(response);
+				} catch(error) {
+					hideMsgAguardo();
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				}
+			}			
+		});	
+
+	}else{
+		showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar a situa&ccedil;&atilde;o da an&aacute;lise.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+	}
+	*/
+	
 }
+
 
 function exibeAlteraNumero() {
 
@@ -919,6 +1016,7 @@ function validaNrContrato() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando n&uacute;mero do contrato ...");
 	
+	/* Campo para confirmar numero removido	 
 	var antnrctr = $("#antnrctr","#frmDadosLimiteDscTit").val().replace(/\./g,"");
 	
 	// Valida número do contrato
@@ -927,6 +1025,7 @@ function validaNrContrato() {
 		showError("error","Confirme o n&uacute;mero do contrato.","Alerta - Ayllos","$('#antnrctr','#frmDadosLimiteDscTit').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	} 
+	*/
 	
 	$.ajax({		
 		type: "POST", 
@@ -934,7 +1033,7 @@ function validaNrContrato() {
 		data: {
 			nrdconta: nrdconta,
             nrctrlim: $("#nrctrlim","#frmDadosLimiteDscTit").val().replace(/\./g,""),
-			antnrctr: antnrctr,
+
 			nrctaav1: 0,
 			nrctaav2: 0,
 			redirect: "script_ajax"

@@ -290,6 +290,7 @@
 	$xmlSetGravarLimite .= "		<nrperger>".$nrperger."</nrperger>";	
 	$xmlSetGravarLimite .= "		<vltotsfn>".$vltotsfn."</vltotsfn>";
 	$xmlSetGravarLimite .= "		<perfatcl>".$perfatcl."</perfatcl>";
+	$xmlSetGravarLimite .= "		<idcobope>0</idcobope>";
 	$xmlSetGravarLimite .= "	</Dados>";
 	$xmlSetGravarLimite .= "</Root>";
 	
@@ -307,6 +308,8 @@
 	if ($cddopcao == "A"){
 		$opermail = "Alterar Limite de Desconto de Titulos";
 	}else{  if ($cddopcao == "I"){
+                // Buscar numero do contrato gerado 
+                $nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];	
 				$opermail = "Novo Limite de Desconto de Titulos";
 			}
 	}
