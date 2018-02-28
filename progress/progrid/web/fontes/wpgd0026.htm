@@ -582,7 +582,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 //cell.width = document.all.tbevento_col8.width;
                 cell.height = 26;
                 cell.align = 'center';
-                cell.id = document.all.tbevento.rows.length - 1;
+                cell.id = i;//document.all.tbevento.rows.length - 1; //Chamado 839505
                 if (mevento[i].tpevento != 10) {
                     cell.style.cursor = 'hand';
                     cell.onclick = Inscricao;
@@ -605,7 +605,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 //cell.width = document.all.tbevento_col9.width;
                 cell.height = 26;
                 cell.align = 'center';
-                cell.id = document.all.tbevento.rows.length - 1;
+                cell.id = i; //document.all.tbevento.rows.length - 1;Chamado 839505
                 if (mevento[i].tpevento != 10) {
                     cell.style.cursor = 'hand';
                     cell.onclick = Confirma;
@@ -652,7 +652,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
 		}
 		
         // linha de final da listagem se nao tiver 100 linhas
-        if (document.all.tbevento.rows.length != '150') {
+        if (document.all.tbevento.rows.length < '150') {
             row = tbevento.insertRow();
             if (cor == '#FFFFFF')
                 cor = '#F7F7F7';
@@ -1049,6 +1049,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
     }
 
     function Inscricao() {
+
         VarURL = document.form.aux_dsendurl.value + '/wpgd0009.htm'
            + '?aux_cdcooper=' + document.form.aux_cdcooper.value
            + '&aux_idevento=' + document.form.aux_idevento.value
@@ -1056,16 +1057,17 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                  + '&aba=pac'
            + '&pagina=divInscrito'
                + '&aux_dtanoage=' + document.form.aux_dtanoage.value;
-
-        if (document.form.nrseqev2.length > 1)
+        if (document.form.nrseqev2.length > 1){
             VarURL = VarURL +
               '&cdageins=' + document.form.aux_cdagenc2[this.id].value +
                   '&nrseqeve=' + document.form.nrseqev2[this.id].value;
+				  }
         else
+		{
             VarURL = VarURL +
               '&cdageins=' + document.form.aux_cdagenc2.value +
               '&nrseqeve=' + document.form.nrseqev2.value;
-
+}
         window.open(VarURL, 'inscri', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=875,height=475');
     }
 
@@ -1097,14 +1099,17 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                + '&aba=evento'
            + '&pagina=divInscrito';
         if (document.form.nrseqev3.length > 1)
+		{
             VarURL = VarURL +
               '&cdageins=' + document.form.aux_cdagenc3[this.id].value +
               '&nrseqeve=' + document.form.nrseqev3[this.id].value;
+			  }
         else
+		{
             VarURL = VarURL +
               '&cdageins=' + document.form.aux_cdagenc3.value +
               '&nrseqeve=' + document.form.nrseqev3.value;
-
+}
         window.open(VarURL, 'inscri', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=875,height=475');
     }
 
