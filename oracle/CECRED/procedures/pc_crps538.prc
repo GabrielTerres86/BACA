@@ -393,7 +393,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                04/01/2018 - #824283 Verificação de parâmetro para saber se o programa aborta o
                             processo caso não encontre arquivos de retorno (Carlos)
 
-               22/02/2018 - Inclusão de controle de paralelismo por Agencia (PA) quando solicitado.
+               27/02/2018 - Inclusão de controle de paralelismo por Agencia (PA) quando solicitado.
                           - Visando performance, Roda somente no processo Noturno
                           - Ajuste no tramamento do arquivo do ABBC - Projeto Ligeirinho (AMcom-Mario)
                 - Funcinalidade:
@@ -402,8 +402,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                   - 2. Com Paralelismo: - a quantidade de JOBS para o cdcooper deve ser > 0;
                                         - ativar o programa normalmente. Roda com PA = 0;
                                         - Cria 1 JOB para cada PA e Ativa/executa os JOBS dos PA's;
-                                        - Aguarda todos os JOB's concluirem para geração dos Relatórios;
+                                        - Aguarda todos os JOB's concluirem;
                                         - Consolida todos os PA's lendo os movimentos gerados na tabeça _WRK.
+                                        - Em seguida, ativa as rotinas de cobrança, emprestimos e geração dos Relatórios;
                   - JOB Paralelismo: - é ativado pelo programa em CRPS538 em execução.
                                      - processa os registros do arquivo somente do PA passado pelo parâmetro.
                                      - Processa os arquivos .RET e cobrança.
@@ -811,7 +812,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                ,crapcco.nrconven
                ,crapcco.nrdctabb
                ,crapcco.cddbanco
-               ,ass.cdagenci --crapcco.cdagenci  --ass.cdagenci  --
+               ,ass.cdagenci      --crapcco.cdagenci  --alterado Paralelismo
                ,crapcco.cdbccxlt
                ,crapcco.nrdolote
                ,crapcco.dsorgarq
@@ -826,43 +827,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          AND   ass.cdcooper = ceb.cdcooper
          AND   ass.nrdconta = ceb.nrdconta
          AND   ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci);
-
-/*
-       select cco.cdcooper
-             ,cco.nrconven
-             ,cco.nrdctabb
-             ,cco.cddbanco
-             ,cco.cdagenci
-             ,cco.cdagenci_ass
-             ,cco.cdbccxlt
-             ,cco.nrdolote
-             ,cco.dsorgarq
-         from (SELECT distinct
-                      crapcco.cdcooper
-                     ,crapcco.nrconven
-                     ,crapcco.nrdctabb
-                     ,crapcco.cddbanco
-                     ,crapcco.cdagenci
-                     ,decode(pr_cdagenci
-                            ,0
-                            ,1
-                            ,nvl(ass.cdagenci,pr_cdagenci)) cdagenci_ass
-                     ,crapcco.cdbccxlt
-                     ,crapcco.nrdolote
-                     ,crapcco.dsorgarq
-                 FROM crapcco
-                     ,crapceb ceb
-                     ,crapass ass
-                WHERE crapcco.cdcooper = pr_cdcooper
-                AND   crapcco.cddbanco = pr_cddbanco
-                AND   crapcco.flgregis = 1
-                AND   ceb.cdcooper (+)= crapcco.cdcooper
-                AND   ceb.nrconven (+)= crapcco.nrconven
-                AND   ass.cdcooper (+)= ceb.cdcooper
-                AND   ass.nrdconta (+)= ceb.nrdconta) cco
-          where 
-                cco.cdagenci_ass = decode(pr_cdagenci,0,1,pr_cdagenci);
-*/
 
        --Selecionar titulos baixa decurso prazo
        CURSOR cr_crapcob_aberto (pr_cdcooper IN crapcco.cdcooper%type
@@ -1193,33 +1157,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            AND TO_CHAR(dtmvtolt,'YYYYMMDD') = TO_CHAR(pr_dtmvtolt,'YYYYMMDD')
          ORDER BY dschave
                  ,cdagenci;
-
-       -- Busca dados para typ_reg_lat_consolidada
-       CURSOR cr_lat_consolidada (pr_cdcooper    IN NUMBER
-                                 ,PR_cdprograma  IN VARCHAR2
-                                 ,pr_dsrelatorio IN VARCHAR2
-                                 ,pr_dtmvtolt    IN DATE) IS
-         SELECT cdcooper
-               ,cdprograma
-               ,dsrelatorio
-               ,dtmvtolt
-               ,cdagenci
-               ,nrdconta    nrdconta
-               ,nrcnvcob    nrcnvcob
-               ,nrdocmto    nrdocmto
-               ,nrctremp    cdmotivo
-               ,tpparcel    cdocorre
-               ,vltitulo    vllanmto
-               ,dscritic    dscritic
-               ,substr(dbms_lob.substr( dsxml, 1000, 1 ),1,1000) dsincide
-               ,dschave
-          from TBGEN_BATCH_RELATORIO_WRK
-         WHERE cdcooper = pr_cdcooper
-           AND cdprograma = PR_cdprograma
-           AND dsrelatorio = pr_dsrelatorio
-           AND TO_CHAR(dtmvtolt,'YYYYMMDD') = TO_CHAR(pr_dtmvtolt,'YYYYMMDD')
-         ORDER BY dschave
-                 ,cdagenci;
        
        --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -1264,8 +1201,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        vr_dtmvtaux     DATE;
 
        -- Retirada variavel pertencente a rotina COBR0007.pc_inst_protestar - Chamado 714566 - 11/08/2017 
-       --vr_dtmvtpro     DATE;
-       ---vr_dscodbar     VARCHAR2(100);
        vr_dtdpagto     DATE;
        vr_vlliquid     NUMBER;
        vr_vldescar     NUMBER;
@@ -1335,7 +1270,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        --vr_index_relat_cecred  VARCHAR2(50);
        vr_index_crapmot       VARCHAR2(17);
        vr_index_cratrej       VARCHAR2(20);
-       vr_index_cratlat       VARCHAR2(60);
        vr_index_cratlcm       VARCHAR2(60);
        -- Variavel para armazenar as informacoes em XML
        vr_des_xml      CLOB;
@@ -1761,10 +1695,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          --Inicializa controle de queque do arquivo de relatório
          vr_cdbanpag_qbr := 0;
          
-         --Percorrer toda a tabela de memória
-         --vr_index_rel618:= vr_tab_rel618.FIRST;
-         --WHILE vr_index_rel618 IS NOT NULL LOOP
-
          --Percorrer toda a tabela do relatório
          vr_index_rel618:= 0;         
          FOR rw_crap618 IN cr_crap618 (pr_cdcooper => pr_cdcooper
@@ -2332,83 +2262,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          END;
        END pc_gera_tab_lcm_consolidada;
 
-       --Procedimento para gravar dados na tabela a partir da tab memoria tab_lat_consolidada
-       PROCEDURE pc_gera_tab_lat_consolidada (pr_cdcritic OUT INTEGER      --Codigo Critica
-                                             ,pr_dscritic OUT VARCHAR2     --Descricao Critica
-                                             ,pr_tab_lat_consolidada IN PAGA0001.typ_tab_lat_consolidada) IS --Tabela lancamentos consolidada
-       BEGIN
-         BEGIN
-           pr_cdcritic:= NULL;
-           pr_dscritic:= NULL;
-
-           IF pr_nmtelant = 'COMPEFORA' THEN
-              vr_dtmvtaux:= rw_crapdat.dtmvtoan;
-           ELSE
-              vr_dtmvtaux:= rw_crapdat.dtmvtolt;
-           END IF;
-
-           --Percorrer todos os lancamentos
-           vr_index_cratlat := pr_tab_lat_consolidada.FIRST;
-
-           WHILE vr_index_cratlat IS NOT NULL LOOP
-
-             --Gravar dados na tabela work
-             BEGIN
-               pc_insere_tbgen_batch_rel_wrk (pr_cdcooper => pr_cdcooper,
-                                              pr_CDPROGRAMA  => vr_cdprogra,
-                                              pr_DSRELATORIO => 'TYP_TAB_LAT_CONSOLIDADA',
-                                              pr_dtmvtolt => vr_dtmvtaux,
-                                              pr_cdagenci => pr_cdagenci,
-                                              pr_DSCHAVE  => lpad(pr_tab_lat_consolidada(vr_index_cratlat).cdcooper,10,'0')||
-                                                             lpad(pr_tab_lat_consolidada(vr_index_cratlat).nrdconta,10,'0')||
-                                                             lpad(pr_tab_lat_consolidada(vr_index_cratlat).nrcnvcob,10,'0')||
-                                                             lpad(pr_tab_lat_consolidada(vr_index_cratlat).cdocorre,10,'0')||
-                                                             lpad(pr_tab_lat_consolidada(vr_index_cratlat).cdmotivo,10,'0')||
-                                                             lpad(pr_tab_lat_consolidada(vr_index_cratlat).vllanmto,10,'0'),
-                                              pr_NRDCONTA => pr_tab_lat_consolidada(vr_index_cratlat).nrdconta,
-                                              pr_NRCNVCOB => pr_tab_lat_consolidada(vr_index_cratlat).nrcnvcob,
-                                              pr_NRDOCMTO => pr_tab_lat_consolidada(vr_index_cratlat).nrdocmto,
-                                              pr_NRCTREMP => pr_tab_lat_consolidada(vr_index_cratlat).cdmotivo,
-                                              pr_DSDOCCOP => null,
-                                              pr_TPPARCEL => pr_tab_lat_consolidada(vr_index_cratlat).cdocorre,
-                                              pr_DTVENCTO => null,
-                                              pr_VLTITULO => pr_tab_lat_consolidada(vr_index_cratlat).vllanmto,
-                                              pr_VLDPAGTO => null,
-                                              pr_DSXML    => rpad(pr_tab_lat_consolidada(vr_index_cratlat).dsincide,1000),
-                                              pr_dscritic => pr_tab_lat_consolidada(vr_index_cratlat).dscritic,
-                                              pr_dscriatu => vr_dscritic);
-
-               if vr_dscritic is not null then
-                  -- No caso de erro de programa gravar tabela especifica de log
-                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-                  -- Erro
-                  vr_cdcritic:= 0;
-                  vr_dscritic:= 'Erro nao tratado - Gera TYP_TAB_LAT_CONSOLIDADA - '||vr_dscritic;
-               end if;
-
-             EXCEPTION
-               WHEN OTHERS THEN
-                 -- No caso de erro de programa gravar tabela especifica de log
-                 CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-                 -- Erro
-                 vr_cdcritic:= 0;
-                 vr_dscritic:= 'Erro nao tratado - Gera TYP_TAB_LAT_CONSOLIDADA - '||sqlerrm;
-             END;
-
-             --Buscar proximo registro
-             vr_index_cratlat := pr_tab_lat_consolidada.NEXT(vr_index_cratlat);
-           END LOOP;
-           
-         EXCEPTION
-           WHEN OTHERS THEN
-             -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
-             CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-             vr_cdcritic:= 0;
-             vr_dscritic:= 'Erro ao inserir na tabela de memoria lat_consolidada. '||SQLERRM;
-             RAISE vr_exc_saida;
-         END;
-       END pc_gera_tab_lat_consolidada;
-
        --Procedimento para gravar dados na tabela memoria 
        PROCEDURE pc_carga_tab_lcm_consolidada(pr_cdcritic OUT INTEGER --Codigo Critica
                                              ,pr_dscritic OUT VARCHAR2 --Descricao Critica
@@ -2471,58 +2324,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              RAISE vr_exc_saida;
          END;
        END pc_carga_tab_lcm_consolidada;
-
-
-       --Procedimento para gravar dados na tabela memoria 
-       PROCEDURE pc_carga_tab_lat_consolidada(pr_cdcritic OUT INTEGER --Codigo Critica
-                                             ,pr_dscritic OUT VARCHAR2 --Descricao Critica
-                                             ,pr_tab_lat_consolidada IN OUT PAGA0001.typ_tab_lat_consolidada) IS
-       BEGIN
-         --Inicializar variaveis retorno
-         pr_cdcritic:= NULL;
-         pr_dscritic:= NULL;
-
-         IF pr_nmtelant = 'COMPEFORA' THEN
-            vr_dtmvtaux:= rw_crapdat.dtmvtoan;
-         ELSE
-            vr_dtmvtaux:= rw_crapdat.dtmvtolt;
-         END IF;
-         
-         BEGIN
-           --Percorrer todos os lancamentos da tabela do working
-           FOR rw_lat_consolidada IN cr_lat_consolidada (pr_cdcooper => pr_cdcooper
-                                                        ,pr_cdprograma => vr_cdprogra
-                                                        ,pr_dsrelatorio => 'TYP_TAB_LAT_CONSOLIDADA'
-                                                        ,pr_dtmvtolt => vr_dtmvtaux) LOOP
-
-             --Montar Indice
-             vr_index_cratlat := lpad(rw_lat_consolidada.cdcooper,10,'0')||
-                                 lpad(rw_lat_consolidada.nrdconta,10,'0')||
-                                 lpad(rw_lat_consolidada.nrcnvcob,10,'0')||
-                                 lpad(rw_lat_consolidada.cdocorre,10,'0')||
-                                 lpad(rw_lat_consolidada.cdmotivo,10,'0')||
-                                 lpad(pr_tab_lat_consolidada.Count+1,10,'0');     
-             
-             --Criar registro tabela lancamentos consolidada
-             pr_tab_lat_consolidada(vr_index_cratlat).nrdconta := rw_lat_consolidada.nrdconta;
-             pr_tab_lat_consolidada(vr_index_cratlat).nrdocmto := rw_lat_consolidada.nrdocmto;
-             pr_tab_lat_consolidada(vr_index_cratlat).nrcnvcob := rw_lat_consolidada.nrcnvcob;
-             pr_tab_lat_consolidada(vr_index_cratlat).cdocorre := rw_lat_consolidada.cdocorre;
-             pr_tab_lat_consolidada(vr_index_cratlat).cdmotivo := rw_lat_consolidada.cdmotivo;
-             pr_tab_lat_consolidada(vr_index_cratlat).vllanmto := rw_lat_consolidada.vllanmto;
-             pr_tab_lat_consolidada(vr_index_cratlat).dscritic := rw_lat_consolidada.dscritic;
-             pr_tab_lat_consolidada(vr_index_cratlat).dsincide := rw_lat_consolidada.dsincide;
-
-           END LOOP;
-         EXCEPTION
-           WHEN OTHERS THEN
-             -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
-             CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-             vr_cdcritic:= 0;
-             vr_dscritic:= 'Erro na carga da tabela de memoria tab_lat_consolidada. '||SQLERRM;
-             RAISE vr_exc_saida;
-         END;
-       END pc_carga_tab_lat_consolidada;
 
        -------------------------------------------------
        -- Procedimento para Integrar Cobrança Registrada
@@ -3175,8 +2976,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          vr_crapass  BOOLEAN;
          vr_crapsab  BOOLEAN;
          vr_crapceb  BOOLEAN;
-         --vr_email_compefora BOOLEAN := FALSE;
-         --vr_email_proc_cred VARCHAR2(1000);
          vr_dstextab craptab.dstextab%type;
          --Excecoes
          vr_exc_proximo EXCEPTION;
@@ -6159,16 +5958,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              --Levantar Excecao
              RAISE vr_exc_saida;
            END IF;
-
-           -- Cada Agência gera dados consolidados. Ao final consolida todas as agências.         
-           pc_gera_tab_lat_consolidada ( pr_cdcritic     => vr_cdcritic            --Codigo Critica
-                                        ,pr_dscritic     => vr_dscritic            --Descricao Critica
-                                        ,pr_tab_lat_consolidada => vr_tab_lat_consolidada); --Tabela lancamentos consolidada
-
-           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-             --Levantar Excecao
-             RAISE vr_exc_saida;
-           END IF;         
          END iF; --Fim Paralelismo 3A
            
        EXCEPTION
@@ -6186,6 +5975,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            pr_cdcritic:= 0;
            pr_dscritic:= 'Erro na rotina pc_crps538.pc_integra_cecred. '||sqlerrm;
        END pc_integra_cecred;
+
 
        -----------------------------------------
        -- Integrar Todas as cooperativas
@@ -6900,6 +6690,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
           pr_cdcritic:= vr_cdcritic;
           pr_dscritic:= 'Retorno gene0001.pc_controle_exec - ' || sqlerrm;           
       END pc_verifica_ja_executou; 
+
               
      -----------------------------------------
      -- Inicio Bloco Principal pc_CRPS538
@@ -7279,16 +7070,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
           --Levantar Excecao
            RAISE vr_exc_saida;
          END IF;
-
-         -- Cada Agência gera dados consolidados.         
-         pc_carga_tab_lat_consolidada ( pr_cdcritic     => vr_cdcritic            --Codigo Critica
-                                       ,pr_dscritic     => vr_dscritic            --Descricao Critica
-                                       ,pr_tab_lat_consolidada => vr_tab_lat_consolidada); --Tabela lancamentos consolidada
-
-         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-           --Levantar Excecao
-           RAISE vr_exc_saida;
-         END IF;                  
        END IF;       
 
 
@@ -7302,8 +7083,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        or (rw_crapdat.inproces <= 2) then -- ou processo On Line/Agendado    
                                    
          -- Buscar informações da poupança programada
- 
-         pc_controla_log_batch(1,'04 Processa Movimento PA '||pr_cdagenci);
 
          -- Controla execucao dos JOBS
          if (rw_crapdat.inproces > 2     -- Processo Batch
@@ -7360,7 +7139,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          END IF;
 
          -- Incluido controle de Log - Chamado 714566 - 11/08/2017 
-         pc_controla_log_batch(1, '10 Inicio Processo Lancamento Tarifas');
+         pc_controla_log_batch(1, '10 Inicio Processo Lancamento Tarifas. PA '|| pr_cdagenci);
 
          -- Lancamento Tarifas
          PAGA0001.pc_efetua_lancto_tarifas_lat (pr_cdcooper => pr_cdcooper         --Codigo Cooperativa
@@ -7376,7 +7155,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          END IF;
 
          -- Incluido controle de Log - Chamado 714566 - 11/08/2017 
-         pc_controla_log_batch(1, '11 Fim Processo Lancamento Tarifas');
+         pc_controla_log_batch(1, '11 Fim Processo Lancamento Tarifas. PA '|| pr_cdagenci);
 
          if (rw_crapdat.inproces > 2     -- Processo Batch
          and pr_cdagenci > 0             -- Agencia
@@ -7427,26 +7206,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        or (rw_crapdat.inproces <= 2) -- Não Paralelismo
        or (vr_qtdjobs  = 0) then     -- Não Paralelismo
 
-/*
-         -- Incluido controle de Log - Chamado 714566 - 11/08/2017 
-         pc_controla_log_batch(1, '10 Inicio Processo Lancamento Tarifas');
-
-         -- Lancamento Tarifas
-         PAGA0001.pc_efetua_lancto_tarifas_lat (pr_cdcooper => pr_cdcooper         --Codigo Cooperativa
-                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt --Data Movimento
-                                               ,pr_tab_lat_consolidada  => vr_tab_lat_consolidada --Tabela Lancamentos
-                                               ,pr_cdcritic => vr_cdcritic         --Codigo Erro
-                                               ,pr_dscritic => vr_dscritic);       --Descricao Erro
-
-         --Se Ocorreu erro
-         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-           --Levantar Excecao
-           RAISE vr_exc_saida;
-         END IF;
-
-         -- Incluido controle de Log - Chamado 714566 - 11/08/2017 
-         pc_controla_log_batch(1, '11 Fim Processo Lancamento Tarifas');
-*/
          -- Incluido controle de Log - Chamado 714566 - 11/08/2017 
          pc_controla_log_batch(1, '12 Inicio Geracao Log CRAPCOL');
 
@@ -7587,6 +7346,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            END LOOP;
          end if; -- vr_tot_paerr
        end if;  -- Fim Paralelismo 5
+
        --
        -- Rotina Paralelismo 6 - Executar Processo JOB
        --                      - Finaliza o Paralismo do JOB Arquivo ABBC
@@ -7715,7 +7475,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          and vr_qtdjobs  > 0  then
     
            -- Processo JOB
-           pc_controla_log_batch(1, 'Erro 1: '||pr_cdagenci||' - '||vr_nrdconta);
+           pc_controla_log_batch(1, 'Erro 1: '||pr_cdagenci );
 
            -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
            pc_log_programa(PR_DSTIPLOG           => 'E',

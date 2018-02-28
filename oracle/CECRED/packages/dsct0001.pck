@@ -16,6 +16,10 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --              26/02/2016 - Criacao das procedures pc_efetua_baixa_tit_car e
   --                           pc_efetua_baixa_tit_car_job melhoria 116
   --                           (Tiago/Rodrigo).
+  --
+  --              27/02/2018 - Paralelismo por Agencia -- AMcom (Mário)
+  --                           Substituido (PA 1) pela Agencia do Parâmetro
+  --                           Sibstituido (nrseqdig +1) pela função fn_sequence
   ---------------------------------------------------------------------------------------------------------------
  
   --Tipo de Desconto de Títulos

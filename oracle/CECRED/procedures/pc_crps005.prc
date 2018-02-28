@@ -7403,7 +7403,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_cdprogra:= 'CRPS005';
 
        -- Incluir nome do módulo logado
-       GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS'
+       GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS005'
                                  ,pr_action => NULL);
 
        -- Verifica se a cooperativa esta cadastrada
