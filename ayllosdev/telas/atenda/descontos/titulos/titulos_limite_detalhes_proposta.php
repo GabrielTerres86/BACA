@@ -26,21 +26,19 @@ $nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : '';
 $xml = "<Root>";
 $xml .= " <Dados>";
 $xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
-$xml .= "   <nrctrlim>" . $nrctrlim . "</nrctrlim>";
+$xml .= "   <nrctremp>" . $nrctrlim . "</nrctremp>";
+$xml .= "   <tpproduto>3</tpproduto>";
 $xml .= "   <dtinicio>01/01/0001</dtinicio>";
 $xml .= "   <dtafinal>31/12/9999</dtafinal>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "CONS_ACIONAMENTOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "CONPRO", "CONPRO_ACIONAMENTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObj = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-	
-   //echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);controlaOperacao();");';
-   echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fechaRotinaDetalhe();");';
-   exit;
-
+	echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fechaRotinaDetalhe();");';
+    exit;
 }
 
 $registros = $xmlObj->roottag->tags[0]->tags;
@@ -89,6 +87,10 @@ $qtregist = $xmlObj->roottag->tags[1]->cdata;
     <div id="divBotoesAcionamento" style="margin-top:5px;">
         <a href="#" class="botao gft" id="btVoltar" onclick="fechaRotinaDetalhe();//controlaOperacao('TESTE');bloqueiaFundo(divRotina);">Voltar</a>
     </div>
+    <form id="frmImprimir" name="frmImprimir">
+        <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>" />
+        <input type="hidden" name="nmarquiv" id="nmarquiv" />
+    </form>
 </div>
 
 <script type="text/javascript">
@@ -106,6 +108,5 @@ hideMsgAguardo();
 bloqueiaFundo(divRotina);
 
 </script>
-
 
     
