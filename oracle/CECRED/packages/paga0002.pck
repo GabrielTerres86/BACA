@@ -6345,6 +6345,9 @@ create or replace package body cecred.PAGA0002 is
           --> Convenio Sicredi
           IF rw_crapcon.tparrecd = 1 THEN
           vr_tpdvalor := 1;
+          --> Convenio Bancoob  
+          ELSIF rw_crapcon.tparrecd = 2 THEN
+            vr_tpdvalor := 2;
         END IF;
 
           OPEN cr_crapcop2 (pr_cdcooper => pr_cdcooper);

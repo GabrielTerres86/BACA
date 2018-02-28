@@ -6694,8 +6694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
              ,craplau.progress_recid
       FROM   craplau,
              craphis
-      WHERE craplau.cdcooper = pr_cdcooper
-        AND craplau.cdcooper = craphis.cdcooper
+      WHERE craplau.cdcooper = craphis.cdcooper
         AND craplau.cdhistor = craphis.cdhistor
         AND craplau.cdcooper = pr_cdcooper
         AND craplau.dtmvtopg = pr_dtmvtopg
