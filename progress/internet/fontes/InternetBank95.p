@@ -200,9 +200,8 @@ DO:
                 RETURN "NOK".
             END.
 
-            
             /* Verificar se existe valor para resgate*/
-            IF  aux_vlresgat = aux_vlrgttot  THEN
+            IF  aux_vlresgat = 0 OR aux_vlresgat = tt-saldo-rdca.sldresga  THEN
                 /* Valor solicitado para resgate = VALOR TOTAL */
                 ASSIGN aux_vlsolrgt = aux_vlrgttot
                        aux_tpresgat = 2.
