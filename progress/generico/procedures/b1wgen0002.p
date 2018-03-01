@@ -6403,29 +6403,33 @@ PROCEDURE grava-proposta-completa:
                            crawepr.cdagenci = par_cdpactra when crawepr.cdagenci = 0  
                            crawepr.hrinclus = TIME WHEN crawepr.hrinclus = 0.					 
         
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-        RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
-          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.idcobope
-                                              ,INPUT par_idcobope
-                                              ,INPUT crawepr.nrctremp
-                                              ,"").
-
-        CLOSE STORED-PROC pc_vincula_cobertura_operacao
-          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-        ASSIGN aux_dscritic  = ""
-               aux_dscritic  = pc_vincula_cobertura_operacao.pr_dscritic 
-               WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
-                        
-        IF aux_dscritic <> "" THEN
-           UNDO Grava, LEAVE Grava.
         
-        ASSIGN crawepr.idcobope = par_idcobope
-               crawepr.idcobefe = par_idcobope.
-        
+        IF par_idcobope <> crawepr.idcobope THEN
+          DO:
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+              
+              RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.idcobope
+                                                    ,INPUT par_idcobope
+                                                    ,INPUT crawepr.nrctremp
+                                                    ,"").
+
+              CLOSE STORED-PROC pc_vincula_cobertura_operacao
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_dscritic  = ""
+                       aux_dscritic  = pc_vincula_cobertura_operacao.pr_dscritic 
+                       WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
+         
+              IF aux_dscritic <> "" THEN
+                UNDO Grava, LEAVE Grava.
+                
+              ASSIGN crawepr.idcobope = par_idcobope
+                     crawepr.idcobefe = par_idcobope.
+          END.
+  
         RUN atualiza_dados_avalista_proposta 
             (INPUT par_cdcooper,
                                    INPUT par_cdagenci,
