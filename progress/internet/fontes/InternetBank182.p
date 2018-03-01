@@ -43,7 +43,7 @@ DEF VAR tmp_cdagectl AS DECI                                           NO-UNDO.
 DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 
-DEF VAR aux_idpessoa LIKE crapass.nrcpfcgc                             NO-UNDO. /* TODO - Alterar para campo TB_CADAST_PESSOA.IDPESSOA - CRM */
+DEF VAR aux_idpessoa AS DECI                                           NO-UNDO.
 DEF VAR aux_nrcpfcgc LIKE crapass.nrcpfcgc                             NO-UNDO.
 DEF VAR aux_nrcpfpre LIKE crapsnh.nrcpfcgc                             NO-UNDO.
 
@@ -153,8 +153,7 @@ IF  crapass.inpessoa = 1  THEN
                aux_nmprepos = ""
                aux_nrcpfpre = 0
                aux_nrcpfcgc = crapttl.nrcpfcgc
-               aux_inpessoa = crapttl.inpessoa
-               aux_idpessoa = crapttl.nrcpfcgc. /* TODO - Alterar para campo TB_CADAST_PESSOA.IDPESSOA - CRM */
+               aux_inpessoa = crapttl.inpessoa.
     END.
 ELSE
     DO:
@@ -163,8 +162,7 @@ ELSE
                aux_nmprepos = ""
                aux_nrcpfpre = 0
                aux_nrcpfcgc = crapass.nrcpfcgc
-               aux_inpessoa = crapass.inpessoa
-               aux_idpessoa = crapass.nrcpfcgc. /* TODO - Alterar para campo TB_CADAST_PESSOA.IDPESSOA - CRM */
+               aux_inpessoa = crapass.inpessoa.
 
         IF  par_nrcpfope > 0  THEN
             DO:
@@ -226,6 +224,27 @@ ELSE
                 END.
             END.
     END.
+
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+RUN STORED-PROCEDURE pc_retorna_idpessoa
+  aux_handproc = PROC-HANDLE NO-ERROR
+                     (INPUT aux_nrcpfcgc,                                            
+                      OUTPUT 0,
+                      OUTPUT "").
+                      
+                     
+CLOSE STORED-PROC pc_retorna_idpessoa aux_statproc = PROC-STATUS
+      WHERE PROC-HANDLE = aux_handproc.
+
+ASSIGN aux_idpessoa = 0       
+       aux_dscritic = ""
+       aux_idpessoa = pc_retorna_idpessoa.pr_idpessoa
+                      WHEN pc_retorna_idpessoa.pr_idpessoa <> ?
+       aux_dscritic = pc_retorna_idpessoa.pr_dscritic
+                      WHEN pc_retorna_idpessoa.pr_dscritic <> ?.      
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }       
 
 RUN sistema/internet/procedures/b1wnet0002.p PERSISTENT
     SET h-b1wnet0002.
