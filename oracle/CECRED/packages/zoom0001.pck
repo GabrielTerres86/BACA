@@ -6392,31 +6392,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<linha>'||
                                                    '  <idquaprc>1</idquaprc>'||
-                                                   '  <dsquaprc>Operação Normal</dsquaprc>'||
+                                                   '  <dsquaprc>Operacao Normal</dsquaprc>'||
                                                    '</linha>');
       gene0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<linha>'||
                                                    '  <idquaprc>2</idquaprc>'||
-                                                   '  <dsquaprc>Renovação Crédito</dsquaprc>'||
+                                                   '  <dsquaprc>Renovacao Credito</dsquaprc>'||
                                                    '</linha>');
       gene0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<linha>'||
                                                    '  <idquaprc>3</idquaprc>'||
-                                                   '  <dsquaprc>Renegociação Crédito</dsquaprc>'||
+                                                   '  <dsquaprc>Renegociacao Credito</dsquaprc>'||
                                                    '</linha>');
       gene0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<linha>'||
                                                    '  <idquaprc>4</idquaprc>'||
-                                                   '  <dsquaprc>Composição Dívida</dsquaprc>'||
+                                                   '  <dsquaprc>Composicao Divida</dsquaprc>'||
                                                    '</linha>');
       gene0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<linha>'||
                                                    '  <idquaprc>5</idquaprc>'||
-                                                   '  <dsquaprc>Cessão de Cartão</dsquaprc>'||
+                                                   '  <dsquaprc>Cessao de Cartao</dsquaprc>'||
                                                    '</linha>');
 
 

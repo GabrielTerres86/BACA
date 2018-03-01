@@ -124,6 +124,29 @@
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
 		
+
+		// Monta o xml de requisição
+		$xmlFuncao  = "";
+		$xmlFuncao .= "<Root>";
+		$xmlFuncao .= "   <Dados>";
+		$xmlFuncao .= "	   	<nrdconta>".$nrdconta."</nrdconta>";
+		$xmlFuncao .= "   </Dados>";
+		$xmlFuncao .= "</Root>";
+
+		// Executa script para envio do XML	
+		$xmlFuncaoResult = mensageria($xmlFuncao, "TELA_ATENDA_EMPRESTIMO", "OBTEM_DADOS_CONSIGNADO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjFuncao = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlFuncaoResult)));
+		//$xmlObjFuncao = simplexml_load_string($xmlFuncaoResult);
+
+
+		// Se ocorrer um erro, mostra cr&iacute;tica
+		
+		if (isset($xmlObjFuncao->roottag->tags[0]->name) && strtoupper($xmlObjFuncao->roottag->tags[0]->name) == "ERRO") {
+			exibirErro('error',$xmlObjFuncao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		}
+		
+		
+		
 		$xmlResult = getDataXML($xml);
 		
 		$xmlObjeto = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
@@ -144,6 +167,11 @@
 
 			$registros = $xmlObjeto->roottag->tags[0]->tags;
 			$gerais    = $xmlObjeto->roottag->tags[1]->tags[0]->tags;
+
+			// registro da procedure que retorna os dados da FUNCAO(SOFTPAR)
+			//$registrosFuncao = $xmlObjFuncao->roottag;
+			$registrosFuncao = $xmlObjFuncao->roottag->tags[0]->tags;
+
 
 			$ddmesnov = getByTagName($gerais,'ddmesnov');
 			$dtdpagt2 = getByTagName($gerais,'dtdpagto');
@@ -226,7 +254,7 @@
 			arrayProposta['vlpreemp'] = '<? echo getByTagName($proposta,'vlpreemp'); ?>';
 			arrayProposta['qtpreemp'] = '<? echo getByTagName($proposta,'qtpreemp'); ?>';
 			arrayProposta['nivrisco'] = '<? echo getByTagName($proposta,'nivrisco'); ?>';
-			arrayProposta['nivriori'] = '<? echo getByTagName($proposta,'nivriori'); ?>'; // n�vel de risco original
+			arrayProposta['nivriori'] = '<? $riscoOrig = getByTagName($proposta,'nivriori'); $riscoCalc = getByTagName($proposta,'nivrisco'); echo !empty($riscoOrig) ? $riscoOrig : $riscoCalc; ?>'; // n�vel de risco original
 			arrayProposta['nivcalcu'] = '<? echo getByTagName($proposta,'nivcalcu'); ?>';
 			arrayProposta['cdlcremp'] = '<? echo getByTagName($proposta,'cdlcremp'); ?>';
 			arrayProposta['cdfinemp'] = '<? echo getByTagName($proposta,'cdfinemp'); ?>';
