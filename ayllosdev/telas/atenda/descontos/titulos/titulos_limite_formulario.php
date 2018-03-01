@@ -233,7 +233,7 @@
 	// Para demais operações, configurar máscaras para campos do formulário
 	} else {
 	
-		if (operacao == 'A' || operacao == 'I') {
+		if (operacao == 'A' || operacao == 'I' ) {
 			$("#nrctrlim",'#'+nomeForm).prop("disabled",true).attr("class","campoTelaSemBorda");
 		} 
 	
