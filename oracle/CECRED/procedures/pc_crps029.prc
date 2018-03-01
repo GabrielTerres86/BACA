@@ -1239,7 +1239,18 @@ BEGIN
                                   pr_infimsol => pr_infimsol,
                                   pr_stprogra => pr_stprogra);
 															
-    ELSE
+       if vr_inproces  > 2 and
+          vr_qtdjobs   > 0 and 
+          pr_cdagenci  = 0 then 
+          pc_log_programa(pr_dstiplog   => 'F',
+                       pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                       pr_cdcooper   => pr_cdcooper, 
+                       pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                       pr_idprglog   => vr_idlog_ini_ger,
+                       pr_flgsucesso => 1);   
+       END IF;
+	
+	ELSE
        -- Atualiza finalização do batch na tabela de controle 
        gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
                                            ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
