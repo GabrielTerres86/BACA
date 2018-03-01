@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE CECRED.TELA_ATACOR IS
 
-PROCEDURE pc_busca_contratos_lc100(pr_nracordo tbrecup_acordo.nrdconta%TYPE
+PROCEDURE pc_busca_contratos_lc100(pr_nracordo tbrecup_acordo.nracordo%TYPE
                                  , pr_xmllog   IN VARCHAR2                  --> XML com informações de LOG
                                  , pr_cdcritic OUT PLS_INTEGER              --> Código da crítica
                                  , pr_dscritic OUT VARCHAR2                 --> Descrição da crítica
@@ -73,7 +73,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATACOR IS
   --
   ---------------------------------------------------------------------------------------------------------------
 
-PROCEDURE pc_busca_contratos_lc100(pr_nracordo tbrecup_acordo.nrdconta%TYPE
+PROCEDURE pc_busca_contratos_lc100(pr_nracordo tbrecup_acordo.nracordo%TYPE
                                  , pr_xmllog   IN VARCHAR2                  --> XML com informações de LOG
                                  , pr_cdcritic OUT PLS_INTEGER              --> Código da crítica
                                  , pr_dscritic OUT VARCHAR2                 --> Descrição da crítica
@@ -134,7 +134,7 @@ DECLARE
 		   AND a.nracordo = pr_nracordo
 		   AND c.cdcooper = a.cdcooper
        AND c.nrdconta = a.nrdconta
-       AND c.inliquid = 0
+       AND (c.inliquid = 0 OR c.vlsdprej > 0)
        AND c.cdlcremp = 100
      ORDER BY c.dtmvtolt desc
          , c.nrctremp asc;
@@ -311,7 +311,7 @@ DECLARE
        AND c.nrdconta = a.nrdconta
        AND c.nrctremp = pr_nrctremp
        AND c.cdlcremp = 100
-       AND c.inliquid = 0;
+       AND (c.inliquid = 0 OR c.vlsdprej > 0);
 
 		IF (vr_qtd_contratos_validos = 0) THEN
 		   vr_contrato_valido := 'N';
@@ -397,6 +397,7 @@ DECLARE
 			   , crapass c
 		 WHERE a.cdcooper = pr_cdcooper
 		   AND a.nracordo = pr_nracordo
+			 AND a.cdsituacao = 1 -- Somente contratos ativos
 			 AND c.cdcooper = a.cdcooper
 			 AND c.nrdconta = a.nrdconta;
 		rw_dados_conta cr_dados_conta%ROWTYPE;
@@ -404,22 +405,25 @@ DECLARE
     -- Contratos (e conta corrente) vinculados ao acordo fornecido
     CURSOR cr_contratos_acordo(pr_cdcooper tbrecup_acordo.cdcooper%TYPE
                              , pr_nracordo tbrecup_acordo.nracordo%TYPE) IS
-    SELECT ctr.nrctremp
-         , ctr.cdorigem
-         , DECODE(ctr.cdorigem, 1, 'Conta corrente', 'Empréstimo') dsorigem
-         , e.cdlcremp
-         , ctr.indpagar
-         , ctr.cdoperad
-      FROM (SELECT c.cdorigem, t.nrdconta, t.cdcooper, c.nrctremp, c.indpagar, c.cdoperad
-			        FROM tbrecup_acordo t
-                 , tbrecup_acordo_contrato c
-						 WHERE t.cdcooper = pr_cdcooper
-						   AND t.nracordo = pr_nracordo
-							 AND c.nracordo = t.nracordo) ctr
-         , crapepr e
-     WHERE e.cdcooper(+) = ctr.cdcooper
-       AND e.nrdconta(+) = ctr.nrdconta
-       AND e.nrctremp(+) = ctr.nrctremp;
+    SELECT c.nrctremp
+         , c.cdorigem
+         , DECODE(c.cdorigem, 1, 'Conta corrente', 'Empréstimo') dsorigem
+         , (CASE WHEN c.cdorigem = 1 THEN NULL 
+				         ELSE (
+									 SELECT e.cdlcremp
+									   FROM crapepr e
+										WHERE e.cdcooper = t.cdcooper
+										  AND e.nrdconta = t.nrdconta
+											AND e.nrctremp = c.nrctremp    
+				         ) END
+					 ) cdlcremp
+         , c.indpagar
+         , c.cdoperad
+      FROM tbrecup_acordo t
+         , tbrecup_acordo_contrato c
+		 WHERE t.cdcooper = pr_cdcooper
+			 AND t.nracordo = pr_nracordo
+			 AND c.nracordo = t.nracordo;
     rw_contratos_acordo cr_contratos_acordo%ROWTYPE;
 
     BEGIN
@@ -606,6 +610,8 @@ DECLARE
 			 AND e.cdlcremp = 100;
 		rw_contrato_valido cr_contrato_valido%ROWTYPE;
 
+		-- Verifica se já existe registro na CRAPCYC para o contrato que está sendo incluído
+
     ----------->>> VARIAVEIS <<<--------
 
     -- Variável de críticas
@@ -694,6 +700,14 @@ DECLARE
 				 , rw_dat.dtmvtolt
 				);
 
+				-- Exclui o registro da tabela CRAPCYC relativo ao contrato que será incluído, caso exista
+			  DELETE
+			    FROM crapcyc
+			   WHERE cdcooper = vr_cdcooper
+			     AND nrdconta = rw_acordo.nrdconta
+				   AND nrctremp = pr_nrctremp
+				   AND cdorigem = 3;
+
 				-- Replica registro da tabela CRAPCYC para o novo contrato inserido
 				INSERT INTO crapcyc (
 					 cdcooper
@@ -708,6 +722,8 @@ DECLARE
 				 , cdopeinc
 				 , cdassess
 				 , cdmotcin
+				 , dtaltera
+				 , dtenvcbr
 				)
 				SELECT vr_cdcooper
 						 , 3
@@ -716,11 +732,13 @@ DECLARE
 						 , c.flgjudic
 						 , c.flextjud
 						 , c.flgehvip
-						 , vr_cdoperad
-						 , rw_dat.dtmvtolt
-						 , vr_cdoperad
+						 , c.cdoperad
+						 , c.dtinclus
+						 , c.cdopeinc
 						 , c.cdassess
 						 , c.cdmotcin
+						 , c.dtaltera
+						 , c.dtenvcbr
 				 FROM crapcyc c
 				WHERE c.cdcooper = vr_cdcooper
 					AND c.nrdconta = rw_acordo.nrdconta
@@ -867,7 +885,8 @@ DECLARE
 			DELETE
 			  FROM tbrecup_acordo_contrato
 			 WHERE nracordo = pr_nracordo
-			   AND nrctremp = pr_nrctremp;
+			   AND nrctremp = pr_nrctremp
+				 AND cdorigem = 3;
 
 		  COMMIT;
 
