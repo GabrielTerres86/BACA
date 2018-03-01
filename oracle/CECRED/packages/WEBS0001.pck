@@ -66,6 +66,29 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
 																			 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
 																			 ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 	                             
+  PROCEDURE pc_atualiza_prop_srv_emprestim(pr_cdcooper    IN crapcop.cdcooper%TYPE     --> Codigo da cooperativa
+                                          ,pr_nrdconta    IN crapass.nrdconta%TYPE     --> Numero da conta
+                                          ,pr_nrctremp    IN crawepr.nrctremp%TYPE     --> Numero do contrato
+																					,pr_tpretest    IN VARCHAR2                  --> Tipo do retorno recebido ('M' - Motor/ 'E' - Esteira)
+                                          ,pr_rw_crapdat  IN btch0001.rw_crapdat%TYPE  --> Vetor com dados de parâmetro (CRAPDAT)
+                                          ,pr_insitapr    IN crawepr.insitapr%TYPE     --> Situacao da proposta
+                                          ,pr_dsobscmt    IN crawepr.dsobscmt%TYPE DEFAULT NULL    --> Observação recebida da esteira de crédito
+                                          ,pr_dsdscore    IN crapass.dsdscore%TYPE DEFAULT NULL    --> Consulta do score feita na Boa Vista pela esteira de crédito
+                                          ,pr_dtdscore    IN crapass.dtdscore%TYPE DEFAULT NULL    --> Data da consulta do score feita na Boa Vista pela esteira de crédito
+																					,pr_indrisco    IN VARCHAR2 DEFAULT NULL     --> Nível do risco calculado para a operação
+																					,pr_nrnotrat    IN NUMBER   DEFAULT NULL     --> Valor do rating calculado para a operação
+																					,pr_nrinfcad    IN NUMBER   DEFAULT NULL     --> Valor do item Informações Cadastrais calculado no Rating
+																					,pr_nrliquid    IN NUMBER   DEFAULT NULL     --> Valor do item Liquidez calculado no Rating
+																					,pr_nrgarope    IN NUMBER   DEFAULT NULL     --> Valor das Garantias calculada no Rating
+																					,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
+																					,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
+                                          ,pr_flgpreap    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
+                                          ,pr_status      OUT PLS_INTEGER              --> Status
+                                          ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
+                                          ,pr_dscritic    OUT VARCHAR2                 --> Descricao da critica
+                                          ,pr_msg_detalhe OUT VARCHAR2                 --> Detalhe da mensagem
+                                          ,pr_des_reto    OUT VARCHAR2);               --> Erros do processo
+	                             
 END WEBS0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
@@ -644,19 +667,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   PROCEDURE pc_atualiza_prop_srv_emprestim(pr_cdcooper    IN crapcop.cdcooper%TYPE     --> Codigo da cooperativa
                                           ,pr_nrdconta    IN crapass.nrdconta%TYPE     --> Numero da conta
                                           ,pr_nrctremp    IN crawepr.nrctremp%TYPE     --> Numero do contrato
-																					,pr_tpretest    IN VARCHAR2                  --> Tipo do retorno recebido ('M' - Motor/ 'E' - Esteira)
+										  ,pr_tpretest    IN VARCHAR2                  --> Tipo do retorno recebido ('M' - Motor/ 'E' - Esteira)
                                           ,pr_rw_crapdat  IN btch0001.rw_crapdat%TYPE  --> Vetor com dados de parâmetro (CRAPDAT)
                                           ,pr_insitapr    IN crawepr.insitapr%TYPE     --> Situacao da proposta
                                           ,pr_dsobscmt    IN crawepr.dsobscmt%TYPE DEFAULT NULL    --> Observação recebida da esteira de crédito
                                           ,pr_dsdscore    IN crapass.dsdscore%TYPE DEFAULT NULL    --> Consulta do score feita na Boa Vista pela esteira de crédito
                                           ,pr_dtdscore    IN crapass.dtdscore%TYPE DEFAULT NULL    --> Data da consulta do score feita na Boa Vista pela esteira de crédito
-																					,pr_indrisco    IN VARCHAR2 DEFAULT NULL     --> Nível do risco calculado para a operação
-																					,pr_nrnotrat    IN NUMBER   DEFAULT NULL     --> Valor do rating calculado para a operação
-																					,pr_nrinfcad    IN NUMBER   DEFAULT NULL     --> Valor do item Informações Cadastrais calculado no Rating
-																					,pr_nrliquid    IN NUMBER   DEFAULT NULL     --> Valor do item Liquidez calculado no Rating
-																					,pr_nrgarope    IN NUMBER   DEFAULT NULL     --> Valor das Garantias calculada no Rating
-																					,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
-																					,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
+                                          ,pr_indrisco    IN VARCHAR2 DEFAULT NULL     --> Nível do risco calculado para a operação
+                                          ,pr_nrnotrat    IN NUMBER   DEFAULT NULL     --> Valor do rating calculado para a operação
+                                          ,pr_nrinfcad    IN NUMBER   DEFAULT NULL     --> Valor do item Informações Cadastrais calculado no Rating
+                                          ,pr_nrliquid    IN NUMBER   DEFAULT NULL     --> Valor do item Liquidez calculado no Rating
+                                          ,pr_nrgarope    IN NUMBER   DEFAULT NULL     --> Valor das Garantias calculada no Rating
+                                          ,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
+                                          ,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
                                           ,pr_flgpreap    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
                                           ,pr_status      OUT PLS_INTEGER              --> Status
                                           ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
