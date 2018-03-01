@@ -357,6 +357,10 @@ function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim, dssitest, insitapr
 	decisao = insitapr;
 	valor_limite = vlLimite;
 
+	nrcontrato = null;
+	idLinhaL = null;
+	situacao_limite = null;
+
 	var cor = "";
 	
 	// Formata cor da linha da tabela que lista os limites de descto titulos
@@ -377,7 +381,29 @@ function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim, dssitest, insitapr
 			nrcontrato = limite;
 			idLinhaL = id;
 			situacao_limite = dssitlim;
+
 		}
+	}
+	carregarBotoesPorLimite(situacao_limite, situacao_analise);
+}
+
+function carregarBotoesPorLimite(situacao_limite, situacao_analise){
+	var btnConfirmarNovoLimite = $("#btnConfirmarNovoLimite");
+	var btnAceitarRejeicao = $("#btnAceitarRejeicao");
+
+	btnConfirmarNovoLimite.css('display','none');
+	btnAceitarRejeicao.css('display','none');
+
+	//$insitlim == 'APROVADO' && $dssitest == 'ANALISE FINALIZADA'
+	if('APROVADO' === situacao_limite.toUpperCase()  && 'ANALISE FINALIZADA' === situacao_analise.toUpperCase()){
+		btnConfirmarNovoLimite.css('display','');
+		return;
+	
+	}
+	//$insitlim == 'NAO APROVADO' && $dssitest == 'ANALISE FINALIZADA')
+	if('NAO APROVADO' === situacao_limite.toUpperCase() && 'ANALISE FINALIZADA' === situacao_analise.toUpperCase()){
+		btnAceitarRejeicao.css('display','');
+		return;
 	}
 }
 
