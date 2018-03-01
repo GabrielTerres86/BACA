@@ -4591,6 +4591,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND crapccs.cdsitcta = 1;
     rw_crapccs cr_crapccs%ROWTYPE;
     
+    --> Buscar contas migradas
+    CURSOR cr_craptco(pr_cdcooper craptco.cdcooper%TYPE,
+                      pr_nrdconta craptco.nrdconta%TYPE ) IS 
+      SELECT craptco.cdcopant
+        FROM craptco
+       WHERE craptco.cdcooper = pr_cdcooper
+         AND craptco.nrdconta = pr_nrdconta;
+    rw_craptco cr_craptco%ROWTYPE;
+    
     --> Buscar alterações
     CURSOR cr_crapalt IS
       SELECT /*+index_desc (crapalt CRAPALT##CRAPALT1)*/
