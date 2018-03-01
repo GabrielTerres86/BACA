@@ -5570,7 +5570,15 @@ PROCEDURE efetua_alteracao_limite:
                old_nrperger        = craplim.nrperger
                craplim.nrperger    = par_nrperger
                old_vltotsfn        = craplim.vltotsfn
-               craplim.vltotsfn    = par_vltotsfn.                                
+               craplim.vltotsfn    = par_vltotsfn
+               craplim.insitest    = 0
+               craplim.dtenvest    = ?
+               craplim.hrenvest    = 0
+               craplim.cdopeste    = ""
+               craplim.insitapr    = 0
+               craplim.dtaprova    = ?
+               craplim.hraprova    = 0
+               craplim.cdopeapr    = "".
         DO aux_contador = 1 TO 10:
         
             FIND FIRST crapprp WHERE crapprp.cdcooper = par_cdcooper     AND
