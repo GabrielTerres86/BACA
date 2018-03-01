@@ -387,6 +387,11 @@ function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim, dssitest, insitapr
 	carregarBotoesPorLimite(situacao_limite, situacao_analise);
 }
 
+function configurarListaVazia(){
+	carregarBotoesPorLimite(null, null);
+	return false;
+}
+
 function carregarBotoesPorLimite(situacao_limite, situacao_analise){
 	var btnConfirmarNovoLimite = $("#btnConfirmarNovoLimite");
 	var btnAceitarRejeicao = $("#btnAceitarRejeicao");
@@ -394,6 +399,10 @@ function carregarBotoesPorLimite(situacao_limite, situacao_analise){
 	btnConfirmarNovoLimite.css('display','none');
 	btnAceitarRejeicao.css('display','none');
 
+	if(!situacao_limite || !situacao_analise){
+		return;
+	}
+	
 	//$insitlim == 'APROVADO' && $dssitest == 'ANALISE FINALIZADA'
 	if('APROVADO' === situacao_limite.toUpperCase()  && 'ANALISE FINALIZADA' === situacao_analise.toUpperCase()){
 		btnConfirmarNovoLimite.css('display','');
@@ -405,6 +414,7 @@ function carregarBotoesPorLimite(situacao_limite, situacao_analise){
 		btnAceitarRejeicao.css('display','');
 		return;
 	}
+	return;
 }
 
 // Função para mostrar a opção Imprimir dos limites de desconto de títulos
@@ -688,7 +698,7 @@ function enviarPropostaAnalise() {
 
 function confirmarNovoLimite(){
 
-	if (situacao_limite == 'APROVADO' && situacao_analise == 'ANALISE FINALIZADA'){
+	if (situacao_limite.toUpperCase() == 'APROVADO' && situacao_analise.toUpperCase() == 'ANALISE FINALIZADA'){
 		showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
 
 		var operacao = "CONFIMAR_NOVO_LIMITE";
@@ -729,18 +739,11 @@ function confirmarNovoLimite(){
 }
 
 function aceitarRejeicao(){
-
-	alert("Rejeição Aceita");
-
 	
-	/*
-	if (situacao_limite == 'NAO APROVADO' && situacao_analise == 'ANALISE FINALIZADA'){
+	if (situacao_limite.toUpperCase() == 'NAO APROVADO' && situacao_analise.toUpperCase() == 'ANALISE FINALIZADA'){
 		showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
-		var operacao = "ACEITAR_REJEICAO_LIMITE";
-		
-		hideMsgAguardo();
 
-		
+		var operacao = "ACEITAR_REJEICAO_LIMITE";
 		
 		$.ajax({		
 			type: "POST", 
@@ -749,7 +752,9 @@ function aceitarRejeicao(){
 			data: {
 				operacao: operacao,
 				nrdconta: nrdconta,
-				nrctrlim: nrcontrato
+				nrctrlim: nrcontrato,
+				vllimite: valor_limite,
+				//cddopera: cddopera,
 
 				redirect: "html_ajax"
 			},		
@@ -759,19 +764,15 @@ function aceitarRejeicao(){
 			},
 			success: function(response) {
 				try {
-					hideMsgAguardo();
-					eval(response);
-				} catch(error) {
-					hideMsgAguardo();
-					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-				}
+	                eval(response);
+	               	hideMsgAguardo();
+	            } catch (error) {
+	                hideMsgAguardo();
+	                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+	            }
 			}			
 		});	
-
-	}else{
-		showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar a situa&ccedil;&atilde;o da an&aacute;lise.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
 	}
-	*/
 	
 }
 

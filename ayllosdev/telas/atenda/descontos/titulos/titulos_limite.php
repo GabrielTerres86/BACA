@@ -209,5 +209,12 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 		$("#btnIncluirLimite", "#divBotoesTitulosLimite").click();
 		
 	}
-	
+	<?php 
+		if($qtLimites == 0){
+
+			echo 'configurarListaVazia();';
+		}
+	?>
+
+
 </script>
