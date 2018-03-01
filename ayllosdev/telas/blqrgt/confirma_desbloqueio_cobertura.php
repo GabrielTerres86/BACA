@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 16/11/2017
  * OBJETIVO     : Confirmar desbloqueio por cobertura de operação de crédito
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 01/03/2018 - Lucas Skroch (Supero TI) - ALteração da mensagem de confirmação de desbloqueio
  * --------------
  */
 
@@ -57,7 +57,7 @@
 									<fieldset>
 											Antes de prosseguir com o desbloqueio da<br>
 											Cobertura da Opera&ccedil;&atilde;o de Cr&eacute;dito selecionada,<br>
-											favor informar o valor do Bloqueio. <br>
+											favor informar o valor bloqueado. <br>
 											Observa&ccedil;&atilde;o: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o do seu Coordenador!
 										<div align="center">
 											<label for="vldesblo">Valor a Desbloquear:</label>
