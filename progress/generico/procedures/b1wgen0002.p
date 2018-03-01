@@ -2219,9 +2219,10 @@ PROCEDURE obtem-propostas-emprestimo:
                tt-proposta-epr.portabil = aux_portabilidade
                tt-proposta-epr.inobriga = aux_inobriga
                tt-proposta-epr.insitapr = crawepr.insitapr
-               tt-proposta-epr.err_efet = aux_err_efet.
-			   tt-proposta-epr.vlfinanc = 0
-IF crawepr.idfiniof > 0 THEN
+               tt-proposta-epr.err_efet = aux_err_efet
+               tt-proposta-epr.vlfinanc = 0.
+               
+               IF crawepr.idfiniof > 0 THEN
                   DO:
                     RUN sistema/generico/procedures/b1wgen0097.p 
 

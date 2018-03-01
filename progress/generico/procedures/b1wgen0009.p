@@ -13651,14 +13651,13 @@ PROCEDURE buscar_valor_iof_simples_nacional:
        cadastrada. */
     IF par_vlborder <= 30000 THEN
       DO:
-        FIND crapjur FIELDS(idregtrb) 
-                     WHERE crapjur.cdcooper = par_cdcooper  AND
+        FIND crapjur WHERE crapjur.cdcooper = par_cdcooper  AND
                            crapjur.nrdconta = par_nrdconta       
                            NO-LOCK NO-ERROR.
-        IF AVAILABLE crapjur AND (crapjur.idregtrb = 1 OR crapjur.idregtrb = 2) THEN
+        IF AVAILABLE crapjur AND (crapjur.idimpdsn = 1 OR crapjur.idimpdsn = 2) THEN
           DO:
             /* Calcula o IOF normal e com base no resultado, calcula o IOF do SN */
-            ASSIGN aux_vltotaliofsn = aux_vlborder + (ROUND(aux_vlborder * tt-iof.txccdiof, 2)).
+            ASSIGN aux_vltotaliofsn = par_vlborder + (ROUND(par_vlborder * tt-iof.txccdiof, 2)).
             ASSIGN aux_vltotaliofsn = ROUND(aux_vltotaliofsn * tt-iof-sn.txccdiof, 2).
           END.
         ELSE
@@ -13669,8 +13668,7 @@ PROCEDURE buscar_valor_iof_simples_nacional:
       END.
     ELSE
       DO:
-        FIND crapass FIELDS(inpessoa)
-                     WHERE crapass.cdcooper = par_cdcooper  AND
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper  AND
                            crapass.nrdconta = par_nrdconta       
                            NO-LOCK NO-ERROR.
         IF AVAILABLE crapass THEN
@@ -13678,14 +13676,13 @@ PROCEDURE buscar_valor_iof_simples_nacional:
             IF crapass.inpessoa = 1 THEN /* Pessoa física */
               DO:                
                 /* Calcula o IOF normal e com base no resultado, calcula o IOF do SN */
-                ASSIGN aux_vltotaliofsn = aux_vlborder + (ROUND(aux_vlborder * tt-iof.txccdiof, 2)).
+                ASSIGN aux_vltotaliofsn = par_vlborder + (ROUND(par_vlborder * tt-iof.txccdiof, 2)).
                 ASSIGN aux_vltotaliofsn = ROUND(aux_vltotaliofsn * const_txiofpf, 2).
               END.
             ELSE  /* Pessoa jurídica */
               DO:
                 /* Verifica se o associado é cooperativa. Se for, taxa iof simples nacional deve ser zero */
-                FIND crapjur FIELDS(natjurid)
-                             WHERE crapjur.cdcooper = par_cdcooper  AND
+                FIND crapjur WHERE crapjur.cdcooper = par_cdcooper  AND
                                    crapjur.nrdconta = par_nrdconta       
                                    NO-LOCK NO-ERROR.
                 IF AVAILABLE crapjur AND (crapjur.natjurid = 2143) THEN /* 2143 = Coopertativa */
@@ -13695,7 +13692,7 @@ PROCEDURE buscar_valor_iof_simples_nacional:
                 ELSE
                   DO:
                     /* Calcula o IOF normal e com base no resultado, calcula o IOF do SN */
-                    ASSIGN aux_vltotaliofsn = aux_vlborder + (ROUND(aux_vlborder * tt-iof.txccdiof, 2)).
+                    ASSIGN aux_vltotaliofsn = par_vlborder + (ROUND(par_vlborder * tt-iof.txccdiof, 2)).
                     ASSIGN aux_vltotaliofsn = ROUND(aux_vltotaliofsn * const_txiofpj, 2).
                   END.
                 RELEASE crapjur.
