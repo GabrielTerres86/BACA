@@ -3901,6 +3901,10 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
              ,ass.inpessoa
              ,DECODE(wpr.flgpagto,0,'CONTA','FOLHA') despagto
              ,lcr.txminima
+             ,wpr.dtdpagto
+             ,wpr.dtlibera
+             ,wpr.dtcarenc
+             ,wpr.percetop
         FROM crawepr wpr
             ,craplcr lcr
             ,crapfin fin      

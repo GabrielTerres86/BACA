@@ -1165,7 +1165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_msg_confirma(1).dsmensag:= '******** AVISO: ESTE EXTRATO SERA TARIFADO EM R$ '||
                                             to_char(vr_vllanaut,'fm999g999g990d00')||' NESTA DATA. ********';
         END IF;    
-      ELSE
+      
         --Data referencia anterior 30 dias
         IF pr_dtrefere < ( rw_crapdat.dtmvtocd - 30 ) THEN /* Periodo */
           --Se terminal for TAA
@@ -1206,7 +1206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             END IF;
           END IF;
         END IF;
-      END IF; --vr_inisenta = 0 AND pr_inproces < 3
+      --END IF; --vr_inisenta = 0 AND pr_inproces < 3
        
       --Cobrar Tarifa
       IF pr_flgtarif THEN
