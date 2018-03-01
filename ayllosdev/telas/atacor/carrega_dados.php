@@ -63,7 +63,7 @@
 
 	// Se acordo não é válido ou não foi encontrado
 	if (empty($nmprimtl)) { 	
-		exibirErro('error','Acordo inv&aacute;lido.','Alerta - Atacor',$returnError . "$('#divTabela').hide(); $('#nmprimtl, #nrdconta').val('');",false);
+		exibirErro('error','Informe um n&uacute;mero de acordo ativo.','Alerta - Atacor',$returnError . "$('#divTabela').hide(); $('#nmprimtl, #nrdconta').val('');",false);
 	}
 
 	include "tabela_atacor.php";	
