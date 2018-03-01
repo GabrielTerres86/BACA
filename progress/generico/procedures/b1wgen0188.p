@@ -99,6 +99,8 @@
 			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							 (Adriano - P339).
                 
+                08/12/2017 - Projeto 410 - Ajuste na chamada à procedure pc_calcula_iof_epr, passando como parametro 
+                             o numero do contrato - Jean (Mout´S)
                 21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                              grava-proposta-completa. PRJ402 - Integracao CDC
                              (Reinert)						                  
@@ -896,8 +898,9 @@ PROCEDURE grava_dados:
                                                INPUT 30,   /* par_inconfi2 */
                                                INPUT par_nrcpfope,
 											   INPUT "", /* cdmodali */
-                                               INPUT ?,
-                                               INPUT ?,                                               
+                                               INPUT ?, /* par_idcarenc */
+                                               INPUT ?, /* par_dtcarenc */
+                                               INPUT 0,  /* par_idfiniof */
                                                OUTPUT TABLE tt-erro,
                                                OUTPUT TABLE tt-msg-confirma,
                                                OUTPUT TABLE tt-ge-epr,
@@ -1009,8 +1012,8 @@ PROCEDURE grava_dados:
                                                    INPUT "", /* par_dsctrliq */
                                                    INPUT 0,  /* par_nrctaava */
                                                    INPUT 0,  /* par_nrctaav2 */
-                                                   INPUT ?,
-                                                   INPUT ?,
+                                                   INPUT 0,  /* par_idcarenc */
+                                                   INPUT ?,  /* par_dtcarenc */
                                                    /*-------Rating------ */
                                                    INPUT aux_nrgarope,
                                                    INPUT aux_nrperger,
@@ -1103,6 +1106,8 @@ PROCEDURE grava_dados:
                                                    INPUT par_dtmvtolt,
                                                    INPUT 0, /* cdcoploj */
                                                    INPUT 0, /* nrcntloj */
+                                                   INPUT 0, /* idfiniof */
+                                                   INPUT "", /* DSCATBEM */
                                                    OUTPUT TABLE tt-erro,
                                                    OUTPUT TABLE tt-msg-confirma,
                                                    OUTPUT aux_recidepr,
@@ -1485,6 +1490,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                          INPUT par_nmdatela,
                          INPUT par_idorigem,
                          INPUT par_nrdconta,
+                         INPUT par_nrctremp,
                          INPUT par_cdlcremp,
                          INPUT par_vlemprst,
                          INPUT par_dtmvtolt,
@@ -1623,6 +1629,7 @@ PROCEDURE calcula_iof:
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdlcremp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
@@ -1640,6 +1647,8 @@ PROCEDURE calcula_iof:
     DEF VAR aux_flgtaiof AS LOGI                                    NO-UNDO.
     DEF VAR aux_qtdiaiof AS INTE                                    NO-UNDO.
     DEF VAR aux_inpessoa AS INTEGER INIT 0                          NO-UNDO.
+	  DEF VAR aux_tpemprst AS INTEGER                                 NO-UNDO.
+    DEF VAR aux_dscatbem AS CHAR                                    NO-UNDO.
     
     ASSIGN par_vltaxiof = 0.
     
@@ -1664,12 +1673,31 @@ PROCEDURE calcula_iof:
            IF AVAILABLE crapass THEN
               ASSIGN aux_inpessoa = crapass.inpessoa.
        
+		   FIND FIRST crawepr WHERE crawepr.cdcooper = par_cdcooper AND
+		                            crawepr.nrdconta = par_nrdconta AND
+									crawepr.nrctremp = par_nrctremp 
+									NO-LOCK NO-ERROR.
+		   
+       ASSIGN aux_tpemprst = 1. /* PP */
+		   IF AVAILABLE crawepr THEN
+			  ASSIGN aux_tpemprst = crawepr.tpemprst.
+			  
+          /* Busca os bens em garantia */
+          ASSIGN aux_dscatbem = "".
+          FOR EACH crapbpr WHERE crapbpr.cdcooper = crawepr.cdcooper  AND
+                                 crapbpr.nrdconta = crawepr.nrdconta  AND
+                                 crapbpr.nrctrpro = crawepr.nrctremp NO-LOCK:
+              ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
+          END.
+			  
+       
            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
            /* Efetuar a chamada a rotina Oracle */ 
            RUN STORED-PROCEDURE pc_calcula_iof_epr
             aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
                                                  INPUT par_nrdconta,
+                                                 INPUT par_nrctremp,
                                                  INPUT par_dtmvtolt,
                                                  INPUT aux_inpessoa,
                                                  INPUT par_cdlcremp,
@@ -1678,9 +1706,12 @@ PROCEDURE calcula_iof:
                                                  INPUT par_vlemprst,
                                                  INPUT par_dtvencto,
                                                  INPUT par_dtmvtolt,
-                                                 INPUT 1, /* pr_tpemprst */
-                                                 INPUT ?, /* pr_dtcarenc */
+                                                 INPUT aux_tpemprst, /* pr_tpemprst */
+                                                 INPUT par_dtmvtolt, /* pr_dtcarenc */
                                                  INPUT 0, /* pr_qtdias_carencia */
+                                                 INPUT aux_dscatbem,      /* Bens em garantia */
+                                                 INPUT (IF AVAILABLE crawepr THEN crawepr.idfiniof ELSE 0),  /* Indicador de financiamento de IOF e tarifa */
+                                                 INPUT "0", /* passar assim para nao gerar erro no Oracle */
                                                 OUTPUT 0,
                                                 OUTPUT "").
            
@@ -1695,6 +1726,13 @@ PROCEDURE calcula_iof:
                   aux_dscritic = pc_calcula_iof_epr.pr_dscritic
                                     WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
                              
+           IF TRIM(aux_dscritic) <> "" THEN
+             DO:
+                RETURN "NOK".
+             END.
+                                                    
+           IF par_vltariof > 0 THEN
+            DO:
            IF NOT VALID-HANDLE(h-b1wgen0159) THEN
               RUN sistema/generico/procedures/b1wgen0159.p 
                   PERSISTENT SET h-b1wgen0159.
@@ -1712,12 +1750,14 @@ PROCEDURE calcula_iof:
            IF VALID-HANDLE(h-b1wgen0159) THEN
               DELETE PROCEDURE h-b1wgen0159.
 
-           IF RETURN-VALUE <> "OK" THEN
+               IF RETURN-VALUE <> "OK" THEN DO:
               RETURN "NOK".
+               END.
 
            /* Caso for imune, nao podemos cobrar IOF */
            IF aux_flgimune THEN
               ASSIGN par_vltariof = 0.
+          END.
               
        END. /* IF aux_flgtaiof AND par_vlemprst > 0 THEN */
 
@@ -1836,6 +1876,7 @@ PROCEDURE calcula_parcelas_emprestimo:
                                               INPUT aux_dtdpagto,
                                               INPUT FALSE, /*par_flggrava*/
                                               INPUT par_dtmvtolt,
+                                              INPUT 0, /* Indicador de IOF - Deve-se rever */
                                               OUTPUT aux_qtdiacar,
                                               OUTPUT aux_vlajuepr,
                                               OUTPUT aux_txdiaria,
@@ -1913,6 +1954,7 @@ PROCEDURE calcula_taxa_emprestimo:
     DEF VAR h-b1wgen0084 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0153 AS HANDLE                                  NO-UNDO.
 
+    
     IF NOT VALID-HANDLE(h-b1wgen0002) THEN
        RUN sistema/generico/procedures/b1wgen0002.p 
            PERSISTENT SET h-b1wgen0002.
@@ -1995,7 +2037,6 @@ PROCEDURE calcula_taxa_emprestimo:
                                       OUTPUT aux_dtvigenc,
                                       OUTPUT aux_cdfvlcop,
                                       OUTPUT TABLE tt-erro).
-    
     IF RETURN-VALUE <> "OK"  THEN
        RETURN "NOK".
     
@@ -2022,6 +2063,9 @@ PROCEDURE calcula_taxa_emprestimo:
                                           INPUT par_nrparepr,
                                           INPUT par_dtvencto,
                                           INPUT 0, /* cdfinemp */
+                                          INPUT "", /* dscatbem */
+                                          INPUT 1, /* idfiniof */
+                                          INPUT "", /* dsctrliq */
                                           OUTPUT par_percetop,
                                           OUTPUT aux_txcetmes,
                                           OUTPUT TABLE tt-erro).
@@ -2037,6 +2081,7 @@ PROCEDURE calcula_taxa_emprestimo:
                      INPUT par_nmdatela,
                      INPUT par_idorigem,
                      INPUT par_nrdconta,
+                     INPUT 0, /* par_nrctremp */
                      INPUT crapcpa.cdlcremp,
                      INPUT par_vlemprst,
                      INPUT par_dtmvtolt,

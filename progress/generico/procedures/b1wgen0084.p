@@ -644,6 +644,7 @@ PROCEDURE calcula_emprestimo:
     DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_flggrava AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_dtlibera AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_qtdiacar AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_vlajuepr AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_txdiaria AS DECI DECIMALS 10               NO-UNDO.
@@ -661,7 +662,9 @@ PROCEDURE calcula_emprestimo:
     DEF VAR aux_diapagto          AS INTE                           NO-UNDO.
     DEF VAR aux_mespagto          AS INTE                           NO-UNDO.
     DEF VAR aux_anopagto          AS INTE                           NO-UNDO.
-
+    DEF VAR vr_ind                AS INTE                           NO-UNDO.
+    DEF VAR vr_saldo_devedor      AS DECI                           NO-UNDO.
+    DEF VAR aux_dscatbem          AS CHAR                           NO-UNDO.
 
     DEF BUFFER crabepr FOR crawepr.
 
@@ -677,6 +680,14 @@ PROCEDURE calcula_emprestimo:
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-parcelas-epr.
+
+    ASSIGN aux_dscatbem = "".
+    FOR EACH crapbpr WHERE crapbpr.cdcooper = par_cdcooper  AND
+                           crapbpr.nrdconta = par_nrdconta  AND
+                           crapbpr.nrctrpro = par_nrctremp  AND 
+                           crapbpr.tpctrpro = 90 NO-LOCK:
+        ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
+    END.
 
     DO WHILE TRUE:
 
@@ -725,25 +736,83 @@ PROCEDURE calcula_emprestimo:
                     INPUT-OUTPUT aux_anopagto,
                    OUTPUT par_qtdiacar).
 
+                   
               /* considera calendario comercial */
        ASSIGN par_txmensal = craplcr.txmensal
 
               /* Calculo da Taxa Diaria definida pela Karina*/
               aux_vlexpone = EXP ((par_txmensal / 100) + 1 , (1 / 30))
 
-              par_txdiaria =
-
-           ROUND( (100 * (EXP ((par_txmensal / 100) + 1 , (1 / 30)) - 1)), 10)
+                    par_txdiaria = ROUND( (100 * (EXP ((par_txmensal / 100) + 1 , (1 / 30)) - 1)), 10)
 
               /* Valor presente com ajuste da carencia */
-              par_vlajuepr =
-
-           par_vlemprst * EXP( (1 + (par_txdiaria / 100 )), par_qtdiacar - 30)
+                    par_vlajuepr = par_vlemprst * EXP( (1 + (par_txdiaria / 100 )), par_qtdiacar - 30)
 
              /* Valor da Prestacao */
-             aux_vlparepr = (par_vlajuepr * craplcr.txmensal / 100) /
+                   aux_vlparepr = (par_vlajuepr * craplcr.txmensal / 100) / (1 - EXP ( (1 + craplcr.txmensal / 100) , ( -1 * par_qtparepr ) ) ).
 
-           (1 - EXP ( (1 + craplcr.txmensal / 100) , ( -1 * par_qtparepr ) ) ).
+
+                   
+       IF par_idfiniof > 0 THEN 
+        DO:
+        
+          FIND crapass WHERE crapass.cdcooper = par_cdcooper
+                             AND crapass.nrdconta = par_nrdconta
+                             NO-LOCK NO-ERROR.
+
+           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+           
+           /* Efetuar a chamada a rotina Oracle  */
+           RUN STORED-PROCEDURE pc_calcula_iof_epr_parcela
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                   ,INPUT par_nrdconta
+                                                    ,INPUT par_nrctremp
+                                                    ,INPUT par_dtmvtolt
+                                                    ,INPUT crapass.inpessoa
+                                                    ,INPUT par_cdlcremp
+                                                    ,INPUT par_qtparepr
+                                                    ,INPUT aux_vlparepr
+                                                    ,INPUT par_vlemprst
+                                                    ,INPUT par_dtdpagto
+                                                    ,INPUT par_dtlibera
+                                                    ,INPUT 1
+                                                    ,INPUT par_dtmvtolt /* xxxxxxxx */
+                                                    ,INPUT 0             /* xxxxxxxxxxx  */
+                                                    ,INPUT aux_dscatbem 
+                                                    ,INPUT par_idfiniof
+                                                    ,OUTPUT 0
+                                                    ,OUTPUT 0
+                                                    ,OUTPUT "").
+
+           /* Fechar o procedimento para buscarmos o resultado */ 
+           CLOSE STORED-PROC pc_calcula_iof_epr_parcela
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+          
+           ASSIGN aux_dscritic = ""
+                  aux_dscritic = pc_calcula_iof_epr_parcela.pr_dscritic
+                                 WHEN pc_calcula_iof_epr_parcela.pr_dscritic <> ?
+                  aux_vlparepr = pc_calcula_iof_epr_parcela.pr_vlpreempcalc
+                                 WHEN pc_calcula_iof_epr_parcela.pr_vlpreempcalc <> ?.
+                               
+        END.
+        ELSE
+          DO:
+             /* considera calendario comercial */
+             ASSIGN par_txmensal = craplcr.txmensal
+
+                    /* Calculo da Taxa Diaria definida pela Karina*/
+                    aux_vlexpone = EXP ((par_txmensal / 100) + 1 , (1 / 30))
+
+                    par_txdiaria = ROUND( (100 * (EXP ((par_txmensal / 100) + 1 , (1 / 30)) - 1)), 10)
+
+                    /* Valor presente com ajuste da carencia */
+                    par_vlajuepr = par_vlemprst * EXP( (1 + (par_txdiaria / 100 )), par_qtdiacar - 30)
+
+                   /* Valor da Prestacao */
+                   aux_vlparepr = (par_vlajuepr * craplcr.txmensal / 100) / (1 - EXP ( (1 + craplcr.txmensal / 100) , ( -1 * par_qtparepr ) ) ).
+          END.
 
        /* Datas das Prestacoes */
        RUN calcula_data_parcela (par_cdcooper, par_dtdpagto, par_qtparepr).
@@ -1101,6 +1170,7 @@ PROCEDURE grava_parcelas_proposta:
     DEF INPUT PARAM par_qtparepr AS INTE                           NO-UNDO.
     DEF INPUT PARAM par_dtlibera AS DATE                           NO-UNDO.
     DEF INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.
+    DEF INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     EMPTY TEMP-TABLE tt-erro.
@@ -1152,6 +1222,7 @@ PROCEDURE grava_parcelas_proposta:
                               INPUT  par_dtdpagto,
                               INPUT  TRUE,
                               INPUT  par_dtlibera,
+                              INPUT  par_idfiniof,
                               OUTPUT var_qtdiacar,
                               OUTPUT var_vlajuepr,
                               OUTPUT var_txdiaria,
@@ -1974,7 +2045,8 @@ PROCEDURE busca_dados_efetivacao_proposta:
            tt-efetiv-epr.altdtpgt = NO
            tt-efetiv-epr.avalist1 = " "
            tt-efetiv-epr.avalist2 = " "
-           tt-efetiv-epr.dtdpagto = crawepr.dtdpagto.
+           tt-efetiv-epr.dtdpagto = crawepr.dtdpagto
+           tt-efetiv-epr.idfiniof = crawepr.idfiniof.
 
     FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper     AND
                            crapavt.tpctrato = 1                AND /*Emprest*/
@@ -3165,6 +3237,7 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_txiofepr AS DECI                                      NO-UNDO.
     DEF VAR aux_floperac AS LOGI                                      NO-UNDO.
     DEF VAR aux_cdhistor AS INTE                                      NO-UNDO.
+    DEF VAR aux_cdhistor_tar AS INTE                                  NO-UNDO.
     DEF VAR aux_nrdolote AS INTE                                      NO-UNDO.
     DEF VAR aux_vltotctr AS DECI                                      NO-UNDO.
     DEF VAR aux_vltotjur AS DECI                                      NO-UNDO.
@@ -3180,12 +3253,23 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_vltottar AS DECI                                      NO-UNDO.
     DEF VAR aux_vltariof AS DECI                                      NO-UNDO.
     DEF VAR aux_flcaliof AS LOGI INIT FALSE                           NO-UNDO.
+    DEF VAR aux_tpfinali AS INTE                                      NO-UNDO.
+  DEF VAR aux_vltotiofpri AS DECI                                   NO-UNDO.
+    DEF VAR aux_vltotiofadi AS DECI                                   NO-UNDO.
+    DEF VAR aux_vltotiofcpl AS DECI                                   NO-UNDO.
+    DEF VAR aux_vltxiofatraso  AS DECI                                NO-UNDO.
+    DEF VAR aux_flgimune AS INTE                                      NO-UNDO.
+    DEF VAR aux_vltotiof AS DECI                                      NO-UNDO.
+	DEF VAR aux_qtdiaiof AS INTE									  NO-UNDO.
 
     DEF VAR h-b1wgen0097 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0134 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0171 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0188 AS HANDLE                                    NO-UNDO.
+    DEF VAR aux_dscatbem AS CHAR                                      NO-UNDO.
+    DEF VAR aux_dsctrliq AS CHAR                                      NO-UNDO.
+    DEF VAR i            AS INTE                                      NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -3256,6 +3340,31 @@ PROCEDURE grava_efetivacao_proposta:
               aux_floperac = ( craplcr.dsoperac = "FINANCIAMENTO" )
 			  aux_idcarga  = 0.
 
+        DO aux_contador = 1 TO 10:
+
+           FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
+                              craplcr.cdlcremp = crawepr.cdlcremp
+                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+           IF NOT AVAILABLE craplcr   THEN
+              IF LOCKED craplcr   THEN
+                 DO:
+                     ASSIGN aux_cdcritic = 77.
+                     PAUSE 2 NO-MESSAGE.
+                     NEXT.
+                 END.
+              ELSE
+                 DO:
+                     ASSIGN aux_cdcritic = 363.
+
+                     UNDO EFETIVACAO, LEAVE EFETIVACAO.
+                 END.
+
+           ASSIGN aux_cdcritic = 0.
+           LEAVE.
+
+       END.
+
        /*** Comentado por Lucas Lunelli - 21/08/2013
 
        IF   aux_floperac   THEN             /* Financiamento*/
@@ -3298,11 +3407,11 @@ PROCEDURE grava_efetivacao_proposta:
             END.
        ****/
 
-       FOR crappre FIELDS(cdfinemp vlmulpli vllimmin)
-                    WHERE crappre.cdcooper = par_cdcooper     AND
-                          crappre.inpessoa = crapass.inpessoa AND
-                          crappre.cdfinemp = crawepr.cdfinemp
-                          NO-LOCK: END.
+       FOR FIRST crappre FIELDS(cdfinemp vlmulpli vllimmin) WHERE crappre.cdcooper = par_cdcooper     
+                                                              AND crappre.inpessoa = crapass.inpessoa
+                                                              AND crappre.cdfinemp = crawepr.cdfinemp NO-LOCK: END.
+                                                              /*AND (crappre.cdfinemp = crawepr.cdfinemp
+                                                               OR crawepr.flgpreap = TRUE) NO-LOCK: END.*/
 
        /* Verifica se o emprestimo eh pre-aprovado */
        IF AVAIL crappre THEN
@@ -3385,6 +3494,301 @@ PROCEDURE grava_efetivacao_proposta:
 
           END. /* END IF AVAIL crappre AND par_cdfinemp = crappre.cdfinemp  */
 
+
+      RUN buscar_historico_e_lote_efet_prop(INPUT crawepr.tpemprst
+                                           ,INPUT crawepr.idfiniof
+                                           ,INPUT craplcr.dsoperac
+                                           ,OUTPUT aux_cdhistor
+                                           ,OUTPUT aux_cdhistor_tar
+                                           ,OUTPUT aux_nrdolote).
+        
+       /* Projeto 410 - Novo IOF */
+       ASSIGN aux_flgimune     = 0
+             aux_vltotiofpri   = 0
+             aux_vltotiofadi   = 0
+             aux_vltotiofcpl   = 0
+             aux_vltxiofatraso = 0
+             aux_vltotiof      = 0
+             aux_qtdiaiof      = 1
+             aux_dscatbem      = "".
+      
+      FIND crapjur WHERE crapjur.cdcooper = par_cdcooper AND
+                         crapjur.nrdconta = par_nrdconta
+                         NO-LOCK NO-ERROR.
+
+       ASSIGN aux_dscatbem = "".
+       FOR EACH crapbpr WHERE crapbpr.cdcooper = crawepr.cdcooper  AND
+                              crapbpr.nrdconta = crawepr.nrdconta  AND
+                              crapbpr.nrctrpro = crawepr.nrctremp  AND
+                              crapbpr.tpctrpro = 90 NO-LOCK:
+           ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
+       END.
+       
+       ASSIGN aux_dsctrliq = "".
+       
+       DO i = 1 TO 10:
+
+         IF  crawepr.nrctrliq[i] > 0  THEN
+           aux_dsctrliq = aux_dsctrliq +
+              (IF  aux_dsctrliq = ""  THEN
+                   TRIM(STRING(crawepr.nrctrliq[i],
+                               "z,zzz,zz9"))
+               ELSE
+                   ", " +
+                   TRIM(STRING(crawepr.nrctrliq[i],
+                               "z,zzz,zz9"))).
+
+       END. /** Fim do DO ... TO **/
+                      
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+      RUN STORED-PROCEDURE pc_calcula_iof_epr
+      aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper       /* Código da cooperativa */
+                                          ,INPUT par_nrdconta       /* Número da conta */
+                                          ,INPUT crawepr.nrctremp   /* Numero do contrato */
+                                          ,INPUT par_dtmvtolt       /* Data do movimento para busca na tabela de IOF */
+                                          ,INPUT crapass.inpessoa   /* Tipo de Pessoa */
+                                          ,INPUT crawepr.cdlcremp   /* Linha de crédito */
+                                          ,INPUT crawepr.qtpreemp   /* Quantidade de parcelas */
+                                          ,INPUT crawepr.vlpreemp   /* Valor da parcela do emprestimo */
+                                          ,INPUT crawepr.vlemprst   /* Valor do emprestimo */
+                                          ,INPUT crawepr.dtdpagto   /* Data de pagamento */
+                                          ,INPUT crawepr.dtlibera   /* Data de liberação */
+                                          ,INPUT crawepr.tpemprst   /* Tipo de emprestimo */
+                                          ,INPUT crawepr.dtcarenc
+                                          ,INPUT 0 /* dias de carencia */
+                                          ,INPUT aux_dscatbem     /* Bens em garantia */
+                                          ,INPUT crawepr.idfiniof /* Indicador de financiamento de iof e tarifa */
+                                          ,INPUT aux_dsctrliq     /* pr_dsctrliq */
+                                          ,OUTPUT 0                 /* Retorno do valor do IOF */
+                                          ,OUTPUT "").              /* Critica */
+
+      /* Fechar o procedimento para buscarmos o resultado */ 
+      CLOSE STORED-PROC pc_calcula_iof_epr
+      
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+      /* Se retornou erro */
+      ASSIGN aux_dscritic = ""
+             aux_dscritic = pc_calcula_iof_epr.pr_dscritic WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
+      IF aux_dscritic <> "" THEN
+        UNDO EFETIVACAO, LEAVE EFETIVACAO.
+        
+      /* Soma IOF principal */
+      IF pc_calcula_iof_epr.pr_valoriof <> ? THEN
+        DO:
+          ASSIGN aux_vltotiofpri = ROUND(DECI(pc_calcula_iof_epr.pr_valoriof),2).
+          ASSIGN aux_vltotiof = aux_vltotiofpri.
+        END.
+                   
+      
+      FIND FIRST crapbpr WHERE crapbpr.cdcooper = par_cdcooper 
+                               AND crapbpr.nrdconta = par_nrdconta
+                               AND crapbpr.nrctrpro = par_nrctremp
+                               AND (crapbpr.dscatbem = "CASA" OR crapbpr.dscatbem = "APARTAMENTO") 
+                               NO-LOCK NO-ERROR.
+      /* Se for CASA ou APARTAMENTO e for PF, deve-se isentar IOF */                               
+      IF AVAILABLE crapbpr AND crapass.inpessoa = 1 THEN
+        ASSIGN aux_vltotiof = 0.
+      
+      /* Financia IOF, gera lancamento na LEM */             
+      IF crawepr.idfiniof = 1 /*AND aux_vltotiof > 0*/ THEN
+        DO:
+		 
+          /* Buscar a tarifa */
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+          RUN STORED-PROCEDURE pc_calcula_tarifa
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper       /* Código da cooperativa */
+                                              ,INPUT par_nrdconta       /* Número da conta */
+                                              ,INPUT crawepr.cdlcremp   /* Linha de crédito */
+                                              ,INPUT crawepr.vlemprst   /* Valor do emprestimo */
+                                              ,INPUT craplcr.cdusolcr   /* Uso da linha de crédito */
+                                              ,INPUT craplcr.tpctrato   /* Tipo de contrato */
+                                              ,INPUT aux_dscatbem       /* Bens em garantia */
+                                              ,INPUT 'ATENDA'           /* Nome do programa */
+                                              ,INPUT 'N'                /* Flag de envio de e-mail */
+                                              ,OUTPUT 0                 /* Valor da tarifa */
+                                              ,OUTPUT 0                 /* Valor da tarifa especial */
+                                              ,OUTPUT 0                 /* Valor da tarifa garantia */
+                                              ,OUTPUT 0                 /* Histórico do lançamento */
+                                              ,OUTPUT 0                 /* Faixa de valor por cooperativa */
+                                              ,OUTPUT 0	                /* Historico Garantia */
+                                              ,OUTPUT 0	                /* Faixa de valor garantia */
+                                              ,OUTPUT 0                 /* Crítica encontrada */
+                                              ,OUTPUT "").              /* Critica */
+
+          /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_calcula_tarifa
+          
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+          /* Se retornou erro */
+          ASSIGN aux_dscritic = ""
+                 aux_dscritic = pc_calcula_tarifa.pr_dscritic WHEN pc_calcula_tarifa.pr_dscritic <> ?.
+          IF aux_dscritic <> "" THEN
+            UNDO EFETIVACAO, LEAVE EFETIVACAO.
+            
+          /* Valor tarifa */
+          ASSIGN par_vltarifa = 0.
+          IF pc_calcula_tarifa.pr_vlrtarif <> ? THEN
+            DO:
+              ASSIGN par_vltarifa = par_vltarifa + ROUND(DECI(pc_calcula_tarifa.pr_vlrtarif),2).
+            END.
+          IF pc_calcula_tarifa.pr_vltrfesp <> ? THEN
+            DO:
+              ASSIGN par_vltarifa = par_vltarifa + ROUND(DECI(pc_calcula_tarifa.pr_vltrfesp),2).
+            END.
+          IF pc_calcula_tarifa.pr_vltrfgar <> ? THEN
+            DO:
+              ASSIGN par_vltarifa = par_vltarifa + ROUND(DECI(pc_calcula_tarifa.pr_vltrfgar),2).
+            END.
+        
+		  if aux_vltotiof > 0 THEN
+		  DO:
+          /* Gera a LEM se for financiado IOF */
+          RUN sistema/generico/procedures/b1wgen0134.p PERSISTENT SET h-b1wgen0134.
+
+          RUN cria_lancamento_lem IN h-b1wgen0134
+                                  (INPUT par_cdcooper,
+                                   INPUT par_dtmvtolt,
+                                   INPUT par_cdagenci,
+                                   INPUT 100,          /* cdbccxlt */
+                                   INPUT par_cdoperad,
+                                   INPUT par_cdagenci,
+                                   INPUT 4,            /* tplotmov */
+                                   INPUT aux_nrdolote, /* nrdolote */
+                                   INPUT par_nrdconta,
+                                   INPUT aux_cdhistor,
+                                   INPUT par_nrctremp,
+                                   INPUT aux_vltotiof, /* Valor IOF */
+                                   INPUT par_dtmvtolt,
+                                   INPUT craplcr.txdiaria,
+                                   INPUT 0,
+                                   INPUT 0,
+                                   INPUT 0,
+                                   INPUT TRUE,
+                                   INPUT TRUE,
+                                   INPUT 0,
+                                   INPUT par_idorigem).
+
+          DELETE PROCEDURE h-b1wgen0134.
+
+          IF RETURN-VALUE <> "OK"   THEN
+            DO:
+                ASSIGN aux_dscritic = "Erro na criacao do lancamento".
+
+                UNDO EFETIVACAO , LEAVE EFETIVACAO.
+            END.
+
+          END.
+
+          /* Gera a tarifa na LEM se for financiado IOF */
+		  IF par_vltarifa > 0 THEN
+		  DO:
+          RUN sistema/generico/procedures/b1wgen0134.p PERSISTENT SET h-b1wgen0134.
+
+          RUN cria_lancamento_lem IN h-b1wgen0134
+                                  (INPUT par_cdcooper,
+                                   INPUT par_dtmvtolt,
+                                   INPUT par_cdagenci,
+                                   INPUT 100,          /* cdbccxlt */
+                                   INPUT par_cdoperad,
+                                   INPUT par_cdagenci,
+                                   INPUT 4,            /* tplotmov */
+                                   INPUT aux_nrdolote, /* nrdolote */
+                                   INPUT par_nrdconta,
+                                   INPUT aux_cdhistor_tar,
+                                   INPUT par_nrctremp,
+                                   INPUT par_vltarifa, /* Valor TARIFA */
+                                   INPUT par_dtmvtolt,
+                                   INPUT craplcr.txdiaria,
+                                   INPUT 0,
+                                   INPUT 0,
+                                   INPUT 0,
+                                   INPUT TRUE,
+                                   INPUT TRUE,
+                                   INPUT 0,
+                                   INPUT par_idorigem).
+
+          DELETE PROCEDURE h-b1wgen0134.
+
+          IF RETURN-VALUE <> "OK"   THEN
+            DO:
+                ASSIGN aux_dscritic = "Erro na criacao do lancamento".
+
+                UNDO EFETIVACAO , LEAVE EFETIVACAO.
+            END.
+           END.
+
+        END.    
+      ELSE
+        DO:
+          /* Gera craplcm se nao for financiado IOF */
+          /* DO aux_contador = 1 TO 10:
+               FIND craplot WHERE craplot.cdcooper = par_cdcooper   AND
+                                  craplot.dtmvtolt = par_dtmvtolt   AND
+                                  craplot.cdagenci = 1              AND
+                                  craplot.cdbccxlt = 100            AND
+                                  craplot.nrdolote = aux_nrdolote
+                                  EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+               IF NOT AVAILABLE craplot   THEN
+                  DO:
+                      IF LOCKED craplot   THEN
+                         DO:                           
+                             PAUSE 1 NO-MESSAGE.
+                             ASSIGN aux_cdcritic = 341.
+                             NEXT.
+                         END.
+                      ELSE
+                         DO:
+                             CREATE craplot.
+                             ASSIGN craplot.dtmvtolt = par_dtmvtolt
+                                    craplot.cdagenci = 1
+                                    craplot.cdbccxlt = 100
+                                    craplot.nrdolote = aux_nrdolote
+                                    craplot.tplotmov = 1
+                                    craplot.cdoperad = par_cdoperad
+                                    craplot.cdhistor = aux_cdhistor
+                                    craplot.cdcooper = par_cdcooper.
+                         END.       
+                  END.
+            
+               ASSIGN aux_cdcritic = 0.                         
+               LEAVE.
+
+            END. /* Fim do DO ... TO */
+         
+            IF  aux_cdcritic > 0  THEN
+                UNDO LIBERACAO, LEAVE.
+                
+          CREATE craplcm.
+          ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt 
+                 craplcm.cdagenci = craplot.cdagenci
+                 craplcm.cdbccxlt = craplot.cdbccxlt 
+                 craplcm.nrdolote = craplot.nrdolote
+                 craplcm.nrdconta = par_nrdconta
+                 craplcm.nrdocmto = craplot.nrseqdig + 1
+                 craplcm.vllanmto = (IF crawepr.idfiniof > 0 THEN crawepr.vlemprst + aux_vltotiof ELSE crawepr.vlemprst.)
+                 craplcm.cdhistor = aux_cdhistor
+                 craplcm.nrseqdig = craplot.nrseqdig + 1 
+                 craplcm.nrdctabb = par_nrdconta
+                 craplcm.nrautdoc = 0
+                 craplcm.cdcooper = par_cdcooper
+                 craplcm.cdpesqbb = "Desconto do bordero " +
+                                     STRING(crapbdt.nrborder,"zzz,zz9")
+                 craplot.nrseqdig = craplcm.nrseqdig
+                 craplot.qtinfoln = craplot.qtinfoln + 1
+                 craplot.qtcompln = craplot.qtcompln + 1      
+                 craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
+                 craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto.              
+            VALIDATE craplot.
+            VALIDATE craplcm. */
+            
+        END. /* IF crawepr.idfiniof = 0 THEN */
+         
+  
        /* Se for Pos-Fixado */
        IF  crawepr.tpemprst = 2  THEN
            DO:
@@ -3397,12 +3801,30 @@ PROCEDURE grava_efetivacao_proposta:
            END.
        ELSE
            DO:
+              FIND crapfin WHERE crapfin.cdcooper = crawepr.cdcooper
+                             AND crapfin.cdfinemp = crawepr.cdfinemp NO-LOCK NO-ERROR NO-WAIT.
+           
+              IF AVAILABLE crapfin THEN
+                ASSIGN aux_tpfinali = crapfin.tpfinali.                
+           
                IF   aux_floperac   THEN             /* Financiamento*/
-            ASSIGN aux_cdhistor = 1059
-                   aux_nrdolote = 600030.
+                DO:
+                  IF aux_tpfinali = 3 THEN /* CDC */
+                    ASSIGN aux_cdhistor = 2014.
+                  ELSE
+                    ASSIGN aux_cdhistor = 1059.
+                    
+                  ASSIGN  aux_nrdolote = 600030.
+                END.
        ELSE                                 /* Emprestimo */
-            ASSIGN aux_cdhistor = 1036
-                   aux_nrdolote = 600005.
+               DO:
+                IF aux_tpfinali = 3 THEN /* CDC */
+                  ASSIGN aux_cdhistor = 2013.
+                ELSE
+                  ASSIGN aux_cdhistor = 1036.
+                
+                ASSIGN aux_nrdolote = 600005.
+               END.
            END.
 
        RUN sistema/generico/procedures/b1wgen0134.p PERSISTENT SET h-b1wgen0134.
@@ -3539,7 +3961,7 @@ PROCEDURE grava_efetivacao_proposta:
           END.
 
        /* Se NAO calculou IOF */
-       IF aux_flcaliof = FALSE THEN
+       IF aux_flcaliof = FALSE OR aux_flgportb = FALSE THEN
             DO:
        RUN sistema/generico/procedures/b1wgen0097.p PERSISTENT SET h-b1wgen0097.
 
@@ -3553,6 +3975,8 @@ PROCEDURE grava_efetivacao_proposta:
                                          INPUT crawepr.vlpreemp,
                                          INPUT crawepr.dtlibera,
                                          INPUT crawepr.tpemprst,
+                                         INPUT aux_dscatbem,
+                                         INPUT crawepr.idfiniof,                                         
                                         OUTPUT aux_vliofepr,
                                         OUTPUT TABLE tt-erro).
 
@@ -3595,18 +4019,32 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.qtprecal = 0
               crapepr.dtinipag = ?
               crapepr.tpdescto = crawepr.tpdescto
-              crapepr.vliofepr = aux_vliofepr
+              /*crapepr.vliofepr = aux_vliofepr*/
+		      crapepr.vliofepr = aux_vltotiof
               crapepr.cdcooper = par_cdcooper
               crapepr.qttolatr = crawepr.qttolatr
               crapepr.vltarifa = par_vltarifa
               crapepr.vltaxiof = par_vltaxiof
               crapepr.vltariof = par_vltariof
-			  crapepr.iddcarga = aux_idcarga.
+              crapepr.iddcarga = aux_idcarga
+              crapepr.vliofadc = aux_vltotiofadi
+              crapepr.vliofcpl = aux_vltotiofcpl
+              /*crapepr.vliofepr = aux_vltotiofpri*/
+			  crapepr.idfiniof = crawepr.idfiniof.
+				
+			  if crawepr.idfiniof > 0 then
+			  do:
+			     /*assign crapepr.vlsdeved = crawepr.vlemprst + aux_vltotiof + par_vltarifa.*/
+			    assign crapepr.vlemprst = crawepr.vlemprst + aux_vltotiof + par_vltarifa.
+			  end.
+
 
        /* Se for Pos-Fixado */
        IF   crawepr.tpemprst = 2   THEN
             DO:
                 ASSIGN crapepr.vlsprojt = crawepr.vlemprst.
+                IF crawepr.idfiniof > 0  THEN
+                   ASSIGN crapepr.vlsprojt = crawepr.vlemprst + aux_vltotiof + par_vltarifa.
             END.
 
        IF   crapepr.cdlcremp = 100   THEN
@@ -4092,7 +4530,7 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
                            craplem.nrdconta = par_nrdconta     AND
                            craplem.nrctremp = par_nrctremp     NO-LOCK:
 
-        IF   NOT CAN-DO("1036,1059,2326,2327",STRING(craplem.cdhistor)) THEN
+        IF   NOT CAN-DO("1036,1059,2013,2014,2326,2327",STRING(craplem.cdhistor)) THEN
              DO:
                  ASSIGN aux_cdcritic = 368
                         aux_dscritic = "".
@@ -4208,6 +4646,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
 
     DEF VAR aux_flgtrans          AS LOGI                           NO-UNDO.
     DEF VAR aux_idcarga           AS INTE                           NO-UNDO.
+    DEF VAR aux_tpfinali          AS INTE                           NO-UNDO.
 
     DEF VAR h-b1wgen0134          AS HANDLE                         NO-UNDO.
     DEF VAR h-b1craplot           AS HANDLE                         NO-UNDO.
@@ -4389,12 +4828,30 @@ PROCEDURE desfaz_efetivacao_emprestimo.
 
            END. /* END IF AVAIL crappre THEN */
 
+        FIND crapfin WHERE crapfin.cdcooper = crapepr.cdcooper
+                       AND crapfin.cdfinemp = crapepr.cdfinemp NO-LOCK NO-ERROR NO-WAIT.
+           
+        IF AVAILABLE crapfin THEN
+          ASSIGN aux_tpfinali = crapfin.tpfinali. 
+        
        IF   aux_floperac   THEN             /* Financiamento*/
-            ASSIGN aux_cdhistor = 1059
-                   aux_nrdolote = 600030.
+          DO:
+            IF aux_tpfinali = 3 THEN /* CDC */
+              ASSIGN aux_cdhistor = 2014.
+            ELSE
+              ASSIGN aux_cdhistor = 1059.
+              
+            ASSIGN  aux_nrdolote = 600030.
+          END.
        ELSE                                 /* Emprestimo */
-            ASSIGN aux_cdhistor = 1036
-                   aux_nrdolote = 600005.
+         DO:
+          IF aux_tpfinali = 3 THEN /* CDC */
+            ASSIGN aux_cdhistor = 2013.
+          ELSE
+            ASSIGN aux_cdhistor = 1036.
+          
+          ASSIGN aux_nrdolote = 600005.
+         END.
 
         RUN sistema/generico/procedures/b1craplot.p PERSISTENT SET h-b1craplot.
 
@@ -4516,6 +4973,7 @@ PROCEDURE transf_contrato_prejuizo.
 
     DEF VAR     aux_vlttmupr LIKE crapepr.vlttmupr                  NO-UNDO.
     DEF VAR     aux_vlttjmpr LIKE crapepr.vlttjmpr                  NO-UNDO.
+    DEF VAR     aux_vliofcpl LIKE crapepr.vliofcpl                  NO-UNDO.
     DEF VAR     aux_cdhistor LIKE craplem.cdhistor EXTENT 3         NO-UNDO.
     DEF VAR     aux_flgtrans AS LOGICAL                             NO-UNDO.
     DEF VAR     aux_dstransa AS CHAR                                NO-UNDO.
@@ -4761,14 +5219,16 @@ PROCEDURE transf_contrato_prejuizo.
 
 
                        ASSIGN aux_vlttmupr = 0
-                              aux_vlttjmpr = 0.
+                              aux_vlttjmpr = 0
+							  aux_vliofcpl = 0.
 
                        FOR EACH tt-pagamentos-parcelas
                           WHERE tt-pagamentos-parcelas.inliquid = 0 /* Nao Liquidadas */
                            NO-LOCK:
 
                            ASSIGN aux_vlttmupr = aux_vlttmupr + tt-pagamentos-parcelas.vlmtapar
-                                  aux_vlttjmpr = aux_vlttjmpr + tt-pagamentos-parcelas.vlmrapar.
+                                  aux_vlttjmpr = aux_vlttjmpr + tt-pagamentos-parcelas.vlmrapar
+								  aux_vliofcpl = aux_vliofcpl + tt-pagamentos-parcelas.vliofcpl.
 
                        END.
 
@@ -4858,6 +5318,7 @@ PROCEDURE transf_contrato_prejuizo.
                               crapepr.dtprejuz = par_dtmvtolt
                               crapepr.vlttmupr = aux_vlttmupr          /* Multa das Parcelas */
                               crapepr.vlttjmpr = aux_vlttjmpr          /* Juros de Mora das Parcelas */
+							  crapepr.vliofcpl = aux_vliofcpl          /* valor do IOF complementar de atraso */
                               crapepr.vlpgmupr = 0
                               crapepr.vlpgjmpr = 0
                               crapepr.vlsdeved = 0
@@ -5103,6 +5564,7 @@ PROCEDURE desfaz_transferencia_prejuizo.
 
     DEF VAR     aux_vlttmupr LIKE crapepr.vlttmupr                  NO-UNDO.
     DEF VAR     aux_vlttjmpr LIKE crapepr.vlttjmpr                  NO-UNDO.
+	DEF VAR     aux_vliofcpl LIKE crapepr.vliofcpl                  NO-UNDO.
     DEF VAR     aux_cdhistor LIKE craplem.cdhistor EXTENT 6         NO-UNDO.
     DEF VAR     aux_flgtrans AS LOGICAL                             NO-UNDO.
     DEF VAR     aux_dstransa AS CHAR                                NO-UNDO.
@@ -5307,6 +5769,7 @@ PROCEDURE desfaz_transferencia_prejuizo.
             FOR EACH craplem
                 WHERE craplem.cdcooper = par_cdcooper
                   AND craplem.dtmvtolt = par_dtmvtolt
+                  AND craplem.cdagenci = par_cdagenci
                   AND craplem.cdbccxlt = 100
                   AND craplem.nrdolote = 600029
                   AND craplem.nrdconta = par_nrdconta
@@ -5528,6 +5991,87 @@ PROCEDURE efetua_estorno_pagamentos_pp:
 
     IF RETURN-VALUE <> "OK" THEN
        RETURN "NOK".
+        
+    RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE buscar_historico_e_lote_efet_prop: 
+    DEF  INPUT PARAM par_tpemprst AS INTE                            NO-UNDO.
+    DEF  INPUT PARAM par_idfiniof AS INTE                            NO-UNDO.
+    DEF  INPUT PARAM par_dsoperac AS CHAR                            NO-UNDO.
+    
+    DEF  OUTPUT PARAM par_cdhistor AS INTE                            NO-UNDO.
+    DEF  OUTPUT PARAM par_cdhistor_tar AS INTE                            NO-UNDO.
+    DEF  OUTPUT PARAM par_nrdolote AS INTE                            NO-UNDO.
+    
+    ASSIGN par_cdhistor = 0
+           par_nrdolote = 0.
+           
+    
+    /* Financia IOF - se financiar IOF, nunca vai ser TR */
+    IF par_idfiniof = 1 THEN
+      DO:        
+        IF par_tpemprst = 1 THEN /* Pre-Fixado */
+          DO:
+            IF par_dsoperac = "FINANCIAMENTO" THEN
+              ASSIGN par_cdhistor = 2305
+                     par_cdhistor_tar = 2307
+                     par_nrdolote = 600030.
+                
+            IF par_dsoperac = "EMPRESTIMO" THEN
+              ASSIGN par_cdhistor = 2304
+                     par_cdhistor_tar = 2306
+                     par_nrdolote = 600005.
+          END.
+        ELSE
+          IF par_tpemprst = 2 THEN /* Pos-Fixado */
+            DO:
+              IF par_dsoperac = "FINANCIAMENTO" THEN
+                ASSIGN par_cdhistor = 2536
+                       par_cdhistor_tar = 2307
+                       par_nrdolote = 600030.
+                  
+              IF par_dsoperac = "EMPRESTIMO" THEN
+                ASSIGN par_cdhistor = 2535
+                     par_cdhistor_tar = 2306
+                       par_nrdolote = 600005.
+            END.
+      END.
+    ELSE
+      DO:
+        /* Nao financia IOF */
+        IF par_tpemprst = 1 THEN /* Pre-Fixado */
+          DO:
+          IF par_dsoperac = "FINANCIAMENTO" THEN
+              ASSIGN par_cdhistor = 2309
+                     par_nrdolote = 600030.
+          ELSE
+            IF par_dsoperac = "EMPRESTIMO" THEN
+              ASSIGN par_cdhistor = 2308
+                     par_nrdolote = 600005.
+          END.
+        ELSE
+          IF par_tpemprst = 2 THEN /* Pos-Fixado */
+            DO:
+              IF par_dsoperac = "FINANCIAMENTO" THEN
+                ASSIGN par_cdhistor = 2538
+                       par_nrdolote = 600030.
+                  
+              IF par_dsoperac = "EMPRESTIMO" THEN
+                ASSIGN par_cdhistor = 2537
+                       par_nrdolote = 600005.
+            END.
+        ELSE /* TR */             
+          DO:
+            ASSIGN par_cdhistor = 2310.
+            IF par_dsoperac = "FINANCIAMENTO" THEN
+                ASSIGN par_nrdolote = 600013.
+            ELSE
+              IF par_dsoperac = "EMPRESTIMO" THEN
+                ASSIGN par_nrdolote = 600012.
+          END.
+      END.
         
     RETURN "OK".
 

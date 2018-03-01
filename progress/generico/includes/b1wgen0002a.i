@@ -87,7 +87,7 @@ DEF VAR aux_diainici AS INTE                                        NO-UNDO.
 DEF VAR aux_nrdiamta AS INTE                                        NO-UNDO.
 DEF VAR aux_conthist AS INTE                                        NO-UNDO.
 DEF VAR aux_contlote AS INTE                                        NO-UNDO.
-/* DEF VAR aux_vliofcpl AS DECI                                        NO-UNDO. */
+DEF VAR aux_vliofcpl AS DECI                                        NO-UNDO.
 DEF VAR aux_vlbaseiof AS DECI                                        NO-UNDO.
 
 DEF BUFFER crabhis_1 FOR craphis.

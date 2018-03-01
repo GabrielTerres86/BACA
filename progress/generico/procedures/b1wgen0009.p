@@ -283,8 +283,8 @@
            17/07/2017 - Ajustes na geraçao do registro de LOG na exclusao do bordero
                         Projeto 300. (Lombardi)
 					                
-		   29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
-					                
+		       29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+           
            04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
                         de novo limite. (Chamado 768648) - (Fabricio)
 					                
@@ -551,9 +551,9 @@ PROCEDURE busca_dados_dscchq:
             DELETE PROCEDURE h-b1wgen0001.
             RETURN "NOK".
             
-        END.
-                DELETE PROCEDURE h-b1wgen0001.
-            END.
+        END.        
+        DELETE PROCEDURE h-b1wgen0001.
+    END.
 
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper   AND
                              craplim.nrdconta = par_nrdconta   AND
@@ -694,7 +694,7 @@ PROCEDURE busca_dados_limite_incluir:
 
     IF RETURN-VALUE <> "OK" THEN
         RETURN "NOK".*/
-
+        
     RUN sistema/generico/procedures/b1wgen0001.p
         PERSISTENT SET h-b1wgen0001.
 
@@ -10337,7 +10337,7 @@ PROCEDURE efetua_exclusao_bordero:
                 
                     IF  AVAILABLE craplau  THEN
                         DELETE craplau.
-				    END.
+                END.
     
             DELETE crapcdb.                   
                            
@@ -10538,7 +10538,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE VARIABLE aux_pertengp AS LOG     NO-UNDO.
     DEFINE VARIABLE aux_dsdrisco AS CHAR    NO-UNDO.
     DEFINE VARIABLE aux_dsoperac AS CHAR    NO-UNDO.
-    DEFINE VARIABLE aux_flgimune AS LOGICAL NO-UNDO.
+    DEFINE VARIABLE aux_flgimune AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_flpedsen AS LOGICAL INIT "N"                 NO-UNDO.
     
     DEF VAR aux_cdpactra LIKE crapope.cdpactra                       NO-UNDO.
@@ -12233,9 +12233,12 @@ PROCEDURE efetua_liber_anali_bordero:
                                                   ,INPUT aux_qtdiaiof           /* Qde dias em atraso (cálculo IOF atraso) */
                                                   ,INPUT crapcdb.vlliquid       /* Valor liquido da operaçao */
                                                   ,INPUT aux_vltotoperac        /* Valor total da operaçao */
+                                                  ,INPUT 0                      /* Valor da taxa de IOF complementar */
                                                   ,OUTPUT 0                     /* Retorno do valor do IOF principal */
                                                   ,OUTPUT 0                     /* Retorno do valor do IOF adicional */
                                                   ,OUTPUT 0                     /* Retorno do valor do IOF complementar */
+                                                  ,OUTPUT 0                     /* Valor da taxa de IOF principal */
+                                                  ,OUTPUT 0
                                                   ,OUTPUT "").                  /* Critica */
               /* Fechar o procedimento para buscarmos o resultado */ 
               CLOSE STORED-PROC pc_calcula_valor_iof
@@ -12261,6 +12264,12 @@ PROCEDURE efetua_liber_anali_bordero:
                 DO:
                   ASSIGN aux_vltotiofcpl = aux_vltotiofcpl + ROUND(DECI(pc_calcula_valor_iof.pr_vliofcpl),2).
                 END.
+
+              /* Soma IOF complementar */
+              IF pc_calcula_valor_iof.pr_flgimune <> ? THEN
+                DO:
+                  ASSIGN aux_flgimune = pc_calcula_valor_iof.pr_flgimune.
+                END.    
 
            END. /* IF par_cddopcao = "L"  THEN */
 
@@ -12341,7 +12350,7 @@ PROCEDURE efetua_liber_anali_bordero:
                     DELETE PROCEDURE h-b1wgen0159.
 
                     /*  Cobranca do IOF de desconto  */
-                    IF  (NOT aux_flgimune)  AND
+                    IF  aux_flgimune <= 0  AND
                         tt-iof.txccdiof > 0 THEN         
                        DO:
                           DO aux_contador = 1 TO 10:
@@ -12432,6 +12441,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                                               ,INPUT ROUND(aux_vltotiofpri, 2)  /* Valor do IOF Principal */
                                                               ,INPUT ROUND(aux_vltotiofadi, 2)  /* Valor do IOF Adicional */
                                                               ,INPUT ROUND(aux_vltotiofcpl, 2)  /* Valor do IOF Complementar */
+                                                              ,INPUT aux_flgimune
                                                               ,OUTPUT 0                     /* Código da Crítica */
                                                               ,OUTPUT "").
                           /* Fechar o procedimento para buscarmos o resultado */ 
