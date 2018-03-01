@@ -9187,7 +9187,7 @@ PROCEDURE verifica-rollout:
     RUN STORED-PROCEDURE pc_verifica_rollout
                  aux_handproc = PROC-HANDLE NO-ERROR
                                  (INPUT par_cdcooper, /* Cooperativa */ 
-                                  INPUT STRING(par_dtmvtolt),  /* Data de movimento */
+                                  INPUT STRING(par_dtmvtolt,"99/99/9999"),  /* Data de movimento */
                                   INPUT par_vltitulo, /* Vl. do Título */
                                   INPUT 2, /* Tipo de regra de rollout(1-registro,2-pagamento)  */
                                  OUTPUT 0). /* Está no Rollout */
