@@ -2284,7 +2284,7 @@ create or replace package body cecred.CCET0001 is
           RAISE vr_exc_erro;        
         END IF;                  
       END IF;     
-                    */                                     
+                                                       
       -- valor total emprestado
       vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0);      
                                                     
