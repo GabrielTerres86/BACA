@@ -2868,8 +2868,8 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.dtcarenc = crawepr.dtcarenc
                        tt-proposta-epr.insitest = crawepr.insitest
                        tt-proposta-epr.vlrtarif = aux_vlrtarif
-                       tt-proposta-epr.vliofepr = 0.
-					   t-proposta-epr.idfiniof = crawepr.idfiniof      
+                       tt-proposta-epr.vliofepr = 0
+					   tt-proposta-epr.idfiniof = crawepr.idfiniof.     
                        
 				IF  AVAIL crapepr THEN
                   DO:
