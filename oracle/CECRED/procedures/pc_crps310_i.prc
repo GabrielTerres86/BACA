@@ -3149,6 +3149,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_dtvencto      crappep.dtvencto%TYPE; --> Data de vencimento
         vr_vlprxpar      crapris.vlprxpar%TYPE; --> Valor da proxima parcela
         vr_dtprxpar      crapris.dtprxpar%TYPE; --> Data da proxima parcela
+        vr_vlju60mo      NUMBER(25,2);
 
         -- Cursor para juros mora em atraso ha mais de 60 dias
         CURSOR cr_craplem_60_mora(pr_qtdiaatr IN NUMBER) IS
