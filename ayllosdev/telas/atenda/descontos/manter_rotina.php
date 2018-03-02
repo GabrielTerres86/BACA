@@ -47,12 +47,16 @@
 	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ENVIAR_ESTEIRA_DESCT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
-		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){		   
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){  
            echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';           
            exit;
 		}
-
-		echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
+		if($xmlObj->roottag->tags[0]){
+			echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
+		} else{
+			echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
+		}	
+		
         exit;
 
 	}else if ($operacao == 'ENVIAR_ESTEIRA' ) {
