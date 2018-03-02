@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Adriano
-       Data    : Marco/2013                      Ultima atualizacao: 24/10/2017
+       Data    : Marco/2013                      Ultima atualizacao: 26/01/2018
 
        Dados referentes ao programa:
 
@@ -38,12 +38,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                    24/10/2017 - Atualizacao do Grupo Economico fora do loop da crapris com valor de arrasto.
                                 (Jaison/James)
 
+                   26/01/2018 - Arrasto do Grupo Economico para CPFs/CNPJs do grupo (Guilherme/AMcom)
+
     ............................................................................ */
 
     DECLARE
 
       ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
-
 
       -- Vetor para armazenar os dados de riscos, dessa forma temos o valor
       -- char do risco (AA, A, B...HH) como chave e o valor é seu indice
@@ -71,8 +72,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
           INDEX BY VARCHAR2(14);
       vr_tab_ass_cpfcnpj typ_tab_crapass_cpfcnpj;
 
-
-
       -- Código do programa
       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS635_i';
 
@@ -86,7 +85,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
       vr_datautil   DATE;       --> Auxiliar para busca da data
       vr_dtrefere   DATE;       --> Data de referência do processo
+      vr_dtrefere_aux DATE;       --> Data de referência auxiliar do processo
       vr_dtdrisco   crapris.dtdrisco%TYPE; -- Data da atualização do risco
+
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -155,46 +156,47 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
       -- Busca dos dados do ultimo risco Doctos 3020/3030
       CURSOR cr_crapris_last(pr_nrdconta IN crapris.nrdconta%TYPE
+                            ,pr_nrctremp IN crapris.nrctremp%TYPE
+                            ,pr_cdmodali IN crapris.cdmodali%TYPE
+                            ,pr_cdorigem IN crapris.cdorigem%TYPE
                             ,pr_dtrefere in crapris.dtrefere%TYPE) IS
-        SELECT dtrefere
+           -- Ajuste no cursor para tratar data do risco - Daniel(AMcom)
+           SELECT r.dtrefere
+                , r.innivris
+                , r.dtdrisco
+            FROM crapris r
+           WHERE r.cdcooper = pr_cdcooper
+             AND r.nrdconta = pr_nrdconta
+             AND r.dtrefere = pr_dtrefere
+             AND r.nrctremp = pr_nrctremp
+             AND r.cdmodali = pr_cdmodali
+             AND r.cdorigem = pr_cdorigem
+             AND r.inddocto = 1 -- 3020 e 3030
+--             AND r.innivris < 10
+           ORDER BY r.dtrefere DESC --> Retornar o ultimo gravado
+                  , r.innivris DESC --> Retornar o ultimo gravado
+                  , r.dtdrisco DESC;
+        rw_crapris_last cr_crapris_last%ROWTYPE;
+
+        -- Comentado cursor original cr_crapris_last Daniel(AMcom)
+        /*SELECT dtrefere
               ,innivris
               ,dtdrisco
           FROM crapris
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
-           AND dtrefere < vr_dtrefere
+           -- Buscar somente informações do dia anterior - Daniel(AMcom)
+           --AND dtrefere < vr_dtrefere
+           AND dtrefere >= rw_crapdat.dtmvtoan
+           --
            AND dtrefere <> pr_dtrefere
            AND inddocto = 1 -- 3020 e 3030
            AND innivris < 10
          ORDER BY dtrefere DESC  --> Retornar o ultimo gravado
                  ,innivris DESC  --> Retornar o ultimo gravado
-                 ,dtdrisco DESC; --> Retornar o ultimo gravado
-      rw_crapris_last cr_crapris_last%ROWTYPE;
+                 ,dtdrisco DESC;*/--> Retornar o ultimo gravado
 
 
-      procedure pc_grava_log (pr_dsmensag IN varchar2,pr_des_erro OUT varchar2)  is
-
-        vr_ind_arqlog UTL_FILE.file_type; -- Handle para o arquivo de log
-        vr_nmdiret  VARCHAR2(50);
-
-     begin
-
-        vr_nmdiret := gene0001.fn_diretorio(pr_tpdireto => 'C'
-                                             ,pr_cdcooper => pr_cdcooper
-                                             ,pr_nmsubdir => 'log');
-
-        vr_ind_arqlog := UTL_FILE.fopen(vr_nmdiret, 'LOG_635_I.lst', 'A');
-
-        vr_dsmensag := to_char(sysdate,'DD/MM/RRRR HH24:MI:SS') || ' - ' || pr_dsmensag;
-
-        UTL_FILE.put_line(vr_ind_arqlog,vr_dsmensag);
-
-        UTL_FILE.fclose(vr_ind_arqlog);
-
-      EXCEPTION
-        WHEN OTHERS THEN
-          pr_des_erro := 'pc_grava_log --> Erro não tratado ao gravar log. Detalhes: '||sqlerrm;
-      END;
 
 
       PROCEDURE pc_popula_ass_arrasto(pr_cpfcnpj  IN VARCHAR2
@@ -339,14 +341,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             vr_maxrisco := rw_contas_grupo.innivrge;
           END IF;
 
-          vr_dsmensag := 'CPF/CNPJ: '  || rw_contas_grupo.cpf_cnpj
-                       ||' GRUPO: '    || rw_contas_grupo.nrdgrupo
-                       ||' RIS_GRP: '  || rw_contas_grupo.innivrge
-                       ||' MAX RIS: '  || vr_maxrisco
-                       ||' RIS_ASS: '  || rw_contas_grupo.innivris
-                       ||' DTREFERE: ' || pr_dtrefere
-                       ;
-          pc_grava_log(vr_dsmensag,vr_dsmsgerr);
 
           -- PERCORRER TODOS CONTRATOS DA RIS - COM RISCO DIFERENTE DO GRUPO
           FOR rw_riscos_cpfcnpj IN cr_riscos_cpfcnpj( pr_nrcpfcgc => rw_contas_grupo.cpf_cnpj
@@ -356,12 +350,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
             -- Efetuar atualização da CENTRAL RISCO cfme os valores maior risco
             BEGIN
-              vr_dsmensag := '=> Atualizando RIS: '
-                           ||' RISCO de '  || rw_riscos_cpfcnpj.innivris
-                           ||' para '      || vr_maxrisco
-                           ||' ROWID: '    || rw_riscos_cpfcnpj.rowid
-                           ||' SEQ: '      || rw_riscos_cpfcnpj.SEQ_CTA ;
-              pc_grava_log(vr_dsmensag,vr_dsmsgerr);
+
               UPDATE crapris
                  SET innivris = vr_maxrisco
                     ,inindris = vr_maxrisco
@@ -379,14 +368,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
             -- ATUALIZAR VENCIMENTOS RISCO COM BASE NO MAIOR RISCO
             BEGIN
-              vr_dsmensag := '=> Atualizando VRI: '
-                           ||' CONTA: '    || rw_riscos_cpfcnpj.nrdconta
-                           ||' RISCO: '    || vr_maxrisco
-                           ||' CDMODALI: ' || rw_riscos_cpfcnpj.cdmodali
-                           ||' NRCTREMP: ' || rw_riscos_cpfcnpj.nrctremp
-                           ||' NRSEQCTR: ' || rw_riscos_cpfcnpj.nrseqctr
-                           ;
-              pc_grava_log(vr_dsmensag,vr_dsmsgerr);
+
               UPDATE crapvri
                  SET innivris = vr_maxrisco
                WHERE cdcooper = pr_cdcooper
@@ -411,14 +393,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
           -- Atualiza participante do Grupo Economico com o valor do arrasto
           BEGIN
-            vr_dsmensag := '=> Atualizando GRP: '
-                         ||' GRUPO: '    || rw_contas_grupo.nrdgrupo
-                         ||' CPF/CNPJ: ' || rw_contas_grupo.nrcpfcgc
-                         ||' CONTA: '    || rw_contas_grupo.nrctasoc
-                         ||' RISCO:    ' || vr_maxrisco
-                         ||' - ' || vr_tab_risco_num(vr_maxrisco)
-                         ;
-            pc_grava_log(vr_dsmensag,vr_dsmsgerr);
+
             -- APENAS DO GRUPO ATUAL
             UPDATE crapgrp cr
                SET cr.innivris = vr_maxrisco
@@ -438,11 +413,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
           END;
 
 
-          -- Atualiza todas as contas do CPF/CNPJ
-          vr_dsmensag := 'CPF/CNPJ: ' || rw_contas_grupo.cpf_cnpj
-                       ||' RISCO: '   || vr_maxrisco ;
-          pc_grava_log(vr_dsmensag,vr_dsmsgerr);
-
           pc_popula_ass_arrasto(rw_contas_grupo.cpf_cnpj
                                ,rw_contas_grupo.inpessoa
                                ,vr_maxrisco
@@ -460,10 +430,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
         LOOP
           EXIT WHEN vr_chave_ass IS NULL;
 
-          vr_dsmensag := '=> Atualizando ASS: '
-                       ||' CPF/CNPJ: '  || vr_chave_ass
-                       ||' RISCO: '  || vr_tab_ass_cpfcnpj(vr_chave_ass);
-          pc_grava_log(vr_dsmensag,vr_dsmsgerr);
           BEGIN
             -- Atualizar utilizar a tabela de-para de texto do nível com base no indice
             UPDATE crapass
@@ -494,6 +460,74 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                pr_des_erro := 'pc_efetua_arrasto_cpfcnpj --> Erro não tratado ao processar arrasto CPF/CNPJ. Detalhes: '||sqlerrm;
         END; -- FIM PROCEDURE pc_efetua_arrasto_cpfcnpj
 
+
+      PROCEDURE pc_validar_data_risco(pr_des_erro OUT VARCHAR2) IS
+
+        -- Variaveis auxiliares
+        vr_dsmsgerr     VARCHAR2(200);
+        vr_maxrisco     INTEGER:=-10;
+
+
+        -- Busca de todos os riscos
+        CURSOR cr_crapris (pr_dtrefant IN crapris.dtrefere%TYPE) IS
+          SELECT ris.cdcooper
+               , ris.nrdconta
+               , ris.nrctremp
+               , ris.innivris   risco_atual
+               , r_ant.innivris risco_anterior
+               , ris.dtdrisco   dtdrisco_atual
+               , r_ant.dtdrisco dtdrisco_anterior
+               , ris.rowid
+            FROM crapris ris
+               , (SELECT *  -- Busca risco anterior
+                    FROM crapris r
+                   WHERE r.dtrefere = pr_dtrefant
+                     AND r.cdcooper = pr_cdcooper) r_ant
+           WHERE ris.dtrefere   = vr_dtrefere
+             AND ris.cdcooper   = pr_cdcooper
+             AND r_ant.cdcooper = ris.cdcooper
+             AND r_ant.nrdconta = ris.nrdconta
+             AND r_ant.nrctremp = ris.nrctremp
+             AND r_ant.cdmodali = ris.cdmodali
+             AND r_ant.cdorigem = ris.cdorigem
+             -- Quando o nível de risco for o mesmo e a data ainda estiver divergente
+             AND (r_ant.innivris = ris.innivris AND r_ant.dtdrisco <> ris.dtdrisco)  ;
+
+    BEGIN
+
+          IF to_char(rw_crapdat.dtmvtolt, 'MM') <> to_char(rw_crapdat.dtmvtopr, 'MM') THEN
+            -- Utilizar o final do mês como data
+            vr_dtrefere_aux := rw_crapdat.dtultdma;
+          ELSE
+            -- Utilizar a data atual
+            vr_dtrefere_aux := rw_crapdat.dtmvtoan;
+          END IF;
+
+  
+          FOR rw_crapris IN cr_crapris (vr_dtrefere_aux) LOOP
+
+            -- atualiza data dos riscos que não sofreram alteração de risco
+            BEGIN
+              UPDATE crapris r
+                 SET r.dtdrisco = rw_crapris.dtdrisco_anterior
+               WHERE r.rowid    = rw_crapris.rowid;
+            EXCEPTION
+              WHEN OTHERS THEN
+                --gera critica
+                vr_dscritic := 'Erro ao atualizar Data do risco da Central de Risco(crapris). '||
+                               'Erro: '||SQLERRM;
+                RAISE vr_exc_fimprg;
+            END;
+
+          END LOOP;
+
+
+        EXCEPTION
+          WHEN vr_exc_fimprg THEN
+               pr_des_erro := 'pc_validar_data_risco --> Erro ao processar Data do Risco. Detalhes: '||vr_dscritic;
+          WHEN OTHERS THEN
+               pr_des_erro := 'pc_validar_data_risco --> Erro não tratado ao processar Data do Risco. Detalhes: '||sqlerrm;
+        END; -- FIM PROCEDURE pc_validar_data_risco
 
     BEGIN
 
@@ -572,9 +606,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
           LOOP
             EXIT WHEN cr_crapvri%NOTFOUND;
 
+            -- Regra para carga de data para o cursor
+            -- Se for rotina mensal - Daniel(AMcom)
+            IF to_char(rw_crapdat.dtmvtolt, 'MM') <> to_char(rw_crapdat.dtmvtopr, 'MM') THEN
+              -- Utilizar o final do mês como data
+              vr_dtrefere_aux := rw_crapdat.dtultdma;
+            ELSE
+              -- Utilizar a data atual
+              vr_dtrefere_aux := rw_crapdat.dtmvtoan;
+            END IF;
+
             -- Busca dos dados do ultimo risco de origem 1
             OPEN cr_crapris_last(pr_nrdconta => rw_crapris.nrdconta
-                                ,pr_dtrefere => vr_datautil);
+                                ,pr_nrctremp => rw_crapris.nrctremp
+                                ,pr_cdmodali => rw_crapris.cdmodali
+                                ,pr_cdorigem => rw_crapris.cdorigem
+                                ,pr_dtrefere => vr_dtrefere_aux);
             FETCH cr_crapris_last
              INTO rw_crapris_last;
             -- Se encontrou
@@ -583,13 +630,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
               -- OU o nível deste registro é diferente do nível do risco no cursor principal
               -- e o nível do risco principal seja diferente de HH(10)
               -- ATENCAO: caso seja alterada esta regra, ajustar em crps310_i tb
-              IF rw_crapris_last.dtrefere <> rw_crapdat.dtultdma
-              OR (rw_crapris_last.innivris <> rw_crapgrp.innivrge AND rw_crapris.innivris <> 10) THEN
+              --
+              -- Comentado comparativo de datas(dtrefere <> dtultdma), pois esta condição sempre irá existir - Daniel(AMcom)
+              IF /*rw_crapris_last.dtrefere <> rw_crapdat.dtultdma
+              OR */(rw_crapris_last.innivris <> rw_crapgrp.innivrge /*AND rw_crapris.innivris <> 10*/) THEN
                 -- Utilizar a data de referência do processo
                 vr_dtdrisco := vr_dtrefere;
               ELSE
                 -- Utilizar a data do ultimo risco
+                IF rw_crapris_last.dtdrisco IS NULL THEN
+                vr_dtdrisco := vr_dtrefere;
+              ELSE
+                -- Utilizar a data do ultimo risco
                 vr_dtdrisco := rw_crapris_last.dtdrisco;
+              END IF;
               END IF;
             ELSE
               -- Utilizar a data de referência do processo
@@ -668,6 +722,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                                                    || vr_cdprogra || ' --> '
                                                    || vr_dscritic );
 
+
+
+      pc_validar_data_risco(pr_des_erro => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_fimprg;
+      END IF;
 
     EXCEPTION
       WHEN vr_exc_fimprg THEN
