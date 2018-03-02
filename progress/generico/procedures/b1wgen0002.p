@@ -6209,9 +6209,6 @@ PROCEDURE grava-proposta-completa:
     DEF  INPUT PARAM par_dsjusren AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtlibera AS DATE                           NO-UNDO.
         
-    /** -------------------- Parametros Lojista CDC ---------------------**/
-    DEF  INPUT PARAM par_cdcoploj AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrcntloj AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dscatbem AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
