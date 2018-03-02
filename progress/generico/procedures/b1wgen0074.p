@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 14/11/2017
+    Data    : Maio/2010                   Ultima atualizacao: 06/02/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -221,7 +221,9 @@
 
 				14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
 				             ja estiver com situacao = 4
-							( Jonata - RKAM P364).		
+							( Jonata - RKAM P364).		  
+                             
+                06/02/2018 - Adicionado campo cdcatego e flblqtal na tabela crapass. PRJ366 (Lombardi)
 
 .............................................................................*/
 
@@ -293,7 +295,8 @@ PROCEDURE Busca_Dados:
                                  flgiddep dtcnsspc dtcnsscr dtdsdspc 
                                  dtmvtolt dtelimin dtabtcct dtdemiss inadimpl 
                                  inlbacen inpessoa flgctitg flgrestr nrctacns
-                                 incadpos indserma idastcjt dtdscore dsdscore)
+                                 incadpos indserma idastcjt dtdscore dsdscore
+                                 cdcatego flblqtal)
                            WHERE crapass.cdcooper = par_cdcooper AND 
                                 crapass.nrdconta = par_nrdconta NO-LOCK:
         END.
@@ -361,7 +364,9 @@ PROCEDURE Busca_Dados:
             tt-conta-corr.indserma = crapass.indserma
             tt-conta-corr.idastcjt = crapass.idastcjt
             tt-conta-corr.dtdscore = crapass.dtdscore
-            tt-conta-corr.dsdscore = crapass.dsdscore.    
+            tt-conta-corr.dsdscore = crapass.dsdscore
+            tt-conta-corr.cdcatego = crapass.cdcatego
+            tt-conta-corr.flblqtal = crapass.flblqtal.
 
         CASE crapass.incadpos:
             WHEN 3 THEN ASSIGN tt-conta-corr.dscadpos = "Cancelado".
@@ -749,6 +754,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_inlbacen AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtdsdspc AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_flgexclu AS LOG                            NO-UNDO.
+    DEF  INPUT PARAM par_cdcatego AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM par_flgcreca AS LOG                            NO-UNDO.
     DEF OUTPUT PARAM par_tipconfi AS INTE                           NO-UNDO.
@@ -788,6 +794,7 @@ PROCEDURE Valida_Dados:
                       INPUT par_inlbacen,
                       INPUT par_dtdsdspc,
                       INPUT par_flgexclu,
+                      INPUT par_cdcatego,
                      OUTPUT par_flgcreca,
                      OUTPUT par_tipconfi,
                      OUTPUT par_msgconfi,
@@ -944,6 +951,7 @@ PROCEDURE Valida_Dados_Altera:
     DEF  INPUT PARAM par_inlbacen AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtdsdspc AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_flgexclu AS LOG                            NO-UNDO.
+    DEF  INPUT PARAM par_cdcatego AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_flgcreca AS LOG                            NO-UNDO.
     DEF OUTPUT PARAM par_tipconfi AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_msgconfi AS CHAR                           NO-UNDO.
@@ -956,6 +964,7 @@ PROCEDURE Valida_Dados_Altera:
     DEF VAR aux_dstextab AS CHAR                                    NO-UNDO.
     DEF VAR aux_qtseqttl AS INTE                                    NO-UNDO.
     DEF VAR aux_nrdeanos AS INTE                                    NO-UNDO.
+    DEF VAR aux_flacesso AS INTE                                    NO-UNDO.
     
     DEF BUFFER crabass FOR crapass.
 
@@ -1024,7 +1033,73 @@ PROCEDURE Valida_Dados_Altera:
                       END.
                    END.
             END.
+        
+        IF crapass.cdtipcta <> par_cdtipcta THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                
+                /* Efetuar a chamada da rotina Oracle */ 
+                RUN STORED-PROCEDURE pc_valida_novo_tipo
+                    aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapass.inpessoa, 
+                                                        INPUT par_cdcooper,
+                                                        INPUT par_nrdconta,
+                                                        INPUT crapass.cdtipcta,
+                                                        INPUT par_cdtipcta,
+                                                        OUTPUT 0, /*Codigo da critica*/
+                                                        OUTPUT ""). /*Descricao da critica*/
 
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC pc_valida_novo_tipo
+                       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+                /* Busca possíveis erros */ 
+                ASSIGN par_cdcritic = 0
+                       par_dscritic = ""
+                       par_cdcritic = pc_valida_novo_tipo.pr_cdcritic 
+                                      WHEN pc_valida_novo_tipo.pr_cdcritic <> ?
+                       par_dscritic = pc_valida_novo_tipo.pr_dscritic 
+                                      WHEN pc_valida_novo_tipo.pr_dscritic <> ?.
+                
+                IF par_cdcritic <> 0 OR par_dscritic <> "" THEN
+                    LEAVE ValidaAltera.
+            END.
+        
+        IF crapass.cdsitdct <> par_cdsitdct THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                
+                /* Efetuar a chamada da rotina Oracle */ 
+                RUN STORED-PROCEDURE pc_verifica_tipo_acesso
+                    aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,
+                                                        INPUT par_cdsitdct,
+                                                        INPUT par_cdoperad,
+                                                        OUTPUT 0, /*Codigo da critica*/
+                                                        OUTPUT 0, /*Codigo da critica*/
+                                                        OUTPUT ""). /*Descricao da critica*/
+
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC pc_verifica_tipo_acesso
+                       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+                /* Busca possíveis erros */ 
+                ASSIGN aux_flacesso = 0
+                       par_cdcritic = 0
+                       par_dscritic = ""
+                       aux_flacesso = pc_verifica_tipo_acesso.pr_flacesso 
+                                      WHEN pc_verifica_tipo_acesso.pr_flacesso <> ?
+                       par_cdcritic = pc_verifica_tipo_acesso.pr_cdcritic 
+                                      WHEN pc_verifica_tipo_acesso.pr_cdcritic <> ?
+                       par_dscritic = pc_verifica_tipo_acesso.pr_dscritic 
+                                      WHEN pc_verifica_tipo_acesso.pr_dscritic <> ?.
+                
+                IF par_cdcritic <> 0 OR par_dscritic <> "" THEN
+                    LEAVE ValidaAltera.
+            END.
+        
         IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
             RUN sistema/generico/procedures/b1wgen0060.p
                 PERSISTENT SET h-b1wgen0060.
@@ -1932,6 +2007,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_flgrestr AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_indserma AS LOG                            NO-UNDO.
 	DEF  INPUT PARAM par_idastcjt AS INTE							NO-UNDO.
+	DEF  INPUT PARAM par_cdcatego AS INTE							NO-UNDO.
 	
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM log_msgatcad AS CHAR                           NO-UNDO.
@@ -2061,6 +2137,7 @@ PROCEDURE Grava_Dados:
                       INPUT par_flgrestr,
                       INPUT par_indserma,
 					  INPUT par_idastcjt,
+                      INPUT par_cdcatego,
                       BUFFER crapass,
                      OUTPUT aux_cdcritic,
                      OUTPUT aux_dscritic ) NO-ERROR.   
@@ -2678,6 +2755,7 @@ PROCEDURE Grava_Dados_Altera:
     DEF  INPUT PARAM par_flgrestr AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_indserma AS LOG                            NO-UNDO.
 	DEF  INPUT PARAM par_idastcjt AS INTE							NO-UNDO.
+    DEF  INPUT PARAM par_cdcatego AS INTE							NO-UNDO.
 	
     DEF PARAM BUFFER crabass FOR crapass.
 
@@ -3774,6 +3852,7 @@ PROCEDURE Grava_Dados_Altera:
                crabass.flgrestr = par_flgrestr 
                crabass.indserma = par_indserma
 			   crabass.idastcjt = par_idastcjt
+			   crabass.cdcatego = par_cdcatego
                NO-ERROR.
 
         IF ERROR-STATUS:ERROR THEN

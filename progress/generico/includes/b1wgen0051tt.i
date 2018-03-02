@@ -26,7 +26,9 @@
                              PRJ339 - CRM (Odirlei-AMcom)               
                              
 				02/10/2017 - Incluido campo tpregtrb na tt-cabec 
-				            (Projeto 410 - RF 2 e 3 - Diogo - Mouts)							 
+				            (Projeto 410 - RF 2 e 3 - Diogo - Mouts)		
+                             
+                06/02/2018 -  Incluido campo cdcatego na tt-cabec. PRJ366 (Lombardi)					 
 ..............................................................................*/
 
 
@@ -51,7 +53,8 @@ DEFINE TEMP-TABLE tt-cabec NO-UNDO
     FIELD nmfansia AS CHAR
     FIELD dtnasttl AS DATE
     FIELD inhabmen AS INT
-	FIELD tpregtrb AS INT.
+	FIELD tpregtrb AS INT
+    FIELD cdcatego LIKE crapass.cdcatego.
 
 DEFINE TEMP-TABLE tt-dados-ass NO-UNDO
     FIELD inpessoa LIKE crapass.inpessoa.

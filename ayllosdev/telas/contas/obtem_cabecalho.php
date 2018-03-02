@@ -169,8 +169,69 @@
 	echo '$("#nrcpfcgc","#frmCabContas").val("'.$cabecalho[8]->cdata.'");'; //certo
 	echo '$("#cdsexotl","#frmCabContas").val("'.$cabecalho[9]->cdata.'");'; 
 	echo '$("#cdestcvl","#frmCabContas").val("'.$cabecalho[10]->cdata.' - '.$cabecalho[11]->cdata.'");'; 
-	echo '$("#cdtipcta","#frmCabContas").val("'.$cabecalho[12]->cdata.' - '.$cabecalho[13]->cdata.'");'; //pos.12 descricao tp.conta
-	echo '$("#cdsitdct","#frmCabContas").val("'.$cabecalho[14]->cdata.' - '.$cabecalho[15]->cdata.'");'; //pos.14 descricao
+	//echo '$("#cdtipcta","#frmCabContas").val("'.$cabecalho[12]->cdata.' - '.$cabecalho[13]->cdata.'");'; //pos.12 descricao tp.conta
+	
+	// buscar tipos de conta
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <inpessoa>" . $cabecalho[6]->cdata . "</inpessoa>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "CADA0006", "BUSCAR_TIPOS_DE_CONTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlTpContas = getObjectXML($xmlResult);	
+
+	//-----------------------------------------------------------------------------------------------
+	// Controle de Erros
+	//-----------------------------------------------------------------------------------------------
+	if(strtoupper($xmlTpContas->roottag->tags[0]->name == 'ERRO')){	
+		$msgErro = $xmlTpContas->roottag->tags[0]->cdata;
+		if($msgErro == null || $msgErro == ''){
+			$msgErro = $xmlTpContas->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		}
+		exibeErro($msgErro);
+	}
+
+	$tipos_conta = $xmlTpContas->roottag->tags[0]->tags;
+	
+	foreach($tipos_conta as $tipo_conta) {
+		if ( getByTagName($tipo_conta->tags,'cdtipo_conta') == $cabecalho[12]->cdata ) { //pos.12 descricao tp.conta
+			echo '$("#cdtipcta","#frmCabContas").val("' . getByTagName($tipo_conta->tags,'cdtipo_conta') . ' - ' . getByTagName($tipo_conta->tags,'dstipo_conta') .'");';
+		}
+	}
+	
+	//echo '$("#cdsitdct","#frmCabContas").val("'.$cabecalho[14]->cdata.' - '.$cabecalho[15]->cdata.'");'; //pos.14 descricao
+	
+	// buscar tipos de conta
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "CADA0006", "BUSCAR_SITUACOES_CONTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlSituacoes = getObjectXML($xmlResult);	
+
+	//-----------------------------------------------------------------------------------------------
+	// Controle de Erros
+	//-----------------------------------------------------------------------------------------------
+	if(strtoupper($xmlSituacoes->roottag->tags[0]->name == 'ERRO')){	
+		$msgErro = $xmlSituacoes->roottag->tags[0]->cdata;
+		if($msgErro == null || $msgErro == ''){
+			$msgErro = $xmlSituacoes->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		}
+		exibeErro($msgErro);
+	}
+
+	$situacoes = $xmlSituacoes->roottag->tags[0]->tags;
+	
+	foreach($situacoes as $situacao) {
+		if ( getByTagName($situacao->tags,'cdsituacao') == $cabecalho[14]->cdata ) { //pos.14 descricao
+			echo '$("#cdsitdct","#frmCabContas").val("' . getByTagName($situacao->tags,'cdsituacao') . ' - ' . getByTagName($situacao->tags,'dssituacao') .'");';
+		}
+	} 
+	
     echo '$("#nrdctitg","#frmCabContas").val("'.$cabecalho[16]->cdata.'").formataDado("STRING","9.999.999-9",".-",false);';
 	echo '$("#tpregtrb","#frmCabContas").val("'.$cabecalho[20]->cdata.'");';
 	

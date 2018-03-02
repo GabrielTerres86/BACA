@@ -60,6 +60,7 @@ var flgContinuar = false;
 var CriticasExcTitulares = new Array();
 var idConfirmouSenha = 0;
 var opCoordenador = '';
+var tiposConta = [];
 
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 
@@ -273,6 +274,7 @@ function manterRotina(operacao) {
     cdagepac = $('#cdagepac', '#' + nomeForm).val();
     cdsitdct = $('#cdsitdct', '#' + nomeForm).val();
     cdtipcta = $('#cdtipcta', '#' + nomeForm).val();
+    cdcatego = $('#cdcatego', '#' + nomeForm).val();
     cdbcochq = $('#cdbcochq', '#' + nomeForm).val();
     nrdctitg = normalizaNumero($('#nrdctitg', '#' + nomeForm).val());
     cdagedbb = $('#cdagedbb', '#' + nomeForm).val();
@@ -295,7 +297,7 @@ function manterRotina(operacao) {
     flgrestr = $('input[name="flgrestr"]:checked', '#' + nomeForm).val();
     indserma = $('input[name="indserma"]:checked', '#' + nomeForm).val();
 	idastcjt = $('input[name="idastcjt"]:checked', '#' + nomeForm).val();
-
+	
 	flgdevolu_autom_alt = $('input[name="flgdevolu_autom"]:checked', '#' + nomeForm).val();
 	opCoordenador = $('#operauto', '#frmSenha').val();
 	
@@ -310,12 +312,13 @@ function manterRotina(operacao) {
             cdbcoitg: cdbcoitg, cdsecext: cdsecext, dtcnsscr: dtcnsscr,
             dtcnsspc: dtcnsspc, dtdsdspc: dtdsdspc, dtabtcoo: dtabtcoo,
             dtelimin: dtelimin, dtabtcct: dtabtcct, dtdemiss: dtdemiss,
-            flgiddep: flgiddep, tpavsdeb: tpavsdeb,
+            flgiddep: flgiddep, tpavsdeb: tpavsdeb, cdcatego: cdcatego,
             tpextcta: tpextcta, flgrestr: flgrestr, inadimpl: inadimpl,
             inlbacen: inlbacen, flgexclu: flgexclu, flgcreca: flgcreca,
             operacao: operacao, flgcadas: flgcadas, indserma: indserma,
-				cdconsul: cdconsul, idastcjt: idastcjt,	cdageant: cdageant,
+			cdconsul: cdconsul, idastcjt: idastcjt,	cdageant: cdageant,
 			flgdevolu_autom: flgdevolu_autom_alt, cdopecor: opCoordenador,
+			inpessoa: inpessoa,
 				redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -375,12 +378,13 @@ function controlaLayout(operacao) {
 
 
     // FIELDSET PRINCIPAL		
-    var rPrincipal = $('label[for="cdagepac"],label[for="cdtipcta"],label[for="nrdctitg"],label[for="nrctacns"]', '#' + nomeForm);
+    var rPrincipal = $('label[for="cdagepac"],label[for="cdtipcta"],label[for="cdcatego"],label[for="nrdctitg"],label[for="nrctacns"]', '#' + nomeForm);
     var cSituacao = $('#cdsitdct', '#' + nomeForm);
     var cContaITG = $('#nrdctitg', '#' + nomeForm);
     var cBcoCheque = $('#cdbcochq', '#' + nomeForm);
     var cSitCtaITG = $('#dssititg', '#' + nomeForm);
     var cTipoConta = $('#cdtipcta', '#' + nomeForm);
+    var cCdcatego = $('#cdcatego', '#' + nomeForm);
     var cDescPrinc = $('#dsagepac', '#' + nomeForm);
     var cAgeBcoITG = $('#cdagedbb,#cdbcoitg', '#' + nomeForm);
     var cNrctacns = $('#nrctacns', '#' + nomeForm);
@@ -393,6 +397,7 @@ function controlaLayout(operacao) {
     cDescPrinc.addClass('descricao').css('width', '203px');
     cSituacao.css('width', '147px');
     cTipoConta.css('width', '259px');
+    cCdcatego.css('width', '159px');
     cContaITG.css('width', '100px').addClass('contaitg');
     cNrctacns.css('width', '100px').addClass('conta');
     cDscadpos.css('width', '100px');
@@ -445,14 +450,14 @@ function controlaLayout(operacao) {
 	var flgdevolu_autom_alt = $('input[name="flgdevolu_autom"]', '#' + nomeForm);		
 
     if (operacao == "CA") {
-        var grupo1 = $('#cdagepac,#cdtipcta,#cdsitdct,#cdbcochq,#cdsecext,#dtcnsscr,#cdconsultor', '#' + nomeForm);
+        var grupo1 = $('#cdagepac,#cdtipcta,#cdsitdct,#cdcatego,#cdbcochq,#cdsecext,#dtcnsscr,#cdconsultor', '#' + nomeForm);
         grupo1.removeClass('campoTelaSemBorda').addClass('campo').removeProp('disabled');
         cSelect.removeProp('disabled');
         cRadio.removeProp('disabled');
         cBcoCheque.desabilitaCampo();
 
         flgfirst = true;
-
+		
         cTipoConta.unbind('change').bind('change', function() {
             if ($(this).val() == '8' || $(this).val() == '9' || $(this).val() == '10' || $(this).val() == '11') {
                 /* Busca o codigo de banco da IF CECRED */
@@ -465,6 +470,17 @@ function controlaLayout(operacao) {
             } else {
                 manterRotina('VE');
             }
+			
+			var cbTiposConta = '';
+			
+			if (tiposConta[$(this).val()].idindividual == 1) { cbTiposConta += '<option value="0">Individual</option>'; }
+			if (tiposConta[$(this).val()].idconjunta_solidaria == 1) { cbTiposConta += '<option value="1">Conjunta solid&aacute;ria</option>'; }
+			if (tiposConta[$(this).val()].idconjunta_nao_solidaria == 1) { cbTiposConta += '<option value="2">Conjunta n&atilde;o solid&aacute;ria</option>'; }
+			
+			cCdcatego.html(cbTiposConta);
+			
+			cCdcatego.prop("selectedIndex", -1);
+			
         });
 		
 		cConsultaDatas.unbind("keydown").bind("keydown",function(e) {
@@ -476,7 +492,7 @@ function controlaLayout(operacao) {
 		
     }
 
-    montaSelect('b1wgen0059.p', 'Busca_Tipo_Conta', 'cdtipcta', 'cdtipcta', 'cdtipcta;dstipcta', cdtipcta);
+    //montaSelect('b1wgen0059.p', 'Busca_Tipo_Conta', 'cdtipcta', 'cdtipcta', 'cdtipcta;dstipcta', cdtipcta);
 
 	// Se alterar o campo de devolucao automatica, valida senha de coordenador
 	flgdevolu_autom_alt.unbind('change').bind('change', function() {
@@ -487,7 +503,7 @@ function controlaLayout(operacao) {
     layoutPadrao();
     hideMsgAguardo();
     bloqueiaFundo(divRotina);
-    cTipoConta.trigger('change');
+    //cTipoConta.trigger('change');
     cContaITG.trigger('blur');
 	highlightObjFocus($('#frmContaCorrente'));
 	controlaFocoEnter("frmContaCorrente");

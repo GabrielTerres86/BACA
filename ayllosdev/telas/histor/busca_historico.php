@@ -112,6 +112,11 @@
 	echo "$('#vltarint','#frmHistorico').val('" . $vltarint . "');";
 	echo "$('#vltarcsh','#frmHistorico').val('" . $vltarcsh . "');";
 	
+	// LABEL - Situacoes de Contas
+	$cdgrphis = (getByTagName($historico,'cdgrphis') == "0") ? "" : getByTagName($historico,'cdgrphis');
+	echo "$('#cdgrupo_historico','#frmHistorico').val('" . $cdgrphis . "');";
+	echo "$('#dsgrupo_historico','#frmHistorico').val('" . getByTagName($historico,'dsgrphis') . "');";
+	
 	// LABEL - Outros
 	$cdprodut = (getByTagName($historico,'cdprodut') == "0") ? "" : getByTagName($historico,'cdprodut');
 	$cdagrupa = (getByTagName($historico,'cdagrupa') == "0") ? "" : getByTagName($historico,'cdagrupa');

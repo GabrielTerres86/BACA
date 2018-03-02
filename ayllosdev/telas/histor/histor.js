@@ -24,7 +24,7 @@ $(document).ready(function() {
  */
 function estadoInicial() {
 	
-	$('#divTela').css({'display':'inline'}).fadeTo(0,0.1);
+	$('#divTela').css({'display':'block'}).fadeTo(0,0.1);
 	
 	// Formatar o layout da tela
 	formataCabecalho();
@@ -58,7 +58,7 @@ function estadoInicial() {
 function formataCabecalho() {
 
 	// Labels
-	$('label[for="cddopcao"]',"#frmCab").addClass("rotulo").css({"width":"60px"}); 
+	$('label[for="cddopcao"]',"#frmCab").addClass("rotulo").css({"width":"120px"}); 
 	
 	// Campos
 	$("#cddopcao","#frmCab").css("width","450px").habilitaCampo();
@@ -93,14 +93,17 @@ function formataCabecalho() {
  */
 function formataFiltros(){
 	// Labels
-	$('label[for="cdhistor"]','#fsetFiltroConsultar').addClass('rotulo').css({'width':'60px'});
+	$('label[for="cdhistor"]','#fsetFiltroConsultar').addClass('rotulo').css({'width':'120px'});
 	$('label[for="dshistor"]','#fsetFiltroConsultar').addClass('rotulo-linha').css({'width':'70px'});
 	$('label[for="tpltmvpq"]','#fsetFiltroConsultar').addClass('rotulo-linha').css({'width':'45px'});
+	$('label[for="cdgrupo_historico"]','#fsetFiltroConsultar').addClass('rotulo').css({'width':'120px'});
 	
 	// Campos
 	$('#cdhistor','#fsetFiltroConsultar').css({'width':'60px'}).setMask('INTEGER','z.zzz','.','');
 	$('#dshistor','#fsetFiltroConsultar').css({'width':'110px'});
 	$('#tpltmvpq','#fsetFiltroConsultar').css({'width':'40px'});
+	$('#cdgrupo_historico','#fsetFiltroConsultar').css({'width':'60px'}).attr('maxlength','5').setMask('INTEGER','zzzzz','','');
+	$('#dsgrupo_historico','#fsetFiltroConsultar').css({'width':'350px'});
 
 	// Limpar todos os campos do formulario, e remover o destaque dos campos com erro
 	$('input[type="text"],select','#fsetFiltroConsultar').limpaFormulario().removeClass('campoErro');
@@ -197,13 +200,19 @@ function formataCadastroHistorico(){
 	$('#vltarint','#frmHistorico').css({'width':'75px'}).addClass('moeda');
 	$('#vltarcsh','#frmHistorico').css({'width':'75px'}).addClass('moeda');
 	$('#vltarayl','#frmHistorico').css({'width':'75px'}).addClass('moeda');
-
-
+	
+	// LABEL - Situacoes de Conta
+	$('label[for="cdgrupo_historico"]','#frmHistorico').addClass('rotulo').css({'width':'130px'});
+	
+	// CAMPO - Situacoes de Conta
+	$('#cdgrupo_historico','#frmHistorico').css({'width':'60px'}).attr('maxlength','5').setMask('INTEGER','zzzzz','','');
+	$('#dsgrupo_historico','#frmHistorico').css({'width':'350px'}).desabilitaCampo();
+	
 	// LABEL - Outros
 	$('label[for="flgsenha"]','#frmHistorico').addClass('rotulo').css({'width':'100px'});
 	$('label[for="cdprodut"]','#frmHistorico').addClass('rotulo').css({'width':'100px'});
 	$('label[for="cdagrupa"]','#frmHistorico').addClass('rotulo').css({'width':'100px'});
-
+	
 	// CAMPOS - Outros
 	$('#flgsenha','#frmHistorico').css({'width':'60px'});
 	$('#cdprodut','#frmHistorico').css({'width':'60px'}).attr('maxlength','5').setMask('INTEGER','zzzzz','','');
@@ -345,6 +354,8 @@ function liberaFiltrosConsultar(){
 	$("#cddopcao","#frmCab").desabilitaCampo();
 	// Limpar formulário
 	$('input[type="text"],select','#frmFiltros').limpaFormulario().removeClass('campoErro').habilitaCampo();
+	$('#dsgrupo_historico','#fsetFiltroConsultar').desabilitaCampo();
+	
 	// Mostrar a tela
 	$('#frmFiltros').css({'display':'block'});
 	$('#fsetFiltroConsultar','#frmFiltros').css({'display':'block'});
@@ -419,6 +430,9 @@ function liberaAcaoListar(){
  * Funcao para controlar a ordem dos campos dos filtros da consulta
  */
 function controlaCamposFiltroConsulta(){
+	
+	$('#cdgrupo_historico','#fsetFiltroConsultar').removeAttr('aux');
+	
 	// Validacao do campo CDHISTOR para quando executar o TAB ou ENTER
 	$('#cdhistor','#fsetFiltroConsultar').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
@@ -440,8 +454,23 @@ function controlaCamposFiltroConsulta(){
 	// Validacao do campo TPLTMVPQ para quando executar o TAB ou ENTER
 	$('#tpltmvpq','#fsetFiltroConsultar').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			// Ultimo campo da tela, executar o botao PROSSEGUIR
-			prosseguir();
+			// Setar foco no campo CDGRUPO_HISTORICO
+			$('#cdgrupo_historico','#fsetFiltroConsultar').focus();
+			return false;
+		}	
+	});
+	
+	// Validacao do campo CDGRUPO_HISTORICO para quando executar o TAB ou ENTER
+	$('#cdgrupo_historico','#fsetFiltroConsultar').unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+		
+			$('#divTela').css('display','block');
+			
+			var bo = 'ZOOM0001';
+			var procedure = 'BUSCA_GRUPO_HISTORICO';
+			var titulo = 'Grupo de Hist&oacute;rico';
+			buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsgrupo_historico', $(this).val(), 'dsgrupo_historico', '', 'fsetFiltroConsultar','$(\"#btSalvar\",\"#divBotoes\").focus();');
+			
 			return false;
 		}	
 	});
@@ -712,10 +741,25 @@ function controlaCamposCadastroHistorico(){
 	$("#vltarcsh","#frmHistorico").unbind('keypress').bind('keypress', function(e) {
 		if (e.keyCode == 9 || e.keyCode == 13) {
 			// Setar foco no proximo campo
-			$("#flgsenha","#frmHistorico").focus();
+			$("#cdgrupo_historico","#frmHistorico").focus();
 			return false;
 		}
     });	
+	
+	// Acao para quando alterar o valor do campo
+	$('#cdgrupo_historico','#frmHistorico').unbind('keypress').bind('keypress', function(e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			// Setar foco no proximo campo
+			$('#divTela').css('display','block');
+		
+			var bo = 'ZOOM0001';
+			var procedure = 'BUSCA_GRUPO_HISTORICO';
+			var titulo = 'Grupo de Hist&oacute;rico';
+			buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsgrupo_historico', $(this).val(), 'dsgrupo_historico', '', 'frmHistorico','$("#flgsenha", "#frmHistorico").focus();');
+			
+			return false;
+		}
+	});
 	
 	//Define ação para ENTER e TAB no campo solicitar senha
 	$("#flgsenha","#frmHistorico").unbind('keypress').bind('keypress', function(e) {
@@ -949,6 +993,35 @@ function controlaPesquisaAgrupamento() {
 }
 
 /**
+ * Controlar a pesquisa de Historico
+ */
+function controlaPesquisaGrupoHistorico(formulario) {
+	
+	// Definir o tamanho da tela de pesquisa
+	$("#divCabecalhoPesquisa").css("width","100%");
+	$("#divResultadoPesquisa").css("width","100%");
+	
+	// Se esta desabilitado o campo 
+	if ($("#cdgrupo_historico","#" + formulario).prop("disabled") == true)  { return; }
+	
+	//Remove a classe de Erro do form
+	$('input,select', '#' + formulario).removeClass('campoErro');
+	
+	// Informacoes da pesquisa
+	var bo			  = 'ZOOM0001';
+	var procedure	  = 'BUSCA_GRUPO_HISTORICO';
+	var titulo        = 'Grupo Hist&oacute;rico';
+	var qtReg		  = '20';
+	var filtros 	  = 'C&oacutedigo;cdgrupo_historico;80px;S;;S|Grupo de Hist&oacuterico;dsgrupo_historico;280px;S;;S';
+	var colunas 	  = 'C&oacutedigo;cdgrupo_historico;20%;right|Grupo de Hist&oacuterico;dsgrupo_historico;50%;left';
+	
+	// Exibir a tela de pesquisa
+	mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,$('#divTela'),'$(\'#cdgrupo_historico\',\'#' + formulario + '\').val()');
+	
+	return false;
+}
+
+/**
  * Controlar a pesquisa de Produto
  */
 function controlaPesquisaProduto() {
@@ -999,6 +1072,7 @@ function consultarHistoricos(nriniseq, paginacao) {
     var cdhistor = $('#cdhistor','#fsetFiltroConsultar').val();	
     var dshistor = $('#dshistor','#fsetFiltroConsultar').val();
     var tpltmvpq = $('#tpltmvpq','#fsetFiltroConsultar').val();
+    var cdgrphis = $('#cdgrupo_historico','#fsetFiltroConsultar').val();
 	
 	showMsgAguardo( "Aguarde, buscando Hist&oacute;ricos..." );
 
@@ -1017,6 +1091,7 @@ function consultarHistoricos(nriniseq, paginacao) {
 			cdhistor: cdhistor, 	 
 			dshistor: dshistor,	 
 			tpltmvpq: tpltmvpq,
+			cdgrphis: cdgrphis,
 			nrregist: nrregist,
 			nriniseq: nriniseq,
 			redirect: 'script_ajax'
@@ -1284,6 +1359,7 @@ function buscaHistorico() {
 					hideMsgAguardo();
 		            try {
 						eval( response );
+						$('#dsgrupo_historico', '#frmHistorico').desabilitaCampo();
 						$('#dsprodut', '#frmHistorico').desabilitaCampo();
 						$('#dsagrupa', '#frmHistorico').desabilitaCampo();
                     } catch (error) {
@@ -1329,6 +1405,9 @@ function manterRotina(){
 
 	var ingercre  = $('#ingercre','#frmHistorico').val();
 	var ingerdeb  = $('#ingerdeb','#frmHistorico').val();
+	
+	var cdgrupo_historico  = $('#cdgrupo_historico','#frmHistorico').val();
+	
 	var flgsenha  = $('#flgsenha','#frmHistorico').val();
 	var cdprodut  = $('#cdprodut','#frmHistorico').val();
 	var cdagrupa  = $('#cdagrupa','#frmHistorico').val();
@@ -1341,6 +1420,7 @@ function manterRotina(){
 
 	var indebfol  = $('#indebfol','#frmHistorico').val();
 	var txdoipmf  = $('#txdoipmf','#frmHistorico').val();
+	
 	
 	$.ajax({		
 		type	: 'POST',
@@ -1373,6 +1453,7 @@ function manterRotina(){
 				  tpctbcxa : tpctbcxa,
 				  ingercre : ingercre,
 				  ingerdeb : ingerdeb,
+				  cdgrupo_historico: cdgrupo_historico,
 				  flgsenha : flgsenha,
 				  cdprodut : cdprodut,
 				  cdagrupa : cdagrupa,

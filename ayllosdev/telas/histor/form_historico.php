@@ -245,6 +245,23 @@
 		</fieldset>
 
 		<!-- Fieldset para os campos de TARIFAS do historico -->
+		<fieldset id="fsetTarifas" name="fsetTarifas" style="padding-bottom:10px;">
+			
+			<legend>Situa&ccedil;&otilde;es de Conta</legend>
+
+			<table width="100%">
+				<tr>
+					<td>
+						<label for="cdgrupo_historico">Grupo de Hist&oacute;rico:</label>
+						<input name="cdgrupo_historico" id="cdgrupo_historico" type="text"/>
+						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaGrupoHistorico('frmHistorico'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
+						<input name="dsgrupo_historico" id="dsgrupo_historico" type="text"/>
+					</td>
+				<tr>
+			</table>
+		</fieldset>
+		
+		<!-- Fieldset para os campos de TARIFAS do historico -->
 		<fieldset id="fsetOutros" name="fsetOutros" style="padding-bottom:10px;">
 			
 			<legend>Outros</legend>

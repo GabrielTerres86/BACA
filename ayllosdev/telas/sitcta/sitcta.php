@@ -1,10 +1,10 @@
 <?php 
 	/*********************************************************************
-	 Fonte: cadsoa.php                                                 
+	 Fonte: sitcta.php                                                 
 	 Autor: Tiago Castro - RKAM                                                     
 	 Data : Jul/2015                Última Alteração: 
 	                                                                  
-	 Objetivo  : Mostrar tela CADSOA.                                 
+	 Objetivo  : Mostrar tela SITCTA.                                 
 	                                                                  
 	 Alterações: 
 	 
@@ -21,7 +21,7 @@
 	isPostMethod();
 	
 	// Classe para leitura do xml de retorno
-	require_once("../../class/xmlfile.php");	
+	require_once("../../class/xmlfile.php");
 	
 	// Carrega permissões do operador
 	include("../../includes/carrega_permissoes.php");	
@@ -35,13 +35,12 @@
 <meta http-equiv="Pragma" content="no-cache">
 <title><?php echo $TituloSistema; ?></title>
 <link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
-<script type="text/javascript" src="../../scripts/jquery1.4.1.js"></script>
 <script type="text/javascript" src="../../scripts/scripts.js"></script>
 <script type="text/javascript" src="../../scripts/dimensions.js"></script>
 <script type="text/javascript" src="../../scripts/funcoes.js"></script>
 <script type="text/javascript" src="../../scripts/mascara.js"></script>
 <script type="text/javascript" src="../../scripts/menu.js"></script>
-<script type="text/javascript" src="cadsoa.js"></script>
+<script type="text/javascript" src="sitcta.js"></script>
 </head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -66,7 +65,7 @@
 									<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">CADSOA - Cadastro de Produtos por Tipo de Conta</td>
+											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">SITCTA - Cadastro de Par&acirc;metros de Situa&ccedil;&atilde;o de Conta</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
 											<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
@@ -75,37 +74,28 @@
 								</td>
 							</tr>
 							<tr>
-								<td id="tdConteudoTela" class="tdConteudoTela" align="center">											
+								<td id="tdConteudoTela" class="tdConteudoTela" align="center">
 									<table width="100%" border="0" cellpadding="3" cellspacing="0">
 										<tr>
 											<td style="border: 1px solid #F4F3F0;">
 												<table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
 													<tr>
 														<td align="center">
-															<table width="580" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+															<table width="700" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
 																<tr>
-																	<td>															
-																		<table width="100%" border="0" cellspacing="0" cellpadding="0">																			
+																	<td>
+																		<table width="100%" border="0" cellspacing="0" cellpadding="0">
 																			<tr>
 																				<td>
-																					<? include("form_cabecalho.php"); ?>																
+																					<? include("form_cabecalho.php"); ?>
 																				</td>
-																			</tr>																				
+																			</tr>
 																			<tr>
 																				<td>
 																					<table width="100%" cellpadding="0" cellspacing="0" border="0">
 																						<tr>
 																							<td align="center">
-																								<div id="divTela">
-																				
-																									<? include('form_cadsoa.php')	?>
-																																						
-																									<div id="divMsgAjuda" style='display:none; margin-top:10px; margin-bottom :10px'>	
-																										<span></span>
-																										<a href="#" class="botao" id="btVoltar" onClick="voltar();return false;" >Voltar</a>
-																										<a href="#" class="botao" id="btAlterar"  onClick="confirma();return false;">Alterar</a>	
-																									</div>
-																								</div>																																
+																								<div id="divTela"></div>																																
 																							</td>
 																						</tr>												
 																					</table> 

@@ -29,6 +29,8 @@
 							 crapass.idastcjt (Jean Michel) 
 
                 12/01/2016 - Remoção do campo flgcrdpa (Anderson).
+
+                06/02/2018 - Adicionado parametro cdcatego. PRJ366 (Lombardi).
 .............................................................................*/
 
                                                                              
@@ -67,6 +69,7 @@ DEF VAR aux_flgrestr AS LOG                                            NO-UNDO.
 DEF VAR aux_indserma AS LOG                                            NO-UNDO.
 DEF VAR aux_nrctacns AS DECI                                           NO-UNDO.
 DEF VAR aux_idastcjt AS INTE                                           NO-UNDO.
+DEF VAR aux_cdcatego AS INTE                                           NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -111,6 +114,7 @@ PROCEDURE valores_entrada:
             WHEN "flgrestr" THEN aux_flgrestr = LOGICAL(tt-param.valorCampo).
             WHEN "indserma" THEN aux_indserma = LOGICAL(tt-param.valorCampo).
 			WHEN "idastcjt" THEN aux_idastcjt = INTE(tt-param.valorCampo).
+            WHEN "cdcatego" THEN aux_cdcatego = INTE(tt-param.valorCampo).
 
         END CASE.
 
@@ -278,6 +282,7 @@ PROCEDURE Valida_Dados:
                              INPUT aux_inlbacen,
                              INPUT aux_dtdsdspc,
                              INPUT aux_flgexclu,
+                             INPUT aux_cdcatego,
                             OUTPUT aux_flgcreca,
                             OUTPUT aux_tipconfi,
                             OUTPUT aux_msgconfi,
@@ -358,6 +363,7 @@ PROCEDURE Grava_Dados:
                             INPUT aux_flgrestr,
                             INPUT aux_indserma,
 							INPUT aux_idastcjt,
+                            INPUT aux_cdcatego,
                            OUTPUT aux_tpatlcad,
                            OUTPUT aux_msgatcad,
                            OUTPUT aux_chavealt,

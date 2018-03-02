@@ -51,6 +51,9 @@
 
 	$ingercre = (isset($_POST['ingercre'])) ? $_POST['ingercre'] : 0;
 	$ingerdeb = (isset($_POST['ingerdeb'])) ? $_POST['ingerdeb'] : 0;
+	
+	$cdgrupo_historico = (isset($_POST['cdgrupo_historico'])) ? $_POST['cdgrupo_historico'] : 0;
+	
 	$flgsenha = (isset($_POST['flgsenha'])) ? $_POST['flgsenha'] : 0;
 	$cdprodut = (isset($_POST['cdprodut'])) ? $_POST['cdprodut'] : 0;
 	$cdagrupa = (isset($_POST['cdagrupa'])) ? $_POST['cdagrupa'] : 0;
@@ -192,6 +195,9 @@
 
 	$xml .= '       <ingercre>'.$ingercre.'</ingercre>';
 	$xml .= '       <ingerdeb>'.$ingerdeb.'</ingerdeb>';
+	
+	$xml .= '       <cdgrphis>'.$cdgrupo_historico.'</cdgrphis>';
+	
 	$xml .= '       <flgsenha>'.$flgsenha.'</flgsenha>';
 	$xml .= '       <cdprodut>'.$cdprodut.'</cdprodut>';
 	$xml .= '       <cdagrupa>'.$cdagrupa.'</cdagrupa>';

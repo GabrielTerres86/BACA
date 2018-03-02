@@ -1057,7 +1057,7 @@ function formataTela() {
     removeOpacidade('divTela');
     
     var grupoEditavel = $('#nrdconta', '#frmCabCadcta');
-    var grupoAmbos = $('#cdagenci,#nrmatric,#cdtipcta,#cdsitdct,#nmctajur', '#frmCabCadcta');
+    var grupoAmbos = $('#cdagenci,#nrmatric,#cdtipcta,#cdsitdct,#cdcatego,#nmctajur', '#frmCabCadcta');
     var cTodosFrmCadcta = $('input,select,textarea', '#frmCadcta');
     var botoesAlteracao = $('#btCancelar, #btSalvar', '#frmCadcta');
     
@@ -1083,9 +1083,10 @@ function formataTela() {
     $('label[for="cdtipcta"]', '#frmCabCadcta').css({ 'width': '85px' }).addClass('rotulo rotulo-40');;
     $('label[for="nrdctitg"]', '#frmCabCadcta').css({ 'width': '50px' });
     $('label[for="cdsitdct"]', '#frmCabCadcta').css({ 'width': '70px' });
+    $('label[for="cdcatego"]', '#frmCabCadcta').css({ 'width': '85px' }).addClass('rotulo rotulo-40');
     $('label[for="idseqttl"]', '#frmCabCadcta').css({ 'display': 'none' });
     $('label[for="nrdctitg"]', '#frmCabCadcta').css({ 'display': 'none' });
-    $('label[for="nmctajur"]', '#frmCabCadcta').css({ 'width': '93px' }).addClass('rotulo rotulo-40');;
+    $('label[for="nmctajur"]', '#frmCabCadcta').css({ 'width': '93px' }).addClass('rotulo rotulo-40');
     
     // Largura dos campos comum a PF e PJ
     $('#nrdconta', '#frmCabCadcta').css({ 'width': '67px', 'text-align': 'right' });
@@ -1095,6 +1096,7 @@ function formataTela() {
     $('#cdsitdct', '#frmCabCadcta').css({ 'width': '180px' });
     $('#idseqttl', '#frmCabCadcta').css({ 'display': 'none' });
     $('#nrdctitg', '#frmCabCadcta').css({ 'display': 'none' });
+    $('#cdcatego', '#frmCabCadcta').css({ 'width': '200px' });
     $('#nmctajur', '#frmCabCadcta').css({ 'width': '445px','text-transform':'uppercase' });
 
     // Hack IE

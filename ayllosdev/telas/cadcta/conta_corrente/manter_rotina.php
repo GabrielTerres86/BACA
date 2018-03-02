@@ -77,8 +77,10 @@
 	$flgcadas = (isset($_POST['flgcadas'])) ? $_POST['flgcadas'] : '' ;
 	$indserma = (isset($_POST['indserma'])) ? $_POST['indserma'] : '' ;
     $idastcjt = (isset($_POST['idastcjt'])) ? $_POST['idastcjt'] : '' ;
+    $cdcatego = (isset($_POST['cdcatego'])) ? $_POST['cdcatego'] : '' ;
 	$cdconsul = (isset($_POST['cdconsul'])) ? $_POST['cdconsul'] : '' ; //Melhoria 126
 	$cdageant = (isset($_POST['cdageant'])) ? $_POST['cdageant'] : '' ; //Melhoria 147
+	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '' ;
 
 	$cdopecor        = (isset($_POST['cdopecor'])) ? $_POST['cdopecor'] : '' ; //Melhoria 69
 	$flgdevolu_autom = (isset($_POST['flgdevolu_autom'])) ? $_POST['flgdevolu_autom'] : '' ; //Melhoria 69
@@ -209,6 +211,7 @@
 		$xml .= '		<flgrestr>'.$flgrestr.'</flgrestr>';
 		$xml .= '		<indserma>'.$indserma.'</indserma>';
 		$xml .= '		<idastcjt>'.$idastcjt.'</idastcjt>';
+		$xml .= '		<cdcatego>'.$cdcatego.'</cdcatego>';
 		$xml .= '	</Dados>';
 		$xml .= '</Root>';
 		
@@ -371,6 +374,9 @@
 		
 		// Tipo de Conta
 		if ( $GLOBALS['cdtipcta'] == '' ) exibirErro('error','Tipo de conta deve ser selecionado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdtipcta\',\'frmContaCorrente\')',false); 
+		
+		// Categoria
+		if ( $GLOBALS['inpessoa'] == 1 && $GLOBALS['cdcatego'] == '') exibirErro('error','Categoria deve ser informada.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdcatego\',\'frmContaCorrente\')',false); 
 		
 		// Banco emi. cheque
 		if ( ($GLOBALS['cdbcochq'] == '') ) exibirErro('error','Banco emissão do cheque deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdbcochq\',\'frmContaCorrente\')',false);

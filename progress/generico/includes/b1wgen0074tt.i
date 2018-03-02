@@ -39,6 +39,8 @@
                 18/03/2016 - Inclusao campos na tt-conta-corr
 				             PRJ207 - Esteira (Odirlei-AMcom)    
                              
+                06/02/2018 - Incluido campo FIELD cdcatego e flblqtal. PRJ366 (Lombardi)
+                             
 .............................................................................*/
 
 
@@ -88,7 +90,9 @@ DEFINE TEMP-TABLE tt-conta-corr NO-UNDO
     FIELD indserma LIKE crapass.indserma
     FIELD idastcjt LIKE crapass.idastcjt
 	FIELD dtdscore LIKE crapass.dtdscore
-	FIELD dsdscore LIKE crapass.dsdscore.
+	FIELD dsdscore LIKE crapass.dsdscore
+    FIELD cdcatego LIKE crapass.cdcatego
+    FIELD flblqtal LIKE crapass.flblqtal.
 
 DEFINE TEMP-TABLE tt-titulares NO-UNDO 
     FIELD idseqttl LIKE crapttl.idseqttl
