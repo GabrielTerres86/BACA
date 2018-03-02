@@ -1,3 +1,4 @@
+
 /***********************************************************************************/
 /** TO-DO: retirar &OUT de dentro das procedures e concatenar apenas na variavel
            aux_funcaojs para ser excutado apenas no fim da requisicao dentro de 
@@ -593,8 +594,9 @@ PROCEDURE htmOffsets :
     ("v_tpproces":U,"ab_unmap.v_tpproces":U,ab_unmap.v_tpproces:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_flblqval":U,"ab_unmap.v_flblqval":U,ab_unmap.v_flblqval:HANDLE IN FRAME {&FRAME-NAME}).  
+  RUN htmAssociatec
+    ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
-    ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).    
     ("v_cod":U,"ab_unmap.v_cod":U,ab_unmap.v_cod:HANDLE IN FRAME {&FRAME-NAME}).  
   RUN htmAssociate
     ("v_senha":U,"ab_unmap.v_senha":U,ab_unmap.v_senha:HANDLE IN FRAME {&FRAME-NAME}). 
