@@ -908,6 +908,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 										 INPUT "", /* cdmodali */
                                          INPUT ?, /* par_idcarenc */
                                          INPUT ?, /* par_dtcarenc */
+										 INPUT tt-proposta-epr.idfiniof, /* par_idfiniof */
                                          OUTPUT TABLE tt-erro,
                                          OUTPUT TABLE tt-msg-confirma,
                                          OUTPUT TABLE tt-grupo,

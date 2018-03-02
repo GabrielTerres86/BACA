@@ -302,6 +302,7 @@ PROCEDURE grava_dados:
                                              INPUT "", /* cdmodali */
                                              INPUT ?, /* par_idcarenc */
                                              INPUT ?, /* par_dtcarenc */
+											 INPUT 0, /* par_idfiniof */
                                              OUTPUT TABLE tt-erro,
                                              OUTPUT TABLE tt-msg-confirma,
                                              OUTPUT TABLE tt-ge-epr,
@@ -436,6 +437,7 @@ PROCEDURE grava_dados:
                                             INPUT par_dtdpagto,
                                             INPUT FALSE,      /*par_flggrava*/
                                             INPUT par_dtmvtolt,
+                                            INPUT 0, /* idfiniof */
                                             OUTPUT aux_qtdiacar,
                                             OUTPUT aux_vlajuepr,
                                             OUTPUT aux_txdiaria,
@@ -475,6 +477,9 @@ PROCEDURE grava_dados:
                                            INPUT 1,            /*par_nrparepr*/
                                            INPUT par_dtdpagto, /*par_dtvencto*/
                                            INPUT 0, /* cdfinemp */
+                                           INPUT "", /* dscatbem */
+                                           INPUT 0,  /* idfiniof */
+                                           INPUT "", /* dsctrliq */
                                            OUTPUT aux_percetop,
                                            OUTPUT aux_txcetmes,
                                            OUTPUT TABLE tt-erro).
@@ -614,6 +619,9 @@ PROCEDURE grava_dados:
                         INPUT par_dtmvtolt,              /* par_dtlibera DATE */
                         INPUT 0,                         /* cdcoploj */
                         INPUT 0,                         /* nrcntloj */
+                        INPUT 0,						 /* idfiniof */
+						INPUT "",                        /* dscatbem */
+     
                        OUTPUT TABLE tt-erro,
                        OUTPUT TABLE tt-msg-confirma,
                        OUTPUT aux_recidepr,
@@ -865,6 +873,7 @@ END PROCEDURE. /* END grava_dados */
                          INPUT par_nmdatela,
                          INPUT par_idorigem,
                          INPUT par_nrdconta,
+						 INPUT par_nrctremp,
                          INPUT par_cdlcremp,
                          INPUT par_vlemprst,
                          INPUT par_dtmvtolt,
@@ -916,6 +925,17 @@ END PROCEDURE. /* END grava_dados */
         
                END.  /*  Fim do DO WHILE TRUE  */
         
+		       /* Projeto 410 - verifica a linha de credito para definir o histórico de emprestimo / financiamento */
+			   FIND FIRST CRAPLCR where craplcr.cdcooper = par_cdcooper AND
+			                            craplcr.cdlcremp = par_cdlcremp.
+
+			   IF AVAIL craplcr then
+			      if craplcr.dsoperac = "FINANCIAMENTO" then
+				     ASSIGN aux_cdhistor = 2309.
+				  else
+				     ASSIGN aux_cdhistor = 2308.
+                
+				
                CREATE craplcm.
                ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
                       craplcm.cdagenci = craplot.cdagenci
@@ -925,7 +945,8 @@ END PROCEDURE. /* END grava_dados */
                       craplcm.nrdctabb = par_nrdconta
                       craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
                       craplcm.nrdocmto = par_nrctremp
-                      craplcm.cdhistor = 322
+                     /* craplcm.cdhistor = 322 */
+					  craplcm.cdhistor = aux_cdhistor
                       craplcm.nrseqdig = craplot.nrseqdig + 1
                       craplcm.cdpesqbb = 
                                  STRING(par_vlemprst,"zzz,zzz,zz9.99") + 

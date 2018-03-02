@@ -903,6 +903,7 @@ IF   FRAME-FIELD = "cdfinemp"  THEN
 											INPUT "", /* cdmodali */
                                             INPUT ?, /* par_idcarenc */
                                             INPUT ?, /* par_dtcarenc */
+											INPUT tt-proposta-epr.idfiniof,
                                             OUTPUT TABLE tt-erro,
                                             OUTPUT TABLE tt-msg-confirma,
                                             OUTPUT TABLE tt-grupo,
