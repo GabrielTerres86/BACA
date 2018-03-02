@@ -664,7 +664,7 @@ function enviarPropostaAnaliseComLIberacaoCordenador(){
 function enviarPropostaAnalise() {
 	//alert("Proposta enviada para analise.\nObs.: Função ainda em desenvolvimento!");
 	
-	showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
+	showMsgAguardo("Aguarde, enviando proposta para an&aacute;lise ...");
 
 	var operacao = "ENVIAR_ANALISE";
 
@@ -696,84 +696,109 @@ function enviarPropostaAnalise() {
 	});	
 }
 
-function confirmarNovoLimite(){
+function confirmarNovoLimite(confirm = 0){
 
-	if (situacao_limite.toUpperCase() == 'APROVADO' && situacao_analise.toUpperCase() == 'ANALISE FINALIZADA'){
-		showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
-
-		var operacao = "CONFIMAR_NOVO_LIMITE";
-		
-		$.ajax({		
-			type: "POST", 
-			url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
-			dataType: "html",
-			data: {
-				operacao: operacao,
-				nrdconta: nrdconta,
-				nrctrlim: nrcontrato,
-				vllimite: valor_limite,
-				//cddopera: cddopera,
-
-				redirect: "html_ajax"
-			},		
-			error: function(objAjax,responseError,objExcept) {
-				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-			},
-			success: function(response) {
-				try {
-	                eval(response);
-	               	hideMsgAguardo();
-	            } catch (error) {
-	                hideMsgAguardo();
-	                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-	            }
-			}			
-		});	
-
-	}else{
-		showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar a situa&ccedil;&atilde;o da an&aacute;lise.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+	if(confirm == 0){
+		showConfirmacao(
+						"Deseja confirmar o novo limite ?",
+						"Confirma&ccedil;&atilde;o - Ayllos",
+						"confirmarNovoLimite(1);",
+						"blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
+						"sim.gif",
+						"nao.gif");
+		return;
 	}
-	
-    return false;
+	if(confirm == 1){
+		if (situacao_limite.toUpperCase() == 'APROVADO' && situacao_analise.toUpperCase() == 'ANALISE FINALIZADA'){
+			showMsgAguardo("Aguarde, confirmando novo limite ...");
+
+			var operacao = "CONFIMAR_NOVO_LIMITE";
+			
+			$.ajax({		
+				type: "POST", 
+				url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+				dataType: "html",
+				data: {
+					operacao: operacao,
+					nrdconta: nrdconta,
+					nrctrlim: nrcontrato,
+					vllimite: valor_limite,
+					//cddopera: cddopera,
+
+					redirect: "html_ajax"
+				},		
+				error: function(objAjax,responseError,objExcept) {
+					hideMsgAguardo();
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				},
+				success: function(response) {
+					try {
+		                eval(response);
+		               	hideMsgAguardo();
+		            } catch (error) {
+		                hideMsgAguardo();
+		                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		            }
+				}			
+			});	
+
+		}else{
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar a situa&ccedil;&atilde;o da an&aacute;lise.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		}
+    	return;
+	}
 }
 
-function aceitarRejeicao(){
-	
-	if (situacao_limite.toUpperCase() == 'NAO APROVADO' && situacao_analise.toUpperCase() == 'ANALISE FINALIZADA'){
-		showMsgAguardo("Aguarde, carregando dados para análise de t&iacute;tulos ...");
+function aceitarRejeicao(confirm = 0){
 
-		var operacao = "ACEITAR_REJEICAO_LIMITE";
-		
-		$.ajax({		
-			type: "POST", 
-			url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
-			dataType: "html",
-			data: {
-				operacao: operacao,
-				nrdconta: nrdconta,
-				nrctrlim: nrcontrato,
-				vllimite: valor_limite,
-				//cddopera: cddopera,
-
-				redirect: "html_ajax"
-			},		
-			error: function(objAjax,responseError,objExcept) {
-				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-			},
-			success: function(response) {
-				try {
-	                eval(response);
-	               	hideMsgAguardo();
-	            } catch (error) {
-	                hideMsgAguardo();
-	                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-	            }
-			}			
-		});	
+	if(confirm == 0){
+		showConfirmacao(
+						"Deseja aceitar a rejei&ccedil;&atilde;o do limite?",
+						"Confirma&ccedil;&atilde;o - Ayllos",
+						"aceitarRejeicao(1);",
+						"blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
+						"sim.gif",
+						"nao.gif");
+		return;
 	}
-	
+	if(confirm == 1){
+		if (situacao_limite.toUpperCase() == 'NAO APROVADO' && situacao_analise.toUpperCase() == 'ANALISE FINALIZADA'){
+			showMsgAguardo("Aguarde, confirmando rejei&ccedil;&atilde;o do limite ...");
+
+			var operacao = "ACEITAR_REJEICAO_LIMITE";
+			
+			$.ajax({		
+				type: "POST", 
+				url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+				dataType: "html",
+				data: {
+					operacao: operacao,
+					nrdconta: nrdconta,
+					nrctrlim: nrcontrato,
+					vllimite: valor_limite,
+					//cddopera: cddopera,
+
+					redirect: "html_ajax"
+				},		
+				error: function(objAjax,responseError,objExcept) {
+					hideMsgAguardo();
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				},
+				success: function(response) {
+					try {
+		                eval(response);
+		               	hideMsgAguardo();
+		            } catch (error) {
+		                hideMsgAguardo();
+		                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		            }
+				}			
+			});	
+		}else{
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar a situa&ccedil;&atilde;o da an&aacute;lise.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		}
+    	return;
+	}
 }
 
 
