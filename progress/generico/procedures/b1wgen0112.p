@@ -33,7 +33,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 28/11/2017
+    Data    : Agosto/2011                        Ultima atualizacao: 02/03/2018
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -225,6 +225,8 @@
                 27/11/2017 - Inclusao do valor de bloqueio em garantia nos relatorios. 
                              PRJ404 - Garantia Empr.(Odirlei-AMcom)  
                                            
+                02/03/2018 - Lucas Skroch (Supero TI) - Ajustes nos saldos de cobertura, judicial, total geral e total resgate
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -275,6 +277,7 @@ DEF VAR aux_vlblqjud AS DECI                                        NO-UNDO.
 DEF VAR aux_vlresblq AS DECI                                        NO-UNDO.
 DEF VAR aux_vlblqapl_gar AS DECI                                    NO-UNDO.
 DEF VAR aux_vlblqpou_gar AS DECI                                    NO-UNDO.
+DEF VAR aux_vltot_resgat AS DECI                                    NO-UNDO.
 
 
 DEF STREAM str_1.
@@ -2905,14 +2908,15 @@ PROCEDURE gera_impressao_sintetico:
             FRAME f_dados_relat_sintetico.
 
     FORM SKIP(2)
-         "Saldo disponivel para resgate:"                 AT  01
-         tot_sldresga  FORMAT "z,zzz,zz9.99"              AT  57
+         "SALDO DISPONIVEL R$:"                 AT  01
+         tot_sldresga  FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"              AT  40
          WITH NO-BOX NO-ATTR-SPACE DOWN NO-LABEL WIDTH 80 FRAME f_footer_total.
 
     ASSIGN aux_vlblqjud = 0
            aux_vlresblq = 0
            aux_vlblqapl_gar = 0
-           aux_vlblqpou_gar = 0.
+           aux_vlblqpou_gar = 0
+           aux_vltot_resgat = 0.
            
     /*** Busca Saldo Bloqueado Judicial ***/
     IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
@@ -3034,21 +3038,28 @@ PROCEDURE gera_impressao_sintetico:
     DISPLAY STREAM str_1 
             tot_sldresga WITH FRAME f_footer_total.
 
-    IF  aux_vlblqjud > 0 THEN
-        DO: 
+    /* IF  aux_vlblqjud > 0 THEN
+        DO: */
             PUT STREAM str_1
-                "Valor Bloqueado Judicialmente e de R$: " 
+                "VALOR BLOQUEADO JUDICIALMENTE R$:      "
                 aux_vlblqjud FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"
                 SKIP.
-        END.
+       /* END. */
         
-    IF  aux_vlblqapl_gar > 0 THEN
-        DO: 
+    /* IF  aux_vlblqapl_gar > 0 THEN
+        DO: */
             PUT STREAM str_1
-                "Valor Bloqueado para Cobertura de Garantia e de R$: "
-                aux_vlblqapl_gar FORMAT "z,zzz,zzz,zz9.99"
+                "VALOR BLOQUEADO COBERTURA GARANTIA R$: "
+                aux_vlblqapl_gar FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"                
                 SKIP.
-        END.    
+			
+			aux_vltot_resgat = tot_sldresga - (aux_vlblqjud + aux_vlblqapl_gar).
+
+            PUT STREAM str_1
+                "SALDO DISPONIVEL PARA RESGATE R$:      "
+                aux_vltot_resgat FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"
+                SKIP.
+       /* END. */
         
 
     OUTPUT STREAM str_1 CLOSE.
@@ -3181,7 +3192,8 @@ PROCEDURE gera_impressao_demonstrativo:
     ASSIGN aux_vlblqjud = 0
            aux_vlresblq = 0
            aux_vlblqapl_gar = 0
-           aux_vlblqpou_gar = 0.
+           aux_vlblqpou_gar = 0
+           aux_vltot_resgat = 0.
            
     /*** Busca Saldo Bloqueado Judicial ***/
     IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
@@ -3453,24 +3465,33 @@ PROCEDURE gera_impressao_demonstrativo:
 
     END.
 
-    IF  aux_vlblqjud > 0 THEN
-        DO: 
+ /* IF  aux_vlblqjud > 0 THEN
+      DO: */
             PUT STREAM str_1
                 SKIP(1)
-                "Valor Bloqueado Judicialmente e de R$: "
+                "VALOR BLOQUEADO JUDICIALMENTE R$:      "
                 aux_vlblqjud FORMAT "z,zzz,zzz,zzz,zzz,zzz,zz9.99"
                 SKIP.
-        END.
+   /* END. */
 
-    IF  aux_vlblqapl_gar > 0 THEN
-        DO: 
+ /* IF  aux_vlblqapl_gar > 0 THEN
+      DO: */
 
             PUT STREAM str_1
                 SKIP(1)
-                "Valor Bloqueado para Cobertura Garantia e de R$: "
-                aux_vlblqapl_gar FORMAT "zzz,zzz,zzz,zz9.99"
+                "VALOR BLOQUEADO COBERTURA GARANTIA R$: "
+                aux_vlblqapl_gar FORMAT "z,zzz,zzz,zzz,zzz,zzz,zz9.99"
                 SKIP.
-        END. 
+
+            aux_vltot_resgat = tot_sldresga - (aux_vlblqjud + aux_vlblqapl_gar).
+
+            PUT STREAM str_1
+                SKIP(1)
+                "SALDO DISPONIVEL PARA RESGATE R$:     "
+                aux_vltot_resgat FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"
+                SKIP.
+
+   /* END. */
 
     /** FIM Processamento do Extrato **/       
 
@@ -3755,9 +3776,18 @@ PROCEDURE pi_monta_demonstrativo:
                    AND tt-demonstrativo.dstplanc = "SALDO" 
                 EXCLUSIVE-LOCK NO-ERROR.
 
+         /* IF  aux_vlblqapl_gar > 0 THEN DO: */
+
+            ASSIGN tt-demonstrativo.vlcolu14 = "SALDO"
+                   tt-demonstrativo.vlcolu15 = 
+                      STRING(tot_sldresga,"zz,zzz,zz9.99").
+         /* END.
+	        ELSE DO: 
+
             ASSIGN tt-demonstrativo.vlcolu14 = "SALDO RESGATE"
                    tt-demonstrativo.vlcolu15 = 
                       STRING(tot_sldresga,"zz,zzz,zz9.99").
+            END. */
         END.
                     
         /** Processamento dos dados do extrato **/
