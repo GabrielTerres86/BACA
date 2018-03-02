@@ -1390,7 +1390,6 @@ PROCEDURE valida-liquidacao-emprestimos:
 
     EMPTY TEMP-TABLE tt-erro.
 
-
     ASSIGN
         aux_cdcritic = 0
         aux_dscritic = ""
@@ -1438,7 +1437,7 @@ PROCEDURE valida-liquidacao-emprestimos:
                 IF  NOT AVAIL crawepr THEN DO:
                           ASSIGN aux_cdcritic = 510.
                           LEAVE Valida.
-                      END.
+                END.
 
                 IF crawepr.tpemprst = 1   OR
                    crawepr.tpemprst = 2   THEN   DO:
@@ -3687,7 +3686,7 @@ PROCEDURE valida-dados-gerais:
         ELSE IF par_tpemprst = 2 THEN
             DO:
                 /* Trava para testes em producao */
-                IF par_cdcooper <> 1 OR par_nrdconta <> 6820743 THEN
+                IF par_cdcooper <> 1 THEN
                    DO:
                       ASSIGN aux_dscritic = "Produto nao liberado.".
                       LEAVE.
@@ -4381,23 +4380,22 @@ PROCEDURE proc_qualif_operacao:
                AND crabepr.inliquid = 0
                    NO-LOCK NO-ERROR.
 
-        IF  AVAIL crabepr THEN
-            DO:
-        FOR FIRST crapris FIELDS(qtdiaatr)
-            WHERE crapris.cdcooper = par_cdcooper
-              AND crapris.nrdconta = par_nrdconta
-              AND crapris.cdorigem = 3
-              AND crapris.nrctremp = crabepr.nrctremp
-              AND crapris.inddocto = 1
-              AND crapris.dtrefere = par_dtmvtoan
-              NO-LOCK:
+        IF  AVAIL crabepr THEN DO:
+           FOR FIRST crapris FIELDS(qtdiaatr)
+               WHERE crapris.cdcooper = par_cdcooper
+                 AND crapris.nrdconta = par_nrdconta
+                 AND crapris.cdorigem = 3
+                 AND crapris.nrctremp = crabepr.nrctremp
+                 AND crapris.inddocto = 1
+                 AND crapris.dtrefere = par_dtmvtoan
+             NO-LOCK:
                   ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-         END.
-            END.
+           END.
+        END.
 
         IF aux_dias_atraso < aux_qtd_dias_atraso THEN
            aux_dias_atraso = aux_qtd_dias_atraso.
-             END.
+    END.
 
     /* De 0 a 4 dias de atraso - Renovação de Crédito                       */
     IF  aux_dias_atraso < 5 THEN
