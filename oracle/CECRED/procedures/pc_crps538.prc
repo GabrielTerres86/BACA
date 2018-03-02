@@ -7492,12 +7492,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                            pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
                            pr_cdcooper   => pr_cdcooper, 
                            pr_tpexecucao => 2,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                           pr_idprglog   => vr_idlog_ini_par);  
-
-           -- Atualiza finalização do batch na tabela de controle 
-           gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
-                                              ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
-                                              ,pr_dscritic   => pr_dscritic);  
+                           pr_idprglog   => vr_idlog_ini_par,
+						   pr_flgsucesso => 0);  
 
            -- Encerrar o job do processamento paralelo dessa agência
            gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
@@ -7549,12 +7545,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                            pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
                            pr_cdcooper   => pr_cdcooper, 
                            pr_tpexecucao => 2,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                           pr_idprglog   => vr_idlog_ini_par);  
+                           pr_idprglog   => vr_idlog_ini_par,
+						   pr_flgsucesso => 0);  
 
-           -- Atualiza finalização do batch na tabela de controle 
-           gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
-                                              ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
-                                              ,pr_dscritic   => pr_dscritic);  
            -- Encerrar o job do processamento paralelo dessa agência
            gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                        ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
