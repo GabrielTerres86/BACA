@@ -153,7 +153,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_tipdocto    AS CHARACTER FORMAT "X(256)":U
        FIELD v_tpproces    AS CHARACTER FORMAT "X(256)":U
        FIELD v_flblqval    AS CHARACTER FORMAT "X(256)":U
-       FIELD v_tppagmto    AS CHARACTER FORMAT "X(256)":U.
+       FIELD v_tppagmto    AS CHARACTER FORMAT "X(256)":U
        FIELD v_cod         AS CHARACTER FORMAT "X(256)":U
        FIELD v_senha       AS CHARACTER FORMAT "X(256)":U
        FIELD hdnEstorno    AS CHARACTER FORMAT "X(256)":U
