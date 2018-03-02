@@ -7,3 +7,5 @@ INSERT INTO crapcri
           4, 
           0,
           '90001 - Contrato Limite/ADP nao encontrado');
+
+COMMIT;

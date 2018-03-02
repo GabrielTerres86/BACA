@@ -6,7 +6,7 @@ declare
        , t.nrdconta
        , t.nrctremp
        , t.dsnivris
-    from CRAWEPR t where rownum < 50000;
+    from CRAWEPR t ;
   rw_risco cr_risco%ROWTYPE;
 
 begin
@@ -29,5 +29,6 @@ begin
 
   end loop;
 
+  COMMIT;
   close cr_risco;
 end;

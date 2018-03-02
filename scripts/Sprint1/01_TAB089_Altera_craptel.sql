@@ -2,3 +2,5 @@
 update craptel tel
   set tel.idambtel = 0 -- DEVERÁ SER 2 (apenas web) EM PROD
  where tel.nmdatela = 'TAB089';
+
+COMMIT;

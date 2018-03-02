@@ -7,3 +7,5 @@ SET crapprg.nrsolici = 999
                         FROM crapprg g
                         WHERE g.nrsolici = 999) + 1
 WHERE cdprogra = 'CRPS641';
+
+COMMIT;
