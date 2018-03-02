@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-03-01T16:39:58 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl521" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isFloatColumnFooter="true" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -102,14 +103,16 @@
 		<band height="16">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<staticText>
-				<reportElement x="0" y="0" width="18" height="8" uuid="e56615b6-471b-4934-8819-fbecdfa92782"/>
+				<reportElement x="26" y="0" width="18" height="8" uuid="e56615b6-471b-4934-8819-fbecdfa92782">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<text><![CDATA[Bco]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="8" width="18" height="8" uuid="fecd92c2-d105-46a1-a758-9088352a8809"/>
+				<reportElement x="26" y="8" width="18" height="8" uuid="fecd92c2-d105-46a1-a758-9088352a8809"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -242,9 +245,10 @@
 				<text><![CDATA[Lancado]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="22" y="0" width="22" height="8" uuid="c23dbe2b-9ad5-4008-98a4-2b9f1e7e0c91">
+				<reportElement x="0" y="0" width="22" height="8" uuid="c23dbe2b-9ad5-4008-98a4-2b9f1e7e0c91">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
@@ -252,7 +256,7 @@
 				<text><![CDATA[PA]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="22" y="8" width="22" height="8" uuid="d18a3095-7971-498e-8e2a-32a68eeacb6e">
+				<reportElement x="0" y="8" width="22" height="8" uuid="d18a3095-7971-498e-8e2a-32a68eeacb6e">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Right">
@@ -266,7 +270,7 @@
 		<band height="8" splitType="Stretch">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField pattern="#000">
-				<reportElement x="0" y="0" width="18" height="8" uuid="c71af279-676c-4b0a-83ba-58f6fe1df8b8"/>
+				<reportElement x="26" y="0" width="18" height="8" uuid="c71af279-676c-4b0a-83ba-58f6fe1df8b8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -336,7 +340,7 @@
 				<textFieldExpression><![CDATA[$F{flglanca}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#000">
-				<reportElement x="22" y="0" width="22" height="8" uuid="344c5d1e-25ad-4880-a63f-3a7707f3f983">
+				<reportElement x="0" y="0" width="22" height="8" uuid="344c5d1e-25ad-4880-a63f-3a7707f3f983">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Right">
