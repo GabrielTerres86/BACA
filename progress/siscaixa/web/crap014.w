@@ -1075,8 +1075,7 @@ PROCEDURE process-web-request:
         DO:
             {include/i-erro.i}
 
-            {&OUT}
-                 '<script> window.location = "crap002.html" </script>'.
+            {&OUT} '<script> window.location = "crap002.html" </script>'.
         
         END.
 
@@ -1087,8 +1086,7 @@ PROCEDURE process-web-request:
         DO:
             {include/i-erro.i}
 
-            {&OUT}
-                 '<script> window.location = "crap002.html" </script>'.
+            {&OUT} '<script> window.location = "crap002.html" </script>'.
         END.
     END.
     
