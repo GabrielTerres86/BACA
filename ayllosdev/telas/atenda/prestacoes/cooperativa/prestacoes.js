@@ -2433,11 +2433,13 @@ function limpaDivGenerica(){
 function mostraExtrato( operacao ) {
 
 	showMsgAguardo('Aguarde, abrindo extrato...');
-	//exibeRotina($('#divUsoGenerico'));
 
 	tpemprst = arrayRegistros['tpemprst'];
 
-	limpaDivGenerica();
+	if (tpemprst == 0) {
+	    exibeRotina($('#divUsoGenerico'));
+	    limpaDivGenerica();
+	}
 
 	if  (tpemprst == 1 || tpemprst == 2) {
 		verificaTipoEmprestimo();
