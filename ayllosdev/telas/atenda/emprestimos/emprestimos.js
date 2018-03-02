@@ -1373,6 +1373,12 @@ function controlaOperacao(operacao) {
                     busca_uf_pa_ass();
                 }
                 
+                if (arrayProposta['tpemprst'] == 0){
+                    $("#idfiniof").desabilitaCampo();
+                    $("#idfiniof").val(0);
+                    arrayProposta['tpemprst'] = 0;
+                }
+                
             } else {
                 eval(response);
             }

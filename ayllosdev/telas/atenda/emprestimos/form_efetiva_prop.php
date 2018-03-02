@@ -30,6 +30,10 @@
 		<input name="vlemprst" id="vlemprst" type="text" value="" />
 		<br />
 		
+		
+		<!--label for="vlfinanc">Vl. Financiado:</label>
+		<input name="vlfinanc" id="vlfinanc" type="text" value="" /-->
+
 		<label for="vlpreemp">Valor da parcela:</label>
 		<input name="vlpreemp" id="vlpreemp" type="text" value="" />
 		<br />

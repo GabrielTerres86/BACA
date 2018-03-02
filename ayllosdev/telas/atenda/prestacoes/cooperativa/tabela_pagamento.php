@@ -42,7 +42,7 @@
 					<th><label for="vlmtapar" class="txtNormalBold">Multa</label></th>
 					<th><label for="vljinpar" class="txtNormalBold">Jr. Normais</label></th>
 					<th><label for="vlmrapar" class="txtNormalBold">Jr. Mora</label></th>
-					<!--<th><label for="vliofcpl" class="txtNormalBold">IOF Atraso</label></th>-->
+					<th><label for="vliofcpl" class="txtNormalBold">IOF Atraso</label></th>
 					<th><label for="vldespar" class="txtNormalBold">Desc.</label></th>
 					<th><label for="vlatupar" class="txtNormalBold">Vl. Atual</label></th>
 					<th style="width:96px;"><label for="vlpagpar" class="txtNormalBold" >Vl. a Pagar</label></th>
