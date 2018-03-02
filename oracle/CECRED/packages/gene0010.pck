@@ -52,6 +52,17 @@ CREATE OR REPLACE PACKAGE CECRED.gene0010 AS
                                  pr_dscritic     OUT VARCHAR2         --> retorna descricao da critica
                                  );    
                                  
+  --> Procedure para retornar as opçoes do dominio para o Ayllos WEB.
+  PROCEDURE pc_retorna_dominios_web (pr_nmmodulo   IN VARCHAR2           --> Nome do modulo(CADAST, COBRAN, etc.)
+                                    ,pr_nmdomini   IN VARCHAR2           --> Nome do dominio
+                                    -----> OUT <------
+                                    ,pr_xmllog   IN VARCHAR2             --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER         --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2            --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2            --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2            --> Erros do processo
+                                    );
   --> Função para retornar descrição do dominio SIM_NAO.
   FUNCTION fn_desc_sim_nao ( pr_cddomini   IN VARCHAR2        --> Codigo que deseja retornar descrição
                            ) RETURN VARCHAR2;                                 
@@ -275,6 +286,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0010 AS
     vr_nrretorn      NUMBER;
     vr_qtdretor      NUMBER;
     vr_cursor        VARCHAR2(32000);
+    vr_cddominio     tbcc_dominio_campo.cddominio%TYPE;
+    vr_dscodigo      tbcc_dominio_campo.dscodigo%TYPE;
     
     vr_exc_erro     EXCEPTION;
     vr_dscritic     VARCHAR2(4000);
@@ -301,8 +314,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0010 AS
     dbms_sql.parse(vr_nrcursor, vr_cursor, 1);
     
     -- Definindo Colunas de retorno
-    dbms_sql.define_column(vr_nrcursor, 1, pr_tab_dominios(1).cddominio ,4000);
-    dbms_sql.define_column(vr_nrcursor, 1, pr_tab_dominios(1).dscodigo  ,4000);
+    dbms_sql.define_column(vr_nrcursor, 1, vr_cddominio ,4000);
+    dbms_sql.define_column(vr_nrcursor, 2, vr_dscodigo  ,4000);
     
     -- Execução do select dinamico
     vr_nrretorn := dbms_sql.execute(vr_nrcursor);
@@ -322,7 +335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0010 AS
         vr_qtdretor := vr_qtdretor + 1;        
         -- Carrega variáveis com o retorno do cursor
         dbms_sql.column_value(vr_nrcursor, 1, pr_tab_dominios(vr_qtdretor).cddominio);
-        dbms_sql.column_value(vr_nrcursor, 1, pr_tab_dominios(vr_qtdretor).dscodigo );
+        dbms_sql.column_value(vr_nrcursor, 2, pr_tab_dominios(vr_qtdretor).dscodigo );
       END IF;   
     END LOOP;
     
@@ -334,6 +347,89 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0010 AS
        pr_dscritic := 'Erro nao tratado ao carregar dominio:'||SQLERRM;
   END pc_retorna_dominios;
   
+  --> Procedure para retornar as opçoes do dominio para o Ayllos WEB.
+  PROCEDURE pc_retorna_dominios_web (pr_nmmodulo   IN VARCHAR2           --> Nome do modulo(CADAST, COBRAN, etc.)
+                                    ,pr_nmdomini   IN VARCHAR2           --> Nome do dominio
+                                    -----> OUT <------
+                                    ,pr_xmllog   IN VARCHAR2             --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER         --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2            --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2            --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2            --> Erros do processo
+                                    ) IS
+  /* ..........................................................................
+  --
+  --  Programa : pc_retorna_dominios_web
+  --  Sistema  : Conta-Corrente - Cooperativa de Credito
+  --  Sigla    : CRED
+  --  Autor    : Lombardi
+  --  Data     : Agosto/2017.                   Ultima atualizacao:
+  --
+  --  Dados referentes ao programa:
+  --
+  --   Frequencia: Sempre que for chamado
+  --   Objetivo  : Procedure para retornar as opçoes do dominio para o Ayllos WEB.
+  --
+  --
+  --   Alteração :
+  -- ..........................................................................*/
+
+    ------------------> CURSORES <----------------
+
+
+
+    -----------------> VARIAVEIS <-----------------
+    vr_tab_dominios  typ_tab_dominio;
+    
+    vr_exc_erro     EXCEPTION;
+    vr_dscritic     VARCHAR2(4000);
+    
+    -----------------> SUBPROGRAMAS <--------------
+
+
+  BEGIN
+    
+    -- Criar cabecalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><modalidades></modalidades></Root>');
+      
+    pc_retorna_dominios(pr_nmmodulo     => pr_nmmodulo
+                       ,pr_nmdomini     => pr_nmdomini
+                       ,pr_tab_dominios => vr_tab_dominios
+                       ,pr_dscritic     => vr_dscritic);
+    
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+                
+    FOR rw_index IN vr_tab_dominios.FIRST .. vr_tab_dominios.LAST LOOP
+      -- Registros
+      pr_retxml := XMLTYPE.appendChildXML(pr_retxml
+                                         ,'/Root/modalidades'
+                                         ,XMLTYPE('<modalidade>'
+                                                ||'  <cddominio>' || vr_tab_dominios(rw_index).cddominio || '</cddominio>'
+                                                ||'  <dscodigo>'  || vr_tab_dominios(rw_index).dscodigo  || '</dscodigo>'
+                                                ||'</modalidade>'));
+    END LOOP;
+
+
+  EXCEPTION
+    WHEN vr_exc_erro  THEN
+      pr_dscritic := vr_dscritic;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro nao tratado ao carregar dominio:'||SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_retorna_dominios_web;
+
   --> Função para retornar descrição do dominio SIM_NAO.
   FUNCTION fn_desc_sim_nao ( pr_cddomini   IN VARCHAR2        --> Codigo que deseja retornar descrição
                            ) RETURN VARCHAR2 IS  
@@ -360,7 +456,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0010 AS
       
     -----------------> VARIAVEIS <-----------------
     vr_exc_erro     EXCEPTION;
-    vr_dscritic     VARCHAR2(4000);
     -----------------> SUBPROGRAMAS <--------------
             
   BEGIN
