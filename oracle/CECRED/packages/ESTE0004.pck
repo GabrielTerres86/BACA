@@ -3664,7 +3664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
           ,ldc.dsdlinha dslcremp
           ,lim.tpctrlim
           ,decode(lim.tpctrlim,1,'PP','TR') tpproduto
-          ,ldc.tpctrato
+          ,/*ldc.*/1 tpctrato
           ,0 cdfinemp -- finalidadeCodigo: Codigo Finalidade da Proposta de Empréstimo
           ,'' dsfinemp -- finalidadeDescricao: Descricao Finalidade da Proposta de Empréstimo
           ,lim.inconcje
@@ -4001,16 +4001,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     vr_obj_generico.put('finalidadeDescricao'   ,rw_craplim.dsfinemp);                
 
     vr_obj_generico.put('tipoProduto'           ,rw_craplim.tpproduto);
-    vr_obj_generico.put('tipoGarantiaCodigo'    ,rw_craplim.tpctrato );
     
+    /* Paulo Penteado (GFT): 02/03/2018 - Por hora iremos considerar as tags 
+       tipoGarantiaCodigo e tipoGarantiaDescricao como sendo 1 e 'LIMITE DESC TITUL0' até a liberação 
+       a alteração 404 ser liberada. Pois na 404 será criado o campo crapldc.tpctrato */
+    vr_obj_generico.put('tipoGarantiaCodigo'    ,rw_craplim.tpctrato );
     --> Buscar descrição do tipo de garantia
-    vr_dstpgara  := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper,
+    vr_dstpgara  := 'LIMITE DESC TITUL0';
+                    /*tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper,
                                                pr_nmsistem => 'CRED',
                                                pr_tptabela => 'GENERI', 
                                                pr_cdempres => 0, 
                                                pr_cdacesso => 'CTRATOEMPR', 
-                                               pr_tpregist => rw_craplim.tpctrato);    
-                                               
+                                               pr_tpregist => rw_craplim.tpctrato);*/
     vr_obj_generico.put('tipoGarantiaDescricao'    ,TRIM(vr_dstpgara) );
 
     vr_obj_generico.put('debitoEm'    ,rw_craplim.despagto );
