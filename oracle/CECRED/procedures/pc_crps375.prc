@@ -6651,4 +6651,4 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
 
     END;
   END pc_crps375;
-  /
+  
