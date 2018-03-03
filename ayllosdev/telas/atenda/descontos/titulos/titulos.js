@@ -392,16 +392,10 @@ function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim, dssitest, insitapr
 
 		}
 	}
-	carregarBotoesPorLimite(situacao_limite, situacao_analise);
 	return false;
 }
 
-function configurarListaVazia(){
-    console.log('configurarListaVazia');
-	carregarBotoesPorLimite(null, null);
-	return false;
-}
-
+/*
 function carregarBotoesPorLimite(situacao_limite, situacao_analise){
 	var btnConfirmarNovoLimite = $("#btnConfirmarNovoLimite");
 	var btnAceitarRejeicao = $("#btnAceitarRejeicao");
@@ -426,6 +420,7 @@ function carregarBotoesPorLimite(situacao_limite, situacao_analise){
 	}
 	return false;
 }
+*/
 
 // Função para mostrar a opção Imprimir dos limites de desconto de títulos
 function mostraImprimirLimite() {
@@ -723,7 +718,6 @@ function confirmarNovoLimite(confirm) {
 		return false;
 	}
 	if(confirm == 1){
-		if (situacao_limite.toUpperCase() == 'APROVADO' && situacao_analise.toUpperCase() == 'ANALISE FINALIZADA'){
 			showMsgAguardo("Aguarde, confirmando novo limite ...");
 
 			var operacao = "CONFIMAR_NOVO_LIMITE";
@@ -754,11 +748,8 @@ function confirmarNovoLimite(confirm) {
 		                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
 		            }
 				}			
-			});	
-
-		}else{
-			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar a situa&ccedil;&atilde;o da an&aacute;lise.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-		}
+			});
+		
     	return false;
 	}
 }
@@ -775,7 +766,6 @@ function aceitarRejeicao(confirm) {
 		return false;
 	}
 	if(confirm == 1){
-		if (situacao_limite.toUpperCase() == 'NAO APROVADO' && situacao_analise.toUpperCase() == 'ANALISE FINALIZADA'){
 			showMsgAguardo("Aguarde, confirmando rejei&ccedil;&atilde;o do limite ...");
 
 			var operacao = "ACEITAR_REJEICAO_LIMITE";
@@ -807,10 +797,7 @@ function aceitarRejeicao(confirm) {
 		            }
 				}			
 			});	
-		}else{
-			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Verificar a situa&ccedil;&atilde;o da an&aacute;lise.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-		}
-    	return false ;
+    	return false;
 	}
 }
 

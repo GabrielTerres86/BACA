@@ -142,19 +142,19 @@
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
-
 	    // FAZER O INSERT CRAPRDR e CRAPACA
 	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ACEITAR_REJEICAO_LIM_TIT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
 
 	    // Se ocorrer um erro, mostra crítica
-		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			if ($msgErro == "") {
 				$msgErro = $xmlObj->roottag->tags[0]->cdata;
 			}
 			exibeErro(htmlentities($msgErro));
+			exit;
 		}
 		
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "MSG") {
@@ -179,10 +179,12 @@
 					$grupo = substr($grupo,0,-1);
 			}
 			echo 'verificaMensagens("'.$mensagem_01.'","'.$mensagem_02.'","'.$mensagem_03.'","'.$mensagem_04.'","'.$qtctarel.'","'.$grupo.'");';
+			exit;
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
 				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulos();");';
+				exit;
 			}
 		}
 		
