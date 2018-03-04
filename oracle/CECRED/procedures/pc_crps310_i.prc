@@ -273,7 +273,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  21/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
                  26/12/2017 - Auditoria BACEN ajustar a quantidade de dias em atraso da central de risco produto PP e TR após a transferência para prejuizo. (Oscar/Odirlei-AMcom)
-            
+                 
                  05/02/2018 - Alterado o cursor cr_cessao_carga para considerar contratos transferidos para prejuizo, 
                               não estava considerando a sessaão de credito no calculo de dias em atraso. (Oscar)
                  04/02/2018 - Ajuste para calcular o valor dos juros60 para o produto pos-fixado. (James)            
@@ -412,7 +412,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,crapepr.mesrefju
               ,crapepr.anorefju
               ,crapepr.txjuremp                                       
-              ,crawepr.dtlibera                                       
+              ,crawepr.dtlibera
               ,crapepr.txmensal
               ,crapepr.qttolatr
               ,crapepr.vlemprst
@@ -1005,14 +1005,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       
       -- Funcao para calcular o Juros 60 do produto PP
       FUNCTION fn_calcula_juros_60d_pp(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
-                                    ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE
-                                    ,pr_dtdpagto IN crapepr.dtdpagto%TYPE
-                                    ,pr_diarefju IN crapepr.diarefju%TYPE
-                                    ,pr_mesrefju IN crapepr.mesrefju%TYPE
-                                    ,pr_anorefju IN crapepr.anorefju%TYPE
-                                    ,pr_txjuremp IN crapepr.txjuremp%TYPE
-                                    ,pr_dtlibera IN crawepr.dtlibera%TYPE
-                                    ,pr_vlsdeved IN crapepr.vlsdeved%TYPE) RETURN NUMBER IS
+                                      ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE
+                                      ,pr_dtdpagto IN crapepr.dtdpagto%TYPE
+                                      ,pr_diarefju IN crapepr.diarefju%TYPE
+                                      ,pr_mesrefju IN crapepr.mesrefju%TYPE
+                                      ,pr_anorefju IN crapepr.anorefju%TYPE
+                                      ,pr_txjuremp IN crapepr.txjuremp%TYPE
+                                      ,pr_dtlibera IN crawepr.dtlibera%TYPE
+                                      ,pr_vlsdeved IN crapepr.vlsdeved%TYPE) RETURN NUMBER IS
         vr_qtdiajur	 INTEGER;
     		vr_diavtolt  INTEGER;
         vr_mesvtolt  INTEGER;
@@ -1148,6 +1148,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
           -- Procedure para calcular o Valor de Juros de Mora
           EMPR0011.pc_calcula_atraso_pos_fixado(pr_cdcooper => pr_cdcooper
+                                               ,pr_cdprogra => pr_cdprogra
                                                ,pr_nrdconta => pr_nrdconta
                                                ,pr_nrctremp => pr_nrctremp
                                                ,pr_cdlcremp => pr_cdlcremp         
@@ -2698,16 +2699,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           
           -- Diario
           IF to_char(pr_rw_crapdat.dtmvtolt,'mm') = to_char(pr_rw_crapdat.dtmvtopr,'mm') THEN
-          -- Obter valor de juros a mais de 60 dias
+            -- Obter valor de juros a mais de 60 dias
             vr_totjur60 := nvl(vr_totjur60,0) + nvl(fn_calcula_juros_60d_pp(pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
-                                                                       ,pr_dtmvtopr => pr_rw_crapdat.dtmvtopr
-                                                                       ,pr_dtdpagto => pr_rw_crapepr.dtdpagto
-                                                                       ,pr_diarefju => pr_rw_crapepr.diarefju
-                                                                       ,pr_mesrefju => pr_rw_crapepr.mesrefju
-                                                                       ,pr_anorefju => pr_rw_crapepr.anorefju
-                                                                       ,pr_txjuremp => pr_rw_crapepr.txjuremp
-                                                                         ,pr_dtlibera => pr_rw_crapepr.dtlibera
-                                                                         ,pr_vlsdeved => nvl(pr_rw_crapepr.vlsdevat,0)),0);
+                                                                           ,pr_dtmvtopr => pr_rw_crapdat.dtmvtopr
+                                                                           ,pr_dtdpagto => pr_rw_crapepr.dtdpagto
+                                                                           ,pr_diarefju => pr_rw_crapepr.diarefju
+                                                                           ,pr_mesrefju => pr_rw_crapepr.mesrefju
+                                                                           ,pr_anorefju => pr_rw_crapepr.anorefju
+                                                                           ,pr_txjuremp => pr_rw_crapepr.txjuremp
+                                                                           ,pr_dtlibera => pr_rw_crapepr.dtlibera
+                                                                           ,pr_vlsdeved => nvl(pr_rw_crapepr.vlsdevat,0)),0);
           END IF;
                                                                          
         END IF;
@@ -3160,7 +3161,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
              AND nrctremp = pr_rw_crapepr.nrctremp
              AND cdhistor IN (2347,2346)
              AND dtmvtolt > pr_rw_crapdat.dtmvtolt - (pr_qtdiaatr - 59);
-
+             
         -- Busca da ultima nao liquidada
         CURSOR cr_crappep_ultima IS
           SELECT MAX(nrparepr)
@@ -3282,7 +3283,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           OPEN  cr_craplem_60_mora (pr_qtdiaatr => vr_qtdiaatr);
           FETCH cr_craplem_60_mora INTO vr_vlju60mo;
           CLOSE cr_craplem_60_mora;
-
+          
           -- Valor Total do Juros60
           vr_totjur60 := NVL(vr_vlju60mo,0);          
           -- Diario
@@ -3304,7 +3305,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               RAISE vr_exc_erro;
             END IF;
           END IF;          
-          END IF; 
+        END IF; 
 
         -- Montar a data prevista do ultimo vencimento com base na data do 
         -- primeiro pagamento * qtde de parcelas do emprestimo
@@ -3819,15 +3820,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             vr_innivris := -1;
 
             IF rw_crapris.vldivida > pr_vlarrasto THEN
-              vr_dtdrisco := rw_crapris.dtdrisco;
-              -- Armazenar a data e nível deste risco, pois é o mais elevado
-              vr_innivris := rw_crapris.innivris;
+            vr_dtdrisco := rw_crapris.dtdrisco;
+            -- Armazenar a data e nível deste risco, pois é o mais elevado
+            vr_innivris := rw_crapris.innivris;
   
-              -- Condicao para verificar se a conta possui risco soberano
-              IF vr_tab_contas_risco_soberano.EXISTS(rw_crapris.nrdconta) THEN
+            -- Condicao para verificar se a conta possui risco soberano
+            IF vr_tab_contas_risco_soberano.EXISTS(rw_crapris.nrdconta) THEN
 
-                IF vr_tab_contas_risco_soberano(rw_crapris.nrdconta).innivris > vr_innivris THEN
-                  vr_innivris := vr_tab_contas_risco_soberano(rw_crapris.nrdconta).innivris;
+              IF vr_tab_contas_risco_soberano(rw_crapris.nrdconta).innivris > vr_innivris THEN
+                vr_innivris := vr_tab_contas_risco_soberano(rw_crapris.nrdconta).innivris;
                   vr_dtdrisco := vr_dtrefere;
                 END IF;
               END IF;
@@ -4079,7 +4080,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         WHEN OTHERS THEN
           pr_des_erro := 'pc_efetua_arrasto --> Erro não tratado ao processar arrasto. Detalhes: '||sqlerrm;
       END;
-      
+
       
 
 

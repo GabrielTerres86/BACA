@@ -3117,7 +3117,7 @@ PROCEDURE busca-craplcr:
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdmodali AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpprodut AS INTE                           NO-UNDO.
-    
+
     DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-craplcr.
 
@@ -3144,8 +3144,11 @@ PROCEDURE busca-craplcr:
 									    craplch.cdlcrhab = par_cdlcremp  
 									   ELSE 
 									    craplch.cdlcrhab >= par_cdlcremp ) AND 
-                                      (IF par_flgstlcr THEN craplcr.flgstlcr = par_flgstlcr ELSE TRUE)   AND
-                                       craplcr.dslcremp MATCHES("*" + par_dslcremp + "*")
+                    (IF par_flgstlcr THEN 
+                        craplcr.flgstlcr = par_flgstlcr 
+                     ELSE TRUE) AND
+                     craplcr.dslcremp MATCHES("*" + par_dslcremp + "*") AND
+                    (IF par_tpprodut <> ? THEN craplcr.tpprodut = par_tpprodut ELSE TRUE)
                                        NO-LOCK:
         
                     ASSIGN par_qtregist = par_qtregist + 1.

@@ -13208,7 +13208,7 @@ END pc_consulta_ir_pj_trim;
         vr_vlprvenc  NUMBER(25,2);
         vr_vlpraven  NUMBER(25,2);
         vr_vlmtapar  NUMBER(25,2);
-        vr_vlmrapar  NUMBER(25,2);        
+        vr_vlmrapar  NUMBER(25,2);
         vr_vliofcpl  NUMBER(25,2);
         vr_vltxiofpri NUMBER := 0;
         vr_vltxiofadc NUMBER := 0;
@@ -13580,6 +13580,7 @@ END pc_consulta_ir_pj_trim;
         IF pr_flgimpri THEN
           -- Busca as parcelas para pagamento
           EMPR0011.pc_busca_pagto_parc_pos_prog(pr_cdcooper => pr_cdcooper
+			                                   ,pr_cdprogra => pr_nmdatela
                                                ,pr_dtmvtolt => TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR')
                                                ,pr_dtmvtoan => TO_CHAR(pr_dtmvtoan,'DD/MM/RRRR')
                                                ,pr_nrdconta => pr_nrdconta
@@ -13624,8 +13625,8 @@ END pc_consulta_ir_pj_trim;
                 vr_dsvltaxa := '';
                 IF pr_tab_extrato_epr_aux(vr_index_epr_aux).vltaxprd > 0 THEN
                   vr_dsvltaxa := to_char(pr_tab_extrato_epr_aux(vr_index_epr_aux).vltaxprd * 100,'fm999g999g990d00')||'%';
-                END IF;                
-
+                END IF;  
+                
                 --Montar Texto
                 vr_dstexto:= '<extrato> ' ||
                                '<e_dtmvtolt>'||to_char(pr_tab_extrato_epr_aux(vr_index_epr_aux).dtmvtolt,'DD/MM/YY')||'</e_dtmvtolt>'||              

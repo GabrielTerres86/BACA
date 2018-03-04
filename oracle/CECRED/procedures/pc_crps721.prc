@@ -133,7 +133,7 @@ BEGIN
          AND craplem.dtmvtolt >= pr_dtamvini
          AND craplem.dtmvtolt <= pr_dtamvfin;
     vr_vllanmto craplem.vllanmto%TYPE;
-
+    
     CURSOR cr_craplem_mora (pr_cdcooper	IN craplem.cdcooper%TYPE
                            ,pr_nrdconta IN craplem.nrdconta%TYPE
                            ,pr_nrctremp IN craplem.nrctremp%TYPE
@@ -525,6 +525,7 @@ BEGIN
           
           -- Procedure para calcular o Valor de Juros de Mora
           EMPR0011.pc_calcula_atraso_pos_fixado(pr_cdcooper => pr_cdcooper
+                                               ,pr_cdprogra => vr_cdprogra
                                                ,pr_nrdconta => rw_crapepr.nrdconta
                                                ,pr_nrctremp => rw_crapepr.nrctremp
                                                ,pr_cdlcremp => rw_crapepr.cdlcremp
