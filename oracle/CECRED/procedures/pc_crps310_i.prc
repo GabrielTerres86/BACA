@@ -1133,6 +1133,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
           -- Procedure para calcular o Valor de Juros de Mora
           EMPR0011.pc_calcula_atraso_pos_fixado(pr_cdcooper => pr_cdcooper
+                                               ,pr_cdprogra => pr_cdprogra
                                                ,pr_nrdconta => pr_nrdconta
                                                ,pr_nrctremp => pr_nrctremp
                                                ,pr_cdlcremp => pr_cdlcremp         

@@ -525,6 +525,7 @@ BEGIN
           
           -- Procedure para calcular o Valor de Juros de Mora
           EMPR0011.pc_calcula_atraso_pos_fixado(pr_cdcooper => pr_cdcooper
+                                               ,pr_cdprogra => vr_cdprogra
                                                ,pr_nrdconta => rw_crapepr.nrdconta
                                                ,pr_nrctremp => rw_crapepr.nrctremp
                                                ,pr_cdlcremp => rw_crapepr.cdlcremp

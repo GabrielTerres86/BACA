@@ -9501,6 +9501,7 @@ PROCEDURE valida-dados-proposta-completa:
     DEF VAR          aux_qtdias2  AS INTE                           NO-UNDO.
     DEF VAR          aux_qtdiacar AS INTE                           NO-UNDO.
 	DEF VAR          aux_flgcescr AS LOG INIT FALSE                 NO-UNDO.
+    DEF VAR          aux_tpprodut AS INTE                           NO-UNDO.
 
     DEF BUFFER crablcr FOR craplcr.
 
@@ -9593,6 +9594,19 @@ PROCEDURE valida-dados-proposta-completa:
                  aux_cdcritic = 470.
                  LEAVE.
              END.
+
+        /* Emprestimo TR */
+        IF  par_tpemprst = 0 THEN
+            ASSIGN aux_tpprodut = 1.
+        ELSE
+            ASSIGN aux_tpprodut = par_tpemprst.
+        
+        /* Validar se a linha de credito esta habilitada para o produto */
+        IF craplcr.tpprodut <> aux_tpprodut THEN
+           DO:
+               ASSIGN aux_dscritic = "Linha nao permitida para esse produto".
+               LEAVE.
+           END.
 
         IF   par_cddopcao = "A"   THEN /* Se for alteraçao */
              DO:

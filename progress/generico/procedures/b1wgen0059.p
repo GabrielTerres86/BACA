@@ -3137,16 +3137,19 @@ PROCEDURE busca-craplcr:
                                        craplch.cdlcrhab >= par_cdlcremp  NO-LOCK,
                    FIRST craplcr WHERE craplcr.cdcooper = craplch.cdcooper  AND
                                        craplcr.cdlcremp = craplch.cdlcrhab  AND                                      
-                                      (IF par_cdmodali <> "0" AND par_cdmodali <> "" AND par_cdmodali <> "undefined" THEN
-										STRING(craplcr.cdmodali) + STRING(craplcr.cdsubmod) = par_cdmodali 
+                     (IF par_cdmodali <> "0" AND par_cdmodali <> "" AND par_cdmodali <> "undefined" THEN
+										     STRING(craplcr.cdmodali) + STRING(craplcr.cdsubmod) = par_cdmodali 
 									   ELSE TRUE ) AND
 									  (IF par_cdmodali <> "0" AND par_cdmodali <> "" AND par_cdlcremp > 0 THEN 
-									    craplch.cdlcrhab = par_cdlcremp  
+									      craplch.cdlcrhab = par_cdlcremp  
 									   ELSE 
-									    craplch.cdlcrhab >= par_cdlcremp ) AND 
-                                      (IF par_flgstlcr THEN craplcr.flgstlcr = par_flgstlcr ELSE TRUE)   AND
-                                       craplcr.dslcremp MATCHES("*" + par_dslcremp + "*")
-                                       NO-LOCK:
+									      craplch.cdlcrhab >= par_cdlcremp ) AND 
+                    (IF par_flgstlcr THEN 
+                        craplcr.flgstlcr = par_flgstlcr 
+                     ELSE TRUE) AND
+                     craplcr.dslcremp MATCHES("*" + par_dslcremp + "*") AND
+                    (IF par_tpprodut <> ? THEN craplcr.tpprodut = par_tpprodut ELSE TRUE)
+                    NO-LOCK:
         
                     ASSIGN par_qtregist = par_qtregist + 1.
         

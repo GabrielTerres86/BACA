@@ -230,6 +230,7 @@ BEGIN
       
       -- Busca as parcelas para pagamento
       EMPR0011.pc_busca_pagto_parc_pos(pr_cdcooper => pr_cdcooper
+                                      ,pr_cdprogra => vr_cdprogra
                                       ,pr_flgbatch => TRUE
                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                       ,pr_dtmvtoan => rw_crapdat.dtmvtoan

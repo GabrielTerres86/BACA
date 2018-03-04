@@ -970,6 +970,13 @@ PROCEDURE valida_gravacao_simulacao:
                 LEAVE VALIDA.
             END.
 
+       /* Diferente que o produto PP */ 
+       IF  craplcr.tpprodut <> 1 THEN
+           DO:
+               ASSIGN aux_cdcritic = 0
+                      aux_dscritic = "Linha nao permitida para esse produto".
+               LEAVE VALIDA.
+           END.
        /* ******* Novas Validacoes ******* */
 
        /* Finalidade da operaçao */

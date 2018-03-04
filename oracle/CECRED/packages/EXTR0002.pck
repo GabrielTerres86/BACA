@@ -13378,6 +13378,7 @@ END pc_consulta_ir_pj_trim;
         IF pr_flgimpri THEN
           -- Busca as parcelas para pagamento
           EMPR0011.pc_busca_pagto_parc_pos_prog(pr_cdcooper => pr_cdcooper
+			                                   ,pr_cdprogra => pr_nmdatela
                                                ,pr_dtmvtolt => TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR')
                                                ,pr_dtmvtoan => TO_CHAR(pr_dtmvtoan,'DD/MM/RRRR')
                                                ,pr_nrdconta => pr_nrdconta

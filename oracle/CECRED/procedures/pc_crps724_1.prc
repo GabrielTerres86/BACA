@@ -423,6 +423,7 @@ BEGIN
 
         -- Efetua o pagamento da parcela Vencida
         EMPR0011.pc_efetua_pagamento_em_atraso(pr_cdcooper => pr_cdcooper
+                                              ,pr_cdprogra => vr_cdprogra
                                               ,pr_dtcalcul => rw_crapdat.dtmvtolt
                                               ,pr_cdagenci => rw_epr_pep.cdagenci
                                               ,pr_cdpactra => rw_epr_pep.cdagenci
