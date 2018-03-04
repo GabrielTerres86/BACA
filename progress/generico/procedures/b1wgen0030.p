@@ -3689,12 +3689,10 @@ PROCEDURE busca_dados_limite:
     ELSE
     IF  par_cddopcao = "A"  THEN
         DO:
-            IF  craplim.insitlim <> 1   THEN
+            IF  ((craplim.insitlim = 2) or (craplim.insitlim = 3) or (craplim.insitlim = 7))   THEN
                 DO:
                     ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "E' possivel alterar contratos" +
-                                          " somente com a situacao EM" +
-                                          " ESTUDO.".
+                           aux_dscritic = "Nao e permitido alterar uma proposta com a situacao ATIVA ou CANCELADA ou REJEITADA".
                           
                     RUN gera_erro (INPUT par_cdcooper,
                                    INPUT par_cdagenci,
