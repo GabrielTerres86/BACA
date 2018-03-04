@@ -280,6 +280,7 @@ ELSE IF crapepr.tpemprst = 2 THEN /* POS */
          /* Efetuar a chamada a rotina Oracle  */
          RUN STORED-PROCEDURE pc_busca_pagto_parc_pos_prog
              aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper,
+							                      INPUT glb_nmdatela,
                                                   INPUT STRING(glb_dtmvtolt),
                                                   INPUT STRING(glb_dtmvtoan),
                                                   INPUT par_nrdconta,
