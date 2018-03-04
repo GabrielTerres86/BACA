@@ -1921,6 +1921,8 @@ RUN grava-proposta-completa IN h-b1wgen0002
                                 INPUT TRUE,
                                 INPUT tt-rendimento.dsjusren,
                                 INPUT ?, /* dtlibera */
+								INPUT tt-proposta-epr.idfiniof, /* par_idfiniof */
+								INPUT "", /* par_dscatbem */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT tt-proposta-epr.nrdrecid,

@@ -617,8 +617,8 @@ PROCEDURE grava_dados:
                         INPUT aux_flgerlog,              /* par_flgerlog LOGI */
                         INPUT aux_dsjusren,              /* par_dsjusren CHAR */
                         INPUT par_dtmvtolt,              /* par_dtlibera DATE */
-                        INPUT 0,                         /* cdcoploj */
-                        INPUT 0,                         /* nrcntloj */
+                        /* INPUT 0,                         cdcoploj */
+                        /* INPUT 0,                         nrcntloj */
                         INPUT 0,						 /* idfiniof */
 						INPUT "",                        /* dscatbem */
      
