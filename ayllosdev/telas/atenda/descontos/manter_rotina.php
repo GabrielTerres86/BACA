@@ -65,19 +65,30 @@
 	    $xml .= " <Dados>";
 	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	    $xml .= "   <nrctrlim>".$nrctrlim."</nrctrlim>";
+	    $xml .= "   <tpctrlim>3</tpctrlim>";
+	    $xml .= "	<dtmovito>".$glbvars["dtmvtolt"]."</dtmovito>";
+	    $xml .= "   <tpenvest>I</tpenvest>"; // Tipo de envio para esteira I - Inclusao (Emprestimo)
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
 	    // FAZER O INSERT CRAPRDR e CRAPACA
-	    $xmlResult = mensageria($xml,"XXXXX","XXXXX", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SENHA_ENVIAR_ESTEIRA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
+		$registros = $xmlObj->roottag->tags[0]->tags;
+		
 	    // Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodoErro,false);
+           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';           
+		}
+		else{
+			if($xmlObj->roottag->tags[0]){
+				echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
+			} else{
+				echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
+			}	
 		}
 
-		$registros = $xmlObj->roottag->tags[0]->tags;
 
 		exit;
 		
