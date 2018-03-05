@@ -351,6 +351,9 @@ DO WHILE TRUE:
 
         RUN STORED-PROCEDURE pc_crps682 aux_handproc = PROC-HANDLE
            (INPUT INT(tel_cdcooper),
+            INPUT  0,
+            INPUT  0,
+            INPUT  0,
             INPUT INT(STRING(glb_flgresta,"1/0")),
             INPUT  1, /* Gerar arquivo TXT para SPC/Serasa */
             OUTPUT 0,
