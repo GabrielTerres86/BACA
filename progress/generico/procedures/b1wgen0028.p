@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 13/09/2017
+    Data      : Marco/2008                    Ultima Atualizacao: 27/11/2017
     
     Dados referentes ao programa:
 
@@ -518,6 +518,17 @@
 
                 13/09/2017 - Tratamento para nao permitir solicitacao de novos Cartoes BB.
                              (Jaison/Elton - M459)
+
+				19/09/2017 - Ajuste na procedure cadastra_novo_cartao para nao permitir que a cooperativa 
+							 solicite cartao CECRED para ela mesma. Por exemplo: Viacredi acessa sua própria 
+							 onta no Ayllos Web e tenta solicitar um cartao Cecred para si mesma. 
+							 (Chamado 712927) (Kelvin/Douglas)
+
+                16/10/2017 - Remocao de Tratamento para nao permitir solicitacao de novos Cartoes BB.
+                             (Jaison/Elton - M459)
+
+				27/11/2017 - Ajuste na rotina exclui_cartao na verificacao de existencia de cartao Cecred adicional.
+							 (Chamado 788309) - (Fabricio)
 
 ..............................................................................*/
 
@@ -1100,6 +1111,26 @@ PROCEDURE carrega_dados_inclusao:
        END. /* END IF crapass.inpessoa = 1 THEN */
     ELSE
     DO:
+	
+		/* Buscar o CNPJ da cooperativa para nao deixar solicitar o cartao */ 
+        FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+             
+        IF crapass.nrcpfcgc = crapcop.nrdocnpj THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Solicitacao nao permitida. O cliente nao pode " + 
+                                  "ser igual ao CNPJ da instituicao informante.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).                
+                    
+            RETURN "NOK".
+        END.
+		
         FOR FIRST crapjfn FIELDS(vlrftbru mesftbru anoftbru)
                           WHERE crapjfn.cdcooper = crapass.cdcooper AND
                                 crapjfn.nrdconta = crapass.nrdconta
@@ -1329,7 +1360,7 @@ PROCEDURE carrega_dados_inclusao:
     FOR EACH crapadc WHERE crapadc.cdcooper = par_cdcooper   AND
                            crapadc.insitadc = 0 NO-LOCK 
                            BY crapadc.cdadmcrd DESCENDING:
-
+/*
         /* Tratamento para nao permitir solicitacao de novos Cartoes BB */
         IF  CAN-DO ("83,85", STRING(crapadc.cdadmcrd))  THEN
             DO:
@@ -1345,7 +1376,7 @@ PROCEDURE carrega_dados_inclusao:
                     par_dtmvtolt >= 10/24/2017 AND par_dtmvtolt <= 10/30/2017)  THEN
                     NEXT.
             END.
-
+*/
         IF  crapadc.cdadmcrd = 3 AND crapope.cddepart  <> 2 THEN   /* 2-CARTÕES */
             NEXT.
 
@@ -13872,8 +13903,8 @@ PROCEDURE exclui_cartao:
                   LEAVE.
               END.               
           
-          /* Se for um cartao Bancoob - Deve verificar se existem adicionais 
-             cadastrados - 11/11/2014 - Renato - Supero */
+          /* Para cartoes Cecred (Bancoob) verifica se existem cartoes adicionais
+		     (Fabricio). */
           IF f_verifica_adm(crawcrd.cdadmcrd) = 2 THEN
             DO:
                 /* Buscar o CPF do titular da conta */
@@ -13887,11 +13918,12 @@ PROCEDURE exclui_cartao:
                     /* Se estiver tentando excluir o cartao do titular */
                     IF crawcrd.nrcpftit = crapttl.nrcpfcgc THEN
                       DO:
-                          /* Buscar outros registros da operadora */
+                          /* Buscar outros registros da operadora mas de um cartao adicional */
                           FIND FIRST crawbcrd WHERE crawbcrd.cdcooper  = crawcrd.cdcooper  AND
                                                     crawbcrd.nrdconta  = crawcrd.nrdconta  AND
                                                     crawbcrd.nrctrcrd <> crawcrd.nrctrcrd  AND 
-                                                    crawbcrd.cdadmcrd  = crawcrd.cdadmcrd
+                                                    crawbcrd.cdadmcrd  = crawcrd.cdadmcrd  AND
+													crawbcrd.flgprcrd  = 0
                                                     NO-LOCK NO-ERROR.
                                                
                           IF AVAILABLE crawbcrd  THEN
