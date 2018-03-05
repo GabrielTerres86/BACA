@@ -766,8 +766,9 @@ PROCEDURE consulta-boleto-2via.
         END.
     
     /* ====  validacao do boleto ====*/
-    
-    IF crapcob.incobran = 5 THEN
+    IF crapcob.insitcrt = 3 THEN
+         ASSIGN aux_dscritic = "Boleto bloqueado, entre em contato com o beneficiário".
+    ELSE IF crapcob.incobran = 5 THEN
          ASSIGN aux_dscritic = "Boleto liquidado. Nao e possivel imprimi-lo.".
     ELSE IF crapcob.incobran = 3 AND crapcob.insitcrt = 1 THEN
          ASSIGN aux_dscritic = "Boleto enviado para protesto. " +

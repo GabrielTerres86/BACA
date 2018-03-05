@@ -109,6 +109,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
           ,qtdiaprt crapcob.qtdiaprt%TYPE
           ,indiaprt crapcob.indiaprt%TYPE
           ,insitpro crapcob.insitpro%TYPE
+		  ,insrvprt crapcob.insrvprt%TYPE
           ,flgcbdda VARCHAR2(1)
           ,cdocorre INTEGER
           ,dsocorre VARCHAR2(1000)
@@ -1480,6 +1481,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                ,cob.dtelimin
                ,cob.flserasa 
                ,cob.qtdianeg
+			   ,cob.insrvprt
                ,sab.nmdsacad
                ,sab.dsendsac
                ,sab.nmbaisac
@@ -1880,6 +1882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           pr_tab_cob(vr_ind_cob).tpjurmor := rw_crapcob.tpjurmor;
           pr_tab_cob(vr_ind_cob).tpdmulta := rw_crapcob.tpdmulta;
           pr_tab_cob(vr_ind_cob).flgdprot := rw_crapcob.flgdprot;
+		  pr_tab_cob(vr_ind_cob).insrvprt := rw_crapcob.insrvprt;
           pr_tab_cob(vr_ind_cob).qtdiaprt := rw_crapcob.qtdiaprt;
           pr_tab_cob(vr_ind_cob).indiaprt := rw_crapcob.indiaprt;
           pr_tab_cob(vr_ind_cob).insitpro := rw_crapcob.insitpro;
@@ -1997,8 +2000,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           END IF;
           
           IF rw_crapcob.flgdprot = 1 THEN
-             pr_tab_cob(vr_ind_cob).dsdinst3 := 'PROTESTAR APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS CORRIDOS DO VENCIMENTO.';
-             pr_tab_cob(vr_ind_cob).dsdinst4 := '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***';
+             IF rw_crapcob.insrvprt = 1 THEN
+               pr_tab_cob(vr_ind_cob).dsdinst3 := 'PROTESTAR BOLETO APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS DO VENCIMENTO.';
+               pr_tab_cob(vr_ind_cob).dsdinst4 := '*** SERVICO DE PROTESTO SERA EFETUADO PELO IEPTB ***';
+             ELSIF rw_crapcob.insrvprt = 2 THEN
+               pr_tab_cob(vr_ind_cob).dsdinst3 := 'PROTESTAR APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS CORRIDOS DO VENCIMENTO.';
+               pr_tab_cob(vr_ind_cob).dsdinst4 := '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***';
+             END IF;
           END IF;
                     
           IF rw_crapcob.flserasa = 1 AND rw_crapcob.qtdianeg > 0  THEN
