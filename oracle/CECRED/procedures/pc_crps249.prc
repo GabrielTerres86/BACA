@@ -651,7 +651,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        and craphis.cdhstctb > 0
        and craphis.cdhistor NOT IN (1154, -- Hist.Sicredi
                                     1019, -- Hist. Debito Automatico Sicredi
-                                    1414) -- Hist. Gps inss convencional via sicredi
+                                    1414,
+                                    2311,
+                                    2312,
+                                    2539,
+                                    2540) -- Hist. Gps inss convencional via sicredi
        and upper(craphis.nmestrut) in ('CRAPLCT',
                                        'CRAPLCM',
                                        'CRAPLEM',
@@ -699,7 +703,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            craphis.tpctbcxa,
            craprej.cdbccxlt,
            craprej.nraplica,
-           craprej.vlsdapli
+           craprej.vlsdapli,
+           craprej.nrdocmto
       from craprej,
            craphis
      where craprej.cdcooper = pr_cdcooper
@@ -745,7 +750,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            craprej.nrseqdig,
            crapthi.vltarifa,
            craprej.nraplica,
-           craprej.vlsdapli
+           craprej.vlsdapli,
+           craprej.nrdocmto
       from craprej,
            crapthi
      where crapthi.cdcooper = pr_cdcooper
