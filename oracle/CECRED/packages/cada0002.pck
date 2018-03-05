@@ -4019,8 +4019,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
             ,cdcooper
         FROM crapope ope
        WHERE (TRIM(upper(ope.cdoperad)) LIKE UPPER('e%')
-          OR TRIM(upper(ope.cdoperad)) LIKE UPPER('f%')
-          OR TRIM(upper(ope.cdoperad)) LIKE UPPER('t%'))
+          OR TRIM(upper(ope.cdoperad)) LIKE UPPER('f%'))
          AND length(ope.cdoperad) = 8          
          AND ope.cdsitope = 1;
     
