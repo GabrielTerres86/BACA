@@ -22,13 +22,13 @@
 
 	// parâmetos do POST em variáveis
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
-	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '' ;
-	$nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : '' ;
+	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0 ;
+	$nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : 0 ;
 	$insitlim = (isset($_POST['insitlim'])) ? $_POST['insitlim'] : '' ;
 	$dssitest = (isset($_POST['dssitest'])) ? $_POST['dssitest'] : '' ;
 	$insitapr = (isset($_POST['insitapr'])) ? $_POST['insitapr'] : '' ;
-	$vllimite = (isset($_POST['vllimite'])) ? $_POST['vllimite'] : '' ;
-	$cddopera = (isset($_POST['cddopera'])) ? $_POST['cddopera'] : '' ;
+	$vllimite = (isset($_POST['vllimite'])) ? $_POST['vllimite'] : 0 ;
+	$cddopera = (isset($_POST['cddopera'])) ? $_POST['cddopera'] : 0 ;
 
 
 	if ($operacao == 'ENVIAR_ANALISE' ) {
@@ -92,7 +92,11 @@
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
+
+
 	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","CONFIRMAR_NOVO_LIMITE_TIT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+
 	    $xmlObj = getObjectXML($xmlResult);
 
 	    // Se ocorrer um erro, mostra crítica
@@ -110,11 +114,12 @@
 			$mensagem_02 = $xmlObj->roottag->tags[0]->tags[1]->cdata;
 			$mensagem_03 = $xmlObj->roottag->tags[0]->tags[2]->cdata;
 			$mensagem_04 = $xmlObj->roottag->tags[0]->tags[3]->cdata;
+			$mensagem_05 = $xmlObj->roottag->tags[0]->tags[4]->cdata;
 			$qtctarel    = '';
 			
 			if ($mensagem_03 != '') {
-				$tab_grupo   = $xmlObj->roottag->tags[0]->tags[4]->tags;
-				$qtctarel    = $xmlObj->roottag->tags[0]->tags[5]->cdata;
+				$tab_grupo   = $xmlObj->roottag->tags[0]->tags[5]->tags;
+				$qtctarel    = $xmlObj->roottag->tags[0]->tags[6]->cdata;
 			}
 			
 			$grupo = '';
@@ -125,7 +130,17 @@
 				if ($grupo != '')
 					$grupo = substr($grupo,0,-1);
 			}
-			echo 'verificaMensagens("'.$mensagem_01.'","'.$mensagem_02.'","'.$mensagem_03.'","'.$mensagem_04.'","'.$qtctarel.'","'.$grupo.'");';
+
+			echo 'verificaMensagens("'.$mensagem_01.'","'.$mensagem_02.'","'.$mensagem_03.'","'.$mensagem_04.'","'.$mensagem_05.'","'.$qtctarel.'","'.$grupo.'");';
+
+			/*echo 'showConfirmacao(
+						"Deseja confirmar novo limite?",
+						"Confirma&ccedil;&atilde;o - Ayllos",
+						"methodStr",
+						"telaOperacaoNaoEfetuada()",
+						"sim.gif",
+						"nao.gif");'*/
+			exit;
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
@@ -142,47 +157,24 @@
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
-
 	    // FAZER O INSERT CRAPRDR e CRAPACA
 	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ACEITAR_REJEICAO_LIM_TIT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
 
 	    // Se ocorrer um erro, mostra crítica
-		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			if ($msgErro == "") {
 				$msgErro = $xmlObj->roottag->tags[0]->cdata;
 			}
 			exibeErro(htmlentities($msgErro));
-		}
-		
-		if (strtoupper($xmlObj->roottag->tags[0]->name) == "MSG") {
-			
-			$mensagem_01 = $xmlObj->roottag->tags[0]->tags[0]->cdata;
-			$mensagem_02 = $xmlObj->roottag->tags[0]->tags[1]->cdata;
-			$mensagem_03 = $xmlObj->roottag->tags[0]->tags[2]->cdata;
-			$mensagem_04 = $xmlObj->roottag->tags[0]->tags[3]->cdata;
-			$qtctarel    = '';
-			
-			if ($mensagem_03 != '') {
-				$tab_grupo   = $xmlObj->roottag->tags[0]->tags[4]->tags;
-				$qtctarel    = $xmlObj->roottag->tags[0]->tags[5]->cdata;
-			}
-			
-			$grupo = '';
-			if ($mensagem_03 != '') {
-				foreach( $tab_grupo as $reg ) { 
-					$grupo .= ($reg->cdata).";";
-				}
-				if ($grupo != '')
-					$grupo = substr($grupo,0,-1);
-			}
-			echo 'verificaMensagens("'.$mensagem_01.'","'.$mensagem_02.'","'.$mensagem_03.'","'.$mensagem_04.'","'.$qtctarel.'","'.$grupo.'");';
+			exit;
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
 				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulos();");';
+				exit;
 			}
 		}
 		
