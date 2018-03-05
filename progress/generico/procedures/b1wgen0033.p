@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 04/08/2017
+    Data    : Agosto/2008                     Ultima Atualizacao: 27/11/2017
            
     Dados referentes ao programa:
                 
@@ -228,6 +228,9 @@
 				04/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							 (Adriano - P339).
+
+                27/11/2017 - Chamado 792418 - Incluir opções de cancelamento 10 e 11
+                             (Andrei Vieira - MOUTs)
 
 ..............................................................................*/
                     
@@ -8519,7 +8522,7 @@ PROCEDURE buscar_motivo_can:
 
     valida:
     DO:
-        IF par_cdmotcan > 9 THEN
+        IF par_cdmotcan > 11 THEN
             DO:
                 ASSIGN aux_dscritic = "Motivo nao cadastrado".
                 LEAVE valida.
@@ -8562,6 +8565,14 @@ PROCEDURE buscar_motivo_can:
         CREATE tt-mot-can.
         ASSIGN tt-mot-can.cdmotcan = 9
                tt-mot-can.dsmotcan = "Encerramento de conta".
+
+        CREATE tt-mot-can.
+        ASSIGN tt-mot-can.cdmotcan = 10
+               tt-mot-can.dsmotcan = "Insatisfacao".
+
+        CREATE tt-mot-can.
+        ASSIGN tt-mot-can.cdmotcan = 11
+               tt-mot-can.dsmotcan = "Perdido para a concorrencia".
 
         IF par_cdmotcan <> 0 THEN DO:
             FOR EACH tt-mot-can WHERE
