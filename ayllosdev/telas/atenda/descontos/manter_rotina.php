@@ -132,14 +132,6 @@
 			}
 
 			echo 'verificaMensagens("'.$mensagem_01.'","'.$mensagem_02.'","'.$mensagem_03.'","'.$mensagem_04.'","'.$mensagem_05.'","'.$qtctarel.'","'.$grupo.'");';
-
-			/*echo 'showConfirmacao(
-						"Deseja confirmar novo limite?",
-						"Confirma&ccedil;&atilde;o - Ayllos",
-						"methodStr",
-						"telaOperacaoNaoEfetuada()",
-						"sim.gif",
-						"nao.gif");'*/
 			exit;
 		}
 		else{
