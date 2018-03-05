@@ -395,33 +395,6 @@ function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim, dssitest, insitapr
 	return false;
 }
 
-/*
-function carregarBotoesPorLimite(situacao_limite, situacao_analise){
-	var btnConfirmarNovoLimite = $("#btnConfirmarNovoLimite");
-	var btnAceitarRejeicao = $("#btnAceitarRejeicao");
-
-	btnConfirmarNovoLimite.css('display','none');
-	btnAceitarRejeicao.css('display','none');
-
-	if(!situacao_limite || !situacao_analise){
-		return false;
-	}
-	
-	//$insitlim == 'APROVADO' && $dssitest == 'ANALISE FINALIZADA'
-	if('APROVADO' === situacao_limite.toUpperCase()  && 'ANALISE FINALIZADA' === situacao_analise.toUpperCase()){
-		btnConfirmarNovoLimite.css('display','');
-		return false;
-	
-	}
-	//$insitlim == 'NAO APROVADO' && $dssitest == 'ANALISE FINALIZADA')
-	if('NAO APROVADO' === situacao_limite.toUpperCase() && 'ANALISE FINALIZADA' === situacao_analise.toUpperCase()){
-		btnAceitarRejeicao.css('display','');
-		return false;
-	}
-	return false;
-}
-*/
-
 // Função para mostrar a opção Imprimir dos limites de desconto de títulos
 function mostraImprimirLimite() {
     // Mostra mensagem de aguardo
@@ -617,12 +590,6 @@ function confirmaEnvioAnalise(){
 //Avaliar se é possível executar a ação de analisar
 function validaAnaliseTitulo(){
 
-	// INICIO MOCK - (remover trecho quando subir - utilizado apenas para mock)
-	//var insitapr = 'REJEITADO AUTOMATICAMENTE'; 
-	//var dssitest = 'ANALISE FINALIZADA'; 
-
-	// FIM MOCK - (remover trecho quando subir - utilizado apenas para mock)
-
 	// pega os valores conforme o status que está na tabela (descomentar quando não estiver usando o mock)
 	var insitapr = $('#insitapr').val();
 	var dssitest = $("#dssitest").val();
@@ -707,16 +674,7 @@ function enviarPropostaAnalise() {
 }
 
 function confirmaNovoLimite(cddopera) {
-    /*if (!confirm || confirm == 0) {
-		showConfirmacao(
-						"Deseja confirmar o novo limite ?",
-						"Confirma&ccedil;&atilde;o - Ayllos",
-						"confirmarNovoLimite(1);",
-						"blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
-						"sim.gif",
-						"nao.gif");
-		return false;
-	}*/
+
 		showMsgAguardo("Aguarde, confirmando novo limite ...");
 
 		var operacao = "CONFIMAR_NOVO_LIMITE";
@@ -1179,17 +1137,6 @@ function validaLimiteDscTit(cddopcao,idconfir,idconfi2,idconfi5) {
 function validaNrContrato() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando n&uacute;mero do contrato ...");
-	
-	/* Campo para confirmar numero removido	 
-	var antnrctr = $("#antnrctr","#frmDadosLimiteDscTit").val().replace(/\./g,"");
-	
-	// Valida número do contrato
-	if (antnrctr == "" || !validaNumero(antnrctr,true,0,0)) {
-		hideMsgAguardo();
-		showError("error","Confirme o n&uacute;mero do contrato.","Alerta - Ayllos","$('#antnrctr','#frmDadosLimiteDscTit').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	} 
-	*/
 	
 	$.ajax({		
 		type: "POST", 
