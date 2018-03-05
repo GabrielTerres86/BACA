@@ -755,18 +755,22 @@ function confirmaNovoLimite(cddopera) {
 
 function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,mensagem_05,qtctarel,grupo,vlutiliz,vlexcedi) {
 
-	if (mensagem_01 != '')
+	if (mensagem_01 != ''){
+
 		showConfirmacao(mensagem_01
 					   ,"Confirma&ccedil;&atilde;o - Ayllos"
 					   ,"verificaMensagens('','" + mensagem_02 + "','" + mensagem_03 + "','" + mensagem_04 + "','"+ mensagem_05 + "','" + qtctarel + "','" + grupo + "','" + vlutiliz + "','" + vlexcedi + "')"
 					   ,"telaOperacaoNaoEfetuada()"
 					   ,"sim.gif","nao.gif");
-	else if (mensagem_02 != '')
+	}
+	else if (mensagem_02 != ''){
+
 		showConfirmacao('<center>' + (mensagem_02 + "<br>Deseja confirmar esta operação?") + '</center>'
 					   ,"Confirma&ccedil;&atilde;o - Ayllos"
 					   ,"verificaMensagens('','','" + mensagem_03 + "','" + mensagem_04 + "','" + mensagem_05 + "','" + qtctarel + "','" + grupo + "','" + vlutiliz + "','" + vlexcedi + "')"
 					   ,"telaOperacaoNaoEfetuada()"
 					   ,"sim.gif","nao.gif");
+	}
 	else if (mensagem_03 != ''){
 
 		exibeRotina($('#divUsoGenerico'));
@@ -777,7 +781,7 @@ function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,mensa
 		$.ajax({
 			type: 'POST',
 			dataType: 'html',
-			url: UrlSite + 'telas/atenda/descontos/cheques/titulos_tabela_grupo.php',
+			url: UrlSite + 'telas/atenda/descontos/titulos/titulos_tabela_grupo.php',
 			data: {
 			 mensagem_03: mensagem_03,
 			 mensagem_04: mensagem_04,
@@ -802,7 +806,8 @@ function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,mensa
 		});
 	}
 	else if (mensagem_04 != ''){
-		showError("inform",mensagem_04,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));verificaMensagens('','','','',"+ $mensagem_05 +",'','','','');");
+
+		showError("inform",mensagem_04,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));verificaMensagens('','','','','"+ mensagem_05 +"','','','','');");
 	}
 	else if(mensagem_05 != ''){
 
@@ -822,6 +827,42 @@ function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,mensa
 function telaOperacaoNaoEfetuada() {
 	fechaRotina($('#divUsoGenerico'),'divRotina');
 	showError('inform','Opera&ccedil;&atilde;o n&atilde;o efetuada!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+	return false;
+}
+
+function formataMensagem03() {
+
+	var Labels = $('label[for="vlutiliz"],label[for="vlexcedi"]','#divGrupoEconomico');
+
+	Labels.css({'width':'120px','height':'22px','float':'left','display':'block'});
+
+	var Inputs = $('input','#divGrupoEconomico');
+	Inputs.css({'width':'120px','text-align':'right','float':'left','display':'block'});
+	Inputs.desabilitaCampo();
+
+	var divRegistro = $('div.divRegistros','#divGrupoEconomico');
+	var tabela      = $('table', divRegistro );
+	var linha       = $('table > tbody > tr', divRegistro );
+
+	divRegistro.css({'height':'100px'});
+	divRegistro.css({'width':'250px'});
+
+	var ordemInicial = new Array();
+	ordemInicial = [[0,0]];
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '230px';
+
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'center';
+
+	var metodoTabela = '';
+
+	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, metodoTabela );
+
+	$('#btnContinuar').unbind('click');
+
 	return false;
 }
 
