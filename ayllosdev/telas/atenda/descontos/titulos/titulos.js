@@ -593,7 +593,6 @@ function validaAnaliseTitulo(){
     // pega os valores conforme o status que está na tabela (descomentar quando não estiver usando o mock)
     var insitapr = decisao;
     var dssitest = situacao_analise;
-    console.log(dssitest == 'ANALISE FINALIZADA' && insitapr == 'REJEITADO AUTOMATICAMENTE');
     if (dssitest == 'ANALISE FINALIZADA' && insitapr == 'REJEITADO AUTOMATICAMENTE'){
         showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'enviarPropostaAnaliseComLIberacaoCordenador()\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
     }else{
@@ -675,42 +674,49 @@ function enviarPropostaAnalise() {
     }); 
 }
 
-function confirmaNovoLimite(cddopera) {
-
-        showMsgAguardo("Aguarde, confirmando novo limite ...");
-
-        var operacao = "CONFIMAR_NOVO_LIMITE";
-        
-        $.ajax({        
-            type: "POST", 
-            url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
-            dataType: "html",
-            data: {
-                operacao: operacao,
-                nrdconta: nrdconta,
-                nrctrlim: nrcontrato,
-                vllimite: valor_limite,
-                cddopera: cddopera,
-
-                redirect: "html_ajax"
-            },      
-            error: function(objAjax,responseError,objExcept) {
-                hideMsgAguardo();
-                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-            },
-            success: function(response) {
-                try {
-                      eval(response);
-                        hideMsgAguardo();
-                  } catch (error) {
-                      hideMsgAguardo();
-                      showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-                  }
-            }           
-        });
-        
+function efetuarNovoLimite(){
+        showConfirmacao(
+                        "Deseja confirmar novo limite?",
+                        "Confirma&ccedil;&atilde;o - Ayllos",
+                        "confirmaNovoLimite(0);",
+                        "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
+                        "sim.gif",
+                        "nao.gif");
         return false;
-    
+}
+
+function confirmaNovoLimite(cddopera) {
+    showMsgAguardo("Aguarde, confirmando novo limite ...");
+
+    var operacao = "CONFIMAR_NOVO_LIMITE";
+    $.ajax({        
+        type: "POST", 
+        url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+        dataType: "html",
+        data: {
+            operacao: operacao,
+            nrdconta: nrdconta,
+            nrctrlim: nrcontrato,
+            vllimite: valor_limite,
+            cddopera: cddopera,
+
+            redirect: "html_ajax"
+        },      
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            try {
+                  eval(response);
+                    hideMsgAguardo();
+              } catch (error) {
+                  hideMsgAguardo();
+                  showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+              }
+        }           
+    });
+    return false;
 }
 
 function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,mensagem_05,qtctarel,grupo,vlutiliz,vlexcedi) {
@@ -829,7 +835,7 @@ function formataMensagem03() {
 function aceitarRejeicao(confirm) {
     if(!confirm || confirm == 0){
         showConfirmacao(
-                        "Deseja aceitar a rejei&ccedil;&atilde;o do limite?",
+                        "Deseja rejeitar este limite?",
                         "Confirma&ccedil;&atilde;o - Ayllos",
                         "aceitarRejeicao(1);",
                         "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",

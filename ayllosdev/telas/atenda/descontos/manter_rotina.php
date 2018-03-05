@@ -141,7 +141,7 @@
 				if ($grupo != '')
 					$grupo = substr($grupo,0,-1);
 			}
-
+			
 			echo 'verificaMensagens("'.$mensagem_01.'","'.$mensagem_02.'","'.$mensagem_03.'","'.$mensagem_04.'","'.$mensagem_05.'","'.$qtctarel.'","'.$grupo.'");';
 			exit;
 		}
@@ -176,12 +176,12 @@
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
-				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulos();");';
+				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - 	Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulos();");';
 				exit;
-			}
-		}
+			} // OK
+		}// != ERROR
 		
-	}
+	}//ACEITAR_REJEICAO_LIMITE
 
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
