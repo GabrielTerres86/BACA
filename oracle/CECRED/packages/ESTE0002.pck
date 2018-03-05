@@ -12,7 +12,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
       Frequencia: -----
       Objetivo  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN - Motor de Credito
 
-      Alteracoes:
+      Alteracoes: 12/12/2017 - Projeto 410 - inclusão do IOF sobre atraso - (JEan - MOut´S)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -30,7 +30,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
 									
 END ESTE0002;
 /
-CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
@@ -4164,6 +4164,9 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
 		vr_qtdiarpv      INTEGER;
     vr_valoriof      NUMBER;
+    vr_vliofpri      NUMBER;
+    vr_vliofadi      NUMBER;
+    vr_flgimune      PLS_INTEGER;
     vr_tab_split     gene0002.typ_split;
     vr_dsliquid      VARCHAR2(1000);
     vr_sum_vlpreemp  crapepr.vlpreemp%TYPE := 0;
@@ -4381,11 +4384,18 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
                                ,pr_dtcarenc => rw_crawepr.dtcarenc
                                ,pr_qtdias_carencia => 0
                                ,pr_valoriof => vr_valoriof
+                               ,pr_vliofpri => vr_vliofpri
+                               ,pr_vliofadi => vr_vliofadi
+                               ,pr_flgimune => vr_flgimune
                                ,pr_dscritic => vr_dscritic);
 
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
     vr_obj_generico.put('CETValor', este0001.fn_decimal_ibra(nvl(rw_crawepr.percetop,0)));
     vr_obj_generico.put('IOFValor', este0001.fn_decimal_ibra(nvl(vr_valoriof,0)));
+    vr_obj_generico.put('IOFPrincipal', este0001.fn_decimal_ibra(nvl(vr_vliofpri,0)));
+    vr_obj_generico.put('IOFAdicional', este0001.fn_decimal_ibra(nvl(vr_vliofadi,0)));
+    vr_obj_generico.put('flgimune', nvl(vr_flgimune,0));
+    
     
     IF rw_crawepr.dsliquid <> '0,0,0,0,0,0,0,0,0,0' THEN
       vr_tab_split := gene0002.fn_quebra_string(rw_crawepr.dsliquid, ',');

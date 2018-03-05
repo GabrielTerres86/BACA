@@ -61,6 +61,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                         ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
                                         ,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
                                         ,pr_nmtelant  IN VARCHAR2                     -- Nome da tela 
+                                        ,pr_vliofcpl  IN crapepr.vliofcpl%TYPE        -- Valor do IOF complementar
                                         ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
                                         ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                         ,pr_dscritic OUT VARCHAR2);                   -- Descrição da crítica
@@ -569,6 +570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                         ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
                                         ,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
                                         ,pr_nmtelant  IN VARCHAR2                     -- Nome da tela 
+                                        ,pr_vliofcpl  IN crapepr.vliofcpl%TYPE        -- Valor do IOF complementar
                                         ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
                                         ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                         ,pr_dscritic OUT VARCHAR2) IS                 -- Descrição da crítica
@@ -930,7 +932,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                       ,pr_nrdolote => 650001              --> Numero do Lote
                                       ,pr_nrdconta => pr_nrdconta         --> Número da conta
                                       ,pr_cdhistor => 384                 --> Codigo historico
-                                      ,pr_vllanmto => pr_vltotpag         --> Valor do debito
+                                      ,pr_vllanmto => pr_vltotpag - nvl(pr_vliofcpl,0)        --> Valor do debito
                                       ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
                                       ,pr_nrctremp => 0                   --> Número do contrato de empréstimo
                                       ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
@@ -948,6 +950,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         END IF;
         RAISE vr_exc_erro;
       END IF;  
+         
+      IF NVL(pr_vliofcpl,0) > 0 THEN
+          EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
+                                        ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
+                                        ,pr_cdagenci => pr_cdagenci         --> Código da agência
+                                        ,pr_cdbccxlt => 100                 --> Número do caixa
+                                        ,pr_cdoperad => pr_cdoperad         --> Código do Operador
+                                        ,pr_cdpactra => pr_cdagenci         --> P.A. da transação
+                                        ,pr_nrdolote => 650001              --> Numero do Lote
+                                        ,pr_nrdconta => pr_nrdconta         --> Número da conta
+                                        ,pr_cdhistor => 2313                --> Codigo historico
+                                        ,pr_vllanmto => pr_vliofcpl         --> Valor do debito
+                                        ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
+                                        ,pr_nrctremp => 0                   --> Número do contrato de empréstimo
+                                        ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
+                                        ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
+            
+          -- Se ocorreu erro
+          IF vr_des_reto <> 'OK' THEN
+            -- Se possui algum erro na tabela de erros
+            IF vr_tab_erro.COUNT() > 0 THEN
+              pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              pr_cdcritic := 0;
+              pr_dscritic := 'Erro ao criar o lancamento de IOF na conta corrente.';
+            END IF;
+            RAISE vr_exc_erro;
+          END IF;  
+          
+          -- Insere registro de pagamento de IOF na tbgen_iof_lancamento
+          tiof0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
+                               , pr_nrdconta     => pr_nrdconta
+                               , pr_dtmvtolt     => pr_crapdat.dtmvtolt
+                               , pr_tpproduto    => 1 -- Emprestimo
+                               , pr_nrcontrato   => pr_nrctremp
+                               , pr_idlautom     => null
+                               , pr_dtmvtolt_lcm => pr_crapdat.dtmvtolt
+                               , pr_cdagenci_lcm => pr_cdagenci
+                               , pr_cdbccxlt_lcm => 100
+                               , pr_nrdolote_lcm => 650001
+                               , pr_nrseqdig_lcm => 1
+                               , pr_vliofpri     => 0
+                               , pr_vliofadi     => 0
+                               , pr_vliofcpl     => pr_vliofcpl
+                               , pr_flgimune     => 0
+                               , pr_cdcritic     => vr_cdcritic 
+                               , pr_dscritic     => vr_dscritic);
+          
+          if vr_dscritic is not null then
+             raise vr_exc_erro;
+          end if;
+          
+      END IF;
          
     END IF;    
     
@@ -1001,6 +1057,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
              , epr.vlpgmupr = pr_vlttmupr
              , epr.vlpgjmpr = pr_vlttjmpr
              , epr.dtliquid = pr_crapdat.dtmvtolt
+             , epr.vliofcpl = epr.vliofcpl - nvl(pr_vliofcpl,0)
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
            AND epr.nrctremp = pr_nrctremp;
@@ -1656,12 +1713,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                        ,1040
                        ,craplem.vllanmto
                        ,1042
-                       ,craplem.vllanmto))
+                       ,craplem.vllanmto
+                       ,2311
+                       ,craplem.vllanmto * -1
+                       ,2312
+                       ,craplem.vllanmto * -1))
           FROM craplem
          WHERE craplem.cdcooper = pr_cdcooper
            AND craplem.nrdconta = pr_nrdconta
            AND craplem.nrctremp = pr_nrctremp
-           AND craplem.cdhistor IN (1040, 1041, 1042, 1043);
+           AND craplem.cdhistor IN (1040, 1041, 1042, 1043, 2311, 2312);
         
     -- VARIÁVEIS
     vr_tab_pgto_parcel empr0001.typ_tab_pgto_parcel;
@@ -2064,6 +2125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
            , epr.vlttjmpr
            , epr.vlpgjmpr
            , epr.dtultpag
+           , epr.vliofcpl
         FROM crapepr  epr
        WHERE epr.cdcooper = pr_cdcooper
          AND epr.nrdconta = pr_nrdconta
@@ -2134,6 +2196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                   ,pr_cdoperad => pr_cdoperad         
                                   ,pr_vlparcel => vr_vlpagmto
                                   ,pr_nmtelant => pr_nmtelant
+                                  ,pr_vliofcpl => rw_crapepr.vliofcpl
                                   ,pr_vltotpag => pr_vltotpag -- Retorno do total pago       
                                   ,pr_cdcritic => vr_cdcritic         
                                   ,pr_dscritic => vr_dscritic);       

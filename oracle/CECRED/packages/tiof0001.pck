@@ -131,9 +131,27 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                              ,pr_cdcritic     OUT NUMBER                   --> Código da Crítica
                              ,pr_dscritic     OUT VARCHAR2);               --> Descrição da Crítica
                           
+  PROCEDURE pc_busca_taxa_iof_prg(pr_cdcooper	    IN crapcop.cdcooper%TYPE     --> Codigo da Cooperativa 
+                                 ,pr_nrdconta     IN crapass.nrdconta%TYPE     --> Numero da Conta Corrente
+                                 ,pr_nrctremp     IN NUMBER                    --> Numero do Contrato
+                                 ,pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE DEFAULT NULL    --> Data do movimento para busca na tabela de IOF
+                                 ,pr_cdlcremp     IN crawepr.cdlcremp%type default 0
+                                 ,pr_vlemprst     IN crapepr.vlemprst%TYPE
+                                 ,pr_vltxiofpri   OUT VARCHAR2                   --> Taxa de IOF principal
+                                 ,pr_vltxiofadc   OUT VARCHAR2                   --> Taxa de IOF adicional
+                                 ,pr_cdcritic     OUT NUMBER                   --> Código da Crítica
+                                 ,pr_dscritic     OUT VARCHAR2);            --> Descrição da Crítica
+                          
   PROCEDURE pc_carrega_taxas_iof(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE     --> Data de movimento
                                 ,pr_dscritic OUT crapcri.dscritic%TYPE);  --> Descricao da Critica
   
+  --Rotina chamada no processo de desfazer a efetivacao de uma proposta
+  PROCEDURE pc_exclui_iof(pr_cdcooper IN  crapepr.cdcooper%TYPE    --> Cooperativa
+                         ,pr_nrdconta IN  crapepr.nrdconta%TYPE    --> Numero da conta
+                         ,pr_nrctremp IN  crapepr.nrctremp%TYPE    --> Numero do contrato
+                         ,pr_cdcritic OUT crapcri.cdcritic%TYPE    --> Codigo da critica
+                         ,pr_dscritic OUT crapcri.dscritic%TYPE);  --> Descricao da critica
+
 END TIOF0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
@@ -434,6 +452,7 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       vr_dscritic crapcri.dscritic%TYPE;
       vr_vltaxa_iof_atraso NUMBER := null;
       vr_vltotope          number;
+      vr_existe_epr        BOOLEAN := FALSE;
       
       -- Cursor para dados da PF, PJ, PJ Cooperativa e regime tributário
       CURSOR cr_pessoa(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -447,17 +466,29 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
      CURSOR cr_crapepr(pr_cdcooper IN crapcop.cdcooper%TYPE
                       ,pr_nrdconta IN crapass.nrdconta%TYPE
                       ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
-       SELECT t.vltaxiof
+       SELECT t.vlaqiofc
              ,t.dtinsori
        FROM crapepr t
        WHERE t.cdcooper = pr_cdcooper
              AND t.nrdconta = pr_nrdconta
              AND t.nrctremp = pr_nrctremp
-             AND (t.tpemprst <> 1 OR (t.tpemprst IN(1, 2) AND t.dtmvtolt >= TO_DATE('03/04/2017','dd/mm/yyyy'))); 
+             AND t.tpemprst IN(1, 2) 
+             AND t.dtmvtolt >= TO_DATE('03/04/2017','dd/mm/yyyy'); 
              /*Para operações em atraso do produto Price Pré-fixado, deverá ser cobrado IOF complementar de atraso
              nas operações contratadas após o dia 03 de abril de 2017*/
      rw_crapepr cr_crapepr%ROWTYPE;
        
+    -- Cursor de portabilidade
+    CURSOR cr_portabilidade(pr_cdcooper IN crapcop.cdcooper%TYPE
+                           ,pr_nrdconta IN crapcop.nrdconta%TYPE
+                           ,pr_nrctremp IN crawepr.nrctremp%TYPE) IS
+    SELECT nrunico_portabilidade
+          ,flgerro_efetivacao
+      FROM tbepr_portabilidade
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND nrctremp = pr_nrctremp;
+    rw_portabilidade cr_portabilidade%ROWTYPE;    
        
     BEGIN
       OPEN cr_pessoa(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
@@ -470,15 +501,14 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       END IF;
       CLOSE cr_pessoa;
       
-      
       IF pr_nrctremp IS NOT NULL THEN
         OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_nrctremp => pr_nrctremp);
          FETCH cr_crapepr INTO rw_crapepr;
          IF cr_crapepr%FOUND THEN
-            
-            vr_vltaxa_iof_atraso := rw_crapepr.vltaxiof;
+            vr_existe_epr := TRUE;
+            vr_vltaxa_iof_atraso := rw_crapepr.vlaqiofc;
          END IF;
          CLOSE cr_crapepr;  
       END IF;
@@ -518,8 +548,8 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
           pr_vliofcpl := 0;
         END IF;
         
-        
         --IF rw_pessoa.inpessoa = 1 THEN
+        IF NOT vr_existe_epr THEN
           pc_verifica_isencao_iof(pr_cdcooper => pr_cdcooper --> Código da cooperativa referente ao contrato de empréstimos
                                  ,pr_nrdconta => pr_nrdconta --> Número da conta referente ao empréstimo
                                  ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
@@ -529,7 +559,20 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_vliofadi => pr_vliofadi --> Valor do IOF adicional
                                  ,pr_vliofcpl => pr_vliofcpl --> Valor do IOF complementar
                                  ,pr_dscritic => vr_dscritic); --> Descrição da crítica
-         --END IF;
+        END IF;
+         
+         
+        --Consulta o registro na tabela de portabilidade, se tiver portabilidade, não cobra IOF
+        OPEN cr_portabilidade(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrctremp => pr_nrctremp);
+        FETCH cr_portabilidade INTO rw_portabilidade;
+        IF cr_portabilidade%FOUND THEN
+           pr_vliofpri := 0;
+           pr_vliofadi := 0;
+        END IF;
+        CLOSE cr_portabilidade;
+
                                
       EXCEPTION
         WHEN vr_exc_erro THEN
@@ -1088,6 +1131,63 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
   END pc_busca_taxa_iof;
   
   
+  PROCEDURE pc_busca_taxa_iof_prg(pr_cdcooper	    IN crapcop.cdcooper%TYPE     --> Codigo da Cooperativa 
+                                 ,pr_nrdconta     IN crapass.nrdconta%TYPE     --> Numero da Conta Corrente
+                                 ,pr_nrctremp     IN NUMBER                    --> Numero do Contrato
+                                 ,pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE DEFAULT NULL    --> Data do movimento para busca na tabela de IOF
+                                 ,pr_cdlcremp     IN crawepr.cdlcremp%type default 0
+                                 ,pr_vlemprst     IN crapepr.vlemprst%TYPE
+                                 ,pr_vltxiofpri   OUT VARCHAR2                   --> Taxa de IOF principal
+                                 ,pr_vltxiofadc   OUT VARCHAR2                   --> Taxa de IOF adicional
+                                 ,pr_cdcritic     OUT NUMBER                   --> Código da Crítica
+                                 ,pr_dscritic     OUT VARCHAR2)  IS            --> Descrição da Crítica
+  BEGIN
+   /* .............................................................................
+    Programa: pc_busca_taxa_iof_prg
+    Sistema : CRED
+    Sigla   : TIOF
+    Autor   : Diogo - MoutS
+    Data    : Dezembro/2017.                    Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina chamar a TIOF0001 pelo Progress. Retorna os campos via VARCHAR pois o Progress nula
+                valores com mais de 6 casas decimais
+
+    Observacao: -----
+    Alteracoes:
+    ..............................................................................*/
+    
+    DECLARE
+       vr_vltxiofpri NUMBER;
+       vr_vltxiofadc NUMBER;
+    BEGIN
+      
+       TIOF0001.pc_busca_taxa_iof(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrctremp => pr_nrctremp
+                                 ,pr_dtmvtolt => pr_dtmvtolt
+                                 ,pr_cdlcremp => pr_cdlcremp
+                                 ,pr_vlemprst => pr_vlemprst
+                                 ,pr_vltxiofpri => vr_vltxiofpri
+                                 ,pr_vltxiofadc => vr_vltxiofadc
+                                 ,pr_cdcritic => pr_cdcritic
+                                 ,pr_dscritic => pr_dscritic);
+      
+      pr_vltxiofpri := TO_CHAR(vr_vltxiofpri);
+      pr_vltxiofadc := TO_CHAR(vr_vltxiofadc);
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro ao buscar taxas do IOF. Rotina TIOF0001.pc_busca_taxa_iof_prg. ' || SQLERRM;
+    END;
+  END pc_busca_taxa_iof_prg;
+  
+  
+  
   PROCEDURE pc_carrega_taxas_iof(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE      --> Data de movimento
                                 ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da Critica
     BEGIN
@@ -1124,6 +1224,20 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
     END;
   END pc_carrega_taxas_iof;
       
-  
+  PROCEDURE pc_exclui_iof(pr_cdcooper IN  crapepr.cdcooper%TYPE      --> Cooperativa
+                         ,pr_nrdconta IN  crapepr.nrdconta%TYPE      --> Numero da conta
+                         ,pr_nrctremp IN  crapepr.nrctremp%TYPE      --> Numero do contrato
+                         ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Codigo da critica
+                         ,pr_dscritic OUT crapcri.dscritic%TYPE) IS  --> Descricao da critica
+  BEGIN
+    DELETE tbgen_iof_lancamento t
+     WHERE t.cdcooper   = pr_cdcooper
+       AND t.nrdconta   = pr_nrdconta
+       AND t.nrcontrato = pr_nrctremp;
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro ao excluir IOF. Rotina TIOF0001.pc_exclui_iof. '||sqlerrm;
+  END pc_exclui_iof;
 END TIOF0001;
 /

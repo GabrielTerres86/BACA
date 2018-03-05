@@ -1748,7 +1748,10 @@ PROCEDURE consulta_iof:
                                           INPUT par_dscatbem,     /* Bens em garantia */
                                           INPUT par_idfiniof,     /* Indicador de financiamento de IOF e tarifa */
                                           INPUT ?,
-                                         OUTPUT 0,
+                                         OUTPUT 0, /* IOF */
+                                         OUTPUT 0, /* IOF principal */
+                                         OUTPUT 0, /* IOF adicional */
+                                         OUTPUT 0, /* Imunidade */
                                          OUTPUT "").
     
     /* Fechar o procedimento para buscarmos o resultado */ 
@@ -1917,6 +1920,8 @@ PROCEDURE consulta_tarifa_emprst:
                                               ,INPUT aux_dscatbem       /* Bens em garantia */
                                               ,INPUT 'ATENDA'           /* Nome do programa */
                                               ,INPUT 'N'                /* Flag de envio de e-mail */
+                                              ,INPUT 0                  /* Identificador se financia iof e tarifa */
+                                              ,OUTPUT 0                 /* Tipo de empréstimo */
                                               ,OUTPUT 0                 /* Valor da tarifa */
                                               ,OUTPUT 0                 /* Valor da tarifa especial */
                                               ,OUTPUT 0                 /* Valor da tarifa garantia */

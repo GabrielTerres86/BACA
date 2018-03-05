@@ -550,6 +550,8 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                               ,pr_dsbemgar  IN VARCHAR2              --> Relação de categoria de bens em garantia
                               ,pr_cdprogra  IN VARCHAR2              --> Nome do programa chamador
                               ,pr_flgemail  IN VARCHAR2              --> Envia e-mail S/N, se N interrompe o processo em caso de erro
+                              ,pr_tpemprst  in crapepr.tpemprst%type DEFAULT NULL --> tipo de emprestimo
+                              ,pr_idfiniof  IN crapepr.idfiniof%type DEFAULT 0
                               --
                               ,pr_vlrtarif OUT crapfco.vltarifa%TYPE --> Valor da tarifa calculada
                               ,pr_vltrfesp OUT craplcr.vltrfesp%TYPE --> Valor da tarifa especial calculada
@@ -7931,6 +7933,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                                                      --- deve terminar com |
                               ,pr_cdprogra  IN VARCHAR2              --> Nome do programa chamador
                               ,pr_flgemail  IN VARCHAR2              --> Envia e-mail S/N, se N interrompe o processo em caso de erro
+                              ,pr_tpemprst  in crapepr.tpemprst%type DEFAULT NULL --> tipo de emprestimo
+                              ,pr_idfiniof  IN crapepr.idfiniof%type DEFAULT 0
                               --
                               ,pr_vlrtarif OUT crapfco.vltarifa%TYPE --> Valor da tarifa calculada
                               ,pr_vltrfesp OUT craplcr.vltrfesp%TYPE --> Valor da tarifa especial calculada
@@ -7987,6 +7991,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     w_qtcaract NUMBER;
     w_nrcatbem NUMBER;
     w_dscatbem crapbpr.dscatbem%TYPE;
+    
+    vr_cdbattar_cad VARCHAR2(100) := ' ';
+    vr_cdbattar_ava VARCHAR2(100) := ' ';
+    vr_cdhiscad_lem craphis.cdhistor%TYPE;
+    vr_cdhisgar_lem craphis.cdhistor%TYPE;
+    
     -- Tabela temporaria para tipos de bens em garantia
     TYPE typ_reg_dscatbem IS
      RECORD(dscatbem crapbpr.dscatbem%TYPE);
@@ -8008,6 +8018,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;  
 
+    CURSOR cr_craplcr (pr_cdcooper in crapass.cdcooper%type,
+                       pr_cdlcremp in craplcr.cdlcremp%type) is
+       select dsoperac
+       from   craplcr
+       where  cdcooper = pr_cdcooper
+       and    cdlcremp = pr_cdlcremp;
+       
+    rw_craplcr cr_craplcr%rowtype;
+    
   BEGIN
     -- Limpa Variaveis de Tarifa     
     pr_vlrtarif := 0;
@@ -8248,6 +8267,8 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       
     END IF;
       
+    --pr_cdhislcm := vr_cdhistor;
+          
     -- Cobranca da tarifa de avaliacao de bens em garantia
     vr_cdhistor := 0;
     vr_cdhisest := 0;
@@ -8342,7 +8363,90 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
         pr_cdhisgar := vr_cdhisgar; -- Historico da tarifa de bens em garantia
         pr_cdfvlgar := vr_cdfvlgar;
       END IF;
+      --pr_cdgarlcm := pr_cdhisgar;
     END IF; -- Fim cobranca da tarifa de avaliacao de bens em garantia
+    
+    open cr_craplcr (pr_cdcooper => pr_cdcooper
+                    ,pr_cdlcremp => pr_cdlcremp);
+    fetch cr_craplcr into rw_craplcr;
+    close cr_craplcr;
+    
+    IF pr_idfiniof = 1 THEN
+      IF pr_tpemprst = 1 THEN  -- PP
+        IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
+          vr_cdbattar_cad := 'FINCADPP';
+          vr_cdbattar_ava := 'FINAVAPP';        
+        ELSE
+          vr_cdbattar_cad := 'EMPCADPP';
+          vr_cdbattar_ava := 'EMPAVAPP';
+        END IF;      
+      ELSIF pr_tpemprst = 2 THEN  -- Pós
+        IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
+          vr_cdbattar_cad := 'FINCADPOS';
+          vr_cdbattar_ava := 'FINAVAPOS';        
+        ELSE
+          vr_cdbattar_cad := 'EMPCADPOS';
+          vr_cdbattar_ava := 'EMPAVAPOS';
+        END IF;            
+      END IF;
+      
+      IF rw_crapass.inpessoa = 1 THEN
+        vr_cdbattar_cad := 'PF'||vr_cdbattar_cad;
+        vr_cdbattar_ava := 'PF'||vr_cdbattar_ava;
+      
+      ELSE
+        vr_cdbattar_cad := 'PJ'||vr_cdbattar_cad;
+        vr_cdbattar_ava := 'PJ'||vr_cdbattar_ava;
+      END IF;
+      
+      -- Buscar historico para lancamento na craplem de tarifa de cadastro
+      TARI0001.pc_carrega_par_tarifa_vigente(pr_cdcooper => pr_cdcooper
+                                            ,pr_cdbattar => vr_cdbattar_cad
+                                            ,pr_dsconteu => vr_cdhiscad_lem
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic
+                                            ,pr_des_erro => vr_des_erro
+                                            ,pr_tab_erro => vr_tab_erro);
+
+      -- Verifica se Houve Erro no Retorno
+      IF vr_des_erro = 'NOK' OR vr_tab_erro.count > 0 OR vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+        -- Envio Centralizado de Log de Erro
+        IF vr_tab_erro.count > 0 THEN
+
+          -- Recebe Descrição do Erro
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          RAISE vr_exc_saida;
+        END IF;
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Buscar historico para lancamento na craplem de tarifa de avaliacao de garantia 
+      TARI0001.pc_carrega_par_tarifa_vigente(pr_cdcooper => pr_cdcooper
+                                            ,pr_cdbattar => vr_cdbattar_ava
+                                            ,pr_dsconteu => vr_cdhisgar_lem
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic
+                                            ,pr_des_erro => vr_des_erro
+                                            ,pr_tab_erro => vr_tab_erro);
+
+      -- Verifica se Houve Erro no Retorno
+      IF vr_des_erro = 'NOK' OR vr_tab_erro.count > 0 OR vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+        -- Envio Centralizado de Log de Erro
+        IF vr_tab_erro.count > 0 THEN
+
+          -- Recebe Descrição do Erro
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          RAISE vr_exc_saida;
+        END IF;
+        RAISE vr_exc_saida;
+      END IF;
+      
+      pr_cdhistor := vr_cdhiscad_lem;
+      pr_cdhisgar := vr_cdhisgar_lem;
+      
+        
+    END IF;
+    
   EXCEPTION
     WHEN vr_exc_saida THEN
       -- Se foi retornado apenas código

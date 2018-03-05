@@ -87,8 +87,9 @@ DEF VAR aux_diainici AS INTE                                        NO-UNDO.
 DEF VAR aux_nrdiamta AS INTE                                        NO-UNDO.
 DEF VAR aux_conthist AS INTE                                        NO-UNDO.
 DEF VAR aux_contlote AS INTE                                        NO-UNDO.
-DEF VAR aux_vliofcpl AS DECI                                        NO-UNDO.
+/* DEF VAR aux_vliofcpl AS DECI                                        NO-UNDO. */
 DEF VAR aux_vlbaseiof AS DECI                                        NO-UNDO.
+DEF VAR aux_qtdiaiof AS INTEGER                                     NO-UNDO.
 
 DEF BUFFER crabhis_1 FOR craphis.
 
@@ -197,7 +198,8 @@ DO ON ERROR UNDO , LEAVE:
                         
                  ASSIGN aux_dtdpagto = crapepr.dtdpagto
                         aux_dtdinici = aux_dtmvtolt
-                        aux_dtdfinal = par_dtmvtolt.
+                        aux_dtdfinal = par_dtmvtolt
+                        aux_qtdiaiof = par_dtmvtolt - aux_dtmvtolt.
 
                  /** Rotina para calculo dias360 **/
                  { includes/dias360.i }
@@ -301,7 +303,7 @@ DO ON ERROR UNDO , LEAVE:
                                                         ,INPUT ""
                                                         ,INPUT crapepr.cdlcremp /* pr_cdlcremp */
                                                         ,INPUT par_dtmvtolt /* pr_dtmvtolt */
-                                                        ,INPUT aux_qtdianor /* vr_qtdiamor */
+                                                        ,INPUT aux_qtdiaiof /* vr_qtdiamor */
                                                         ,OUTPUT 0 /* pr_vliofpri */
                                                         ,OUTPUT 0 /* pr_vliofadi */
                                                         ,OUTPUT 0 /* pr_vliofcpl */

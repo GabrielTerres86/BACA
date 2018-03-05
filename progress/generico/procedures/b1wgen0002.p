@@ -2288,7 +2288,10 @@ PROCEDURE obtem-propostas-emprestimo:
                                                        ,INPUT aux_dscatbem     /* Bens em garantia */
                                                        ,INPUT crawepr.idfiniof /* Indicador de financiamento de iof e tarifa */
                                                        ,INPUT tt-proposta-epr.dsctrliq /* pr_dsctrliq */
-                                                       ,OUTPUT 0
+                                                       ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
+                                                       ,OUTPUT 0 /* Valor calculado do iof principal */
+                                                       ,OUTPUT 0 /* Valor calculado do iof adicional */
+                                                       ,OUTPUT 0 /* Imunidade tributária */
                                                        ,OUTPUT "").
             
                     CLOSE STORED-PROC pc_calcula_iof_epr 
@@ -2931,7 +2934,10 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                             ,INPUT aux_dscatbem         /* Bens em garantia */
                                             ,INPUT crawepr.idfiniof     /* Indicador de financiamento de IOF e tarifa */
                                             ,INPUT tt-proposta-epr.dsctrliq /* pr_dsctrliq */
-                                            ,OUTPUT 0
+                                            ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
+                                            ,OUTPUT 0 /* Valor calculado do iof principal */
+                                            ,OUTPUT 0 /* Valor calculado do iof adicional */
+                                            ,OUTPUT 0 /* Imunidade tributária */
                                             ,OUTPUT "").
 
                       CLOSE STORED-PROC pc_calcula_iof_epr 
@@ -3561,6 +3567,7 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        h-b1wgen0110 AS HANDLE                         NO-UNDO.
     DEF   VAR        h-b1wgen0188 AS HANDLE                         NO-UNDO.
     DEF   VAR        h-b1wgen0043 AS HANDLE                         NO-UNDO.
+    DEF   VAR        h-b1wgen0097 AS HANDLE                         NO-UNDO.
 
     DEF   VAR        aux_flgativo AS INTEGER                        NO-UNDO.
     DEF   VAR        aux_contaliq AS INTEGER                        NO-UNDO.
@@ -3568,6 +3575,9 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        aux_qtdias_carencia AS INTE                    NO-UNDO.
 		
     DEF   VAR        aux_vlpreemp AS DECIMAL                        NO-UNDO.
+    DEF   VAR        aux_vlemprst AS DECIMAL                        NO-UNDO.
+    DEF   VAR        aux_vlrtarif AS DECIMAL                        NO-UNDO.
+    DEF   VAR        aux_dscatbem AS CHAR                           NO-UNDO.
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
@@ -4187,6 +4197,67 @@ PROCEDURE valida-dados-gerais:
                             aux_qtdias_carencia = INT(pc_busca_qtd_dias_carencia.pr_qtddias) 
                                                   WHEN pc_busca_qtd_dias_carencia.pr_qtddias <> ?.
 
+                     /* Se financiar IOF, calcula esses valores e soma ao total emprestado, para enviar ao cálculo da parcela*/                             
+                     ASSIGN aux_vlemprst = par_vlemprst.
+                     IF par_idfiniof > 0 THEN DO:
+                     
+                        RUN sistema/generico/procedures/b1wgen0097.p PERSISTENT SET h-b1wgen0097.               
+                        RUN consulta_tarifa_emprst IN h-b1wgen0097 (INPUT  par_cdcooper,
+                                                                    INPUT  par_cdlcremp,
+                                                                    INPUT  par_vlemprst,
+                                                                    INPUT  par_nrdconta,
+                                                                    INPUT  par_nrctremp,
+                                                                    OUTPUT aux_vlrtarif,
+                                                                    OUTPUT TABLE tt-erro).                                
+                        DELETE PROCEDURE h-b1wgen0097.
+                        
+                        IF RETURN-VALUE = "NOK" THEN
+                           RETURN "NOK".
+                           
+                        ASSIGN aux_vlemprst = aux_vlemprst + aux_vlrtarif.
+                                   
+                        /* Busca os bens em garantia */
+                        ASSIGN aux_dscatbem = "".
+                        FOR EACH crapbpr WHERE crapbpr.cdcooper = par_cdcooper  AND
+                                               crapbpr.nrdconta = par_nrdconta  AND
+                                               crapbpr.nrctrpro = par_nrctremp  AND 
+                                               crapbpr.tpctrpro = 90 NO-LOCK:
+                          ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
+                        END.
+                            
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        RUN STORED-PROCEDURE pc_calcula_iof_epr
+                        aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper
+                                                           ,INPUT par_nrdconta
+                                                           ,INPUT par_nrctremp
+                                                           ,INPUT par_dtmvtolt
+                                                           ,INPUT crapass.inpessoa
+                                                           ,INPUT par_cdlcremp
+                                                           ,INPUT par_qtpreemp
+                                                           ,INPUT par_vlpreemp
+                                                           ,INPUT par_vlemprst
+                                                           ,INPUT par_dtdpagto
+                                                           ,INPUT par_dtmvtolt
+                                                           ,INPUT par_tpemprst
+                                                           ,INPUT par_dtmvtolt
+                                                           ,INPUT 0 /* dias de carencia */
+                                                           ,INPUT aux_dscatbem     /* Bens em garantia */
+                                                           ,INPUT par_idfiniof /* Indicador de financiamento de iof e tarifa */
+                                                           ,INPUT "" /* pr_dsctrliq */
+                                                           ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
+                                                           ,OUTPUT 0 /* Valor calculado do iof principal */
+                                                           ,OUTPUT 0 /* Valor calculado do iof adicional */
+                                                           ,OUTPUT 0 /* Imunidade tributária */
+                                                           ,OUTPUT "").
+
+                        CLOSE STORED-PROC pc_calcula_iof_epr 
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                        ASSIGN aux_vlemprst = aux_vlemprst + pc_calcula_iof_epr.pr_valoriof WHEN pc_calcula_iof_epr.pr_valoriof <> ?.
+                     END.
+
                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                
                      /* Efetuar a chamada a rotina Oracle  */
@@ -4197,7 +4268,7 @@ PROCEDURE valida-dados-gerais:
                                                               INPUT par_qtpreemp,
                                                               INPUT par_dtcarenc,
                                                               INPUT par_dtdpagto,
-                                                              INPUT par_vlemprst,
+                                                              INPUT aux_vlemprst,
                                                               INPUT aux_qtdias_carencia,
                                                              OUTPUT 0,   /* pr_vlpreemp */
                                                              OUTPUT 0,   /* pr_cdcritic */
@@ -7943,8 +8014,11 @@ PROCEDURE altera-valor-proposta:
                                                     ,INPUT 0             /* xxxxxxxxxxx  */
                                                     ,INPUT par_dscatbem 
                                                     ,INPUT par_idfiniof
-                                                    ,OUTPUT 0
-                                                    ,OUTPUT 0
+                                                    ,OUTPUT 0 /* IOF */
+                                                    ,OUTPUT 0 /* IOF principal */
+                                                    ,OUTPUT 0 /* IOF adicional */
+                                                    ,OUTPUT 0 /* Imunidade */
+                                                    ,OUTPUT 0 /* Valor recalculado da parcela */
                                                     ,OUTPUT "").
 
            /* Fechar o procedimento para buscarmos o resultado */ 

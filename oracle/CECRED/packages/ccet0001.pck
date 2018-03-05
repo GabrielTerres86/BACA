@@ -1829,6 +1829,9 @@ create or replace package body cecred.CCET0001 is
       vr_txmensal craplrt.txmensal%TYPE := 0; -- Taxa mensal
       vr_txdjuros NUMBER := 0;                -- Taxa anual
       vr_vlrdoiof NUMBER := 0;                -- IOF calculado
+      vr_vliofpri NUMBER := 0;                -- IOF calculado - principal
+      vr_vliofadi NUMBER := 0;                -- IOF calculado - adicional
+      vr_flgimune PLS_INTEGER;
       vr_txjuriof NUMBER := 0;                -- Taxa do IOF
       vr_vlrtarif NUMBER := 0;                -- Valor Tar. Cadastro
       vr_vlrtares NUMBER := 0;                -- Valor tarifa especial
@@ -2162,6 +2165,9 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_dscatbem => vr_dscatbem
                                    ,pr_idfiniof => rw_dados.idfiniof
                                    ,pr_dsctrliq => vr_dsctrliq
+                                   ,pr_vliofpri => vr_vliofpri
+                                   ,pr_vliofadi => vr_vliofadi
+                                   ,pr_flgimune => vr_flgimune
                                    ,pr_dscritic        => vr_dscritic);
                                    
         -- VERIFICA SE OCORREU UMA CRITICA
@@ -2284,7 +2290,7 @@ create or replace package body cecred.CCET0001 is
           RAISE vr_exc_erro;        
         END IF;                  
       END IF;     
-                                                       
+                    */                                     
       -- valor total emprestado
       vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0);      
                                                     
@@ -2819,6 +2825,9 @@ create or replace package body cecred.CCET0001 is
       
       -- VARIAVEIS A ENVIAR PARA O XML
       vr_vlrdoiof NUMBER := 0;                -- IOF calculado
+      vr_vliofpri NUMBER := 0;                -- IOF principal
+      vr_vliofadi NUMBER := 0;                -- IOF adicional
+      vr_flgimune PLS_INTEGER;
       vr_txjuriof NUMBER := 0;                -- Taxa do IOF
       vr_vlrtarif NUMBER := 0;                -- Valor Tar. Cadastro
       vr_txjurtar NUMBER := 0;                -- Taxa Tar. Cadastro         
@@ -3028,6 +3037,9 @@ create or replace package body cecred.CCET0001 is
                                  ,pr_idfiniof => pr_idfiniof
                                  ,pr_dsctrliq => vr_dsctrliq
                                  ,pr_valoriof        => vr_vlrdoiof
+                                 ,pr_vliofpri => vr_vliofpri
+                                 ,pr_vliofadi => vr_vliofadi
+                                 ,pr_flgimune => vr_flgimune
                                  ,pr_dscritic        => vr_dscritic);
                                    
       -- VERIFICA SE OCORREU UMA CRITICA

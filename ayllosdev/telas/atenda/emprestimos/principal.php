@@ -869,7 +869,7 @@
 		$xml .= " <Dados>";
 		$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-		$xml .= "   <nrctremp>".$nrctremp."</nrctremp>";
+		$xml .= "   <nrctremp>0</nrctremp>";
 		$xml .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 		$xml .= "   <inpessoa>".$inpessoa."</inpessoa>";
 		$xml .= "   <cdlcremp>".$cdlcremp."</cdlcremp>";

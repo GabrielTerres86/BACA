@@ -307,7 +307,7 @@ PROCEDURE grava_liquidacao_empr:
                        STRING(craplem.cdhistor)) THEN
                 ASSIGN aux_vllancre = aux_vllancre + craplem.vllanmto.
            ELSE /* Debitos */
-           IF   CAN-DO("1036,1059,1037,1038,1716,1707,1714,1705,1042,1040,2013,2014",
+           IF   CAN-DO("1036,1059,1037,1038,1716,1707,1714,1705,1042,1040,2013,2014,2312,2311",
                        STRING(craplem.cdhistor)) THEN
                 ASSIGN aux_vllandeb = aux_vllandeb + craplem.vllanmto.
           
@@ -535,6 +535,9 @@ PROCEDURE efetua_liquidacao_empr:
     DEF VAR aux_lotepaga AS INTE                                    NO-UNDO.
     DEF VAR aux_vlpagsld AS DECI                                    NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+    DEF VAR aux_vliofcpl AS DECI                                    NO-UNDO.
+    DEF VAR aux_cdhisiof AS INTE                                    NO-UNDO.
+    DEF VAR aux_loteiof  AS INTE                                    NO-UNDO.
     
     DEF BUFFER crabpep FOR crappep.
     
@@ -644,6 +647,9 @@ PROCEDURE efetua_liquidacao_empr:
                                        OUTPUT aux_loteatra,
                                        OUTPUT aux_lotemult,
                                        OUTPUT aux_lotepaga,
+                                       OUTPUT aux_vliofcpl,
+                                       OUTPUT aux_cdhisiof,
+                                       OUTPUT aux_loteiof,
                                        OUTPUT TABLE tt-erro).
 
                      IF   RETURN-VALUE <> "OK"   THEN
@@ -741,7 +747,6 @@ PROCEDURE efetua_liquidacao_empr:
         END. /* FOR EACH tt-pagamentos-parcelas:  */
 
         FOR EACH tt-lancconta:
-                 
             RUN cria_lancamento_cc IN h-b1wgen0084a 
                                   (INPUT tt-lancconta.cdcooper,
                                    INPUT tt-lancconta.dtmvtolt,
@@ -795,6 +800,7 @@ PROCEDURE efetua_liquidacao_empr:
                                          INPUT "vlpagpar", 
                                          INPUT STRING(tt-pagamentos-parcelas.vlpagpar),
                                          INPUT STRING(tt-pagamentos-parcelas.vlpagpar)).
+                                         
             END.
         END.
 
