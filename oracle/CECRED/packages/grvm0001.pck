@@ -5777,7 +5777,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
        AND crapbpr.tpctrpro = pr_tpctrpro
        AND crapbpr.nrctrpro = pr_nrctrpro
        AND crapbpr.flgalien = 1
-       AND TRIM(UPPER(pr_dschassi)) = UPPER(pr_dschassi);
+       AND TRIM(UPPER(crapbpr.dschassi)) = TRIM(UPPER(pr_dschassi));
     rw_crapbpr cr_crapbpr%ROWTYPE;           
                
     CURSOR cr_craprto(pr_cdoperac IN craprto.cdoperac%TYPE
