@@ -174,15 +174,19 @@ function populaCombos(){
         },
         success: function(response) {
             try {
-                //popula combo banco liquidante
-                $.each(response.liquidante.item, function(i, val) {
-                    $('#bcoliquidante').append($('<option>', { value: val.ispb, text: val.nome }));
-                });
+                if (response.liquidante.length > 0) {
+                    //popula combo banco liquidante
+                    $.each(response.liquidante.item, function (i, val) {
+                        $('#bcoliquidante').append($('<option>', { value: val.ispb, text: val.nome }));
+                    });
+                }
 
-                //popula combo credenciadora
-                $.each(response.credenciadora.item, function(i, val) {
-                    $('#credenciadora').append($('<option>', { value: val.ispb, text: val.nome }));
-                });
+                if (response.credenciadora.length > 0) {
+                    //popula combo credenciadora
+                    $.each(response.credenciadora.item, function (i, val) {
+                        $('#credenciadora').append($('<option>', { value: val.ispb, text: val.nome }));
+                    });
+                }
             }
             catch (error) {
                 hideMsgAguardo();
