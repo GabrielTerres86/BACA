@@ -23,7 +23,7 @@
 	}
 	
 	$inpessoa = 				(isset($_POST['inpessoa']))  				? $_POST['inpessoa'] : 0;
-	$dstipo_conta =   			(isset($_POST['dstipo_conta'])) 			? $_POST['dstipo_conta'] : '';
+	$dstipo_conta =   			(isset($_POST['dstipo_conta'])) 			? utf8_decode($_POST['dstipo_conta']) : '';
 	$individual = 				(isset($_POST['individual'])) 				? $_POST['individual'] : 0;
 	$conjunta_solidaria = 		(isset($_POST['conjunta_solidaria'])) 		? $_POST['conjunta_solidaria'] : 0;
 	$conjunta_nao_solidaria = 	(isset($_POST['conjunta_nao_solidaria'])) 	? $_POST['conjunta_nao_solidaria'] : 0;

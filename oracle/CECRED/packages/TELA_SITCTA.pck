@@ -104,7 +104,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
       CURSOR cr_situacao_conta IS
         SELECT sit.cdsituacao
               ,sit.dssituacao
-          FROM tbcc_situacao_conta sit;
+          FROM tbcc_situacao_conta sit
+         ORDER BY sit.cdsituacao;
           
     BEGIN
       

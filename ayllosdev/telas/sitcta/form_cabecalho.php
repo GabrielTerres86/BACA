@@ -32,7 +32,7 @@
 		<?
 		foreach($situacoes as $situacao) {
 			?>
-			<option value="<? echo getByTagName($situacao->tags,'cdsituacao'); ?>"><? echo getByTagName($situacao->tags,'dssituacao'); ?></option>
+			<option value="<? echo getByTagName($situacao->tags,'cdsituacao'); ?>"><? echo getByTagName($situacao->tags,'cdsituacao') . ' - ' . getByTagName($situacao->tags,'dssituacao'); ?></option>
 			<?
 		}
 		?>
