@@ -99,7 +99,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     Sistema : Processos Batch
     Sigla   : BTCH
     Autor   : Odirlei Busana - AMcom
-    Data    : Maio/2014.                       Ultima atualizacao: 28/04/2017
+    Data    : Maio/2014.                       Ultima atualizacao: 05/03/2018
   
    Dados referentes ao programa:
   
@@ -118,6 +118,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                28/04/2017 - Adicionar chmod 666 apos a chamada do pc_clob_para_arquivo
                             para ter permissao de exclusao do arquivo ao rodar novamente 
                             a tela process ref ao chamado 491624(Lucas Ranghetti/Elton)
+                            
+               07/07/2017 - Adicionar Order by na consulta da tabela crapbcx, pois estava
+                            ordenando pelo operador ao inves de ordear pelo PA (Lucas Ranghetti #701329)
+                            
+               14/09/2017 - Incluido mais uma condição para verificar se deve 
+                            solicitar calculo do retorno das Sobras
+                            na procedure pc_gera_criticas_proces (Tiago/Thiago M439)               
+                            
+               05/03/2018 - Alterado parametros de critica para não solicitar o processo
+                            quando as moedas(6,16,17,18) não estiverem cadastradas (Tiago/Adriano)
   ---------------------------------------------------------------------------------------------------------------*/
   -- Gerar criticas do processo
   PROCEDURE pc_gera_criticas_proces (pr_cdcooper       IN NUMBER,                 --> Codigo da cooperativa
@@ -148,7 +158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Margarete/Mirtes
-   Data    : Junho/2004.                     Ultima atualizacao: 28/04/2017
+   Data    : Junho/2004.                     Ultima atualizacao: 14/09/2017
 
    Dados referentes ao programa:
 
@@ -332,6 +342,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                28/04/2017 - Adicionar chmod 666 apos a chamada do pc_clob_para_arquivo
                             para ter permissao de exclusao do arquivo ao rodar novamente 
                             a tela process (Lucas Ranghetti/Elton)
+                            
+               07/07/2017 - Adicionar Order by na consulta da tabela crapbcx, pois estava
+                            ordenando pelo operador ao inves de ordear pelo PA (Lucas Ranghetti #701329)
+                            
+               14/09/2017 - Incluido mais uma condição para verificar se deve 
+                            solicitar calculo do retorno das Sobras(Tiago/Thiago M439)
+                            
+               05/03/2018 - Alterado parametros de critica para não solicitar o processo
+                            quando as moedas(6,16,17,18) não estiverem cadastradas (Tiago/Adriano)
   ..............................................................................*/  
     ------------------------------- CURSORES ---------------------------------
 
@@ -458,17 +477,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
          AND rownum < 2; -- somente precisa encontra 1
     rw_craplbi cr_craplbi%rowtype;   
     
-    -- buscar aplicações por tipo
-    CURSOR cr_crapapl(pr_cdcooper crapcop.cdcooper%type,
-                      pr_dtmvtolt DATE,
-                      pr_tpaplica crapapl.tpaplica%type) IS
-      SELECT 1
-        FROM crapapl
-       WHERE crapapl.cdcooper = pr_cdcooper
-         AND crapapl.dtmvtolt = pr_dtmvtolt
-         AND crapapl.tpaplica = pr_tpaplica;
-    rw_crapapl cr_crapapl%rowtype;     
-    
     -- Buscar aplicacoes RDCA - Pos
     CURSOR cr_craprda(pr_cdcooper crapcop.cdcooper%type) IS
       SELECT 1
@@ -554,23 +562,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     -- Buscar Boletim de caixa ABERTO
     CURSOR cr_crapbcx (pr_cdcooper crapcop.cdcooper%type,
                        pr_dtmvtolt DATE) IS
-      SELECT crapbcx.cdopecxa
-            ,crapbcx.cdagenci
-            ,crapbcx.nrdcaixa
-            ,crapope.nmoperad
-        FROM crapbcx,
-             crapope       
+      SELECT crapbcx.cdopecxa,
+             crapbcx.cdagenci,
+             crapbcx.nrdcaixa,
+             crapope.nmoperad
+        FROM crapbcx, crapope
        WHERE crapbcx.cdcooper = pr_cdcooper
          AND crapbcx.dtmvtolt = pr_dtmvtolt
          AND crapope.cdcooper = pr_cdcooper        
          AND crapope.cdcooper = crapbcx.cdcooper        
-         AND UPPER(crapope.cdoperad) = UPPER(crapbcx.cdopecxa)
+         AND upper(crapope.cdoperad) = upper(crapbcx.cdopecxa)
          AND crapbcx.cdsitbcx = 1
          /* Nao considera se o caixa da INTERNET ou TAA estiver aberto, pois ele sao
             fechados durante o processo */
-         AND NOT(crapbcx.cdagenci in (90,91)AND /** TAA **/
-                 crapbcx.nrdcaixa = 900     AND
-                 UPPER(crapbcx.cdopecxa) = '996'   );
+         AND NOT (crapbcx.cdagenci IN (90, 91) AND /** TAA **/
+                  crapbcx.nrdcaixa = 900 AND upper(crapbcx.cdopecxa) = '996')
+       ORDER BY crapbcx.cdcooper, 
+                crapbcx.cdagenci, 
+                crapbcx.nrdcaixa;
                  
     -- Buscar lotes
     CURSOR cr_craplot (pr_cdcooper crapcop.cdcooper%type,
@@ -769,6 +778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
 		-- Data do período do indexador
 		vr_dtperiod DATE;
     
+    vr_flexecut BOOLEAN := FALSE;
     
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
@@ -1114,42 +1124,76 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         
     END LOOP;  -- Fim Loop crapage
     
-    /* Testa se ha aplicacoes tipo 1 digitadas */
-    OPEN cr_crapapl (pr_cdcooper => pr_cdcooper,
-                     pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                     pr_tpaplica => 1);
-    FETCH cr_crapapl INTO rw_crapapl;
-    -- se encontrar aplicações
-    IF cr_crapapl%FOUND THEN
-      /*  Verifica se a Taxa de Aplicacao (RDC) esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                      pr_tpmoefix => 6);
-      FETCH cr_crapmfx INTO rw_crapmfx;
+    /*  Verifica se a Taxa de Aplicacao (RDC) esta cadastrada  */
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                    pr_tpmoefix => 6);
+    FETCH cr_crapmfx INTO rw_crapmfx;
       
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar RDC dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
-      END IF;  
-      CLOSE cr_crapmfx;
-      
-      /*  Verifica se a Taxa de Aplicacao (RDC) esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                      pr_tpmoefix => 13);
-      FETCH cr_crapmfx INTO rw_crapmfx;
-      
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar RDC dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
-      END IF;  
-      CLOSE cr_crapmfx;
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar RDC dia '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
+                       pr_cdsitexc => 1);  
+    END IF;  
+    CLOSE cr_crapmfx;
     
-    END IF; -- Fim aplicações - crapapl
-    CLOSE cr_crapapl;  
-    
+    /*  Verifica se a CDI Mensal esta cadastrada  */
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                    pr_tpmoefix => 16);
+    FETCH cr_crapmfx INTO rw_crapmfx;
+      
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar CDI Mensal '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
+                       pr_cdsitexc => 1);  
+    END IF;  
+    CLOSE cr_crapmfx;
+
+    /*  Verifica se a CDI Acumulado esta cadastrada  */
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                    pr_tpmoefix => 17);
+    FETCH cr_crapmfx INTO rw_crapmfx;
+      
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar CDI Acumulado '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
+                       pr_cdsitexc => 1);  
+    END IF;  
+    CLOSE cr_crapmfx;
+
+    /*  Verifica se a CDI Diario esta cadastrada  */
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                    pr_tpmoefix => 18);
+    FETCH cr_crapmfx INTO rw_crapmfx;
+      
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar CDI Diario '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
+                       pr_cdsitexc => 1);  
+    END IF;  
+    CLOSE cr_crapmfx;
+      
+    /*  Verifica se a Taxa de Aplicacao (RDC) esta cadastrada  */
+    /*
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                    pr_tpmoefix => 13);
+    FETCH cr_crapmfx INTO rw_crapmfx;
+      
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar RDC dia '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
+    END IF;  
+    CLOSE cr_crapmfx;
+  */  
     -- Verificar se é virada de mês
     IF TO_CHAR(rw_crapdat.dtmvtolt,'MM') <> TO_CHAR(rw_crapdat.dtmvtopr,'MM') THEN
       -- definir ultimo dia do mês
@@ -1194,66 +1238,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       END LOOP;  
     END IF; -- Fim virada do mês  
     
-    
-    /*** crapapl.tpaplica ->  Tipo de aplicacao 1 RDC pre,2 RDC pos,3 RDCA,4 P.Prog,5 RDCAII  ****/
-    /* Testa se ha aplicacoes tipo 2 digitadas */
-    OPEN cr_crapapl (pr_cdcooper => pr_cdcooper,
-                     pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                     pr_tpaplica => 2);
-    FETCH cr_crapapl INTO rw_crapapl;
-    -- se encontrar aplicações
-    IF cr_crapapl%FOUND THEN
-      /*  Verifica se a TR P/RDC esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                      pr_tpmoefix => 11);
-      FETCH cr_crapmfx INTO rw_crapmfx;
+    /*  Verifica se a TR P/RDC esta cadastrada  */
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                    pr_tpmoefix => 11);
+    FETCH cr_crapmfx INTO rw_crapmfx;
       
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
-      END IF;  
-      CLOSE cr_crapmfx;
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
+    END IF;  
+    CLOSE cr_crapmfx;
       
-      /*  Verifica se a TAXA DE JUROS P/RDC esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                      pr_tpmoefix => 10);
-      FETCH cr_crapmfx INTO rw_crapmfx;
+    /*  Verifica se a TAXA DE JUROS P/RDC esta cadastrada  */
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                    pr_tpmoefix => 10);
+    FETCH cr_crapmfx INTO rw_crapmfx;
       
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar JUROS P/APLICACAO RDC dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
-      END IF;  
-      CLOSE cr_crapmfx;
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar JUROS P/APLICACAO RDC dia '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
+    END IF;  
+    CLOSE cr_crapmfx;
     
-    END IF; -- Fim aplicações - crapapl
-    CLOSE cr_crapapl;  
-    
-    /* Testa se ha aplicacoes a vencer no dia seguinte */
-    OPEN cr_crapapl (pr_cdcooper => pr_cdcooper,
-                     pr_dtmvtolt => rw_crapdat.dtmvtopr,
-                     pr_tpaplica => 2);
-    FETCH cr_crapapl INTO rw_crapapl;
-    -- se encontrar aplicações
-    IF cr_crapapl%FOUND THEN
-      /*  Verifica se a TR P/RDC esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtopr,
-                      pr_tpmoefix => 11);
-      FETCH cr_crapmfx INTO rw_crapmfx;
+    /*  Verifica se a TR P/RDC esta cadastrada  */
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtopr,
+                    pr_tpmoefix => 11);
+    FETCH cr_crapmfx INTO rw_crapmfx;
       
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtopr,'DD/MM/RRRR'));  
-      END IF;  
-      CLOSE cr_crapmfx;            
-    
-    END IF; -- Fim aplicações - crapapl
-    CLOSE cr_crapapl;
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtopr,'DD/MM/RRRR'));  
+    END IF;  
+    CLOSE cr_crapmfx;            
     
     /* Verifica se ha resgates de RDCA para o dia seguinte. Se houver,
        exige a UFIR do dia seguinte. */
@@ -1274,7 +1296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                         TO_CHAR(RW_CRAPDAT.dtmvtopr,'DD/MM/RRRR'));  
       END IF;  
       CLOSE cr_crapmfx;                
-    END IF; -- Fim aplicações - crapapl
+    END IF; 
     CLOSE cr_craplrg;
     
     /*** Magui, se houver aplicacoes RDCPOS, exigir TAXRDC glb_dtmvtolt **/
@@ -1819,8 +1841,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       END IF;  
     END IF; --  Fim IF dtmvtolt > 19
     
+    IF   gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                    ,pr_dtmvtolt => add_months(TRUNC(rw_crapdat.dtmvtolt,'RRRR'),12)-1 
+                                    ,pr_tipo => 'A') = rw_crapdat.dtmvtolt  THEN
+         vr_flexecut := TRUE;                                
+    END IF;
+
+    
     /* Verifica se deve solicitar calculo do retorno das Sobras - roda somente ate abril */
-    IF to_char(rw_crapdat.dtmvtolt,'MM') <= to_number(gene0001.fn_param_sistema('CRED', pr_cdcooper, 'NRMES_LIM_JURO_SOBRA')) THEN
+    IF (to_char(rw_crapdat.dtmvtolt,'MM') <= to_number(gene0001.fn_param_sistema('CRED', pr_cdcooper, 'NRMES_LIM_JURO_SOBRA'))) OR
+       vr_flexecut = TRUE  THEN
       -- Buscar informação na craptab
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
