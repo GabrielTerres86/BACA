@@ -2881,7 +2881,6 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                   END.
                   ELSE
                   DO:
-                    
                       /* Busca os bens em garantia */
                       ASSIGN aux_dscatbem = "".
                       FOR EACH crapbpr WHERE crapbpr.cdcooper = crawepr.cdcooper  AND
@@ -2889,6 +2888,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                              crapbpr.nrctrpro = crawepr.nrctremp  AND
                                              crapbpr.tpctrpro = 90 NO-LOCK:
                           ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
+                  END.
                   END.
                     
                 CASE crawepr.idquapro:
@@ -2914,6 +2914,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
 
                 END. /** Fim do DO ... TO **/
 
+                
                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                       RUN STORED-PROCEDURE pc_calcula_iof_epr
                           aux_handproc = PROC-HANDLE NO-ERROR
@@ -2948,7 +2949,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                       ASSIGN tt-proposta-epr.vliofepr = 0
                              tt-proposta-epr.vliofepr = pc_calcula_iof_epr.pr_valoriof 
                                                         WHEN pc_calcula_iof_epr.pr_valoriof <> ?.
-                    END.
+              /* END. */
                     
                 ASSIGN tt-proposta-epr.vlrtotal = (crawepr.vlemprst + tt-proposta-epr.vliofepr + aux_vlrtarif).
                 IF crawepr.idfiniof > 0 THEN
