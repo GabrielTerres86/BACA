@@ -54,6 +54,11 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --                         - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
   --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
   --                           (Ana - Envolti) - SD: 660356 e 660394
+  --              23/02/2018 - Alterado a rotina pc_gravames_geracao_arquivo:  Foi alterado cursor cr_crapbpr, 
+  --                           incluido uma validação do inliquid = 0.
+  --						   Alterado rotina pc_gravames_baixa_manual: ao atualizar a crapbpr setar flginclu = 0
+  --					       Alterado rotina pc_gravames_processa_retorno: ao atualizar a crapbpr setar flginclu = 0
+ 
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicação de tipo e tabela para o arquivo do GRAVAMES
@@ -636,7 +641,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         -- Se foi retornado apenas código
         IF vr_cdcritic > 0 AND pr_dscritic IS NULL THEN
           -- Buscar a descrição
-          pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);END IF;
+          pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
 
         --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
         --Padronização - Chamado 660394
@@ -1420,7 +1426,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,bpr.idseqbem
               ,UPPER(TRIM(bpr.dschassi)) dschassi
               ,bpr.tpchassi
-              ,bpr.uflicenc
+              ,UPPER(bpr.uflicenc) uflicenc
               ,bpr.nranobem
               ,bpr.nrmodbem
               ,bpr.ufplnovo
@@ -1430,7 +1436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,bpr.nrdplaca
               ,bpr.nrrenava
               ,ass.nrcpfcgc
-
+              ,epr.inliquid 
               ,ROW_NUMBER ()
                   OVER (PARTITION BY cop.cdcooper ORDER BY cop.cdcooper) nrseqcop
 
@@ -1438,7 +1444,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,crapcop cop
               ,crawepr wpr
               ,crapbpr bpr
-
+         full outer join crapepr epr on (epr.cdcooper = bpr.cdcooper and epr.nrdconta = bpr.nrdconta and epr.nrctremp = bpr.nrctrpro)
          WHERE bpr.cdcooper = DECODE(pr_cdcoptel,0,bpr.cdcooper,pr_cdcoptel)
            AND bpr.flgalien   = 1 -- Sim
            AND wpr.cdcooper   = bpr.cdcooper
@@ -1448,14 +1454,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
            AND cop.cdcooper   = bpr.cdcooper
            AND ass.cdcooper   = bpr.cdcooper
            AND ass.nrdconta   = bpr.nrdconta
-
            AND (  -- Bloco INCLUSAO
                      (pr_tparquiv IN ('INCLUSAO','TODAS')
                  AND  bpr.tpctrpro   = 90
                  AND  wpr.flgokgrv   = 1
-                 AND  bpr.flginclu   = 1     -- INCLUSAO SOLICITADA
-                 AND  bpr.cdsitgrv in(0,3)   -- NAO ENVIADO ou PROCES.COM ERRO
-                 AND  bpr.tpinclus   = 'A')  -- AUTOMATICA
+                 AND  bpr.flgbaixa   = 0      -- APENAS NÃO BAIXADOS
+                 AND  nvl(epr.inliquid,0) = 0 -- APENAS NÃO LIQUIDADO, CASO NULO TRATAR COMO "0 - NÃO LIQUIDADO"
+                 AND  bpr.flginclu   = 1      -- INCLUSAO SOLICITADA
+                 AND  bpr.cdsitgrv in (0,3)   -- NAO ENVIADO ou PROCES.COM ERRO
+                 AND  bpr.tpinclus   = 'A')   -- AUTOMATICA
 
                   -- Bloco BAIXA --
                   OR (pr_tparquiv IN('BAIXA','TODAS')
@@ -1694,7 +1701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         IF pr_tparquiv = 'TODAS' THEN
           -- Inclusão
           IF rw_bpr.flgokgrv = 1 AND rw_bpr.flginclu = 1 AND rw_bpr.cdsitgrv in(0,3) AND rw_bpr.tpinclus = 'A' AND 
-             rw_bpr.flgbaixa = 0 THEN --Adicionado a alteração rw_bpr.flgbaixa = 0 pedido pelo análista Gielow
+             rw_bpr.flgbaixa = 0 AND nvl(rw_bpr.inliquid,0) = 0 THEN --Adicionado a alteração rw_bpr.flgbaixa = 0 pedido pelo análista Gielow
             vr_tparquiv := 'INCLUSAO';
           -- Cancelamento
           ELSIF rw_bpr.flcancel = 1 AND rw_bpr.tpcancel = 'A' AND rw_bpr.tpctrpro IN(90,99) THEN
@@ -2704,99 +2711,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
    
   END pc_busca_valida_contrato;  
 
-  -- Prj. 402
-  PROCEDURE pc_consulta_situacao_cdc(pr_cdcooper IN crapcop.cdcooper%TYPE      -- Código da Cooperativa
-                                    ,pr_nrdconta IN crapass.nrdconta%TYPE      -- Número da conta
-                                    ,pr_nrctrpro IN crawepr.nrctremp%TYPE      -- Número do contrato 
-                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE     -- Código da crítica
-                                    ,pr_dscritic OUT crapcri.dscritic%TYPE) IS -- Descrição da crítica
-                                      
-                            
-  /*---------------------------------------------------------------------------------------------------------------
-    
-    Programa : pc_consulta_situacao_cdc                            
-    Sistema  : Conta-Corrente - Cooperativa de Credito
-    Sigla    : CRED
-    Autor    : Jean Michel
-    Data     : 15/12/2017                          Ultima atualizacao:
-    
-    Dados referentes ao programa:
-    
-    Frequencia: -----
-    Objetivo   : Busca contratos
-    
-    --   Alteracoes: 
-    --               
-    -------------------------------------------------------------------------------------------------------------*/                               
-    
-    --Cursor para encotrato o contrato de empréstimo 
-    CURSOR cr_crawepr(pr_cdcooper IN crapcop.cdcooper%TYPE
-                     ,pr_nrdconta IN crapass.nrdconta%TYPE
-                     ,pr_nrctremp IN crapepr.nrctremp%TYPE)IS
-    SELECT cop.flintcdc
-          ,cdc.inintegra_cont
-          ,fin.tpfinali
-      FROM crapcop cop
-          ,crawepr epr
-          ,tbepr_cdc_parametro cdc
-          ,crapfin fin
-     WHERE epr.cdcooper = pr_cdcooper
-       AND epr.nrdconta = pr_nrdconta
-       AND epr.nrctremp = pr_nrctremp
-       AND epr.cdcooper = cop.cdcooper
-       AND cop.cdcooper = cdc.cdcooper
-       AND cdc.cdcooper = fin.cdcooper
-       AND fin.cdfinemp = epr.cdfinemp;
-
-    rw_crawepr cr_crawepr%ROWTYPE;                      
-                     
-    --Variaveis de Criticas
-    vr_cdcritic INTEGER;
-    vr_dscritic VARCHAR2(4000);
-    
-    --Variaveis de Excecoes
-    vr_exc_erro  EXCEPTION; 
-  
-    
-  BEGIN
-    
-      OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
-                     ,pr_nrdconta => pr_nrdconta
-                     ,pr_nrctremp => pr_nrctrpro);
-                     
-      FETCH cr_crawepr INTO rw_crawepr;
-              
-      IF cr_crawepr%FOUND THEN
-        CLOSE cr_crawepr; 
-
-        IF rw_crawepr.tpfinali = 3 AND rw_crawepr.flintcdc = 1 AND rw_crawepr.inintegra_cont = 0 THEN
-          vr_dscritic := 'Ação não permitida, cooperativa possui integração CDC habilitada! Esta ação deve ser realizada junto ao Autorizador CDC.';
-          RAISE vr_exc_erro;
-        END IF;
-
-      ELSE
-        CLOSE cr_crawepr;
-        vr_dscritic := 'Registro de contrato não encontrado.';
-        RAISE vr_exc_erro;
-      END IF;
-
-  EXCEPTION    
-    WHEN vr_exc_erro THEN
-
-      IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic); -- Buscar a descrição
-      END IF;
-
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic;
-
-    WHEN OTHERS THEN   
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na pc_consulta_situacao_cdc: '|| SQLERRM;
-    
-  END pc_consulta_situacao_cdc;
-  -- Prj. 402
-
   PROCEDURE pc_gravames_consultar_bens(pr_nrdconta IN crapass.nrdconta%TYPE --Número da conta
                                       ,pr_cddopcao IN VARCHAR2              --Opção
                                       ,pr_nrctrpro IN crawepr.nrctremp%TYPE --Número do contrato 
@@ -2845,7 +2759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.nranobem
           ,crawepr.vlemprst
           ,crapbpr.nrcpfbem
-          ,crapbpr.uflicenc
+          ,UPPER(crapbpr.uflicenc) uflicenc
           ,crapbpr.dscatbem
           ,crapbpr.dscorbem
           ,crapbpr.dschassi
@@ -2898,7 +2812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.nranobem
           ,crawepr.vlemprst
           ,crapbpr.nrcpfbem
-          ,crapbpr.uflicenc
+          ,UPPER(crapbpr.uflicenc) uflicenc
           ,crapbpr.dscatbem
           ,crapbpr.dscorbem
           ,crapbpr.dschassi
@@ -3005,18 +2919,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       RAISE vr_exc_erro;
     END IF;    
        
-    /**/
-    pc_consulta_situacao_cdc(pr_cdcooper => vr_cdcooper  -- Código da Cooperativa
-                            ,pr_nrdconta => pr_nrdconta  -- Número da conta
-                            ,pr_nrctrpro => pr_nrctrpro  -- Número do contrato 
-                            ,pr_cdcritic => vr_cdcritic  -- Código da crítica
-                            ,pr_dscritic => vr_dscritic); -- Descrição do Erro
-
-    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-    /**/
-
     pc_valida_alienacao_fiduciaria (pr_cdcooper => vr_cdcooper  -- Código da cooperativa
                                    ,pr_nrdconta => pr_nrdconta  -- Numero da conta do associado
                                    ,pr_nrctrpro => pr_nrctrpro  -- Numero do contrato
@@ -3502,7 +3404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.nrdplaca
           ,crapbpr.nranobem
           ,crapbpr.nrcpfbem
-          ,crapbpr.uflicenc
+          ,UPPER(crapbpr.uflicenc) uflicenc
           ,crapbpr.dscatbem
           ,crapbpr.dscorbem
           ,crapbpr.dschassi
@@ -4053,7 +3955,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.nrdplaca
           ,crapbpr.nranobem
           ,crapbpr.nrcpfbem
-          ,crapbpr.uflicenc
+          ,UPPER(crapbpr.uflicenc) uflicenc
           ,crapbpr.dscatbem
           ,crapbpr.dscorbem
           ,crapbpr.dschassi
@@ -4090,7 +3992,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-
+    
     --Variaveis Locais  
     vr_dstransa VARCHAR2(100);
     vr_nrdrowid ROWID;
@@ -4712,7 +4614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-
+    
     --Variaveis Locais   
     vr_dstransa VARCHAR2(100);  
     vr_nrdrowid ROWID; 
@@ -4856,6 +4758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       UPDATE crapbpr
          SET crapbpr.cdsitgrv = 4 -- Baixado
             ,crapbpr.flgbaixa = 1
+            ,crapbpr.flginclu = 0
             ,crapbpr.dtdbaixa = rw_crapdat.dtmvtolt
             ,crapbpr.dsjstbxa = pr_dsjstbxa
             ,crapbpr.tpdbaixa = 'M' --Manual              
@@ -4885,7 +4788,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               pr_nmdcampo => 'dtdbaixa', 
                               pr_dsdadant => to_char(rw_crapbpr.dtdbaixa), 
                               pr_dsdadatu => to_char(rw_crapdat.dtmvtolt)); 
-
+             
     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                               pr_nmdcampo => 'pr_dsjstbxa', 
                               pr_dsdadant => rw_crapbpr.dsjstbxa, 
@@ -5046,7 +4949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_idorigem VARCHAR2(100);
     vr_dsmensag VARCHAR2(100);
     vr_dtmvttel DATE;
-
+    
     --Variaveis Locais   
     vr_dstransa VARCHAR2(100);  
     vr_nrdrowid ROWID;
@@ -5308,7 +5211,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               pr_nmdcampo => 'nrgravam', 
                               pr_dsdadant => to_char(rw_crapbpr.nrgravam), 
                               pr_dsdadatu => to_char(pr_nrgravam));
-                              
+             
     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                               pr_nmdcampo => 'dtatugrv', 
                               pr_dsdadant => to_char(rw_crapbpr.dtatugrv), 
@@ -6658,10 +6561,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     
       vr_cdcritic PLS_INTEGER := 0; -- Variavel interna para erros
       vr_dscritic varchar2(4000) := ''; -- Variavel interna para erros
-			vr_dsplsql  VARCHAR2(4000);
-			vr_jobname  VARCHAR2(30);
 
-    
       vr_nrseqreg PLS_INTEGER;           -- Sequenciador do registro na cooperativa
       vr_nmarqdir VARCHAR2(200);         -- Nome do diretorio
       vr_nmarqsav VARCHAR2(200);         -- Nome do diretorio
@@ -7111,6 +7011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                         UPDATE crapbpr
                            SET crapbpr.flgbaixa = 0
                               ,crapbpr.cdsitgrv = 4 --Baixado OK
+                              ,crapbpr.flginclu = 0
                         WHERE ROWID = rw_crapbpr.rowid_bpr;
                         
                       EXCEPTION
@@ -7140,6 +7041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                         UPDATE crapbpr
                            SET crapbpr.flcancel = 0
                               ,crapbpr.cdsitgrv = 5 --Cancelado OK
+                              ,crapbpr.flginclu = 0
                         WHERE ROWID = rw_crapbpr.rowid_bpr;
                         
                       EXCEPTION
@@ -7358,35 +7260,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                         
         END IF;
               
-				-- Montar o bloco PLSQL que sera executado,
-				-- ou seja, executaremos a geracao dos dados
-				-- para a agencia atual atraves de Job no banco
-				vr_dsplsql := 'DECLARE' || chr(13)
-									 || '  vr_cdcritic NUMBER;' || chr(13)
-									 || '  vr_dscritic VARCHAR2(4000);' || chr(13)
-									 || 'BEGIN' || chr(13)
-									 || '  GRVM0001.pc_envia_retorno_gravames('|| to_char(vr_cdcooper) ||
-		                                 ','|| to_char(pr_dtmvtolt) ||
-																		 ','|| to_char(vr_nrseqlot) ||
-																		 ',vr_cdcritic ,vr_dscritic);' || chr(13)
-									 || 'END;';
-
-				-- Montar o prefixo do codigo do programa para o jobname
-				vr_jobname := 'grv_proc_ret_' || to_char(vr_nrseqlot) || '$';
-
-				-- Faz a chamada ao programa paralelo atraves de JOB
-				GENE0001.pc_submit_job(pr_cdcooper  => pr_cdcooper  --> Codigo da cooperativa
-															,pr_cdprogra  => vr_cdprogra  --> Codigo do programa
-															,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
-															,pr_dthrexe   => SYSTIMESTAMP --> Executar nesta hora
-															,pr_interva   => NULL         --> Sem intervalo de execucao da fila, ou seja, apenas 1 vez
-															,pr_jobname   => vr_jobname   --> Nome randomico criado
-															,pr_des_erro  => vr_dscritic);
-				-- Se houve erro
-				IF trim(vr_dscritic) IS NOT NULL THEN
-					RAISE vr_exc_erro;
-				END IF;				
-				
         --Commit das alterações para cada arquivo
         COMMIT;
                   
@@ -7438,6 +7311,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     END;
   END pc_gravames_processa_retorno;
   
-
 END GRVM0001;
 /
