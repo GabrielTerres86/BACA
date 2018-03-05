@@ -520,6 +520,9 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
               07/12/2018 - Adicionar a opcao de regaste de custodia, opcao 18
                            (Rafael Monteiro - MoutS)
 
+              28/02/2018 - Alterar procedure convenios_aceitos para retornar o nome resumido mais amigavel, 
+                           conforme acontece na b1wgen0092.busca_convenios_codbarras. (Anderson - P285)
+
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -2603,6 +2606,7 @@ PROCEDURE convenios_aceitos:
     DEF VAR aux_hhini_bancoob AS CHAR                                      NO-UNDO.
     DEF VAR aux_hhfim_bancoob AS CHAR                                      NO-UNDO.
     DEF VAR aux_hhcan_bancoob AS CHAR                                      NO-UNDO.
+	DEF VAR aux_nmempcon AS CHAR NO-UNDO.
     
     
     EMPTY TEMP-TABLE tt-convenios_aceitos.
@@ -2666,7 +2670,8 @@ PROCEDURE convenios_aceitos:
                                    crapcon.flginter = TRUE 
                                    BY crapcon.nmextcon:
 								   
-        ASSIGN aux_cdhisdeb = crapcon.cdhistor.
+        ASSIGN aux_cdhisdeb = crapcon.cdhistor
+               aux_nmempcon = crapcon.nmrescon.
 
         /* Sicredi */  
         IF  crapcon.tparrecd = 1 THEN
@@ -2680,7 +2685,13 @@ PROCEDURE convenios_aceitos:
                 IF  NOT AVAIL crapscn THEN
                     ASSIGN aux_fldebaut = NO.
                 ELSE
-                    ASSIGN aux_fldebaut = YES.
+                    DO:
+                        ASSIGN aux_fldebaut = YES.
+                        IF(crapscn.dsnomres <> "") then
+                           ASSIGN aux_nmempcon = crapscn.dsnomres.
+                        ELSE
+                           ASSIGN aux_nmempcon = crapscn.dsnomcnv.
+                    END.
             END.
         /* Cecred */    
         ELSE IF  crapcon.tparrecd = 3 THEN
@@ -2704,8 +2715,14 @@ PROCEDURE convenios_aceitos:
                 IF  NOT AVAILABLE gnconve  THEN
                     ASSIGN aux_fldebaut = NO.
                 ELSE 
-                    ASSIGN aux_fldebaut = YES
-                           aux_cdhisdeb = gnconve.cdhisdeb.					
+                    DO:
+                        ASSIGN aux_fldebaut = YES
+                               aux_cdhisdeb = gnconve.cdhisdeb.
+                               
+                        IF gnconve.cdconven <> 87  AND
+                           gnconve.cdconven <> 108 THEN
+                           ASSIGN aux_nmempcon = gnconve.nmempres.
+                    END.
             END.								   
         /* Bancoob */    
         ELSE IF  crapcon.tparrecd = 2 THEN
@@ -2718,7 +2735,7 @@ PROCEDURE convenios_aceitos:
     
         CREATE tt-convenios_aceitos.
         ASSIGN tt-convenios_aceitos.nmextcon = crapcon.nmextcon
-               tt-convenios_aceitos.nmrescon = crapcon.nmrescon
+               tt-convenios_aceitos.nmrescon = aux_nmempcon
                tt-convenios_aceitos.cdempcon = crapcon.cdempcon 
                tt-convenios_aceitos.cdsegmto = crapcon.cdsegmto
                tt-convenios_aceitos.dssegmto = aux_dssegmto[crapcon.cdsegmto]
