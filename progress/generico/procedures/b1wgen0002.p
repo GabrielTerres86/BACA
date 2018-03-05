@@ -862,7 +862,7 @@ FUNCTION verificaContrato RETURNS CHARACTER
 
        IF   par_nrctremp = 0   THEN
             DO:
-                aux_cdcritic = 361.
+                aux_cdcritic = 3610.
                 LEAVE.
             END.
 
