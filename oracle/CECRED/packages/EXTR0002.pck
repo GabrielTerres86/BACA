@@ -7157,11 +7157,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                           to_char(pr_dtreffim,'DD/MM/YYYY') || ' **';    
 
             --Se Possui Bloqueio Judicial
-            IF vr_vlblqjud > 0 THEN
+            --IF vr_vlblqjud > 0 THEN
               vr_flgblqjud:= TRUE;
               --Escrever mensagem  
-              vr_dsblqjud:= 'Valor Bloqueado Judicialmente e de R$: '||to_char(vr_vlblqjud,'fm999g999g999g990d00');    
-            END IF;
+            vr_dsblqjud:= 'VALOR BLOQUEADO JUDICIALMENTE R$:        '||to_char(vr_vlblqjud,'fm999g999g999g990d00');    
+            --END IF;
                                       
             -- Procedimento para buscar dados do credito pre-aprovado (crapcpa)
             EMPR0002.pc_busca_dados_cpa (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa
@@ -13786,7 +13786,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 20/04/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 02/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -13806,6 +13806,9 @@ END pc_consulta_ir_pj_trim;
   --
   --              27/11/2017 - Inclusao do valor de bloqueio em garantia nos relatorios. 
   --                           PRJ404 - Garantia.(Odirlei-AMcom) 
+  --  
+  --              02/03/2018 - Ajustes na exibição dos valores de bloqueio Judicial e de cobertura de aplicacao
+  --
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -14359,20 +14362,20 @@ END pc_consulta_ir_pj_trim;
               --marcar que já processou primeiro registro
               vr_flgfirst:= FALSE;
               --Verificar se possui bloqueio judicial
-              IF vr_vlblqjud > 0 THEN
-                vr_dsextrat:= ' flgmsgjud="S" dsmsgjud="Valor Bloqueado Judicialmente e de R$ '||
+              --IF vr_vlblqjud > 0 THEN
+              vr_dsextrat:= ' flgmsgjud="S" dsmsgjud="VALOR BLOQUEADO JUDICIALMENTE R$        '||
                               to_char(vr_vlblqjud,'fm999g999g999g990d00')||'"'; 
-              ELSE
-                vr_dsextrat:= ' flgmsgjud="N" dsmsgjud=""'; 
-              END IF;  
+              --ELSE
+              --  vr_dsextrat:= ' flgmsgjud="N" dsmsgjud=""'; 
+              --END IF;  
               
-              --Verificar se possui bloqueio por garantia
-              IF vr_vlblqapl > 0 THEN
-                vr_dsextrat:= vr_dsextrat||' flgmsggar="S" dsmsggar="Valor Bloqueado para Cobertura e de R$ '||
+              --Verificar se possui bloqueio por garantia de aplicacao
+              --IF vr_vlblqapl > 0 THEN
+                vr_dsextrat:= vr_dsextrat ||' flgmsggar="S" dsmsggar="VALOR BLOQUEADO COBERTURA GARANTIA R$ '||
                               to_char(vr_vlblqapl,'fm999g999g999g990d00')||'"'; 
-              ELSE
-                vr_dsextrat:= vr_dsextrat||' flgmsggar="N" dsmsggar=""'; 
-              END IF;
+              --ELSE
+              --  vr_dsextrat:= vr_dsextrat||' flgmsggar="N" dsmsggar=""'; 
+              --END IF;
                
               --Montar texto
               vr_dstexto:= '<conta nrdconta="'||to_char(rw_crapass.nrdconta,'fm9g999g999g0')||
@@ -14773,7 +14776,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 27/11/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 02/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -14787,6 +14790,9 @@ END pc_consulta_ir_pj_trim;
   --
   --              27/11/2017 - Inclusao do valor de bloqueio em garantia nos relatorios. 
   --                           PRJ404 - Garantia.(Odirlei-AMcom)               
+  --
+  --              02/03/2018 - Ajustes na exibição dos valores de bloqueio Judicial e de cobertura de aplicacao
+  --              
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -14834,9 +14840,10 @@ END pc_consulta_ir_pj_trim;
         vr_vlblqapl NUMBER:= 0;
         vr_vlblqpou NUMBER:= 0;
         vr_vltotrpp NUMBER;
+        vr_vltotres NUMBER:= 0;
         vr_percenir NUMBER;
         vr_flgfirst BOOLEAN;
-        vr_dsblqjud VARCHAR2(300);
+        vr_dsblqjud VARCHAR2(500);
         vr_dsextrat VARCHAR2(100);
         vr_dsorigem VARCHAR2(100);
         vr_dstransa VARCHAR2(100);
@@ -15108,21 +15115,26 @@ END pc_consulta_ir_pj_trim;
               RAISE vr_exc_sair;          
             END IF;
             
+            vr_dsblqjud:= ' dsmssaldo="SALDO DISPONIVEL R$                    '||
+                            to_char(vr_vltotrpp,'fm999g999g999g990d00')||'"'; --vr_vltotrpp
             --Verificar se possui bloqueio judicial
-            IF vr_vlblqjud > 0 THEN
-              vr_dsblqjud:= ' flgmsgjud="S" dsmsgjud="Valor Bloqueado Judicialmente e de R$ '||
+            --IF vr_vlblqjud > 0 THEN
+            vr_dsblqjud:= vr_dsblqjud ||' flgmsgjud="S" dsmsgjud="VALOR BLOQUEADO JUDICIALMENTE R$         '|| 
                             to_char(vr_vlblqjud,'fm999g999g999g990d00')||'"'; 
-            ELSE
-              vr_dsblqjud:= ' flgmsgjud="N" dsmsgjud=""'; 
-            END IF;  
+            --ELSE
+            --  vr_dsblqjud:= ' flgmsgjud="N" dsmsgjud=""'; 
+            --END IF;  
             
-            --Verificar se possui bloqueio judicial
-            IF vr_vlblqpou > 0 THEN
-              vr_dsblqjud:= vr_dsblqjud||' flgmsggar="S" dsmsggar="Valor Bloqueado para Cobertura de Garantia e de R$ '||
+            --Verificar se possui bloqueio de garantia de aplicacao
+            --IF vr_vlblqpou > 0 THEN
+            vr_dsblqjud:= vr_dsblqjud ||' flgmsggar="S" dsmsggar="VALOR BLOQUEADO COBERTURA GARANTIA R$    '||
                             to_char(vr_vlblqpou,'fm999g999g999g990d00')||'"'; 
-            ELSE
-              vr_dsblqjud:= vr_dsblqjud||' flgmsggar="N" dsmsggar=""'; 
-            END IF; 
+            --ELSE
+            --  vr_dsblqjud:= vr_dsblqjud||' flgmsggar="N" dsmsggar=""'; 
+            --END IF; 
+            vr_vltotres := vr_vltotrpp - (vr_vlblqjud + vr_vlblqpou);
+            vr_dsblqjud:= vr_dsblqjud ||' dsmsslddis="SALDO DISPONIVEL PARA RESGATE R$       '||
+                                          to_char(vr_vltotres,'fm999g999g999g990d00')||'"';
             
             --Verificar se possui extratos de poupanca
             IF vr_tab_extrato_rpp.COUNT = 0 THEN
@@ -15227,6 +15239,7 @@ END pc_consulta_ir_pj_trim;
                                        ,pr_nrcopias  => 1                             --> Número de cópias
                                        ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                        ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
+                                       ,pr_nrvergrl  => 1                             --> Versao do relatorio
                                        ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
             --Se ocorreu erro no relatorio
             IF vr_dscritic IS NOT NULL THEN
@@ -15617,12 +15630,12 @@ END pc_consulta_ir_pj_trim;
           END IF;
           
           --Verificar se possui bloqueio judicial
-          IF vr_vlblqjud > 0 THEN
-            vr_dsblqjud:= ' flgmsgjud="S" dsmsgjud="Valor Bloqueado Judicialmente e de R$ '||
+          --IF vr_vlblqjud > 0 THEN
+          vr_dsblqjud:= ' flgmsgjud="S" dsmsgjud="VALOR BLOQUEADO JUDICIALMENTE R$        '||
                           to_char(vr_vlblqjud,'fm999g999g999g990d00')||'"'; 
-          ELSE
-            vr_dsblqjud:= ' flgmsgjud="N" dsmsgjud=""'; 
-          END IF;  
+          --ELSE
+          --  vr_dsblqjud:= ' flgmsgjud="N" dsmsgjud=""'; 
+          --END IF;  
           --Verificar se possui extratos de capital
           IF vr_tab_extrato_cotas.COUNT = 0 THEN
             vr_dsextrat:= '<extratos flgmsgext="S" dsmsgext="** NAO HA LANCAMENTOS NO MES **">';
@@ -16650,12 +16663,12 @@ END pc_consulta_ir_pj_trim;
           END IF;          
           
           --Verificar se possui bloqueio judicial
-          IF vr_vlblqjud > 0 THEN
-            vr_dsblqjud:= ' flgmsgjud="S" dsmsgjud="Valor Bloqueado Judicialmente e de R$ '||
+          --IF vr_vlblqjud > 0 THEN
+          vr_dsblqjud:= ' flgmsgjud="S" dsmsgjud="VALOR BLOQUEADO JUDICIALMENTE R$        '||
                           to_char(vr_vlblqjud,'fm999g999g999g990d00')||'"'; 
-          ELSE
+          /* ELSE
             vr_dsblqjud:= ' flgmsgjud="N" dsmsgjud=""'; 
-          END IF;
+          END IF; */
             
           --Verificar se possui extratos 
           --IF (vr_tab_saldo_rdc.COUNT + vr_tab_saldo_rdca.COUNT + vr_tab_dados_rpp.COUNT) = 0 THEN
