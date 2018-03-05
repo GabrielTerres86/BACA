@@ -474,6 +474,7 @@ function formataCabecalho() {
                 buscaDadosGAROPC();
             } else {
                 
+				if ( cddopcao != 'I' ) {
                 showMsgAguardo('Aguarde, buscando ...');
 
                 // Executa script de confirmação através de ajax
@@ -507,6 +508,9 @@ function formataCabecalho() {
                         }
                     }
                 });
+				} else {
+					mostraTipo();
+				}
             }
 		}
 
