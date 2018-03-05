@@ -4262,7 +4262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                               ,pr_nrcontrato   => pr_nrctremp
                               ,pr_idlautom     => null
                               ,pr_dtmvtolt_lcm => pr_dtmvtolt
-                              ,pr_cdagenci_lcm => pr_cdagenci
+                              ,pr_cdagenci_lcm => pr_cdpactra
                               ,pr_cdbccxlt_lcm => 100
                               ,pr_nrdolote_lcm => 10025
                               ,pr_nrseqdig_lcm => vr_nrseqdig
@@ -5783,7 +5783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                               ,pr_nrcontrato   => pr_nrctremp
                               ,pr_idlautom     => null
                               ,pr_dtmvtolt_lcm => pr_dtcalcul
-                              ,pr_cdagenci_lcm => pr_cdagenci
+                              ,pr_cdagenci_lcm => pr_cdpactra
                               ,pr_cdbccxlt_lcm => 100
                               ,pr_nrdolote_lcm => 650003
                               ,pr_nrseqdig_lcm => vr_nrseqdig
