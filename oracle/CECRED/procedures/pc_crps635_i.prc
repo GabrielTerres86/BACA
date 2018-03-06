@@ -72,6 +72,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
           INDEX BY VARCHAR2(14);
       vr_tab_ass_cpfcnpj typ_tab_crapass_cpfcnpj;
 
+      -- Registro de Associado que precisam alterar o Risco
+      TYPE typ_ass_ris IS
+        RECORD(cdcooper      crapris.cdcooper%TYPE
+              ,nrdconta      crapris.nrdconta%TYPE
+              ,nrcpfcgc      crapris.nrcpfcgc%TYPE
+              ,maxrisco      crapris.innivris%TYPE
+              ,inpessoa      crapris.inpessoa%TYPE);
+                  
+      -- Definição de um tipo de tabela com o registro acima
+      TYPE typ_tab_ass_ris IS
+        TABLE OF typ_ass_ris
+          INDEX BY PLS_INTEGER;
+      vr_tab_ass_ris   typ_tab_ass_ris;
+
+
       -- Código do programa
       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS635_i';
 
@@ -256,6 +271,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
         -- Variaveis auxiliares
         vr_dsmsgerr     VARCHAR2(200);
         vr_chave_ass    VARCHAR2(14);
+        vr_chave_assris INTEGER;
         vr_maxrisco     INTEGER:=-10;
 
         -- LISTAR CONTAS DO GRUPO ECON. QUE ESTÃO COM RISCO MENOR QUE DO GRUPO
@@ -269,11 +285,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                           END STATUS
                         ,ass.inpessoa
                         ,DECODE(ass.inpessoa
-                               ,1,gene0002.fn_mask(ass.nrcpfcgc,
-                                           DECODE(ass.inpessoa,1,'99999999999','99999999999999'))
-                                 ,SUBSTR(gene0002.fn_mask(ass.nrcpfcgc,
-                                           DECODE(ass.inpessoa,1,'99999999999','99999999999999'))
-                                        ,1,8) ) CPF_CNPJ
+                                     ,1,to_char(ass.nrcpfcgc,'FM00000000000')
+                                       ,SUBSTR(to_char(ass.nrcpfcgc,'FM00000000000000')
+                                              ,1,8) )   CPF_CNPJ -- Agrupar pela raiz do CNPJ
                         ,crapgrp.nrcpfcgc
                         ,crapgrp.nrdconta
                         ,crapgrp.innivrge
@@ -297,11 +311,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             AND grupo.status = 'GRP'   -- APENAS AQUELES QUE TEM O RISCO DO GRUPO MAIOR QUE INNIVRIS
           ORDER BY nrdgrupo;
 
+        CURSOR cr_crapass(pr_cdcooper NUMBER,
+                          pr_cpf_cnpj NUMBER) IS
+          SELECT ass.nrdconta
+            FROM crapass ass
+           WHERE ass.cdcooper = pr_cdcooper
+             AND ((ass.inpessoa = 1 AND ass.nrcpfcgc  = to_number(pr_cpf_cnpj)) OR
+                  (ass.inpessoa = 2 AND ass.nrcpfcgc >= to_number(pr_cpf_cnpj||'000000')
+                                    AND ass.nrcpfcgc <= to_number(pr_cpf_cnpj||'999999')) );              
 
         -- Busca todos os riscos que deverão ser arrastados
         -- É passado apenas a raíz do cnpj, por isso a função
-        CURSOR cr_riscos_cpfcnpj( pr_nrcpfcgc IN VARCHAR2
-                                 ,pr_inpessoa in crapass.inpessoa%TYPE
+        CURSOR cr_riscos_cpfcnpj( pr_nrdconta IN crapass.nrdconta%TYPE
                                  ,pr_innivris IN crapris.innivris%TYPE) IS
           SELECT  ris.nrdconta
                  ,ris.innivris
@@ -312,26 +333,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                  ,ris.nrctremp
                  ,ris.nrseqctr
                  ,rowid
-                 ,ROW_NUMBER () OVER (PARTITION BY ris.nrdconta
-                                          ORDER BY ris.nrcpfcgc,ris.nrdconta) SEQ_CTA
             FROM crapris ris
            WHERE ris.cdcooper = pr_cdcooper
              AND ris.dtrefere = pr_dtrefere
+             AND ris.nrdconta = pr_nrdconta
              AND ris.inddocto = 1
              AND ris.vldivida > pr_vlr_arrasto --> Valor dos parâmetros
-             AND ((pr_inpessoa = 1 AND ris.nrcpfcgc  = to_number(pr_nrcpfcgc)) Or
-                  (pr_inpessoa = 2 AND ris.nrcpfcgc >= to_number(pr_nrcpfcgc||'000000')
-                                   AND ris.nrcpfcgc <= to_number(pr_nrcpfcgc||'999999'))  )
-             AND (ris.innivris < pr_innivris);
+             AND ris.innivris < pr_innivris;
 
         BEGIN
 
 
-        vr_tab_ass_cpfcnpj.delete;
+        vr_tab_ass_cpfcnpj.DELETE;
 
 
         -- CONTAS DO GRUPO COM RISCO MENOR QUE O GRUPO (Serão arrastadas)
         FOR rw_contas_grupo IN cr_contas_grupo LOOP
+
+          vr_tab_ass_ris.DELETE;
 
           -- NAO LEVA PARA O PREJUIZO  
           IF rw_contas_grupo.innivrge = 10 THEN
@@ -340,11 +359,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             vr_maxrisco := rw_contas_grupo.innivrge;
           END IF;
 
-          -- PERCORRER TODOS CONTRATOS DA RIS - COM RISCO DIFERENTE DO GRUPO
-          FOR rw_riscos_cpfcnpj IN cr_riscos_cpfcnpj( pr_nrcpfcgc => rw_contas_grupo.cpf_cnpj
-                                                     ,pr_inpessoa => rw_contas_grupo.inpessoa
-                                                     ,pr_innivris => vr_maxrisco) LOOP
+          -- POPULAR OS VR TAB ASSOCIADOS BASEADO NO CNPJ RAIZ E CPF
+          FOR rw_crapass IN cr_crapass(pr_cdcooper => pr_cdcooper,
+                                       pr_cpf_cnpj => rw_contas_grupo.cpf_cnpj ) LOOP
+                                       
+            vr_tab_ass_ris(rw_crapass.nrdconta).cdcooper := pr_cdcooper;
+            vr_tab_ass_ris(rw_crapass.nrdconta).nrdconta := rw_crapass.nrdconta;
 
+          END LOOP;
+
+          -- PERCORRER TODAS AS CONTAS QUE PRECISAM SER AJUSTADAS
+          vr_chave_assris := vr_tab_ass_ris.FIRST;
+          LOOP
+            EXIT WHEN vr_chave_assris IS NULL;
+
+          -- PERCORRER TODOS CONTRATOS DA RIS - COM RISCO DIFERENTE DO GRUPO
+            FOR rw_riscos_cpfcnpj IN cr_riscos_cpfcnpj( pr_nrdconta => vr_chave_assris
+                                                     ,pr_innivris => vr_maxrisco) LOOP
 
             -- Efetuar atualização da CENTRAL RISCO cfme os valores maior risco
             BEGIN
@@ -386,18 +417,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             END;
 
           END LOOP; -- FIM LOOP - CONTRATOS DA CONTA
+            -- Buscar o próximo
+            vr_chave_assris := vr_tab_ass_ris.NEXT(vr_chave_assris);
+
+          END LOOP; -- LOOP DAS CONTAS
+
+
 
           -- Atualiza participante do Grupo Economico com o valor do arrasto
           BEGIN
             -- APENAS DO GRUPO ATUAL
-            UPDATE crapgrp cr
-               SET cr.innivris = vr_maxrisco
-                  ,cr.dsdrisco = vr_tab_risco_num(vr_maxrisco)
-                  ,cr.dtrefere = pr_dtrefere
-             WHERE cr.cdcooper = pr_cdcooper
-               AND cr.nrdgrupo = rw_contas_grupo.nrdgrupo
-               AND cr.nrcpfcgc = rw_contas_grupo.nrcpfcgc
-               AND cr.nrctasoc = rw_contas_grupo.nrctasoc;
+            UPDATE crapgrp grp
+               SET grp.innivris = vr_maxrisco
+                  ,grp.dsdrisco = vr_tab_risco_num(vr_maxrisco)
+                  ,grp.dtrefere = pr_dtrefere
+             WHERE grp.cdcooper = pr_cdcooper
+               AND grp.nrdgrupo = rw_contas_grupo.nrdgrupo
+               AND grp.nrcpfcgc = rw_contas_grupo.nrcpfcgc
+               AND grp.nrctasoc = rw_contas_grupo.nrctasoc;
           EXCEPTION
             WHEN OTHERS THEN
               --gera critica
