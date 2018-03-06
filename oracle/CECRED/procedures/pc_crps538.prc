@@ -1163,7 +1163,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            AND TO_CHAR(dtmvtolt,'YYYYMMDD') = TO_CHAR(pr_dtmvtolt,'YYYYMMDD')
          ORDER BY dschave
                  ,cdagenci;
-
+       
        --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
        rw_craprej  craprej%ROWTYPE;
@@ -6570,7 +6570,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
           pr_cdcritic:= vr_cdcritic;
           pr_dscritic:= 'Retorno gene0001.pc_controle_exec - ' || sqlerrm;           
       END pc_verifica_ja_executou; 
-              
+
               
      -----------------------------------------
      -- Inicio Bloco Principal pc_CRPS538
@@ -6949,7 +6949,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
           --Levantar Excecao
            RAISE vr_exc_saida;
          END IF;
-         END IF;                  
+       END IF;       
 
 
        -- Rotina Paralelismo 3 - Processar quando JOB ou Não Paralelismmo
@@ -6962,7 +6962,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        or (rw_crapdat.inproces <= 2) then -- ou processo On Line/Agendado    
                                    
          -- Buscar informações da poupança programada
- 
+
          -- Controla execucao dos JOBS
          if (rw_crapdat.inproces > 2     -- Processo Batch
          and pr_cdagenci > 0             -- Agencia
@@ -7370,12 +7370,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                            pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
                            pr_cdcooper   => pr_cdcooper, 
                            pr_tpexecucao => 2,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                           pr_idprglog   => vr_idlog_ini_par);  
-
-           -- Atualiza finalização do batch na tabela de controle 
-           gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
-                                              ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
-                                              ,pr_dscritic   => pr_dscritic);  
+                           pr_idprglog   => vr_idlog_ini_par,
+						   pr_flgsucesso => 0);  
 
            -- Encerrar o job do processamento paralelo dessa agência
            gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
@@ -7426,12 +7422,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                            pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
                            pr_cdcooper   => pr_cdcooper, 
                            pr_tpexecucao => 2,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                           pr_idprglog   => vr_idlog_ini_par);  
+                           pr_idprglog   => vr_idlog_ini_par,
+						   pr_flgsucesso => 0);  
 
-           -- Atualiza finalização do batch na tabela de controle 
-           gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
-                                              ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
-                                              ,pr_dscritic   => pr_dscritic);  
            -- Encerrar o job do processamento paralelo dessa agência
            gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                        ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
