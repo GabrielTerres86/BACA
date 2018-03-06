@@ -80,14 +80,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
-      vr_dsmensag   VARCHAR2(500):='';
 
 
       vr_datautil   DATE;       --> Auxiliar para busca da data
       vr_dtrefere   DATE;       --> Data de referência do processo
       vr_dtrefere_aux DATE;       --> Data de referência auxiliar do processo
       vr_dtdrisco   crapris.dtdrisco%TYPE; -- Data da atualização do risco
-
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -335,12 +333,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
         -- CONTAS DO GRUPO COM RISCO MENOR QUE O GRUPO (Serão arrastadas)
         FOR rw_contas_grupo IN cr_contas_grupo LOOP
 
+          -- NAO LEVA PARA O PREJUIZO  
           IF rw_contas_grupo.innivrge = 10 THEN
             vr_maxrisco := 9;
           ELSE
             vr_maxrisco := rw_contas_grupo.innivrge;
           END IF;
-
 
           -- PERCORRER TODOS CONTRATOS DA RIS - COM RISCO DIFERENTE DO GRUPO
           FOR rw_riscos_cpfcnpj IN cr_riscos_cpfcnpj( pr_nrcpfcgc => rw_contas_grupo.cpf_cnpj
@@ -350,7 +348,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
             -- Efetuar atualização da CENTRAL RISCO cfme os valores maior risco
             BEGIN
-
               UPDATE crapris
                  SET innivris = vr_maxrisco
                     ,inindris = vr_maxrisco
@@ -368,7 +365,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
             -- ATUALIZAR VENCIMENTOS RISCO COM BASE NO MAIOR RISCO
             BEGIN
-
               UPDATE crapvri
                  SET innivris = vr_maxrisco
                WHERE cdcooper = pr_cdcooper
@@ -393,7 +389,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
           -- Atualiza participante do Grupo Economico com o valor do arrasto
           BEGIN
-
             -- APENAS DO GRUPO ATUAL
             UPDATE crapgrp cr
                SET cr.innivris = vr_maxrisco
@@ -413,6 +408,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
           END;
 
 
+          -- Atualiza todas as contas do CPF/CNPJ
           pc_popula_ass_arrasto(rw_contas_grupo.cpf_cnpj
                                ,rw_contas_grupo.inpessoa
                                ,vr_maxrisco
@@ -608,7 +604,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
             -- Regra para carga de data para o cursor
             -- Se for rotina mensal - Daniel(AMcom)
-            IF to_char(rw_crapdat.dtmvtolt, 'MM') <> to_char(rw_crapdat.dtmvtopr, 'MM') THEN
+            IF to_char(rw_crapdat.dtmvtoan, 'MM') <> to_char(rw_crapdat.dtmvtolt, 'MM') THEN
               -- Utilizar o final do mês como data
               vr_dtrefere_aux := rw_crapdat.dtultdma;
             ELSE
@@ -652,6 +648,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             -- Fechar o cursor
             CLOSE cr_crapris_last;
 
+            
             -- atualiza controle de riscos.
             BEGIN
               UPDATE crapris
@@ -741,4 +738,4 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
         ROLLBACK;
     END;
   END pc_crps635_i;
-
+/
