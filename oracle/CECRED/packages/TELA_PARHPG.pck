@@ -57,9 +57,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PARHPG AS
                                     ,pr_hrnetcan  IN VARCHAR2           --> Horario Cancelamento Pagamento INTERNET/MOBILE
                                     ,pr_hrtaacau  IN VARCHAR2           --> Atualizar Horario Cancelamento Pagamento TAA "S/N"
                                     ,pr_hrtaacan  IN VARCHAR2           --> Horario Cancelamento Pagamento TAA
-                                    ,pr_hrvlbatu  IN VARCHAR2           --> Atualizar Horario DEVOLUCAO VLB "S/N"
-                                    ,pr_hrvlbini  IN VARCHAR2           --> Horario DEVOLUCAO VLB - Inicial
-                                    ,pr_hrvlbfim  IN VARCHAR2           --> Horario DEVOLUCAO VLB - FINAL
                                     ,pr_hrdiuatu  IN VARCHAR2           --> Atualizar Horario DEVOLUCAO DIURNA "S/N"
                                     ,pr_hrdiuini  IN VARCHAR2           --> Horario DEVOLUCAO DIURNA - Inicial
                                     ,pr_hrdiufim  IN VARCHAR2           --> Horario DEVOLUCAO DIURNA - Final
@@ -1225,9 +1222,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
   
   -- Rotina para alterar os horarios de DEVOLUCOES
   PROCEDURE pc_altera_horario_devolucao(pr_cdcooper  IN INTEGER      --> Codigo da Cooperativa (zero para todas)
-                                       ,pr_hrvlbatu  IN VARCHAR2     --> Atualizar Horario DEVOLUCAO VLB "S/N"
-                                       ,pr_hrvlbini  IN VARCHAR2     --> Horario DEVOLUCAO VLB - Inicial
-                                       ,pr_hrvlbfim  IN VARCHAR2     --> Horario DEVOLUCAO VLB - FINAL
                                        ,pr_hrdiuatu  IN VARCHAR2     --> Atualizar Horario DEVOLUCAO DIURNA "S/N"
                                        ,pr_hrdiuini  IN VARCHAR2     --> Horario DEVOLUCAO DIURNA - Inicial
                                        ,pr_hrdiufim  IN VARCHAR2     --> Horario DEVOLUCAO DIURNA - Final
@@ -1253,6 +1247,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
 
     Alteracoes: 01/06/2016 - Adicionado UPPER na leitura da craptab, para que seja utilizado 
                              o indice na pesquisa (Douglas - Chamado 454248)
+                             
+                26/06/2017 - Retiradas validações VLB. PRJ367 (Lombardi)
     ............................................................................. */
     -- Parametros de horarios DEVOLUCAO de Cheque
     CURSOR cr_craptab (pr_cdcooper IN craptab.cdcooper%TYPE) IS
@@ -1275,8 +1271,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
       -- Dados craptab
       vr_dstextab craptab.dstextab%TYPE;
       
-      vr_hrvlbini VARCHAR2(10); -- DEVOLUCAO VLB - Inicial
-      vr_hrvlbfim VARCHAR2(10); -- DEVOLUCAO VLB - Final
       vr_hrdiuini VARCHAR2(10); -- DEVOLUCAO DIURNA - Inicial
       vr_hrdiufim VARCHAR2(10); -- DEVOLUCAO DIURNA - Final
       vr_hrnotini VARCHAR2(10); -- DEVOLUCAO NOTURNA - Inicial
@@ -1291,33 +1285,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
     BEGIN
 
       -- Verificar se atualiza o horario das devolucoes
-      IF pr_hrvlbatu <> 'S' AND pr_hrdiuatu <> 'S' AND pr_hrnotatu <> 'S' THEN
+      IF pr_hrdiuatu <> 'S' AND pr_hrnotatu <> 'S' THEN
         -- nao executa nada
         RAISE vr_exit;
       END IF;
       
-      -- Converter a de DEVOLUCAO VLB inicial
-      BEGIN
-        vr_hrvlbini := TO_CHAR(TO_DATE(pr_hrvlbini,'HH24:MI'),'SSSSS');
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Horario DEVOLUCAO VLB - Inicial invalido (' || pr_hrvlbini || ')';
-          pr_nmdcampo := 'hrvlbini';
-          RAISE vr_exc_erro;
-      END;  
-
-      -- Converter a de DEVOLUCAO VLB final
-      BEGIN
-        vr_hrvlbfim := TO_CHAR(TO_DATE(pr_hrvlbfim,'HH24:MI'),'SSSSS');
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Horario DEVOLUCAO VLB - Final invalido (' || pr_hrvlbfim || ')';
-          pr_nmdcampo := 'hrvlbfim';
-          RAISE vr_exc_erro;
-      END;  
-
       -- Converter a de DEVOLUCAO DIURNA inicial
       BEGIN
         vr_hrdiuini := TO_CHAR(TO_DATE(pr_hrdiuini,'HH24:MI'),'SSSSS');
@@ -1367,16 +1339,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
         -- Inicializa a novo valor
         vr_dstextab := '';
           
-        -- Verificar se atualiza Horario DEVOLUCAO VLB
-        IF pr_hrvlbatu = 'S' THEN
-          vr_dstextab := vr_hrvlbini || ';' ||
-                         vr_hrvlbfim || ';';
-        ELSE
-          -- Se nao atualizar, mantem os valores originais
-          vr_dstextab := GENE0002.fn_busca_entrada(1,rw.dstextab,';') || ';' || -- Hora Inicio - Devolucao VLB
-                         GENE0002.fn_busca_entrada(2,rw.dstextab,';') || ';';   -- Hora Fim - Devolucao VLB
-        END IF;
-
         -- Verificar se atualiza Horario DEVOLUCAO DIURNO
         IF pr_hrdiuatu = 'S' THEN
           vr_dstextab := vr_dstextab ||
@@ -1455,9 +1417,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
                                     ,pr_hrnetcan  IN VARCHAR2           --> Horario Cancelamento Pagamento INTERNET/MOBILE
                                     ,pr_hrtaacau  IN VARCHAR2           --> Atualizar Horario Cancelamento Pagamento TAA "S/N"
                                     ,pr_hrtaacan  IN VARCHAR2           --> Horario Cancelamento Pagamento TAA
-                                    ,pr_hrvlbatu  IN VARCHAR2           --> Atualizar Horario DEVOLUCAO VLB "S/N"
-                                    ,pr_hrvlbini  IN VARCHAR2           --> Horario DEVOLUCAO VLB - Inicial
-                                    ,pr_hrvlbfim  IN VARCHAR2           --> Horario DEVOLUCAO VLB - FINAL
                                     ,pr_hrdiuatu  IN VARCHAR2           --> Atualizar Horario DEVOLUCAO DIURNA "S/N"
                                     ,pr_hrdiuini  IN VARCHAR2           --> Horario DEVOLUCAO DIURNA - Inicial
                                     ,pr_hrdiufim  IN VARCHAR2           --> Horario DEVOLUCAO DIURNA - Final
@@ -1489,6 +1448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
                 24/11/2016 - Alteração para que o fonte realize a avaliação do departamento
                              pelo campo CDDEPART ao invés do DSDEPART. (Renato Darosci - Supero)
                                
+                26/06/2017 - Retiradas validações VLB. PRJ367 (Lombardi)                               
     ............................................................................. */
       -- CURSORES -- 
       -- Buscar informacoes da cooperativa
@@ -1687,9 +1647,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
 
       -- Atualizar os horarios de DEVOLUCAO de cheques
       pc_altera_horario_devolucao(pr_cdcooper => pr_cdcooper   --> Codigo da Cooperativa (zero para todas)
-                                 ,pr_hrvlbatu => pr_hrvlbatu   --> Atualizar Horario DEVOLUCAO VLB "S/N"
-                                 ,pr_hrvlbini => pr_hrvlbini   --> Horario DEVOLUCAO VLB - Inicial
-                                 ,pr_hrvlbfim => pr_hrvlbfim   --> Horario DEVOLUCAO VLB - FINAL
                                  ,pr_hrdiuatu => pr_hrdiuatu   --> Atualizar Horario DEVOLUCAO DIURNA "S/N"
                                  ,pr_hrdiuini => pr_hrdiuini   --> Horario DEVOLUCAO DIURNA - Inicial
                                  ,pr_hrdiufim => pr_hrdiufim   --> Horario DEVOLUCAO DIURNA - Final
@@ -1822,19 +1779,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARHPG AS
                                                     ' - Atualizou o Cancelamento de pagamentos para:' ||
                                                     pr_hrtaacan || 
                                                     ' para o PA 91 (TAA)' || vr_dscooper);
-      END IF;
-
-      -- Alterou Horario de DEVOLUCAO VLB
-      IF pr_hrvlbatu = 'S' THEN
-        --Escrever No LOG
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_nmarqlog     => 'parhpg.log'
-                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss') ||
-                                                    ' --> Operador: ' || vr_cdoperad ||
-                                                    ' - Atualizou o Horario de DEVOLUCAO de Cheque VLB para:' ||
-                                                    ' Inicio ' || pr_hrvlbini || ' e Fim ' || pr_hrvlbfim ||
-                                                    vr_dscooper);
       END IF;
 
       -- Alterou Horario de DEVOLUCAO DIURNA
