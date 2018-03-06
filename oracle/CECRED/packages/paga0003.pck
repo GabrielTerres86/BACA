@@ -7277,11 +7277,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_cdempcon tbconv_arrecadacao.cdempcon%TYPE;
       vr_nrrefere craplft.nrrefere%TYPE;
       vr_cdagebcb crapcop.cdagebcb%TYPE;
+      vr_cdagebcb2 crapcop.cdagebcb%TYPE;
       vr_trocaarq BOOLEAN;
       vr_procearq BOOLEAN;
       vr_linha    VARCHAR2(400);
       -- Função para retornar o nome do arquivo
-      FUNCTION fn_nm_arquivo(pr_cdagectl IN crapcop.cdagectl%TYPE
+      FUNCTION fn_nm_arquivo(pr_cdagebcb IN crapcop.cdagebcb%TYPE
                             ,pr_cdempres IN tbconv_arrecadacao.cdempres%TYPE
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                             ,pr_nrnsa    IN NUMBER
@@ -7290,7 +7291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       BEGIN
         --
         --RETURN lpad(pr_cdagectl, 4, '0') || '-' || 'EG'|| lpad(pr_cdempres, 10, '0') || to_char(pr_dtmvtolt, 'YYYYMMDD') || '.CNV';
-        RETURN lpad(pr_cdagectl, 4, '0') || '-' || 'FC'|| lpad(pr_cdempres, 10, '0') || to_char(pr_dtmvtolt, 'YYYYMMDD') || '.' || lpad(pr_nrnsa, 3, '0');
+        RETURN lpad(pr_cdagebcb, 4, '0') || '-' || 'FC'|| lpad(pr_cdempres, 10, '0') || to_char(pr_dtmvtolt, 'YYYYMMDD') || '.' || lpad(pr_nrnsa, 3, '0');
         --
       END fn_nm_arquivo;
       
@@ -7629,7 +7630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       END pc_insere_linha;
       
       -- Rotina que grava o arquivo gerado em memória nos diretórios
-      PROCEDURE pc_grava_arquivo(pr_cdagectl IN  crapcop.cdagectl%TYPE
+      PROCEDURE pc_grava_arquivo(pr_cdagebcb IN  crapcop.cdagebcb%TYPE
                                 ,pr_cdempres IN  tbconv_arrecadacao.cdempres%TYPE
                                 ,pr_dtmvtolt IN  crapdat.dtmvtolt%TYPE
                                 ,pr_cdcooper IN  crapcop.cdcooper%TYPE
@@ -7655,7 +7656,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         --
         IF vr_tab_arquivo.count > 0 THEN
           -- Busca o nome do arquivo
-          pr_nmarqtxt := fn_nm_arquivo(pr_cdagectl => pr_cdagectl -- IN
+          pr_nmarqtxt := fn_nm_arquivo(pr_cdagebcb => pr_cdagebcb -- IN
                                       ,pr_cdempres => pr_cdempres -- IN
                                       ,pr_dtmvtolt => pr_dtmvtolt -- IN
                                       ,pr_nrnsa    => substr(fn_busca_nsa(pr_cdcooper => pr_cdcooper -- IN
@@ -7871,7 +7872,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                      ,pr_rowid => NULL     -- IN
                                      );
                       -- Se não ocorreu nenhum erro durante o processamento dos movimentos, grava o arquivo nos diretórios
-                      pc_grava_arquivo(pr_cdagectl => vr_cdagectl          -- IN
+                      pc_grava_arquivo(pr_cdagebcb => vr_cdagebcb2          -- IN
                                       ,pr_cdempres => vr_cdconven          -- IN
                                       ,pr_dtmvtolt => rw_dtmvtolt.dtmvtolt -- IN
                                       ,pr_cdcooper => vr_cdcooper          -- IN
@@ -7923,6 +7924,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                 vr_cdcooper := rw_cooper.cdcooper;
                 vr_nmrescop := rw_cooper.nmrescop;
                 vr_cdagectl := rw_cooper.cdagectl;
+                vr_cdagebcb2 := rw_cooper.cdagebcb;
                 vr_cdconven := rw_conven.cdempres;
                 vr_cdempcon := rw_conven.cdempcon;
                 vr_trocaarq := TRUE;
@@ -8083,7 +8085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                              ,pr_rowid => NULL     -- IN
                              );
               -- Se não ocorreu nenhum erro durante o processamento dos movimentos, grava o arquivo nos diretórios
-              pc_grava_arquivo(pr_cdagectl => vr_cdagectl          -- IN
+              pc_grava_arquivo(pr_cdagebcb => vr_cdagebcb2          -- IN
                               ,pr_cdempres => vr_cdconven          -- IN
                               ,pr_dtmvtolt => rw_dtmvtolt.dtmvtolt -- IN
                               ,pr_cdcooper => vr_cdcooper          -- IN
