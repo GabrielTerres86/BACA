@@ -172,14 +172,14 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
                             ,pr_des_erro     OUT VARCHAR2);       --> Erros do processo
 
     -- Verificar possivel fraude dos cheques de outras instituicoes com sinistros (UNICRED).                       
-    PROCEDURE pc_ver_fraude_chq_extern(pr_cdcooper IN NUMBER                                  --> Cooperativa
+    PROCEDURE pc_ver_fraude_chq_extern (pr_cdcooper IN NUMBER                                  --> Cooperativa
                                       ,pr_cdprogra IN VARCHAR2                                --> Programa chamador
-                                      ,pr_cdbanco  IN tbchq_sinistro_outrasif.cdbanco%TYPE    --> Código da Agencia do Cheque
-                                      ,pr_nrcheque IN tbchq_sinistro_outrasif.nrcheque%TYPE   --> Numero da Conta do Cheque
-                                      ,pr_nrctachq IN tbchq_sinistro_outrasif.nrcontachq%TYPE --> Data de Referencia
-                                      ,pr_cdoperad IN tbchq_sinistro_outrasif.cdoperad%TYPE   --> Numero da Conta
-                                      ,pr_cdagenci IN tbchq_sinistro_outrasif.cdagencia%TYPE  --> Numero do Documento
-                                      ,pr_des_erro OUT VARCHAR2); 
+                                       ,pr_cdbanco  IN tbchq_sinistro_outrasif.cdbanco%TYPE    --> Número do Banco do Chque
+                                       ,pr_nrcheque IN tbchq_sinistro_outrasif.nrcheque%TYPE   --> Numero do Cheque
+                                       ,pr_nrctachq IN tbchq_sinistro_outrasif.nrcontachq%TYPE --> Numero da Conta do Cheque
+                                       ,pr_cdoperad IN tbchq_sinistro_outrasif.cdoperad%TYPE   --> Operador 
+                                       ,pr_cdagenci IN tbchq_sinistro_outrasif.cdagencia%TYPE  --> Código da Agencia do Cheque
+                                       ,pr_des_erro OUT VARCHAR2);                             --> Descrição do erro 
 
   /* Rotina para criar registros de devolucao/taxa de cheques. */
   PROCEDURE pc_gera_devolu_cheque_car (pr_cdcooper  IN crapdev.cdcooper%TYPE    --> Código da cooperativa
@@ -219,7 +219,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     Sistema  : Rotinas focadas no sistema de Cheques
     Sigla    : GENE
     Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 19/10/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 24/11/2017
 
    Dados referentes ao programa:
   
@@ -233,7 +233,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            fonte progress (Lucas Ranghetti #422753)
 													 
       			  04/07/2016 - Adicionados busca_taloes_car para geração de relatório
-                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)													 
+                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
                             
               13/10/2016 - #497744 Modificada a consulta de cheque sinistrado na rotina 
                            pc_ver_fraude_chq_extern pois a parte do cmc7 que pertence a
@@ -241,9 +241,16 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            
               25/04/2017 - Na procedure pc_busca_cheque incluir >= na busca do todos pr_nrtipoop = 5 para 
                            trazer todos os cheques a partir do informado (Lucas Ranghetti #625222)
+                           
+              11/10/2017 - Na procedure pc_busca_cheque mudar ordenacao do select pra trazer os 
+                           ultimos cheques emitidos primeiro qdo a opcao for TODOS na tela (Tiago #725346)
 
-              19/10/2017 - Ajsute para pegar corretamente a observação do cheque
+              19/10/2017 - Ajuste para pegar corretamente a observação do cheque
 			               (Adriano - SD 774552)
+                     
+              24/11/2017 - Quando usar a opcao todos e filtrar pelo nr cheque
+                           deve ordenar a lista pelo numero do cheque (Tiago/Adriano)
+                     
   --------------------------------------------------------------------------------------------------------------- */
 
 
@@ -2364,8 +2371,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;    
     END pc_obtem_cheques_deposito; 
-
-                        
+    
   -- TELA: CHEQUE - Matriz de Cheques
   PROCEDURE pc_busca_cheque(pr_cdcooper  IN     NUMBER           --> Código cooperativa
                            ,pr_nrtipoop  IN     NUMBER           --> Tipo de operação
@@ -2385,7 +2391,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     --  Sistema  : Rotinas para cadastros Web
     --  Sigla    : CHEQUE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2013.                   Ultima atualizacao: 25/04/2017
+    --  Data     : Maio/2013.                   Ultima atualizacao: 24/11/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2401,6 +2407,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     
                      25/04/2017 - Incluir >= na busca do todos pr_nrtipoop = 5 para 
                                   trazer todos os cheques a partir do informado (Lucas Ranghetti #625222)
+                                  
+                     11/10/2017 - Mudar ordenacao do select pra trazer os ultimos cheques
+                                  emitidos primeiro qdo a opcao for TODOS na tela (Tiago #725346)
+                                  
+                     24/11/2017 - Quando usar a opcao todos e filtrar pelo nr cheque
+                                  deve ordenar a lista pelo numero do cheque (Tiago/Adriano)
      .............................................................................*/
     
     -- Variáveis
@@ -2519,8 +2531,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             'order by nrctachq desc, nrseqems desc, nrcheque desc';
       WHEN 5 THEN
         IF pr_nrcheque > 0 THEN
-          vr_sql := vr_sql || 'and nrcheque >= ' || pr_nrcheque || ' ' ||
-                              'order by nrcheque';
+          vr_sql := vr_sql || 'and nrcheque >= ' || pr_nrcheque || ' order by nrcheque';
+        ELSE
+          vr_sql := vr_sql || 'order by dtemschq desc, nrcheque desc';  
         END IF;
     END CASE;
 
@@ -2952,12 +2965,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              
   PROCEDURE pc_ver_fraude_chq_extern (pr_cdcooper IN NUMBER                                  --> Cooperativa
                                      ,pr_cdprogra IN VARCHAR2                                --> Programa chamador
-                                     ,pr_cdbanco  IN tbchq_sinistro_outrasif.cdbanco%TYPE    --> Código da Agencia do Cheque
-                                     ,pr_nrcheque IN tbchq_sinistro_outrasif.nrcheque%TYPE   --> Numero da Conta do Cheque
-                                     ,pr_nrctachq IN tbchq_sinistro_outrasif.nrcontachq%TYPE --> Data de Referencia
-                                     ,pr_cdoperad IN tbchq_sinistro_outrasif.cdoperad%TYPE   --> Numero da Conta
-                                     ,pr_cdagenci IN tbchq_sinistro_outrasif.cdagencia%TYPE  --> Numero do Documento
-                                     ,pr_des_erro OUT VARCHAR2) IS
+                                     ,pr_cdbanco  IN tbchq_sinistro_outrasif.cdbanco%TYPE    --> Número do Banco do Chque
+                                     ,pr_nrcheque IN tbchq_sinistro_outrasif.nrcheque%TYPE   --> Numero do Cheque
+                                     ,pr_nrctachq IN tbchq_sinistro_outrasif.nrcontachq%TYPE --> Numero da Conta do Cheque
+                                     ,pr_cdoperad IN tbchq_sinistro_outrasif.cdoperad%TYPE   --> Operador 
+                                     ,pr_cdagenci IN tbchq_sinistro_outrasif.cdagencia%TYPE  --> Código da Agencia do Cheque
+                                     ,pr_des_erro OUT VARCHAR2) IS                           --> Descrição do erro 
   BEGIN
     /* .............................................................................
 
@@ -2965,20 +2978,22 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Ranghetti
-    Data    : Agosto/2015                          Ultima alteracao: 
+    Data    : Agosto/2015                          Ultima alteracao: 27/12/2017
 
     Dados referentes ao programa:
 
     Frequencia: Diario (Batch)
     Objetivo  : Verificar possivel fraude dos cheques de outras instituicoes com sinistros (UNICRED).
 
-    Alteracoes:  
-                             
+    Alteracoes: 27/12/2017 - Adicionar o Número da Agencia do Cheque como parametro e buscar 
+                             a informação de cheque sinistrado com a informação da agencia
+                             do cheque (Douglas - Chamado 820177)
     ............................................................................. */
     DECLARE
       -- buscar cheques de outras instituicoes com sinistros
       CURSOR cr_tbchq (pr_cdbanco  IN tbchq_sinistro_outrasif.cdbanco%TYPE,
                        pr_nrcheque IN tbchq_sinistro_outrasif.nrcheque%TYPE,
+                       pr_cdagechq IN tbchq_sinistro_outrasif.cdagencia%TYPE,
                        pr_nrctachq IN tbchq_sinistro_outrasif.nrcontachq%TYPE) IS
         SELECT tbchq.nrcheque,
                tbchq.nrcontachq,
@@ -2986,11 +3001,11 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
           FROM tbchq_sinistro_outrasif tbchq
          WHERE tbchq.cdbanco    = pr_cdbanco
            AND tbchq.nrcheque   = pr_nrcheque
-           AND tbchq.cdagencia  = pr_cdagenci           
+           AND tbchq.cdagencia  = pr_cdagechq
            /* nr da conta cadastrada LIKE qlqr str terminando no Conta completa do cmc7  */
            AND regexp_like(pr_nrctachq, '.*'||tbchq.nrcontachq||'$');
            
-         rw_tbchq cr_tbchq%ROWTYPE;
+         rw_tbchq cr_tbchq%ROWTYPE;     
        
       vr_cdcritic  NUMBER:= 0;
       vr_dscritic VARCHAR2(100);
@@ -3008,6 +3023,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       -- Verificar cheque contem fraude
       OPEN cr_tbchq (pr_cdbanco  => pr_cdbanco,
                      pr_nrcheque => pr_nrcheque,
+                     pr_cdagechq => pr_cdagenci,
                      pr_nrctachq => pr_nrctachq);
       FETCH cr_tbchq INTO rw_tbchq;
       -- caso tenha fraude
