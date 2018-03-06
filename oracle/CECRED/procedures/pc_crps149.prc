@@ -2091,6 +2091,7 @@ BEGIN
 
           -- Busca as parcelas para pagamento
           EMPR0011.pc_busca_pagto_parc_pos(pr_cdcooper => rw_crapepr.cdcooper
+										  ,pr_cdprogra => vr_cdprogra
                                           ,pr_flgbatch => TRUE
                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                           ,pr_dtmvtoan => rw_crapdat.dtmvtoan
@@ -2710,6 +2711,7 @@ BEGIN
           WHILE vr_index_pos IS NOT NULL LOOP
             -- Chama pagamento da parcela
             EMPR0011.pc_gera_pagto_pos(pr_cdcooper  => rw_crapepr.cdcooper
+									  ,pr_cdprogra => vr_cdprogra
                                       ,pr_dtcalcul  => rw_crapdat.dtmvtolt
                                       ,pr_nrdconta  => rw_crapepr.nrdconta
                                       ,pr_nrctremp  => rw_crapepr.nrctremp
