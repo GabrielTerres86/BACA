@@ -497,6 +497,8 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                         tt-consulta-blt.dtvctori, "99/99/9999") + "</dtvctori>" + 
                                    "<flgcbdda>" + STRING(IF aux_npc_cip = 1 THEN "S" ELSE "N") + "</flgcbdda>" +
                                    "<vldocmto>" + STRING(tt-consulta-blt.vldocmto)+ "</vldocmto>" +
+                                   "<dtmvtatu>" + STRING(tt-consulta-blt.dtmvtatu,"99/99/9999") + "</dtmvtatu>" +
+                                   "<flgvenci>" + STRING(tt-consulta-blt.flgvenci) + "</flgvenci>" +
                                    "<vldocmto_boleto>" + STRING(tt-consulta-blt.vldocmto_boleto,"zzzzzzzzz9.99") + "</vldocmto_boleto>" +
                                    "<vlcobrado_boleto>" + STRING(tt-consulta-blt.vlcobrado_boleto,"zzzzzzzzz9.99") + "</vlcobrado_boleto>" +
                                    "<dtvencto_boleto>" + STRING(tt-consulta-blt.dtvencto_boleto,"99/99/9999") + "</dtvencto_boleto>" +
