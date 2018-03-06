@@ -108,6 +108,11 @@
                23/12/2015 - Adicionar parametro de saida para a descricao da 
                             critica, e utilizar a procedure convertida em 
                             Oracle (Douglas - Melhoria 100)
+                            
+               20/06/2017 - Removida leitura da craptab.cdacesso = “VALORESVLB” 
+                            e atribuir ZERO para a variável aux_vlchqvlb. 
+                            PRJ367 - Compe Sessao Unica (Lombardi)
+                            
 ............................................................................. */
 
 { sistema/generico/includes/var_oracle.i }
@@ -152,20 +157,7 @@ IF   NOT AVAILABLE crapcop THEN
          NEXT.
      END.
 
-
-/*   Verificar o valor VLB */
-FIND craptab WHERE craptab.cdcooper = par_cdcooper   AND
-                   craptab.nmsistem = "CRED"         AND
-                   craptab.tptabela = "GENERI"       AND
-                   craptab.cdempres = 0              AND
-                   craptab.cdacesso = "VALORESVLB"   AND
-                   craptab.tpregist = 0
-                   NO-LOCK NO-ERROR.
-                                 
-IF   AVAILABLE craptab   THEN
-     aux_vlchqvlb = DEC(ENTRY(2,craptab.dstextab,";")).
-ELSE 
-     aux_vlchqvlb = 0.
+aux_vlchqvlb = 0.
 
 ASSIGN par_cdcritic = 0
        aux_cdbanchq = IF   par_cdbccxlt = 756 THEN

@@ -20,9 +20,11 @@
                02/02/2006 - Unificacao dos Bancos - SQLWorks - Fernando.
                
                19/09/2014 - Alteração da mensagem com critica 77 substituindo pela 
-                           b1wgen9999.p procedure acha-lock, que identifica qual 
-                           é o usuario que esta prendendo a transaçao. (Vanessa)
-
+                            b1wgen9999.p procedure acha-lock, que identifica qual 
+                            é o usuario que esta prendendo a transaçao. (Vanessa)
+                           
+               13/06/2017 - Nao permitir mais alterar o valor do campo “Valor para os Cheques Maiores”,
+                            apenas exibi-lo em tela. PRJ367 - Compe Sessao Unica (Lombardi)
 ............................................................................. */
 
 { includes/var_online.i } 
@@ -194,8 +196,10 @@ DO WHILE TRUE:
                 END.
 
            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-
-              UPDATE tel_vlmaichq tel_vlsldneg tel_vlchcomp WITH FRAME f_tab006
+              
+              DISPLAY tel_vlmaichq WITH FRAME f_tab006.
+              
+              UPDATE  tel_vlsldneg tel_vlchcomp WITH FRAME f_tab006
 
               EDITING:
 
