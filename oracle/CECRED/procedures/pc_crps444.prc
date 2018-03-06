@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 17/10/2017
+     Data    : Marco/2005.                     Ultima atualizacao: 14/12/2017
 
      Dados referentes ao programa:
 
@@ -357,6 +357,10 @@ BEGIN
                  17/10/2017 - Atualizar descricao do historico 0729 enviado no arquivo pelo BB,
                               de: '0729TRANSFERENCIA' para: '0729TRANSF RECEBIDA'.
                               (Chamado 775188) - (Fabricio)
+                              
+                 15/12/2017 - Chamado 779705 - Inclusão de informações do histórico 
+                              0729TRANSF RECEBIDA em arquivo contábil (Andrei-Mouts)
+                              
      ............................................................................. */
 
   DECLARE
@@ -873,7 +877,7 @@ BEGIN
                FROM crapage age
               WHERE age.cdcooper = pr_cdcooper
                 AND age.insitage = 1
-                AND age.cdagenci NOT IN (90,91,999)
+                AND age.cdagenci NOT IN (90,91,95,999)
              ORDER BY cdagenci);
 
      --Variaveis Locais
@@ -1175,7 +1179,11 @@ BEGIN
 
         vr_tab_historico('795CONTR CDC I').nrctaori := 1179;
         vr_tab_historico('795CONTR CDC I').nrctades := 4894;
-        vr_tab_historico('795CONTR CDC I').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CREDITO CDA NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+        vr_tab_historico('795CONTR CDC I').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CREDITO CDA NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';  
+        
+        vr_tab_historico('0729TRANSF RECE').nrctaori := 1179;
+        vr_tab_historico('0729TRANSF RECE').nrctades := 4894;
+        vr_tab_historico('0729TRANSF RECE').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TRANSFERENCIA NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                                
         
      END;
 
@@ -2806,7 +2814,7 @@ BEGIN
 
            vr_nrdctabb:= TO_NUMBER(SUBSTR(vr_setlinha,33,09));
            vr_nrseqint:= TO_NUMBER(SUBSTR(vr_setlinha,195,06));
-           vr_dshistor:= TRIM(SUBSTR(vr_setlinha,46,29));
+           vr_dshistor:= TRIM(SUBSTR(vr_setlinha,46,29));           
            vr_nrdocmto:= TO_NUMBER(SUBSTR(vr_setlinha,75,06));
            vr_vllanmto:= TO_NUMBER(SUBSTR(vr_setlinha,87,18)) / 100;
            vr_dtmvtolt:= TO_DATE(SUBSTR(vr_setlinha,184,2)||
@@ -5068,6 +5076,7 @@ BEGIN
                                               ,pr_tpintegr => vr_contaarq) LOOP
            /*   Utilizado para a Somatoria dos Valores de Devolucao  */
            vr_dshistor:= TRIM(SUBSTR(rw_craprej_tot.dshistor,1,15));
+           
            IF INSTR(vr_dshstdev,SUBSTR(vr_dshistor,01,04)) > 0 OR 
               SUBSTR(vr_dshistor,01,04) = '0114' THEN
              --Se existir crawtot
