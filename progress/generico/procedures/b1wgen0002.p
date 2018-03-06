@@ -14147,16 +14147,17 @@ PROCEDURE buscar_liquidacoes_contrato:
     DEF INPUT PARAM par_nrctremp AS INTE                             NO-UNDO.    
     DEF OUTPUT PARAM par_dsctrliq AS CHAR                            NO-UNDO. 
     DEF VAR i AS INTE NO-UNDO.
+    DEF BUFFER crabwepr FOR crawepr.
     
     ASSIGN par_dsctrliq = "".
     
-    FIND FIRST crawepr WHERE crawepr.cdcooper = par_cdcooper AND
-                             crawepr.nrdconta = par_nrdconta AND
-                             crawepr.nrctremp = par_nrctremp NO-LOCK NO-ERROR.
-    IF AVAIL crawepr THEN DO:
+    FIND crabwepr WHERE crabwepr.cdcooper = par_cdcooper AND
+                        crabwepr.nrdconta = par_nrdconta AND
+                        crabwepr.nrctremp = par_nrctremp NO-LOCK NO-ERROR.
+    IF AVAIL crabwepr THEN DO:
       DO i = 1 TO 10:
-         IF  crawepr.nrctrliq[i] > 0  THEN DO:
-            par_dsctrliq = par_dsctrliq + (IF par_dsctrliq = "" THEN TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9")) ELSE "," + TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))).
+         IF  crabwepr.nrctrliq[i] > 0  THEN DO:
+            par_dsctrliq = par_dsctrliq + (IF par_dsctrliq = "" THEN TRIM(STRING(crabwepr.nrctrliq[i], "z,zzz,zz9")) ELSE "," + TRIM(STRING(crabwepr.nrctrliq[i], "z,zzz,zz9"))).
          END.
       END.
     END.
