@@ -12691,7 +12691,7 @@ END pc_consulta_ir_pj_trim;
                           '" p_qtpreemp="'||rw_crapepr.qtpreemp||
                           '" p_carencia="'||vr_carencia ||                          
                           '" p_vltxiofadc="'||to_char((nvl(vr_vltxiofadc, 0) * 100), 'fm9999g999g990d00000')||'%'    ||
-                          '" p_vltxiofpri="'||to_char((nvl(vr_vltxiofpri, 0) * 100), 'fm9999g999g990d00000')||'%'    ||'">';
+                          '" p_vltxiofpri="'||to_char((nvl(rw_crapepr.vlaqiofc, 0) * 100), 'fm9999g999g990d00000')||'%'    ||'">';
                           
           --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);

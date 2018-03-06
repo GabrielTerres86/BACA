@@ -3267,6 +3267,8 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_vliofpri AS DECI                                      NO-UNDO.    
     DEF VAR aux_vliofadi AS DECI                                      NO-UNDO.    
     DEF VAR aux_nrseqdig AS INTE                                      NO-UNDO.
+    DEF VAR aux_nrdolote_cred AS INTE                                 NO-UNDO.   
+    DEF VAR aux_cdhistor_cred AS INTE                                 NO-UNDO.
 
     DEF VAR h-b1wgen0097 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0134 AS HANDLE                                    NO-UNDO.
@@ -3662,12 +3664,12 @@ PROCEDURE grava_efetivacao_proposta:
      /* Se for Pos-Fixado */
      IF  crawepr.tpemprst = 2  THEN
 		  DO:
-             ASSIGN aux_nrdolote = 650004.
+             ASSIGN aux_nrdolote_cred = 650004.
 
              IF   aux_floperac   THEN             /* Financiamento*/
-                  ASSIGN aux_cdhistor = 2327.
+                  ASSIGN aux_cdhistor_cred = 2327.
              ELSE                                 /* Emprestimo */
-                  ASSIGN aux_cdhistor = 2326.
+                  ASSIGN aux_cdhistor_cred = 2326.
          END.
      ELSE
          DO:
@@ -3680,20 +3682,20 @@ PROCEDURE grava_efetivacao_proposta:
             IF aux_floperac THEN /* Financiamento*/
               DO:
                 IF aux_tpfinali = 3 THEN /* CDC */
-                  ASSIGN aux_cdhistor = 2014.
+                  ASSIGN aux_cdhistor_cred = 2014.
                 ELSE
-                  ASSIGN aux_cdhistor = 1059.
+                  ASSIGN aux_cdhistor_cred = 1059.
                   
-                ASSIGN  aux_nrdolote = 600030.
+                ASSIGN  aux_nrdolote_cred = 600030.
               END.
            ELSE /* Emprestimo */
              DO:
               IF aux_tpfinali = 3 THEN /* CDC */
-                ASSIGN aux_cdhistor = 2013.
+                ASSIGN aux_cdhistor_cred = 2013.
               ELSE
-                ASSIGN aux_cdhistor = 1036.
+                ASSIGN aux_cdhistor_cred = 1036.
               
-              ASSIGN aux_nrdolote = 600005.
+              ASSIGN aux_nrdolote_cred = 600005.
              END.
          END.
 
@@ -3707,9 +3709,9 @@ PROCEDURE grava_efetivacao_proposta:
                                    INPUT par_cdoperad,
                                    INPUT par_cdagenci,
                                    INPUT 4,            /* tplotmov */
-                                   INPUT aux_nrdolote, /* nrdolote */
+                              INPUT aux_nrdolote_cred, /* nrdolote */
                                    INPUT par_nrdconta,
-                                   INPUT aux_cdhistor,
+                              INPUT aux_cdhistor_cred,
                                    INPUT par_nrctremp,
                               INPUT aux_vltotemp, /* Valor total emprestado */
                                    INPUT par_dtmvtolt,

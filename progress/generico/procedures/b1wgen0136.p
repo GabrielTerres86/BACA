@@ -683,6 +683,22 @@ PROCEDURE efetua_liquidacao_empr:
                                      INPUT par_nrseqava,
                                      INPUT-OUTPUT TABLE tt-lancconta).
 
+                     /* IOF complementar */
+                     IF aux_vliofcpl > 0 THEN DO:
+                       RUN cria-atualiza-ttlancconta
+                                      (INPUT par_cdcooper,
+                                       INPUT par_nrctremp,
+                                       INPUT aux_cdhisiof,
+                                       INPUT par_dtmvtolt,
+                                       INPUT par_cdoperad,
+                                       INPUT par_cdpactra,
+                                       INPUT aux_loteiof,
+                                       INPUT par_nrdconta,
+                                       INPUT aux_vliofcpl,
+                                       INPUT par_nrseqava,
+                                       INPUT-OUTPUT TABLE tt-lancconta).
+                     END.
+
                      IF (NOT par_ehprcbat) THEN
                         DO:
                              /* pagamento */

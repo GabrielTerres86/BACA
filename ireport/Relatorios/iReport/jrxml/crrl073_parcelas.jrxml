@@ -261,7 +261,7 @@
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
-					<text><![CDATA[IOF dia./compl.:]]></text>
+					<text><![CDATA[IOF adicional:]]></text>
 				</staticText>
 				<textField>
 					<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="359" y="77" width="75" height="11"/>

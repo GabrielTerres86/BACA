@@ -7974,25 +7974,6 @@ PROCEDURE altera-valor-proposta:
 
         IF crawepr.tpemprst = 1 then
         DO:                
-        
-            /* MESSAGE "VALOR PARCELA SERA RECALCULADO: " + STRING(crawepr.vlpreemp).        
-            MESSAGE "--> par_cdcooper: " + STRING(par_cdcooper).
-            MESSAGE "--> par_nrdconta: " + STRING(par_nrdconta).
-            MESSAGE "--> par_nrctremp: " + STRING(par_nrctremp).
-            MESSAGE "--> par_dtmvtolt: " + STRING(par_dtmvtolt).
-            MESSAGE "--> crapass.inpessoa: " + STRING(crapass.inpessoa).
-            MESSAGE "--> crawepr.cdlcremp: " + STRING(crawepr.cdlcremp).
-            MESSAGE "--> crawepr.qtpreemp: " + STRING(crawepr.qtpreemp).
-            MESSAGE "--> crawepr.vlpreemp: " + STRING(crawepr.vlpreemp).
-            MESSAGE "--> crawepr.vlemprst: " + STRING(crawepr.vlemprst).
-            MESSAGE "--> crawepr.dtdpagto: " + STRING(crawepr.dtdpagto).
-            MESSAGE "--> crawepr.dtlibera: " + STRING((IF crawepr.dtlibera <> ? THEN 
-                                                               crawepr.dtlibera
-                                                            ELSE par_dtmvtolt)).
-            MESSAGE "--> par_dtmvtolt: " + STRING(par_dtmvtolt).
-            MESSAGE "--> par_dscatbem: " + STRING(par_dscatbem).
-            MESSAGE "--> par_idfiniof: " + STRING(par_idfiniof). */
-            
            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
            /* Efetuar a chamada a rotina Oracle  */
@@ -14165,36 +14146,19 @@ PROCEDURE buscar_liquidacoes_contrato:
     DEF INPUT PARAM par_nrdconta AS DECI                             NO-UNDO.
     DEF INPUT PARAM par_nrctremp AS INTE                             NO-UNDO.    
     DEF OUTPUT PARAM par_dsctrliq AS CHAR                            NO-UNDO. 
+    DEF VAR i AS INTE NO-UNDO.
     
     ASSIGN par_dsctrliq = "".
     
-    /* FIND FIRST crawepr WHERE crawepr.cdcooper = par_cdcooper AND
+    FIND FIRST crawepr WHERE crawepr.cdcooper = par_cdcooper AND
                              crawepr.nrdconta = par_nrdconta AND
                              crawepr.nrctremp = par_nrctremp NO-LOCK NO-ERROR.
-
-    ASSIGN par_dsctrliq = "".
-    IF AVAIL crawepr THEN
-    DO:
-        IF crawepr.nrctrliq[1] <> "0" THEN
-           ASSIGN par_dsctrliq = par_dsctrliq + "," + crawepr.nrctrliq[1].
-        IF crawepr.nrctrliq[2] <> "0" THEN
-           ASSIGN par_dsctrliq = par_dsctrliq + "," + crawepr.nrctrliq[2].
-        IF crawepr.nrctrliq[3] <> "0" THEN
-           ASSIGN par_dsctrliq = par_dsctrliq + "," + crawepr.nrctrliq[3].
-        IF crawepr.nrctrliq[4] <> "0" THEN
-           ASSIGN par_dsctrliq = par_dsctrliq + "," + crawepr.nrctrliq[4].
-        IF crawepr.nrctrliq[5] <> "0" THEN
-           ASSIGN par_dsctrliq = par_dsctrliq + "," + crawepr.nrctrliq[5].
-        IF crawepr.nrctrliq[6] <> "0" THEN
-           ASSIGN par_dsctrliq = par_dsctrliq + "," + crawepr.nrctrliq[6].
-        IF crawepr.nrctrliq[7] <> "0" THEN
-           ASSIGN par_dsctrliq = par_dsctrliq + "," + crawepr.nrctrliq[7].
-        IF crawepr.nrctrliq[8] <> "0" THEN
-           ASSIGN par_dsctrliq = par_dsctrliq + "," + crawepr.nrctrliq[8].
-        IF crawepr.nrctrliq[9] <> "0" THEN
-           ASSIGN par_dsctrliq = par_dsctrliq + "," + crawepr.nrctrliq[9].
-        IF crawepr.nrctrliq[10] <> "0" THEN
-           ASSIGN par_dsctrliq = par_dsctrliq + "," + crawepr.nrctrliq[10].           
-    END. */
+    IF AVAIL crawepr THEN DO:
+      DO i = 1 TO 10:
+         IF  crawepr.nrctrliq[i] > 0  THEN DO:
+            par_dsctrliq = par_dsctrliq + (IF par_dsctrliq = "" THEN TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9")) ELSE "," + TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))).
+         END.
+      END.
+    END.
     
 END PROCEDURE.
