@@ -8666,6 +8666,9 @@ create or replace package body cecred.PAGA0002 is
     --                           
     --              15/02/2018 - Ajuste realizado para corrigir o problema do chamado 
     --                           830373. (Kelvin)
+	--
+    --              06/03/2018 - Ajuste de filtros para não buscar GPS se não for epecificado 
+    --                           P285. (Ricardo Linhares)
     --  
     -- ..........................................................................*/
 
@@ -8750,6 +8753,9 @@ create or replace package body cecred.PAGA0002 is
        OR (lau.cdcooper  = pr_cdcooper -- Agendamentos GPS no CAIXA
       AND  lau.nrdconta  = pr_nrdconta
       AND  lau.nrseqagp <> 0
+	  AND (pr_cdtiptra IS NULL OR 2 IN (SELECT regexp_substr(pr_cdtiptra, '[^;]+', 1, LEVEL) --Pagamento; DARF/DAS/GPS
+                                              FROM dual
+                                CONNECT BY LEVEL <= regexp_count(pr_cdtiptra, '[^;]+')))
       AND  (pr_dtageini IS NULL
        OR  (pr_dtageini IS NOT NULL
       AND  lau.dtmvtopg >= pr_dtageini))
