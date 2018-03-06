@@ -16358,6 +16358,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          if vr_cobraiof then
             pr_vlbasiof := pr_vlemprst;
             pr_retiof   := 3; -- cobra IOF integral
+         
+         end if;     
+         
+         -- Regra 4 se o vencimento foi superior a 365 dias e o saldo for igual ao emprestimo,
+         -- cobra só IOF adicional. Se o emprestimo for superior ao saldo, cobra adicional e 
+         -- principal sobre a diferença         
+         if vr_vct365 then
+            if pr_vlemprst > vr_vlsaldo then
+               pr_vlbasiof := pr_vlemprst - vr_vlsaldo;  
+               --pr_retiof := 3;
+
+             end if;
+             pr_retiof := 4;  
          end if;     
 
     end PC_CALCULO_EPR_IOF_REFIN;
@@ -16399,7 +16412,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_retiof := 0;
                        
    IF (pr_dsctrliq is not null
-    and nvl(pr_dsctrliq,'0') <> '0') OR nvl(pr_nrctremp,0) > 0 then
+    and to_char(nvl(pr_dsctrliq,'0')) <> '0') 
+    OR nvl(pr_nrctremp,0) > 0 then
        PC_CALCULO_EPR_IOF_REFIN(pr_cdcooper => pr_cdcooper
                                  , pr_nrdconta => pr_nrdconta
                                  , pr_nrctremp => pr_nrctremp
@@ -16408,7 +16422,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  , pr_vlbasiof => vr_vlbaseiof
                                  , pr_retiof   => vr_retiof  /* 1 - Cobra somente IOF adicional sobre saldo;
                                                                2 - Não cobra IOF 
-                                                               3 - cobra integral sobre saldo */
+                                                                3 - cobra integral sobre saldo 
+                                                                4 - cobra somente IOF adicional*/
                                  , pr_vllanmto => vr_vllanmto /* lancamento IOF anterior */
                                  , pr_dscritic => vr_dscritic);
     end if;
@@ -16605,7 +16620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;
       END IF;
 
-      if vr_retiof = 1 then
+      if vr_retiof in ( 1, 4) then
          pr_valoriof := pr_valoriof + vr_vliofaditt;
       end if;
       
@@ -16642,7 +16657,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                  vr_vlpreemp := vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));
                  end if;
                  -- Calculo para achar a prestação quando é refinanciamento (e possuir saldo entre os contratos)
-                 if vr_retiof = 1 then
+                 if vr_retiof in (1, 4) then
                      vr_saldo_devedorRF := round(pr_vlemprst + vr_vltarifaN,2);
                      vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - pr_valoriof) / vr_saldo_devedorRF),2);
                      -- Acha o VP (valor presente do saldo devedor)
@@ -16729,6 +16744,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                 end if;
              end if;
             
+      if vr_retiof = 4 then
+         if vr_vlbaseiof >= pr_vlemprst then         
+           pr_valoriof := vr_vliofaditt;  
+         end if;
+      end if;
+      
     ELSIF pr_tpemprst = 0 THEN  -- Se o tipo do empréstimo for TR
       
       -- Condicao Pessoa Fisica
@@ -16793,6 +16814,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           end if;
              end if;
               
+               if vr_retiof = 4 then
+                   if vr_vlbaseiof >= pr_vlemprst then                   
+                     pr_valoriof := vr_vliofaditt;  
+                   end if;
+                end if;
           end if;
        end if;
     
@@ -17026,6 +17052,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                 end if;
           end if;
              
+           if vr_retiof = 4 then
+             if vr_vlbaseiof >= pr_vlemprst then            
+                pr_valoriof := vr_vliofaditt;  
+             end if;
+           end if;
+         
       end if;
 
     END IF;
@@ -17056,6 +17088,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     pr_vliofpri := vr_vliofpritt;
     pr_vliofadi := vr_vliofaditt_aux;
     END IF;
+    pr_flgimune := NVL(pr_flgimune, 0);
 
     CLOSE cr_crapbpr_moto;
       

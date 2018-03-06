@@ -743,7 +743,10 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
     vr_dscritic     VARCHAR2(10000);
     vr_cdcritic     INTEGER;
     vr_exc_erro     EXCEPTION;
+    vr_flgimune     PLS_INTEGER;
   BEGIN    
+
+    vr_flgimune := NVL(pr_flgimune, 0);
 
     -- Condicao para verificar se devemos lancar valor do IOF Principal
     IF pr_vliofpri > 0 THEN
@@ -775,7 +778,7 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                     ,pr_cdbccxlt_lcm
                     ,pr_nrdolote_lcm
                     ,pr_nrseqdig_lcm
-                    ,pr_flgimune
+                    ,vr_flgimune
                     ,pr_vliofpri);
       EXCEPTION
         WHEN OTHERS THEN
@@ -814,7 +817,7 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                     ,pr_cdbccxlt_lcm
                     ,pr_nrdolote_lcm
                     ,pr_nrseqdig_lcm
-                    ,pr_flgimune
+                    ,vr_flgimune
                     ,pr_vliofadi);
       EXCEPTION
         WHEN OTHERS THEN
@@ -853,7 +856,7 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                     ,pr_cdbccxlt_lcm
                     ,pr_nrdolote_lcm
                     ,pr_nrseqdig_lcm
-                    ,pr_flgimune
+                    ,vr_flgimune
                     ,pr_vliofcpl);
       EXCEPTION
         WHEN OTHERS THEN

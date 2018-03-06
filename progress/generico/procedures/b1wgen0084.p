@@ -3808,6 +3808,8 @@ PROCEDURE grava_efetivacao_proposta:
            /* Se retornou erro */
            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
               DO:
+                  MESSAGE "(1) Erro ao inserir lancamento de IOF.".
+                  ASSIGN aux_dscritic = "Erro ao inserir lancamento de IOF.".
                   UNDO EFETIVACAO , LEAVE EFETIVACAO.
            END.
 
@@ -3850,6 +3852,8 @@ PROCEDURE grava_efetivacao_proposta:
              /* Se retornou erro */
              IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
                          DO:
+                    MESSAGE "(2) Erro ao inserir lancamento de IOF.".
+                    ASSIGN aux_dscritic = "Erro ao inserir lancamento de IOF.".
                     UNDO EFETIVACAO , LEAVE EFETIVACAO.
                   END.
             

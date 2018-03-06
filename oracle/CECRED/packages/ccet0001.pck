@@ -2755,6 +2755,7 @@ create or replace package body cecred.CCET0001 is
       vr_qtdiavig NUMBER := 0;                -- Quantidade de Dias de Vigencia
       vr_data_contrato DATE;
       vr_cdusolcr NUMBER := 0;                -- Uso da Linha de Credito
+      vr_vlfinanc NUMBER := 0;                -- Valor financiado
       
       vr_cdfvlcop crapfco.cdfvlcop%TYPE;
       vr_vlrtares NUMBER := 0;                -- Valor tarifa especial
@@ -2879,58 +2880,6 @@ create or replace package body cecred.CCET0001 is
       -- Valor da parcela
       vr_vlpreemp := pr_vlpreemp;
 
-      -- Se for Pos-Fixado
-      IF pr_tpemprst = 2 THEN
-        -- Busca os dados do emprestimo
-        OPEN cr_dados(pr_cdcooper => pr_cdcooper
-                     ,pr_nrdconta => pr_nrdconta
-                     ,pr_nrctremp => pr_nrctremp);
-        FETCH cr_dados INTO rw_dados;
-        CLOSE cr_dados;
-
-        --Concatena as liquidacoes
-/*        pc_concatena_liquid(rw_dados.nrctrliq##1);
-        pc_concatena_liquid(rw_dados.nrctrliq##2);
-        pc_concatena_liquid(rw_dados.nrctrliq##3);
-        pc_concatena_liquid(rw_dados.nrctrliq##4);
-        pc_concatena_liquid(rw_dados.nrctrliq##5);
-        pc_concatena_liquid(rw_dados.nrctrliq##6);
-        pc_concatena_liquid(rw_dados.nrctrliq##7);
-        pc_concatena_liquid(rw_dados.nrctrliq##8);
-        pc_concatena_liquid(rw_dados.nrctrliq##9);
-        pc_concatena_liquid(rw_dados.nrctrliq##10);*/
-        vr_dsctrliq := NVL(pr_dsctrliq, '0');
-
-        -- Busca quantidade de dias da carencia
-        EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_dados.idcarenc
-                                           ,pr_qtddias    => vr_qtdias_carencia
-                                           ,pr_cdcritic   => vr_cdcritic
-                                           ,pr_dscritic   => vr_dscritic);
-        -- Se retornou erro
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-
-        -- Chama o calculo da parcela
-        EMPR0011.pc_busca_prest_principal_pos(pr_cdcooper        => pr_cdcooper
-                                             ,pr_dtefetiv        => rw_dados.dtmvtolt
-                                             ,pr_dtcalcul        => (CASE WHEN rw_dados.dtmvtolt IS NULL THEN pr_dtmvtolt ELSE rw_dados.dtmvtolt END)
-                                             ,pr_cdlcremp        => pr_cdlcremp
-                                             ,pr_dtcarenc        => rw_dados.dtcarenc
-                                             ,pr_dtdpagto        => pr_dtdpagto
-                                             ,pr_qtpreemp        => pr_qtpreemp
-                                             ,pr_vlemprst        => pr_vlemprst
-                                             ,pr_qtdias_carencia => vr_qtdias_carencia
-                                             ,pr_vlpreemp        => vr_vlpreemp
-                                             ,pr_vljurcor        => vr_vljurcor
-                                             ,pr_cdcritic        => vr_cdcritic
-                                             ,pr_dscritic        => vr_dscritic);
-        -- Se retornou erro
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-      END IF;
-
       EMPR0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
                                  ,pr_nrdconta        => pr_nrdconta
 								                 ,pr_nrctremp => pr_nrctremp
@@ -3024,27 +2973,6 @@ create or replace package body cecred.CCET0001 is
           END IF;             
         END IF;
         
-  /*      -- buscar tarifa de cadastro linha de credito
-        CCET0001.pc_calcula_tarifa_cadastro(pr_cdcooper => pr_cdcooper
-                                           ,pr_dtmvtolt => pr_dtmvtolt
-                                           ,pr_vlemprst => pr_vlemprst
-                                           ,pr_cdbattar => vr_cdbattar
-                                           ,pr_cdprogra => pr_cdprogra
-                                           ,pr_cdusolcr => vr_cdusolcr 
-                                           ,pr_inpessoa => pr_inpessoa
-                                           ,pr_cdlcremp => pr_cdlcremp
-                                           ,pr_tpctrato => vr_tpctrato
-                                           ,pr_nrdconta => pr_nrdconta
-                                           ,pr_nrctremp => pr_nrctremp
-                                           ,pr_vltottar => vr_vlrtarif
-                                           ,pr_cdcritic => vr_cdcritic
-                                           ,pr_dscritic => vr_dscritic);
-
-         -- VERIFICA SE OCORREU UMA CRITICA
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;        
-        END IF;*/
-        
         -- Calcula tarifa
         TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
                                  , pr_nrdconta => pr_nrdconta
@@ -3072,6 +3000,54 @@ create or replace package body cecred.CCET0001 is
         vr_vlrtarif := ROUND(nvl(vr_vlrtarif,0),2) + nvl(vr_vlrtares,0) + nvl(vr_vltarbem,0);
         
       END IF;                                      
+      
+      -- Se for Pos-Fixado
+      IF pr_tpemprst = 2 THEN
+        -- Busca os dados do emprestimo
+        OPEN cr_dados(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctremp);
+        FETCH cr_dados INTO rw_dados;
+        CLOSE cr_dados;
+        
+        --Concatena as liquidacoes
+        vr_dsctrliq := NVL(pr_dsctrliq, '0');
+
+        -- Busca quantidade de dias da carencia
+        EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_dados.idcarenc
+                                           ,pr_qtddias    => vr_qtdias_carencia
+                                           ,pr_cdcritic   => vr_cdcritic
+                                           ,pr_dscritic   => vr_dscritic);
+        -- Se retornou erro
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+        
+        IF pr_idfiniof > 0 THEN
+           vr_vlfinanc := (pr_vlemprst + nvl(vr_vlrdoiof,0) + nvl(vr_vlrtarif ,0));
+        ELSE
+          vr_vlfinanc := pr_vlemprst;
+        END IF;
+
+        -- Chama o calculo da parcela
+        EMPR0011.pc_busca_prest_principal_pos(pr_cdcooper        => pr_cdcooper
+                                             ,pr_dtefetiv        => rw_dados.dtmvtolt
+                                             ,pr_dtcalcul        => (CASE WHEN rw_dados.dtmvtolt IS NULL THEN pr_dtmvtolt ELSE rw_dados.dtmvtolt END)
+                                             ,pr_cdlcremp        => pr_cdlcremp
+                                             ,pr_dtcarenc        => rw_dados.dtcarenc
+                                             ,pr_dtdpagto        => pr_dtdpagto
+                                             ,pr_qtpreemp        => pr_qtpreemp
+                                             ,pr_vlemprst        => vr_vlfinanc
+                                             ,pr_qtdias_carencia => vr_qtdias_carencia
+                                             ,pr_vlpreemp        => vr_vlpreemp
+                                             ,pr_vljurcor        => vr_vljurcor
+                                             ,pr_cdcritic        => vr_cdcritic
+                                             ,pr_dscritic        => vr_dscritic);
+        -- Se retornou erro
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
       
       -- se tipo de finalidade for portabilidade
       -- não deduz o IOF do valor total para calculo do CET

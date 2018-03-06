@@ -7945,10 +7945,7 @@ PROCEDURE altera-valor-proposta:
                        crawepr.txdiaria = pc_grava_parcel_pos_fixado.pr_txdiaria
                        crawepr.txmensal = pc_grava_parcel_pos_fixado.pr_txmensal.
 
-                /* Projeto 410 - se financia IOF, assume a parcela calculada */
-                IF par_idfiniof = 1 THEN
-                   ASSIGN crawepr.vlpreemp = par_vlpreemp.
-
+                
                 /* Caso o valor da prestacao foi alterado, vamos mostrar mensagem */
                 IF   aux_dtlibera     <> ?              AND
                      aux_dtlibera     <> par_dtmvtolt   AND
