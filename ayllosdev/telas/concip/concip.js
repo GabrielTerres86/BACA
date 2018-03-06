@@ -174,14 +174,14 @@ function populaCombos(){
         },
         success: function(response) {
             try {
-                if (response.liquidante.length > 0) {
+                if (response.liquidante.item.length > 0) {
                     //popula combo banco liquidante
                     $.each(response.liquidante.item, function (i, val) {
                         $('#bcoliquidante').append($('<option>', { value: val.ispb, text: val.nome }));
                     });
                 }
 
-                if (response.credenciadora.length > 0) {
+                if (response.credenciadora.item.length > 0) {
                     //popula combo credenciadora
                     $.each(response.credenciadora.item, function (i, val) {
                         $('#credenciadora').append($('<option>', { value: val.ispb, text: val.nome }));
