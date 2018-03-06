@@ -2895,6 +2895,11 @@ BEGIN
                                  ,pr_dtcarenc        => rw_crawepr.dtcarenc
                                  ,pr_qtdias_carencia => vr_qtdias_carencia
                                  ,pr_valoriof => vr_vliofaux                  
+                                 ,pr_vliofpri => vr_vliofpri_tmp
+                                 ,pr_vliofadi => vr_vliofadi_tmp
+                                 ,pr_dscatbem => vr_dscatbem
+                                 ,pr_idfiniof => rw_crabepr.idfiniof
+                                 ,pr_flgimune => vr_flgimune
                                  ,pr_dscritic => vr_dscritic);                
                                                                              
       IF vr_dscritic IS NOT NULL THEN                                        
