@@ -1127,6 +1127,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
             ,epr.vlpgmupr
             ,epr.vlttjmpr
             ,epr.vlpgjmpr
+            ,epr.vliofcpl
 			  FROM crapepr epr
 			 WHERE epr.cdcooper = pr_cdcooper
 				 AND epr.nrdconta = pr_nrdconta
@@ -1295,6 +1296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                                ,pr_cdoperad => pr_cdoperad
                                                ,pr_vlparcel => pr_vldpagto
                                                ,pr_nmtelant => pr_nmtelant
+                                               ,pr_vliofcpl => rw_crapepr.vliofcpl
                                                ,pr_vltotpag => vr_vldpagto -- Retorna o valor pr_vltotpag com o valor pago.
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
@@ -1343,6 +1345,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  ,pr_vlparcel => pr_vldpagto
                                                ,pr_inliqaco => 'S'
                                                ,pr_nmtelant => pr_nmtelant
+                                 ,pr_vliofcpl => rw_crapepr.vliofcpl
                                                ,pr_vltotpag => vr_vldpagto -- Retorna o valor pr_vltotpag com o valor pago.
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
@@ -1426,6 +1429,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                                ,pr_vlparcel => pr_vldpagto
                                                ,pr_nmtelant => pr_nmtelant
                                                ,pr_vltotpag => vr_vldpagto
+                                               ,pr_vliofcpl => rw_crapepr.vliofcpl
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
           -- Se retornar erro da rotina
@@ -4423,8 +4427,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
 				-- Se não for quitação do contrato
 				IF pr_tpparepr <> 4 THEN
-					-- Atribui valor parametrizado à variavel para efetuar calculo de parcelas
-				  vr_vlparepr := pr_vlparepr + vr_vliofcpl;
+          vr_vlparepr := pr_vlparepr;
 
 					-- Para cada parcela do contrato
 					FOR idx IN vr_tab_pgto_parcel.first..vr_tab_pgto_parcel.last LOOP

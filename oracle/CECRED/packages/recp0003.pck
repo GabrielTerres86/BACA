@@ -669,6 +669,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
               ,epr.vljuracu
               ,epr.txjuremp
               ,epr.dtultpag
+              ,epr.vliofcpl
          FROM crapepr epr
         WHERE epr.cdcooper = pr_cdcooper
           AND epr.nrdconta = pr_nrdconta
@@ -1057,6 +1058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                             ,pr_vlparcel => 0
                                                             ,pr_nmtelant => vr_nmdatela
                                                             ,pr_inliqaco => 'S'           -- Indicador informando que é para liquidar o contrato de emprestimo
+                                                            ,pr_vliofcpl => rw_crapepr.vliofcpl
                                                             ,pr_vltotpag => vr_vltotpag -- Retorno do total pago       
                                                             ,pr_cdcritic => vr_cdcritic
                                                             ,pr_dscritic => vr_dscritic);
