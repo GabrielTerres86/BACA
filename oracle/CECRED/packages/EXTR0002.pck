@@ -12225,6 +12225,7 @@ END pc_consulta_ir_pj_trim;
                 ,crapepr.dtdpagto
                 ,crapepr.qtpreemp
                 ,crapepr.inprejuz
+                ,crapepr.vlaqiofc
           FROM crapepr crapepr
           WHERE crapepr.cdcooper = pr_cdcooper
           AND   crapepr.nrdconta = pr_nrdconta
