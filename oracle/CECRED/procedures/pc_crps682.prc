@@ -15,7 +15,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Jaison
-     Data    : Maio/2014                     Ultima atualizacao: 13/12/2017
+     Data    : Maio/2014                     Ultima atualizacao: 06/03/2018
 
      Dados referentes ao programa:
 
@@ -78,7 +78,10 @@ BEGIN
                       - Armazenamento de atributos de decisão. Todas as críticas deverão ser feitas e as
                         informações utilizadas deverão ser armazenadas para consultas posteriores.
                         
-                 13/12/2017 - Projeto Ligeirinho - Tratar paralelismo para ganho de performance - Mauro       
+                 13/12/2017 - Projeto Ligeirinho - Tratar paralelismo para ganho de performance - Mauro
+                 
+                 06/03/2017 - Incluso procedimento para execução a partir da LANPRE. Cursor CRAPDAT precisou
+                              ficar no mesmo Loop da leitura das Cooperativas - CRAPCOP - Mauro     
 
 
   ............................................................................ */
