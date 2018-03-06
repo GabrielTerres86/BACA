@@ -466,7 +466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                ,pr_pos_conta     IN INTEGER
                                ,pr_dscritic      IN OUT VARCHAR2
                                ,pr_num_conta     IN crapass.nrdconta%TYPE
-                               ,pr_cpf_cnpj      IN crapass.nrcpfcgc%TYPE
+                               ,pr_cpf_cnpj      IN VARCHAR2
                                ,pr_num_contrato  IN crawepr.nrctremp%TYPE
                                ,pr_ris_inclusao  IN crawepr.dsnivris%TYPE
                                ,pr_ris_grupo     IN crawepr.dsnivris%TYPE
@@ -701,7 +701,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       CURSOR cr_contas_do_titular(rw_cbase IN crapass%ROWTYPE) IS
       SELECT c.cdcooper
            , c.nrdconta
-           , c.nrcpfcgc
+           , gene0002.fn_mask(c.nrcpfcgc, 
+				                    DECODE(c.inpessoa, 1, '99999999999','99999999999999')) nrcpfcgc
            , c.inpessoa
            , c.dsnivris
 					 , CASE WHEN c.nrdconta = rw_cbase.nrdconta THEN 0 ELSE 1 END ordem
@@ -727,7 +728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
          , crapepr e
       WHERE e.cdcooper = pr_cdcooper
         AND e.nrdconta = pr_nrdconta
-        AND e.inliquid = 0
+        AND (e.inliquid = 0 OR e.vlsdprej > 0) -- contratos ativos ou em prejuízo
         AND w.cdcooper = e.cdcooper
         AND w.nrdconta = e.nrdconta
         AND w.nrctremp = e.nrctremp;
@@ -804,7 +805,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
     CURSOR cr_contas_grupo_economico(rw_cbase IN crapass%ROWTYPE) IS
     SELECT DISTINCT cgr.cdcooper
          , cgr.nrdconta
-         , cgr.nrcpfcgc
+         , gene0002.fn_mask(cgr.nrcpfcgc, 
+				                    DECODE(cgr.inpessoa, 1, '99999999999','99999999999999')) nrcpfcgc
          , cgr.inpessoa
          , cgr.dsnivris
          , grp.nrdgrupo
@@ -815,7 +817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                SELECT aux.nrdgrupo
                  FROM crapgrp aux
                 WHERE aux.cdcooper = rw_cbase.cdcooper
-                  AND DECODE(rw_cbase.inpessoa, 1,
+                  AND DECODE(aux.inpessoa, 1,
                          gene0002.fn_mask(aux.nrcpfcgc, '99999999999'),
                          substr(gene0002.fn_mask(aux.nrcpfcgc, '99999999999999'), 1, 8)) =
                       DECODE(rw_cbase.inpessoa, 1,
@@ -823,13 +825,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                          substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
            )
        AND grp.cdcooper =  rw_cbase.cdcooper
-       AND DECODE(rw_cbase.inpessoa, 1,
+       AND DECODE(grp.inpessoa, 1,
                   gene0002.fn_mask(grp.nrcpfcgc, '99999999999'),
                   substr(gene0002.fn_mask(grp.nrcpfcgc, '99999999999999'), 1, 8)) <>
            DECODE(rw_cbase.inpessoa, 1,
                   gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
                   substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-       AND DECODE(rw_cbase.inpessoa, 1,
+       AND DECODE(cgr.inpessoa, 1,
                   gene0002.fn_mask(cgr.nrcpfcgc, '99999999999'),
                   substr(gene0002.fn_mask(cgr.nrcpfcgc, '99999999999999'), 1, 8)) <>
            DECODE(rw_cbase.inpessoa, 1,
@@ -1238,7 +1240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 																							, vr_risco_atraso
 																							, nvl(fn_traduz_risco(vr_risco_agr), 'A'))
                                      , rw_contas_grupo_economico.dsnivris
-                                     , vr_numero_grupo
+                                     , rw_contas_grupo_economico.nrdgrupo
 																		 , NULL
 																		 , NULL
 																		 , rw_contratos_limite_desc.tipcontr
@@ -1285,7 +1287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 																							, vr_risco_atraso
 																							, nvl(fn_traduz_risco(vr_risco_agr), 'A'))
                                      , rw_contas_grupo_economico.dsnivris
-                                     , vr_numero_grupo
+                                     , rw_contas_grupo_economico.nrdgrupo
 																		 , NULL
 																		 , NULL
 																		 , 'LIM'
