@@ -653,6 +653,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_txcpmfcc NUMBER := 0;
   vr_vldacpmf NUMBER := 0;
   
+  --IOF
+  vr_qtdiaiof NUMBER := 0;
+  vr_vltaxa_iof_atraso NUMBER := 0;
+  vr_vliofpri NUMBER := 0;
+  vr_vliofadi NUMBER := 0;
+  vr_vliofcpl NUMBER := 0;
+  vr_vliofpri_tmp NUMBER := 0;
+  vr_vliofadi_tmp NUMBER := 0;
+  vr_vltaxa_iof_principal NUMBER := 0;
+  vr_dscatbem VARCHAR2(200);
+  vr_dsctrliq VARCHAR2(1000) := '';
+  
   -- Tabela temporaria Linhas de Credito
   TYPE typ_reg_craplcr IS
    RECORD(flgtarif craplcr.flgtarif%TYPE
