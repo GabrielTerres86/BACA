@@ -279,6 +279,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.nrdolote
           ,epr.cdbccxlt
           ,epr.dtmvtolt
+          ,epr.idfiniof		  
+          ,epr.vltarifa
+          ,epr.vltariof
+          ,epr.vliofepr
        FROM crapepr epr 
       WHERE epr.cdcooper = pr_cdcooper 
         AND epr.dtmvtolt = pr_dtmvtolt
