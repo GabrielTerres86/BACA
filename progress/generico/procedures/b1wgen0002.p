@@ -4339,39 +4339,49 @@ PROCEDURE proc_qualif_operacao:
                 IF  AVAIL crapris  THEN
                     DO:
                         ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-                    END.
-                ELSE
-                    DO:
-                        ASSIGN aux_qtd_dias_atraso = 0.
-                    END.
+                    END.                
             END.
+	    ELSE 
+			/* LIMITE OU LIMITE/ADP                              */
+			DO:
+				FIND FIRST craplim
+					 WHERE craplim.cdcooper = par_cdcooper
+					   AND craplim.nrdconta = par_nrdconta
+					   AND craplim.nrctrlim = aux_emp_a_liq
+					   AND craplim.tpctrlim = 1
+					   AND craplim.insitlim = 2
+						   NO-LOCK NO-ERROR.
 
-        /* LIMITE OU LIMITE/ADP                              */
-        FIND FIRST craplim
-             WHERE craplim.cdcooper = par_cdcooper
-               AND craplim.nrdconta = par_nrdconta
-               AND craplim.nrctrlim = aux_emp_a_liq
-               AND craplim.tpctrlim = 1
-               AND craplim.insitlim = 2
-                   NO-LOCK NO-ERROR.
+				IF  AVAIL craplim THEN
+					DO:
 
-        IF  AVAIL craplim THEN
-            DO:
-                /* LIMITE/ADP                                */
-                FIND crapris
-                     WHERE crapris.cdcooper = par_cdcooper
-                       AND crapris.nrdconta = par_nrdconta
-                       AND crapris.cdorigem = 1
-                       AND crapris.cdmodali = 201
-                       AND crapris.nrctremp = aux_emp_a_liq
-                       AND crapris.inddocto = 1
-                       AND crapris.dtrefere = par_dtmvtoan
-                           NO-LOCK NO-ERROR.
-                IF AVAIL crapris THEN
-                    ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-                ELSE
-                    ASSIGN aux_qtd_dias_atraso = 0.
-            END.
+						/* LIMITE                                */
+						FIND crapris
+							 WHERE crapris.cdcooper = par_cdcooper
+							   AND crapris.nrdconta = par_nrdconta
+							   AND crapris.cdorigem = 1
+							   AND crapris.cdmodali = 201
+							   AND crapris.nrctremp = aux_emp_a_liq
+							   AND crapris.inddocto = 1
+							   AND crapris.dtrefere = par_dtmvtoan
+								   NO-LOCK NO-ERROR.
+
+						IF AVAIL crapris THEN
+							ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.                
+
+						/* LIMITE/ADP                                */
+						FIND crapris
+							 WHERE crapris.cdcooper = par_cdcooper
+							   AND crapris.nrdconta = par_nrdconta
+							   AND crapris.cdorigem = 1
+							   AND crapris.cdmodali = 101
+							   AND crapris.inddocto = 1
+							   AND crapris.dtrefere = par_dtmvtoan
+								   NO-LOCK NO-ERROR.
+						IF AVAIL crapris THEN
+							ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.                
+					END.
+			END.
 
         FIND FIRST crabepr
              WHERE crabepr.cdcooper = par_cdcooper
