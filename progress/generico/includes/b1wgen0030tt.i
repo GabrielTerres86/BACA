@@ -143,6 +143,8 @@ DEF TEMP-TABLE tt-limite_tit NO-UNDO
     FIELD qtdiavig LIKE craplim.qtdiavig
     FIELD cddlinha LIKE craplim.cddlinha
     FIELD tpctrlim LIKE craplim.tpctrlim
+    FIELD idcobope LIKE craplim.idcobope
+    FIELD cdageori LIKE craplim.cdageori
     FIELD dssitlim AS CHAR
     FIELD dssitest AS CHAR
     FIELD dssitapr AS CHAR
@@ -195,7 +197,8 @@ DEF TEMP-TABLE tt-desconto_titulos NO-UNDO
     FIELD qtutilcr AS INTE
     FIELD vlutilcr AS DECI
     FIELD qtutilsr AS INTE
-    FIELD vlutilsr AS DECI.
+    FIELD vlutilsr AS DECI
+    FIELD dtrenova AS DATE.
            
 
 DEF TEMP-TABLE tt-tot_descontos NO-UNDO

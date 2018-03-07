@@ -6890,7 +6890,8 @@ PROCEDURE busca_dados_dsctit:
                     tt-desconto_titulos.dsdlinha = ""
                     tt-desconto_titulos.vlutiliz = 0
                     tt-desconto_titulos.qtutiliz = 0
-                    tt-desconto_titulos.cddopcao = 2.
+                    tt-desconto_titulos.cddopcao = 2
+                    tt-desconto_titulos.dtrenova = ?.
                     
              FOR EACH craptdb WHERE (craptdb.cdcooper = par_cdcooper AND
                                      craptdb.nrdconta = par_nrdconta AND
@@ -6939,7 +6940,8 @@ PROCEDURE busca_dados_dsctit:
                     tt-desconto_titulos.qtdiavig = craplim.qtdiavig
                     tt-desconto_titulos.vllimite = craplim.vllimite
                     tt-desconto_titulos.qtrenova = craplim.qtrenova
-                    tt-desconto_titulos.cddopcao = 1.
+                    tt-desconto_titulos.cddopcao = 1
+                    tt-desconto_titulos.dtrenova = craplim.dtrenova.
                     
              FOR EACH craptdb WHERE (craptdb.cdcooper = par_cdcooper AND
                                      craptdb.nrdconta = par_nrdconta AND
