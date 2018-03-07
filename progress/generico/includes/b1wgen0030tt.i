@@ -197,7 +197,8 @@ DEF TEMP-TABLE tt-desconto_titulos NO-UNDO
     FIELD qtutilcr AS INTE
     FIELD vlutilcr AS DECI
     FIELD qtutilsr AS INTE
-    FIELD vlutilsr AS DECI.
+    FIELD vlutilsr AS DECI
+    FIELD dtrenova AS DATE.
            
 
 DEF TEMP-TABLE tt-tot_descontos NO-UNDO
