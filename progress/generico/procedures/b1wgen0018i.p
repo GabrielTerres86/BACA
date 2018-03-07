@@ -18,6 +18,11 @@
                             sobre a forma de iteracao das contas da cooperativa 
                             e tambem do filtro para a conta 85448(Cooper).
                             (Carlos Rafael Tanholi - SM 281222).
+
+               26/06/2017 - Retirada separaçao de cheques maiores e menores no 
+                            relatório CRRL308. Criada nova coluna "Cheques Outros Bancos"
+                            Retirado parâmetro Cheques Maiores apresentado no cabeçalho.
+                            PRJ367. (Lombardi)
    
 .............................................................................*/
 
@@ -49,12 +54,10 @@ DEF VAR rel_dtmvtfim AS DATE                                        NO-UNDO.
 DEF VAR aux_nrdconta AS INTE                                        NO-UNDO.
 
 DEF VAR pac_vlchqcop AS DECI FORMAT "zzz,zzz,zz9.99"                NO-UNDO.
-DEF VAR pac_vlchqmen AS DECI FORMAT "zzz,zzz,zz9.99"                NO-UNDO.
-DEF VAR pac_vlchqmai AS DECI FORMAT "zzz,zzz,zz9.99"                NO-UNDO.
+DEF VAR pac_vlcheque AS DECI FORMAT "zzz,zzz,zz9.99"                NO-UNDO.
 DEF VAR pac_vlchqtot AS DECI FORMAT "zzz,zzz,zz9.99"                NO-UNDO.
 DEF VAR pac_qtchqcop AS INTE FORMAT "zzz9"                          NO-UNDO.
-DEF VAR pac_qtchqmen AS INTE FORMAT "zzz9"                          NO-UNDO.
-DEF VAR pac_qtchqmai AS INTE FORMAT "zzz9"                          NO-UNDO.
+DEF VAR pac_qtcheque AS INTE FORMAT "zzz9"                          NO-UNDO.
 DEF VAR pac_qtchqtot AS INTE FORMAT "zzz9"                          NO-UNDO.
 DEF VAR pac_qtdlotes AS INTE FORMAT "zz9"                           NO-UNDO.
 DEF VAR pac_dsdtraco AS CHAR FORMAT "x(132)"                        NO-UNDO.
@@ -64,41 +67,37 @@ DEF VAR aux_dtliber1 AS DATE FORMAT "99/99/9999"                    NO-UNDO.
 DEF VAR aux_dtliber2 AS DATE FORMAT "99/99/9999"                    NO-UNDO.
 
 DEF VAR aux_geralchq AS DECI   FORMAT "zzzz,zzz,zz9.99"             NO-UNDO.
-DEF VAR aux_vlchmatb AS DECI   FORMAT "zzz,zzz,zz9.99"              NO-UNDO.
 
 DEF VAR lot_vlchqcop AS DECI FORMAT "zzzz,zzz,zz9.99"               NO-UNDO.
-DEF VAR lot_vlchqmen AS DECI FORMAT "zzzz,zzz,zz9.99"               NO-UNDO.
-DEF VAR lot_vlchqmai AS DECI FORMAT "zzzz,zzz,zz9.99"               NO-UNDO.
+
+DEF VAR lot_vlcheque AS DECI FORMAT "zzzz,zzz,zz9.99"               NO-UNDO.
 DEF VAR lot_qtchqcop AS INTE FORMAT "zzz9"                          NO-UNDO.
-DEF VAR lot_qtchqmen AS INTE FORMAT "zzz9"                          NO-UNDO.
-DEF VAR lot_qtchqmai AS INTE FORMAT "zzz9"                          NO-UNDO.
+
+DEF VAR lot_qtcheque AS INTE FORMAT "zzz9"                          NO-UNDO.
 DEF VAR lot_nmoperad AS CHAR FORMAT "x(10)"                         NO-UNDO.
 
-FORM crawlot.dtmvtolt            
-     crawlot.cdagenci                          
-     crawlot.nrdolote             
+FORM crawlot.dtmvtolt
+     crawlot.cdagenci
+     crawlot.nrdolote
      crawlot.nrdconta
      crawlot.nrborder
-     crawlot.qtchqcop              
-     crawlot.vlchqcop                        
-     crawlot.qtchqmen                          
-     crawlot.vlchqmen                         
-     crawlot.qtchqmai                         
-     crawlot.vlchqmai                        
-     crawlot.qtchqtot             
-     crawlot.vlchqtot             
-     crawlot.nmoperad                      
+     crawlot.qtchqcop
+     crawlot.vlchqcop
+     crawlot.qtcheque AT 69
+     crawlot.vlcheque AT 73
+     crawlot.qtchqtot AT 89
+     crawlot.vlchqtot
+     crawlot.nmoperad
      WITH NO-LABELS NO-BOX  WIDTH 132 FRAME f_lotes.
 
 FORM rel_dtmvtolt            AT   1 LABEL "REFERENCIA"  FORMAT "99/99/9999"
      tt-relat-lotes.dsdsaldo AT  55 NO-LABEL            FORMAT "x(25)"
-     tt-relat-lotes.vlchmatb AT 102 LABEL "CHEQUES MAIORES"
      SKIP(1)
-     "  CHQS COOPERATIVA    CHEQUES MENORES" AT  46
-     "   CHEQUES MAIORES ------ TOTAL -----"   
+     "  CHQS COOPERATIVA   CHEQUES OUTROS BANCOS" AT  46
+     "------ TOTAL ------"   
      SKIP
      "DIGITADO EM PA     LOTE   CONTA/DV   BORDERO QTD.         VALOR" 
-     "QTD.         VALOR QTD.         VALOR"
+     "    QTD.         VALOR "
      "QTD.         VALOR OPERADOR"
      SKIP(1)
      WITH SIDE-LABELS NO-BOX WIDTH 132 FRAME f_cab.
@@ -108,11 +107,9 @@ FORM SKIP(1)
          pac_qtdlotes        AT   19               NO-LABEL "LOTE(S)"
          pac_qtchqcop        AT   45               NO-LABEL
          pac_vlchqcop                              NO-LABEL
-         pac_qtchqmen        AT   64               NO-LABEL
-         pac_vlchqmen                              NO-LABEL
-         pac_qtchqmai        AT   83               NO-LABEL
-         pac_vlchqmai                              NO-LABEL
-         pac_qtchqtot        AT  102               NO-LABEL
+         pac_qtcheque        AT   68               NO-LABEL
+         pac_vlcheque                              NO-LABEL
+         pac_qtchqtot        AT   88               NO-LABEL
          pac_vlchqtot                              NO-LABEL
          SKIP(1)
          pac_dsdtraco        AT    1               NO-LABEL 
@@ -124,10 +121,9 @@ FORM SKIP(1)
 FORM rel_dtmvtini             AT  1  LABEL "PERIODO"  FORMAT "99/99/9999" " a "
      rel_dtmvtfim                    NO-LABEL         FORMAT "99/99/9999"
      tt-relat-custod.dsdsaldo AT 55  NO-LABEL         FORMAT "x(25)"
-     aux_vlchmatb             AT 102 LABEL "CHEQUES MAIORES"
      SKIP(1)
-     " CHEQUES COOPERATIVA      CHEQUES MENORES" AT  24
-     "     CHEQUES MAIORES  ------ TOTAL ------"
+     " CHEQUES COOPERATIVA  CHEQUES OUTROS BANCOS" AT  24
+     " ------ TOTAL ------"
      SKIP(1)
      WITH SIDE-LABELS NO-BOX WIDTH 132 FRAME f_cab_c.
       
@@ -136,10 +132,9 @@ FORM crawlot.cdagenci  LABEL "PA"        FORMAT "zz9"
      crawlot.nrdconta  LABEL "CONTA/DV"  
      crawlot.qtchqcop  LABEL "QTD"        FORMAT "zzz9"                
      crawlot.vlchqcop  LABEL "VALOR"      FORMAT "zzzz,zzz,zz9.99"
-     crawlot.qtchqmen  LABEL "QTD"        FORMAT "zzz9"                
-     crawlot.vlchqmen  LABEL "VALOR"      FORMAT "zzzz,zzz,zz9.99"
-     crawlot.qtchqmai  LABEL "QTD"        FORMAT "zzz9"               
-     crawlot.vlchqmai  LABEL "VALOR"      FORMAT "zzzz,zzz,zz9.99"                    crawlot.qtchqtot  LABEL "QTD"        FORMAT "zzz9"   
+     crawlot.qtcheque  LABEL "QTD"        FORMAT "zzzzz9"                
+     crawlot.vlcheque  LABEL "VALOR"      FORMAT "zzzz,zzz,zz9.99"
+     crawlot.qtchqtot  LABEL "QTD"        FORMAT "zzz9"   
      crawlot.vlchqtot  LABEL "VALOR"      FORMAT "zzzz,zzz,zz9.99"
      crawlot.dtlibera  LABEL "LIBERACAO"                       
      crawlot.nmoperad  LABEL "OPERADOR"                    
@@ -149,13 +144,11 @@ FORM SKIP(1)
      "DO PA "            AT    1               
      pac_qtdlotes        AT   11               NO-LABEL
      pac_qtchqcop        AT   24               NO-LABEL
-     pac_vlchqcop                              NO-LABEL
-     pac_qtchqmen                              NO-LABEL
-     pac_vlchqmen                              NO-LABEL
-     pac_qtchqmai                              NO-LABEL
-     pac_vlchqmai                              NO-LABEL
-     pac_qtchqtot                              NO-LABEL
-     pac_vlchqtot                              NO-LABEL
+     pac_vlchqcop        AT   30               NO-LABEL
+     pac_qtcheque        AT   47               NO-LABEL
+     pac_vlcheque        AT   53               NO-LABEL
+     pac_qtchqtot        AT   68               NO-LABEL
+     pac_vlchqtot        AT   74               NO-LABEL
      SKIP
      pac_dsdtraco        AT    1               NO-LABEL 
      WITH NO-LABELS NO-BOX  WIDTH 132 FRAME f_pac_c.
@@ -165,10 +158,8 @@ FORM SKIP(1)
      tt-relat-custod.qtdlotes        AT   11               NO-LABEL
      tt-relat-custod.qtchqcop        AT   24               NO-LABEL
      tt-relat-custod.vlchqcop                              NO-LABEL
-     tt-relat-custod.qtchqmen                              NO-LABEL
-     tt-relat-custod.vlchqmen                              NO-LABEL
-     tt-relat-custod.qtchqmai                              NO-LABEL
-     tt-relat-custod.vlchqmai                              NO-LABEL
+     tt-relat-custod.qtcheque                              NO-LABEL
+     tt-relat-custod.vlcheque                              NO-LABEL
      tt-relat-custod.qtchqtot                              NO-LABEL
      tt-relat-custod.vlchqtot                              NO-LABEL
      WITH NO-LABELS NO-BOX WIDTH 132 FRAME f_tot.
@@ -228,11 +219,9 @@ PROCEDURE gera-relatorio-lotes:
          tt-relat-lotes.qtdlotes        AT   19           NO-LABEL "LOTE(S)"
          tt-relat-lotes.qtchqcop        AT   45           NO-LABEL
          tt-relat-lotes.vlchqcop                          NO-LABEL
-         tt-relat-lotes.qtchqmen        AT   64           NO-LABEL
-         tt-relat-lotes.vlchqmen                          NO-LABEL
-         tt-relat-lotes.qtchqmai        AT   83           NO-LABEL
-         tt-relat-lotes.vlchqmai                          NO-LABEL
-         tt-relat-lotes.qtchqtot        AT  102           NO-LABEL
+         tt-relat-lotes.qtcheque        AT   68           NO-LABEL
+         tt-relat-lotes.vlcheque                          NO-LABEL
+         tt-relat-lotes.qtchqtot        AT   88           NO-LABEL
          tt-relat-lotes.vlchqtot                          NO-LABEL
          WITH NO-LABELS NO-BOX  WIDTH 132 FRAME f_tot.
 
@@ -289,16 +278,13 @@ PROCEDURE gera-relatorio-lotes:
         ASSIGN rel_dtmvtolt = par_dtmvtolt.
 
         DISPLAY STREAM 
-                str_1 rel_dtmvtolt tt-relat-lotes.dsdsaldo 
-                tt-relat-lotes.vlchmatb WITH FRAME f_cab.    
+                str_1 rel_dtmvtolt tt-relat-lotes.dsdsaldo WITH FRAME f_cab.    
 
         ASSIGN pac_qtdlotes = 0
                pac_qtchqcop = 0 
                pac_vlchqcop = 0
-               pac_qtchqmen = 0 
-               pac_vlchqmen = 0 
-               pac_qtchqmai = 0 
-               pac_vlchqmai = 0
+               pac_qtcheque = 0 
+               pac_vlcheque = 0
                pac_qtchqtot = 0 
                pac_vlchqtot = 0.
 
@@ -313,8 +299,7 @@ PROCEDURE gera-relatorio-lotes:
                 PAGE STREAM str_1.
 
                 DISPLAY STREAM str_1 
-                        rel_dtmvtolt tt-relat-lotes.dsdsaldo 
-                        tt-relat-lotes.vlchmatb WITH FRAME f_cab.
+                        rel_dtmvtolt tt-relat-lotes.dsdsaldo WITH FRAME f_cab.
             END.
 
         CLEAR FRAME f_tot.
@@ -323,10 +308,8 @@ PROCEDURE gera-relatorio-lotes:
                 tt-relat-lotes.qtdlotes  
                 tt-relat-lotes.qtchqcop WHEN tt-relat-lotes.qtchqcop > 0
                 tt-relat-lotes.vlchqcop WHEN tt-relat-lotes.vlchqcop > 0
-                tt-relat-lotes.qtchqmen WHEN tt-relat-lotes.qtchqmen > 0
-                tt-relat-lotes.vlchqmen WHEN tt-relat-lotes.vlchqmen > 0
-                tt-relat-lotes.qtchqmai WHEN tt-relat-lotes.qtchqmai > 0
-                tt-relat-lotes.vlchqmai WHEN tt-relat-lotes.vlchqmai > 0
+                tt-relat-lotes.qtcheque WHEN tt-relat-lotes.qtcheque > 0
+                tt-relat-lotes.vlcheque WHEN tt-relat-lotes.vlcheque > 0
                 tt-relat-lotes.qtchqtot  
                 tt-relat-lotes.vlchqtot  
                 WITH FRAME f_tot.
@@ -1275,13 +1258,6 @@ PROCEDURE gera-lotes-custodia:
                        aux_nmarqpdf = aux_nmendter + ".pdf".
             END.
 
-        RUN busca_maiores_cheques_craptab
-            ( INPUT par_cdcooper,
-              INPUT par_cdprogra,
-             OUTPUT aux_vlchmatb,
-             OUTPUT aux_cdcritic,
-             OUTPUT TABLE tt-erro).
-
         IF  RETURN-VALUE <> "OK" THEN
             DO:
                 FIND FIRST tt-erro NO-ERROR.
@@ -1332,17 +1308,14 @@ PROCEDURE gera-lotes-custodia:
             DISPLAY STREAM str_1 
                     rel_dtmvtini 
                     rel_dtmvtfim 
-                    tt-relat-custod.dsdsaldo 
-                    aux_vlchmatb 
+                    tt-relat-custod.dsdsaldo  
                     WITH FRAME f_cab_c.
         
             ASSIGN pac_qtdlotes = 0
                    pac_qtchqcop = 0 
                    pac_vlchqcop = 0
-                   pac_qtchqmen = 0 
-                   pac_vlchqmen = 0 
-                   pac_qtchqmai = 0 
-                   pac_vlchqmai = 0
+                   pac_qtcheque = 0 
+                   pac_vlcheque = 0
                    pac_qtchqtot = 0 
                    pac_vlchqtot = 0.
                 
@@ -1365,7 +1338,6 @@ PROCEDURE gera-lotes-custodia:
                             rel_dtmvtini 
                             rel_dtmvtfim 
                             tt-relat-custod.dsdsaldo 
-                            aux_vlchmatb
                             WITH FRAME f_cab_c.
                 END.
 
@@ -2209,14 +2181,8 @@ PROCEDURE busca_lotes_descto PRIVATE:
                     crawlot.qtchqcop = crawlot.qtchqcop + 1.
         ELSE
              DO:
-                 IF   crapcdb.vlcheque >= tab_vlchqmai THEN
-                      ASSIGN crawlot.vlchqmai = crawlot.vlchqmai + 
-                                                        crapcdb.vlcheque
-                             crawlot.qtchqmai = crawlot.qtchqmai + 1.
-                 ELSE
-                      ASSIGN crawlot.vlchqmen = crawlot.vlchqmen +
-                                                        crapcdb.vlcheque
-                             crawlot.qtchqmen = crawlot.qtchqmen + 1.
+                 ASSIGN crawlot.vlcheque = crawlot.vlcheque + crapcdb.vlcheque
+                        crawlot.qtcheque = crawlot.qtcheque + 1.
              END.
  
     END. /* Fim do FOR EACH  crapbdc --  Leitura dos lotes do dia  */
@@ -2226,13 +2192,11 @@ PROCEDURE busca_lotes_descto PRIVATE:
         ASSIGN 
           tt-relat-lotes.qtdlotes = tt-relat-lotes.qtdlotes + 1
           tt-relat-lotes.qtchqcop = tt-relat-lotes.qtchqcop + crawlot.qtchqcop
-          tt-relat-lotes.qtchqmen = tt-relat-lotes.qtchqmen + crawlot.qtchqmen 
-          tt-relat-lotes.qtchqmai = tt-relat-lotes.qtchqmai + crawlot.qtchqmai
+          tt-relat-lotes.qtcheque = tt-relat-lotes.qtcheque + crawlot.qtcheque
           tt-relat-lotes.qtchqtot = tt-relat-lotes.qtchqtot + crawlot.qtchqtot
            
           tt-relat-lotes.vlchqcop = tt-relat-lotes.vlchqcop + crawlot.vlchqcop 
-          tt-relat-lotes.vlchqmen = tt-relat-lotes.vlchqmen + crawlot.vlchqmen 
-          tt-relat-lotes.vlchqmai = tt-relat-lotes.vlchqmai + crawlot.vlchqmai
+          tt-relat-lotes.vlcheque = tt-relat-lotes.vlcheque + crawlot.vlcheque 
           tt-relat-lotes.vlchqtot = tt-relat-lotes.vlchqtot + crawlot.vlchqtot.
     END.
 
@@ -2315,8 +2279,7 @@ PROCEDURE gera-lista PRIVATE:
                     PAGE STREAM str_1.
 
                     DISPLAY STREAM str_1 
-                            rel_dtmvtolt tt-relat-lotes.dsdsaldo
-                            tt-relat-lotes.vlchmatb WITH FRAME f_cab.
+                            rel_dtmvtolt tt-relat-lotes.dsdsaldo WITH FRAME f_cab.
                 END.
         END.
 
@@ -2330,10 +2293,8 @@ PROCEDURE gera-lista PRIVATE:
            crawlot.nrdolote 
            crawlot.qtchqcop  WHEN crawlot.qtchqcop > 0
            crawlot.vlchqcop  WHEN crawlot.vlchqcop > 0 
-           crawlot.qtchqmen  WHEN crawlot.qtchqmen > 0
-           crawlot.vlchqmen  WHEN crawlot.vlchqmen > 0
-           crawlot.qtchqmai  WHEN crawlot.qtchqmai > 0    
-           crawlot.vlchqmai  WHEN crawlot.vlchqmai > 0
+           crawlot.qtcheque  WHEN crawlot.qtcheque > 0
+           crawlot.vlcheque  WHEN crawlot.vlcheque > 0
            crawlot.qtchqtot 
            crawlot.vlchqtot 
            crawlot.nmoperad
@@ -2341,13 +2302,11 @@ PROCEDURE gera-lista PRIVATE:
 
     ASSIGN pac_qtdlotes = pac_qtdlotes + 1
            pac_qtchqcop = pac_qtchqcop + crawlot.qtchqcop
-           pac_qtchqmen = pac_qtchqmen + crawlot.qtchqmen 
-           pac_qtchqmai = pac_qtchqmai + crawlot.qtchqmai
+           pac_qtcheque = pac_qtcheque + crawlot.qtcheque
            pac_qtchqtot = pac_qtchqtot + crawlot.qtchqtot
            
            pac_vlchqcop = pac_vlchqcop + crawlot.vlchqcop 
-           pac_vlchqmen = pac_vlchqmen + crawlot.vlchqmen 
-           pac_vlchqmai = pac_vlchqmai + crawlot.vlchqmai
+           pac_vlcheque = pac_vlcheque + crawlot.vlcheque 
            pac_vlchqtot = pac_vlchqtot + crawlot.vlchqtot.
 
     DOWN STREAM str_1 WITH FRAME f_lotes.                      
@@ -2361,10 +2320,8 @@ PROCEDURE gera-lista PRIVATE:
             pac_qtdlotes  
             pac_qtchqcop WHEN pac_qtchqcop > 0
             pac_vlchqcop WHEN pac_vlchqcop > 0
-            pac_qtchqmen WHEN pac_qtchqmen > 0
-            pac_vlchqmen WHEN pac_vlchqmen > 0
-            pac_qtchqmai WHEN pac_qtchqmai > 0
-            pac_vlchqmai WHEN pac_vlchqmai > 0
+            pac_qtcheque WHEN pac_qtcheque > 0
+            pac_vlcheque WHEN pac_vlcheque > 0
             pac_qtchqtot  
             pac_vlchqtot
             pac_dsdtraco
@@ -2375,19 +2332,16 @@ PROCEDURE gera-lista PRIVATE:
             PAGE STREAM str_1.
                    
             DISPLAY STREAM str_1 
-                    rel_dtmvtolt tt-relat-lotes.dsdsaldo 
-                    tt-relat-lotes.vlchmatb WITH FRAME f_cab.
+                    rel_dtmvtolt tt-relat-lotes.dsdsaldo WITH FRAME f_cab.
         END.
 
     ASSIGN pac_qtdlotes = 0
            pac_qtchqcop = 0 
-           pac_qtchqmen = 0 
-           pac_qtchqmai = 0 
+           pac_qtcheque = 0 
            pac_qtchqtot = 0 
            
            pac_vlchqcop = 0
-           pac_vlchqmen = 0 
-           pac_vlchqmai = 0
+           pac_vlcheque = 0 
            pac_vlchqtot = 0.
 
     RETURN "OK".
@@ -2459,7 +2413,6 @@ PROCEDURE gera-lista-custod PRIVATE:
                              rel_dtmvtini 
                              rel_dtmvtfim 
                              tt-relat-custod.dsdsaldo 
-                             aux_vlchmatb
                              WITH FRAME f_cab_c.
                 END.
         END.
@@ -2472,10 +2425,8 @@ PROCEDURE gera-lista-custod PRIVATE:
             crawlot.nrdolote 
             crawlot.qtchqcop  WHEN crawlot.qtchqcop > 0
             crawlot.vlchqcop  WHEN crawlot.vlchqcop > 0 
-            crawlot.qtchqmen  WHEN crawlot.qtchqmen > 0
-            crawlot.vlchqmen  WHEN crawlot.vlchqmen > 0
-            crawlot.qtchqmai  WHEN crawlot.qtchqmai > 0    
-            crawlot.vlchqmai  WHEN crawlot.vlchqmai > 0
+            crawlot.qtcheque  WHEN crawlot.qtcheque > 0
+            crawlot.vlcheque  WHEN crawlot.vlcheque > 0
             crawlot.qtchqtot 
             crawlot.vlchqtot 
             crawlot.dtlibera 
@@ -2519,13 +2470,11 @@ PROCEDURE gera-lista-custod PRIVATE:
 
     ASSIGN pac_qtdlotes = pac_qtdlotes + 1
            pac_qtchqcop = pac_qtchqcop + crawlot.qtchqcop
-           pac_qtchqmen = pac_qtchqmen + crawlot.qtchqmen 
-           pac_qtchqmai = pac_qtchqmai + crawlot.qtchqmai
+           pac_qtcheque = pac_qtcheque + crawlot.qtcheque 
            pac_qtchqtot = pac_qtchqtot + crawlot.qtchqtot
       
            pac_vlchqcop = pac_vlchqcop + crawlot.vlchqcop 
-           pac_vlchqmen = pac_vlchqmen + crawlot.vlchqmen 
-           pac_vlchqmai = pac_vlchqmai + crawlot.vlchqmai
+           pac_vlcheque = pac_vlcheque + crawlot.vlcheque 
            pac_vlchqtot = pac_vlchqtot + crawlot.vlchqtot.
 
     DOWN STREAM str_1 WITH FRAME f_lotes_c.
@@ -2542,10 +2491,8 @@ PROCEDURE gera-lista-custod PRIVATE:
             pac_qtdlotes  
             pac_qtchqcop WHEN pac_qtchqcop > 0
             pac_vlchqcop WHEN pac_vlchqcop > 0
-            pac_qtchqmen WHEN pac_qtchqmen > 0
-            pac_vlchqmen WHEN pac_vlchqmen > 0
-            pac_qtchqmai WHEN pac_qtchqmai > 0
-            pac_vlchqmai WHEN pac_vlchqmai > 0
+            pac_qtcheque WHEN pac_qtcheque > 0
+            pac_vlcheque WHEN pac_vlcheque > 0
             pac_qtchqtot  
             pac_vlchqtot
             pac_dsdtraco
@@ -2560,19 +2507,16 @@ PROCEDURE gera-lista-custod PRIVATE:
             DISPLAY STREAM str_1 rel_dtmvtini 
                                  rel_dtmvtfim 
                                  tt-relat-custod.dsdsaldo 
-                                 aux_vlchmatb 
                                  WITH FRAME f_cab_c.
         END.
    
    ASSIGN pac_qtdlotes = 0
           pac_qtchqcop = 0 
-          pac_qtchqmen = 0 
-          pac_qtchqmai = 0 
+          pac_qtcheque = 0 
           pac_qtchqtot = 0 
 
           pac_vlchqcop = 0
-          pac_vlchqmen = 0 
-          pac_vlchqmai = 0
+          pac_vlcheque = 0 
           pac_vlchqtot = 0.
 
     RETURN "OK".
@@ -2938,10 +2882,8 @@ PROCEDURE busca_informacoes_relatorio_custodia PRIVATE:
                  
                     ASSIGN lot_qtchqcop = 0                
                            lot_vlchqcop = 0 
-                           lot_qtchqmen = 0 
-                           lot_vlchqmen = 0 
-                           lot_qtchqmai = 0
-                           lot_vlchqmai = 0
+                           lot_qtcheque = 0 
+                           lot_vlcheque = 0 
                            aux_nrdconta = 0.
 
                     FOR EACH crapcst WHERE 
@@ -2976,14 +2918,8 @@ PROCEDURE busca_informacoes_relatorio_custodia PRIVATE:
                                    lot_qtchqcop = lot_qtchqcop + 1.
                         ELSE 
                             DO:
-                                IF  crapcst.vlcheque >= tab_vlchqmai THEN
-                                    ASSIGN lot_vlchqmai = lot_vlchqmai + 
-                                                          crapcst.vlcheque
-                                           lot_qtchqmai = lot_qtchqmai + 1.
-                                ELSE
-                                    ASSIGN lot_vlchqmen = lot_vlchqmen + 
-                                                          crapcst.vlcheque
-                                           lot_qtchqmen = lot_qtchqmen + 1.
+                                ASSIGN lot_vlcheque = lot_vlcheque + crapcst.vlcheque
+                                       lot_qtcheque = lot_qtcheque + 1.
                             END.
 
                         CREATE crabcst.
@@ -3004,8 +2940,7 @@ PROCEDURE busca_informacoes_relatorio_custodia PRIVATE:
                     END.  /*  Fim do FOR EACH -- Leitura da custodia  */
            
                     IF  lot_qtchqcop = 0   AND 
-                        lot_qtchqmen = 0   AND
-                        lot_qtchqmai = 0   THEN
+                        lot_qtcheque = 0   THEN
                         NEXT.
                         
                     FIND crapope WHERE 
@@ -3022,12 +2957,10 @@ PROCEDURE busca_informacoes_relatorio_custodia PRIVATE:
                            crawlot.nrdconta = aux_nrdconta
                            crawlot.nrdolote = craplot.nrdolote
                            crawlot.qtchqcop = lot_qtchqcop
-                           crawlot.qtchqmen = lot_qtchqmen
-                           crawlot.qtchqmai = lot_qtchqmai
+                           crawlot.qtcheque = lot_qtcheque
                            crawlot.qtchqtot = craplot.qtcompln
                            crawlot.vlchqcop = lot_vlchqcop
-                           crawlot.vlchqmen = lot_vlchqmen
-                           crawlot.vlchqmai = lot_vlchqmai
+                           crawlot.vlcheque = lot_vlcheque
                            crawlot.vlchqtot = craplot.vlcompdb
                            crawlot.dtlibera = craplot.dtmvtopg
                            crawlot.nmoperad = lot_nmoperad.
@@ -3035,18 +2968,14 @@ PROCEDURE busca_informacoes_relatorio_custodia PRIVATE:
                     ASSIGN tt-relat-custod.qtdlotes = tt-relat-custod.qtdlotes + 1
                            tt-relat-custod.qtchqcop = tt-relat-custod.qtchqcop + 
                                                       crawlot.qtchqcop
-                           tt-relat-custod.qtchqmen = tt-relat-custod.qtchqmen + 
-                                                      crawlot.qtchqmen
-                           tt-relat-custod.qtchqmai = tt-relat-custod.qtchqmai + 
-                                                      crawlot.qtchqmai
+                           tt-relat-custod.qtcheque = tt-relat-custod.qtcheque + 
+                                                      crawlot.qtcheque
                            tt-relat-custod.qtchqtot = tt-relat-custod.qtchqtot + 
                                                       crawlot.qtchqtot
                            tt-relat-custod.vlchqcop = tt-relat-custod.vlchqcop + 
                                                       crawlot.vlchqcop 
-                           tt-relat-custod.vlchqmen = tt-relat-custod.vlchqmen + 
-                                                      crawlot.vlchqmen 
-                           tt-relat-custod.vlchqmai = tt-relat-custod.vlchqmai + 
-                                                      crawlot.vlchqmai
+                           tt-relat-custod.vlcheque = tt-relat-custod.vlcheque + 
+                                                      crawlot.vlcheque 
                            tt-relat-custod.vlchqtot = tt-relat-custod.vlchqtot + 
                                                       crawlot.vlchqtot.
    
