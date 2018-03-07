@@ -121,6 +121,10 @@
 		<label for="vlutilsr"><? echo utf8ToHtml('Valor utilizado (Sem Registro):') ?></label>
 		<input type="text" name="vlutilsr" id="vlutilsr" value="<?php echo number_format(str_replace(",",".",$dados[12]->cdata),2,",",".") . " (". $dados[11]->cdata; if ($dados[11]->cdata > 1) { echo " t&iacute;tulos)"; } else { echo " t&iacute;tulos)"; } ?>" />
 		<br />
+
+		<label for="dtrenova"><? echo utf8ToHtml('Data Renovação: ') ?></label>
+		<input type="text" name="dtrenova" id="dtrenova" value="<?php echo $dados[13]->cdata ?>"/>
+		<br />
 		
 		
 	</fieldset>
