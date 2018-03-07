@@ -3803,9 +3803,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           FROM crapatr
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
+           AND tpautori = 0
            AND dtfimatr IS NULL;
       rw_crapatr cr_crapatr%ROWTYPE;
 
+      -- Cursor sobre a tabela de debitos autorizados
+      CURSOR cr_crapatr_2 IS
+        SELECT 1
+          FROM crapatr
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND tpautori <> 0
+           AND dtfimatr IS NULL;
+      rw_crapatr_2 cr_crapatr_2%ROWTYPE;
+      
       -- Cursor sobre a tabela de lancamento de cotas
       CURSOR cr_craplct IS
         SELECT 1
@@ -4400,14 +4411,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         CLOSE cr_tarifa;
       ELSIF pr_cdproduto = 29 THEN -- Débito Automático Fácil
         -- Abre a tabela de debitos automaticos
-        OPEN cr_crapatr;
-        FETCH cr_crapatr INTO rw_crapatr;
+        OPEN cr_crapatr_2;
+        FETCH cr_crapatr_2 INTO rw_crapatr_2;
         -- Se nao encotrou, nao possui nenhum debito automatico
-        IF cr_crapatr%NOTFOUND THEN
-          CLOSE cr_crapatr;
+        IF cr_crapatr_2%NOTFOUND THEN
+          CLOSE cr_crapatr_2;
           RETURN 'N'; -- Retorna como produto nao aderido
         END IF;
-        CLOSE cr_crapatr;
+        CLOSE cr_crapatr_2;
         RETURN 'S'; -- Retorna como produto aderido
       ELSIF pr_cdproduto = 31 THEN -- Empréstimos
         
