@@ -423,8 +423,7 @@ function formataLayout(nomeForm){
 	
 		ajustarCentralizacao();
 		
-	}else if(  nomeForm == 'frmDadosLimiteDscChq' ||
-			   nomeForm == 'frmDadosLimiteDscTit'){
+	}else if(  nomeForm == 'frmDadosLimiteDscChq' || nomeForm == 'frmDadosLimiteDscTit'){
 	
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
 		var Lvllimite = $('label[for="vllimite"]','#'+nomeForm);
@@ -612,6 +611,7 @@ function formataLayout(nomeForm){
 		var Ldsdlinha = $('label[for="dsdlinha"]','#'+nomeForm);
 		var Lvlutilcr = $('label[for="vlutilcr"]','#'+nomeForm);
 		var Lvlutilsr = $('label[for="vlutilsr"]','#'+nomeForm);
+		var Ldtrenova = $('label[for="dtrenova"]','#'+nomeForm);
 		
 		var Cnrctrlim = $('#nrctrlim','#'+nomeForm);
 		var Cdtinivig = $('#dtinivig','#'+nomeForm);
@@ -621,6 +621,7 @@ function formataLayout(nomeForm){
 		var Cdsdlinha = $('#dsdlinha','#'+nomeForm);
 		var Cvlutilcr = $('#vlutilcr','#'+nomeForm);
 		var Cvlutilsr = $('#vlutilsr','#'+nomeForm);
+		var Cdtrenova = $('#dtrenova','#'+nomeForm);
 		
 		$('#'+nomeForm).css('width','430px');
 		
@@ -632,6 +633,7 @@ function formataLayout(nomeForm){
 		Ldsdlinha.addClass('rotulo').css('width','155px');
 		Lvlutilcr.addClass('rotulo').css('width','200px');
 		Lvlutilsr.addClass('rotulo').css('width','200px');
+		Ldtrenova.addClass('rotulo').css('width','200px');
 		
 		
 		Cnrctrlim.css({'width':'60px','text-align':'right'});
@@ -642,6 +644,7 @@ function formataLayout(nomeForm){
 		Cdsdlinha.css({'width':'200px'});
 		Cvlutilcr.css({'width':'150px','text-align':'right'});
 		Cvlutilsr.css({'width':'150px','text-align':'right'});
+		Cdtrenova.css({'width':'150px','text-align':'right'});
 		
 		Cnrctrlim.desabilitaCampo();
 		Cdtinivig.desabilitaCampo();
@@ -651,6 +654,7 @@ function formataLayout(nomeForm){
 		Cdsdlinha.desabilitaCampo();
 		Cvlutilcr.desabilitaCampo();
 		Cvlutilsr.desabilitaCampo();
+		Cdtrenova.desabilitaCampo();
 
 	}else if ( nomeForm == 'divRestricoes' ){
 	
