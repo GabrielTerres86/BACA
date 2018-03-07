@@ -96,7 +96,6 @@ function reabilitaForm() {
     DEF VAR v_valor2      AS DECI NO-UNDO.
     DEF VAR v_chequescoop AS DECI NO-UNDO.
     DEF VAR aux_qtddchqs  AS INTE NO-UNDO.
-    DEF VAR aux_tpdmovto  AS INTE NO-UNDO.
     DEF VAR v_totdepos    AS DECI NO-UNDO.
     DEF VAR v_qtdchqs     AS INTE NO-UNDO.
     DEF VAR v_nrsequni    AS CHAR NO-UNDO.
@@ -221,14 +220,6 @@ DEF TEMP-TABLE tt-conta NO-UNDO
                        v_chequescoop = crapmrw.vlchqcop
                        v_totdepos = v_totdepos + crapmrw.vldepdin + crapmrw.vlchqcop.
             
-            FIND FIRST craptab WHERE craptab.cdcooper = crapcop.cdcooper    AND
-                                     craptab.nmsistem = "CRED"              AND
-                                     craptab.tptabela = "USUARI"            AND
-                                     craptab.cdempres = 11                  AND
-                                     craptab.cdacesso = "MAIORESCHQ"        AND
-                                     craptab.tpregist = 1 
-                                     NO-LOCK NO-ERROR.
-        
             /* Buscar os totais de cheque maior e menor da Praca ou fora Praca */
             FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper AND
                                    crapmdw.cdagenci = INT(v_pac) AND
@@ -242,38 +233,12 @@ DEF TEMP-TABLE tt-conta NO-UNDO
                 IF  NOT AVAIL tt-cheques  THEN
                     CREATE tt-cheques.
                 
-                IF  crapmdw.vlcompel < DEC(SUBSTR(craptab.dstextab,1,15))  THEN
-                    ASSIGN  aux_tpdmovto = 2.
-                ELSE
-                    ASSIGN  aux_tpdmovto = 1.                
-                
-                IF  crapmdw.cdhistor = 3  THEN /* Praca */
-                    DO:
-                        IF  aux_tpdmovto = 2  THEN /* Menor Praca */
-                            ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
+                IF  crapmdw.cdhistor = 2433  THEN
+                    ASSIGN tt-cheques.nrdocmto = 6
+                           tt-cheques.dtlibera = crapmdw.dtlibcom
                            tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                   tt-cheques.nrdocmto = 3
                            v_totdepos = v_totdepos + crapmdw.vlcompel.
-                        ELSE                       /* Maior Praca */
-                            ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                   tt-cheques.nrdocmto = 4
-                                   v_totdepos = v_totdepos + crapmdw.vlcompel.
-                    END.
-                ELSE
-                IF  crapmdw.cdhistor = 4  THEN /* Fora Praca */
-                    DO:
-                        IF  aux_tpdmovto = 2  THEN /* Menor Fora Praca */
-                            ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                   tt-cheques.nrdocmto = 5
-                                   v_totdepos = v_totdepos + tt-cheques.vlcompel.
-                        ELSE                       /* Maior Fora Praca */
-                            ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                   tt-cheques.nrdocmto = 6
-                           v_totdepos = v_totdepos + crapmdw.vlcompel.
-                    END.
+            
                 FIND CURRENT tt-cheques NO-LOCK.
                 
                 ASSIGN aux_limite-credito = 0
@@ -329,7 +294,7 @@ DEF TEMP-TABLE tt-conta NO-UNDO
                                          " VALOR LIMITE: " + STRING(aux_limite-credito,"zzz,zzz,zz9.99")       + 
                                          " CMC7: '" + STRING(crapmdw.dsdocmc7)        +
                                          "' >> " + aux_nmarqlog).  
-            END.
+                   END.
             END.
             /* Fim da montagem dos dados do resumo */        
              
@@ -524,7 +489,7 @@ DEF TEMP-TABLE tt-conta NO-UNDO
                                    
 
                                    
-                                                         
+                                                                             
                                                                              
                                END.
                                 
@@ -638,14 +603,6 @@ DEF TEMP-TABLE tt-conta NO-UNDO
                        v_chequescoop = crapmrw.vlchqcop
                        v_totdepos = v_totdepos + crapmrw.vldepdin + crapmrw.vlchqcop.
                  
-            FIND FIRST craptab WHERE craptab.cdcooper = crapcop.cdcooper    AND
-                                     craptab.nmsistem = "CRED"              AND
-                                     craptab.tptabela = "USUARI"            AND
-                                     craptab.cdempres = 11                  AND
-                                     craptab.cdacesso = "MAIORESCHQ"        AND
-                                     craptab.tpregist = 1 
-                                     NO-LOCK NO-ERROR.
-                         
             /* Buscar os totais de cheque maior e menor da Praca ou fora Praca */
             FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper AND
                                    crapmdw.cdagenci = INT(v_pac) AND
@@ -660,38 +617,11 @@ DEF TEMP-TABLE tt-conta NO-UNDO
                 IF  NOT AVAIL tt-cheques  THEN
                     CREATE tt-cheques.
 
-                IF  crapmdw.vlcompel < DEC(SUBSTR(craptab.dstextab,1,15))  THEN
-                    ASSIGN  aux_tpdmovto = 2.
-                ELSE
-                    ASSIGN  aux_tpdmovto = 1.                
-                
-                IF  crapmdw.cdhistor = 3  THEN /* Praca */
-                    DO:
-                        IF  aux_tpdmovto = 2  THEN /* Menor Praca */
-                            ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                   tt-cheques.nrdocmto = 3
-                                   v_totdepos = v_totdepos + crapmdw.vlcompel.
-                        ELSE                       /* Maior Praca */
-                            ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                   tt-cheques.nrdocmto = 4
-                                   v_totdepos = v_totdepos + crapmdw.vlcompel.
-                    END.
-                ELSE
-                IF  crapmdw.cdhistor = 4  THEN /* Fora Praca */
-                    DO:
-                        IF  aux_tpdmovto = 2  THEN /* Menor Fora Praca */
-                            ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                   tt-cheques.nrdocmto = 5
-                                   v_totdepos = v_totdepos + crapmdw.vlcompel.
-                        ELSE                       /* Maior Fora Praca */
-                            ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
+                IF  crapmdw.cdhistor = 2433  THEN             
+                    ASSIGN tt-cheques.nrdocmto = 6
+                           tt-cheques.dtlibera = crapmdw.dtlibcom
                            tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                   tt-cheques.nrdocmto = 6
                            v_totdepos = v_totdepos + crapmdw.vlcompel.
-                    END.
 				
                 FIND CURRENT tt-cheques NO-LOCK.
             
@@ -821,37 +751,12 @@ DEF TEMP-TABLE tt-conta NO-UNDO
            </td>
         </tr>
         <script language="SpeedScript">END.</script>
-        <script language="SpeedScript">FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 3 NO-LOCK:</script>
+        <script language="SpeedScript">FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:</script>
         <tr>
-          <td width="34%" align="right" class="linhaform"> Cheq. Menores Praça: </td>
+          <td width="34%" align="right" class="linhaform"> Cheq. Outros Bancos: </td>
            <td width="67%">
            <input type="text" value="`STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")`" size="20" class="input" maxlength="14" onKeyUp="callCalc(event, this);" onKeyDown="JavaScript:FormataValor(this,14,event)" style="text-align: right" disabled>
            <input type="text" value="`tt-cheques.dtlibera`" size="12" class="input" maxlength="8" disabled></td>
-        </tr>
-        <script language="SpeedScript">END.</script>
-        <script language="SpeedScript">FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 4 NO-LOCK:</script>
-        <tr>
-          <td width="34%" align="right" class="linhaform">Cheq. Maiores
-            Praça:</td>
-           <td width="67%">
-           <input type="text" value="`STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")`" size="20" class="input" maxlength="14" onKeyUp="callCalc(event, this);" onKeyDown="JavaScript:FormataValor(this,14,event)" style="text-align: right" disabled>
-           <input type="text" value="`tt-cheques.dtlibera`" size="12" disabled maxlength="8" class="input"></td>
-        </tr>
-        <script language="SpeedScript">END.</script>
-        <script language="SpeedScript">FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 5 NO-LOCK:</script>
-        <tr>
-          <td width="34%" align="right" nowrap class="linhaform">Cheq. Menores Fora Praça:</td>
-           <td width="67%">
-           <input type="text" value="`STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")`" size="20" class="input" maxlength="14" onKeyUp="callCalc(event, this);" onKeyDown="JavaScript:FormataValor(this,14,event)" style="text-align: right" disabled>
-		   <input type="text" value="`tt-cheques.dtlibera`" size="12" disabled maxlength="8" class="input"></td>
-        </tr>
-        <script language="SpeedScript">END.</script>
-        <script language="SpeedScript">FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:</script>
-        <tr>
-          <td width="34%" align="right" class="linhaform">Cheq. Maiores Fora Praça:</td>
-           <td width="67%">
-           <input type="text" value="`STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")`" size="20" class="input" maxlength="14" onKeyUp="callCalc(event, this);" onKeyDown="JavaScript:FormataValor(this,14,event)" style="text-align: right" disabled>
-            <input type="text" value="`tt-cheques.dtlibera`" size="12" disabled maxlength="8" class="input"></td>
         </tr>
         <script language="SpeedScript">END.</script>
         <tr>
