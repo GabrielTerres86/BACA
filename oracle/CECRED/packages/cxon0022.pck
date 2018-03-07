@@ -44,7 +44,10 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0022 AS
                             varias procedures desta package.(Carlos Rafael Tanholi).                                                             
 
                28/03/2016 - Adicionados parâmetros para geraçao de LOG
-                           (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)														       
+                           (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)			
+
+               27/06/2017 - Removida separacao de cheques Maior e Menor, Praça e Fora Praça,
+                            e utilizado historico único 1523. PRJ367 - Compe Sessao Unica (Lombardi)
 
 ..............................................................................*/
 
@@ -2362,7 +2365,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                 ,pr_cdcritic          OUT INTEGER      --> Cod Critica
                                 ,pr_dscritic          OUT VARCHAR2) IS --> Des Critica
   /*---------------------------------------------------------------------------------------------------------------
-  
+
     Programa : pc_realiza_dep_cheq Fonte: dbo/b1crap22.p/realiza_deposito_cheque
     Sistema  : Procedure para realizar deposito de cheques entre cooperativas
     Sigla    : CRED
@@ -2812,7 +2815,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_c_docto_salvo       VARCHAR2(200) := '';
   vr_cdpacrem            PLS_INTEGER;
   vr_c_docto             VARCHAR2(200) := '';
-  vr_tpdmovto            INTEGER       := 0;
   vr_i_nro_docto         INTEGER       := 0;
   vr_p_literal           VARCHAR2(32000) := '';
   vr_p_ult_sequencia     INTEGER       := 0;
@@ -2824,10 +2826,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_de_valor_total      NUMBER(13,2)  := 0;
   vr_de_cooperativa      NUMBER(13,2)  := 0;
   vr_de_chq_intercoopc   NUMBER(13,2)  := 0;
-  vr_de_maior_praca      NUMBER(13,2)  := 0;
-  vr_de_menor_praca      NUMBER(13,2)  := 0;
-  vr_de_maior_fpraca     NUMBER(13,2)  := 0;
-  vr_de_menor_fpraca     NUMBER(13,2)  := 0;
   vr_index               VARCHAR2(21)  := '';
   vr_index2              NUMBER        := 0;
   vr_i_seq_386           INTEGER       := 0;
@@ -2835,7 +2833,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_glb_dsdctitg        VARCHAR2(200) := '';
   vr_literal             VARCHAR2(32000) := '';
   vr_nmsegntl            crapttl.nmextttl%TYPE;
-    
+
   vr_nrtrfcta     craptrf.nrsconta%TYPE := 0;
   vr_nrdconta     craptrf.nrsconta%TYPE := 0;
   vr_nro_conta    craptrf.nrsconta%TYPE := 0;
@@ -3169,10 +3167,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      vr_de_valor_total    := 0;
      vr_de_cooperativa    := 0;
      vr_de_chq_intercoopc := 0;
-     vr_de_maior_praca    := 0;
-     vr_de_menor_praca    := 0;
-     vr_de_maior_fpraca   := 0;
-     vr_de_menor_fpraca   := 0;
 
      -- RESUMO
      -- Buscar os Totais de Cheque Cooperativa
@@ -3209,50 +3203,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
              pr_typ_tab_chq(vr_index).vlcompel := 0; -- Inicializa o campo de valor
            END IF;
 
-           -- Define o tipo do docmto (1-Menor Praca-Maior/2-Praca,1-Menor Fora Praca/2-Maior Fora Praca)
-           IF rw_verifica_mdw.vlcompel < TO_NUMBER(SUBSTR(vr_dstextab,1,15)) THEN               
-              vr_tpdmovto := 2;             
-           ELSE
-              vr_tpdmovto := 1;
+           IF rw_verifica_mdw.cdhistor = 2433 THEN
+             pr_typ_tab_chq(vr_index).nrdocmto := 6;
+             pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
+             pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
+             vr_de_valor_total := vr_de_valor_total + rw_verifica_mdw.vlcompel;
            END IF;
-            
-            IF rw_verifica_mdw.cdhistor = 3 THEN -- Praca
-               IF vr_tpdmovto = 2 THEN -- Menor Praca
-                  pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                  pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                  pr_typ_tab_chq(vr_index).nrdocmto := 3;
-                  vr_de_menor_praca                 := vr_de_menor_praca + rw_verifica_mdw.vlcompel;
-               ELSE -- Maior Praca
-                  pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                  pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                  pr_typ_tab_chq(vr_index).nrdocmto := 4;
-                  vr_de_maior_praca                 := vr_de_maior_praca + rw_verifica_mdw.vlcompel;
-               END IF;                 
-            ELSE -- Fora Praca
-               IF rw_verifica_mdw.cdhistor = 4 THEN
-                  IF vr_tpdmovto = 2 THEN -- Menor Fora Praca
-                     pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                     pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                     pr_typ_tab_chq(vr_index).nrdocmto := 5;
-                     vr_de_menor_fpraca                := vr_de_menor_fpraca + rw_verifica_mdw.vlcompel;
-                  ELSE -- Maior Fora Praca
-                     pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                     pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                     pr_typ_tab_chq(vr_index).nrdocmto := 6;
-                     vr_de_maior_fpraca                := vr_de_maior_fpraca + rw_verifica_mdw.vlcompel;
-                  END IF;  
-               END IF;
-            END IF;                                                   
-                                                                                                                 
         END LOOP;
         -- Fim da montagem do Resumo
           
      END IF; /* IF TRIM(vr_dstextab) IS NOT NULL AND ... */
      
-     vr_de_valor_total := vr_de_valor_total
-                        + vr_de_menor_fpraca + vr_de_menor_praca
-                        + vr_de_maior_fpraca + vr_de_maior_praca;
-                        
      /** Se veio da Rotina 61 **/
      IF NVL(pr_identifica,' ') LIKE '%Deposito de envelope%'  THEN
         vr_cdpacrem := 91; /* TAA */
@@ -3633,10 +3594,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_nrsequen := 0;
      
-     -- Cheque MENOR PRACA
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 3 THEN
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
           
            /* Sequencial utilizado para separar um lançamento
            em conta para cada data nao ocorrendo duplicidade de chave */
@@ -3749,7 +3709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                      ,pr_nro_conta
                      ,TO_NUMBER(vr_c_docto)
                      ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1526  /* 3 DEP.CHQ.PR. */
+                   ,1523  /* DEP.CHQ.INTER */
                      ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
                      ,pr_nro_conta
                      ,vr_p_ult_sequencia
@@ -3776,6 +3736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                         ,pr_flg_erro => TRUE
                                         ,pr_cdcritic => vr_cdcritic
                                         ,pr_dscritic => vr_dscritic);
+                                        
                    -- Levantar excecao
                    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                       pr_cdcritic := vr_cdcritic;
@@ -3784,6 +3745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                    END IF;
 
                    RAISE vr_exc_erro;
+
            END;
            
            -- Verifica se existe lote
@@ -3829,7 +3791,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                        RAISE vr_exc_erro;
 
                  END;
+
               END IF;
+
            CLOSE cr_existe_lot;
            
            -- Cria registro de Deposito Bloqueado
@@ -3847,7 +3811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                  ,cdcooper)
               VALUES (pr_nro_conta
                      ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1526 -- 3
+                   ,1523 -- DEP.CHQ.INTER
                      ,TO_NUMBER(vr_c_docto)
                      ,rw_dat_cop.dtmvtolt
                      ,1
@@ -3879,772 +3843,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
                    RAISE vr_exc_erro;
            END;           
-        END IF;        
+        END IF;           
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
         
-     END LOOP; -- Fim cheques menor praca
-     
-     vr_nrsequen := 0;
-     
-     -- Cheque MAIOR PRACA
-     vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
-     WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 4 THEN
-          
-           /* Sequencial utilizado para separar um lançamento
-           para cada data nao ocorrendo duplicidade de chave */
-
-           vr_nrsequen := vr_nrsequen + 1;
-           vr_c_docto  := vr_c_docto_salvo || to_char(gene0002.fn_mask(pr_dsorigi => vr_nrsequen, pr_dsforma => '99' )) || pr_typ_tab_chq(vr_index).nrdocmto;
-           
-           pr_typ_tab_chq(vr_index).nrsequen := vr_nrsequen;
-           
-           -- Busca o ultima sequencia de digito
-           OPEN cr_consulta_lot(rw_cod_coop_dest.cdcooper
-                               ,rw_dat_cop.dtmvtocd
-                               ,1   -- FIXO
-                               ,100 -- FIXO
-                               ,vr_i_nro_lote);
-           FETCH cr_consulta_lot INTO rw_consulta_lot;
-           CLOSE cr_consulta_lot;
-              
-           -- Verifica se Lancamento ja Existe no Dest.
-           OPEN cr_existe_lcm(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtolt
-                             ,1
-                             ,100
-                             ,vr_i_nro_lote
-                             ,rw_consulta_lot.nrseqdig); -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           FETCH cr_existe_lcm INTO rw_existe_lcm;
-              IF cr_existe_lcm%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento  ja existente';
-                                      
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-              END IF;              
-           CLOSE cr_existe_lcm;
-              
-           OPEN cr_existe_lcm1(rw_cod_coop_dest.cdcooper
-                              ,rw_dat_cop.dtmvtolt
-                              ,1
-                              ,100
-                              ,vr_i_nro_lote
-                              ,pr_nro_conta
-                              ,vr_c_docto);
-           FETCH cr_existe_lcm1 INTO rw_existe_lcm1;
-              IF cr_existe_lcm1%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento(Primario) ja existente';
-                                     
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-           
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-                   
-              END IF;            
-           CLOSE cr_existe_lcm1;
-              
-           -- Chegou aqui eh porque nao existir lcm, entao cria registro de lcm
-           BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,dsidenti
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdocmto
-                                 ,vllanmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,nrdctabb
-                                 ,nrautdoc
-                                 ,cdpesqbb
-                                 ,nrdctitg
-                                 ,cdcoptfn
-                                 ,cdagetfn
-                                 ,nrterfin
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_dest.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,pr_identifica
-                     ,vr_i_nro_lote
-                     ,pr_nro_conta
-                     ,TO_NUMBER(vr_c_docto)
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1526  /* 3 DEP.CHQ.PR. */
-                     ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                     ,pr_nro_conta
-                     ,vr_p_ult_sequencia
-                     ,'CRAP22'
-                     ,vr_glb_dsdctitg
-                     ,rw_cod_coop_orig.cdcooper
-                     ,pr_cod_agencia
-                     ,pr_nro_caixa
-                     ,pr_cod_operador);
-                     
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                                        
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-
-           END;
-           
-           -- Verifica se existe lote
-           OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtocd
-                             ,1   /* FIXO */
-                             ,100 /* FIXO */
-                             ,vr_i_nro_lote);
-           FETCH cr_existe_lot INTO rw_existe_lot;
-              IF cr_existe_lot%FOUND THEN
-                 BEGIN
-                    UPDATE craplot lot
-                       SET lot.nrseqdig = lot.nrseqdig + 1
-                          ,lot.qtcompln = lot.qtcompln + 1
-                          ,lot.qtinfoln = lot.qtinfoln + 1
-                          ,lot.vlcompcr = lot.vlcompcr + pr_typ_tab_chq(vr_index).vlcompel
-                          ,lot.vlinfocr = lot.vlinfocr + pr_typ_tab_chq(vr_index).vlcompel
-                     WHERE lot.cdcooper = rw_cod_coop_dest.cdcooper
-                       AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                       AND lot.cdagenci = 1
-                       AND lot.cdbccxlt = 100
-                       AND lot.nrdolote = vr_i_nro_lote;             
-                 EXCEPTION
-                    WHEN OTHERS THEN
-                       pr_cdcritic := 0;
-                       pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                  
-                       cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                            ,pr_cdagenci => pr_cod_agencia
-                                            ,pr_nrdcaixa => pr_nro_caixa
-                                            ,pr_cod_erro => pr_cdcritic
-                                            ,pr_dsc_erro => pr_dscritic
-                                            ,pr_flg_erro => TRUE
-                                            ,pr_cdcritic => vr_cdcritic
-                                            ,pr_dscritic => vr_dscritic); 
-                       -- Levantar excecao
-                       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                          pr_cdcritic := vr_cdcritic;
-                          pr_dscritic := vr_dscritic;
-                          RAISE vr_exc_erro;
-                       END IF;
-
-                       RAISE vr_exc_erro;
-
-                 END;
-
-              END IF;
-
-           CLOSE cr_existe_lot;
-           
-           -- Cria registro de Deposito Bloqueado
-           BEGIN
-              INSERT INTO crapdpb(nrdconta
-                                 ,dtliblan
-                                 ,cdhistor
-                                 ,nrdocmto
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,vllanmto
-                                 ,inlibera
-                                 ,cdcooper)
-              VALUES (pr_nro_conta
-                     ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1526 -- 3
-                     ,TO_NUMBER(vr_c_docto)
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,vr_i_nro_lote
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1
-                     ,rw_cod_coop_dest.cdcooper);
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPDPB: '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic;
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-
-           END;
-           
-        END IF;        
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques maior praca
-     
-     vr_nrsequen := 0;
-     
-     -- Cheque MENOR FORA PRACA
-     vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
-     WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 5 THEN
-          
-           /* Sequencial utilizado para separar um lançamento
-           para cada data nao ocorrendo duplicidade de chave */
-
-
-           vr_nrsequen := vr_nrsequen + 1;
-           vr_c_docto  := vr_c_docto_salvo || to_char(gene0002.fn_mask(pr_dsorigi => vr_nrsequen, pr_dsforma => '99' )) || pr_typ_tab_chq(vr_index).nrdocmto;
-           pr_typ_tab_chq(vr_index).nrsequen := vr_nrsequen;
-           
-           -- Busca o ultima sequencia de digito
-           OPEN cr_consulta_lot(rw_cod_coop_dest.cdcooper
-                               ,rw_dat_cop.dtmvtocd
-                               ,1   -- FIXO
-                               ,100 -- FIXO
-                               ,vr_i_nro_lote);
-           FETCH cr_consulta_lot INTO rw_consulta_lot;
-           CLOSE cr_consulta_lot;
-              
-           -- Verifica se Lancamento ja Existe no Dest.
-           OPEN cr_existe_lcm(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtolt
-                             ,1
-                             ,100
-                             ,vr_i_nro_lote
-                             ,rw_consulta_lot.nrseqdig); -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           FETCH cr_existe_lcm INTO rw_existe_lcm;
-              IF cr_existe_lcm%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento  ja existente';
-                                      
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-                 
-              END IF;              
-           CLOSE cr_existe_lcm;
-              
-           OPEN cr_existe_lcm1(rw_cod_coop_dest.cdcooper
-                              ,rw_dat_cop.dtmvtolt
-                              ,1
-                              ,100
-                              ,vr_i_nro_lote
-                              ,pr_nro_conta
-                              ,vr_c_docto);
-           FETCH cr_existe_lcm1 INTO rw_existe_lcm1;
-              IF cr_existe_lcm1%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento(Primario) ja existente';
-                                     
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-              END IF;            
-           CLOSE cr_existe_lcm1;
-              
-           -- Chegou aqui eh porque nao existir lcm, entao cria registro de lcm
-           BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,dsidenti
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdocmto
-                                 ,vllanmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,nrdctabb
-                                 ,nrautdoc
-                                 ,cdpesqbb
-                                 ,nrdctitg
-                                 ,cdcoptfn
-                                 ,cdagetfn
-                                 ,nrterfin
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_dest.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,pr_identifica
-                     ,vr_i_nro_lote
-                     ,pr_nro_conta
-                     ,TO_NUMBER(vr_c_docto)
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1523  /** 4 - DEP.CHQ.FPR. **/
-                     ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                     ,pr_nro_conta
-                     ,vr_p_ult_sequencia
-                     ,'CRAP22'
-                     ,vr_glb_dsdctitg
-                     ,rw_cod_coop_orig.cdcooper
-                     ,pr_cod_agencia
-                     ,pr_nro_caixa
-                     ,pr_cod_operador);
-                                          
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic;
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-           END;
-           
-           -- Verifica se existe lote
-           OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtocd
-                             ,1   /* FIXO */
-                             ,100 /* FIXO */
-                             ,vr_i_nro_lote);
-           FETCH cr_existe_lot INTO rw_existe_lot;
-              IF cr_existe_lot%FOUND THEN
-                 BEGIN
-                    UPDATE craplot lot
-                       SET lot.nrseqdig = lot.nrseqdig + 1
-                          ,lot.qtcompln = lot.qtcompln + 1
-                          ,lot.qtinfoln = lot.qtinfoln + 1
-                          ,lot.vlcompcr = lot.vlcompcr + pr_typ_tab_chq(vr_index).vlcompel
-                          ,lot.vlinfocr = lot.vlinfocr + pr_typ_tab_chq(vr_index).vlcompel
-                     WHERE lot.cdcooper = rw_cod_coop_dest.cdcooper
-                       AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                       AND lot.cdagenci = 1
-                       AND lot.cdbccxlt = 100
-                       AND lot.nrdolote = vr_i_nro_lote;             
-                 EXCEPTION
-                    WHEN OTHERS THEN
-                       pr_cdcritic := 0;
-                       pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                  
-                       cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                            ,pr_cdagenci => pr_cod_agencia
-                                            ,pr_nrdcaixa => pr_nro_caixa
-                                            ,pr_cod_erro => pr_cdcritic
-                                            ,pr_dsc_erro => pr_dscritic
-                                            ,pr_flg_erro => TRUE
-                                            ,pr_cdcritic => vr_cdcritic
-                                            ,pr_dscritic => vr_dscritic); 
-                       -- Levantar excecao
-                       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                          pr_cdcritic := vr_cdcritic;
-                          pr_dscritic := vr_dscritic;
-                          RAISE vr_exc_erro;
-                       END IF;
-
-                       RAISE vr_exc_erro;
-
-                 END;
-              END IF;
-           CLOSE cr_existe_lot;
-           
-           -- Cria registro de Deposito Bloqueado
-           BEGIN
-              INSERT INTO crapdpb(nrdconta
-                                 ,dtliblan
-                                 ,cdhistor
-                                 ,nrdocmto
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,vllanmto
-                                 ,inlibera
-                                 ,cdcooper)
-              VALUES (pr_nro_conta
-                     ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1523 -- 4
-                     ,TO_NUMBER(vr_c_docto)
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,vr_i_nro_lote
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1
-                     ,rw_cod_coop_dest.cdcooper);                                
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPDPB : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic;
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-           END;
-           
-        END IF;        
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques menor fora praca
-     
-     vr_nrsequen := 0;
-     
-     -- Cheque MAIOR FORA PRACA
-     vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
-     WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
-
-           /* Sequencial utilizado para separar um lançamento
-           para cada data nao ocorrendo duplicidade de chave */
-
-           vr_nrsequen := vr_nrsequen + 1;
-           vr_c_docto  := vr_c_docto_salvo || to_char(gene0002.fn_mask(pr_dsorigi => vr_nrsequen, pr_dsforma => '99' )) || pr_typ_tab_chq(vr_index).nrdocmto;
-           pr_typ_tab_chq(vr_index).nrsequen := vr_nrsequen;
-
-           -- Busca o ultima sequencia de digito
-           OPEN cr_consulta_lot(rw_cod_coop_dest.cdcooper
-                               ,rw_dat_cop.dtmvtocd
-                               ,1   -- FIXO
-                               ,100 -- FIXO
-                               ,vr_i_nro_lote);
-           FETCH cr_consulta_lot INTO rw_consulta_lot;
-           CLOSE cr_consulta_lot;
-
-           -- Verifica se Lancamento ja Existe no Dest.
-           OPEN cr_existe_lcm(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtolt
-                             ,1
-                             ,100
-                             ,vr_i_nro_lote
-                             ,rw_consulta_lot.nrseqdig); -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           FETCH cr_existe_lcm INTO rw_existe_lcm;
-              IF cr_existe_lcm%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento  ja existente';
-
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-              END IF;              
-           CLOSE cr_existe_lcm;
-
-           OPEN cr_existe_lcm1(rw_cod_coop_dest.cdcooper
-                              ,rw_dat_cop.dtmvtolt
-                              ,1
-                              ,100
-                              ,vr_i_nro_lote
-                              ,pr_nro_conta
-                              ,vr_c_docto);
-           FETCH cr_existe_lcm1 INTO rw_existe_lcm1;
-              IF cr_existe_lcm1%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento(Primario) ja existente';
-                                     
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-              END IF;            
-           CLOSE cr_existe_lcm1;
-              
-           -- Chegou aqui eh porque nao existir lcm, entao cria registro de lcm
-           BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,dsidenti
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdocmto
-                                 ,vllanmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,nrdctabb
-                                 ,nrautdoc
-                                 ,cdpesqbb
-                                 ,nrdctitg
-                                 ,cdcoptfn
-                                 ,cdagetfn
-                                 ,nrterfin
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_dest.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,pr_identifica
-                     ,vr_i_nro_lote
-                     ,pr_nro_conta
-                     ,TO_NUMBER(vr_c_docto)
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1523  /** 4 - DEP.CHQ.FPR. **/
-                     ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                     ,pr_nro_conta
-                     ,vr_p_ult_sequencia
-                     ,'CRAP22'
-                     ,vr_glb_dsdctitg
-                     ,rw_cod_coop_orig.cdcooper
-                     ,pr_cod_agencia
-                     ,pr_nro_caixa
-                     ,pr_cod_operador);
-
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
-
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic;
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-
-           END;
-
-           -- Verifica se existe lote
-           OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtocd
-                             ,1   /* FIXO */
-                             ,100 /* FIXO */
-                             ,vr_i_nro_lote);
-           FETCH cr_existe_lot INTO rw_existe_lot;
-              IF cr_existe_lot%FOUND THEN
-                 BEGIN
-                    UPDATE craplot lot
-                       SET lot.nrseqdig = lot.nrseqdig + 1
-                          ,lot.qtcompln = lot.qtcompln + 1
-                          ,lot.qtinfoln = lot.qtinfoln + 1
-                          ,lot.vlcompcr = lot.vlcompcr + pr_typ_tab_chq(vr_index).vlcompel
-                          ,lot.vlinfocr = lot.vlinfocr + pr_typ_tab_chq(vr_index).vlcompel
-                     WHERE lot.cdcooper = rw_cod_coop_dest.cdcooper
-                       AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                       AND lot.cdagenci = 1
-                       AND lot.cdbccxlt = 100
-                       AND lot.nrdolote = vr_i_nro_lote;             
-                 EXCEPTION
-                    WHEN OTHERS THEN
-                       pr_cdcritic := 0;
-                       pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                  
-                       cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                            ,pr_cdagenci => pr_cod_agencia
-                                            ,pr_nrdcaixa => pr_nro_caixa
-                                            ,pr_cod_erro => pr_cdcritic
-                                            ,pr_dsc_erro => pr_dscritic
-                                            ,pr_flg_erro => TRUE
-                                            ,pr_cdcritic => vr_cdcritic
-                                            ,pr_dscritic => vr_dscritic); 
-                       -- Levantar excecao
-                       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                          pr_cdcritic := vr_cdcritic;
-                          pr_dscritic := vr_dscritic;
-                          RAISE vr_exc_erro;
-                       END IF;
-
-                       RAISE vr_exc_erro;
-                 END;                 
-              END IF;
-              
-           CLOSE cr_existe_lot;
-           
-           -- Cria registro de Deposito Bloqueado
-           BEGIN
-              INSERT INTO crapdpb(nrdconta
-                                 ,dtliblan
-                                 ,cdhistor
-                                 ,nrdocmto
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,vllanmto
-                                 ,inlibera
-                                 ,cdcooper)
-              VALUES (pr_nro_conta
-                     ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1523 -- 4
-                     ,TO_NUMBER(vr_c_docto)
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,vr_i_nro_lote
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1
-                     ,rw_cod_coop_dest.cdcooper);           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao atualizar na CRAPDPB : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic;
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-           END;
-           
-        END IF;        
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques maior fora praca
+     END LOOP;
      
      -- Criacao do LOTE de ORIGEM (DEBITO)
      vr_i_nro_lote    := 11000 + pr_nro_caixa;
@@ -4775,20 +3977,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   vr_index :=  TO_CHAR(rw_verifica_mdw.dtlibcom,'DD/MM/RRRR')||
                                TO_CHAR(LPAD(rw_verifica_mdw.nrdocmto,10,0));
 
-                  IF rw_verifica_mdw.cdhistor = 3 THEN -- PRACA MENOR
-                     IF rw_verifica_mdw.tpdmovto = 2 THEN
-                        vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'3');
-                     ELSE
-                        vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'4');
-                     END IF;
-                  ELSE
-                     IF rw_verifica_mdw.cdhistor = 4 THEN -- FORA PRACA MENOR
-                        IF rw_verifica_mdw.tpdmovto = 2 THEN
-                           vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'5');
-                        ELSE
+                  IF rw_verifica_mdw.cdhistor = 2433 THEN
                            vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'6');
-                        END IF;
-                     END IF;
                   END IF;
                   
                   IF rw_verifica_mdw.cdhistor <> 386 THEN
@@ -5329,38 +4519,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
-       
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 3 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.PRACA MENOR...: '||
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
+          pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ. OUTROS BANCOS: '||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
                                                            '   ' ||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
                                                            ,48,' ');
-        END IF;
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 4 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.PRACA MAIOR...: '||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
-                                                           '   ' ||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
-                                                           ,48,' ');
-        END IF;
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 5 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.F.PRACA MENOR.: '||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
-                                                           '   ' ||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
-                                                           ,48,' ');
-        END IF;
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.F.PRACA MAIOR.: '||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
-                                                           '   ' ||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
-                                                           ,48,' ');
-        END IF;       
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques maior fora praca
+       END IF;
+       vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
+     END LOOP;
 
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
      variavel VARCHAR2(32627), a solucao foi definir um tamanho para o parametro no 
@@ -5959,7 +5126,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_c_docto_salvo VARCHAR2(200)     := '';
   vr_cdpacrem PLS_INTEGER;
   vr_c_docto VARCHAR2(200)           := '';
-  vr_tpdmovto INTEGER                := 0;
   vr_i_nro_docto INTEGER             := 0;
   vr_p_literal VARCHAR2(32000)       := '';
   vr_p_ult_sequencia INTEGER         := 0;
@@ -6366,48 +5532,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
              pr_typ_tab_chq(vr_index).vlcompel := 0; -- Inicializa o campo de valor
            END IF;
 
-           -- Define o tipo do docmto (1-Menor Praca-Maior/2-Praca,1-Menor Fora Praca/2-Maior Fora Praca)
-           IF rw_verifica_mdw.vlcompel < TO_NUMBER(SUBSTR(vr_dstextab,1,15)) THEN               
-              vr_tpdmovto := 2;             
-           ELSE
-              vr_tpdmovto := 1;
+           IF rw_verifica_mdw.cdhistor = 2433 THEN
+             pr_typ_tab_chq(vr_index).nrdocmto := 6;
+             pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
+             pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
+             vr_de_valor_total := vr_de_valor_total + rw_verifica_mdw.vlcompel;
            END IF;
-            
-            IF rw_verifica_mdw.cdhistor = 3 THEN -- Praca
-               IF vr_tpdmovto = 2 THEN -- Menor Praca
-                  pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                  pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                  pr_typ_tab_chq(vr_index).nrdocmto := 3;
-                  vr_de_menor_praca                 := vr_de_menor_praca + rw_verifica_mdw.vlcompel;
-               ELSE -- Maior Praca
-                  pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                  pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                  pr_typ_tab_chq(vr_index).nrdocmto := 4;
-                  vr_de_maior_praca                 := vr_de_maior_praca + rw_verifica_mdw.vlcompel;
-               END IF;                 
-            ELSE -- Fora Praca
-               IF rw_verifica_mdw.cdhistor = 4 THEN
-                  IF vr_tpdmovto = 2 THEN -- Menor Fora Praca
-                     pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                     pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                     pr_typ_tab_chq(vr_index).nrdocmto := 5;
-                     vr_de_menor_fpraca                := vr_de_menor_fpraca + rw_verifica_mdw.vlcompel;
-                  ELSE -- Maior Fora Praca
-                     pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                     pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                     pr_typ_tab_chq(vr_index).nrdocmto := 6;
-                     vr_de_maior_fpraca                := vr_de_maior_fpraca + rw_verifica_mdw.vlcompel;
-                  END IF;  
-               END IF;
-            END IF;                                                   
-                                                                                                                 
         END LOOP;
         -- Fim da montagem do Resumo
-          
-     vr_de_valor_total := vr_de_valor_total
-                        + vr_de_menor_fpraca + vr_de_menor_praca
-                        + vr_de_maior_fpraca + vr_de_maior_praca;
-                        
+
      /** Se veio da Rotina 61 **/
      IF NVL(pr_identifica,' ') LIKE '%Deposito de envelope%'  THEN
         vr_cdpacrem := 91; /* TAA */
@@ -6784,769 +5917,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_nrsequen := 0;
      
-     -- Cheque MENOR PRACA
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 3 THEN
-          
-           /* Sequencial utilizado para separar um lançamento
-           em conta para cada data nao ocorrendo duplicidade de chave */
-           vr_nrsequen := vr_nrsequen + 1;
-           vr_c_docto  := vr_c_docto_salvo || to_char(gene0002.fn_mask(pr_dsorigi => vr_nrsequen, pr_dsforma => '99' )) || pr_typ_tab_chq(vr_index).nrdocmto;
-           
-           /* Numero de sequencia sera utilizado para identificar cada
-           cheque(crapchd) do lancamento total da data */
-           pr_typ_tab_chq(vr_index).nrsequen := vr_nrsequen;
-           
-           -- Busca o ultima sequencia de digito
-           OPEN cr_consulta_lot(rw_cod_coop_dest.cdcooper
-                               ,rw_dat_cop.dtmvtocd
-                               ,1   -- FIXO
-                               ,100 -- FIXO
-                               ,vr_i_nro_lote);
-           FETCH cr_consulta_lot INTO rw_consulta_lot;
-           CLOSE cr_consulta_lot;
-              
-           -- Verifica se Lancamento ja Existe no Dest.
-           OPEN cr_existe_lcm(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtolt
-                             ,1
-                             ,100
-                             ,vr_i_nro_lote
-                             ,rw_consulta_lot.nrseqdig); -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           FETCH cr_existe_lcm INTO rw_existe_lcm;
-              IF cr_existe_lcm%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento  ja existente';
-                                      
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-              END IF;              
-           CLOSE cr_existe_lcm;
-              
-           OPEN cr_existe_lcm1(rw_cod_coop_dest.cdcooper
-                              ,rw_dat_cop.dtmvtolt
-                              ,1
-                              ,100
-                              ,vr_i_nro_lote
-                              ,vr_nro_conta
-                              ,vr_c_docto);
-           FETCH cr_existe_lcm1 INTO rw_existe_lcm1;
-              IF cr_existe_lcm1%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento(Primario) ja existente';
-                                     
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-           
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-              END IF;              
-            
-           CLOSE cr_existe_lcm1;
-              
-           -- Chegou aqui eh porque nao existir lcm, entao cria registro de lcm
-           BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,dsidenti
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdocmto
-                                 ,vllanmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,nrdctabb
-                                 ,nrautdoc
-                                 ,cdpesqbb
-                                 ,nrdctitg
-                                 ,cdcoptfn
-                                 ,cdagetfn
-                                 ,nrterfin
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_dest.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,pr_identifica
-                     ,vr_i_nro_lote
-                     ,vr_nro_conta
-                     ,TO_NUMBER(vr_c_docto)
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1526  /* 3 DEP.CHQ.PR. */
-                     ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                     ,vr_nro_conta
-                     ,vr_p_ult_sequencia
-                     ,'CRAP22'
-                     ,vr_glb_dsdctitg
-                     ,rw_cod_coop_orig.cdcooper
-                     ,pr_cod_agencia
-                     ,pr_nro_caixa
-                     ,pr_cod_operador);
-                     
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-                   
-                   RAISE vr_exc_erro;
-           END;
-           
-           -- Verifica se existe lote
-           OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtocd
-                             ,1   /* FIXO */
-                             ,100 /* FIXO */
-                             ,vr_i_nro_lote);
-           FETCH cr_existe_lot INTO rw_existe_lot;
-              IF cr_existe_lot%FOUND THEN
-                 BEGIN
-                    UPDATE craplot lot
-                       SET lot.nrseqdig = lot.nrseqdig + 1
-                          ,lot.qtcompln = lot.qtcompln + 1
-                          ,lot.qtinfoln = lot.qtinfoln + 1
-                          ,lot.vlcompcr = lot.vlcompcr + pr_typ_tab_chq(vr_index).vlcompel
-                          ,lot.vlinfocr = lot.vlinfocr + pr_typ_tab_chq(vr_index).vlcompel
-                     WHERE lot.cdcooper = rw_cod_coop_dest.cdcooper
-                       AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                       AND lot.cdagenci = 1
-                       AND lot.cdbccxlt = 100
-                       AND lot.nrdolote = vr_i_nro_lote;             
-                 EXCEPTION
-                    WHEN OTHERS THEN
-                       pr_cdcritic := 0;
-                       pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                  
-                       cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                            ,pr_cdagenci => pr_cod_agencia
-                                            ,pr_nrdcaixa => pr_nro_caixa
-                                            ,pr_cod_erro => pr_cdcritic
-                                            ,pr_dsc_erro => pr_dscritic
-                                            ,pr_flg_erro => TRUE
-                                            ,pr_cdcritic => vr_cdcritic
-                                            ,pr_dscritic => vr_dscritic); 
-                       
-                       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                          pr_cdcritic := vr_cdcritic;
-                          pr_dscritic := vr_dscritic; 
-                          RAISE vr_exc_erro;
-                       END IF;
-                       
-                       RAISE vr_exc_erro;
-                 END;
-              END IF;
-           CLOSE cr_existe_lot;
-           
-           -- Cria registro de Deposito Bloqueado
-           BEGIN
-              INSERT INTO crapdpb(nrdconta
-                                 ,dtliblan
-                                 ,cdhistor
-                                 ,nrdocmto
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,vllanmto
-                                 ,inlibera
-                                 ,cdcooper)
-              VALUES (vr_nro_conta
-                     ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1526 -- 3
-                     ,TO_NUMBER(vr_c_docto)
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,vr_i_nro_lote
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1
-                     ,rw_cod_coop_dest.cdcooper);
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPDPB : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-                       
-                   RAISE vr_exc_erro;
-           END;
-           
-        END IF;        
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques menor praca
-     
-     vr_nrsequen := 0;
-     
-     -- Cheque MAIOR PRACA
-     vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
-     WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 4 THEN
-          
-           /* Sequencial utilizado para separar um lançamento
-           para cada data nao ocorrendo duplicidade de chave */
-
-           vr_nrsequen := vr_nrsequen + 1;
-           vr_c_docto  := vr_c_docto_salvo || to_char(gene0002.fn_mask(pr_dsorigi => vr_nrsequen, pr_dsforma => '99' )) || pr_typ_tab_chq(vr_index).nrdocmto;
-           
-           pr_typ_tab_chq(vr_index).nrsequen := vr_nrsequen;
-           
-           -- Busca o ultima sequencia de digito
-           OPEN cr_consulta_lot(rw_cod_coop_dest.cdcooper
-                               ,rw_dat_cop.dtmvtocd
-                               ,1   -- FIXO
-                               ,100 -- FIXO
-                               ,vr_i_nro_lote);
-           FETCH cr_consulta_lot INTO rw_consulta_lot;
-           CLOSE cr_consulta_lot;
-              
-           -- Verifica se Lancamento ja Existe no Dest.
-           OPEN cr_existe_lcm(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtolt
-                             ,1
-                             ,100
-                             ,vr_i_nro_lote
-                             ,rw_consulta_lot.nrseqdig); -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           FETCH cr_existe_lcm INTO rw_existe_lcm;
-              IF cr_existe_lcm%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento  ja existente';
-                                      
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-                       
-                 RAISE vr_exc_erro;
-              END IF;              
-           CLOSE cr_existe_lcm;
-              
-           OPEN cr_existe_lcm1(rw_cod_coop_dest.cdcooper
-                              ,rw_dat_cop.dtmvtolt
-                              ,1
-                              ,100
-                              ,vr_i_nro_lote
-                              ,vr_nro_conta
-                              ,vr_c_docto);
-           FETCH cr_existe_lcm1 INTO rw_existe_lcm1;
-              IF cr_existe_lcm1%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento(Primario) ja existente';
-                                     
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-           
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-                       
-                 RAISE vr_exc_erro;
-              END IF;            
-           CLOSE cr_existe_lcm1;
-              
-           -- Chegou aqui eh porque nao existir lcm, entao cria registro de lcm
-           BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,dsidenti
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdocmto
-                                 ,vllanmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,nrdctabb
-                                 ,nrautdoc
-                                 ,cdpesqbb
-                                 ,nrdctitg
-                                 ,cdcoptfn
-                                 ,cdagetfn
-                                 ,nrterfin
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_dest.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,pr_identifica
-                     ,vr_i_nro_lote
-                     ,vr_nro_conta
-                     ,TO_NUMBER(vr_c_docto)
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1526  /* 3 DEP.CHQ.PR. */
-                     ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                     ,vr_nro_conta
-                     ,vr_p_ult_sequencia
-                     ,'CRAP22'
-                     ,vr_glb_dsdctitg
-                     ,rw_cod_coop_orig.cdcooper
-                     ,pr_cod_agencia
-                     ,pr_nro_caixa
-                     ,pr_cod_operador);
-                     
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-                        
-                   RAISE vr_exc_erro;
-           END;
-           
-           -- Verifica se existe lote
-           OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtocd
-                             ,1   /* FIXO */
-                             ,100 /* FIXO */
-                             ,vr_i_nro_lote);
-           FETCH cr_existe_lot INTO rw_existe_lot;
-              IF cr_existe_lot%FOUND THEN
-                 BEGIN
-                    UPDATE craplot lot
-                       SET lot.nrseqdig = lot.nrseqdig + 1
-                          ,lot.qtcompln = lot.qtcompln + 1
-                          ,lot.qtinfoln = lot.qtinfoln + 1
-                          ,lot.vlcompcr = lot.vlcompcr + pr_typ_tab_chq(vr_index).vlcompel
-                          ,lot.vlinfocr = lot.vlinfocr + pr_typ_tab_chq(vr_index).vlcompel
-                     WHERE lot.cdcooper = rw_cod_coop_dest.cdcooper
-                       AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                       AND lot.cdagenci = 1
-                       AND lot.cdbccxlt = 100
-                       AND lot.nrdolote = vr_i_nro_lote;             
-                 EXCEPTION
-                    WHEN OTHERS THEN
-                       pr_cdcritic := 0;
-                       pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                  
-                       cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                            ,pr_cdagenci => pr_cod_agencia
-                                            ,pr_nrdcaixa => pr_nro_caixa
-                                            ,pr_cod_erro => pr_cdcritic
-                                            ,pr_dsc_erro => pr_dscritic
-                                            ,pr_flg_erro => TRUE
-                                            ,pr_cdcritic => vr_cdcritic
-                                            ,pr_dscritic => vr_dscritic); 
-                       
-                       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                          pr_cdcritic := vr_cdcritic;
-                          pr_dscritic := vr_dscritic; 
-                          RAISE vr_exc_erro;
-                       END IF;
-                        
-                       RAISE vr_exc_erro;
-                 END;
-              END IF;
-           CLOSE cr_existe_lot;
-           
-           -- Cria registro de Deposito Bloqueado
-           BEGIN
-              INSERT INTO crapdpb(nrdconta
-                                 ,dtliblan
-                                 ,cdhistor
-                                 ,nrdocmto
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,vllanmto
-                                 ,inlibera
-                                 ,cdcooper)
-              VALUES (vr_nro_conta
-                     ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1526 -- 3
-                     ,TO_NUMBER(vr_c_docto)
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,vr_i_nro_lote
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1
-                     ,rw_cod_coop_dest.cdcooper);
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   vr_cdcritic := 0;
-                   vr_dscritic := 'Erro ao inserir na CRAPDPB: '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => vr_cdcritic
-                                        ,pr_dsc_erro => vr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-                       
-                   RAISE vr_exc_erro;
-           END;           
-        END IF;        
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques maior praca
-     
-     vr_nrsequen := 0;
-     
-     -- Cheque MENOR FORA PRACA
-     vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
-     WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 5 THEN
-          
-           /* Sequencial utilizado para separar um lançamento
-           para cada data nao ocorrendo duplicidade de chave */
-
-
-           vr_nrsequen := vr_nrsequen + 1;
-           vr_c_docto  := vr_c_docto_salvo || to_char(gene0002.fn_mask(pr_dsorigi => vr_nrsequen, pr_dsforma => '99' )) || pr_typ_tab_chq(vr_index).nrdocmto;
-           pr_typ_tab_chq(vr_index).nrsequen := vr_nrsequen;
-           
-           -- Busca o ultima sequencia de digito
-           OPEN cr_consulta_lot(rw_cod_coop_dest.cdcooper
-                               ,rw_dat_cop.dtmvtocd
-                               ,1   -- FIXO
-                               ,100 -- FIXO
-                               ,vr_i_nro_lote);
-           FETCH cr_consulta_lot INTO rw_consulta_lot;
-           CLOSE cr_consulta_lot;
-              
-           -- Verifica se Lancamento ja Existe no Dest.
-           OPEN cr_existe_lcm(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtolt
-                             ,1
-                             ,100
-                             ,vr_i_nro_lote
-                             ,rw_consulta_lot.nrseqdig); -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           FETCH cr_existe_lcm INTO rw_existe_lcm;
-              IF cr_existe_lcm%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento  ja existente';
-                                      
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-                       
-                 RAISE vr_exc_erro;
-              END IF;              
-           CLOSE cr_existe_lcm;
-              
-           OPEN cr_existe_lcm1(rw_cod_coop_dest.cdcooper
-                              ,rw_dat_cop.dtmvtolt
-                              ,1
-                              ,100
-                              ,vr_i_nro_lote
-                              ,vr_nro_conta
-                              ,vr_c_docto);
-           FETCH cr_existe_lcm1 INTO rw_existe_lcm1;
-              IF cr_existe_lcm1%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento(Primario) ja existente';
-                                     
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-           
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-                       
-                 RAISE vr_exc_erro;
-              END IF;            
-           CLOSE cr_existe_lcm1;
-              
-           -- Chegou aqui eh porque nao existir lcm, entao cria registro de lcm
-           BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,dsidenti
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdocmto
-                                 ,vllanmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,nrdctabb
-                                 ,nrautdoc
-                                 ,cdpesqbb
-                                 ,nrdctitg
-                                 ,cdcoptfn
-                                 ,cdagetfn
-                                 ,nrterfin
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_dest.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,pr_identifica
-                     ,vr_i_nro_lote
-                     ,vr_nro_conta
-                     ,TO_NUMBER(vr_c_docto)
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1523  /** 4 - DEP.CHQ.FPR. **/
-                     ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                     ,vr_nro_conta
-                     ,vr_p_ult_sequencia
-                     ,'CRAP22'
-                     ,vr_glb_dsdctitg
-                     ,rw_cod_coop_orig.cdcooper
-                     ,pr_cod_agencia
-                     ,pr_nro_caixa
-                     ,pr_cod_operador);
-                                          
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-                       
-                   RAISE vr_exc_erro;
-           END;
-           
-           -- Verifica se existe lote
-           OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtocd
-                             ,1   /* FIXO */
-                             ,100 /* FIXO */
-                             ,vr_i_nro_lote);
-           FETCH cr_existe_lot INTO rw_existe_lot;
-              IF cr_existe_lot%FOUND THEN
-                 BEGIN
-                    UPDATE craplot lot
-                       SET lot.nrseqdig = lot.nrseqdig + 1
-                          ,lot.qtcompln = lot.qtcompln + 1
-                          ,lot.qtinfoln = lot.qtinfoln + 1
-                          ,lot.vlcompcr = lot.vlcompcr + pr_typ_tab_chq(vr_index).vlcompel
-                          ,lot.vlinfocr = lot.vlinfocr + pr_typ_tab_chq(vr_index).vlcompel
-                     WHERE lot.cdcooper = rw_cod_coop_dest.cdcooper
-                       AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                       AND lot.cdagenci = 1
-                       AND lot.cdbccxlt = 100
-                       AND lot.nrdolote = vr_i_nro_lote;             
-                 EXCEPTION
-                    WHEN OTHERS THEN
-                       vr_cdcritic := 0;
-                       vr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                  
-                       cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                            ,pr_cdagenci => pr_cod_agencia
-                                            ,pr_nrdcaixa => pr_nro_caixa
-                                            ,pr_cod_erro => vr_cdcritic
-                                            ,pr_dsc_erro => vr_dscritic
-                                            ,pr_flg_erro => TRUE
-                                            ,pr_cdcritic => vr_cdcritic
-                                            ,pr_dscritic => vr_dscritic);
-
-                       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                          pr_cdcritic := vr_cdcritic;
-                          pr_dscritic := vr_dscritic; 
-                          RAISE vr_exc_erro;
-                       END IF;                       
-
-                       RAISE vr_exc_erro;
-                 END;
-              END IF;
-           CLOSE cr_existe_lot;
-           
-           -- Cria registro de Deposito Bloqueado
-           BEGIN
-              INSERT INTO crapdpb(nrdconta
-                                 ,dtliblan
-                                 ,cdhistor
-                                 ,nrdocmto
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,vllanmto
-                                 ,inlibera
-                                 ,cdcooper)
-              VALUES (vr_nro_conta
-                     ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1523 -- 4
-                     ,TO_NUMBER(vr_c_docto)
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,vr_i_nro_lote
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1
-                     ,rw_cod_coop_dest.cdcooper);                                
-           EXCEPTION
-              WHEN OTHERS THEN
-                   vr_cdcritic := 0;
-                   vr_dscritic := 'Erro ao inserir na CRAPDPB : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => vr_cdcritic
-                                        ,pr_dsc_erro => vr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;                       
-
-                   RAISE vr_exc_erro;
-           END;
-           
-        END IF;        
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques menor fora praca
-     
-     vr_nrsequen := 0;
-     
-     -- Cheque MAIOR FORA PRACA
-     vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
-     WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
 
            /* Sequencial utilizado para separar um lançamento
-           para cada data nao ocorrendo duplicidade de chave */
+         em conta para cada data nao ocorrendo duplicidade de chave */
 
            vr_nrsequen := vr_nrsequen + 1;
            vr_c_docto  := vr_c_docto_salvo || to_char(gene0002.fn_mask(pr_dsorigi => vr_nrsequen, pr_dsforma => '99' )) || pr_typ_tab_chq(vr_index).nrdocmto;
@@ -7653,7 +6029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                      ,vr_nro_conta
                      ,TO_NUMBER(vr_c_docto)
                      ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1523  /** 4 - DEP.CHQ.FPR. **/
+                   ,1523  /** DEP.CHQ.INTER **/
                      ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
                      ,vr_nro_conta
                      ,vr_p_ult_sequencia
@@ -7751,7 +6127,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                  ,cdcooper)
               VALUES (vr_nro_conta
                      ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1523 -- 4
+                   ,1523 -- DEP.CHQ.INTER
                      ,TO_NUMBER(vr_c_docto)
                      ,rw_dat_cop.dtmvtolt
                      ,1
@@ -7782,11 +6158,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
                    RAISE vr_exc_erro;
            END;
-           
-        END IF;        
+        END IF;           
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
         
-     END LOOP; -- Fim cheques maior fora praca
+     END LOOP;
      
      -- Criacao do LOTE de ORIGEM (DEBITO)
      vr_i_nro_lote    := 11000 + pr_nro_caixa;
@@ -7915,20 +6290,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   vr_index :=  TO_CHAR(rw_verifica_mdw.dtlibcom,'DD/MM/RRRR')||
                                TO_CHAR(LPAD(rw_verifica_mdw.nrdocmto,10,0));
 
-                  IF rw_verifica_mdw.cdhistor = 3 THEN -- PRACA MENOR
-                     IF rw_verifica_mdw.tpdmovto = 2 THEN
-                        vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'3');
-                     ELSE
-                        vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'4');
-                     END IF;
-                  ELSE
-                     IF rw_verifica_mdw.cdhistor = 4 THEN -- FORA PRACA MENOR
-                        IF rw_verifica_mdw.tpdmovto = 2 THEN
-                           vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'5');
-                        ELSE
+                  IF rw_verifica_mdw.cdhistor = 2433 THEN
                            vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'6');
-                        END IF;
-                     END IF;
                   END IF;
                   
                   IF rw_verifica_mdw.cdhistor <> 386 THEN
@@ -8651,38 +7014,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
-       
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 3 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.PRACA MENOR...: '||
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
+          pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ. OUTROS BANCOS: '||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
                                                            '   ' ||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
                                                            ,48,' ');
-        END IF;
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 4 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.PRACA MAIOR...: '||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
-                                                           '   ' ||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
-                                                           ,48,' ');
-        END IF;
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 5 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.F.PRACA MENOR.: '||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
-                                                           '   ' ||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
-                                                           ,48,' ');
-        END IF;
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.F.PRACA MAIOR.: '||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
-                                                           '   ' ||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
-                                                           ,48,' ');
-        END IF;       
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques maior fora praca
+       END IF;
+       vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
+     END LOOP;
      
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
      variavel VARCHAR2(32627), a solucao foi definir um tamanho para o parametro no 
@@ -9320,7 +7660,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_c_docto_salvo VARCHAR2(200)     := '';
   vr_cdpacrem PLS_INTEGER;  
   vr_c_docto VARCHAR2(200)           := '';
-  vr_tpdmovto INTEGER                := 0;
   vr_i_nro_docto INTEGER             := 0;
   vr_p_literal VARCHAR2(32000)       := '';
   vr_p_ult_sequencia INTEGER         := 0;
@@ -9720,48 +8059,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
              pr_typ_tab_chq(vr_index).vlcompel := 0; -- Inicializa o campo de valor
            END IF;
 
-           -- Define o tipo do docmto (1-Menor Praca-Maior/2-Praca,1-Menor Fora Praca/2-Maior Fora Praca)
-           IF rw_verifica_mdw.vlcompel < TO_NUMBER(SUBSTR(vr_dstextab,1,15)) THEN               
-              vr_tpdmovto := 2;             
-           ELSE
-              vr_tpdmovto := 1;
+           IF rw_verifica_mdw.cdhistor = 2433 THEN
+             pr_typ_tab_chq(vr_index).nrdocmto := 6;
+             pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
+             pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
+             vr_de_valor_total := vr_de_valor_total + rw_verifica_mdw.vlcompel;
            END IF;
-            
-            IF rw_verifica_mdw.cdhistor = 3 THEN -- Praca
-               IF vr_tpdmovto = 2 THEN -- Menor Praca
-                  pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                  pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                  pr_typ_tab_chq(vr_index).nrdocmto := 3;
-                  vr_de_menor_praca                 := vr_de_menor_praca + rw_verifica_mdw.vlcompel;
-               ELSE -- Maior Praca
-                  pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                  pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                  pr_typ_tab_chq(vr_index).nrdocmto := 4;
-                  vr_de_maior_praca                 := vr_de_maior_praca + rw_verifica_mdw.vlcompel;
-               END IF;                 
-            ELSE -- Fora Praca
-               IF rw_verifica_mdw.cdhistor = 4 THEN
-                  IF vr_tpdmovto = 2 THEN -- Menor Fora Praca
-                     pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                     pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                     pr_typ_tab_chq(vr_index).nrdocmto := 5;
-                     vr_de_menor_fpraca                := vr_de_menor_fpraca + rw_verifica_mdw.vlcompel;
-                  ELSE -- Maior Fora Praca
-                     pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                     pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                     pr_typ_tab_chq(vr_index).nrdocmto := 6;
-                     vr_de_maior_fpraca                := vr_de_maior_fpraca + rw_verifica_mdw.vlcompel;
-                  END IF;  
-               END IF;
-            END IF;                                                   
-                                                                                                                 
         END LOOP;
         -- Fim da montagem do Resumo
-          
-     vr_de_valor_total := vr_de_valor_total
-                        + vr_de_menor_fpraca + vr_de_menor_praca
-                        + vr_de_maior_fpraca + vr_de_maior_praca;
-                        
+
      /** Se veio da Rotina 61 **/
      IF NVL(pr_identifica,' ') LIKE '%Deposito de envelope%'  THEN
         vr_cdpacrem := 91; /* TAA */
@@ -10132,768 +8438,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_nrsequen := 0;
      
-     -- Cheque MENOR PRACA
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 3 THEN
-          
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
            /* Sequencial utilizado para separar um lançamento
-           em conta para cada data nao ocorrendo duplicidade de chave */
-           vr_nrsequen := vr_nrsequen + 1;
-           vr_c_docto  := vr_c_docto_salvo || to_char(gene0002.fn_mask(pr_dsorigi => vr_nrsequen, pr_dsforma => '99' )) || pr_typ_tab_chq(vr_index).nrdocmto;
-           
-           /* Numero de sequencia sera utilizado para identificar cada
-           cheque(crapchd) do lancamento total da data */
-           pr_typ_tab_chq(vr_index).nrsequen := vr_nrsequen;
-           
-           -- Busca o ultima sequencia de digito
-           OPEN cr_consulta_lot(rw_cod_coop_dest.cdcooper
-                               ,rw_dat_cop.dtmvtocd
-                               ,1   -- FIXO
-                               ,100 -- FIXO
-                               ,vr_i_nro_lote);
-           FETCH cr_consulta_lot INTO rw_consulta_lot;
-           CLOSE cr_consulta_lot;
-              
-           -- Verifica se Lancamento ja Existe no Dest.
-           OPEN cr_existe_lcm(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtolt
-                             ,1
-                             ,100
-                             ,vr_i_nro_lote
-                             ,rw_consulta_lot.nrseqdig); -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           FETCH cr_existe_lcm INTO rw_existe_lcm;
-              IF cr_existe_lcm%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento  ja existente';
-                                      
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-              END IF;              
-           CLOSE cr_existe_lcm;
-              
-           OPEN cr_existe_lcm1(rw_cod_coop_dest.cdcooper
-                              ,rw_dat_cop.dtmvtolt
-                              ,1
-                              ,100
-                              ,vr_i_nro_lote
-                              ,pr_nro_conta
-                              ,vr_c_docto);
-           FETCH cr_existe_lcm1 INTO rw_existe_lcm1;
-              IF cr_existe_lcm1%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento(Primario) ja existente';
-                                     
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-           
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-              END IF;              
-            
-           CLOSE cr_existe_lcm1;
-              
-           -- Chegou aqui eh porque nao existir lcm, entao cria registro de lcm
-           BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,dsidenti
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdocmto
-                                 ,vllanmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,nrdctabb
-                                 ,nrautdoc
-                                 ,cdpesqbb
-                                 ,nrdctitg
-                                 ,cdcoptfn
-                                 ,cdagetfn
-                                 ,nrterfin
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_dest.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,pr_identifica
-                     ,vr_i_nro_lote
-                     ,pr_nro_conta
-                     ,TO_NUMBER(vr_c_docto)
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1526  /* 3 DEP.CHQ.PR. */
-                     ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                     ,pr_nro_conta
-                     ,vr_p_ult_sequencia
-                     ,'CRAP22'
-                     ,vr_glb_dsdctitg
-                     ,rw_cod_coop_orig.cdcooper
-                     ,pr_cod_agencia
-                     ,pr_nro_caixa
-                     ,pr_cod_operador);
-                     
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-           END;
-           
-           -- Verifica se existe lote
-           OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtocd
-                             ,1   /* FIXO */
-                             ,100 /* FIXO */
-                             ,vr_i_nro_lote);
-           FETCH cr_existe_lot INTO rw_existe_lot;
-              IF cr_existe_lot%FOUND THEN
-                 BEGIN
-                    UPDATE craplot lot
-                       SET lot.nrseqdig = lot.nrseqdig + 1
-                          ,lot.qtcompln = lot.qtcompln + 1
-                          ,lot.qtinfoln = lot.qtinfoln + 1
-                          ,lot.vlcompcr = lot.vlcompcr + pr_typ_tab_chq(vr_index).vlcompel
-                          ,lot.vlinfocr = lot.vlinfocr + pr_typ_tab_chq(vr_index).vlcompel
-                     WHERE lot.cdcooper = rw_cod_coop_dest.cdcooper
-                       AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                       AND lot.cdagenci = 1
-                       AND lot.cdbccxlt = 100
-                       AND lot.nrdolote = vr_i_nro_lote;             
-                 EXCEPTION
-                    WHEN OTHERS THEN
-                       pr_cdcritic := 0;
-                       pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                  
-                       cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                            ,pr_cdagenci => pr_cod_agencia
-                                            ,pr_nrdcaixa => pr_nro_caixa
-                                            ,pr_cod_erro => pr_cdcritic
-                                            ,pr_dsc_erro => pr_dscritic
-                                            ,pr_flg_erro => TRUE
-                                            ,pr_cdcritic => vr_cdcritic
-                                            ,pr_dscritic => vr_dscritic);
-
-                       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                          pr_cdcritic := vr_cdcritic;
-                          pr_dscritic := vr_dscritic; 
-                          RAISE vr_exc_erro;
-                       END IF;
-
-                       RAISE vr_exc_erro;
-
-                 END;
-              END IF;
-           CLOSE cr_existe_lot;
-           
-           -- Cria registro de Deposito Bloqueado
-           BEGIN
-              INSERT INTO crapdpb(nrdconta
-                                 ,dtliblan
-                                 ,cdhistor
-                                 ,nrdocmto
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,vllanmto
-                                 ,inlibera
-                                 ,cdcooper)
-              VALUES (pr_nro_conta
-                     ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1526 -- 3
-                     ,TO_NUMBER(vr_c_docto)
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,vr_i_nro_lote
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1
-                     ,rw_cod_coop_dest.cdcooper);
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   vr_cdcritic := 0;
-                   vr_dscritic := 'Erro ao inserir na CRAPDPB : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => vr_cdcritic
-                                        ,pr_dsc_erro => vr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-           END;
-           
-        END IF;        
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques menor praca
-     
-     vr_nrsequen := 0;
-     
-     -- Cheque MAIOR PRACA
-     vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
-     WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 4 THEN
-          
-           /* Sequencial utilizado para separar um lançamento
-           para cada data nao ocorrendo duplicidade de chave */
-
-           vr_nrsequen := vr_nrsequen + 1;
-           vr_c_docto  := vr_c_docto_salvo || to_char(gene0002.fn_mask(pr_dsorigi => vr_nrsequen, pr_dsforma => '99' )) || pr_typ_tab_chq(vr_index).nrdocmto;
-           
-           pr_typ_tab_chq(vr_index).nrsequen := vr_nrsequen;
-           
-           -- Busca o ultima sequencia de digito
-           OPEN cr_consulta_lot(rw_cod_coop_dest.cdcooper
-                               ,rw_dat_cop.dtmvtocd
-                               ,1   -- FIXO
-                               ,100 -- FIXO
-                               ,vr_i_nro_lote);
-           FETCH cr_consulta_lot INTO rw_consulta_lot;
-           CLOSE cr_consulta_lot;
-              
-           -- Verifica se Lancamento ja Existe no Dest.
-           OPEN cr_existe_lcm(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtolt
-                             ,1
-                             ,100
-                             ,vr_i_nro_lote
-                             ,rw_consulta_lot.nrseqdig); -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           FETCH cr_existe_lcm INTO rw_existe_lcm;
-              IF cr_existe_lcm%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento  ja existente';
-                                      
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 RAISE vr_exc_erro;
-              END IF;              
-           CLOSE cr_existe_lcm;
-              
-           OPEN cr_existe_lcm1(rw_cod_coop_dest.cdcooper
-                              ,rw_dat_cop.dtmvtolt
-                              ,1
-                              ,100
-                              ,vr_i_nro_lote
-                              ,pr_nro_conta
-                              ,vr_c_docto);
-           FETCH cr_existe_lcm1 INTO rw_existe_lcm1;
-              IF cr_existe_lcm1%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento(Primario) ja existente';
-                                     
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-           
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-              END IF;            
-           CLOSE cr_existe_lcm1;
-              
-           -- Chegou aqui eh porque nao existir lcm, entao cria registro de lcm
-           BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,dsidenti
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdocmto
-                                 ,vllanmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,nrdctabb
-                                 ,nrautdoc
-                                 ,cdpesqbb
-                                 ,nrdctitg
-                                 ,cdcoptfn
-                                 ,cdagetfn
-                                 ,nrterfin
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_dest.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,pr_identifica
-                     ,vr_i_nro_lote
-                     ,pr_nro_conta
-                     ,TO_NUMBER(vr_c_docto)
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1526  /* 3 DEP.CHQ.PR. */
-                     ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                     ,pr_nro_conta
-                     ,vr_p_ult_sequencia
-                     ,'CRAP22'
-                     ,vr_glb_dsdctitg
-                     ,rw_cod_coop_orig.cdcooper
-                     ,pr_cod_agencia
-                     ,pr_nro_caixa
-                     ,pr_cod_operador);
-                     
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-           END;
-           
-           -- Verifica se existe lote
-           OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtocd
-                             ,1   /* FIXO */
-                             ,100 /* FIXO */
-                             ,vr_i_nro_lote);
-           FETCH cr_existe_lot INTO rw_existe_lot;
-              IF cr_existe_lot%FOUND THEN
-                 BEGIN
-                    UPDATE craplot lot
-                       SET lot.nrseqdig = lot.nrseqdig + 1
-                          ,lot.qtcompln = lot.qtcompln + 1
-                          ,lot.qtinfoln = lot.qtinfoln + 1
-                          ,lot.vlcompcr = lot.vlcompcr + pr_typ_tab_chq(vr_index).vlcompel
-                          ,lot.vlinfocr = lot.vlinfocr + pr_typ_tab_chq(vr_index).vlcompel
-                     WHERE lot.cdcooper = rw_cod_coop_dest.cdcooper
-                       AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                       AND lot.cdagenci = 1
-                       AND lot.cdbccxlt = 100
-                       AND lot.nrdolote = vr_i_nro_lote;             
-                 EXCEPTION
-                    WHEN OTHERS THEN
-                       pr_cdcritic := 0;
-                       pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-
-                       cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                            ,pr_cdagenci => pr_cod_agencia
-                                            ,pr_nrdcaixa => pr_nro_caixa
-                                            ,pr_cod_erro => pr_cdcritic
-                                            ,pr_dsc_erro => pr_dscritic
-                                            ,pr_flg_erro => TRUE
-                                            ,pr_cdcritic => vr_cdcritic
-                                            ,pr_dscritic => vr_dscritic);
-
-                       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                          pr_cdcritic := vr_cdcritic;
-                          pr_dscritic := vr_dscritic; 
-                          RAISE vr_exc_erro;
-                       END IF;
-
-                       RAISE vr_exc_erro;
-                 END;
-
-              END IF;
-
-           CLOSE cr_existe_lot;
-           
-           -- Cria registro de Deposito Bloqueado
-           BEGIN
-              INSERT INTO crapdpb(nrdconta
-                                 ,dtliblan
-                                 ,cdhistor
-                                 ,nrdocmto
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,vllanmto
-                                 ,inlibera
-                                 ,cdcooper)
-              VALUES (pr_nro_conta
-                     ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1526 -- 3
-                     ,TO_NUMBER(vr_c_docto)
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,vr_i_nro_lote
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1
-                     ,rw_cod_coop_dest.cdcooper);
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPDPB: '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-           END;
-           
-        END IF;        
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques maior praca
-     
-     vr_nrsequen := 0;
-     
-     -- Cheque MENOR FORA PRACA
-     vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
-     WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 5 THEN
-          
-           /* Sequencial utilizado para separar um lançamento
-           para cada data nao ocorrendo duplicidade de chave */
-
-
-           vr_nrsequen := vr_nrsequen + 1;
-           vr_c_docto  := vr_c_docto_salvo || to_char(gene0002.fn_mask(pr_dsorigi => vr_nrsequen, pr_dsforma => '99' )) || pr_typ_tab_chq(vr_index).nrdocmto;
-           pr_typ_tab_chq(vr_index).nrsequen := vr_nrsequen;
-           
-           -- Busca o ultima sequencia de digito
-           OPEN cr_consulta_lot(rw_cod_coop_dest.cdcooper
-                               ,rw_dat_cop.dtmvtocd
-                               ,1   -- FIXO
-                               ,100 -- FIXO
-                               ,vr_i_nro_lote);
-           FETCH cr_consulta_lot INTO rw_consulta_lot;
-           CLOSE cr_consulta_lot;
-              
-           -- Verifica se Lancamento ja Existe no Dest.
-           OPEN cr_existe_lcm(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtolt
-                             ,1
-                             ,100
-                             ,vr_i_nro_lote
-                             ,rw_consulta_lot.nrseqdig); -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           FETCH cr_existe_lcm INTO rw_existe_lcm;
-              IF cr_existe_lcm%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento  ja existente';
-                                      
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-              END IF;              
-           CLOSE cr_existe_lcm;
-              
-           OPEN cr_existe_lcm1(rw_cod_coop_dest.cdcooper
-                              ,rw_dat_cop.dtmvtolt
-                              ,1
-                              ,100
-                              ,vr_i_nro_lote
-                              ,pr_nro_conta
-                              ,vr_c_docto);
-           FETCH cr_existe_lcm1 INTO rw_existe_lcm1;
-              IF cr_existe_lcm1%FOUND THEN
-                 pr_cdcritic := 0;
-                 pr_dscritic := 'Lancamento(Primario) ja existente';
-                                     
-                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                      ,pr_cdagenci => pr_cod_agencia
-                                      ,pr_nrdcaixa => pr_nro_caixa
-                                      ,pr_cod_erro => pr_cdcritic
-                                      ,pr_dsc_erro => pr_dscritic
-                                      ,pr_flg_erro => TRUE
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic); 
-           
-                 -- Levantar excecao
-                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic; 
-                    RAISE vr_exc_erro;
-                 END IF;
-
-                 RAISE vr_exc_erro;
-              END IF;            
-           CLOSE cr_existe_lcm1;
-              
-           -- Chegou aqui eh porque nao existir lcm, entao cria registro de lcm
-           BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,dsidenti
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdocmto
-                                 ,vllanmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,nrdctabb
-                                 ,nrautdoc
-                                 ,cdpesqbb
-                                 ,nrdctitg
-                                 ,cdcoptfn
-                                 ,cdagetfn
-                                 ,nrterfin
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_dest.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,pr_identifica
-                     ,vr_i_nro_lote
-                     ,pr_nro_conta
-                     ,TO_NUMBER(vr_c_docto)
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1523  /** 4 - DEP.CHQ.FPR. **/
-                     ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                     ,pr_nro_conta
-                     ,vr_p_ult_sequencia
-                     ,'CRAP22'
-                     ,vr_glb_dsdctitg
-                     ,rw_cod_coop_orig.cdcooper
-                     ,pr_cod_agencia
-                     ,pr_nro_caixa
-                     ,pr_cod_operador);
-                                          
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-           
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-           END;
-           
-           -- Verifica se existe lote
-           OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
-                             ,rw_dat_cop.dtmvtocd
-                             ,1   /* FIXO */
-                             ,100 /* FIXO */
-                             ,vr_i_nro_lote);
-           FETCH cr_existe_lot INTO rw_existe_lot;
-              IF cr_existe_lot%FOUND THEN
-                 BEGIN
-                    UPDATE craplot lot
-                       SET lot.nrseqdig = lot.nrseqdig + 1
-                          ,lot.qtcompln = lot.qtcompln + 1
-                          ,lot.qtinfoln = lot.qtinfoln + 1
-                          ,lot.vlcompcr = lot.vlcompcr + pr_typ_tab_chq(vr_index).vlcompel
-                          ,lot.vlinfocr = lot.vlinfocr + pr_typ_tab_chq(vr_index).vlcompel
-                     WHERE lot.cdcooper = rw_cod_coop_dest.cdcooper
-                       AND lot.dtmvtolt = rw_dat_cop.dtmvtocd
-                       AND lot.cdagenci = 1
-                       AND lot.cdbccxlt = 100
-                       AND lot.nrdolote = vr_i_nro_lote;             
-                 EXCEPTION
-                    WHEN OTHERS THEN
-                       pr_cdcritic := 0;
-                       pr_dscritic := 'Erro ao atualizar CRAPLOT : '||sqlerrm;
-                                  
-                       cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                            ,pr_cdagenci => pr_cod_agencia
-                                            ,pr_nrdcaixa => pr_nro_caixa
-                                            ,pr_cod_erro => pr_cdcritic
-                                            ,pr_dsc_erro => pr_dscritic
-                                            ,pr_flg_erro => TRUE
-                                            ,pr_cdcritic => vr_cdcritic
-                                            ,pr_dscritic => vr_dscritic); 
-                       
-                       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                          pr_cdcritic := vr_cdcritic;
-                          pr_dscritic := vr_dscritic; 
-                          RAISE vr_exc_erro;
-                       END IF;
-
-                       RAISE vr_exc_erro;
-                 END;
-              END IF;
-           CLOSE cr_existe_lot;
-           
-           -- Cria registro de Deposito Bloqueado
-           BEGIN
-              INSERT INTO crapdpb(nrdconta
-                                 ,dtliblan
-                                 ,cdhistor
-                                 ,nrdocmto
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,vllanmto
-                                 ,inlibera
-                                 ,cdcooper)
-              VALUES (pr_nro_conta
-                     ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1523 -- 4
-                     ,TO_NUMBER(vr_c_docto)
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,vr_i_nro_lote
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1
-                     ,rw_cod_coop_dest.cdcooper);                                
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPDPB : '||sqlerrm;
-                                  
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-           END;
-           
-        END IF;        
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques menor fora praca
-     
-     vr_nrsequen := 0;
-     
-     -- Cheque MAIOR FORA PRACA
-     vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
-     WHILE vr_index IS NOT NULL LOOP
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
-
-           /* Sequencial utilizado para separar um lançamento
-           para cada data nao ocorrendo duplicidade de chave */
+         em conta para cada data nao ocorrendo duplicidade de chave */
 
            vr_nrsequen := vr_nrsequen + 1;
            vr_c_docto  := vr_c_docto_salvo || to_char(gene0002.fn_mask(pr_dsorigi => vr_nrsequen, pr_dsforma => '99' )) || pr_typ_tab_chq(vr_index).nrdocmto;
@@ -11000,7 +8549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                      ,pr_nro_conta
                      ,TO_NUMBER(vr_c_docto)
                      ,pr_typ_tab_chq(vr_index).vlcompel
-                     ,1523  /** 4 - DEP.CHQ.FPR. **/
+                   ,1523  /** DEP.CHQ.INTER **/
                      ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
                      ,pr_nro_conta
                      ,vr_p_ult_sequencia
@@ -11098,7 +8647,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                  ,cdcooper)
               VALUES (pr_nro_conta
                      ,pr_typ_tab_chq(vr_index).dtlibcom
-                     ,1523 -- 4
+                   ,1523 -- DEP.CHQ.INTER
                      ,TO_NUMBER(vr_c_docto)
                      ,rw_dat_cop.dtmvtolt
                      ,1
@@ -11129,11 +8678,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
                    RAISE vr_exc_erro;
            END;
-           
-        END IF;        
+        END IF;           
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
         
-     END LOOP; -- Fim cheques maior fora praca
+     END LOOP;
      
      -- Criacao do LOTE de ORIGEM (DEBITO)
      vr_i_nro_lote    := 11000 + pr_nro_caixa;
@@ -11263,20 +8811,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   vr_index :=  TO_CHAR(rw_verifica_mdw.dtlibcom,'DD/MM/RRRR')||
                                TO_CHAR(LPAD(rw_verifica_mdw.nrdocmto,10,0));
 
-                  IF rw_verifica_mdw.cdhistor = 3 THEN -- PRACA MENOR
-                     IF rw_verifica_mdw.tpdmovto = 2 THEN
-                        vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'3');
-                     ELSE
-                        vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'4');
-                     END IF;
-                  ELSE
-                     IF rw_verifica_mdw.cdhistor = 4 THEN -- FORA PRACA MENOR
-                        IF rw_verifica_mdw.tpdmovto = 2 THEN
-                           vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'5');
-                        ELSE
+                  IF rw_verifica_mdw.cdhistor = 2433 THEN
                            vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'6');
-                        END IF;
-                     END IF;
                   END IF;
                   
                   IF rw_verifica_mdw.cdhistor <> 386 THEN
@@ -12124,38 +9660,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
-       
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 3 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.PRACA MENOR...: '||
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
+          pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ. OUTROS BANCOS: '||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
                                                            '   ' ||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
                                                            ,48,' ');
-        END IF;
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 4 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.PRACA MAIOR...: '||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
-                                                           '   ' ||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
-                                                           ,48,' ');
-        END IF;
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 5 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.F.PRACA MENOR.: '||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
-                                                           '   ' ||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
-                                                           ,48,' ');
-        END IF;
-        IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
-           pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ.F.PRACA MAIOR.: '||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
-                                                           '   ' ||
-                                                           TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
-                                                           ,48,' ');
-        END IF;       
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
-     END LOOP; -- Fim cheques maior fora praca
+       END IF;
+       vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
+     END LOOP;
      
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
      variavel VARCHAR2(32627), a solucao foi definir um tamanho para o parametro no 
