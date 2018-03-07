@@ -3676,7 +3676,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- PASSOU A SER TRATADA DENTRO DO BLOCO.
           
           -- O TRATAMENTO PARA INNIVRIS -1 É APENAS PARA NÃO TRATAR
-          -- MAIOR RISCO QUANDO ESSE RISCO FOR UM CONTRATO MENOR QUE MATERIALIDADE
+          -- MAIOR RISCO QUANDO ESSE RISCO FOR UM VALOR MENOR QUE MATERIALIDADE
           
           -- QUANDO MENOR QUE A MATERIALIDADE NAO ARRASTA O
           -- RISCO E TAMBÉM NÃO É ARRASTADO.
@@ -3701,7 +3701,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               END IF;
               -- Usado para controlar a atualização do ASS
               vr_qtdrisco := vr_qtdrisco + 1;
-                          
             END IF;
           END IF;
 
@@ -3742,6 +3741,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- Se encontrou
           IF cr_crapris_last%FOUND THEN
             -- ATENCAO: caso seja alterada esta regra, ajustar em crps635_i tb
+            -- O RISCO ANTERIOR É DIFERENTE DO RISCO PRA ONDE ELE SERÁ ALTERADO?
             IF (rw_crapris_last.innivris <> vr_innivris_upd)
             AND vr_innivris_upd <> -1 THEN
               -- Utilizar a data de referência do processo
@@ -3766,7 +3766,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
           -- APENAS MENOR QUE MATERIALIDADE
           IF rw_crapris.vldivida <= pr_vlarrasto THEN
-
+            -- O RISCO ATUAL É DIFERENTE DO RISCO PARA O QUAL ELE VAI?
+            IF rw_crapris.innivris <> vr_innivris_upd   THEN
+              -- SE SIM, MUDA DATA DO RISCO
+              vr_dtdrisco_upd := vr_dtrefere;
+            END IF;
           BEGIN
               UPDATE crapris
                  SET innivori = vr_innivori
@@ -3790,7 +3794,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               RAISE vr_exc_erro;
             END IF;
 
-            
             CONTINUE;
           END IF;
 
@@ -3817,10 +3820,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               RAISE vr_exc_erro;
           END;
 
-
-
         -- Novamente somente para o primeiro risco da conta/Primeiro é o maior
---          IF rw_crapris.sequencia = 1 THEN
           IF vr_qtdrisco = 1 THEN
             -- Atualizar o nível na conta
             pc_atualiza_risco_crapass(pr_nrdconta => rw_crapris.nrdconta
@@ -3831,6 +3831,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               RAISE vr_exc_erro;
             END IF;
           END IF;
+
           -- Limpar tabela temporaria Vencimentos de risco
           vr_tab_crapvri_2.DELETE;
           -- Busca de todos os vencimentos do risco atual
@@ -3953,7 +3954,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
 
 
-
       PROCEDURE pc_popula_ass_arrasto(pr_cpfcnpj  IN VARCHAR2
                                      ,pr_inpessoa IN INTEGER
                                      ,pr_innivris IN INTEGER
@@ -4064,6 +4064,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         rw_max_risco_cpfcnpj cr_max_risco_cpfcnpj%ROWTYPE;
 
 
+
         -- Busca todos os riscos que deverão ser arrastados
         -- É passado apenas a raíz do cnpj, por isso a função
         CURSOR cr_riscos_cpfcnpj( pr_nrdconta IN crapass.nrdconta%TYPE
@@ -4140,6 +4141,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             vr_maxrisco := 9;
           END IF;
 
+
           pc_popula_ass_arrasto(rw_cpfcnpj_contas.cpf_cnpj
                                ,rw_cpfcnpj_contas.inpessoa
                                ,vr_maxrisco
@@ -4161,6 +4163,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
             -- Efetuar atualização da CENTRAL RISCO cfme os valores maior risco
             BEGIN
+
               UPDATE crapris
                  SET innivris = vr_maxrisco
                     ,inindris = vr_maxrisco
@@ -4179,6 +4182,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
             -- ATUALIZAR VENCIMENTOS RISCO COM BASE NO MAIOR RISCO
             BEGIN
+
               UPDATE crapvri
                  SET innivris = vr_maxrisco
                WHERE cdcooper = pr_cdcooper
