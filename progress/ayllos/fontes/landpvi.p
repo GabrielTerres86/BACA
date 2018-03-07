@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 19/11/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 01/02/2018
 
    Dados referentes ao programa:
 
@@ -508,6 +508,16 @@
                             (Lucas Ranghetti #726238)
 			  19/11/2017 - Ajustes para retirar o uso do historico 354
                            (Jonata RKAM - P364)
+
+              01/02/2018 - Inserçao da verificaçao e solicitaçao de permissao de uso de saldo bloqueado em pagamento
+                            de empréstimo
+                           ( Lindon GFT )
+
+			  02/02/2018 - Alteraçao do local de pesquisa do saldo bloqueado por solicitaçao do Sr. Daniel da tabela 
+                           crapsld para (aux_vlsdbloq = tt-saldos.vlsdblpr + tt-saldos.vlsdblfp + tt-saldos.vlsdbloq.) 
+                           a fim de pegar os valore de alteraçao do dia.
+                           ( Lindon GFT )
+
 
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
@@ -2574,28 +2584,61 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
               FIND FIRST tt-saldos NO-LOCK NO-ERROR.
               IF AVAILABLE tt-saldos THEN
                  DO:
+						/* É atribuido ao saldo disponivel o valor da soma do saldo */
+						/* disponivel  + saldo do cheque especial + o valor do limite de crédito*/
                      ASSIGN aux_vlsddisp = tt-saldos.vlsddisp +
                                            tt-saldos.vlsdchsl + 
                                            tt-saldos.vllimcre.
-                 END.
+						ASSIGN aux_vlsdbloq = tt-saldos.vlsdblpr +
+												tt-saldos.vlsdblfp + 
+												tt-saldos.vlsdbloq.
+					END. /*AVAILABLE tt-saldos THEN*/
+
                  
                  IF aux_indebcre = "D" THEN
                     DO:
-                       /* Condicao para verifica se possui saldo disponivel */
+					   /* Verifica se o valor de lançamento é maior que o saldo disponível (Saldo normal + valor do cheque */
+                       /*  especial + valor do limite de crédito). */
                        IF tel_vllanmto > aux_vlsddisp THEN
                           DO:
+							/* Verifica se o saldo bloqueado é maio que 0.*/
+							IF  aux_vlsdbloq > 0 THEN
+							  DO:
+								/* Solicita a confirmaçao de utilizaçao do saldo bloqueado para o pagamento. */
+								/* Se o valor bloqueado for maior que 0, solicita a senha para utilizaçao do valor */
+								/* do saldo bloqueado para pagamento do débito. */
+								DO:
+								  /* Solicita a confirmaçao de pagamento mesmo ocorrendo o estouro da conta.*/
+								  RUN fontes/confirma.p
+									(INPUT "Deseja utilizar o valor do saldo bloqueado? S/N",
+										OUTPUT aux_confirma).
+								  IF aux_confirma <> "S" THEN
+									UNDO, NEXT INICIO. 
+								  ELSE 
+									  DO:
+										RUN fontes/pedesenha.p (INPUT glb_cdcooper,
+										  INPUT 2, 
+										  OUTPUT aut_flgsenha,
+										  OUTPUT aut_cdoperad).
+										/*Se nao for dada a autorizaçao ou a senha estiver errada é cancelado o pagamento*/
+										IF NOT aut_flgsenha  THEN
+										  UNDO, NEXT INICIO.
+									  END. 
+								END. /* aux_vlsdbloq <= tel_vllanmto */
+							  END.
+							  IF  (aux_vlsdbloq + aux_vlsddisp)< tel_vllanmto THEN
+								DO:
+								  /* Solicita a confirmaçao de pagamento mesmo ocorrendo o estouro da conta.*/
+										RUN fontes/confirma.p
+										  (INPUT "Saldo Disp.: " + STRING(aux_vlsddisp,"zzz,zzz,zz9.99-")
+												  + ". Confirma estouro de conta? S/N",
+										   OUTPUT aux_confirma).
                             
-                            RUN fontes/confirma.p
-                              (INPUT "Saldo Disp.: " + STRING(aux_vlsddisp,"zzz,zzz,zz9.99-")
-                                      + ". Confirma estouro de conta? S/N",
-                               OUTPUT aux_confirma).
-                            
-                            IF aux_confirma <> "S" THEN
-                              UNDO, NEXT INICIO.
-                            
-                        END.
-                    END.                 
-              
+										IF aux_confirma <> "S" THEN
+										  UNDO, NEXT INICIO.
+								END. /* aux_vlsdbloq <= tel_vllanmto */
+						  END. /* tel_vllanmto >= aux_vlsddisp */             
+					END. /* aux_indebcre = "D" */
         END. /* END IF  CAN-DO("275,394,428",STRING(tel_cdhistor)) */        
       
 
@@ -3534,7 +3577,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                         ELSE
                             DO:
                                 ASSIGN glb_cdcritic = 0
-                                       glb_dscritic = "Proposta de portabilidade não encontrada.".
+                                       glb_dscritic = "Proposta de portabilidade nao encontrada.".
                             END.
                    END.
                IF   aux_inhistor = 12   THEN
