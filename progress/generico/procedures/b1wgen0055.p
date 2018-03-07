@@ -21,7 +21,7 @@
 
     Programa: b1wgen0055.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 19/07/2017
+    Data    : Janeiro/2010                   Ultima atualizacao: 07/03/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Fisica
 
@@ -162,6 +162,10 @@
                 09/10/2017 - Incluido rotina para ao cadastrar cooperado carregar dados
                              da pessoa do cadastro unificado, para completar o cadastro com dados
                              que nao estao na tela. PRJ339 - CRM (Odirlei-AMcom)
+							 
+				07/03/2018 - Voltando validacao para que nao seja possivel cadastrar escolaridade
+							 que nao esteja cadastrada no sistema, conforme solicitado no chamado
+							 849651. (Kelvin)
 .............................................................................*/
 
 
@@ -4212,7 +4216,6 @@ PROCEDURE Valida_Dados:
            END.
 
         /* validar o grau escolar */
-        /*
         IF  NOT CAN-FIND(gngresc WHERE gngresc.grescola = par_grescola) AND 
             par_grescola <> 0 THEN
             DO:
@@ -4221,7 +4224,7 @@ PROCEDURE Valida_Dados:
                    aux_cdcritic = 825.
                LEAVE Valida.
             END.
-        */    
+            
 
         IF par_grescola < 5 AND par_cdfrmttl <> 0 THEN
            DO:
