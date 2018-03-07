@@ -16059,6 +16059,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_dtlibera date;
       vr_dscritic varchar2(100);
       vr_cobraiof boolean;
+      vr_vct365   boolean;
       VR_ROWID rowid;
       -- variaveis para montar os contratos à partir da dsctrliq
       wtamanho number;
@@ -16095,6 +16096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         pr_vlbasiof := pr_vlemprst;
         pr_vllanmto := 0;
         vr_cobraiof := true;
+        vr_vct365   := false;
         
         open btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
         fetch btch0001.cr_crapdat into rw_crapdat;
@@ -16161,6 +16163,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                      vr_vlsaldo := vr_vlsaldo + vr_vlsdeved + nvl(vr_vlmrapar, 0) + nvl(vr_vlmtapar, 0); -- Nao calcular IOF dos refinanciamentos + nvl(vr_vliofcpl, 0);
                      if rw_crapepr.dtmvtolt > to_date('31/03/2017','dd/mm/yyyy') then
                         vr_cobraiof := true;
+                        if rw_crapepr.dtultvct - rw_crapdat.dtmvtolt > 365 then
+                           vr_vct365 := true; 
+                        end if;
                      else
                          vr_cobraiof := false;
                      end if;
@@ -16240,6 +16245,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                  vr_vlsaldo := vr_vlsaldo + vr_vlsdeved + nvl(vr_vlmrapar, 0) + nvl(vr_vlmtapar, 0); -- Nao calcular IOF no refinanciamento + nvl(vr_vliofcpl, 0);
                  if rw_crapepr.dtmvtolt > to_date('31/03/2017','dd/mm/yyyy') then
                     vr_cobraiof := true;
+                    if rw_crapepr.dtultvct - rw_crapdat.dtmvtolt > 365 then
+                       vr_vct365 := true; 
+                    end if;
                  else
                     vr_cobraiof := false;
                  end if;
@@ -16307,6 +16315,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                          vr_vlsaldo := vr_vlsaldo + vr_vlsdeved + nvl(vr_vlmrapar, 0) + nvl(vr_vlmtapar, 0); -- + nvl(vr_vliofcpl, 0);
                          if rw_crapepr.dtmvtolt > to_date('31/03/2017','dd/mm/yyyy') then
                             vr_cobraiof := true;
+                             if rw_crapepr.dtultvct - rw_crapdat.dtmvtolt > 365 then
+                                vr_vct365 := true; 
+                             end if;
                          else 
                             vr_cobraiof := false;
                          end if;
