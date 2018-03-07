@@ -1696,9 +1696,9 @@ PROCEDURE process-web-request :
             ASSIGN aux_tpoperac = INT(GET-VALUE("tpoperac")).
 
         /* Verificar senha e frase */
-        IF  aux_flgcript AND NOT CAN-DO("2,11,18",STRING(aux_operacao))  OR /** Utiliza criptografia **/
-           (
-               NOT aux_flgcript AND 
+        IF  (aux_flgcript AND NOT CAN-DO("2,11,18",STRING(aux_operacao)))  OR /** Utiliza criptografia **/
+            (
+               NOT aux_flgcript AND aux_nrcpfope = 0 AND
                ( 
                  (
                   /** Nao utiliza criptografia se for confirmacao de pagamento **/
@@ -5140,7 +5140,7 @@ PROCEDURE proc_operacao80:
            aux_rowidcti = GET-VALUE("aux_rowidcti").
            aux_flexclui = GET-VALUE("aux_flregist").
 
-    IF  NOT aux_flgcript AND aux_flgexecu AND aux_rowidcti = ""  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND aux_flgexecu AND aux_rowidcti = ""  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -5787,7 +5787,7 @@ PROCEDURE proc_operacao97:
            aux_dtvencto = DATE(GET-VALUE("dtvencto"))
            aux_qtdiaven = INTEGER(GET-VALUE("qtdiaven")).
 
-    IF  NOT aux_flgcript AND aux_flgtipar = 1 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND aux_flgtipar = 1 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -5882,13 +5882,11 @@ PROCEDURE proc_operacao99:
                                          OUTPUT TABLE xml_operacao).
 
     IF RETURN-VALUE <> "OK" THEN
-            {&out} aux_dsmsgerr. 
-
-    FOR EACH xml_operacao NO-LOCK:
-
-        {&out} xml_operacao.dslinxml.
-
-        END.
+       {&out} aux_dsmsgerr. 
+    ELSE
+       FOR EACH xml_operacao NO-LOCK:
+           {&out} xml_operacao.dslinxml.
+       END.
 
     {&out} aux_tgfimprg.
 
@@ -6273,7 +6271,7 @@ PROCEDURE proc_operacao112:
 
     ASSIGN aux_nrctraar = INTEGER(GET-VALUE("nrctraar")).
 
-    IF  NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -6511,7 +6509,7 @@ PROCEDURE proc_operacao119:
 
     ASSIGN aux_detagend = GET-VALUE("detagend").
 
-    IF  NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -7961,7 +7959,7 @@ PROCEDURE proc_operacao167:
 		   aux_dtinivig = GET-VALUE("aux_dtinivig")
 		   aux_vlpacote = DECI(GET-VALUE("aux_vlpacote")).
 
-  IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+  IF  aux_nrcpfope = 0 AND NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
       DO:
           RUN proc_operacao2.
           
@@ -8091,7 +8089,7 @@ PROCEDURE proc_operacao173:
          aux_nrdddtfc = DECI(GET-VALUE("nrdddtfc"))
          aux_nrtelefo = DECI(GET-VALUE("nrtelefo")).
 
-  IF  NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "E")  THEN /* Nao possui criptografia no front e autenticao e realizada junto com a propria operacao*/
+  IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "E")  THEN /* Nao possui criptografia no front e autenticao e realizada junto com a propria operacao*/
       DO:
           RUN proc_operacao2.
 
@@ -8191,7 +8189,7 @@ END PROCEDURE.
 /* Cancelar integralizacao de cotas de capital */
 PROCEDURE proc_operacao177:
     
-    IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -8244,7 +8242,7 @@ PROCEDURE proc_operacao178:
                  aux_nriniseq =  INT(GET-VALUE("aux_nriniseq"))
                  aux_nrregist =  INT(GET-VALUE("aux_nrregist")).
                               
-    IF  NOT aux_flgcript AND aux_operacao = 6 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND aux_operacao = 6 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -8307,7 +8305,7 @@ PROCEDURE proc_operacao179:
            aux_nrremess =     (GET-VALUE("aux_nrremret"))
            aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
            
-    IF  NOT aux_flgcript AND aux_operacao = 5 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND aux_operacao = 5 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -8539,7 +8537,7 @@ PROCEDURE proc_operacao189:
          aux_idpacote   = INTE(GET-VALUE("idpacote"))
          aux_iddspscp   = INTE(GET-VALUE("aux_iddspscp")).
   
-  IF  NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "CA") THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+  IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "CA") THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
       DO:
           RUN proc_operacao2.
   

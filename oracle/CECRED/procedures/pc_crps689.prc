@@ -407,15 +407,19 @@ begin
     vr_sort_arquivos typ_sortarq;
     vr_list_arquivos VARCHAR2(10000);
     vr_list_arquivos_matera VARCHAR2(10000);
+    vr_list_arquivos_SOA    VARCHAR2(10000);
     -- Variável para formar chaves para collections
     vr_dschave       VARCHAR2(100);
     -- Variável de críticas
     vr_cdcritic      crapcri.cdcritic%TYPE;
     vr_dscritic      VARCHAR2(10000);
+    vr_typ_said      VARCHAR2(50);
+    vr_des_erro      VARCHAR2(500);
     -- Diretório das cooperativas
     vr_dsdireto      VARCHAR2(200);
+    vr_dsdirsoa      VARCHAR2(200);
     -- Mascara para busca de arquivos
-    vr_dsmascar      VARCHAR2(200);
+    vr_dsmascar        VARCHAR2(200);
     -- Numero da conta conforme o arq
     vr_nrdconta      crapass.nrdconta%TYPE;
     -- Tratamento de erros
@@ -520,15 +524,65 @@ begin
         vr_dscritic := NULL;
         pr_cdcritic := 0;
         pr_dscritic := NULL;
-
+        
         vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Coop
                                             ,pr_cdcooper => rw_crapcop.cdcooper
                                             ,pr_nmsubdir => '/upload');
-
+                                            
+        -- Diretorio de upload do barramento SOA
+        vr_dsdirsoa := gene0001.fn_diretorio('C',0)                                ||
+                       gene0001.fn_param_sistema('CRED',0,'PATH_DOWNLOAD_ARQUIVO') ||
+                       '/'                                                         ||
+                       rw_crapcop.dsdircop                                         ||
+                       '/upload/';                                            
+        
         -- Retorna a lista dos arquivos REM do diretório,
         -- conforme padrão "cdcooper.nrdconta.nome.REM" (Ex.: 001.329.arq_upload.REM)
         -- Ex.: --  vr_dsmascar      := '001.3696553.PGT%.REM';
-        vr_dsmascar      := lpad(rw_crapcop.cdcooper,3,'0') ||'.%.PGT%.REM';
+        vr_dsmascar := lpad(rw_crapcop.cdcooper,3,'0') ||'.%.PGT%.REM'; 
+        
+        vr_list_arquivos := NULL;
+
+        -- Retorna a lista dos arquivos do diretório de upload do barramento SOA
+        gene0001.pc_lista_arquivos(pr_path     => vr_dsdirsoa
+                                  ,pr_pesq     => vr_dsmascar
+                                  ,pr_listarq  => vr_list_arquivos
+                                  ,pr_des_erro => vr_dscritic);
+
+        -- Testar saida com erro
+        IF vr_dscritic IS NOT NULL THEN
+           -- Gerar exceção
+           vr_cdcritic := 0;
+           RAISE vr_exc_proxcoop;
+        END IF;        
+        
+        IF vr_list_arquivos IS NOT NULL THEN
+           -- Listar os arquivos em um array
+           vr_array_arquivo := gene0002.fn_quebra_string(pr_string  => vr_list_arquivos
+                                                        ,pr_delimit => ',');
+                                                        
+           -- Ordenar pelo nome do arquivo
+           -- Percorrer todos os arquivos selecionados
+           FOR ind IN vr_array_arquivo.FIRST..vr_array_arquivo.LAST LOOP
+             -- Move os arquivo Processado para Pasta Salvar
+             GENE0001.pc_OScommand_Shell('mv ' || vr_dsdirsoa || vr_array_arquivo(ind) || ' ' || vr_dsdireto || '/'
+                                        ,pr_typ_saida => vr_typ_said
+                                        ,pr_des_saida => vr_des_erro);
+               
+             -- Testar erro
+             IF vr_typ_said = 'ERR' THEN
+               -- Define a mensagem de erro
+               vr_dscritic := 'Erro ao mover arquivos recebidos via SOA => '||vr_array_arquivo(ind)||'.'||chr(10)||vr_des_erro;
+               -- Envio centralizado de log de erro
+               PGTA0001.pc_logar_cst_arq_pgto(pr_cdcooper => rw_crapcop.cdcooper
+                                             ,pr_nrdconta => 0
+                                             ,pr_nmarquiv => 'PC_CRPS689'
+                                             ,pr_textolog => vr_dscritic
+                                             ,pr_cdcritic => pr_cdcritic
+                                             ,pr_dscritic => pr_dscritic);
+             END IF;
+           END LOOP;           
+        END IF;                          
 
         vr_list_arquivos := NULL;
 
@@ -568,8 +622,8 @@ begin
            ELSE
                 vr_list_arquivos := vr_list_arquivos_matera;
            END IF;
-        END IF;
-
+        END IF;                         
+        
         -- Verifica se retornou arquivos
         IF vr_list_arquivos IS NOT NULL THEN
            -- Listar os arquivos em um array
