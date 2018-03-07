@@ -16031,6 +16031,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               , crapepr.vlsdevat
               , crapepr.txjuremp
               , crapepr.vliofepr
+              , (select max(dtvencto) 
+                   from crappep a
+                  where a.cdcooper = crapepr.cdcooper
+                  and   a.nrdconta = crapepr.nrdconta
+                  and   a.nrctremp = crapepr.nrctremp) dtultvct
            from crapepr
           where cdcooper = pr_cdcooper
             and nrdconta = pr_nrdconta
