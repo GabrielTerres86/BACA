@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 20/12/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 07/03/2018
     
    Dados referentes ao programa:
    
@@ -212,6 +212,9 @@
               01/02/2018 - Ajustar na exclui_suspensao_autorizacao para sempre que possivel, utilizar a chave unica da
                            tabela crapatr para encontrar a autorizacao para exclusao da suspensao. Quando isso nao for
                            possivel, continuara buscando pelo cdempcon e cdsegmto (Anderson P285).
+                           
+              07/03/2018 - Alterar validacao do digito do samae Pomerode para validar com o modulo 11
+                           (Lucas Ranghetti #858121).
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1301,7 +1304,8 @@ PROCEDURE valida-dados:
                                      
                     END.
                 ELSE       
-                IF  par_cdhistor = 635 THEN /* SAMAE GASPAR */
+                IF  par_cdhistor = 635 OR /* SAMAE GASPAR   */
+                    par_cdhistor = 619  THEN  /* SAMAE Pomerode */
                     DO:
                          IF  par_cdrefere > 999999 THEN
                              DO:
@@ -1327,8 +1331,7 @@ PROCEDURE valida-dados:
                              END.
                     END.
                 ELSE
-                IF  par_cdhistor = 616  OR   /* SAMAE Brusque */
-                    par_cdhistor = 619  OR   /* SAMAE Pomerode */
+                IF  par_cdhistor = 616  OR   /* SAMAE Brusque */                    
                     par_cdhistor = 900  THEN /* SAMAE Rio Negrinho */
                     DO:
                         IF   par_cdrefere > 999999 THEN
