@@ -4674,6 +4674,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           RAISE vr_exc_erro;
         END IF;
         
+        /** Tratamento para evitar que o usuário faça agendamento para data retroativa **/
+        IF pr_idagenda = 2  AND
+           pr_dtmvtopg <= pr_dtmvtolt THEN
+           
+          vr_dscritic := 'Não é possível efetuar agendamentos para data retroativa.';
+          vr_cdcritic:= 0;
+          
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+        
         IF pr_idagenda = 1 AND
            pr_tpoperac = 4 AND 
            pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
