@@ -1104,8 +1104,6 @@ PROCEDURE grava_dados:
                                                    INPUT aux_flgerlog,
                                                    INPUT aux_dsjusren,
                                                    INPUT par_dtmvtolt,
-                                                   INPUT 0, /* cdcoploj */
-                                                   INPUT 0, /* nrcntloj */
                                                    INPUT 0, /* idfiniof */
                                                    INPUT "", /* DSCATBEM */
                                                    OUTPUT TABLE tt-erro,
