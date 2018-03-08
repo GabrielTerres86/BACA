@@ -6,7 +6,8 @@
  * --------------
  * ALTERAÇÕES   : 19/06/2017 - Removida a linha com informações da Devolução VLB.
 				               PRJ367 - Compe Sessao Unica (Lombardi)
- *
+
+                  08/03/2018 - #PRJ367 Aumentadas as larguras dos labels "devolução diurna" e "devolução fraude/imp" (Carlos)
  * --------------
  */
 
@@ -241,10 +242,10 @@ function formataCadastro(){
 	$('#hrtaacan','#frmHorarios').setMask('STRING','99:99',':','');
 
 	// LABEL - DEVOLUCAO DE CHEQUE
-	$('label[for="hrdevdiu"]','#frmHorarios').addClass('rotulo').css({'width':'130px'});
+	$('label[for="hrdevdiu"]','#frmHorarios').addClass('rotulo').css({'width':'140px'});
 	$('label[for="hrdiuini"]','#frmHorarios').addClass('rotulo-linha').css({'width':'50px'});
 	$('label[for="hrdiufim"]','#frmHorarios').addClass('rotulo-linha').css({'width':'30px'});
-	$('label[for="hrdevnot"]','#frmHorarios').addClass('rotulo').css({'width':'130px'});
+	$('label[for="hrdevnot"]','#frmHorarios').addClass('rotulo').css({'width':'140px'});
 	$('label[for="hrnotini"]','#frmHorarios').addClass('rotulo-linha').css({'width':'50px'});
 	$('label[for="hrnotfim"]','#frmHorarios').addClass('rotulo-linha').css({'width':'30px'});
 	
