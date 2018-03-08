@@ -1290,13 +1290,13 @@ PROCEDURE grava_dados_conta PRIVATE:
            RUN sistema/generico/procedures/b1wgen0153.p 
                PERSISTENT SET h-b1wgen0153.
 
-        FIND crawepr WHERE crawepr.cdcooper = par_cdcooper AND crawepr.nrdconta = par_nrdconta AND crawepr.nrctremp = par_nrctremp NO-LOCK.
+        FIND crawepr WHERE crawepr.cdcooper = par_cdcooper AND crawepr.nrdconta = par_nrdconta AND crawepr.nrctremp = par_nrctremp NO-LOCK NO-ERROR.
         IF NOT AVAIL crawepr THEN DO:
           MESSAGE "Nao encontrado registro na crawepr".
           UNDO TRANS_1, LEAVE TRANS_1.
         END.
 
-        FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND craplcr.cdlcremp = par_cdlcremp NO-LOCK.
+        FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND craplcr.cdlcremp = par_cdlcremp NO-LOCK NO-ERROR.
         IF NOT AVAIL craplcr THEN DO:
           MESSAGE "Nao encontrado registro na craplcr".
            UNDO TRANS_1, LEAVE TRANS_1.
@@ -1598,8 +1598,8 @@ PROCEDURE grava_dados_conta PRIVATE:
         VALIDATE craplcm.
     
         /* Calcula o IOF */
-        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND crapass.nrdconta = par_nrdconta NO-LOCK.
-        FIND crapjur WHERE crapjur.cdcooper = par_cdcooper AND crapjur.nrdconta = par_nrdconta NO-LOCK.
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+        FIND crapjur WHERE crapjur.cdcooper = par_cdcooper AND crapjur.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
     
