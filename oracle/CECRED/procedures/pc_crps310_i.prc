@@ -3834,7 +3834,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- PASSOU A SER TRATADA DENTRO DO BLOCO.
           
           -- O TRATAMENTO PARA INNIVRIS -1 É APENAS PARA NÃO TRATAR
-          -- MAIOR RISCO QUANDO ESSE RISCO FOR UM CONTRATO MENOR QUE MATERIALIDADE
+          -- MAIOR RISCO QUANDO ESSE RISCO FOR UM VALOR MENOR QUE MATERIALIDADE
           
           -- QUANDO MENOR QUE A MATERIALIDADE NAO ARRASTA O
           -- RISCO E TAMBÉM NÃO É ARRASTADO.
@@ -3900,6 +3900,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- Se encontrou
           IF cr_crapris_last%FOUND THEN
             -- ATENCAO: caso seja alterada esta regra, ajustar em crps635_i tb
+            -- O RISCO ANTERIOR É DIFERENTE DO RISCO PRA ONDE ELE SERÁ ALTERADO?
             IF (rw_crapris_last.innivris <> vr_innivris_upd)
             AND vr_innivris_upd <> -1 THEN
               -- Utilizar a data de referência do processo
@@ -3924,7 +3925,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
           -- APENAS MENOR QUE MATERIALIDADE
           IF rw_crapris.vldivida <= pr_vlarrasto THEN
-
+            -- O RISCO ATUAL É DIFERENTE DO RISCO PARA O QUAL ELE VAI?
+            IF rw_crapris.innivris <> vr_innivris_upd   THEN
+              -- SE SIM, MUDA DATA DO RISCO
+              vr_dtdrisco_upd := vr_dtrefere;
+            END IF;
           BEGIN
               UPDATE crapris
                  SET innivori = vr_innivori
@@ -3978,7 +3983,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
 
         -- Novamente somente para o primeiro risco da conta/Primeiro é o maior
---          IF rw_crapris.sequencia = 1 THEN
           IF vr_qtdrisco = 1 THEN
             -- Atualizar o nível na conta
             pc_atualiza_risco_crapass(pr_nrdconta => rw_crapris.nrdconta
