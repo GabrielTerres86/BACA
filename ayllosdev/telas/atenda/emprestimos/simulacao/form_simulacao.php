@@ -84,7 +84,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
             <br />
 
             <label for="idfiniof">Financiar IOF e Tarifa:</label>
-            <select display=none name="idfiniof" id="idfiniof" class="campo" >
+            <select name="idfiniof" id="idfiniof" class="campo" >
                 <option value="1" selected="selected">Sim</option>
                 <option value="0">N&atilde;o</option>
             </select>

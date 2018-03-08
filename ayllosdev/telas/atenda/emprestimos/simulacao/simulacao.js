@@ -268,7 +268,7 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
         });
 
         // Formata o tamanho do Formulário
-        $('#divProcSimulacoesFormulario').css({'height': '300px', 'width': '560px'});
+        $('#divProcSimulacoesFormulario').css({'height': '385px', 'width': '560px'});
 
         // Adicionando as classes
         cTodos.removeClass('campoErro').habilitaCampo();
