@@ -12,10 +12,115 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
       Frequencia: -----
       Objetivo  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN - Motor de Credito
 
-      Alteracoes:
-
   ---------------------------------------------------------------------------------------------------------------*/
   
+  --> Funcao para CPF/CNPJ
+  FUNCTION fn_mask_cpf_cnpj(pr_nrcpfcgc IN NUMBER
+                           ,pr_inpessoa IN NUMBER) return VARCHAR2;
+  
+  --> Funcao para formatar data hora conforme padrao da IBRATAN
+  FUNCTION fn_Data_ibra_motor (pr_data IN DATE) RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição do grau escolar
+  FUNCTION fn_des_grescola (pr_grescola  IN NUMBER) RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição de formação
+  FUNCTION fn_des_cdfrmttl (pr_cdfrmttl  IN NUMBER) --> codigo da formacao. 
+                            RETURN VARCHAR2; 
+  
+  --> Rotina para retornar descrição do tipos de naturezas de ocupacao
+  FUNCTION fn_des_cdnatopc (pr_cdnatocp  IN NUMBER) --> Codigo da natureza de ocupacao.  
+                            RETURN VARCHAR2; 
+  
+  --> Rotina para retornar descrição da ocupacão.
+  FUNCTION fn_des_cdocupa (pr_cdocupa  IN NUMBER) --> codigo da ocupacao. 
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição do turno
+  FUNCTION fn_des_cdturnos (pr_cdturnos  IN NUMBER) --> Codigo do turno
+                            RETURN VARCHAR2; 
+  
+  
+  --> Rotina para retornar descrição do nivel do cargo.
+  FUNCTION fn_des_cdnvlcgo (pr_cdnvlcgo  IN NUMBER) --> Codigo do nivel do cargo
+                            RETURN VARCHAR2; 
+  
+  --> Rotina para retornar descrição do tipo de contrato de trabalho
+  FUNCTION fn_des_tpcttrab (pr_tpcttrab  IN NUMBER) --> Codigo tipo de contrato de trabalho
+                            RETURN VARCHAR2; 
+  
+  
+  --> Rotina para retornar descrição do estado civil
+  FUNCTION fn_des_cdestciv (pr_cdestciv  IN NUMBER) --> Codigo do estado civil 
+                            RETURN VARCHAR2;
+  
+  
+  --> Rotina para retornar descrição de indicador de menor
+  FUNCTION fn_des_inhabmen (pr_inhabmen  IN NUMBER) --> indicador de menor
+                            RETURN VARCHAR2;  
+  
+  --> Rotina para retornar descrição do tipo de conta
+  FUNCTION fn_des_cdtipcta (pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE,  --> Tipo de pessoa
+                            pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)  --> Tipo de conta
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição de situacao da conta
+  FUNCTION fn_des_cdsitdct (pr_cdsitdct  IN NUMBER) --> Codigo de situacao da conta
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição de indicador
+  FUNCTION fn_des_incasprp (pr_incasprp  IN NUMBER) --> Codigo indicador
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição da situação do CPF
+  FUNCTION fn_des_cdsitcpf (pr_cdsitcpf  IN NUMBER) --> Codigo da situação do CPF
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição de cadastro positivo
+  FUNCTION fn_des_incadpos (pr_incadpos  IN NUMBER) --> Codigo cadastro positivo
+                            RETURN VARCHAR2;
+  
+  --> Rotina para remover caracteres do telefone
+  FUNCTION fn_somente_numeros_telefone(pr_nrtelefo VARCHAR2) RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição de atraso
+  FUNCTION fn_des_pontualidade (pr_qtdiaatr  IN NUMBER) --> qtd dias de atraso
+                                RETURN VARCHAR2;
+                                
+  PROCEDURE pc_calc_dias_atraso(pr_cdcooper   IN crapepr.cdcooper%TYPE --> Código da cooperativa
+                               ,pr_nrdconta   IN crapepr.nrdconta%TYPE --> Numero da conta do emprestimo
+                               ,pr_nrctremp   IN crapepr.nrctremp%TYPE --> Numero do contrato de emprestimo
+                               ,pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE --> Data Movimento
+                               ,pr_dtmvtoan   IN crapdat.dtmvtoan%TYPE --> Data Movimento Anterior
+                               ,pr_dtmvtopr   IN crapdat.dtmvtopr%TYPE --> Data Movimento Próximo
+                               ,pr_tpemprst   IN crapepr.tpemprst%TYPE --> Tipo do Empréstimo
+                               ,pr_qtmesdec   IN crapepr.qtmesdec%TYPE --> Meses decorridos
+                               ,pr_dtdpagto   IN crapepr.dtdpagto%TYPE --> Data de pagamento
+                               ,pr_qtprecal   IN crapepr.qtprecal%TYPE --> Quantidade parcelas calculadas
+                               ,pr_flgpagto   IN crapepr.flgpagto%TYPE --> TIpo de pagamento
+                               ,pr_qtdiaatr   OUT NUMBER --> Quantidade de dias em atraso
+                               ,pr_cdcritic   OUT crapcri.cdcritic%TYPE --> Código de critica encontrada
+                               ,pr_des_erro   OUT VARCHAR2);
+				
+  
+  PROCEDURE pc_gera_json_pessoa_ass(pr_cdcooper IN crapass.cdcooper%TYPE
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                   ,pr_nrctremp IN crapepr.nrctremp%TYPE
+																	 ,pr_flprepon IN BOOLEAN DEFAULT FALSE
+                                   ,pr_vlsalari IN NUMBER  DEFAULT 0
+                                   ,pr_persocio IN NUMBER  DEFAULT 0
+                                   ,pr_dtadmsoc IN DATE    DEFAULT NULL
+                                   ,pr_dtvigpro IN DATE    DEFAULT NULL
+                                   ,pr_dsjsonan OUT json
+                                   ,pr_cdcritic OUT NUMBER
+                                   ,pr_dscritic OUT VARCHAR2);
+  
+  PROCEDURE pc_gera_json_pessoa_avt ( pr_rw_crapavt  IN crapavt%ROWTYPE,        --> Dados do avalista
+                                      ---- OUT ----
+                                      pr_dsjsonavt OUT NOCOPY json,             --> Retorno do clob em modelo json dos dados do avalista
+                                      pr_cdcritic  OUT NUMBER,                  --> Codigo da critica
+                                      pr_dscritic  OUT VARCHAR2);
+                                
   --> Rotina responsavel por montar o objeto json para analise
   PROCEDURE pc_gera_json_analise ( pr_cdcooper   IN crapass.cdcooper%TYPE   --> Codigo da cooperativa
                                   ,pr_cdagenci   IN crapass.cdagenci%TYPE   --> Codigo da cooperativa
@@ -30,7 +135,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
 									
 END ESTE0002;
 /
-CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
@@ -467,7 +572,8 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
   
   
   --> Rotina para retornar descrição do tipo de conta
-  FUNCTION fn_des_cdtipcta (pr_cdtipcta  IN NUMBER) --> Codigo do tipo de conta
+  FUNCTION fn_des_cdtipcta (pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE,  --> Tipo de pessoa
+                            pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)  --> Tipo de conta
                             RETURN VARCHAR2 IS 
   /* ..........................................................................
     
@@ -482,32 +588,35 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para retornar descrição do tipo de conta
     
-      Alteração : 
+      Alteração : 20/02/2018 - Busca a descrição do tipo de conta da tabela
+                               TBCC_TIPO_CONTA. PRJ366 (Lombardi).
         
     ..........................................................................*/
-    -----------> CURSORES <-----------    
+    -----------> CURSORES <-----------
+    CURSOR cr_tipo_conta IS
+      SELECT tpcta.dstipo_conta
+        FROM tbcc_tipo_conta tpcta
+       WHERE tpcta.inpessoa = pr_inpessoa
+         AND tpcta.cdtipo_conta = pr_cdtipcta;
+    rw_tipo_conta cr_tipo_conta%ROWTYPE;
     
-    -----------> VARIAVEIS <-----------   
+    -----------> VARIAVEIS <-----------
     vr_dstipcta VARCHAR2(100) := NULL;
-    
+     
   BEGIN
     
-    SELECT CASE pr_cdtipcta 
-             WHEN  1 THEN 'NORMAL'
-             WHEN  2 THEN 'ESPECIAL'
-             WHEN  3 THEN 'NORMAL CONJUNTA'
-             WHEN  4 THEN 'ESPEC. CONJUNTA'
-             WHEN  5 THEN 'CHEQUE SALARIO'
-             WHEN  6 THEN 'CTA APLIC CONJ.'
-             WHEN  7 THEN 'CTA APLIC INDIV'
-             WHEN  8 THEN 'NORMAL CONVENIO'
-             WHEN  9 THEN 'ESPEC. CONVENIO'
-             WHEN 10 THEN 'CONJ. CONVENIO'
-             ELSE NULL
-           END CASE  
-      INTO vr_dstipcta FROM dual;         
-      
-      RETURN vr_dstipcta;
+    -- Buscar descrição do tipo de conta
+    OPEN cr_tipo_conta;
+    FETCH cr_tipo_conta INTO rw_tipo_conta;
+    
+    IF cr_tipo_conta%FOUND THEN
+      CLOSE cr_tipo_conta;
+      vr_dstipcta := rw_tipo_conta.dstipo_conta;
+        RETURN vr_dstipcta;
+    ELSE
+      CLOSE cr_tipo_conta;
+      RETURN NULL;
+    END IF;
         
   EXCEPTION
     WHEN OTHERS THEN
@@ -907,7 +1016,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 19/10/2017
+        Data     : Maio/2017.                    Ultima atualizacao: 21/12/2017
       
         Dados referentes ao programa:
       
@@ -918,6 +1027,9 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         Alteração : 19/10/2017 - Renomear "quantDiasAtrasoEmprest" para "quantDiasMaiorAtrasoEmprest"
                                  Criar campo "quantDiasAtrasoEmprest" com a maior quantidade de dias em atraso (Lombardi)
           
+                    21/12/2017 - Ajustar tratamento de erro, para que a mensagem seja exibida em tela
+                               - Ajustar passagem de parametro cdcritic e dscritic 
+                               (Douglas - Chamado 819146)
     ..........................................................................*/
     DECLARE
       -- Variáveis para exceções
@@ -995,14 +1107,17 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
 			vr_vlmedfat NUMBER;
 			vr_qtmesest crapprm.dsvlrprm%TYPE;
 			vr_qtmeschq crapprm.dsvlrprm%TYPE;	
+			vr_qtmeschqal11 crapprm.dsvlrprm%TYPE;	
+			vr_qtmeschqal12 crapprm.dsvlrprm%TYPE;							
 			vr_qthisemp crapprm.dsvlrprm%TYPE;	
 			vr_qqdiacheq NUMBER;    
       vr_tab_estouros risc0001.typ_tab_estouros;
       vr_dtiniest DATE;
       vr_qtdiaat2 INTEGER := 0;
       vr_idcarga  tbepr_carga_pre_aprv.idcarga%TYPE;
+      vr_vllimdis crapcpa.vllimdis%TYPE := 0;
       vr_maior_nratrmai NUMBER(25,10);
-      
+
       --vr_vet_nrctrliq            RATI0001.typ_vet_nrctrliq := RATI0001.typ_vet_nrctrliq(0,0,0,0,0,0,0,0,0,0);
       			
 			--PlTables auxiliares
@@ -1418,7 +1533,9 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       rw_craplim_chqesp cr_craplim_chqesp%ROWTYPE;
     
       -- Buscar ultimas ocorrências de Cheques Devolvidos
-      CURSOR cr_crapneg_cheq(pr_qtmeschq IN INTEGER) IS
+      CURSOR cr_crapneg_cheq(pr_qtmeschq     IN INTEGER
+			                      ,pr_qtmeschqal11 IN INTEGER
+														,pr_qtmeschqal12 IN INTEGER) IS
         SELECT dtiniest
               ,vlestour
               ,cdobserv
@@ -1427,7 +1544,11 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
          WHERE crapneg.cdcooper = pr_cdcooper
            AND crapneg.cdhisest = 1 /* Dev Cheques */
            AND crapneg.nrdconta = pr_nrdconta
-           AND crapneg.dtiniest BETWEEN add_months(TRUNC(rw_crapdat.dtmvtolt),-pr_qtmeschq)
+           AND crapneg.dtiniest BETWEEN add_months(TRUNC(rw_crapdat.dtmvtolt),
+					                                         -DECODE(crapneg.cdobserv
+																									        ,11,pr_qtmeschqal11
+																									        ,12,pr_qtmeschqal12
+																													,pr_qtmeschq))
                                                    AND TRUNC(rw_crapdat.dtmvtolt)					 
          ORDER BY crapneg.dtiniest DESC;
     
@@ -2055,13 +2176,14 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
           END IF;
           CLOSE cr_preapv;
         ELSE
+          vr_vllimdis := rw_crapcpa.vllimdis;
           CLOSE cr_crapcpa;
         END IF; 
       END IF;
-    
-      vr_obj_generic2.put('liberaPreAprovad'
-                         ,(nvl(vr_flglibera_pre_aprv,0)=1));
-    
+
+      vr_obj_generic2.put('liberaPreAprovad', (nvl(vr_flglibera_pre_aprv,0)=1));
+      vr_obj_generic2.put('limitePreAprovado', este0001.fn_decimal_ibra(nvl(vr_vllimdis,0)));
+
       -- Data Ultima Revisão Cadastral      
       OPEN cr_revisa;
       FETCH cr_revisa
@@ -3023,8 +3145,8 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
                                      ,pr_vldctitu           => rw_craplim_tit.vllimite /* Valor Limite Titulos */
                                      ,pr_vlutitit           => rw_craptdb.vltitulo /* Valor utilizado Titulos */
                                      ,pr_tab_co_responsavel => vr_tab_co_responsavel
-                                     ,pr_dscritic           => vr_cdcritic
-                                     ,pr_cdcritic           => vr_dscritic);
+                                     ,pr_dscritic           => vr_dscritic
+                                     ,pr_cdcritic           => vr_cdcritic);
     
       -- Testar possíveis erros no retorno prevendo já o formato convertido… 
       IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
@@ -3154,7 +3276,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         IF vr_tab_dados_epr(vr_idxempr).vlsdeved > 0 THEN
           -- Chamar calculo de dias em atraso
           pc_calc_dias_atraso(pr_cdcooper => pr_cdcooper  
-                                      ,pr_nrdconta   => pr_nrdconta
+                             ,pr_nrdconta   => pr_nrdconta
                              ,pr_nrctremp => vr_tab_dados_epr(vr_idxempr).nrctremp  
                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                              ,pr_dtmvtoan => rw_crapdat.dtmvtoan
@@ -3164,9 +3286,9 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
                              ,pr_dtdpagto => vr_tab_dados_epr(vr_idxempr).dtdpagto   
                              ,pr_qtprecal => vr_tab_dados_epr(vr_idxempr).qtprecal   
                              ,pr_flgpagto => vr_tab_dados_epr(vr_idxempr).flgpagto   
-                                      ,pr_qtdiaatr   => vr_dias
-                                      ,pr_cdcritic   => vr_cdcritic
-                                      ,pr_des_erro   => vr_dscritic);
+                             ,pr_qtdiaatr   => vr_dias
+                             ,pr_cdcritic   => vr_cdcritic
+                             ,pr_des_erro   => vr_dscritic);
           --Se ocorreu erro
           IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
             --Levantar Exceção
@@ -3304,9 +3426,13 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
     
 			-- Buscar parâmetro da quantidade de meses para busca dos Estouros/Adiantamentos
 			vr_qtmeschq := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CHEQUES');		
+			vr_qtmeschqal11 := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CH_AL11');
+			vr_qtmeschqal12 := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CH_AL11');			
 		
       -- Efetuar laço para trazer todos os registros 
-      FOR rw_negchq IN cr_crapneg_cheq(vr_qtmeschq) LOOP
+      FOR rw_negchq IN cr_crapneg_cheq(vr_qtmeschq
+				                              ,vr_qtmeschqal11
+																			,vr_qtmeschqal12) LOOP
       
         -- Criar objeto para a operação e enviar suas informações 
         vr_obj_generic3 := json();
@@ -3555,10 +3681,28 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
+      
       WHEN OTHERS THEN
+        IF SQLCODE < 0 THEN
+          -- Caso ocorra exception gerar o código do erro com a linha do erro
+          vr_dscritic:= vr_dscritic ||
+                        dbms_utility.format_error_backtrace;
+                       
+        END IF;  
+
+        -- Montar a mensagem final do erro 
+        vr_dscritic:= 'Erro na montagem dos dados para análise automática da proposta (1): ' ||
+                       vr_dscritic || ' -- SQLERRM: ' || SQLERRM;
+                       
+        -- Remover as ASPAS que quebram o texto
+        vr_dscritic:= replace(vr_dscritic,'"', '');
+        vr_dscritic:= replace(vr_dscritic,'''','');
+        -- Remover as quebras de linha
+        vr_dscritic:= replace(vr_dscritic,chr(10),'');
+        vr_dscritic:= replace(vr_dscritic,chr(13),'');
+      
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro na montagem dos dados para análise automática da proposta: ' ||
-                       SQLERRM;
+        pr_dscritic := vr_dscritic;
     END;
   END pc_gera_json_pessoa_ass;
 
@@ -3862,7 +4006,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
             ,decode(wpr.tpemprst,1,'PP','TR') tpproduto
             ,lcr.tpctrato
             -- Indica que am linha de credito eh CDC ou C DC
-            ,DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
+            ,decode(fin.tpfinali,3,1,0) inlcrcdc
             ,fin.cdfinemp
             ,fin.dsfinemp
             ,wpr.inconcje
@@ -3876,6 +4020,10 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
              ,ass.inpessoa
              ,DECODE(wpr.flgpagto,0,'CONTA','FOLHA') despagto
              ,lcr.txminima
+             ,wpr.percetop
+             ,wpr.dtdpagto
+             ,wpr.dtlibera
+             ,wpr.dtcarenc
         FROM crawepr wpr
             ,craplcr lcr
             ,crapfin fin      
@@ -4133,7 +4281,8 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
     vr_dsquapro      VARCHAR2(100);
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
-		vr_qtdiarpv      INTEGER;
+    vr_qtdiarpv      INTEGER;
+    vr_valoriof      NUMBER;
     vr_tab_split     gene0002.typ_split;
     vr_dsliquid      VARCHAR2(1000);
     vr_sum_vlpreemp  crapepr.vlpreemp%TYPE := 0;
@@ -4213,24 +4362,30 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
     vr_obj_generico.put('cooperativa', pr_cdcooper); 
     vr_obj_generico.put('agenci', pr_cdagenci);
 
+    /* 0 – CDC Diversos
+       1 – CDC Veículos 
+       2 – Empréstimos /Financiamentos 
+       3 – Desconto Cheques 
+       4 – Desconto Títulos 
+       5 – Cartão de Crédito 
+       6 – Limite de Crédito) */
     -- Se for CDC
-    IF rw_crawepr.inlcrcdc = 1 THEN  
+    IF rw_crawepr.cdfinemp = 58 and rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_generico.put('segmentoCodigo'    ,0); 
-      vr_obj_generico.put('segmentoDescricao' ,'CDC Diversos');  
-      vr_obj_generico.put('linhaCreditoCodigo'    ,'');
-      vr_obj_generico.put('linhaCreditoDescricao' ,'');
-      vr_obj_generico.put('finalidadeCodigo'      ,''); 
-      vr_obj_generico.put('finalidadeDescricao'   ,'');   
+      vr_obj_generico.put('segmentoDescricao' ,'CDC Diversos');
+    ELSIF rw_crawepr.cdfinemp = 59 and rw_crawepr.inlcrcdc = 1 THEN
+      vr_obj_generico.put('segmentoCodigo'    ,1); 
+      vr_obj_generico.put('segmentoDescricao' ,'CDC Veiculos');
     ELSE
-
       vr_obj_generico.put('segmentoCodigo' ,2); -- Emprestimos/Financiamento 
       vr_obj_generico.put('segmentoDescricao' ,'Emprestimos/Financiamento');   
-      vr_obj_generico.put('linhaCreditoCodigo'    ,rw_crawepr.cdlcremp);
-      vr_obj_generico.put('linhaCreditoDescricao' ,rw_crawepr.dslcremp);
-      vr_obj_generico.put('finalidadeCodigo'      ,rw_crawepr.cdfinemp);       
-      vr_obj_generico.put('finalidadeDescricao'   ,rw_crawepr.dsfinemp);                
-    END IF;
-    
+    END IF;      
+
+    vr_obj_generico.put('linhaCreditoCodigo'    ,rw_crawepr.cdlcremp);
+    vr_obj_generico.put('linhaCreditoDescricao' ,rw_crawepr.dslcremp);
+    vr_obj_generico.put('finalidadeCodigo'      ,rw_crawepr.cdfinemp);       
+    vr_obj_generico.put('finalidadeDescricao'   ,rw_crawepr.dsfinemp);                
+
     vr_obj_generico.put('tipoProduto'           ,rw_crawepr.tpproduto);
     vr_obj_generico.put('tipoGarantiaCodigo'    ,rw_crawepr.tpctrato );
     
@@ -4336,8 +4491,27 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       END IF;
     END IF;  
 
+    -- Buscar IOF
+    EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                               ,pr_inpessoa => rw_crawepr.inpessoa
+                               ,pr_cdlcremp => rw_crawepr.cdlcremp
+                               ,pr_qtpreemp => rw_crawepr.qtpreemp
+                               ,pr_vlpreemp => rw_crawepr.vlpreemp
+                               ,pr_vlemprst => rw_crawepr.vlemprst
+                               ,pr_dtdpagto => rw_crawepr.dtdpagto
+                               ,pr_dtlibera => rw_crawepr.dtlibera
+                               ,pr_tpemprst => rw_crawepr.tpemprst
+/*                               ,pr_dtcarenc => rw_crawepr.dtcarenc
+                               ,pr_qtdias_carencia => 0*/
+                               ,pr_valoriof => vr_valoriof
+                               ,pr_dscritic => vr_dscritic);
+
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
-    
+    vr_obj_generico.put('CETValor', este0001.fn_decimal_ibra(nvl(rw_crawepr.percetop,0)));
+    vr_obj_generico.put('IOFValor', este0001.fn_decimal_ibra(nvl(vr_valoriof,0)));
+
     IF rw_crawepr.dsliquid <> '0,0,0,0,0,0,0,0,0,0' THEN
       vr_tab_split := gene0002.fn_quebra_string(rw_crawepr.dsliquid, ',');
       
@@ -4362,7 +4536,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
     END IF;
     
     vr_obj_generico.put('valorPrestLiquidacao', ESTE0001.fn_decimal_ibra(vr_sum_vlpreemp));
-    
+
     vr_obj_analise.put('indicadoresCliente', vr_obj_generico);         
     
     pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
@@ -4995,10 +5169,28 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       pr_dscritic := vr_dscritic;
 
     WHEN OTHERS THEN 
+      IF SQLCODE < 0 THEN
+        -- Caso ocorra exception gerar o código do erro com a linha do erro
+        vr_dscritic:= vr_dscritic ||
+                      dbms_utility.format_error_backtrace;
+                       
+      END IF;  
+
+      -- Montar a mensagem final do erro 
+      vr_dscritic:= 'Erro na montagem dos dados para análise automática da proposta (2): ' ||
+                     vr_dscritic || ' -- SQLERRM: ' || SQLERRM;
+                       
+      -- Remover as ASPAS que quebram o texto
+      vr_dscritic:= replace(vr_dscritic,'"', '');
+      vr_dscritic:= replace(vr_dscritic,'''','');
+      -- Remover as quebras de linha
+      vr_dscritic:= replace(vr_dscritic,chr(10),'');
+      vr_dscritic:= replace(vr_dscritic,chr(13),'');
+      
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na montagem dos dados para análise automática da proposta: '||sqlerrm;
-  END pc_gera_json_analise;
-    
+      pr_dscritic := vr_dscritic;
+
+  END pc_gera_json_analise;  
   
 END ESTE0002;
 /

@@ -98,7 +98,19 @@ PROCEDURE pc_negar_proposta(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da 
                            ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
+  
 
+PROCEDURE pc_enviar_proposta_manual(pr_nrctrlim in  craplim.nrctrlim%type --> Numero do Contrato do Limite.
+                                   ,pr_tpctrlim in  craplim.tpctrlim%type --> Tipo de contrato do limite
+                                   ,pr_nrdconta in  crapass.nrdconta%type --> Conta do associado
+                                   ,pr_dtmovito in  varchar2	             -- crapdat.dtmvtolt%type  --> Data do movimento atual
+                                   ,pr_xmllog   in  varchar2              --> XML com informações de LOG
+                                   ,pr_cdcritic out pls_integer           --> Codigo da critica
+                                   ,pr_dscritic out varchar2              --> Descricao da critica
+                                   ,pr_retxml   in  out nocopy xmltype    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo out varchar2              --> Nome do campo com erro
+                                   ,pr_des_erro out varchar2              --> Erros do processo OK ou NOK
+                                   );
 
 END TELA_ATENDA_DSCTO_TIT;
 /
@@ -476,6 +488,7 @@ BEGIN
        raise vr_exc_saida;
    end if;
 
+   vr_dsmensag := replace(replace(vr_dsmensag, '<b>', '\"'), '</b>', '\"');
    vr_dsmensag := replace(replace(vr_dsmensag, '<br>', ' '), '<BR>', ' ');
    pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                     '<Root><dsmensag>' || vr_dsmensag || '</dsmensag></Root>');
@@ -502,7 +515,7 @@ EXCEPTION
   when others then
        -- Atribui exceção para os parametros de crítica
        pr_cdcritic := vr_cdcritic;
-       pr_dscritic := 'Erro nao tratado na ESTE0003.pc_consulta_acionamento: ' || sqlerrm;
+       pr_dscritic := 'Erro nao tratado na ESTE0003.pc_analisar_proposta: ' || sqlerrm;
        pr_des_erro := 'NOK';
        pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
@@ -819,14 +832,16 @@ BEGIN
 
                 --  Verifica se o valor é maior que o valor da consulta SCR
                 IF  vr_valor > vr_vlminscr THEN
-                    vr_mensagem_04 := 'Efetue consulta no SCR.';
+                    vr_mensagem_04 := 'Efetue consulta no SCR.'; 
                 END IF;
             END IF;
         END IF;
 
         --  Se está em Contingência...
         IF  vr_em_contingencia_ibratan THEN
-            vr_mensagem_05 := 'O processo de análise IBRATAN está em Contingência. Deseja prosseguir com o processo de Confirmação do Novo Limite mesmo assim?';
+            /* 07/03/2018 Paulo Penteado (GFT): Segundo Amanda não precisa mais emitir essa mensagem na confirmação. Pois as situações de retorna das analises já deixa isso claro.
+            vr_mensagem_05 := 'O processo de análise IBRATAN está em Contingência. Deseja prosseguir com o processo de Confirmação do Novo Limite mesmo assim?';*/
+            vr_mensagem_05 := null;
         END IF;
 
         --  Se houver alguma Mensagem/Inconsistência, emitir mensagem para o usuario
@@ -1514,6 +1529,121 @@ BEGIN
   END;
 
 END pc_negar_proposta;
+
+PROCEDURE pc_enviar_proposta_manual(pr_nrctrlim in  craplim.nrctrlim%type --> Numero do Contrato do Limite.
+                                   ,pr_tpctrlim in  craplim.tpctrlim%type --> Tipo de contrato do limite
+                                   ,pr_nrdconta in  crapass.nrdconta%type --> Conta do associado
+                                   ,pr_dtmovito in  varchar2	             -- crapdat.dtmvtolt%type  --> Data do movimento atual
+                                   ,pr_xmllog   in  varchar2              --> XML com informações de LOG
+                                   ,pr_cdcritic out pls_integer           --> Codigo da critica
+                                   ,pr_dscritic out varchar2              --> Descricao da critica
+                                   ,pr_retxml   in  out nocopy xmltype    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo out varchar2              --> Nome do campo com erro
+                                   ,pr_des_erro out varchar2              --> Erros do processo OK ou NOK
+                                   ) is
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : pc_enviar_proposta_manual
+    Sistema  : Cred
+    Sigla    : TELA_ATENDA_LIMDESCTIT
+    Autor    : Paulo Penteado (GFT) 
+    Data     : Março/2018                   Ultima atualizacao: 05/03/2018
+   
+    Dados referentes ao programa:
+   
+    Frequencia: Sempre que for chamado
+    
+    Objetivo  : Procedure para enviar a analise para esteira após confirmação de senha
+   
+    Alteração : 05/03/2018 - Criação (Paulo Penteado (GFT))
+
+  ---------------------------------------------------------------------------------------------------------------------*/
+
+   vr_dsmensag varchar2(32767);
+   
+   -- Variável de críticas
+   vr_cdcritic crapcri.cdcritic%type;
+   vr_dscritic varchar2(10000);
+     
+   -- Tratamento de erros
+   vr_exc_saida exception;
+
+   -- Variaveis de entrada vindas no xml
+   vr_cdcooper integer;
+   vr_cdoperad varchar2(100);
+   vr_nmdatela varchar2(100);
+   vr_nmeacao  varchar2(100);
+   vr_cdagenci varchar2(100);
+   vr_nrdcaixa varchar2(100);
+   vr_idorigem varchar2(100);
+
+BEGIN
+
+   pr_des_erro := pr_xmllog; -- somente para não haver hint, caso for usado, pode remover essa linha
+   pr_des_erro := 'OK';
+   pr_nmdcampo := null;
+
+   gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                           ,pr_cdcooper => vr_cdcooper
+                           ,pr_nmdatela => vr_nmdatela
+                           ,pr_nmeacao  => vr_nmeacao
+                           ,pr_cdagenci => vr_cdagenci
+                           ,pr_nrdcaixa => vr_nrdcaixa
+                           ,pr_idorigem => vr_idorigem
+                           ,pr_cdoperad => vr_cdoperad
+                           ,pr_dscritic => vr_dscritic);
+
+   este0003.pc_enviar_analise_manual(pr_cdcooper => vr_cdcooper
+                                    ,pr_cdagenci => vr_cdagenci
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_cdorigem => vr_idorigem
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_nrctrlim => pr_nrctrlim
+                                    ,pr_tpctrlim => pr_tpctrlim
+                                    ,pr_dtmvtolt => pr_dtmovito
+                                    ,pr_nmarquiv => null
+                                    ,vr_flgdebug => 'N'
+                                    ,pr_dsmensag => vr_dsmensag
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic
+                                    ,pr_des_erro => pr_des_erro );
+
+   if  vr_cdcritic > 0  or vr_dscritic is not null then
+       raise vr_exc_saida;
+   end if;
+
+   vr_dsmensag := replace(replace(vr_dsmensag, '<b>', '\"'), '</b>', '\"');
+   vr_dsmensag := replace(replace(vr_dsmensag, '<br>', ' '), '<BR>', ' ');
+   pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                    '<Root><dsmensag>' || vr_dsmensag || '</dsmensag></Root>');
+   dbms_output.put_line(vr_dsmensag);
+   
+   COMMIT;
+
+EXCEPTION
+  when vr_exc_saida then
+       -- Se possui código de crítica e não foi informado a descrição
+       if  vr_cdcritic <> 0 and trim(vr_dscritic) is null then
+           -- Busca descrição da crítica
+           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+       end if;
+        
+       -- Atribui exceção para os parametros de crítica
+       pr_cdcritic := vr_cdcritic;
+       pr_dscritic := vr_dscritic;
+       pr_des_erro := 'NOK';
+       pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+       rollback;
+        
+  when others then
+       -- Atribui exceção para os parametros de crítica
+       pr_cdcritic := vr_cdcritic;
+       pr_dscritic := 'Erro nao tratado na ESTE0003.pc_enviar_proposta_manual: ' || sqlerrm;
+       pr_des_erro := 'NOK';
+       pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+       rollback;
+end pc_enviar_proposta_manual;
 
 
 END TELA_ATENDA_DSCTO_TIT;

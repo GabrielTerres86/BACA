@@ -88,6 +88,11 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                       pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                      
                                       ---- OUT ----                           
                                       pr_dscritic OUT VARCHAR2);              --> Descricao da critica
+  
+  --> Rotina para converter arquivo(pdf) para CLOB em base64 para ser enviado via JSON                                    
+  PROCEDURE pc_arq_para_clob_base64(pr_nmarquiv     IN VARCHAR2,
+                                    pr_json_value_arq OUT json_value,
+                                    pr_dscritic    OUT VARCHAR2);
                                       
   --> Extrair a descricao de critica do jsson de retorno
   FUNCTION fn_retorna_critica (pr_jsonreto IN VARCHAR2) RETURN VARCHAR2;
@@ -903,27 +908,27 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
                                pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
                                pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
-                               pr_dsmetodo								 IN tbgen_webservice_aciona.dsmetodo%TYPE DEFAULT NULL,
+                               pr_dsmetodo         IN tbgen_webservice_aciona.dsmetodo%TYPE DEFAULT NULL,
                                pr_tpconteudo               IN tbgen_webservice_aciona.tpconteudo%TYPE DEFAULT NULL,  --tipo de retorno json/xml
                                pr_tpproduto                IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
                                pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
                                pr_dscritic                OUT VARCHAR2) IS
-																 
+                 
 /* ..........................................................................
-		
+  
   Programa : pc_grava_acionamento        
   Sistema  : Conta-Corrente - Cooperativa de Credito
   Sigla    : CRED
   Autor    : Luis Fernando - GFT
   Data     : Fevereiro/2018.                   Ultima atualizacao: 
-		
+  
   Dados referentes ao programa:
-		
+  
   Frequencia: Sempre que for chamado
   Objetivo  : Grava registro de log de acionamento
-		
+  
   Alteração : 
-				
+    
 ..........................................................................*/
   PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
@@ -960,12 +965,12 @@ BEGIN
                 pr_cdstatus_http,   -- cdstatus_http
                 pr_dsconteudo_requisicao,
                 pr_dsresposta_requisicao, --dsresposta_requisicao       
-                pr_dsmetodo,				-- dsmetodo
-                pr_tpconteudo,			-- tpconteudo
-                pr_tpproduto,				--tpproduto
+                pr_dsmetodo,    -- dsmetodo
+                pr_tpconteudo,   -- tpconteudo
+                pr_tpproduto,    --tpproduto
                 pr_dsprotocolo)     -- protocolo
          RETURNING tbgen_webservice_aciona.idacionamento INTO pr_idacionamento;
-	 
+  
   --> Commit para garantir que guarde as informações do log de acionamento
   COMMIT;
 EXCEPTION
@@ -1012,8 +1017,7 @@ END pc_grava_acionamento;
   END;
 
 
-  --> Rotina para converter arquivo(pdf) para CLOB em base64 para ser enviado
-   -- via JSON
+  --> Rotina para converter arquivo(pdf) para CLOB em base64 para ser enviado via JSON
   PROCEDURE pc_arq_para_clob_base64(pr_nmarquiv     IN VARCHAR2,
                                     pr_json_value_arq OUT json_value,
                                     pr_dscritic    OUT VARCHAR2  )IS
@@ -4454,7 +4458,7 @@ END pc_grava_acionamento;
                                           ,pr_cdcritic OUT PLS_INTEGER           --> Cód. da crítica
                                           ,pr_dscritic OUT VARCHAR2) IS          --> Desc. da crítica
   BEGIN
-  /* .........................................................................
+  /* ......................................................................... 
 
     Programa : pc_obrigacao_analise_automatica
     Sistema  : Conta-Corrente - Cooperativa de Credito

@@ -126,7 +126,6 @@ procedure pc_enviar_esteira (pr_cdcooper    in crapcop.cdcooper%type  --> Codigo
                             ,pr_cdorigem    in integer                --> Origem da operacao
                             ,pr_nrdconta    in craplim.nrdconta%type  --> Numero da conta do cooperado
                             ,pr_nrctrlim    in craplim.nrctrlim%type  --> Numero da proposta
-                            ,pr_tpctrlim    in craplim.tpctrlim%type  --> Tipo de contrato do limite
                             ,pr_dtmvtolt    in crapdat.dtmvtolt%type  --> Data do movimento                                      
                             ,pr_comprecu    in varchar2               --> Complemento do recuros da URI
                             ,pr_dsmetodo    in varchar2               --> Descricao do metodo
@@ -145,20 +144,107 @@ procedure pc_solicita_retorno_analise(pr_cdcooper in crapcop.cdcooper%type
                                      ,pr_dsprotoc in craplim.dsprotoc%type
                                      );
 
+
+
+procedure pc_enviar_analise_manual(pr_cdcooper    in craplim.cdcooper%type  --> Codigo da cooperativa
+                                   ,pr_cdagenci    in crapage.cdagenci%type  --> Codigo da agencia                                          
+                                   ,pr_cdoperad    in crapope.cdoperad%type  --> codigo do operador
+                                   ,pr_cdorigem    in integer                --> Origem da operacao
+                                   ,pr_nrdconta    in craplim.nrdconta%type  --> Numero da conta do cooperado
+                                   ,pr_nrctrlim    in craplim.nrctrlim%type  --> Numero da proposta
+                                   ,pr_tpctrlim    in craplim.tpctrlim%type  --> Tipo de contrato do limite
+                                   ,pr_dtmvtolt    in VARCHAR2
+                                   ,pr_nmarquiv  in varchar2                 --> Diretorio e nome do arquivo pdf da proposta
+                                   ,vr_flgdebug  IN VARCHAR2                 --> Flag se debug ativo
+                                    ---- OUT ----
+                                   ,pr_dsmensag OUT VARCHAR2
+                                   ,pr_cdcritic OUT NUMBER
+                                   ,pr_dscritic OUT VARCHAR2
+                                   ,pr_des_erro out varchar2              --> Erros do processo OK ou NOK
+                                   );
+
 end ESTE0003;
 /
 create or replace package body cecred.ESTE0003 is
 
-  --> Funcao para formatar data hora conforme padrao da IBRATAN
-  FUNCTION fn_DataTempo_ibra (pr_data IN DATE) RETURN VARCHAR2 IS
-  BEGIN
-    RETURN to_char(pr_data,'RRRR-MM-DD"T"HH24:MI:SS".000Z"');
-  END fn_DataTempo_ibra;
+vr_flctgest boolean;
+vr_flctgmot boolean;
+
+--> Funcao para formatar data hora conforme padrao da IBRATAN
+FUNCTION fn_DataTempo_ibra (pr_data IN DATE) RETURN VARCHAR2 IS
+BEGIN
+   RETURN to_char(pr_data,'RRRR-MM-DD"T"HH24:MI:SS".000Z"');
+END fn_DataTempo_ibra;
+
+PROCEDURE pc_verifica_contigenc_esteira(pr_cdcooper in crapcop.cdcooper%type
+                                       ,pr_flctgest out boolean
+                                       ,pr_dsmensag out varchar2
+                                       ,pr_dscritic out varchar2
+                                       ) is
+   vr_contige_este VARCHAR2(500);
+   vr_exc_erro EXCEPTION;
+   vr_dscritic VARCHAR2(4000);
+    
+BEGIN  
+   pr_flctgest := false;
+
+   vr_contige_este := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_cdacesso => 'CONTIGENCIA_ESTEIRA_DESC');
+   if  vr_contige_este is null then
+       vr_dscritic := 'Parametro CONTIGENCIA_ESTEIRA_DESC não encontrado.';
+       raise vr_exc_erro;      
+   end if;
+    
+   if  vr_contige_este = '1' then
+       pr_flctgest := true;
+       pr_dsmensag := 'Atenção! O Envio para esteira está em contingencia';      
+   end if;
+  
+EXCEPTION
+   when vr_exc_erro then     
+        pr_dscritic := vr_dscritic;
+    
+   when others then
+        pr_dscritic := 'Não foi possivel buscar parametros da estira: '||sqlerrm;
+END;
+
+
+PROCEDURE pc_verifica_contigenc_motor(pr_cdcooper in crapcop.cdcooper%type
+                                     ,pr_flctgmot out boolean
+                                     ,pr_dsmensag out varchar2
+                                     ,pr_dscritic out varchar2
+                                     ) is
+   vr_contige_moto VARCHAR2(500);
+   vr_exc_erro     EXCEPTION;
+   vr_dscritic     VARCHAR2(4000);
+    
+BEGIN  
+   pr_flctgmot := false; 
+
+   vr_contige_moto := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_cdacesso => 'ANALISE_OBRIG_MOTOR_DESC');
+   if  vr_contige_moto is null then
+       vr_dscritic := 'Parametro ANALISE_OBRIG_MOTOR_DESC não encontrado.';
+       raise vr_exc_erro;      
+   end if;
+    
+   if  vr_contige_moto = '0' then
+       pr_flctgmot := true; 
+       pr_dsmensag := 'Atenção! O Envio para o motor está em contingencia';
+   end if; 
+  
+EXCEPTION
+   when vr_exc_erro then     
+        pr_dscritic := vr_dscritic;
+    
+   when others then
+        pr_dscritic := 'Não foi possivel buscar parametros do motor: '||sqlerrm;
+END;
+
 
 PROCEDURE pc_carrega_param_ibra(pr_cdcooper      IN crapcop.cdcooper%type  -- Codigo da cooperativa
-                               ,pr_nrdconta      IN crawepr.nrdconta%type  --> Numero da conta do cooperado
-                               ,pr_nrctrlim      IN craplim.nrctrlim%type  --> Numero da proposta de emprestimo
-                               ,pr_tpctrlim      in craplim.tpctrlim%type  --> Tipo de contrato do limite.
                                ,pr_tpenvest      IN VARCHAR2 DEFAULT null  --> Tipo de envio C - Consultar(Get)
                                ,pr_host_esteira  OUT varchar2               -- Host da esteira
                                ,pr_recurso_este  OUT varchar2               -- URI da esteira
@@ -188,17 +274,7 @@ PROCEDURE pc_carrega_param_ibra(pr_cdcooper      IN crapcop.cdcooper%type  -- Co
     vr_dscritic VARCHAR2(4000);
     vr_cdcritic NUMBER;
     
-  BEGIN  
-    
-    pc_verifica_regras_esteira (pr_cdcooper  => pr_cdcooper
-                               ,pr_nrdconta  => pr_nrdconta
-                               ,pr_nrctrlim  => pr_nrctrlim
-                               ,pr_tpctrlim  => pr_tpctrlim
-                               ,pr_tpenvest  => pr_tpenvest
-                               ---- OUT ----                                        
-                               ,pr_cdcritic => vr_cdcritic 
-                               ,pr_dscritic => vr_dscritic);
-  
+  BEGIN    
     -- Se houve erro
     IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       -- Encerrar o processo
@@ -320,6 +396,7 @@ PROCEDURE pc_enviar_proposta_esteira(pr_cdcooper in  craplim.cdcooper%type --> C
 
   vr_dtmvtolt DATE;
 
+  vr_cdagenci crapage.cdagenci%type; --> Codigo da agencia
   vr_inobriga varchar2(1);
   vr_tpenvest varchar2(1);
   
@@ -332,11 +409,12 @@ PROCEDURE pc_enviar_proposta_esteira(pr_cdcooper in  craplim.cdcooper%type --> C
   
   -- Busca do nome do associado
   cursor cr_crapass is
-  select nmprimtl
-        ,inpessoa
-  from   crapass
-  where  cdcooper = pr_cdcooper
-  and    nrdconta = pr_nrdconta;
+  select ass.nmprimtl
+        ,ass.inpessoa
+        ,ass.cdagenci
+  from   crapass ass
+  where  ass.cdcooper = pr_cdcooper
+  and    ass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%rowtype;
 
   -- busca do limite do contrato
@@ -351,89 +429,109 @@ PROCEDURE pc_enviar_proposta_esteira(pr_cdcooper in  craplim.cdcooper%type --> C
   rw_craplim cr_craplim%ROWTYPE;
 
 BEGIN
-  pr_des_erro := 'OK';
-  vr_tpenvest := pr_tpenvest;
-  vr_dtmvtolt := TO_DATE(pr_dtmovito, 'DD/MM/YYYY');
-                          
-  open  cr_crapass;
-  fetch cr_crapass into rw_crapass;
-  if    cr_crapass%notfound then
-        close cr_crapass;
-        vr_dscritic := 'Associado nao cadastrado. Conta: ' || pr_nrdconta;
-        raise vr_exc_saida;
-  end   if;
-  close cr_crapass;
-    
-  open  cr_craplim;
-  fetch cr_craplim into rw_craplim;
-  if    cr_craplim%notfound then
-        close cr_craplim;
-        vr_dscritic := 'Associado nao possui proposta de limite de credito. Conta: ' || pr_nrdconta || '.Contrato: ' || pr_nrctrlim;
-        raise vr_exc_saida;
-  end   if;
-  close cr_craplim;
+   pr_des_erro := 'OK';
+   vr_tpenvest := pr_tpenvest;
+   vr_dtmvtolt := TO_DATE(pr_dtmovito, 'DD/MM/YYYY');
   
-  tela_atenda_limdesctit.pc_validar_data_proposta(pr_cdcooper => pr_cdcooper
-                                                 ,pr_nrdconta => rw_craplim.nrdconta
-                                                 ,pr_nrctrlim => pr_nrctrlim
-                                                 ,pr_tpctrlim => pr_tpctrlim
-                                                 ,pr_cdcritic => vr_cdcritic
-                                                 ,pr_dscritic => vr_dscritic);
+  
+   pc_verifica_contigenc_motor(pr_cdcooper => pr_cdcooper
+                              ,pr_flctgmot => vr_flctgmot
+                              ,pr_dsmensag => pr_dsmensag
+                              ,pr_dscritic => pr_dscritic);
 
-  if  vr_cdcritic > 0  or vr_dscritic is not null then
-      raise vr_exc_saida;
-  end if;
+   pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper
+                                ,pr_flctgest => vr_flctgest
+                                ,pr_dsmensag => pr_dsmensag
+                                ,pr_dscritic => pr_dscritic);
+                                
+   if  vr_flctgmot and vr_flctgest then
+       pr_cdcritic := 0;
+       pr_dscritic := '';
+       pr_dsmensag := 'O Motor e a Esteira estão em contingência, efetue a análise manual e para efetivar pressione o botão \"Confirmar Novo Limite\".';
+       return;
+   end if;
+                          
+   open  cr_crapass;
+   fetch cr_crapass into rw_crapass;
+   if    cr_crapass%notfound then
+         close cr_crapass;
+         vr_dscritic := 'Associado nao cadastrado. Conta: ' || pr_nrdconta;
+         raise vr_exc_saida;
+   end   if;
+   close cr_crapass;
+   
+   vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
+     
+   open  cr_craplim;
+   fetch cr_craplim into rw_craplim;
+   if    cr_craplim%notfound then
+         close cr_craplim;
+         vr_dscritic := 'Associado nao possui proposta de limite de credito. Conta: ' || pr_nrdconta || '.Contrato: ' || pr_nrctrlim;
+         raise vr_exc_saida;
+   end   if;
+   close cr_craplim;
+   
+   tela_atenda_limdesctit.pc_validar_data_proposta(pr_cdcooper => pr_cdcooper
+                                                  ,pr_nrdconta => rw_craplim.nrdconta
+                                                  ,pr_nrctrlim => pr_nrctrlim
+                                                  ,pr_tpctrlim => pr_tpctrlim
+                                                  ,pr_cdcritic => vr_cdcritic
+                                                  ,pr_dscritic => vr_dscritic);
 
-  if  vr_tpenvest = 'I' then
-      vr_inobriga := 'N';
-      
-      -- Verificar se a proposta devera passar por analise automatica
-      pc_obrigacao_analise_automatic(pr_cdcooper => pr_cdcooper
-                                    ,pr_inobriga => vr_inobriga
-                                    ,pr_cdcritic => vr_cdcritic
-                                    ,pr_dscritic => vr_dscritic);
-      -- Se: 1 - Ja houve envio para a Esteira
-      --     2 - Nao precisar passar por Analise Automatica
-      --     3 - Nao existir protocolo gravado
-      if  rw_craplim.dtenvest is not null and vr_inobriga <> 'S' and (trim(rw_craplim.dsprotoc) is null) then
-          -- Significa que a proposta jah foi para a Esteira, entao devemos mandar um reinicio de Fluxo
-          vr_tpenvest := 'A';
-      end if;
-  end if;
+   if  vr_cdcritic > 0  or vr_dscritic is not null then
+       raise vr_exc_saida;
+   end if;
 
-        
-  /***** Verificar se a Esteira esta em contigencia *****/
-  pc_verifica_regras_esteira(pr_cdcooper => pr_cdcooper
-                            ,pr_nrdconta => rw_craplim.nrdconta
-                            ,pr_nrctrlim => pr_nrctrlim
-                            ,pr_tpctrlim => pr_tpctrlim
-                            ,pr_tpenvest => vr_tpenvest
-                            ,pr_cdcritic => vr_cdcritic
-                            ,pr_dscritic => vr_dscritic);
+   if  vr_tpenvest = 'I' then
+       vr_inobriga := 'N';
+       
+       -- Verificar se a proposta devera passar por analise automatica
+       pc_obrigacao_analise_automatic(pr_cdcooper => pr_cdcooper
+                                     ,pr_inobriga => vr_inobriga
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+       -- Se: 1 - Ja houve envio para a Esteira
+       --     2 - Nao precisar passar por Analise Automatica
+       --     3 - Nao existir protocolo gravado
+       if  rw_craplim.dtenvest is not null and vr_inobriga <> 'S' and (trim(rw_craplim.dsprotoc) is null) then
+           -- Significa que a proposta jah foi para a Esteira, entao devemos mandar um reinicio de Fluxo
+           vr_tpenvest := 'A';
+       end if;
+   end if;
 
-  if  vr_cdcritic > 0  or vr_dscritic is not null then
-      raise vr_exc_saida;
-  end if;
-      
-  /***** INCLUIR/DERIVAR PROPOSTA *****/ 
-  if  vr_tpenvest in ('I','D') then
-      pc_incluir_proposta_est(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_cdoperad => pr_cdoperad
-                             ,pr_cdorigem => pr_idorigem
-                             ,pr_nrdconta => pr_nrdconta
+         
+   /***** Verificar se a Esteira esta em contigencia *****/
+   pc_verifica_regras_esteira(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => rw_craplim.nrdconta
                              ,pr_nrctrlim => pr_nrctrlim
                              ,pr_tpctrlim => pr_tpctrlim
-                             ,pr_dtmvtolt => vr_dtmvtolt
-                             ,pr_nmarquiv => null
-                             -- out
-                             ,pr_dsmensag => pr_dsmensag
+                             ,pr_tpenvest => vr_tpenvest
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);
 
-      if  vr_cdcritic > 0  or vr_dscritic is not null then
-          raise vr_exc_saida;
-      end if;
+   if  vr_cdcritic > 0  or vr_dscritic is not null then
+       raise vr_exc_saida;
+   end if;
+       
+   /***** INCLUIR/DERIVAR PROPOSTA *****/ 
+   if  vr_tpenvest in ('I','D') then
+       pc_incluir_proposta_est(pr_cdcooper => pr_cdcooper
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_cdoperad => pr_cdoperad
+                              ,pr_cdorigem => pr_idorigem
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrctrlim => pr_nrctrlim
+                              ,pr_tpctrlim => pr_tpctrlim
+                              ,pr_dtmvtolt => vr_dtmvtolt
+                              ,pr_nmarquiv => null
+                              -- out
+                              ,pr_dsmensag => pr_dsmensag
+                              ,pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
+
+       if  vr_cdcritic > 0  or vr_dscritic is not null then
+           raise vr_exc_saida;
+       end if;
    end if;
 
    COMMIT;
@@ -456,7 +554,7 @@ EXCEPTION
   WHEN OTHERS THEN
        -- Atribui exceção para os parametros de crítica
        pr_cdcritic := vr_cdcritic;
-       pr_dscritic := 'Erro nao tratado na ESTE0003.pc_consulta_acionamento: ' || SQLERRM;
+       pr_dscritic := 'Erro nao tratado na ESTE0003.pc_enviar_proposta_esteira: ' || SQLERRM;
        pr_des_erro := 'NOK';
 
        ROLLBACK;
@@ -481,38 +579,36 @@ begin
   null;
 end;*/
 
-PROCEDURE pc_obrigacao_analise_automatic(pr_cdcooper IN crapcop.cdcooper%TYPE  -- Cód. cooperativa
+PROCEDURE pc_obrigacao_analise_automatic(pr_cdcooper in crapcop.cdcooper%type  -- Cód. cooperativa
                                          ---- OUT ----                                          
-                                        ,pr_inobriga OUT VARCHAR2              -- Indicador de obrigaçao de análisa automática ('S' - Sim / 'N' - Nao)
-                                        ,pr_cdcritic OUT PLS_INTEGER           -- Cód. da crítica
-                                        ,pr_dscritic OUT VARCHAR2) IS          -- Desc. da crítica
-/* .........................................................................
-Programa : pc_obrigacao_analise_automatica
-Sistema  : 
-Sigla    : 
-Autor    : Lindon Carlos Pecile (GFT - Brasil)
-Data     : Fevereiro/2018                    Ultima atualizacao: --/--/----
-Dados referentes ao programa:
-Frequencia: Sempre que for chamado
-Objetivo  : Tem como objetivo retornar positivo caso a proposta deverá passar 
-            por análise automática ou posteriormente manual na Esteira de Crédito
-Alteraçao : 
-..........................................................................*/
-BEGIN 
-  -- OU Esteira está em contingencia 
-  -- OU a Cooperativa nao Obriga Análise Automática
-  IF  GENE0001.FN_PARAM_SISTEMA('CRED',pr_cdcooper,'CONTIGENCIA_ESTEIRA_DESC') = 1 OR 
-      GENE0001.FN_PARAM_SISTEMA('CRED',pr_cdcooper,'ANALISE_OBRIG_MOTOR_DESC') = 0 THEN
-      pr_inobriga := 'N';
-  ELSE 
-      pr_inobriga := 'S';
-  END IF;
+                                        ,pr_inobriga out varchar2              -- Indicador de obrigaçao de análisa automática ('S' - Sim / 'N' - Nao)
+                                        ,pr_cdcritic out pls_integer           -- Cód. da crítica
+                                        ,pr_dscritic out varchar2) is          -- Desc. da crítica
+vr_dsmensag varchar2(1000);
+begin 
+   pc_verifica_contigenc_motor(pr_cdcooper => pr_cdcooper
+                              ,pr_flctgmot => vr_flctgmot
+                              ,pr_dsmensag => vr_dsmensag
+                              ,pr_dscritic => pr_dscritic);
+
+   pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper
+                                ,pr_flctgest => vr_flctgest
+                                ,pr_dsmensag => vr_dsmensag
+                                ,pr_dscritic => pr_dscritic);
+
+   -- OU Esteira está em contingencia 
+   -- OU a Cooperativa nao Obriga Análise Automática
+   if  vr_flctgest or vr_flctgmot then
+       pr_inobriga := 'N';
+   else 
+       pr_inobriga := 'S';
+   end if;
       
-EXCEPTION     
-  WHEN OTHERS THEN
-    pr_cdcritic := 0;
-    pr_dscritic := 'Erro inesperado na rotina que verifica o tipo de análise da proposta: '||SQLERRM;
-END pc_obrigacao_analise_automatic;  
+exception     
+   when others then
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro inesperado na rotina que verifica o tipo de análise da proposta: '||sqlerrm;
+end pc_obrigacao_analise_automatic;  
 
   
 PROCEDURE pc_verifica_regras_esteira (pr_cdcooper  IN craplim.cdcooper%TYPE  -- Codigo da cooperativa                                        
@@ -552,27 +648,11 @@ PROCEDURE pc_verifica_regras_esteira (pr_cdcooper  IN craplim.cdcooper%TYPE  -- 
       and    lim.tpctrlim = pr_tpctrlim; 
     rw_craplim cr_craplim%ROWTYPE;
     
-    vr_contige_este VARCHAR2(500);
     vr_exc_erro     EXCEPTION;
     vr_dscritic     VARCHAR2(4000);
     vr_cdcritic     NUMBER;
     
   BEGIN
-  
-    --> Verificar se a Esteira esta em contigencia para a cooperativa
-    vr_contige_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-                                                  pr_cdcooper => pr_cdcooper, 
-                                                  pr_cdacesso => 'CONTIGENCIA_ESTEIRA_DESC');
-    IF vr_contige_este IS NULL THEN
-      vr_dscritic := 'Parametro CONTIGENCIA_ESTEIRA_DESC não encontrado.';
-      RAISE vr_exc_erro;      
-    END IF;
-    
-    IF vr_contige_este = '1' THEN
-      vr_dscritic := 'Atenção! O Envio para esteira está em contigencia';
-      RAISE vr_exc_erro;      
-    END IF; 
-    
     -- Para inclusão, alteração ou derivação
     IF nvl(pr_tpenvest,' ') IN ('I','A','D') THEN    
       
@@ -589,10 +669,10 @@ PROCEDURE pc_verifica_regras_esteira (pr_cdcooper  IN craplim.cdcooper%TYPE  -- 
       -- OU se foi Reprovada pelo Motor
       -- ou se houve Erro Conexão
       -- OU se foi enviada e recebemos a Derivação 
-      IF rw_craplim.insitest = 0 
-      OR (rw_craplim.insitest = 3 AND rw_craplim.insitapr = 2 AND rw_craplim.cdopeapr = 'MOTOR') 
-      OR (rw_craplim.insitest = 3 AND rw_craplim.insitapr = 6 AND pr_tpenvest = 'I')       
-      OR (rw_craplim.insitest = 3 AND rw_craplim.insitapr = 5) THEN
+      IF  rw_craplim.insitest = 0 
+      OR (rw_craplim.insitest = 3 AND rw_craplim.insitapr = 5) 
+      OR (rw_craplim.insitest = 3 AND rw_craplim.insitapr = 8 AND pr_tpenvest = 'I')       
+      /*OR (rw_craplim.insitest = 3 AND rw_craplim.insitapr = 5)*/ THEN
         -- Sair pois pode ser enviada
         RETURN;
       END IF;
@@ -868,9 +948,6 @@ PROCEDURE pc_incluir_proposta_est(pr_cdcooper  IN craplim.cdcooper%TYPE
   and    lim.tpctrlim = pr_tpctrlim;
   rw_craplim cr_craplim%ROWTYPE;
     
-  -- Tipo Envio Esteira
-  vr_tpenvest varchar2(1);
-    
   -- Acionamentos de retorno
   cursor cr_aciona_retorno(pr_dsprotocolo varchar2) is
     select ac.dsconteudo_requisicao
@@ -898,7 +975,6 @@ PROCEDURE pc_incluir_proposta_est(pr_cdcooper  IN craplim.cdcooper%TYPE
   vr_destipo varchar2(1000);
   vr_desmens varchar2(4000);
   vr_dsmensag VARCHAR2(32767);
-  vr_inobriga VARCHAR2(1);
     
   -- Variaveis para DEBUG
   vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
@@ -937,14 +1013,13 @@ BEGIN
   FETCH cr_craplim INTO rw_craplim;
   CLOSE cr_craplim;
     
-  -- Verificar se a Cooperativa/Linha/Finalidade Obriga a passagem pelo Motor
-  pc_obrigacao_analise_automatic(pr_cdcooper => pr_cdcooper
-                                ,pr_inobriga => vr_inobriga
-                                ,pr_cdcritic => vr_cdcritic
-                                ,pr_dscritic => vr_dscritic);
-    
+  pc_verifica_contigenc_motor(pr_cdcooper => pr_cdcooper
+                             ,pr_flctgmot => vr_flctgmot
+                             ,pr_dsmensag => pr_dsmensag
+                             ,pr_dscritic => pr_dscritic);
+  
   -- Se Obrigatorio e ainda nao Enviada ou Enviada mas com Erro Conexao
-  IF vr_inobriga = 'S' AND (rw_craplim.insitest = 0 OR rw_craplim.insitapr = 6) THEN 
+  IF not(vr_flctgmot) AND (rw_craplim.insitest = 0 OR rw_craplim.insitapr = 8) THEN 
       
     -- Gerar informaçoes no padrao JSON da proposta de emprestimo
     ESTE0004.pc_gera_json_analise_lim(pr_cdcooper  => pr_cdcooper
@@ -1013,7 +1088,6 @@ BEGIN
                      ,pr_cdorigem    => pr_cdorigem
                      ,pr_nrdconta    => pr_nrdconta
                      ,pr_nrctrlim    => pr_nrctrlim
-                     ,pr_tpctrlim    => pr_tpctrlim
                      ,pr_dtmvtolt    => pr_dtmvtolt
                      ,pr_comprecu    => vr_comprecu
                      ,pr_dsmetodo    => 'POST'
@@ -1036,7 +1110,7 @@ BEGIN
     vr_hrenvest := to_char(SYSDATE,'sssss');
     BEGIN
       UPDATE craplim lim 
-         SET lim.insitest = 1, --  1 – Enviada para Analise 
+         SET lim.insitest = 2, -- Enviada Analise Manual 1, -- Enviada para Analise Autom
              lim.dtenvmot = trunc(SYSDATE), 
              lim.hrenvmot = vr_hrenvest,
              lim.cdopeste = pr_cdoperad,
@@ -1070,7 +1144,7 @@ BEGIN
       CLOSE cr_craplim;
         
       -- Se a proposta mudou de situaçao Esteira
-      IF rw_craplim.insitest <> 1 THEN 
+      IF rw_craplim.insitest <> 2 THEN 
         -- Indica que terminou a analise 
         vr_flganlok := true;
       END IF;
@@ -1094,249 +1168,124 @@ BEGIN
     CLOSE cr_craplim;
       
     -- Se houve expiraçao
-    IF rw_craplim.insitest = 1 THEN 
-      pr_dsmensag := 'Proposta permanece em <b>Processamento</b>...';
-    ELSIF rw_craplim.insitest = 2 THEN 
-      pr_dsmensag := '<b>Avaliaçao Manual</b>';
-    ELSIF rw_craplim.insitest = 3 THEN 
-      -- Conforme tipo de aprovacao
-      IF rw_craplim.insitapr = 1 THEN
-        pr_dsmensag := '<b>Aprovada</b>';
-      ELSIF rw_craplim.insitapr = 2 THEN 
-        pr_dsmensag := '<b>Rejeitada</b>';          
-      ELSIF rw_craplim.insitapr IN(0,6) THEN 
-        pr_dsmensag := '<b>Erro</b> motor de crédito';
-      ELSIF rw_craplim.insitapr = 3 THEN 
-        pr_dsmensag := '<b>Com Restricoes</b>';        
-      ELSIF rw_craplim.insitapr = 4 THEN
-        pr_dsmensag := '<b>Refazer Proposta</b>';
-      ELSIF rw_craplim.insitapr = 5 THEN
-        pr_dsmensag := '<b>Avaliaçao Manual</b>';
-      END IF;
-    ELSIF rw_craplim.insitest = 4 THEN
-      pr_dsmensag := '<b>Expirada</b> apos '||vr_qtsegund||' segundos de espera.';        
-    ELSE 
-      pr_dsmensag := '<b>Finalizada</b> com situaçao indefinida!';
-    END IF;
+    if    rw_craplim.insitest = 0 then 
+          pr_dsmensag := '<b>Não enviado</b>';
+    elsif rw_craplim.insitest = 1 then 
+          pr_dsmensag := '<b>Enviado para analise automatica</b>';
+    elsif rw_craplim.insitest = 2 then 
+          pr_dsmensag := '<b>Enviada para analise manual</b>';
+    elsif rw_craplim.insitest = 3 then 
+          -- Conforme tipo de aprovacao
+          if    rw_craplim.insitapr = 0 then 
+                pr_dsmensag := '<b>Não analisado</b>';
+          elsif rw_craplim.insitapr = 1 then
+                pr_dsmensag := '<b>Aprovado automaticamente</b>';
+          elsif rw_craplim.insitapr = 2 then 
+                pr_dsmensag := '<b>Aprovado manual</b>';          
+          elsif rw_craplim.insitapr = 3 then 
+                pr_dsmensag := '<b>Aprovada contigencia</b>';        
+          elsif rw_craplim.insitapr = 4 then
+                pr_dsmensag := '<b>Rejeitado manual</b>';
+          elsif rw_craplim.insitapr = 5 then
+                pr_dsmensag := '<b>Rejeitado automaticamente</b>';
+          elsif rw_craplim.insitapr = 6 then
+                pr_dsmensag := '<b>Rejeitado Contigencia</b>';
+          elsif rw_craplim.insitapr = 7 then
+                pr_dsmensag := '<b>Não analisado</b>';
+          elsif rw_craplim.insitapr = 8 then
+                pr_dsmensag := '<b>Refazer</b>';
+          end   if;
+    elsif rw_craplim.insitest = 4 then
+          pr_dsmensag := '<b>Expirada</b> apos '||vr_qtsegund||' segundos de espera.';        
+    else 
+          pr_dsmensag := '<b>Finalizada</b> com situaçao indefinida!';
+    end   if;
       
     -- Gerar mensagem padrao:
     pr_dsmensag := 'Resultado da Avaliaçao: '||pr_dsmensag;
       
-    -- Se houver protocolo e a analise foi encerrada ou derivada
-    IF vr_dsprotoc IS NOT NULL AND rw_craplim.insitest in(2,3) THEN 
-      -- Buscar os detalhes do acionamento de retorno
-      OPEN cr_aciona_retorno(vr_dsprotoc);
-      FETCH cr_aciona_retorno
-       INTO vr_dsconteudo_requisicao;
-      -- Somente se encontrou
-      IF cr_aciona_retorno%FOUND THEN 
-        CLOSE cr_aciona_retorno; 
-        -- Processar as mensagens para adicionar ao retorno
-        BEGIN 
-          -- Efetuar cast para JSON
-          vr_obj := json(vr_dsconteudo_requisicao);            
-          -- Se existe o objeto de analise
-          IF vr_obj.exist('analises') THEN
-            vr_obj_anl := json(vr_obj.get('analises').to_char());        
-            -- Se existe a lista de mensagens
-            IF vr_obj_anl.exist('mensagensDeAnalise') THEN
-              vr_obj_lst := json_list(vr_obj_anl.get('mensagensDeAnalise').to_char());
-              -- Para cada mensagem 
-              for vr_idx in 1..vr_obj_lst.count() loop
-                BEGIN
-                  vr_obj_msg := json( vr_obj_lst.get(vr_idx));
-                  -- Se encontrar o atributo texto e tipo
-                  if vr_obj_msg.exist('texto') AND vr_obj_msg.exist('tipo') THEN
-                    vr_desmens := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_msg.get('texto').to_char(),'"'),'"'),'\u','\')));
-                    vr_destipo := REPLACE(RTRIM(LTRIM(vr_obj_msg.get('tipo').to_char(),'"'),'"'),'ERRO','REPROVAR');
-                  end if;
-                  IF vr_destipo <> 'DETALHAMENTO' THEN
-                  vr_dsmensag := vr_dsmensag || '<BR>['||vr_destipo||'] '||vr_desmens;                              
-                  END IF;
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    NULL; -- Ignorar essa linha
-                END;
-              END LOOP;
-            END IF;
-          END IF;
-        EXCEPTION
-          WHEN OTHERS THEN 
-            -- Ignorar se o conteudo nao for JSON nao conseguiremos ler as mensagens
-            null; 
-        END; 
-      ELSE
-        CLOSE cr_aciona_retorno;           
-      END IF;
-        
-      -- Se nao encontrou mensagem
-      IF vr_dsmensag IS NULL THEN 
-        -- Usar mensagem padrao
-        vr_dsmensag := '<br>Obs: para acessar detalhes da decisao, acionar <b>[Detalhes Proposta]</b>';            
-      ELSE
-        -- Gerar texto padrao 
-        vr_dsmensag := '<br>Detalhes da decisao:<br>###'|| vr_dsmensag;
-      END IF;
-      -- Concatenar ao retorno a mensagem montada
-      pr_dsmensag := pr_dsmensag ||vr_dsmensag;
-    END IF;
+    --  Se houver protocolo e a analise foi encerrada ou derivada
+    if  vr_dsprotoc is not null and rw_craplim.insitest in (2,3) then 
+        --    Buscar os detalhes do acionamento de retorno
+        open  cr_aciona_retorno(vr_dsprotoc);
+        fetch cr_aciona_retorno into vr_dsconteudo_requisicao;
+        if    cr_aciona_retorno%found then 
+              -- Processar as mensagens para adicionar ao retorno
+              begin 
+                 -- Efetuar cast para JSON
+                 vr_obj := json(vr_dsconteudo_requisicao);            
+
+                 --  Se existe o objeto de analise
+                 if  vr_obj.exist('analises') then
+                     vr_obj_anl := json(vr_obj.get('analises').to_char());        
+                     
+                     --  Se existe a lista de mensagens
+                     if  vr_obj_anl.exist('mensagensDeAnalise') then
+                         vr_obj_lst := json_list(vr_obj_anl.get('mensagensDeAnalise').to_char());
+
+                         --   Para cada mensagem 
+                         for vr_idx in 1..vr_obj_lst.count() loop
+                             begin
+                                vr_obj_msg := json( vr_obj_lst.get(vr_idx));
+                                
+                                --  Se encontrar o atributo texto e tipo
+                                if  vr_obj_msg.exist('texto') and vr_obj_msg.exist('tipo') then
+                                    vr_desmens := gene0007.fn_convert_web_db(unistr(replace(rtrim(ltrim(vr_obj_msg.get('texto').to_char(),'"'),'"'),'\u','\')));
+                                    vr_destipo := replace(rtrim(ltrim(vr_obj_msg.get('tipo').to_char(),'"'),'"'),'ERRO','REPROVAR');
+                                end if;
+
+                                if  vr_destipo <> 'DETALHAMENTO' then
+                                    vr_dsmensag := vr_dsmensag || '<BR>['||vr_destipo||'] '||vr_desmens;                              
+                                end if;
+                             exception
+                                when others then
+                                     null; -- Ignorar essa linha
+                             end;
+                         end loop;
+                     end if;
+                 end if;
+              exception
+                 when others then 
+                      null; -- Ignorar se o conteudo nao for JSON nao conseguiremos ler as mensagens
+              end; 
+        end   if;
+        close cr_aciona_retorno;           
+
+        --  Se nao encontrou mensagem
+        if  vr_dsmensag is null then 
+            -- Usar mensagem padrao
+            vr_dsmensag := '<br>Obs: Clique no botão \"Detalhes Proposta\" para visualização de mais detalhes';
+        else
+            -- Gerar texto padrao 
+            vr_dsmensag := '<br>Detalhes da decisao: <br>'|| vr_dsmensag;
+        end if;
+
+        pr_dsmensag := pr_dsmensag ||vr_dsmensag;
+    end if;
       
     -- Commitar o encerramento da rotina 
     COMMIT;
       
   ELSE
-            
-    /*-- Gerar informaçoes no padrao JSON da proposta de emprestimo
-    pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper
-                         ,pr_cdagenci  => pr_cdagenci
-                         ,pr_cdoperad  => pr_cdoperad
-                         ,pr_cdorigem  => pr_cdorigem
-                         ,pr_nrdconta  => pr_nrdconta
-                         ,pr_nrctrlim  => pr_nrctrlim
-                         ,pr_tpctrlim  => pr_tpctrlim
-                         ,pr_nmarquiv  => pr_nmarquiv  --> Diretorio e nome do arquivo pdf da proposta de emprestimo
-                         ---- OUT ----
-                         ,pr_proposta  => vr_obj_proposta  --> Retorno do clob em modelo json da proposta de emprestimo
-                         ,pr_cdcritic  => vr_cdcritic
-                         ,pr_dscritic  => vr_dscritic);*/
-      
+    pc_enviar_analise_manual(pr_cdcooper => pr_cdcooper
+                            ,pr_cdagenci => pr_cdagenci
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_cdorigem => pr_cdorigem
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrctrlim => pr_nrctrlim
+                            ,pr_tpctrlim => pr_tpctrlim
+                            ,pr_dtmvtolt => pr_dtmvtolt
+                            ,pr_nmarquiv => pr_nmarquiv
+                            ,vr_flgdebug => vr_flgdebug
+                             ---- OUT ----
+                            ,pr_dsmensag => pr_dsmensag
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic
+                            ,pr_des_erro => vr_des_erro);
+                                   
     IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;        
-    END IF;  
-  
-    -- Se origem veio do Motor/Esteira
-    IF pr_cdorigem = 9 THEN 
-      -- É uma derivaçao
-      vr_tpenvest := 'D';
-    ELSE 
-      vr_tpenvest := 'I';
     END IF;
-  
-    -- Criar o CLOB para converter JSON para CLOB
-    dbms_lob.createtemporary(vr_obj_proposta_clob, TRUE, dbms_lob.CALL);
-    dbms_lob.open(vr_obj_proposta_clob, dbms_lob.lob_readwrite);
-    json.to_clob(vr_obj_proposta,vr_obj_proposta_clob);  
-      
-    -- Se o DEBUG estiver habilitado
-    IF vr_flgdebug = 'S' THEN
-      -- Gravar dados log acionamento
-      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
-                                    pr_cdagenci              => pr_cdagenci,          
-                                    pr_cdoperad              => pr_cdoperad,          
-                                    pr_cdorigem              => pr_cdorigem,          
-                                    pr_nrctrprp              => pr_nrctrlim,          
-                                    pr_nrdconta              => pr_nrdconta,          
-                                    pr_tpacionamento         => 0,  -- 0 - DEBUG
-                                    pr_dsoperacao            => 'ANTES ENVIAR PROPOSTA',       
-                                    pr_dsuriservico          => NULL,       
-                                    pr_dtmvtolt              => pr_dtmvtolt,       
-                                    pr_cdstatus_http         => 0,
-                                    pr_dsconteudo_requisicao => vr_obj_proposta_clob,
-                                    pr_dsresposta_requisicao => null,
-                                    pr_tpproduto             => 3, --> Desconto de títulos
-                                    pr_idacionamento         => vr_idaciona,
-                                    pr_dscritic              => vr_dscritic);
-      -- Sem tratamento de exceçao para DEBUG                    
-      --IF TRIM(vr_dscritic) IS NOT NULL THEN
-      --  RAISE vr_exc_erro;
-      --END IF;
-    END IF;  
-      
-    -- Enviar dados para Esteira
-    pc_enviar_esteira (pr_cdcooper    => pr_cdcooper
-                      ,pr_cdagenci    => pr_cdagenci
-                      ,pr_cdoperad    => pr_cdoperad
-                      ,pr_cdorigem    => pr_cdorigem
-                      ,pr_nrdconta    => pr_nrdconta
-                      ,pr_nrctrlim    => pr_nrctrlim
-                      ,pr_tpctrlim    => pr_tpctrlim
-                      ,pr_dtmvtolt    => pr_dtmvtolt
-                      ,pr_comprecu    => NULL
-                      ,pr_dsmetodo    => 'POST'
-                      ,pr_conteudo    => vr_obj_proposta_clob
-                      ,pr_dsoperacao  => 'ENVIO DA PROPOSTA PARA ANALISE DE CREDITO'
-                      ,pr_tpenvest    => vr_tpenvest
-                      ,pr_dsprotocolo => vr_dsprotoc
-                      ,pr_dscritic    => vr_dscritic);
-      
-    -- Caso tenhamos recebido critica de Proposta jah existente na Esteira
-    IF lower(vr_dscritic) LIKE '%proposta%ja existente na esteira%' THEN
-
-      -- Tentaremos enviar alteraçao com reinício de fluxo para a Esteira 
-      pc_alterar_proposta_est(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_cdoperad => pr_cdoperad
-                             ,pr_cdorigem => pr_cdorigem
-                             ,pr_nrdconta => pr_nrdconta
-                             ,pr_nrctrlim => pr_nrctrlim
-                             ,pr_tpctrlim => pr_tpctrlim
-                             ,pr_dtmvtolt => pr_dtmvtolt
-                             ,pr_flreiflx => 1
-                             ,pr_nmarquiv => pr_nmarquiv
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic);
-      END IF;
-      
-    -- Liberando a memória alocada pro CLOB
-    dbms_lob.close(vr_obj_proposta_clob);
-    dbms_lob.freetemporary(vr_obj_proposta_clob);    
-      
-    -- verificar se retornou critica
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF; 
-      
-    vr_hrenvest := to_char(SYSDATE,'sssss');
-      
-    -- Atualizar proposta
-    BEGIN
-      UPDATE craplim wpr 
-         SET wpr.insitest = 2, --  2 – Enviada para Analise Manual
-             wpr.dtenvest = trunc(SYSDATE), 
-             wpr.hrenvest = vr_hrenvest,
-             wpr.cdopeste = pr_cdoperad,
-             wpr.dsprotoc = nvl(vr_dsprotoc,' '),
-             wpr.insitapr = 0,
-             wpr.cdopeapr = NULL,
-             wpr.dtaprova = NULL,
-             wpr.hraprova = 0
-       WHERE wpr.rowid = rw_craplim.rowid;      
-    EXCEPTION    
-      WHEN OTHERS THEN
-        vr_dscritic := 'Nao foi possivel atualizar proposta apos envio para Análise de Crédito: '||SQLERRM;
-        RAISE vr_exc_erro;
-    END;
-      
-    pr_dsmensag := 'Proposta Enviada para Analise Manual de Credito.';
-      
-    -- Efetuar gravaçao
-    COMMIT;
-    
-  END IF;
-    
-  -- Se o DEBUG estiver habilitado
-  IF vr_flgdebug = 'S' THEN
-    -- Gravar dados log acionamento
-    ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
-                                  pr_cdagenci              => pr_cdagenci,          
-                                  pr_cdoperad              => pr_cdoperad,          
-                                  pr_cdorigem              => pr_cdorigem,          
-                                  pr_nrctrprp              => pr_nrctrlim,          
-                                  pr_nrdconta              => pr_nrdconta,          
-                                  pr_tpacionamento         => 0,  -- 0 - DEBUG      
-                                  pr_dsoperacao            => 'TERMINO INCLUIR PROPOSTA',       
-                                  pr_dsuriservico          => NULL,       
-                                  pr_dtmvtolt              => pr_dtmvtolt,       
-                                  pr_cdstatus_http         => 0,
-                                  pr_dsconteudo_requisicao => null,
-                                  pr_dsresposta_requisicao => null,
-                                  pr_tpproduto             => 3, --> Desconto de títulos
-                                  pr_idacionamento         => vr_idaciona,
-                                  pr_dscritic              => vr_dscritic);
-    -- Sem tratamento de exceçao para DEBUG                    
-    --IF TRIM(vr_dscritic) IS NOT NULL THEN
-    --  RAISE vr_exc_erro;
-    --END IF;
   END IF;  
     
   COMMIT;   
@@ -1446,19 +1395,18 @@ END pc_incluir_proposta_est;
       --END IF;
     END IF;   
   
-    /*--> Gerar informações no padrao JSON da proposta de emprestimo
-    pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper
-                         ,pr_cdagenci  => pr_cdagenci
-                         ,pr_cdoperad  => pr_cdoperad
-                         ,pr_cdorigem  => pr_cdorigem
-                         ,pr_nrdconta  => pr_nrdconta
-                         ,pr_nrctrlim  => pr_nrctrlim
-                         ,pr_tpctrlim  => pr_tpctrlim
-                         ,pr_nmarquiv  => pr_nmarquiv  --> Diretorio e nome do arquivo pdf da proposta de emprestimo
-                         ---- OUT ----
-                         ,pr_proposta  => vr_obj_proposta  --> Retorno do clob em modelo json da proposta de emprestimo
-                         ,pr_cdcritic  => vr_cdcritic
-                         ,pr_dscritic  => vr_dscritic);*/
+    --> Gerar informações no padrao JSON da proposta de emprestimo
+    este0004.pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper
+                                  ,pr_cdagenci  => pr_cdagenci
+                                  ,pr_cdoperad  => pr_cdoperad
+                                  ,pr_nrdconta  => pr_nrdconta
+                                  ,pr_nrctrlim  => pr_nrctrlim
+                                  ,pr_tpctrlim  => pr_tpctrlim
+                                  ,pr_nmarquiv  => pr_nmarquiv  --> Diretorio e nome do arquivo pdf da proposta de emprestimo
+                                  ---- OUT ----
+                                  ,pr_proposta  => vr_obj_proposta  --> Retorno do clob em modelo json da proposta de emprestimo
+                                  ,pr_cdcritic  => vr_cdcritic
+                                  ,pr_dscritic  => vr_dscritic);
     
     IF nvl(vr_cdcritic,0) > 0 OR
        TRIM(vr_dscritic) IS NOT NULL THEN
@@ -1526,7 +1474,6 @@ END pc_incluir_proposta_est;
                      ,pr_cdorigem    => pr_cdorigem
                      ,pr_nrdconta    => pr_nrdconta
                      ,pr_nrctrlim    => pr_nrctrlim
-                     ,pr_tpctrlim    => pr_tpctrlim
                      ,pr_dtmvtolt    => pr_dtmvtolt
                      ,pr_comprecu    => null
                      ,pr_dsmetodo    => 'PUT'
@@ -1636,7 +1583,6 @@ END pc_incluir_proposta_est;
                               ,pr_cdorigem    IN integer                --> Origem da operacao
                               ,pr_nrdconta    IN craplim.nrdconta%type  --> Numero da conta do cooperado
                               ,pr_nrctrlim    IN craplim.nrctrlim%type  --> Numero da proposta de emprestimo
-                              ,pr_tpctrlim    in craplim.tpctrlim%type  --> Tipo de contrato do limite
                               ,pr_dtmvtolt    IN crapdat.dtmvtolt%type  --> Data do movimento                                      
                               ,pr_comprecu    IN varchar2               --> Complemento do recuros da URI
                               ,pr_dsmetodo    IN varchar2               --> Descricao do metodo
@@ -1669,9 +1615,6 @@ END pc_incluir_proposta_est;
     
     -- Carregar parametros para a comunicacao com a esteira
     pc_carrega_param_ibra(pr_cdcooper     => pr_cdcooper
-                         ,pr_nrdconta     => pr_nrdconta
-                         ,pr_nrctrlim     => pr_nrctrlim
-                         ,pr_tpctrlim     => pr_tpctrlim
                          ,pr_tpenvest     => pr_tpenvest
                          ,pr_host_esteira => vr_host_esteira
                          ,pr_recurso_este => vr_recurso_este
@@ -1918,7 +1861,7 @@ END pc_incluir_proposta_est;
     AND    lim.nrctrlim = pr_nrctrlim
     and    lim.tpctrlim = pr_tpctrlim
     AND    lim.dsprotoc = pr_dsprotoc
-    AND    lim.insitest = 1;-- Enviadas para Analise Automática
+    AND    lim.insitest in (1,2);-- Enviadas para Analise Automática ou Manual
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100);
@@ -1983,9 +1926,6 @@ END pc_incluir_proposta_est;
           vr_dsprotoc := rw_craplim.dsprotoc;
           -- Carregar parametros para a comunicacao com a esteira
           pc_carrega_param_ibra(pr_cdcooper      => rw_craplim.cdcooper
-                               ,pr_nrdconta      => rw_craplim.nrdconta
-                               ,pr_nrctrlim      => rw_craplim.nrctrlim
-                               ,pr_tpctrlim      => rw_craplim.tpctrlim
                                ,pr_tpenvest      => 'M'
                                ,pr_host_esteira  => vr_host_esteira     -- Host da esteira
                                ,pr_recurso_este  => vr_recurso_este     -- URI da esteira
@@ -2050,7 +1990,7 @@ END pc_incluir_proposta_est;
           END IF; 
           
           -- Iniciar status
-          vr_dssitret := 'TEMPO ESGOTADO';
+          vr_dssitret := null;--'TEMPO ESGOTADO';
           
           -- HTTP 204 não tem conteúdo
           IF vr_response.status_code != 204 THEN
@@ -2078,7 +2018,7 @@ END pc_incluir_proposta_est;
                                         pr_nrctrprp              => rw_craplim.nrctrlim,          
                                         pr_nrdconta              => rw_craplim.nrdconta,          
                                         pr_tpacionamento         => 2,  /* 1 - Envio, 2 – Retorno */      
-                                        pr_dsoperacao            => 'RETORNO ANALISE AUTOMATICA DE CREDITO - '||vr_dssitret,
+                                        pr_dsoperacao            => 'RETORNO ANALISE AUTOMATICA DE CREDITO '||vr_dssitret,
                                         pr_dsuriservico          => vr_host_esteira||vr_recurso_este,       
                                         pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                         pr_cdstatus_http         => vr_response.status_code,
@@ -2107,8 +2047,9 @@ END pc_incluir_proposta_est;
             OR to_number(to_char(SYSDATE, 'sssss')) - rw_craplim.hrenvmot > vr_qtsegund THEN
               BEGIN
                 UPDATE craplim lim
-                   SET lim.insitest = 3 --> Analise Finalizada
-                      ,lim.insitapr = 6 --> Erro na análise
+                   SET lim.insitlim = 6 --> Não aprovado
+                      ,lim.insitest = 3 --> Analise Finalizada
+                      ,lim.insitapr = 5 --> Rejeitado Automaticamente
                  WHERE lim.rowid = rw_craplim.rowid;
               EXCEPTION
                 WHEN OTHERS THEN 
@@ -2299,7 +2240,242 @@ END pc_incluir_proposta_est;
                                                  ||vr_dsprotoc||': '||sqlerrm,
                                  pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                                                               pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
-      END pc_solicita_retorno_analise;  
+      END pc_solicita_retorno_analise;
+      
 
+  PROCEDURE pc_enviar_analise_manual(pr_cdcooper  IN craplim.cdcooper%TYPE
+                                    ,pr_cdagenci  IN crapage.cdagenci%TYPE
+                                    ,pr_cdoperad  IN crapope.cdoperad%TYPE
+                                    ,pr_cdorigem  IN INTEGER
+                                    ,pr_nrdconta  IN craplim.nrdconta%TYPE
+                                    ,pr_nrctrlim  IN craplim.nrctrlim%TYPE
+                                    ,pr_tpctrlim  in craplim.tpctrlim%type
+                                    ,pr_dtmvtolt  IN VARCHAR2
+                                    ,pr_nmarquiv  IN VARCHAR2
+                                    ,vr_flgdebug  IN VARCHAR2
+                                     ---- OUT ----
+                                    ,pr_dsmensag OUT VARCHAR2
+                                    ,pr_cdcritic OUT NUMBER
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_des_erro OUT VARCHAR2) IS
+
+ /* ...........................................................................
+
+   Programa : pc_enviar_analise_manual        
+   Sistema  : Conta-Corrente - Cooperativa de Credito
+   Sigla    : CRED
+   Autor    : Luis Fernando - GFT-Brasil
+   Data     : Março/2018.          Ultima atualizacao: 05/03/2018
+        
+   Dados referentes ao programa:
+        
+   Frequencia: Sempre que for chamado
+   Objetivo  : Rotina responsavel por gerar a geracao e inclusao da proposta psistemara a esteira 
+
+ ..........................................................................*/
+
+ vr_dtmvtolt DATE;
+
+ vr_cdagenci crapage.cdagenci%type; --> Codigo da agencia
+    
+ vr_exc_erro EXCEPTION;
+ vr_dscritic VARCHAR2(4000);
+ vr_cdcritic NUMBER;
+
+ -- Hora de Envio
+ vr_hrenvest craplim.hrenvest%TYPE;
+
+ vr_tpenvest varchar2(1);
+ vr_obj_proposta json := json();
+ vr_obj_proposta_clob clob;
+        
+ vr_dsprotoc VARCHAR2(1000);
+ vr_idaciona tbgen_webservice_aciona.idacionamento%type;
+  
+  -- Busca do nome do associado
+  cursor cr_crapass is
+  select ass.nmprimtl
+        ,ass.inpessoa
+        ,ass.cdagenci
+  from   crapass ass
+  where  ass.cdcooper = pr_cdcooper
+  and    ass.nrdconta = pr_nrdconta;
+  rw_crapass cr_crapass%rowtype;
+
+ BEGIN
+   pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper
+                                ,pr_flctgest => vr_flctgest
+                                ,pr_dsmensag => pr_dsmensag
+                                ,pr_dscritic => vr_dscritic);
+                                
+   if  vr_flctgest then
+       vr_dscritic := pr_dsmensag;
+       raise vr_exc_erro;
+   end if;
+    
+  vr_dtmvtolt := TO_DATE(pr_dtmvtolt, 'DD/MM/YYYY');
+                          
+  open  cr_crapass;
+  fetch cr_crapass into rw_crapass;
+  if    cr_crapass%notfound then
+        close cr_crapass;
+        vr_dscritic := 'Associado nao cadastrado. Conta: ' || pr_nrdconta;
+        raise vr_exc_erro;
+  end   if;
+  close cr_crapass;
+  
+  vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
+
+   -- Gerar informaçoes no padrao JSON da proposta de emprestimo
+   este0004.pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper
+                                 ,pr_cdagenci  => vr_cdagenci
+                                 ,pr_cdoperad  => pr_cdoperad
+                                 ,pr_nrdconta  => pr_nrdconta
+                                 ,pr_nrctrlim  => pr_nrctrlim
+                                 ,pr_tpctrlim  => pr_tpctrlim
+                                 ,pr_nmarquiv  => pr_nmarquiv  --> Diretorio e nome do arquivo pdf da proposta de emprestimo
+                                 ---- OUT ----
+                                 ,pr_proposta  => vr_obj_proposta  --> Retorno do clob em modelo json da proposta de emprestimo
+                                 ,pr_cdcritic  => vr_cdcritic
+                                 ,pr_dscritic  => vr_dscritic);
+          
+   IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+     RAISE vr_exc_erro;        
+   END IF;  
+
+   -- Se origem veio do Motor/Esteira
+   IF pr_cdorigem = 9 THEN 
+     -- É uma derivaçao
+     vr_tpenvest := 'D';
+   ELSE 
+     vr_tpenvest := 'I';
+   END IF;
+
+   -- Criar o CLOB para converter JSON para CLOB
+   dbms_lob.createtemporary(vr_obj_proposta_clob, TRUE, dbms_lob.CALL);
+   dbms_lob.open(vr_obj_proposta_clob, dbms_lob.lob_readwrite);
+   json.to_clob(vr_obj_proposta,vr_obj_proposta_clob);  
+          
+   -- Se o DEBUG estiver habilitado
+   IF vr_flgdebug = 'S' THEN
+     -- Gravar dados log acionamento
+     ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                                   pr_cdagenci              => vr_cdagenci,          
+                                   pr_cdoperad              => pr_cdoperad,          
+                                   pr_cdorigem              => pr_cdorigem,          
+                                   pr_nrctrprp              => pr_nrctrlim,          
+                                   pr_nrdconta              => pr_nrdconta,          
+                                   pr_tpacionamento         => 0,  -- 0 - DEBUG
+                                   pr_dsoperacao            => 'ANTES ENVIAR PROPOSTA',       
+                                   pr_dsuriservico          => NULL,       
+                                   pr_dtmvtolt              => vr_dtmvtolt,       
+                                   pr_cdstatus_http         => 0,
+                                   pr_dsconteudo_requisicao => vr_obj_proposta_clob,
+                                   pr_dsresposta_requisicao => null,
+                                   pr_tpproduto             => 3, --> Desconto de títulos
+                                   pr_idacionamento         => vr_idaciona,
+                                   pr_dscritic              => vr_dscritic);
+     -- Sem tratamento de exceçao para DEBUG                    
+     --IF TRIM(vr_dscritic) IS NOT NULL THEN
+     --  RAISE vr_exc_erro;
+     --END IF;
+   END IF;  
+          
+   -- Enviar dados para Esteira
+   pc_enviar_esteira (pr_cdcooper    => pr_cdcooper
+                     ,pr_cdagenci    => vr_cdagenci
+                     ,pr_cdoperad    => pr_cdoperad
+                     ,pr_cdorigem    => pr_cdorigem
+                     ,pr_nrdconta    => pr_nrdconta
+                     ,pr_nrctrlim    => pr_nrctrlim
+                     ,pr_dtmvtolt    => vr_dtmvtolt
+                     ,pr_comprecu    => NULL
+                     ,pr_dsmetodo    => 'POST'
+                     ,pr_conteudo    => vr_obj_proposta_clob
+                     ,pr_dsoperacao  => 'ENVIO DA PROPOSTA PARA ANALISE DE CREDITO'
+                     ,pr_tpenvest    => vr_tpenvest
+                     ,pr_dsprotocolo => vr_dsprotoc
+                     ,pr_dscritic    => vr_dscritic);
+          
+   -- Caso tenhamos recebido critica de Proposta jah existente na Esteira
+   IF lower(vr_dscritic) LIKE '%proposta%ja existente na esteira%' THEN
+
+     -- Tentaremos enviar alteraçao com reinício de fluxo para a Esteira 
+     pc_alterar_proposta_est(pr_cdcooper => pr_cdcooper
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_cdorigem => pr_cdorigem
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrctrlim => pr_nrctrlim
+                            ,pr_tpctrlim => pr_tpctrlim
+                            ,pr_dtmvtolt => vr_dtmvtolt
+                            ,pr_flreiflx => 1
+                            ,pr_nmarquiv => pr_nmarquiv
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic);
+     END IF;
+          
+   -- Liberando a memória alocada pro CLOB
+   dbms_lob.close(vr_obj_proposta_clob);
+   dbms_lob.freetemporary(vr_obj_proposta_clob);    
+          
+   -- verificar se retornou critica
+   IF vr_dscritic IS NOT NULL THEN
+     RAISE vr_exc_erro;
+   END IF; 
+          
+   vr_hrenvest := to_char(SYSDATE,'sssss');
+          
+   -- Atualizar proposta
+   begin
+      update craplim lim
+      set    insitlim = 1
+            ,insitest = 2 --  2 – Enviada para Analise Manual
+            ,dtenvest = trunc(sysdate)
+            ,hrenvest = vr_hrenvest
+            ,cdopeste = pr_cdoperad
+            ,dsprotoc = nvl(vr_dsprotoc,' ')
+            ,insitapr = 0
+            ,cdopeapr = null
+            ,dtaprova = null
+            ,hraprova = 0
+      where  lim.cdcooper = pr_cdcooper
+      and    lim.nrdconta = pr_nrdconta
+      and    lim.nrctrlim = pr_nrctrlim
+      and    lim.tpctrlim = pr_tpctrlim;
+   exception    
+      when others then
+           vr_dscritic := 'Nao foi possivel atualizar proposta apos envio para Análise de Crédito: '||sqlerrm;
+           raise vr_exc_erro;
+   end;
+          
+   pr_dsmensag := 'Proposta Enviada para Analise Manual de Credito.';
+          
+   -- Efetuar gravaçao
+   COMMIT;
+        
+   EXCEPTION
+     WHEN vr_exc_erro THEN
+          -- Se possui código de crítica e não foi informado a descrição
+          IF  vr_cdcritic <> 0 and TRIM(vr_dscritic) IS NULL THEN
+              -- Busca descrição da crítica
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          END IF;
+                
+          -- Atribui exceção para os parametros de crítica
+          pr_cdcritic := nvl(vr_cdcritic,0);
+          pr_dscritic := vr_dscritic;
+          pr_des_erro := 'NOK';
+
+          ROLLBACK;
+                
+     WHEN OTHERS THEN
+          -- Atribui exceção para os parametros de crítica
+          pr_cdcritic := nvl(vr_cdcritic,0);
+          pr_dscritic := 'Erro nao tratado na ESTE0003.pc_enviar_analise_manual: ' || SQLERRM;
+          pr_des_erro := 'NOK';
+
+          ROLLBACK;
+   END pc_enviar_analise_manual;
 END ESTE0003;
 /
