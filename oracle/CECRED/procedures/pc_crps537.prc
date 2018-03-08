@@ -15,7 +15,7 @@ AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme / Supero
-    Data    : Novembro/2009.                   Ultima atualizacao: 07/04/2017
+    Data    : Novembro/2009.                   Ultima atualizacao: 08/03/2018
 
     Dados referentes ao programa:
 
@@ -68,6 +68,9 @@ AS
                             do arquivo corretamente (Carlos)
                19/06/2017 - Retirados tratamentos efetuados para separação de cheques 
                             com valor Inferior e Superior.
+
+               08/03/2018 - #prj367 Adicionado o parâmetro pr_nrvergrl = 1 para utilizar a versão do jasper
+                            compilado pelo TIBCO (Carlos)
 
     ........................................................................ */
     DECLARE
@@ -657,6 +660,7 @@ AS
                                          ,pr_qtcoluna  => 132                              --> Qtd colunas do relatório (80,132,234)
                                          ,pr_flg_impri=> 'S'                               --> Chamar a impressão (Imprim.p)
                                          ,pr_nrcopias  => 1                                --> Número de cópias para impressão
+                                         ,pr_nrvergrl  => 1                                --> Numero da versão da função de geração de relatorio
                                          ,pr_des_erro  => vr_dscritic);                    --> Saída com erro
 
               -- Liberando a memória alocada pro CLOB
