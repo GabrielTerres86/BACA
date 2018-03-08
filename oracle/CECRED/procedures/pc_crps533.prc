@@ -5805,22 +5805,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                    ,pr_cdacesso => 'NUMLOTEBCO'
                                                    ,pr_tpregist => 1));
 
+       /* A partir de 16/04/2018 nao havera mais Cheque VLB - Projeto Compe Sessao Unica */  
        --Buscar informormacoes da craptab para valores vlb
-       vr_dstextab_vlb:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                                   ,pr_nmsistem => 'CRED'
-                                                   ,pr_tptabela => 'GENERI'
-                                                   ,pr_cdempres => 0
-                                                   ,pr_cdacesso => 'VALORESVLB'
-                                                   ,pr_tpregist => 0);
-
-       --Se nao encontrou entao
-       IF trim(vr_dstextab_vlb) IS NULL THEN
-         vr_vlchqvlb:= 0;
-       ELSE
-         --Atribuir o valor do 2º parametro para a variavel
-         vr_vlchqvlb:= GENE0002.fn_char_para_number(
-                           GENE0002.fn_busca_entrada(2,vr_dstextab_vlb,';'));
-       END IF;
+       vr_dstextab_vlb:= '';
+	   vr_vlchqvlb:= 0;
 
        ----- Gravar informações vindas do cadastro da cooperativa ----
        -- Inicializar contador de arquivos processados
