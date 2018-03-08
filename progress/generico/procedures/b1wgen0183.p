@@ -5,7 +5,7 @@
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Tiago
-  Data    : Fevereiro/14                           Ultima alteracao: 02/12/2016
+  Data    : Fevereiro/14                           Ultima alteracao: 17/10/2017
 
   Objetivo  : Procedures referentes a tela HRCOMP.
 
@@ -40,6 +40,12 @@
               
               02/12/2016 - Alterado campo dsdepart para cddepart.
                            PRJ341 - BANCENJUD (Odirlei-AMcom)   
+                           
+            17/10/2017 - Formatado o numero da coop de uma forma diferente qdo 
+                         for reagendar o job na procedure reagenda_job pois
+                         nao estava encontrando o job fazendo com que as 
+                         alteracoes na HRCOMP nao surtissem o efeito desejado
+                         (Tiago #753784).
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0183tt.i }
@@ -1008,17 +1014,17 @@ PROCEDURE reagenda_job:
       criado mais um com _NOT pra noite*/      
     IF  par_dsprogra MATCHES '*VESPERTINA*' THEN
     DO:
-      ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"zz")) + "\_DIA". 
+      ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"99")) + "\_DIA". 
     END.
     ELSE     
     DO:
       IF  par_dsprogra MATCHES '*NOTURNA*' THEN
           DO:
-            ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"zz")) + "\_NOT". 
+            ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"99")) + "\_NOT". 
           END.
       ELSE
           DO:
-            ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"zz")) + "\_DIA". /*No caso do CRPS688 continua como esta 2 exec por dia*/
+            ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"99")) + "\_DIA". /*No caso do CRPS688 continua como esta 2 exec por dia*/
           END.
     END.
 
