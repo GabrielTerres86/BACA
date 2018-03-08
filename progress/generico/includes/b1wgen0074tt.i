@@ -37,7 +37,9 @@
                 12/01/2016 - Remoção dos campos flgcrdpa e cdoplcpa do 
                              tt-conta-corr (Anderson)
                 18/03/2016 - Inclusao campos na tt-conta-corr
-				             PRJ207 - Esteira (Odirlei-AMcom)    
+				             PRJ207 - Esteira (Odirlei-AMcom)   
+                             
+                14/11/2017 - Incluido campo FIELD dtadmiss. PRJ339-CRM(Odirlei-AMcom) 
                              
                 06/02/2018 - Incluido campo FIELD cdcatego e flblqtal. PRJ366 (Lombardi)
                              
@@ -91,6 +93,7 @@ DEFINE TEMP-TABLE tt-conta-corr NO-UNDO
     FIELD idastcjt LIKE crapass.idastcjt
 	FIELD dtdscore LIKE crapass.dtdscore
 	FIELD dsdscore LIKE crapass.dsdscore
+    FIELD dtadmiss LIKE crapass.dtadmiss
     FIELD cdcatego LIKE crapass.cdcatego
     FIELD flblqtal LIKE crapass.flblqtal.
 
