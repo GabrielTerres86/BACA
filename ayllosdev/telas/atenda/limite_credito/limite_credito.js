@@ -37,6 +37,7 @@
  * 021: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438. 
  * 022: [05/12/2017] Lombardi  (CECRED)  : Gravação do campo idcobope e inserção da tela GAROPC. Projeto 404
  * 023: [18/12/2017] Augusto / Marcos (Supero): P404 - Inclusão de Garantia de Cobertura das Operações de Crédito
+ * 024: [06/03/2018] Reinert (CECRED)    : Adicionado parametro idcobope na chamada do fonte confirma_novo_limite. (PRJ404 Reinert)
  */
  
 var callafterLimiteCred = '';
@@ -206,6 +207,7 @@ function confirmaNovoLimite(inconfir, flgratok) {
 	var camposRS = "";
 	var dadosRtS = "";
     var nrctrrat = $("#nrctrpro", "#frmDadosLimiteCredito").val();
+    var idcobope = $("#idcobope", "#frmDadosLimiteCredito").val();
 	
 	if (flgratok) {
         camposRS = retornaCampos(arrayRatingSingulares, '|');
@@ -224,6 +226,7 @@ function confirmaNovoLimite(inconfir, flgratok) {
 			nrcpfcgc: nrcpfcgc,
 			nrctrrat: nrctrrat,
 			flgratok: flgratok,
+            idcobope: idcobope,
 			/** Variaveis ref ao rating singulares **/
 			camposRS: camposRS,
 			dadosRtS: dadosRtS,

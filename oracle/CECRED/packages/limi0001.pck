@@ -2521,7 +2521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
           ,lim.vllimite -- sobre xx
           ,lim.qtdiavig
           ,lim.dsencfin##1 -- Encargos financeiros
-          ,lim.dsencfin##2 -- Juros na contratação – (Aplicável x%)
+          ,to_char(lim.dsencfin##2, 'fm990d00') dsencfin##2 -- Juros na contratação – (Aplicável x%)
           ,lim.dsencfin##3 -- Periodicidade da capitalização (Mensal)
           ,(SELECT nmcidade || ' - ' || cdufdcop FROM crapcop cop WHERE cop.cdcooper = pr_cdcooper AND rownum = 1) nmcidade -- Lugar do Pagamento (cidade local do PA) 
           ,cob.perminimo -- Valor(es) da aplicação(ões) financeira(s) bloqueada(a): x%  do limite de crédito concedido
@@ -2770,7 +2770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                       '<nmcidade>'|| TRIM(rw_crapenc.nmcidade)                  ||'</nmcidade>' ||
                       '<nmbairro>'|| TRIM(rw_crapenc.nmbairro)                  ||'</nmbairro>' ||
                       '<cdufende>'|| TRIM(rw_crapenc.cdufende)                  ||'</cdufende>' ||
-                      '<nrcepend>'|| TRIM(rw_crapenc.nrcepend)                  ||'</nrcepend>' ||
+                      '<nrcepend>'|| GENE0002.fn_mask_cep(TRIM(rw_crapenc.nrcepend)) ||'</nrcepend>' ||
                    '</cooperado>');
 
     OPEN cr_craplim(pr_nrdconta => pr_nrdconta

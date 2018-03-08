@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-03-05T15:36:28 -->
+<!-- 2018-03-08T15:55:07 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_01" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="0.9558924531310722"/>
 	<property name="ireport.x" value="0"/>
@@ -720,9 +720,9 @@ mantém junto à Cooperativa.
 				<staticText>
 					<reportElement x="2" y="2" width="461" height="11" uuid="d60f1b55-5060-4535-b5a3-4f239625be7b"/>
 					<textElement>
-						<font fontName="Courier New" size="9" pdfFontName="Courier"/>
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<text><![CDATA[1.16. Descrição da garantia - Valor(es) da aplicação(ões) financeira(s) bloqueada(s):]]></text>
+					<text><![CDATA[1.16. Descrição da garantia - Valor(es) da aplicação(ões) financeira(s)/poupança bloqueada(s):]]></text>
 				</staticText>
 			</frame>
 			<frame>
@@ -789,7 +789,7 @@ mantém junto à Cooperativa.
 				<reportElement positionType="FixRelativeToBottom" x="4" y="50" width="466" height="350" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<printWhenExpression><![CDATA[$F{cob_inresaut}== 0	]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{cob_inresaut}== 0]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
@@ -813,7 +813,7 @@ g) O <b> Emitente </b> pagará também o Imposto sobre Operações Financeiras (
 				<reportElement x="4" y="50" width="466" height="379" uuid="b2ae1663-a0d0-445c-87c5-d434d8f43d20">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<printWhenExpression><![CDATA[$F{cob_inresaut}>	 0	]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{cob_inresaut}>	 0]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>

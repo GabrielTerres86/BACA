@@ -86,7 +86,8 @@ DEF TEMP-TABLE tt-limite_chq NO-UNDO
     FIELD cddopcao AS INTEGER
     FIELD nrdrecid AS RECID
     FIELD flgenvio AS CHAR
-    FIELD insitlim AS INTE.
+    FIELD insitlim AS INTE
+    FIELD idcobope AS INTE.
 
 /* TAB019 */
 DEF TEMP-TABLE tt-dados_dscchq NO-UNDO

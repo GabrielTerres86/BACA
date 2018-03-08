@@ -2,7 +2,7 @@
 
    Programa: b1wgen0019tt.i                  
    Autor   : Murilo/David
-   Data    : Agosto/2007                      Ultima atualizacao: 09/12/2015
+   Data    : Agosto/2007                      Ultima atualizacao: 06/03/2018 
 
    Dados referentes ao programa:
 
@@ -67,6 +67,8 @@
                05/12/2017 - Adicionado campo idcobope na temp-table tt-dados-prp. 
                             Projeto 404 (Lombardi)
                                                 
+               06/03/2018 - Adicionado campo idcobope na temp-table tt-cabec-limcredito.
+                            (PRJ404 Reinert)
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-limite-credito NO-UNDO
@@ -102,7 +104,8 @@ DEF TEMP-TABLE tt-cabec-limcredito NO-UNDO
     FIELD dtrenova LIKE craplim.dtrenova
     FIELD tprenova LIKE craplim.tprenova
     FIELD dstprenv AS CHAR
-    FIELD dslimpro AS CHAR.
+    FIELD dslimpro AS CHAR
+    FIELD idcobope AS INTE.
 
 
 DEF TEMP-TABLE tt-ultimas-alteracoes NO-UNDO

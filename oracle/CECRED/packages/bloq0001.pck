@@ -75,6 +75,15 @@ CREATE OR REPLACE PACKAGE CECRED.BLOQ0001 AS
   PROCEDURE pc_revalida_bloqueio_garantia (pr_nmdatela  IN VARCHAR2 DEFAULT ''
                                           ,pr_idcobert  IN NUMBER
                                           ,pr_dscritic OUT crapcri.dscritic%TYPE);  --> Retorno de erro
+																					
+  PROCEDURE pc_revalida_bloq_garantia_web (pr_nmdatela  IN VARCHAR2 DEFAULT ''
+                                          ,pr_idcobert  IN NUMBER
+						                              ,pr_xmllog   IN  VARCHAR2           --> XML com informações de LOG
+                                          ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                          ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                          ,pr_des_erro OUT VARCHAR2);        --> Erros do processo																					
                                           
   PROCEDURE pc_retorna_bloqueio_garantia (pr_cdcooper IN crapcop.cdcooper%TYPE
                                          ,pr_nrdconta IN crapass.nrdconta%TYPE
@@ -1277,6 +1286,107 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
     
   END pc_revalida_bloqueio_garantia;
   
+  PROCEDURE pc_revalida_bloq_garantia_web (pr_nmdatela  IN VARCHAR2 DEFAULT ''
+                                          ,pr_idcobert  IN NUMBER
+						                              ,pr_xmllog   IN  VARCHAR2           --> XML com informações de LOG
+                                          ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                          ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                          ,pr_des_erro OUT VARCHAR2) IS      --> Erros do processo
+  /*.............................................................................
+
+    Programa: pc_revalida_bloq_garantia_web 
+    Autor   : Lucas Reinert
+    Data    : Março/2018                    Ultima Atualizacao: --/--/----.
+     
+    Dados referentes ao programa:
+   
+    Objetivo  :  Re-Verificar se o bloqueio configurado possui saldo suficiente para a cobertura da operação. 
+                 Esta rotina irá buscar as informações da cobertura cadastrada e delegar a validação para a r
+                 otina pc_valida_bloqueio_garantia. Versão Web.
+                 
+    Alteracoes: 
+  .............................................................................*/
+  BEGIN
+		DECLARE
+		
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+    
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);      
+		
+		BEGIN
+      pr_des_erro := 'OK';
+      -- Extrai dados do xml
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcooper,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
+    
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_erro;
+      END IF;
+			
+			-- Chamar procedure para revalidar bloqueio de garantia
+			pc_revalida_bloqueio_garantia(pr_nmdatela => pr_nmdatela
+			                             ,pr_idcobert => pr_idcobert
+																	 ,pr_dscritic => vr_dscritic);
+																	 
+			-- Se retornou critica
+			IF trim(vr_dscritic) IS NOT NULL THEN
+				-- Levantar exceção
+				RAISE vr_exc_erro;
+			END IF;
+			
+		EXCEPTION
+			WHEN vr_exc_erro THEN
+	      
+				IF vr_cdcritic <> 0 THEN
+					pr_cdcritic := vr_cdcritic;
+					pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+				ELSE
+					pr_cdcritic := vr_cdcritic;
+					pr_dscritic := vr_dscritic;
+				END IF;
+	      
+				pr_des_erro := 'NOK';
+				-- Carregar XML padrão para variável de retorno não utilizada.
+				-- Existe para satisfazer exigência da interface.
+				pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+																			 '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+				ROLLBACK;
+			WHEN OTHERS THEN
+	      
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+				pr_des_erro := 'NOK';
+				-- Carregar XML padrão para variável de retorno não utilizada.
+				-- Existe para satisfazer exigência da interface.
+				pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+																			 '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+				ROLLBACK;			
+		END;																	
+  END pc_revalida_bloq_garantia_web;
+	
   PROCEDURE pc_retorna_bloqueio_garantia (pr_cdcooper IN crapcop.cdcooper%TYPE
                                          ,pr_nrdconta IN crapass.nrdconta%TYPE
                                          ,pr_tpctrato IN NUMBER

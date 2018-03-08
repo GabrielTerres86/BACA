@@ -3,11 +3,12 @@
 	/************************************************************************
 	 Fonte: cheques_limite_confirmar_novo_limite.php	 
 	 Autor: Lombardi
-	 Data : Setembro/2016                         Última Alteração: 00/00/0000
+	 Data : Setembro/2016                         Última Alteração: 07/03/2018
 	
 	 Objetivo  : Excluir um limite de desconto de cheques
 	
-	 Alterações:
+	 Alterações: 07/03/2018 - Adicionado validação da cobertura de bloqueio da
+							  garantia do contrato de limite. (PRJ404 Reinert)
 	************************************************************************/
 	
 	session_start();
@@ -52,6 +53,27 @@
 	$vllimite = (isset($_POST['vllimite'])) ? $_POST['vllimite'] : 0;
 	$nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : 0;
 	$cddopera = (isset($_POST['cddopera'])) ? $_POST['cddopera'] : 0;
+	$idcobope = (isset($_POST['idcobope'])) ? $_POST['idcobope'] : 0;
+	
+	// Monta o xml dinâmico de acordo com a operação 
+	$xml  = '';
+	$xml .= '<Root>';
+	$xml .= '	<Dados>';
+	$xml .= '       <nmdatela>ATENDA</nmdatela>';
+	$xml .= '       <idcobert>'.$idcobope.'</idcobert>';
+	$xml .= '	</Dados>';
+	$xml .= '</Root>';
+
+	$xmlResult = mensageria($xml, "BLOQ0001", "REVALIDA_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	//----------------------------------------------------------------------------------------------------------------------------------	
+	// Controle de Erros
+	//----------------------------------------------------------------------------------------------------------------------------------
+	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {		
+		echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar o limite proposto?', 'Confirma&ccedil;&atilde;o - Ayllos', 'mostraTelaAltera();', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
+		exit();
+	}
 	
     $xmlRenovaLimite  = "";
 	$xmlRenovaLimite .= "<Root>";

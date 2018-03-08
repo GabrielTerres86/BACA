@@ -38,6 +38,7 @@
  * 027: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
  * 028: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)	
  * 029: [17/12/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
+ * 030: [05/03/2018] Inclusão do campo idcobope no array arrayStatusApprov. PRJ404 (Reinert)
  */
 
 	session_start();
@@ -674,6 +675,7 @@
 				arrayStatusApprov['avalist1'] = '<? echo getByTagName($insitapv[0]->tags,'avalist1'); ?>';
 				arrayStatusApprov['avalist2'] = '<? echo getByTagName($insitapv[0]->tags,'avalist2'); ?>';
 				arrayStatusApprov['altdtpgt'] = '<? echo getByTagName($insitapv[0]->tags,'altdtpgt'); ?>';
+				arrayStatusApprov['idcobope'] = '<? echo getByTagName($insitapv[0]->tags,'idcobope'); ?>';
 
 				var arrayMensagemAval = new Array();
 

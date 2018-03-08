@@ -22,7 +22,7 @@
 	$vldesblo    = (isset($_POST['vldesblo']))    ? $_POST['vldesblo']    : 0;
 	$cdopelib    = (isset($_POST['cdopelib']))    ? $_POST['cdopelib']    : 0;
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'L')) <> '') {
     
         exibirErro('error',$msgError,'Alerta - Ayllos','',false);
     }

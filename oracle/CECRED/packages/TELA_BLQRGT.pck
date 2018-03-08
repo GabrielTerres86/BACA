@@ -237,7 +237,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
       FOR rw_cobertura IN cr_cobertura(pr_cdcooper => vr_cdcooper
                                       ,pr_nrdconta => pr_nrdconta) LOOP
         IF rw_cobertura.tpcontrato = 90 THEN
-          
+					-- Zerar valor do saldo devedor para próxima proposta
+          vr_valopera_atualizada := 0;
           -- Buscar o saldo devedor atualizado do contrato
           EMPR0001.pc_saldo_devedor_epr (pr_cdcooper => vr_cdcooper             --> Cooperativa conectada
                                         ,pr_cdagenci => 1                       --> Codigo da agencia
@@ -245,7 +246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
                                         ,pr_cdoperad => '1'                     --> Codigo do operador
                                         ,pr_nmdatela => 'ATENDA'                --> Nome datela conectada
                                         ,pr_idorigem => 1 /*Ayllos*/            --> Indicador da origem da chamada
-                                        ,pr_nrdconta => pr_nrdconta             --> Conta do associado
+                                        ,pr_nrdconta => rw_cobertura.nrdconta             --> Conta do associado
                                         ,pr_idseqttl => 1                       --> Sequencia de titularidade da conta
                                         ,pr_rw_crapdat => rw_crapdat            --> Vetor com dados de parametro (CRAPDAT)
                                         ,pr_nrctremp => rw_cobertura.nrcontrato --> Numero contrato emprestimo

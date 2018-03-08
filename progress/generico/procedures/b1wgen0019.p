@@ -2,7 +2,7 @@
 
    Programa: b1wgen0019.p
    Autor   : Murilo/David
-   Data    : 21/06/2007                        Ultima atualizacao: 27/07/2017
+   Data    : 21/06/2007                        Ultima atualizacao: 06/03/2018 
 
    Objetivo  : BO LIMITE DE CRÉDITO
 
@@ -297,17 +297,20 @@
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom) 
 
-				 29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+                29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
          
-                 28/09/2017 - Ajuste leitura IDORGEXP.
-                              PRJ339 - CRM (Odirlei-AMcom) 
+                28/09/2017 - Ajuste leitura IDORGEXP.
+                             PRJ339 - CRM (Odirlei-AMcom) 
          
-                 05/12/2017 - Adicionada chamada para a rotina pc_bloq_desbloq_cob_operacao nas procedures
-                              cconfirmar-novo-limite e cancelar-limite-atual.
-                              Adicionado campo idcobope e chamada para a rotina pc_vincula_cobertura_operacao
-                              nas procedures alterar-novo-limite e altera-numero-proposta-limite.
-                              Projeto 404 (Lombardi)
+                05/12/2017 - Adicionada chamada para a rotina pc_bloq_desbloq_cob_operacao nas procedures
+                             cconfirmar-novo-limite e cancelar-limite-atual.
+                             Adicionado campo idcobope e chamada para a rotina pc_vincula_cobertura_operacao
+                             nas procedures alterar-novo-limite e altera-numero-proposta-limite.
+                             Projeto 404 (Lombardi)
          
+                06/03/2018 - Adicionado campo idcobope na temp-table tt-cabec-limcredito
+                             para as novas propostas de limite na procedure obtem-cabecalho-limite.
+                             (PRJ404 Reinert)
 ..............................................................................*/
 
 
@@ -638,14 +641,16 @@ PROCEDURE obtem-cabecalho-limite:
                                             ELSE
                                                   FALSE
                                        ELSE
-                                            FALSE.
+                                            FALSE
+                   tt-cabec-limcredito.idcobope = craplim.idcobope.
         END.
     ELSE
         ASSIGN tt-cabec-limcredito.flgpropo = FALSE
                tt-cabec-limcredito.nrctrpro = 0
                tt-cabec-limcredito.cdlinpro = 0
                tt-cabec-limcredito.vllimpro = 0
-               tt-cabec-limcredito.flgenpro = FALSE.
+               tt-cabec-limcredito.flgenpro = FALSE
+               tt-cabec-limcredito.idcobope = 0.
                
     IF  crapass.inpessoa = 1  THEN
         ASSIGN tt-cabec-limcredito.dstitulo = " LIMITE DE CREDITO ".
@@ -9781,38 +9786,42 @@ PROCEDURE alterar-novo-limite:
                craplim.inconcje    = par_inconcje
                craplim.dtconbir    = par_dtconbir.
                
-               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        IF par_idcobope <> craplim.idcobope THEN
+           DO:
+         
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-               /* Faz a vinculaçao da garantia com a proposta */
-               RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
-               aux_handproc = PROC-HANDLE NO-ERROR (INPUT craplim.idcobope
-                                                   ,INPUT par_idcobope
-                                                   ,INPUT craplim.nrctrlim
-                                                   ,"").
+             /* Faz a vinculaçao da garantia com a proposta */
+             RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT craplim.idcobope
+                                                 ,INPUT par_idcobope
+                                                 ,INPUT craplim.nrctrlim
+                                                 ,"").
 
-               CLOSE STORED-PROC pc_vincula_cobertura_operacao
-               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+             CLOSE STORED-PROC pc_vincula_cobertura_operacao
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-               ASSIGN aux_dscritic = pc_vincula_cobertura_operacao.pr_dscritic
-                                     WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
+             ASSIGN aux_dscritic = pc_vincula_cobertura_operacao.pr_dscritic
+                                   WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
 
-               IF  aux_dscritic <> "" THEN
-                   DO:
-                       
-                       RUN gera_erro (INPUT par_cdcooper,
-                                      INPUT par_cdagenci,
-                                      INPUT par_nrdcaixa,
-                                      INPUT 1,            /** Sequencia **/
-                                      INPUT aux_cdcritic,
-                                      INPUT-OUTPUT aux_dscritic).
-                                              
-                       UNDO TRANSACAO, LEAVE TRANSACAO.
-                   END.
-                   
-               ASSIGN craplim.idcobope = par_idcobope
-                      craplim.idcobefe = par_idcobope.
+             IF  aux_dscritic <> "" THEN
+                 DO:
+                     
+                     RUN gera_erro (INPUT par_cdcooper,
+                                    INPUT par_cdagenci,
+                                    INPUT par_nrdcaixa,
+                                    INPUT 1,            /** Sequencia **/
+                                    INPUT aux_cdcritic,
+                                    INPUT-OUTPUT aux_dscritic).
+                                            
+                     UNDO TRANSACAO, LEAVE TRANSACAO.
+                 END.
+           END.
+            
+        ASSIGN craplim.idcobope = par_idcobope
+               craplim.idcobefe = par_idcobope.
                
         RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT 
             SET h-b1wgen9999.              

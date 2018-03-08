@@ -2610,7 +2610,8 @@ PROCEDURE busca_limites:
                                                  "NAO"
                                        ELSE
                                             "NAO"
-              tt-limite_chq.insitlim = craplim.insitlim.
+              tt-limite_chq.insitlim = craplim.insitlim
+              tt-limite_chq.idcobope = craplim.idcobope.
 
 
     END.  /*  Fim da leitura do craplim  */

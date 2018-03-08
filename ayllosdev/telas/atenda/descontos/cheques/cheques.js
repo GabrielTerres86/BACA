@@ -31,8 +31,9 @@
  * 016: [26/05/2017] Odirlei   (AMcom)  : Alterado para tipo de impressao 10 - Analise bordero.
  *                                        Desabilitado o campo nrctrlim na inclusao de limite. - PRJ300 - Desconto de cheque
  * 017: [31/05/2017] Odirlei   (AMcom)  : Ajuste para verificar se possui cheque custodiado no dia de hoje. - PRJ300 - Desconto de cheque 
- * 017: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque 
- * 013: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+ * 018: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque 
+ * 019: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+ * 020: [07/03/2018] Reinert (CECRED)   : Adicionado parametro idcobope na efetivação do limite.
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -45,6 +46,7 @@ var flresghj = 0;    // Variável para armazenar se deseja resgatar os cheques c
 var situacao_limite = ""; // Variável para armazenar a situação do limite atualmente selecionado
 var cd_situacao_lim = 0; // Variável para armazenar o código da situação do limite atualmente selecionado
 var valor_limite = 0; // Variável para armazenar o valor limite do limite atualmente selecionado
+var idcobope = 0; // Variável para armazenar o id da cobertura da garantia da operação
 var idLinhaB   = 0;  // Variável para armazanar o id da linha que contém o bordero selecionado
 var idLinhaL   = 0;  // Variável para armazanar o id da linha que contém o limite selecionado
 var dtrating   = 0;  // Data rating (é calculada e alimentada no cheques_limite_incluir.php)
@@ -462,7 +464,7 @@ function carregaLimitesCheques() {
 }
 
 // Função para seleção do limite
-function selecionaLimiteCheques(id,qtLimites,limite,dssitlim,insitlim,vllimite) {
+function selecionaLimiteCheques(id,qtLimites,limite,dssitlim,insitlim,vllimite,mIdcobope) {
 	var cor = "";
 
 	// Formata cor da linha da tabela que lista os limites de descto cheques
@@ -486,6 +488,7 @@ function selecionaLimiteCheques(id,qtLimites,limite,dssitlim,insitlim,vllimite) 
 			situacao_limite = dssitlim;
 			cd_situacao_lim = insitlim;
 			valor_limite = vllimite;
+			idcobope = mIdcobope;
 		}
 	}
 }
@@ -1396,6 +1399,7 @@ function confirmaNovoLimite(cddopera) {
 			vllimite: valor_limite,
 			nrctrlim: nrcontrato,
 			cddopera: cddopera,
+			idcobope: idcobope,
 			redirect: "script_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {

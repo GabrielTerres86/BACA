@@ -1960,7 +1960,8 @@ PROCEDURE busca_dados_efetivacao_proposta:
            tt-efetiv-epr.altdtpgt = NO
            tt-efetiv-epr.avalist1 = " "
            tt-efetiv-epr.avalist2 = " "
-           tt-efetiv-epr.dtdpagto = crawepr.dtdpagto.
+           tt-efetiv-epr.dtdpagto = crawepr.dtdpagto
+           tt-efetiv-epr.idcobope = crawepr.idcobope.
 
     FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper     AND
                            crapavt.tpctrato = 1                AND /*Emprest*/
@@ -3551,7 +3552,7 @@ PROCEDURE grava_efetivacao_proposta:
 
               ASSIGN aux_dscritic  = ""
                      aux_dscritic  = pc_bloq_desbloq_cob_operacao.pr_dscritic 
-                                     WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?.
+                                     WHEN pc_bloq_desbloq_cob_operacao.pr_dscritic <> ?.
 
               IF aux_dscritic <> "" THEN
                  UNDO EFETIVACAO , LEAVE EFETIVACAO.
@@ -3587,7 +3588,7 @@ PROCEDURE grava_efetivacao_proposta:
 
                                   ASSIGN aux_dscritic  = ""
                                          aux_dscritic  = pc_bloq_desbloq_cob_operacao.pr_dscritic 
-                                                         WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?.
+                                                         WHEN pc_bloq_desbloq_cob_operacao.pr_dscritic <> ?.
 
                                   IF aux_dscritic <> "" THEN
                                      UNDO EFETIVACAO , LEAVE EFETIVACAO.
@@ -4385,7 +4386,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
 
                   ASSIGN aux_dscritic  = ""
                          aux_dscritic  = pc_bloq_desbloq_cob_operacao.pr_dscritic 
-                                         WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?.
+                                         WHEN pc_bloq_desbloq_cob_operacao.pr_dscritic <> ?.
 
                   IF aux_dscritic <> "" THEN
                      UNDO Desfaz , LEAVE Desfaz.
@@ -4421,7 +4422,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
 
                                       ASSIGN aux_dscritic  = ""
                                              aux_dscritic  = pc_bloq_desbloq_cob_operacao.pr_dscritic 
-                                                             WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?.
+                                                             WHEN pc_bloq_desbloq_cob_operacao.pr_dscritic <> ?.
 
                                       IF aux_dscritic <> "" THEN
                                          UNDO Desfaz , LEAVE Desfaz.

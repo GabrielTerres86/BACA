@@ -114,6 +114,7 @@
  * 089: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
  * 090: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
  * 091: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
+ * 092: [05/03/2018] Incluido campo idcobope na parametrizacao do fonte efetiva_proposta. (PRJ404 - Reinert)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -8229,6 +8230,7 @@ function efetivaProposta() {
     nrdconta = arrayStatusApprov['nrdconta'];
     nrctremp = arrayStatusApprov['nrctremp'];
     dtdpagto = arrayStatusApprov['dtdpagto'];
+    idcobope = arrayStatusApprov['idcobope'];
 
     // Executa script de confirmação através de ajax
     $.ajax({
@@ -8238,7 +8240,8 @@ function efetivaProposta() {
         data: {
             nrdconta: nrdconta, idseqttl: idseqttl,
             nrctremp: nrctremp, insitapv: insitapv,
-            dtdpagto: dtdpagto, redirect: 'html_ajax'
+            dtdpagto: dtdpagto, idcobope: idcobope, 
+			redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();

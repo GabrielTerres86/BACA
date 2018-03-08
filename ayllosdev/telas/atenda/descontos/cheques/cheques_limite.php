@@ -22,7 +22,9 @@
 
 				  12/09/2016 - Inclusão do campo "Confirmar Novo Limite" que vai substituir a "LANCDC". PRJ300 (Lombardi)
           
-          11/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+				  11/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+				  
+				  07/03/2018 - Adicionado parametro idcobope na chamada da function selecionaLimiteCheques. (PRJ404 Reinert)
 
 	************************************************************************/
 	
@@ -115,7 +117,7 @@
 			<tbody>
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
 												
-						$mtdClick = "selecionaLimiteCheques('".($i + 1)."','".$qtLimites."','".($limites[$i]->tags[3]->cdata)."','".($limites[$i]->tags[6]->cdata)."','".($limites[$i]->tags[10]->cdata)."','".($limites[$i]->tags[2]->cdata)."');";
+						$mtdClick = "selecionaLimiteCheques('".($i + 1)."','".$qtLimites."','".($limites[$i]->tags[3]->cdata)."','".($limites[$i]->tags[6]->cdata)."','".($limites[$i]->tags[10]->cdata)."','".($limites[$i]->tags[2]->cdata)."',".($limites[$i]->tags[11]->cdata).");";
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 					
