@@ -333,6 +333,10 @@ begin
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapsol: '
                        ||'insitsol:2 - executada'
                        ||' com rowid:'||rw_crapsol.row_id||'. '||sqlerrm;
+
+        -- No caso de erro de programa gravar tabela especifica de log - Chamado 805994
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+
         raise vr_exc_saida;
     end;
   end loop;
@@ -413,7 +417,7 @@ EXCEPTION
     -- Efetuar rollback
     ROLLBACK;
 
-    -- No caso de erro de programa gravar tabela especifica de log - 13/12/2017 - Chamado 813390
+    -- No caso de erro de programa gravar tabela especifica de log - Chamado 805994
     CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
 END;
 /
