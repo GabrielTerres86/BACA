@@ -3221,6 +3221,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             END IF;  
             --Fechar Cursor
             CLOSE cr_craplem_his; 
+            
+            /* Historico de IOF  */
+            CASE WHEN rw_craplem.cdhistor = 1044 THEN
+                 vr_cdhistor := 2311; /* Devedor */                 
+            ELSE     
+                 vr_cdhistor := 2312; /* Devedor */
+            END CASE;
+
+            /* Achar juros de inadimplencia desta parcela */
+            OPEN cr_craplem_his (pr_cdcooper => rw_craplem.cdcooper
+                                ,pr_nrdconta => rw_craplem.nrdconta
+                                ,pr_nrctremp => rw_craplem.nrctremp
+                                ,pr_nrparepr => rw_craplem.nrparepr
+                                ,pr_dtmvtolt => rw_craplem.dtmvtolt
+                                ,pr_cdhistor => vr_cdhistor);
+            FETCH cr_craplem_his INTO rw_craplem_his;
+            --Se encontrou
+            IF cr_craplem_his%FOUND THEN
+              --Acumular valor lancamento
+              vr_vllantmo:= nvl(vr_vllantmo,0) + nvl(rw_craplem_his.vllanmto,0);
+            END IF;  
+            --Fechar Cursor
+            CLOSE cr_craplem_his;
             --Atualizar tabela primeira parcela
             vr_tab_flgpripa(rw_craplem.nrparepr):= TRUE;  
           END IF;  

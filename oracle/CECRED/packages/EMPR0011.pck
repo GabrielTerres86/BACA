@@ -1314,6 +1314,1268 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
   END pc_calcula_prox_parcela_pos;
   
+  PROCEDURE pc_calcula_iof_provisorio(pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
+                                      ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
+                                      ,pr_nrctremp  IN crapepr.nrctremp%TYPE DEFAULT null
+                                      ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
+                                      ,pr_inpessoa  IN crapass.inpessoa%TYPE
+                                      ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE
+                                      ,pr_qtpreemp  IN crapepr.qtpreemp%TYPE
+                                      ,pr_vlpreemp  IN crapepr.vlpreemp%TYPE
+                                      ,pr_vlemprst  IN crapepr.vlemprst%TYPE
+                                      ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE
+                                      ,pr_dtlibera  IN crawepr.dtlibera%TYPE
+                                      ,pr_tpemprst  IN crawepr.tpemprst%TYPE
+                                      ,pr_dtcarenc        IN crawepr.dtcarenc%TYPE
+                                      ,pr_qtdias_carencia IN tbepr_posfix_param_carencia.qtddias%TYPE
+                                      ,pr_dscatbem        IN VARCHAR2 DEFAULT NULL            -- Bens em garantia (separados por "|")
+                                      ,pr_idfiniof        IN crapepr.idfiniof%TYPE DEFAULT 1  -- Indicador se financia IOF e tarifa
+                                      ,pr_dsctrliq        IN VARCHAR2 DEFAULT NULL
+                                      ,pr_valoriof       OUT craplcm.vllanmto%TYPE -- Valor calculado com o iof (principal + adicional)
+                                      ,pr_vliofpri       OUT craplcm.vllanmto%TYPE -- Valor calculado do iof principal
+                                      ,pr_vliofadi       OUT craplcm.vllanmto%TYPE -- Valor calculado do iof adicional
+                                      ,pr_flgimune       OUT PLS_INTEGER
+                                      ,pr_vlfinanciado   OUT NUMBER
+                                      ,pr_dscritic OUT VARCHAR2) IS          --> Descricão da critica
+  /* .............................................................................
+     Programa: pc_calcula_iof_provisorio                
+     Sistema : Conta-Corrente - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Andrino -> Procedure provisoria, será revisto na proxima etapa
+  ............................................................................. */
+
+    -- Tipo para armazenar as informações das parcelas
+    TYPE typ_reg_parcela IS
+      RECORD(nrparepr       crappep.nrparepr%TYPE
+            ,dtvencto       crappep.dtvencto%TYPE
+            ,qtdias         PLS_INTEGER
+            ,vlparepr       NUMBER(25,2)
+            ,vljuros        NUMBER(25,8)
+            ,vlprincipal    NUMBER(25,8)
+            ,vlsaldodevedor NUMBER(25,8)
+            ,vliof          NUMBER(25,2));
+          
+    -- Tabela para armazenar registros do tipo acima
+    TYPE typ_tab_parcela IS TABLE OF typ_reg_parcela INDEX BY PLS_INTEGER;
+    
+    pr_tab_parcelas EMPR0011.typ_tab_parcelas;
+    
+    vr_tab_parcela       typ_tab_parcela;  
+  
+    vr_saldo_devedor     NUMBER(25,2) := 0;  
+    vr_saldo_devedorRF   number(25,2) := 0;
+    vr_txmensal          number(25,8); --craplcr.txmensal%TYPE;
+    vr_txdiaria          number(25,8); -- craplcr.txdiaria%TYPE;
+    vr_dtvencto          DATE;
+    vr_dtiniiof          DATE;
+    vr_dtfimiof          DATE;
+    vr_qtdias            PLS_INTEGER;
+    vr_flgimuneB         boolean;
+    vr_taxaiof           NUMBER(25,8);
+    vr_txiofadc          number(25,8);
+    vr_vltariof          NUMBER(25,8);
+    vr_dstextab          VARCHAR2(500);
+    vr_qtdedias          number;
+    vr_diafinal          number;
+    vr_mesfinal          number;
+    vr_anofinal          number;
+    vr_exc_erro              EXCEPTION;
+--    vr_exc_erro          exception;
+
+    vr_vliofpri          number(25,8) := 0;
+    vr_vliofpritt        number(25,8) := 0;
+    vr_vliofadi          number(25,8) := 0;
+    vr_vliofaditt        number(25,8) := 0;
+    vr_vliofaditt_aux    number(25,8) := 0;
+    vr_vliofcpl          number(25,8) := 0;
+    vr_vlpreemp          number(25,8);
+    vr_vltarifa          number;
+    vr_vltarifaN         number;
+    vr_vltarifaES        number;
+    vr_vltarifaGT        number;
+    vr_vlbaseiof         number;
+    vr_dsreturn          varchar2(100);
+    vr_tab_erro          gene0001.typ_tab_erro;
+    vr_cdhistor          craphis.cdhistor%type;
+    vr_cdfvlcop          crapfco.cdfvlcop%type;
+    vr_cdhisgar          craphis.cdhistor%type;
+    vr_cdfvlgar          crapfco.cdfvlcop%type;
+    vr_retiof            number;
+    vr_vllanmto          number;
+
+    vr_xml_log varchar2(1000);
+    vr_cdcritic pls_integer;
+    vr_dscritic varchar2(1000);
+    vr_nmdcampo varchar2(100);
+    pr_des_erro varchar2(100);
+    pr_xml_retorno xmltype;
+    
+    VR_ROWID ROWID;
+    -- Busca os dados da linha de credito
+    CURSOR cr_craplcr IS
+      SELECT txmensal 
+           , craplcr.cdusolcr
+           , craplcr.tpctrato
+        FROM craplcr 
+       WHERE cdcooper = pr_cdcooper
+         AND cdlcremp = pr_cdlcremp;
+    rw_craplcr cr_craplcr%ROWTYPE;    
+     
+    -- Projeto 410 - busca categoria do Bem para verificar isenção do IOF
+    --CURSOR cr_crapbpr IS
+    --  SELECT dscatbem
+    --    FROM crapbpr
+    --   WHERE cdcooper = pr_cdcooper
+    --     and nrdconta = pr_nrdconta
+    --     and crapbpr.nrctrpro = pr_nrctremp
+    --     and crapbpr.dscatbem in ('CASA','APARTAMENTO','MOTO');
+    -- rw_crapbpr cr_crapbpr%rowtype;
+
+   CURSOR cr_crapbpr_moto IS
+      SELECT dscatbem
+        FROM crapbpr
+       WHERE cdcooper = pr_cdcooper
+         and nrdconta = pr_nrdconta
+         and crapbpr.nrctrpro = pr_nrctremp
+         and crapbpr.dscatbem in ('MOTO');
+     rw_crapbpr_moto cr_crapbpr_moto%rowtype;
+
+     vr_perc_aux NUMBER;
+
+     vr_calc_iof_aux NUMBER;
+     vr_calc_adi_aux NUMBER;
+
+    /*cursor cr_crawepr is
+      select idfiniof
+        from crawepr
+       where cdcooper = pr_cdcooper
+         and nrdconta = pr_nrdconta
+         and nrctremp = pr_nrctremp;*/
+
+      -- vr_idfiniof crawepr.idfiniof%type;
+
+  /* Procedure para verificar IOF de Refinanciamento */
+  
+      PROCEDURE PC_CALCULO_EPR_IOF_REFIN
+      (pr_cdcooper in crapepr.cdcooper%type
+      ,pr_nrdconta in crapepr.nrdconta%type
+      ,pr_nrctremp in crapepr.nrctremp%type
+      ,pr_dsctrliq in varchar2
+      ,pr_vlemprst in crawepr.vlemprst%type
+      ,pr_vlbasiof out number
+      ,pr_retiof   out number /* 1 - Cobra somente IOF adicional sobre saldo;
+                                 2 - Não cobra IOF 
+                                 3 - cobra integral sobre saldo */
+      ,pr_vllanmto out number /* Valor do lancamento de IOF anterior */                           
+      ,pr_dscritic out varchar2) IS
+
+      cursor cr_crawepr is
+         select nrctrliq##1
+               ,nrctrliq##2
+               ,nrctrliq##3
+               ,nrctrliq##4
+               ,nrctrliq##5
+               ,nrctrliq##6
+               ,nrctrliq##7
+               ,nrctrliq##8
+               ,nrctrliq##9
+               ,nrctrliq##10
+               ,vlemprst
+               ,cdlcremp
+               ,vlpreemp
+               ,qtpreemp 
+               ,dtdpagto
+               ,dtlibera
+               ,dtmvtolt
+               ,tpemprst
+               ,dtcarenc
+               ,qtdialib
+               ,idfiniof
+          from  crawepr
+          where crawepr.cdcooper = pr_cdcooper
+            and crawepr.nrdconta = pr_nrdconta
+            and crawepr.nrctremp = pr_nrctremp;
+
+       rw_crawepr cr_crawepr%rowtype;
+
+       cursor cr_crapepr(pr_cdcooper crapepr.cdcooper%type
+                        ,pr_nrdconta crapepr.nrdconta%type
+                        ,pr_nrctremp crapepr.nrctremp%type) is
+         select crapepr.vlsdeved
+              , crapepr.dtmvtolt
+              , crapepr.vlsdevat
+              , crapepr.txjuremp
+              , crapepr.vliofepr
+              , (select max(dtvencto) 
+                   from crappep a
+                  where a.cdcooper = crapepr.cdcooper
+                  and   a.nrdconta = crapepr.nrdconta
+                  and   a.nrctremp = crapepr.nrctremp) dtultvct
+           from crapepr
+          where cdcooper = pr_cdcooper
+            and nrdconta = pr_nrdconta
+            and nrctremp = pr_nrctremp;
+
+         rw_crapepr cr_crapepr%rowtype;
+
+       /*cursor cr_craplcm (pr_cdcooper crapepr.cdcooper%type
+                        ,pr_nrdconta crapepr.nrdconta%type
+                        ,pr_nrctremp crapepr.nrctremp%type) is
+         select sum(vllanmto) 
+         from   craplcm
+         where  cdcooper = pr_cdcooper
+         and    nrdconta = pr_nrdconta
+         and    nrdocmto = pr_nrctremp
+         and    cdhistor = 322; */
+         
+         vr_vllanmto number; 
+      -- Tabela temporaria Contratos Liquidados
+      TYPE typ_tab_nrctrliq IS TABLE OF crawepr.nrctrliq##1%TYPE INDEX BY PLS_INTEGER;
+      vr_tab_nrctrliq typ_tab_nrctrliq;
+
+      vr_vlsaldo number;
+      vr_vlbaseiof number;
+      vr_contador integer;
+      vr_dtlibera date;
+      vr_dscritic varchar2(100);
+      vr_cobraiof boolean;
+      vr_vct365   boolean;
+      VR_ROWID rowid;
+      -- variaveis para montar os contratos à partir da dsctrliq
+      wtamanho number;
+      wpos number := 1;
+      wpos2 number := 0;
+      vrindice number := 0;
+      wcontrato varchar2(100);
+      vr_dsctrliq varchar2(1000);
+      
+      rw_crapdat btch0001.cr_crapdat%rowtype;
+      vr_des_reto VARCHAR2(400);
+      vr_tab_erro gene0001.typ_tab_erro;
+      
+      vr_qtprecal  crapepr.qtprecal%TYPE;
+      vr_vlprepag  NUMBER;
+      vr_vlpreapg  NUMBER;
+      vr_vljurmes  NUMBER;
+      vr_vljuracu  NUMBER;
+      vr_vlsdeved  NUMBER;
+      vr_dtultpag  crapepr.dtultpag%TYPE;
+      vr_vlmrapar  crappep.vlmrapar%TYPE;
+      vr_vlmtapar  crappep.vlmtapar%TYPE;
+      vr_vliofcpl  crappep.vliofcpl%TYPE;
+      vr_vlprvenc  NUMBER;
+      vr_vlpraven  NUMBER;
+      vr_txdjuros  NUMBER;
+      vr_dtcalcul  DATE;
+      vr_diapagto  INTEGER;
+     
+    begin
+        --Zerar Valor Creditado
+        vr_vlsaldo := 0;
+        -- Assumir valor base de IOF o que recebe pelo parametro
+        pr_vlbasiof := pr_vlemprst;
+        pr_vllanmto := 0;
+        vr_cobraiof := true;
+        vr_vct365   := false;
+        
+        open btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        fetch btch0001.cr_crapdat into rw_crapdat;
+        close btch0001.cr_crapdat;
+                           
+        if nvl(pr_nrctremp,0) > 0 then
+            open cr_crawepr;
+            fetch cr_crawepr into rw_crawepr;
+            close cr_crawepr;
+
+            --Popular Emprestimos
+            vr_tab_nrctrliq(1):=  NVL(rw_crawepr.nrctrliq##1,0);
+            vr_tab_nrctrliq(2):=  NVL(rw_crawepr.nrctrliq##2,0);
+            vr_tab_nrctrliq(3):=  NVL(rw_crawepr.nrctrliq##3,0);
+            vr_tab_nrctrliq(4):=  NVL(rw_crawepr.nrctrliq##4,0);
+            vr_tab_nrctrliq(5):=  NVL(rw_crawepr.nrctrliq##5,0);
+            vr_tab_nrctrliq(6):=  NVL(rw_crawepr.nrctrliq##6,0);
+            vr_tab_nrctrliq(7):=  NVL(rw_crawepr.nrctrliq##7,0);
+            vr_tab_nrctrliq(8):=  NVL(rw_crawepr.nrctrliq##8,0);
+            vr_tab_nrctrliq(9):=  NVL(rw_crawepr.nrctrliq##9,0);
+            vr_tab_nrctrliq(10):= NVL(rw_crawepr.nrctrliq##10,0);       
+
+             FOR vr_contador IN 1..10 LOOP
+
+                IF vr_tab_nrctrliq(vr_contador) > 0 THEN
+
+                  OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrctremp => vr_tab_nrctrliq(vr_contador));
+                  FETCH cr_crapepr INTO rw_crapepr;
+
+
+                  if cr_crapepr%found then
+                                           
+                     EMPR0001.pc_calc_saldo_deved_epr_lem(pr_cdcooper => pr_cdcooper                       --> Cooperativa conectada      
+                                                         ,pr_cdprogra => 'ATENDA'                          --> Código do programa corrente    
+                                                         ,pr_cdagenci => 1                                 --> Código da agência
+                                                         ,pr_nrdcaixa => 1                                 --> Número do caixa
+                                                         ,pr_cdoperad => 1                                 --> Código do Operador
+                                                         ,pr_rw_crapdat => rw_crapdat                      --> Vetor com dados de parâmetro (CRAPDAT)
+                                                         ,pr_nrdconta => pr_nrdconta                       --> Número da conta
+                                                         ,pr_idseqttl => 1                                 --> Seq titula
+                                                         ,pr_nrctremp => vr_tab_nrctrliq(vr_contador)                       --> Numero ctrato empréstimo
+                                                         ,pr_idorigem => 5                                 --> Id do módulo de sistema
+                                                         ,pr_txdjuros => rw_crapepr.txjuremp               --> Taxa de juros aplicada
+                                                         ,pr_dtcalcul => rw_crapdat.dtmvtolt               --> Data para calculo do empréstimo
+                                                         ,pr_diapagto => vr_diapagto                       --> Dia para pagamento
+                                                         ,pr_qtprecal => vr_qtprecal                       --> Quantidade de prestações calculadas até momento
+                                                         ,pr_vlprepag => vr_vlprepag                       --> Valor acumulado pago no mês
+                                                         ,pr_vlpreapg => vr_vlpreapg                       --> Valor a pagar
+                                                         ,pr_vljurmes => vr_vljurmes                       --> Juros no mês corrente
+                                                         ,pr_vljuracu => vr_vljuracu                       --> Juros acumulados total
+                                                         ,pr_vlsdeved => vr_vlsdeved                       --> Saldo devedor acumulado
+                                                         ,pr_dtultpag => vr_dtultpag                       --> Ultimo dia de pagamento das prestações
+                                                         ,pr_vlmrapar => vr_vlmrapar                       --> Valor do Juros de Mora
+                                                         ,pr_vlmtapar => vr_vlmtapar                       --> Valor da Multa
+                                                         ,pr_vliofcpl => vr_vliofcpl                       --> IOF
+                                                         ,pr_vlprvenc => vr_vlprvenc                       --> Valor a parcela a vencer
+                                                         ,pr_vlpraven => vr_vlpraven                       --> Valor da parcela vencida
+                                                         ,pr_flgerlog => 'N'                               --> Gerar log S/N
+                                                         ,pr_des_reto => vr_des_reto                       --> Retorno OK / NOK
+                                                         ,pr_tab_erro => vr_tab_erro);                     --> Tabela com possíves erros
+                  
+                     vr_vlsaldo := vr_vlsaldo + vr_vlsdeved + nvl(vr_vlmrapar, 0) + nvl(vr_vlmtapar, 0) + nvl(vr_vliofcpl, 0); -- Nao calcular IOF dos refinanciamentos + nvl(vr_vliofcpl, 0);
+                     if rw_crapepr.dtmvtolt > to_date('31/03/2017','dd/mm/yyyy') then
+                        vr_cobraiof := true;
+                        if rw_crapepr.dtultvct - rw_crapdat.dtmvtolt > 365 then
+                           vr_vct365 := true; 
+                        end if;
+                     else
+                         vr_cobraiof := false;
+                     end if;
+                     
+                     /*
+                     open cr_craplcm(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrctremp =>  vr_tab_nrctrliq(vr_contador));
+                     fetch cr_craplcm into vr_vllanmto;
+                     close cr_craplcm;
+                     */
+                     --> armazenar valor de IOF ja calculado/cobrado
+                     vr_vllanmto := rw_crapepr.vliofepr;
+                     
+                  end if;
+                  close cr_crapepr;
+                  
+                  pr_vllanmto := pr_vllanmto + vr_vllanmto;
+                  
+                END IF;
+             end loop;
+
+             
+         else
+             -- obtem os contratos com base no pr_dsctrliq
+             vr_dsctrliq := replace(pr_dsctrliq,'.','');
+             
+             wtamanho := length(vr_dsctrliq);
+             wpos := instr(vr_dsctrliq,',',1);
+             if wpos = 0 then
+                wcontrato := vr_dsctrliq;  
+             else
+                wcontrato := substr(vr_dsctrliq, 1, wpos-1);
+             end if;
+             
+             wcontrato := trim(wcontrato);
+             IF wcontrato = '' OR UPPER(wcontrato) LIKE '%SEM%' THEN --Sem liquidações
+               wcontrato := '0';
+             end if;
+             
+             OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrctremp => to_number(wcontrato));
+              FETCH cr_crapepr INTO rw_crapepr;
+
+
+              if cr_crapepr%found then
+                EMPR0001.pc_calc_saldo_deved_epr_lem(pr_cdcooper => pr_cdcooper                       --> Cooperativa conectada      
+                                                         ,pr_cdprogra => 'ATENDA'                          --> Código do programa corrente    
+                                                         ,pr_cdagenci => 1                                 --> Código da agência
+                                                         ,pr_nrdcaixa => 1                                 --> Número do caixa
+                                                         ,pr_cdoperad => 1                                 --> Código do Operador
+                                                         ,pr_rw_crapdat => rw_crapdat                      --> Vetor com dados de parâmetro (CRAPDAT)
+                                                         ,pr_nrdconta => pr_nrdconta                       --> Número da conta
+                                                         ,pr_idseqttl => 1                                 --> Seq titula
+                                                         ,pr_nrctremp => to_number(wcontrato)              --> Numero ctrato empréstimo
+                                                         ,pr_idorigem => 5                                 --> Id do módulo de sistema
+                                                         ,pr_txdjuros => rw_crapepr.txjuremp               --> Taxa de juros aplicada
+                                                         ,pr_dtcalcul => rw_crapdat.dtmvtolt               --> Data para calculo do empréstimo
+                                                         ,pr_diapagto => vr_diapagto                       --> Dia para pagamento
+                                                         ,pr_qtprecal => vr_qtprecal                       --> Quantidade de prestações calculadas até momento
+                                                         ,pr_vlprepag => vr_vlprepag                       --> Valor acumulado pago no mês
+                                                         ,pr_vlpreapg => vr_vlpreapg                       --> Valor a pagar
+                                                         ,pr_vljurmes => vr_vljurmes                       --> Juros no mês corrente
+                                                         ,pr_vljuracu => vr_vljuracu                       --> Juros acumulados total
+                                                         ,pr_vlsdeved => vr_vlsdeved                       --> Saldo devedor acumulado
+                                                         ,pr_dtultpag => vr_dtultpag                       --> Ultimo dia de pagamento das prestações
+                                                         ,pr_vlmrapar => vr_vlmrapar                       --> Valor do Juros de Mora
+                                                         ,pr_vlmtapar => vr_vlmtapar                       --> Valor da Multa
+                                                         ,pr_vliofcpl => vr_vliofcpl                       --> IOF
+                                                         ,pr_vlprvenc => vr_vlprvenc                       --> Valor a parcela a vencer
+                                                         ,pr_vlpraven => vr_vlpraven                       --> Valor da parcela vencida
+                                                         ,pr_flgerlog => 'N'                               --> Gerar log S/N
+                                                         ,pr_des_reto => vr_des_reto                       --> Retorno OK / NOK
+                                                         ,pr_tab_erro => vr_tab_erro);                     --> Tabela com possíves erros
+                                                         
+                 vr_vlsaldo := vr_vlsaldo + vr_vlsdeved + nvl(vr_vlmrapar, 0) + nvl(vr_vlmtapar, 0) + nvl(vr_vliofcpl, 0); -- Nao calcular IOF no refinanciamento + nvl(vr_vliofcpl, 0);
+                 if rw_crapepr.dtmvtolt > to_date('31/03/2017','dd/mm/yyyy') then
+                    vr_cobraiof := true;
+                    if rw_crapepr.dtultvct - rw_crapdat.dtmvtolt > 365 then
+                       vr_vct365 := true; 
+                    end if;
+                 else
+                    vr_cobraiof := false;
+                 end if;
+                 /*
+                  open cr_craplcm(pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrctremp =>  to_number(wcontrato));
+                  fetch cr_craplcm into vr_vllanmto;
+                  close cr_craplcm;
+                  */
+                  --> armazenar valor de IOF ja calculado/cobrado
+                   vr_vllanmto := rw_crapepr.vliofepr;
+                  
+              end if;
+              close cr_crapepr;
+                     
+              pr_vllanmto := pr_vllanmto + vr_vllanmto;
+             --dbms_output.put_line('contrato: ' || wcontrato);
+             if wpos > 0 then
+                 vrindice := wpos + 1;
+                 while vrindice <= wtamanho loop
+                     vrindice := vrindice+1;
+                     wpos := wpos+1;
+                     wpos2 := instr(vr_dsctrliq, ',',wpos);
+                     wcontrato := substr(vr_dsctrliq, wpos, wpos2-wpos);
+                     if wpos2 = 0 then
+                        wcontrato := substr(vr_dsctrliq, wpos);
+                     end if;
+                     OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_nrctremp => wcontrato);
+                      FETCH cr_crapepr INTO rw_crapepr;
+
+
+                      if cr_crapepr%found then
+                        EMPR0001.pc_calc_saldo_deved_epr_lem(pr_cdcooper => pr_cdcooper                       --> Cooperativa conectada      
+                                                         ,pr_cdprogra => 'ATENDA'                          --> Código do programa corrente    
+                                                         ,pr_cdagenci => 1                                 --> Código da agência
+                                                         ,pr_nrdcaixa => 1                                 --> Número do caixa
+                                                         ,pr_cdoperad => 1                                 --> Código do Operador
+                                                         ,pr_rw_crapdat => rw_crapdat                      --> Vetor com dados de parâmetro (CRAPDAT)
+                                                         ,pr_nrdconta => pr_nrdconta                       --> Número da conta
+                                                         ,pr_idseqttl => 1                                 --> Seq titula
+                                                         ,pr_nrctremp => wcontrato                         --> Numero ctrato empréstimo
+                                                         ,pr_idorigem => 5                                 --> Id do módulo de sistema
+                                                         ,pr_txdjuros => rw_crapepr.txjuremp               --> Taxa de juros aplicada
+                                                         ,pr_dtcalcul => rw_crapdat.dtmvtolt               --> Data para calculo do empréstimo
+                                                         ,pr_diapagto => vr_diapagto                       --> Dia para pagamento
+                                                         ,pr_qtprecal => vr_qtprecal                       --> Quantidade de prestações calculadas até momento
+                                                         ,pr_vlprepag => vr_vlprepag                       --> Valor acumulado pago no mês
+                                                         ,pr_vlpreapg => vr_vlpreapg                       --> Valor a pagar
+                                                         ,pr_vljurmes => vr_vljurmes                       --> Juros no mês corrente
+                                                         ,pr_vljuracu => vr_vljuracu                       --> Juros acumulados total
+                                                         ,pr_vlsdeved => vr_vlsdeved                       --> Saldo devedor acumulado
+                                                         ,pr_dtultpag => vr_dtultpag                       --> Ultimo dia de pagamento das prestações
+                                                         ,pr_vlmrapar => vr_vlmrapar                       --> Valor do Juros de Mora
+                                                         ,pr_vlmtapar => vr_vlmtapar                       --> Valor da Multa
+                                                         ,pr_vliofcpl => vr_vliofcpl                       --> IOF
+                                                         ,pr_vlprvenc => vr_vlprvenc                       --> Valor a parcela a vencer
+                                                         ,pr_vlpraven => vr_vlpraven                       --> Valor da parcela vencida
+                                                         ,pr_flgerlog => 'N'                               --> Gerar log S/N
+                                                         ,pr_des_reto => vr_des_reto                       --> Retorno OK / NOK
+                                                         ,pr_tab_erro => vr_tab_erro);                     --> Tabela com possíves erros
+                                                         
+                         vr_vlsaldo := vr_vlsaldo + vr_vlsdeved + nvl(vr_vlmrapar, 0) + nvl(vr_vlmtapar, 0) + nvl(vr_vliofcpl, 0); -- Alteração de escopo - calcular IOF dos refinanciamentos;
+                         if rw_crapepr.dtmvtolt > to_date('31/03/2017','dd/mm/yyyy') then
+                            vr_cobraiof := true;
+                             if rw_crapepr.dtultvct - rw_crapdat.dtmvtolt > 365 then
+                                vr_vct365 := true; 
+                             end if;
+                         else 
+                            vr_cobraiof := false;
+                         end if;
+                      end if;
+                      close cr_crapepr;
+                      /*
+                       open r_craplcm(pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrctremp =>  to_number(wcontrato));
+                       fetch cr_craplcm into vr_vllanmto;
+                       close cr_craplcm;*/
+                       
+                       --> armazenar valor de IOF ja calculado/cobrado
+                     vr_vllanmto := rw_crapepr.vliofepr;
+              
+              pr_vllanmto := pr_vllanmto + vr_vllanmto;
+                     --dbms_output.put_line('contrato: ' || wcontrato);
+                     if wpos2 = 0 then
+                        exit;
+                     end if;
+                     wpos := wpos2;
+                 end loop;
+             end if;
+             
+         end if;
+         
+         
+    --     vr_vlsaldo := 1000000;
+         
+         -- Regra 1: se o saldo dos contratos liquidados for igual (ou inferior) ao valor refinanciado E a data de liberação
+         --          dos contratos refinanciados for anterior à 31/03/2017, não cobra IOF
+         if  pr_vlemprst <= vr_vlsaldo
+         and not vr_cobraiof then
+             pr_vlbasiof := 0;
+             pr_retiof   := 2; -- não cobra IOF
+         end if;
+
+         -- Regra 2: se o valor refinanciado for superior aos contratos liquidados e a data de liberação inferior a 31/03/2017,
+         --          cobra IOF apenas do valor complementar (valor refinanciado - valor contratos liquidados)
+         if not vr_cobraiof
+         and pr_vlemprst > vr_vlsaldo then
+             pr_vlbasiof := pr_vlemprst - vr_vlsaldo;
+             pr_retiof   := 1 ; -- cobra somente IOF adicional sobre saldo.
+             pr_vllanmto := 0;
+         end if;
+
+         -- Regra 3: Se data de liberação (dos contratos refinanciados) for superior a 31/03/2017, cobra IOF utilizando como
+         --          base o valor total refinanciado
+         if vr_cobraiof then
+            pr_vlbasiof := pr_vlemprst;
+            pr_retiof   := 3; -- cobra IOF integral
+         
+         end if;     
+         
+         -- Regra 4 se o vencimento foi superior a 365 dias e o saldo for igual ao emprestimo,
+         -- cobra só IOF adicional. Se o emprestimo for superior ao saldo, cobra adicional e 
+         -- principal sobre a diferença         
+         if vr_vct365 then
+            if pr_vlemprst > vr_vlsaldo then
+               pr_vlbasiof := pr_vlemprst - vr_vlsaldo;  
+               --pr_retiof := 3;
+
+             end if;
+             pr_retiof := 4;  
+         end if;     
+
+    end PC_CALCULO_EPR_IOF_REFIN;
+
+  
+  /* Inicio rotina PC_CALCULA_IOF_EPR */
+     
+  
+  BEGIN
+    vr_tab_parcela.DELETE;
+    vr_taxaiof := 0;
+    
+    pr_vliofpri := 0;
+    pr_vliofadi := 0;
+    vr_calc_adi_aux := 0;
+    vr_perc_aux := 0;
+    vr_calc_iof_aux := 0;
+    
+    
+    
+    
+    pr_vlfinanciado := pr_vlemprst;
+    
+    
+    
+    
+    
+    
+    ------------------------------------------------------------------------------------------------
+    --                                 CALCULO DO IOF ANTIGO    
+    ------------------------------------------------------------------------------------------------    
+    -- Buscar a taxa do IOF "0,038"
+    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsistem => 'CRED'
+                                             ,pr_tptabela => 'USUARI'
+                                             ,pr_cdempres => 11
+                                             ,pr_cdacesso => 'VLIOFOPFIN'
+                                             ,pr_tpregist => 1);
+
+    IF vr_dstextab IS NOT NULL THEN
+      -- Povoar as informacões conforme as regras da versão anterior
+      vr_dtiniiof := TO_DATE(SUBSTR(vr_dstextab,1,10),'DD/MM/YYYY');
+      vr_dtfimiof := TO_DATE(SUBSTR(vr_dstextab,12,10),'DD/MM/YYYY');
+      IF pr_dtmvtolt BETWEEN vr_dtiniiof AND vr_dtfimiof THEN
+        vr_taxaiof := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,14));
+      END IF;
+    END IF;
+          
+    vr_retiof := 0;
+                       
+   IF (pr_dsctrliq is not null
+    and to_char(nvl(pr_dsctrliq,'0')) <> '0') 
+    OR nvl(pr_nrctremp,0) > 0 then
+       PC_CALCULO_EPR_IOF_REFIN(pr_cdcooper => pr_cdcooper
+                                 , pr_nrdconta => pr_nrdconta
+                                 , pr_nrctremp => pr_nrctremp
+                                 , pr_dsctrliq => pr_dsctrliq
+                                 , pr_vlemprst => pr_vlemprst
+                                 , pr_vlbasiof => vr_vlbaseiof
+                                 , pr_retiof   => vr_retiof  /* 1 - Cobra somente IOF adicional sobre saldo;
+                                                               2 - Não cobra IOF 
+                                                                3 - cobra integral sobre saldo 
+                                                                4 - cobra somente IOF adicional*/
+                                 , pr_vllanmto => vr_vllanmto /* lancamento IOF anterior */
+                                 , pr_dscritic => vr_dscritic);
+    end if;
+    
+    if vr_vlbaseiof is null then
+       vr_vlbaseiof := pr_vlemprst;      
+    end if;
+    
+    -- Calcula o IOF para a taxa "0,038"
+    pr_valoriof := ROUND(vr_vlbaseiof /*pr_vlemprst*/ * vr_taxaiof,2);
+    
+    vr_vliofaditt := pr_valoriof;
+    vr_vliofaditt_aux := vr_vliofaditt;
+
+    IF nvl(pr_dtlibera, pr_dtmvtolt) < to_date('25/01/2017','DD/MM/RRRR') THEN
+      RETURN;
+    END IF;
+    
+    if  vr_retiof = 1 
+    and pr_idfiniof = 0 then -- Refinanciamento referente a contratos anteriores a 31/03/2018, cobra só adicional
+        return;
+    end if;
+    
+    -- Buscar a taxa de juros
+    OPEN cr_craplcr;
+    FETCH cr_craplcr INTO rw_craplcr;
+    -- se achou registro
+    IF cr_craplcr%FOUND THEN
+      -- Taxa de juros remunerados mensal
+      vr_txmensal := ROUND((POWER(1 + (nvl(rw_craplcr.txmensal,0) / 100),1) - 1) * 100,2);
+      vr_txdiaria := POWER((1 + (rw_craplcr.txmensal / 100)),(1/30))-1;
+    END IF; 
+    CLOSE cr_craplcr;
+      
+    -- Buscar bem em garantia - específico para motos
+    OPEN cr_crapbpr_moto;
+    FETCH cr_crapbpr_moto INTO rw_crapbpr_moto;
+      
+    ------------------------------------------------------------------------------------------------
+    --                                 CALCULO DO NOVO IOF
+    ------------------------------------------------------------------------------------------------        
+    -- Se o empréstimo for do tipo PP 
+    IF pr_tpemprst = 1 THEN
+    -- Condicao Pessoa Fisica
+      /*
+    IF pr_inpessoa = 1 THEN
+      vr_taxaiof := 0.000082;
+    ELSE
+      vr_taxaiof := 0.000041;
+    END IF;
+      */
+      pr_valoriof := 0;
+    
+      vr_diafinal := to_char(pr_dtdpagto, 'dd');
+      vr_mesfinal := to_char(pr_dtdpagto, 'mm');
+      vr_anofinal := to_char(pr_dtdpagto, 'yyyy');
+
+      empr0001.pc_calc_dias360 (pr_ehmensal => false
+                              , pr_dtdpagto => to_char(pr_dtdpagto,'DD')
+                              , pr_diarefju => to_char(pr_dtmvtolt,'DD')
+                              , pr_mesrefju => to_char(pr_dtmvtolt,'MM')
+                              , pr_anorefju => to_char(pr_dtmvtolt,'YYYY')
+                              , pr_diafinal => vr_diafinal
+                              , pr_mesfinal => vr_mesfinal
+                              , pr_anofinal => vr_anofinal
+                              , pr_qtdedias => vr_qtdedias );
+
+      vr_vlpreemp := pr_vlpreemp;
+
+      if nvl(pr_idfiniof,0) = 1 then
+        
+          TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
+                                   , pr_nrdconta => pr_nrdconta
+                                   , pr_cdlcremp => pr_cdlcremp
+                                   , pr_vlemprst => pr_vlemprst
+                                   , pr_cdusolcr => rw_craplcr.cdusolcr
+                                   , pr_tpctrato => rw_craplcr.tpctrato
+                                   , pr_dsbemgar => pr_dscatbem
+                                   , pr_cdprogra => 'ATENDA'
+                                   , pr_flgemail => 'N'
+                                   , pr_vlrtarif => vr_vltarifa
+                                   , pr_vltrfesp => vr_vltarifaES
+                                   , pr_vltrfgar => vr_vltarifaGT
+                                   , pr_cdhistor => vr_cdhistor
+                                   , pr_cdfvlcop => vr_cdfvlcop
+                                   , pr_cdhisgar => vr_cdhisgar
+                                   , pr_cdfvlgar => vr_cdfvlgar
+                                   , pr_cdcritic => vr_cdcritic
+                                   , pr_dscritic => vr_dscritic);
+              if nvl(vr_cdcritic,0) > 0
+              or vr_dscritic is not null then
+                 raise vr_exc_erro;
+              end if;
+              
+              vr_vltarifaN := vr_vltarifa + vr_vltarifaES + vr_vltarifaGT;
+              
+      end if;
+
+      /* Primeiro cálculo */
+      vr_saldo_devedor := ROUND((vr_vlbaseiof /*pr_vlemprst */+ nvl(vr_vltarifaN,0)) * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+
+      if nvl(pr_idfiniof,0) = 1
+      and vr_vlbaseiof > 0 then
+          -- recalcula prestacao do emprestimo
+          vr_vlpreemp := vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));
+          vr_vliofaditt := (vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0)) * vr_taxaiof;
+          vr_vliofaditt_aux := vr_vliofaditt;
+      end if;
+    
+    FOR vr_ind IN 1..pr_qtpreemp LOOP
+      IF vr_ind = 1 THEN
+        --   vr_saldo_devedor := ROUND(pr_vlemprst * (POWER((1 + vr_txdiaria),((pr_dtdpagto - pr_dtmvtolt) - 30))),2);
+            vr_saldo_devedor := ROUND((vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0)) * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+      ELSE
+        vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
+      END IF;
+      
+      -- Data de Vencimento da Parcela
+      vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
+      
+      -- Somente eh permitido calcular o IOF para 365 dias
+      vr_qtdias   := vr_dtvencto - pr_dtmvtolt;
+        
+        if vr_qtdias < 0 then
+           vr_qtdias := abs(vr_qtdias);
+        end if;
+        
+      IF vr_qtdias > 365 THEN
+        vr_qtdias := 365;
+      END IF;
+    
+        
+
+      -- Valor do Juros
+      vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
+      -- Valor Amortizacao/Principal
+        if vr_vlbaseiof = 0 then
+           vr_tab_parcela(vr_ind).vlprincipal    := 0;
+        else
+        vr_tab_parcela(vr_ind).vlprincipal    := vr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
+        end if;
+      -- Valor Saldo Devedor
+      vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
+      -- Valor do IOF
+
+        -- Calculo do valor do IOF de acordo com as novas regras
+        tiof0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
+                                        , pr_nrdconta => pr_nrdconta
+                                        , pr_nrctremp => pr_nrctremp
+                                        , pr_vlemprst => vr_tab_parcela(vr_ind).vlprincipal
+                                        , pr_vltotope => vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0)
+                                        , pr_dscatbem => pr_dscatbem
+                                        , pr_cdlcremp => pr_cdlcremp
+                                        , pr_dtmvtolt => pr_dtmvtolt
+                                        , pr_qtdiaiof => vr_qtdias
+                                        , pr_vliofpri => vr_vliofpri
+                                        , pr_vliofadi => vr_vliofadi
+                                        , pr_vliofcpl => vr_vliofcpl
+                                        , pr_vltaxa_iof_principal => vr_taxaiof
+                                        , pr_flgimune => pr_flgimune
+                                        , pr_dscritic => vr_dscritic );
+         if vr_dscritic is null  then
+            vr_vliofpritt := nvl(vr_vliofpritt,0) + NVL(vr_vliofpri,0);
+
+            -- no caso de imunidade, não cobra IOF
+            if nvl(pr_flgimune ,0) = 1 then
+               vr_vliofpri := 0 ;
+               vr_vliofadi := 0;
+            end if;
+            
+            if vr_retiof = 1 then
+               vr_vliofpri := 0 ;
+               vr_vliofadi := 0;
+            end if;
+            
+            pr_valoriof := abs(pr_valoriof + NVL(vr_vliofpri,0)); -- + NVL(vr_vliofadi,0);
+         end if;
+
+    END LOOP;
+
+
+      --IF pr_inpessoa = 1 AND (cr_crapbpr_moto%FOUND OR INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
+      IF pr_inpessoa = 1 AND (INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
+         if nvl(pr_idfiniof,0) = 1 then
+            pr_valoriof := pr_valoriof + NVL(vr_vliofaditt, 0);
+         else
+            pr_valoriof := NVL(vr_vliofaditt, 0);
+         end if;
+      ELSE
+          IF vr_vliofadi > 0 AND (pr_valoriof > 0 or vr_vliofaditt > 0) THEN
+            --Adicionado "OR" pois não estava calculando IOF em casos onde somente
+            --calcula o adicional (ex. natjurid = 2143 - Cooperativas)
+            pr_valoriof := pr_valoriof + vr_vliofaditt;
+          END IF;
+      END IF;
+
+      if vr_retiof in ( 1, 4) then
+         pr_valoriof := pr_valoriof + vr_vliofaditt;
+      end if;
+      
+      if nvl(vr_vllanmto,0) > 0 
+      and vr_retiof in (1,3) then
+         if pr_valoriof <= vr_vllanmto then
+         --   pr_valoriof := pr_valoriof - vr_vllanmto;
+         --else 
+            pr_valoriof := 0;
+         end if;
+      end if;
+
+      if nvl(pr_idfiniof,0) = 1 then -- refazer o calculo de IOF com base no financiamento Tarifa e IOF
+         --ARRED(vlr base ante/((vlr base ante - vliof apurado)/vl base ante);2)
+         if nvl(pr_flgimune ,0) = 1 then
+           pr_valoriof := nvl(vr_vliofpritt,0) + nvl(vr_vliofaditt,0);
+         end if;
+         
+         if pr_valoriof > 0 then
+           vr_vliofpritt := 0;
+
+           FOR vr_ind IN 1..pr_qtpreemp LOOP
+              IF vr_ind = 1 THEN
+                 -- calcula saldo devedor com base no emprestimo + tarifa e incide o IOF já calculado
+                 vr_saldo_devedor := round(vr_vlbaseiof /*pr_vlemprst*/ + vr_vltarifaN,2);
+                 vr_saldo_devedor := ROUND(vr_saldo_devedor / ((vr_saldo_devedor - pr_valoriof) / vr_saldo_devedor),2);
+                 vr_taxaiof := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,14));
+                 vr_vliofaditt := ROUND(vr_saldo_devedor * vr_taxaiof,2);
+                 vr_vliofaditt_aux := vr_vliofaditt;
+
+                 -- Acha o VP (valor presente do saldo devedor)
+                 vr_saldo_devedor := ROUND(vr_saldo_devedor * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+                 if vr_vlbaseiof > 0  then            
+                 vr_vlpreemp := vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));
+                 end if;
+                 -- Calculo para achar a prestação quando é refinanciamento (e possuir saldo entre os contratos)
+                 if vr_retiof in (1, 4) then
+                     vr_saldo_devedorRF := round(pr_vlemprst + vr_vltarifaN,2);
+                     vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - pr_valoriof) / vr_saldo_devedorRF),2);
+                     -- Acha o VP (valor presente do saldo devedor)
+                     vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+                     vr_vlpreemp := vr_saldo_devedorRF * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));                    
+                 end if;
+                 
+                 --vr_gb_vlrpreemp := vr_vlpreemp;
+                 pr_valoriof := 0;
+              ELSE
+                vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
+              END IF;
+
+              -- Data de Vencimento da Parcela
+              vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);
+
+              -- Somente eh permitido calcular o IOF para 365 dias
+              vr_qtdias   := vr_dtvencto - pr_dtmvtolt;
+              IF vr_qtdias > 365 THEN
+                vr_qtdias := 365;
+              END IF;
+
+              -- Valor do Juros
+              vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
+              -- Valor Amortizacao/Principal
+              vr_tab_parcela(vr_ind).vlprincipal    := vr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
+              -- Valor Saldo Devedor
+              vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
+
+              -- Calculo do valor do IOF de acordo com as novas regras
+              tiof0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
+                                              , pr_nrdconta => pr_nrdconta
+                                              , pr_nrctremp => pr_nrctremp
+                                              , pr_vlemprst => vr_tab_parcela(vr_ind).vlprincipal
+                                              , pr_vltotope => vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0) 
+                                              , pr_dscatbem => pr_dscatbem
+                                              , pr_cdlcremp => pr_cdlcremp
+                                              , pr_dtmvtolt => pr_dtmvtolt
+                                              , pr_qtdiaiof => vr_qtdias
+                                              , pr_vliofpri => vr_vliofpri
+                                              , pr_vliofadi => vr_vliofadi
+                                              , pr_vliofcpl => vr_vliofcpl
+                                              , pr_vltaxa_iof_principal => vr_taxaiof
+                                              , pr_flgimune => pr_flgimune
+                                              , pr_dscritic => vr_dscritic );
+               if vr_dscritic is null  then
+                 vr_vliofpritt := nvl(vr_vliofpritt,0) + NVL(vr_vliofpri,0);
+
+                  -- no caso de imunidade, não cobra IOF
+                  if nvl(pr_flgimune ,0) = 1 then
+                     vr_vliofpri := 0 ;
+                     vr_vliofadi := 0;
+                  end if;
+                  
+                  if vr_retiof = 1 then
+                     vr_vliofpri := 0 ;
+                  end if;
+                  
+                  -- possui isencao
+                  IF nvl(vr_vliofadi,0) = 0 then 
+                     vr_vliofaditt := 0;
+                  end if;
+                  pr_valoriof := pr_valoriof + NVL(vr_vliofpri,0); -- + NVL(vr_vliofadi,0);
+               end if;
+
+    END LOOP;
+      
+             IF pr_valoriof > 0
+             or vr_vliofaditt > 0 THEN
+                pr_valoriof := pr_valoriof + vr_vliofaditt;
+             END IF;
+
+         end if;
+      end if;
+
+      if nvl(vr_vllanmto,0) > 0 and vr_retiof in ( 1, 3) then
+                if pr_valoriof > vr_vllanmto then
+            --IOF total calculado
+            vr_calc_iof_aux := pr_valoriof;
+            --desconta o que já foi pago
+                   pr_valoriof := pr_valoriof - vr_vllanmto;
+                else 
+                   pr_valoriof := 0;
+                end if;
+             end if;
+            
+      if vr_retiof = 4 then
+         if vr_vlbaseiof >= pr_vlemprst then         
+           pr_valoriof := vr_vliofaditt;  
+         end if;
+      end if;
+      
+    ELSIF pr_tpemprst = 0 THEN  -- Se o tipo do empréstimo for TR
+      
+      -- Condicao Pessoa Fisica
+      IF pr_inpessoa = 1 THEN
+        vr_taxaiof := 0.03 ; --+ vr_taxaiof;
+      ELSE -- Se PJ
+        vr_taxaiof := 0.015 ; --+ vr_taxaiof;
+      END IF;
+      
+      -- Valor do IOF
+      pr_valoriof := pr_valoriof + ROUND(vr_vlbaseiof /*pr_vlemprst*/ * vr_taxaiof,2);
+      
+      
+      tiof0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
+                                      , pr_nrdconta => pr_nrdconta
+                                      , pr_nrctremp => pr_nrctremp
+                                      , pr_vlemprst => pr_vlemprst
+                                      , pr_vltotope => pr_vlemprst
+                                      , pr_dscatbem => pr_dscatbem
+                                      , pr_cdlcremp => pr_cdlcremp
+                                      , pr_dtmvtolt => pr_dtmvtolt
+                                      , pr_qtdiaiof => 1
+                                      , pr_vliofpri => vr_vliofpri
+                                      , pr_vliofadi => vr_vliofadi
+                                      , pr_vliofcpl => vr_vliofcpl
+                                      , pr_vltaxa_iof_principal => vr_taxaiof
+                                      , pr_flgimune => pr_flgimune
+                                      , pr_dscritic => vr_dscritic );
+       if vr_dscritic is null  then
+          -- no vaso de imunidade, nao cobra IOF
+          if pr_flgimune = 1 then
+             pr_valoriof := 0;
+        --  else
+        --     pr_valoriof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+          else
+            --se os 2 vierem zerados, passou pela isenção e zerou o IOF, então zera aqui também
+            if (nvl(vr_vliofpri,0) <= 0 and nvl(vr_vliofadi,0) <= 0) then 
+              pr_valoriof := 0;
+            end if;
+            
+            --Isenção de MOTOS
+            IF pr_inpessoa = 1 AND (INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
+               pr_valoriof := NVL(vr_vliofadi, 0);
+            --ELSE
+            --   pr_valoriof := NVL(pr_valoriof, 0) + NVL(vr_vliofpri, 0) + NVL(vr_vliofadi, 0);
+            END IF;
+            
+            -- verifica se só existe IOF adicional (caso de imunidade ou cooperativa por exemplo)
+            if nvl(vr_vliofpri,0) = 0 
+            and nvl(vr_vliofadi,0) > 0 then
+                 pr_valoriof := NVL(vr_vliofadi, 0);
+            end if;
+            
+             if nvl(vr_vllanmto,0) > 0  and vr_retiof in ( 1, 3) then
+                if pr_valoriof > vr_vllanmto then
+                   --IOF total calculado
+                   vr_calc_iof_aux := pr_valoriof;
+                   --desconta o que já foi pago de IOF
+                   pr_valoriof := pr_valoriof - vr_vllanmto;
+                else 
+                   pr_valoriof := 0;
+          end if;
+             end if;
+              
+               if vr_retiof = 4 then
+                   if vr_vlbaseiof >= pr_vlemprst then                   
+                     pr_valoriof := vr_vliofaditt;  
+                   end if;
+                end if;
+          end if;
+       end if;
+    
+    ELSIF pr_tpemprst = 2 THEN  -- Se o emprestimo for Pos-Fixado
+
+      /*-- Condicao Pessoa Fisica
+      IF pr_inpessoa = 1 THEN
+        vr_taxaiof := 0.000082;
+      ELSE
+        vr_taxaiof := 0.000041;
+      END IF;*/
+
+      tiof0001.pc_busca_taxa_iof(pr_cdcooper => pr_cdcooper
+                               , pr_nrdconta => pr_nrdconta
+                               , pr_nrctremp => pr_nrctremp
+                               , pr_dtmvtolt => pr_dtmvtolt
+                               , pr_cdlcremp => pr_cdlcremp
+                               , pr_vlemprst => vr_vlbaseiof/* pr_vlemprst*/
+                               , pr_vltxiofpri => vr_taxaiof
+                               , pr_vltxiofadc => vr_txiofadc
+                               , pr_cdcritic => vr_cdcritic
+                               , pr_dscritic => vr_dscritic);
+
+      if vr_dscritic is not null then
+         raise vr_exc_erro;
+      end if;
+
+      pr_valoriof := 0;
+
+      vr_diafinal := to_char(pr_dtdpagto, 'dd');
+      vr_mesfinal := to_char(pr_dtdpagto, 'mm');
+      vr_anofinal := to_char(pr_dtdpagto, 'yyyy');
+
+      empr0001.pc_calc_dias360 (pr_ehmensal => false
+                              , pr_dtdpagto => to_char(pr_dtdpagto,'DD')
+                              , pr_diarefju => to_char(pr_dtmvtolt,'DD')
+                              , pr_mesrefju => to_char(pr_dtmvtolt,'MM')
+                              , pr_anorefju => to_char(pr_dtmvtolt,'YYYY')
+                              , pr_diafinal => vr_diafinal
+                              , pr_mesfinal => vr_mesfinal
+                              , pr_anofinal => vr_anofinal
+                              , pr_qtdedias => vr_qtdedias );
+
+      vr_vlpreemp := pr_vlpreemp;
+
+      if nvl(pr_idfiniof,0) = 1 and vr_vlbaseiof > 0 then
+         TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
+                                   , pr_nrdconta => pr_nrdconta
+                                        ,pr_cdlcremp        => pr_cdlcremp
+                                        ,pr_vlemprst        => pr_vlemprst
+                                   , pr_cdusolcr => rw_craplcr.cdusolcr
+                                   , pr_tpctrato => rw_craplcr.tpctrato
+                                   , pr_dsbemgar => pr_dscatbem
+                                   , pr_cdprogra => 'ATENDA'
+                                   , pr_flgemail => 'N'
+                                   , pr_vlrtarif => vr_vltarifa
+                                   , pr_vltrfesp => vr_vltarifaES
+                                   , pr_vltrfgar => vr_vltarifaGT
+                                   , pr_cdhistor => vr_cdhistor
+                                   , pr_cdfvlcop => vr_cdfvlcop
+                                   , pr_cdhisgar => vr_cdhisgar
+                                   , pr_cdfvlgar => vr_cdfvlgar
+                                        ,pr_cdcritic        => vr_cdcritic
+                                        ,pr_dscritic        => vr_dscritic);
+         if nvl(vr_cdcritic,0) > 0 or vr_dscritic is not null then
+            raise vr_exc_erro;
+         end if;
+              
+         vr_vltarifaN := vr_vltarifa + vr_vltarifaES + vr_vltarifaGT;
+              
+         -- vr_saldo_devedor := ROUND((pr_vlemprst + nvl(vr_vltarifaN,0)) * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+         vr_saldo_devedor := vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0);
+      else
+         vr_saldo_devedor := vr_vlbaseiof /*pr_vlemprst*/;
+      end if;
+
+    
+      -- Chama o calculo de IOF para Pos-Fixado
+      EMPR0011.pc_calcula_iof_pos_fixado(pr_cdcooper        => pr_cdcooper
+                                        ,pr_dtcalcul        => pr_dtmvtolt
+                                        ,pr_cdlcremp        => pr_cdlcremp
+                                        ,pr_vlemprst        => vr_saldo_devedor
+                                        ,pr_qtpreemp        => pr_qtpreemp
+                                        ,pr_dtdpagto        => pr_dtdpagto
+                                        ,pr_dtcarenc        => pr_dtcarenc
+                                        ,pr_qtdias_carencia => pr_qtdias_carencia
+                                        ,pr_taxaiof         => vr_taxaiof
+                                        ,pr_vltariof        => vr_vltariof
+                                        ,pr_cdcritic        => vr_cdcritic
+                                        ,pr_dscritic        => vr_dscritic);
+      -- Se retornou erro
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      --Se tiver moto em garantia, não tem principal, somente adicional 
+      IF pr_inpessoa = 1 AND (INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
+        vr_vltariof := 0;
+      END IF;
+
+      -- Calcula IOF Adicional com base no saldo devedor inicial
+      vr_vliofaditt := ROUND((vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0)) * vr_txiofadc,2);
+      
+      if vr_retiof = 1 then
+         vr_vltariof := 0;
+      end if;
+      
+      if pr_idfiniof = 1 then
+         -- recalcula valor devedor, chama novamente o calculo de iof pós-fixado
+         vr_saldo_devedor := round(vr_vlbaseiof /*pr_vlemprst*/ + vr_vltarifaN,2);
+         --Se já tiver sido pago IOF anteriormente, desconta da base
+        /* if nvl(vr_vllanmto,0) > 0 and vr_retiof in (3) then
+            vr_vltariof := vr_vltariof - vr_vllanmto;
+         end if;*/
+        
+         vr_saldo_devedor := ROUND(vr_saldo_devedor / ((vr_saldo_devedor - vr_vltariof - vr_vliofaditt) / vr_saldo_devedor),2);
+         --Recalcula o valor do IOF adicional
+         vr_vliofaditt := ROUND(vr_saldo_devedor * vr_txiofadc,2);
+         vr_vliofaditt_aux := vr_vliofaditt;
+         
+         -- Acha o VP (valor presente do saldo devedor)
+         -- vr_saldo_devedor := ROUND(vr_saldo_devedor * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+         
+         -- Recalcula Parcela
+         vr_vlpreemp := round(vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), -1 * pr_qtpreemp)),2);
+         --vr_gb_vlrpreemp := vr_vlpreemp;
+         
+      -- Chama o calculo de IOF para Pos-Fixado
+          if vr_retiof = 1 then
+             vr_saldo_devedorRF := round(pr_vlemprst + vr_vltarifaN,2);
+             vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - vr_vltariof - vr_vliofaditt) / vr_saldo_devedorRF),2);
+             vr_saldo_devedor := vr_saldo_devedorRF;             
+          end if;
+          
+          pr_vlfinanciado := NVL(vr_saldo_devedor,0);
+          
+      end if;
+
+
+      -- Valor do IOF
+      imut0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper,
+                                          pr_nrdconta => pr_nrdconta,
+                                          pr_dtmvtolt => pr_dtmvtolt,
+                                          pr_flgrvvlr => false,
+                                          pr_cdinsenc => 0,
+                                          pr_vlinsenc => 0,
+                                          pr_inpessoa => 0,
+                                          pr_nrcpfcgc => 0,
+                                          pr_flgimune => vr_flgimuneB,
+                                          pr_dsreturn => vr_dsreturn,
+                                          pr_tab_erro => vr_tab_erro );
+
+
+      if vr_flgimuneB then
+         pr_valoriof := 0;
+         vr_vliofaditt := 0;
+      else
+         if vr_retiof = 1 then
+             vr_vltariof := 0;
+         end if;
+         
+         pr_valoriof := NVL(pr_valoriof,0) + NVL(vr_vltariof,0);
+      end if;
+
+      tiof0001.pc_verifica_isencao_iof(pr_cdcooper => pr_cdcooper
+                                     , pr_nrdconta => pr_nrdconta
+                                     , pr_dscatbem => pr_dscatbem
+                                     , pr_cdlcremp => pr_cdlcremp
+                                     , pr_vliofpri => vr_vliofpri
+                                     , pr_vliofadi => vr_vliofaditt
+                                     , pr_vliofcpl => vr_vliofcpl
+                                     , pr_dscritic => vr_dscritic);
+      if  vr_vliofpri = 0 and vr_vliofaditt = 0 then
+         pr_valoriof := 0;
+      else
+         --IF pr_inpessoa = 1 AND (cr_crapbpr_moto%FOUND OR INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
+         IF pr_inpessoa = 1 AND (INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
+              pr_valoriof := NVL(vr_vliofaditt, 0);
+         ELSE
+            if vr_retiof = 1 then
+               vr_vliofpri := 0;
+             end if;
+             if vr_retiof = 2 then
+                vr_vliofpri := 0;
+                vr_vliofaditt := 0;
+             end if;
+             pr_valoriof := NVL(pr_valoriof, 0) + NVL(vr_vliofpri, 0) + NVL(vr_vliofaditt, 0);
+    END IF;
+         
+          if nvl(vr_vllanmto,0) > 0  and vr_retiof in ( 1, 3) then
+                if pr_valoriof > vr_vllanmto then
+                   --IOF total calculado
+                   vr_calc_iof_aux := pr_valoriof;
+                   --desconta o que já foi pago de IOF
+                   pr_valoriof := pr_valoriof - vr_vllanmto;
+                else 
+                   pr_valoriof := 0;
+                end if;
+          end if;
+             
+           if vr_retiof = 4 then
+             if vr_vlbaseiof >= pr_vlemprst then            
+                pr_valoriof := vr_vliofaditt;  
+             end if;
+           end if;
+         
+      end if;
+
+    END IF;
+    --pr_vliofpri := vr_vliofpri;
+
+    /*
+      Aqui faz o cálculo proporcional do IOF já pago anteriormente (casos de refinanciamento).
+      Ex.: 
+           Dados:
+             IOF total calculado: 380,81
+             IOF principal:       264,41
+             IOF adicional:       116,40
+             IOF já pago:         79,96
+             Diferença de IOF:    300,85
+           ----------------------------
+
+           Cálculo:
+             % IOF principal / total: 380,81 / 264,41 = 0,694335758 (69,43%)
+             IOF principal (calculado):  300,85 * 69,43% => 208,89
+             IOF adicional (calculado):  300,85 * 30,57% => 91,96
+    */
+    IF vr_calc_iof_aux > 0 THEN
+       --Entra aqui se descontou IOF já pago anteriormente
+       vr_perc_aux := vr_vliofpritt / vr_calc_iof_aux;
+       pr_vliofpri := ROUND(pr_valoriof * vr_perc_aux, 2);
+       pr_vliofadi := ROUND(pr_valoriof * (1 - vr_perc_aux), 2);
+    ELSE
+    pr_vliofpri := vr_vliofpritt;
+    pr_vliofadi := vr_vliofaditt_aux;
+    END IF;
+    pr_flgimune := NVL(pr_flgimune, 0);
+
+    CLOSE cr_crapbpr_moto;
+      
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Devolvemos código e critica encontradas das variaveis locais
+      --pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na EMPR0001.pc_calcula_iof_epr --> ' || SQLERRM;
+  END pc_calcula_iof_provisorio;
+
+    
   PROCEDURE pc_calcula_parcelas_pos_fixado(pr_cdcooper        IN crapcop.cdcooper%TYPE      --> Codigo da Cooperativa
                                           ,pr_flgbatch        IN BOOLEAN DEFAULT FALSE      --> Indica se o processo noturno estah rodando
                                           ,pr_dtcalcul        IN crapdat.dtmvtolt%TYPE      --> Data de Calculo
@@ -1672,38 +2934,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 	    --------------------------------------------------------------------------------------------------------------
    	  --                                     CALCULO IOF COMPLEMENTAR ATRASO                                      --
 	    --------------------------------------------------------------------------------------------------------------
-      -- Provisorio: Andrino
-      IF UPPER(pr_cdprogra) <> 'CRPS149' THEN
-        vr_vllanmto := 0;
-        OPEN cr_craplem(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta
-                       ,pr_nrctremp => pr_nrctremp
-                       ,pr_nrparepr => pr_nrparepr);
-        FETCH cr_craplem INTO vr_vllanmto;
-        CLOSE cr_craplem;      
-        -- Valor da Parcela sem o Juros
-        vr_vlparcela_sem_juros := NVL(pr_vlparepr,0) - NVL(vr_vllanmto,0);
-        -- Calcula o valor da do IOF e tarifa
-        TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
-                                         ,pr_nrdconta => pr_nrdconta
-                                         ,pr_nrctremp => pr_nrctremp
-                                         ,pr_vlemprst => vr_vlparcela_sem_juros
-                                         ,pr_vltotope => pr_vlemprst
-                                         ,pr_dscatbem => ''
-                                         ,pr_cdlcremp => pr_cdlcremp
-                                         ,pr_dtmvtolt => pr_dtcalcul
-                                         ,pr_qtdiaiof => vr_qtdiamor                                       
-                                         ,pr_vliofpri => vr_vliofpri
-                                         ,pr_vliofadi => vr_vliofadi
-                                         ,pr_vliofcpl => pr_vliofcpl
-                                         ,pr_vltaxa_iof_principal => vr_vltxaiof
-                                         ,pr_flgimune => vr_flgimune
-                                         ,pr_dscritic => vr_dscritic);
-                                         
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-      END IF;  
+      vr_vllanmto := 0;
+      OPEN cr_craplem(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctremp
+                     ,pr_nrparepr => pr_nrparepr);
+      FETCH cr_craplem INTO vr_vllanmto;
+      CLOSE cr_craplem;      
+      -- Valor da Parcela sem o Juros
+      vr_vlparcela_sem_juros := NVL(pr_vlparepr,0) - NVL(vr_vllanmto,0);
+      -- Calcula o valor da do IOF e tarifa
+      TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_vlemprst => vr_vlparcela_sem_juros
+                                       ,pr_vltotope => pr_vlemprst
+                                       ,pr_dscatbem => ''
+                                       ,pr_cdlcremp => pr_cdlcremp
+                                       ,pr_dtmvtolt => pr_dtcalcul
+                                       ,pr_qtdiaiof => vr_qtdiamor                                       
+                                       ,pr_vliofpri => vr_vliofpri
+                                       ,pr_vliofadi => vr_vliofadi
+                                       ,pr_vliofcpl => pr_vliofcpl
+                                       ,pr_vltaxa_iof_principal => vr_vltxaiof
+                                       ,pr_flgimune => vr_flgimune
+                                       ,pr_dscritic => vr_dscritic);
+                                       
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
    		-------------------------------------------------------------------------------------------------------------
       --                 FIM CALCULO IOF COMPLEMENTAR ATRASO                                                     --
       -------------------------------------------------------------------------------------------------------------		
@@ -3563,12 +4822,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_txdiaria     craplcr.txdiaria%TYPE;
       vr_vlpreemp     crapepr.vlpreemp%TYPE := 0;
       vr_dtdpagto     crapepr.dtdpagto%TYPE;
+      vr_vlemprst     crapepr.vlemprst%TYPE;
+      vr_dsbemgar     VARCHAR2(32000);
+      vr_retorno01    craplem.vllanmto%TYPE;
+      vr_retorno02    craplcm.vllanmto%TYPE;
+      vr_retorno03    craplcm.vllanmto%TYPE;
+      vr_retorno04    PLS_INTEGER;
+      vr_blnachou     BOOLEAN;
 
       -- Variaveis tratamento de erros
       vr_cdcritic     crapcri.cdcritic%TYPE;
       vr_dscritic     VARCHAR2(4000);
       vr_exc_erro     EXCEPTION;
 
+      -- Cursor dos Bens da Proposta
+      CURSOR cr_crapbpr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                       ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+        SELECT dscatbem
+          FROM crapbpr
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND tpctrpro = 90
+           AND nrctrpro = pr_nrctremp
+           AND flgalien = 1;
+           
       -- Busca os dados da linha de credito
       CURSOR cr_craplcr(pr_cdcooper IN craplcr.cdcooper%TYPE
                        ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
@@ -3577,6 +4855,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
          WHERE cdcooper = pr_cdcooper
            AND cdlcremp = pr_cdlcremp;
       rw_craplcr cr_craplcr%ROWTYPE;
+      
+      -- Cursor de Emprestimo
+      CURSOR cr_crawepr(pr_cdcooper IN crapepr.cdcooper%TYPE
+                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                       ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+        SELECT dtlibera
+              ,idfiniof
+          FROM crawepr
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND nrctremp = pr_nrctremp;
+      rw_crawepr cr_crawepr%ROWTYPE;           
+      
+      -- Busca o associado
+      CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+                       ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT crapass.inpessoa
+          FROM crapass
+         WHERE crapass.cdcooper = pr_cdcooper
+           AND crapass.nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+	        
     BEGIN
 
       BEGIN
@@ -3590,6 +4890,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           vr_dscritic := 'Problema ao deletar dados da crappep: ' || SQLERRM;
           RAISE vr_exc_erro;
       END;
+      
+      /* ----------------------------------------------------------------------------------------
+                        ANDRINO -> PROVISORIO, SERA AJUSTADO NA PROXIMA LIBERACAO         
+         ----------------------------------------------------------------------------------------*/
+      vr_dsbemgar := '';
+      -- Percorrer todos os bens da Proposta de Emprestimo
+      FOR rw_crapbpr IN cr_crapbpr(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_nrctremp => pr_nrctremp) LOOP
+        vr_dsbemgar := vr_dsbemgar || '|' || rw_crapbpr.dscatbem;
+      END LOOP;
+      
+      -- Buscar dados do emprestimo
+      OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctremp);
+      FETCH cr_crawepr INTO rw_crawepr;
+      vr_blnachou := cr_crawepr%FOUND;
+      CLOSE cr_crawepr;
+      -- Se NAO achou
+      IF NOT vr_blnachou THEN
+        vr_cdcritic := 510;
+        RAISE vr_exc_erro;
+      END IF;
+      
+	    -- Busca o associado
+      OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      vr_blnachou := cr_crapass%FOUND;
+      CLOSE cr_crapass;
+      -- Se NAO achou
+      IF NOT vr_blnachou THEN
+        vr_cdcritic := 9;
+        RAISE vr_exc_erro;
+      END IF;      
+      
+      pc_calcula_iof_provisorio(pr_cdcooper  		    => pr_cdcooper
+                               ,pr_nrdconta  		    => pr_nrdconta
+                               ,pr_nrctremp  		    => pr_nrctremp
+                               ,pr_dtmvtolt  		    => pr_dtcalcul
+                               ,pr_inpessoa  		    => rw_crapass.inpessoa
+                               ,pr_cdlcremp  		    => pr_cdlcremp
+                               ,pr_qtpreemp  		    => pr_qtparepr
+                               ,pr_vlpreemp  		   	=> pr_vlpreemp
+                               ,pr_vlemprst  		    => pr_vlemprst
+                               ,pr_dtdpagto  		    => pr_dtdpagto
+                               ,pr_dtlibera  		    => rw_crawepr.dtlibera
+                               ,pr_tpemprst  		    => 2
+                               ,pr_dtcarenc       	=> pr_dtcarenc
+                               ,pr_qtdias_carencia	=> pr_qtdias_carencia
+                               ,pr_dscatbem       	=> vr_dsbemgar
+                               ,pr_idfiniof       	=> rw_crawepr.idfiniof
+                               ,pr_valoriof       	=> vr_retorno01
+                               ,pr_vliofpri       	=> vr_retorno02
+                               ,pr_vliofadi       	=> vr_retorno03
+                               ,pr_flgimune       	=> vr_retorno04
+                               ,pr_vlfinanciado   	=> vr_vlemprst
+                               ,pr_dscritic 		    => vr_dscritic);      
+                         
+      -- Se retornou erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
 
       -- Chama o calculo das parcelas
       pc_calcula_parcelas_pos_fixado(pr_cdcooper        => pr_cdcooper
@@ -3599,7 +4963,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                     ,pr_qtdias_carencia => pr_qtdias_carencia
                                     ,pr_dtdpagto        => pr_dtdpagto
                                     ,pr_qtpreemp        => pr_qtparepr
-                                    ,pr_vlemprst        => pr_vlemprst
+                                    ,pr_vlemprst        => vr_vlemprst
                                     ,pr_tab_parcelas    => vr_tab_parcelas
                                     ,pr_cdcritic        => vr_cdcritic
                                     ,pr_dscritic        => vr_dscritic);
@@ -7705,7 +9069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                   ,2371,2373,2347,2346 -- Juros de Mora
                   ,2375,2377           -- Juros de Mora Aval
                   ,2566,2567           -- Desconto
-               );
+                  ,2540,2539);         -- IOF
 
       -- Variaveis gerais
       vr_cdhistor craphis.cdhistor%TYPE;
