@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel234" language="groovy" pageWidth="842" pageHeight="700" orientation="Landscape" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="3.0"/>
-	<property name="ireport.x" value="0"/>
+	<property name="ireport.x" value="714"/>
 	<property name="ireport.y" value="0"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -82,6 +82,9 @@
 	<field name="tpemprst" class="java.lang.String">
 		<fieldDescription><![CDATA[tpemprst]]></fieldDescription>
 	</field>
+	<field name="vljura60ref" class="java.lang.String">
+		<fieldDescription><![CDATA[vljura60ref]]></fieldDescription>
+	</field>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
@@ -102,137 +105,144 @@
 				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="175" y="0" width="12" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="164" y="0" width="10" height="8"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tpemprst}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="179" y="0" width="12" height="8"/>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{dsorigem}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="190" y="0" width="32" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="195" y="0" width="32" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nrctremp}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="225" y="0" width="20" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="232" y="0" width="14" height="8"/>
 				<textElement>
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{cdlcremp}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="245" y="0" width="55" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="249" y="0" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vldivida}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="304" y="0" width="55" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="298" y="0" width="47" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vljura60}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="363" y="0" width="35" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="348" y="0" width="47" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vljura60ref}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="398" y="0" width="35" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlpreemp}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="401" y="0" width="35" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="436" y="0" width="35" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nroprest}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="440" y="0" width="60" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="476" y="0" width="52" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{qtatraso}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="503" y="0" width="50" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="532" y="0" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vltotatr}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="556" y="0" width="50" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="595" y="0" width="39" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlpreatr}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="612" y="0" width="23" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="637" y="0" width="23" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{percentu}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="635" y="0" width="15" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="662" y="0" width="12" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{cdagenci}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="658" y="0" width="15" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="676" y="0" width="25" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{dsnivris}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="684" y="0" width="30" height="8"/>
-				<textElement textAlignment="Right">
-					<font fontName="Courier New" size="6"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{nivrisco}]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="675" y="0" width="8" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="700" y="0" width="11" height="8"/>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pertenge}]]></textFieldExpression>
 			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="711" y="0" width="30" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nivrisco}]]></textFieldExpression>
+			</textField>
 			<textField pattern="" isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="715" y="0" width="54" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="743" y="0" width="36" height="8"/>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{dtdrisco}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="771" y="0" width="30" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="779" y="0" width="30" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{qtdiaris}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="803" y="0" width="30" height="8"/>
+				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="811" y="0" width="30" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{qtdiaatr}]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement uuid="69c5fe33-6084-40e2-8ad5-1c748358865b" x="164" y="0" width="10" height="8"/>
-				<textElement textAlignment="Center">
-					<font fontName="Courier New" size="6"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{tpemprst}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>

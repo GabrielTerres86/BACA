@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 01/03/2018
+     Data    : Fevereiro/2006                  Ultima atualizacao: 07/03/2018
 
      Dados referentes ao programa:
 
@@ -280,12 +280,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                  02/04/2014 - Ajuste para calcular o campo "w-crapris.nroprest"
                               para o novo tipo de emprestimo. (James)
 
-				         09/04/2014 - Ajustes devido a revalidação
+                 09/04/2014 - Ajustes devido a revalidação
                   
                  16/04/2014 - Projeto padronização das linhas de crédito
                               alterado relatório 552 para receber coluna de 
                               finalidade. (Reinert)
-															
+                              
                  30/04/2014 - Ajustes nos caracteres de quebra de linha (Marcos)
 
                  05/05/2014 - Ajuste no envio dos dados para o CYBER. (James)
@@ -339,7 +339,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
 
                  23/03/2017 - Ajustes PRJ343 - Cessao de credito.
                               (Odirlei-AMcom)   
-							  
+                
                  23/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
                  05/09/2017 - Ajustado para gerar os historicos separadamente no arquivo AJUSTE_MICROCREDITO
@@ -347,22 +347,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
 
                  16/01/2018 - Somente chamar a rotina de atualizacao dos dados financeiros para o Cyber
                               caso a cooperativa conectada seja uma singular. (Chamado 831629) - (Fabricio)
-                              
 
                  19/01/2017 - Regra (IF pr_cdprogra = 'CRPS280' THEN) comentada para o projeto Contratação de Crédito 
-		                      Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
-							  (Daniel Junior - AMcom)
+                              Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
+                  (Daniel Junior - AMcom)
 
-				 01/03/2018 - Alterado a Data do Risco e Quantidade de Dias Risco para considerar a diária
-							  nos relatórios 354 e 227.							   
-                              (Diego Simas - AMcom)
+           01/03/2018 - Alterado a Data do Risco e Quantidade de Dias Risco para considerar a diária
+                nos relatórios 354 e 227. (Diego Simas - AMcom)
 
+         07/03/2018 - Incluído nova coluna (JUR +60 REF) nos relatórios 354 e 227. (Diego Simas - AMcom)
 
   ............................................................................. */
 
    DECLARE
       -- Constante
-      vr_flgerar  CHAR(1) := 'N';
+      vr_flgerar  CHAR(1) := 'S';
       -- Tratamento de erros
       vr_exc_erro exception;
       -- Erro em chamadas da pc_gera_erro
@@ -637,6 +636,41 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
            AND ris.dtrefere  = pr_dtrefere
            AND ris.inddocto  = 1 -- Docto 3020
            AND ris.vldivida  > 0; 
+           
+      -- Buscar o valor do Juros +60 Refinanciado
+      CURSOR cr_juros60_ref(pr_nrdconta IN crapris.nrdconta%TYPE
+                           ,pr_nrctremp IN crapris.nrctremp%TYPE) IS
+      SELECT SUM(tlf.vljuros60) vljura60
+        FROM crawepr crwpr,
+             crapepr epr,
+             tbepr_liquidado_financiado tlf,
+             crapass ass 
+       WHERE (crwpr.nrctrliq##1   = tlf.nrctremp
+        OR    crwpr.nrctrliq##2 = tlf.nrctremp
+        OR    crwpr.nrctrliq##3 = tlf.nrctremp
+        OR    crwpr.nrctrliq##4 = tlf.nrctremp
+        OR    crwpr.nrctrliq##5 = tlf.nrctremp
+        OR    crwpr.nrctrliq##6 = tlf.nrctremp
+        OR    crwpr.nrctrliq##7 = tlf.nrctremp
+        OR    crwpr.nrctrliq##8 = tlf.nrctremp
+        OR    crwpr.nrctrliq##9 = tlf.nrctremp
+        OR    crwpr.nrctrliq##10= tlf.nrctremp)
+        AND   crwpr.nrctremp = epr.nrctremp
+        AND   crwpr.cdcooper = epr.cdcooper
+        AND   crwpr.cdagenci = epr.cdagenci
+        AND   crwpr.nrdconta = epr.nrdconta
+        AND   epr.cdcooper   = tlf.cdcooper
+        AND   epr.nrdconta   = tlf.nrdconta  
+        AND   tlf.cdcooper   = ass.cdcooper
+        AND   tlf.nrdconta   = ass.nrdconta
+        AND   epr.cdcooper   = pr_cdcooper
+        AND   epr.nrdconta   = pr_nrdconta
+        AND   epr.nrctremp   = pr_nrctremp
+        GROUP BY epr.nrctremp;
+        rw_juros60_ref cr_juros60_ref%ROWTYPE;
+         
+      vr_juros60_ref   NUMBER:=0;  
+      vr_nrctremp_refi VARCHAR2(300);   
 
       -- Busca de registro de transferência entre cooperativas
       CURSOR cr_craptco_via_alto IS
@@ -908,7 +942,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
            AND lim.nrctrlim = pr_nrctremp
            AND lim.tpctrlim = 1  --> Cheque especial
            AND lim.insitlim = 2  --> Ativo
-           AND lim.cddlinha = 2; --> Linha BNDES Finame;	
+           AND lim.cddlinha = 2; --> Linha BNDES Finame;  
       rw_craplim cr_craplim%ROWTYPE;
       
       CURSOR cr_crapris_reccaixa IS
@@ -1228,7 +1262,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
             vr_tab_contab(vr_vladtdep)(vr_divida)(idx).vladtdep := 0;
             vr_tab_contab(vr_vlchqesp)(vr_divida)(idx).vlchqesp := 0;
          END LOOP;
-		 vr_tab_contab_cessao(vr_vleprces)(vr_provis)(1).vlempres_pf := 0;
+     vr_tab_contab_cessao(vr_vleprces)(vr_provis)(1).vlempres_pf := 0;
          vr_tab_contab_cessao(vr_vleprces)(vr_provis)(2).vlempres_pj := 0;
          vr_tab_contab_cessao(vr_vleprces)(vr_divida)(1).vlempres_pf := 0;
          vr_tab_contab_cessao(vr_vleprces)(vr_divida)(2).vlempres_pj := 0;
@@ -3109,9 +3143,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
 
          -- Somente em caso de chamada pelo crps280
          
-		 --IF pr_cdprogra = 'CRPS280' THEN
-		 -- Regra (IF) comentada para o projeto Contratação de Crédito 
-		 -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
+     --IF pr_cdprogra = 'CRPS280' THEN
+     -- Regra (IF) comentada para o projeto Contratação de Crédito 
+     -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
          
             -- Renato Darosci - 30/08/2016 - ao invés de utilizar o percentual de 0.5 na 
             -- condição, vamos verificar o nível de risco "A".
@@ -3208,8 +3242,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                END IF; --> Nivel <> A               
             END IF; --> Somente com risco em dia, que não seja do tipo A, Sem Prejuízo e somente Empréstimo
          --END IF; --> Somente para crps280
-		 -- Regra (END IF) comentada para o projeto Contratação de Crédito 
-		 -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
+     -- Regra (END IF) comentada para o projeto Contratação de Crédito 
+     -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
 
 
          -- Alimentar varíaveis para detalhamento dos riscos atual e anterior
@@ -3325,7 +3359,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                -- Ativar flag para não enviar mais a tag de agência
                vr_flgpac01 := TRUE;
             END IF;
-
+            
+            -- Buscar valor do Juros +60 Refinanciado
+            OPEN cr_juros60_ref(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
+                               ,pr_nrctremp => vr_tab_crapris(vr_des_chave_crapris).nrctremp);
+            FETCH cr_juros60_ref INTO rw_juros60_ref;              
+            IF  cr_juros60_ref%FOUND THEN
+              IF  nvl(rw_juros60_ref.vljura60,0) = 0 THEN
+                  vr_juros60_ref := 0;
+              ELSE
+                  vr_juros60_ref := rw_juros60_ref.vljura60;   
+              END IF;
+            ELSE
+                vr_juros60_ref := 0;
+            END IF;
+            
+            CLOSE cr_juros60_ref;
+            
             -- Enviar registro para o XML 1
             vr_des_xml_gene := '<atraso>'
                              ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
@@ -3335,6 +3385,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                              ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_crapris(vr_des_chave_crapris).nrctremp,'zzzzzzz9'))||'</nrctremp>'
                              ||' <vldivida>'||to_char(vr_vldivida,'fm999g999g990d00')||'</vldivida>'
                              ||' <vljura60>'||to_char(vr_tab_crapris(vr_des_chave_crapris).vljura60,'fm999g999g990d00')||'</vljura60>'
+                             ||' <vljura60ref>'||to_char(vr_juros60_ref,'fm999g999g990d00')||'</vljura60ref>'
                              ||' <vlpreemp>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).vlpreemp,0),'fm999g990d00')||'</vlpreemp>'
                              ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
                              ||' <qtatraso>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'fm990d00')||'</qtatraso>'
@@ -3381,6 +3432,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                vr_flgpac02 := true;
             END IF;
             
+            -- Buscar valor do Juros +60 Refinanciado
+            OPEN cr_juros60_ref(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
+                               ,pr_nrctremp => vr_tab_crapris(vr_des_chave_crapris).nrctremp);
+            FETCH cr_juros60_ref INTO rw_juros60_ref;     
+            IF  cr_juros60_ref%FOUND THEN
+              IF  nvl(rw_juros60_ref.vljura60,0) = 0 THEN
+                  vr_juros60_ref := 0;
+              ELSE
+                  vr_juros60_ref := rw_juros60_ref.vljura60;   
+              END IF;
+            ELSE
+                vr_juros60_ref := 0;
+            END IF;
+            CLOSE cr_juros60_ref;
+             
             -- Enviar registro para o XML 2
             vr_des_xml_gene :='<divida>'
                             ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
@@ -3390,6 +3456,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                             ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_crapris(vr_des_chave_crapris).nrctremp,'zzzzzzz9'))||'</nrctremp>'
                             ||' <vldivida>'||to_char(vr_vldivida,'fm999g999g990d00')||'</vldivida>'
                             ||' <vljura60>'||to_char(vr_tab_crapris(vr_des_chave_crapris).vljura60,'fm999g990d00')||'</vljura60>'
+                            ||' <vljura60ref>'||to_char(vr_juros60_ref,'fm999g999g990d00')||'</vljura60ref>'
                             ||' <vlpreemp>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).vlpreemp,0),'fm999g990d00')||'</vlpreemp>'
                             ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
                             ||' <qtatraso>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'fm990d00')||'</qtatraso>'
