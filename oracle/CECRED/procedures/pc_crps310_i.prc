@@ -3998,7 +3998,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- Busca de todos os vencimentos do risco atual
           FOR rw_crapvri IN cr_crapvri_ord(pr_nrdconta => rw_crapris.nrdconta
                                           ,pr_dtrefere => rw_crapris.dtrefere
-                                          ,pr_innivori => rw_crapris.innivori
+                                          ,pr_innivori => vr_innivori
                                           ,pr_cdmodali => rw_crapris.cdmodali
                                           ,pr_nrctremp => rw_crapris.nrctremp
                                           ,pr_nrseqctr => rw_crapris.nrseqctr) LOOP
