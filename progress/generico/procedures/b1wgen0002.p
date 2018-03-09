@@ -4330,11 +4330,11 @@ PROCEDURE proc_qualif_operacao:
                 FIND FIRST crapris
                      WHERE crapris.cdcooper = par_cdcooper
                        AND crapris.nrdconta = par_nrdconta
+					   AND crapris.dtrefere = par_dtmvtoan
                        AND crapris.cdorigem = 1
                        AND crapris.cdmodali = 101
                        AND crapris.nrctremp = aux_emp_a_liq
-                       AND crapris.inddocto = 1
-                       AND crapris.dtrefere = par_dtmvtoan
+                       AND crapris.inddocto = 1                       
                            NO-LOCK NO-ERROR.
                 IF  AVAIL crapris  THEN
                     DO:
@@ -4347,8 +4347,8 @@ PROCEDURE proc_qualif_operacao:
 				FIND FIRST craplim
 					 WHERE craplim.cdcooper = par_cdcooper
 					   AND craplim.nrdconta = par_nrdconta
-					   AND craplim.nrctrlim = aux_emp_a_liq
 					   AND craplim.tpctrlim = 1
+					   AND craplim.nrctrlim = aux_emp_a_liq					   
 					   AND craplim.insitlim = 2
 						   NO-LOCK NO-ERROR.
 
@@ -4356,28 +4356,29 @@ PROCEDURE proc_qualif_operacao:
 					DO:
 
 						/* LIMITE                                */
-						FIND crapris
+						FIND FIRST crapris
 							 WHERE crapris.cdcooper = par_cdcooper
 							   AND crapris.nrdconta = par_nrdconta
+							   AND crapris.dtrefere = par_dtmvtoan
 							   AND crapris.cdorigem = 1
 							   AND crapris.cdmodali = 201
 							   AND crapris.nrctremp = aux_emp_a_liq
-							   AND crapris.inddocto = 1
-							   AND crapris.dtrefere = par_dtmvtoan
+							   AND crapris.inddocto = 1							   
 								   NO-LOCK NO-ERROR.
 
 						IF AVAIL crapris THEN
 							ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.                
 
 						/* LIMITE/ADP                                */
-						FIND crapris
+						FIND FIRST crapris
 							 WHERE crapris.cdcooper = par_cdcooper
 							   AND crapris.nrdconta = par_nrdconta
+							   AND crapris.dtrefere = par_dtmvtoan
 							   AND crapris.cdorigem = 1
 							   AND crapris.cdmodali = 101
-							   AND crapris.inddocto = 1
-							   AND crapris.dtrefere = par_dtmvtoan
+							   AND crapris.inddocto = 1							   
 								   NO-LOCK NO-ERROR.
+
 						IF AVAIL crapris THEN
 							ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.                
 					END.
