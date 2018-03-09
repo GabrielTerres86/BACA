@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Marco/96.                       Ultima atualizacao: 03/01/2018
+       Data    : Marco/96.                       Ultima atualizacao: 05/06/2017
 
        Dados referentes ao programa:
 
@@ -104,10 +104,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
                    24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
          			                  crapass, crapttl, crapjur 
                   							(Adriano - P339).
-                   
-                   03/01/2018 - Alteração na forma de gravação do nrseqdig na tabela craplot
-                                para o lote 8384, devido mudança no crps148. Projeto Ligeirinho
-                                Jonatas Jaqmam (AMcom)
 
     ............................................................................. */
 
@@ -1103,7 +1099,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                     ,vlcompdb
                                     ,vlinfodb
                                     ,cdcooper
-                                    ,nrseqdig
                 )VALUES ( rw_crapdat.dtmvtolt --craplot.dtmvtolt  
                          ,1                  --craplot.cdagenci
                          ,100                --craplot.cdbccxlt
@@ -1113,10 +1108,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
                          ,0                  --craplot.vlcompdb
                          ,0                  --craplot.vlinfodb 
                          ,pr_cdcooper        --craplot.cdcooper 
-                         ,fn_sequence(pr_nmtabela => 'CRAPLOT',
-                                      pr_nmdcampo => 'NRSEQDIG',
-                                      pr_dsdchave => pr_cdcooper||';'||to_char(rw_crapdat.dtmvtolt,'dd/mm/rrrr')||';'||'1;100;8384');    
-
                 )RETURNING craplot.rowid 
                           ,craplot.cdagenci
                           ,craplot.cdbccxlt
@@ -1138,9 +1129,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
             --atualizando as demais informações do lote 8384
             BEGIN
-              UPDATE craplot SET craplot.nrseqdig = fn_sequence(pr_nmtabela => 'CRAPLOT',
-                                                                pr_nmdcampo => 'NRSEQDIG',
-                                                                pr_dsdchave => pr_cdcooper||';'||to_char(rw_crapdat.dtmvtolt,'dd/mm/rrrr')||';'||'1;100;8384')
+              UPDATE craplot SET craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
                                 ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
                                 ,craplot.qtinfoln = nvl(craplot.qtcompln,0) + 1
                                 ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + nvl(rw_craprpp.vlprerpp,0)
