@@ -16,29 +16,6 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
   -- Alteracoes:
   --
   ---------------------------------------------------------------------------
-  PROCEDURE pc_atualiza_prop_srv_emprestim(pr_cdcooper    IN crapcop.cdcooper%TYPE     --> Codigo da cooperativa
-                                          ,pr_nrdconta    IN crapass.nrdconta%TYPE     --> Numero da conta
-                                          ,pr_nrctremp    IN crawepr.nrctremp%TYPE     --> Numero do contrato
-                                          ,pr_tpretest    IN VARCHAR2                  --> Tipo do retorno recebido ('M' - Motor/ 'E' - Esteira)
-                                          ,pr_rw_crapdat  IN btch0001.rw_crapdat%TYPE  --> Vetor com dados de parâmetro (CRAPDAT)
-                                          ,pr_insitapr    IN crawepr.insitapr%TYPE     --> Situacao da proposta
-                                          ,pr_dsobscmt    IN crawepr.dsobscmt%TYPE DEFAULT NULL    --> Observação recebida da esteira de crédito
-                                          ,pr_dsdscore    IN crapass.dsdscore%TYPE DEFAULT NULL    --> Consulta do score feita na Boa Vista pela esteira de crédito
-                                          ,pr_dtdscore    IN crapass.dtdscore%TYPE DEFAULT NULL    --> Data da consulta do score feita na Boa Vista pela esteira de crédito
-                                          ,pr_indrisco    IN VARCHAR2 DEFAULT NULL     --> Nível do risco calculado para a operação
-                                          ,pr_nrnotrat    IN NUMBER   DEFAULT NULL     --> Valor do rating calculado para a operação
-                                          ,pr_nrinfcad    IN NUMBER   DEFAULT NULL     --> Valor do item Informações Cadastrais calculado no Rating
-                                          ,pr_nrliquid    IN NUMBER   DEFAULT NULL     --> Valor do item Liquidez calculado no Rating
-                                          ,pr_nrgarope    IN NUMBER   DEFAULT NULL     --> Valor das Garantias calculada no Rating
-                                          ,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
-                                          ,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
-                                          ,pr_flgpreap    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
-                                          ,pr_status      OUT PLS_INTEGER              --> Status
-                                          ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
-                                          ,pr_dscritic    OUT VARCHAR2                 --> Descricao da critica
-                                          ,pr_msg_detalhe OUT VARCHAR2                 --> Detalhe da mensagem
-                                          ,pr_des_reto    OUT VARCHAR2);
-
   PROCEDURE pc_atuaretorn_proposta_esteira(pr_usuario  IN VARCHAR2              --> Usuario
                                           ,pr_senha    IN VARCHAR2              --> Senha
                                           ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
@@ -87,8 +64,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
 																			 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
 																			 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
 																			 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-																			 ,pr_des_erro OUT VARCHAR2             --> Erros do processo
-                    );
+																			 ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
              
 	PROCEDURE pc_retorno_analise_limdesct
                     (pr_cdorigem IN NUMBER             --> Origem da Requisição (9-Esteira ou 5-Ayllos)
@@ -131,11 +107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   -- Objetivo  : Centralizar rotinas relacionadas ao WebService de propostas
   --
   -- Alteracoes: 05/05/2017 - Package adaptada para prever o retorno do Motor
-	 --                         de crédito - Projeto 337 - Motor de Crédito. (Reinert)
-  --
-  --             27/02/2018 - Adicionado os procedimentos pc_atualiza_prop_srv_limdesct e pc_retorno_analise_limdesct
-  --                        - Adaptado o procedimento pc_atuaretorn_proposta_esteira para utilização do limite de
-  --                          desconto de títulos (Paulo Penteado (GFT))
+	--                          de crédito - Projeto 337 - Motor de Crédito. (Reinert)
   --
   ---------------------------------------------------------------------------  
   PROCEDURE pc_gera_retor_proposta_esteira(pr_status       IN PLS_INTEGER,           --> Status
@@ -184,7 +156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'msg_detalhe', pr_tag_cont => pr_msg_detalhe, pr_des_erro => vr_des_erro);
       
       BEGIN
-        UPDATE tbgen_webservice_aciona a
+        UPDATE tbepr_acionamento a
            SET a.cdstatus_http = pr_status,
                a.dsresposta_requisicao = pr_retxml.getClobVal(),
                a.dtmvtolt              = pr_dtmvtolt
@@ -709,7 +681,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																					,pr_nrgarope    IN NUMBER   DEFAULT NULL     --> Valor das Garantias calculada no Rating
 																					,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
 																					,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
-                                          ,pr_flgpreap    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
                                           ,pr_status      OUT PLS_INTEGER              --> Status
                                           ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
                                           ,pr_dscritic    OUT VARCHAR2                 --> Descricao da critica
@@ -721,7 +692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      Sistema : Rotinas referentes ao WebService
      Sigla   : WEBS
      Autor   : James Prust Junior
-     Data    : Janeiro/16.                    Ultima atualizacao: 21/11/2017
+     Data    : Janeiro/16.                    Ultima atualizacao: 21/01/2018
 
      Dados referentes ao programa:
 
@@ -740,8 +711,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                  16/06/2016 - Ajustes para não estourar variavel dsobscmt.             
                               PRJ207 - Esteira (Odirlei-AMcom)
 
-                 21/11/2017 - Inclusão do parametro pr_flgpreap, Prj. 402 (Jean Michel)             
-
+                 21/01/2018 - Chamado 732952 - Melhorar a mensagem para ficar
+				              mais claro a Ibratan quando a proposta esta em 
+							  situacao que nao permite atualizacao (Andrei-MOUTs)
      ..............................................................................*/
     DECLARE
       CURSOR cr_crawepr(pr_cdcooper IN crawepr.cdcooper%TYPE
@@ -757,7 +729,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
               ,crawepr.cdcomite
               ,crawepr.cdfinemp
               ,crawepr.dtenvest
-								,crawepr.dsnivris
+							,crawepr.dsnivris
           FROM crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
            AND crawepr.nrdconta = pr_nrdconta
@@ -848,7 +820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         IF rw_crawepr.insitest NOT IN (1,2) THEN
           pr_status      := 202;
           pr_cdcritic    := 971;
-          pr_msg_detalhe := 'Parecer nao foi atualizado, proposta nao foi enviada para a esteira de credito.';
+          pr_msg_detalhe := 'Parecer nao foi atualizado, proposta em situacao que nao permite esta operacao.';
           RAISE vr_exc_saida;
         END IF;
       END IF; --> Fim IF pr_insitapr <> 99 THEN
@@ -1003,7 +975,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                                           ,crawepr.dsnivris)
                 ,crawepr.dtdscore = NVL(pr_dtdscore,nvl(crawepr.dtdscore,trunc(SYSDATE)))
                 ,crawepr.dsdscore = NVL(pr_dsdscore,crawepr.dsdscore)
-                ,crawepr.flgpreap = pr_flgpreap
            WHERE crawepr.cdcooper = pr_cdcooper
              AND crawepr.nrdconta = pr_nrdconta
              AND crawepr.nrctremp = pr_nrctremp
@@ -1163,8 +1134,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                    pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
     END;                            
       
-  END pc_atualiza_prop_srv_emprestim;
-  
+  END pc_atualiza_prop_srv_emprestim;   
+    
   PROCEDURE pc_atualiza_prop_srv_dsccheque(pr_cdcooper    IN crapcop.cdcooper%TYPE     --> Codigo da cooperativa
                                           ,pr_nrdconta    IN crapass.nrdconta%TYPE     --> Numero da conta
                                           ,pr_nrctremp    IN crawepr.nrctremp%TYPE     --> Numero do contrato
@@ -1205,7 +1176,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         NULL;
     END;                            
       
-  END pc_atualiza_prop_srv_dsccheque;   
+  END pc_atualiza_prop_srv_dsccheque;
   
   procedure pc_atualiza_prop_srv_limdesct
                 (pr_cdcooper    in crapcop.cdcooper%type     --> Codigo da cooperativa
@@ -1220,6 +1191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                 ,pr_dtdscore    in crapass.dtdscore%type default null    --> Data da consulta do score feita na Boa Vista pela esteira de crédito
 																,pr_indrisco    in varchar2 default null     --> Nível do risco calculado para a operação
 																,pr_nrnotrat    in number   default null     --> Valor do rating calculado para a operação
+
 																,pr_nrinfcad    in number   default null     --> Valor do item Informações Cadastrais calculado no Rating
 																,pr_nrliquid    in number   default null     --> Valor do item Liquidez calculado no Rating
 																,pr_nrgarope    in number   default null     --> Valor das Garantias calculada no Rating
@@ -1613,9 +1585,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                                                  ,pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
   end;                            
-  end pc_atualiza_prop_srv_limdesct;
+  end pc_atualiza_prop_srv_limdesct;                                  
                                            
-  PROCEDURE pc_atuaretorn_proposta_esteira(pr_usuario  IN VARCHAR2              --> Usuario
+PROCEDURE pc_atuaretorn_proposta_esteira(pr_usuario  IN VARCHAR2              --> Usuario
                                           ,pr_senha    IN VARCHAR2              --> Senha
                                           ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                                           ,pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta
@@ -1653,43 +1625,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                               PRJ207 - Esteira (Odirlei-AMcom)
                  
                  31/05/2016 - Incluido tratamento para monitoracao do serviço.
-                              PRJ207 - Esteira (Odirlei-AMcom)
-  
+                              PRJ207 - Esteira (Odirlei-AMcom)          
+     
                  27/02/2018 - Adaptado o procedimento pc_atuaretorn_proposta_esteira para utilização do limite de
                               desconto de títulos (Paulo Penteado (GFT))        
      
      ..............................................................................*/
-  DECLARE
-     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;    
+    DECLARE
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;    
       
-     -- Tratamento de erros
-     vr_cdcritic     crapcri.cdcritic%TYPE;
-     vr_dscritic     crapcri.dscritic%TYPE;
-     vr_des_reto     VARCHAR2(3);
-     vr_exc_saida    EXCEPTION;
+      -- Tratamento de erros
+      vr_cdcritic     crapcri.cdcritic%TYPE;
+      vr_dscritic     crapcri.dscritic%TYPE;
+      vr_des_reto     VARCHAR2(3);
+      vr_exc_saida    EXCEPTION;
       
-     vr_dtdscore     crapass.dtdscore%TYPE;
-     vr_chavereq     VARCHAR2(10000);      --> Cliente ID
-     vr_chavecli     VARCHAR2(10000);      --> Cliente ID
-     vr_nrtransacao  NUMBER(25) := 0;      --> Numero da transacao
-     vr_status       PLS_INTEGER;          --> Status
-     vr_msg_detalhe  VARCHAR2(10000);      --> Detalhe da mensagem    
-     vr_dssitapr     VARCHAR2(50);
+      vr_dtdscore     crapass.dtdscore%TYPE;
+      vr_chavereq     VARCHAR2(10000);      --> Cliente ID
+      vr_chavecli     VARCHAR2(10000);      --> Cliente ID
+      vr_nrtransacao  NUMBER(25) := 0;      --> Numero da transacao
+      vr_status       PLS_INTEGER;          --> Status
+      vr_msg_detalhe  VARCHAR2(10000);      --> Detalhe da mensagem    
+      vr_dssitapr     VARCHAR2(50);
      vr_tpproduto    number;
     
-  BEGIN
+    BEGIN
      
      -- Produto 999 = Monitoração do serviço
-     IF  pr_tpprodut = 999 THEN
-         -- Apenas gerar retorno de sucesso para a esteira
-         pc_gera_retor_proposta_esteira(pr_status      => 200  --> Status
-                                       ,pr_nrtransacao => NULL --> Numero da transacao
-                                       ,pr_cdcritic    => 0    --> Codigo da critica
-                                       ,pr_dscritic    => 0    --> Descricao da critica
-                                       ,pr_msg_detalhe => 'Monitoracao' --> Mensagem de detalhe
-                                       ,pr_dtmvtolt    => NULL
-                                       ,pr_retxml      => pr_retxml);  
-         RETURN;
+     IF pr_tpprodut = 999 THEN
+       
+       -- Apenas gerar retorno de sucesso para a esteira
+       pc_gera_retor_proposta_esteira(pr_status      => 200  --> Status
+                                     ,pr_nrtransacao => NULL --> Numero da transacao
+                                     ,pr_cdcritic    => 0    --> Codigo da critica
+                                     ,pr_dscritic    => 0    --> Descricao da critica
+                                     ,pr_msg_detalhe => 'Monitoracao' --> Mensagem de detalhe
+                                     ,pr_dtmvtolt    => NULL
+                                     ,pr_retxml      => pr_retxml);  
+       RETURN;
      END IF;
      
      if    pr_tpprodut = 1 then -- Proposta de Emprestimo
@@ -1726,105 +1699,105 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
            into   vr_dssitapr
            from   dual;
      end   if;
+      
+      -- Para cada requisicao sera criado um numero de transacao
+      ESTE0001.pc_grava_acionamento( pr_cdcooper                 => pr_cdcooper,
+                                     pr_cdagenci                 => 1, 
+                                     pr_cdoperad                 => 'ESTEIRA',
+                                     pr_cdorigem                 => 9,
+                                     pr_nrctrprp                 => pr_nrctremp,
+                                     pr_nrdconta                 => pr_nrdconta,
+                                     pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
+                                     pr_dsoperacao               => 'RETORNO PROPOSTA - '||vr_dssitapr,
+                                     pr_dsuriservico             => pr_namehost,
+                                     pr_dtmvtolt                 => NULL,
+                                     pr_cdstatus_http            => 0,
+                                     pr_dsconteudo_requisicao    => replace(pr_dsrequis,'&quot;','"'),
+                                     pr_dsresposta_requisicao    => NULL,
+                                     pr_tpproduto                => vr_tpproduto,
+                                     pr_idacionamento            => vr_nrtransacao,
+                                     pr_dscritic                 => vr_dscritic);
 
-     -- Para cada requisicao sera criado um numero de transacao
-     WEBS0003.pc_grava_acionamento(pr_cdcooper                 => pr_cdcooper,
-                                   pr_cdagenci                 => 1, 
-                                   pr_cdoperad                 => 'ESTEIRA',
-                                   pr_cdorigem                 => 9,
-                                   pr_nrctrprp                 => pr_nrctremp,
-                                   pr_nrdconta                 => pr_nrdconta,
-                                   pr_cdcliente                => 1,
-                                   pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
-                                   pr_dsoperacao               => 'RETORNO PROPOSTA - '||vr_dssitapr,
-                                   pr_dsuriservico             => pr_namehost,
-                                   pr_dsmetodo                 => 'PUT',
-                                   pr_dtmvtolt                 => NULL,
-                                   pr_cdstatus_http            => 0,
-                                   pr_dsconteudo_requisicao    => replace(pr_dsrequis,'&quot;','"'),
-                                   pr_dsresposta_requisicao    => NULL,
-                                   pr_flgreenvia               => 0,
-                                   pr_nrreenvio                => 0,
-                                   pr_tpconteudo               => 1,
-                                   pr_tpproduto                => vr_tpproduto,
-                                   pr_idacionamento            => vr_nrtransacao,
-                                   pr_dscritic                 => vr_dscritic);
-
-     IF  vr_dscritic IS NOT NULL THEN
-         btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                    pr_ind_tipo_log => 2, 
-                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                       ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || pr_nrctremp ||': '||SQLERRM,
-                                    pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+      IF vr_dscritic IS NOT NULL THEN
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                   pr_ind_tipo_log => 2, 
+                                   pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || pr_nrctremp ||': '||SQLERRM,
+                                   pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
                                    
-         -- Montar mensagem de critica
-         vr_status      := 500;
-         vr_cdcritic    := 978;
-         vr_msg_detalhe := 'Parecer nao foi atualizado, ocorreu uma erro interno no sistema.(3)';
-         RAISE vr_exc_saida;
-     END IF; 
-
-     --vr_nrtransacao := fn_sequence(pr_nmtabela => 'TBWBS_ESTEIRA', pr_nmdcampo => 'NRTRANSACAO',pr_dsdchave => pr_cdcooper);            
-     vr_dscritic    := NULL;
-     vr_dtdscore    := TO_DATE(pr_dtdscore,'DD/MM/RRRR');
-     vr_chavecli    := utl_encode.text_encode(pr_usuario || ':' || pr_senha,'WE8ISO8859P1', UTL_ENCODE.BASE64);
+        -- Montar mensagem de critica
+        vr_status      := 500;
+        vr_cdcritic    := 978;
+        vr_msg_detalhe := 'Parecer nao foi atualizado, ocorreu uma erro interno no sistema.(3)';
+        RAISE vr_exc_saida;
+        
+      END IF; 
       
-     -- Vamos verificar a chave de acesso (Desenvolvimento/Producao)
-     vr_chavereq := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                             ,pr_cdcooper => 0
-                                             ,pr_cdacesso => 'IDWEBSRVICE_ESTEIRA_IBRA');
+      --vr_nrtransacao := fn_sequence(pr_nmtabela => 'TBWBS_ESTEIRA', pr_nmdcampo => 'NRTRANSACAO',pr_dsdchave => pr_cdcooper);            
+      vr_dscritic    := NULL;
+      vr_dtdscore    := TO_DATE(pr_dtdscore,'DD/MM/RRRR');
+      vr_chavecli    := utl_encode.text_encode(pr_usuario || ':' || pr_senha,'WE8ISO8859P1', UTL_ENCODE.BASE64);
+      
+      -- Vamos verificar a chave de acesso (Desenvolvimento/Producao)
+      vr_chavereq := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => 0
+                                              ,pr_cdacesso => 'IDWEBSRVICE_ESTEIRA_IBRA');
                                               
-     --  Condicao para verificar se o cliente tem acesso
-     IF  vr_chavecli <> vr_chavereq THEN
-         -- Montar mensagem de critica
-         vr_status      := 403;
-         vr_cdcritic    := 977;
-         vr_msg_detalhe := 'Parecer nao foi atualizado, credenciais de acesso nao autorizada.';
-         RAISE vr_exc_saida;
-     END IF;
+      -- Condicao para verificar se o cliente tem acesso
+      IF vr_chavecli <> vr_chavereq THEN
+        -- Montar mensagem de critica
+        vr_status      := 403;
+        vr_cdcritic    := 977;
+        vr_msg_detalhe := 'Parecer nao foi atualizado, credenciais de acesso nao autorizada.';
+        RAISE vr_exc_saida;
+      END IF;
       
-     --    Verifica se a data esta cadastrada
-     OPEN  BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-     IF    BTCH0001.cr_crapdat%NOTFOUND THEN
-           CLOSE BTCH0001.cr_crapdat;
-           -- Montar mensagem de critica
-           vr_status      := 500;
-           vr_cdcritic    := 978;
-           vr_msg_detalhe := 'Parecer nao foi atualizado, ocorreu uma erro interno no sistema.(4)';
-           RAISE vr_exc_saida;
-     ELSE
-           CLOSE BTCH0001.cr_crapdat;
-     END   IF;
-
-     -- Condicao para verificar se o processo estah rodando
-     IF  NVL(rw_crapdat.inproces,0) <> 1 THEN
-         -- Montar mensagem de critica
-         vr_status      := 400;
-         vr_cdcritic    := 138;
-         vr_msg_detalhe := 'Parecer nao foi atualizado, o processo batch CECRED esta em execucao.';
-         RAISE vr_exc_saida;
-     END IF;
-
-     --    Proposta de Emprestimo
+      -- Verifica se a data esta cadastrada
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat
+       INTO rw_crapdat;
+      -- Se nao encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois havera raise
+        CLOSE BTCH0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_status      := 500;
+        vr_cdcritic    := 978;
+        vr_msg_detalhe := 'Parecer nao foi atualizado, ocorreu uma erro interno no sistema.(4)';
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;
+      
+      -- Condicao para verificar se o processo estah rodando
+      IF NVL(rw_crapdat.inproces,0) <> 1 THEN
+        -- Montar mensagem de critica
+        vr_status      := 400;
+        vr_cdcritic    := 138;
+        vr_msg_detalhe := 'Parecer nao foi atualizado, o processo batch CECRED esta em execucao.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Proposta de Emprestimo
      IF    vr_tpproduto = 1 THEN
-           -- Atualiza os dados da proposta do servico 01
-           pc_atualiza_prop_srv_emprestim(pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
-                                         ,pr_nrdconta    => pr_nrdconta    --> Numero da conta
-                                         ,pr_nrctremp    => pr_nrctremp    --> Numero do contrato
-																			                      ,pr_tpretest    => 'E'            --> Tipo do retorno
-                                         ,pr_rw_crapdat  => rw_crapdat     --> Cursor da crapdat
-                                         ,pr_insitapr    => pr_insitapr    --> Situacao da proposta
-                                         ,pr_dsobscmt    => pr_dsobscmt    --> Observação recebida da esteira de crédito
-                                         ,pr_dsdscore    => pr_dsdscore    --> Consulta do score feita na Boa Vista pela esteira de crédito
-                                         ,pr_dtdscore    => vr_dtdscore    --> Data da consulta do score feita na Boa Vista pela esteira de crédito
-                                         ,pr_status      => vr_status      --> Status
-                                         ,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
-                                         ,pr_dscritic    => vr_dscritic    --> Descricao da critica
-                                         ,pr_msg_detalhe => vr_msg_detalhe --> Detalhe da mensagem
-                                         ,pr_des_reto    => vr_des_reto);  --> Erros do processo
-           RAISE vr_exc_saida;
-     
+        -- Atualiza os dados da proposta do servico 01
+        pc_atualiza_prop_srv_emprestim(pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
+                                      ,pr_nrdconta    => pr_nrdconta    --> Numero da conta
+                                      ,pr_nrctremp    => pr_nrctremp    --> Numero do contrato
+																			,pr_tpretest    => 'E'            --> Tipo do retorno
+                                      ,pr_rw_crapdat  => rw_crapdat     --> Cursor da crapdat
+                                      ,pr_insitapr    => pr_insitapr    --> Situacao da proposta
+                                      ,pr_dsobscmt    => pr_dsobscmt    --> Observação recebida da esteira de crédito
+                                      ,pr_dsdscore    => pr_dsdscore    --> Consulta do score feita na Boa Vista pela esteira de crédito
+                                      ,pr_dtdscore    => vr_dtdscore    --> Data da consulta do score feita na Boa Vista pela esteira de crédito
+                                      ,pr_status      => vr_status      --> Status
+                                      ,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
+                                      ,pr_dscritic    => vr_dscritic    --> Descricao da critica
+                                      ,pr_msg_detalhe => vr_msg_detalhe --> Detalhe da mensagem
+                                      ,pr_des_reto    => vr_des_reto);  --> Erros do processo
+        RAISE vr_exc_saida;
+        
      --    Limite Desconto Titulos   
      elsif vr_tpproduto = 3 then
            pc_atualiza_prop_srv_limdesct(pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
@@ -1843,105 +1816,97 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                         ,pr_msg_detalhe => vr_msg_detalhe --> Detalhe da mensagem
                                         ,pr_des_reto    => vr_des_reto);  --> Erros do processo);
         
-     ELSE
-           vr_status      := 202;
-           vr_cdcritic    := 973;
-           vr_msg_detalhe := 'Parecer nao foi atualizado, o tipo de produto nao foi implementado para a aprovacao pela esteira.';
-           RAISE vr_exc_saida;
-     END   IF;
+      ELSE
+        vr_status      := 202;
+        vr_cdcritic    := 973;
+        vr_msg_detalhe := 'Parecer nao foi atualizado, o tipo de produto nao foi implementado para a aprovacao pela esteira.';
+        RAISE vr_exc_saida;
+      END IF;
 
-  EXCEPTION
-     WHEN vr_exc_saida THEN
-          IF  vr_nrtransacao = 0 THEN
-              -- Para cada requisicao sera criado um numero de transacao
-              WEBS0003.pc_grava_acionamento(pr_cdcooper                 => pr_cdcooper,
-                                            pr_cdagenci                 => 1, 
-                                            pr_cdoperad                 => 'ESTEIRA',
-                                            pr_cdorigem                 => 9,
-                                            pr_nrctrprp                 => pr_nrctremp,
-                                            pr_nrdconta                 => pr_nrdconta,
-                                            pr_cdcliente                => 1,
-                                            pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
-                                            pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO PROPOSTA - '||vr_dssitapr,
-                                            pr_dsuriservico             => NULL,
-                                            pr_dsmetodo                 => NULL,
-                                            pr_dtmvtolt                 => NULL,
-                                            pr_cdstatus_http            => 0,
-                                            pr_dsconteudo_requisicao    => NULL,
-                                            pr_dsresposta_requisicao    => NULL,
-                                            pr_flgreenvia               => 0,
-                                            pr_nrreenvio                => 0,
-                                            pr_tpconteudo               => 1,
-                                            pr_tpproduto                => vr_tpproduto,
-                                            pr_idacionamento            => vr_nrtransacao,
-                                            pr_dscritic                 => vr_dscritic);
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        
+        IF vr_nrtransacao = 0 THEN
+          -- Para cada requisicao sera criado um numero de transacao
+          ESTE0001.pc_grava_acionamento( pr_cdcooper                 => pr_cdcooper,
+                                         pr_cdagenci                 => 1, 
+                                         pr_cdoperad                 => 'ESTEIRA',
+                                         pr_cdorigem                 => 9,
+                                         pr_nrctrprp                 => pr_nrctremp,
+                                         pr_nrdconta                 => pr_nrdconta,
+                                         pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
+                                         pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO PROPOSTA - '||vr_dssitapr,
+                                         pr_dsuriservico             => NULL,
+                                         pr_dtmvtolt                 => NULL,
+                                         pr_cdstatus_http            => 0,
+                                         pr_dsconteudo_requisicao    => NULL,
+                                         pr_dsresposta_requisicao    => NULL,
+										                               pr_tpproduto                => vr_tpproduto,
+                                         pr_idacionamento            => vr_nrtransacao,
+                                         pr_dscritic                 => vr_dscritic);
 
-              IF  vr_dscritic IS NOT NULL THEN
-                  btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                             pr_ind_tipo_log => 2, 
-                                             pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || pr_nrctremp ||': '||SQLERRM,
-                                             pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));                        
-              END IF;
+          IF vr_dscritic IS NOT NULL THEN
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_ind_tipo_log => 2, 
+                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                          ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || pr_nrctremp ||': '||SQLERRM,
+                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));                        
           END IF;
+        END IF;
         
-          -- Gera retorno da proposta para a esteira
-          pc_gera_retor_proposta_esteira(pr_status      => vr_status      --> Status
-                                        ,pr_nrtransacao => vr_nrtransacao --> Numero da transacao
-                                        ,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
-                                        ,pr_dscritic    => vr_dscritic    --> Descricao da critica
-                                        ,pr_msg_detalhe => vr_msg_detalhe --> Mensagem de detalhe
-                                        ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
-                                        ,pr_retxml      => pr_retxml);      
-     
-     WHEN OTHERS THEN
-          IF  vr_nrtransacao = 0 THEN
-              -- Para cada requisicao sera criado um numero de transacao
-              WEBS0003.pc_grava_acionamento(pr_cdcooper                 => pr_cdcooper,
-                                            pr_cdagenci                 => 1, 
-                                            pr_cdoperad                 => 'ESTEIRA',
-                                            pr_cdorigem                 => 9,
-                                            pr_nrctrprp                 => pr_nrctremp,
-                                            pr_nrdconta                 => pr_nrdconta,
-                                            pr_cdcliente                => 1,
-                                            pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
-                                            pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO PROPOSTA - '||vr_dssitapr,
-                                            pr_dsuriservico             => NULL,
-                                            pr_dsmetodo                 => NULL,
-                                            pr_dtmvtolt                 => NULL,
-                                            pr_cdstatus_http            => 0,
-                                            pr_dsconteudo_requisicao    => NULL,
-                                            pr_dsresposta_requisicao    => NULL,
-                                            pr_flgreenvia               => 0,
-                                            pr_nrreenvio                => 0,
-                                            pr_tpconteudo               => 1,
-                                            pr_tpproduto                => vr_tpproduto,
-                                            pr_idacionamento            => vr_nrtransacao,
-                                            pr_dscritic                 => vr_dscritic);
+        -- Gera retorno da proposta para a esteira
+        pc_gera_retor_proposta_esteira(pr_status      => vr_status      --> Status
+                                      ,pr_nrtransacao => vr_nrtransacao --> Numero da transacao
+                                      ,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
+                                      ,pr_dscritic    => vr_dscritic    --> Descricao da critica
+                                      ,pr_msg_detalhe => vr_msg_detalhe --> Mensagem de detalhe
+                                      ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
+                                      ,pr_retxml      => pr_retxml);      
+      WHEN OTHERS THEN
+        
+        IF vr_nrtransacao = 0 THEN
+          -- Para cada requisicao sera criado um numero de transacao
+          ESTE0001.pc_grava_acionamento( pr_cdcooper                 => pr_cdcooper,
+                                         pr_cdagenci                 => 1, 
+                                         pr_cdoperad                 => 'ESTEIRA',
+                                         pr_cdorigem                 => 9,
+                                         pr_nrctrprp                 => pr_nrctremp,
+                                         pr_nrdconta                 => pr_nrdconta,
+                                         pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
+                                         pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO PROPOSTA - '||vr_dssitapr,
+                                         pr_dsuriservico             => NULL,
+                                         pr_dtmvtolt                 => NULL,
+                                         pr_cdstatus_http            => 0,
+                                         pr_dsconteudo_requisicao    => NULL,
+                                         pr_dsresposta_requisicao    => NULL,
+                                         pr_tpproduto                => vr_tpproduto,
+                                         pr_idacionamento            => vr_nrtransacao,
+                                         pr_dscritic                 => vr_dscritic);
 
-              IF  vr_dscritic IS NOT NULL THEN
-                  btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                             pr_ind_tipo_log => 2, 
-                                             pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || pr_nrctremp ||': '||SQLERRM,
-                                             pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));                        
-              END IF;
+          IF vr_dscritic IS NOT NULL THEN
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_ind_tipo_log => 2, 
+                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                          ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || pr_nrctremp ||': '||SQLERRM,
+                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));                        
           END IF;
+        END IF;
         
-          btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                     pr_ind_tipo_log => 3, 
-                                     pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                        ' - WEBS0001 --> Nao foi possivel atualizar retorno de proposta ' || vr_nrtransacao ||': '||SQLERRM,
-                                     pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                   pr_ind_tipo_log => 3, 
+                                   pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - WEBS0001 --> Nao foi possivel atualizar retorno de proposta ' || vr_nrtransacao ||': '||SQLERRM,
+                                   pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
         
-          -- Gera retorno da proposta para a esteira
-          pc_gera_retor_proposta_esteira(pr_status      => 500              --> Status
-                                        ,pr_nrtransacao => vr_nrtransacao   --> Numero da transacao
-                                        ,pr_cdcritic    => 978              --> Codigo da critica
-                                        ,pr_msg_detalhe => 'Parecer nao foi atualizado, ocorreu uma erro interno no sistema.(5)'
-                                        ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
-                                        ,pr_retxml      => pr_retxml);
-  END;                            
+        -- Gera retorno da proposta para a esteira
+        pc_gera_retor_proposta_esteira(pr_status      => 500              --> Status
+                                      ,pr_nrtransacao => vr_nrtransacao   --> Numero da transacao
+                                      ,pr_cdcritic    => 978              --> Codigo da critica
+                                      ,pr_msg_detalhe => 'Parecer nao foi atualizado, ocorreu uma erro interno no sistema.(5)'
+                                      ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
+                                      ,pr_retxml      => pr_retxml);
+    END;                            
+      
   END pc_atuaretorn_proposta_esteira;
   
   PROCEDURE pc_grava_requisicao_erro(pr_dsrequis IN VARCHAR2              --> Requisicao de entrada em json 
@@ -1997,29 +1962,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       
   END pc_grava_requisicao_erro;
              
-	PROCEDURE pc_retorno_analise_proposta
-                    (pr_cdorigem IN NUMBER             --> Origem da Requisição (9-Esteira ou 5-Ayllos)
-																			 ,pr_dsprotoc IN VARCHAR2           --> Protocolo da análise
-																			 ,pr_nrtransa IN NUMBER             --> Transacao do acionamento
-																			 ,pr_dsresana IN VARCHAR2           --> Resultado da análise automática; Contendo as seguintes opções: APROVAR, REPROVAR, DERIVAR ou ERRO
-                    ,pr_indrisco IN VARCHAR2           --> Nível do risco calculado para a operação
-																			 ,pr_nrnotrat IN VARCHAR2           --> Valor do rating calculado para a operação
-																		 	,pr_nrinfcad IN VARCHAR2           --> Valor do item Informações Cadastrais calculado no Rating
-																		 	,pr_nrliquid IN VARCHAR2           --> Valor do item Liquidez calculado no Rating
-																		 	,pr_nrgarope IN VARCHAR2           --> Valor das Garantias calculada no Rating
-																			 ,pr_nrparlvr IN VARCHAR2           --> Valor do Patrimônio Pessoal Livre calculado no Rating
-																			 ,pr_nrperger IN VARCHAR2           --> Valor da Percepção Geral da Empresa calculada no Rating
-																			 ,pr_desscore IN VARCHAR2           --> Descrição do Score Boa Vista
-																			 ,pr_datscore IN VARCHAR2           --> Data do Score Boa Vista
-																			 ,pr_dsrequis IN VARCHAR2           --> Conteúdo da requisição oriunda da Análise Automática na Esteira
-																			 ,pr_namehost IN VARCHAR2           --> Nome do host oriundo da requisição da Análise Automática na Esteira
-																			 ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
-																			 ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
-																			 ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
-																			 ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
-																			 ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
-																			 ,pr_des_erro OUT VARCHAR2          --> Erros do processo
-                    ) IS
+	PROCEDURE pc_retorno_analise_proposta(pr_cdorigem IN NUMBER                --> Origem da Requisição (9-Esteira ou 5-Ayllos)
+																			 ,pr_dsprotoc IN VARCHAR2              --> Protocolo da análise
+																			 ,pr_nrtransa IN NUMBER                --> Transacao do acionamento
+																			 ,pr_dsresana IN VARCHAR2              --> Resultado da análise automática; Contendo as seguintes opções: APROVAR, REPROVAR, DERIVAR ou ERRO
+                                       ,pr_indrisco IN VARCHAR2              --> Nível do risco calculado para a operação
+																			 ,pr_nrnotrat IN VARCHAR2              --> Valor do rating calculado para a operação
+																		 	 ,pr_nrinfcad IN VARCHAR2              --> Valor do item Informações Cadastrais calculado no Rating
+																		 	 ,pr_nrliquid IN VARCHAR2              --> Valor do item Liquidez calculado no Rating
+																		 	 ,pr_nrgarope IN VARCHAR2              --> Valor das Garantias calculada no Rating
+																			 ,pr_nrparlvr IN VARCHAR2              --> Valor do Patrimônio Pessoal Livre calculado no Rating
+																			 ,pr_nrperger IN VARCHAR2              --> Valor da Percepção Geral da Empresa calculada no Rating
+																			 ,pr_desscore IN VARCHAR2              --> Descrição do Score Boa Vista
+																			 ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
+																			 ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
+																			 ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+																			 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+																			 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+																			 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+																			 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+																			 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+																			 ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
   BEGIN
 	/* .............................................................................
 	 Programa: pc_retorno_analise_proposta
@@ -2035,125 +1998,125 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 	 Objetivo  : Receber as informações da análise automática da Esteira e gravar 
 	             na base
 
-	 Observacao: 21/11/2017 - Alterações referente ao Prj. 402 (Jean Michel).
+	 Observacao: -----
      
 	 Alteracoes:  15/12/2017 - P337 - SM - Acionar nova rotina Derivação (Marcos-Supero)
         
 	 ..............................................................................*/	
 		DECLARE
 		  -- Tratamento de críticas
-			 vr_exc_saida EXCEPTION;
-			 vr_cdcritic PLS_INTEGER;
-			 vr_dscritic VARCHAR2(4000);
-			 vr_des_reto VARCHAR2(10);
+			vr_exc_saida EXCEPTION;
+			vr_cdcritic PLS_INTEGER;
+			vr_dscritic VARCHAR2(4000);
+			vr_des_reto VARCHAR2(10);
 			
-			 -- Variáveis auxiliares
+			-- Variáveis auxiliares
 		  vr_msg_detalhe  VARCHAR2(10000);      --> Detalhe da mensagem    
-    vr_status       PLS_INTEGER;          --> Status
-			 vr_dssitret     VARCHAR2(100);        --> Situação de retorno
-    vr_nrtransacao  NUMBER(25) := 0;      --> Numero da transacao	
-			 vr_inpessoa     PLS_INTEGER := 0;     --> 1 - PF/ 2 - PJ		
-			 vr_insitapr     crawepr.insitapr%TYPE; --> Situacao Aprovacao(0-Em estudo/1-Aprovado/2-Nao aprovado/3-Restricao/4-Refazer)
+      vr_status       PLS_INTEGER;          --> Status
+			vr_dssitret     VARCHAR2(100);        --> Situação de retorno
+      vr_nrtransacao  NUMBER(25) := 0;      --> Numero da transacao	
+			vr_inpessoa     PLS_INTEGER := 0;     --> 1 - PF/ 2 - PJ		
+			vr_insitapr     crawepr.insitapr%TYPE; --> Situacao Aprovacao(0-Em estudo/1-Aprovado/2-Nao aprovado/3-Restricao/4-Refazer)
 			
-    -- Acionamento 
-    CURSOR cr_aciona IS
-    SELECT aci.cdcooper    
-          ,aci.nrdconta    
-          ,aci.nrctrprp    nrctremp
-          ,aci.dsprotocolo dsprotoc
-    FROM   tbgen_webservice_aciona aci
-    WHERE  aci.dsprotocolo   = pr_dsprotoc
-    AND    aci.tpacionamento = 1; /*Envio*/
-    rw_aciona cr_aciona%ROWTYPE;
+      -- Acionamento 
+      CURSOR cr_aciona IS
+        SELECT aci.cdcooper    
+              ,aci.nrdconta    
+              ,aci.nrctrprp    nrctremp
+              ,aci.dsprotocolo dsprotoc
+          FROM tbepr_acionamento aci
+         WHERE aci.dsprotocolo   = pr_dsprotoc
+           AND aci.tpacionamento = 1; /*Envio*/
+      rw_aciona cr_aciona%ROWTYPE;
       
 		  -- Buscar a proposta de empréstimo vinculada ao protocolo
 		  CURSOR cr_crawepr(pr_cdcooper crawepr.cdcooper%TYPE
-                     ,pr_nrdconta crawepr.nrdconta%TYPE
-                     ,pr_nrctremp crawepr.nrctremp%TYPE) IS
-			 SELECT wpr.cdcooper
-          ,wpr.nrdconta
-          ,wpr.nrctremp
-          ,wpr.cdagenci
-          ,wpr.cdopeste
-          ,wpr.insitest
-          ,decode(wpr.insitapr, 0, 'EM ESTUDO', 1, 'APROVADO', 2, 'NAO APROVADO', 3, 'RESTRICAO', 4, 'REFAZER', 'SITUACAO DESCONHECIDA') dssitapr
-          ,wpr.rowid
-    FROM   crawepr wpr
-    WHERE  wpr.cdcooper = pr_cdcooper
-    AND    wpr.nrdconta = pr_nrdconta
-    AND    wpr.nrctremp = pr_nrctremp
-    AND    wpr.dsprotoc = pr_dsprotoc/*
+                       ,pr_nrdconta crawepr.nrdconta%TYPE
+                       ,pr_nrctremp crawepr.nrctremp%TYPE) IS
+			  SELECT wpr.cdcooper
+              ,wpr.nrdconta
+              ,wpr.nrctremp
+              ,wpr.cdagenci
+              ,wpr.cdopeste
+              ,wpr.insitest
+              ,decode(wpr.insitapr, 0, 'EM ESTUDO', 1, 'APROVADO', 2, 'NAO APROVADO', 3, 'RESTRICAO', 4, 'REFAZER', 'SITUACAO DESCONHECIDA') dssitapr
+              ,wpr.rowid
+          FROM crawepr wpr
+         WHERE wpr.cdcooper = pr_cdcooper
+           AND wpr.nrdconta = pr_nrdconta
+           AND wpr.nrctremp = pr_nrctremp
+           AND wpr.dsprotoc = pr_dsprotoc/*
            FOR UPDATE*/;  
 		  rw_crawepr cr_crawepr%ROWTYPE;
 			
 			-- Buscar o tipo de pessoa que contratou o empréstimo
 			CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
 			                 ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-			SELECT ass.inpessoa
-			FROM   crapass ass
-			WHERE  ass.cdcooper = pr_cdcooper
-			AND    ass.nrdconta = pr_nrdconta;
+				SELECT ass.inpessoa
+				  FROM crapass ass
+				 WHERE ass.cdcooper = pr_cdcooper
+				   AND ass.nrdconta = pr_nrdconta;
+			
 			rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 			
-   -- Variaveis temp para ajuste valores recebidos nos indicadores
-   vr_indrisco VARCHAR2(100); --> Nível do risco calculado para a operação
+      -- Variaveis temp para ajuste valores recebidos nos indicadores
+      vr_indrisco VARCHAR2(100); --> Nível do risco calculado para a operação
 			vr_nrnotrat VARCHAR2(100); --> Valor do rating calculado para a operação
 			vr_nrinfcad VARCHAR2(100); --> Valor do item Informações Cadastrais calculado no Rating
 			vr_nrliquid VARCHAR2(100); --> Valor do item Liquidez calculado no Rating
 			vr_nrgarope VARCHAR2(100); --> Valor das Garantias calculada no Rating
 			vr_nrparlvr VARCHAR2(100); --> Valor do Patrimônio Pessoal Livre calculado no Rating
 			vr_nrperger VARCHAR2(100); --> Valor da Percepção Geral da Empresa calculada no Rating
-   vr_desscore VARCHAR2(100); --> Descricao do Score Boa Vista
-   vr_datscore VARCHAR2(100); --> Data do Score Boa Vista
-   vr_flgpreap INTEGER := 0;
-
-   -- Bloco PLSQL para chamar a execução paralela do pc_crps414
-   vr_dsplsql VARCHAR2(4000);
-   -- Job name dos processos criados
-   vr_jobname VARCHAR2(100);
+      vr_desscore VARCHAR2(100); --> Descricao do Score Boa Vista
+      vr_datscore VARCHAR2(100); --> Data do Score Boa Vista
       
-   -- Variaveis para DEBUG
-   vr_flgdebug VARCHAR2(100) := 'S';
-   vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+      -- Bloco PLSQL para chamar a execução paralela do pc_crps414
+      vr_dsplsql VARCHAR2(4000);
+      -- Job name dos processos criados
+      vr_jobname VARCHAR2(100);
+      
+      -- Variaveis para DEBUG
+      vr_flgdebug VARCHAR2(100) := 'S';
+      vr_idaciona tbepr_acionamento.idacionamento%TYPE;
       
            
-			-- Função para verificar se parâmetro passado é numérico
+ 			-- Função para verificar se parâmetro passado é numérico
 			FUNCTION fn_is_number(pr_vlparam IN VARCHAR2) RETURN BOOLEAN IS
 			BEGIN
 			  IF TRIM(gene0002.fn_char_para_number(pr_vlparam)) IS NULL THEN
-        RETURN FALSE;
-     ELSE
-        RETURN TRUE;
-     END IF;  
+          RETURN FALSE;
+        ELSE
+          RETURN TRUE;
+        END IF;  
 			EXCEPTION
-				 WHEN OTHERS THEN
-					     RETURN FALSE;
+				WHEN OTHERS THEN
+					RETURN FALSE;
 			END fn_is_number;
       
-   -- Função para verificar se parâmetro passado é Data
-   FUNCTION fn_is_date(pr_vlparam IN VARCHAR2) RETURN BOOLEAN IS
-     vr_data date;
-   BEGIN
-     vr_data := TO_DATE(pr_vlparam,'RRRRMMDD');
-     IF  vr_data IS NULL THEN 
-         RETURN FALSE;
-     ELSE
-         RETURN TRUE;  
-     END IF;  
-   EXCEPTION
-     WHEN OTHERS THEN
+      -- Função para verificar se parâmetro passado é Data
+      FUNCTION fn_is_date(pr_vlparam IN VARCHAR2) RETURN BOOLEAN IS
+        vr_data date;
+      BEGIN
+        vr_data := TO_DATE(pr_vlparam,'RRRRMMDD');
+        IF vr_data IS NULL THEN 
           RETURN FALSE;
-   END fn_is_date;
+        ELSE
+          RETURN TRUE;  
+        END IF;  
+      EXCEPTION
+        WHEN OTHERS THEN
+          RETURN FALSE;
+      END fn_is_date;
       
-   -- Função para trocar o litereal "null" por null
-   FUNCTION fn_converte_null(pr_dsvaltxt IN VARCHAR2) RETURN VARCHAR2 IS
-   BEGIN
-      IF  pr_dsvaltxt = 'null' THEN
+      -- Função para trocar o litereal "null" por null
+      FUNCTION fn_converte_null(pr_dsvaltxt IN VARCHAR2) RETURN VARCHAR2 IS
+      BEGIN
+        IF pr_dsvaltxt = 'null' THEN
           RETURN NULL;
-      ELSE
+        ELSE
           RETURN pr_dsvaltxt;
-      END IF;
-   END;
+        END IF;
+      END;
 											 
 		BEGIN
     
@@ -2171,15 +2134,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
        RETURN;
      END IF;    
     
-     -- Se o acionamento já foi gravado na origem
-     IF  nvl(pr_nrtransa,0) > 0 THEN
-         vr_nrtransacao := pr_nrtransa;
-     END IF;  
+      -- Se o acionamento já foi gravado na origem
+      IF nvl(pr_nrtransa,0) > 0 THEN
+        vr_nrtransacao := pr_nrtransa;
+      END IF;  
       
-     -- Acionamento 
-     OPEN  cr_aciona;
-     FETCH cr_aciona INTO rw_aciona;
-     CLOSE cr_aciona; 
+      -- Acionamento 
+      OPEN cr_aciona;
+      FETCH cr_aciona
+       INTO rw_aciona;
+      CLOSE cr_aciona; 
       
 			-- Buscar a proposta de empréstimo a partir do protocolo
 			OPEN cr_crawepr(rw_aciona.cdcooper
@@ -2212,25 +2176,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       -- Se o DEBUG estiver habilitado
       IF vr_flgdebug = 'S' THEN
         --> Gravar dados log acionamento
-        WEBS0003.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
+        este0001.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
                                       pr_cdagenci              => 1,          
                                       pr_cdoperad              => 'MOTOR',          
                                       pr_cdorigem              => pr_cdorigem,          
                                       pr_nrctrprp              => rw_crawepr.nrctremp,      
                                       pr_nrdconta              => rw_crawepr.nrdconta,  
-                                      pr_cdcliente             => 1,
                                       pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                       pr_dsoperacao            => 'INICIO RETORNO ANALISE',       
                                       pr_dsuriservico          => pr_namehost,       
-                                      pr_dsmetodo              => 'PUT',
                                       pr_dtmvtolt              => trunc(sysdate),       
                                       pr_cdstatus_http         => 0,
                                       pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
                                       pr_dsresposta_requisicao => null,
-                                      pr_flgreenvia            => 0,
-                                      pr_nrreenvio             => 0,
-                                      pr_tpconteudo            => 1,
-                                      pr_tpproduto             => 0,
                                       pr_dsprotocolo           => pr_dsprotoc,
                                       pr_idacionamento         => vr_idaciona,
                                       pr_dscritic              => vr_dscritic);
@@ -2261,37 +2219,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       
 			-- Montar a mensagem que será gravada no acionamento
       CASE lower(pr_dsresana)
-        WHEN 'aprovar'      THEN vr_dssitret := 'APROVADO AUTOM.';
-        WHEN 'reprovar'     THEN vr_dssitret := 'REJEITADA AUTOM.';
-        WHEN 'derivar'      THEN vr_dssitret := 'ANALISAR MANUAL';
-        WHEN 'erro'         THEN vr_dssitret := 'ERRO';
-        WHEN 'aprovar_auto' THEN vr_dssitret := 'APROVADO PRE APROVADO'; vr_flgpreap := 1;
+        WHEN 'aprovar'  THEN vr_dssitret := 'APROVADO AUTOM.';
+        WHEN 'reprovar' THEN vr_dssitret := 'REJEITADA AUTOM.';
+        WHEN 'derivar'  THEN vr_dssitret := 'ANALISAR MANUAL';
+        WHEN 'erro'     THEN vr_dssitret := 'ERRO';
         ELSE vr_dssitret := 'DESCONHECIDA';
       END CASE;
 		
       -- Se o acionamento ainda não foi gravado
       IF vr_nrtransacao = 0 THEN 				
         -- Gravar o acionamento 
-        WEBS0003.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
+        ESTE0001.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
                                       pr_cdagenci                 => 1, 
                                       pr_cdoperad                 => 'MOTOR',
                                       pr_cdorigem                 => pr_cdorigem,
                                       pr_nrctrprp                 => rw_crawepr.nrctremp,
                                       pr_nrdconta                 => rw_crawepr.nrdconta,
-                                      pr_cdcliente                => 1,
                                       pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
                                       pr_dsoperacao               => 'RETORNO ANALISE AUTOMATICA - '||vr_dssitret,
                                       pr_dsuriservico             => pr_namehost,
-                                      pr_dsmetodo                 => 'PUT',
                                       pr_dtmvtolt                 => rw_crapdat.dtmvtolt,
                                       pr_cdstatus_http            => 200,
                                       pr_dsconteudo_requisicao    => replace(pr_dsrequis,'&quot;','"'),
                                       pr_dsresposta_requisicao    => NULL,
                                       pr_dsprotocolo              => pr_dsprotoc,
-                                      pr_flgreenvia               => 0,
-                                      pr_nrreenvio                => 0,
-                                      pr_tpconteudo               => 1,
-                                      pr_tpproduto                => 0,
                                       pr_idacionamento            => vr_nrtransacao,
                                       pr_dscritic                 => vr_dscritic);
         -- Se retornou crítica
@@ -2429,7 +2380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 		  END IF;
 			
 			-- Tratar status
-      IF lower(pr_dsresana) = 'aprovar' OR lower(pr_dsresana) = 'aprovar_auto' THEN
+      IF lower(pr_dsresana) = 'aprovar' THEN
 			  vr_insitapr := 1; -- Aprovado
 			ELSIF lower(pr_dsresana) = 'reprovar' THEN
 				vr_insitapr := 2; -- Reprovado
@@ -2455,7 +2406,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																		,pr_nrperger    => gene0002.fn_char_para_number(vr_nrperger)    --> Percepção Geral Empresa na Analise 
 																		,pr_dsdscore    => vr_desscore    --> Descrição Score Boa Vista
 																		,pr_dtdscore    => to_date(vr_datscore,'RRRRMMDD')    --> Data Score Boa Vista
-                                    ,pr_flgpreap    => vr_flgpreap    --> Indicador de Pré Aprovado
 																		,pr_status      => vr_status      --> Status
 																		,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
 																		,pr_dscritic    => vr_dscritic    --> Descricao da critica
@@ -2473,25 +2423,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       -- Se o DEBUG estiver habilitado
       IF vr_flgdebug = 'S' THEN
         --> Gravar dados log acionamento
-        WEBS0003.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
+        este0001.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
                                       pr_cdagenci              => 1,          
                                       pr_cdoperad              => 'MOTOR',          
                                       pr_cdorigem              => pr_cdorigem,          
                                       pr_nrctrprp              => rw_crawepr.nrctremp,      
-                                      pr_nrdconta              => rw_crawepr.nrdconta,
-                                      pr_cdcliente             => 1,  
+                                      pr_nrdconta              => rw_crawepr.nrdconta,  
                                       pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                       pr_dsoperacao            => 'FINAL RETORNO ANALISE',       
                                       pr_dsuriservico          => pr_namehost,       
-                                      pr_dsmetodo              => 'PUT',
                                       pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                       pr_cdstatus_http         => 0,
                                       pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
                                       pr_dsresposta_requisicao => null,
-                                      pr_flgreenvia            => 0,
-                                      pr_nrreenvio             => 0,
-                                      pr_tpconteudo            => 1,
-                                      pr_tpproduto             => 0,
                                       pr_dsprotocolo           => pr_dsprotoc,
                                       pr_idacionamento         => vr_idaciona,
                                       pr_dscritic              => vr_dscritic);
@@ -2527,25 +2471,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           -- Se o DEBUG estiver habilitado
           IF vr_flgdebug = 'S' THEN
             --> Gravar dados log acionamento
-            WEBS0003.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
+            este0001.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
                                           pr_cdagenci              => 1,          
                                           pr_cdoperad              => 'MOTOR',          
                                           pr_cdorigem              => pr_cdorigem,          
                                           pr_nrctrprp              => rw_crawepr.nrctremp,      
                                           pr_nrdconta              => rw_crawepr.nrdconta,  
-                                          pr_cdcliente             => 1,
                                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                           pr_dsoperacao            => 'FINAL RETORNO CONAUT',       
-                                          pr_dsuriservico          => pr_namehost,
-                                          pr_dsmetodo              => 'PUT',      
+                                          pr_dsuriservico          => pr_namehost,       
                                           pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                           pr_cdstatus_http         => 0,
                                           pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
                                           pr_dsresposta_requisicao => null,
-                                          pr_flgreenvia            => 0,
-                                          pr_nrreenvio             => 0,
-                                          pr_tpconteudo            => 1,
-                                          pr_tpproduto             => 0,
                                           pr_dsprotocolo           => pr_dsprotoc,
                                           pr_idacionamento         => vr_idaciona,
                                           pr_dscritic              => vr_dscritic);
@@ -2606,26 +2544,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- Se ainda nao houve geracao id Acionamento
         IF vr_nrtransacao = 0 AND rw_crawepr.nrdconta IS NOT NULL THEN
           -- Para cada requisicao sera criado um numero de transacao
-          WEBS0003.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
+          ESTE0001.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
 																				pr_cdagenci                 => 1, 
 																				pr_cdoperad                 => 'MOTOR',
 																				pr_cdorigem                 => 9,
 																				pr_nrctrprp                 => rw_crawepr.nrctremp,
 																				pr_nrdconta                 => rw_crawepr.nrdconta,
-                                        pr_cdcliente                => 1,
 																				pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
 																				pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO ANALISE AUTO – '
 																																		||rw_crawepr.dssitapr,
 																				pr_dsuriservico             => pr_namehost,
-                                        pr_dsmetodo                 => 'PUT',
 																				pr_dtmvtolt                 => rw_crapdat.dtmvtolt,
 																				pr_cdstatus_http            => 0,
 																				pr_dsconteudo_requisicao    => replace(pr_dsrequis,'&quot;','"'),
 																				pr_dsresposta_requisicao    => NULL,
-                                        pr_flgreenvia               => 0,
-                                        pr_nrreenvio                => 0,
-                                        pr_tpconteudo               => 1,
-                                        pr_tpproduto                => 0,
 																				pr_idacionamento            => vr_nrtransacao,
 																				pr_dscritic                 => vr_dscritic);
 
@@ -2673,26 +2605,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- Se ainda nao houve geracao id Acionamento
         IF vr_nrtransacao = 0 AND rw_crawepr.nrdconta IS NOT NULL THEN
           -- Para cada requisicao sera criado um numero de transacao
-          WEBS0003.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
+          ESTE0001.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
 																				pr_cdagenci                 => 1, 
 																				pr_cdoperad                 => 'MOTOR',
 																				pr_cdorigem                 => 9,
 																				pr_nrctrprp                 => rw_crawepr.nrctremp,
 																				pr_nrdconta                 => rw_crawepr.nrdconta,
-                                        pr_cdcliente                => 1,
 																				pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
 																				pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO ANALISE '
 																																		|| 'PROPOSTA - '||rw_crawepr.dssitapr,
 																				pr_dsuriservico             => pr_namehost,
-                                        pr_dsmetodo                 => 'PUT',
 																				pr_dtmvtolt                 => rw_crapdat.dtmvtolt,
 																				pr_cdstatus_http            => 0,
 																				pr_dsconteudo_requisicao    => replace(pr_dsrequis,'&quot;','"'),
 																				pr_dsresposta_requisicao    => NULL,
-                                        pr_flgreenvia               => 0,
-                                        pr_nrreenvio                => 0,
-                                        pr_tpconteudo               => 1,
-                                        pr_tpproduto                => 0,
 																				pr_idacionamento            => vr_nrtransacao,
 																				pr_dscritic                 => vr_dscritic);
 
@@ -3462,8 +3388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           
           COMMIT;
   END;
-  END pc_retorno_analise_limdesct;
-  
-  
+  END pc_retorno_analise_limdesct;	                                                     	
+
 END WEBS0001;
 /
