@@ -15991,6 +15991,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          and crapbpr.dscatbem in ('MOTO');
      rw_crapbpr_moto cr_crapbpr_moto%rowtype;
 
+
+    CURSOR cr_crapepr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE
+                      ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+       SELECT t.vlaqiofc
+             ,t.dtinsori
+       FROM crapepr t
+       WHERE t.cdcooper = pr_cdcooper
+             AND t.nrdconta = pr_nrdconta
+             AND t.nrctremp = pr_nrctremp
+             AND t.tpemprst IN(1, 2) 
+             AND t.dtmvtolt >= TO_DATE('03/04/2017','dd/mm/yyyy'); 
+             /*Para operações em atraso do produto Price Pré-fixado, deverá ser cobrado IOF complementar de atraso
+             nas operações contratadas após o dia 03 de abril de 2017*/
+     rw_crapepr    cr_crapepr%ROWTYPE;
+     vr_existe_epr BOOLEAN;
+
      vr_perc_aux NUMBER;
 
      vr_calc_iof_aux NUMBER;
@@ -16883,6 +16900,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_taxaiof := 0.000041;
       END IF;*/
 
+
       tiof0001.pc_busca_taxa_iof(pr_cdcooper => pr_cdcooper
                                , pr_nrdconta => pr_nrdconta
                                , pr_nrctremp => pr_nrctremp
@@ -16917,7 +16935,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       vr_vlpreemp := pr_vlpreemp;
 
-      if nvl(pr_idfiniof,0) = 1 and vr_vlbaseiof > 0 then
+      if nvl(pr_idfiniof,0) = 1 then
          TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
                                    , pr_nrdconta => pr_nrdconta
                                         ,pr_cdlcremp        => pr_cdlcremp
@@ -16951,6 +16969,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       -- Chama o calculo de IOF para Pos-Fixado
       EMPR0011.pc_calcula_iof_pos_fixado(pr_cdcooper        => pr_cdcooper
+                                        ,pr_nrdconta        => pr_nrdconta
+                                        ,pr_nrctremp        => pr_nrctremp                                        
                                         ,pr_dtcalcul        => pr_dtmvtolt
                                         ,pr_cdlcremp        => pr_cdlcremp
                                         ,pr_vlemprst        => vr_saldo_devedor
@@ -16959,6 +16979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         ,pr_dtcarenc        => pr_dtcarenc
                                         ,pr_qtdias_carencia => pr_qtdias_carencia
                                         ,pr_taxaiof         => vr_taxaiof
+                                        ,pr_dscatbem        => pr_dscatbem
                                         ,pr_vltariof        => vr_vltariof
                                         ,pr_cdcritic        => vr_cdcritic
                                         ,pr_dscritic        => vr_dscritic);
@@ -16972,9 +16993,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_vltariof := 0;
       END IF;
 
+      vr_existe_epr := FALSE;
+      IF pr_nrctremp IS NOT NULL THEN
+        OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_nrctremp => pr_nrctremp);
+         FETCH cr_crapepr INTO rw_crapepr;
+         IF cr_crapepr%FOUND THEN
+            vr_existe_epr := TRUE;
+            --vr_vltaxa_iof_atraso := rw_crapepr.vlaqiofc;
+         END IF;
+         CLOSE cr_crapepr;  
+      END IF;
+      
       -- Calcula IOF Adicional com base no saldo devedor inicial
       vr_vliofaditt := ROUND((vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0)) * vr_txiofadc,2);
       
+      
+      IF NOT vr_existe_epr THEN
+        tiof0001.pc_verifica_isencao_iof( pr_cdcooper => pr_cdcooper --> Código da cooperativa referente ao contrato de empréstimos
+                                         ,pr_nrdconta => pr_nrdconta --> Número da conta referente ao empréstimo
+                                         ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
+                                         ,pr_dscatbem => pr_dscatbem --> Descrição da categoria do bem, valor default NULO 
+                                         ,pr_cdlcremp => pr_cdlcremp --> Linha de crédito do empréstimo                                                                        
+                                         ,pr_vliofpri => vr_vltariof --> Valor do IOF principal
+                                         ,pr_vliofadi => vr_vliofaditt --> Valor do IOF adicional
+                                         ,pr_vliofcpl => vr_vliofcpl --> Valor do IOF complementar
+                                         ,pr_dscritic => vr_dscritic); --> Descrição da crítica
+      END IF;
+            
       if vr_retiof = 1 then
          vr_vltariof := 0;
       end if;
@@ -17008,6 +17055,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           end if;
           
       EMPR0011.pc_calcula_iof_pos_fixado(pr_cdcooper        => pr_cdcooper
+                                            ,pr_nrdconta        => pr_nrdconta
+                                            ,pr_nrctremp        => pr_nrctremp                                        
                                         ,pr_dtcalcul        => pr_dtmvtolt
                                         ,pr_cdlcremp        => pr_cdlcremp
                                             ,pr_vlemprst        => vr_saldo_devedor --pr_vlemprst
@@ -17016,6 +17065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         ,pr_dtcarenc        => pr_dtcarenc
                                         ,pr_qtdias_carencia => pr_qtdias_carencia
                                         ,pr_taxaiof         => vr_taxaiof
+                                            ,pr_dscatbem        => pr_dscatbem
                                         ,pr_vltariof        => vr_vltariof
                                         ,pr_cdcritic        => vr_cdcritic
                                         ,pr_dscritic        => vr_dscritic);
