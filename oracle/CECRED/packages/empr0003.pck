@@ -3996,7 +3996,10 @@ BEGIN
 	   Alteracoes: 
 	............................................................................. */
 	-- Cursor com os dados do cooperado
-	CURSOR cr_crapass (pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE,pr_cdcooper IN crapass.cdcooper%TYPE,pr_nrctrato IN crapepr.nrctremp%TYPE) IS
+      CURSOR cr_crapass (pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE
+                        ,pr_cdcooper IN crapass.cdcooper%TYPE
+                        ,pr_nrctrato IN crapepr.nrctremp%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
 		SELECT crapass.nrdconta,
 			   gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa) AS nrcpfcgc,
 			   crapass.nmprimtl,
@@ -4011,22 +4014,20 @@ BEGIN
 			   nvl(crapnac.dsnacion,'') as dsnacion,
 			   nvl(gnetcvl.rsestcvl,'') as rsestcvl, 
 		       nvl(crapttl.dsproftl,'') as dsproftl,
-			   crapepr.nrctremp,
+               crawepr.nrctremp,
 			   crapcop.nmextcop,
 			   crapass.inpessoa
 		FROM crapass
 		INNER JOIN crapcop ON crapcop.cdcooper = crapass.cdcooper
 		LEFT JOIN crapenc ON crapenc.nrdconta = crapass.nrdconta AND crapenc.idseqttl = 1 AND crapenc.cdseqinc = 1 AND crapenc.cdcooper = crapass.cdcooper
 		LEFT JOIN crapttl ON crapttl.nrdconta = crapass.nrdconta AND crapttl.nrcpfcgc = crapass.nrcpfcgc AND crapttl.cdcooper = crapass.cdcooper
-		--LEFT JOIN tbcadast_nacoes ON crapttl.cdnacion = tbcadast_nacoes.cdnacion
-		LEFT JOIN crapepr ON crapepr.cdcooper = crapass.cdcooper AND crapepr.nrdconta = crapass.nrdconta
+        LEFT JOIN crawepr ON crawepr.cdcooper = crapass.cdcooper AND crawepr.nrdconta = crapass.nrdconta
 		LEFT JOIN crapnac ON crapnac.cdnacion = crapass.cdnacion
 		LEFT JOIN gnetcvl ON gnetcvl.cdestcvl = crapttl.cdestcvl
 		WHERE crapass.nrdconta = pr_nrdconta
-		--               AND crapenc.tpendass = 9
 			  AND crapass.nrcpfcgc = pr_nrcpfcgc
 			  AND crapass.cdcooper = pr_cdcooper
-			  AND crapepr.nrctremp = pr_nrctrato;
+              AND crawepr.nrctremp = pr_nrctrato;
 		rw_crapass cr_crapass%ROWTYPE;
 		-- Tratamento de erros
 		vr_exc_saida EXCEPTION;
@@ -4050,10 +4051,14 @@ BEGIN
 			FETCH btch0001.cr_crapdat
 					INTO rw_crapdat;
 			CLOSE btch0001.cr_crapdat;
+      
 			--Informações do associado
-			OPEN cr_crapass(pr_nrcpfcgc => pr_nrcpfcgc, pr_cdcooper => pr_cdcooper, pr_nrctrato => pr_nrctrato);
-			FETCH cr_crapass
-					INTO rw_crapass;
+			OPEN cr_crapass(pr_nrcpfcgc => pr_nrcpfcgc
+						   ,pr_cdcooper => pr_cdcooper
+						   ,pr_nrctrato => pr_nrctrato
+						   ,pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+			
 			--Validações
 			IF cr_crapass%NOTFOUND THEN
 				CLOSE cr_crapass;
@@ -4068,21 +4073,26 @@ BEGIN
 			    RAISE vr_exc_saida;
 			END IF;
 			CLOSE cr_crapass;
-			vr_des_xml := NULL;
+
 			--XML de envio
-			vr_temp := '<?xml version="1.0" encoding="utf-8"?>' || '<associado>' || '<nrdconta>' ||
-						rw_crapass.nrdconta || '</nrdconta>' || '<nrcpfcgc>' || rw_crapass.nrcpfcgc ||
-						'</nrcpfcgc>' || '<nmprimtl>' || rw_crapass.nmprimtl || '</nmprimtl>' ||
-						'<nrcepend>' || rw_crapass.nrcepend || '</nrcepend>' || '<dsendere>' ||
-						rw_crapass.dsendere || '</dsendere>' || '<nrendere>' || rw_crapass.nrendere ||
-						'</nrendere>' || '<complend>' || rw_crapass.complend || '</complend>' ||
-						'<nmbairro>' || rw_crapass.nmbairro || '</nmbairro>' || '<nmcidade>' ||
-						rw_crapass.nmcidade || '</nmcidade>' || '<cdufende>' || rw_crapass.cdufende ||
-						'</cdufende>' || '<nrcxapst>' || rw_crapass.nrcxapst || '</nrcxapst>' ||
-						'<dsnacion>' || rw_crapass.dsnacion || '</dsnacion>' || '<rsestcvl>' || 
-						rw_crapass.rsestcvl || '</rsestcvl>' || '<dsproftl>' || 
-						rw_crapass.dsproftl || '</dsproftl>' || '<nrctremp>' || rw_crapass.nrctremp || 
-						'</nrctremp>' || '<nmextcop>' || rw_crapass.nmextcop || '</nmextcop>' ||                   
+			vr_temp := '<?xml version="1.0" encoding="utf-8"?>' ||
+						 '<associado>' || 
+							 '<nrdconta>' || rw_crapass.nrdconta || '</nrdconta>' || 
+							 '<nrcpfcgc>' || rw_crapass.nrcpfcgc || '</nrcpfcgc>' || 
+							 '<nmprimtl>' || rw_crapass.nmprimtl || '</nmprimtl>' ||
+							 '<nrcepend>' || rw_crapass.nrcepend || '</nrcepend>' || 
+							 '<dsendere>' || rw_crapass.dsendere || '</dsendere>' || 
+							 '<nrendere>' || rw_crapass.nrendere || '</nrendere>' || 
+							 '<complend>' || rw_crapass.complend || '</complend>' ||
+							 '<nmbairro>' || rw_crapass.nmbairro || '</nmbairro>' || 
+							 '<nmcidade>' || rw_crapass.nmcidade || '</nmcidade>' || 
+							 '<cdufende>' || rw_crapass.cdufende || '</cdufende>' || 
+							 '<nrcxapst>' || rw_crapass.nrcxapst || '</nrcxapst>' ||
+							 '<dsnacion>' || rw_crapass.dsnacion || '</dsnacion>' || 
+							 '<rsestcvl>' || rw_crapass.rsestcvl || '</rsestcvl>' ||
+							 '<dsproftl>' || rw_crapass.dsproftl || '</dsproftl>' ||
+							 '<nrctremp>' || rw_crapass.nrctremp || '</nrctremp>' ||
+							 '<nmextcop>' || rw_crapass.nmextcop || '</nmextcop>' ||
 						'</associado>';
 			-- Inicializar o CLOB
 			vr_des_xml := NULL;
