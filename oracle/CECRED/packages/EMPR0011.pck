@@ -200,6 +200,30 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                           ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                           ,pr_dscritic OUT crapcri.dscritic%TYPE);
 
+  PROCEDURE pc_calcula_iof_provisorio(pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
+                                      ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
+                                      ,pr_nrctremp  IN crapepr.nrctremp%TYPE DEFAULT null
+                                      ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
+                                      ,pr_inpessoa  IN crapass.inpessoa%TYPE
+                                      ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE
+                                      ,pr_qtpreemp  IN crapepr.qtpreemp%TYPE
+                                      ,pr_vlpreemp  IN crapepr.vlpreemp%TYPE
+                                      ,pr_vlemprst  IN crapepr.vlemprst%TYPE
+                                      ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE
+                                      ,pr_dtlibera  IN crawepr.dtlibera%TYPE
+                                      ,pr_tpemprst  IN crawepr.tpemprst%TYPE
+                                      ,pr_dtcarenc        IN crawepr.dtcarenc%TYPE
+                                      ,pr_qtdias_carencia IN tbepr_posfix_param_carencia.qtddias%TYPE
+                                      ,pr_dscatbem        IN VARCHAR2 DEFAULT NULL            -- Bens em garantia (separados por "|")
+                                      ,pr_idfiniof        IN crapepr.idfiniof%TYPE DEFAULT 1  -- Indicador se financia IOF e tarifa
+                                      ,pr_dsctrliq        IN VARCHAR2 DEFAULT NULL
+                                      ,pr_valoriof       OUT craplcm.vllanmto%TYPE -- Valor calculado com o iof (principal + adicional)
+                                      ,pr_vliofpri       OUT craplcm.vllanmto%TYPE -- Valor calculado do iof principal
+                                      ,pr_vliofadi       OUT craplcm.vllanmto%TYPE -- Valor calculado do iof adicional
+                                      ,pr_flgimune       OUT PLS_INTEGER
+                                      ,pr_vlfinanciado   OUT NUMBER
+                                      ,pr_dscritic OUT VARCHAR2);          --> Descricão da critica
+                                      
   PROCEDURE pc_calcula_juros_correcao(pr_cdcooper IN  crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
                                      ,pr_dtmvtoan IN  crapdat.dtmvtoan%TYPE     --> Data de Movimento Anterior
                                      ,pr_dtmvtolt IN  crapdat.dtmvtolt%TYPE     --> Data de Movimento Atual
@@ -2386,7 +2410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
       vr_vlpreemp := pr_vlpreemp;
 
-      if nvl(pr_idfiniof,0) = 1 and vr_vlbaseiof > 0 then
+      if nvl(pr_idfiniof,0) = 1 then
          TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
                                    , pr_nrdconta => pr_nrdconta
                                         ,pr_cdlcremp        => pr_cdlcremp
@@ -2417,6 +2441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
          vr_saldo_devedor := vr_vlbaseiof /*pr_vlemprst*/;
       end if;
 
+      IF vr_vlbaseiof > 0 THEN
     
       -- Chama o calculo de IOF para Pos-Fixado
       EMPR0011.pc_calcula_iof_pos_fixado(pr_cdcooper        => pr_cdcooper
@@ -2475,16 +2500,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       if vr_retiof = 1 then
          vr_vltariof := 0;
       end if;
+      END IF;
       
       if pr_idfiniof = 1 then
          -- recalcula valor devedor, chama novamente o calculo de iof pós-fixado
-         vr_saldo_devedor := round(vr_vlbaseiof /*pr_vlemprst*/ + vr_vltarifaN,2);
+         vr_saldo_devedor := round(vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0),2);
          --Se já tiver sido pago IOF anteriormente, desconta da base
-        /* if nvl(vr_vllanmto,0) > 0 and vr_retiof in (3) then
+         if nvl(vr_vllanmto,0) > 0 and vr_retiof in (3) then
             vr_vltariof := vr_vltariof - vr_vllanmto;
-         end if;*/
-        
-         vr_saldo_devedor := ROUND(vr_saldo_devedor / ((vr_saldo_devedor - vr_vltariof - vr_vliofaditt) / vr_saldo_devedor),2);
+         end if;
+         IF vr_saldo_devedor > 0 THEN
+           vr_saldo_devedor := ROUND(vr_saldo_devedor / ((vr_saldo_devedor - vr_vltariof - vr_vliofaditt) / vr_saldo_devedor),2);
+         END IF;
          --Recalcula o valor do IOF adicional
          vr_vliofaditt := ROUND(vr_saldo_devedor * vr_txiofadc,2);
          vr_vliofaditt_aux := vr_vliofaditt;
@@ -2497,9 +2524,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
          --vr_gb_vlrpreemp := vr_vlpreemp;
          
       -- Chama o calculo de IOF para Pos-Fixado
-          if vr_retiof = 1 then
-             vr_saldo_devedorRF := round(pr_vlemprst + vr_vltarifaN,2);
-             vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - vr_vltariof - vr_vliofaditt) / vr_saldo_devedorRF),2);
+          if vr_retiof  in (1, 2, 4) then
+             vr_saldo_devedorRF := round(pr_vlemprst + nvl(vr_vltarifaN,0),2);
+             vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - nvl(vr_vltariof,0) - nvl(vr_vliofaditt,0)) / vr_saldo_devedorRF),2);
              vr_saldo_devedor := vr_saldo_devedorRF;             
           end if;
           
