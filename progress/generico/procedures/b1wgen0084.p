@@ -4139,6 +4139,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.txmensal = crawepr.txmensal
               crapepr.cdempres = aux_cdempres
               crapepr.nrcadast = crapass.nrcadast
+			  crapepr.idquaprc = crawepr.idquapro
               crapepr.flgpagto = FALSE
               crapepr.dtdpagto = par_dtdpagto
               crapepr.qtmesdec = 0
@@ -4231,7 +4232,8 @@ PROCEDURE grava_efetivacao_proposta:
                                         crawepr.dsnivris +
                                         '" e o do contrato sera de "' +
                                         aux_dsnivris + '".'
-                         crawepr.dsnivris = aux_dsnivris.
+                         crawepr.dsnivris = aux_dsnivris
+						 crawepr.dsnivori = aux_dsnivris.
 
                END.
 
