@@ -1436,7 +1436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     
     TARI0001.pc_calcula_tarifa (pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
-                               ,pr_cdlcremp => pr_cdcooper
+                               ,pr_cdlcremp => pr_cdlcremp
                                ,pr_vlemprst => pr_vllanmto
                                ,pr_cdusolcr => rw_craplcr.cdusolcr
                                ,pr_tpctrato => rw_craplcr.tpctrato 
