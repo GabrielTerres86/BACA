@@ -5599,7 +5599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       end if;      
       
       -- Para o programa CRPS148, foi realizado o upate no próprio crps, visto que teríamos problemas
-      -- no paralelismo           
+      -- no paralelismo
       if vr_cdprogra = 'CRPS148' then
         begin
 
@@ -5658,7 +5658,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         -- Próxima data
         vr_dtcalcul := vr_dtcalcul + 1;
       end loop;  /* Fim do WHILE */
-    end if;      
+    end if;
 
     /*  Arredondamento dos valores calculados  */
     vr_vlsdrdpp := fn_round(vr_vlsdrdpp,2);
@@ -5872,7 +5872,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         if vr_cdprogra = 'CRPS148' then  --Tratado de forma diferente devido paralelismo
           vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
                                      pr_nmdcampo => 'NRSEQDIG',
-                                     pr_dsdchave => vr_dsdchave);                                       
+                                     pr_dsdchave => vr_dsdchave);
                                      
         else
           -- Atualizar o tipo do lote
@@ -5958,11 +5958,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           when others then
             vr_des_erro := 'Erro ao inserir lançamento de poupança programada: '||sqlerrm;
             raise vr_exc_erro;
-        end;  
+        end;
         
         -- Atualiza a capa do lote
         if vr_cdprogra = 'CRPS148' then
-          
+        
           --Se for CRPS148 utilizar chave do lote 8384 para adicionar os lançamentos.
           vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
                                      pr_nmdcampo => 'NRSEQDIG',
@@ -6045,7 +6045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           
         end if;
       end if;
-      --     
+      --
       
       IF vr_cdprogra = 'CRPS148' and
          vr_cdhistor = 151 and
@@ -6269,7 +6269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           
         end if;
       end if;
-      --        
+      --
       
       IF vr_cdprogra = 'CRPS148' and
          rw_craprpp.vlabcpmf > 0 then
@@ -6381,7 +6381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           end;
         end if;
       end if;
-      --       
+      --
       if vr_cdprogra in ('CRPS147', 'CRPS148') then
         /* Ajuste */
         vr_vlajuste := vr_vlprovis - vr_vllan152;
@@ -6406,7 +6406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_vlcompdb := vr_vlcompdb + nvl(vr_vlajuste_db, 0);  
             vr_qtinfoln := vr_qtinfoln + 1;    
             vr_qtcompln := vr_qtcompln + 1; 
-            
+          
             --Para lote 8384 utilizar sequence da tabela de lote.
             vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
                                        pr_nmdcampo => 'NRSEQDIG',
@@ -6542,7 +6542,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
       end if;
 
-    end if;    
+    end if;
     
   exception
     when vr_exc_erro THEN
@@ -13066,7 +13066,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       END LOOP;
     END IF;
   END;
-  
+
   PROCEDURE pc_insere_tab_wrk(pr_cdcooper     in tbgen_batch_relatorio_wrk.cdcooper%type 
                              ,pr_nrdconta     in tbgen_batch_relatorio_wrk.nrdconta%type
                              ,pr_cdprogra     in tbgen_batch_relatorio_wrk.cdprograma%type
