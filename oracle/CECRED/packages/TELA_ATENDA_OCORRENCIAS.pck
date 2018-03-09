@@ -841,7 +841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                   gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
                   substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
        AND cgr.cdcooper =  grp.cdcooper
-       AND cgr.nrdconta =  grp.nrdconta;
+       AND (cgr.nrdconta =  grp.nrdconta OR cgr.nrdconta = grp.nrctasoc);
     rw_contas_grupo_economico cr_contas_grupo_economico%ROWTYPE;
 
     -- Calendário da cooperativa selecionada
