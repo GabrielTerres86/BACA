@@ -2661,9 +2661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           vr_vlbaseiof :=   rw_crappep.vlsdvsji / ((power(( 1 + rw_crapepr.txmensal / 100 ), 
                                 (rw_crapepr.qtpreemp - rw_crappep.nrparepr + 1) )));
                    
-        IF pr_nmdatela = 'CRPS149' THEN
-          pr_vliofcpl := 0;
-        ELSE
+        
           TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
                                         , pr_nrdconta => pr_nrdconta
                                         , pr_nrctremp => pr_nrctremp
@@ -2679,7 +2677,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         , pr_vltaxa_iof_principal => vr_vltxaiof
                                         , pr_flgimune => vr_flgimune
                                         , pr_dscritic => vr_dscritic);
-        END IF;
+
         
         -- Se o valor a pagar originalmente for diferente de zero
         IF pr_vlpagpar <> 0 THEN
@@ -13598,40 +13596,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             RAISE vr_exc_saida;
           END IF;
           
-          
-          -- Insere registro de pagamento de IOF na tbgen_iof_lancamento
-          /* Quando for IOF de atraso, deve lancar na tabela de desmembramento do IOF.
-             Porém, ao calcular IOF, ainda não tem a nrseqdig (chave), por isso faz o lançamento aqui no final
-             No loop de pagamento das parcelas, ele armazena os histórios na variável vr_historicos_iof, 
-             separados por "|" (|2309|2308|), e aqui verifica se o histórico do lançamento atual pertence aos 
-             históricos de IOF */
-          IF vr_tab_lanc(vr_index_lanc).vllanmto > 0 THEN
-            vr_hist_iof_tmp := '|' || TO_CHAR(vr_tab_lanc(vr_index_lanc).cdhistor) || '|';
-            IF vr_hist_iof_tmp LIKE vr_historicos_iof THEN
-                tiof0001.pc_insere_iof(pr_cdcooper     => vr_tab_lanc(vr_index_lanc).cdcooper
-                                     , pr_nrdconta     => vr_tab_lanc(vr_index_lanc).nrdconta
-                                     , pr_dtmvtolt     => vr_tab_lanc(vr_index_lanc).dtmvtolt
-                                     , pr_tpproduto    => 1 -- Emprestimo
-                                     , pr_nrcontrato   => vr_tab_lanc(vr_index_lanc).nrctremp
-                                     , pr_idlautom     => null
-                                     , pr_dtmvtolt_lcm => vr_tab_lanc(vr_index_lanc).dtmvtolt
-                                     , pr_cdagenci_lcm => vr_tab_lanc(vr_index_lanc).cdpactra
-                                     , pr_cdbccxlt_lcm => vr_tab_lanc(vr_index_lanc).cdbccxlt
-                                     , pr_nrdolote_lcm => vr_tab_lanc(vr_index_lanc).nrdolote
-                                     , pr_nrseqdig_lcm => vr_nrseqdig
-                                     , pr_vliofpri     => 0
-                                     , pr_vliofadi     => 0
-                                     , pr_vliofcpl     => vr_tab_lanc(vr_index_lanc).vllanmto
-                                     , pr_flgimune     => 0
-                                     , pr_cdcritic     => vr_cdcritic 
-                                     , pr_dscritic     => vr_dscritic);
-                      
-                if vr_dscritic is not null then
-                   RAISE vr_exc_saida;
-                end if;
-            END IF;
-          END IF;
-          
           --Marcar que transacao ocorreu
           vr_flgtrans:= TRUE;
           --Proximo registro
@@ -15960,6 +15924,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_flgimuneB         boolean;
     vr_taxaiof           NUMBER(25,8);
     vr_txiofadc          number(25,8);
+    vr_txiofcpl          number(25,8);
     vr_vltariof          NUMBER(25,8);
     vr_dstextab          VARCHAR2(500);
     vr_qtdedias          number;
@@ -16702,9 +16667,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
       if nvl(vr_vllanmto,0) > 0 
       and vr_retiof in (1,3) then
-         if pr_valoriof <= vr_vllanmto then
-         --   pr_valoriof := pr_valoriof - vr_vllanmto;
-         --else 
+         if pr_valoriof >= vr_vllanmto then
+            pr_valoriof := pr_valoriof - vr_vllanmto;
+         else 
             pr_valoriof := 0;
          end if;
       end if;
@@ -16733,7 +16698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                  vr_vlpreemp := vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));
                  end if;
                  -- Calculo para achar a prestação quando é refinanciamento (e possuir saldo entre os contratos)
-                 if vr_retiof in (1, 4) then
+                 if vr_retiof in (1, 2, 4) then
                      vr_saldo_devedorRF := round(pr_vlemprst + vr_vltarifaN,2);
                      vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - pr_valoriof) / vr_saldo_devedorRF),2);
                      -- Acha o VP (valor presente do saldo devedor)
@@ -16826,6 +16791,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          end if;
       end if;
       
+      -- Calculo para achar a prestação quando é refinanciamento (e possuir saldo entre os contratos)
+                 if vr_retiof in (1, 2, 4) then
+                     vr_saldo_devedorRF := round(pr_vlemprst + vr_vltarifaN,2);
+                     vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - pr_valoriof) / vr_saldo_devedorRF),2);
+                     -- Acha o VP (valor presente do saldo devedor)
+                     vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+                     vr_vlpreemp := vr_saldo_devedorRF * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));                    
+                 end if;
+                 
+                 vr_gb_vlrpreemp := vr_vlpreemp;
+                 
     ELSIF pr_tpemprst = 0 THEN  -- Se o tipo do empréstimo for TR
       
       -- Condicao Pessoa Fisica
@@ -16915,6 +16891,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                , pr_vlemprst => vr_vlbaseiof/* pr_vlemprst*/
                                , pr_vltxiofpri => vr_taxaiof
                                , pr_vltxiofadc => vr_txiofadc
+                               , pr_vltxiofcpl => vr_txiofcpl
                                , pr_cdcritic => vr_cdcritic
                                , pr_dscritic => vr_dscritic);
 
@@ -17006,9 +16983,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          -- recalcula valor devedor, chama novamente o calculo de iof pós-fixado
          vr_saldo_devedor := round(vr_vlbaseiof /*pr_vlemprst*/ + vr_vltarifaN,2);
          --Se já tiver sido pago IOF anteriormente, desconta da base
-        /* if nvl(vr_vllanmto,0) > 0 and vr_retiof in (3) then
+        
+         if nvl(vr_vllanmto,0) > 0 and vr_retiof in (3) then
             vr_vltariof := vr_vltariof - vr_vllanmto;
-         end if;*/
+         end if;
         
          vr_saldo_devedor := ROUND(vr_saldo_devedor / ((vr_saldo_devedor - vr_vltariof - vr_vliofaditt) / vr_saldo_devedor),2);
          --Recalcula o valor do IOF adicional
@@ -17023,7 +17001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          --vr_gb_vlrpreemp := vr_vlpreemp;
          
       -- Chama o calculo de IOF para Pos-Fixado
-          if vr_retiof = 1 then
+          if vr_retiof  in (1, 2, 4) then
              vr_saldo_devedorRF := round(pr_vlemprst + vr_vltarifaN,2);
              vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - vr_vltariof - vr_vliofaditt) / vr_saldo_devedorRF),2);
              vr_saldo_devedor := vr_saldo_devedorRF;             

@@ -128,6 +128,7 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                              ,pr_vlemprst     IN crapepr.vlemprst%TYPE
                              ,pr_vltxiofpri   OUT NUMBER                   --> Taxa de IOF principal
                              ,pr_vltxiofadc   OUT NUMBER                   --> Taxa de IOF adicional
+                             ,pr_vltxiofcpl   out number                   --> Taxa de IOF Complementar por atraso
                              ,pr_cdcritic     OUT NUMBER                   --> Código da Crítica
                              ,pr_dscritic     OUT VARCHAR2);               --> Descrição da Crítica
                           
@@ -139,6 +140,7 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                                  ,pr_vlemprst     IN crapepr.vlemprst%TYPE
                                  ,pr_vltxiofpri   OUT VARCHAR2                   --> Taxa de IOF principal
                                  ,pr_vltxiofadc   OUT VARCHAR2                   --> Taxa de IOF adicional
+                                 ,pr_vltxiofcpl   out number                   --> Taxa de IOF Complementar por atraso
                                  ,pr_cdcritic     OUT NUMBER                   --> Código da Crítica
                                  ,pr_dscritic     OUT VARCHAR2);            --> Descrição da Crítica
                           
@@ -955,6 +957,7 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                              ,pr_vlemprst     IN crapepr.vlemprst%TYPE
                              ,pr_vltxiofpri   OUT NUMBER                   --> Taxa de IOF principal
                              ,pr_vltxiofadc   OUT NUMBER                   --> Taxa de IOF adicional
+                             ,pr_vltxiofcpl   out number                   --> Taxa de IOF Complementar por atraso
                              ,pr_cdcritic     OUT NUMBER                   --> Código da Crítica
                              ,pr_dscritic     OUT VARCHAR2)  IS            --> Descrição da Crítica
   BEGIN
@@ -1085,6 +1088,10 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
         END IF;
       END IF;
       
+      if pr_cdlcremp in (800, 850, 900, 6901) then
+         pr_vltxiofcpl := pr_vltxiofpri;  
+      end if;
+      
       vr_dscatbem := '';
             
       FOR rw_crapbpr IN cr_crapbpr(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta, pr_nrctremp => pr_nrctremp) LOOP
@@ -1098,7 +1105,7 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                            ,pr_cdlcremp => pr_cdlcremp           --> rw_crapepr.cdlcremp   --> Linha de crédito do empréstimo                                                                        
                                ,pr_vliofpri => pr_vltxiofpri         --> Valor do IOF principal
                                ,pr_vliofadi => pr_vltxiofadc         --> Valor do IOF adicional
-                               ,pr_vliofcpl => vr_vliofcpl           --> Valor do IOF complementar
+                           ,pr_vliofcpl => pr_vltxiofcpl         --> Valor do IOF complementar
                                ,pr_dscritic => vr_dscritic);         --> Descrição da crítica
 
 
@@ -1142,6 +1149,7 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_vlemprst     IN crapepr.vlemprst%TYPE
                                  ,pr_vltxiofpri   OUT VARCHAR2                   --> Taxa de IOF principal
                                  ,pr_vltxiofadc   OUT VARCHAR2                   --> Taxa de IOF adicional
+                                 ,pr_vltxiofcpl   out number                   --> Taxa de IOF Complementar por atraso
                                  ,pr_cdcritic     OUT NUMBER                   --> Código da Crítica
                                  ,pr_dscritic     OUT VARCHAR2)  IS            --> Descrição da Crítica
   BEGIN
@@ -1166,6 +1174,7 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
     DECLARE
        vr_vltxiofpri NUMBER;
        vr_vltxiofadc NUMBER;
+       vr_vltxiofcpl NUMBER;
     BEGIN
       
        TIOF0001.pc_busca_taxa_iof(pr_cdcooper => pr_cdcooper
@@ -1176,11 +1185,13 @@ BTCH0001 .pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_vlemprst => pr_vlemprst
                                  ,pr_vltxiofpri => vr_vltxiofpri
                                  ,pr_vltxiofadc => vr_vltxiofadc
+                                 ,pr_vltxiofcpl => vr_vltxiofcpl
                                  ,pr_cdcritic => pr_cdcritic
                                  ,pr_dscritic => pr_dscritic);
       
       pr_vltxiofpri := TO_CHAR(vr_vltxiofpri);
       pr_vltxiofadc := TO_CHAR(vr_vltxiofadc);
+      pr_vltxiofcpl := to_char(vr_vltxiofcpl);
       
     EXCEPTION
       WHEN OTHERS THEN

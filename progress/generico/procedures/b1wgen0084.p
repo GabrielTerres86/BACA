@@ -3968,6 +3968,7 @@ PROCEDURE grava_efetivacao_proposta:
                                                 OUTPUT "",
                                                 OUTPUT "",
                                                 OUTPUT 0,
+                                                OUTPUT 0,
                                                 OUTPUT "").
 
        /* Fechar o procedimento para buscarmos o resultado */ 
@@ -3980,6 +3981,8 @@ PROCEDURE grava_efetivacao_proposta:
               aux_vlaqiofc = 0
               aux_vlaqiofc = DECI(pc_busca_taxa_iof_prg.pr_vltxiofpri) WHEN pc_busca_taxa_iof_prg.pr_vltxiofpri <> ?
               aux_dscritic = pc_busca_taxa_iof_prg.pr_dscritic WHEN pc_busca_taxa_iof_prg.pr_dscritic <> ?.
+       IF aux_vlaqiofc = 0 THEN    
+          ASSIGN aux_vlaqiofc = DECI(pc_busca_taxa_iof_prg.pr_vltxiofcpl) WHEN pc_busca_taxa_iof_prg.pr_vltxiofcpl <> ?.
               
        IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
           UNDO EFETIVACAO , LEAVE EFETIVACAO.

@@ -12408,6 +12408,7 @@ END pc_consulta_ir_pj_trim;
         --IOF
         vr_vltxiofadc NUMBER := 0;
         vr_vltxiofpri NUMBER := 0;
+        vr_vltxiofcpl NUMBER := 0;
       BEGIN
         --Inicializar transacao
         vr_dsorigem:= gene0001.vr_vet_des_origens(pr_idorigem);
@@ -12692,7 +12693,8 @@ END pc_consulta_ir_pj_trim;
                                     ,pr_cdlcremp => rw_crapepr.cdlcremp --> linha de credito emprestimo
                                     ,pr_vlemprst => rw_crapepr.vlemprst
                                     ,pr_vltxiofpri => vr_vltxiofpri  --> Taxa de IOF principal
-                                    ,pr_vltxiofadc => vr_vltxiofadc  --> Taxa de IOF adicional
+                                    ,pr_vltxiofadc => vr_vltxiofadc  --> Taxa de IOF adiciona                                    ,pr_vltxiofad => vr_vltxiofcpl  --> Taxa de IOF adicional
+                                    ,pr_vltxiofcpl => vr_vltxiofcpl  --> Taxa de IOF adiciona                                    ,pr_vltxiofad => vr_vltxiofcpl  --> Taxa de IOF adicional
                                     ,pr_cdcritic  => vr_cdcritic     --> Código da Crítica
                                     ,pr_dscritic  => vr_dscritic);   --> Descrição da Crítica
                                     
@@ -12715,7 +12717,7 @@ END pc_consulta_ir_pj_trim;
                           '" p_qtpreemp="'||rw_crapepr.qtpreemp||
                           '" p_carencia="'||vr_carencia ||                          
                           '" p_vltxiofadc="'||to_char((nvl(vr_vltxiofadc, 0) * 100), 'fm9999g999g990d00000')||'%'    ||
-                          '" p_vltxiofpri="'||to_char((CASE WHEN nvl(vr_vltxiofadc, 0) = 0 THEN 0 ELSE nvl(rw_crapepr.vlaqiofc, 0) * 100 END), 'fm9999g999g990d00000')||'%'    ||'">';
+                          '" p_vltxiofpri="'||to_char((nvl(rw_crapepr.vlaqiofc, 0) * 100), 'fm9999g999g990d00000')||'%'    ||'">';
                           
           --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
@@ -13236,6 +13238,7 @@ END pc_consulta_ir_pj_trim;
         vr_vliofcpl  NUMBER(25,2);
         vr_vltxiofpri NUMBER := 0;
         vr_vltxiofadc NUMBER := 0;
+        vr_vltxiofcpl number := 0;
 
         --Variaveis de Erro
         vr_cdcritic INTEGER;
@@ -13372,6 +13375,7 @@ END pc_consulta_ir_pj_trim;
                                     ,pr_vlemprst => rw_crapepr.vlemprst
                                     ,pr_vltxiofpri => vr_vltxiofpri  --> Taxa de IOF principal
                                     ,pr_vltxiofadc => vr_vltxiofadc  --> Taxa de IOF adicional
+                                    ,pr_vltxiofcpl => vr_vltxiofcpl  --> Taxa de IOF adicional
                                     ,pr_cdcritic  => vr_cdcritic     --> Código da Crítica
                                     ,pr_dscritic  => vr_dscritic);   --> Descrição da Crítica
                                     

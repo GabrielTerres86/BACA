@@ -1373,6 +1373,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
     vr_flgimuneB         boolean;
     vr_taxaiof           NUMBER(25,8);
     vr_txiofadc          number(25,8);
+    vr_txiofcpl          number(25,8);
     vr_vltariof          NUMBER(25,8);
     vr_dstextab          VARCHAR2(500);
     vr_qtdedias          number;
@@ -2340,6 +2341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                , pr_vlemprst => vr_vlbaseiof/* pr_vlemprst*/
                                , pr_vltxiofpri => vr_taxaiof
                                , pr_vltxiofadc => vr_txiofadc
+                               , pr_vltxiofcpl => vr_txiofcpl
                                , pr_cdcritic => vr_cdcritic
                                , pr_dscritic => vr_dscritic);
 
