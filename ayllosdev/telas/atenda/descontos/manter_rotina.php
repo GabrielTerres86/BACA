@@ -65,19 +65,30 @@
 	    $xml .= " <Dados>";
 	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	    $xml .= "   <nrctrlim>".$nrctrlim."</nrctrlim>";
+	    $xml .= "   <tpctrlim>3</tpctrlim>";
+	    $xml .= "	<dtmovito>".$glbvars["dtmvtolt"]."</dtmovito>";
+	    $xml .= "   <tpenvest>I</tpenvest>"; // Tipo de envio para esteira I - Inclusao (Emprestimo)
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
 	    // FAZER O INSERT CRAPRDR e CRAPACA
-	    $xmlResult = mensageria($xml,"XXXXX","XXXXX", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SENHA_ENVIAR_ESTEIRA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
+		$registros = $xmlObj->roottag->tags[0]->tags;
+		
 	    // Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodoErro,false);
+           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';           
+		}
+		else{
+			if($xmlObj->roottag->tags[0]){
+				echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
+			} else{
+				echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
+			}	
 		}
 
-		$registros = $xmlObj->roottag->tags[0]->tags;
 
 		exit;
 		
@@ -130,7 +141,7 @@
 				if ($grupo != '')
 					$grupo = substr($grupo,0,-1);
 			}
-
+			
 			echo 'verificaMensagens("'.$mensagem_01.'","'.$mensagem_02.'","'.$mensagem_03.'","'.$mensagem_04.'","'.$mensagem_05.'","'.$qtctarel.'","'.$grupo.'");';
 			exit;
 		}
@@ -165,12 +176,12 @@
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
-				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulos();");';
+				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - 	Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulos();");';
 				exit;
-			}
-		}
+			} // OK
+		}// != ERROR
 		
-	}
+	}//ACEITAR_REJEICAO_LIMITE
 
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
