@@ -112,8 +112,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
      where a.cdcooper    = pr_cdcooper
        and a.cdprograma  = 'CRPS148'
        and a.dsrelatorio = 'CRAPLOT'
-       and a.dtmvtolt    = pr_dtmvtolt;        
-
+       and a.dtmvtolt    = pr_dtmvtolt;  
+       
   --Cursor para buscar lançamentos gerados na apli0001 e reajustar nrseqdig     
   cursor cr_craplpp(pr_dtmvtolt in craplpp.dtmvtolt%type) is
     select rownum nrseqdig, 
@@ -296,7 +296,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
     commit;    
     
   end if;
-  
+
   -- Buscar quantidade parametrizada de Jobs
   vr_qtdjobs := gene0001.fn_retorna_qt_paralelo( pr_cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
                                                , vr_cdprogra --pr_cdprogra  IN crapprg.cdprogra%TYPE    --> Código do programa
@@ -324,7 +324,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                                                   pr_dtmvtolt    => rw_crapdat.dtmvtolt,
                                                   pr_tpagrupador => 1,
                                                   pr_nrexecucao  => 1);     
-                                          
+
     -- Retorna as agências, com poupança programada
     for rw_craprpp_age in cr_craprpp_age (pr_cdcooper,
                                           vr_dtmvtopr,
@@ -553,7 +553,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                     pr_dsmensagem         => 'Fim - Atualiza tabela craplpp.',
                     PR_IDPRGLOG           => vr_idlog_ini_ger);   
 
-
+  
     -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
     pc_log_programa(PR_DSTIPLOG           => 'O',
                     PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
