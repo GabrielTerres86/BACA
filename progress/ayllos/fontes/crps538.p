@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 27/02/2018
+   Data    : Novembro/2009.                   Ultima atualizacao: 20/06/2013
                                                                           
    Dados referentes ao programa:
 
@@ -135,11 +135,8 @@
                             
                15/11/2013 - Novos ajustes no processamento "COMPEFORA" (Rafael).                            
                
-               20/06/2014 - Ajuste na chamada da store-procedure, armazenar o 
+               20/06/2014 - AJuste na chamada da store-procedure, armazenar o 
                             proc-handle (Odirlei-AMcom)
-              
-			   27/02/2018 - Inclusão de novos parâmetros para execução com paralelismo:
-			                pc_cdagenci e pr_idparale (Roberto Nunhes - AMcom).
               
 ............................................................................. */
 
@@ -168,8 +165,6 @@ ETIME(TRUE).
 
 RUN STORED-PROCEDURE pc_crps538 aux_handproc = PROC-HANDLE NO-ERROR
    (INPUT glb_cdcooper, 
-    INPUT 0,
-	INPUT 0, 
     INPUT INT(STRING(glb_flgresta,"1/0")),
     INPUT glb_nmtelant,
     OUTPUT 0,
