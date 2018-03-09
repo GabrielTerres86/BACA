@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 15/02/2018
+    Data    : Marco/2010                   Ultima atualizacao: 09/03/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -209,6 +209,9 @@
 				15/02/2018 - Ajustado problema que não deixava a tela de poderes abrir pois
 							 havia um FIND retorando mais de um registro. Para solucionar
 							 fiz o filtro com a chave correta. (SD 841137 - Kelvin).
+               
+                09/03/2018 - Ajustado para nao buscar orgao expedidor do documento
+                             na hora da exclusao do registro na procedure Exclui_Dados (Tiago #844538)
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -4839,26 +4842,7 @@ Exclui: DO TRANSACTION
                                                    0)                   AND
                             crapcrl.idseqmen = crapavt.nrctremp
                             NO-LOCK:
-                     
-                       /* Retornar orgao expedidor */
-                       IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
-                              RUN sistema/generico/procedures/b1wgen0052b.p 
-                                  PERSISTENT SET h-b1wgen0052b.
 
-                       ASSIGN aux_cdorgexp = "".
-                       RUN busca_org_expedidor IN h-b1wgen0052b 
-                                             ( INPUT crapcrl.idorgexp,
-                                              OUTPUT aux_cdorgexp,
-                                              OUTPUT aux_cdcritic, 
-                                              OUTPUT aux_dscritic).
-
-                       DELETE PROCEDURE h-b1wgen0052b.   
-
-                       IF  RETURN-VALUE = "NOK" THEN
-                       DO:
-                           UNDO Exclui, LEAVE Exclui.
-                       END.                         
-                     
                        IF NOT VALID-HANDLE(h-b1wgen0072) THEN
                           RUN sistema/generico/procedures/b1wgen0072.p
                           PERSISTENT SET h-b1wgen0072.
