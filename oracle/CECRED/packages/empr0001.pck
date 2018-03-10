@@ -17043,13 +17043,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          vr_saldo_devedor := round(vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0),2);
          --Se já tiver sido pago IOF anteriormente, desconta da base
         
-         if nvl(vr_vllanmto,0) > 0 and vr_retiof in (3) then
+         if nvl(vr_vllanmto,0) > 0 and vr_retiof in (3) THEN
+         
             vr_vltariof := vr_vltariof - vr_vllanmto;
+            
+            --> Caso valor negativo, zerar valor             
+            IF vr_vltariof < 0 THEN
+              --> diminuir saldo
+              vr_vliofaditt := vr_vliofaditt + vr_vltariof;
+              -- se continuar negativo, zerar
+              IF vr_vliofaditt < 0 THEN
+                vr_vliofaditt := 0; 
+              END IF;
+              
+              vr_vltariof   := 0;
+              
+            END IF;
+            
          end if;
         
          IF vr_saldo_devedor > 0 THEN
            vr_saldo_devedor := ROUND(vr_saldo_devedor / ((vr_saldo_devedor - vr_vltariof - vr_vliofaditt) / vr_saldo_devedor),2);
          END IF;
+
          --Recalcula o valor do IOF adicional
          vr_vliofaditt := ROUND(vr_saldo_devedor * vr_txiofadc,2);
          vr_vliofaditt_aux := vr_vliofaditt;
