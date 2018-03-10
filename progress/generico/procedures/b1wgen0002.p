@@ -6645,6 +6645,7 @@ PROCEDURE grava-proposta-completa:
                                      crawepr.dsnivris
                crawepr.dsnivori = IF crawepr.dsnivori = ?
                                   OR crawepr.dsnivori = ""
+								  OR crawepr.dsnivori = "0"
                                   THEN
                                      UPPER(par_dsnivris)
                                   ELSE
