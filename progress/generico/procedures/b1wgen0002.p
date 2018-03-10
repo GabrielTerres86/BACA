@@ -1837,6 +1837,56 @@ PROCEDURE obtem-extrato-emprestimo:
                                                            crablem.vllanmto.
                                END.
 
+                          /* Historico de IOF PP - Emprestimo */
+                          CASE craplem.cdhistor:
+                               WHEN 1044 THEN ASSIGN aux_cdhistor = 2311.
+                               /* Pagamento de avalista - Multa */
+                               WHEN 1045 THEN ASSIGN aux_cdhistor = 2311.
+                               WHEN 1057 THEN ASSIGN aux_cdhistor = 2311.
+                               /* Default */
+                               OTHERWISE aux_cdhistor = 2311.
+                          END CASE.
+
+                          /* Achar juros de inadimplencia desta parcela */
+                          FIND FIRST crablem WHERE
+                                     crablem.cdcooper = craplem.cdcooper   AND
+                                     crablem.nrdconta = craplem.nrdconta   AND
+                                     crablem.nrctremp = craplem.nrctremp   AND
+                                     crablem.nrparepr = craplem.nrparepr   AND
+                                     crablem.dtmvtolt = craplem.dtmvtolt   AND
+                                     crablem.cdhistor = aux_cdhistor
+                                     NO-LOCK NO-ERROR.
+
+                          /* Se achar a multa entao pegar*/
+                          /* o valor de pagamento e somar */
+                          IF   AVAIL crablem   THEN
+                               ASSIGN aux_vllantmo = aux_vllantmo + crablem.vllanmto.                               
+                               
+                          /* Historico de IOF PP - Financiamento */
+                          CASE craplem.cdhistor:
+                               WHEN 1044 THEN ASSIGN aux_cdhistor = 2312.
+                               /* Pagamento de avalista - Multa */
+                               WHEN 1045 THEN ASSIGN aux_cdhistor = 2312.
+                               WHEN 1057 THEN ASSIGN aux_cdhistor = 2312.
+                               /* Default */
+                               OTHERWISE aux_cdhistor = 2312.
+                          END CASE.
+
+                          /* Achar juros de inadimplencia desta parcela */
+                          FIND FIRST crablem WHERE
+                                     crablem.cdcooper = craplem.cdcooper   AND
+                                     crablem.nrdconta = craplem.nrdconta   AND
+                                     crablem.nrctremp = craplem.nrctremp   AND
+                                     crablem.nrparepr = craplem.nrparepr   AND
+                                     crablem.dtmvtolt = craplem.dtmvtolt   AND
+                                     crablem.cdhistor = aux_cdhistor
+                                     NO-LOCK NO-ERROR.
+
+                          /* Se achar a multa entao pegar*/
+                          /* o valor de pagamento e somar */
+                          IF   AVAIL crablem   THEN
+                               ASSIGN aux_vllantmo = aux_vllantmo + crablem.vllanmto.
+                               
                           ASSIGN aux_flgpripa[craplem.nrparepr] = TRUE.
 
                       END.
@@ -2881,6 +2931,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                   END.
                   ELSE
                   DO:
+
                       /* Busca os bens em garantia */
                       ASSIGN aux_dscatbem = "".
                       FOR EACH crapbpr WHERE crapbpr.cdcooper = crawepr.cdcooper  AND
@@ -3782,6 +3833,7 @@ PROCEDURE valida-dados-gerais:
 
         IF par_tpemprst = 1 THEN
             DO:
+
                 RUN sistema/generico/procedures/b1wgen0084.p
                     PERSISTENT SET h-b1wgen0084.
 
@@ -4133,6 +4185,7 @@ PROCEDURE valida-dados-gerais:
                  END.
             WHEN 1 THEN
                  DO:
+
                      RUN sistema/generico/procedures/b1wgen0084.p
                          PERSISTENT SET h-b1wgen0084.
 
@@ -6289,6 +6342,7 @@ PROCEDURE grava-proposta-completa:
     DEF OUTPUT PARAM nov_nrctremp AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_flmudfai AS CHAR                           NO-UNDO.
 
+
     DEF  VAR         aux_contador AS INTE                           NO-UNDO.
     DEF  VAR         aux_contabns AS INTE                           NO-UNDO.
     DEF  VAR         aux_contbens AS INTE                           NO-UNDO.
@@ -7976,6 +8030,7 @@ PROCEDURE altera-valor-proposta:
                                         INPUT par_nrdconta,
                                         INPUT par_nrctremp,
                                         OUTPUT aux_dsctrliq).
+
         /* Calclar o cet automaticamente */
         RUN calcula_cet_novo(INPUT par_cdcooper,
                              INPUT 0, /* agencia */
