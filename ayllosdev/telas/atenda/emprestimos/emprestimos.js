@@ -413,6 +413,8 @@ function controlaOperacao(operacao) {
     idfiniof = '';
     cdfinemp = '';
     dsctrliq = '';
+	idcarenc = '';
+    dtcarenc = '';
 
     var simula = false;
 
@@ -1240,6 +1242,8 @@ function controlaOperacao(operacao) {
             qtdialib = arrayProposta['dtlibera'];
             dtdpagto = arrayProposta['dtdpagto'];
 			dsctrliq = arrayProposta['dsctrliq'];
+			idcarenc = arrayProposta['idcarenc'];
+			dtcarenc = arrayProposta['dtcarenc'];
             cddopcao = 'C';
             vlpreemp = number_format(parseFloat(arrayProposta['vlpreemp'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
             mensagem = 'Carregando Demonstrativo da Proposta...';
@@ -1306,6 +1310,7 @@ function controlaOperacao(operacao) {
             inpessoa: inpessoa, dscatbem: dscatbem,
             idfiniof: idfiniof, cdfinemp: cdfinemp,
             inconfir: 1, dsctrliq : dsctrliq,
+			dtcarenc: dtcarenc, idcarenc:idcarenc, 
             nomeAcaoCall: nomeAcaoCall,
 			executandoProdutos: executandoProdutos,
             redirect: 'html_ajax'

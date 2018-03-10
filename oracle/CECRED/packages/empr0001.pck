@@ -866,7 +866,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                   ,pr_dtlibera        IN VARCHAR2
                              ,pr_tpemprst  IN crawepr.tpemprst%TYPE
                                   ,pr_dtcarenc        IN VARCHAR2
-                              ,pr_qtdias_carencia IN tbepr_posfix_param_carencia.qtddias%TYPE
+                                  ,pr_idcarencia      IN crawepr.idcarenc%TYPE
                                   ,pr_dscatbem        IN VARCHAR2 DEFAULT NULL            -- Bens em garantia (separados por "|")
                                   ,pr_idfiniof        IN crapepr.idfiniof%TYPE DEFAULT 1  -- Indicador se financia IOF e tarifa
                                   ,pr_dsctrliq        IN VARCHAR2 DEFAULT NULL
@@ -15741,7 +15741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                   ,pr_dtlibera        IN VARCHAR2
                                   ,pr_tpemprst        IN crawepr.tpemprst%TYPE
                                   ,pr_dtcarenc        IN VARCHAR2
-                                  ,pr_qtdias_carencia IN tbepr_posfix_param_carencia.qtddias%TYPE
+                                  ,pr_idcarencia      IN crawepr.idcarenc%TYPE
                                   ,pr_dscatbem        IN VARCHAR2 DEFAULT NULL            -- Bens em garantia (separados por "|")
                                   ,pr_idfiniof        IN crapepr.idfiniof%TYPE DEFAULT 1  -- Indicador se financia IOF e tarifa
                                   ,pr_dsctrliq        IN VARCHAR2 DEFAULT NULL
@@ -15784,6 +15784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_dtdpagto crapepr.dtdpagto%TYPE;
       vr_dtlibera crawepr.dtlibera%TYPE;
       vr_dtcarenc crawepr.dtcarenc%TYPE;
+      vr_qtdias_carencia  pls_integer;
       VR_NRDROWID ROWID;                                   
   BEGIN 
     
@@ -15792,6 +15793,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_dtlibera := TO_DATE(pr_dtlibera, 'DD/MM/YYYY');
       vr_dtcarenc := TO_DATE(pr_dtcarenc, 'DD/MM/YYYY');
                                     
+      -- Busca quantidade de dias da carencia
+      EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => pr_idcarencia
+                                         ,pr_qtddias    => vr_qtdias_carencia
+                                         ,pr_cdcritic   => vr_cdcritic
+                                         ,pr_dscritic   => vr_dscritic);
+      -- Se retornou erro
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
      EMPR0001.pc_calcula_iof_epr (pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta
                                  ,pr_nrctremp => pr_nrctremp
@@ -15805,7 +15816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  ,pr_dtlibera => vr_dtlibera
                                  ,pr_tpemprst => pr_tpemprst
                                  ,pr_dtcarenc => vr_dtcarenc
-                                 ,pr_qtdias_carencia => pr_qtdias_carencia
+                                 ,pr_qtdias_carencia => vr_qtdias_carencia
                                  ,pr_valoriof => vr_valoriof
                                  ,pr_dscatbem => pr_dscatbem
                                  ,pr_idfiniof => pr_idfiniof
@@ -15832,7 +15843,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlpreemp', pr_tag_cont => TO_CHAR(nvl(pr_vlpreemp,0), 'fm999g999g990d00'), pr_des_erro => vr_dscritic);
         end if;
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'tpemprst', pr_tag_cont => TO_CHAR(pr_tpemprst), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdias_carencia', pr_tag_cont => TO_CHAR(pr_qtdias_carencia), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdias_carencia', pr_tag_cont => TO_CHAR(vr_qtdias_carencia), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'valoriof', pr_tag_cont => TO_CHAR(vr_valoriof,'fm999g999g990d00'), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dsctrliq', pr_tag_cont => TO_CHAR(pr_dsctrliq), pr_des_erro => vr_dscritic);
     EXCEPTION

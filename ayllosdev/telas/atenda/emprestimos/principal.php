@@ -840,6 +840,8 @@
 		$cdfinemp = isset($_POST['cdfinemp']) ? $_POST['cdfinemp'] : '0';
 		$dtlibera = isset($_POST['qtdialib']) ? $_POST['qtdialib'] : '0';
         $dsctrliq = isset($_POST['dsctrliq']) ? $_POST['dsctrliq'] : '0';	
+        $dtcarenc = isset($_POST['dtcarenc']) ? $_POST['dtcarenc'] : '';	
+        $idcarenc = isset($_POST['idcarenc']) ? $_POST['idcarenc'] : '0';	
 
 		//Busca valor da tarifa de empréstimo
 		$xml = "<Root>";
@@ -879,8 +881,8 @@
 		$xml .= "	<dtlibera>".$dtlibera."</dtlibera>";
 		$xml .= "	<dtdpagto>".$dtdpagto."</dtdpagto>";
 		$xml .= "   <tpemprst>".$tpemprst."</tpemprst>";
-		$xml .= "   <dtcarenc>".$glbvars["dtmvtolt"]."</dtcarenc>";
-		$xml .= "   <qtdias_carencia>0</qtdias_carencia>";
+		$xml .= "   <dtcarenc>".$dtcarenc."</dtcarenc>";
+		$xml .= "   <qtdias_carencia>".$idcarenc."</qtdias_carencia>";
 		$xml .= "   <dscatbem>".$dscatbem."</dscatbem>";
 		$xml .= "   <idfiniof>".$idfiniof."</idfiniof>";
 		$xml .= "   <dsctrliq>".$dsctrliq."</dsctrliq>";

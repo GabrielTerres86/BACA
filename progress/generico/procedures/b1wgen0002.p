@@ -6797,9 +6797,11 @@ PROCEDURE grava-proposta-completa:
                                        craplcr.cddindex
                                   ELSE 0
                crawepr.idfiniof = par_idfiniof.
+               
+               /*
                IF crawepr.idfiniof = 1 THEN               
                   ASSIGN crawepr.vlpreemp = par_vlpreemp.
-                             
+               */              
 
         /* Se for Pos-Fixado */
         IF  par_tpemprst = 2  THEN
@@ -6930,47 +6932,6 @@ PROCEDURE grava-proposta-completa:
                       INTE(ENTRY(aux_contador,par_dsctrliq)) NO-ERROR.
         END.
 
-        /* Tratar as mensagens da aprovacao */
-        RUN altera-valor-proposta (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT par_cdoperad,
-                                   INPUT par_nmdatela,
-                                   INPUT par_idorigem,
-                                   INPUT par_nrdconta,
-                                   INPUT par_idseqttl,
-                                   INPUT par_dtmvtolt,
-                                   INPUT par_nrctremp,
-                                   INPUT par_flgcmtlc,
-                                   INPUT par_vlemprst,
-                                   INPUT par_vlpreemp,
-                                   INPUT par_vlutiliz,
-                                   INPUT par_vlpreant,
-                                   INPUT par_vllimapv,
-                                   INPUT par_flgerlog,
-                                   INPUT "TP",     /* Altera Toda Proposta */
-                                   INPUT par_dtlibera,
-                                   INPUT par_idfiniof,
-                                   INPUT par_dscatbem,
-                                   OUTPUT par_flmudfai,
-                                  OUTPUT TABLE tt-erro,
-                                  OUTPUT TABLE tt-msg-confirma).
-
-
-        IF   RETURN-VALUE <> "OK"   THEN
-             do:
-				     FIND FIRST tt-erro NO-ERROR.
-               IF   AVAIL tt-erro   THEN
-                    aux_dscritic = tt-erro.dscritic.
-               ELSE
-                    aux_dscritic = "Ocorreram erros na alteracao do valor da proposta".
-               EMPTY TEMP-TABLE tt-erro.
-             UNDO Grava, LEAVE Grava.
-             end.
-
-        /* Atualiza a data de liberacao */
-        ASSIGN crawepr.dtlibera = par_dtlibera.
-
         RUN sistema/generico/procedures/b1wgen0024.p
                             PERSISTENT SET h-b1wgen0024.
        
@@ -7070,6 +7031,47 @@ PROCEDURE grava-proposta-completa:
 
              END.
 
+/* Tratar as mensagens da aprovacao */
+        RUN altera-valor-proposta (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT par_cdoperad,
+                                   INPUT par_nmdatela,
+                                   INPUT par_idorigem,
+                                   INPUT par_nrdconta,
+                                   INPUT par_idseqttl,
+                                   INPUT par_dtmvtolt,
+                                   INPUT par_nrctremp,
+                                   INPUT par_flgcmtlc,
+                                   INPUT par_vlemprst,
+                                   INPUT par_vlpreemp,
+                                   INPUT par_vlutiliz,
+                                   INPUT par_vlpreant,
+                                   INPUT par_vllimapv,
+                                   INPUT par_flgerlog,
+                                   INPUT "TP",     /* Altera Toda Proposta */
+                                   INPUT par_dtlibera,
+                                   INPUT par_idfiniof,
+                                   INPUT par_dscatbem,
+                                   OUTPUT par_flmudfai,
+                                  OUTPUT TABLE tt-erro,
+                                  OUTPUT TABLE tt-msg-confirma).
+
+
+        IF   RETURN-VALUE <> "OK"   THEN
+             do:
+                                     FIND FIRST tt-erro NO-ERROR.
+               IF   AVAIL tt-erro   THEN
+                    aux_dscritic = tt-erro.dscritic.
+               ELSE
+                    aux_dscritic = "Ocorreram erros na alteracao do valor da proposta".
+               EMPTY TEMP-TABLE tt-erro.
+             UNDO Grava, LEAVE Grava.
+             end.
+
+        /* Atualiza a data de liberacao */
+        ASSIGN crawepr.dtlibera = par_dtlibera.
+        
         RUN sistema/generico/procedures/b1wgen0024.p
                              PERSISTENT SET h-b1wgen0024.
 
@@ -7968,58 +7970,6 @@ PROCEDURE altera-valor-proposta:
                ASSIGN crawepr.dtlibera = par_dtlibera.
         
         END.
-
-        IF crawepr.tpemprst = 1 then
-        DO:                
-           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-           /* Efetuar a chamada a rotina Oracle  */
-           RUN STORED-PROCEDURE pc_calcula_iof_epr_parcela
-               aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
-                                                   ,INPUT par_nrdconta
-                                                    ,INPUT par_nrctremp
-                                                    ,INPUT par_dtmvtolt
-                                                    ,INPUT crapass.inpessoa
-                                                    ,INPUT crawepr.cdlcremp
-                                                    ,INPUT crawepr.qtpreemp
-                                                    ,INPUT crawepr.vlpreemp
-                                                    ,INPUT crawepr.vlemprst
-                                                    ,INPUT crawepr.dtdpagto
-                                                    ,INPUT (IF crawepr.dtlibera <> ? THEN 
-                                                               crawepr.dtlibera
-                                                            ELSE par_dtmvtolt)
-                                                    ,INPUT 1
-                                                    ,INPUT par_dtmvtolt /* xxxxxxxx */
-                                                    ,INPUT 0             /* xxxxxxxxxxx  */
-                                                    ,INPUT par_dscatbem 
-                                                    ,INPUT par_idfiniof
-                                                    ,OUTPUT 0 /* IOF */
-                                                    ,OUTPUT 0 /* IOF principal */
-                                                    ,OUTPUT 0 /* IOF adicional */
-                                                    ,OUTPUT 0 /* Imunidade */
-                                                    ,OUTPUT 0 /* Valor recalculado da parcela */
-                                                    ,OUTPUT "").
-
-           /* Fechar o procedimento para buscarmos o resultado */ 
-           CLOSE STORED-PROC pc_calcula_iof_epr_parcela
-                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-           
-           /* MESSAGE "VALOR PARCELA SERA RECALCULADO 2: " + STRING(DECI(pc_calcula_iof_epr_parcela.pr_vlpreempcalc)). */
-
-           ASSIGN aux_dscritic = ""
-                  aux_dscritic = pc_calcula_iof_epr_parcela.pr_dscritic
-                                 WHEN pc_calcula_iof_epr_parcela.pr_dscritic <> ?
-                  crawepr.vlpreemp = DECI(pc_calcula_iof_epr_parcela.pr_vlpreempcalc)
-                                 WHEN pc_calcula_iof_epr_parcela.pr_vlpreempcalc <> ?.
-                                 
-                                 
-            /* MESSAGE "VALOR PARCELA FOI RECALCULADO PARA: " + STRING(crawepr.vlpreemp).
-            MESSAGE "CRITIC: " + aux_dscritic. */
-                                 
-        END.
-
 
         /* Busca liquidacoes contrato */
         RUN buscar_liquidacoes_contrato(INPUT par_cdcooper,
@@ -10952,6 +10902,9 @@ PROCEDURE grava-alienacao-hipoteca:
                 ASSIGN crapbpr.tpinclus = "A"
                        crapbpr.flginclu = TRUE.
 
+            /* PRJ410 - IOF incluir validate para garantir leitur dos dados no oracle*/ 
+            VALIDATE crapbpr.
+            RELEASE  crapbpr.
         END. /* Fim dos Cadastros dos bens alienados */
 
        IF   aux_cdcritic <> 0    OR
