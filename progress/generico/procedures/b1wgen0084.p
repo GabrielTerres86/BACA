@@ -4235,6 +4235,17 @@ PROCEDURE grava_efetivacao_proposta:
                          crawepr.dsnivris = aux_dsnivris
 						 crawepr.dsnivori = aux_dsnivris.
 
+				  RUN proc_gerar_log (INPUT par_cdcooper,
+                           INPUT par_cdoperad,
+                           INPUT "",
+                           INPUT aux_dsorigem,
+                           INPUT par_mensagem,
+                           INPUT TRUE,
+                           INPUT par_idseqttl,
+                           INPUT par_nmdatela,
+                           INPUT par_nrdconta,
+                          OUTPUT aux_nrdrowid).
+
                END.
 
           END.
