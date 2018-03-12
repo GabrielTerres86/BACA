@@ -31,7 +31,7 @@ if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X"))
 }	
 	
 $cddopcao = $_POST['cddopcao'];
-$flgregis = $_POST['flgregis'];
+$flgregis = trim($_POST['flgregis']);
 $cdcooper = ($_POST["cdcooper"] ? $_POST["cdcooper"] : $glbvars["cdcooper"]);
 $nrdconta = $_POST["nrdconta"];
 $nrconven = $_POST["nrconven"];

@@ -1362,29 +1362,33 @@ function confirmaImpressaoCancelamento(flgregis, callafterFnc) {
 
     imprimeRelatorio();
 
-    var callafterCobranca;
+    var callafterCobranca, nmrotina;
 
     if (!callafterFnc) {
         callafterCobranca = 'blockBackground(parseInt($("#divRotina").css("z-index")));';
 
         callafterCobranca += (executandoProdutos) ? 'encerraRotina();' : 'realizaExclusao(1);';
+
+    // parametros são recebidos quando é relacionado ao protesto
     } else {
         callafterCobranca = callafterFnc;
+
+        nmrotina = "imprimirTermoCancelamentoProtesto";
     }
 
     aux_mensagem = "Deseja efetuar impress&atilde;o do termo de cancelamento ?"; // Mensagem de confirmacao de impressao;
 
     showConfirmacao(aux_mensagem,
 					'Confirma&ccedil;&atilde;o - Ayllos',
-					'testemunhasCancelamento("' + flgregis + '");blockBackground(parseInt($("#divRotina").css("z-index")));',
+					'testemunhasCancelamento("' + flgregis + '", "' + nmrotina + '");blockBackground(parseInt($("#divRotina").css("z-index")));',
 					callafterCobranca,
 					'sim.gif',
 					'nao.gif');
 }
 
-function testemunhasCancelamento(flgregis) {
+function testemunhasCancelamento(flgregis, pNmrotina) {
 
-    var nmrotina = "imprimirTermoCancelamento";
+    var nmrotina = pNmrotina ? pNmrotina : "imprimirTermoCancelamento";
 
     // Carrega conteúdo da opção através do Ajax
     $.ajax({
@@ -1404,6 +1408,9 @@ function testemunhasCancelamento(flgregis) {
 			// Numero do convenio e o termo de cancelamento
 			nrconven_imprimir = normalizaNumero($("#nrconven", "#divConteudoOpcao").val());
 			tpdtermo_imprimir = 2;// Imprimir termo de cancelamento
+            if (pNmrotina != "imprimirTermoCancelamento") {
+                tpdtermo_imprimir = 3;// Imprimir termo de cancelamento de protesto
+            }
 			
             $("#divOpcaoIncluiAltera").css({ 'display': 'none' });
             $("#divOpcaoConsulta").css({ 'display': 'none' });

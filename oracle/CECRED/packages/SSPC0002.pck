@@ -73,7 +73,7 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0002 AS
                              ,pr_nmdtest2 IN VARCHAR2 --> Nome da testemunha 2
                              ,pr_cpftest2 IN crapass.nrcpfcgc%TYPE --> Cpf da testemunha 2
                              ,pr_nrconven IN crapceb.nrconven%TYPE --> Numero do convenio
-                             ,pr_tpimpres IN PLS_INTEGER --> 1-Termo de Abertura, 2-Termo de Encerramento
+                             ,pr_tpimpres IN PLS_INTEGER --> 1-Termo de Abertura, 2-Termo de Encerramento, 3-Termo de Cancelamento Protesto
                              ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                              ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                              ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -1049,7 +1049,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                              ,pr_nmdtest2 IN VARCHAR2 --> Nome da testemunha 2
                              ,pr_cpftest2 IN crapass.nrcpfcgc%TYPE --> Cpf da testemunha 2
                              ,pr_nrconven IN crapceb.nrconven%TYPE --> Numero do convenio
-                             ,pr_tpimpres IN PLS_INTEGER --> 1-Termo de Abertura, 2-Termo de Encerramento
+                             ,pr_tpimpres IN PLS_INTEGER --> 1-Termo de Abertura, 2-Termo de Encerramento, 3-Termo de Cancelamento Protesto
                              ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                              ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                              ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -1358,8 +1358,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       IF pr_tpimpres = 1 THEN  -- Se for Adesao
         vr_dsjasper := 'termo_adesao_cob_reg.jasper';
         vr_nmarqim  := '/TermoAbertura_'||to_char(sysdate,'DDMMYYYYHH24MISS')||'.pdf';
-      ELSE -- Se for cancelamento
+      ELSIF pr_tpimpres = 2 THEN -- Se for cancelamento
         vr_dsjasper := 'termo_cancel_cob_reg.jasper';
+        vr_nmarqim  := '/TermoCancelamento'||to_char(sysdate,'DDMMYYYYHH24MISS')||'.pdf';
+      ELSE -- Se for cancelamento do protesto
+        vr_dsjasper := 'termo_cancel_protesto.jasper';
         vr_nmarqim  := '/TermoCancelamento'||to_char(sysdate,'DDMMYYYYHH24MISS')||'.pdf';
       END IF;
       

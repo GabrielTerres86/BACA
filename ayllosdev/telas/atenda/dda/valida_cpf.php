@@ -35,7 +35,7 @@ $nmdtest1 = $_POST["nmdtest1"];
 $cpftest1 = $_POST["cpftest1"];
 $nmdtest2 = $_POST["nmdtest2"];
 $cpftest2 = $_POST["cpftest2"];
-$flgregis = $_POST["flgregis"];
+$flgregis = trim($_POST["flgregis"]);
 
 
 // Monta o xml de requisição
@@ -73,12 +73,18 @@ if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 }
 
 
-if ($nmrotina == "imprimirTermoCancelamento") {
+if ($nmrotina == "imprimirTermoCancelamento" || $nmrotina == "imprimirTermoCancelamentoProtesto") {
 	
 	$dsdtitul = "1";
 		
-	//confirmação para gerar impressao
-	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));imprimirTermoAdesao(\"'.$flgregis.'\",\"'.$dsdtitul.'\",\"2\");realizaExclusao();","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
+	// Da rotina COBRANCA / ATENDA - Cancelamento Convênio
+	if ($nmrotina == "imprimirTermoCancelamento") {
+		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));imprimirTermoAdesao(\"'.$flgregis.'\",\"'.$dsdtitul.'\",\"2\");realizaExclusao();","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
+	}
+	// Da rotina COBRANCA / ATENDA - Cancelamento Protesto
+	else {
+		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));imprimirTermoAdesao(\"'.$flgregis.'\",\"'.$dsdtitul.'\",\"3\");","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
+	}
 
 	
 } else {
