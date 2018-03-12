@@ -435,7 +435,6 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
                               pr_dtmvtolt  in crapdat.dtmvtolt%type,           --> Data do processo
                               pr_dtmvtopr  in crapdat.dtmvtopr%type,           --> Proximo dia util
                               pr_rpp_rowid in varchar2, 
-                              pr_cdagenci in craprpp.cdagenci%type default 0,  --> Agência utilizada no paralelismo                                              --> Identificador do registro da tabela CRAPRPP em processamento
                               pr_vlsdrdpp  in out craprpp.vlsdrdpp%type,       --> Saldo da poupanca programada
                               pr_cdcritic out crapcri.cdcritic%type,           --> Codigo da critica de erro
                               pr_des_erro out varchar2);                       --> Descricao do erro encontrado
@@ -5275,7 +5274,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                               pr_dtmvtolt  in crapdat.dtmvtolt%type,          --> Data do processo
                               pr_dtmvtopr  in crapdat.dtmvtopr%type,          --> Próximo dia útil
                               pr_rpp_rowid in varchar2,                       --> Identificador do registro da tabela CRAPRPP em processamento
-                              pr_cdagenci  in craprpp.cdagenci%type default 0,--> Agência utilizada no paralelismo
                               pr_vlsdrdpp  in out craprpp.vlsdrdpp%type,      --> Saldo da poupança programada
                               pr_cdcritic out crapcri.cdcritic%type,          --> Codigo da crítica de erro
                               pr_des_erro out varchar2) is                    --> Descrição do erro encontrado
@@ -5285,7 +5283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Marco/96.                       Ultima atualizacao: 17/11/2015
+   Data    : Marco/96.                       Ultima atualizacao: 09/03/2018
 
    Dados referentes ao programa:
 
@@ -5367,6 +5365,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                
                03/01/2018 - Ajustes na procedure pc_calc_poupanca para contemplar paralelismo do crps148
                             Projeto Ligeirinho - Jonatas Jaqmam (AMcom)
+                            
+               09/03/2018 - Alteração na forma de gravação da craplpp, utilizar sequence para gerar nrseqdig
+                            Projeto Ligeirinho - Jonatas Jaqmam (AMcom)                            
 ................................................................................................... */
     -- Variaveis para auxiliar nos calculos
     vr_percenir         number(8,4);
@@ -5400,7 +5401,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_flggrvir         boolean;
     vr_des_reto         varchar2(10);
     vr_tptaxrda         craptrd.tptaxrda%type;
-    vr_dsdchave         crapsqu.dsdchave%type;
     
     --Variáveis acumulo lote
     vr_vlinfocr         craplot.vlinfocr%type := 0;
@@ -5784,16 +5784,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_cdhistor := 151;
         --Para o CRPS148, vamos informar a agêcia executada no paralelismo
         --e montar a chave para buscar o nrseqdig por ela.
-        if pr_cdagenci <> 0 then
-          vr_cdagenci := pr_cdagenci;  
-        end if;
-        
-        --Monta chave para geração do nrseqdig
-        vr_dsdchave := pr_cdcooper||';'||
-                       to_char(pr_dtmvtopr,'dd/mm/rrrr')||';'||
-                       vr_cdagenci||';'||
-                       vr_cdbccxlt||';'||
-                       vr_nrdolote;
         --
         if rw_craprpp.vlabcpmf > 0 then
           begin
@@ -5869,12 +5859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       end if;
       --
       if vr_vlrentot > 0 then
-        if vr_cdprogra = 'CRPS148' then  --Tratado de forma diferente devido paralelismo
-          vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
-                                     pr_nmdcampo => 'NRSEQDIG',
-                                     pr_dsdchave => vr_dsdchave);
-                                     
-        else
+        if vr_cdprogra <> 'CRPS148' then
           -- Atualizar o tipo do lote
           begin
             update craplot
@@ -5917,9 +5902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
        
         --Se for CRPS148 utilizar chave do lote 8384 para adicionar os lançamentos.
         if vr_cdprogra = 'CRPS148' then  --Tratado de forma diferente devido paralelismo
-          vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
-                                     pr_nmdcampo => 'NRSEQDIG',
-                                     pr_dsdchave => vr_dsdchave);
+          vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;
         else 
           vr_nrseqdig := vr_nrseqdig +1;  
         end if;
@@ -5963,11 +5946,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         -- Atualiza a capa do lote
         if vr_cdprogra = 'CRPS148' then
         
-          --Se for CRPS148 utilizar chave do lote 8384 para adicionar os lançamentos.
-          vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
-                                     pr_nmdcampo => 'NRSEQDIG',
-                                     pr_dsdchave => vr_dsdchave);          
-            
           vr_vlinfocr := vr_vlinfocr + nvl(vr_vlrentot, 0); 
           vr_vlcompcr := vr_vlcompcr + nvl(vr_vlrentot, 0);   
           vr_qtinfoln := vr_qtinfoln + 1;    
@@ -5998,9 +5976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
            vr_vlrirrpp > 0 then
            
           --Se for CRPS148 utilizar chave do lote 8384 para adicionar os lançamentos.
-          vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
-                                     pr_nmdcampo => 'NRSEQDIG',
-                                     pr_dsdchave => vr_dsdchave);           
+          vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;         
            
           -- Cria o lançamento 863 na poupança programada
           begin
@@ -6221,9 +6197,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         if vr_vlrentot - vr_vlprovis > 0 then
 
           --Se for CRPS148 utilizar chave do lote 8384 para adicionar os lançamentos.
-          vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
-                                     pr_nmdcampo => 'NRSEQDIG',
-                                     pr_dsdchave => vr_dsdchave);
+          vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;
         
           
           -- Insere o histórico 152 nos lançamentos da poupança programada
@@ -6275,9 +6249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
          rw_craprpp.vlabcpmf > 0 then
 
         --Se for CRPS148 utilizar chave do lote 8384 para adicionar os lançamentos.
-        vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
-                                   pr_nmdcampo => 'NRSEQDIG',
-                                   pr_dsdchave => vr_dsdchave);      
+        vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;      
         
         -- Insere histórico 869 nos lançamentos da poupança programada
         begin
@@ -6324,9 +6296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         if trunc((rw_craprpp.vlabcpmf * vr_percenir / 100),2) > 0 then
           
           --Se for CRPS148 utilizar chave do lote 8384 para adicionar os lançamentos.
-          vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
-                                     pr_nmdcampo => 'NRSEQDIG',
-                                     pr_dsdchave => vr_dsdchave);        
+          vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;        
           
           -- Inserir o histórico 866 nos lançamentos da poupança programada
           begin
@@ -6408,9 +6378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_qtcompln := vr_qtcompln + 1; 
           
             --Para lote 8384 utilizar sequence da tabela de lote.
-            vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
-                                       pr_nmdcampo => 'NRSEQDIG',
-                                       pr_dsdchave => vr_dsdchave);            
+            vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;            
             
           else
             -- Faz a alteração dos campos necessários na capa do lote
