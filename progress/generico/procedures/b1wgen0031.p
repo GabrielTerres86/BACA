@@ -26,7 +26,7 @@
 
     Programa: b1wgen0031.p
     Autor   : Guilherme/David
-    Data    : Julho/2008                     Ultima Atualizacao: 09/09/2016
+    Data    : Julho/2008                     Ultima Atualizacao: 30/11/2017
            
     Dados referentes ao programa:
                 
@@ -194,6 +194,15 @@
                 22/09/2016 - Alterado rotina obtem-mensagens-alerta 
                              para buscar o qtd dias de renovacao da tabela craprli
 								  			     PRJ300 - Desconto de cheque (Odirlei-AMcom)             
+                
+                30/01/2017 - Exibir mensagem quando Cooperado/Fiador atrasar emprestimo Pos-Fixado.
+                             (Jaison/James - PRJ298)
+
+							
+                30/11/2017 - Ajuste na verifica_prova_vida_inss - Chamado 784845 - 
+				             Prova de vida nao aparecendo na AV - Andrei - Mouts							
+
+
                 
 .............................................................................*/
 
@@ -724,7 +733,8 @@ PROCEDURE obtem-mensagens-alerta:
 
         ASSIGN aux_dsmensag = "".
 
-        IF tt-dados-epr.tpemprst = 1   THEN
+        IF tt-dados-epr.tpemprst = 1   OR
+		   tt-dados-epr.tpemprst = 2   THEN
            DO:
               IF tt-dados-epr.flgatras   THEN 
                  DO:
@@ -915,7 +925,8 @@ PROCEDURE obtem-mensagens-alerta:
                 
         ASSIGN aux_dsmensag = "".
                 
-        IF tt-dados-epr.tpemprst = 1   THEN
+        IF tt-dados-epr.tpemprst = 1   OR
+		   tt-dados-epr.tpemprst = 2   THEN
            DO:
               IF tt-dados-epr.flgatras   THEN 
                  DO:
@@ -1127,19 +1138,9 @@ PROCEDURE obtem-mensagens-alerta:
        RUN sistema/generico/procedures/b1wgen0091.p
            PERSISTENT SET h-b1wgen0091.
 
-    /*Se for uma conta migrada "Viacredi Alto Vale" sera passado o cdcopant
-      para a funcao verificacao_bloqueio a fim de, verificar seus respectivos
-      beneficios na Viacredi.*/
-    FIND craptco WHERE craptco.cdcooper = 16               AND
-                       craptco.nrdconta = crapass.nrdconta
-                       NO-LOCK NO-ERROR.
-
     ASSIGN aux_tpbloque = DYNAMIC-FUNCTION("verificacao_bloqueio" 
                                            IN h-b1wgen0091,
-                                           INPUT (IF AVAIL craptco THEN 
-                                                     craptco.cdcopant
-                                                  ELSE 
-                                                     par_cdcooper),
+                                           INPUT par_cdcooper,
                                            INPUT par_nrdcaixa,
                                            INPUT par_cdagenci,
                                            INPUT par_cdoperad,
@@ -2059,13 +2060,6 @@ PROCEDURE bloqueio_prova_vida:
        RUN sistema/generico/procedures/b1wgen0091.p 
            PERSISTENT SET h-b1wgen0091.
 
-    /*Se for uma conta migrada "Viacredi Alto Vale" sera passado o cdcopant
-      para a funcao verificacao_bloqueio a fim de, verificar seus respectivos
-      beneficios na Viacredi.*/
-    FIND craptco WHERE craptco.cdcooper = 16           AND
-                       craptco.nrdconta = par_nrdconta
-                       NO-LOCK NO-ERROR.
-
     /*Como cada titular pode possuir o seu beneficio, sera pego cpf deste e 
       passado para a funcao verificacao_bloqueio.*/
     FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
@@ -2075,10 +2069,7 @@ PROCEDURE bloqueio_prova_vida:
 
     ASSIGN aux_tpbloque = DYNAMIC-FUNCTION("verificacao_bloqueio" 
                                            IN h-b1wgen0091,
-                                           INPUT (IF AVAIL craptco THEN 
-                                                     craptco.cdcopant
-                                                  ELSE             
-                                                     par_cdcooper),
+                                           INPUT par_cdcooper,
                                            INPUT par_nrdcaixa,
                                            INPUT par_cdagenci,
                                            INPUT par_cdoperad,
