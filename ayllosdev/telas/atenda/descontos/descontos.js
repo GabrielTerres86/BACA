@@ -30,6 +30,9 @@
              26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 			 
 			 21/07/2017 - Ajuste no cadastro de emitentes. Projeto 300. (Lombardi)
+
+             07/03/2018 - Formatação do novo campo 'Data Renovação' na tela 'titulos' (Leonardo Oliveira - GFT)
+
 			 
 ************************************************************************/
 

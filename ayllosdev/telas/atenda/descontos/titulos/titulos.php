@@ -15,7 +15,9 @@
                               informações de títulos descontados com e sem
                               registro (Lucas).
 
-                 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
+         26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
+         
+         07/03/2018 - Novo campo 'Data Renovação' (Leonardo Oliveira - GFT)
 
 	***************************************************************************/
 	

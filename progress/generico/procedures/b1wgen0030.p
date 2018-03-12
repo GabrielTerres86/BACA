@@ -506,6 +506,8 @@
 
                25/10/2017 - Projeto 410 - Ajustado cálculo do IOF na baixa do título
                             (James)
+
+			   07/03/2018 - Preenchimento do campo 'dtrenova' na procedure busca_dados_dsctit (Leonardo Oliveira - GFT)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }

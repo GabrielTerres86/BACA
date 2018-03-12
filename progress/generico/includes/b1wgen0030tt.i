@@ -69,6 +69,8 @@
                
                07/02/2018 - Adicionados novos campos na tt-limite_tit (Luis Fernando - GFT)
 
+			   07/03/2018 - Inclusão do novo campo 'dtrenova' na TEMP-TABLE 'tt-desconto_titulos' (Leonardo Oliveira - GFT)
+
 ..............................................................................*/
     
 DEF TEMP-TABLE crawljt NO-UNDO
