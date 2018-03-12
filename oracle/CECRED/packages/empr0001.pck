@@ -16433,6 +16433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          -- Regra 4 se o vencimento foi superior a 365 dias e o saldo for igual ao emprestimo,
          -- cobra só IOF adicional. Se o emprestimo for superior ao saldo, cobra adicional e 
          -- principal sobre a diferença         
+         /******** REGRAS AINDA NAO CONCLUIDA ********
          if vr_vct365 then
             if pr_vlemprst > vr_vlsaldo then
                pr_vlbasiof := pr_vlemprst - vr_vlsaldo;  
@@ -16440,7 +16441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
              end if;
              pr_retiof := 4;  
-         end if;     
+         end if;     */
 
     end PC_CALCULO_EPR_IOF_REFIN;
 
