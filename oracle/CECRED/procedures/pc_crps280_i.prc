@@ -666,6 +666,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
         AND   epr.cdcooper   = pr_cdcooper
         AND   epr.nrdconta   = pr_nrdconta
         AND   epr.nrctremp   = pr_nrctremp
+        AND   CECRED.fn_exibe_epr_ref(epr.tpemprst,
+                                      epr.qtpreemp,
+                                      epr.qtprepag,
+                                      epr.qtpcalat) > 0 
+        AND   epr.inprejuz   = 0 --SEM PREJUIZO
+        AND   epr.inliquid   = 0 --ATIVO 
         GROUP BY epr.nrctremp;
         rw_juros60_ref cr_juros60_ref%ROWTYPE;
          
