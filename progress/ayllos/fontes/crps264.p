@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 05/09/2017
+    Data    : Marco/07.                       Ultima atualizacao: 10/03/2018
     
     Dados referentes ao programa:
 
@@ -232,6 +232,8 @@
               05/09/2017 - Ajuste para apresentar novamente a conta do associado na coluna Benefic
 						   no relatorio de cheques 085
 						   (Adriano - SD 744959).
+
+			  10/03/2018 - Removida procedure envia_arquivo_xml - Compe Sessao Unica (Diego).
 
 ..............................................................................*/
 
@@ -3204,199 +3206,6 @@ PROCEDURE gera_arquivo_cecred:
                 
 END PROCEDURE.
 
-PROCEDURE envia_arquivo_xml:
-
-    DEF INPUT PARAM par_cdbanchq          AS INTEGER                   NO-UNDO.
-    DEF INPUT PARAM par_ispbdebt          AS DECIMAL                   NO-UNDO.
-    DEF INPUT PARAM par_ispbcred          AS DECIMAL                   NO-UNDO.
-    DEF INPUT PARAM par_nrcheque          AS INTEGER                   NO-UNDO.
-    DEF INPUT PARAM par_vllanmto          AS DECIMAL                   NO-UNDO.
-    DEF INPUT PARAM par_nrdconta          AS CHARACTER                 NO-UNDO.
-    DEF INPUT PARAM par_cdlegado          AS INTEGER                   NO-UNDO.
-
-    DEFINE VARIABLE aux_contador          AS INTEGER                   NO-UNDO.
-    DEFINE VARIABLE aux_textoxml          AS CHARACTER    EXTENT 31    NO-UNDO.
-    DEFINE VARIABLE aux_nrctrlif          AS CHARACTER                 NO-UNDO.
-    DEFINE VARIABLE aux_dsarqenv          AS CHARACTER                 NO-UNDO.
-    DEFINE VARIABLE aux_nmarqxml          AS CHARACTER                 NO-UNDO.
-    DEFINE VARIABLE aux_dtmvtolt          AS CHARACTER                 NO-UNDO.
-    DEFINE VARIABLE aux_nmlogspb          AS CHARACTER                 NO-UNDO.
-
-    DEFINE VARIABLE h-b1wgen0050          AS HANDLE                    NO-UNDO.
-
-    /* Arquivo gerado para o envio */
-    ASSIGN aux_nmarqxml = "/usr/coop/" + crapcop.dsdircop +
-                            "/salvar/msgenv_cecred_" + 
-                            STRING(YEAR(glb_dtmvtolt),"9999") + 
-                            STRING(MONTH(glb_dtmvtolt),"99") + 
-                            STRING(DAY(glb_dtmvtolt),"99") +
-                            STRING(ETIME,"9999999999") + ".xml"
-         
-           /* Arquivo de log - tela LOGSPB*/
-           aux_nmlogspb = "/usr/coop/" + crapcop.dsdircop + "/log/" + 
-                          "mqcecred_envio" +
-                          STRING(glb_dtmvtolt,"999999") + ".log"
-                        
-           aux_nmarquiv = SUBSTRING(TRIM(aux_nmarqxml),
-                                       R-INDEX(aux_nmarqxml,"/") + 1)
-           
-                        /* 3-identifica ROC650, assim como 1-TED e 2-TEC 
-                           em outros programas */  
-           aux_nrctrlif = "3" + SUBSTRING(STRING(YEAR(glb_dtmvtolt)),3) +
-                                STRING(MONTH(glb_dtmvtolt),"99") +
-                                STRING(DAY(glb_dtmvtolt),"99") +
-                                STRING(crapcop.cdagectl,"9999") +
-                                STRING(ETIME,"99999999")
-                              
-           aux_dtmvtolt = STRING(YEAR(glb_dtmvtolt), "9999") + "-" +
-                          STRING(MONTH(glb_dtmvtolt), "99") + "-" +
-                          STRING(DAY(glb_dtmvtolt), "99").
-
-  
-    /* HEADER - mensagens STR e PAG */
-    ASSIGN aux_textoxml[1] = "<SISMSG>"
-           aux_textoxml[2] = "<SEGCAB>" 
-           aux_textoxml[3] = "<CD_LEGADO>" + STRING(par_cdlegado) + 
-                           "</CD_LEGADO>"
-           aux_textoxml[4] = "<TP_MANUT>" + "I" + "</TP_MANUT>" /* Inclusao */
-           aux_textoxml[5] = "<CD_STATUS>" + "D" + "</CD_STATUS>"  
-           aux_textoxml[6] = "<NR_OPERACAO>" + aux_nrctrlif + 
-                           "</NR_OPERACAO>"
-           aux_textoxml[7] = "<FL_DEB_CRED>" + "D" + "</FL_DEB_CRED>"
-           aux_textoxml[8] = "</SEGCAB>".
-
-    /* BODY  - Mensagem STR0004
-      Descrição: destinado à IF requisitar transferência de recursos entre
-                 instituições financeiras resultantes de operações de sua
-                 responsabilidade e de terceiros. */
-    ASSIGN aux_textoxml[9]  = "<STR0004>"
-           aux_textoxml[10] = "<CodMsg>" + "STR0004" + "</CodMsg>"      
-           aux_textoxml[11] = "<NumCtrlIF>" + aux_nrctrlif +
-                            "</NumCtrlIF>"
-           aux_textoxml[12] = "<ISPBIFDebtd>" + 
-                            SUBSTR(STRING(par_ispbdebt,"99999999999999"),1,8) +
-                            "</ISPBIFDebtd>"
-           aux_textoxml[13] = "<ISPBIFCredtd>" + 
-                            STRING(par_ispbcred,"99999999") +
-                            "</ISPBIFCredtd>"
-           aux_textoxml[14] = "<AgCredtd>" + "</AgCredtd>"
-         
-                            /* Liquidacao Bilateral */ 
-           aux_textoxml[15] = "<FinlddIF>" + "52" + "</FinlddIF>"
-           aux_textoxml[16] = "<CodIdentdTransf>" + "</CodIdentdTransf>"
-           aux_textoxml[17] = "<VlrLanc>" + STRING(par_vllanmto) +
-                            "</VlrLanc>"
-           aux_textoxml[18] = "<Hist>"+ "Cheque VLB n. " + 
-                                TRIM(STRING(par_nrcheque, "zzz,zz9,9")) +
-                            "</Hist>"
-           aux_textoxml[19] = "<NivelPref>" + "</NivelPref>"
-           aux_textoxml[20] = "<DtMovto>" + aux_dtmvtolt +
-                            "</DtMovto>"
-           aux_textoxml[21] = "</STR0004>"
-           aux_textoxml[22] = "</SISMSG>".
-
-    /* Faz uma copia do XML de envio para o diretorio salvar */
-    OUTPUT STREAM str_1 TO VALUE (aux_nmarqxml).
-
-    /* Cria o arquivo */
-    DO aux_contador = 1 TO 23:
-
-        IF   aux_textoxml[aux_contador] = ""   THEN
-            NEXT.
-  
-        PUT STREAM str_1 UNFORMATTED aux_textoxml[aux_contador].
-        /* String que recebe a mensagem enviada por buffer */
-        ASSIGN aux_dsarqenv = aux_dsarqenv + aux_textoxml[aux_contador].
-    END.
-  
-    OUTPUT STREAM str_1 CLOSE.
-    
-    /* Com o comando SUDO pois para conecta no MQ através do script
-         o usuário precisa ser ROOT */
-    UNIX SILENT VALUE ("/usr/bin/sudo /usr/local/cecred/bin/mqcecred_envia.pl"
-                        + " --msg='" + aux_dsarqenv + "'"
-                        + " --coop='" + STRING(p-cdcooper) + "'"
-                        + " --arq='" + aux_nmarqxml + "'").
-     
-    /* Gerar log dos arquivos */
-    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
-                      glb_cdprogra + "' --> '" +
-                      " Cooperativa: " + STRING(p-cdcooper) +
-                      " Enviar arquivo via MQ: " + aux_nmarqxml +
-                      " Mensagem: " + aux_dsarqenv +
-                      " >> log/proc_message.log").
-
-
-    /* Cria registro de Debito */
-    CREATE gnmvcen.
-    ASSIGN gnmvcen.cdagectl = crapcop.cdagectl
-           gnmvcen.dtmvtolt = glb_dtmvtolt
-           gnmvcen.dsmensag = "STR0004"
-           gnmvcen.dsdebcre = "D" /*Debito em Conta*/
-           gnmvcen.vllanmto = par_vllanmto.
-
-    VALIDATE gnmvcen.
-
-    /* Logar envio 
-     *****************************************************************
-     * Cuidar ao mecher no log pois os espacamentos e formats estao  *
-     * ajustados para que a tela LogSPB pegue os dados com SUBSTRING * 
-     *****************************************************************/
-    UNIX SILENT VALUE ("echo " + '"' + 
-       STRING(glb_dtmvtolt,"99/99/9999") + " - " +
-       STRING(TIME,"HH:MM:SS") + " - " + STRING("crps264","x(10)") +
-       " - ENVIADA OK         --> "  + 
-       "Arquivo " + STRING(aux_nmarquiv, "x(40)") +
-       ". Evento: " + STRING("STR0004", "x(9)") + 
-       ", Numero Controle: " + STRING(aux_nrctrlif, "x(20)") +
-       ", Hora: " + STRING(TIME,"HH:MM:SS") +
-       ", Valor: " + STRING(par_vllanmto,"zzz,zzz,zz9.99") +
-       ", Banco Remet.: " + STRING(crapcop.cdbcoctl,"zz9") + "," + 
-       STRING("", "x(136)") + 
-       "Banco Dest.: " + STRING(par_cdbanchq,"zz9") +  "," + 
-       STRING("", "x(136)") + 
-       "ISPB IF Creditada: " + STRING(par_ispbcred,"99999999")  +   
-       '"' + " >> " + aux_nmlogspb). 
-
-    
-    RUN sistema/generico/procedures/b1wgen0050.p 
-        PERSISTENT SET h-b1wgen0050.
-                                       
-    IF  VALID-HANDLE (h-b1wgen0050)  THEN
-        DO:
-           RUN grava-log-ted IN h-b1wgen0050 (INPUT glb_cdcooper,
-                                              INPUT TODAY,
-                                              INPUT TIME,
-                                              INPUT 1, /* Ayllos */
-                                              INPUT "crps264",
-                                              INPUT 1, /*Enviada OK*/
-                                              INPUT aux_nmarquiv,
-                                              INPUT "STR0004",
-                                              INPUT aux_nrctrlif,
-                                              INPUT par_vllanmto, /*Valor*/
-                                              INPUT crapcop.cdbcoctl, /*085*/
-                                              INPUT crapcop.cdagectl, 
-                                              INPUT par_nrdconta, /* Conta Cooperado, */
-                                              INPUT "", /* Nome Cooperado, */
-                                              INPUT 0,  /* CPF Cooperado*/
-                                              INPUT par_cdbanchq, /*Banco*/
-                                              INPUT 0, /* par_cdagenbc, */
-                                              INPUT "", /* par_nrcctrcb, */
-                                              INPUT "", /* par_nmpesrcb, */
-                                              INPUT 0,
-                                              INPUT "", /* par_cdidtran, */
-                                              INPUT "",
-                                              INPUT 0, /*PA origem*/
-                                              INPUT 0, /*Caixa origem */
-                                              INPUT "1", /* operador */
-                                              INPUT 0,   /* ISPB */ 
-                                              INPUT 0).  /* sem crise */
-       
-           DELETE PROCEDURE h-b1wgen0050.
-        END.
-    
-
-END PROCEDURE.
 
 /*........................................................................... */
 
