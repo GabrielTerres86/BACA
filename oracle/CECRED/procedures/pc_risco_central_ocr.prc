@@ -585,9 +585,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
         -- Efetua limpeza dos registros com referência superior a 5 dias
         DELETE
           FROM tbrisco_central_ocr
-         WHERE /*dtrefere <= rw_dat.dtdelreg
+         WHERE dtrefere <= rw_dat.dtdelreg
            AND dtrefere <> rw_dat.dtmvtoan
-           AND */cdcooper = pr_cdcooper;
+           AND cdcooper = pr_cdcooper;
          --
        EXCEPTION
          WHEN OTHERS THEN
