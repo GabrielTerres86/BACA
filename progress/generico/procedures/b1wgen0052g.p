@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052g.p                  
     Autor(a): Jose Luis Marchezoni (DB1 Informatica)
-    Data    : Junho/2010                      Ultima atualizacao: 05/10/2017
+    Data    : Junho/2010                      Ultima atualizacao: 22/09/2017
   
     Dados referentes ao programa:
   
@@ -716,24 +716,6 @@ PROCEDURE Grava_Dados :
     IF  par_cdcritic <> 0 OR par_dscritic <> "" THEN
         ASSIGN aux_returnvl = "NOK".
 
-		
-		
-    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
-                        
-	RUN STORED-PROCEDURE pc_marca_replica_ayllos 
-		aux_handproc = PROC-HANDLE NO-ERROR
-						 (INPUT par_cdcooper,  
-						  INPUT par_nrdconta,	
-						  INPUT par_idseqttl,
-						 OUTPUT "").
-
-	CLOSE STORED-PROC pc_marca_replica_ayllos 
-		  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-	{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }		
-
-
-	
     RETURN aux_returnvl.
 
 END PROCEDURE. /* Grava_Dados */
@@ -4370,6 +4352,13 @@ PROCEDURE Inclui PRIVATE :
                        crabass.dtinsori = TODAY
                        /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                        crabass.cdbcochq = 85 NO-ERROR.  
+
+                       /* Para esta tela deve gravar essas informaçoes como padrao */
+                       IF par_nmdatela = 'CADMAT' THEN
+                       DO:
+                          ASSIGN crabass.cdsecext = 999 NO-ERROR.
+                       END.
+                       
 
                    IF  ERROR-STATUS:ERROR THEN 
                        DO:
