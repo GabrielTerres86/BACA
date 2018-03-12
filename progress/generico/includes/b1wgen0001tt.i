@@ -148,6 +148,9 @@ DEF TEMP-TABLE tt-extrato_conta NO-UNDO
     FIELD vlblqjud LIKE crapsda.vlblqjud
     FIELD cdcoptfn LIKE craplcm.cdcoptfn
     FIELD nrseqlmt AS INTE
+    FIELD cdtippro LIKE crappro.cdtippro
+    FIELD dsprotoc LIKE crappro.dsprotoc
+    FIELD flgdetal AS INTE
     INDEX tt-extrato_conta1 AS PRIMARY dtmvtolt nrsequen.
 
 DEF TEMP-TABLE tt-dep-identificado NO-UNDO
