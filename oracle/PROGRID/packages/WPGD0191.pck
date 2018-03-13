@@ -63,6 +63,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --              09/08/2017 - #677251 Corrigido o nome do job p jbpgd_rec_cursos_aprovados e formatação de data na
   --                           rotina pc_busca_conteudo_campo para dd/mm/rrrr, usada nas tags DTINIEVT e DTFIMEVT (Carlos)
   --              27/02/2018 - Chamado 851807 - Tratar as situações de XML vazio para enviar e-mail informando o usuário (Márcio Mouts)
+  --              08/03/2018 - Chamado 861524 - Tratar para quando ocorrer erro, mandar o e-mail para o usuário
+  --                                            mas não abortar o JOB com erro - Pois cria alerta no monitoramento. 
   -------------------------------------------------------------------------------------------------------------------
 
  -- Rotina para buscar o conteudo do campo com base no xml enviado
@@ -1540,10 +1542,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
                                     ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
                                     ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
                                     ,pr_des_erro        => vr_dscritic);
-          pr_dscritic:= 'RETORNO DO XML VAZIO';                                 
         END IF;
-
         --> manter tabela de email                  
+        pr_dscritic:= ''; -- Chamado 861524
         COMMIT;
       WHEN OTHERS THEN
 
@@ -1570,8 +1571,22 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
                                     ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
                                     ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
                                     ,pr_des_erro        => vr_dscritic);
+        ELSE -- Chamado 851807
+          -- Comando para enviar e-mail a OQS
+          pr_dscritic:= 'O arquivo gerado na integração do SGE com a plataforma Konviva se encontra vazio, possíveis causas: 1) Nenhum aluno concluiu um curso ou 2) Existem inconsistências de dados na plataforma do Konviva que estão impedindo a geração do arquivo.';
+          GENE0003.pc_solicita_email(pr_cdcooper        => 1 --> Cooperativa conectada
+                                    ,pr_cdprogra        => 'WPGD0191' --> Programa conectado
+                                    ,pr_des_destino     => 'educacao@progrid.coop.br' --> Um ou mais detinatários separados por ';' ou ','
+                                    ,pr_des_assunto     => 'LOG: EaD - Sistema de Relacionamento' --> Assunto do e-mail
+                                    ,pr_des_corpo       => pr_dscritic --> Corpo (conteudo) do e-mail
+                                    ,pr_des_anexo       => vr_caminho_xml || vr_arquivo_xml --> Um ou mais anexos separados por ';' ou ','
+                                    ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                    ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
+                                    ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                    ,pr_des_erro        => vr_dscritic);
         END IF;
         --> manter tabela de email                  
+        pr_dscritic:= ''; -- Chamado 861524
         COMMIT;
     END;
  
