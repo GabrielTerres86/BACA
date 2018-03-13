@@ -1,0 +1,71 @@
+BODY, TD, SELECT, DIV {
+	color : #006142;
+	font-family : Arial, sans-serif;
+	font-size: 12px;
+	text-align: ;
+}
+
+
+H2 {
+	font-size: 12pt;
+	color: #006142;
+}
+
+H3 {
+	font-size: 12pt;
+}
+
+H4 {
+	font-size: small;
+	font-variant: small-caps;
+	font-weight: bold;
+	color : Red;
+}
+
+A {
+		color: #006142;
+		Font-size: 12px;
+}
+
+A:Hover {
+	text-decoration: underline;
+	color: #006142;
+	Font-size: 12px;
+}
+
+HR {
+	color: #006142;
+	height: 1pt;
+}
+
+H5 { font-size: 12pt; color: #000000; ; text-align: center; font-family: Arial, Helvetica, sans-serif}
+
+.infparcela
+ {
+	BORDER-LEFT: black 1px solid; 
+	BORDER-RIGHT: black 1px solid; 
+	BORDER-TOP: black 1px solid; 
+	BORDER-BOTTOM: black 1px solid; 
+	LEFT: 0px; 
+	PADDING-LEFT: 1px; 
+	PADDING-RIGHT: 1px; 
+	PADDING-TOP: 1px;
+	TOP: 0px; 	
+	Z-INDEX: 2
+	}
+.dcontato
+ {
+	BACKGROUND-COLOR: #ffffff; 
+	BORDER-LEFT: black 3px solid; 
+	BORDER-RIGHT: black 3px solid; 
+	BORDER-TOP: black 3px solid; 
+	BORDER-BOTTOM: black 3px solid; 
+	FONT: 10pt MS Comic Sans,arial,sans-serif; LEFT: 0px; 
+	PADDING-LEFT: 1px; 
+	PADDING-RIGHT: 1px; 
+	PADDING-TOP: 1px;
+	POSITION: absolute; 
+	TOP: 0px; VISIBILITY: hidden; 
+	WIDTH: 360px; 
+	Z-INDEX: 2
+	}

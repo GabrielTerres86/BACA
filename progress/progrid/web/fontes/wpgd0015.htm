@@ -1,0 +1,130 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="wsoptions" content="no-output">
+<title>evendasems</title>
+<base target="mainFrame">
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+</head>
+<body style="margin-left: 3px; ">
+<form action="#." method="POST" name="form">
+    <input name="aux_cddopcao" type="hidden" id="aux_cddopcao" value="">
+    <input name="aux_lspermis" type="hidden" id="aux_lspermis" value="">
+    <input name="aux_nrdrowid" type="hidden" id="aux_nrdrowid" value="">
+    <input name="aux_dsretorn" type="hidden" id="aux_dsretorn" value="">    
+    <input name="aux_stdopcao" type="hidden" id="aux_stdopcao" value="">
+    <input name="aux_dsendurl" type="hidden" id="aux_dsendurl" value="">
+    <input name="aux_nrseqdig" type="hidden" id="aux_nrseqdig" value="">
+    <input name="aux_idevento" type="hidden" id="aux_idevento" value="">
+<script language="JavaScript">
+NomeDoProgramaPrincipal  = '/wpgd0015.w';
+NomeDoProgramaDeZoom     = '/zoom/zwpgd0015.w';
+</script>
+<!-- Início do modelo geral -->
+<div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"></div>
+  <table width="575" height="360"  border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+    <tr>
+      <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+      <td width="56"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
+      <td width="268" height="20" align="left" class="linkGuia">Cadastro de Recursos</td>
+      <td width="228" height="20" align="right" class="linkGuia">wpgd0015</td>	  
+      <td width="12" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+    </tr>
+    <tr valign="top" bgcolor="#FFFFFF">
+      <td colspan="5">
+        <table width="100%" height="100%"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
+          <tr>
+            <td height="200" valign="top" bgcolor="#FFFFFF">
+              <table width="100%" height="100%"  border="0" cellpadding="0" cellspacing="0">
+				<tr>
+				  <td height="157">&nbsp;</td>
+				  <td align="center" valign="middle"><table  border="0" cellspacing="0" align="center">
+                    <tr>
+                      <td align="right" class="NomeCampo">Recurso:</td>
+                      <td><input name="dsrecurs" type="text" class="Campo" onFocus="window.status = 'Descri&ccedil;&atilde;o do recurso.'" size="80" maxlength="80" value="">
+                      </td>
+                    </tr>
+                  </table></td>
+				</tr>
+                <tr>
+                  <td height="15" align="left">&nbsp;</td>
+                  <td height="15" align="center" valign="bottom">
+                  <!-- Interrupção do modelo geral, início dos dados específicos da tela -->
+                    <table border="0" align="center" cellpadding="1" cellspacing="1"> 					  					  					  					  					  					  
+                      <tr>
+                        <td><img style="cursor:hand" src="/cecred/images/botoes/btn_cadastrar.gif" onClick="return top.frcod.Incluir()"></td>
+                        <td><img style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif" onClick="return top.frcod.Salvar()"></td>
+                        <td><img style="cursor:hand" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir()"></td>
+                        <td><img style="cursor:hand" src="/cecred/images/botoes/btn_procurar.gif" onClick="return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,document.form.aux_idevento.value,'P')"></td>
+                      </tr>
+                    </table>
+                    <!-- Fim dos dados específicos da tela, reinício do modelo geral -->
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+<!-- Fim do modelo geral -->
+</form>
+</body>
+</html>
+<SCRIPT LANGUAGE="JAVASCRIPT">
+   NomeDoProgramaPrincipal  = '/wpgd0015.w';
+   NomeDoProgramaDeListagem = '/wpgd0015ls.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0015aj.w';
+   
+   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+   document.form.action = NomeDoProgramaPrincipal;
+
+function Habilita()
+{
+  
+}
+function HabilitaSalvar()
+{
+  
+}
+function ValidaDados(form)
+    { 
+        var msg="";
+         
+        //msg = msg + top.frcod.VE("in",form.cdrecurs,"O código do recurso","sim","1","999");
+	msg = msg + top.frcod.VE("ca",form.dsrecurs,"A descrição do recurso","nao");
+         
+        if (msg == "")
+                return true
+            else
+                {
+                    top.frcod.MostraResultado('1',msg);
+                    return false
+                }
+    }
+
+function LimparCampos()
+    {
+        document.form.aux_nrseqdig.value = '';
+        document.form.dsrecurs.value = '';
+        focus();
+        document.form.dsrecurs.focus();
+        document.form.dsrecurs.select();
+    }
+
+function ExaminaCampo(Campo)
+    {
+       if (document.form.statuspos.value != 'i' & Campo == 'aux_nrseqdig' )  {
+           document.form.dsrecurs.focus();
+           document.form.dsrecurs.select();
+       }      
+    }
+ 
+function CarregaPrincipal()
+    {  
+      //top.topFrame.document.all.titulo.innerHTML = 'Cadastro de Recursos - ' + document.form.aux_idevento.value;
+    }    
+</SCRIPT>
+
+

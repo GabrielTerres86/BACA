@@ -1,0 +1,1504 @@
+<!--
+	Alteracoes: 22/10/2012 - Limitado tamanho dos campos Nome, Endereço, Bairro,
+                           Cidade, UF, DDD, Telefone, Fax, Cooperativa, Home page,
+                           Considerações, Referências e incluso função para
+                           formatação campo Cep(Daniel).
+							 
+              30/06/2015 - Inclusao de novos campos Projeto Progrid, ajuste no tamnho da tela PRJ 229(Vanessa)
+              
+              08/10/2015 - Inclusao de novos campos Tipo, Origem e Fornecedor Principal PRJ 229 (Vanessa)
+			  
+			  09/12/2015 - Inclusão do campo cdcopope (Vanessa)
+              
+              13/09/2016 - Ajustes PRJ229 - Melhorias OQS RF07 (Odirlei-AMcom)
+-->
+
+<html>
+<head>
+  <script type="text/javascript" src="/cecred/scripts/jquery.js"></script>
+  <script type="text/javascript" src="/cecred/scripts/jquery.mask.min.js"></script>
+  <title>Cadastro de Fornecedores</title>
+  <base target="mainFrame">
+</head>
+<body style="margin-left: 3px; " onload="mostraTipos(); verificaMaterial();">
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+<script SRC="/cecred/jsbiblio/sorttable.js"></script>
+<script SRC="/cecred/js/funcoes.js"></script>
+<script language="JavaScript">
+function mostraContatos(){
+ var row;var cell;
+
+ var cor='#F7F7F7';
+
+ for (var i=document.all.tbcontato.rows.length; i>0; i--)
+      document.all.tbcontato.deleteRow(i-1); 
+
+ for(i=0;i<mcontato.length;i++){      // insere linhas na tabela de contato
+   row=tbcontato.insertRow(); 
+
+   if (cor == '#FFFFFF')
+      cor = '#F7F7F7';
+   else
+      cor = '#FFFFFF';
+
+   row.bgColor = cor;
+
+   cell=row.insertCell();   // primeira celula da linha (mail)
+   cell.className = 'txtNormal';
+   cell.width= 26;
+   linky='<a href="mailto:' + mcontato[i].dsdemail + '"><img src="/cecred/images/icones/ico_email.gif" border="0"></a>';
+   cell.innerHTML=linky; // fim primeira celula (mail)
+
+   cell=row.insertCell();   // segunda celula da linha (nome)
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.tbcontato_col1.width;
+   cell.innerText=mcontato[i].nmconfor; // fim segunda celula (nome)
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();   // terceira celula da linha  (depto)
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.tbcontato_col2.width;
+   cell.innerText=mcontato[i].dsdepart; // fim terceira celula (depto)
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();   // quarta celula da linha (email)
+   cell.className = 'txtNormal';
+   cell.align = 'left';
+   cell.width= document.all.tbcontato_col3.width;
+   cell.title=mcontato[i].dsdemail;
+   cell.innerText=mcontato[i].dsdemail.substring(0, 20); // fim quarta celula (email)
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();   // quinta celula da linha (ddd)
+   cell.className = 'txtNormal';
+   cell.align = 'left';
+	cell.width= document.all.tbcontato_col4.width;
+   cell.innerText=mcontato[i].cddddfor; // fim quinta celula (ddd)
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();   // sexta celula da linha (fone)
+   cell.className = 'txtNormal';
+   cell.align = 'left';
+   cell.width= document.all.tbcontato_col5.width;
+   cell.innerText=mcontato[i].nrfonfor; // fim sexta celula (fone)
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();   // setima celula da linha (edita)
+   cell.className = 'txtNormal';
+   cell.align = 'center';
+   cell.width= document.all.tbcontato_col6.width;
+   linky='<a href="#." onClick=EdContato("' + mcontato[i].idconfor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_atualizar.gif" title="Atualizar" border="0"></a>';
+   cell.innerHTML=linky; // fim sexta celula (edita)
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();   // oitava celula da linha (apaga)
+   cell.className = 'txtNormal';
+   cell.align = 'center';
+   cell.width= document.all.tbcontato_col7.width;
+   linky='<a href="#." onClick=ExContato("' + mcontato[i].idconfor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
+   cell.innerHTML=linky; // fim oitava celula (apaga)
+   
+ }  
+}
+
+function mostraEixos(){
+ var row;
+ var cell;
+ var cor = '#F7F7F7';
+
+ for (var i=document.all.tbeixo.rows.length; i>0; i--)
+      document.all.tbeixo.deleteRow(i-1);
+
+ for(i=0;i<meixo.length;i++){      // insere linhas na tabela de eixo
+   row=tbeixo.insertRow(); 
+
+   if (cor == '#FFFFFF')
+      cor = '#F7F7F7';
+   else
+      cor = '#FFFFFF';
+
+   row.bgColor = cor;
+	
+   cell=row.insertCell();   // ESPAÇO ANTES DO TEXTO
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+   
+   cell=row.insertCell();   // segunda celula da linha (Descrição do Eixo)
+   cell.className = 'txtNormal';
+   cell.width= "95%";
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.tbeixo_col1.width;
+   cell.innerText=meixo[i].dseixtem; // fim segunda celula (Descrição do Eixo)
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();   // oitava celula da linha (apaga)
+   cell.className = 'txtNormal';
+   cell.align = 'center';
+   cell.width= document.all.tbeixo_col2.width;
+   linky='<a href="#." onClick=ExEixo("' + meixo[i].ideixfor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
+   cell.innerHTML=linky; // fim oitava celula (apaga)
+   } 
+}
+
+function mostraPropostas(){
+ var row;var cell;
+ var cor = '#F7F7F7';
+
+ for (var i=document.all.tbproposta.rows.length; i>0; i--)
+      document.all.tbproposta.deleteRow(i-1);
+ 
+ for(i=0;i<mproposta.length;i++){      
+   row=tbproposta.insertRow(); 
+
+   if (cor == '#FFFFFF')
+      cor = '#F7F7F7';
+   else
+      cor = '#FFFFFF';
+
+   row.bgColor = cor;
+
+   cell=row.insertCell();   // ESPAÇO ANTES DO TEXTO
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+   
+   cell=row.insertCell();   
+   cell.className = 'txtNormal';
+   cell.height = 6;
+   cell.align = 'left';
+   cell.width = document.all.tbproposta_col1.width;
+   cell.innerText=mproposta[i].nrpropos; 
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();   
+   cell.className = 'txtNormal';
+   cell.align = 'left';
+   cell.width = document.all.tbproposta_col2.width;
+   cell.innerText=mproposta[i].dtmvtolt;
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();   
+   cell.className = 'txtNormal';
+   cell.align = 'left';
+   cell.width = document.all.tbproposta_col3.width;
+   cell.innerText=mproposta[i].dtvalpro;
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();   
+   cell.className = 'txtNormal';
+   cell.align = 'left';
+   cell.width = document.all.tbproposta_col4.width;
+   cell.innerText=mproposta[i].nmevento;
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+   
+/*   cell=row.insertCell();  
+   cell.className = 'txtNormal';
+   cell.align = 'left';
+   cell.innerText=''; 
+*/
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();   
+   cell.className = 'txtNormal';
+   cell.align = 'center';
+   cell.width = document.all.tbproposta_col5.width;
+   linky='<a href="#." onClick=EdProposta("' + mproposta[i].idprofor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_atualizar.gif" title="Atualizar" border="0"></a>';
+   cell.innerHTML=linky; 
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 26;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   cell=row.insertCell();  
+   cell.className = 'txtNormal';
+   cell.align = 'center';
+   cell.width = document.all.tbproposta_col6.width;
+   linky='<a href="#." onClick=ExProposta("' + mproposta[i].idprofor + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
+   cell.innerHTML=linky; 
+   }
+}
+
+function mostraTipos(){
+  if (document.form.idtipfor.value == 2){ 
+		mostraCampos('FornecedorPrincipalInput');
+		mostraCampos('FornecedorPrincipalLabel');
+		if (document.form.idforpri.value == 1) {
+			document.getElementById("aux_idforpri").checked = true;
+		}else{
+			document.getElementById("aux_idforpri").checked = false;			
+		}
+	}else{
+			document.getElementById("aux_idforpri").checked = false;
+			escondeCampos('FornecedorPrincipalInput');
+			escondeCampos('FornecedorPrincipalLabel');
+	}
+}
+
+function mostraCampos(id){
+	document.getElementById(id).style.display = 'block';
+}
+function escondeCampos(id){
+	document.getElementById(id).style.display = 'none';
+}
+function marcaFornecedorPrincipal(tipo){ 
+	if(tipo == 2){ 
+		document.getElementById("aux_idforpri").checked = false;
+		 mostraCampos('FornecedorPrincipalLabel');
+		 mostraCampos("FornecedorPrincipalInput");
+		 
+	}else{
+		document.getElementById("aux_idforpri").checked = false;
+		escondeCampos('FornecedorPrincipalLabel');
+		escondeCampos("FornecedorPrincipalInput");		
+	}	
+}
+</script>
+<script language="JavaScript">
+   NomeDoProgramaPrincipal  = '/wpgd0012.w';
+   NomeDoProgramaDeListagem = '/wpgd0012ls.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0012aj.w';
+   NomeDoProgramaDeZoom     = '/zoom/zwpgd0012.w';
+
+</script>
+<form action="#." method="POST" name="form">
+<input type="hidden" name="aux_dsendurl" value="">
+<input type="hidden" name="pagina" value="">
+<input type="hidden" name="aux_idevento" value="">
+<input type="hidden" name="aux_cddopcao" value="">
+<input type="hidden" name="aux_nrdrowid" value="">
+<input type="hidden" name="aux_lspermis" value="">
+<input type="hidden" name="aux_dsretorn" value="">
+<input type="hidden" name="aux_stdopcao" value="">
+<input type="hidden" name="aux_idexclui" value="">
+<input type="hidden" name="aux_datahoje" value="">
+<input type="hidden" name="idtipfor" value="1">
+<input type="hidden" name="cdtipcta" value="1">
+<input type="hidden" name="idforpri" value="0">
+<input type="hidden" name="idorifor" value="1">
+<input type="hidden" name="aux_cdcopope" value="">
+<input type="hidden" name="aux_dsurlphp" value="">
+<input type="hidden" name="aux_ctlinati" value="">
+<input type="hidden" name="aux_ctljusti" value="">
+
+<!-- Inicio do modelo com abas -->
+<div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"></div>
+  <table width="620" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+    <tr>
+      <td width="6%"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+      <td width="5%"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
+      <td width="45%" height="20" align="left" class="linkGuia">Cadastro de Fornecedores</td>
+      <td width="42%" height="20" align="right" class="linkGuia">wpgd0012</td>	  
+      <td width="2%" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+    </tr>
+    <tr valign="top" bgcolor="#FFFFFF">
+      <td colspan="5">
+        <table width="620" height="300"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
+          <tr>
+            <td height="200" valign="top" bgcolor="#FFFFFF">
+              <table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
+                <tr>				
+                  <td width="1%" height="15" align="left">&nbsp;</td>
+                  <td align="left">&nbsp;</td>
+                  <td width="1%" align="left">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td height="15" align="left">&nbsp;</td>
+                  <td align="left">
+				  <!-- Interrupcao do modelo - início das abas -->
+                    <table  border="0" align="left" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF">
+                      <tr align="center">
+                        <td width="90" height="15">
+                          <table width="88" id="AbaFornecedor" border="0" cellpadding="0" cellspacing="0">
+                            <tr style="cursor:hand;">
+                              <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
+                              <td width="80" align="center" class="txtTituloHid" onclick="mostraDiv('divFornecedor')">Fornecedor</td>
+                              <td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="90" height="15">
+                          <table width="88" id="AbaContato" border="0" cellpadding="0" cellspacing="0">
+                            <tr style="cursor:hand;">
+                              <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
+                              <td width="80" align="center" class="txtTituloHid" onclick="mostraDiv('divContato')">Contatos</td>
+                              <td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="90" height="15">
+                          <table width="88" id="AbaEixo" border="0" cellpadding="0" cellspacing="0">
+                            <tr style="cursor:hand;">
+                              <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
+                              <td width="80" align="center" class="txtTituloHid" onclick="mostraDiv('divEixo')">Eixo</td>
+                              <td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="90" height="15">
+                          <table width="88" id="AbaProposta" border="0" cellpadding="0" cellspacing="0">
+                            <tr style="cursor:hand;">
+                              <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
+                              <td width="80" align="center" class="txtTituloHid" onclick="mostraDiv('divProposta')">Proposta</td>
+                              <td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
+                            </tr>
+                          </table>
+                        </td>
+                        <!-- Links de Adicionar -->
+                        <td width="260" align="right" class="txtTituloHid">
+                          <div id="adicionar">
+                            <a href="#." onclick="mudaAdicionar();">Adicionar</a>
+                          </div>
+                        </td>                        
+                      </tr>
+                      <tr>
+                        <td colspan="5" width="200" height="2" align="left" background="/cecred/images/menu/mnu_slc.gif"></td>
+                      </tr>
+                    </table>
+                    <!-- Fim das abas - Início dos dados do programa -->
+                  </td>
+                  <td align="left">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td height="15" align="left">&nbsp;</td>
+                  <td height="15" align="left" bgcolor="#F5F5F5">
+                    <div id="divFornecedor" align="left">
+                      <table width="95%" border="0" align="center" cellspacing="0">
+                        <tr>
+                          <td align="right" class="NomeCampo">Natureza: </td>
+                          <td colspan="9" class="NomeCampo">
+                            <input id="inpessoa_1" type=radio name="inpessoa" checked value="1">Física
+                            <input id="inpessoa_2" type=radio name="inpessoa" value="2">Jurídica
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="right" class="NomeCampo">CNPJ/CPF:</td>
+                          <td class="NomeCampo" colspan="9">
+                            <input name="aux_nrcpfcgc" type="text" class="Campo" size="20" maxlength="20" onKeyDown="validaInteiro(event)" onkeypress="if(document.form.inpessoa[0].checked) FormataCPF(this.name, this.value); else FormataCNPJ(this.name, this.value);">
+                            &nbsp; &nbsp; Vigência - Inicio:
+                            <input id="dtinivig" name="dtinivig" type="text" class="Campo" size="10" maxlength="10">
+                            &nbsp; &nbsp; Fim:
+                            <input id="dtfimvig" name="dtfimvig" type="text" class="Campo" size="10" maxlength="10">
+                            &nbsp; &nbsp; Ativo: 
+                            <input id="aux_idsitfor" name="aux_idsitfor" type="checkbox" class="NomeCampo">
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="right" class="NomeCampo">Nome:</td>
+                          <td colspan="2">
+                            <input name="nmfornec" type="text" class="Campo" size="40" maxlength="40" value="">
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="right" class="NomeCampo">Endereço:</td>
+                          <td colspan="2">
+                            <input name="dsendfor" type="text" class="Campo" size="40" maxlength="50" value="">
+                          </td>
+                          <td><div align="right" class="NomeCampo">Cidade:</div></td>
+                          <td colspan="2"><input name="nmcidfor" type="text" class="Campo" size="15" maxlength="15" value=""></td>
+                        </tr>
+                        <tr>
+                          <td align="right" class="NomeCampo">Bairro:</td>
+                          <td colspan="2"><input name="nmbaifor" type="text" class="Campo" size="40" maxlength="50" value="">
+                          </td>
+                        </tr>
+                        <tr>
+                          <td><div align="right" class="NomeCampo">UF:</div></td>
+                          <td width="75" colspan="2"><input name="cdufforn" type="text" class="Campo" size="4" maxlength="2" value=""></td>
+                          <td nowrap><div align="right" class="NomeCampo">CEP:</div></td>
+                          <td><input name="nrcepfor" type="text" class="Campo" onKeyDown="FormataCep(this.form.nrcepfor,event);" onKeyUp="FormataCep(this.form.nrcepfor,event);" size="9" maxlength="9" ></td>
+                        </tr>
+                        <tr>
+                          <td height="19" align="right" class="NomeCampo">DDD/Fone:</td>
+                          <td colspan="2"><input name="cddddfor" type="text" class="Campo" size="3" maxlength="3" onKeyDown="validaInteiro(event)" value="">
+                            <input name="nrfonfor" type="text" class="Campo" size="10" maxlength="9" onKeyDown="validaInteiro(event)" value=""></td>
+                          <td class="NomeCampo"><div align="right">DDD/Fax:</div></td>
+                          <td colspan="4" align="right" class="NomeCampo">
+                            <div align="left">
+                            <input name="cddddfax" type="text" class="Campo" size="3" maxlength="3" onKeyDown="validaInteiro(event)" value="">
+                            <input name="nrfaxfor" type="text" class="Campo" size="10" maxlength="9" onKeyDown="validaInteiro(event)" value="">
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td height="19" align="right" class="NomeCampo">Cooperado:</td>
+                          <td><input name="flgcoope" type="checkbox" class="Campo" onClick="Cooperado();"></td>
+                          <td><div id="NmCoop" align="right" class="NomeCampo">Cooperativa:
+                            <input name="nmcoofor" type="text" size="10" maxlength="20" class="Campo"></div>
+                          </td>
+                          <td>&nbsp;</td>
+                          <td class="NomeCampo"></td>
+                          <td colspan="3" >&nbsp;</td>
+                        </tr>
+                        <tr>
+                          <td height="19" align="right" class="NomeCampo">Home Page: </td>
+                          <td colspan="6" ><input name="nmhompag" type="text" class="Campo" size="40" maxlength="40" style="width:396px" ></td>
+                        </tr>
+                        <tr>
+                          <td height="19" align="right" class="NomeCampo">Referencias:</td>
+                          <td colspan="9" class="CampoTextArea"><textarea name="dsreffor" cols="75" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dsreffor,200)" onKeyDown="ValidaTamanho(this.form.dsreffor,200)"></textarea></td>
+                        </tr>
+                        <tr>
+                          <td height="19" align="right" class="NomeCampo">Considerações:</td>
+                          <td colspan="9" class="CampoTextArea"><textarea name="dsobserv" cols="75" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dsobserv,200)" onKeyDown="ValidaTamanho(this.form.dsobserv,200)"></textarea></td>
+                        </tr>
+                        <tr>
+                          <td height="19" align="right" class="NomeCampo">Principais Clientes:</td>
+                          <td colspan="9" class="CampoTextArea"><textarea name="dspricli" cols="75" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dspricli,1000)" onKeyDown="ValidaTamanho(this.form.dspricli,1000)"></textarea></td>
+                        </tr>
+                        <tr>
+                          <td height="19" align="right" class="NomeCampo">Cadastrado: </td>
+                          <td width="52">
+                            <input name="dtforati" type="text" class="Campo" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="top.frcod.FormataData(this.name, this.value)" value="">
+                          </td>
+                          
+                          <td class="NomeCampo" colspan="3" nowrap><div align="right" class="NomeCampo">Última atualização:</div></td>
+                          <td width="110" align="left">
+                            <input name="dtultalt" type="text" disabled="true" class="Campo" size="10" readonly>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td width="80" align="right" class="NomeCampo" style="vertical-align: top">Inativo desde:</td>
+                          <td width="175">
+                            <table border="0" width="100%">
+                              <tr>                            
+                                <td>  
+                                    <input name="dtforina" type="text" class="Campo" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="top.frcod.FormataData(this.name, this.value)" onchange="document.form.aux_ctlinati.value = 'A' " value=""> 
+                                </td>
+                                <td align="right" class="NomeCampo">    
+                                    Justificativa:
+                                </td>
+                              </tr>
+                              <tr>
+                                <td> &nbsp; </td>
+                                <td width="210" align="right" class="NomeCampo">
+                                    <a href="#." onclick="AbrirHist();" style="PADDING-RIGHT: 8px"> Histórico</a>
+                                </td>  
+                              </tr>
+                            </table>
+                          </td>
+                          
+                          <td colspan="9" width="400">
+                            <span class="CampoTextArea"><textarea name="dsjusain" cols="55" rows="3" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dsjusain,200)" onKeyDown="ValidaTamanho(this.form.dsjusain,200)" onchange="document.form.aux_ctljusti.value = 'A'" ></textarea></span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="NomeCampo"  nowrap><div align="right" class="NomeCampo">Tipo:</div></td>
+                          <td width="110" align="left">
+                            <select name="aux_idtipfor"  size="1" class="Campo" onChange="marcaFornecedorPrincipal(this.value); verificaMaterial();"></select>                           
+                          </td>						 
+                          <td height="19" align="right" class="NomeCampo"id="FornecedorPrincipalLabel"> Fornecedor Principal:</td>
+                          <td id="FornecedorPrincipalInput"><input name="aux_idforpri"  type="checkbox" class="Campo"></td>                         
+                          
+                        </tr>
+                        <tr>
+                          <td class="NomeCampo" nowrap><div align="right" class="NomeCampo">Origem:</div></td>
+                          <td width="110" align="left">
+                            <select name="aux_idorifor" id="aux_idorifor" size="1" class="Campo">								
+                            </select>
+                          </td>
+                        </tr>
+                      </table>
+                      <br>
+                      <fieldset>
+                        <legend class="NomeCampo">Dados Bancários </legend>
+                          <table width="91%" border="0" align="center" cellspacing="0">
+                            <tr>
+                              <td class="NomeCampo"  nowrap><div align="right" >Banco:</div></td>
+                              <td align="left" colspan="4">
+                                <select name="aux_cddbanco" size="1" class="Campo" onChange="PreencheCamposBanco();"></select>
+                              </td>	
+                            </tr>
+                            <tr>
+                              <td class="NomeCampo" nowrap><div align="right">Agência (Sem DV):</div></td>
+                              <td align="left">
+                                <input name="aux_cdageban" type="text" class="Campo" size="4" maxlength="4" onblur="ValidaAgencia();"> 
+                              </td>	
+                              <td colspan="3">
+                                <input name="aux_dsageban" type="text" class="Campo" size="60%" readonly> 
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="NomeCampo" nowrap><div align="right" class="NomeCampo">Conta (Com DV):</div></td>
+                              <td align="left" colspan="4" class="NomeCampo">
+                                <input name="aux_nrdconta" type="text" class="Campo" size="14" maxlength="12" onBlur="formataContaIF(this,event);" onChange="formataNum(this,event);">
+                                <i>(Mínimo dois digitos)</i>
+                                &nbsp; &nbsp; Tipo de conta:
+                                <select name="aux_cdtipcta"  size="1" class="Campo" ></select>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="NomeCampo" nowrap><div align="right" class="NomeCampo">Tipo de pessoa:</div></td>
+                              <td colspan="4" class="NomeCampo">
+                                <input id="inpesrcb1" type=radio name="inpesrcb" checked value="1"> Pessoa Física
+                                <input id="inpesrcb2" type=radio name="inpesrcb" value="2"> Pessoa Jurídica
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="NomeCampo" nowrap><div align="right">Nome:</div></td>
+                              <td align="left" colspan="4">
+                                <input name="aux_nmpesrcb" type="text" class="Campo" size="72%">
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="NomeCampo" nowrap><div align="right">CGC/CPF:</div></td>
+                              <td align="left" colspan="4">
+                                <input name="aux_nrdocrcb" type="text" class="Campo" size="30%" maxlength="20" onKeyDown="validaInteiro(event)" onkeypress="if(document.form.inpesrcb[0].checked) FormataCPF(this.name, this.value); else FormataCNPJ(this.name, this.value);">
+                              </td>
+                            </tr>
+                            <tr>
+                              <td  id="pispasep" class="NomeCampo" nowrap><div align="right">PIS/PASEP:</div></td>
+                              <td  id="pispasep" align="left" colspan="4" class="NomeCampo">
+                                <input name="aux_nrpispas" type="text" class="Campo" size="30%" onKeyDown="validaInteiro(event)" onkeypress="FormataPIS(this.name, this.value);">
+                                &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Data Nascimento: 
+                                <input id="dtnasfor" name="dtnasfor" type="text" class="Campo" size="11" maxlength="10">
+                              </td>
+                            </tr>
+                          </table>                                  
+                      </fieldset>
+                      <br>
+                      <table border="0" align="center" cellpadding="1" cellspacing="1">
+                        <tr>
+                          <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_cadastrar.gif" onClick="return top.frcod.Incluir()"></th>
+                          <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" onClick="return salvarTela()"></th>
+                          <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir()"></th>
+                          <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_procurar.gif" onClick=";return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P','',document.form.aux_cdcopope.value)"></th>
+                        </tr>
+                      </table>
+                    </div>
+                    <div id="divContato" align="left">
+                      <table border="0" width="100%" height="255">
+                        <tr >
+                          <td>
+                            <table width="100%" id="tbcon" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+                              <tr>
+                                <td width="26" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">&nbsp;</td>
+                                <td width="110" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbcontato_col1">Nome</td>
+                                <td id="separador1" width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                <td width="95" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbcontato_col2">Departamento</td>
+                                <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                <td id="tbcontato_col3" width="165" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">E-mail</td>
+                                <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                <td id="tbcontato_col4" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">DDD</td>
+                                <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                <td id="tbcontato_col5" width="70" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Telefone</td>
+                                <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                <td id="tbcontato_col6" width="20" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">&nbsp;</td>
+                                <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                <td id="tbcontato_col7" width="20" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">&nbsp;</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr valign="top">
+                          <td>
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                              <tr>
+                                <td align="left" height="30";>
+                                  <div style="overflow: auto; height:'263';">
+                                    <table id="tbcontato" width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+                                      <!-- INCLUI CONTATOS -->
+                                    </table>      
+                                  </div>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+					
+                    <div id="divEixo" align="left">
+                      <table border="0" width="100%" height="275">
+                        <tr valign="top">
+                          <td>
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+                              <tr>
+                                <td height="25" width="5" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">&nbsp;</td>
+                                <td id="tbeixo_col1" width="545" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Eixos Relacionados</td>
+                                <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                <td id="tbeixo_col2" width="20" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"></td>
+                              </tr>
+                            </table>      
+                          </td>
+                          <tr valign="top">
+                          <td>
+                            <div style="overflow: auto; height:'263';">
+                              <table id="tbeixo" width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+                                <!-- INCLUI DADOS -->
+                              </table>      
+                        	</div>
+                          </td>
+                      </table>
+                    </div>
+					
+                    <div id="divProposta" align="left">
+                      <table border="0" width="100%" height="275">
+                        <tr valign="top">
+                          <td>
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+                                <tr>
+                                  <td width="5" background="/cecred/images/menu/fnd_title.jpg">&nbsp;</td>
+                                  <td id="tbproposta_col1" width="60" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" align="left">Número</td>
+                                  <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                  <td id="tbproposta_col2" width="90" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="left">Recebimento</div></td>
+                                  <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                  <td id="tbproposta_col3" width="85" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="left">Validade</div></td>
+                                  <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                  <td id="tbproposta_col4" width="260" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="left">Evento</div></td>
+                                  <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                  <td id="tbproposta_col5" width="20" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="left">&nbsp;</div></td>
+                                  <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                  <td id="tbproposta_col6" width="35" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="left">&nbsp;</div></td>
+                                </tr>
+                            </table>      
+                          </td>
+                        </tr>
+                        <tr valign="top">
+                          <td>
+                            <div style="overflow: auto; height:'263';">
+                              <table id="tbproposta" width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+                                <!-- INCLUI DADOS -->
+                              </table>      
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+                  <!-- Fim dos dados do programa - retorno ao modelo -->
+                  </td>
+                  <td>&nbsp;</td>
+                </tr>				
+              </table>
+          </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+<!-- fim do modelo -->
+</form>
+
+<script language="JavaScript">
+
+
+$('i').css('font-size','11px');
+$('i').css('color','grey');
+$('#dtinivig').mask('00/00/0000');
+$('#dtfimvig').mask('00/00/0000');
+$('#dtnasfor').mask('00/00/0000');
+$('#aux_nrdconta').mask('99999999-9');
+$('#aux_idsitfor').prop('disabled',true);
+
+for(i = 0;i< document.form.inpesrcb.length; i++)
+   document.form.inpesrcb[i].disabled = false;
+   
+if ($('input[name="inpesrcb"]:checked').val() == 2) {
+  for (i = 0; i < document.all.pispasep.length; i++)
+    document.all.pispasep[i].style.visibility = "hidden";
+  document.form.aux_nrpispas.value = "";
+  document.form.dtnasfor.value = "";
+}
+
+document.getElementById("inpesrcb1").onclick = function(){ for (i = 0; i < document.all.pispasep.length; i++)
+                                                                document.all.pispasep[i].style.visibility = "visible"; }
+document.getElementById("inpesrcb2").onclick = function(){ for (i = 0; i < document.all.pispasep.length; i++)
+                                                                document.all.pispasep[i].style.visibility = "hidden";
+                                                           document.form.aux_nrpispas.value = "";
+                                                           document.form.dtnasfor.value = "";
+                                                         }
+
+NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+document.form.action = NomeDoProgramaPrincipal;
+document.form.aux_cdcopope.value = document.form.aux_cdcopope.value
+var nomeaba = '';
+Cooperado();
+
+function CarregaPrincipal () {
+   //top.topFrame.document.all.titulo.innerHTML = 'Cadastro de Fornecedores - ' + document.form.aux_idevento.value;
+   window.status = "";
+							
+}
+
+function LimparCampos()
+{
+   //document.form.cdcooper.value = '';
+   document.form.cddddfax.value = '';
+   document.form.cddddfor.value = ''; 
+   //document.form.cdoperad.value = ''; 
+   document.form.cdufforn.value = ''; 
+   document.form.dsendfor.value = ''; 
+   document.form.dsobserv.value = ''; 
+   document.form.dsreffor.value = ''; 
+   document.form.dtforati.value = document.form.aux_datahoje.value; 
+   document.form.dtforina.value = ''; 
+   document.form.dtultalt.value = document.form.aux_datahoje.value; 
+   document.form.flgcoope.value = 1; 
+   //document.form.aux_idevento.value = ''; 
+   document.form.inpessoa.value = ''; 
+   document.form.nmbaifor.value = ''; 
+   document.form.nmcidfor.value = ''; 
+   document.form.nmcoofor.value = ''; 
+   document.form.nmfornec.value = ''; 
+   document.form.nmhompag.value = ''; 
+   document.form.nrcepfor.value = ''; 
+   document.form.aux_nrcpfcgc.value = ''; 
+   document.form.nrfaxfor.value = ''; 
+   document.form.nrfonfor.value = '';
+   document.form.aux_idorifor.value = 1;
+   document.form.idorifor.value = document.form.aux_idorifor.value;
+   $('#inpessoa_1').attr('checked',true);
+   document.form.dtinivig.value = '';
+   document.form.dtfimvig.value = '';
+   document.form.aux_idsitfor.checked = false;
+   document.form.aux_idforpri.checked = false;
+   document.form.dtforati.value = '';
+   document.form.aux_idtipfor.value = 1;
+   
+   document.form.aux_cddbanco.value = 0;
+   document.form.aux_cdageban.value = '';
+   document.form.aux_dsageban.value = '';
+   document.form.aux_nrdconta.value = '';
+   document.form.aux_cdtipcta.value = 0;
+   document.form.aux_nmpesrcb.value = '';
+   document.form.aux_nrdocrcb.value = '';
+   document.form.aux_nrpispas.value = '';
+   document.form.dtnasfor.value = '';
+   $('#inpesrcb1').attr('checked',true);
+   
+   for (i = 0; i < document.all.pispasep.length; i++)
+     document.all.pispasep[i].style.visibility = "visible";
+                                                                
+   escondeCampos('FornecedorPrincipalInput');
+   escondeCampos('FornecedorPrincipalLabel');
+
+   for(i = 0;i< document.form.inpessoa.length; i++)
+      document.form.inpessoa[i].disabled = false;
+	  document.form.aux_nrcpfcgc.disabled = false;
+
+   for (var i=document.all.tbcontato.rows.length; i>0; i--)
+      document.all.tbcontato.deleteRow(i-1); 
+
+   for (var i=document.all.tbeixo.rows.length; i>0; i--)
+      document.all.tbeixo.deleteRow(i-1);
+
+   for (var i=document.all.tbproposta.rows.length; i>0; i--)
+      document.all.tbproposta.deleteRow(i-1);
+}
+
+function Habilita()
+{
+
+   // Habilita os campos chave pra poder salvar
+   for(i = 0;i< document.form.inpessoa.length; i++)
+      document.form.inpessoa[i].disabled = false;
+	  document.form.aux_nrcpfcgc.disabled = false;
+
+}
+function HabilitaSalvar(){}
+
+function ValidaDados(form){
+
+  var msg="";
+  
+  // Verifica tipo de fornecedor
+  if(document.form.aux_idtipfor.value == 2 && (meixo.length > 0 || mproposta.length > 0)){
+    if(!confirm("As informações de Eixo e Proposta serão excluídas. Confirma esta ação?")){
+      return false;
+    }
+  }
+
+  document.form.aux_nrcpfcgc.value =  TiraFormato(document.form.aux_nrcpfcgc.value);
+  document.form.nrcepfor.value     =  TiraFormato(document.form.nrcepfor.value);
+  document.form.idorifor.value 	   = document.form.aux_idorifor.value;
+		
+  document.form.aux_nrdocrcb.value =  TiraFormato(document.form.aux_nrdocrcb.value);
+  
+  if (form.aux_idorifor.value == 0){
+    msg ="Selecione campo de Origem do Fornecedor"
+  }
+ 
+  msg = msg + top.frcod.VE("ca",form.nmfornec,"O campo de nome do Fornecedor","nao");
+  msg = msg + top.frcod.VE("ca",form.dsendfor,"O campo de endereço do Fornecedor","nao");
+  msg = msg + top.frcod.VE("ca",form.nmcidfor,"O campo de cidade do Fornecedor","nao");
+  msg = msg + top.frcod.VE("ca",form.nmbaifor,"O campo de bairro do Fornecedor","nao");
+  msg = msg + top.frcod.VE("ca",form.aux_idorifor,"O campo de Origem do Fornecedor","sim","0","99999999");
+  msg = msg + top.frcod.VE("in",form.aux_idorifor,"O campo de Origem do Fornecedor","sim","0","99999999");
+  msg = msg + top.frcod.VE("in",form.nrcepfor,"O campo de CEP do Fornecedor","sim","0","99999999");
+  msg = msg + top.frcod.VE("ca",form.cdufforn,"O campo de UF do Fornecedor","nao");
+  msg = msg + top.frcod.VE("in",form.nrfonfor,"O telefone do Fornecedor","sim", "0", "99999999");
+  msg = msg + top.frcod.VE("in",form.nrfaxfor,"O FAX do Fornecedor","sim", "0", "99999999");
+  msg = msg + top.frcod.VE("in",form.cddddfor,"O DDD do telefone do Fornecedor","sim", "0", "99999999");
+  msg = msg + top.frcod.VE("in",form.cddddfax,"O DDD do FAX do Fornecedor","sim", "0", "99999999");
+         
+  if (msg != ""){
+     top.frcod.MostraResultado('1',msg);
+     return false
+  }
+  if ((form.aux_cddbanco.value != 0 ||
+       form.aux_cdageban.value != "" ||
+       form.aux_nrdconta.value != "" ||
+       form.aux_cdtipcta.value != 0  ||
+       form.aux_nmpesrcb.value != "" ||
+       form.aux_nrdocrcb.value != "" ||
+       form.aux_nrpispas.value != "" ||
+       form.dtnasfor.value != "") &&
+      (form.aux_cddbanco.value == 0 ||
+       form.aux_cdageban.value == "" ||
+       form.aux_nrdconta.value == "" ||
+       form.aux_cdtipcta.value == 0  ||
+       form.aux_nmpesrcb.value == "" ||
+       form.aux_nrdocrcb.value == "" ||
+       (form.inpesrcb.value == 1 && (form.aux_nrpispas.value == "" || form.dtnasfor.value == "")))){
+    top.frcod.MostraResultado('1','Preencha todos os dados bancários');
+    return false;    
+  }
+  return true;
+}
+
+function Cooperado()
+{
+   if(document.form.flgcoope.checked == true)
+   {
+      document.all.NmCoop.style.visibility = "visible";
+   }
+   else
+   {
+      document.all.NmCoop.style.visibility = "hidden";
+      document.form.nmcoofor.value = '';
+   }
+}
+
+
+function Recarrega()
+{
+   VarURL = NomeDoProgramaPrincipal + '?LinkRowid=' + document.form.aux_nrdrowid.value + '&pagina='  + document.form.pagina.value +'&aux_cdcopope=' + document.form.aux_cdcopope.value;
+   window.open(VarURL,'mainFrame','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=600,height=300,top=10,left=10');
+}
+
+function AdContato()
+{
+   var campo = '';
+   if(document.form.aux_cddopcao.value == "in")
+   {
+      alert("O fornecedor deve ser gravado antes de inserir Contatos. ");
+   }
+   else
+   {
+      campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012a.htm?aux_nrcpfcgc=' + campo+'&aux_cdcopope=' + document.form.aux_cdcopope.value;
+      window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=no,width=425,height=255,top=10,left=10');
+   }
+}
+
+function EdContato(rowid){
+
+   // Verifica se o usuário tem permissão de salvar
+   if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
+      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+      return false;
+   }
+
+   var campo = '';
+   if(rowid != "")
+   {
+      campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012a.htm?LinkRowid=' + rowid + 
+         '&aux_nrcpfcgc=' + campo +
+		 '&aux_cdcopope=' + document.form.aux_cdcopope.value;
+      window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=425,height=255,top=10,left=10');
+   }
+}
+
+function ExContato(rowid){
+
+   // Verifica se o usuário tem permissão de exclusao
+   if (document.form.aux_lspermis.value.substring(2,3) != 'E'){ 
+      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+      return false;
+   }
+
+   if(rowid != "")
+   {
+      if (!confirm('Confirma Exclusão do Contato?'))
+      {
+         return false;
+      }
+   
+      document.form.aux_idexclui.value = rowid;
+      document.form.aux_cddopcao.value = "exc";
+      document.form.submit();
+   }
+}
+
+function AdEixo()
+{
+   if(document.form.aux_cddopcao.value == "in")
+   {
+      alert("O fornecedor deve ser gravado antes de relacioná-lo com eixos temáticos. ");
+   }
+   else
+   {
+      campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012b.htm?aux_nrcpfcgc=' + campo + 
+         '&aux_idevento=' + document.form.aux_idevento.value +
+		 '&aux_cdcopope=' + document.form.aux_cdcopope.value; 
+      window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=no,width=420,height=400,top=10,left=10');
+   }
+}
+
+function ExEixo(rowid)
+{
+   // Verifica se o usuário tem permissão de exclusao
+   if (document.form.aux_lspermis.value.substring(2,3) != 'E'){ 
+      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+      return false;
+   }
+
+   if(rowid != "")
+   {
+      if (!confirm('Confirma Exclusão da Relação Fornecedor/Eixo?'))
+      {
+         return false;
+      }
+   
+      document.form.aux_idexclui.value = rowid;
+      document.form.aux_cddopcao.value = "exe";
+      document.form.submit();
+   }
+}
+
+function AdProposta()
+{
+   var campo = '';   
+
+   if((document.form.dtforina.value != "/  /")&&(document.form.dtforina.value != ""))
+   {   
+   
+      var dtdatual = new Date();
+      var aux_data = document.form.dtforina.value.split("/");   
+      var dtiantiv = new Date(aux_data[2], aux_data[1] - 1, aux_data[0]);
+      
+      if (dtiantiv < dtdatual){
+          alert("Fornecedor está inativo.");
+          return false;
+      }
+   }
+   
+   
+   if((document.form.dtfimvig.value != "/  /")&&(document.form.dtfimvig.value != ""))
+   {   
+   
+      var dtdatual = new Date();
+      var aux_data = document.form.dtfimvig.value.split("/");   
+      var dtfimvig = new Date(aux_data[2], aux_data[1] - 1, aux_data[0]);
+      
+      if (dtfimvig < dtdatual){
+          alert("Fornecedor está inativo.");
+          return false;
+      }
+   }   
+   if(document.form.aux_cddopcao.value == "in")
+   {
+      alert("O fornecedor deve ser gravado antes de inserir propostas. ");
+   }
+   else
+   {
+	  campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012c.htm?aux_nrcpfcgc=' + campo + 
+         '&aux_idevento=' + document.form.aux_idevento.value + 
+		 '&aux_cdcopope=' + document.form.aux_cdcopope.value +
+		 '&aux_operacao=' + "incluir";
+      window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=650,height=695,top=10,left=10');
+   }
+}
+
+function EdProposta(rowid){
+
+   // Verifica se o usuário tem permissão de salvar
+   if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
+      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+      return false;
+   }
+  
+   var campo = '';
+   if(rowid != "")
+   {
+      campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012c.htm?LinkRowid=' + rowid + 
+         '&aux_nrcpfcgc=' + campo + 
+		 '&aux_cdcopope=' + document.form.aux_cdcopope.value +
+         '&aux_idevento=' + document.form.aux_idevento.value; 
+      window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=650,height=695,top=10,left=10');
+   }
+}
+
+function ExProposta(rowid)
+{
+   // Verifica se o usuário tem permissão de exclusao
+   if (document.form.aux_lspermis.value.substring(2,3) != 'E'){ 
+      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+      return false;
+   }
+
+   if(rowid != "")
+   {
+      if (!confirm('Confirma Exclusão da Proposta?'))
+      {
+         return false;
+      }
+   
+      document.form.aux_idexclui.value = rowid;
+      document.form.aux_cddopcao.value = "exp";
+      document.form.submit();
+   }
+}
+
+function MudaPagina(sentido, indice, max)
+{
+   if((indice != max) && (indice != "?"))
+   {
+      document.form.aux_cddopcao.value = sentido;
+      document.form.submit();
+   }
+
+}
+function mostraDiv(nomediv)
+{  
+   if (nomediv=='') {nomediv='divFornecedor';}
+
+   if (nomediv=='divFornecedor') {nomeaba='AbaFornecedor';}
+   if (nomediv=='divContato')    {nomeaba='AbaContato';}
+   if (nomediv=='divEixo')       {nomeaba='AbaEixo';}
+   if (nomediv=='divProposta')   {nomeaba='AbaProposta';}
+
+   document.form.pagina.value=nomediv;
+   document.all.divFornecedor.style.display = 'none';
+   document.all.divContato.style.display = 'none';
+   document.all.divEixo.style.display = 'none';
+   document.all.divProposta.style.display = 'none';
+
+   document.all.adicionar.style.visibility = 'hidden';
+
+   document.all.AbaFornecedor.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+   document.all.AbaFornecedor.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+   document.all.AbaFornecedor.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+   document.all.AbaFornecedor.rows[0].cells[1].className="txtTituloHid";
+   
+   document.all.AbaContato.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+   document.all.AbaContato.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+   document.all.AbaContato.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+   document.all.AbaContato.rows[0].cells[1].className="txtTituloHid";
+
+   document.all.AbaEixo.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+   document.all.AbaEixo.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+   document.all.AbaEixo.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+   document.all.AbaEixo.rows[0].cells[1].className="txtTituloHid";
+
+   document.all.AbaProposta.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+   document.all.AbaProposta.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+   document.all.AbaProposta.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+   document.all.AbaProposta.rows[0].cells[1].className="txtTituloHid";
+
+   document.all[nomeaba].rows[0].cells[0].background="/cecred/images/menu/mnu_sle.gif";
+   document.all[nomeaba].rows[0].cells[1].background="/cecred/images/menu/mnu_slc.gif";
+   document.all[nomeaba].rows[0].cells[2].background="/cecred/images/menu/mnu_sld.gif";
+   document.all[nomeaba].rows[0].cells[1].className="txtTituloVis";
+
+   if(nomeaba != 'AbaFornecedor')
+      document.all.adicionar.style.visibility = 'visible';
+
+   document.all[nomediv].style.display = 'block';
+   
+   verificaMaterial();
+}
+
+
+// Altera o link da função de adicionar
+function mudaAdicionar()
+{
+	if (document.form.aux_lspermis.value.substring(0,1) != 'I')
+         { 
+            alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+
+         }
+	else
+     	{
+	   if(document.all.divContato.style.display == 'block')
+		  AdContato();
+	
+	   if(document.all.divEixo.style.display == 'block')
+		  AdEixo();
+	
+	   if(document.all.divProposta.style.display == 'block')
+		  AdProposta();
+		 }
+}
+
+mostraDiv(document.form.pagina.value);
+mostraContatos();
+mostraEixos();
+mostraPropostas();
+
+function FormataCPF(campo,teclapress)  {
+   
+   var tecla = teclapress.keycode;
+   vr = teclapress;
+  
+   vr = vr.replace(".",""); 
+   vr = vr.replace(".","");
+   vr = vr.replace(".","");
+   vr = vr.replace("/","");
+   vr = vr.replace("-","");
+   tam = vr.length ;
+           
+   //if ( tecla != 9 && tecla != 8 )   {
+      if ( tam > 2 && tam < 5 )   
+	     document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 3 );
+      if ( tam > 5 && tam < 8 )  
+	     document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 3) + '.' + vr.substr( 6, 3);
+      if ( tam > 8 )  
+	     document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 3) + '.' + vr.substr( 6, 3) + '-' + vr.substr(9,2);
+   //}	  
+}
+
+function FormataCNPJ(campo,teclapress)  {
+   
+  var tecla = teclapress.keycode;
+  vr = teclapress;
+
+  vr = vr.replace(".",""); 
+  vr = vr.replace(".","");
+  vr = vr.replace(".","");
+  vr = vr.replace("/","");
+  vr = vr.replace("-","");
+  tam = vr.length ;
+         
+  if(tecla != 9 && tecla != 8){
+    if ( tam > 1 && tam < 4 )   
+     document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3 );
+    if ( tam > 4 && tam < 7 )  
+     document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3) + '.' + vr.substr( 5, 3);
+    if ( tam > 7 && tam < 11 )  
+     document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3) + '.' + vr.substr( 5, 3) + '/' + vr.substr( 8, 4);
+    if ( tam > 11 )  
+     document.form[campo].value = vr.substr(0, 2) + '.' + vr.substr( 2, 3) + '.' + vr.substr( 5, 3) + '/' + vr.substr( 8, 4) + '-' + vr.substr( 12, 2);
+  }	  
+}
+
+function FormataPIS(campo,teclapress)  {
+   
+ var tecla = teclapress.keycode;
+ vr = teclapress;
+ 
+ vr = vr.replace(".",""); 
+ vr = vr.replace(".","");
+ vr = vr.replace(".","");
+ vr = vr.replace("/","");
+ vr = vr.replace("-","");
+ tam = vr.length ;
+         
+ //if ( tecla != 9 && tecla != 8 )   {
+    if ( tam > 2 && tam < 5 )   
+      document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 5 );
+    if ( tam > 7 && tam < 11 )  
+      document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 5) + '.' + vr.substr( 8, 2);
+    if ( tam > 8 )  
+	    document.form[campo].value = vr.substr(0, 3) + '.' + vr.substr( 3, 5) + '.' + vr.substr( 8, 2) + '-' + vr.substr(10,0);
+ //}	  
+}
+
+if(document.form.inpessoa[0].checked){
+   FormataCPF(document.form.aux_nrcpfcgc.name,document.form.aux_nrcpfcgc.value);
+}else{
+   FormataCNPJ(document.form.aux_nrcpfcgc.name,document.form.aux_nrcpfcgc.value);
+}
+if (document.form.aux_nrdocrcb.value != ""){
+  if(document.form.inpesrcb[0].checked){
+     FormataCPF(document.form.aux_nrdocrcb.name,document.form.aux_nrdocrcb.value);
+  }else{
+     FormataCNPJ(document.form.aux_nrdocrcb.name,document.form.aux_nrdocrcb.value);
+  }
+}
+// Desabilita os campos chaves, se estiver posicionado em algum registro
+if(document.form.aux_nrdrowid.value != "?"){
+   for(i = 0;i< document.form.inpessoa.length; i++)
+      document.form.inpessoa[i].disabled = true;
+	  document.form.aux_nrcpfcgc.disabled = true;
+}
+
+// Tirar os formatos de CPF e CNPJ, deixando somente os numeros
+function TiraFormato(campo){
+   //Retirar a formatação de CPF e CNPJ
+   campo = campo.replace(".",""); 
+   campo = campo.replace(".","");
+   campo = campo.replace(".","");
+   campo = campo.replace("/","");
+   campo = campo.replace("-","");
+
+   return campo;
+}
+
+setTimeout("verificaMaterial()",100);
+
+function verificaMaterial(){
+     
+  if(document.form.aux_idtipfor.value == 2){
+    document.getElementById("AbaEixo").style.display = 'none';
+    document.getElementById("AbaProposta").style.display = 'none';
+  }else{
+    document.getElementById("AbaEixo").style.display = 'block';
+    document.getElementById("AbaProposta").style.display = 'block';
+  }
+  
+}
+
+function PreencheCamposBanco() {
+
+  document.form.aux_cdageban.value = "";
+  document.form.aux_dsageban.value = "";
+  
+  if(document.form.inpessoa[0].checked)
+    document.form.inpesrcb[0].checked = true;
+  else
+    document.form.inpesrcb[1].checked = true;
+  
+  document.form.aux_nmpesrcb.value = document.form.nmfornec.value;
+  document.form.aux_nrdocrcb.value = document.form.aux_nrcpfcgc.value;
+  
+}
+
+function ValidaAgencia() {
+  
+  document.form.aux_nrcpfcgc.disabled = false;
+  document.form.aux_idsitfor.disabled = false;
+  document.form.inpessoa[0].disabled = false;
+  document.form.inpessoa[1].disabled = false;
+  document.form.dtultalt.disabled = false;
+  for(i = 0;i< document.form.inpesrcb.length; i++)
+    document.form.inpesrcb[i].disabled = false;
+  
+  document.form.aux_cddopcao.value = "vag";
+  document.form.submit();
+}
+
+function formataContaIF(objEdit,e) {
+	if (objEdit.value == "") {
+		return true;
+	}
+	if (objEdit.value.replace(" ","").length < 2) {
+		alert("A conta deve conter no mínimo 2 dígitos.");
+		return false;
+	}
+	if (objEdit.value.length > 13) {
+		alert("A conta deve conter no máximo 13 dígitos.");
+		return false;
+	}
+	if (!validaContaIF(objEdit,e)) {
+		objEdit.value = "";
+		alert("Conta Inválida.");
+		return false;
+	}
+
+	var dataValue = objEdit.value;
+	var dataCta = dataValue.substr(0,dataValue.length - 1);
+	var dataDig = dataValue.substr(dataValue.length - 1);
+
+	if (dataDig.toUpperCase() == "X") {
+		dataDig = "0";
+	}
+
+	dataValue = dataCta + "-" + dataDig;
+
+	objEdit.value = dataValue;
+}
+
+function validaContaIF(obj,e) {
+	var keyValue = retornaTecla(e);
+
+	if ((keyValue >= 35 && keyValue <= 40) || (keyValue == 8) || (keyValue == 46)) {
+		return true;
+	} else {
+		var text   = new String(obj.value);
+		var textok = '';
+		var temp   = '';
+		var valid  = '0123456789Xx';
+		var cont   = 0;
+		var posX   = -1;
+
+		for (var i = 0; i < text.length; i++) {
+			temp = text.substr(i,1);
+
+			if (valid.indexOf(temp) == '-1') {
+				continue;
+			} else {
+				if (temp.toUpperCase() == 'X') {
+					if (posX < 0) {
+						posX = i;
+					} else {
+						continue;
+					}
+				}
+
+				textok += temp.toUpperCase();
+				cont++;
+			}
+		}
+	}
+
+	if (textok.length > 12) {
+		obj.value = textok.substr(0,12);
+		return false;
+	}
+
+	if (posX >= 0 && textok.substr(textok.length - 1).toUpperCase() != 'X') {
+		obj.value = textok.substr(0,posX + 1);
+		return false;
+	}
+
+	obj.value = textok;
+	return true;
+}
+
+function formataNum(obj,e) {
+	var keyValue = retornaTecla(e);
+	
+	if ((keyValue >= 35 && keyValue <= 40) || (keyValue == 8) || (keyValue == 46)) {
+		return true;
+	} else {
+		var data   = new String(obj.value);
+		var dataok = '';
+		var temp   = '';
+		var valid  = '0123456789';
+		var cont   = 0;
+		
+		for (var i = 0; i < data.length; i++) {
+			temp = data.substr(i,1);
+			
+			if (valid.indexOf(temp) == '-1') {
+				continue;				
+			} else {
+				dataok += temp;
+				cont++;
+			}
+		}
+	}
+	
+	obj.value = dataok;
+	return true; 
+}
+
+function validar(){
+  if (document.form.aux_ctlinati.value == "A" &&
+      (document.form.aux_ctljusti.value != "A" || document.form.dsjusain.value == "" )) {
+        alert("O campo de justificativa é obrigatório.");
+        document.form.dsjusain.value = "";
+        document.form.dsjusain.focus();
+
+        return false;
+     }
+  return true;  
+}
+function salvarTela() {
+  
+  if ( validar() ) {
+     top.frcod.Salvar();
+  }
+}
+
+function AbrirHist() {
+
+    var campo = '';       
+    campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+    VarURL = document.form.aux_dsendurl.value  + '/wpgd0012e.htm?aux_nrcpfcgc=' + campo + 
+     '&aux_idevento=' + document.form.aux_idevento.value;
+    window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=1100,height=400,top=30,left=30');
+   
+       
+
+}
+
+</script>
+</body>

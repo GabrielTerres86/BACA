@@ -1,0 +1,492 @@
+<!--
+
+     Alteracoes:  04/12/2017 - Ajustado passagem de parametro para wpgd0013.
+                         (Odirlei-AMcom)
+-->
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta name="wsoptions" content="no-output">
+		<title>Seleção de Local (wpgd0060b)</title>
+		<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+	</head>
+	<body bgcolor="#FFFFFF">
+		<form action="#." method="POST" name="form">
+		<input type="hidden" name="aux_cddopcao" value="">
+		<input type="hidden" name="aux_lspermis" value="">
+		<input type="hidden" name="aux_nrdrowid" value="">
+		<input type="hidden" name="aux_dsretorn" value="">
+		<input type="hidden" name="aux_stdopcao" value="">
+		<input type="hidden" name="aux_dsendurl" value="">
+		<input type="hidden" name="aux_idevento" value="">
+		<input type="hidden" name="aux_lslocali" value="">
+		<input type="hidden" name="aux_cdcooper" value="">
+		<input type="hidden" name="aux_cdagenci" value="">
+		<input type="hidden" name="aux_cdevento" value="">
+		<input type="hidden" name="aux_dtanoage" value="">
+		<input type="hidden" name="aux_nrseqeve" value="">
+		<input type="hidden" name="aux_cdoperad" value="">
+		<input type="hidden" name="aux_cdcopope" value="">
+		<input type="hidden" name="idevento"     value=""> <!-- pra poder mapear -->
+		
+		<table width="100%" height="96%"  border="0" align="center" cellpadding="0" cellspacing="0">
+			<tr valign="botton">
+				<td height="20">
+					<table width="100%" border="0" cellpadding="0" cellspacing="0">
+						<tr>
+							<td width="25%" >
+								<table border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+									<tr>
+										<td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+										<td align="center" nowrap width="150" class="linkGuia">Selecionar Local </td>
+										<td align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+									</tr>
+								</table>
+							</td>
+							<td  width="75%"  align="right" class="txtTituloHid" style="text-align:right;">                                                
+								<div id="adicionar" style="text-align:right; width:100%;"> <a href="#." onclick="AdLocal();">Adicionar</a></div>
+							</td>
+						</tr>
+					</table>
+				</td>	   
+			</tr>
+			<!-- Links de Adicionar -->                                                       
+			<tr valign="top" bgcolor="#FFFFFF">
+				<td>
+					<table width="100%" height="100%"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
+						<tr>
+							<td height="200" valign="top" bgcolor="#FFFFFF">
+								<table width="100%" height="100%"  border="0" cellpadding="0" cellspacing="0">
+									<tr>
+										<td height="27"><table width="100%"  border="0" cellpadding="0" cellspacing="0">
+											<tr>
+												<td height="1"><img src="/cecred/images/geral/spacer.gif" width="21" height="1"></td>
+											</tr>
+											<tr>
+												<td height="27" align="left" background="/cecred/images/menu/fnd_title.jpg">
+													<table width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable" id="tblocal">
+														<tr>
+															<td width="8%" height="22" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">&nbsp;&nbsp;Local</td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="4%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><span class="txtMenuTitulos">Valor</span></td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="5%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><span class="txtMenuTitulos">Capacidade</span></td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="12%" height="22" background="/cecred/images/menu/fnd_title.jpg"><span class="txtMenuTitulos">Endere&ccedil;o</span></td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="10%" height="22" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Estrutura</td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="3%"  height="22" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Estacionamento</td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="8%"  height="22" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Acesso Cadeirante</td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="4%"  height="22" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Climatiza&ccedil;&atilde;o</td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="4%"  height="22" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Cadeiras</td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="12%"  height="22" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Parede Branca / Tela Proje&ccedil;&atilde;o</td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Projetor</td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="3%"  height="22" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Sonoriza&ccedil;&atilde;o</td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td width="2"   height="22" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Contato<span class="txtMenuTitulos"></span></td>
+															<td width="1%"  height="22" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td height="22" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Fone</td>
+														</tr>
+													</table>
+												</td>
+											</tr>
+										</table>
+										</td>
+										<td width="1%" valign="top">&nbsp;</td>
+									</tr>
+									<tr>
+										<td valign="top">
+											<table width="100%" height="100%"  border="0" cellpadding="0" cellspacing="0">
+												<tr>
+													<td height="1"><img src="/cecred/images/geral/spacer.gif" width="21" height="1"></td>
+												</tr>
+												<tr>
+													<td height="27">
+														<table  border="0" cellpadding="0" cellspacing="0">
+															<tr>
+																<td height="1" colspan="3"><img src="/cecred/images/geral/spacer.gif" width="21" height="1"></td>
+															</tr>
+															<tr>
+																<td width="10" height="27">&nbsp;</td>
+																<td width="30" align="center" class="txtNormal"></td>
+																<td width="400" class="txtNormal"></td>
+															</tr>
+														</table>
+													</td>
+												</tr>
+												<tr>
+													<td height="1" bgcolor="#EBEBEB"></td>
+												</tr>
+												<tr>
+													<td height="27" bgcolor="#F7F7F7">
+														<table  border="0" cellpadding="0" cellspacing="0">
+															<tr>
+																<td height="1" colspan="3"><img src="/cecred/images/geral/spacer.gif" width="21" height="1"></td>
+															</tr>
+															<tr>
+																<td width="10" height="27">&nbsp;</td>
+																<td width="30" align="center" class="txtNormal">&nbsp;</td>
+																<td width="400" class="txtNormal"></td>
+															</tr>
+														</table>
+													</td>
+												</tr>
+												<tr>
+													<td valign="bottom">
+														<table border="0" cellspacing="0" cellpadding="0" align="center">
+															<tr>
+																<td><img src="/cecred/images/botoes/btn_salvar.gif" style="cursor: hand; " onClick="Salvar()"></td>
+															</tr>
+														</table>
+													</td>
+												</tr>
+												<tr>
+													<td valign="bottom" height="2"><img src="/cecred/images/geral/spacer.gif" width="21" height="1"></td>
+												</tr>
+											</table>
+										</td>
+										<td width="1%" valign="top">
+										</td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+	</body>
+
+	<script LANGUAGE="JAVASCRIPT">
+		NomeDoProgramaPrincipal  = '/wpgd0060b.w';
+		NomeDoProgramaDeListagem = '/wpgd0060bs.w';
+		NomeDoProgramaDeAjuda    = '/wpgd0060baj.w';
+		NomeDoProgramaDeZoom     = '/zoom/zwpgd0060b.w';
+
+		NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+		document.form.action = NomeDoProgramaPrincipal;
+
+		function Salvar(){
+			 //ZeraModoExclusao();
+			 var vaux = document.form.aux_lspermis.value; 
+			 if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')){ 
+					document.form.aux_cddopcao.value='sa'; 
+					document.form.aux_stdopcao.value='al';
+					status = 'Salvando. Por favor, aguarde ...';			
+					armazenaLocal();
+					document.form.submit();
+					return true;
+			 }else { 
+						 alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+						 return false;
+			 }
+		}
+
+		function mudaCor(){
+
+				var aux;
+
+				// se houver mais de um registro de fornecedor
+				if (mlocal.length > 1){
+					 aux = document.form.aux_nrlocali[this.id].checked;
+					 // Zera todo mundo. Só pode selecionar 1
+					 for(i = 1; i < document.all.tblocal.rows.length; i++){
+							document.all.tblocal.rows[i].bgColor = '#FFFFFF';
+							document.form.aux_nrlocali[i-1].checked=false;
+					 }
+
+					 if (aux==false){
+							 this.bgColor = '#CCCCCC';
+							 document.form.aux_nrlocali[this.id].checked=true;
+					 }else{
+							 this.bgColor = '#FFFFFF';
+							 document.form.aux_nrlocali[this.id].checked=false;
+					 }
+				}else{ // se for somente um registro de fornecedor
+			
+				 if (document.form.aux_nrlocali.checked==false){
+						 this.bgColor = '#CCCCCC';
+						 document.form.aux_nrlocali.checked=true;
+				 }else{
+						this.bgColor = '#FFFFFF';
+						document.form.aux_nrlocali.checked=false;
+				 }
+			} 
+		}
+	
+		function AdLocal() {
+
+				VarURL = document.form.aux_dsendurl.value + '/wpgd0013.htm' + '?aux_cdevento=' + document.form.aux_cdevento.value 
+																			+ '&aux_idevento=' + document.form.aux_idevento.value
+																			+ '&aux_cdcopope=' + document.form.aux_cdcopope.value 
+																			+ '&hdn_cdcooper=' + document.form.aux_cdcooper.value
+																			+ '&aux_cdcooper=' + document.form.aux_cdcooper.value
+																			+ '&hdn_cdagenci=' + document.form.aux_cdagenci.value
+																			+ '&aux_cdoperad=' + document.form.aux_cdoperad.value
+																			+ '&aux_origem=agenda';
+																		
+				window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=600,height=400,top=10,left=10');
+			
+		}
+			
+		function mostraLocal(){
+
+			var row; 
+			var cell;
+			var cor = '#F7F7F7';
+
+			// limpa a tabela de Local, menos a 1ª linha - linha do cabecalho
+			for (var i=document.all.tblocal.rows.length; i>2; i--){
+				document.all.tblocal.deleteRow(i-1);
+			}
+			for(i=0;i<mlocal.length;i++){      // insere linhas na tabela de locais
+				 row=tblocal.insertRow();  // nova linha
+				 row.id=i;
+
+				 if (cor == '#FFFFFF')
+						cor = '#F7F7F7';
+				 else
+						cor = '#FFFFFF';
+				 
+				 row.bgColor = cor;
+
+				 row.onclick=mudaCor;
+				 row.style.cursor = 'hand';
+				 //row.bgColor=mlocal[i].regselec;
+
+				 // nome do local
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+
+				 linky='&nbsp;&nbsp;'+mlocal[i].dslocali + '<in' + 'put type="hidden" name="aux_nrlocali" value="' + mlocal[i].nrseqdig + '">';
+				 cell.innerHTML= linky;
+
+				 // Separador
+				 cell=row.insertCell();
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+
+				 // Capacidade
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.align = 'right';
+				 cell.innerText=mlocal[i].vldialoc; 
+
+				 // Separador
+				 cell=row.insertCell();
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+
+				 // Capacidade
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.innerText=mlocal[i].qtmaxpes; 
+				 
+				 // Separador
+				 cell=row.insertCell();
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+
+				 //  Endereço
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 linky=mlocal[i].dsendloc;
+				 cell.innerHTML=linky; 
+
+				 // Separador	
+				 cell=row.insertCell();   
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+
+				 // Estrutura
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.align = 'right';
+				 linky=mlocal[i].dsestloc;
+				 cell.innerHTML=linky;
+
+				 // Separador
+				 cell=row.insertCell();   
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+				 
+				 // Estacionamento
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.align = 'right';
+				 linky=mlocal[i].idestaci;
+				 cell.innerHTML=linky;
+
+				 // Separador
+				 cell=row.insertCell();   
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+				 
+				 // Acesso a Cadeirante
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.align = 'right';
+				 linky=mlocal[i].idacecad;
+				 cell.innerHTML=linky;
+
+				 // Separador
+				 cell=row.insertCell();   
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+				 
+				 // Climatizacao
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.align = 'right';
+				 linky=mlocal[i].idclimat;
+				 cell.innerHTML=linky;
+
+				 // Separador
+				 cell=row.insertCell();   
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+				 
+				 // Cadeiras
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.align = 'right';
+				 linky=mlocal[i].idcadeir;
+				 cell.innerHTML=linky;
+
+				 // Separador
+				 cell=row.insertCell();   
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+				 
+				 // Parede Branca / Tela de Projeção
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.align = 'right';
+				 linky=mlocal[i].idtelpro;
+				 cell.innerHTML=linky;
+				 
+				 // Separador
+				 cell=row.insertCell();   
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+				 
+				 // Projetor
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.align = 'right';
+				 linky=mlocal[i].idprojet;
+				 cell.innerHTML=linky;
+
+				 // Separador
+				 cell=row.insertCell();   
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+				 
+				 // Sonorizacao
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.align = 'right';
+				 linky=mlocal[i].idsonori;
+				 cell.innerHTML=linky;
+
+				 // Separador
+				 cell=row.insertCell();   
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+
+				 // Contato
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.align = 'right';
+				 linky=mlocal[i].nmconloc;
+				 cell.innerHTML=linky;
+
+				 cell=row.insertCell();   // Separador
+				 cell.className = 'txtPequeno';
+				 cell.width= 2;
+				 cell.height = 30;
+				 cell.align = 'left';
+				 cell.innerText='';
+
+				 // Telefone
+				 cell=row.insertCell();      
+				 cell.className = 'txtPequeno';
+				 cell.align = 'right';
+				 linky=mlocal[i].nrtelefo;
+				 cell.innerHTML=linky;
+			}
+		}
+
+		function armazenaLocal(){
+			var i;
+			// se for mais de um registro de local
+			if (mlocal.length > 1){
+				 for(i=0;i<document.form.aux_nrlocali.length;i++)
+					 if(document.form.aux_nrlocali[i].checked)
+					 {
+							document.form.aux_lslocali.value = document.form.aux_nrlocali[i].value;
+					 } 
+				 }
+			// se for somente um registro de local
+			else{
+				 if(document.form.aux_nrlocali.checked)
+					document.form.aux_lslocali.value = document.form.aux_nrlocali.value;
+			}
+
+			if (document.form.aux_lslocali.value == '') {
+				 document.form.aux_lslocali.value = '0,';
+			}
+
+		}
+
+		function Recarrega(){ 
+			history.go(0);				
+		}
+
+		mostraLocal();
+
+	</script>
+</html>

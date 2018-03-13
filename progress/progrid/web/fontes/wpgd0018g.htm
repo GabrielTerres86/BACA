@@ -1,0 +1,86 @@
+<html>
+<head>
+<title>Justificativa (wpgd0018g)</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<form action="#." method="POST" name="form">
+  
+  <div align="left">
+    <input type="hidden" name="aux_dsendurl" value="">
+    <input type="hidden" name="aux_cddopcao" value="">           
+    <input type="hidden" name="aux_nrdrowid" value="">
+    <input type="hidden" name="aux_lspermis" value="">
+    <input type="hidden" name="aux_dsretorn" value="">
+    <input type="hidden" name="aux_stdopcao" value="">
+    <input type="hidden" name="aux_lsfornec" value="">
+    <input type="hidden" name="aux_idevento" value="">
+    <input type="hidden" name="aux_dtanoage" value="">
+    <input type="hidden" name="aux_cdcooper" value="">
+    <input type="hidden" name="aux_cdagenci" value="">
+    <input type="hidden" name="aux_cdevento" value="">
+    <input type="hidden" name="aux_nrpropos" value="">
+    <input type="hidden" name="aux_cdcuseve" value="">
+	
+    </div>
+    	<table width="330"  border="0" cellspacing="0" cellpadding="3" background="#FFFFFF">
+		    <tr>
+		      <td>
+				<table width="330" border="0" cellpadding="0" cellspacing="0" >
+         			<tr>
+					    <td width="11" background="/cecred/images/geral/guia_fundo.gif"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+			            <td width="300" nowrap background="/cecred/images/geral/guia_fundo.gif" class="linkGuia"><div align="center">Justificativa</div></td>
+            			<td width="8" background="/cecred/images/geral/guia_fundo.gif" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
+				        <td>&nbsp;</td>
+					</tr>
+			    </table>
+       	  </td>
+		</tr>
+		<tr>
+		  <td><textarea name="aux_dsjustif" id="aux_dsjustif" rows="8" cols="37" align="center"></textarea></td>	  
+		</tr>
+		<tr>
+		  <td align="left">			
+			<div align="center">
+			  <input type="button"  src="/cecred/images/botoes/btn_salvar.gif" width="290" height="20" onClick="Salvar();" style="width:60px; border:0;cursor:hand;background-image: url(/cecred/images/botoes/btn_salvar.gif)">
+			</div></td>
+		</tr>	
+	  </table>
+</form>
+</body>
+
+  <SCRIPT LANGUAGE="JAVASCRIPT">
+     NomeDoProgramaPrincipal  = '/wpgd0018g.w';
+     NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+     document.form.action = NomeDoProgramaPrincipal;
+
+
+  function Salvar(){ 	
+    //ZeraModoExclusao();
+    var vaux = document.form.aux_lspermis.value; 
+    
+    if (document.form.aux_dsjustif.value == "") {
+      alert('Informe a Justificativa para a alteração do Valor.'); 
+      return false;
+    }else{ 
+      if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')){ 
+        if (document.form.aux_cddopcao.value!='sa')  {
+          document.form.aux_cddopcao.value='sa'; 
+          document.form.aux_stdopcao.value='i';
+          status = 'Salvando. Por favor, aguarde ...';			
+            document.form.submit();
+            return true;
+        } 
+        else{ 
+          return false;
+        }  
+       }
+       else { 
+         alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+         return false;
+       }
+    }    
+  }
+  </SCRIPT>
+</html>

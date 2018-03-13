@@ -1,0 +1,240 @@
+<html>
+<head>
+<title>Itens de Avaliação (wpgd0059a)</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<script language="JavaScript">
+NomeDoProgramaPrincipal  = '/wpgd0059a.w';
+</script>
+<form action="#." method="POST" name="form">
+  <input type="hidden" name="aux_dsendurl" value="">
+  <input type="hidden" name="aux_cddopcao" value="">           
+  <input type="hidden" name="aux_nrdrowid" value="">
+  <input type="hidden" name="aux_lspermis" value="">
+  <input type="hidden" name="aux_dsretorn" value="">
+  <input type="hidden" name="aux_stdopcao" value="">
+  <input type="hidden" name="aux_idavalia" value="">
+  <input type="hidden" name="aux_lsavalia" value="">
+  <input type="hidden" name="aux_idevento" value="">
+  <input type="hidden" name="aux_tpiteava" value="">
+  <input type="hidden" name="aux_dtanoage" value="">
+  <input type="hidden" name="aux_cdcooper" value="">
+  <input type="hidden" name="aux_cdagenci" value="">
+  <input type="hidden" name="aux_qtavares" value="">
+  <input type="hidden" name="aux_qtavares_ass" value="">
+  <input type="hidden" name="aux_qtavares_coop" value="">
+  <input type="hidden" name="aux_qtavares_forn" value="">
+  <input type="hidden" name="aux_nrseqeve" value="">
+  <input type="hidden" name="aux_cdevento" value="">
+  <input type="hidden" name="idevento" value="">
+  <table width="100%"  border="0" cellspacing="0" cellpadding="0">
+    <tr>
+      <td height="21" align="left">
+	<table height="21" border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+          <tr>
+            <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+            <td class="linkGuia"><div align="center">Itens de Avaliação</div></td>
+            <td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
+          </tr>
+	</table>
+      </td>
+    </tr>
+    <tr>
+      <td height="2" bgcolor="#999999"></td>
+    </tr>
+    <tr>
+      <td>
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+          <tr>
+            <td width="1%" background="/cecred/images/menu/fnd_title.jpg">&nbsp;</td>
+            <td width="13%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbavalia_col0">Relatório</td>
+            <td width="1%" background="/cecred/images/menu/fnd_title.jpg" id="separador1" ><img src="/cecred/images/geral/div.gif" height="15"></td>
+            <td width="42%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbavalia_col1">Grupo</td>
+            <td width="1%" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" height="15"></td>
+            <td width="42%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbavalia_col2">Item</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <table id="tbavalia" width="100%" cellpadding="0" cellspacing="0" border="0" bgColor="#ffffff">
+      </table>
+      </td>	  
+    </tr>
+    <tr>
+      <td height="10"></td>
+    </tr>
+    <tr>
+      <td align="center">
+        <a href="#." onClick="Salvar();" style="cursor: hand; ">
+    	<input name="imageField" type="image"  src="/cecred/images/botoes/btn_salvar.gif" width="60" height="20">
+    	</a>
+      </td>
+    </tr>	
+  </table>
+</form>
+</body>
+
+<SCRIPT LANGUAGE="JAVASCRIPT">
+   NomeDoProgramaPrincipal  = '/wpgd0059a.w';
+   NomeDoProgramaDeListagem = '/wpgd0059as.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0059aaj.w';
+   NomeDoProgramaDeZoom     = '/zoom/zwpgd0059a.w';
+   
+   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+   document.form.action = NomeDoProgramaPrincipal;
+
+
+function Salvar()
+{
+   //ZeraModoExclusao();
+   var vaux = document.form.aux_lspermis.value; 
+   if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')){ 
+        if (document.form.aux_cddopcao.value!='sa')  {
+            document.form.aux_cddopcao.value='sa'; 
+			document.form.aux_stdopcao.value='i';
+            status = 'Salvando. Por favor, aguarde ...';			
+			armazenaItens();
+			document.form.submit();
+            return true;
+        } 
+        else{ 
+            return false;
+        }  
+   }
+   else { 
+         alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+         return false;
+   }
+}
+
+function mudaCor(){
+
+  // se houver mais de um registro de avaliação
+  if (mavalia.length > 1){
+     if (document.form.aux_cditeava[this.id].checked==false){
+         this.bgColor = '#CCCCCC';
+         document.form.aux_cditeava[this.id].checked=true;
+     }
+     else{
+         this.bgColor = '#FFFFFF';
+         document.form.aux_cditeava[this.id].checked=false;
+	 }
+  }
+  // se for somente um registro de avaliação
+  else{
+     if (document.form.aux_cditeava.checked==false){
+         this.bgColor = '#CCCCCC';
+         document.form.aux_cditeava.checked=true;
+     }
+     else{
+         this.bgColor = '#FFFFFF';
+	     document.form.aux_cditeava.checked=false;
+     }
+  }  
+}
+
+function mostraItens()
+{
+   var row; var cell;  
+   
+   for (var i=document.all.tbavalia.rows.length; i>0; i--)
+       document.all.tbrectbavaliaurso.deleteRow(i-1);
+        
+   for(i=0;i<mavalia.length;i++)
+   {
+      row=tbavalia.insertRow();  // nova linha
+      row.id=i;
+      row.onclick=mudaCor;
+      
+      cell=row.insertCell();   // Separador
+      cell.className = 'txtNormal';
+      cell.height = 26;
+      cell.width= document.all.separador1.width;
+      cell.align = 'left';
+      cell.innerText=' ';
+      
+      // Tipo de relatorio
+      cell=row.insertCell();      
+      cell.style.cursor = 'hand';
+      cell.className = 'txtNormal';
+      cell.width = document.all.tbavalia_col0.width;
+      linky='&nbsp;&nbsp;' + mavalia[i].tprelgru;
+      cell.innerHTML=linky;
+   
+      cell=row.insertCell();   // Separador
+      cell.className = 'txtNormal';
+      cell.height = 26;
+      cell.width= document.all.separador1.width;
+      cell.align = 'left';
+      cell.innerText=' ';
+      
+      // Grupo de Avaliação
+      cell=row.insertCell();      
+      cell.style.cursor = 'hand';
+      cell.className = 'txtNormal';
+      cell.width = document.all.tbavalia_col1.width;
+      linky='&nbsp;' + mavalia[i].dsgruava;
+      cell.innerHTML=linky;
+   
+      cell=row.insertCell();   // Separador
+      cell.className = 'txtNormal';
+      cell.height = 26;
+      cell.width= document.all.separador1.width;
+      cell.align = 'left';
+      cell.innerText='';
+   
+      // Item de Avaliação
+      cell=row.insertCell();      
+      cell.style.cursor = 'hand';
+      cell.className = 'txtNormal';
+      cell.width = document.all.tbavalia_col2.width;
+      linky='&nbsp;' + mavalia[i].dsiteava + '<in' + 'put type="hidden" name="aux_cditeava" value="' + mavalia[i].cditeava + '">';
+      cell.innerHTML=linky;
+   }
+}
+
+function armazenaItens()
+{
+   var i;
+   
+   if (document.all.tbavalia.rows.length > 1)
+   {
+      for(i=0;i<document.all.tbavalia.rows.length;i++)
+      {
+         if(document.form.aux_cditeava[i].checked)
+         {
+             if(document.form.aux_lsavalia.value=='')
+                document.form.aux_lsavalia.value = document.form.aux_cditeava[i].value;
+       	     else
+                document.form.aux_lsavalia.value = document.form.aux_lsavalia.value + ',' + document.form.aux_cditeava[i].value;
+         } 
+      }
+   }
+   else
+   {
+      if(document.form.aux_cditeava.checked)
+         document.form.aux_lsavalia.value = document.form.aux_cditeava.value;
+   }
+}
+
+function CarregaPrincipal()
+{
+}
+
+function LimparCampos()
+{
+}
+
+if (mavalia.length == 0)
+{
+   close(alert('Não há itens cadastrados'));
+}
+
+   
+mostraItens();
+</SCRIPT>
+</html>

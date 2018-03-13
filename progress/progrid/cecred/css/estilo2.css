@@ -1,0 +1,295 @@
+/*!
+ * FONTE        : estilo2.css
+ * CRIA��O      : Gabriel (CECRED)
+ * DATA CRIA��O : Fevereiro/2012
+ * OBJETIVO     : Arquivos com estilos CSS do sistema
+ * --------------
+ * ALTERA��ES   :
+ * --------------
+ * 001: [02/02/2012] Gabriel Capoia        (DB1): Feito uma copia do arquivo estilo.css para mudar o font-size de 11px para 12px. 
+ * 002: [07/02/2012] Gabriel Capoia        (DB1): Adicionado as classes FocusIn para os campos que tem focu. 
+ * 003: [17/02/2012] Rog�rius Milit�o      (DB1): Adicionado a classe botao. 
+ * 004: [17/02/2012] Rog�rius Milit�o      (DB1): Alterado "form.formulario a" para ajustar a novo botao. 
+ * 005: [19/04/2012] Rogerius Milit�o/Guilherme Strube (DB1/CECRED): Adaptar divBotoes para tag img
+ * 006: [17/11/2014] J�ssica			   (DB1): Inserido um divRotina2 para atender a op��o C da tela Movtos.
+ */	
+
+*  {font-family:Arial,Helvetica,sans-serif;font-size:12px;margin:0px;padding:0px;border:0px;text-decoration:none;}
+	
+body { background-color:#DFE0D6; behavior: url(csshover2.htc); }
+
+.txtLabel, .txtLabel a {color:#000;}
+.txtLabel a:hover {text-decoration:underline;}
+.txtLabelBold, .txtLabelBold a {font-weight:bold;color:#000;font-size:12px;padding-left:4px;}
+.txtLabelBold a:hover {text-decoration:underline;}
+
+.txtSistema { font-size:18px; font-style:italic;	font-weight:bold; color:#666; letter-spacing:0.05em; }
+.txtVermelho { color:#f00;}
+.txtVermelhoBold { color:#f00; font-weight:bold; }
+.txtVerdeBold { color:#006400; font-weight: bold; }
+.txtBranco, .txtBranco a, .tituloJanelaPesquisa { font-size: 12px; color: #fff; }
+.txtBranco a:hover { text-decoration: underline; }
+.txtBrancoBold, .txtBrancoBold a { font-size: 12px; font-weight: bold; color: #fff; }
+.txtBrancoBold a:hover { text-decoration: underline; }
+.txtNormal, .txtNormal a { font-size: 12px; color: #000; }
+.txtNormal a:hover { text-decoration: underline; }
+.txtNormalBold, .txtNormalBold a {font-size:12px;font-weight:bold;color:#000;}
+.txtNormalBold a:hover {text-decoration:underline;}
+
+#tdLogin { background-color: #CCCCCC; border:1px; border-style: solid; border-color: #999; }
+#tdTituloLogin {	border-bottom: 1px solid #000; }
+#tdConteudo {padding:2px;}
+#tdMenu {border-top:1px solid #000;border-right:1px solid #000;border-left:1px solid #000;background-color:#efefe2;}
+#tdTitMenu {font-size:12px;font-weight:bold;border-bottom:1px solid #000;}
+
+#divMenu span {display:block;background-color:#e3e2dd;border-top:1px solid #fff;border-bottom:1px solid #000;padding:5px 0px 2px 6px;height:20px;} 
+#divMenu div {display:none;}
+#divMenu div dl dt {border-top:1px solid #fff;border-bottom:1px solid #000;padding:3px 0px 2px 6px;height:18px;}
+#tdTela {padding:0px 2px 0px 2px;}
+
+.tdConteudoTela {background-color:#fff;border-style:solid;border-color:#999;border:0px 1px 1px 1px;padding:10px;}
+.txtCritica {color:#f00;font-weight:bold;}
+.txtInform {color:#6f7a86;font-weight:bold;}
+.txtCarregando {color:#333;font-weight:bold;}
+.txtTitulo {color:#617172;font-weight:bold;}
+
+#divError,#divConfirm {position:absolute;border:1px solid #999;background-color:#d1d2ca;display:none;} 
+#tdTitError {border-bottom:1px solid #999;padding:4px 6px 4px 6px;background-color:#6f7a86;font-size:12px;font-weight:bold;color:#fff;}
+#divAguardo {position:absolute;border:1px solid #999;background-color:#efefe2;padding:18px 20px;z-index:200;display:none;} 
+
+#divBloqueio {position:absolute;top:0px;left:0px;display:none;width:0px;height:0px;background-color:#264D21;	
+	-moz-opacity: 0.2; /* Firefox */
+	filter: alpha(opacity=20); /* IE */ 
+	opacity: 0.2; /* CSS3 */
+}
+#iframeBloqueio {position:absolute;top:0px;left:0px;display:none;width:0px;height:0px;border:none;
+	-moz-opacity: 0; /* Firefox */
+	filter: alpha(opacity=0); /* IE */ 
+	opacity: 0; /* CSS3 */
+}
+
+#divF2 {position:absolute;z-index:190;display:none;}
+.tdConteudoF2 {background-color:#F4F3F0;border-style:solid;border-color:#999;border:0px 1px 1px 1px;padding:10px;}
+
+/* DIVs OCULTAS */
+#divRotina,#divJanelaDaRotina,#divAnotacoes,#divConsultaRamoAtiv,#divConsultaNatJuridica,
+#divRotina2,
+#divMsgsAlerta,#divPesquisa,#divPesquisaEndereco,#divFormularioEndereco,#divPesquisaAssociado,#divUsoGenerico,#divPesquisaEmpresa
+{position:absolute;visibility:hidden;}
+
+#divRotina 				{width:545px;z-index:90;}
+#divRotina2 				{width:650px;z-index:91;}
+#divPesquisaEndereco        {width:545px;z-index:99;height:300px;}
+#divFormularioEndereco    {width:545px;z-index:100;height:300px;}
+#divPesquisa		         {width:500px;z-index:101;height:300px;}
+#divPesquisaAssociado       {width:550px;z-index:102;}
+#divJanelaDaRotina 		{width:545px;z-index:103;}
+#divAnotacoes 			{width:545px;z-index:104;}
+#divConsultaRamoAtiv	{width:445px;z-index:105;}
+#divConsultaNatJuridica 	{width:445px;z-index:106;}
+#divMsgsAlerta 			{width:545px;z-index:107;}
+#divUsoGenerico                    {width:375px;z-index:108;}
+#divError				{z-index:201;}
+#divConfirm  			{z-index:200;}
+#divPesquisaEmpresa       {width:575px;z-index:102;}
+
+/* CAMPOS FORMUL�RIOS */
+.campo, .campoTelaSemBorda, .campoFocusIn {font-size:12px;padding:2px 4px 1px 4px;border:1px solid #777;height:20px;background-color:#fff;color:#111;}
+.campoTelaSemBorda {color:#555;border-color:#ddd;}
+
+.campoFocusIn {color: #FFFFFF;background-color:#0A2464;border: 1px dotted #F5DB95;}
+
+.textarea, .textareaFocusIn  {font-size:11px;padding:2px 4px 1px 4px;border:1px solid #777;background-color:#fff;color:#111;}
+.textareaFocusIn {color: #FFFFFF;background-color:#0A2464;border: 1px dotted #F5DB95;}
+
+.radioFocusIn  {border:1px dotted #F5DB95;background-color:#0A2464;}
+.checkboxFocusIn  {border:1px dotted #F5DB95;background-color:#0A2464;}
+.selectFocusIn  {border:1px dotted #F5DB95;background-color:#0A2464;}
+
+
+
+.campoErro {border-color:#d00;}
+select.campo, select.campoTelaSemBorda {padding:1px;}
+
+/* FORMUL�RIOS */
+form.formulario  {width:100%;}
+form.formulario label {display:block;float:left;text-align:right;height:25px;vertical-align:middle;line-height:25px;color:#333;font-weight:bold;font-size:12px;}
+form.formulario input {float:left;margin:3px 0px 3px 3px;}
+form.formulario input.codigo {width:35px;}
+form.formulario input.descricao {width:369px;}
+form.formulario select {float:left;margin:3px 0px 3px 3px;}
+form.formulario label.rotulo {clear:left;}
+form.formulario label.rotulo-linha {padding-left:3px;}
+form.formulario label.rotulo-30 {width:30px;}
+form.formulario label.rotulo-40 {width:40px;}
+form.formulario label.rotulo-50 {width:50px;}
+form.formulario label.rotulo-60 {width:60px;}
+form.formulario label.rotulo-70 {width:70px;}
+form.formulario label.rotulo-80 {width:80px;}
+form.formulario label.rotulo-90 {width:90px;}
+form.formulario label.rotulo-100 {width:100px;}
+form.formulario label.rotulo-110 {width:110px;}
+form.formulario label.rotulo-120 {width:120px;}
+form.formulario label.rotulo-140 {width:140px;}
+form.formulario label.rotulo-250 {width:270px;}
+form.formulario a {float:left;margin:2px 0px 0px 3px;}
+form.formulario input.radio {margin:7px 3px 0px 3px;*margin:7px 0px 0px 0px;height:16px;border:none;}
+form.formulario label.radio {float:left;width:auto;clear:none;font-weight:normal;border:none;}
+form.formulario input.checkbox {margin:7px 3px 0px 3px;*margin:7px 0px 0px 0px;height:16px;}
+form.formulario label.checkbox {float:left;width:auto;clear:none;font-weight:normal;text-align:left;}
+form.formulario h5 {padding:3px;display:block;clear:both;color:#333;border:1px solid #777;background-color:#efefe7;margin:4px 3px;}
+form.formulario fieldset {clear:both;border:1px solid #bbb;margin:3px;padding:0px 3px 5px 3px;_padding-bottom:10px;}
+form.formulario fieldset legend {font-size:12px;color:#333;margin-left:5px;padding:0px 2px;}
+
+form.condensado label {height:20px;line-height:20px;padding-top:1px;}
+form.condensado input {margin:1px 0px 1px 3px;}
+form.condensado select {margin:1px 0px 1px 3px;}
+form.condensado input.radio {margin-top:6px;}
+form.condensado label.radio {padding-top:2px;}
+
+div.condensado label {height:20px;line-height:20px;padding-top:1px;}
+div.condensado input {margin:1px 0px 1px 3px;}
+div.condensado select {margin:1px 0px 1px 3px;}
+div.condensado input.radio {margin-top:6px;}
+div.condensado label.radio {padding-top:2px;}
+
+div .divFinanc {height:28px;border-style:solid none;border-width:1px;margin:6px -2px 0px -2px;vertical-align:bottom;padding:2px 0px 1px 0px;clear:both;border-color:#949ead;background-color:#eeeaee;_padding:1px 0px 2px 0px;}
+div .divFinanc label{display:block;float:left;text-align:right;height:25px;vertical-align:middle;line-height:25px;color:#333;font-weight:bold;font-size:12px;}
+div .divFinanc input {margin:3px 0px 3px 3px;float:left;}
+
+/* FORM CABE�ALHO */
+#frmCabContas {padding-top:3px;border-bottom:1px solid #777;padding-bottom:2px;margin-bottom:4px;border-top:1px solid #777;}
+#frmCabMatric {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
+#frmCabAnota   {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
+#frmCabAutori   {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
+#frmCabDomins   {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
+#frmCabBeinss   {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
+#frmCabCadgps   {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
+#frmCabConalt   {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
+#frmFisico, #frmJuridico {position:relative;display:none;}
+form.cabecalho {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
+
+/* FORMUL�RIO PESQUISA */ 
+#formPesquisa label {width:130px;clear:left;}
+div.divPesquisa {position:absolute;visibility:hidden;}
+div.divCabecalhoPesquisa {width:470px;border:1px solid #e3e5ce;border-bottom:none;padding:1px;clear:both;margin-top:5px;float:left;}
+div.divCabecalhoPesquisa table {width:100%;}
+div.divCabecalhoPesquisa table thead tr {background-color:#f7d3ce;text-transform:uppercase;height:18px;font-size:10px;}
+div.divCabecalhoPesquisa table thead tr td {padding:1px 5px;font-size:12px;}
+div.divResultadoPesquisa {height:150px;width:470px;border:1px solid #e3e5ce;border-top:none;padding:1px;clear:both;float:left;}
+div.divPesquisaItens {height:129px;overflow-x:hidden;overflow-y:scroll;width:100%;}
+div.divPesquisaItens table {width:100%;}
+div.divPesquisaItens table tbody tr td {font-size:12px;padding:0px 2px;}
+#divCabecalhoPesquisaEndereco{width:515px;}
+#divResultadoPesquisaEndereco {width:515px;}
+#divResultadoPesquisaNome{height:150px;width:470px;}
+
+/* FORMUL�RIO PESQUISA ASSOCIADO */ 
+#frmPesquisaAssociado label {width:130px;clear:left;}
+#frmPesquisaAssociado #cdpesqui {float:none;}
+#frmPesquisaAssociado #nmdbusca {width:335px;}
+#frmPesquisaAssociado #cdagpesq {width:40px;}
+#frmPesquisaAssociado #nrdctitg {width:90px;}
+#frmPesquisaAssociado input.radio {margin:7px 3px 0px 3px;height:16px;}
+#frmPesquisaAssociado label.radio {float:left;width:auto;clear:none;font-weight:normal;}
+
+/* FORMATA OS BOT�ES DE TODOS FORMUL�RIOS */
+#divBotoes {padding-top:10px;display:block;clear:both;float:none;text-align:center;}
+#divBotoes input  {float:none;}
+#divBotoes a  {float:none;}
+#divBotoes a img  {margin-bottom:3.5px }
+
+.divBotoes {padding-top:10px;display:block;clear:both;float:none;text-align:center;}
+.divBotoes input  {float:none;}
+
+/* PADR�O TABELA APRESENTA��O DOS DADOS */
+table.tituloRegistros {width:100%;border-collapse:collapse;}
+table.tituloRegistros thead tr {border-bottom:1px dotted #999;}
+table.tituloRegistros thead tr th{font-size:12px;height:22px;padding:0px 5px;cursor:pointer;border-right:1px dotted #999;background-color:#f7d3ce;}
+table.tituloRegistros thead tr th.ordemInicial{background-image:url(../imagens/geral/ordem_inicial.gif);background-repeat:no-repeat;background-position:center;background-color:#f7d3ce;border:0px;width:16px;padding:0px;}
+
+div.divRegistros {height:150px;width:100%;overflow-x:hidden;overflow-y:scroll;}
+div.divRegistros table {width:100%;border-collapse:collapse;}
+div.divRegistros table thead {display:none;}
+div.divRegistros table tbody tr {height:16px;}
+div.divRegistros table tbody tr td {padding:0px 5px;border-right:1px dotted #999;font-size:12px;color:#333;}
+div.divRegistros table tbody tr td span {display:none;}
+
+div.divComplemento {display:block;clear:both;margin:7px -2px 0px -2px;padding:3px 0px;background-color:#EFEFEF;color:#555;border-top:1px solid #DEDFDE;height:30px}
+
+th.headerSort{background-image:url(../imagens/geral/ordem_central.gif);background-repeat:no-repeat;background-position:center right;}   
+th.headerSortUp {background-image:url(../imagens/geral/ordem_cresc.gif);}   
+th.headerSortDown {background-image:url(../imagens/geral/ordem_decres.gif);}   
+
+tr.corPar{background-color:#fff;}
+tr.corImpar{background-color:#eeeaee;}
+tr.corSelecao{background-color:#ffbaad;}
+
+.ponteiroDrag{cursor:move;}
+.fecharPesquisa{cursor:pointer;}
+a.pointer{cursor:pointer;}
+
+div.linha1 { border-top: 1px solid #666666; margin: 5px 0 5px 0; clear:both; }
+
+ul.complemento { border-top: 1px solid #949EAD; border-bottom: 1px solid #949EAD; list-style-type: none; width:99%; height: 20px; background-color: #EEEAEE;}
+ul.complemento li { float:left; padding:3px 2px 2px 2px; text-align:left; }
+
+.botao {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #ffffff), color-stop(1, #d4d4d4) );
+	background:-moz-linear-gradient( center top, #ffffff 5%, #d4d4d4 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#d4d4d4');
+	background-color:#ffffff;
+	-moz-border-radius:3px;
+	-webkit-border-radius:3px;
+	border-radius:3px;
+	border-left:1px solid #CCCCCC;
+	border-top:1px solid #CCCCCC;
+	border-right:1px solid #999999;
+	border-bottom:1px solid #999999;
+	/*border:1px solid #696969;*/
+	display:inline-block;
+	color:#3d3c3d;
+	font-family:Verdana;
+	font-size:11px;
+	font-weight:bold;
+	padding:3px 6px;
+	text-decoration:none;
+}.botao:hover {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #adadad), color-stop(1, #d4d4d4) );
+	background:-moz-linear-gradient( center top, #adadad 5%, #d4d4d4 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#adadad', endColorstr='#d4d4d4');
+	background-color:#adadad;
+}.botao:active {
+	position:relative;
+	top:1px;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #adadad), color-stop(1, #d4d4d4) );
+	background:-moz-linear-gradient( center top, #adadad 5%, #d4d4d4 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#adadad', endColorstr='#d4d4d4');
+	background-color:#adadad;
+}.botao:focus {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #adadad), color-stop(1, #d4d4d4) );
+	background:-moz-linear-gradient( center top, #adadad 5%, #d4d4d4 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#adadad', endColorstr='#d4d4d4');
+	background-color:#adadad;
+}
+.botaoDesativado {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #bbbbbb), color-stop(1, #cccccc) );
+	background:-moz-linear-gradient( center top, #bbbbbb 5%, #cccccc 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#bbbbbb', endColorstr='#eeeeee');
+	background-color:#eeeeee;
+	-moz-border-radius:3px;
+	-webkit-border-radius:3px;
+	border-radius:3px;
+	border-left:1px solid #BBBBBB;
+	border-top:1px solid #BBBBBB;
+	border-right:1px solid #777777;
+	border-bottom:1px solid #777777;
+	/*border:1px solid #696969;*/
+	display:inline-block;
+	color:#666666;
+	font-family:Verdana;
+	font-size:11px;
+	font-weight:bold;        
+	padding:3px 6px;
+	text-decoration:none;
+}

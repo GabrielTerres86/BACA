@@ -1,0 +1,13 @@
+BODY {
+	background-color: White;
+	font-family: Arial, Helvetica, sans-serif;
+	font-style: normal;
+	font-size: 12px;
+	line-height: 8pt;
+	font-weight: bold;
+	color: #00639c
+}
+td {  font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-style: normal; font-weight: normal; color: #000000; text-align: left; clip:   rect(   ); border: none; border-width: 0px 5px 0px 1px}
+table {  clip:  rect(   ); text-align: center}
+div { background-color: White; font-family: Arial, Helvetica, sans-serif; font-style: normal; font-size: 16px; line-height: 8pt; font-weight: bold; color: #00639c }
+th { font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-style: normal; font-weight: bold; color: #006699; text-align: center; clip: rect( ) ; border: none; border-width: 0px 5px 0px 1px}

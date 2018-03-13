@@ -1,0 +1,228 @@
+<!--    
+ 
+ * FONTE        : wpgd0051.htm
+ * AUTOR        : David Kruger         
+ * DATA CRIAÇÃO : 04/2013
+ * OBJETIVO     : Mostrar tela Arquivo Quadro Social wpgd0051.
+ * --------------
+ * ALTERAÇÕES   : 
+ *				  
+ * --------------
+ *
+
+-->
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="wsoptions" content="no-output">
+<title>Arquivo Quadro Social</title>
+<base target="mainFrame"> 
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+<script SRC="/cecred/js/funcoes.js"></script>
+</head>
+<body style="margin-left: 3px; ">
+<form action="#." method="POST" name="form">
+    <input name="aux_idevento" type="hidden" value="">
+    <input name="aux_dsendurl" type="hidden" value="">		
+    <input name="aux_lspermis" type="hidden" id="aux_lspermis"  value="">
+		 
+<!-- Início do modelo geral -->
+<div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"></div>
+   <table width="575" height="360" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+      <tr>
+         <td height="20" colspan="5">
+	    <table width="100%"  border="0" cellspacing="0" cellpadding="0">
+               <tr>
+                  <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+                  <td width="56"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
+                  <td width="406" height="20" align="left" class="linkGuia">Arquivo Quadro Social</td>
+                  <td width="91" height="20" align="right" class="linkGuia">wpgd0051</td>	  
+                  <td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+          </tr>
+           </table>
+         </td>
+      </tr>
+      <tr valign="top" bgcolor="#FFFFFF">
+         <td colspan="5">
+            <table width="100%" height="100%" border="0" align="left" cellpadding="0" cellspacing="0" bgcolor="#999999">
+               <tr>
+                  <td valign="top" bgcolor="#FFFFFF">
+                     <table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td align="center" valign="middle">
+                             <!-- Interrupção do modelo geral, início dos dados específicos da tela -->
+                              <table border="0" align="center" cellspacing="1" cellpadding="1">
+                                 <tr>
+                                    <td align="right" class="NomeCampo">Agenda:</td>
+                                    <td colspan="2" width="200"><input type="text" name="aux_agenda" size="10" maxlength="4" onKeyDown="validaInteiro(event)"/></td>
+                                 </tr>
+								 <tr>
+                                    <td align="right" class="NomeCampo">Data Final Assembleia:</td>
+                                    <td><input type="text" name="aux_dtfinal" size="10" maxlength="10" onkeyup="validaData(this.name,this.value)" /></td>
+									<br/>
+                                 </tr>                                                               
+                              </table>
+                             <!-- Fim dos dados específicos da tela, reinício do modelo geral -->
+                           </td>
+                        </tr>
+                        <tr>
+                           <td height="15" align="center" valign="bottom">
+                              <table width="100%" border="0" cellpadding="1" cellspacing="1" align="center">
+                                 <tr>
+                                    <td align="center"><img style="cursor: hand;" src="/cecred/images/botoes/btn_executar.gif" alt="Executar relatorio" onClick="valida();"></td>
+                                 </tr>
+                              </table>
+                           </td>
+                        </tr>
+                     </table>
+                  </td>
+               </tr>
+           </table>
+         </td>
+      </tr>
+   </table>
+<!-- Fim do modelo geral -->
+</form>
+</body>
+
+
+<SCRIPT LANGUAGE="JAVASCRIPT">
+   NomeDoProgramaPrincipal  = '/wpgd0051.w';
+   NomeDoProgramaDeListagem = '/wpgd0051ls.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0051aj.w';
+   
+   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+   document.form.action = NomeDoProgramaPrincipal;
+
+   var aux_vazio = false;
+   
+   window.focus();
+   
+
+function Habilita()
+{
+  
+}
+function HabilitaSalvar()
+{
+  
+}
+function ValidaDados(form)
+    { 
+      
+    }
+
+function LimparCampos()
+    {
+    }
+
+function ExaminaCampo(Campo)
+    {
+    }
+ 
+function CarregaPrincipal()
+    {  
+    }
+	
+function valida()
+{
+
+    var msg = "";
+	
+
+
+    if (document.form.aux_agenda.value=="") 
+        msg = "-> Informe o ano da agenda.\n";
+    if (document.form.aux_dtfinal.value=="") 
+        msg = msg + "-> Informe a data final.\n";
+		
+   
+    var aux_ano = document.form.aux_dtfinal.value;
+	
+	var x = aux_ano.substring(aux_ano.length -4, aux_ano.length);
+	
+	if ( x != document.form.aux_agenda.value)
+		msg = "-> Ano informado na Assembleia deve ser o mesmo da agenda.\n";
+	
+   
+    if (msg!="") {
+	
+        alert(msg);
+		return false;
+		
+	}
+	
+	aguarde();
+	
+	document.form.submit();
+	
+	
+}
+
+function aguarde(){
+   
+   // abre a janela com a mesagem de aguarde
+   window.open('aguarde',null,'menubar = no, resizable = no, scrollbars = no, status = no, titlebar = no, toolbar = no, height=50, width=300, left=260, top=220');      
+} 
+
+// valida a digitação da data nos campos
+function validaData(campo,valor){
+
+   if((event.keyCode==9)||    // TAB
+      (event.keyCode==16)){   // BACK-TAB
+	  return true;
+   } 
+
+   // tira as barras
+   document.form[campo].value = document.form[campo].value.replace("/","");
+   document.form[campo].value = document.form[campo].value.replace("/","");
+   
+   // data são 8 caracteres
+   document.form[campo].value = document.form[campo].value.substring(0,8);
+
+   // varre o campo em busca de caracteres inválidos e remove-os
+   for(var i=0;i< document.form[campo].value.length;i++){
+      
+	  if((document.form[campo].value.substring(i,i+1)!='0')&&
+         (document.form[campo].value.substring(i,i+1)!='1')&&
+         (document.form[campo].value.substring(i,i+1)!='2')&&
+         (document.form[campo].value.substring(i,i+1)!='3')&&
+         (document.form[campo].value.substring(i,i+1)!='4')&&
+         (document.form[campo].value.substring(i,i+1)!='5')&&
+         (document.form[campo].value.substring(i,i+1)!='6')&&
+         (document.form[campo].value.substring(i,i+1)!='7')&&
+         (document.form[campo].value.substring(i,i+1)!='8')&&
+         (document.form[campo].value.substring(i,i+1)!='9'))	  
+    	  document.form[campo].value = document.form[campo].value.substring(0,i);   
+   }   
+      
+   // valida o dia e formata a data - DD/MM
+   if(document.form[campo].value.length > 2){
+      if((document.form[campo].value.substring(0,2) > "31")||
+         (document.form[campo].value.substring(0,2) == "00")){
+	     alert("Dia inválido! Deve ser entre 01 e 31!");
+		 document.form[campo].value="";
+		 return false;
+	  }
+   
+      document.form[campo].value = document.form[campo].value.substring(0,2) + "/" +
+	                               document.form[campo].value.substring(2,document.form[campo].value.length);
+   }							   
+
+   // valida o mes e formata a data - MM/AAAA
+   if(document.form[campo].value.length > 5){
+      if((document.form[campo].value.substring(3,5) > "12")||
+         (document.form[campo].value.substring(3,5) == "00")){
+	     alert("Mês inválido! Deve ser entre 01 e 12!");
+		 document.form[campo].value="";
+		 return false;
+	  }
+	     
+      document.form[campo].value = document.form[campo].value.substring(0,5) + "/" +
+	                               document.form[campo].value.substring(5,document.form[campo].value.length);								    
+   }
+}
+</SCRIPT>
+
+</html>

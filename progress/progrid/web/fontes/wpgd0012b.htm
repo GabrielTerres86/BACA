@@ -1,0 +1,257 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="wsoptions" content="no-output">
+<title>Eixos de Atua&ccedil;&atilde;o do Fornecedor (wpgd0012b)</title>
+</head>
+<body>
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+<script language="JavaScript">
+NomeDoProgramaPrincipal  = '/wpgd0012b.w';
+</script>
+<form action="#." method="POST" name="form">
+<input type="hidden" name="aux_cddopcao"  VALUE="">
+<input type="hidden" name="aux_lspermis"  VALUE="">
+<input type="hidden" name="aux_nrdrowid"  VALUE="">
+<input type="hidden" name="aux_dsretorn"  VALUE="">
+<input type="hidden" name="aux_stdopcao"  VALUE="">
+<input type="hidden" name="aux_dsendurl"  VALUE="">
+<input type="hidden" name="aux_nrcpfcgc"  VALUE="">
+<input type="hidden" name="aux_idevento"  VALUE="">
+<input type="hidden" name="aux_cdcooper"  VALUE="">
+<input type="hidden" name="aux_cdeixsel"  VALUE="">
+<input type="hidden" class="NomeCampo" name="aux_nmfornec" readOnly size=40>
+  <table width="400" border="0" align="center" cellspacing="0">
+	<tr valign="botton">
+      <td>
+		<table width="153" border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+		  <tr>
+			<td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+			<td align="center" nowrap width="134" class="linkGuia">Adicionar Eixo</td>
+			<td width="10" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
+		  </tr>
+		</table>
+	  </td>
+    </tr>
+	<tr>
+		<td height="2" align="left" background="/cecred/images/menu/mnu_slc.gif"></td>
+    </tr>
+	<tr>
+	  <td height="22" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg">&nbsp;&nbsp;Descri&ccedil;&atilde;o</td>
+	</tr>
+  	<tr>	
+      <td align="center">
+		<div style="overflow: auto; height:'300';">
+		<table id="tbeixo" width="100%" cellpadding="0" cellspacing="0" border="1" bgColor="#ffffff">  		    
+		<!-- INSERE DADOS -->
+		</table>
+      	</div>
+      </td>
+	</tr>
+	<tr>	
+      <td height="10"></td>
+	</tr>
+	<tr>	
+      <td align="center">
+		<img src="/cecred/images/botoes/btn_salvar.gif" onClick="Salvar()" style="cursor: hand; ">
+      </td>
+	</tr>
+  </table>
+</form>
+</body>
+</html>
+<SCRIPT LANGUAGE="JAVASCRIPT">
+   NomeDoProgramaPrincipal  = '/wpgd0012b.w';
+   NomeDoProgramaDeListagem = '/wpgd0012bs.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0012baj.w';
+   NomeDoProgramaDeZoom     = '/zoom/zoei01.w';
+   
+   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+   document.form.action = NomeDoProgramaPrincipal;
+
+function RetornoDoZoom(campo,valor,valor2,valor3)
+{  
+     
+}
+function Habilita()
+{
+  
+}
+function HabilitaSalvar()
+{
+  
+}
+function ValidaDados(form)
+    { 
+        var msg="";
+                 
+        if (msg == "")
+                return true
+            else
+                {
+                    alert(msg);
+                    return false
+                }
+    }
+
+function LimparCampos()
+{
+   
+}
+
+function ExaminaCampo(Campo)
+{
+
+}
+ 
+function CarregaPrincipal()
+{  
+
+}    
+
+function Incluir()
+{
+   var vaux = document.form.aux_lspermis.value; 
+   if (vaux.substring(0,1) == 'I') 
+       { 
+          if (document.form.aux_stdopcao.value == 'i') 
+                { 
+                   alert('Você já esta no modo de inclusão'); 
+                   return false
+                } 
+             else 
+                { 
+                   document.form.aux_cddopcao.value ='in'; 
+                   document.form.aux_stdopcao.value ='i';
+                   LimparCampos(); 
+                   return true
+                } 
+       } 
+    else 
+       { 
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false
+       }
+}
+
+function Salvar()
+{
+   //ZeraModoExclusao();
+   var vaux = document.form.aux_lspermis.value; 
+   if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) { 
+        if ( document.form.aux_cddopcao.value!='sa')  {
+           if (ValidaDados(document.forms[0])) {
+               Habilita(); 
+               HabilitaSalvar(); 
+               armazenaEixos();
+               document.form.aux_cddopcao.value='sa'; 
+               status = 'Salvando. Por favor, aguarde ...'; 
+               document.form.submit(); 
+               return true;
+               
+            } 
+            else { 
+              return false;
+            }  
+        } 
+   }
+   else { 
+         alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+         return false;
+   }
+}
+
+function Recarregar()
+{
+   
+}
+
+function CarregaPrincipal()
+{
+}
+
+function mostraEixos(){
+
+  var row; var cell;
+  
+  // limpa a tabela de eixos, menos a 1ª linha - linha do cabecalho
+  for (var i=document.all.tbeixo.rows.length; i>3; i--)
+      document.all.tbeixo.deleteRow(i-1);
+	  
+  for(i=0;i<meixo.length;i++){      // insere linhas na tabela de eixos
+     row=tbeixo.insertRow();  // nova linha
+	 row.id=i;
+	 row.onclick=mudaCor;
+	 cell=row.insertCell();      // primeira celula da linha (descricao do eixo)
+	 cell.height = '20px';
+	 cell.width = '100%';
+     cell.className = 'txtNormal';
+	 cell.style.cursor='hand';
+     linky='&nbsp;&nbsp;'+meixo[i].dseixtem + '<input type="hidden" name="aux_cdeixtem" value="' + meixo[i].cdeixtem + '">';
+     cell.innerHTML=linky;	      
+  }
+}
+
+function mudaCor(){
+
+  if(document.form.aux_cdeixtem.length > 1)
+  {
+     if (document.form.aux_cdeixtem[this.id].checked==false){
+        this.bgColor = '#CCCCCC';
+   	 document.form.aux_cdeixtem[this.id].checked=true;
+     }
+     else{
+        this.bgColor = '#FFFFFF';
+   	 document.form.aux_cdeixtem[this.id].checked=false;
+     }
+  }
+  else
+  {
+     if (document.form.aux_cdeixtem.checked==false){
+        this.bgColor = '#CCCCCC';
+   	 document.form.aux_cdeixtem.checked=true;
+     }
+     else{
+        this.bgColor = '#FFFFFF';
+   	 document.form.aux_cdeixtem.checked=false;
+     }
+
+  }
+
+  
+}
+
+function armazenaEixos(){
+  var i;
+  
+  for(i=0;i<document.form.aux_cdeixtem.length;i++)
+    if(document.form.aux_cdeixtem.length > 1)
+    {
+       if(document.form.aux_cdeixtem[i].checked)
+       {
+          if(document.form.aux_cdeixsel.value=='')
+             document.form.aux_cdeixsel.value = document.form.aux_cdeixtem[i].value;
+          else
+             document.form.aux_cdeixsel.value = document.form.aux_cdeixsel.value + ',' + document.form.aux_cdeixtem[i].value;
+       }
+    }
+    else
+    {
+       if(document.form.aux_cdeixtem.checked)
+       {
+          if(document.form.aux_cdeixsel.value=='')
+             document.form.aux_cdeixsel.value = document.form.aux_cdeixtem.value;
+          else
+             document.form.aux_cdeixsel.value = document.form.aux_cdeixsel.value + ',' + document.form.aux_cdeixtem.value;
+       } 
+    }
+}
+
+// tira a borda do nome do fornecedor
+document.form.aux_nmfornec.style.border="none";
+document.form.aux_nmfornec.style.background="#dfe0d6"
+
+mostraEixos();
+
+
+</SCRIPT>

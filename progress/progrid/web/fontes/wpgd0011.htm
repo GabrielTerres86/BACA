@@ -1,0 +1,660 @@
+<!--
+      Alterações: 03/03/2010 - Tratamento na digitação do apóstrofe (Diego).
+	  
+				  22/10/2012 - Incluso chamada para biblioteca de funções funcoes.js , incluso validação tamanho
+				     		   maximo campo Descrição usando função ValidaTamanho. 
+                  
+                  10/09/2013 - Nova forma de chamar as agências, de PAC agora 
+                               a escrita será PA (André Euzébio - Supero).
+							   
+				  18/05/2015 - Aleração da nomenclatura de 'Nome' para 'Titular de Conta' e Inclusão de campos -  
+							   Projeto 229 (Vanessa)
+							   
+				  25/08/2015 - Ajustes solicitados na homologação. (Vanessa)	
+-->
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="wsoptions" content="no-output">
+
+<!--base target="mainFrame"-->
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+</head>
+<body style="margin-left: 3px; ">
+<form action="#." method="POST" name="form">
+<input name="aux_cddopcao" type="hidden" value="">
+<input name="aux_lspermis" type="hidden" value="">
+<input name="aux_nrdrowid" type="hidden" value="">    
+<input name="aux_dsretorn" type="hidden" value="">    
+<input name="aux_stdopcao" type="hidden" value="">    
+<input name="aux_dsendurl" type="hidden" value="">
+<input name="aux_nrseqdig" type="hidden" value="">
+<input name="aux_idevento" type="hidden" value="">    
+<input name="cdagenci"     type="hidden" value="">
+<input name="cdcooper"     type="hidden" value="">
+<input name="origem"       type="hidden" value="">
+<input name="nrseqpri"     type="hidden" value="">
+<input name="aux_nrseqeve" type="hidden" value="">
+<input name="aux_datahoje" type="hidden" value="">
+<script language="JavaScript">
+   NomeDoProgramaPrincipal  = '/wpgd0011.w';
+   NomeDoProgramaDeZoom     = '/zwpgd0011.w';
+</script>
+	<script SRC="/cecred/js/funcoes.js"></script>
+
+<script type="text/javascript" src="/cecred/scripts/jquery.js"></script>
+<script type="text/javascript" src="/cecred/scripts/jquery.maskedinput.js"></script>
+<!-- Início do modelo geral -->
+<div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom">        </div>
+  <table width="575" height="360"  border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+    <tr>
+      <td width="13"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+      <td width="54"><img src="/cecred/images/geral/spacer.gif" width="48" height="10"></td>
+      <td width="245" height="20" class="linkGuia">Cadastro de Sugest&otilde;es</td>
+      <td width="251" class="linkGuia"> <div align="right">wpgd0011</div></td>
+      <td width="12" align="right" valign="middle" class="linkGuia"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+    </tr>
+    <tr valign="top" bgcolor="#FFFFFF">
+      <td colspan="5">
+        <table width="100%" height="100%"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
+          <tr>
+            <td height="200" valign="top" bgcolor="#FFFFFF">
+              <table width="100%" height="100%"  border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td rowspan="2" align="left">&nbsp;</td>
+                  <td height="15" align="left">
+                                 
+                    <!-- Interrupção do modelo geral, início dos dados específicos da tela -->
+                    <table width="541" border="0" align="center">
+                      <tr>
+                        <td width="60" align="right" class="NomeCampo"><div align="right">N&uacute;mero:</div></td>
+                        <td width="60"><div class="NomeCampo" id="SeqDig">
+                          <input name="nrseqdig" type="text" disabled="true" class="Campo" size="8"  readonly="true">
+						</div></td>
+						
+                        <td   width="250" colspan="3"><div align="right"><span class="NomeCampo">Data:</span></div></td>
+						
+                        <td width="50"><div align="left">
+                          <input name="dtmvtolt" type="text" class="Campo" size="10" onKeyPress = "top.frcod.FormataData(this.name, this.value)"  value="" readonly>
+                        </div></td>
+                        <td width="63" align="right" class="NomeCampo">&nbsp;</td>
+                        <td width="60">&nbsp;                          </td>
+                      </tr>
+                      <tr>
+                        <td align="right" class="NomeCampo">Origem :</td>
+                        <td>
+							<select name="aux_cdorisug" class="Campo" onChange="MostraOrigem(this.value);">
+                            </select>
+						</td>
+                        <td colspan="3" width="60" align="right" class="NomeCampo"><div align="right" style="width:100px"><span class="NomeCampo" style="text-align:right">Parceria Institucional:</span></div></td>
+                        <td align="left">
+							<select name="aux_cdcodpri" class="Campo">
+                            </select>
+						</td>
+                        
+                      </tr>
+                      <tr>
+                        <td align="right" class="NomeCampo"><div align="right" class="NomeCampo">Cooperativa:</div></td>
+                        <td>
+                          <select name="aux_cdcooper" class="Campo" onChange="document.form.cdcooper.value = document.form.aux_cdcooper.value; document.form.submit();">
+                          </select>
+                        </td>
+                        <td colspan="3" ><div align="right"><span class="NomeCampo">PA:</span></div></td>
+                        <td ><div align="left"><span class="NomeCampo">
+                            <select name="aux_cdagenci" class="Campo">
+                            </select>
+                        </span></div></td>
+                      </tr>
+                      <tr>
+                        <td align="right"><div id="Cooperado" class="NomeCampo" >Conta: </div></td>
+                        <td><div id="Cooperado"><span class="NomeCampo">
+                          <input name="nrdconta" type="text" class="Campo" size="20"  language="JavaScript" onBlur="return top.frames[1].PesquisaDados('nrdconta','nrdconta','nrdconta',document.form.nrdconta.value,'idseqttl',document.form.idseqttl.value,'cdcooper',document.form.aux_cdcooper.value);">
+                        </span> </div></td>
+                        <td><div id="Cooperado" class="NomeCampo">
+                          <div align="right"><span class="NomeCampo">Titularidade</span>:</div>
+                        </div></td>
+                        <td colspan="3"><div id="Cooperado"><span class="NomeCampo">
+                          <input name="idseqttl" type="text" class="Campo" onBlur="return top.frames[1].PesquisaDados('nrdconta','nrdconta','nrdconta',document.form.nrdconta.value,'idseqttl',document.form.idseqttl.value,'cdcooper',document.form.aux_cdcooper.value);" size="5" language="JavaScript">
+                        </span></div></td>
+                      </tr>
+                      <tr>
+                        <td align="right" class="NomeCampo"><div class="NomeCampo" id="Nome">Titular Conta:</div></td>
+                        <td colspan="5">
+                            <div id="Nome" class="NomeCampo" >
+                              <input  name="nmtitular" type="text" readonly="true"  class="Campo" id="nmtitular" size="50" value="">
+                            </div>
+                        </td>
+						<tr>
+                        <td align="right" class="NomeCampo"><div class="NomeCampo" id="NaoCoop">Nome:</div></td>
+                        <td colspan="5">
+                            <div id="NaoCoop" class="NomeCampo" >
+                              <input style="border:none;" name="nmpessug" type="text"  readonly="true" class="Campo" id="nmpessug" size="49" value="">
+                            </div>
+                        </td>
+						<tr>
+                        <td align="right" class="NomeCampo"><div class="NomeCampo" id="NaoCoop">Telefone:</div></td>
+                        <td colspan="5">
+                            <div id="NaoCoop" class="NomeCampo" >
+                              ( <input style="border:none;width:15px; margin-bottom:-3px;" name="nrdddtel" type="text"  readonly="true" class="Campo" id="nrdddtel" size="3" value="">
+                              ) <input style="border:none;margin-bottom:-3px;" name="nrtelcto" type="text" onload="formatar('####-####', this)" readonly="true" class="Campo" id="nrtelcto" size="49" value="">
+                            </div>
+                        </td>
+                        </tr>
+					    <tr>
+                         <td align="right" class="NomeCampo"><div class="NomeCampo" id="NaoCoop">Celular:</div></td>
+                         <td colspan="5">
+                            <div id="NaoCoop" class="NomeCampo" >
+                             ( <input style="border:none;width:15px;margin-bottom:-3px" name="nrdddcel" type="text"  readonly="true" class="Campo" id="nrdddcel" size="3" value="">
+                             ) <input style="border:none;margin-bottom:-3px;" name="nrcelcto" type="text"  readonly="true" class="Campo" id="nrcelcto" size="49" value="">
+                            </div>
+                         </td>
+                      </tr>   
+					  <tr>
+                        <td align="right" class="NomeCampo"><div class="NomeCampo" id="NaoCoop"> E-mail:</div></td>
+                        <td colspan="5">
+                            <div id="NaoCoop" class="NomeCampo" >
+                              <input style="border:none;" name="dsemlcto" type="text"  readonly="true" class="Campo" id="dsemlcto" size="49" value="">
+                            </div>
+                        </td>
+                      </tr>   
+  					  
+                      <tr>
+                        <td align="right" class="NomeCampo"><div align="right" class="NomeCampo" >Descri&ccedil;&atilde;o:</div></td>
+                        <td colspan="7"><textarea name="dssugeve" cols=50 rows=5 class="CampoTextArea" onkeyup="ValidaCampo()" onKeyUp="ValidaTamanho(this.form.dssugeve,500)" onKeyDown="ValidaTamanho(this.form.dssugeve,500)"> </textarea></td>
+                      </tr>
+                      <tr>
+                        <td align="right" class="NomeCampo"><div align="right" class="NomeCampo" id="Pesquisa">Quantidade:</div></td>
+                        <td colspan="5"><div class="NomeCampo" id="Pesquisa">
+                          <input name="qtsugeve" type="text" class="Campo" size="4" maxlength="4">
+                        </div></td>
+                      </tr>
+                    </table>
+                    <!-- Fim dos dados específicos da tela, reinício do modelo geral -->                  
+                  </td>
+                </tr>
+                <tr>
+                  <td height="15" align="center" valign="bottom">
+                                  <table border="0" align="center" cellpadding="1" cellspacing="1">
+                    <tr>
+												<th><div id="btinclui" align="center"><img style="cursor:hand;" src="/cecred/images/botoes/btn_limpar.gif" onClick="return Incluir()"></div></th>
+                      <th><div id="btsalvar" align="center"><img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif"  onClick="return Salvar()"></div></th>
+                      <th><div id="btexclui" align="center"><img style="cursor:hand;" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir()"></div></th>
+                      <th><div id="btpesqui" align="center"><img style="cursor:hand;" src="/cecred/images/botoes/btn_procurar.gif" onClick=";return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P',document.form.aux_idevento.value,document.form.aux_cdcooper.options[document.form.aux_cdcooper.options.selectedIndex].value)"></div></th>
+                    </tr>
+                  </table></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
+<!-- Fim do modelo geral -->
+</form>
+</body>
+</html>
+<SCRIPT LANGUAGE="JAVASCRIPT">
+   NomeDoProgramaPrincipal  = '/wpgd0011.w';
+   NomeDoProgramaDeListagem = '/wpgd0011ls.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0011aj.w';
+   NomeDoProgramaDeZoom     = '/zoom/zwpgd0011.w';
+   
+   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+   document.form.action = NomeDoProgramaPrincipal;
+   
+   aux_vltotcel = $("#nrcelcto").val().length;
+   aux_vltottel = $("#nrtelcto").val().length;   
+
+    if (aux_vltotcel == 8){
+		$("#nrcelcto").mask("9999-9999");
+   }else if (aux_vltotcel == 9){
+		$("#nrcelcto").mask("99999-9999");
+   }else{
+		$("#nrcelcto").mask("999999999");
+   }
+   
+   if (aux_vltottel == 8){
+		$("#nrtelcto").mask("9999-9999");
+   }else if (aux_vltottel == 9){
+		$("#nrtelcto").mask("99999-9999");
+   }else{
+		$("#nrtelcto").mask("999999999");
+   }
+   
+function Habilita()
+{
+   // Habilita os campos pra poder salvar corretamente
+   document.form.aux_cdagenci.disabled = false;
+   document.form.aux_cdcooper.disabled = false;
+   document.form.aux_cdorisug.disabled = false;
+}
+function HabilitaSalvar()
+{
+  
+}
+function ValidaDados(form)
+{ 
+    var msg="";
+     
+//    msg = msg + top.frcod.VE("ca",form.dssugeve,"A descrição da sugestão","nao");
+/*    msg = msg + top.frcod.VE("ca",form.qtsugeve,"A quantidade de sugestão","nao");*/
+
+    if (document.form.dssugeve.value == '')
+						 msg = 'A descrição da sugestão não pode ser em branco!';
+
+    if (msg == "")
+        return true;
+    else
+    {
+        alert(msg);
+        return false;
+    }
+}
+
+function LimparCampos()
+{
+   //document.form.aux_cdagenci.value = ''; 
+   //document.form.aux_cdcooper.value = ''; 
+   document.form.nrseqdig.value     = '';  
+    
+   document.form.dtmvtolt.value     = document.form.aux_datahoje.value;  
+   document.form.nrdconta.value     = '';  
+   document.form.idseqttl.value     = '';  
+   document.form.nmtitular.value     = '';  
+   //document.form.aux_cdcooper.value     = '';  
+   document.form.dssugeve.value     = '';  
+   document.form.qtsugeve.value     = '';
+   document.form.cdcooper.value     = ''; 
+   document.form.nmpessug.value     = '';  
+   document.form.nrdddtel.value     = '';  
+   document.form.nrtelcto.value     = '';  
+   document.form.nrdddcel.value     = '';  
+   document.form.nrcelcto.value     = '';  
+   document.form.dsemlcto.value     = '';   
+   
+   if (document.form.origem.value == "")
+   {
+      document.form.aux_cdagenci.value     = '';
+      document.form.aux_cdorisug.value     = ''; 
+      MostraOrigem(document.form.aux_cdorisug.value);
+   }
+}
+
+function CarregaPrincipal()
+    {  
+       jan3 = open('wpgd0011a.htm','fraux');
+    }   
+
+
+// Cria a Combo de PAs, de acordo com a cooperativa selecionada
+function MostraPACs()
+{
+
+   // Posiciona a cooperativa, caso seja um registro existente
+   if (document.form.cdcooper.value != '')
+      document.form.aux_cdcooper.value = document.form.cdcooper.value;
+   else
+      document.form.cdcooper.value = document.form.aux_cdcooper.value;          
+   
+   for (var i=document.all.aux_cdagenci.options.length; i>=0; i--)
+      document.all.aux_cdagenci.remove(i); 
+
+   var oOption;
+                        
+      /* Cria o registro que representa todos os PAs */
+		 /*if (mpac.length > 1){
+      oOption = document.createElement("OPTION");
+      document.all.aux_cdagenci.options.add(oOption);
+      oOption.innerText = "---TODOS---";
+      oOption.value = 0;
+		 }*/
+   
+   for(i=0;i<mpac.length;i++)
+   {
+      if (mpac[i].cdcooper == document.form.aux_cdcooper.value)
+      {
+         oOption = document.createElement("OPTION");
+         document.all.aux_cdagenci.options.add(oOption);
+         oOption.innerText = mpac[i].nmresage.substring(0, 15);
+         oOption.value = mpac[i].cdagenci;
+         
+      }
+   }
+
+   // posiciona a seleção no primeiro registro de PAs, se só tiver 1
+   if(document.form.aux_cdagenci.options.length == 1)
+      document.form.aux_cdagenci.value = document.all.aux_cdagenci.options[0].value;
+   else
+      document.form.aux_cdagenci.value = '';
+}
+
+
+// Posiciona as Combos nos valores corretos
+function PosicionaPAC()
+{
+
+   if(document.form.cdagenci.value != "")
+   {
+      //document.form.aux_cdeixtem.value = document.form.cdeixtem.value;
+      MostraPACs();
+      document.form.aux_cdagenci.value = document.form.cdagenci.value;
+   }
+   else
+   {
+      // posiciona a seleção no primeiro registro de Cooperativas, se só tiver 1
+      if(document.all.aux_cdcooper.options.length == 1)
+         document.form.aux_cdcooper.value = document.all.aux_cdcooper.options[0].value;
+      //else
+         //document.form.aux_cdcooper.value = '';
+   }
+}
+
+function PosicionaParceria()
+{
+   
+   if(document.form.nrseqpri.value != 0)
+   {
+     
+      document.form.aux_cdcodpri.value = document.form.nrseqpri.value;
+   }
+   else
+   {
+      // posiciona a seleção no primeiro registro de Cooperativas, se só tiver 1
+      if(document.all.aux_cdcodpri.options.length == 1)
+         document.form.aux_cdcodpri.value = document.all.aux_cdcodpri.options[0].value;
+      
+   }
+}
+
+function MostraOrigem(origem){
+   
+   // 1 - Comite Educativo
+   // 2 - Pesquisa
+   // 3 - Cooperativa
+   // 4 - Cooperado
+   // 5 - Nao Cooperado
+   // 6 - Central
+   // 7 - Avaliação
+        
+   for(i = 0;i < document.all.Cooperado.length; i++)
+   { 
+	  //document.all.Cooperado[i].style.visibility = "hidden";
+      document.all.Cooperado[i].style.display = "none";
+   }
+   for(i = 0;i < document.all.Pesquisa.length; i++)
+   {
+      document.all.Pesquisa[i].style.display = 'none';
+   }
+   for(i = 0;i < document.all.Nome.length; i++)
+   {
+      document.all.Nome[i].style.display = 'none';
+   }
+   
+   for(i = 0;i < document.all.NaoCoop.length; i++)
+   {
+      document.all.NaoCoop[i].style.display = 'none';
+   }
+
+   document.form.aux_cdagenci.disabled = false;
+   document.form.aux_cdcooper.disabled = false;
+   document.form.aux_cdorisug.disabled = false;
+//   document.form.nmtitular.style.border='none';   
+
+  if(origem == "1") //Comite
+  {
+     for(i = 0;i < document.all.Cooperado.length; i++)
+     {
+        document.all.Cooperado[i].style.display='block'; 
+     }
+     for(i = 0;i < document.all.Nome.length; i++)
+     {
+        document.all.Nome[i].style.display='block'; 
+     }
+     document.form.qtsugeve.value = "1";
+         LimpaAssociado();
+ 
+  }          
+  
+  if(origem == "2" || origem == "10")//Pesquisa
+  {
+     for(i = 0;i < document.all.Pesquisa.length; i++)
+     {
+        document.all.Pesquisa[i].style.display = 'block';
+     }
+  }          
+  
+		/*if(origem == "3")//Cooperativa
+  {
+     for(i = 0;i < document.all.Cooperado.length; i++)
+     {
+        document.all.Cooperado[i].style.display='block'; 
+     }
+     for(i = 0;i < document.all.Nome.length; i++)
+     {
+        document.all.Nome[i].style.display='block'; 
+     }
+     document.form.qtsugeve.value = "1";  
+         LimpaAssociado();
+         
+		}*/
+
+  if(origem == "4")//Cooperados
+  {
+     for(i = 0;i < document.all.Cooperado.length; i++)
+     {
+        document.all.Cooperado[i].style.display='block'; 
+     }
+     for(i = 0;i < document.all.Nome.length; i++)
+     {
+        document.all.Nome[i].style.display='block'; 
+     }
+     document.form.qtsugeve.value = "1"; 
+
+     document.form.aux_cdagenci.disabled = true;
+     document.form.aux_cdcooper.disabled = true;
+         LimpaAssociado();
+
+  }
+
+  if(origem == "5")//Não cooperado
+  {
+     for(i = 0;i < document.all.Nome.length; i++)
+     { 
+		if( document.all.nmtitular.value == ''){
+			document.all.Nome[i].style.display='none';
+			document.all.Cooperado[i].style.display='none'; 			
+		}else{ 
+			for(a = 0;a < document.all.Cooperado.length; a++)
+			{   
+				document.all.Cooperado[a].style.display='block'; 
+				document.all.Nome[i].style.display='block';
+				document.form.nrdconta.disabled = true;
+				document.form.idseqttl.disabled = true;				
+		}	}
+     }
+	 for(i = 0;i < document.all.NaoCoop.length; i++)
+	{
+      document.all.NaoCoop[i].style.display = 'block';
+	}
+     document.form.qtsugeve.value = "1";
+  }           
+   
+		/*if(origem == "6")//Central
+  {
+         for(i = 0;i < document.all.Cooperado.length; i++)
+     {
+        document.all.Cooperado[i].style.display='block'; 
+     }
+     for(i = 0;i < document.all.Nome.length; i++)
+     {
+        document.all.Nome[i].style.display='block'; 
+     }
+     document.form.qtsugeve.value = "1";  
+         LimpaAssociado();
+                  
+		}  */         
+
+  if(origem == "7")//Avaliação
+  {
+     for(i = 0;i < document.all.Pesquisa.length; i++)
+     {
+        document.all.Pesquisa[i].style.display = 'block';
+     }
+  }
+ 
+  // posiciona a seleção no primeiro registro de PAs, se só tiver 1
+  if(document.all.aux_cdagenci.options.length == 1)
+     document.form.aux_cdagenci.value = document.all.aux_cdagenci.options[0].value;           
+}
+
+function RetornoDaPesquisa(campo,valor,valor2,valor3)
+{  
+  if (campo == 'nrdconta') 
+  {
+     document.form.nmtitular.value = valor;
+         if (valor.substring(2,3) == '*')
+            document.form.nmtitular.style.color = 'red';
+         else
+            document.form.nmtitular.style.color = '';         
+         
+     // se for COOPERADOS, atualiza o PA
+         if (document.form.aux_cdorisug.value == '4'){
+            document.form.cdagenci.value = valor2;
+        PosicionaPAC();
+         }
+                
+     document.form.aux_cdcooper.value = valor3;
+  }
+}
+
+// Não permite digitar apóstrofe
+function ValidaCampo(){
+
+   // varre o campo em busca de apóstrofe e remove-a
+   for(var i=0;i< document.form.dssugeve.value.length;i++){
+       if(document.form.dssugeve.value.substring(i,i+1)=='\''){
+              document.form.dssugeve.value = document.form.dssugeve.value.substring(0,i);  
+                  return false; 
+       }   
+   }  
+}
+
+// Funcao: Incluir
+// Objetivo: Funcao acionada quando selecionado o botao de incluir da tela
+// Parametros de Entrada: nenhum
+// Parametros de Saida: 
+//    aux_cddopcao = 'in' - Modo de Inclusao
+//    aux_stdopcao = 'i' - Status de Inclusão
+//    Funcao MostraResultado, caso o usuário não tenha permissão para inclusão ou já esteja em 
+//       modo de inclusão
+function Incluir()
+{
+   var vaux = document.form.aux_lspermis.value; 
+   if (vaux.substring(0,1) == 'I') 
+   { 
+      if (document.form.aux_stdopcao.value == 'i') 
+      {
+         alert('Você já esta no modo de inclusão.'); 
+         return false;
+      } 
+      else 
+      {
+         document.form.aux_cddopcao.value='in'; 
+         document.form.aux_stdopcao.value='i';
+         LimparCampos(); 
+         return true;
+      } 
+   } 
+   else 
+   {
+      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+      return false;
+   }
+}
+
+
+// Funcao: Salvar
+// Objetivo: Funcao acionada quando selecionado o botão de Salvar da tela
+// Parametros de Entrada: 
+//    Funcao ValidaDados
+// Parametros de Saida: 
+//    aux_cddopcao = "sa" - Operação de Salvar
+//    submit() - Manda para o progress a instrução de salvar o registro
+//    MostraResultado, caso o usuário não tenha permissão de Salvar
+function Salvar()
+{
+   var vaux = document.form.aux_lspermis.value; 
+   if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) { 
+        if ( document.form.aux_cddopcao.value!='sa')  {
+           if (ValidaDados(document.forms[0])) {
+               Habilita(); 
+               HabilitaSalvar(); 
+               document.form.aux_cddopcao.value='sa'; 
+               status = 'Salvando. Por favor, aguarde ...'; 
+               document.form.submit(); 
+               return true;
+            } 
+            else { 
+              return false;
+            }  
+        } 
+   }
+   else { 
+         alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+         return false;
+   }
+}
+
+function Avaliacao()
+{   
+         for(i = 0;i < document.all.Pesquisa.length; i++)
+     {
+        document.all.Pesquisa[i].style.display = 'block';
+     }
+         for(i = 0;i < document.all.Nome.length; i++)
+     {            
+        document.all.Nome[i].style.display = 'none';
+     }
+  
+     for(i = 0;i < document.all.Cooperado.length; i++)
+     {
+        document.all.Cooperado[i].style.display='none'; 
+     }
+         document.form.dtmvtolt.disabled = true;
+         document.form.aux_cdorisug.disabled = true;
+		 document.all.btexclui.style.display = 'none';
+		 document.all.btpesqui.style.display = 'none';
+         
+         PosicionaPAC();
+		document.form.aux_cdagenci.disabled = true;
+		document.form.aux_cdcooper.disabled = true;   
+}
+
+function LimpaAssociado(){
+
+  // na INCLUSAO  
+  if (document.form.aux_cddopcao.value == 'in'){
+     // limpa os campos
+     document.form.nrdconta.value='';
+     document.form.idseqttl.value='1';
+     document.form.nmtitular.value='';
+  }
+}
+
+function TravaTudo(){
+  document.form.aux_cdorisug.disabled = true;
+  document.form.aux_cdcooper.disabled = true;
+  document.form.aux_cdagenci.disabled = true;
+}
+		
+PosicionaPAC();
+PosicionaParceria();
+MostraOrigem(document.form.aux_cdorisug.value);
+
+//MostraParceria(document.form.aux_cdcodpri.value);
+document.form.nmtitular.style.border = 'none';
+        
+</SCRIPT>

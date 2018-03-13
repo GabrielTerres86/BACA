@@ -1,0 +1,228 @@
+<!-------------------------------------------------------------------------------
+
+   Programa: sistema/progrid/web/fontes/wpgd0043.p
+   Sistema : Progrid
+   Sigla   : PROGRID
+   Autor   : Jean Michel
+   Data    : ######/####                       Ultima atualizacao: 30/08/2017
+   
+   Dados referentes ao programa:
+   Frequencia: Sempre que for chamado (On-Line)
+   
+   Objetivo  : Tela de relatório de fechamento geral
+      
+   Alteracoes: 23/06/2015 - Ajustes no JavaScript, código e inclusão de nova
+                            cooperativa "99-TODAS" (Jean Michel).
+							
+               25/04/2016 - Alteracao nas dimensoes	dos campos e da tela assim
+                            como a forma de exibicao da opcao detalhar.
+                            (Carlos Rafael Tanholi).              				
+                            
+               30/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).
+               
+--------------------------------------------------------------------------------->
+
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta name="wsoptions" content="no-output">
+		<title>Fechamento Final</title>
+		<base target="mainFrame"> 
+		<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+		<script type="text/javascript">
+			function ver_detalhe(valor){
+
+				if(valor == 1)
+					document.all.divDetalhe.style.visibility = 'hidden';
+				else
+					document.all.divDetalhe.style.visibility = 'visible';
+			}
+			
+			function ValidaDados(form){ 
+				var msg = "";
+				return true
+			}
+
+			function imprimir(){
+				msg      = "";
+				nrseqeve = "";
+
+				if (document.form.aux_dtanoage.value=="") 
+					msg = "-> Selecione o ano a agenda.\n";
+
+				if (document.form.aux_cdcooper.value=="") 
+					msg = msg + "-> Selecione uma cooperativa.\n";
+
+				if (msg!="") 
+					alert(msg);
+				else{
+					
+					var form = document.form;
+					var listCooper = "";
+					var x = 0;
+					var y = 0;
+
+					for(x = 0; x < form.aux_cdcooper.length; x++){
+						if(form.aux_cdcooper[x].selected){
+						
+							if(form.aux_cdcooper[x].value == 99){
+								
+								for(y = 0; y < form.aux_cdcooper.length; y++){
+									if(form.aux_cdcooper[y].value != 99){
+										if(listCooper == null || listCooper == ""){
+											listCooper = form.aux_cdcooper[y].value;
+										}else{
+											listCooper = listCooper + "," + form.aux_cdcooper[y].value;
+										}
+									}
+								}
+								 
+								break;
+							}
+							
+							if(listCooper == null || listCooper == ""){
+								listCooper = form.aux_cdcooper[x].value;
+							}else{
+								listCooper = listCooper + "," + form.aux_cdcooper[x].value;								
+							}
+						 
+						}
+					}
+					
+					// Dados Quantitativos
+					if(document.form.aux_tprelato.value==1)
+						linha = "wpgd0043a?parametro1=" + document.form.aux_idevento.value
+                           + "&parametro2=" + listCooper
+                           + "&parametro3=" + document.form.aux_dtanoage.value
+                           + "&parametro4=" + document.form.aux_nrseqpgm.value;
+								  
+						// Por Evento
+						if(document.form.aux_tprelato.value==2)
+							linha = "wpgd0043b?parametro1=" + document.form.aux_idevento.value
+                             + "&parametro2=" + listCooper
+                             + "&parametro3=" + document.form.aux_dtanoage.value
+                             + "&parametro4=" + document.form.aux_detalhar.checked
+                             + "&parametro5=" + document.form.aux_nrseqpgm.value;
+
+						// Por PAC
+						if(document.form.aux_tprelato.value==3)
+							linha = "wpgd0043c?parametro1=" + document.form.aux_idevento.value
+                             + "&parametro2=" + listCooper
+                             + "&parametro3=" + document.form.aux_dtanoage.value
+                             + "&parametro4=" + document.form.aux_detalhar.checked
+                             + "&parametro5=" + document.form.aux_nrseqpgm.value;
+
+						imp = window.open(linha,"imp","toolbar=no,location=no,diretories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,top=10,left=10,width=850,height=600");
+				}
+			}
+
+			function verifica_coop(){
+        
+				if (document.form.aux_cdcooper.value == ''){
+					alert('A Cooperativa deve ser escolhida!');
+					return false;
+				}
+
+				imprimir();
+			}
+		</script>
+	</head>
+	<body style="margin-left: 3px; " onLoad="ver_detalhe(1);">
+		<form action="#." method="POST" name="form">
+			<input name="aux_idevento" id="aux_idevento" type="hidden" value="">
+			<input name="aux_dsendurl" id="aux_dsendurl" type="hidden" value="">		
+			<input name="aux_lspermis" id="aux_lspermis" type="hidden" value="">
+      <input name="aux_cdoperad" id="aux_cdoperad" type="hidden" value="">
+			      
+			<!-- Início do modelo geral -->
+			<div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;">
+				<img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom">
+			</div>
+			<table width="575" height="390" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+				<tr>
+					<td height="20" colspan="5">
+						<table width="100%"  border="0" cellspacing="0" cellpadding="0">
+							<tr>
+								<td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+								<td width="56"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
+								<td width="406" height="20" align="left" class="linkGuia">Fechamento Geral</td>
+								<td width="91" height="20" align="right" class="linkGuia">wpgd0043</td>	  
+								<td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr valign="top" bgcolor="#FFFFFF">
+					<td colspan="5">
+						<table width="100%" height="100%" border="0" align="left" cellpadding="0" cellspacing="0" bgcolor="#999999">
+							<tr>
+								<td valign="top" bgcolor="#FFFFFF">
+									<table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
+										<tr>
+											<td align="center" valign="middle">
+												<!-- Interrupção do modelo geral, início dos dados específicos da tela -->
+												<table border="0" align="center" cellspacing="1" cellpadding="1">
+													<tr>
+														<td align="right" class="NomeCampo">Agenda:</td>
+														<td colspan="2" width="200">
+															<input type="text" name="aux_dtanoage" style="width: 270px; text-align: left;" >
+														</td>
+													</tr>
+													<tr>
+														<td align="right" class="NomeCampo">Cooperativa:</td>
+														<td colspan="2">
+															<select multiple style="width: 270px; height: 240px;" name="aux_cdcooper" id="aux_cdcooper" class="Campo" >
+															</select></td>
+													</tr>
+													<tr>
+														<td align="right" class="NomeCampo">Tipo:</td>
+														<td>
+															<select name="aux_tprelato" class="Campo" style="width: 270px;" onChange="ver_detalhe(this.value);"></select>
+														</td>
+														<td align="rigth" class="NomeCampo">
+															<div id="divDetalhe"><input type="checkbox" name="aux_detalhar">Detalhar</div>									   
+														</td>									
+													</tr>
+                          <tr>
+                            <td align="right" class="NomeCampo" ><div id="divNrseqpgmLabel">Programa:</div></td>
+                            <td colspan="2"><div id="divNrseqpgm"><select style="width: 270px;" name="aux_nrseqpgm" type="hidden" class="Campo" id="aux_nrseqpgm" ></select></div></td>
+                          </tr>
+												</table>
+												<!-- Fim dos dados específicos da tela, reinício do modelo geral -->
+											</td>
+										</tr>
+										<tr>
+											<td height="15" align="center" valign="bottom">
+												<table width="100%" border="0" cellpadding="1" cellspacing="1" align="center">
+													<tr>
+														<td align="center"><img style="cursor: hand;" src="/cecred/images/botoes/btn_visualizar_impressao.gif" alt="Procurar fechamentos para os dados informados" onClick="verifica_coop();"></td>
+													</tr>
+												</table>
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</form>
+	</body>
+  <script type="text/javascript">
+    NomeDoProgramaPrincipal  = '/wpgd0043.w';
+    NomeDoProgramaDeListagem = '/wpgd0043ls.w';
+    NomeDoProgramaDeAjuda    = '/wpgd0043aj.w';
+
+    NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+    document.form.action = NomeDoProgramaPrincipal;
+
+    var aux_vazio = false;
+    
+    
+    if(document.form.aux_idevento.value == 2){
+      document.getElementById("divNrseqpgm").style.display = "none";
+      document.getElementById("divNrseqpgmLabel").style.display = "none";
+    }
+  </script>
+</html>

@@ -1,0 +1,224 @@
+<html>
+<head>
+<title>Fornecedores (wpgd0018f)</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<script language="JavaScript">
+NomeDoProgramaPrincipal  = '/wpgd0018f.w';
+</script>
+<form action="#." method="POST" name="form">
+  
+  <div align="left">
+    <input type="hidden" name="aux_dsendurl" value="">
+    <input type="hidden" name="aux_cddopcao" value="">           
+    <input type="hidden" name="aux_nrdrowid" value="">
+    <input type="hidden" name="aux_lspermis" value="">
+    <input type="hidden" name="aux_dsretorn" value="">
+    <input type="hidden" name="aux_stdopcao" value="">
+    <input type="hidden" name="aux_lsfornec" value="">
+    <input type="hidden" name="aux_idevento" value="">
+    <input type="hidden" name="aux_dtanoage" value="">
+    <input type="hidden" name="aux_cdcooper" value="">
+    <input type="hidden" name="aux_cdagenci" value="">
+    <input type="hidden" name="aux_cdevento" value="">
+	<input type="hidden" name="aux_nrpropos" value="">
+	<input type="hidden" name="aux_nrcpfcgc" value="">	
+    </div>
+    	<table width="790"  border="0" cellspacing="0" cellpadding="3">
+		    <tr>
+		      <td>
+				<table width="780" border="0" cellpadding="0" cellspacing="0" >
+         			<tr>
+					    <td width="11" background="/cecred/images/geral/guia_fundo.gif"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+			            <td width="300" nowrap background="/cecred/images/geral/guia_fundo.gif" class="linkGuia"><div align="center">Fornecedores de Material de Divulgação</div></td>
+            			<td width="8" background="/cecred/images/geral/guia_fundo.gif" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
+				        <td>&nbsp;</td>
+					</tr>
+			    </table>
+       			<table width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+        		     <tr>
+					 	<td id="separador1" width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+               			<td id="tbfornece_col1" width="295" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Fornecedor</td>
+						<td id="separador2" width="10" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+               			<td id="tbfornece_col2" width="295" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">CNPJ/CPF</td>
+        		        <td  id="separador3" width="10" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+		             </tr>
+         		 </table>
+                <div style="overflow: auto; height:'200';">
+       	          <table id="tbfornece" width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable" >
+        		     <!-- INCLUI DADOS -->
+         		 </table>
+	       		 </div>
+			 </td>
+		</tr>
+		<tr>
+		  <td>&nbsp;</td>	  
+		</tr>
+		<tr>
+		  <td align="left">
+			
+			<div align="center">
+			  <input name="imageField" type="image"  src="/cecred/images/botoes/btn_salvar.gif" width="60" height="20" onClick="Salvar();" style="cursor:hand">
+			</div></td>
+		</tr>	
+	  </table>
+</form>
+</body>
+
+<SCRIPT LANGUAGE="JAVASCRIPT">
+   NomeDoProgramaPrincipal  = '/wpgd0018f.w';
+   NomeDoProgramaDeListagem = '/wpgd0018fs.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0018faj.w';
+   NomeDoProgramaDeZoom     = '/zoom/zwpgd0018f.w';
+   
+   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+   document.form.action = NomeDoProgramaPrincipal;
+
+
+function Salvar()
+{ 
+   //ZeraModoExclusao();
+   var vaux = document.form.aux_lspermis.value; 
+   if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')){ 
+        if (document.form.aux_cddopcao.value!='sa')  {
+            document.form.aux_cddopcao.value='sa'; 
+	    document.form.aux_stdopcao.value='i';
+            status = 'Salvando. Por favor, aguarde ...';			
+	    armazenaFornecedor();
+	   /* document.form.submit();*/
+            return true;
+        } 
+        else{ 
+            return false;
+        }  
+   }
+   else { 
+         alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+         return false;
+   }
+}
+
+function mudaCor(){
+
+   var aux;
+
+  // se houver mais de um registro de fornecedor
+  if (mfornece.length > 1)
+  {
+     aux = document.form.aux_nrcpfcgc2[this.id].checked;
+     // Zera todo mundo. Só pode selecionar 1
+     for(i = 1; i < document.all.tbfornece.rows.length; i++)
+     {
+        document.all.tbfornece.rows[i].bgColor = '#FFFFFF';
+        document.form.aux_nrcpfcgc2[i-1].checked=false;
+     }
+
+     if (aux==false)
+     {
+         this.bgColor = '#CCCCCC';
+         document.form.aux_nrcpfcgc2[this.id].checked=true;
+     }
+     else
+     {
+         this.bgColor = '#FFFFFF';
+         document.form.aux_nrcpfcgc2[this.id].checked=false;
+     }
+  }
+  // se for somente um registro de fornecedor
+  else
+  {
+     if (document.form.aux_nrcpfcgc2.checked==false){
+         this.bgColor = '#CCCCCC';
+         document.form.aux_nrcpfcgc2.checked=true;
+     }
+     else{
+         this.bgColor = '#FFFFFF';
+	 document.form.aux_nrcpfcgc2.checked=false;
+     }
+  } 
+}
+
+function mostraFornecedor(){
+
+  var row; var cell;  
+  
+  // limpa a tabela de Fornecedores, menos a 1ª linha - linha do cabecalho
+  for (var i=document.all.tbfornece.rows.length; i>2; i--)
+      document.all.tbfornece.deleteRow(i-1);
+	  
+  for(i=0;i<mfornece.length;i++){      // insere linhas na tabela de fornecedores
+     row=tbfornece.insertRow();  // nova linha
+     row.id=i;
+     row.onclick=mudaCor;
+	 row.style.cursor = 'hand';
+     row.bgColor=mfornece[i].regselec;
+
+	 cell=row.insertCell();   // Separador
+     cell.className = 'txtNormal';
+     cell.height = 26;
+	 cell.width= document.all.separador1.width;
+     cell.align = 'left';
+     cell.innerText='';
+	 
+     // nome do fornecedor
+     cell=row.insertCell();      
+     cell.className = 'txtNormal';
+	 cell.width= document.all.tbfornece_col1.width;
+     linky=mfornece[i].nmfornec + '<in' + 'put type="hidden" name="aux_nrcpfcgc2" value="' + mfornece[i].nrcpfcgc + '">';
+     cell.innerHTML=linky; 
+
+     cell=row.insertCell();   // Separador
+     cell.className = 'txtNormal';
+     cell.height = 26;
+	 cell.width= document.all.separador2.width;
+     cell.align = 'left';
+     cell.innerText='';
+	 
+	 // nrcpfcgc
+     cell=row.insertCell();      
+     cell.className = 'txtNormal';
+	 cell.width= document.all.tbfornece_col2.width;
+     linky=mfornece[i].nrcpfcgc;
+     cell.innerHTML=linky; 
+
+     cell=row.insertCell();   // Separador
+     cell.className = 'txtNormal';
+     cell.height = 26;
+	 cell.width= document.all.separador3.width;
+     cell.align = 'left';
+     cell.innerText='';     
+  }
+}
+
+function armazenaFornecedor(){
+  var i; 
+  // se for mais de um registro de fornecedores
+  if (mfornece.length > 1){
+     for(i=0;i<document.form.aux_nrcpfcgc2.length;i++)
+       if(document.form.aux_nrcpfcgc2[i].checked)
+       {
+          document.form.aux_lsfornec.value = document.form.aux_nrcpfcgc2[i].value;
+       } 
+     }
+  // se for somente um registro de fornecedor
+  else{
+     if(document.form.aux_nrcpfcgc2.checked)
+	    document.form.aux_lsfornec.value = document.form.aux_nrcpfcgc2.value ;
+  }
+
+  if (document.form.aux_lsfornec.value == '') {
+     document.form.aux_lsfornec.value = '0,';
+  }
+
+}
+
+if (mfornece.length == 0){
+   alert('Não há fornecedores de Material de Divulgação ou propostas cadastradas');
+   self.close();
+}   
+   
+mostraFornecedor();
+</SCRIPT>
+</html>

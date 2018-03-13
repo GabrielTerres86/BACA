@@ -1,0 +1,408 @@
+<!--
+	Alteracoes: 22/10/2012 - Inclusão chamada para biblioteca de funções funcoes.js e
+							 incluso validação inteiro nos campos DDD e Telefone
+							 (Daniel).
+
+                21/02/2017 - Alteração na quantidade de caracteres do campo de email (Jean Michel).
+-->
+<html>
+<head>
+<title>Contatos do Fornecedor (wpgd0012a)</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+<body>
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+<script language="JavaScript">
+NomeDoProgramaPrincipal  = '/wpgd0012a.w';
+</script>
+<script SRC="/cecred/js/funcoes.js"></script>
+<form action="#." method="POST" name="form">
+<input type="hidden" name="aux_dsendurl" value="">
+<input type="hidden" name="aux_cddopcao" value="">           
+<input type="hidden" name="aux_nrdrowid" value="">
+<input type="hidden" name="aux_lspermis" value="">
+<input type="hidden" name="aux_dsretorn" value="">
+<input type="hidden" name="aux_stdopcao" value="">
+<input type="hidden" name="aux_nrcpfcgc" value="">
+  <table width="100%"  border="0" cellspacing="0" cellpadding="3">
+    <tr>
+      <td>
+	    <table width="400" border="0" cellpadding="0" cellspacing="0">
+          <tr>
+            <td width="154">
+			  <table border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+			    <tr>
+                  <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+                  <td nowrap class="linkGuia"><div align="center">Adicionar Contato </div></td>
+                  <td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
+                </tr>
+              </table>
+			</td>
+            <td>
+			  <span class="style5">
+			  </span>
+			</td>
+          </tr>
+          <tr bgcolor="#999999">
+            <td height="2" colspan="2"></td>
+          </tr>
+        </table>
+        <table width="400" cellpadding="0" cellspacing="1" bgcolor="#999999">
+          <tr>
+            <td valign="top" class="bgConteudoDialogo">
+              <table width="100%" border="0" cellpadding="2" cellspacing="0" bgcolor="#CCCCCC">
+                <tr bgcolor="#FFFFFF">
+				  <td colspan="2">&nbsp;</td>
+				</tr>
+                <tr bgcolor="#FFFFFF">				    
+                  <td align="right" class="NomeCampo">Fornecedor:</td>
+                  <td><input name="aux_nmfornec" type="text" class="Campo" style="width: 300px;" maxlength="40" readOnly></td>
+                </tr>
+                <tr bgcolor="#FFFFFF">
+                  <td align="right" class="NomeCampo">Nome Contato:</td>
+                  <td><input name="nmconfor" type="text" class="Campo" style="width: 300px;" maxlength="40" value=""></td>
+                </tr>
+                <tr bgcolor="#FFFFFF">
+                  <td align="right" class="NomeCampo">Departamento:</td>
+                  <td><input name="dsdepart" type="text" class="Campo" style="width: 300px;" maxlength="30"></td>
+                </tr>
+                <tr bgcolor="#FFFFFF">
+                  <td align="right" class="NomeCampo">E-mail:</td>
+                  <td><input name="dsdemail" type="text" class="Campo" style="width: 300px;" maxlength="60"></td>
+                </tr>
+                <tr bgcolor="#FFFFFF">
+                  <td align="right" class="NomeCampo">DDD/Fone:</td>
+                  <td><span class="NomeCampo">
+                      <input name="cddddfor"  type="text" class="Campo" size="4" maxlength="3" onKeyDown="validaInteiro(event)"></span>
+		      <input name="nrfonfor" type="text" class="Campo"  size="9" maxlength="9" onKeyDown="validaInteiro(event)">
+                      <input name="nrseqdig" type="hidden" >
+                  </td>
+                </tr>
+				<tr bgcolor="#FFFFFF">
+				  <td colspan="2">&nbsp;
+				    
+				  </td>
+				</tr>
+                <tr bgcolor="#FFFFFF">
+                  <td colspan="2" align="center">
+				    
+                                    <img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" onClick="Salvar()">
+				  </td>
+				</tr>
+              </table>
+			</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</form>
+</body>
+</html>
+<SCRIPT LANGUAGE="JAVASCRIPT">
+   NomeDoProgramaPrincipal  = '/wpgd0012a.w';
+   NomeDoProgramaDeListagem = '/wpgd0012as.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0012aaj.w';
+   NomeDoProgramaDeZoom     = '/zoom/zoei01.w';
+   
+   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+   document.form.action = NomeDoProgramaPrincipal;
+
+function RetornoDoZoom(campo,valor,valor2,valor3)
+{  
+     
+}
+function Habilita()
+{
+  
+}
+function HabilitaSalvar()
+{
+  
+}
+function ValidaDados(form)
+    { 
+        var msg="";
+         
+        msg = msg + VE("in",form.cddddfor,"O DDD do Contato","sim","0","999");
+        msg = msg + VE("in",form.nrfonfor,"O Telefone do Contato","sim","0","999999999");
+	msg = msg + VE("ca",form.nmconfor,"O nome do contato","nao");
+
+        if (msg == "")
+           return true;
+        else
+           {
+               alert(msg);
+               return false;
+           }
+    }
+
+function LimparCampos()
+{
+   
+}
+
+function ExaminaCampo(Campo)
+{
+
+}
+ 
+function CarregaPrincipal()
+{  
+
+}    
+
+function Incluir()
+{
+   var vaux = document.form.aux_lspermis.value; 
+   if (vaux.substring(0,1) == 'I') 
+       { 
+          if (document.form.aux_stdopcao.value == 'i') 
+                { 
+                   alert('Você já esta no modo de inclusão'); 
+                   return false
+                } 
+             else 
+                { 
+                   document.form.aux_cddopcao.value ='in'; 
+                   document.form.aux_stdopcao.value ='i';
+                   LimparCampos(); 
+                   return true
+                } 
+       } 
+    else 
+       { 
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false
+       }
+}
+
+function Salvar()
+{
+   //ZeraModoExclusao();
+   var vaux = document.form.aux_lspermis.value; 
+   if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) { 
+        if ( document.form.aux_cddopcao.value!='sa')  {
+           if (ValidaDados(document.forms[0])) {
+               Habilita(); 
+               HabilitaSalvar(); 
+               document.form.aux_cddopcao.value='sa'; 
+               status = 'Salvando. Por favor, aguarde ...';			   
+               document.form.submit(); 
+               return true;
+            } 
+            else { 
+              return false;
+            }  
+        } 
+   }
+   else { 
+         alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+         return false;
+   }
+}
+
+function Recarregar()
+{
+   
+}
+
+function CarregaPrincipal()
+{
+}
+
+// tira a borda do nome do fornecedor
+document.form.aux_nmfornec.style.border='none';
+
+// Funcao: VE(Valida Elemento)
+// Objetivo: verificar se um elemento(componente) está no formato adequado (caracter, inteiro, data, decimal)
+// Parametros de entrada:
+//    tc = tipo do componente. "ca":caracter, "da":data, "de":decimal, "in":inteiro
+//    nc = nome do componente.
+//    lc = label do componente.
+//    pn = componente pode ser nulo? "sim"/"nao"
+//    mi = valor mínimo do componente
+//    ma = valor máximo do componente
+// Parametros de saída:
+//    msg = Mensagem de Erro da validação
+function VE(tc,nc,lc,pn,mi,ma)
+{  
+  var msg = "";
+  var p = "xx";
+  var z = 1;
+  var x = 0; 
+  var cv = 0;
+  var dia = 0;
+  var mes = 0;
+  var ano = 0;
+  var aux = "";
+  var aux2 = nc.value;
+  pn.toLowerCase();
+  tc.toLowerCase();
+
+  if (tc == "de") {
+    for (var x = 0; x < aux2.length; x++) {
+      if (aux2.substring(x,x+1) != " ")
+        aux = aux + aux2.substring(x,x+1);
+    } 
+    nc.value = aux;
+  }
+  if (tc == "ca") {
+    if (pn == "sim")
+      {}
+    else {
+      if (nc.value == "")
+        msg = lc + " não pode ser nulo.";
+    }
+    if (nc.value.substring(0,1) == " ")
+      msg = msg + lc + " não pode começar com branco.";
+  }
+  else
+  if (tc == "in") {
+    p = "0123456789";
+    if (pn == "sim") {  
+      if (nc.value == "")
+        nc.value = "0";
+      else {
+        for (var x = 0; x < nc.value.length; x++)  {
+          if (p.indexOf(nc.value.substring(x,x+1)) == -1)
+            z = 0;
+        } 
+        if (z == 0)
+          msg = msg + lc + " possui caracteres que não são validos.";  
+        if (msg == "") {
+          if (nc.value < mi)
+            msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
+          if (nc.value > ma)
+            msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+        }
+      }
+    }
+    else {
+      if (nc.value == "")
+        msg = msg + lc + " não pode ser nulo.";
+        for (var x = 0; x < nc.value.length; x++) {
+        if (p.indexOf(nc.value.substring(x,x+1)) == -1)
+                      z = 0;
+               } 
+               if (z == 0)
+                  msg = msg + lc + " possui caracteres que não são validos.";  
+               if (msg == "") {
+                  if (nc.value < mi)
+                     msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
+                  if (nc.value > ma)
+                     msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+               }
+         }
+      }
+      else
+      if (tc == "de") {
+         p = ",0123456789";
+         if (pn == "sim") {  
+            if (nc.value == "")
+               nc.value = "0";
+            else {
+                 for (var x = 0; x < nc.value.length; x++) {
+                     if (p.indexOf(nc.value.substring(x,x+1)) == -1 & nc.value.substring(x,x+1) != ".") {
+                        z = 0;
+                     }
+                     if (nc.value.substring(x,x+1) == ".")
+                        cv = cv + 1;
+                 } 
+                 if (cv > 1)
+                    z = 0;
+                 if (z == 0) {
+                    msg = msg + lc + " possui caracteres que não são validos.";  
+                 }
+                 if (msg == "") {
+                    if (nc.value < mi) 
+                       msg = msg + lc + " deve ser maior que " + mi.toString() + ".";  
+                    if (nc.value > ma)
+                       msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+                 }
+            }
+         }
+         else {
+              if (nc.value == "")
+                 msg = msg + lc + " não pode ser nulo.";
+              for (var x = 0; x < nc.value.length; x++) {
+                  if (p.indexOf(nc.value.substring(x,x+1)) == -1  & nc.value.substring(x,x+1) != ".")
+                     z = 0;
+                  if (nc.value.substring(x,x+1) == ".")
+                     cv = cv + 1;
+              } 
+              if (cv > 1)
+                 z = 0;
+              if (z == 0) {
+                 msg = msg + lc + " possui caracteres que não são validos.";  
+              }
+              if (msg == "") {
+                 if (nc.value < mi)
+                    msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
+                 if (nc.value > ma)
+                    msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+              }
+         }
+      }
+      else
+      if (tc == "da") {
+         p = "0123456789/";
+         if (pn == "sim") {  
+            if (nc.value == "")
+               {}
+            else {
+                 for (var x = 0; x < nc.value.length; x++) {
+                     if (p.indexOf(nc.value.substring(x,x+1)) == -1)
+                        z = 0;
+                     if (nc.value.substring(x,x+1) == "/")
+                        cv = cv + 1;
+                 } 
+                 if (cv != 2)
+                    z = 0;
+                 if (z == 0)
+                    msg = msg + lc + " possui caracteres que não são validos.";  
+                 if (msg == "") {
+                    p1 = nc.value.indexOf("/") ;
+                    p2 = nc.value.lastIndexOf("/") ;
+                    if ((p2 == (p1 + 1)) || (nc.value.substring(0,p1).length == 0) || (nc.value.substring(p1+1,p2).length == 0) || (nc.value.substring(p2+1,nc.value.length).length == 0))
+                       msg = msg + lc + " possui os separadores fora de lugar.";
+                    else {
+                          dia = parseInt(nc.value.substring(0,p1),10);
+                          mes = parseInt(nc.value.substring(p1+1,p2),10);
+                          ano = parseInt(nc.value.substring(p2+1,nc.value.length),10);
+                          if ((mes < 1) || (mes > 12))
+                             msg = msg + lc + " deve possuir o mês entre 1 e 12.";
+                          if ((mes==1) || (mes==3) || (mes==5) || (mes==7) || (mes==8) || (mes==10) || (mes==12))  {
+                             if ((dia < 1) || (dia > 31))
+                                msg = msg + lc + " deve possuir o dia entre 1 e 31.";
+                             }
+                             else {	
+                                  if (mes!=2) {
+                                     if ((dia < 1) || (dia > 30))
+                                        msg = msg + lc + " deve possuir o dia entre 1 e 30.";
+                                  }
+                                  else {
+                                       if (mes==2) {
+                                          if ((ano % 4) == 0) { 
+                                             if ((dia < 1) || (dia > 29))
+                                                msg = msg + lc + " deve possuir o dia entre 1 e 29.";
+                                          }
+                                          else  {
+                                                if ((dia < 1) || (dia > 28))
+                                                msg = msg + lc + " deve possuir o dia entre 1 e 28.";
+                                          }
+                                       }
+                                  }
+                             }
+                         }
+                     }
+                 }
+              }
+          }
+          else
+            msg = "Validação não pode ser realizada.<br> Tipo de dado do campo não identificado.";				
+          return msg;
+   }
+
+</SCRIPT>
+
