@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
-   Data    : Junho/2007                     Ultima atualizacao: 06/10/2017
+   Data    : Junho/2007                     Ultima atualizacao: 21/02/2018
 
    Dados referentes ao programa:
 
@@ -130,6 +130,9 @@
 
               21/09/2017 - Projeto 410 - Incluir campo Indicador de 
                             financiamento do IOF (Diogo - Mouts)
+
+			  21/02/2018 - Novo parametro na chamada da proc_qualif_operacao
+                           (Diego/AMcom)
 
 ..............................................................................*/
 
@@ -380,6 +383,10 @@ DEF VAR aux_vlrtotal AS DECI                                           NO-UNDO.
 DEF VAR aux_idcarenc AS INTE                                           NO-UNDO.
 DEF VAR aux_dtcarenc AS DATE                                           NO-UNDO.
 
+/** ------------------------- Variaveis Lojista CDC ---------------------- **/
+DEF VAR aux_cdcoploj AS INTE                                           NO-UNDO.
+DEF VAR aux_nrcntloj AS DECI                                           NO-UNDO.
+
 { sistema/generico/includes/b1wgen0002tt.i }
 { sistema/generico/includes/b1wgen0024tt.i }
 { sistema/generico/includes/b1wgen0043tt.i }
@@ -615,6 +622,9 @@ PROCEDURE valores_entrada:
 
             WHEN "idcarenc" THEN aux_idcarenc = INTE(tt-param.valorCampo).
             WHEN "dtcarenc" THEN aux_dtcarenc = DATE(tt-param.valorCampo).
+
+            WHEN "cdcoploj" THEN aux_cdcoploj = INTE(tt-param.valorCampo).
+            WHEN "nrcntloj" THEN aux_nrcntloj = DECI(tt-param.valorCampo).
 
         END CASE.
     
@@ -1143,6 +1153,7 @@ PROCEDURE valida-dados-gerais:
                             INPUT aux_cdmodali,
                             INPUT aux_idcarenc,
                             INPUT aux_dtcarenc,
+                            INPUT aux_idfiniof,
                             OUTPUT TABLE tt-erro,
                             OUTPUT TABLE tt-msg-confirma,
                             OUTPUT TABLE tt-ge-epr,
@@ -1619,6 +1630,8 @@ PROCEDURE grava-proposta-completa:
                                 INPUT TRUE,
                                 INPUT aux_dsjusren,
                                 INPUT aux_dtlibera,
+                                INPUT aux_idfiniof,
+                                INPUT aux_dscatbem,
                                 OUTPUT TABLE tt-erro,                          
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT aux_recidepr,
@@ -1802,6 +1815,7 @@ PROCEDURE proc_qualif_operacao:
                              INPUT aux_dsctrliq,
                              INPUT aux_dtmvtolt,
                              INPUT aux_dtmvtopr,
+                             INPUT aux_dtmvtoan,
                             OUTPUT aux_idquapro,
                             OUTPUT aux_dsquapro ).
 
@@ -1856,6 +1870,8 @@ PROCEDURE altera-valor-proposta:
                               INPUT FALSE,
                               INPUT aux_dsdopcao,
                               INPUT aux_dtlibera,
+                              INPUT aux_idfiniof,
+                              INPUT aux_dscatbem,
                              OUTPUT aux_flmudfai,
                              OUTPUT TABLE tt-erro,
                              OUTPUT TABLE tt-msg-confirma).
@@ -2242,6 +2258,9 @@ PROCEDURE calcula_cet_novo:
                                  INPUT aux_qtpreemp,
                                  INPUT aux_dtdpagto,
                                  INPUT aux_cdfinemp,
+                                 INPUT aux_dscatbem,
+                                 INPUT aux_idfiniof,
+                                 INPUT aux_dsctrliq,
                                 OUTPUT aux_txcetano,
                                 OUTPUT aux_txcetmes,
                                 OUTPUT TABLE tt-erro ). 

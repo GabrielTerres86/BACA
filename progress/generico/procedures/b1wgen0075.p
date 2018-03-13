@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 27/09/2017
+    Data    : Maio/2010                   Ultima atualizacao: 27/02/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -107,7 +107,8 @@
                            qnd for da natureza de ocupacao igual a 99, pois
                            campo nao existe mais e nao era utilizado. 
                            PRJ339-CRM (Odirlei-AMcom)
-			  
+			  27/02/2018 - Na procedure grava_dados removido o endereco comercial quando a
+                     natureza da ocupaçao for 12(Sem vinculo) (Tiago #857499)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -322,7 +323,7 @@ PROCEDURE Busca_Dados:
                        tt-comercial.ufresct1 = CAPS(crapemp.cdufdemp)
                        tt-comercial.cxpotct1 = 0.
                 END.
-        END.
+           END.
         END.
 
         IF  NOT AVAILABLE crapemp THEN
@@ -1004,7 +1005,15 @@ PROCEDURE Grava_Dados:
                        END.
                 END.
             ELSE
+            DO:
+            
+              IF par_cdnatopc = 12 THEN
+              DO:                
+                DELETE crapenc.
+              END.
+              
                 LEAVE ContadorEnc.
+            END.
         END.
         
         IF par_cepedct1 <> 0 THEN

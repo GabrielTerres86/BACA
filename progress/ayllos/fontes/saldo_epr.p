@@ -18,16 +18,13 @@
 *******************************************************************************/
 
 
-
-
-
 /* .............................................................................
 
    Programa: Fontes/saldo_epr.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Junho/2004.                         Ultima atualizacao: 08/08/2017
+   Data    : Junho/2004.                         Ultima atualizacao: 23/02/2018
 
    Dados referentes ao programa:
 
@@ -53,6 +50,8 @@
                              da include b1wgen0002a.i (James)
 
                 08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
+                23/02/2018 - Ajuste no parametros de entrada. (James)
 
 ............................................................................. */
 
@@ -113,6 +112,7 @@ DEF         VAR par_dtmvtolt AS DATE                                   NO-UNDO.
 DEF         VAR par_flgerlog AS LOGI                                   NO-UNDO.
 DEF         VAR aux_vlmrapar LIKE crappep.vlmrapar                     NO-UNDO.
 DEF         VAR aux_vlmtapar LIKE crappep.vlmtapar                     NO-UNDO.
+DEF         VAR aux_vliofcpl LIKE crappep.vliofcpl                     NO-UNDO.
 DEF         VAR aux_vlprvenc AS DECI                                   NO-UNDO.
 DEF         VAR aux_vlpraven AS DECI                                   NO-UNDO.
 DEF         VAR aux_vlpreapg AS DECI                                   NO-UNDO.
@@ -277,17 +277,17 @@ ELSE IF crapepr.tpemprst = 2 THEN /* POS */
          /* Efetuar a chamada a rotina Oracle  */
          RUN STORED-PROCEDURE pc_busca_pagto_parc_pos_prog
              aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper,
+							                      INPUT glb_nmdatela,
                                                   INPUT STRING(glb_dtmvtolt),
                                                   INPUT STRING(glb_dtmvtoan),
                                                   INPUT par_nrdconta,
                                                   INPUT par_nrctremp,
-                                                  INPUT crapepr.cdlcremp,
-                                                  INPUT crapepr.qttolatr,
                                                  OUTPUT 0,   /* pr_vlpreapg */
                                                  OUTPUT 0,   /* pr_vlprvenc */
                                                  OUTPUT 0,   /* pr_vlpraven */
                                                  OUTPUT 0,   /* pr_vlmtapar */
                                                  OUTPUT 0,   /* pr_vlmrapar */
+                                                 OUTPUT 0,   /* pr_vliofcpl */
                                                  OUTPUT 0,   /* pr_cdcritic */
                                                  OUTPUT ""). /* pr_dscritic */  
 
@@ -313,6 +313,8 @@ ELSE IF crapepr.tpemprst = 2 THEN /* POS */
                                WHEN pc_busca_pagto_parc_pos_prog.pr_vlmtapar <> ?
                 aux_vlmrapar = pc_busca_pagto_parc_pos_prog.pr_vlmrapar
                                WHEN pc_busca_pagto_parc_pos_prog.pr_vlmrapar <> ?
+                aux_vliofcpl = pc_busca_pagto_parc_pos_prog.pr_vliofcpl
+                               WHEN pc_busca_pagto_parc_pos_prog.pr_vliofcpl <> ?               
                 aux_cdcritic = INT(pc_busca_pagto_parc_pos_prog.pr_cdcritic) 
                                WHEN pc_busca_pagto_parc_pos_prog.pr_cdcritic <> ?
                 aux_dscritic = pc_busca_pagto_parc_pos_prog.pr_dscritic

@@ -48,6 +48,7 @@ BEGIN
             ,crapepr.cdlcremp
             ,crapepr.qttolatr
             ,crawepr.txmensal
+            ,crawepr.dtdpagto dtprivcto
             ,crapepr.ROWID
         FROM crapepr
         JOIN crawepr
@@ -69,6 +70,19 @@ BEGIN
          AND crappep.nrctremp = pr_nrctremp;
          
     -- Soma valor pago da parcela
+    CURSOR cr_vltotal_pago_princ(pr_cdcooper IN crappep.cdcooper%TYPE
+                                ,pr_nrdconta IN crappep.nrdconta%TYPE
+                                ,pr_nrctremp IN crappep.nrctremp%TYPE
+                                ,pr_dtvencto IN crappep.dtvencto%TYPE) IS		
+      SELECT SUM(crappep.vlpagpar)
+        FROM crappep
+       WHERE crappep.cdcooper = pr_cdcooper
+         AND crappep.nrdconta = pr_nrdconta
+         AND crappep.nrctremp = pr_nrctremp
+         AND crappep.dtvencto >= pr_dtvencto
+         AND crappep.vldespar > 0;
+         
+    -- Soma valor pago da parcela
     CURSOR cr_vltotal_parcela(pr_cdcooper IN crappep.cdcooper%TYPE
                              ,pr_nrdconta IN crappep.nrdconta%TYPE
                              ,pr_nrctremp IN crappep.nrctremp%TYPE
@@ -78,7 +92,8 @@ BEGIN
        WHERE crappep.cdcooper = pr_cdcooper
          AND crappep.nrdconta = pr_nrdconta
          AND crappep.nrctremp = pr_nrctremp
-         AND crappep.dtvencto <= pr_dtvencto;
+         AND crappep.dtvencto <= pr_dtvencto
+         AND crappep.vldespar = 0;
          
     -- Soma valor total de Juros     
     CURSOR cr_vltotal_juros(pr_cdcooper IN crappep.cdcooper%TYPE
@@ -132,6 +147,7 @@ BEGIN
     vr_vlprepag         NUMBER;
     vr_vltotal_juros    NUMBER(25,2);
     vr_vltotal_parcela	NUMBER(25,2);
+    vr_vltotal_pago     NUMBER(25,2);
     
     -- Função buscar os meses decorridos
     FUNCTION fn_retorna_meses_decorridos(pr_cdcooper IN crapepr.cdcooper%TYPE             
@@ -214,6 +230,7 @@ BEGIN
       
       -- Busca as parcelas para pagamento
       EMPR0011.pc_busca_pagto_parc_pos(pr_cdcooper => pr_cdcooper
+                                      ,pr_cdprogra => vr_cdprogra
                                       ,pr_flgbatch => TRUE
                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                       ,pr_dtmvtoan => rw_crapdat.dtmvtoan
@@ -221,7 +238,10 @@ BEGIN
                                       ,pr_nrctremp => rw_crapepr.nrctremp
                                       ,pr_dtefetiv => rw_crapepr.dtmvtolt
                                       ,pr_cdlcremp => rw_crapepr.cdlcremp
+                                      ,pr_vlemprst => rw_crapepr.vlemprst
                                       ,pr_txmensal => rw_crapepr.txmensal
+                                      ,pr_dtdpagto => rw_crapepr.dtprivcto
+                                      ,pr_vlsprojt => rw_crapepr.vlsprojt
                                       ,pr_qttolatr => rw_crapepr.qttolatr
                                       ,pr_tab_parcelas => vr_tab_parcelas
                                       ,pr_cdcritic => vr_cdcritic
@@ -276,7 +296,17 @@ BEGIN
       vr_dtvencto := TO_DATE(TO_CHAR(vr_dtdpagto,'DD')||'/'||TO_CHAR(rw_crapdat.dtmvtolt,'MM')||'/'||TO_CHAR(rw_crapdat.dtmvtolt,'RRRR'),'DD/MM/RRRR');                             
       -- Condicao para verificar se a Parcela vence hoje
       IF vr_dtvencto > rw_crapdat.dtmvtoan AND vr_dtvencto <= rw_crapdat.dtmvtolt THEN
+        -- Somar o Valor Total Pago
+        vr_vltotal_pago := 0;
+        OPEN cr_vltotal_pago_princ(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => rw_crapepr.nrdconta
+                                  ,pr_nrctremp => rw_crapepr.nrctremp
+                                  ,pr_dtvencto => rw_crapepr.dtprivcto);
+        FETCH cr_vltotal_pago_princ INTO vr_vltotal_pago;
+        CLOSE cr_vltotal_pago_princ;
+      
         -- Somar o Valor Total de Juros de Emprestimo
+        vr_vltotal_juros := 0;
         OPEN cr_vltotal_juros(pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => rw_crapepr.nrdconta
                              ,pr_nrctremp => rw_crapepr.nrctremp);
@@ -284,6 +314,7 @@ BEGIN
         CLOSE cr_vltotal_juros;
       
         -- Somar o valor da parcela ate o momento
+        vr_vltotal_parcela := 0;
         OPEN cr_vltotal_parcela(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => rw_crapepr.nrdconta
                                ,pr_nrctremp => rw_crapepr.nrctremp
@@ -292,7 +323,7 @@ BEGIN
         CLOSE cr_vltotal_parcela;
         
         -- Valor Total do Saldo Projetado
-        vr_vlsprojt := NVL(rw_crapepr.vlemprst,0) + NVL(vr_vltotal_juros,0) - NVL(vr_vltotal_parcela,0);
+        vr_vlsprojt := NVL(rw_crapepr.vlemprst,0) + NVL(vr_vltotal_juros,0) - NVL(vr_vltotal_parcela,0) - NVL(vr_vltotal_pago,0);
       END IF;            
 
       -- Calcula os meses decorridos

@@ -33,6 +33,7 @@
 				<th>Contrato</th>
 				<th>Produto</th>
 				<th><? echo utf8ToHtml('Empréstimo');?></th>
+				<th>Financiado</th>
 				<th><? echo utf8ToHtml('Prestação');?></th>
 				<th>Pr</th>
 				<th>Lcr</th>
@@ -71,6 +72,7 @@
                         <input type="hidden" id="err_efet" name="err_efet" value="<? echo getByTagName($registro->tags,'err_efet') ?>" />
 						<input type="hidden" id="insitapr" name="insitapr" value="<? echo getByTagName($registro->tags,'insitapr') ?>" />
 						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<? echo getByTagName($registro->tags,'cdlcremp') ?>" />
+					    <input type="hidden" id="vlfinanc" name="vlfinanc" value="<? echo getByTagName($registro->tags,'vlfinanc') ?>" />
 						<input type="hidden" id="dssitest" name="dssitest" value="<? echo getByTagName($registro->tags,'dssitest') ?>" />
             <input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
                     </td>
@@ -78,6 +80,8 @@
 					<td> <? echo stringTabela($tipo,40,'maiuscula'); ?>  </td>
 					<td><span><? echo str_replace(",",".",getByTagName($registro->tags,'vlemprst')) ?></span>
 						<? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vlemprst')),2,",",".") ?></td>
+						<td><span><? echo str_replace(",",".",getByTagName($registro->tags,'vlfinanc')) ?></span>
+						<? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vlfinanc')),2,",",".") ?></td>
 					<td><span><? echo str_replace(",",".",getByTagName($registro->tags,'vlpreemp')) ?></span>
 						<? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vlpreemp')),2,",",".") ?></td>
 					<td><? echo stringTabela(getByTagName($registro->tags,'qtpreemp'),10,'maiuscula') ?></td>

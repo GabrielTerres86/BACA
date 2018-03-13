@@ -32,6 +32,8 @@
  * 021: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
  * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 023: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 024: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 025: [24/01/2018] Processamento do campo DSNIVORI (risco original da proposta) (Reginaldo - AMcom)
  */
 ?>
 
@@ -156,12 +158,14 @@
 	$blqpreap = (isset($_POST['blqpreap'])) ? $_POST['blqpreap'] : '' ;
     $idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : '' ;
     $dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '' ;
+	$vlfinanc = (isset($_POST['vlfinanc'])) ? $_POST['vlfinanc'] : '' ;
 	
 	// Daniel
 	$inpesso1 = (isset($_POST['inpesso1'])) ? $_POST['inpesso1'] : '' ;
 	$dtnasct1 = (isset($_POST['dtnasct1'])) ? $_POST['dtnasct1'] : '' ;
 	$inpesso2 = (isset($_POST['inpesso2'])) ? $_POST['inpesso2'] : '' ;
 	$dtnasct2 = (isset($_POST['dtnasct2'])) ? $_POST['dtnasct2'] : '' ;
+	$dscatbem = (isset($_POST['dscatbem'])) ? $_POST['dscatbem'] : '' ;
 	
 	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1' ;
 	
@@ -418,6 +422,8 @@
 	$xml .= '		<cdlcremp>'.$cdlcremp.'</cdlcremp>';
 	$xml .= '		<flgimppr>'.$flgimppr.'</flgimppr>';
 	$xml .= '		<idquapro>'.$idquapro.'</idquapro>';
+	//Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) 
+	//$xml .= '		<idquaprc>'.$idquaprc.'</idquaprc>';
 	$xml .= '		<flgpagto>'.$flgpagto.'</flgpagto>';
 	$xml .= '		<nrctaav2>'.$nrctaav2.'</nrctaav2>';
 	$xml .= '		<dtcnsspc>'.$dtcnsspc.'</dtcnsspc>';
@@ -456,6 +462,7 @@
 	$xml .= '		<vleprori>'.$vlpreant.'</vleprori>';
     $xml .= '		<idcarenc>'.$idcarenc.'</idcarenc>';
     $xml .= '		<dtcarenc>'.$dtcarenc.'</dtcarenc>';
+	$xml .= '		<vlfinanc>'.$vlfinanc.'</vlfinanc>';
 	
 	// Daniel 
 	$xml .= '		<inpesso1>'.$inpesso1.'</inpesso1>';
@@ -468,6 +475,9 @@
 	}
 	$xml .= '		<dtlibera>'.$dtlibera.'</dtlibera>';
 	$xml .= '		<idfiniof>'.$idfiniof.'</idfiniof>';
+    $xml .= '		<dscatbem>'.$dscatbem.'</dscatbem>';	
+	$xml .= '		<cdcoploj>0</cdcoploj>';
+	$xml .= '		<nrcntloj>0</nrcntloj>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
     

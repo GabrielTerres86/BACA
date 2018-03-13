@@ -544,7 +544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro não tratado na pc_busca_nrseqtel: ' ||
                      SQLERRM;		
-  END pc_busca_nrseqtel;
+	END pc_busca_nrseqtel;		 
 
     -- Buscar dados da pessoa para utilização como avalista
   PROCEDURE pc_ret_dados_pessoa( pr_nrcpfcgc  IN crapttl.nrcpfcgc%TYPE,
@@ -1791,9 +1791,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     CADA0012.pc_valida_acesso_operador(pr_cdcooper => vr_cdcooper
                                       ,pr_cdoperad => vr_cdoperad
                                       ,pr_cdagenci => vr_cdagenci
+                                      ,pr_fltoken => 'N'
                                       ,pr_dstoken  => vr_dstoken
                                       ,pr_dscritic => vr_dscritic);
-									                                          
+                                        
     -- Se retornou algum erro
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       -- Retornar ambos os indicadores como NAO

@@ -24,16 +24,11 @@
 
 *******************************************************************************/
 
-
-
-
-
-
 /* ............................................................................
 
    Programa: sistema/generico/procedures/b1wgen0136.p
    Autor   : Gabriel
-   Data    : Maio/2012                           Ultima atualizacao: 20/11/2015
+   Data    : Maio/2012                           Ultima atualizacao: 20/12/2017
 
    Dados referentes ao programa:
 
@@ -85,8 +80,8 @@
                
                20/10/2015 - Incluir os históricos de ajuste o contrato liquidado pode ser reaberto (Oscar).
                
-			   05/11/2015 - Incluso novo parametro "par_cdorigem" na procedure 
-                            "grava_liquidacao_empr" (Daniel)   
+               05/11/2015 - Incluso novo parametro "par_cdorigem" na procedure 
+                            "grava_liquidacao_empr" (Daniel)
  
 ............................................................................ */
 
@@ -312,7 +307,9 @@ PROCEDURE grava_liquidacao_empr:
                        STRING(craplem.cdhistor)) THEN
                 ASSIGN aux_vllancre = aux_vllancre + craplem.vllanmto.
            ELSE /* Debitos */
-           IF   CAN-DO("1036,1059,1037,1038,1716,1707,1714,1705,1042,1040",
+           IF   CAN-DO("1036,1059,1037,1038,1716,1707,1714,1705,1042,1040,2013,2014,
+                        2305,2304,2536,2535,2306,2597,2598,2307,2599,2600, 
+                        2601,2602,2591,2592,2593,2594,2603,2604,2605,2606",
                        STRING(craplem.cdhistor)) THEN
                 ASSIGN aux_vllandeb = aux_vllandeb + craplem.vllanmto.
           
@@ -540,6 +537,9 @@ PROCEDURE efetua_liquidacao_empr:
     DEF VAR aux_lotepaga AS INTE                                    NO-UNDO.
     DEF VAR aux_vlpagsld AS DECI                                    NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+    DEF VAR aux_vliofcpl AS DECI                                    NO-UNDO.
+    DEF VAR aux_cdhisiof AS INTE                                    NO-UNDO.
+    DEF VAR aux_loteiof  AS INTE                                    NO-UNDO.
     
     DEF BUFFER crabpep FOR crappep.
     
@@ -649,6 +649,9 @@ PROCEDURE efetua_liquidacao_empr:
                                        OUTPUT aux_loteatra,
                                        OUTPUT aux_lotemult,
                                        OUTPUT aux_lotepaga,
+                                       OUTPUT aux_vliofcpl,
+                                       OUTPUT aux_cdhisiof,
+                                       OUTPUT aux_loteiof,
                                        OUTPUT TABLE tt-erro).
 
                      IF   RETURN-VALUE <> "OK"   THEN
@@ -681,6 +684,22 @@ PROCEDURE efetua_liquidacao_empr:
                                      INPUT aux_vlatraso,
                                      INPUT par_nrseqava,
                                      INPUT-OUTPUT TABLE tt-lancconta).
+
+                     /* IOF complementar */
+                     IF aux_vliofcpl > 0 THEN DO:
+                       RUN cria-atualiza-ttlancconta
+                                      (INPUT par_cdcooper,
+                                       INPUT par_nrctremp,
+                                       INPUT aux_cdhisiof,
+                                       INPUT par_dtmvtolt,
+                                       INPUT par_cdoperad,
+                                       INPUT par_cdpactra,
+                                       INPUT aux_loteiof,
+                                       INPUT par_nrdconta,
+                                       INPUT aux_vliofcpl,
+                                       INPUT par_nrseqava,
+                                       INPUT-OUTPUT TABLE tt-lancconta).
+                     END.
 
                      IF (NOT par_ehprcbat) THEN
                         DO:
@@ -746,7 +765,6 @@ PROCEDURE efetua_liquidacao_empr:
         END. /* FOR EACH tt-pagamentos-parcelas:  */
 
         FOR EACH tt-lancconta:
-                 
             RUN cria_lancamento_cc IN h-b1wgen0084a 
                                   (INPUT tt-lancconta.cdcooper,
                                    INPUT tt-lancconta.dtmvtolt,
@@ -800,6 +818,7 @@ PROCEDURE efetua_liquidacao_empr:
                                          INPUT "vlpagpar", 
                                          INPUT STRING(tt-pagamentos-parcelas.vlpagpar),
                                          INPUT STRING(tt-pagamentos-parcelas.vlpagpar)).
+                                         
             END.
         END.
 

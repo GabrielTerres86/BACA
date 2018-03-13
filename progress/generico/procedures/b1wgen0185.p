@@ -56,6 +56,8 @@
 DEF STREAM str_1.
 DEF STREAM str_2.
 
+DEF VAR aux_vliofcpl AS DECIMAL NO-UNDO.
+
 /************************ FUNCTIONS *****************************************/
 
 FUNCTION Retira_Caracteres RETURN CHAR PRIVATE

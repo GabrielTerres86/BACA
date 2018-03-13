@@ -1398,7 +1398,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                     ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
         SELECT epr.inprejuz,
                epr.tpemprst,
-               epr.vlsdprej
+               epr.vlsdprej,
+               epr.txmensal,
+               epr.qtpreemp
           FROM crapepr epr
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
@@ -1570,15 +1572,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
               vr_dstipcob := '';
               vr_vlsdeved := 0;
-              vr_vlsdeved := (vr_tab_dados_epr(vr_ind_cde).vlsdeved + 
-                              vr_tab_dados_epr(vr_ind_cde).vlmtapar +
-                              vr_tab_dados_epr(vr_ind_cde).vlmrapar);   
+
               
               OPEN cr_epr (pr_cdcooper => vr_cdcooper
-                          ,pr_nrdconta => pr_nrdconta
-                          ,pr_nrctremp => vr_tab_dados_epr(vr_ind_cde).nrctremp);
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrctremp => vr_tab_dados_epr(vr_ind_cde).nrctremp);
               FETCH cr_epr INTO rw_epr;
               CLOSE cr_epr;
+                        
+                           
+              vr_vlsdeved := (NVL(vr_tab_dados_epr(vr_ind_cde).vlsdeved,0) + 
+                              NVL(vr_tab_dados_epr(vr_ind_cde).vlmtapar,0) +
+                              NVL(vr_tab_dados_epr(vr_ind_cde).vlmrapar,0) + 
+                              NVL(vr_tab_dados_epr(vr_ind_cde).vliofcpl,0));
+                            
               
               -- verificar se o contrato eh prejuizo      
               IF nvl(rw_epr.inprejuz,0) = 1 THEN
@@ -1635,7 +1642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
               IF vr_tab_dados_epr(vr_ind_cde).tpemprst = 0 THEN
                 vr_vlatraso := vr_tab_dados_epr(vr_ind_cde).vltotpag;
               ELSE
-                vr_vlatraso := vr_tab_dados_epr(vr_ind_cde).vlprvenc + vr_tab_dados_epr(vr_ind_cde).vlmtapar + vr_tab_dados_epr(vr_ind_cde).vlmrapar;                
+                vr_vlatraso := vr_tab_dados_epr(vr_ind_cde).vlprvenc + vr_tab_dados_epr(vr_ind_cde).vlmtapar + vr_tab_dados_epr(vr_ind_cde).vlmrapar + vr_tab_dados_epr(vr_ind_cde).vliofcpl;
               END IF;
 
               IF vr_tab_dados_epr(vr_ind_cde).dsdavali <> ' ' THEN
@@ -1663,6 +1670,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'inprejuz', pr_tag_cont => nvl(vr_tab_dados_epr(vr_ind_cde).inprejuz,0), pr_des_erro => vr_dscritic);
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'vlsdprej', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).vlsdprej, pr_des_erro => vr_dscritic);
 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'inliquid', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).inliquid, pr_des_erro => vr_dscritic);              
+              gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'vliofcpl', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).vliofcpl, pr_des_erro => vr_dscritic);
 
               --IF ( vr_tab_dados_epr(vr_ind_cde).vltotpag > 0 ) THEN
                  vr_auxconta := vr_auxconta + 1;
@@ -4946,11 +4954,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       -- Condicao para verificar se encontrou contrato de emprestimo
       IF vr_tab_dados_epr.COUNT > 0 THEN
         -- Saldo Devedor
-        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) + nvl(vr_tab_dados_epr(1).vlmrapar,0);
+        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) + nvl(vr_tab_dados_epr(1).vlmrapar,0) + nvl(vr_tab_dados_epr(1).vliofcpl,0);
         -- Saldo Prejuizo
         pr_vlsdprej := nvl(vr_tab_dados_epr(1).vlsdprej,0);
         -- Valor em Atraso
         pr_vlatraso := nvl(vr_tab_dados_epr(1).vltotpag,0);
+        
       END IF;
         
     END IF;

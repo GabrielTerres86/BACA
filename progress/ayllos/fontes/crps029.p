@@ -5,7 +5,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/93.                       Ultima atualizacao: 01/09/2017
+   Data    : Fevereiro/93.                       Ultima atualizacao: 23/02/2018
 
    Dados referentes ao programa:
 
@@ -89,6 +89,9 @@
                01/09/2017 - Inclusao de log de fim de execucao do programa 
                             (Carlos)
              
+               01/09/2017 - Projeto ligeirinho, paralelismo.
+                            (Fernando Miranda - Amcom)             
+             
 ............................................................................ */
 
 { includes/var_batch.i "NEW"} 
@@ -114,6 +117,7 @@ ETIME(TRUE).
 
 RUN STORED-PROCEDURE pc_crps029 aux_handproc = PROC-HANDLE NO-ERROR
    (INPUT glb_cdcooper,
+    INPUT  0,
     INPUT  0,
     OUTPUT 0,
     OUTPUT 0,

@@ -1,15 +1,15 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Coop conectada
-                                      ,pr_flgresta IN PLS_INTEGER            --> Indicador para utilização de restart
-                                      ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
-                                      ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
-                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
-                                      ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
+                                             ,pr_flgresta IN PLS_INTEGER            --> Indicador para utilização de restart
+                                             ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
+                                             ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
+                                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
+                                             ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
   /* ............................................................................
    Programa: PC_CRPS149 (Antigo Fontes/crps149.p)
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/96.                       Ultima atualizacao: 10/05/2017
+   Data    : Marco/96.                       Ultima atualizacao: 04/02/2018
 
    Dados referentes ao programa:
 
@@ -229,9 +229,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                01/04/2017 - Ajuste no calculo do IOF. (James)             
                
                07/04/2017 - Ajuste no calculo do IOF para empréstimos do tipo TR ( Renato Darosci )
-
+               
                10/05/2017 - Inclusao do produto Pos-Fixado. Passagem do codigo da Finalidade. 
                             (Jaison/James - PRJ298)
+
+	           04/02/2018 - Ajuste na procedure para buscar o saldo atualizado para o produto pos-fixado. (James)
+
+               14/12/2017 - Novo cálculo IOF e financiamento de IOF no valor do empréstimo.
+                            Projeto 410 - RF 14 a 18 (Diogo - MoutS)
 
   ............................................................................. */
   
@@ -277,6 +282,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.nrdolote
           ,epr.cdbccxlt
           ,epr.dtmvtolt
+          ,epr.idfiniof		  
+          ,epr.vltarifa
+          ,epr.vltariof
+          ,epr.vliofepr
        FROM crapepr epr 
       WHERE epr.cdcooper = pr_cdcooper 
         AND epr.dtmvtolt = pr_dtmvtolt
@@ -330,7 +339,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   -- Cursor Cadastro de pessoas juridicas
   CURSOR cr_crapjur (pr_cdcooper IN crapjur.cdcooper%TYPE
                     ,pr_nrdconta IN crapjur.nrdconta%TYPE) IS
-    SELECT jur.cdempres
+    SELECT jur.cdempres, jur.tpregtrb, jur.natjurid
       FROM crapjur jur
      WHERE jur.cdcooper = pr_cdcooper
        AND jur.nrdconta = pr_nrdconta;
@@ -387,6 +396,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,lcr.cdusolcr
           ,lcr.tpctrato
           ,lcr.txdiaria
+          ,lcr.dsoperac
       FROM craplcr lcr
      WHERE lcr.cdcooper = pr_cdcooper;
      
@@ -421,7 +431,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.dtdpagto
           ,epr.qttolatr
           ,crawepr.txmensal
+          ,crawepr.dtdpagto dtprivencto
+          ,epr.vlsprojt
+          ,epr.vlemprst
           ,epr.ROWID
+          ,crawepr.idfiniof
        FROM crapepr epr 
        JOIN crawepr
          ON crawepr.cdcooper = epr.cdcooper
@@ -501,6 +515,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
         FROM tbepr_posfix_param_carencia param
        WHERE param.idparametro = 1;
 
+     
+    -- Cursor para bens do empréstimo  
+    CURSOR cr_crapbpr_iof(pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_nrdconta IN crapass.nrdconta%TYPE
+                       ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+    SELECT dscatbem
+    FROM crapbpr 
+    WHERE cdcooper = pr_cdcooper
+          AND nrdconta = pr_nrdconta
+          AND nrctrpro = pr_nrctremp
+          AND (dscatbem = 'APARTAMENTO' OR 
+               dscatbem = 'CASA' OR 
+               dscatbem = 'MOTO')
+    ORDER BY dscatbem;
+   rw_crapbpr_iof cr_crapbpr_iof%ROWTYPE;
+
   ------------------------------- VARIAVEIS -------------------------------
   -- Código do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS149';
@@ -545,6 +575,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_cdhistmp craphis.cdhistor%TYPE;
   vr_cdfvltmp crapfco.cdfvlcop%TYPE;
   vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE;
+  vr_dsbemgar varchar2(1000);
+  vr_vltrfgar number := 0;
+  vr_cdhisgar craphis.cdhistor%TYPE;
+  vr_cdfvlgar crapfco.cdfvlcop%TYPE;
+  vr_cdhislcm craphis.cdhistor%TYPE;
+  
   
   -- Variaveis Envio de Email
   vr_nmrescop    VARCHAR2(100);
@@ -565,7 +601,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   
   vr_valor_creditado NUMBER := 0;
   
-  vr_flgimune BOOLEAN;
+  vr_flgimune PLS_INTEGER;
   vr_tab_inusatab BOOLEAN;
   
   -- Codigo da Empresa
@@ -614,7 +650,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_vldmulta NUMBER;
   vr_cdhismor INTEGER;
   vr_vljumora NUMBER;
-
+  
   vr_tab_price EMPR0011.typ_tab_price;
 
   -- Calculo Conta Integração
@@ -648,6 +684,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_txcpmfcc NUMBER := 0;
   vr_vldacpmf NUMBER := 0;
   
+  --IOF
+  vr_qtdiaiof NUMBER := 0;
+  vr_vltaxa_iof_atraso NUMBER := 0;
+  vr_vliofpri NUMBER := 0;
+  vr_vliofadi NUMBER := 0;
+  vr_vliofcpl NUMBER := 0;
+  vr_vliofpri_tmp NUMBER := 0;
+  vr_vliofadi_tmp NUMBER := 0;
+  vr_vltaxa_iof_principal NUMBER := 0;
+  vr_dscatbem VARCHAR2(200);
+  vr_dsctrliq VARCHAR2(1000) := '';
+  
   -- Tabela temporaria Linhas de Credito
   TYPE typ_reg_craplcr IS
    RECORD(flgtarif craplcr.flgtarif%TYPE
@@ -657,7 +705,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
          ,flgtaiof craplcr.flgtaiof%TYPE
          ,cdusolcr craplcr.cdusolcr%TYPE
          ,tpctrato craplcr.tpctrato%TYPE
-         ,txdiaria craplcr.txdiaria%TYPE);
+         ,txdiaria craplcr.txdiaria%TYPE
+         ,dsoperac craplcr.dsoperac%TYPE);
   TYPE typ_tab_craplcr IS
     TABLE OF typ_reg_craplcr
       INDEX BY PLS_INTEGER;
@@ -973,7 +1022,7 @@ BEGIN
     -- Apenas fechar o cursor
     CLOSE BTCH0001.cr_crapdat;
   END IF;
-  
+
   -- Validações iniciais do programa
   BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                            ,pr_flgbatch => 1
@@ -1031,6 +1080,7 @@ BEGIN
     vr_tab_craplcr(rw_craplcr.cdlcremp).cdusolcr := rw_craplcr.cdusolcr;
     vr_tab_craplcr(rw_craplcr.cdlcremp).tpctrato := rw_craplcr.tpctrato;
     vr_tab_craplcr(rw_craplcr.cdlcremp).txdiaria := rw_craplcr.txdiaria;
+    vr_tab_craplcr(rw_craplcr.cdlcremp).dsoperac := rw_craplcr.dsoperac;
   END LOOP;  
 
   --Carregar Tabela crawepr
@@ -1052,7 +1102,7 @@ BEGIN
                               ,pr_cdacesso => 'DIADOPAGTO') LOOP
     vr_tab_diadopagto(rw_craptab.tpregist):= rw_craptab.dstextab;
   END LOOP;  
-
+        
   -- Carregar tabela de carencia
   FOR rw_carencia IN cr_carencia LOOP
     vr_tab_carencia(rw_carencia.idcarencia):= rw_carencia.qtddias;
@@ -1244,196 +1294,44 @@ BEGIN
     vr_vlrtarif:= 0;
     vr_vltrfesp:= 0;
     
+    /* Projeto 410 - Chamada da PC_CALCULA_TARIFA - Jean (Mout´S) */
+     vr_dsbemgar := '';
+      -- Percorrer todos os bens da Proposta de Emprestimo
+      FOR rw_crapbpr IN cr_crapbpr(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => rw_crabepr.nrdconta
+                                  ,pr_nrctremp => rw_crabepr.nrctremp) LOOP
+        vr_dsbemgar := vr_dsbemgar || '|' || rw_crapbpr.dscatbem;
+      END LOOP;
     
-    IF vr_tab_craplcr(rw_crabepr.cdlcremp).cdusolcr = 1 THEN
-
-      IF rw_crapass.inpessoa = 1 THEN
-        vr_cdbattar := 'MICROCREPF'; -- Microcredito Pessoa Fisica
-      ELSE
-        vr_cdbattar := 'MICROCREPJ'; -- Microcredito Pessoa Juridica
-      END IF;
-      
-      TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
-                                           ,pr_cdbattar => vr_cdbattar
-                                           ,pr_vllanmto => rw_crabepr.vlemprst
-                                           ,pr_cdprogra => vr_cdprogra
-                                           ,pr_cdhistor => vr_cdhistor
-                                           ,pr_cdhisest => vr_cdhisest
-                                           ,pr_vltarifa => vr_vlrtarif
-                                           ,pr_dtdivulg => vr_dtdivulg
-                                           ,pr_dtvigenc => vr_dtvigenc
-                                           ,pr_cdfvlcop => vr_cdfvlcop
-                                           ,pr_cdcritic => vr_cdcritic
-                                           ,pr_dscritic => vr_dscritic
-                                           ,pr_tab_erro => vr_tab_erro);
-                                                      
-      --Se ocorreu erro
-      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        --Se possui erro no vetor
-        IF vr_tab_erro.Count() > 0 THEN
-          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Nao foi possivel carregar a tarifa.';
-        END IF;
-        
-        --Corpo para o Email
-        vr_des_corpo := to_char(sysdate,'hh24:mi:ss')||' - '
-                        || vr_cdprogra || ' --> '
-                        || vr_dscritic || ' - ' || vr_cdbattar;
-        
-
-        
-        -- Envio do arquivo detalhado via e-mail
-        gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                  ,pr_cdprogra        => vr_cdprogra
-                                  ,pr_des_destino     => vr_des_destino
-                                  ,pr_des_assunto     => 'Erros log de tarifas(' || vr_nmrescop || ')'
-                                  ,pr_des_corpo       => vr_des_corpo
-                                  ,pr_des_anexo       => NULL
-                                  ,pr_des_erro        => vr_des_erro);
-        --Se ocorreu algum erro
-        IF vr_des_erro IS NOT NULL  THEN
-          RAISE vr_exc_saida;
-        END IF;
-         
-        -- Efetua Limpeza das variaveis de critica
-        vr_cdcritic  := 0;
-        vr_dscritic  := NULL;
-        vr_des_corpo := NULL;
-      END IF;
-    ELSE
-      -- Buscar tarifa emprestimo
-      TARI0001.pc_carrega_dados_tarifa_empr(pr_cdcooper => pr_cdcooper
-                                           ,pr_cdlcremp => rw_crabepr.cdlcremp
-                                           ,pr_cdmotivo => 'EM'
-                                           ,pr_inpessoa => rw_crapass.inpessoa
-                                           ,pr_vllanmto => rw_crabepr.vlemprst
-                                           ,pr_cdprogra => vr_cdprogra
-                                           ,pr_cdhistor => vr_cdhistor
-                                           ,pr_cdhisest => vr_cdhisest
-                                           ,pr_vltarifa => vr_vlrtarif
-                                           ,pr_dtdivulg => vr_dtdivulg
-                                           ,pr_dtvigenc => vr_dtvigenc
-                                           ,pr_cdfvlcop => vr_cdfvlcop
-                                           ,pr_cdcritic => vr_cdcritic
-                                           ,pr_dscritic => vr_dscritic
-                                           ,pr_tab_erro => vr_tab_erro);                                                                                            
-        
-      --Se ocorreu erro
-      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        --Se possui erro no vetor
-        IF vr_tab_erro.Count() > 0 THEN
-          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Nao foi possivel carregar a tarifa.';
-        END IF;
-        --Corpo do Email
-        vr_des_corpo := to_char(SYSDATE,'hh24:mi:ss')||' - '
-                        || vr_cdprogra || ' --> '
-                        || vr_dscritic || ' - ' || vr_cdbattar;
-        
-        
-        -- Envio do arquivo detalhado via e-mail
-        gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                  ,pr_cdprogra        => vr_cdprogra
-                                  ,pr_des_destino     => vr_des_destino
-                                  ,pr_des_assunto     => 'Erros log de tarifas(' || vr_nmrescop || ')'
-                                  ,pr_des_corpo       => vr_des_corpo
-                                  ,pr_des_anexo       => NULL
-                                  ,pr_des_erro        => vr_des_erro);
-        --Se ocorreu algum erro
-        IF vr_des_erro IS NOT NULL  THEN
-          RAISE vr_exc_saida;
-        END IF;
-
-        -- Efetua Limpeza das variaveis de critica
-        vr_cdcritic  := 0;
-        vr_dscritic  := NULL;
-        vr_des_corpo := NULL;
-      END IF; 
-      
-      --Codigo historico
-      vr_cdhistmp := vr_cdhistor;
-      vr_cdfvltmp := vr_cdfvlcop;
-
-      -- Buscar tarifa emprestimo Especial
-      TARI0001.pc_carrega_dados_tarifa_empr(pr_cdcooper => pr_cdcooper
-                                           ,pr_cdlcremp => rw_crabepr.cdlcremp
-                                           ,pr_cdmotivo => 'ES'
-                                           ,pr_inpessoa => rw_crapass.inpessoa
-                                           ,pr_vllanmto => rw_crabepr.vlemprst
-                                           ,pr_cdprogra => vr_cdprogra
-                                           ,pr_cdhistor => vr_cdhistor
-                                           ,pr_cdhisest => vr_cdhisest
-                                           ,pr_vltarifa => vr_vltrfesp
-                                           ,pr_dtdivulg => vr_dtdivulg
-                                           ,pr_dtvigenc => vr_dtvigenc
-                                           ,pr_cdfvlcop => vr_cdfvlcop
-                                           ,pr_cdcritic => vr_cdcritic
-                                           ,pr_dscritic => vr_dscritic
-                                           ,pr_tab_erro => vr_tab_erro);
+    tari0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper , 
+                               pr_nrdconta => rw_crabepr.nrdconta, 
+                               pr_cdlcremp => rw_crabepr.cdlcremp, 
+                               pr_vlemprst => rw_crabepr.vlemprst, 
+                               pr_cdusolcr => vr_tab_craplcr(rw_crabepr.cdlcremp).cdusolcr, 
+                               pr_tpctrato => vr_tab_craplcr(rw_crabepr.cdlcremp).tpctrato, 
+                               pr_dsbemgar => vr_dsbemgar, 
+                               pr_cdprogra => 'CRPS149', 
+                               pr_flgemail => 'N', 
+                               pr_vlrtarif => vr_vlrtarif, 
+                               pr_vltrfesp => vr_vltrfesp, 
+                               pr_vltrfgar => vr_vltrfgar, 
+                               pr_cdhistor => vr_cdhistor, 
+                               pr_cdfvlcop => vr_cdfvlcop, 
+                               pr_cdhisgar => vr_cdhisgar, 
+                               pr_cdfvlgar => vr_cdfvlgar, 
+                               pr_cdcritic => vr_cdcritic, 
+                               pr_dscritic => vr_dscritic);
                                              
-      --Se ocorreu erro
-      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        --Se possui erro no vetor
-        IF vr_tab_erro.Count() > 0 THEN
-          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
+   if vr_dscritic is not null then
           vr_cdcritic:= 0;
-          vr_dscritic:= 'Nao foi possivel carregar a tarifa.';
-        END IF;
-        --Corpo do Email
-        vr_des_corpo := to_char(SYSDATE,'hh24:mi:ss')||' - '
-                        || vr_cdprogra || ' --> '
-                        || vr_dscritic || ' - ' || vr_cdbattar;
-        
-        -- Envio do arquivo detalhado via e-mail
-        gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                  ,pr_cdprogra        => vr_cdprogra
-                                  ,pr_des_destino     => vr_des_destino
-                                  ,pr_des_assunto     => 'Erros log de tarifas(' || vr_nmrescop || ')'
-                                  ,pr_des_corpo       => vr_des_corpo
-                                  ,pr_des_anexo       => NULL
-                                  ,pr_des_erro        => vr_des_erro);
-        --Se ocorreu algum erro
-        IF vr_des_erro IS NOT NULL  THEN
-          RAISE vr_exc_saida;
-        END IF;
-
-        -- Efetua Limpeza das variaveis de critica
-        vr_cdcritic  := 0;
-        vr_dscritic  := NULL;
-        vr_des_corpo := NULL;
-      END IF; 
-
-      IF nvl(vr_cdhistor,0) = 0 AND nvl(vr_cdfvlcop,0) = 0 THEN
-        --Retornar Valores Salvos
-        vr_cdhistor:= vr_cdhistmp;
-        vr_cdfvlcop:= vr_cdfvltmp;
-      END IF;                 
-
-    END IF;
+      vr_dscritic:= 'Erro no calculo da tarifa. ';
+   end if;
     
     -- Total Tarifa a ser Cobrado
     vr_vltottar := NVL(vr_vlrtarif,0) + NVL(vr_vltrfesp,0);
     --Total da Tarifa
-    IF vr_vltottar > 0 THEN
-
-      -- Atualiza a Tarifa no Emprestimo
-      BEGIN
-        UPDATE crapepr SET crapepr.vltarifa = vr_vltottar
-        WHERE crapepr.ROWID = rw_crabepr.ROWID;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao Atualiza a tarifa no emprestimo. ' || SQLERRM;
-          --Sair do programa
-          RAISE vr_exc_saida;
-      END;
+    IF vr_vltottar > 0 
+    AND rw_crabepr.idfiniof = 0 THEN -- so lanca tarifas nas LCM se não financia IOF
       
       -- Criar Lançamento automatico tarifa
       TARI0001.pc_cria_lan_auto_tarifa( pr_cdcooper     => pr_cdcooper
@@ -1484,85 +1382,14 @@ BEGIN
       END IF;
     END IF;  -- Fim Cobranca da tarifa de emprestimo
     
-    -- Cobranca da tarifa de avaliacao de bens em garantia
-    vr_cdhistor := 0;
-    vr_cdhisest := 0;
-    vr_vlrtarif := 0;
-    vr_cdfvlcop := 0;
-    
-    /*------------------------------------------
-    -- 2 - Avaliacao de garantia de bem movel
-    -- 3 - Avaliacao de garantia de bem imovel
-    --------------------------------------------*/
-    IF vr_tab_craplcr(rw_crabepr.cdlcremp).tpctrato IN (2,3) THEN 
-      IF vr_tab_craplcr(rw_crabepr.cdlcremp).tpctrato = 2 THEN -- Ben Movel
-        IF rw_crapass.inpessoa = 1 THEN -- Fisica 
-          vr_cdbattar := 'AVALBMOVPF'; -- Avaliacao de Garantia de Bem Movel - PF
-        ELSE
-          vr_cdbattar := 'AVALBMOVPJ'; -- Avaliacao de Garantia de Bem Movel - PJ
-        END IF;
-      ELSE -- Bens Imoveis
-        IF rw_crapass.inpessoa = 1 THEN -- Fisica
-          vr_cdbattar := 'AVALBIMVPF'; -- Avaliacao de Garantia de Bem Imovel - PF
-        ELSE
-          vr_cdbattar := 'AVALBIMVPJ'; -- Avaliacao de Garantia de Bem Imovel - PF
-        END IF;    
-      END IF;
-      
-      -- Busca Valor da Tarifa
-      TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
-                                           ,pr_cdbattar => vr_cdbattar
-                                           ,pr_vllanmto => 1
-                                           ,pr_cdprogra => vr_cdprogra
-                                           ,pr_cdhistor => vr_cdhistor
-                                           ,pr_cdhisest => vr_cdhisest
-                                           ,pr_vltarifa => vr_vlrtarif
-                                           ,pr_dtdivulg => vr_dtdivulg
-                                           ,pr_dtvigenc => vr_dtvigenc
-                                           ,pr_cdfvlcop => vr_cdfvlcop
-                                           ,pr_cdcritic => vr_cdcritic
-                                           ,pr_dscritic => vr_dscritic
-                                           ,pr_tab_erro => vr_tab_erro);
-                                                        
-      -- Se ocorreu erro
-      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        -- Se possui erro no vetor
-        IF vr_tab_erro.Count() > 0 THEN
-          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Nao foi possivel carregar a tarifa.';
-        END IF;
-        --Concatenar Conta e tarifa
-        vr_dscritic:= vr_dscritic ||'Conta: '||gene0002.fn_mask_conta(rw_crabepr.nrdconta)||'- '||vr_cdbattar;
-
-        -- Envio centralizado de log de erro
-        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || vr_dscritic || ' - ' || vr_cdbattar);
-        -- Efetua Limpeza das variaveis de critica
-        vr_cdcritic := 0;
-        vr_dscritic := NULL;
-      ELSE
-        
-        IF vr_tab_craplcr(rw_crabepr.cdlcremp).tpctrato = 2 THEN -- Ben Movel
-          vr_flgoutrosbens := FALSE;
-          FOR rw_crapbpr IN cr_crapbpr (pr_cdcooper => pr_cdcooper
-                                       ,pr_nrdconta => rw_crabepr.nrdconta
-                                       ,pr_nrctremp => rw_crabepr.nrctremp) LOOP
-            -- Se for carro, moto ou caminhao
-            IF rw_crapbpr.dscatbem LIKE '%AUTOMOVEL%'
-            OR rw_crapbpr.dscatbem LIKE '%MOTO%'
-            OR rw_crapbpr.dscatbem LIKE '%CAMINHAO%' THEN 
-              -- Criar Lançamento automatico tarifa
+    -- Lancamento das tarifas de garantia
+    IF rw_crabepr.idfiniof = 0 AND 
+       vr_vltrfgar > 0 then
               TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => pr_cdcooper
                                               ,pr_nrdconta      => rw_crabepr.nrdconta
                                               ,pr_dtmvtolt      => rw_crapdat.dtmvtolt
-                                              ,pr_cdhistor      => vr_cdhistor
-                                              ,pr_vllanaut      => vr_vlrtarif
+                                      ,pr_cdhistor      => vr_cdhisgar
+                                      ,pr_vllanaut      => vr_vltrfgar
                                               ,pr_cdoperad      => '1'
                                               ,pr_cdagenci      => 1
                                               ,pr_cdbccxlt      => 100
@@ -1577,77 +1404,14 @@ BEGIN
                                               ,pr_nrctachq      => 0
                                               ,pr_flgaviso      => FALSE
                                               ,pr_tpdaviso      => 0
-                                              ,pr_cdfvlcop      => vr_cdfvlcop
+                                      ,pr_cdfvlcop      => vr_cdfvlgar
                                               ,pr_inproces      => rw_crapdat.inproces
                                               ,pr_rowid_craplat => vr_rowid
                                               ,pr_tab_erro      => vr_tab_erro
                                               ,pr_cdcritic      => vr_cdcritic
                                               ,pr_dscritic      => vr_dscritic
                                               );
-            ELSE
-              vr_flgoutrosbens := TRUE;
-            END IF;
-          END LOOP;
           
-          -- Se houver outros bens cobrar mais uma tarifa
-          IF vr_flgoutrosbens THEN
-            -- Criar Lançamento automatico tarifa
-            TARI0001.pc_cria_lan_auto_tarifa( pr_cdcooper     => pr_cdcooper
-                                            , pr_nrdconta     => rw_crabepr.nrdconta
-                                            , pr_dtmvtolt     => rw_crapdat.dtmvtolt
-                                            , pr_cdhistor     => vr_cdhistor
-                                            , pr_vllanaut     => vr_vlrtarif
-                                            , pr_cdoperad     => '1'
-                                            , pr_cdagenci     => 1
-                                            , pr_cdbccxlt     => 100
-                                            , pr_nrdolote     => 8452
-                                            , pr_tpdolote     => 1
-                                            , pr_nrdocmto     => rw_crabepr.nrctremp
-                                            , pr_nrdctabb     => rw_crabepr.nrdconta
-                                            , pr_nrdctitg     => gene0002.fn_mask(rw_crabepr.nrdconta,'99999999')
-                                            , pr_cdpesqbb     => 'Fato gerador tarifa:' || TO_CHAR(rw_crabepr.nrctremp)
-                                            , pr_cdbanchq     => 0
-                                            , pr_cdagechq     => 0
-                                            , pr_nrctachq     => 0
-                                            , pr_flgaviso     => FALSE
-                                            , pr_tpdaviso     => 0
-                                            , pr_cdfvlcop     => vr_cdfvlcop
-                                            , pr_inproces     => rw_crapdat.inproces
-                                            , pr_rowid_craplat=> vr_rowid
-                                            , pr_tab_erro     => vr_tab_erro
-                                            , pr_cdcritic     => vr_cdcritic
-                                            , pr_dscritic     => vr_dscritic
-                                            );
-          END IF;
-        ELSE
-          -- Criar Lançamento automatico tarifa
-          TARI0001.pc_cria_lan_auto_tarifa( pr_cdcooper     => pr_cdcooper
-                                          , pr_nrdconta     => rw_crabepr.nrdconta
-                                          , pr_dtmvtolt     => rw_crapdat.dtmvtolt
-                                          , pr_cdhistor     => vr_cdhistor
-                                          , pr_vllanaut     => vr_vlrtarif
-                                          , pr_cdoperad     => '1'
-                                          , pr_cdagenci     => 1
-                                          , pr_cdbccxlt     => 100
-                                          , pr_nrdolote     => 8452
-                                          , pr_tpdolote     => 1
-                                          , pr_nrdocmto     => rw_crabepr.nrctremp
-                                          , pr_nrdctabb     => rw_crabepr.nrdconta
-                                          , pr_nrdctitg     => gene0002.fn_mask(rw_crabepr.nrdconta,'99999999')
-                                          , pr_cdpesqbb     => 'Fato gerador tarifa:' || TO_CHAR(rw_crabepr.nrctremp)
-                                          , pr_cdbanchq     => 0
-                                          , pr_cdagechq     => 0
-                                          , pr_nrctachq     => 0
-                                          , pr_flgaviso     => FALSE
-                                          , pr_tpdaviso     => 0
-                                          , pr_cdfvlcop     => vr_cdfvlcop
-                                          , pr_inproces     => rw_crapdat.inproces
-                                          , pr_rowid_craplat=> vr_rowid
-                                          , pr_tab_erro     => vr_tab_erro
-                                          , pr_cdcritic     => vr_cdcritic
-                                          , pr_dscritic     => vr_dscritic
-                                          );
-        END IF;
         -- Se ocorreu erro
         IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           -- Se possui erro no vetor
@@ -1669,9 +1433,23 @@ BEGIN
           -- Limpa valores das variaveis de critica
           vr_cdcritic:= 0;
           vr_dscritic:= NULL;                                           
+                
         END IF;
       END IF;
-    END IF; -- Fim cobranca da tarifa de avaliacao de bens em garantia
+  
+    -- Projeto 410 - SM1 - Se financia IOF, cria lançamento na LEM correspondente à  tarifa 
+    -- Na rotina b1wgen0084
+    
+    -- PRJ410 
+    -- Se financia valor  
+    IF rw_crabepr.idfiniof = 1 THEN
+      --> diminuir valor iof e valor tarifa
+      vr_vlemprst := rw_crabepr.vlemprst - nvl(rw_crabepr.vltarifa,0) - nvl(rw_crabepr.vliofepr,0);
+    ELSE
+      -- caso nao financia IOF e tarifa, deve gerar credito do valor total
+      vr_vlemprst := rw_crabepr.vlemprst;
+    END IF;
+  
     
     -- Credita valor do emprestimo (Se não Bloqueado)
     IF (rw_crawepr.qtdialib <= 0  AND rw_crawepr.tpemprst = 0) OR
@@ -1729,7 +1507,7 @@ BEGIN
              ,15 -- CR.EMPRESTIMO
              ,nvl(rw_craplot.nrseqdig,0) + 1
              ,GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999')
-             ,rw_crabepr.vlemprst);
+             ,vr_vlemprst);
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na tabela craplcm (15) . ' || SQLERRM;
@@ -1739,8 +1517,8 @@ BEGIN
           
         --Atualizar capa do Lote
         BEGIN
-          UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + rw_crabepr.vlemprst
-                            ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + rw_crabepr.vlemprst
+          UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_vlemprst
+                            ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + vr_vlemprst
                             ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
                             ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
                             ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
@@ -1869,8 +1647,8 @@ BEGIN
     vr_tab_nrctrliq(8):=  NVL(rw_crawepr.nrctrliq##8,0);
     vr_tab_nrctrliq(9):=  NVL(rw_crawepr.nrctrliq##9,0);
     vr_tab_nrctrliq(10):= NVL(rw_crawepr.nrctrliq##10,0);
-
-        
+    
+    
     FOR vr_contador IN 1..10 LOOP
       
       IF vr_tab_nrctrliq(vr_contador) > 0 THEN
@@ -1941,7 +1719,7 @@ BEGIN
         vr_inliquid := rw_crapepr.inliquid;
         vr_qtprepag := rw_crapepr.qtprepag;
         vr_dtcalcul := NULL;
-
+        
         IF rw_crapepr.tpemprst = 0 THEN  -- Somente Emprestimo Antigo
           IF vr_tab_inusatab  THEN
             
@@ -2086,6 +1864,7 @@ BEGIN
 
           -- Busca as parcelas para pagamento
           EMPR0011.pc_busca_pagto_parc_pos(pr_cdcooper => rw_crapepr.cdcooper
+										  ,pr_cdprogra => vr_cdprogra
                                           ,pr_flgbatch => TRUE
                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                           ,pr_dtmvtoan => rw_crapdat.dtmvtoan
@@ -2093,7 +1872,10 @@ BEGIN
                                           ,pr_nrctremp => rw_crapepr.nrctremp
                                           ,pr_dtefetiv => rw_crapepr.dtmvtolt
                                           ,pr_cdlcremp => rw_crapepr.cdlcremp
+                                          ,pr_vlemprst => rw_crapepr.vlemprst
                                           ,pr_txmensal => rw_crapepr.txmensal
+                                          ,pr_dtdpagto => rw_crapepr.dtprivencto
+                                          ,pr_vlsprojt => rw_crapepr.vlsprojt
                                           ,pr_qttolatr => rw_crapepr.qttolatr
                                           ,pr_tab_parcelas => vr_tab_parcelas_pos
                                           ,pr_cdcritic => vr_cdcritic
@@ -2108,7 +1890,7 @@ BEGIN
                                                           ' - Contrato = ' || TO_CHAR(rw_crapepr.nrctremp, 'FM99G999G999'));
             RAISE vr_exc_saida;
           END IF;
-
+          
           -- Carregar as variveis de retorno
           vr_index_pos := vr_tab_parcelas_pos.FIRST;
           WHILE vr_index_pos IS NOT NULL LOOP
@@ -2168,21 +1950,21 @@ BEGIN
           -- Calcula cpmf saldo devedor
 
           -- Creditar apenas no valor do emprestimo(se menor que saldo devedor)
-          IF nvl(vr_vlsdeved,0) <= nvl(rw_crabepr.vlemprst,0) THEN
+          IF nvl(vr_vlsdeved,0) <= nvl(vr_vlemprst,0) THEN
 
             vr_vldacpmf:= ROUND(vr_vlsdeved  * vr_txcpmfcc,2);
             vr_valor:= nvl(vr_vlsdeved,0) + nvl(vr_vldacpmf,0);
           ELSE
-            vr_valor:= rw_crabepr.vlemprst;
+            vr_valor:= vr_vlemprst;
           END IF;
               
           --Valor Sem CPMF
           vr_sem_cpmf:= ' ';
 
           -- Creditar valor emprestimo se menor que parcela     
-          IF (nvl(vr_valor,0) + nvl(vr_valor_creditado,0)) > nvl(rw_crabepr.vlemprst,0) THEN
+          IF (nvl(vr_valor,0) + nvl(vr_valor_creditado,0)) > nvl(vr_vlemprst,0) THEN
             vr_sem_cpmf:= 'X';
-            vr_valor:= nvl(rw_crabepr.vlemprst,0) - nvl(vr_valor_creditado,0);
+            vr_valor:= nvl(vr_vlemprst,0) - nvl(vr_valor_creditado,0);
           END IF;
           --Valor Creditado                  
           vr_valor_creditado := nvl(vr_valor_creditado,0) + nvl(vr_valor,0);
@@ -2238,8 +2020,8 @@ BEGIN
                       , craplot.nrseqdig
                    INTO rw_craplot.qtinfoln
                       , rw_craplot.qtcompln
-                      , rw_craplot.nrseqdig;
-                   
+                      , rw_craplot.nrseqdig;                   
+              
               
             EXCEPTION
               WHEN OTHERS THEN
@@ -2613,7 +2395,7 @@ BEGIN
                 END;      
               END LOOP; --rw_crapavs
             END IF; --nvl(vr_vlavsdeb,0) > 0
-          END IF; --rw_crapepr.flgpagto = 1
+          END IF; --rw_crapepr.flgpagto = 1             
 
         ELSIF rw_crapepr.tpemprst = 1 THEN  -- Price Pre-Fixado
 
@@ -2702,6 +2484,7 @@ BEGIN
           WHILE vr_index_pos IS NOT NULL LOOP
             -- Chama pagamento da parcela
             EMPR0011.pc_gera_pagto_pos(pr_cdcooper  => rw_crapepr.cdcooper
+									  ,pr_cdprogra => vr_cdprogra
                                       ,pr_dtcalcul  => rw_crapdat.dtmvtolt
                                       ,pr_nrdconta  => rw_crapepr.nrdconta
                                       ,pr_nrctremp  => rw_crapepr.nrctremp
@@ -2727,7 +2510,6 @@ BEGIN
           END LOOP;
 
         END IF;
-
       END IF; -- Fim vr_tab_crawepr(vr_contador).nrctrliq > 0
     END LOOP; -- vr_contador 1..10
     
@@ -2737,7 +2519,7 @@ BEGIN
       -- Credita Valor do Emprestimo(opcao Liquidacoes)                
       -- Gera Credito Emprestimo - (Liq.Emprestimo + CPMF)
 
-      vr_valor_total := nvl(rw_crabepr.vlemprst,0) - nvl(vr_valor_total,0);
+      vr_valor_total := nvl(vr_vlemprst,0) - nvl(vr_valor_total,0);
             
       --Se possui valor total
       IF vr_valor_total > 0 THEN 
@@ -2853,10 +2635,12 @@ BEGIN
     vr_vliofaux := 0;
     
     /*  Cobranca do IOF de emprestimo  */
-    IF vr_flgtaiof = 1 THEN -- TRUE
+    IF vr_flgtaiof = 1 AND 
+       --> Caso o iof não seja financiado junto com o emprestimo
+       rw_crabepr.idfiniof = 0 THEN -- TRUE
       
       -- Valor do empréstimo
-      vr_vlemprst := rw_crabepr.vlemprst;
+      --vr_vlemprst := vr_vlemprst;
     
       -- Se o tipo do empréstimo for TR e for empréstimo de refinanciamento, deve
       -- passar como valor para a rotina de IOF, o valor do emprestimo decrementando 
@@ -2864,63 +2648,85 @@ BEGIN
       IF NVL(vr_totliqui,0) > 0 AND rw_crabepr.tpemprst = 0 THEN
         vr_vlemprst := GREATEST(rw_crabepr.vlemprst - vr_totliqui, 0);
       END IF;
-
+    
       vr_qtdias_carencia := 0; -- Inicializa
 
+      --Novo cálculo do IOF
+      vr_qtdiaiof := rw_crabepr.dtdpagto - rw_crapdat.dtmvtolt;
+      
+      /* Busca o tipo de bem, para usar no cálculo da isenção (somente APARTAMENTO, CASA e MOTO). Pega somente o primeiro (já está ordenado), 
+      pois se for "APARTAMENTO" ou "CASA", zera todos os valores de IOF (principal, adicional e complementar). Já se for "MOTO", 
+      zera apenas IOF princial e complementar */
+      OPEN cr_crapbpr_iof(pr_cdcooper => pr_cdcooper, pr_nrdconta => rw_crabepr.nrdconta, pr_nrctremp => rw_crabepr.nrctremp);
+      FETCH cr_crapbpr_iof INTO rw_crapbpr_iof;
+            
+      vr_dscatbem := NULL;
+      IF cr_crapbpr_iof%FOUND THEN
+        vr_dscatbem := rw_crapbpr_iof.dscatbem || '|';
+      END IF;
+      CLOSE cr_crapbpr_iof;
+      
       -- Se for Pos-Fixado e existir carencia
       IF rw_crabepr.tpemprst = 2 AND vr_tab_carencia.EXISTS(rw_crawepr.idcarenc) THEN
         vr_qtdias_carencia := vr_tab_carencia(rw_crawepr.idcarenc);
       END IF;
     
-      EMPR0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
-                                 ,pr_nrdconta        => rw_crabepr.nrdconta
-                                 ,pr_dtmvtolt        => rw_crapdat.dtmvtolt
-                                 ,pr_inpessoa        => rw_crapass.inpessoa
-                                 ,pr_cdlcremp        => rw_crabepr.cdlcremp
-                                 ,pr_qtpreemp        => rw_crabepr.qtpreemp
-                                 ,pr_vlpreemp        => rw_crabepr.vlpreemp
-                                 ,pr_vlemprst        => vr_vlemprst
-                                 ,pr_dtdpagto        => rw_crabepr.dtdpagto
-                                 ,pr_dtlibera        => rw_crapdat.dtmvtolt
-                                 ,pr_tpemprst        => rw_crabepr.tpemprst
+      EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper                  
+                                 ,pr_nrdconta => rw_crabepr.nrdconta          
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt          
+                                 ,pr_inpessoa => rw_crapass.inpessoa          
+                                 ,pr_cdlcremp => rw_crabepr.cdlcremp          
+                                 ,pr_qtpreemp => rw_crabepr.qtpreemp          
+                                 ,pr_vlpreemp => rw_crabepr.vlpreemp          
+                                 ,pr_vlemprst => vr_vlemprst                  
+                                 ,pr_dtdpagto => rw_crabepr.dtdpagto          
+                                 ,pr_dtlibera => rw_crapdat.dtmvtolt          
+                                 ,pr_tpemprst => rw_crabepr.tpemprst          
                                  ,pr_dtcarenc        => rw_crawepr.dtcarenc
                                  ,pr_qtdias_carencia => vr_qtdias_carencia
-                                 ,pr_valoriof        => vr_vliofaux
-                                 ,pr_dscritic        => vr_dscritic);
-                                
-      IF vr_dscritic IS NOT NULL THEN
+                                 ,pr_valoriof => vr_vliofaux                  
+                                 ,pr_vliofpri => vr_vliofpri_tmp
+                                 ,pr_vliofadi => vr_vliofadi_tmp
+                                 ,pr_dscatbem => vr_dscatbem
+                                 ,pr_idfiniof => rw_crabepr.idfiniof
+                                 ,pr_flgimune => vr_flgimune
+                                 ,pr_dscritic => vr_dscritic);                
+                                                                             
+      IF vr_dscritic IS NOT NULL THEN                                        
         RAISE vr_exc_saida;
       END IF;
       
-      -- 05/04/2017 - Renato Darosci - Quando for refinanciamento devera ajustar os valores de IOF
-      -- Se há valor de liquidação de contratos e o empréstimo for PP ( TR é calculado antes )
-      IF NVL(vr_totliqui,0) > 0 AND rw_crabepr.tpemprst = 1 THEN
-        -- Calcular o multiplo de ajuste para o IOF
-        vr_vlmultip := (1 - (vr_totliqui / rw_crabepr.vlemprst));
-        
-        -- Se o valor calculado para o multiplo for menor ou igual a zero
-        IF vr_vlmultip <= 0 THEN
-          -- Nao devera cobrar IOF
-          vr_vliofaux := 0;
-        ELSE
-          -- Aplicar o multiplo sobre o valor de IOF calculado para o emprestimo
-          vr_vliofaux := ROUND((vr_vliofaux * vr_vlmultip),2);
-        END IF;
-      END IF;
+      -- compõe histórico
       
-      -- Verificar a imunidade tributária
-      IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
-                                         ,pr_nrdconta => rw_crabepr.nrdconta
-                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                         ,pr_flgrvvlr => TRUE
-                                         ,pr_cdinsenc => 1
-                                         ,pr_vlinsenc => vr_vliofaux
-                                         ,pr_flgimune => vr_flgimune
-                                         ,pr_dsreturn => vr_dsreturn
-                                         ,pr_tab_erro => vr_tab_erro);
+      if  rw_crabepr.idfiniof = 0 -- Não Financia IOF
+      and rw_crabepr.tpemprst = 0 then --  Emprestimo TR
+          vr_cdhistor := 2310;
+      end if;
+      
+      if  rw_crabepr.idfiniof = 0 -- Não Financia IOF
+      and rw_crabepr.tpemprst = 1 then --  Emprestimo PP
+          if vr_tab_craplcr(rw_crabepr.cdlcremp).dsoperac = 'FINANCIAMENTO' then
+             vr_cdhistor := 2309;
+          else
+             vr_cdhistor := 2308;
+          end if;        
+      end if;
+      
+      if  rw_crabepr.idfiniof = 0  -- Não Financia IOF
+      and rw_crabepr.tpemprst = 2 then --  Emprestimo Pós
+          if vr_tab_craplcr(rw_crabepr.cdlcremp).dsoperac = 'FINANCIAMENTO' then
+             vr_cdhistor := 2538;
+          else
+             vr_cdhistor := 2537;
+          end if;        
+      end if;
+      
+      if nvl(vr_cdhistor,0) = 0 then
+         vr_cdhistor := 322; -- assume o antigo histórico.
+      end if;
       
       --  Cobranca do IOF de emprestimo
-      IF NOT vr_flgimune AND vr_flgtaiof = 1 AND vr_vliofaux > 0 THEN
+      IF vr_flgtaiof = 1 AND vr_vliofaux > 0 THEN
          
         --Criar os Lotes usados pelo Programa 
         pc_cria_lote (pr_cdcooper => pr_cdcooper
@@ -2971,7 +2777,7 @@ BEGIN
                ,rw_crabepr.nrdconta
                ,GENE0002.FN_MASK(rw_crabepr.nrdconta,'99999999')
                ,rw_crabepr.nrctremp
-               ,322 -- IOF Sobre Emprestimo
+               ,vr_cdhistor --322 -- IOF Sobre Emprestimo.
                ,nvl(rw_craplot.nrseqdig,0) + 1
                 -- controlar para que mantenha 14 posicoes para cada valor devido a 
                 -- outros programas lerem esse valor(crps501)
@@ -3001,20 +2807,107 @@ BEGIN
               RAISE vr_exc_saida;
           END; 
           
-          -- Atualiza o emprestimo 
+          -- Projeto 410 - Insere IOF na tabela de controle
+          TIOF0001.pc_insere_iof(pr_cdcooper => pr_cdcooper
+                               , pr_nrdconta => rw_crabepr.nrdconta
+                               , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                               , pr_tpproduto => 1
+                               , pr_nrcontrato => rw_crabepr.nrctremp
+                               , pr_idlautom => NULL
+                               , pr_dtmvtolt_lcm => rw_craplot.dtmvtolt
+                               , pr_cdagenci_lcm => rw_craplot.cdagenci
+                               , pr_cdbccxlt_lcm => rw_craplot.cdbccxlt
+                               , pr_nrdolote_lcm => rw_craplot.nrdolote
+                               , pr_nrseqdig_lcm => nvl(rw_craplot.nrseqdig,0) + 1
+                               , pr_vliofpri => vr_vliofpri_tmp
+                               , pr_vliofadi => vr_vliofadi_tmp
+                               , pr_vliofcpl => 0
+                               , pr_flgimune => vr_flgimune
+                               , pr_cdcritic => vr_cdcritic
+                               , pr_dscritic => vr_dscritic);
+                               
+           if vr_dscritic is not null then
+              vr_dscritic := 'Erro ao atualiza tabela de controle IOF. ' || SQLERRM;
+              --Sair do programa
+              RAISE vr_exc_saida;
+           end if; 
+           
+          -- Atualiza IOF pago e base de calculo no crapcot
+          OPEN cr_crapcot(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => rw_crabepr.nrdconta);
+          FETCH cr_crapcot INTO rw_crapcot;
+          
+          -- Se não encontrou
+          IF cr_crapcot%NOTFOUND THEN
+            
+            -- Fecha Cursor
+            CLOSE cr_crapcot;
+            
+            vr_cdcritic := 169; -- 169 - Associado sem registro de cotas!!! - Erro do sistema!!!!
+            vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
+      
+            -- Gera Log
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                       pr_ind_tipo_log => 2, -- Erro Tratado
+                                       pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss')  ||
+                                                          ' -' || vr_cdprogra || ' --> '  ||
+                                                          vr_dscritic);
+            --Sair do programa
+            RAISE vr_exc_saida;  
+          ELSE
+             -- Fecha Cursor
+            CLOSE cr_crapcot;
+            
+            -- Atualiza cota 
           BEGIN
-            UPDATE crapepr SET crapepr.vltaxiof = 0
-                              ,crapepr.vltariof = vr_vliofaux
-            WHERE crapepr.ROWID = rw_crabepr.ROWID;
+              UPDATE crapcot SET crapcot.vliofepr = nvl(crapcot.vliofepr,0) + nvl(vr_vliofaux,0)
+                                ,crapcot.vlbsiepr = nvl(crapcot.vlbsiepr,0) + nvl(vr_vlrsaldo,0)
+              WHERE crapcot.ROWID = rw_crapcot.ROWID;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualiza tabela crapepr. ' || SQLERRM;
+                vr_dscritic := 'Erro ao atualiza tabela crapcot. ' || SQLERRM;
               --Sair do programa
               RAISE vr_exc_saida;
           END;         
+          END IF;
+        END IF;
+        
+      --> caso não cobrou IOF pois é imune, mas possui valor principal ou adicional
+      ELSIF vr_flgimune = 1 AND
+            ( vr_vliofpri_tmp > 0 OR 
+              vr_vliofadi_tmp > 0) THEN
+              
+        -- Projeto 410 - Insere IOF na tabela de controle
+        TIOF0001.pc_insere_iof(pr_cdcooper => pr_cdcooper
+                             , pr_nrdconta => rw_crabepr.nrdconta
+                             , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                             , pr_tpproduto => 1
+                             , pr_nrcontrato => rw_crabepr.nrctremp
+                             , pr_idlautom => NULL
+                             , pr_dtmvtolt_lcm => NULL
+                             , pr_cdagenci_lcm => NULL
+                             , pr_cdbccxlt_lcm => NULL
+                             , pr_nrdolote_lcm => NULL
+                             , pr_nrseqdig_lcm => NULL
+                             , pr_vliofpri => vr_vliofpri_tmp
+                             , pr_vliofadi => vr_vliofadi_tmp
+                             , pr_vliofcpl => 0
+                             , pr_flgimune => vr_flgimune
+                             , pr_cdcritic => vr_cdcritic
+                             , pr_dscritic => vr_dscritic);
+                               
+         if vr_dscritic is not null then
+            vr_dscritic := 'Erro ao atualiza tabela de controle IOF. ' || SQLERRM;
+            --Sair do programa
+            RAISE vr_exc_saida;
+         end if; 
+      
+      END IF;
+    --> caso financia IOF deve adicionar valor na crapcot  
+    ELSIF rw_crabepr.idfiniof = 1 AND 
+          rw_crabepr.vliofepr > 0 THEN
                   
           -- Atualiza IOF pago e base de calculo no crapcot
-          
           OPEN cr_crapcot(pr_cdcooper => pr_cdcooper
                          ,pr_nrdconta => rw_crabepr.nrdconta);
           FETCH cr_crapcot INTO rw_crapcot;
@@ -3042,7 +2935,7 @@ BEGIN
             
             -- Atualiza cota 
             BEGIN
-              UPDATE crapcot SET crapcot.vliofepr = nvl(crapcot.vliofepr,0) + nvl(vr_vliofaux,0)
+          UPDATE crapcot SET crapcot.vliofepr = nvl(crapcot.vliofepr,0) + nvl(rw_crabepr.vliofepr,0)
                                 ,crapcot.vlbsiepr = nvl(crapcot.vlbsiepr,0) + nvl(vr_vlrsaldo,0)
               WHERE crapcot.ROWID = rw_crapcot.ROWID;
             EXCEPTION
@@ -3052,8 +2945,6 @@ BEGIN
                 RAISE vr_exc_saida;
             END;  
           END IF;
-        END IF;
-      END IF;
     END IF;
     
     --Atualizar restart (somente se existir)

@@ -22,7 +22,9 @@
                 23/06/2016 - Ajuste na rotina consulta-transacoes-sem-documento
                              para resolver o problema referente o chamado 467402. (Kelvin)
                 
-                04/12/2017 - Melhoria 458 adicionado informacao do CPF a tela Traesp, Antonio R. Junior (mouts)             
+                04/12/2017 - Melhoria 458 adicionado informacao do CPF a tela Traesp, Antonio R. Junior (mouts)  
+				
+				19/02/2018 - Ajustado mascara zz,zzz,zz9 para zzz,zzz,zz9 no campo NRDOCMTO - Antonio R. Junior (mouts) - chamado 851313
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -99,7 +101,7 @@ PROCEDURE consulta-transacoes-especie:
                    tt-transacoes-especie.vllanmto = 
                     STRING(crapcme.vllanmto, "zzz,zzz,zz9.99")
                    tt-transacoes-especie.nrdocmto = 
-                                    STRING(crapcme.nrdocmto, "zz,zzz,zz9")
+                                    STRING(crapcme.nrdocmto, "zzz,zzz,zz9")
                    tt-transacoes-especie.dtmvtolt = crapcme.dtmvtolt
                    tt-transacoes-especie.tpoperac = aux_tpoperac
                    tt-transacoes-especie.sisbacen = crapcme.sisbacen.
@@ -234,7 +236,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                                tt-transacoes-especie.nmprimtl = crapass.nmprimtl
                                                                 WHEN AVAIL crapass
                                tt-transacoes-especie.nrdocmto = 
-                                            STRING(craplcm.nrdocmto, "zz,zzz,zz9")
+                                            STRING(craplcm.nrdocmto, "zzz,zzz,zz9")
                                tt-transacoes-especie.tpoperac = aux_tpoperac
                                tt-transacoes-especie.vllanmto = 
                                          STRING(craplcm.vllanmto, "zzz,zzz,zz9.99")
@@ -316,7 +318,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                                tt-transacoes-especie.nmprimtl = crapass.nmprimtl
                                                                 WHEN AVAIL crapass
                                tt-transacoes-especie.nrdocmto = 
-                                            STRING(craptvl.nrdocmto, "zz,zzz,zz9")
+                                            STRING(craptvl.nrdocmto, "zzz,zzz,zz9")
                                tt-transacoes-especie.tpoperac = aux_tpoperac
                                tt-transacoes-especie.vllanmto = 
                                          STRING(craptvl.vldocrcb, "zzz,zzz,zz9.99")
@@ -391,7 +393,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                               tt-transacoes-especie.nrdolote = craplft.nrdolote
                               tt-transacoes-especie.nrdconta = STRING(craplft.nrdconta, "zzzz,zzz,9")
                               tt-transacoes-especie.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
-                              tt-transacoes-especie.nrdocmto = STRING(craplft.nrseqdig, "zz,zzz,zz9")
+                              tt-transacoes-especie.nrdocmto = STRING(craplft.nrseqdig, "zzz,zzz,zz9")
                               tt-transacoes-especie.tpoperac = aux_tpoperac
                               tt-transacoes-especie.vllanmto = STRING(craplft.vllanmto, "zzz,zzz,zz9.99")
                               tt-transacoes-especie.dtmvtolt = craplft.dtmvtolt.
@@ -441,7 +443,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                             tt-transacoes-especie.nrdolote = craptit.nrdolote
                             tt-transacoes-especie.nrdconta = STRING(craptit.nrdconta, "zzzz,zzz,9")
                             tt-transacoes-especie.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
-                            tt-transacoes-especie.nrdocmto = STRING(craptit.nrseqdig, "zz,zzz,zz9")
+                            tt-transacoes-especie.nrdocmto = STRING(craptit.nrseqdig, "zzz,zzz,zz9")
                             tt-transacoes-especie.tpoperac = aux_tpoperac
                             tt-transacoes-especie.vllanmto = STRING(craptit.vldpagto, "zzz,zzz,zz9.99")
                             tt-transacoes-especie.dtmvtolt = craptit.dtmvtolt.
@@ -490,7 +492,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                                          STRING(craplcx.cdagenci, "999")
                        tt-transacoes-especie.nrdolote = aux_nrdolote
                        tt-transacoes-especie.nrdocmto = 
-                                         STRING(craplcx.nrdocmto, "zz,zzz,zz9")
+                                         STRING(craplcx.nrdocmto, "zzz,zzz,zz9")
                        tt-transacoes-especie.tpoperac = aux_tpoperac
                        tt-transacoes-especie.vllanmto = 
                                          STRING(craplcx.vldocmto, "zzz,zzz,zz9.99")
@@ -605,7 +607,7 @@ PROCEDURE consulta-controle-movimentacao:
            tt-transacoes-especie.vllanmto = 
                                      STRING(crapcme.vllanmto, "zzz,zzz,zz9.99")
            tt-transacoes-especie.nrdocmto = 
-                                        STRING(crapcme.nrdocmto, "zz,zzz,zz9")
+                                        STRING(crapcme.nrdocmto, "zzz,zzz,zz9")
            tt-transacoes-especie.dtmvtolt = crapcme.dtmvtolt
            tt-transacoes-especie.tpoperac = aux_tpoperac
            tt-transacoes-especie.sisbacen = crapcme.sisbacen

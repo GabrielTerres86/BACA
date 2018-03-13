@@ -135,17 +135,17 @@ ELSE IF crapepr.tpemprst = 2 THEN /* Price Pos-Fixado */
        /* Efetuar a chamada a rotina Oracle  */
        RUN STORED-PROCEDURE pc_busca_pagto_parc_pos_prog
            aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+												INPUT par_cdprogra,
                                                 INPUT STRING(par_dtmvtolt),
                                                 INPUT STRING(crapdat.dtmvtoan),
                                                 INPUT crapepr.nrdconta,
                                                 INPUT crapepr.nrctremp,
-                                                INPUT crapepr.cdlcremp,
-                                                INPUT crapepr.qttolatr,
                                                OUTPUT 0,   /* pr_vlpreapg */
                                                OUTPUT 0,   /* pr_vlprvenc */
                                                OUTPUT 0,   /* pr_vlpraven */
                                                OUTPUT 0,   /* pr_vlmtapar */
                                                OUTPUT 0,   /* pr_vlmrapar */
+                                               OUTPUT 0,   /* pr_vliofcpl */
                                                OUTPUT 0,   /* pr_cdcritic */
                                                OUTPUT ""). /* pr_dscritic */  
 

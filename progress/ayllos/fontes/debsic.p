@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Lunelli
-   Data    : Abril/2013                        Ultima atualizacao: 24/10/2016
+   Data    : Abril/2013                        Ultima atualizacao: 14/02/2018
 
    Dados referentes ao programa:
 
@@ -33,6 +33,8 @@
                             os lancamentos do dia - Melhoria349 (Tiago/Elton). 							            
                             
                15/01/2018 - Adicionar flgativo na busca da crapcop (Lucas Ranghetti #822845)
+               
+               14/02/2018 - Retirar validaçao do horario de pagamento SICREDI (Lucas Ranghetti #838937)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -629,13 +631,6 @@ PROCEDURE executa-agendamento:
                                         " - Opcao para processo manual "
                                           + "desabilitada.". 
 
-
-                /** Verifica se horario para pagamentos nao esgotou **/
-                IF  TIME > INT(ENTRY(1,craptab.dstextab," ")) AND
-                    TIME < INT(ENTRY(2,craptab.dstextab," ")) THEN
-                    ASSIGN glb_dscritic = crapcop.nmrescop +
-                                          " - Horario para " + 
-                                   "pagamentos SICREDI na Internet nao esgotou". 
             END.
 
             IF  glb_dscritic <> ""  THEN

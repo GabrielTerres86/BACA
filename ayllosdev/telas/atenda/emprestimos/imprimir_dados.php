@@ -55,6 +55,7 @@
 	$nrdrecid = $_POST["nrdrecid"];
 	$nrdconta = $_POST["nrdconta"];
 	$nrctremp = $_POST['nrctremp'];
+	$nrcpfcgc = $_POST['nrcpfcgc'];
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -115,10 +116,31 @@
 		$xml .= '		<flgentra>FALSE</flgentra>';
 		$xml .= '		<nrpagina>0</nrpagina>';
 		$xml .= '		<cdprogra>"ATENDA"</cdprogra>';
+		$xml .= '		<nrcpfcgc>'.$nrcpfcgc.'</nrcpfcgc>';
 		$xml .= '	</Dados>';
 		$xml .= '</Root>';
 	}
+	
+
 	// verifica se opcao eh contrato
+	if ($idimpres == '57'){
+		// Executa script para envio do XML
+		$xmlResult = mensageria($xml, "EMPR0003", "IMP_DECUTRECISIOF", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+		// Cria objeto para classe de tratamento de XML
+		$xmlObj = simplexml_load_string($xmlResult);
+
+		// Se ocorrer um erro, mostra crítica
+		if ($xmlObj->Erro->Registro->dscritic != '') {
+			$msgErro = utf8ToHtml($xmlObj->Erro->Registro->dscritic);
+			?><script language="javascript">alert('<?php echo $msgErro; ?>');</script><?php
+			exit();
+		}
+
+		// Obtém nome do arquivo PDF 
+		$nmarqpdf = $xmlObj;
+	}
+	else // verifica se opcao eh contrato
 	if ($idimpres == '2' || $idimpres == '8') {
 		// Executa script para envio do XML
 		$xmlResult = mensageria($xml, "EMPR0003", "IMPCONTR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");

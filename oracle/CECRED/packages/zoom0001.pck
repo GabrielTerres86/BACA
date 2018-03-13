@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     Sistema  : Rotinas genericas referente a zoom de pesquisa
     Sigla    : ZOOM
     Autor    : Adriano Marchi
-    Data     : 30/11/2015.                   Ultima atualizacao: 04/08/2017
+    Data     : 30/11/2015.                   Ultima atualizacao: 09/02/2018
   
    Dados referentes ao programa:
   
@@ -25,7 +25,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
                             (Jonata - RKAM).
                                            
-  ---------------------------------------------------------------------------------------------------------------*?
+			   29/01/2018 - Inclusão da rotina pc_busca_qualif_oper_web - Diego Simas (AMcom).			   
+
+  ---------------------------------------------------------------------------------------------------------------*/
   
   /* Tabela para guardar os operadores */
   TYPE typ_operadores IS RECORD 
@@ -455,6 +457,14 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                          ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
                          ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
                          ,pr_des_erro  OUT VARCHAR2);                                                                                    
+  
+
+PROCEDURE pc_busca_qualif_oper_web(pr_xmllog    IN VARCHAR2                --XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER            --Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2               --Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType      --Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2               --Nome do Campo
+                                   ,pr_des_erro  OUT VARCHAR2);             --Saida OK/NOK
                                                                                                                    
 END ZOOM0001;
 /
@@ -6280,6 +6290,189 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                          '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
       
   END pc_busca_conta_cosif;
+  
+
+
+ PROCEDURE pc_busca_qualif_oper_web(pr_xmllog    IN VARCHAR2                --XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER            --Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2               --Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType      --Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2               --Nome do Campo
+                                   ,pr_des_erro  OUT VARCHAR2)IS            --Saida OK/NOK
+
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : pc_busca_qualif_oper_web
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Diego Simas
+    Data     : Janeiro/2018                          Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: -----
+    Objetivo   : Pesquisa que retorna as Qualificações da Operação.
+
+    Alterações :
+
+    -------------------------------------------------------------------------------------------------------------*/
+
+   --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_reto VARCHAR2(3);
+
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    --Tabela de linhas de crédito
+    vr_tab_linhas typ_tab_linhas;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    --Variaveis Locais
+    vr_qtregist INTEGER := 0;
+    vr_clob     CLOB;
+    vr_xml_temp VARCHAR2(32726) := '';
+
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;
+    vr_exc_erro  EXCEPTION;
+
+
+  BEGIN
+    --limpar tabela erros
+    vr_tab_erro.DELETE;
+
+    --Limpar tabela dados
+    vr_tab_linhas.DELETE;
+
+    --Inicializar Variaveis
+    vr_cdcritic:= 0;
+    vr_dscritic:= NULL;
+
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Monta documento XML de ERRO
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><linhas>');
+
+
+
+      -- Carrega os dados -- Qualificação da Operação (1,2,3,4)
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<linha>'||
+                                                   '  <idquaprc>1</idquaprc>'||
+                                                   '  <dsquaprc>Operacao Normal</dsquaprc>'||
+                                                   '</linha>');
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<linha>'||
+                                                   '  <idquaprc>2</idquaprc>'||
+                                                   '  <dsquaprc>Renovacao Credito</dsquaprc>'||
+                                                   '</linha>');
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<linha>'||
+                                                   '  <idquaprc>3</idquaprc>'||
+                                                   '  <dsquaprc>Renegociacao Credito</dsquaprc>'||
+                                                   '</linha>');
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<linha>'||
+                                                   '  <idquaprc>4</idquaprc>'||
+                                                   '  <dsquaprc>Composicao Divida</dsquaprc>'||
+                                                   '</linha>');
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<linha>'||
+                                                   '  <idquaprc>5</idquaprc>'||
+                                                   '  <dsquaprc>Cessao de Cartao</dsquaprc>'||
+                                                   '</linha>');
+
+
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</linhas></Root>'
+                           ,pr_fecha_xml      => TRUE);
+
+    -- Atualiza o XML de retorno
+    pr_retxml := xmltype(vr_clob);
+
+    -- Insere atributo na tag banco com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                             ,pr_tag   => 'linhas'            --> Nome da TAG XML
+                             ,pr_atrib => 'qtregist'          --> Nome do atributo
+                             ,pr_atval => 5                   --> Valor do atributo
+                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);
+
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    --Retorno
+    pr_des_erro:= 'OK';
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_qualif_oper_web --> '|| SQLERRM;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+  END pc_busca_qualif_oper_web;
 
   
 END ZOOM0001;

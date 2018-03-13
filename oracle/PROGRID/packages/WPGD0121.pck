@@ -59,7 +59,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0121 IS
   -- Objetivo  : Rotinas para geração Relatório de Pendências de Eventos
   --
   -- Alteracoes: 
-  --
+  -- Chamado 840781 - Marcio (Mouts) 20/02/2018 - Não considerar o ano na query que busca os cursos finalizados
   --
   ---------------------------------------------------------------------------------------------------------------
   
@@ -101,7 +101,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0121 IS
          AND (eap.dtanoage = edp.dtanoage)
          AND (edp.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
          AND (eap.cdagenci = pr_cdagenci OR pr_cdagenci = 0)
-         AND (eap.dtanoage = pr_dtanoage)
+         --AND (eap.dtanoage = pr_dtanoage) -- Comentado no chamado 840781
+         AND (eap.dtanoage >= pr_dtanoage-1) -- Mostar os eventos EAD do ano atual e anterior
          AND edp.idevento = 1
          AND edp.tpevento IN(10,11)
          AND eap.flgevsel = 1
@@ -188,8 +189,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0121 IS
               ,crapidp ci
               ,crapcop cc
               ,crapage ca
-         WHERE c.dtanoage  = pr_dtanoage -- Parâmetro
-           AND c.cdcooper  = pr_cdcooper -- Parâmetro
+         WHERE /*c.dtanoage  = pr_dtanoage -- Parâmetro
+           AND */ -- Comentada a linha acima para não considerar o ano ao buscar
+           -- os cursos concluídos, visto que, o usuário pode iniciar o curso em 
+           -- um ano e terminar somente no ano seguinte
+           c.cdcooper  = pr_cdcooper -- Parâmetro
            AND c.cdagenci  = decode(pr_cdagenci,0,c.cdagenci,pr_cdagenci)    -- Parâmetros
            AND c.cdevento  = decode(pr_cdevento,0,c.cdevento,pr_cdevento)    -- Parâmetros
            AND ce.idevento = 1

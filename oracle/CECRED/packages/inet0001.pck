@@ -626,6 +626,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --
   --            08/02/2018 - Criado a procedure pc_atu_trans_pend_prep que faz a atualização das transacoes
   --                         pendentes de aprovação por preposto de conta PJ sem ass conjunta (Tiago #775776).
+  --
+  --            12/03/2018 - Ajuste na pc_verifica_operacao para impedir agendamentos para data retroativa. (Pablão)
+  --
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -3883,7 +3886,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                            
               03/01/2018 - Corrigido para verificar saldo da conta mesmo quando for o operador realizando
                            alguma transação (Tiago/Adriano).
-                           
+              
               05/01/2018 - Corrigdo acentuação na frase de critica agendamento e pagamento (Tiago #818723)
               
               22/01/2018 - Ajuste para qdo a conta do preposto estiver sem saldo e for um operador fazendo uma 
@@ -4579,17 +4582,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           RAISE vr_exc_erro;
         END IF;
         
-        /** Tratamento para evitar que o usuário faça agendamento para data retroativa **/
-        IF pr_idagenda = 2  AND
-           pr_dtmvtopg <= pr_dtmvtolt THEN
-           
-          vr_dscritic := 'Não é possível efetuar agendamentos para data retroativa.';
-          vr_cdcritic:= 0;
-          
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-        END IF;
-        
         IF pr_idagenda = 1 AND
            pr_tpoperac = 4 AND 
            pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
@@ -5021,9 +5013,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           pr_vllanmto := nvl(pr_vllanmto,0) + Nvl(vr_vltarifa,0);
         END IF;        
 
-        /** Verifica se data de debito e uma data futura **/
-        IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
-          IF pr_tpoperac = 10 THEN --DARF/DAS            
+        vr_cdcritic := NULL;
+        vr_dscritic := NULL;
+        -- Verifica se data de agendamento e uma data futura
+        IF pr_tpoperac = 10 THEN --DARF/DAS    
+          
+          IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
             --Montar mensagem erro
             vr_cdcritic:= 0;            
             --Data mínima obtida de dtmvtocd se não for dia útil
@@ -5034,15 +5029,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             END IF;
           --  ELSE
           END IF;
-        END IF;
-        IF pr_dtmvtopg < Trunc(vr_datdodia) THEN 
+          
+        ELSE
+          
+          IF pr_dtmvtopg < vr_datdodia THEN -- Se for agendamento para data retroativa
           --Montar mensagem erro
           vr_cdcritic:= 0;
           vr_dscritic:= 'Agendamento deve ser feito para uma data futura.';
+          ELSIF pr_dtmvtopg = vr_datdodia THEN -- Se for agendamento para hoje
+            --Montar mensagem erro
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Não é possível agendar para a data de hoje. Utilize a opção "Nesta Data".';
           END IF;
+        
+          END IF;
+        
+        --Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
-         -- RAISE vr_exc_erro;
-       -- END IF;
+          RAISE vr_exc_erro;
+        END IF;
+        
         /** Agendamento normal **/
         IF pr_idagenda = 2 THEN
           --Verificar se eh feriado
@@ -6426,7 +6433,7 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
       pr_dscritic := 'Erro na proc pc_verifica_limite_ope_canc '||sqlerrm;
   
   END pc_verifica_limite_ope_canc;    
-  
+
   /*Atualiza as transacoes pendentes para o novo preposto*/
   PROCEDURE pc_atu_trans_pend_prep (pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE   --Numero conta

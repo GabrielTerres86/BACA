@@ -372,7 +372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     END IF;
     CLOSE cr_crapblj;
 
-    
+      
       IF pr_fldestrf = 0 THEN
         vr_fldestrf := FALSE;
         vr_dsinfdes := 'Desbloqueio BACENJUD';
@@ -2113,8 +2113,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     CURSOR cr_crapblj(pr_cdcooper crapblj.cdcooper%TYPE,
                       pr_nrdconta crapass.nrdconta%TYPE,
                       pr_nroficio crapblj.nroficio%TYPE,
-                      pr_cdmodali crapblj.cdmodali%TYPE,
-                      pr_vlbloque crapblj.vlbloque%TYPE) IS
+                      pr_cdmodali crapblj.cdmodali%TYPE) IS
       SELECT nrdconta,
              nroficio,
              nrproces,
@@ -2124,7 +2123,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        WHERE a.cdcooper = pr_cdcooper
          AND a.nrdconta = pr_nrdconta
          AND a.cdmodali = pr_cdmodali
-         AND a.vlbloque = pr_vlbloque
          AND a.nroficio LIKE pr_nroficio||'%'
          AND a.dtblqfim IS NULL; -- Que nao esteja finalizada
     rw_crapblj cr_crapblj%ROWTYPE;
@@ -2244,8 +2242,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         OPEN cr_crapblj(pr_cdcooper => rw_solicitacao.cdcooper,
                         pr_nrdconta => rw_solicitacao.nrdconta,
                         pr_nroficio => rw_solicitacao.dsoficio,
-                        pr_cdmodali => rw_solicitacao.cdmodali,
-                        pr_vlbloque => rw_solicitacao.vlordem);
+                        pr_cdmodali => rw_solicitacao.cdmodali);
         FETCH cr_crapblj INTO rw_crapblj;
         
         -- se nao encontrar bloqueio gera inconsistencia

@@ -37,7 +37,10 @@
                           PRJ229 - Melhorias OQS(Odirlei-AMcom)
                              
              05/06/2017 - Alterado as colunas de exibiçao conforme tipo de evento,
-                          Prj. 322 (Jean Michel).             
+                          Prj. 322 (Jean Michel).   
+						  
+             22/02/2018 - Pj 322 - SM 10 - Alteração Relatório de Inscrições (Márcio Mouts)
+                        - Incluir as colunas de Telefone, Celular e e-mail no relatório de inscrições no menu Assembleias			 
                           
  ****************************************************************************/
  
@@ -157,7 +160,12 @@ FUNCTION Relatorio RETURNS LOGICAL ():
                         IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>E-mail</td>' ELSE '' SKIP.
                       END.
                     Else
-                      {&out}  '    <td style="width:77px;padding-left:2px">PA</td>' SKIP.
+                      DO: /* PJ 322 - SM 10*/
+                        {&out}  '    <td style="width:77px;padding-left:2px">PA</td>' SKIP
+                    '   <td style="width:77px;padding-left:2px">Telefone</td>' SKIP        /* PJ 322 - SM 10*/
+					'   <td style="width:77px;padding-left:2px">Celular</td>' SKIP         /* PJ 322 - SM 10*/
+                        IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>E-mail</td>' ELSE '' SKIP.	/* PJ 322 - SM 10*/				  
+                      END. /* PJ 322 - SM 10*/
                       
             {&out}  '    <td align="center">Vínc./Inscr.</td>' SKIP
                     '    <td>Observação</td>' SKIP
@@ -201,10 +209,55 @@ FUNCTION Relatorio RETURNS LOGICAL ():
           DO:
             FIND FIRST crapage WHERE crapage.cdcooper = crapidp.cdcooper
                                  AND crapage.cdagenci = crapidp.cdageins NO-LOCK NO-ERROR NO-WAIT.
-            IF AVAILABLE crapage THEN                     
+            IF AVAILABLE crapage THEN   
+              DO:			
               {&out} '<td class="tab2" width="160">' + crapage.nmresage + '</td>' SKIP.
+			  
+			  /*Início PJ 322 - SM 10 */
+              {&out} '    <td class="tab2" align="left" >(' crapidp.nrdddins ') ' crapidp.nrtelins '</td>' SKIP
+               '    <td class="tab2" align="left" >'.
+                /* Incluir telefone celular se for inscricao de cooperado */
+                IF  crapidp.nrdconta <> 0 THEN 
+                  DO:
+                    FIND FIRST craptfc WHERE craptfc.cdcooper = crapidp.cdcooper AND
+                                             craptfc.nrdconta = crapidp.nrdconta AND
+                                             craptfc.idseqttl = crapidp.idseqttl AND
+                                             craptfc.tptelefo = 2
+                                             NO-LOCK NO-ERROR.
+                
+                    IF AVAIL craptfc THEN
+                      {&out} '(' craptfc.nrdddtfc ') ' craptfc.nrtelefo.
+                  END.
+
+                {&out} '</td>' SKIP
+                IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td class="tab2" width="160">' + crapidp.dsdemail + '</td>' ELSE '' SKIP.
+			  /*Fim PJ 322 - SM 10  */
+			  END.
             ELSE
+			  DO:
               {&out} '<td class="tab2" width="160">SEM PA</td>' SKIP.
+        
+			  /*Início PJ 322 - SM 10 */
+              {&out} '    <td class="tab2" align="left" >(' crapidp.nrdddins ') ' crapidp.nrtelins '</td>' SKIP
+                     '    <td class="tab2" align="left" >'.
+        /* Incluir telefone celular se for inscricao de cooperado */
+        IF  crapidp.nrdconta <> 0 THEN 
+        DO:
+            FIND FIRST craptfc WHERE craptfc.cdcooper = crapidp.cdcooper AND
+                                     craptfc.nrdconta = crapidp.nrdconta AND
+                                     craptfc.idseqttl = crapidp.idseqttl AND
+                                     craptfc.tptelefo = 2
+                                     NO-LOCK NO-ERROR.
+                
+            IF AVAIL craptfc THEN
+            {&out} '(' craptfc.nrdddtfc ') ' craptfc.nrtelefo.
+        END.
+
+        {&out} '</td>' SKIP
+                IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td class="tab2" width="160">' + crapidp.dsdemail + '</td>' ELSE '' SKIP.
+			  /*Fim PJ 322 - SM 10  */
+			  END.
+			
           END.
          {&out}       
                '    <td class="tab2" align="center" width="70">' 
@@ -232,7 +285,12 @@ FUNCTION Relatorio RETURNS LOGICAL ():
 								  	 IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>E-mail</td>' ELSE '' SKIP.
 				     END.
 					 Else
-						{&out}  '    <td style="width:77px;padding-left:2px">PA</td>' SKIP.
+					  DO:
+						{&out}  '    <td style="width:77px;padding-left:2px">PA</td>' SKIP
+                                 '   <td style="width:77px;padding-left:2px">Telefone</td>' SKIP        /* PJ 322 - SM 10*/
+					             '   <td style="width:77px;padding-left:2px">Celular</td>' SKIP         /* PJ 322 - SM 10*/
+                        IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>E-mail</td>' ELSE '' SKIP.	/* PJ 322 - SM 10*/								
+					  END.
 						
 				   {&out} '    <td align="center">Vínc./Inscr.</td>' SKIP
                    '    <td>Observação</td>' SKIP

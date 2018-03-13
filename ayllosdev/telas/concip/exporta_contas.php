@@ -41,6 +41,7 @@ $dtarqfim = (isset($_POST['dtarqfim1'])) ? $_POST['dtarqfim1'] : '';
 $cdlancto = (isset($_POST['cdlancto1'])) ? $_POST['cdlancto1'] : '';
 $cdsituac = (isset($_POST['cdsituac1'])) ? $_POST['cdsituac1'] : '';
 $nmarquiv = (isset($_POST['nmarquiv1'])) ? $_POST['nmarquiv1'] : '';
+$formtran = (isset($_POST['formtran'])) ? $_POST['formtran'] : '0';
 $insaida = (isset($_POST['insaida1'])) ? $_POST['insaida1'] : '2';
 // 1 - Consultar 2 - Exportar
 
@@ -59,6 +60,7 @@ $xml .= "   <nmarquiv>" . $nmarquiv . "</nmarquiv>";
 $xml .= "   <insaida>"  . $insaida . "</insaida>";
 $xml .= "   <nriniseq>" . $nriniseq . "</nriniseq>";
 $xml .= "   <nrregist>" . $nrregist . "</nrregist>";
+$xml .= "   <formtran>" . $formtran . "</formtran>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 

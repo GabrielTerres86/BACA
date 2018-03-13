@@ -162,6 +162,8 @@
                 09/10/2017 - Incluido rotina para ao cadastrar cooperado carregar dados
                              da pessoa do cadastro unificado, para completar o cadastro com dados
                              que nao estao na tela. PRJ339 - CRM (Odirlei-AMcom)
+
+                26/02/2017 - Permitir alterar o nome do talao do segundo titular (Andrino - MoutS)							 
 .............................................................................*/
 
 
@@ -1645,7 +1647,7 @@ PROCEDURE Grava_Dados:
                 tt-dados-fis-ant.dtnasttl = crapttl.dtnasttl
                 tt-dados-fis-ant.inhabmen = crapttl.inhabmen
                 tt-dados-fis-ant.cdfrmttl = crapttl.cdfrmttl
-                tt-dados-fis-ant.nmtalttl = crapttl.nmtalttl
+                tt-dados-fis-ant.nmtalttl = par_nmtalttl 
                 tt-dados-fis-ant.qtfoltal = crapass.qtfoltal
                 tt-dados-fis-ant.nmextttl = crapttl.nmextttl
                 tt-dados-fis-ant.dtcnscpf = crapttl.dtcnscpf

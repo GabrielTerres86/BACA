@@ -17,6 +17,9 @@
                 29/09/2016 - Ajustes referente a inclusão da opção "Acordos". 
 						     Projeto 302 (Jean Michel).
 
+				24/01/2018 - Ajustes referentes a inclusão da opção "Riscos".
+					         Reginaldo - AMcom
+							 
  ***********************************************************************/
 
 var contWin = 0;  // Vari&aacute;vel para contagem do n&uacute;mero de janelas abertas para impress&atilde;o de extratos
@@ -47,6 +50,9 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
     } else if (opcao == '7') { // Operação Acordos
         var msg = "acordos";
         var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/acordos.php";
+	} else if (opcao == '8') { // Operação Riscos
+		var msg = "riscos";
+		var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/riscos.php";
     }
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando " + msg + " ...");
@@ -75,6 +81,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		url: UrlOperacao,
 		data: {
 			nrdconta: nrdconta,
+			nrcpfcnpj: nrcpfcnpj = retiraCaracteres($("#nrcpfcgc", "#frmCabAtenda").val(), "0123456789", true),
 			redirect: "html_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -236,7 +243,7 @@ function formataEmprestimos() {
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'235px', 'width':'530px'});
+	divRegistro.css({'height':'235px', 'width':'580px'});
 	
 	var ordemInicial = new Array();
 	
@@ -259,6 +266,30 @@ function formataEmprestimos() {
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
 	ajustarCentralizacao();	
+
+	return false;
+}
+
+// Função que formata a tabela riscos
+function formataRiscos() {
+	var divRegistro = $('div.divRegistros', '#divTabRiscos');
+	var tabela = $('table', divRegistro);
+	var linha = $('table > tbody > tr', divRegistro);
+
+	divRegistro.css({ 'height': '175px', 'width': '820px' });
+
+	var ordemInicial = new Array();
+
+	var arrayLargura = ['140px', '70px', '60px', '40px', '40px', '40px', '40px', '40px', '40px', 
+		'40px', '40px', '40px', '40px'];
+
+	var arrayAlinha = ['center', 'right', 'right', 'center', 'center', 'center', 'center', 'center',
+		'center', 'center', 'center', 'center', 'center'];
+
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+
+	ajustarCentralizacao();
+
 	return false;
 }
 
@@ -269,7 +300,7 @@ function formataPrejuizos() {
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'235px', 'width':'530px'});
+	divRegistro.css({'height':'235px', 'width':'580px'});
 	
 	var ordemInicial = new Array();
 	
@@ -300,7 +331,7 @@ function formataSPC() {
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'180px', 'width':'530px'});
+	divRegistro.css({'height':'180px', 'width':'580px'});
 	
 	var ordemInicial = new Array();
 	
@@ -358,7 +389,7 @@ function formataEstouros() {
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'180px', 'width':'530px'});
+	divRegistro.css({'height':'180px', 'width':'580px'});
 	
 	var ordemInicial = new Array();
 	
@@ -434,7 +465,7 @@ function formataGrupoEconomico(){
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'180px', 'width':'530px'});
+	divRegistro.css({'height':'180px', 'width':'580px'});
 	
 	var ordemInicial = new Array();
 	
@@ -467,7 +498,7 @@ function formataAcordos() {
     var tabela = $('table', divRegistro);
     var linha = $('table > tbody > tr', divRegistro);
 
-    divRegistro.css({ 'height': '180px', 'width': '530px' });
+    divRegistro.css({ 'height': '180px', 'width': '580px' });
 
     var ordemInicial = new Array();
 

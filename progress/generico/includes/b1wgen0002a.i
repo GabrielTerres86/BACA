@@ -87,6 +87,9 @@ DEF VAR aux_diainici AS INTE                                        NO-UNDO.
 DEF VAR aux_nrdiamta AS INTE                                        NO-UNDO.
 DEF VAR aux_conthist AS INTE                                        NO-UNDO.
 DEF VAR aux_contlote AS INTE                                        NO-UNDO.
+/* DEF VAR aux_vliofcpl AS DECI                                        NO-UNDO. */
+DEF VAR aux_vlbaseiof AS DECI                                        NO-UNDO.
+DEF VAR aux_qtdiaiof AS INTEGER                                     NO-UNDO.
 
 DEF BUFFER crabhis_1 FOR craphis.
 
@@ -101,7 +104,9 @@ ASSIGN aux_vlsdeved = crapepr.vlsdeved
        aux_vlsderel = 0
        aux_vlprepag = 0
        aux_vlprvenc = 0
-       aux_vlpraven = 0.
+       aux_vlpraven = 0
+       aux_vliofcpl = 0
+       aux_vlbaseiof = 0.
       
 FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
 
@@ -193,7 +198,8 @@ DO ON ERROR UNDO , LEAVE:
                         
                  ASSIGN aux_dtdpagto = crapepr.dtdpagto
                         aux_dtdinici = aux_dtmvtolt
-                        aux_dtdfinal = par_dtmvtolt.
+                        aux_dtdfinal = par_dtmvtolt
+                        aux_qtdiaiof = par_dtmvtolt - aux_dtmvtolt.
 
                  /** Rotina para calculo dias360 **/
                  { includes/dias360.i }
@@ -279,6 +285,38 @@ DO ON ERROR UNDO , LEAVE:
                                                aux_txdiaria     * 
                                                aux_qtdiamor).
                     END.
+
+                    
+                  /* Verifica se ha contratos de acordo */            
+                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+                 aux_vlbaseiof = ROUND(crappep.vlsdvpar / ((EXP(( 1 + crapepr.txmensal / 100), 
+                                (crapepr.qtpreemp - crappep.nrparepr + 1) ))), 2).
+                                
+                          
+                 RUN STORED-PROCEDURE pc_calcula_valor_iof_epr
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapepr.cdcooper
+                                                        ,INPUT crapepr.nrdconta
+                                                        ,INPUT crapepr.nrctremp
+                                                        ,INPUT aux_vlbaseiof /* vr_vlbaseiof */
+                                                        ,INPUT aux_vlbaseiof /* vr_vlbaseiof */
+                                                        ,INPUT ""
+                                                        ,INPUT crapepr.cdlcremp /* pr_cdlcremp */
+                                                        ,INPUT par_dtmvtolt /* pr_dtmvtolt */
+                                                        ,INPUT aux_qtdiaiof /* vr_qtdiamor */
+                                                        ,OUTPUT 0 /* pr_vliofpri */
+                                                        ,OUTPUT 0 /* pr_vliofadi */
+                                                        ,OUTPUT 0 /* pr_vliofcpl */
+                                                        ,OUTPUT 0 /* pr_vltaxa_iof_principal */
+                                                        ,OUTPUT 0 /* pr_flgimune */
+                                                        ,OUTPUT "" /* pr_dscritic */).
+                                                      
+                CLOSE STORED-PROC pc_calcula_valor_iof_epr
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_vliofcpl = aux_vliofcpl + pc_calcula_valor_iof_epr.pr_vliofcpl WHEN pc_calcula_valor_iof_epr.pr_vliofcpl <> ?.
 
              END. /* END Parcela Vencida */
        ELSE
@@ -389,10 +427,14 @@ DO ON ERROR UNDO , LEAVE:
           ASSIGN aux_vlsdeved = crapepr.vlemprst
                  aux_vlprepag = 0 
                  aux_vlpreapg = 0.
+				 
+		  /* Projeto 410 - Se financia IOF, incrementar IOF + Tarifa ao saldo devedor */		 
+	      IF crawepr.idfiniof = 1 THEN
+		     ASSIGN aux_vlsdeved = crapepr.vlemprst + crapepr.vliofepr + crapepr.vltarifa.
       END.
    ELSE
       DO:
-          ASSIGN aux_vlsdeved = aux_vlsderel.
+          ASSIGN aux_vlsdeved = aux_vlsderel + aux_vliofcpl.
       END.
 
    ASSIGN aux_flgtrans = TRUE.

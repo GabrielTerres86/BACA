@@ -22,6 +22,8 @@
  *				  11/07/2017 - Inclusao das novas colunas e campos "Tipo de tarifacao", "Percentual", "Valor Minimo" e
  *                             "Valor Maximo" (Mateus - MoutS)
  *
+ *                09/02/2018 - Ajuste feito para que a tela seja aberta no navegador IE. (SD 840276 - Kelvin)
+ *
  * -------------- 
  */
 
@@ -670,8 +672,11 @@ function carregaDetalhamento(){
 	return false;		
 }
 
-function carregaAtribuicaoDetalhamento( cdfaixav, nriniseq = 1, flgCarregando = false){
-
+function carregaAtribuicaoDetalhamento( cdfaixav, nriniseq, flgCarregando){
+	
+	nriniseq = 1;
+	flgCarregando = false;
+	
 	if(flgCarregando == true){
 		showMsgAguardo("Aguarde, carregando...");
 	}

@@ -62,6 +62,7 @@ BEGIN
             ,crapepr.cdfinemp
             ,crapepr.cdlcremp
             ,crapepr.qttolatr
+            ,crapepr.dtrefcor
             ,TO_CHAR(crapepr.dtdpagto, 'DD') diapagto
             ,crawepr.cddindex
         FROM crapepr
@@ -132,6 +133,24 @@ BEGIN
          AND craplem.dtmvtolt >= pr_dtamvini
          AND craplem.dtmvtolt <= pr_dtamvfin;
     vr_vllanmto craplem.vllanmto%TYPE;
+    
+    CURSOR cr_craplem_mora (pr_cdcooper	IN craplem.cdcooper%TYPE
+                           ,pr_nrdconta IN craplem.nrdconta%TYPE
+                           ,pr_nrctremp IN craplem.nrctremp%TYPE
+                           ,pr_nrparepr IN craplem.nrparepr%TYPE) IS
+      SELECT nvl(SUM(decode(cdhistor,
+                            2373, vllanmto,
+                            2371, vllanmto,
+                            2377, vllanmto,
+                            2375, vllanmto,
+                            2347, vllanmto * -1,
+                            2346, vllanmto * -1)), 0) vllanmto
+        FROM craplem
+       WHERE craplem.cdcooper = pr_cdcooper
+         AND craplem.nrdconta = pr_nrdconta
+         AND craplem.nrctremp = pr_nrctremp
+         AND craplem.nrparepr = pr_nrparepr
+         AND craplem.cdhistor IN (2373,2371,2377,2375,2347,2346);
 
     -- Verificar Registro de Microfilmagem
     CURSOR cr_crapmcr(pr_cdcooper IN crapmcr.cdcooper%TYPE
@@ -182,21 +201,23 @@ BEGIN
     vr_tab_crapmfx CADA0001.typ_tab_number;
 
     ------------------------------- VARIAVEIS -------------------------------
-    vr_flgachou          BOOLEAN;
-    vr_flg_lancar_mensal BOOLEAN;
-    vr_floperac          BOOLEAN;
-    vr_txdiaria          craplcr.txdiaria%TYPE;
-    vr_vljuremu          NUMBER;
-    vr_vljurcor          NUMBER;
-    vr_vlmtapar          NUMBER;
-    vr_vlmrapar          NUMBER;
-    vr_dtvencto          DATE;
-    vr_percmult          NUMBER(25,2);
-    vr_cdhistor          craphis.cdhistor%TYPE;
-    vr_dstextab          craptab.dstextab%TYPE;
-    vr_diarefju          crapepr.diarefju%TYPE;
-    vr_mesrefju          crapepr.mesrefju%TYPE;
-    vr_anorefju          crapepr.anorefju%TYPE;
+    vr_flgachou            BOOLEAN;
+    vr_flg_lancar_mensal   BOOLEAN;
+    vr_floperac            BOOLEAN;
+    vr_txdiaria            craplcr.txdiaria%TYPE;
+    vr_vljuremu            NUMBER;
+    vr_vljurcor            NUMBER;
+    vr_vlmtapar            NUMBER;
+    vr_vliofcpl            NUMBER;
+    vr_vlmrapar            NUMBER;
+    vr_dtvencto            DATE;
+    vr_percmult            NUMBER(25,2);
+    vr_cdhistor            craphis.cdhistor%TYPE;
+    vr_dstextab            craptab.dstextab%TYPE;
+    vr_diarefju            crapepr.diarefju%TYPE;
+    vr_mesrefju            crapepr.mesrefju%TYPE;
+    vr_anorefju            crapepr.anorefju%TYPE;
+    vr_vljuros_mora_debito NUMBER(25,2);
   BEGIN
 
     --------------- VALIDACOES INICIAIS -----------------
@@ -304,7 +325,8 @@ BEGIN
         vr_dtvencto := TO_DATE(rw_crapepr.diapagto || '/' || TO_CHAR(rw_crapdat.dtmvtolt, 'MM/RRRR'),'DD/MM/RRRR');
         -- Efetuar o lancamento de Juros Remuneratorio
         EMPR0011.pc_efetua_lcto_juros_remun(pr_cdcooper => pr_cdcooper
-                                           ,pr_dtcalcul => rw_crapdat.dtmvtolt
+                                           ,pr_dtmvtoan => rw_crapdat.dtmvtoan
+                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                            ,pr_cdagenci => rw_crapepr.cdagenci
                                            ,pr_cdpactra => rw_crapepr.cdagenci
                                            ,pr_cdoperad => 1
@@ -334,7 +356,8 @@ BEGIN
 
         -- Efetuar o lancameto de Juros de Correcao
         EMPR0011.pc_efetua_lcto_juros_correc(pr_cdcooper => pr_cdcooper
-                                            ,pr_dtcalcul => rw_crapdat.dtmvtolt
+                                            ,pr_dtmvtoan => rw_crapdat.dtmvtoan
+                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                             ,pr_cdagenci => rw_crapepr.cdagenci
                                             ,pr_cdpactra => rw_crapepr.cdagenci
                                             ,pr_cdoperad => 1
@@ -344,6 +367,9 @@ BEGIN
                                             ,pr_nrctremp => rw_crapepr.nrctremp
                                             ,pr_dtlibera => rw_crapepr.dtmvtolt
                                             ,pr_dtrefjur => rw_crapepr.dtrefjur
+                                            ,pr_diarefju => rw_crapepr.diarefju
+                                            ,pr_mesrefju => rw_crapepr.mesrefju
+                                            ,pr_anorefju => rw_crapepr.anorefju
                                             ,pr_vlrdtaxa => rw_crappep_mensal.vltaxatu
                                             ,pr_txjuremp => rw_crapepr.txjuremp
                                             ,pr_vlpreemp => rw_crapepr.vlpreemp
@@ -352,6 +378,7 @@ BEGIN
                                             ,pr_ehmensal => TRUE
                                             ,pr_floperac => vr_floperac
                                             ,pr_nrparepr => rw_crappep_mensal.nrparepr
+                                            ,pr_dtrefcor => rw_crapepr.dtrefcor
                                             ,pr_vljurcor => vr_vljurcor
                                             ,pr_cdcritic => vr_cdcritic
                                             ,pr_dscritic => vr_dscritic);
@@ -495,9 +522,16 @@ BEGIN
           ELSE
             vr_percmult := 0;
           END IF;
-
+          
           -- Procedure para calcular o Valor de Juros de Mora
-          EMPR0011.pc_calcula_atraso_pos_fixado(pr_dtcalcul => rw_crapdat.dtmvtolt
+          EMPR0011.pc_calcula_atraso_pos_fixado(pr_cdcooper => pr_cdcooper
+                                               ,pr_cdprogra => vr_cdprogra
+                                               ,pr_nrdconta => rw_crapepr.nrdconta
+                                               ,pr_nrctremp => rw_crapepr.nrctremp
+                                               ,pr_cdlcremp => rw_crapepr.cdlcremp
+                                               ,pr_dtcalcul => rw_crapdat.dtmvtolt
+                                               ,pr_vlemprst => rw_crapepr.vlemprst
+                                               ,pr_nrparepr => rw_crappep.nrparepr
                                                ,pr_vlparepr => rw_crappep.vlparepr
                                                ,pr_dtvencto => rw_crappep.dtvencto
                                                ,pr_dtultpag => rw_crappep.dtultpag
@@ -509,6 +543,7 @@ BEGIN
                                                ,pr_qttolatr => rw_crapepr.qttolatr
                                                ,pr_vlmrapar => vr_vlmrapar
                                                ,pr_vlmtapar => vr_vlmtapar
+                                               ,pr_vliofcpl => vr_vliofcpl
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
           -- Se houve erro
@@ -516,9 +551,19 @@ BEGIN
             RAISE vr_exc_saida;
           END IF;
           
+          vr_vljuros_mora_debito := 0;
+          OPEN cr_craplem_mora(pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => rw_crapepr.nrdconta
+                              ,pr_nrctremp => rw_crapepr.nrctremp
+                              ,pr_nrparepr => rw_crappep.nrparepr);
+          FETCH cr_craplem_mora INTO vr_vljuros_mora_debito;
+          CLOSE cr_craplem_mora;
+        
+          -- Somente lancar a diferenca do Juros de Mora do que jah foi lancado
+          vr_vlmrapar := NVL(vr_vlmrapar,0) + NVL(vr_vljuros_mora_debito,0);
+          
           -- Efetua o Lancamento de Juros de Mora do Contrato de Emprestimo
           IF NVL(vr_vlmrapar, 0) > 0 THEN
-
             -- Se for Financiamento
             IF vr_floperac THEN
               vr_cdhistor := 2347;
@@ -559,13 +604,6 @@ BEGIN
          END LOOP;
       END IF;
       
-      -- Condicao para verificar se foi lancado Juros Remuneratorio
-      IF vr_vljuremu <= 0 THEN
-        vr_diarefju := rw_crapepr.diarefju;
-        vr_mesrefju := rw_crapepr.mesrefju;
-        vr_anorefju := rw_crapepr.anorefju;
-      END IF;
-
       -- Atualizar Emprestimo
       BEGIN
         UPDATE crapepr
@@ -573,6 +611,7 @@ BEGIN
               ,crapepr.diarefju = vr_diarefju
               ,crapepr.mesrefju = vr_mesrefju
               ,crapepr.anorefju = vr_anorefju
+              ,crapepr.dtrefcor = rw_crapdat.dtmvtolt
               ,crapepr.vlsdeved = NVL(crapepr.vlsdeved,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0) + NVL(vr_vlmrapar,0)
               ,crapepr.vljuracu = NVL(crapepr.vljuracu,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)
               ,crapepr.vljurmes = NVL(crapepr.vljuratu,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)

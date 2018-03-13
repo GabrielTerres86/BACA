@@ -323,6 +323,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 								    09/02/2018 - Correção de erro na consulta de índices quando empréstimo do BNDES (PRJ298), 
                                  erro reportado pelos plantonistas (Jean Michel)
 
+                    24/01/2017 - Inclusão de consistência do novo campo para identificação da qualificação da operação(crapepr.idquaprc)
+                                 (Daniel-AMcom)
+
 .............................................................................................................................*/
 
     DECLARE
@@ -426,6 +429,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                wpr.nrctrliq##8+
                wpr.nrctrliq##9+
                wpr.nrctrliq##10 qtctrliq -- Se houver qq contrato, teremos a soma + 0          
+              ,wpr.idquapro
+              ,epr.idquaprc
           from crapepr epr
               ,crawepr wpr
          where epr.cdcooper = pr_cdcooper
@@ -952,7 +957,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              ,qtctrliq NUMBER
              ,inprejuz crapepr.inprejuz%TYPE
              ,tpemprst crapepr.tpemprst%TYPE
-             ,cddindex crawepr.cddindex%TYPE);
+             ,cddindex crawepr.cddindex%TYPE
+             ,idquapro NUMBER
+             ,idquaprc NUMBER);
       TYPE typ_tab_crapepr IS
         TABLE OF typ_reg_crapepr
           INDEX BY VARCHAR2(30);
@@ -3814,6 +3821,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_tab_crapepr(vr_ind_epr).inprejuz := rw_crapepr.inprejuz;
         vr_tab_crapepr(vr_ind_epr).tpemprst := rw_crapepr.tpemprst;
         vr_tab_crapepr(vr_ind_epr).cddindex := rw_crapepr.cddindex;
+        vr_tab_crapepr(vr_ind_epr).idquaprc := TRIM(TO_CHAR(rw_crapepr.idquaprc,'00'));
+        vr_tab_crapepr(vr_ind_epr).idquapro := TRIM(TO_CHAR(rw_crapepr.idquapro,'00'));
       END LOOP;    
       
       -- Carregar PLTABLE de Linhas de Credito
@@ -4263,13 +4272,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 -- Se existir CrapEpr
                 vr_ind_epr := lpad(vr_tab_individ(vr_idx_individ).nrdconta,10,'0')
                            || lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
-                -- Se o contrato for uma liquidação de outro contrato
-                IF vr_tab_crapepr(vr_ind_epr).qtctrliq > 0 THEN
+
+                -- Compara refinanciamento
+                IF vr_tab_crapepr(vr_ind_epr).idquaprc = vr_tab_crapepr(vr_ind_epr).idquapro then
+                  -- Se o contrato for uma liquidação de outro contrato
+                  IF vr_tab_crapepr(vr_ind_epr).qtctrliq > 0 THEN
+                    IF vr_caracesp IS NOT NULL THEN
+                      vr_caracesp := vr_caracesp||';';
+                    END IF;
+                    vr_caracesp := vr_caracesp || '01';
+                  END IF;
+                ELSE
+                  -- Se for refinanciamento                  
                   IF vr_caracesp IS NOT NULL THEN
                     vr_caracesp := vr_caracesp||';';
                   END IF;
                   vr_caracesp := vr_caracesp || '01';
                 END IF;
+                
               END IF; --Não BNDES
                         
               IF vr_tab_individ(vr_idx_individ).dsinfaux = 'BNDES' THEN

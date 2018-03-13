@@ -12,7 +12,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
       Frequencia: -----
       Objetivo  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN - Motor de Credito
 
-      Alteracoes:
+      Alteracoes: 12/12/2017 - Projeto 410 - inclusão do IOF sobre atraso - (JEan - MOut´S)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -30,7 +30,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
 									
 END ESTE0002;
 /
-CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
@@ -50,6 +50,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
                                na frente ocasionam problemas devido ao parenteses.
                                Heitor (Mouts) - Chamado 778505
 
+                  12/12/2017 - Projeto 410 - Incluir o tratamento para o IOF por atraso - (Jean / MOut´S)
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -3044,12 +3045,14 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
           -- Se ha pagamento a pagar
           IF NVL(vr_tab_co_responsavel(vr_ind_coresp).vlpreapg,0)
            + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmrapar,0)
-           + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmtapar,0) > 0 THEN
+           + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmtapar,0)
+           + NVL(vr_tab_co_responsavel(vr_ind_coresp).vliofcpl,0)  > 0 THEN
            -- Acumular atraso
             vr_tot_qtprecal := vr_tot_qtprecal + 1;
             vr_ava_vlsdeved := vr_ava_vlsdeved + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlpreapg,0)
                                                + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmrapar,0)
-                                               + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmtapar,0);
+                                               + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmtapar,0)
+                                               + NVL(vr_tab_co_responsavel(vr_ind_coresp).vliofcpl,0);
           END IF;
           /* Somar totais */
           vr_tot_vlsdeved := vr_tot_vlsdeved + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlsdeved,0);
@@ -3185,7 +3188,8 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
             -- Acumular saldo em atraso
             vr_vltotatr := vr_vltotatr + vr_tab_dados_epr(vr_idxempr).vlpreapg
                                        + vr_tab_dados_epr(vr_idxempr).vlmrapar
-                                       + vr_tab_dados_epr(vr_idxempr).vlmtapar;
+                                       + vr_tab_dados_epr(vr_idxempr).vlmtapar
+                                       + vr_tab_dados_epr(vr_idxempr).vliofcpl;
             -- Meses em atraso
             vr_qtpclven := vr_qtpclven + CEIL(vr_dias/30);                          
           END IF;
@@ -3193,8 +3197,8 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         END IF;
       
         -- Calculo de Parcelas conforme tipo de empréstimo 
-        IF vr_tab_dados_epr(vr_idxempr).tpemprst = 1 THEN
-          -- Para PP, buscaremos no cadastro de parcelas a quantidade de parcelas pagas em atraso
+        IF vr_tab_dados_epr(vr_idxempr).tpemprst IN (1,2) THEN
+          -- Para PP ou POS, buscaremos no cadastro de parcelas a quantidade de parcelas pagas em atraso
           OPEN cr_crappep_atraso(rw_crapdat.dtmvtolt
 					                      ,vr_tab_dados_epr(vr_idxempr).nrctremp
 																,vr_qthisemp);
@@ -3897,6 +3901,10 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
              ,ass.inpessoa
              ,DECODE(wpr.flgpagto,0,'CONTA','FOLHA') despagto
              ,lcr.txminima
+             ,wpr.dtdpagto
+             ,wpr.dtlibera
+             ,wpr.dtcarenc
+             ,wpr.percetop
         FROM crawepr wpr
             ,craplcr lcr
             ,crapfin fin      
@@ -4155,6 +4163,10 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
 		vr_qtdiarpv      INTEGER;
+    vr_valoriof      NUMBER;
+    vr_vliofpri      NUMBER;
+    vr_vliofadi      NUMBER;
+    vr_flgimune      PLS_INTEGER;
     vr_tab_split     gene0002.typ_split;
     vr_dsliquid      VARCHAR2(1000);
     vr_sum_vlpreemp  crapepr.vlpreemp%TYPE := 0;
@@ -4357,7 +4369,33 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       END IF;
     END IF;  
 
+    -- Buscar IOF
+    EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                               ,pr_inpessoa => rw_crawepr.inpessoa
+                               ,pr_cdlcremp => rw_crawepr.cdlcremp
+                               ,pr_qtpreemp => rw_crawepr.qtpreemp
+                               ,pr_vlpreemp => rw_crawepr.vlpreemp
+                               ,pr_vlemprst => rw_crawepr.vlemprst
+                               ,pr_dtdpagto => rw_crawepr.dtdpagto
+                               ,pr_dtlibera => rw_crawepr.dtlibera
+                               ,pr_tpemprst => rw_crawepr.tpemprst
+                               ,pr_dtcarenc => rw_crawepr.dtcarenc
+                               ,pr_qtdias_carencia => 0
+                               ,pr_valoriof => vr_valoriof
+                               ,pr_vliofpri => vr_vliofpri
+                               ,pr_vliofadi => vr_vliofadi
+                               ,pr_flgimune => vr_flgimune
+                               ,pr_dscritic => vr_dscritic);
+
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
+    vr_obj_generico.put('CETValor', este0001.fn_decimal_ibra(nvl(rw_crawepr.percetop,0)));
+    vr_obj_generico.put('IOFValor', este0001.fn_decimal_ibra(nvl(vr_valoriof,0)));
+    vr_obj_generico.put('IOFPrincipal', este0001.fn_decimal_ibra(nvl(vr_vliofpri,0)));
+    vr_obj_generico.put('IOFAdicional', este0001.fn_decimal_ibra(nvl(vr_vliofadi,0)));
+    vr_obj_generico.put('flgimune', nvl(vr_flgimune,0));
+    
     
     IF rw_crawepr.dsliquid <> '0,0,0,0,0,0,0,0,0,0' THEN
       vr_tab_split := gene0002.fn_quebra_string(rw_crawepr.dsliquid, ',');

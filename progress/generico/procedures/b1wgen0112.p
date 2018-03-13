@@ -4364,20 +4364,6 @@ PROCEDURE extrato_pos_fixado:
 
         BUFFER-COPY tt-extrato_epr TO tt-extrato_epr_aux.
 
-        ASSIGN tt-extrato_epr_aux.vlrdtaxa = 0.
-        
-        /* Lancamento de Juros de Correcao */
-        IF CAN-DO("2344,2345",STRING(tt-extrato_epr.cdhistor)) THEN
-           DO:
-                FOR crappep FIELDS(vltaxatu) WHERE crappep.cdcooper = par_cdcooper            AND
-                                                   crappep.nrdconta = par_nrdconta            AND
-                                                   crappep.nrctremp = par_nrctremp            AND
-                                                   crappep.nrparepr = INTE(tt-extrato_epr.nrparepr)
-                                                   NO-LOCK:
-                  ASSIGN tt-extrato_epr_aux.vlrdtaxa = crappep.vltaxatu.
-                END.
-           END.
-           
         IF FIRST (tt-extrato_epr.dtmvtolt) THEN
            DO:
                /* Saldo Inicial */

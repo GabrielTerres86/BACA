@@ -330,7 +330,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       -- Condicao para verificar se encontrou contrato de emprestimo
       IF vr_tab_dados_epr.COUNT > 0 THEN
         -- Saldo Devedor
-        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) + nvl(vr_tab_dados_epr(1).vlmrapar,0);
+        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) 
+                     + nvl(vr_tab_dados_epr(1).vlmrapar,0) + nvl(vr_tab_dados_epr(1).vliofcpl,0);
         -- Saldo Prejuizo
         pr_vlsdprej := nvl(vr_tab_dados_epr(1).vlsdprej,0);
         -- Valor em Atraso

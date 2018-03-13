@@ -1,5 +1,5 @@
 /*!
- * FONTE        : comercial.js                              Última alteração: 27/03/2017
+ * FONTE        : comercial.js                              Última alteração: 27/02/2018
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 24/05/2010 
  * OBJETIVO     : Biblioteca de funções na rotina COMERCIAL da tela de CONTAS
@@ -20,6 +20,7 @@
  *                11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
  *                05/12/2017 - Alteração para buscar o Nome da Empresa a partir do CNPJ digitado e regra de alteração do nome da empresa.
  *                             (Mateus Z - Mouts)
+ *                27/02/2018 - Alteração para selecionar o grupoEndereco corretamento no no js (Tiago #844280)
  * --------------
  */
 
@@ -457,7 +458,7 @@ function controlaLayout(operacao) {
     var grupoEmpresa = $('#nmextemp,#nrcpfemp', '#' + nomeForm);
     var grupoSecao = $('#dsproftl,#cdnvlcgo,#nrcadast', '#' + nomeForm);
     var grupoTurno = $('#cdturnos,#dtadmemp,#vlsalari', '#' + nomeForm);
-    var grupoEndereco = $('input,select', '#' + nomeForm + ' fieldset:eq(1)');
+    var grupoEndereco = $('input,select', '#' + nomeForm + ' fieldset:eq(2)');
     var grupoRendimento = $('#tpdrendi,#tpdrend2,#tpdrend3,#tpdrend4,#vldrendi,#vldrend2,#vldrend3,#vldrend4', '#' + nomeForm);
 
     grupoEndereco.desabilitaCampo();

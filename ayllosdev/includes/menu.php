@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: menu.php                                                  ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Última Alteração:14/07/2017  ***//
+	//*** Data : Julho/2007                   Última Alteração:20/02/2018  ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Montar menu de serviços                              ***//
 	//***                                                                  ***//	 
@@ -28,6 +28,9 @@
 					  13/08/2015 - Remover o caminho fixo. (James)
 
 					  14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
+                      
+                      20/02/2018 - Ajuste para que os nós do menu Permaneçam fechados 
+                                   quando acessao via CRM. PRJ399 - CRM(Odirlei-AMcom)
 	 ************************************************************************/
 	 
 	if (isset($glbvars["menu"])) { // Se os itens do menu estão armazenados na sessão, atribui a variável menu
@@ -155,7 +158,12 @@
 					</dl>
 				</div>		
 			</div>
-			<?php if (isset($nrModFoco)) { ?>
+			<?php             
+            
+                $crm_inacesso = isset($glbvars['CRM_INACESSO']) ? $glbvars['CRM_INACESSO'] : 0;
+                $crm_nmdatela = isset($glbvars['CRM_NMDATELA']) ? $glbvars['CRM_NMDATELA'] : 0;
+                
+            if (isset($nrModFoco) && $crm_inacesso != 1 ) { ?>
 			<script type="text/javascript">
 			$(document).ready(function() {
 				$("#spanModMenu<?php echo $nrModFoco; ?>").css("background-color","#CED0C3");

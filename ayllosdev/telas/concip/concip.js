@@ -1,4 +1,4 @@
-/*!
+/*
  * FONTE        : concip.js
  * CRIAÇÃO      : Dionathan Henchel
  * DATA CRIAÇÃO : 01/09/2015
@@ -12,7 +12,7 @@
 //Labels/Campos do cabeçalho
 var cCddopcao, cTodosCabecalho, cTodosFrmArquivo, cTodosFrmConta, dtmvtolt, glbArquivo, glbDtliquidacao, glbDtgeracao;
 
-// Definição de algumas variáveis globais 
+// Definição de algumas variáveis globais
 var cddopcao = 'A';
 var nriniseqAtual = 1;
 
@@ -34,7 +34,6 @@ $(document).ready(function() {
     $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '10px 3px 5px 3px'});
 
     return false;
-
 });
 
 function estadoInicial() {
@@ -50,6 +49,11 @@ function estadoInicial() {
     $('#divBotoesConta').css({'display': 'none'});
     $('#divListaConta').html('');
 
+    $('#frmConciliacao').css({'display': 'none'});
+    $('#divBotoesConciliacao').css({'display': 'none'});
+    $('#divListaConciliacao').html('');
+
+
     trocaBotao('voltaPrincipal');
 
     // Limpa conteudo da divBotoes
@@ -60,6 +64,7 @@ function estadoInicial() {
     formataCabecalho();
     formataFrmArquivo();
     formataFrmConta();
+    formataFrmConciliacao();
 
     // Limpa informações dos Formularios
     cTodosCabecalho.limpaFormulario();
@@ -125,8 +130,16 @@ function controlaOpcao() {
 
         $('#dtinicio', '#frmArquivo').focus();
 
-
-    } else {
+        //chama o metodo de popular combos ao mostrar o frmArquivo
+        $('#frmArquivo').ready(populaCombos);
+    }
+    //Conciliacao Liquidacao STR
+    else if ($('#cddopcao', '#frmCab').val() == 'S'){
+        $('#frmConciliacao').css({'display': 'block'});
+        $('#divBotoesConciliacao').css({'display': 'block'});
+        $('#dtlcto', '#frmConciliacao').focus();
+    }
+    else {
 
         $('#frmConta').css({'display': 'block'});
         $('#divBotoesConta').css({'display': 'block'});
@@ -140,8 +153,51 @@ function controlaOpcao() {
     }
 
     return false;
-
 }
+
+//popula combos de filtragem de banco liquidante e credenciadora
+function populaCombos(){
+
+    //limpa os filtros antes de popular
+    $('#bcoliquidante').empty().append($('<option>', { value: '', text: '  --  ' }));
+    $('#credenciadora').empty().append($('<option>', { value: '', text: '  --  ' }));
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/concip/carrega_filtros.php",
+        dataType: 'json',
+        data: {
+            redirect: "script_ajax"
+        },
+        error: function(objAjax, responseError, objExcept) {
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            try {
+                if (response.liquidante.item.length > 0) {
+                    //popula combo banco liquidante
+                    $.each(response.liquidante.item, function (i, val) {
+                        $('#bcoliquidante').append($('<option>', { value: val.ispb, text: val.nome }));
+                    });
+                }
+
+                if (response.credenciadora.item.length > 0) {
+                    //popula combo credenciadora
+                    $.each(response.credenciadora.item, function (i, val) {
+                        $('#credenciadora').append($('<option>', { value: val.ispb, text: val.nome }));
+                    });
+                }
+            }
+            catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+
+    return false;
+}
+
 
 function formataFrmArquivo() {
 
@@ -154,7 +210,6 @@ function formataFrmArquivo() {
 
     cTodosFrmArquivo = $('input[type="text"],select', '#frmArquivo');
 
-
     rDtinicio.css({'width': '75'});
     rDtafinal.css({'width': '28px'});
 
@@ -163,6 +218,7 @@ function formataFrmArquivo() {
 
     cTodosFrmArquivo.habilitaCampo();
     $('#btConsultar', '#divBotoesArquivo').show();
+    $('#btExportar', '#divBotoesArquivo').hide();
 
     layoutPadrao();
     return false;
@@ -245,6 +301,13 @@ function formataFrmConta() {
     return false;
 }
 
+function formataFrmConciliacao(){
+    rDtLcto = $('label[for="dtlcto"]', '#frmConciliacao');
+    rDtLcto = $('#dtlcto', '#frmConciliacao');
+    rDtLcto.css({'width': '75px'}).setMask('DATE', '', '', '');
+    $('#btConsultar', '#divBotoesConciliacao').show();
+}
+
 function btnVoltar() {
     estadoInicial();
     return false;
@@ -277,6 +340,13 @@ function controlaFoco() {
     $('#cdcooper', '#frmConta').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             $('#cddregio', '#frmConta').focus();
+            return false;
+        }
+    });
+
+    $('#dtlcto', '#frmConciliacao').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            controlaOperacao('STR');
             return false;
         }
     });
@@ -393,8 +463,6 @@ function controlaFoco() {
         return false;
     });
 
-
-
 }
 
 function controlaOperacao(operacao) {
@@ -403,11 +471,14 @@ function controlaOperacao(operacao) {
         buscaArquivos(1, 15);
     } else if(operacao == 'AC'){
         buscaArquivos(nriniseqAtual, 15);
+    } else if(operacao == 'E'){
+        exportaArquivos();
+    } else if (operacao == 'STR') {
+        buscaConciliacaoSTR();
     } else {
         buscaContas(1, 15);
     }
     return false;
-
 }
 
 function buscaArquivos(nriniseq, nrregist) {
@@ -415,6 +486,10 @@ function buscaArquivos(nriniseq, nrregist) {
     var cddopcao = $('#cddopcao', '#frmCab').val();
     var dtinicio = $('#dtinicio', '#frmArquivo').val();
     var dtafinal = $('#dtafinal', '#frmArquivo').val();
+    var tparquivo = $('#tpArquivo', '#frmArquivo').val();
+    var bcoliquidante = $('#bcoliquidante', '#frmArquivo').val();
+    var credenciadora = $('#credenciadora', '#frmArquivo').val();
+    var formtran = $('#formtran', '#frmArquivo').val();
 
     nriniseqAtual = nriniseq;
 
@@ -427,14 +502,18 @@ function buscaArquivos(nriniseq, nrregist) {
         dataType: 'html',
         url: UrlSite + 'telas/concip/carrega_arquivos.php',
         data:
-                {
-                    cddopcao: cddopcao,
-                    dtinicio: dtinicio,
-                    dtafinal: dtafinal,
-                    nriniseq: nriniseq,
-                    nrregist: nrregist,
-                    redirect: 'script_ajax'
-                },
+            {
+                cddopcao: cddopcao,
+                dtinicio: dtinicio,
+                dtafinal: dtafinal,
+                tparquivo: tparquivo,
+                credenciadora: credenciadora,
+                bcoliquidante: bcoliquidante,
+                nriniseq: nriniseq,
+                nrregist: nrregist,
+                formtran: formtran,
+                redirect: 'script_ajax'
+            },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
             showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
@@ -451,7 +530,7 @@ function buscaArquivos(nriniseq, nrregist) {
                     cTodosFrmArquivo.desabilitaCampo();
 
                     $('#btConsultar', '#divBotoesArquivo').hide();
-
+                    $('#btExportar', '#divBotoesArquivo').show();
 
                     hideMsgAguardo();
                     return false;
@@ -473,6 +552,99 @@ function buscaArquivos(nriniseq, nrregist) {
     return false;
 }
 
+function buscaConciliacaoSTR(){
+    var cddopcao = $('#cddopcao', '#frmCab').val();
+    var dtlcto = $('#dtlcto', '#frmConciliacao').val();
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, efetuando consulta ...");
+
+    // Carrega dados parametro através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/concip/carrega_conciliacao.php',
+        data:
+        {
+            cddopcao: cddopcao,
+            dtlcto: dtlcto,
+            redirect: 'script_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+        },
+        success: function(response) {
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    $('#divListaConciliacao').html(response);
+                    $('#divListaConciliacao').css({'display': 'block'});
+
+                    formataConciliacao();
+                    //$('#divPesquisaRodape', '#divListaArquivo').formataRodapePesquisa();
+                    //cTodosFrmArquivo.desabilitaCampo();
+                    $('#btConsultar', '#divBotoesConciliacao').hide();
+
+                    hideMsgAguardo();
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            } else {
+                try {
+                    eval(response);
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            }
+        }
+    });
+
+    return false;
+}
+
+function exportaArquivos(){
+
+    var nomeform = 'frmExporta';
+    var dtinicio = $('#dtinicio', '#frmArquivo').val();
+    var dtafinal = $('#dtafinal', '#frmArquivo').val();
+    var tparquivo = $('#tpArquivo', '#frmArquivo').val();
+    var bcoliquidante = $('#bcoliquidante', '#frmArquivo').val();
+    var credenciadora = $('#credenciadora', '#frmArquivo').val();
+
+    //limpa do form
+    $('#sidlogin', '#' + nomeform).remove();
+    $('#dtinicio', '#' + nomeform).remove();
+    $('#dtafinal', '#' + nomeform).remove();
+    $('#tparquivo', '#' + nomeform).remove();
+    $('#bcoliquidante', '#' + nomeform).remove();
+    $('#credenciadora', '#' + nomeform).remove();
+
+    //insere novos campos hidden no form
+    $('#' + nomeform).append('<input type="hidden" id="dtinicio" name="dtinicio" />');
+    $('#' + nomeform).append('<input type="hidden" id="dtafinal" name="dtafinal" />');
+    $('#' + nomeform).append('<input type="hidden" id="tpArquivo" name="tparquivo" />');
+    $('#' + nomeform).append('<input type="hidden" id="bcoliquidante" name="bcoliquidante" />');
+    $('#' + nomeform).append('<input type="hidden" id="credenciadora" name="credenciadora" />');
+    $('#' + nomeform).append('<input type="hidden" id="sidlogin" name="sidlogin" />');
+
+    //insere valores nos campos criados
+    $('#dtinicio', '#' + nomeform).val(dtinicio);
+    $('#dtafinal', '#' + nomeform).val(dtafinal);
+    $('#tparquivo', '#' + nomeform).val(tparquivo);
+    $('#bcoliquidante', '#' + nomeform).val(bcoliquidante);
+    $('#credenciadora', '#' + nomeform).val(credenciadora);
+    $('#sidlogin', '#' + nomeform).val($('#sidlogin', '#frmMenu').val());
+
+    //nomeform, action, controle
+    carregaImpressaoAyllos(nomeform, UrlSite + 'telas/concip/exporta_arquivos.php', '');
+
+    return false;
+}
+
+
 function formataArquivos() {
 
     $('#divRotina').css('width', '640px');
@@ -487,17 +659,18 @@ function formataArquivos() {
     var ordemInicial = new Array();
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '293px';
-    arrayLargura[1] = '38px';
-    arrayLargura[2] = '87px';
-    arrayLargura[3] = '74px';
-    arrayLargura[4] = '87px';
-    arrayLargura[5] = '220px';
-    arrayLargura[6] = '74px';
-    arrayLargura[7] = '23px';
+    arrayLargura[0] = '123px';
+    arrayLargura[1] = '40px';
+    arrayLargura[2] = '135px';
+    arrayLargura[3] = '100px';
+    arrayLargura[4] = '100px';
+    arrayLargura[5] = '130px';
+    arrayLargura[6] = '130px';
+    arrayLargura[7] = '100px';
+    arrayLargura[8] = '33px';
 
     var arrayAlinha = new Array();
-    arrayAlinha[0] = 'left';
+    arrayAlinha[0] = 'center';
     arrayAlinha[1] = 'center';
     arrayAlinha[2] = 'center';
     arrayAlinha[3] = 'center';
@@ -505,6 +678,7 @@ function formataArquivos() {
     arrayAlinha[5] = 'center';
     arrayAlinha[6] = 'center';
     arrayAlinha[7] = 'center';
+    arrayAlinha[8] = 'center';
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 
@@ -589,8 +763,7 @@ function formataArquivos() {
     // seleciona o registro que é clicado
     $('table > tbody > tr', divRegistro).click(function() {
         glbArquivo = $(this).find('#nmarquivo').val();
-        selecionaArquivos($(this));
-
+        selecionaArquivos($(this))
     });
 
     $('table > tbody > tr', divRegistro).dblclick(function() {
@@ -598,7 +771,6 @@ function formataArquivos() {
         glbDtliquidacao = $(this).find('#dtliquidacao').val();
         glbDtgeracao = $(this).find('#dtgeracao').val().split(' ')[0];
         chamaRotinaConsulta();
-
     });
 
     $('table > tbody > tr:eq(0)', divRegistro).click();
@@ -606,6 +778,47 @@ function formataArquivos() {
     $('#divListaArquivo').css('width','1000px');
 
     return false;
+}
+
+
+function formataConciliacao(){
+    //$('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '0 auto', 'padding': '10px 3px 5px 3px'});
+    $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'padding': '10px 5px 5px 5px'});
+
+    rQdeCreditado  = $('label[for="txtQtcreditado"]', '#divTotaisConciliacao');
+    rVlCreditado   = $('label[for="txtVlcreditado"]', '#divTotaisConciliacao');
+    rQdePagamentos = $('label[for="txtQdeRecebido"]', '#divTotaisConciliacao');
+    rVlPagamentos  = $('label[for="txtVlRecebido"]', '#divTotaisConciliacao');
+    rVlReceber     = $('label[for="txtVlReceber"]', '#divTotaisConciliacao');
+    rVlPagar       = $('label[for="txtVlPagar"]', '#divTotaisConciliacao');
+
+    rQdeCreditado.css({'width': '70px','display': 'inline-block', 'text-align': 'right', 'margin-bottom': '10px'});
+    rVlCreditado.css({'width': '70px', 'display': 'inline-block', 'text-align': 'right', 'margin-bottom': '10px'});
+    rQdePagamentos.css({'width': '70px', 'display': 'inline-block', 'text-align': 'right', 'margin-bottom': '10px'});
+    rVlPagamentos.css({'width': '70px', 'display': 'inline-block', 'text-align': 'right', 'margin-bottom': '10px'});
+    rVlReceber.css({'width': '70px', 'display': 'inline-block', 'text-align': 'right', 'margin-bottom': '10px'});
+    rVlPagar.css({'width': '70px', 'display': 'inline-block', 'text-align': 'right', 'margin-bottom': '10px'});
+
+    cQdeCreditado  = $('#txtQtcreditado', '#divTotaisConciliacao');
+    cVlCreditado   = $('#txtVlcreditado', '#divTotaisConciliacao');
+    cQdePagamentos = $('#txtQdeRecebido', '#divTotaisConciliacao');
+    cVlPagamentos  = $('#txtVlRecebido', '#divTotaisConciliacao');
+    cVlReceber     = $('#txtVlReceber', '#divTotaisConciliacao');
+    cVlPagar       = $('#txtVlPagar', '#divTotaisConciliacao');
+    
+    cQdeCreditado.css({'width': '100px'}).desabilitaCampo();
+    cVlCreditado.css({'width': '100px'}).desabilitaCampo();
+    cQdePagamentos.css({'width': '100px'}).desabilitaCampo();
+    cVlPagamentos.css({'width': '100px'}).desabilitaCampo();
+    cVlReceber.css({'width': '100px'}).desabilitaCampo();
+    cVlPagar.css({'width': '100px'}).desabilitaCampo();
+    
+    cQdeCreditado.css({'text-align': 'right', 'float': 'right'});
+    cVlCreditado.css({'text-align': 'right', 'float': 'right'});
+    cQdePagamentos.css({'text-align': 'right', 'float': 'right'});
+    cVlPagamentos.css({'text-align': 'right', 'float': 'right'});
+    cVlReceber.css({'text-align': 'right', 'float': 'right'});
+    cVlPagar.css({'text-align': 'right', 'float': 'right'});
 }
 
 
@@ -623,6 +836,7 @@ function buscaContas(nriniseq, nrregist) {
     var cddoprod = $('#cddoprod', '#frmConta').val();
     var cdsituac = $('#cdsituac', '#frmConta').val();
     var nmarquiv = $('#nmarquiv', '#frmConta').val();
+    var formtran = $('#formtran', '#frmConta').val();
 
     cddopcao = normalizaNumero(cddopcao);
 
@@ -635,23 +849,24 @@ function buscaContas(nriniseq, nrregist) {
         dataType: 'html',
         url: UrlSite + 'telas/concip/carrega_contas.php',
         data:
-                {
-                    cddopcao: cddopcao,
-                    cdcooper: cdcooper,
-                    cddregio: cddregio,
-                    cdagenci: cdagenci,
-                    dtlanini: dtlanini,
-                    dtlanfim: dtlanfim,
-                    dtarqini: dtarqini,
-                    dtarqfim: dtarqfim,
-                    cdlancto: cdlancto,
-                    cddoprod: cddoprod,
-                    cdsituac: cdsituac,
-                    nmarquiv: nmarquiv,
-                    nriniseq: nriniseq,
-                    nrregist: nrregist,
-                    redirect: 'script_ajax'
-                },
+        {
+            cddopcao: cddopcao,
+            cdcooper: cdcooper,
+            cddregio: cddregio,
+            cdagenci: cdagenci,
+            dtlanini: dtlanini,
+            dtlanfim: dtlanfim,
+            dtarqini: dtarqini,
+            dtarqfim: dtarqfim,
+            cdlancto: cdlancto,
+            cddoprod: cddoprod,
+            cdsituac: cdsituac,
+            nmarquiv: nmarquiv,
+            nriniseq: nriniseq,
+            nrregist: nrregist,
+            formtran: formtran,
+            redirect: 'script_ajax'
+        },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
             showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
@@ -666,13 +881,8 @@ function buscaContas(nriniseq, nrregist) {
                     $('#divPesquisaRodape', '#divListaConta').formataRodapePesquisa();
 
                     if (glbCdcooper != 3) {
-
                         buscaNomeCooperativa();
                     }
-
-                    //   cTodosFrmConta.desabilitaCampo();
-                    //   $('#cdsituac', '#frmConta').habilitaCampo();
-
 
                     hideMsgAguardo();
                     return false;
@@ -719,16 +929,19 @@ function formataContas() {
     ordemInicial = [[0, 0]];
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '30px';
-    arrayLargura[1] = '30px';
-    arrayLargura[2] = '30px';
-    arrayLargura[3] = '70px';
-    arrayLargura[4] = '70px';
-    arrayLargura[5] = '70px';
-    arrayLargura[6] = '60px';
-    arrayLargura[7] = '60px';
-    arrayLargura[8] = '70px';
+    arrayLargura[0] = '30px'; //coop
+    arrayLargura[1] = '30px'; //reg
+    arrayLargura[2] = '30px'; //pa
+    arrayLargura[3] = '70px'; //conta
+    arrayLargura[4] = '40px'; //lct
+    arrayLargura[5] = '150px'; //bandeira
+    arrayLargura[6] = '50px'; //forma transferencia
+    arrayLargura[7] = '60px'; //dt lct
+    arrayLargura[8] = '60px'; //dt arqu
+    arrayLargura[9] = '90px'; //valor
+    arrayLargura[10] = '80px'; //situacao
 
+    
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
     arrayAlinha[1] = 'center';
@@ -740,6 +953,8 @@ function formataContas() {
     arrayAlinha[7] = 'center';
     arrayAlinha[8] = 'right';
     arrayAlinha[9] = 'center';
+    arrayAlinha[10] = 'center';
+
 
     var metodoTabela = '';
 
@@ -759,13 +974,13 @@ function formataContas() {
 
     /*
      glbArquivo = '';
-     
+
      // seleciona o registro que é clicado
      $('table > tbody > tr', divRegistro).click(function() {
      glbArquivo = $(this).find('#nmarquivo').val();
-     
+
      });
-     
+
      $('table > tbody > tr:eq(0)', divRegistro).click();
      */
     return false;
@@ -773,7 +988,7 @@ function formataContas() {
 
 function pesquisaCooperativa() {
 
-    // Se esta desabilitado o campo 
+    // Se esta desabilitado o campo
     if ($("#cdcooper", "#frmConta").prop("disabled") == true) {
         return;
     }
@@ -839,7 +1054,7 @@ function buscaNomeCooperativa() {
 
 function pesquisaPA() {
 
-    // Se esta desabilitado o campo 
+    // Se esta desabilitado o campo
     if ($("#cdagenci", "#frmConta").prop("disabled") == true) {
         return;
     }
@@ -928,8 +1143,8 @@ function trocaBotao(opcao) {
         $('#divBotoesConta', '#divTela').append('<a href="#" class="botao" id="btVoltar"  	onClick="chamaRotinaArquivo(); return false;">Voltar</a>');
     }
 
-    $('#divBotoesConta', '#divTela').append('<a href="#" class="botao" id="btConsultar"  onClick="controlaOperacao(\'C\'); return false;">Consultar</a>');
-    $('#divBotoesConta', '#divTela').append('<a href="#" class="botao" id="btExportar"  	onClick="exportaContas(); return false;">Exportar</a>');
+    $('#divBotoesConta', '#divTela').append('<a href="#" class="botao" id="btConsultar" onClick="controlaOperacao(\'C\'); return false;">Consultar</a>');
+    $('#divBotoesConta', '#divTela').append('<a href="#" class="botao" id="btExportar" onClick="exportaContas(); return false;">Exportar</a>');
 
     return false;
 }
@@ -997,8 +1212,6 @@ function exportaContas() {
     $('#' + nomeform).append('<input type="text" id="cdsituac1" name="cdsituac1" />');
     $('#' + nomeform).append('<input type="text" id="nmarquiv1" name="nmarquiv1" />');
     $('#' + nomeform).append('<input type="text" id="insaida1" name="insaida1" />');
-
-
     $('#' + nomeform).append('<input type="text" id="sidlogin" name="sidlogin" />');
 
     // Agora insiro os devidos valores nos inputs criados
@@ -1017,7 +1230,6 @@ function exportaContas() {
     $('#insaida1', '#' + nomeform).val(insaida);
 
     $('#sidlogin', '#' + nomeform).val($('#sidlogin', '#frmMenu').val());
-
 
     var action = UrlSite + 'telas/concip/exporta_contas.php';
 
@@ -1109,7 +1321,7 @@ function buscaNomeRegional() {
 }
 
 function selecionaArquivos(tr){
-    
+
     $('#fsqtprocessados').val( $('#qtprocessados', tr ).val() );
     $('#fsvlprocessados').val( $('#vlprocessados', tr ).val() );
     $('#fsqtintegrados').val( $('#qtintegrados', tr ).val() );
