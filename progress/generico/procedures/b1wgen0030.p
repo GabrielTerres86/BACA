@@ -1094,11 +1094,12 @@ PROCEDURE efetua_liber_anali_bordero:
                                    INPUT par_dtmvtolt,
                                    OUTPUT TABLE tt-erro,
                                    OUTPUT TABLE tt-iof).
-                               
+
     RUN busca_iof_simples_nacional IN h-b1wgen9999 (INPUT par_cdcooper,
                                       INPUT 0, /* agenci */
                                       INPUT 0, /* caixa  */
                                       INPUT par_dtmvtolt,
+                                      INPUT 'VLIOFOPSN',
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-iof-sn).
     IF VALID-HANDLE(h-b1wgen9999) THEN
@@ -2106,7 +2107,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                    NO-LOCK:
               ASSIGN aux_vltotoperac = aux_vltotoperac + crabtdb.vlliquid.
             END.
-                           
+            
             ASSIGN aux_vltotiof = 0
                    aux_vltotiofpri = 0
                    aux_vltotiofadi = 0
@@ -2242,7 +2243,7 @@ PROCEDURE efetua_liber_anali_bordero:
                 IF pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal <> "" THEN
                   DO:
                     ASSIGN aux_vltxiofatraso = DECI(pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal).
-                  END.                  
+                  END.
                 IF pc_calcula_valor_iof_prg.pr_flgimune <> ? THEN
                   DO:
                     ASSIGN aux_flgimune = pc_calcula_valor_iof_prg.pr_flgimune.
@@ -2510,36 +2511,36 @@ PROCEDURE efetua_liber_anali_bordero:
                    IF aux_dscritic <> ""   THEN
                       UNDO LIBERACAO, LEAVE.
                 
-                   CREATE craplcm.
-                   ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                          craplcm.cdagenci = craplot.cdagenci
-                          craplcm.cdbccxlt = craplot.cdbccxlt
-                          craplcm.nrdolote = craplot.nrdolote
-                          craplcm.nrdconta = crapbdt.nrdconta
-                          craplcm.nrdctabb = crapbdt.nrdconta
-                          craplcm.nrdctitg = STRING(crapbdt.nrdconta,
-                                                    "99999999")
-                          craplcm.nrdocmto = craplot.nrseqdig + 1
-                          /* craplcm.cdhistor = 688 */
-                          craplcm.cdhistor = 2320 /* Novo histórico - projeto 410 */
+                     CREATE craplcm.
+                     ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
+                            craplcm.cdagenci = craplot.cdagenci
+                            craplcm.cdbccxlt = craplot.cdbccxlt
+                            craplcm.nrdolote = craplot.nrdolote
+                            craplcm.nrdconta = crapbdt.nrdconta
+                            craplcm.nrdctabb = crapbdt.nrdconta
+                            craplcm.nrdctitg = STRING(crapbdt.nrdconta,
+                                                      "99999999")
+                            craplcm.nrdocmto = craplot.nrseqdig + 1
+                            /* craplcm.cdhistor = 688 */
+                            craplcm.cdhistor = 2320 /* Novo histórico - projeto 410 */
 
-                          craplcm.nrseqdig = craplot.nrseqdig + 1
-                          craplcm.cdpesqbb = "Bordero " +
-                                             STRING(crapbdt.nrborder)
-                                             + " - " +
-                                             STRING(aux_vlborder,
-                                                    "999,999,999.99")
-                          /* craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ) , 2 ) */
-                          craplcm.vllanmto = ROUND(aux_vltotiof, 2)
-                          craplcm.cdcooper = par_cdcooper
-                          craplot.vlinfodb = craplot.vlinfodb + 
-                                                     craplcm.vllanmto
-                          craplot.vlcompdb = craplot.vlcompdb + 
-                                                     craplcm.vllanmto
-                          craplot.qtinfoln = craplot.qtinfoln + 1
-                          craplot.qtcompln = craplot.qtcompln + 1
-                          craplot.nrseqdig = craplot.nrseqdig + 1.
-                     
+                            craplcm.nrseqdig = craplot.nrseqdig + 1
+                            craplcm.cdpesqbb = "Bordero " +
+                                               STRING(crapbdt.nrborder)
+                                               + " - " +
+                                               STRING(aux_vlborder,
+                                                      "999,999,999.99")
+                            /* craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ) , 2 ) */
+                            craplcm.vllanmto = ROUND(aux_vltotiof, 2)
+                            craplcm.cdcooper = par_cdcooper
+                            craplot.vlinfodb = craplot.vlinfodb + 
+                                                       craplcm.vllanmto
+                            craplot.vlcompdb = craplot.vlcompdb + 
+                                                       craplcm.vllanmto
+                            craplot.qtinfoln = craplot.qtinfoln + 1
+                            craplot.qtcompln = craplot.qtcompln + 1
+                            craplot.nrseqdig = craplot.nrseqdig + 1.
+
                    VALIDATE craplot.
                    VALIDATE craplcm.
 

@@ -273,7 +273,7 @@
            02/06/2017 - Ajuste para resgatar cheque custodiado no dia de hj
                         quando excluir bordero.
                         PRJ300 - Desconto de cheque(Odirlei-AMcom)         
-
+						
            12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			            crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 			 		    (Adriano - P339).  
@@ -551,9 +551,9 @@ PROCEDURE busca_dados_dscchq:
             DELETE PROCEDURE h-b1wgen0001.
             RETURN "NOK".
             
-        END.        
-        DELETE PROCEDURE h-b1wgen0001.
-    END.
+        END.
+                DELETE PROCEDURE h-b1wgen0001.
+            END.
 
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper   AND
                              craplim.nrdconta = par_nrdconta   AND
@@ -694,7 +694,7 @@ PROCEDURE busca_dados_limite_incluir:
 
     IF RETURN-VALUE <> "OK" THEN
         RETURN "NOK".*/
-        
+
     RUN sistema/generico/procedures/b1wgen0001.p
         PERSISTENT SET h-b1wgen0001.
 
@@ -1980,7 +1980,7 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE VARIABLE aux_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_nrseqcar AS INTEGER     NO-UNDO.
     DEF VAR aux_mensagens    AS CHAR                    NO-UNDO.    
-
+    
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_dscritic = ""
@@ -10337,7 +10337,7 @@ PROCEDURE efetua_exclusao_bordero:
                 
                     IF  AVAILABLE craplau  THEN
                         DELETE craplau.
-                END.
+				    END.
     
             DELETE crapcdb.                   
                            
@@ -10446,7 +10446,7 @@ PROCEDURE efetua_exclusao_bordero:
                                 INPUT "Operador",
                                 INPUT "",
                                 INPUT par_cdoperad).
-    
+                                
         RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                 INPUT "Quantidade de cheques",
                                 INPUT "",
@@ -10704,6 +10704,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                       INPUT 0, /* agenci */
                                       INPUT 0, /* caixa  */
                                       INPUT par_dtmvtolt,
+                                      INPUT 'VLIOFOPSN',
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-iof-sn).
        DELETE PROCEDURE h-b1wgen9999.
@@ -12264,12 +12265,12 @@ PROCEDURE efetua_liber_anali_bordero:
                 DO:
                   ASSIGN aux_vltotiofcpl = aux_vltotiofcpl + ROUND(DECI(pc_calcula_valor_iof.pr_vliofcpl),2).
                 END.
-
+              
               /* Soma IOF complementar */
               IF pc_calcula_valor_iof.pr_flgimune <> ? THEN
-                DO:
+                  DO:
                   ASSIGN aux_flgimune = pc_calcula_valor_iof.pr_flgimune.
-                END.    
+           END.
 
            END. /* IF par_cddopcao = "L"  THEN */
 
