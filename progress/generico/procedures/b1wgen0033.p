@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 07/03/2018
+    Data    : Agosto/2008                     Ultima Atualizacao: 13/03/2018
            
     Dados referentes ao programa:
                 
@@ -234,6 +234,10 @@
 
                 07/03/2018 - Ajustar relatorio de seguro de vida de acordo com o modelo
                              enviado pela CHUBB (Lucas Ranghetti #848900)
+							 
+				13/03/2018 - Ajuste no relatorio seguro de vida onde estava escrito
+							 "cerasa" para "serasa", conforme solicitado no chamado
+							 863323. (Kelvin)
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -895,7 +899,7 @@ FORM SKIP(2)
     SKIP(3)
     "AUTORIZO A CONSULTA DE MINHAS INFORMACOES  CADASTRAIS  NOS  SERVICOS"
     SKIP
-    "DE PROTECAO AO CREDITO (SPC, CERASA,...)"
+    "DE PROTECAO AO CREDITO (SPC, SERASA,...)"
     SKIP
     "ALEM DO CADASTRO DA CENTRAL DE RISCO DO  BANCO  CENTRAL  DO  BRASIL."
     SKIP(5)
