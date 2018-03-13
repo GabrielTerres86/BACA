@@ -2601,12 +2601,9 @@ BEGIN
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, ' ', TRUE);
 
       vr_dtlibera := nvl(nvl(rw_crapepr.dtmvtolt, rw_crawepr.dtlibera),rw_crapdat.dtmvtolt);
-
-          IF rw_crawepr.idfiniof > 0 THEN
-            vr_vlemprst := rw_crawepr.vlemprst + NVL(rw_crapepr.vltarifa, 0) + NVL(rw_crapepr.vliofepr, 0);
-          ELSE
-            vr_vlemprst := rw_crawepr.vlemprst;
-          END IF;          
+      
+      --Passar só o valor do empréstimo para a CCET001, pois lá recalcula tudo que precisa
+      vr_vlemprst := rw_crawepr.vlemprst;
 
       -- Chama rotina de CET
       ccet0001.pc_imprime_emprestimos_cet(pr_cdcooper => pr_cdcooper
