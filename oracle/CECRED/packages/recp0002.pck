@@ -91,7 +91,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --  Sistema  : Rotinas referentes ao WebService de Acordos
   --  Sigla    : EMPR
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Julho - 2016.                   Ultima atualizacao: 30/11/2017
+  --  Data     : Julho - 2016.                   Ultima atualizacao: 13/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -120,6 +120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --                          a rotina que efetua o lançamento
   --                          (Adriano - SD 804308).
   --
+  --             13/03/2018 - Chamado 806202 - ALterado update CRAPCYC para não atualizar motivos 2 e 7.
   ---------------------------------------------------------------------------
   -- Formato de retorno para numerico no xml
   vr_formtnum   VARCHAR2(30) := '99999999999990D00';
@@ -1822,7 +1823,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       -- Desmarcar o contrato como CIN
       UPDATE crapcyc
          SET crapcyc.flgehvip = 0,
-             crapcyc.cdmotcin = 0,
+             cdmotcin = CASE cdmotcin
+                        WHEN 2 THEN 2
+                        WHEN 7 THEN 7
+                        ELSE 0 END,
              crapcyc.dtaltera = rw_crapdat.dtmvtolt
          WHERE EXISTS(SELECT 1
                         FROM tbrecup_acordo_contrato

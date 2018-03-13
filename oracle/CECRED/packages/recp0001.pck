@@ -174,7 +174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --  Sistema  : Rotinas genéricas com foco no Sistema de Acordos
   --  Sigla    : RECP
   --  Autor    : Renato Darosci / James Prust Junior
-  --  Data     : Setembro/2016.                   Ultima atualizacao: 22/02/2017
+  --  Data     : Setembro/2016.                   Ultima atualizacao: 13/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -195,6 +195,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --             27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
   --
   --             02/10/2017 - Tratamento no update da tabela CRAPCYC para tratamento da origem 2. (Heitor - Mouts) - Chamado 760624.
+  --
+  --             13/03/2018 - Chamado 806202 - ALterado update CRAPCYC para não atualizar motivos 2 e 7.
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -2584,7 +2586,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         BEGIN
           UPDATE crapcyc 
              SET flgehvip = 1
-               , cdmotcin = 1
+               , cdmotcin = CASE cdmotcin
+                            WHEN 2 THEN 2
+                            WHEN 7 THEN 7
+                            ELSE 1 END
                , dtaltera = BTCH0001.rw_crapdat.dtmvtolt
            WHERE cdcooper = rw_acordo_contrato.cdcooper
              AND cdorigem = DECODE(rw_acordo_contrato.cdorigem,2,3,rw_acordo_contrato.cdorigem)
