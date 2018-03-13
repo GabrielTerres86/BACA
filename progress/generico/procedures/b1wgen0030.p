@@ -506,6 +506,9 @@
 
                25/10/2017 - Projeto 410 - Ajustado cálculo do IOF na baixa do título
                             (James)
+
+               20/10/2017 - Criada procedure busca_iof_simples_nacional 
+                            (Diogo - MoutS - Projeto 410 - RF 43 a 46)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -537,7 +540,8 @@ DEF VAR h-b1wgen0153 AS HANDLE                                         NO-UNDO.
 
 DEF TEMP-TABLE tt-dsctit LIKE tt-dados_dsctit.
 
-
+DEFINE VARIABLE const_txiofpf AS DECIMAL DECIMALS 4 INITIAL 0.0082  NO-UNDO.
+DEFINE VARIABLE const_txiofpj AS DECIMAL DECIMALS 4 INITIAL 0.0041  NO-UNDO.
 
 /*****************************************************************************/
 /*            Buscar a soma total de descontos (titulos + cheques)           */
@@ -900,6 +904,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE VARIABLE aux_vltotiof AS DECIMAL NO-UNDO.
     DEFINE VARIABLE aux_inpessoa AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_vltotaliofsn AS DECIMAL NO-UNDO.
+
     DEFINE VARIABLE aux_natjurid AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_tpregtrb AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_vltotiofpri AS DECIMAL NO-UNDO.
@@ -1089,10 +1094,14 @@ PROCEDURE efetua_liber_anali_bordero:
                                    INPUT par_dtmvtolt,
                                    OUTPUT TABLE tt-erro,
                                    OUTPUT TABLE tt-iof).
-
-
-
-                       
+                               
+    RUN busca_iof_simples_nacional IN h-b1wgen9999 (INPUT par_cdcooper,
+                                      INPUT 0, /* agenci */
+                                      INPUT 0, /* caixa  */
+                                      INPUT par_dtmvtolt,
+                                      INPUT 'VLIOFOPSN',
+                                      OUTPUT TABLE tt-erro,
+                                      OUTPUT TABLE tt-iof-sn).
     IF VALID-HANDLE(h-b1wgen9999) THEN
        DELETE OBJECT h-b1wgen9999.
     
@@ -2098,13 +2107,12 @@ PROCEDURE efetua_liber_anali_bordero:
                                    NO-LOCK:
               ASSIGN aux_vltotoperac = aux_vltotoperac + crabtdb.vlliquid.
             END.
-            
-            ASSIGN aux_flgimune = 0.
-            
+                           
             ASSIGN aux_vltotiof = 0
                    aux_vltotiofpri = 0
                    aux_vltotiofadi = 0
-                   aux_vltotiofcpl = 0.
+                   aux_vltotiofcpl = 0
+                   aux_flgimune = 0.
             FOR EACH crabtdb WHERE crabtdb.cdcooper = par_cdcooper       AND
                                    crabtdb.nrborder = crapbdt.nrborder   AND
                                    crabtdb.nrdconta = crapbdt.nrdconta
@@ -2201,9 +2209,10 @@ PROCEDURE efetua_liber_anali_bordero:
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF principal */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF adicional */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF complementar */
-                                                    ,OUTPUT ""                    /* Valor da taxa de IOF principal */
-                                                    ,OUTPUT ""                    /* Critica */
-                                                    ,OUTPUT 0).                   /* Flag imunidade */        
+                                                    ,OUTPUT ""                     /* Valor da taxa de IOF principal */
+                                                    ,OUTPUT ?                      /* Flag da imunidade */
+                                                    ,OUTPUT "").                  /* Critica */
+                                                    
                 /* Fechar o procedimento para buscarmos o resultado */ 
                 CLOSE STORED-PROC pc_calcula_valor_iof_prg
                 
@@ -2215,7 +2224,6 @@ PROCEDURE efetua_liber_anali_bordero:
                        aux_dscritic = pc_calcula_valor_iof_prg.pr_dscritic WHEN pc_calcula_valor_iof_prg.pr_dscritic <> ?.
                 IF aux_dscritic <> "" THEN
                   UNDO LIBERACAO, LEAVE.
-                  
                 /* Soma IOF principal */
                 IF pc_calcula_valor_iof_prg.pr_vliofpri <> ? THEN
                   DO:
@@ -2235,14 +2243,11 @@ PROCEDURE efetua_liber_anali_bordero:
                 IF pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal <> "" THEN
                   DO:
                     ASSIGN aux_vltxiofatraso = DECI(pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal).
-                  END.
-                  
+                  END.                  
                 IF pc_calcula_valor_iof_prg.pr_flgimune <> ? THEN
                   DO:
                     ASSIGN aux_flgimune = pc_calcula_valor_iof_prg.pr_flgimune.
                   END.
-                  
-                  
             END.  /*  Fim do FOR EACH craptdb  */
             ASSIGN aux_vltotiof = aux_vltotiofpri + aux_vltotiofadi.
 
@@ -2441,8 +2446,14 @@ PROCEDURE efetua_liber_anali_bordero:
             VALIDATE craplot.
             VALIDATE craplcm.
 
-
-            /* RUN sistema/generico/procedures/b1wgen0159.p
+            RUN buscar_valor_iof_simples_nacional(INPUT aux_vlborder,
+                                                  INPUT par_cdcooper,
+                                                  INPUT par_nrdconta,
+                                                  INPUT TABLE tt-iof,
+                                                  INPUT TABLE tt-iof-sn,
+                                                  OUTPUT aux_vltotaliofsn).
+            aux_vltotiof = aux_vltotiof + aux_vltotaliofsn.
+            RUN sistema/generico/procedures/b1wgen0159.p
                             PERSISTENT SET h-b1wgen0159.
 
             RUN verifica-imunidade-tributaria IN h-b1wgen0159(
@@ -2454,14 +2465,11 @@ PROCEDURE efetua_liber_anali_bordero:
                                                  INPUT tt-iof.txccdiof,
                                                 OUTPUT aux_flgimune,
                                                 OUTPUT TABLE tt-erro).
-            DELETE PROCEDURE h-b1wgen0159. */
+            DELETE PROCEDURE h-b1wgen0159.
 
             /*  Cobranca do IOF de desconto  */
             IF  aux_vltotiof > 0 THEN         
                DO:
-                  /* Só grava na craplcm se nao FOR imune */
-                  IF aux_flgimune <= 0 THEN
-                    DO:
                    DO aux_contador = 1 TO 10:
                       FIND craplot WHERE
                            craplot.cdcooper = par_cdcooper   AND
@@ -2503,41 +2511,38 @@ PROCEDURE efetua_liber_anali_bordero:
                    IF aux_dscritic <> ""   THEN
                       UNDO LIBERACAO, LEAVE.
                 
-                     CREATE craplcm.
-                     ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                            craplcm.cdagenci = craplot.cdagenci
-                            craplcm.cdbccxlt = craplot.cdbccxlt
-                            craplcm.nrdolote = craplot.nrdolote
-                            craplcm.nrdconta = crapbdt.nrdconta
-                            craplcm.nrdctabb = crapbdt.nrdconta
-                            craplcm.nrdctitg = STRING(crapbdt.nrdconta,
-                                                      "99999999")
-                            craplcm.nrdocmto = craplot.nrseqdig + 1
-                            /* craplcm.cdhistor = 688 */
-                            craplcm.cdhistor = 2320 /* Novo histórico - projeto 410 */
+                   CREATE craplcm.
+                   ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
+                          craplcm.cdagenci = craplot.cdagenci
+                          craplcm.cdbccxlt = craplot.cdbccxlt
+                          craplcm.nrdolote = craplot.nrdolote
+                          craplcm.nrdconta = crapbdt.nrdconta
+                          craplcm.nrdctabb = crapbdt.nrdconta
+                          craplcm.nrdctitg = STRING(crapbdt.nrdconta,
+                                                    "99999999")
+                          craplcm.nrdocmto = craplot.nrseqdig + 1
+                          /* craplcm.cdhistor = 688 */
+                          craplcm.cdhistor = 2320 /* Novo histórico - projeto 410 */
 
-                            craplcm.nrseqdig = craplot.nrseqdig + 1
-                            craplcm.cdpesqbb = "Bordero " +
-                                               STRING(crapbdt.nrborder)
-                                               + " - " +
-                                               STRING(aux_vlborder,
-                                                      "999,999,999.99")
-                            /* craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ) , 2 ) */
-                            craplcm.vllanmto = ROUND(aux_vltotiof, 2)
-                            craplcm.cdcooper = par_cdcooper
-                            craplot.vlinfodb = craplot.vlinfodb + 
-                                                       craplcm.vllanmto
-                            craplot.vlcompdb = craplot.vlcompdb + 
-                                                       craplcm.vllanmto
-                            craplot.qtinfoln = craplot.qtinfoln + 1
-                            craplot.qtcompln = craplot.qtcompln + 1
-                            craplot.nrseqdig = craplot.nrseqdig + 1.
-
-
+                          craplcm.nrseqdig = craplot.nrseqdig + 1
+                          craplcm.cdpesqbb = "Bordero " +
+                                             STRING(crapbdt.nrborder)
+                                             + " - " +
+                                             STRING(aux_vlborder,
+                                                    "999,999,999.99")
+                          /* craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ) , 2 ) */
+                          craplcm.vllanmto = ROUND(aux_vltotiof, 2)
+                          craplcm.cdcooper = par_cdcooper
+                          craplot.vlinfodb = craplot.vlinfodb + 
+                                                     craplcm.vllanmto
+                          craplot.vlcompdb = craplot.vlcompdb + 
+                                                     craplcm.vllanmto
+                          craplot.qtinfoln = craplot.qtinfoln + 1
+                          craplot.qtcompln = craplot.qtcompln + 1
+                          craplot.nrseqdig = craplot.nrseqdig + 1.
+                     
                    VALIDATE craplot.
                    VALIDATE craplcm.
-                   END.
-
 
                   /* Projeto 410 - Novo IOF */
                   ASSIGN aux_dscritic = "".
@@ -4864,8 +4869,8 @@ PROCEDURE efetua_inclusao_limite:
 
         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        ASSIGN aux_cdcritic      = 0
-               aux_dscritic     = ""
+        ASSIGN aux_cdcritic  = 0
+               aux_dscritic  = ""
                aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
                aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
                aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
@@ -12992,7 +12997,6 @@ PROCEDURE efetua_baixa_titulo:
     DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_indbaixa AS INTE                    NO-UNDO.
-    DEF INPUT PARAM par_dtintegr AS DATE                    NO-UNDO.
     /* 1-Pagamento 2- Vencimento */
     
     DEF INPUT PARAM TABLE FOR tt-titulos.
@@ -13026,6 +13030,7 @@ PROCEDURE efetua_baixa_titulo:
     DEF VAR aux_dtvigenc AS DATE NO-UNDO.
     DEF VAR aux_cdhistor AS INTE NO-UNDO.
     DEF VAR aux_cdfvlcop AS INTE NO-UNDO.
+    DEF VAR aux_flgimune AS INTE NO-UNDO.
 
     DEF VAR aux_natjurid LIKE crapjur.natjurid  NO-UNDO.
     DEF VAR aux_tpregtrb LIKE crapjur.tpregtrb  NO-UNDO.
@@ -13035,7 +13040,6 @@ PROCEDURE efetua_baixa_titulo:
     DEF VAR aux_qtdiaiof AS INTEGER             NO-UNDO.
     DEF VAR aux_vltotal_liquido AS DECIMAL      NO-UNDO.
     DEF VAR aux_vltxiofatraso AS DECIMAL        NO-UNDO.
-    DEF VAR aux_flgimune AS INTEGER             NO-UNDO.
     DEF VAR h-b1wgen0088 AS HANDLE  NO-UNDO.
     
     DEF BUFFER crablot FOR craplot.
@@ -13400,7 +13404,7 @@ PROCEDURE efetua_baixa_titulo:
                                        NO-LOCK NO-ERROR. */
                                    
                     /*  Condicao para verificar se o Titulo estah em Atraso */
-                    IF  NOT(craptdb.dtvencto > crapdat.dtmvtoan) AND craptdb.dtvencto <  par_dtintegr THEN
+                    IF  NOT(craptdb.dtvencto > crapdat.dtmvtoan) AND craptdb.dtvencto <  par_dtmvtolt THEN
                        DO:
                            /* Busca o tipo de pessoa */
                            FOR crapass FIELDS (inpessoa)
@@ -13464,9 +13468,9 @@ PROCEDURE efetua_baixa_titulo:
                                                                ,OUTPUT 0                  /* IOF Principal */
                                                                ,OUTPUT 0                  /* IOF Adicinal  */
                                                                ,OUTPUT 0                  /* IOF Complemenar */
-                                                               ,OUTPUT ""                 /* Taxa de IOF principal */
-                                                               ,OUTPUT ""                 /* Descrição da crítica */
-                                                               ,OUTPUT 0).
+                                                               ,OUTPUT ""                  /* Taxa de IOF principal */
+                                                               ,OUTPUT ?                    /* Flag da imunidade */
+                                                               ,OUTPUT "").  /* Descrição da crítica */
                            /* Fechar o procedimento para buscarmos o resultado */ 
                            CLOSE STORED-PROC pc_calcula_valor_iof_prg
                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
@@ -13483,11 +13487,10 @@ PROCEDURE efetua_baixa_titulo:
                                   aux_vliofcpl = pc_calcula_valor_iof_prg.pr_vliofcpl
                                                  WHEN pc_calcula_valor_iof_prg.pr_vliofcpl <> ?
                                   aux_dscritic = pc_calcula_valor_iof_prg.pr_dscritic
-                                                 WHEN pc_calcula_valor_iof_prg.pr_dscritic <> ?.
+                                                 WHEN pc_calcula_valor_iof_prg.pr_dscritic <> ?
+                                  aux_flgimune = pc_calcula_valor_iof_prg.pr_flgimune
+                                                 WHEN pc_calcula_valor_iof_prg.pr_flgimune <> ?.
                                                  
-                            IF pc_calcula_valor_iof_prg.pr_flgimune <> ? THEN
-                              ASSIGN aux_flgimune = pc_calcula_valor_iof_prg.pr_flgimune.
-
                            /* Se retornou erro */
                            IF aux_dscritic <> "" THEN 
                               DO:
@@ -13500,7 +13503,7 @@ PROCEDURE efetua_baixa_titulo:
                                   UNDO BAIXA, RETURN "NOK".
                               END.
                            /* Condicao para verificar se o valor do complemento eh maior que 0 */    
-                           IF aux_vliofcpl > 0 AND aux_flgimune <= 0 THEN
+                           IF aux_vliofcpl > 0 THEN
                               DO:
                                   DO aux_contador = 1 TO 10:
                                      FIND craplot WHERE 
@@ -13586,7 +13589,7 @@ PROCEDURE efetua_baixa_titulo:
                                                                ,INPUT aux_vliofpri        /* Valor Principal IOF      */
                                                                ,INPUT aux_vliofadi        /* Valor Adicional IOF      */
                                                                ,INPUT aux_vliofcpl        /* Valor Complementar IOF   */
-                                                               ,INPUT aux_flgimune        /* Flag de imunidade tributária */
+                                                               ,INPUT aux_flgimune        /* Flag da imunidade */
                                                                ,OUTPUT 0                  /* Codigo da Critica */
                                                                ,OUTPUT "").               /* Descrição da crítica */
                            /* Fechar o procedimento para buscarmos o resultado */ 
@@ -13727,25 +13730,10 @@ PROCEDURE efetua_baixa_titulo:
                     
                 END. /* Final da baixa por vencimento */
                 
-            FIND crapbdt WHERE crapbdt.cdcooper = craptdb.cdcooper AND
-                               crapbdt.nrborder = craptdb.nrborder
-                               NO-LOCK NO-ERROR.
 
-            IF  NOT AVAIL crapbdt  THEN
-                DO:
-                    ASSIGN aux_dscritic = "Bordero nao encontrado."
-                           aux_cdcritic = 0.
                     
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1, /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
 
-                    UNDO BAIXA, RETURN "NOK".
 
-                END.
             
             /**** ABATIMENTO DE JUROS ****/
             ASSIGN aux_txdiaria = ROUND((EXP(1 + (crapbdt.txmensal / 100),
@@ -17316,10 +17304,82 @@ PROCEDURE valida_titulos_bordero:
     
 	IF aux_flgtrans = FALSE THEN
 	   RETURN "NOK".
+    RETURN "OK".
+END PROCEDURE.
+/*****************************************************************************
+                Busca o valor do IOF para simples nacional                    
+*****************************************************************************/
+PROCEDURE buscar_valor_iof_simples_nacional:
+    DEF INPUT PARAM par_vlborder AS DECI NO-UNDO.
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
+    DEF INPUT PARAM TABLE FOR tt-iof.
+    DEF INPUT PARAM TABLE FOR tt-iof-sn.
+    DEF OUTPUT PARAM aux_vltotaliofsn AS DECI NO-UNDO.
+    /* Projeto 410 - RF 43 a 46:
+     - Se o valor do borderô for maior que 30K, usa a seguinte regra:
+        -> Para pessoa jurídica, taxa do IOF para simples nacional = 0.0041
+        -> Para pessoa física, taxa do IOF para simples nacional = 0.0082
+     - Se o valor do borderô for até 30K (inclusive), busca a taxa que estiver 
+       cadastrada. */
+    IF par_vlborder <= 30000 THEN
+      DO:
+        FIND crapjur WHERE crapjur.cdcooper = par_cdcooper  AND
+                           crapjur.nrdconta = par_nrdconta       
+                           NO-LOCK NO-ERROR.
+        IF AVAILABLE crapjur AND (crapjur.idimpdsn = 1 OR crapjur.idimpdsn = 2) THEN
+          DO:
+            /* Calcula o IOF normal e com base no resultado, calcula o IOF do SN */
+            ASSIGN aux_vltotaliofsn = par_vlborder + (ROUND(par_vlborder * tt-iof.txccdiof, 2)).
+            ASSIGN aux_vltotaliofsn = ROUND(aux_vltotaliofsn * tt-iof-sn.txccdiof, 2).
+          END.
+        ELSE
+          DO:
+            ASSIGN aux_vltotaliofsn = 0.
+          END.
+        RELEASE crapjur.
+      END.
+    ELSE
+      DO:
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper  AND
+                           crapass.nrdconta = par_nrdconta       
+                           NO-LOCK NO-ERROR.
+        IF AVAILABLE crapass THEN
+          DO:
+            IF crapass.inpessoa = 1 THEN /* Pessoa física */
+              DO:                
+                /* Calcula o IOF normal e com base no resultado, calcula o IOF do SN */
+                ASSIGN aux_vltotaliofsn = par_vlborder + (ROUND(par_vlborder * tt-iof.txccdiof, 2)).
+                ASSIGN aux_vltotaliofsn = ROUND(aux_vltotaliofsn * const_txiofpf, 2).
+              END.
+            ELSE  /* Pessoa jurídica */
+              DO:
+                /* Verifica se o associado é cooperativa. Se for, taxa iof simples nacional deve ser zero */
+                FIND crapjur WHERE crapjur.cdcooper = par_cdcooper  AND
+                                   crapjur.nrdconta = par_nrdconta       
+                                   NO-LOCK NO-ERROR.
+                IF AVAILABLE crapjur AND (crapjur.natjurid = 2143) THEN /* 2143 = Coopertativa */
+                  DO:
+                    ASSIGN aux_vltotaliofsn = 0.
+                  END.
+                ELSE
+                  DO:
+                    /* Calcula o IOF normal e com base no resultado, calcula o IOF do SN */
+                    ASSIGN aux_vltotaliofsn = par_vlborder + (ROUND(par_vlborder * tt-iof.txccdiof, 2)).
+                    ASSIGN aux_vltotaliofsn = ROUND(aux_vltotaliofsn * const_txiofpj, 2).
+                  END.
+                RELEASE crapjur.
+              END.
+          END.
+        ELSE
+          ASSIGN aux_vltotaliofsn = 0.
+        RELEASE crapass.        
+      END.
 
     RETURN "OK".
 END PROCEDURE.
 
 /* .......................................................................... */
+
 
 
