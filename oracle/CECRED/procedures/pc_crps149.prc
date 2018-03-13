@@ -238,8 +238,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                             Projeto Ligeirinho (Rangel Decker) AMCom     
   ............................................................................. */
 
-  ............................................................................. */
-  
+ 
   ------------------------------- CURSORES ---------------------------------
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop IS
@@ -670,11 +669,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   --vr_inliquid INTEGER:= 0;
   
   -- Variaveis do CPMF
-  vr_dtinipmf	DATE;
-  vr_dtfimpmf	DATE;
-  vr_dtiniabo	DATE;
-  vr_txrdcpmf	NUMBER;
-  vr_indabono	NUMBER;
+  vr_dtinipmf  DATE;
+  vr_dtfimpmf  DATE;
+  vr_dtiniabo  DATE;
+  vr_txrdcpmf  NUMBER;
+  vr_indabono  NUMBER;
   vr_sem_cpmf CHAR := ' ';
   vr_txcpmfcc NUMBER := 0;
   vr_vldacpmf NUMBER := 0;
