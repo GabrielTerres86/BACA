@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps634_i(pr_cdcooper    IN NUMBER        
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CECRED
    Autor   : Adriano
-   Data    : Dezembro/2012                     Ultima atualizacao: 17/03/2014
+   Data    : Dezembro/2012                     Ultima atualizacao: 13/12/2017
 
    Dados referentes ao programa:
 
@@ -40,6 +40,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps634_i(pr_cdcooper    IN NUMBER        
                17/03/2014 - Ajustes na chamada do relatório, passando direto
                             o pr_cdrelato e não mais o pr_seqabrel (Marcos-Supero)
 
+               13/12/2017 - Padronização mensagens 
+                          - Tratamento erros others: cecred.pc_internal_exception
+                           (Ana - Envolti - Chamado 813390)
   ............................................................................. */
 BEGIN
   DECLARE
@@ -56,6 +59,8 @@ BEGIN
     vr_xml         CLOB;                      --> XML para criar relatório
     vr_nmformul    VARCHAR2(40);              --> Nome do formulário
     vr_nrcopias    NUMBER;                    --> Número de cópias
+    vr_dsparam     VARCHAR2(4000);            --> Parâmetros da rotina para as mensagens
+    vr_dscritic    VARCHAR2(4000);            --> Descrição da crítica
 
     -- Busca dos dados da cooperativa
     CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS   --> Código da cooperativa
@@ -70,6 +75,9 @@ BEGIN
   BEGIN
     -- Nome do programa
     vr_cdprogra := 'CRPS634_I';
+
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS634_I', pr_action => NULL);
 
     -- Atribuição de valores iniciais da procedure
     vr_nmformul := '';
@@ -93,9 +101,17 @@ BEGIN
       pr_cdcritic := 651;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
 
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || pr_dscritic);
+      --Padronização log do erro - Chamado 813390
+      btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper             
+                                ,pr_ind_tipo_log  => 2 -- Erro de negócio
+                                ,pr_nmarqlog      => 'proc_batch.log'          
+                                ,pr_dstiplog      => 'E' 
+                                ,pr_cdprograma    => vr_cdprogra                      
+                                ,pr_tpexecucao    => 1 -- Batch                       
+                                ,pr_cdcriticidade => 1                    
+                                ,pr_cdmensagem    => pr_cdcritic                      
+                                ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
+                                                     ||vr_cdprogra||' --> ' ||pr_dscritic);
 
       RAISE vr_exc_erro;
     ELSE
@@ -104,6 +120,25 @@ BEGIN
 
     -- Limpar crítica
     pr_dscritic := '';
+
+    vr_dsparam := 'cooper:'||rw_crapcop.cdcooper||', cdagenci:'||pr_cdagenci||', nrdcaixa:0'
+                  ||', cdoperad:'||pr_cdoperad||', cdprogra:'||pr_cdprogra||', idorigem:1'
+                  ||', persocio:'||pr_persocio||', dtmvtolt:'||pr_tab_crapdat.dtmvtolt;
+
+    --Inclusao log para acompanhamento de tempo de execução - Chamado 813390
+    --Registra o início
+    btch0001.pc_gera_log_batch(pr_cdcooper      => rw_crapcop.cdcooper             
+                              ,pr_ind_tipo_log  => 1 -- Mensagem
+                              ,pr_nmarqlog      => 'proc_batch.log'          
+                              ,pr_dstiplog      => 'O'             
+                              ,pr_cdprograma    => vr_cdprogra                      
+                              ,pr_tpexecucao    => 1 -- Batch                       
+                              ,pr_cdcriticidade => 0                      
+                              ,pr_cdmensagem    => 1066
+                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
+                                                   ||vr_cdprogra||' --> '||gene0001.fn_busca_critica(1066)
+                                                   ||'pc_forma_grupo_economico '
+                                                   ||rw_crapcop.nmrescop||'. '||vr_dsparam);
 
     -- Gerar grupos economicos
     geco0001.pc_forma_grupo_economico(pr_cdcooper    => rw_crapcop.cdcooper
@@ -122,16 +157,36 @@ BEGIN
     IF pr_dscritic <> 'OK' THEN
       -- Verifica se a tabela de formação de grupos retornou sem registros
       IF vr_tab_crapgrp.count = 0 THEN
-        pr_dscritic := pr_dscritic || ' Nao foi possivel realizar a formacao do grupo economico para a ' || rw_crapcop.nmrescop;
+        pr_dscritic := 'Nao foi possivel realizar a formacao do grupo economico para a ' || rw_crapcop.nmrescop||'. '||pr_dscritic;
       END IF;
-
-      -- Gravar mensagem de erro em LOG
-      btch0001.pc_gera_log_batch(pr_cdcooper        => pr_cdcooper,
-                                 pr_ind_tipo_log  => 2, -- Erro tratato
-                                 pr_nmarqlog      => vr_cdprogra,
-                                 pr_des_log       => to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || pr_dscritic);
+      --Padronização log do erro - Chamado 813390
+      btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper             
+                                ,pr_ind_tipo_log  => 2 -- Erro de negócio
+                                ,pr_nmarqlog      => 'proc_batch.log'          
+                                ,pr_dstiplog      => 'E' 
+                                ,pr_cdprograma    => vr_cdprogra                      
+                                ,pr_tpexecucao    => 1 -- Batch                       
+                                ,pr_cdcriticidade => 1                    
+                                ,pr_cdmensagem    => pr_cdcritic                      
+                                ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
+                                                     ||vr_cdprogra||' --> ' ||pr_dscritic);
 
       RAISE vr_exc_erro;
+    ELSE
+      --Se executou com sucesso, registra o término na tabela de logs
+      --Inclusao log para acompanhamento de tempo de execução - Chamado 813390
+      btch0001.pc_gera_log_batch(pr_cdcooper      => rw_crapcop.cdcooper             
+                                ,pr_ind_tipo_log  => 1 -- Mensagem
+                                ,pr_nmarqlog      => 'proc_batch.log'          
+                                ,pr_dstiplog      => 'O'             
+                                ,pr_cdprograma    => vr_cdprogra                      
+                                ,pr_tpexecucao    => 1 -- Batch                       
+                                ,pr_cdcriticidade => 0                      
+                                ,pr_cdmensagem    => 1067   
+                                ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
+                                                     ||vr_cdprogra||' --> '||gene0001.fn_busca_critica(1067)
+                                                     ||'pc_forma_grupo_economico '
+                                                     ||rw_crapcop.nmrescop||'. '||vr_dsparam);
     END IF;
 
     -- Eliminar registros marcadores da PL Table
@@ -214,20 +269,32 @@ BEGIN
                                      ,pr_dscritic => pr_cdcritic
                                      ,pr_tab_erro => vr_tab_craterr
                                      ,pr_des_erro => pr_dscritic);
+                                     
+    vr_dsparam := 'cdcooper:'||pr_cdcooper||', cdagenci:0, dtmvtolt:'||pr_tab_crapdat.dtmvtolt||
+                  ', nmarqimp:'||vr_nom_dir || '/' || vr_nmarquiv||', nmformul:132col';
 
     -- Verifica se ocorreram erros
     IF pr_dscritic <> 'OK' THEN
       IF vr_tab_craterr.count = 0 THEN
-        pr_dscritic := 'Nao foi possivel gerar o arquivo para a intranet - ' || rw_crapcop.nmrescop;
+        pr_dscritic := 'Nao foi possivel gerar o arquivo para a intranet - ' || rw_crapcop.nmrescop
+                       ||', '||vr_dsparam;
       ELSE
-        pr_dscritic := vr_tab_craterr(vr_tab_craterr.first).dscritic || ' - ' || rw_crapcop.nmrescop;
+        pr_dscritic := vr_tab_craterr(vr_tab_craterr.first).dscritic || ' - ' || rw_crapcop.nmrescop
+                       ||', '||vr_dsparam;
       END IF;
 
-      -- Gravar mensagem de erro em LOG
-      btch0001.pc_gera_log_batch(pr_cdcooper        => pr_cdcooper,
-                                 pr_ind_tipo_log  => 2,
-                                 pr_nmarqlog      => vr_cdprogra,
-                                 pr_des_log       => to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || pr_dscritic);
+      --Padronização log do erro - Chamado 813390
+      btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper             
+                                ,pr_ind_tipo_log  => 2 -- Erro de negócio
+                                ,pr_nmarqlog      => 'proc_batch.log'          
+                                ,pr_dstiplog      => 'E' 
+                                ,pr_cdprograma    => vr_cdprogra                      
+                                ,pr_tpexecucao    => 1 -- Batch                       
+                                ,pr_cdcriticidade => 1                    
+                                ,pr_cdmensagem    => pr_cdcritic                      
+                                ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
+                                                     ||vr_cdprogra||' --> ' ||pr_dscritic);
+
     ELSE
       pr_dscritic := NULL;
     END IF;
@@ -252,21 +319,34 @@ BEGIN
                                ,pr_dscormail => NULL
                                ,pr_flsemqueb => 'N'
                                ,pr_des_erro  => pr_dscritic);
-
     -- Verificar se ocorreram erros
     IF pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
 
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS634_I', pr_action => NULL);
+
     -- Finalizar XML
     dbms_lob.close(vr_xml);
     dbms_lob.freetemporary(vr_xml);
 
+    -- Alimentando a mensagem de sucesso que será impressa no log
+    vr_dscritic := gene0001.fn_busca_critica(1194); --Grupo Economico formado com sucesso
+
     -- Gerar mensagem no LOG indicando sucesso
-    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper,
-                               pr_ind_tipo_log  => 1,
-                               pr_nmarqlog      => vr_cdprogra,
-                               pr_des_log       => to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> Grupo Economico formado com sucesso.');
+    --Padronização log do erro - Chamado 813390
+    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper             
+                              ,pr_ind_tipo_log  => 1 -- Mensagem
+                              ,pr_nmarqlog      => 'proc_batch.log'          
+                              ,pr_dstiplog      => 'E' 
+                              ,pr_cdprograma    => vr_cdprogra                      
+                              ,pr_tpexecucao    => 1 -- Batch                       
+                              ,pr_cdcriticidade => 0                    
+                              ,pr_cdmensagem    => 1194                 
+                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
+                                                   ||vr_cdprogra||' --> '||vr_dscritic||vr_dsparam);
+
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Efetuar rollback
@@ -276,14 +356,25 @@ BEGIN
       ROLLBACK;
 
       -- Propagar crítica
-      pr_cdcritic := 0;
-      pr_dscritic := 'Erro: ' || SQLERRM;
+      -- Padronização - Chamado 813390
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||SQLERRM;
 
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 3 -- Erro crítico
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || ' --> ' || pr_dscritic);
+      --Padronização log do erro - Chamado 813390
+      btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper             
+                                ,pr_ind_tipo_log  => 3 -- Erro nao tratado
+                                ,pr_nmarqlog      => 'proc_batch.log'          
+                                ,pr_dstiplog      => 'E' 
+                                ,pr_cdprograma    => vr_cdprogra                      
+                                ,pr_tpexecucao    => 1 -- Batch                       
+                                ,pr_cdcriticidade => 2                    
+                                ,pr_cdmensagem    => pr_cdcritic                      
+                                ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
+                                                     ||vr_cdprogra||' --> ' ||pr_dscritic);
+
+      -- No caso de erro de programa gravar tabela especifica de log - 13/12/2017 - Chamado 813390
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+        
   END;
 END PC_CRPS634_I;
 /
-

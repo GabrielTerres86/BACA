@@ -250,7 +250,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                           ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                           ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                           ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de presta¿¿es calculadas at¿ momento
-                          ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de presta¿¿es paga at¿ momento
+                          ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de presta¿¿es paga at¿ momento
                           ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no m¿s
                           ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no m¿s corrente
                           ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
@@ -268,7 +268,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                               ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                               ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                               ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes calculadas ate momento
-                              ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes paga ate momento
+                              ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de prestacoes paga ate momento
                               ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no mes
                               ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no mes corrente
                               ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
@@ -923,7 +923,7 @@ PROCEDURE pc_calcula_iof_epr_parcela (pr_cdcooper        IN crapepr.cdcooper%TYP
                                         ,pr_flgimune       OUT PLS_INTEGER -- Imunidade
                                         ,pr_vlpreempcalc   OUT crapepr.vlpreemp%TYPE                              
                              ,pr_dscritic OUT VARCHAR2);
-                                                                   
+                                                 
   /* Calcular a quantidade de dias que o emprestimo está em atraso */
   FUNCTION fn_busca_dias_atraso_epr(pr_cdcooper IN crappep.cdcooper%TYPE --> Código da Cooperativa
                                    ,pr_nrdconta IN crappep.nrdconta%TYPE --> Numero da Conta do empréstimo
@@ -931,12 +931,12 @@ PROCEDURE pc_calcula_iof_epr_parcela (pr_cdcooper        IN crapepr.cdcooper%TYP
                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do Movimento Atual
                                    ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) --> Data do Movimento Anterior
    RETURN INTEGER;
-                                                                   
+
   /* Retorna o tipo de finalide */
   FUNCTION fn_tipo_finalidade(pr_cdcooper IN crapfin.cdcooper%TYPE  --> Código da Cooperativa
                              ,pr_cdfinemp IN crapfin.cdfinemp%TYPE) --> Código de finalidade
    RETURN INTEGER;
-
+	                                                                    
 END empr0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
@@ -1146,7 +1146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                           ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                           ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                           ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de prestações calculadas até momento
-                          ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de prestações paga até momento
+                          ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de prestações paga até momento
                           ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no mês
                           ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no mês corrente
                           ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
@@ -1814,7 +1814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                               ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                               ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                               ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes calculadas ate momento
-                              ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes paga ate momento
+                              ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de prestacoes paga ate momento
                               ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no mes
                               ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no mes corrente
                               ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
@@ -2862,7 +2862,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                      ,pr_nrdconta craplem.nrdconta%type
                      ,pr_nrctremp craplem.nrctremp%type
                      ,pr_dtmvtolt craplem.dtmvtolt%type) is
-      SELECT SUM(DECODE(lem.cdhistor,
+      SELECT /*+ INDEX (lem CRAPLEM##CRAPLEM7) */ SUM(DECODE(lem.cdhistor,
                       1044,
                       lem.vllanmto,
                       1039,
@@ -3366,7 +3366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                        ,pr_nrctremp IN craplem.nrctremp%TYPE
                        ,pr_dtmvtolt IN craplem.dtmvtolt%TYPE) IS
                        
-      SELECT SUM(DECODE(lem.cdhistor,
+      SELECT /*+ INDEX (lem CRAPLEM##CRAPLEM7) */ SUM(DECODE(lem.cdhistor,
                       1044,
                       lem.vllanmto,
                       1039,
@@ -4180,14 +4180,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                              ,pr_vlpraven => pr_vlpraven
                                              ,pr_vlmtapar => pr_vlmtapar
                                              ,pr_vlmrapar => pr_vlmrapar
-                                             ,pr_vliofcpl => pr_vliofcpl
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);
         -- Se houve erro
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
         pr_vlprvenc := pr_vlpreapg;
 
       -- Price TR
@@ -4776,8 +4775,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  553330. (Kelvin)
 
                     23/06/2017 - Inclusao dos campos do produto Pos-Fixado. (Jaison/James - PRJ298)
-
-                    06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo
+					
+					06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo
 					             convertida (Marcos-Supero)
 
                     19/10/2017 - Inclusão campo vliofcpl no XML de retorno (Diogo - MoutS - Proj. 410 - RF 41/42)
@@ -5562,7 +5561,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_tab_dados_epr(vr_indadepr).vlpgjmpr := nvl(rw_crapepr.vlpgjmpr
                                                        ,0);
 
-          IF rw_crapepr.tpemprst = 1 THEN -- Price Pre-Fixada
+          -- Para Pre-Fixada
+          IF rw_crapepr.tpemprst = 1 THEN
             -- Enviar a taxa do empréstimo
             pr_tab_dados_epr(vr_indadepr).txmensal := rw_crapepr.txmensal;
             pr_tab_dados_epr(vr_indadepr).dsidenti := '*';
@@ -6319,7 +6319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<qtimpctr>' || vr_tab_dados_epr(vr_index).qtimpctr || '</qtimpctr>' ||
                         '<portabil>' || vr_tab_dados_epr(vr_index).portabil || '</portabil>' ||
                         '<vliofcpl>' || vr_tab_dados_epr(vr_index).vliofcpl || '</vliofcpl>' ||
-                        '<tpatuidx>' || vr_tab_dados_epr(vr_index).tpatuidx || '</tpatuidx>' ||
+						'<tpatuidx>' || vr_tab_dados_epr(vr_index).tpatuidx || '</tpatuidx>' ||
                         '<idcarenc>' || vr_tab_dados_epr(vr_index).idcarenc || '</idcarenc>' ||
                         '<dtcarenc>' || to_char(vr_tab_dados_epr(vr_index).dtcarenc,'DD/MM/RRRR') || '</dtcarenc>' ||
                         '<nrdiacar>' || vr_tab_dados_epr(vr_index).nrdiacar || '</nrdiacar>' ||
@@ -7496,7 +7496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
        Frequencia: Diaria - Sempre que for chamada
        Objetivo  : Mesma regra da antiga pc_cria_lancamento_cc, mas retorna a chave nrseqdig
-    
+                   
        Alteracoes: 
     ............................................................................. */
   
@@ -7687,8 +7687,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF vr_cdcritic IS NOT NULL
            OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
-        END IF;
-          
+      END IF;
+    
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
@@ -7840,8 +7840,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         ,pr_qtdiacal IN NUMBER DEFAULT 0 --> Quantidade dias usado no calculo
                                         ,pr_vltaxprd IN NUMBER DEFAULT 0 --> Valor da Taxa no Periodo
                                         ,pr_nrseqdig OUT INTEGER --> Numero de sequencia
-                                        ,pr_cdcritic OUT INTEGER --Codigo Erro
-                                        ,pr_dscritic OUT VARCHAR2) IS --Descricao Erro
+                                  ,pr_cdcritic OUT INTEGER --Codigo Erro
+                                  ,pr_dscritic OUT VARCHAR2) IS --Descricao Erro
   BEGIN
     /* .............................................................................
     
@@ -8724,7 +8724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                                'Confirma pagamento?';
           END IF;                                                                                                                              
 
-          END IF;                                                                                                                              
+        END IF;
         END IF;
       
         IF pr_idorigem IN(3,5) THEN 
@@ -9270,7 +9270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    
                    20/10/2015 - Incluir os históricos de ajuste o contrato 
                                 liquidado pode ser reaberto (Oscar).
-    
+
                    20/12/2017 - Inclusão de novos históricos: 2013 e 2014, Prj.402
                                 (Jean Michel).
     
@@ -15728,156 +15728,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       pr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_imoveis_epr --> ' || SQLERRM;
   END pc_valida_imoveis_epr;
   
-  PROCEDURE pc_calcula_iof_epr_web (pr_cdcooper        IN crapepr.cdcooper%TYPE --> Cooperativa conectada
-                                  ,pr_nrdconta        IN crapepr.nrdconta%TYPE --> Conta do associado
-                                  ,pr_nrctremp  IN crapepr.nrctremp%TYPE DEFAULT null
-                                  ,pr_dtmvtolt        IN VARCHAR2
-                                  ,pr_inpessoa        IN crapass.inpessoa%TYPE
-                                  ,pr_cdlcremp        IN crapepr.cdlcremp%TYPE
-                                  ,pr_qtpreemp        IN crapepr.qtpreemp%TYPE
-                                  ,pr_vlpreemp        IN crapepr.vlpreemp%TYPE
-                                  ,pr_vlemprst        IN crapepr.vlemprst%TYPE
-                                  ,pr_dtdpagto        IN VARCHAR2
-                                  ,pr_dtlibera        IN VARCHAR2
-                                  ,pr_tpemprst        IN crawepr.tpemprst%TYPE
-                                  ,pr_dtcarenc        IN VARCHAR2
-                                  ,pr_idcarencia      IN crawepr.idcarenc%TYPE
-                                  ,pr_dscatbem        IN VARCHAR2 DEFAULT NULL            -- Bens em garantia (separados por "|")
-                                  ,pr_idfiniof        IN crapepr.idfiniof%TYPE DEFAULT 1  -- Indicador se financia IOF e tarifa
-                                  ,pr_dsctrliq        IN VARCHAR2 DEFAULT NULL
-                                  ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
-                                  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
-                                  ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
-                                  ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
-                                  ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-                                  ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
-  BEGIN
-
-    -- ........................................................................
-    --
-    --  Programa : pc_calcula_iof_epr_web          
-    --  Sistema  : Cred
-    --  Sigla    : EMPR0001
-    --  Autor    : Diogo Carlassara (MoutS)
-    --  Data     : 19/01/2015.                      Ultima atualizacao: -
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : calcular valor do iof - chamada pela web
-    --
-    --.............................................................................*/
-    DECLARE
-
-      -- Variável de críticas
-      vr_cdcritic crapcri.cdcritic%TYPE;
-      vr_dscritic VARCHAR2(10000);
-
-      -- Tratamento de erros
-      vr_exc_saida EXCEPTION;
-
-      vr_valoriof NUMBER;
-      vr_vliofpri NUMBER;
-      vr_vliofadi NUMBER;
-      vr_flgimune PLS_INTEGER;
-      vr_dtmvtolt crapdat.dtmvtolt%TYPE;
-      vr_dtdpagto crapepr.dtdpagto%TYPE;
-      vr_dtlibera crawepr.dtlibera%TYPE;
-      vr_dtcarenc crawepr.dtcarenc%TYPE;
-      vr_qtdias_carencia  pls_integer;
-      VR_NRDROWID ROWID;                                   
-  BEGIN 
-    
-      vr_dtmvtolt := TO_DATE(pr_dtmvtolt, 'DD/MM/YYYY');
-      vr_dtdpagto := TO_DATE(pr_dtdpagto, 'DD/MM/YYYY');
-      vr_dtlibera := TO_DATE(pr_dtlibera, 'DD/MM/YYYY');
-      vr_dtcarenc := TO_DATE(pr_dtcarenc, 'DD/MM/YYYY');
-                                    
-      -- Busca quantidade de dias da carencia
-      EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => pr_idcarencia
-                                         ,pr_qtddias    => vr_qtdias_carencia
-                                         ,pr_cdcritic   => vr_cdcritic
-                                         ,pr_dscritic   => vr_dscritic);
-      -- Se retornou erro
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-      
-     EMPR0001.pc_calcula_iof_epr (pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => pr_nrdconta
-                                 ,pr_nrctremp => pr_nrctremp
-                                 ,pr_dtmvtolt => vr_dtmvtolt
-                                 ,pr_inpessoa => pr_inpessoa
-                                 ,pr_cdlcremp => pr_cdlcremp                                         
-                                 ,pr_qtpreemp => pr_qtpreemp
-                                 ,pr_vlpreemp => pr_vlpreemp
-                                 ,pr_vlemprst => pr_vlemprst
-                                 ,pr_dtdpagto => vr_dtdpagto
-                                 ,pr_dtlibera => vr_dtlibera
-                                 ,pr_tpemprst => pr_tpemprst
-                                 ,pr_dtcarenc => vr_dtcarenc
-                                 ,pr_qtdias_carencia => vr_qtdias_carencia
-                                 ,pr_valoriof => vr_valoriof
-                                 ,pr_dscatbem => pr_dscatbem
-                                 ,pr_idfiniof => pr_idfiniof
-                                 ,pr_dsctrliq => pr_dsctrliq
-                                 ,pr_vliofpri => vr_vliofpri
-                                 ,pr_vliofadi => vr_vliofadi
-                                 ,pr_flgimune => vr_flgimune
-                                 ,pr_dscritic => vr_dscritic);
-      
-        -- Criar cabeçalho do XML
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
-
-        -- Leitura da tabela temporaria para retornar XML para a WEB
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdcooper', pr_tag_cont => TO_CHAR(pr_cdcooper), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'nrdconta', pr_tag_cont => TO_CHAR(pr_nrdconta), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'nrctremp', pr_tag_cont => TO_CHAR(pr_nrctremp), pr_des_erro => vr_dscritic);        
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'inpessoa', pr_tag_cont => TO_CHAR(pr_inpessoa), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdlcremp', pr_tag_cont => TO_CHAR(pr_cdlcremp), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtpreemp', pr_tag_cont => TO_CHAR(pr_qtpreemp), pr_des_erro => vr_dscritic);
-        if nvl(vr_gb_vlrpreemp,0) > 0 then 
-           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlpreemp', pr_tag_cont => TO_CHAR(vr_gb_vlrpreemp, 'fm999g999g990d00'), pr_des_erro => vr_dscritic);
-        else
-           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlpreemp', pr_tag_cont => TO_CHAR(nvl(pr_vlpreemp,0), 'fm999g999g990d00'), pr_des_erro => vr_dscritic);
-        end if;
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'tpemprst', pr_tag_cont => TO_CHAR(pr_tpemprst), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdias_carencia', pr_tag_cont => TO_CHAR(vr_qtdias_carencia), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'valoriof', pr_tag_cont => TO_CHAR(vr_valoriof,'fm999g999g990d00'), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dsctrliq', pr_tag_cont => TO_CHAR(pr_dsctrliq), pr_des_erro => vr_dscritic);
-    EXCEPTION
-      WHEN vr_exc_saida THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Erro>' || pr_dscritic || SQLERRM || '</Erro></Root>');
-      WHEN OTHERS THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em EMPR0001.pc_calcula_iof_epr_web: ' || SQLERRM;
-
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    END;
-  END pc_calcula_iof_epr_web;
-  
-  PROCEDURE pc_calcula_iof_epr(pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
-                              ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
-                              ,pr_nrctremp  IN crapepr.nrctremp%TYPE DEFAULT null
-                              ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
-                              ,pr_inpessoa  IN crapass.inpessoa%TYPE
-                              ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE
-                              ,pr_qtpreemp  IN crapepr.qtpreemp%TYPE
-                              ,pr_vlpreemp  IN crapepr.vlpreemp%TYPE
-                              ,pr_vlemprst  IN crapepr.vlemprst%TYPE
-                              ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE
-                              ,pr_dtlibera  IN crawepr.dtlibera%TYPE
-                              ,pr_tpemprst  IN crawepr.tpemprst%TYPE
+  PROCEDURE pc_calcula_iof_epr(pr_cdcooper        IN crapepr.cdcooper%TYPE --> Cooperativa conectada
+                              ,pr_nrdconta        IN crapepr.nrdconta%TYPE --> Conta do associado
+                              ,pr_dtmvtolt        IN crapdat.dtmvtolt%TYPE
+                              ,pr_inpessoa        IN crapass.inpessoa%TYPE
+                              ,pr_cdlcremp        IN crapepr.cdlcremp%TYPE
+                              ,pr_qtpreemp        IN crapepr.qtpreemp%TYPE
+                              ,pr_vlpreemp        IN crapepr.vlpreemp%TYPE
+                              ,pr_vlemprst        IN crapepr.vlemprst%TYPE
+                              ,pr_dtdpagto        IN crapepr.dtdpagto%TYPE
+                              ,pr_dtlibera        IN crawepr.dtlibera%TYPE
+                              ,pr_tpemprst        IN crawepr.tpemprst%TYPE
                               ,pr_dtcarenc        IN crawepr.dtcarenc%TYPE
                               ,pr_qtdias_carencia IN tbepr_posfix_param_carencia.qtddias%TYPE
                               ,pr_dscatbem        IN VARCHAR2 DEFAULT NULL            -- Bens em garantia (separados por "|")
@@ -17065,7 +16926,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         
          IF vr_saldo_devedor > 0 THEN
            vr_saldo_devedor := ROUND(vr_saldo_devedor / ((vr_saldo_devedor - vr_vltariof - vr_vliofaditt) / vr_saldo_devedor),2);
-         END IF;
+      END IF;
 
          --Recalcula o valor do IOF adicional
          vr_vliofaditt := ROUND(vr_saldo_devedor * vr_txiofadc,2);
@@ -17086,29 +16947,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           end if;
           
         IF vr_vlbaseiof > 0 THEN
-          EMPR0011.pc_calcula_iof_pos_fixado(pr_cdcooper        => pr_cdcooper
+      EMPR0011.pc_calcula_iof_pos_fixado(pr_cdcooper        => pr_cdcooper
                                             ,pr_nrdconta        => pr_nrdconta
                                             ,pr_nrctremp        => pr_nrctremp                                        
-                                            ,pr_dtcalcul        => pr_dtmvtolt
-                                            ,pr_cdlcremp        => pr_cdlcremp
+                                        ,pr_dtcalcul        => pr_dtmvtolt
+                                        ,pr_cdlcremp        => pr_cdlcremp
                                             ,pr_vlemprst        => vr_saldo_devedor --pr_vlemprst
-                                            ,pr_qtpreemp        => pr_qtpreemp
-                                            ,pr_dtdpagto        => pr_dtdpagto
-                                            ,pr_dtcarenc        => pr_dtcarenc
-                                            ,pr_qtdias_carencia => pr_qtdias_carencia
-                                            ,pr_taxaiof         => vr_taxaiof
+                                        ,pr_qtpreemp        => pr_qtpreemp
+                                        ,pr_dtdpagto        => pr_dtdpagto
+                                        ,pr_dtcarenc        => pr_dtcarenc
+                                        ,pr_qtdias_carencia => pr_qtdias_carencia
+                                        ,pr_taxaiof         => vr_taxaiof
                                             ,pr_dscatbem        => pr_dscatbem
-                                            ,pr_vltariof        => vr_vltariof
-                                            ,pr_cdcritic        => vr_cdcritic
-                                            ,pr_dscritic        => vr_dscritic);
-          -- Se retornou erro
-          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_erro;
-          END IF;
+                                        ,pr_vltariof        => vr_vltariof
+                                        ,pr_cdcritic        => vr_cdcritic
+                                        ,pr_dscritic        => vr_dscritic);
+      -- Se retornou erro
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
 
             vr_vliofpritt := nvl(vr_vliofpritt,0) + NVL(vr_vltariof,0);
           END IF;
-          
+
           -- Retorna parcela calculada
           empr0011.pc_calcula_parcelas_pos_fixado(pr_cdcooper => pr_cdcooper,
                                                   pr_flgbatch => FALSE,

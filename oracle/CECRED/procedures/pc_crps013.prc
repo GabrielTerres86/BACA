@@ -86,7 +86,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS013" (pr_cdcooper in craptab.cdcooper
     select crapsld.nrdconta,
            crapass.nrcpfcgc,
            crapass.nrmatric,
-           nvl(crapass.nmprimtl, 'NAO CADASTRADO') nmprimtl,
+           nvl(crapass.nmprimtl, 'NAO CADASTRADO') nmprimtl,  
            crapass.cdagenci,
            crapass.inpessoa,
            (crapsld.vlsddisp +
@@ -159,16 +159,16 @@ begin
                              pr_action => vr_cdprogra);
   -- Buscar a data do movimento
   open cr_crapdat(pr_cdcooper);
-    fetch cr_crapdat into vr_dtmvtolt;
-  close cr_crapdat;
+  fetch cr_crapdat into vr_dtmvtolt;
+    close cr_crapdat;
   -- Verifica se houve alguma solicitação para o relatório
   open cr_crapsol (pr_cdcooper,
                    vr_dtmvtolt);
     fetch cr_crapsol into rw_crapsol;
     if cr_crapsol%notfound then
-      vr_cdcritic := 157;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||' - SOL009';
-      raise vr_exc_saida;
+       vr_cdcritic := 157;
+       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||' - SOL009';
+       raise vr_exc_saida;
     end if;
   close cr_crapsol;
   -- Buscar o valor separador dos maiores depósitos
@@ -257,8 +257,14 @@ begin
        where crapsol.rowid = rw_crapsol.row_id;
     exception
       when others then
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao marcar a solicitação '||rw_crapsol.row_id||' como executada: '||sqlerrm;
+        vr_cdcritic := 1035;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapsol: '
+                       ||'insitsol:2 - executada'
+                       ||' com rowid:'||rw_crapsol.row_id||'. '||sqlerrm;
+
+        -- No caso de erro de programa gravar tabela especifica de log - Chamado 805994
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+
         raise vr_exc_saida;
     end;
   end loop;
@@ -280,10 +286,12 @@ begin
 
   -- Verifica se ocorreu erro na geração do arquivo ou na solicitação do relatório
   if vr_dscritic is not null then
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, -- Erro tratado
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> '|| vr_dscritic,
-                               pr_nmarqlog => vr_cdprogra);
+    --Gera log da crítica - Chamado 805994
+    pc_gera_log(pr_dstiplog      => 'E'
+               ,pr_tpocorrencia  => 2 -- Erro tratado
+               ,pr_dscritic      => vr_dscritic
+               ,pr_cdcritic      => 0
+               ,pr_cdcriticidade => 1);
   end if;
   -- Liberando a memória alocada para os CLOBs
   dbms_lob.close(vr_des_xml);
@@ -297,46 +305,46 @@ begin
     raise vr_exc_saida;
   end if;
   --
+  --Programa finalizado - Chamado 805994
+  pc_gera_log(pr_dstiplog      => 'F'
+             ,pr_tpocorrencia  => NULL
+             ,pr_dscritic      => NULL
+             ,pr_cdcritic      => NULL
+             ,pr_cdcriticidade => 0);
+
   commit;
 EXCEPTION
-  WHEN vr_exc_fimprg THEN
-    -- Se foi retornado apenas código
-    IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-      -- Buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    END IF;
-    IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
-    END IF;
-    -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-    btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                             ,pr_cdprogra => vr_cdprogra
-                             ,pr_infimsol => pr_infimsol
-                             ,pr_stprogra => pr_stprogra);
-    -- Efetuar commit
-    COMMIT;
   WHEN vr_exc_saida THEN
-    -- Se foi retornado apenas código
-    IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-      -- Buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    END IF;
-    -- Devolvemos código e critica encontradas
     pr_cdcritic := NVL(vr_cdcritic,0);
-    pr_dscritic := vr_dscritic;
+    pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+    --Programa iniciado - Chamado 805994
+    pc_gera_log(pr_dstiplog      => 'E'
+               ,pr_tpocorrencia  => 2 -- grava 1 - Erro de negócio
+               ,pr_dscritic      => pr_dscritic
+               ,pr_cdcritic      => pr_cdcritic
+               ,pr_cdcriticidade => 1);
+
     -- Efetuar rollback
     ROLLBACK;
   WHEN OTHERS THEN
     -- Efetuar retorno do erro não tratado
-    pr_cdcritic := 0;
-    pr_dscritic := sqlerrm;
+    -- Padronização - Chamado 805994
+    pr_cdcritic := 9999;
+    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'PC_CRPS013'|| '. ' || SQLERRM;
+
+    --Programa iniciado - Chamado 805994
+    pc_gera_log(pr_dstiplog      => 'E'
+               ,pr_tpocorrencia  => 3 -- Erro não tratado
+               ,pr_dscritic      => pr_dscritic
+               ,pr_cdcritic      => pr_cdcritic
+               ,pr_cdcriticidade => 2);
+
     -- Efetuar rollback
     ROLLBACK;
+
+    -- No caso de erro de programa gravar tabela especifica de log - Chamado 805994
+    CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
 END;
 /
 
