@@ -30,7 +30,10 @@ BEGIN
     rw_crapdat         btch0001.cr_crapdat%rowtype;    --> Dados para fetch de cursor genérico
     vr_persocio        NUMBER(10,2);                   --> Sócios
     vr_cdoperad        VARCHAR2(40);                   --> Código do cooperado
-
+    vr_infimsol        PLS_INTEGER;
+    vr_stprogra        PLS_INTEGER; 
+    vr_cdcritic        crapcri.cdcritic%TYPE;          --> Codigo da critica        
+    vr_dscritic        VARCHAR2(2000);                 --> Descricao da critica
     -- Busca dos dados da cooperativa
     CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS   --> Código da cooperativa
       SELECT cop.nmrescop
@@ -119,15 +122,29 @@ BEGIN
       vr_persocio := to_number(substr(rw_craptab.dstextab, 91, 6));
     END IF;
 
-    -- Incluir include
-    PC_CRPS634_I(pr_cdcooper    => pr_cdcooper
-                ,pr_cdagenci    => 0
-                ,pr_cdoperad    => vr_cdoperad
-                ,pr_cdprogra    => vr_cdprogra
-                ,pr_persocio    => vr_persocio
-                ,pr_tab_crapdat => rw_crapdat
-                ,pr_cdcritic    => pr_cdcritic
-                ,pr_dscritic    => pr_dscritic);
+    -- limpa wrk para paralelismo
+    DELETE
+    from tbgen_batch_relatorio_wrk wrk
+    where wrk.cdcooper    = pr_cdcooper
+    and wrk.cdprograma  = 'pc_crps634_i'
+    and wrk.dsrelatorio = 'rptGrupoEconomico'
+    and wrk.dtmvtolt    = rw_crapdat.dtmvtolt;
+    COMMIT;
+                
+-- Incluir include
+  PC_CRPS634_I(pr_cdcooper    => pr_cdcooper
+              ,pr_cdagenci    => 0
+              ,pr_cdoperad    => vr_cdoperad
+              ,pr_cdprogra    => vr_cdprogra
+              ,pr_persocio    => vr_persocio
+              ,pr_tab_crapdat => rw_crapdat
+              ,pr_impcab      => 'S'
+              ,pr_idparale    => 0
+              ,pr_stprogra    => vr_stprogra
+              ,pr_infimsol    => vr_infimsol              
+              ,pr_cdcritic    => vr_cdcritic
+              ,pr_dscritic    => vr_dscritic);                
+                
 
     -- Verifica se ocorreram erros
     IF pr_dscritic IS NOT NULL OR pr_cdcritic > 0 THEN
@@ -158,4 +175,3 @@ BEGIN
   END;
 END PC_CRPS627;
 /
-

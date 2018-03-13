@@ -35,6 +35,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps634(pr_cdcooper  IN NUMBER         -->
   vr_exc_saida       EXCEPTION;                      --> Controle de exceção
   vr_exc_fimprg      EXCEPTION;                      --> Controle de exceção
   rw_crapdat         btch0001.cr_crapdat%rowtype;    --> Dados para fetch de cursor genérico
+  vr_infimsol        PLS_INTEGER;
+  vr_stprogra        PLS_INTEGER; 
 
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS   --> Código da cooperativa
@@ -127,6 +129,15 @@ BEGIN
     CLOSE cr_craptab;
     vr_persocio := to_number(substr(rw_craptab.dstextab, 91, 6));
   END IF;
+  
+    -- limpa wrk para paralelismo
+    DELETE
+    from tbgen_batch_relatorio_wrk wrk
+    where wrk.cdcooper    = pr_cdcooper
+    and wrk.cdprograma  = 'pc_crps634_i'
+    and wrk.dsrelatorio = 'rptGrupoEconomico'
+    and wrk.dtmvtolt    = rw_crapdat.dtmvtolt;
+    COMMIT;
 
   -- Incluir include
   PC_CRPS634_I(pr_cdcooper    => pr_cdcooper
@@ -136,6 +147,9 @@ BEGIN
               ,pr_persocio    => vr_persocio
               ,pr_tab_crapdat => rw_crapdat
               ,pr_impcab      => 'S'
+              ,pr_idparale    => 0
+              ,pr_stprogra    => vr_stprogra
+              ,pr_infimsol    => vr_infimsol              
               ,pr_cdcritic    => vr_cdcritic
               ,pr_dscritic    => vr_dscritic);
 
@@ -150,6 +164,7 @@ BEGIN
                            ,pr_infimsol => pr_infimsol
                            ,pr_stprogra => pr_stprogra);
   COMMIT;
+  
 EXCEPTION
   WHEN vr_exc_fimprg  THEN
     -- Se foi retornado apenas código
@@ -196,4 +211,3 @@ EXCEPTION
     ROLLBACK;
 END PC_CRPS634;
 /
-
