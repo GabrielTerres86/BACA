@@ -980,7 +980,7 @@ BEGIN
                                  ||'  <nrdolote>'||LPAD(vr_relato(ind).nrdolote,7,'0')||'</nrdolote>'
                                  ||'  <nrseqarq>'||LPAD(vr_relato(ind).nrseqarq,9,'0')||'</nrseqarq>'
                                  ||'  <flglanca>'||vr_relato(ind).flglanca||'</flglanca>'
-								 ||'  <cdagenci>'||vr_relato(ind).cdagenci||'</cdagenci>'
+								 ||'  <cdagenci>'||nvl(vr_relato(ind).cdagenci,0)||'</cdagenci>'
                                  ||'</titulo>');
         
         -- Se NAO foi lancado corretamente
