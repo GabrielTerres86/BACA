@@ -97,20 +97,20 @@ $situacoes = $xmlObj->roottag->tags[0]->tags;
 
 $idindividual = 0;
 $idconjunta_solidaria = 0;
-$idconjunta_nao_solidaria = 0;
+//$idconjunta_nao_solidaria = 0;
 
 foreach($tipos_conta as $tipo_conta) {
 	if (getByTagName($tipo_conta->tags,'cdtipo_conta') == getByTagName($registro,'cdtipcta')) {
 		$idindividual = getByTagName($tipo_conta->tags,'idindividual');
 		$idconjunta_solidaria = getByTagName($tipo_conta->tags,'idconjunta_solidaria');
-		$idconjunta_nao_solidaria = getByTagName($tipo_conta->tags,'idconjunta_nao_solidaria');
+		//$idconjunta_nao_solidaria = getByTagName($tipo_conta->tags,'idconjunta_nao_solidaria');
 	}
 	?>
 	var tipoConta = {
 		cdtipo_conta: <? echo getByTagName($tipo_conta->tags,'cdtipo_conta');?>,
 		idindividual: <? echo getByTagName($tipo_conta->tags,'idindividual');?>,
-		idconjunta_solidaria: <? echo getByTagName($tipo_conta->tags,'idconjunta_solidaria');?>,
-		idconjunta_nao_solidaria: <? echo getByTagName($tipo_conta->tags,'idconjunta_nao_solidaria');?>,
+		idconjunta_solidaria: <? echo getByTagName($tipo_conta->tags,'idconjunta_solidaria');?>
+		/*idconjunta_nao_solidaria: <? echo getByTagName($tipo_conta->tags,'idconjunta_nao_solidaria');?>*/
 	}
 	tiposConta[<?echo getByTagName($tipo_conta->tags,'cdtipo_conta');?>] = tipoConta;
 	<?
@@ -159,9 +159,10 @@ foreach($tipos_conta as $tipo_conta) {
 		
 		<label for="cdcatego" <?php echo getByTagName($registro,'inpessoa') > 1 ? 'style="display: none";' : '' ?>>Categoria</label>
 		<select name="cdcatego" id="cdcatego" <?php echo getByTagName($registro,'inpessoa') > 1 ? 'style="display: none";' : '' ?>>
-			<? if ($idindividual == 1) { ?> <option value="0" <? if (getByTagName($registro,'cdcatego') == 0) echo 'Selected'; ?>>Individual</option> <? } ?>
-			<? if ($idconjunta_solidaria == 1) { ?> <option value="1" <? if (getByTagName($registro,'cdcatego') == 1) echo 'Selected'; ?>>Conjunta solid&aacute;ria</option> <? } ?>
-			<? if ($idconjunta_nao_solidaria == 1) { ?> <option value="2" <? if (getByTagName($registro,'cdcatego') == 2) echo 'Selected'; ?>>Conjunta n&atilde;o solid&aacute;ria</option> <? } ?>
+			<? if ($idindividual == 1) { ?> <option value="1" <? if (getByTagName($registro,'cdcatego') == 1) echo 'Selected'; ?>>Individual</option> <? } ?>
+			<? if ($idconjunta_solidaria == 1) { ?> <option value="2" <? if (getByTagName($registro,'cdcatego') == 2) echo 'Selected'; ?>>Conjunta</option> <? } ?>
+			<!--< ? if ($idconjunta_solidaria == 1) { ?> <option value="1" < ? if (getByTagName($registro,'cdcatego') == 1) echo 'Selected'; ?>>Conjunta solid&aacute;ria</option> < ? } ?>
+			< ? if ($idconjunta_nao_solidaria == 1) { ?> <option value="2" < ? if (getByTagName($registro,'cdcatego') == 2) echo 'Selected'; ?>>Conjunta n&atilde;o solid&aacute;ria</option> < ? } ?>-->
 		</select>
 		<br />
 		

@@ -184,7 +184,8 @@
 	if ($cabecalho[6]->cdata == 1) {
 		echo '$("label[for=\'cdcatego\']", "#frmCabCadcta").css({ "display": "block" });';
 		echo '$("#cdcatego","#frmCabCadcta").css({ "display": "block" });';
-		echo '$("#cdcatego","#frmCabCadcta").val("'. ($cabecalho[21]->cdata == 0 ? 'Individual' : ($cabecalho[21]->cdata == 1 ? 'Conjunta solidária' : 'Conjunta não solidária')).'");';
+		echo '$("#cdcatego","#frmCabCadcta").val("'. ($cabecalho[21]->cdata == 1 ? 'Individual' : 'Conjunta').'");';
+		//echo '$("#cdcatego","#frmCabCadcta").val("'. ($cabecalho[21]->cdata == 1 ? 'Individual' : ($cabecalho[21]->cdata == 2 ? 'Conjunta solidária' : 'Conjunta não solidária')).'");';
     } else {
 		echo '$("label[for=\'cdcatego\']", "#frmCabCadcta").css({ "display": "none" });';
 		echo '$("#cdcatego","#frmCabCadcta").css({ "display": "none" });';

@@ -99,7 +99,7 @@ function formataTipoConta() {
     $('#dstipo_conta', '#frmTipoConta').css({ 'width': '400px', "margin-left": "6px"}).attr('maxlength', '50').desabilitaCampo();
     $('#individual', '#frmTipoConta').css({ "margin-left": "4px", "margin-right" :"50px"}).desabilitaCampo();
     $('#conjunta_solidaria', '#frmTipoConta').css({ "margin-left": "4px", "margin-right" :"50px"}).desabilitaCampo();
-    $('#conjunta_nao_solidaria', '#frmTipoConta').css({ "margin-left": "4px", "margin-right" :"50px"}).desabilitaCampo();
+    //$('#conjunta_nao_solidaria', '#frmTipoConta').css({ "margin-left": "4px", "margin-right" :"50px"}).desabilitaCampo();
     $('#tpcadast', '#frmTipoConta').css({ 'width': '130px' }).desabilitaCampo();
     $('#cdmodali', '#frmTipoConta').css({ 'width': '230px' }).desabilitaCampo();
     $('#indconta_itg', '#frmTipoConta').css({ 'width': '50px' }).desabilitaCampo();
@@ -121,7 +121,7 @@ function formataTipoConta() {
 		$('#dstipo_conta', '#frmTipoConta').habilitaCampo();
 		$('#individual', '#frmTipoConta').habilitaCampo();
 		$('#conjunta_solidaria', '#frmTipoConta').habilitaCampo();
-		$('#conjunta_nao_solidaria', '#frmTipoConta').habilitaCampo();
+		//$('#conjunta_nao_solidaria', '#frmTipoConta').habilitaCampo();
 		$('#tpcadast', '#frmTipoConta').habilitaCampo();
 		$('#cdmodali', '#frmTipoConta').habilitaCampo();
 		$('#indconta_itg', '#frmTipoConta').habilitaCampo();
@@ -521,7 +521,7 @@ function buscarTipoDeConta(inpessoa, cdtipo_conta) {
 					$('#dstipo_conta', '#frmTipoConta').habilitaCampo();
 					$('#individual', '#frmTipoConta').habilitaCampo();
 					$('#conjunta_solidaria', '#frmTipoConta').habilitaCampo();
-					$('#conjunta_nao_solidaria', '#frmTipoConta').habilitaCampo();
+					//$('#conjunta_nao_solidaria', '#frmTipoConta').habilitaCampo();
 					$('#tpcadast', '#frmTipoConta').habilitaCampo();
 					$('#cdmodali', '#frmTipoConta').habilitaCampo();
 					$('#indconta_itg', '#frmTipoConta').habilitaCampo();
@@ -577,7 +577,7 @@ function incluirTipodeConta() {
 	var dstipo_conta   = $("#dstipo_conta","#frmTipoConta").val().trim();
 	var individual = $("#individual","#frmTipoConta").is(':checked') ? 1 : 0;
 	var conjunta_solidaria = $("#conjunta_solidaria","#frmTipoConta").is(':checked') ? 1 : 0;
-	var conjunta_nao_solidaria = $("#conjunta_nao_solidaria","#frmTipoConta").is(':checked') ? 1 : 0;
+	var conjunta_nao_solidaria = 0; //$("#conjunta_nao_solidaria","#frmTipoConta").is(':checked') ? 1 : 0;
 	var tpcadast   = $("#tpcadast option:selected").val();
 	var cdmodali   = $("#cdmodali option:selected").val();
 	var indconta_itg   = $("#indconta_itg option:selected").val();
@@ -623,7 +623,7 @@ function alterarTipodeConta() {
 	var dstipo_conta = $("#dstipo_conta","#frmTipoConta").val().trim();
 	var individual = $("#individual","#frmTipoConta").is(':checked') ? 1 : 0;
 	var conjunta_solidaria = $("#conjunta_solidaria","#frmTipoConta").is(':checked') ? 1 : 0;
-	var conjunta_nao_solidaria = $("#conjunta_nao_solidaria","#frmTipoConta").is(':checked') ? 1 : 0;
+	var conjunta_nao_solidaria = 0; //$("#conjunta_nao_solidaria","#frmTipoConta").is(':checked') ? 1 : 0;
 	var tpcadast = $("#tpcadast option:selected").val();
 	var cdmodali = $("#cdmodali option:selected").val();
 	var indconta_itg = $("#indconta_itg option:selected").val();
@@ -794,11 +794,13 @@ function verificaInpessoa(inpessoa) {
 		if (inpessoa == 1) {
 			$("#individual","#frmTipoConta").habilitaCampo();
 			$("#conjunta_solidaria","#frmTipoConta").habilitaCampo();
-			$("#conjunta_nao_solidaria","#frmTipoConta").habilitaCampo();
+			//$("#conjunta_nao_solidaria","#frmTipoConta").habilitaCampo();
+			$("#cdmodali option[value=2]","#frmTipoConta").css('display','block');
 		} else {
 			$("#individual","#frmTipoConta").desabilitaCampo().prop("checked",true);
 			$("#conjunta_solidaria","#frmTipoConta").desabilitaCampo().prop("checked",false);
-			$("#conjunta_nao_solidaria","#frmTipoConta").desabilitaCampo().prop("checked",false);
+			//$("#conjunta_nao_solidaria","#frmTipoConta").desabilitaCampo().prop("checked",false);
+			$("#cdmodali option[value=2]","#frmTipoConta").css('display','none');
 		}
 	}
 }

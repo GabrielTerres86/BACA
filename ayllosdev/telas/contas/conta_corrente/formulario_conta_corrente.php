@@ -164,9 +164,10 @@ foreach($tipos_conta as $tipo_conta) {
 		
 		<label for="cdcatego" <?php echo getByTagName($registro,'inpessoa') > 1 ? 'style="display: none";' : '' ?>>Categoria</label>
 		<select name="cdcatego" id="cdcatego" <?php echo getByTagName($registro,'inpessoa') > 1 ? 'style="display: none";' : '' ?>>
-			<? if ($idindividual == 1) { ?> <option value="0" <? if (getByTagName($registro,'cdcatego') == 0) echo 'Selected'; ?>>Individual</option> <? } ?>
-			<? if ($idconjunta_solidaria == 1) { ?> <option value="1" <? if (getByTagName($registro,'cdcatego') == 1) echo 'Selected'; ?>>Conjunta solid&aacute;ria</option> <? } ?>
-			<? if ($idconjunta_nao_solidaria == 1) { ?> <option value="2" <? if (getByTagName($registro,'cdcatego') == 2) echo 'Selected'; ?>>Conjunta n&atilde;o solid&aacute;ria</option> <? } ?>
+			<? if ($idindividual == 1) { ?> <option value="1" <? if (getByTagName($registro,'cdcatego') == 1) echo 'Selected'; ?>>Individual</option> <? } ?>
+			<? if ($idconjunta_solidaria == 1) { ?> <option value="2" <? if (getByTagName($registro,'cdcatego') == 2) echo 'Selected'; ?>>Conjunta</option> <? } ?>
+			<!--< ? if ($idconjunta_solidaria == 1) { ?> <option value="2" < ? if (getByTagName($registro,'cdcatego') == 2) echo 'Selected'; ?>>Conjunta solid&aacute;ria</option> < ? } ?>
+			< ? if ($idconjunta_nao_solidaria == 1) { ?> <option value="3" < ? if (getByTagName($registro,'cdcatego') == 3) echo 'Selected'; ?>>Conjunta n&atilde;o solid&aacute;ria</option> < ? } ?> -->
 		</select>
 		<br />
 		
