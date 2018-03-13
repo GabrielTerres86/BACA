@@ -88,7 +88,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --  Sistema  : Rotinas para Calculos de Risco
   --  Sigla    : RISC
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Agosto/2014.                   Ultima atualizacao: 27/04/2017
+  --  Data     : Agosto/2014.                   Ultima atualizacao: 13/02/2018
   --
   -- Dados referentes ao programa:
   --
@@ -103,6 +103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --
   --             27/04/2017 - Nas linhas de reversao verificar se é uma data util,(pc_risco_k, pc_risco_t)
   --                          (Tiago/Thiago SD 589074).  
+  --             13/02/2018   
   ---------------------------------------------------------------------------------------------------------------
 
   -- constantes para geracao de arquivos contabeis
@@ -370,7 +371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
   END fn_normaliza_jurosa60;
 
-  PROCEDURE pc_calcula_juros_60k(par_cdcooper IN crapris.cdcooper%TYPE
+   PROCEDURE pc_calcula_juros_60k(par_cdcooper IN crapris.cdcooper%TYPE
                                 ,par_dtrefere IN crapris.dtrefere%TYPE
                                 ,par_cdmodali IN crapris.cdmodali%TYPE
                                 ,par_dtinicio IN crapris.dtinictr%TYPE
@@ -384,6 +385,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                                 ,pr_vlrjuros2 OUT typ_decimal_pfpj           --> PP - Modalidade 299 - Por Tipo pessoa.
                                 ,pr_finjuros2 OUT typ_decimal_pfpj           --> PP - Modalidade 499 - Por Tipo pessoa.
                                 ,pr_vlrjuros3 OUT typ_decimal_pfpj           --> PP – Cessao - Por Tipo pessoa.
+                                ,pr_empjuros1 OUT typ_decimal_pfpj           --> TR – Emprestimo pessoa fisica refinanciado
+                                ,pr_empjuros2 OUT typ_decimal_pfpj           --> PP – Emprestimo pessoa fisica refinanciado
+                                ,pr_empjuros3 OUT typ_decimal_pfpj           --> POS – Emprestimo pessoa fisica refinanciado
+                                ,pr_finjuros3 OUT typ_decimal_pfpj           --> TR – Emprestimo pessoa fisica refinanciado
+                                ,pr_finjuros4 OUT typ_decimal_pfpj           --> PP – Emprestimo pessoa fisica refinanciado
+                                ,pr_finjuros5 OUT typ_decimal_pfpj           --> POS – Emprestimo pessoa fisica refinanciado
+                                ,pr_tabvlempjur1 IN OUT typ_arr_decimal_pfpj    --> TR – Cessao Emprestimo - Por PA.
+                                ,pr_tabvlempjur2 IN OUT typ_arr_decimal_pfpj    --> PP – Cessao Emprestimo - Por PA.
+                                ,pr_tabvlempjur3 IN OUT typ_arr_decimal_pfpj    --> POS – Cessao Emprestimo - Por PA.
+                                ,pr_tabvlfinjur1 IN OUT typ_arr_decimal_pfpj    --> TR – Cessao Financiamento - Por PA.
+                                ,pr_tabvlfinjur2 IN OUT typ_arr_decimal_pfpj   --> PP – Cessao Financiamento - Por PA.
+                                ,pr_tabvlfinjur3 IN OUT typ_arr_decimal_pfpj   --> POS – Cessao Financiamento - Por PA.
                                 ) IS
   -- ..........................................................................
   --
@@ -392,7 +405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --  Sistema  : Rotinas genericas para RISCO
   --  Sigla    : RISC
   --  Autor    : ?????
-  --  Data     : ?????                         Ultima atualizacao: 21/07/2017
+  --  Data     : ?????                         Ultima atualizacao: 03/10/2017
   --
   --  Dados referentes ao programa:
   --
@@ -402,6 +415,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --               21/07/2017 - Ajuste para somar os lançamentos de rendas a apropriar e provisao das 
   --                            cessoes nos emprestimos PP modalidade 299 (SD 718024 Anderson).
   --
+  --               03/10/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+  --               
+  --              12/03/2018 - Ajuste para exibir as taxas de juros+60 de contratos refinanciados.
+  --                           Projeto Ligeirinho - Contratação de Crédito (Rangel Decker Amcom)
   -- .............................................................................
 
     CURSOR cr_crapvri_jur(pr_cdcooper IN crapris.cdcooper%TYPE
@@ -481,6 +498,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
        WHERE ces.cdcooper = pr_cdcooper
          AND ces.nrdconta = pr_nrdconta
          AND ces.nrctremp = pr_nrctremp;
+         
+         
+   --Busca contratos que são ativos , nao estao na situação de prejuizo.
+   -- Verifica se foi refinanciado
+   CURSOR cr_crapris_jur_refi (pr_cdcooper IN crapepr.cdcooper%TYPE) IS
+    select   tlf.cdcooper,
+             tlf.nrdconta,
+             ass.inpessoa inpessoa,
+             tlf.cdmodali,
+             tlf.nrctremp,
+             tlf.qtdia_atraso  qtdiaatr,
+             tlf.vljuros60     vljura60,
+             epr.cdagenci,
+             epr.tpemprst,
+             epr.nrctremp nctremp
+    from   crawepr crwpr,
+           crapepr epr,
+           tbepr_liquidado_financiado tlf,
+           crapass ass 
+    where  (crwpr.nrctrliq##1   = tlf.nrctremp
+        or    crwpr.nrctrliq##2 = tlf.nrctremp
+        or    crwpr.nrctrliq##3 = tlf.nrctremp
+        or    crwpr.nrctrliq##4 = tlf.nrctremp
+        or    crwpr.nrctrliq##5 = tlf.nrctremp
+        or    crwpr.nrctrliq##6 = tlf.nrctremp
+        or    crwpr.nrctrliq##7 = tlf.nrctremp
+        or    crwpr.nrctrliq##8 = tlf.nrctremp
+        or    crwpr.nrctrliq##9 = tlf.nrctremp
+        or    crwpr.nrctrliq##10= tlf.nrctremp)
+        and   crwpr.nrctremp = epr.nrctremp
+        and   crwpr.cdcooper = epr.cdcooper
+        and   crwpr.cdagenci = epr.cdagenci
+        and   crwpr.nrdconta = epr.nrdconta
+        and   epr.cdcooper   = tlf.cdcooper
+        and   epr.nrdconta   = tlf.nrdconta  
+        and   tlf.cdcooper   = ass.cdcooper
+        and   tlf.nrdconta   = ass.nrdconta
+        and   CECRED.fn_exibe_epr_ref(epr.tpemprst,
+                                      epr.qtpreemp,
+                                      epr.qtprepag,
+                                      epr.qtpcalat) >0 
+        and   epr.inprejuz   =0 --SEM PREJUIZO
+        and   epr.inliquid   =0 --ATIVO
+        and   crwpr.cdcooper  = pr_cdcooper;
+         
 
     vr_vljurctr          NUMBER;
     vr_crapvri_jur_found BOOLEAN := FALSE;
@@ -500,6 +562,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     pr_finjuros.valorpj  := 0;
     pr_finjuros2.valorpf := 0;
     pr_finjuros2.valorpj := 0;
+    
+    
+    pr_empjuros1.valorpf:=0;
+    pr_empjuros1.valorpj:=0;
+    pr_empjuros2.valorpf:=0;
+    pr_empjuros2.valorpj:=0;
+    pr_empjuros3.valorpf:=0;
+    pr_empjuros3.valorpj:=0;
+
+
+
+    pr_finjuros3.valorpf:=0;
+    pr_finjuros3.valorpj:=0;
+    pr_finjuros4.valorpf:=0;
+    pr_finjuros4.valorpj:=0;
+    pr_finjuros5.valorpf:=0;
+    pr_finjuros5.valorpj:=0;
 
 
 
@@ -617,7 +696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         END IF;
 
-      ELSIF rw_crapris_jur.tpemprst = 1 THEN  -- Pre-Fixado
+      ELSIF rw_crapris_jur.tpemprst IN (1,2) THEN  -- Pre-Fixado ou Pos-Fixado
         
         vr_fleprces := 0; 
         --> Verificar se é um emprestimo de cessao de credito
@@ -700,6 +779,96 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       END IF;
 
     END LOOP;
+    
+        --Soma de Juros +60 a apropriar para contratos refinanciados.
+    FOR  rw_crapris_jur_refi in cr_crapris_jur_refi(par_cdcooper) LOOP
+            --Emprestimos
+            IF par_cdmodali = 299 THEN
+              IF rw_crapris_jur_refi.inpessoa = 1 THEN -- PF
+                --Tipos de Emprestimos
+                --TR
+                IF rw_crapris_jur_refi.tpemprst = 0  THEN
+                   pr_empjuros1.valorpf := pr_empjuros1.valorpf +rw_crapris_jur_refi.vljura60;
+
+                   IF pr_tabvlempjur1.exists(rw_crapris_jur_refi.cdagenci) THEN
+                      pr_tabvlempjur1(rw_crapris_jur_refi.cdagenci).valorpf := NVL(pr_tabvlempjur1(rw_crapris_jur_refi.cdagenci).valorpf,0) +  rw_crapris_jur_refi.vljura60;
+                   ELSE
+                      pr_tabvlempjur1(rw_crapris_jur_refi.cdagenci).valorpf := rw_crapris_jur_refi.vljura60;
+                   END IF;
+                END IF;
+                --PP
+                IF rw_crapris_jur_refi.tpemprst = 1  THEN
+                   pr_empjuros2.valorpf := pr_empjuros2.valorpf +rw_crapris_jur_refi.vljura60;
+
+                   IF pr_tabvlempjur2.exists(rw_crapris_jur_refi.cdagenci) THEN
+                      pr_tabvlempjur2(rw_crapris_jur_refi.cdagenci).valorpf := NVL(pr_tabvlempjur2(rw_crapris_jur_refi.cdagenci).valorpf,0) +  rw_crapris_jur_refi.vljura60;
+                   ELSE
+                      pr_tabvlempjur2(rw_crapris_jur_refi.cdagenci).valorpf := rw_crapris_jur_refi.vljura60;
+                   END IF;
+                END IF;
+
+                --POS
+                IF rw_crapris_jur_refi.tpemprst > 1  THEN
+                   pr_empjuros3.valorpf := pr_empjuros3.valorpf +rw_crapris_jur_refi.vljura60;
+
+                   IF pr_tabvlempjur3.exists(rw_crapris_jur_refi.cdagenci) THEN
+                      pr_tabvlempjur3(rw_crapris_jur_refi.cdagenci).valorpf := NVL(pr_tabvlempjur3(rw_crapris_jur_refi.cdagenci).valorpf,0) +  rw_crapris_jur_refi.vljura60;
+                   ELSE
+                      pr_tabvlempjur3(rw_crapris_jur_refi.cdagenci).valorpf := rw_crapris_jur_refi.vljura60;
+                   END IF;
+
+                END IF;
+              END IF;
+           END IF;
+
+          --Financiamento
+          IF par_cdmodali = 499 THEN
+             IF rw_crapris_jur_refi.inpessoa = 2 THEN -- PJ
+                --Tipos de Emprestimos
+
+                --TR
+                IF rw_crapris_jur_refi.tpemprst = 0  THEN
+                   pr_finjuros3.valorpj := pr_finjuros3.valorpj +rw_crapris_jur_refi.vljura60;
+
+                   IF pr_tabvlfinjur1.exists(rw_crapris_jur_refi.cdagenci) THEN
+                      pr_tabvlfinjur1(rw_crapris_jur_refi.cdagenci).valorpj := NVL(pr_tabvlfinjur1(rw_crapris_jur_refi.cdagenci).valorpj,0) +  rw_crapris_jur_refi.vljura60;
+                   ELSE
+                      pr_tabvlfinjur1(rw_crapris_jur_refi.cdagenci).valorpj := rw_crapris_jur_refi.vljura60;
+                   END IF;
+
+                 END IF;
+
+                 --PP
+                 IF rw_crapris_jur_refi.tpemprst = 1  THEN
+                    pr_finjuros2.valorpj := pr_finjuros2.valorpj +rw_crapris_jur_refi.vljura60;
+
+                    IF pr_tabvlfinjur2.exists(rw_crapris_jur_refi.cdagenci) THEN
+                       pr_tabvlfinjur2(rw_crapris_jur_refi.cdagenci).valorpj := NVL(pr_tabvlfinjur2(rw_crapris_jur_refi.cdagenci).valorpj,0) +  rw_crapris_jur_refi.vljura60;
+                    ELSE
+                       pr_tabvlfinjur2(rw_crapris_jur_refi.cdagenci).valorpj := rw_crapris_jur_refi.vljura60;
+                    END IF;
+
+                 END IF;
+
+                 --POS
+                 IF rw_crapris_jur_refi.tpemprst > 1  THEN
+                    pr_finjuros3.valorpj := pr_finjuros3.valorpj +rw_crapris_jur_refi.vljura60;
+
+                    IF pr_tabvlfinjur3.exists(rw_crapris_jur_refi.cdagenci) THEN
+                       pr_tabvlfinjur3(rw_crapris_jur_refi.cdagenci).valorpj := NVL(pr_tabvlfinjur3(rw_crapris_jur_refi.cdagenci).valorpj,0) +  rw_crapris_jur_refi.vljura60;
+                    ELSE
+                       pr_tabvlfinjur3(rw_crapris_jur_refi.cdagenci).valorpj := rw_crapris_jur_refi.vljura60;
+                    END IF;
+                 END IF;
+
+              END IF;
+            END IF;
+
+      
+
+    END LOOP;
+
+
 
 
   END pc_calcula_juros_60k;
@@ -716,7 +885,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Felipe Oliveira
-  Data    : Dezembro/2014                       Ultima Alteracao: 21/07/2017
+  Data    : Dezembro/2014                       Ultima Alteracao: 12/03/2018
 
   Dados referentes ao programa:
 
@@ -760,6 +929,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                   
      21/07/2017 - Ajuste para somar os lançamentos de rendas a apropriar e provisao das 
                   cessoes nos emprestimos PP modalidade 299 (SD 718024 Anderson).
+                  
+     12/03/2018 - Ajuste para exibir valores de juros +60 de contratos refinanciados                  
+                  Projeto Ligeirinho (Rangel Decker) AMcom    
   ............................................................................. */
 
 
@@ -1023,6 +1195,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_finjur_calc2      typ_decimal_pfpj;
     vr_vldjur_calc3      typ_decimal_pfpj;
 
+    vr_empjur_calc1      typ_decimal_pfpj;
+    vr_empjur_calc2      typ_decimal_pfpj;
+    vr_empjur_calc3      typ_decimal_pfpj;
+
+    vr_finjur_calc3      typ_decimal_pfpj;
+    vr_finjur_calc4      typ_decimal_pfpj;
+    vr_finjur_calc5      typ_decimal_pfpj;
+
+    vr_empjuros1          typ_decimal_pfpj;
+    vr_empjuros2          typ_decimal_pfpj;
+    vr_empjuros3          typ_decimal_pfpj;
+
+    vr_finjuros3          typ_decimal_pfpj;
+    vr_finjuros4          typ_decimal_pfpj;
+    vr_finjuros5          typ_decimal_pfpj;
+
+    --Somatorio das Agencias
+    vr_tabvlempjur1        typ_arr_decimal_pfpj;
+    vr_tabvlempjur2        typ_arr_decimal_pfpj;
+    vr_tabvlempjur3        typ_arr_decimal_pfpj;
+    vr_tabvlfinjur1        typ_arr_decimal_pfpj;
+    vr_tabvlfinjur2       typ_arr_decimal_pfpj;
+    vr_tabvlfinjur3       typ_arr_decimal_pfpj;
+
     vr_rel_dsdrisco      typ_arr_decimal;
     vr_rel_percentu      typ_arr_decimal;
     vr_rel_vldabase      typ_arr_decimal;
@@ -1092,7 +1288,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
     vr_rel1721_v_pre     NUMBER := 0;
     vr_rel1731_1_v_pre   NUMBER := 0;
+    
+    -->> POS <<--
+      --FIN 
+    vr_vldespes_pj_pos     NUMBER := 0;
+    vr_vldespes_pf_pos     NUMBER := 0;
+    vr_vldevedo_pf_v_pos   NUMBER := 0;
+    vr_vldevedo_pj_v_pos   NUMBER := 0;
+    vr_vlag1731_1_pos    typ_arr_decimal;
+    vr_vlag1731_2_pos    typ_arr_decimal;
 
+      --EMPR
+    --PF  
+    vr_rel1721_v_pos       NUMBER := 0;  
+    vr_rel1721_pos         NUMBER := 0;
+    --PJ
+    vr_rel1723_pos         NUMBER := 0;
+    vr_rel1723_v_pos       NUMBER := 0;    
+    vr_vlag1721_pos        typ_arr_decimal; --> PF
+    vr_vlag1723_pos        typ_arr_decimal; --> PJ
     vr_relmicro_atr_pf   NUMBER := 0;
     vr_relmicro_pre_pf   NUMBER := 0;
     vr_relmicro_atr_pj   NUMBER := 0;
@@ -1170,6 +1384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_nrctaori NUMBER;
     vr_descricao VARCHAR2(200);
     vr_chave2 varchar2(10);
+
 
     -- Escrever linha no arquivo
     PROCEDURE pc_gravar_linha(pr_linha IN VARCHAR2) IS
@@ -1636,7 +1851,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1721(rw_crapris.cdagenci).valor := vr_vlpreatr;
             END IF;
 
-          ELSE
+          -- Prefixado
+          ELSIF rw_crapepr.tpemprst = 1 THEN
 
             vr_rel1721_pre   := vr_rel1721_pre   + vr_vlpreatr;
             vr_rel1721_v_pre := vr_rel1721_v_pre + vr_vldivida;
@@ -1647,6 +1863,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1721_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
             END IF;
 
+          -- PosFixado
+          ELSIF rw_crapepr.tpemprst = 2 THEN
+
+            vr_rel1721_pos   := vr_rel1721_pos   + vr_vlpreatr;
+            vr_rel1721_v_pos := vr_rel1721_v_pos + vr_vldivida;
+
+            IF vr_vlag1721_pos.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1721_pos(rw_crapris.cdagenci).valor := vr_vlag1721_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1721_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
+
+          
           END IF;
 
         ELSE -- Se pessoa Juridica
@@ -1662,7 +1891,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1723(rw_crapris.cdagenci).valor := vr_vlpreatr;
             END IF;
 
-          ELSE
+          -- Prefixado
+          ELSIF rw_crapepr.tpemprst = 1 THEN
 
             vr_rel1723_pre   := vr_rel1723_pre + vr_vlpreatr;
             vr_rel1723_v_pre := vr_rel1723_v_pre + vr_vldivida;
@@ -1671,6 +1901,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1723_pre(rw_crapris.cdagenci).valor := vr_vlag1723_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
             ELSE
               vr_vlag1723_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
+            
+          -- Pos Fixado
+          ELSIF rw_crapepr.tpemprst = 2 THEN
+
+            vr_rel1723_pos   := vr_rel1723_pos + vr_vlpreatr;
+            vr_rel1723_v_pos := vr_rel1723_v_pos + vr_vldivida;
+
+            IF vr_vlag1723_pos.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1723_pos(rw_crapris.cdagenci).valor := vr_vlag1723_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1723_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
             END IF;
           END IF;
         END IF;
@@ -1711,7 +1953,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
             END IF;
 
-          ELSE
+          --> Prefixado
+          ELSIF rw_crapepr.tpemprst = 1 THEN
 
             vr_rel1731_1_pre   := vr_rel1731_1_pre   + vr_vlpreatr;
             vr_rel1731_1_v_pre := vr_rel1731_1_v_pre + vr_vldivida;
@@ -1732,6 +1975,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
             END IF;
 
+          --> Pos fixado
+          ELSIF rw_crapepr.tpemprst = 2 THEN
+
+            vr_vldespes_pf_pos   := vr_vldespes_pf_pos   + vr_vlpreatr;
+            vr_vldevedo_pf_v_pos := vr_vldevedo_pf_v_pos + vr_vldivida;
+
+            IF vr_vlag1731_1_pos.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1731_1_pos(rw_crapris.cdagenci).valor := vr_vlag1731_1_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1731_1_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
           END IF;
 
         ELSE  -- Pessoa Juridica
@@ -1768,8 +2022,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
 
             END IF;
-
-            ELSE -- tipo de emprestimo
+            --> prefixado
+          ELSIF rw_crapepr.tpemprst = 1 THEN -- tipo de emprestimo
 
             vr_rel1731_2_pre   := vr_rel1731_2_pre   + vr_vlpreatr;
             vr_rel1731_2_v_pre := vr_rel1731_2_v_pre + vr_vldivida;
@@ -1790,7 +2044,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
             END IF;
 
-          END IF;
+            --> PosFixado
+            ELSIF rw_crapepr.tpemprst = 2 THEN -- tipo de emprestimo
+
+              vr_vldespes_pj_pos   := vr_vldespes_pj_pos   + vr_vlpreatr;
+              vr_vldevedo_pj_v_pos := vr_vldevedo_pj_v_pos + vr_vldivida;
+
+              IF vr_vlag1731_2_pos.exists(rw_crapris.cdagenci) THEN
+                vr_vlag1731_2_pos(rw_crapris.cdagenci).valor := vr_vlag1731_2_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
+              ELSE
+                vr_vlag1731_2_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
+              END IF;
+            END IF;
           
           ELSE -- Se for operacao do BNDES
             CLOSE cr_crapebn;
@@ -2006,8 +2271,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_finjuros.valorpj  := 0;
     vr_finjuros2.valorpf := 0;
     vr_finjuros2.valorpj := 0;
+    
+    vr_empjuros1.valorpj := 0;
+    vr_empjuros1.valorpf := 0;
+    vr_empjuros2.valorpj := 0;
+    vr_empjuros2.valorpf := 0;
+    vr_empjuros3.valorpj := 0;
+    vr_empjuros3.valorpf := 0;
 
-    pc_calcula_juros_60k ( par_cdcooper => pr_cdcooper
+    vr_finjuros3.valorpj := 0;
+    vr_finjuros3.valorpf := 0;
+    vr_finjuros4.valorpj := 0;
+    vr_finjuros4.valorpf := 0;
+    vr_finjuros5.valorpj := 0;
+    vr_finjuros5.valorpf := 0;
+
+        pc_calcula_juros_60k ( par_cdcooper => pr_cdcooper
                           ,par_dtrefere => vr_dtrefere
                           ,par_cdmodali => 299
                           ,par_dtinicio => vr_dtinicio                         
@@ -2020,7 +2299,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                           ,pr_finjuros  => vr_finjur_calc    --> TR - Modalidade 499 - Por Tipo pessoa.
                           ,pr_vlrjuros2 => vr_vldjur_calc2   --> PP - Modalidade 299 - Por Tipo pessoa.
                           ,pr_finjuros2 => vr_finjur_calc2   --> PP - Modalidade 499 - Por Tipo pessoa.
-                          ,pr_vlrjuros3 => vr_vldjur_calc3); --> PP – Cessao - Por Tipo pessoa.
+                          ,pr_vlrjuros3 => vr_vldjur_calc3   --> PP – Cessao - Por Tipo pessoa.
+                          ,pr_empjuros1 => vr_empjur_calc1   --> TR – Emprestimo pessoa fisica refinanciado
+                          ,pr_empjuros2 => vr_empjur_calc2   --> PP – Emprestimo pessoa fisica refinanciado
+                          ,pr_empjuros3 => vr_empjur_calc3   --> POS – Emprestimo pessoa fisica refinanciado
+                          ,pr_finjuros3 => vr_finjur_calc3   --> TR – Emprestimo pessoa fisica refinanciado
+                          ,pr_finjuros4 => vr_finjur_calc4       --> PP – Emprestimo pessoa fisica refinanciado
+                          ,pr_finjuros5 => vr_finjur_calc5      --> POS – Emprestimo pessoa fisica refinanciado
+                          ,pr_tabvlempjur1 => vr_tabvlempjur1    --> TR – Cessao Emprestimo - Por PA.
+                          ,pr_tabvlempjur2 => vr_tabvlempjur2    --> PP – Cessao Emprestimo - Por PA.
+                          ,pr_tabvlempjur3 => vr_tabvlempjur3    --> POS – Cessao Emprestimo - Por PA.
+                          ,pr_tabvlfinjur1 => vr_tabvlfinjur1    --> TR – Cessao Financiamento - Por PA.
+                          ,pr_tabvlfinjur2 => vr_tabvlfinjur2   --> PP – Cessao Financiamento - Por PA.
+                          ,pr_tabvlfinjur3 => vr_tabvlfinjur3);   --> POS – Cessao Financiamento - Por PA.
+
                          
                          
 
@@ -2033,25 +2325,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_finjuros.valorpj  := vr_finjuros.valorpj  + vr_finjur_calc.valorpj;
     vr_finjuros2.valorpf := vr_finjuros2.valorpf + vr_finjur_calc2.valorpf;
     vr_finjuros2.valorpj := vr_finjuros2.valorpj + vr_finjur_calc2.valorpj;
+    
+    vr_empjuros1.valorpj := vr_empjuros1.valorpj + vr_empjur_calc1.valorpj;
+    vr_empjuros1.valorpf := vr_empjuros1.valorpf + vr_empjur_calc1.valorpf;
+    vr_empjuros2.valorpj := vr_empjuros2.valorpj + vr_empjur_calc2.valorpj;
+    vr_empjuros2.valorpf := vr_empjuros2.valorpf + vr_empjur_calc2.valorpf;
+    vr_empjuros3.valorpj := vr_empjuros3.valorpj + vr_empjur_calc3.valorpj;
+    vr_empjuros3.valorpf := vr_empjuros3.valorpf + vr_empjur_calc3.valorpf;
 
     --Cessao credito
     vr_vldjuros3.valorpf := vr_vldjuros3.valorpf + vr_vldjur_calc3.valorpf;
     vr_vldjuros3.valorpj := vr_vldjuros3.valorpj + vr_vldjur_calc3.valorpj;
 
-    pc_calcula_juros_60k( par_cdcooper => pr_cdcooper
-                         ,par_dtrefere => vr_dtrefere
-                         ,par_cdmodali => 499
-                         ,par_dtinicio => vr_dtinicio
-                         ,pr_tabvljur1 => vr_pacvljur_1       --> TR - Modalidade 299 - Por PA.
-                         ,pr_tabvljur2 => vr_pacvljur_2       --> TR - Modalidade 499 - Por PA.
-                         ,pr_tabvljur3 => vr_pacvljur_3       --> PP - Modalidade 299 - Por PA.
-                         ,pr_tabvljur4 => vr_pacvljur_4       --> PP - Modalidade 499 - Por PA.
-                         ,pr_tabvljur5 => vr_pacvljur_5       --> PP – Cessao - Por PA.
-                         ,pr_vlrjuros  => vr_vldjur_calc      --> TR - Modalidade 299 - Por Tipo pessoa.
-                         ,pr_finjuros  => vr_finjur_calc      --> TR - Modalidade 499 - Por Tipo pessoa.
-                         ,pr_vlrjuros2 => vr_vldjur_calc2     --> PP - Modalidade 299 - Por Tipo pessoa.
-                         ,pr_finjuros2 => vr_finjur_calc2     --> PP - Modalidade 499 - Por Tipo pessoa.
-                         ,pr_vlrjuros3 => vr_vldjur_calc3);   --> PP – Cessao - Por Tipo pessoa.
+ pc_calcula_juros_60k( par_cdcooper => pr_cdcooper
+                        ,par_dtrefere => vr_dtrefere
+                        ,par_cdmodali => 499
+                        ,par_dtinicio => vr_dtinicio
+                        ,pr_tabvljur1 => vr_pacvljur_1       --> TR - Modalidade 299 - Por PA.
+                        ,pr_tabvljur2 => vr_pacvljur_2       --> TR - Modalidade 499 - Por PA.
+                        ,pr_tabvljur3 => vr_pacvljur_3       --> PP - Modalidade 299 - Por PA.
+                        ,pr_tabvljur4 => vr_pacvljur_4       --> PP - Modalidade 499 - Por PA.
+                        ,pr_tabvljur5 => vr_pacvljur_5       --> PP – Cessao - Por PA.
+                        ,pr_vlrjuros  => vr_vldjur_calc      --> TR - Modalidade 299 - Por Tipo pessoa.
+                        ,pr_finjuros  => vr_finjur_calc      --> TR - Modalidade 499 - Por Tipo pessoa.
+                        ,pr_vlrjuros2 => vr_vldjur_calc2     --> PP - Modalidade 299 - Por Tipo pessoa.
+                        ,pr_finjuros2 => vr_finjur_calc2     --> PP - Modalidade 499 - Por Tipo pessoa.
+                        ,pr_vlrjuros3 => vr_vldjur_calc3     --> PP – Cessao - Por Tipo pessoa.
+                        ,pr_empjuros1 => vr_empjur_calc1        --> TR – Emprestimo pessoa fisica refinanciado
+                        ,pr_empjuros2 => vr_empjur_calc2        --> PP – Emprestimo pessoa fisica refinanciado
+                        ,pr_empjuros3 => vr_empjur_calc3        --> POS – Emprestimo pessoa fisica refinanciado
+                        ,pr_finjuros3 => vr_finjur_calc3        --> TR – Emprestimo pessoa fisica refinanciado
+                        ,pr_finjuros4 => vr_finjur_calc4        --> PP – Emprestimo pessoa fisica refinanciado
+                        ,pr_finjuros5 => vr_finjur_calc5        --> POS – Emprestimo pessoa fisica refinanciado
+                        ,pr_tabvlempjur1 => vr_tabvlempjur1     --> TR – Cessao Emprestimo - Por PA.
+                        ,pr_tabvlempjur2 => vr_tabvlempjur2     --> PP – Cessao Emprestimo - Por PA.
+                        ,pr_tabvlempjur3 => vr_tabvlempjur3     --> POS – Cessao Emprestimo - Por PA.
+                        ,pr_tabvlfinjur1 => vr_tabvlfinjur1     --> TR – Cessao Financiamento - Por PA.
+                        ,pr_tabvlfinjur2 => vr_tabvlfinjur2     --> PP – Cessao Financiamento - Por PA.
+                        ,pr_tabvlfinjur3 => vr_tabvlfinjur3);   --> POS – Cessao Financiamento - Por PA.
                          
     -- Acumula retornos da pc_calcula_juros_60k
     vr_vldjuros.valorpf  := vr_vldjuros.valorpf  + vr_vldjur_calc.valorpf;
@@ -2062,6 +2373,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_finjuros.valorpj  := vr_finjuros.valorpj  + vr_finjur_calc.valorpj;
     vr_finjuros2.valorpf := vr_finjuros2.valorpf + vr_finjur_calc2.valorpf;
     vr_finjuros2.valorpj := vr_finjuros2.valorpj + vr_finjur_calc2.valorpj;
+    
+    vr_finjuros3.valorpj := vr_finjuros3.valorpj + vr_finjur_calc3.valorpj;
+    vr_finjuros3.valorpf := vr_finjuros3.valorpf + vr_finjur_calc3.valorpf;
+    vr_finjuros4.valorpj := vr_finjuros4.valorpj + vr_finjur_calc4.valorpj;
+    vr_finjuros4.valorpf := vr_finjuros4.valorpf + vr_finjur_calc4.valorpf;
+    vr_finjuros5.valorpj := vr_finjuros5.valorpj + vr_finjur_calc5.valorpj;
+    vr_finjuros5.valorpf := vr_finjuros5.valorpf + vr_finjur_calc5.valorpf;
 
     --Cessao credito
     vr_vldjuros3.valorpf := vr_vldjuros3.valorpf + vr_vldjur_calc3.valorpf;
@@ -2131,6 +2449,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_vldespes(33) := vr_rel1760_pre;
     vr_vldevedo(34) := vr_rel1761_v_pre;
     vr_vldespes(34) := vr_rel1761_pre;
+    
+    --Pos Fixado
+      --> EMPR
+    vr_vldevedo(35) := vr_rel1721_v_pos; --PF
+    vr_vldespes(35) := vr_rel1721_pos;   --PF
+    vr_vldevedo(36) := vr_rel1723_v_pos; --PJ
+    vr_vldespes(36) := vr_rel1723_pos;   --PJ
+      --> FIN
+    vr_vldevedo(37) := vr_vldevedo_pf_v_pos;
+    vr_vldespes(37) := vr_vldespes_pf_pos;
+    vr_vldevedo(38) := vr_vldevedo_pj_v_pos;
+    vr_vldespes(38) := vr_vldespes_pj_pos;
+
     
     -- Buscar o próximo dia útil
     vr_dtmvtopr := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
@@ -2233,6 +2564,807 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     D - 1633
     C - 7116
     *************************/
+    
+    
+     --EMPRESTIMO - RENDAS A APROPRIAR REFINANCIADO TR PF
+    IF vr_empjuros1.valorpf <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7010,5514,' ||
+                      TRIM(to_char(vr_empjuros1.valorpf, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar EMPRESTIMO TR REFINANCIADO PF"';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur1.exists(vr_contador)
+        AND vr_tabvlempjur1(vr_contador).valorpf <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur1(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlempjur1.exists(vr_contador)
+         AND vr_tabvlempjur1(vr_contador).valorpf <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlempjur1(vr_contador).valorpf, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5514,7010,' ||
+                     TRIM(to_char(vr_empjuros1.valorpf, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar EMPRESTIMO TR Refinanciado PF "';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_1.exists(vr_contador)
+        AND vr_pacvljur_1(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_1(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_1.exists(vr_contador)
+        AND vr_pacvljur_1(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur1(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
+    --EMPRESTIMO - RENDAS A APROPRIAR  REFINANCIADO TR PJ
+    IF vr_empjuros1.valorpj <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7010,5514,' ||
+                      TRIM(to_char(vr_empjuros1.valorpj, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar EMPRESTIMO TR REFINANCIADO PJ"';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur1.exists(vr_contador)
+        AND vr_tabvlempjur1(vr_contador).valorpj <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur1(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlempjur1.exists(vr_contador)
+         AND vr_tabvlempjur1(vr_contador).valorpj <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlempjur1(vr_contador).valorpj, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5514,7010,' ||
+                     TRIM(to_char(vr_empjuros1.valorpj, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar EMPRESTIMO TR Refinanciado PJ "';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_1.exists(vr_contador)
+        AND vr_pacvljur_1(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_1(vr_contador).valorpj,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_1.exists(vr_contador)
+        AND vr_pacvljur_1(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur1(vr_contador).valorpj,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
+
+
+    --EMPRESTIMO - RENDAS A APROPRIAR REFINANCIADO PP PF
+    IF vr_empjuros2.valorpf <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7016,5518,' ||
+                      TRIM(to_char(vr_empjuros2.valorpf, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar EMPRESTIMO PP REFINANCIADO PF "';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlempjur2.exists(vr_contador)
+         AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpf, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5518,7016,' ||
+                     TRIM(to_char(vr_empjuros2.valorpf, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar Emprestimo PP Refinanciado PF"';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
+   --EMPRESTIMO - RENDAS A APROPRIAR REFINANCIADO  PP PJ
+    IF vr_empjuros2.valorpj <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7016,5518,' ||
+                      TRIM(to_char(vr_empjuros2.valorpj, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar EMPRESTIMO PP REFINANCIADO PJ "';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpj <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlempjur2.exists(vr_contador)
+         AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpj, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5518,7016,' ||
+                     TRIM(to_char(vr_empjuros2.valorpj, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar Emprestimo PP Refinanciado PJ "';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpj,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
+    --EMPRESTIMO - RENDAS A APROPRIAR REFINANCIADO POS PF
+    IF vr_empjuros3.valorpf <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7017,5519,' ||
+                      TRIM(to_char(vr_empjuros3.valorpf, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar EMPRESTIMO POS REFINANCIADO PF "';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlempjur3.exists(vr_contador)
+         AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpf, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5519,7017,' ||
+                     TRIM(to_char(vr_empjuros3.valorpf, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar EMPRESTIMO POS Refinanciado PF"';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
+   --EMPRESTIMO - RENDAS A APROPRIAR REFINANCIADO POS PJ
+    IF vr_empjuros3.valorpj <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7017,5519,' ||
+                      TRIM(to_char(vr_empjuros3.valorpj, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar EMPRESTIMO POS REFINANCIADO PJ "';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpj <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlempjur3.exists(vr_contador)
+         AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpj, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5519,7017,' ||
+                     TRIM(to_char(vr_empjuros3.valorpj, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar EMPRESTIMO POS Refinanciado PJ "';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpj,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
+    --FINANCIAMENTO - RENDAS A APROPRIAR  REFINANCIADO TR PF
+    IF vr_finjuros3.valorpf <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7026,5522,' ||
+                      TRIM(to_char(vr_finjuros3.valorpf, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar FINANCIAMENTO TR REFINANCIADO PF"';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlfinjur1.exists(vr_contador)
+        AND vr_tabvlfinjur1(vr_contador).valorpf <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlfinjur1(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlfinjur1.exists(vr_contador)
+         AND vr_tabvlfinjur1(vr_contador).valorpf <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlfinjur1(vr_contador).valorpf, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5522,7026,' ||
+                     TRIM(to_char(vr_finjuros3.valorpf, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar Financiamento TR Refinanciado PF "';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlfinjur1.exists(vr_contador)
+        AND vr_tabvlfinjur1(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlfinjur1(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlfinjur1.exists(vr_contador)
+        AND vr_tabvlfinjur1(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlfinjur1(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
+
+    --FINANCIAMENTO - RENDAS A APROPRIAR REFINANCIADO TR PJ
+    IF vr_finjuros3.valorpj <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7010,5514,' ||
+                      TRIM(to_char(vr_finjuros3.valorpj, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar FINANCIAMENTO TR REFINANCIADO PJ"';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur1.exists(vr_contador)
+        AND vr_tabvlempjur1(vr_contador).valorpj <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur1(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlempjur1.exists(vr_contador)
+         AND vr_tabvlempjur1(vr_contador).valorpj <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlempjur1(vr_contador).valorpj, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5514,7010,' ||
+                     TRIM(to_char(vr_finjuros3.valorpj, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar Emprestimo TR Refinanciado PF "';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_1.exists(vr_contador)
+        AND vr_pacvljur_1(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_1(vr_contador).valorpj,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_1.exists(vr_contador)
+        AND vr_pacvljur_1(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur1(vr_contador).valorpj,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
+
+    --FINANCIAMENTO - RENDAS A APROPRIAR REFINANCIADO PP PF
+    IF vr_empjuros2.valorpf <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7016,5518,' ||
+                      TRIM(to_char(vr_empjuros2.valorpf, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar FINANCIAMENTO PP REFINANCIADO PF "';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlempjur2.exists(vr_contador)
+         AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpf, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5518,7016,' ||
+                     TRIM(to_char(vr_empjuros2.valorpf, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar FINANCIAMENTO PP Refinanciado PF"';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
+
+   --FINANCIAMENTO - RENDAS A APROPRIAR  REFINANCIADO PP PJ
+    IF vr_empjuros2.valorpj <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7016,5518,' ||
+                      TRIM(to_char(vr_empjuros2.valorpj, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar FINANCIAMENTO PP REFINANCIADO PJ "';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpj <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlempjur2.exists(vr_contador)
+         AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpj, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5518,7016,' ||
+                     TRIM(to_char(vr_empjuros2.valorpj, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar FINANCIAMENTO PP Refinanciado PJ "';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpj,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur2.exists(vr_contador)
+        AND vr_tabvlempjur2(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur2(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
+
+    --FINANCIAMENTO - RENDAS A APROPRIAR REFINANCIADO POS PF
+    IF vr_empjuros3.valorpf <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7017,5519,' ||
+                      TRIM(to_char(vr_empjuros3.valorpf, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar FINANCIAMENTO POS REFINANCIADO PF "';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlempjur3.exists(vr_contador)
+         AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpf, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5519,7017,' ||
+                     TRIM(to_char(vr_empjuros3.valorpf, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar Emprestimo POS Refinanciado PF"';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
+
+   --FINANCIAMENTO - RENDAS A APROPRIAR REFINANCIADO POS PJ
+    IF vr_empjuros3.valorpj <> 0 THEN
+
+      -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7017,5519,' ||
+                      TRIM(to_char(vr_empjuros3.valorpj, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar FINANCIAMENTO PP REFINANCIADO PJ "';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpj <> 0 THEN
+          -- Escrever a linha com as informações da agencia
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+        END LOOP;
+
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+         IF  vr_tabvlempjur3.exists(vr_contador)
+         AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                          TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpj, '99999999999990.00'));
+           -- Gravar Linha
+           pc_gravar_linha(vr_linhadet);
+         END IF;
+       END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5519,7017,' ||
+                     TRIM(to_char(vr_empjuros3.valorpj, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) Reversao rendas a apropriar FINANCIAMENTO POS Refinanciado PJ "';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpj,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_tabvlempjur3.exists(vr_contador)
+        AND vr_tabvlempjur3(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_tabvlempjur3(vr_contador).valorpf,'99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+
 
     -- EMPRESTIMOS EM ATRASO PESSOA FISICA
     IF vr_vldjuros.valorpf <> 0 THEN
@@ -4215,6 +5347,252 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     END IF;
 
 
+    --->>>>> POS FIXADO <<<<<---
+    
+    -- AJUSTE PROVISAO FIN.PESSOAIS POS FIXADO
+    IF vr_vldespes(37) <> 0 THEN
+
+      vr_vllanmto := vr_vldespes(37);
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5329,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO FIN.PESSOAIS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_1_pos.exists(vr_contador)
+        AND vr_vlag1731_1_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_1_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_1_pos.exists(vr_contador)
+        AND vr_vlag1731_1_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_1_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5329,8447,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO FIN.PESSOAIS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_1_pos.exists(vr_contador)
+        AND vr_vlag1731_1_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_1_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_1_pos.exists(vr_contador)
+        AND vr_vlag1731_1_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_1_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+
+    -- AJUSTE PROVISAO FIN.EMPRESAS POS FIXADO
+    IF vr_vldespes(38) <> 0 THEN
+
+      vr_vllanmto := vr_vldespes(38);
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5330,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO FIN.EMPRESAS POS FIXADO "';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_2_pos.exists(vr_contador)
+        AND vr_vlag1731_2_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_2_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_2_pos.exists(vr_contador)
+        AND vr_vlag1731_2_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_2_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5330,8448,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO FIN.EMPRESAS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_2_pos.exists(vr_contador)
+        AND vr_vlag1731_2_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_2_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_2_pos.exists(vr_contador)
+        AND vr_vlag1731_2_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_2_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+
+    -- Ajuste Provisao CL - Empresas e Entidades prefixado
+    -- AJUSTE PROVISAO EMPR.EMPRESAS POS FIXADO
+    IF vr_vldespes(36) <> 0 THEN
+
+      vr_vllanmto := vr_vldespes(36);
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5332,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO EMPR.EMPRESAS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1723_pos.exists(vr_contador)
+        AND vr_vlag1723_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1723_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1723_pos.exists(vr_contador)
+        AND vr_vlag1723_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1723_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5332,8448,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO EMPR.EMPRESAS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1723_pos.exists(vr_contador)
+        AND vr_vlag1723_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1723_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1723_pos.exists(vr_contador)
+        AND vr_vlag1723_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1723_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+
+    -- Ajuste Provisao CL - Emprestimos Pessoais prefixado
+    -- AJUSTE PROVISAO EMPR.PESSOAIS POS FIXADO
+    IF vr_vldespes(35) <> 0 THEN
+
+      vr_vllanmto := vr_vldespes(35);
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5331,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO EMPR.PESSOAIS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1721_pos.exists(vr_contador)
+        AND vr_vlag1721_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1721_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1721_pos.exists(vr_contador)
+        AND vr_vlag1721_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1721_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5331,8447,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO EMPR.PESSOAIS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF vr_vlag1721_pos.exists(vr_contador)
+        AND vr_vlag1721_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1721_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1721_pos.exists(vr_contador)
+        AND vr_vlag1721_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1721_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+    --->>>>>> FIM POS FIXADO <<<<<---
+
     -- PROVISAO DE CESSAO CARTAO - PESSOA FISICA
     IF vr_vldespes(33) <> 0 THEN
 
@@ -5418,7 +6796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_tipsplit(2) := 1;
       RISC0002.pc_atualiza_param_risco_cartao(pr_cdcooper => pr_cdcooper
                                              ,pr_tipsplit => vr_tipsplit
-      	    				        	               ,pr_dscritic => vr_dscritic);
+                                             ,pr_dscritic => vr_dscritic);
                                     
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
