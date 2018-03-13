@@ -10,7 +10,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --
   --  Alteracoes: 14/06/2017 - Criação da rotina.
   --              13/12/2017 - Criação da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
-  
+
 
   --  Variáveis globais
   vr_database_name           VARCHAR2(50);
@@ -7332,7 +7332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                 ,pr_ind_tipo_log => 1 -- Aviso
                                 ,pr_des_log      => 'retorno valida antecipacao COM DIFERENCA vr_TotLancamento='||vr_TotLancamento||'  pr_vlrlancto='||pr_vlrlancto
                                 ,pr_nmarqlog => 'CONSLC');
-             return('N');
+             return('S');
              
           ELSE
              for r in cr_liq_antecip_sum_update loop
@@ -7362,7 +7362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                 ,pr_des_log      => 'credito e debito rw_msg.id_existe_liquid := N pr_cicloliquidacao='||pr_cicloliquidacao||' pr_vlrlancto='||pr_vlrlancto
                                 ,pr_nmarqlog => 'CONSLC');
 
-                return('N');
+                return('S');
              ELSE
                 IF pr_idatualiza = 'S' THEN
                    for r in  cr_liq_slc_update loop
@@ -10092,11 +10092,11 @@ from  (
                          AND pdv.dtpagamento = to_char(to_date(pr_dtlcto, 'DD/MM/YYYY'), 'YYYY-MM-DD')
                          AND pdv.cdocorrencia = 0
                       ) cred
-                   , (SELECT count(1) AS qdepagamentos
-                           , sum(str.vllancamento) vlpagamentos
-                        FROM cecred.tbdomic_liqtrans_msg_ltrstr str
-                       WHERE str.cdmsg = 'STR0006R2'
-                         AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;                              
+                     , (SELECT count(1) AS qdepagamentos
+                             , sum(str.vllancamento) vlpagamentos
+                          FROM cecred.tbdomic_liqtrans_msg_ltrstr str
+                         WHERE str.cdmsg = 'STR0006R2'
+                           AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;                              
 
                            
   BEGIN
