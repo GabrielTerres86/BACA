@@ -550,7 +550,8 @@ function controlaOperacao(operacao) {
             mostraTabelaBens('BT', 'C_BENS_ASSOC');
             return false;
             break;
-        case 'TA' :
+        case 'TA':
+            booPrimeiroBen = false; //809763
             idSocio = 0;
             if (msgDsdidade != '') {
                 showError('inform', msgDsdidade, 'Alerta - Ayllos', 'mostraTelaAltera("");');
@@ -739,7 +740,6 @@ function controlaOperacao(operacao) {
         case 'AI_ALIENACAO':
             mensagem = 'abrindo altera ...';
             cddopcao = 'A';
-            booPrimeiroBen = false; //809763
             break;
         case 'A_ALIENACAO' :
 
@@ -822,7 +822,7 @@ function controlaOperacao(operacao) {
             cddopcao = 'A';
             break;
         case 'I':
-            booprimeirbooPrimeiroBen = false;
+            booPrimeiroBen = false; //809763
             if (msgDsdidade != '') {
                 showError('inform', msgDsdidade, 'Alerta - Ayllos', 'controlaOperacao("TI");');
             } else if (possuiPortabilidade == 'S' && cadastroNovo == 'N') { /* portabilidade */
@@ -858,7 +858,6 @@ function controlaOperacao(operacao) {
             contIntervis = 0;
             resposta = '';
             cddopcao = 'I';
-            booPrimeiroBen = false;//809763
             break;
         case 'I_DADOS_AVAL' :
             if (contAvalistas < nrAvalistas) {
