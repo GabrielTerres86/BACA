@@ -5379,19 +5379,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                    ,pr_nrdconta => rw_craprej.nrdconta);
                     FETCH cr_crapass_pa INTO rw_crapass_pa;
                     
-                    --Se nao encontrou 
-                    IF cr_crapass_pa%NOTFOUND THEN
-                       --Fechar Cursor
-                       CLOSE cr_crapass_pa;
-                       pr_dscritic:= 'Registro do cooperado nao encontrado.';
-                       pr_cdcritic:= 0;
-                       --Levantar Excecao
-                       RAISE vr_exc_saida;
+                    --Se encontrou 
+                    IF cr_crapass_pa%FOUND THEN
+                       vr_cdagenci_pa := rw_crapass_pa.cdagenci;
+                    ELSE
+                       vr_cdagenci_pa := 0;
                     END IF;
                     --Fechar Cursor
                     CLOSE cr_crapass_pa;
-                    
-                    vr_cdagenci_pa := rw_crapass_pa.cdagenci;
 
                     -- Por as criticas 717 dentro de uma temp-table 
                     -- para apresentar apenas no final do relatorio
@@ -5667,19 +5662,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ,pr_nrdconta => rw_craprej.nrdconta);
                       FETCH cr_crapass_pa INTO rw_crapass_pa;
                       
-                      --Se nao encontrou 
-                      IF cr_crapass_pa%NOTFOUND THEN
-                         --Fechar Cursor
-                         CLOSE cr_crapass_pa;
-                         pr_dscritic:= 'Registro do cooperado nao encontrado.';
-                         pr_cdcritic:= 0;
-                         --Levantar Excecao
-                         RAISE vr_exc_saida;
+                      --Se encontrou 
+                      IF cr_crapass_pa%FOUND THEN
+                         vr_cdagenci_pa := rw_crapass_pa.cdagenci;
+                      ELSE
+                         vr_cdagenci_pa := 0;
                       END IF;
                       --Fechar Cursor
                       CLOSE cr_crapass_pa;
-                      
-                      vr_cdagenci_pa := rw_crapass_pa.cdagenci;
 
                       --Montar os lançamentos
                       gene0002.pc_escreve_xml(pr_xml            => vr_xml_rel

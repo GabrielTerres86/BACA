@@ -860,17 +860,12 @@ BEGIN
             
             --Se nao encontrou 
             IF cr_crapass%NOTFOUND THEN
-               --Fechar Cursor
-               CLOSE cr_crapass;
-               pr_dscritic:= 'Registro do cooperado nao encontrado.';
-               pr_cdcritic:= 0;
-               --Levantar Excecao
-               RAISE vr_exc_saida;
+              vr_relato(vr_indice).cdagenci := 0;
+            ELSE
+              vr_relato(vr_indice).cdagenci := rw_crapass.cdagenci;
             END IF;
-            --Fechar Cursor
+			--Fechar Cursor
             CLOSE cr_crapass;
-            
-            vr_relato(vr_indice).cdagenci := rw_crapass.cdagenci;
 				
             -- Registro lançado
             vr_relato(vr_indice).flglanca := 'SIM';  
