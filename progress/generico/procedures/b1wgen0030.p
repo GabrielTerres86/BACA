@@ -2446,13 +2446,13 @@ PROCEDURE efetua_liber_anali_bordero:
             VALIDATE craplot.
             VALIDATE craplcm.
 
-            RUN buscar_valor_iof_simples_nacional(INPUT aux_vlborder,
+            /* RUN buscar_valor_iof_simples_nacional(INPUT aux_vlborder,
                                                   INPUT par_cdcooper,
                                                   INPUT par_nrdconta,
                                                   INPUT TABLE tt-iof,
                                                   INPUT TABLE tt-iof-sn,
                                                   OUTPUT aux_vltotaliofsn).
-            aux_vltotiof = aux_vltotiof + aux_vltotaliofsn.
+            aux_vltotiof = aux_vltotiof + aux_vltotaliofsn. */
             RUN sistema/generico/procedures/b1wgen0159.p
                             PERSISTENT SET h-b1wgen0159.
 
