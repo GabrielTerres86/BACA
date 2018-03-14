@@ -9,10 +9,10 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
   --  Data     : Setembro/2016.
   --
   -- Frequencia: -----
-  -- Objetivo  : Procedimentos para retorno das informações da Atenda Ocorrencias
+  -- Objetivo  : Procedimentos para retorno das informações da tela Atenda Ocorrências
   --
-  -- Alterado: 23/01/2018 - Daniel AMcom
-  -- Ajuste: Criada procedure pc_busca_dados_risco
+  -- Alterado: Criada procedure pc_busca_dados_risco
+	--           23/01/2018 - Reginaldo (AMcom) 
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -47,18 +47,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   --  Data     : Setembro/2016.
   --
   -- Frequencia: -----
-  -- Objetivo  : Procedimentos para retorno das informações da Atenda Seguros
+  -- Objetivo  : Procedimentos para retorno das informações da tela Atenda Ocorrências
   --
-  -- Alterado: 23/01/2018 - Reginaldo (AMcom)
-  -- Ajuste: Criada procedure pc_busca_dados_risco
+  -- Alterado: Criada procedure pc_busca_dados_risco
+	--           23/01/2018 - Reginaldo (AMcom)          
   --
   ---------------------------------------------------------------------------------------------------------------
+
+	-- Registro para armazenar todos os dados que são exibidos em cada linha da aba de Riscos
+	TYPE typ_info_riscos IS
+      RECORD(nrdconta       crapris.nrdconta%TYPE
+						,nrcpfcgc       crapass.nrcpfcgc%TYPE
+						,nrctremp       crapris.nrctremp%TYPE
+						,tiplinha       VARCHAR2(3)
+						,ris_inclusao   VARCHAR2(2)
+						,ris_rating     VARCHAR2(2)
+						,ris_atraso     VARCHAR2(2)
+						,ris_agravado   VARCHAR2(2)
+						,ris_melhora    VARCHAR2(2)
+						,ris_operacao   VARCHAR2(2)
+						,ris_cpf        VARCHAR2(2)
+						,ris_final      VARCHAR2(2)
+						,nrdgrupo       VARCHAR2(11)
+			);
+
+	-- Tabela temporária para armazenar os dados de riscos
+	TYPE typ_tab_riscos IS TABLE OF typ_info_riscos
+	  INDEX BY BINARY_INTEGER;
+
+	-- Tabela que armazenará os riscos CPF que são calculados durante o processamento das contas
+	TYPE typ_tab_cpf IS TABLE OF VARCHAR(2)
+	  INDEX BY VARCHAR2(11);
+
+	-- Tabela que armazenará os riscos do grupo econômico que são calculados durante o processamento das contas
+	TYPE typ_tab_ge IS TABLE OF VARCHAR(2)
+	  INDEX BY VARCHAR(11);
 
   FUNCTION fn_busca_rating(pr_cdcooper NUMBER
 		                     , pr_nrdconta NUMBER
 												 , pr_nrctremp NUMBER
-												 , pr_cdorigem NUMBER
-												 , pr_dtmvtoan DATE)
+												 , pr_cdorigem NUMBER)
     RETURN crapnrc.indrisco%TYPE AS vr_rating crapnrc.indrisco%TYPE;
 
       --- >>> CURSORES <<< ---
@@ -69,11 +97,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
           AND rat.nrdconta =  pr_nrdconta
           AND rat.nrctrrat =  pr_nrctremp
 			    AND rat.tpctrrat =  DECODE(pr_cdorigem
-					                          , 1, 1
-															  		, 2, 2
-																	  , 3, 90
-																	  , 4, 3
-																	  , 5, 3)
+					                          , 1, 1  -- conta corrente
+															  		, 2, 2  -- limite de desconto de cheques
+																	  , 3, 90 -- empréstimo/financiamento
+																	  , 4, 3  -- limite de desconto de títulos
+																	  , 5, 3) -- limite de desconto de títulos
           AND rat.insitrat =  2;
       rw_rating cr_rating%ROWTYPE;
   BEGIN
@@ -81,7 +109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
      FETCH cr_rating INTO rw_rating;
 
      vr_rating := rw_rating.indrisco;
-		
+
      CLOSE cr_rating;
 
      RETURN vr_rating;
@@ -182,6 +210,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
 		 RETURN vr_data_risco;
 	END fn_busca_data_risco;
+	
+	FUNCTION fn_busca_dias_atraso_emp(pr_cdcooper    NUMBER
+                                  , pr_nrdconta    NUMBER
+                                  , pr_nrctremp    NUMBER
+                                  , pr_dtmvtoan    DATE) 
+		RETURN INTEGER AS vr_dias_atraso INTEGER;
+
+      --- >>> CURSORES <<< ---
+      CURSOR cr_diaatr IS
+      SELECT ris.qtdiaatr
+        FROM crapris ris
+       WHERE ris.cdcooper = pr_cdcooper
+         AND ris.nrdconta = pr_nrdconta
+         AND ris.nrctremp = pr_nrctremp
+         AND ris.dtrefere = pr_dtmvtoan
+         AND ris.inddocto = 1
+				 AND ris.cdorigem = 3;
+      rw_diaatr cr_diaatr%ROWTYPE;
+  BEGIN
+     OPEN cr_diaatr;
+
+     FETCH cr_diaatr INTO rw_diaatr;
+
+     CLOSE cr_diaatr;
+
+     vr_dias_atraso   := rw_diaatr.qtdiaatr;
+		 
+		 RETURN vr_dias_atraso;
+  END fn_busca_dias_atraso_emp;
 
 	FUNCTION fn_busca_dias_atraso_adp(pr_cdcooper   NUMBER
                                   , pr_nrdconta   NUMBER
@@ -218,96 +275,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 		RETURN vr_qtd_dias_atraso;
 	END fn_busca_dias_atraso_adp;
 
-	FUNCTION fn_busca_dias_atraso_lc(pr_cdcooper   NUMBER
-                                 , pr_nrdconta   NUMBER
-																 , pr_nrctrlim   NUMBER
-                                 , pr_dtmvtoan   DATE
-																 , pr_vlrarrasto NUMBER)
-		RETURN INTEGER AS vr_qtd_dias_atraso INTEGER;
-
-			--- >>> CURSORES <<< ---
-
-			-- Busca os dias de atraso do contrato (modalidade 201) --
-		  CURSOR cr_atraso_lc IS
-	    SELECT r.qtdiaatr
-			  FROM crapris r
-			 WHERE r.cdcooper = pr_cdcooper
-			   AND r.nrdconta = pr_nrdconta
-				 AND r.nrctremp = pr_nrctrlim
-				 AND r.cdmodali = 201
-				 AND r.inddocto = 1
-				 AND r.dtrefere = pr_dtmvtoan;
-			rw_atraso_lc cr_atraso_lc%ROWTYPE;
-	BEGIN
-		vr_qtd_dias_atraso := fn_busca_dias_atraso_adp(pr_cdcooper
-		                                             , pr_nrdconta
-																								 , pr_dtmvtoan);
-
-		IF vr_qtd_dias_atraso IS NULL THEN
-		   	OPEN cr_atraso_lc;
-
-				FETCH cr_atraso_lc INTO rw_atraso_lc;
-
-				IF cr_atraso_lc%NOTFOUND THEN
-					 vr_qtd_dias_atraso := 0;
-				ELSE
-					 vr_qtd_dias_atraso := rw_atraso_lc.qtdiaatr;
-				END IF;
-
-				CLOSE cr_atraso_lc;
-		END IF;
-
-		RETURN vr_qtd_dias_atraso;
-	END fn_busca_dias_atraso_lc;
-
-	FUNCTION fn_verifica_atraso_conta(pr_cdcooper   crawepr.cdcooper%TYPE
-                                  , pr_nrdconta   crawepr.nrdconta%TYPE
-                                  , pr_dtmvtoan   crapdat.dtmvtoan%TYPE
-																	, pr_vlrarrasto NUMBER)
-    RETURN BOOLEAN AS vr_tem_atraso BOOLEAN;
-
-		 -- >>> CURSORES <<< --
-		 CURSOR cr_atraso IS
-		 SELECT r1.qtdiaatr
-		   FROM crapris r1
-			WHERE r1.cdcooper = pr_cdcooper
-			  AND r1.nrdconta = pr_nrdconta
-				AND r1.nrctremp = pr_nrdconta
-				AND r1.inddocto = 1
-				AND r1.cdmodali = 101
-				AND r1.dtrefere = pr_dtmvtoan
-				AND r1.vldivida > pr_vlrarrasto
-				AND NOT EXISTS (
-				    SELECT 1
-						  FROM crapris r2
-						 WHERE r2.cdcooper = pr_cdcooper
-						   AND r2.nrdconta = pr_nrdconta
-							 AND r2.inddocto = 1
-							 AND r2.cdmodali = 201
-							 AND r2.dtrefere = pr_dtmvtoan
-				);
-		 rw_atraso cr_atraso%ROWTYPE;
-  BEGIN
-	   OPEN cr_atraso;
-
-		 FETCH cr_atraso INTO rw_atraso;
-
-		 IF cr_atraso%NOTFOUND OR rw_atraso.qtdiaatr = 0 THEN
-			 vr_tem_atraso := FALSE;
-		 ELSE
-			 vr_tem_atraso := TRUE;
-		 END IF;
-
-		 CLOSE cr_atraso;
-
-		 RETURN vr_tem_atraso;
-	END fn_verifica_atraso_conta;
-
-	FUNCTION fn_busca_risco_ult_central(pr_cdcooper    crawepr.cdcooper%TYPE
+	FUNCTION fn_busca_risco_ult_mensal(pr_cdcooper    crawepr.cdcooper%TYPE
                                     , pr_nrdconta   crawepr.nrdconta%TYPE
                                     , pr_dtultdma   crapdat.dtultdma%TYPE
 																		, pr_vlrarrasto NUMBER)
-		RETURN crawepr.dsnivris%TYPE AS vr_risco_ult_central crawepr.dsnivris%TYPE;
+		RETURN crawepr.dsnivris%TYPE AS vr_risco_ult_mensal crawepr.dsnivris%TYPE;
 
      -- >>> CURSORES <<< --
 
@@ -357,13 +329,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       CLOSE cr_riscos;
 
       IF vr_risco_nao_cadastrado THEN
-         vr_risco_ult_central := 2;
+         vr_risco_ult_mensal := 2;
       ELSE
-         vr_risco_ult_central := rw_riscos.innivris;
+         vr_risco_ult_mensal := rw_riscos.innivris;
       END IF;
 
-      RETURN vr_risco_ult_central;
-  END fn_busca_risco_ult_central;
+      RETURN vr_risco_ult_mensal;
+  END fn_busca_risco_ult_mensal;
 
 	FUNCTION fn_calcula_risco_atraso(qtdiaatr NUMBER)
     RETURN crawepr.dsnivris%TYPE AS risco_atraso crawepr.dsnivris%TYPE;
@@ -408,45 +380,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       RETURN dsnivris;
   END fn_traduz_risco;
 
-  PROCEDURE pc_busca_dados_diaria(pr_cdcooper    IN NUMBER
-                                , pr_nrdconta    IN NUMBER
-                                , pr_nrctremp    IN NUMBER
-                                , pr_dtmvtoan    IN DATE
-												    		, vr_dias_atraso OUT NUMBER
-													    	, vr_risco_final OUT NUMBER) IS
-
-      --- >>> CURSORES <<< ---
-      CURSOR cr_riscos IS
-      SELECT ris.qtdiaatr
-			     , ris.innivris
-        FROM crapris ris
-       WHERE ris.cdcooper = pr_cdcooper
-         AND ris.nrdconta = pr_nrdconta
-         AND ris.nrctremp = pr_nrctremp
-         AND ris.dtrefere = pr_dtmvtoan
-         AND ris.inddocto = 1
-				 AND ris.cdorigem = 3;
-      rw_riscos cr_riscos%ROWTYPE;
-  BEGIN
-     OPEN cr_riscos;
-
-     FETCH cr_riscos INTO rw_riscos;
-
-     CLOSE cr_riscos;
-
-     vr_dias_atraso   := rw_riscos.qtdiaatr;
-		 vr_risco_final   := rw_riscos.innivris;
-  END pc_busca_dados_diaria;
-
   PROCEDURE pc_busca_grupo_economico(pr_cdcooper     IN NUMBER
                                    , pr_nrdconta     IN NUMBER
                                    , pr_nrcpfcgc     IN NUMBER
-                                   , vr_numero_grupo OUT NUMBER
+                                   , vr_numero_grupo OUT VARCHAR2
                                    , vr_risco_grupo  OUT VARCHAR2) IS
 
 			--- >>> CURSORES <<< ---
       CURSOR cr_grupo IS
-      SELECT g.nrdgrupo
+      SELECT TO_CHAR(g.nrdgrupo) nrdgrupo
            , g.dsdrisgp
         FROM crapgrp g
        WHERE g.cdcooper(+) = pr_cdcooper
@@ -477,11 +419,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                ,pr_ris_agravado  IN crawepr.dsnivris%TYPE
                                ,pr_ris_operacao  IN crawepr.dsnivris%TYPE
                                ,pr_ris_cpf       IN crawepr.dsnivris%TYPE
-                               ,pr_numero_grupo  IN crapgrp.nrdgrupo%TYPE
+                               ,pr_numero_grupo  IN VARCHAR2
 															 ,pr_ris_melhora   IN crawepr.dsnivris%TYPE
 															 ,pr_ris_final     IN crawepr.dsnivris%TYPE
-															 ,pr_tipo_registro IN VARCHAR2
-															 ,pr_arrastaoperac IN VARCHAR2) IS
+															 ,pr_tipo_registro IN VARCHAR2) IS
   BEGIN
          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Contas',
@@ -587,13 +528,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                              pr_tag_nova => 'tipo_registro',
                              pr_tag_cont => pr_tipo_registro,
                              pr_des_erro => pr_dscritic);
-
-					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'Conta',
-                             pr_posicao  => pr_pos_conta,
-                             pr_tag_nova => 'arrasta_operacao',
-                             pr_tag_cont => pr_arrastaoperac,
-                             pr_des_erro => pr_dscritic);
   END pc_monta_reg_conta_xml;
 
   PROCEDURE pc_monta_reg_central_risco(pr_retxml           IN OUT NOCOPY XMLType
@@ -655,13 +589,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Daniel/AMcom & Reginaldo/AMcom
-        Data    : Janeiro/2018                 Ultima atualizacao:
+        Data    : Janeiro/2018                 Ultima atualizacao: 14/03/2018
 
         Dados referentes ao programa:
         Frequencia: Sempre que for chamado
         Objetivo  : Rotina para consultar dados de risco a partir de uma conta base
         Observacao: -----
-        Alteracoes:
+        Alteracoes: 
+				            Modificação no processamento das contas para considerar rating de
+										contratos de limite de crédito no arrasto, mesmo que a conta não
+										possua outras operações.
+										14/03/2018 - Reginaldo (AMcom)
       ..............................................................................*/
 
       ----------->>> VARIAVEIS <<<--------
@@ -687,24 +625,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       vr_rating            crapnrc.indrisco%TYPE;  -- Rating do contrato
       vr_risco_agr         tbrisco_cadastro_conta.cdnivel_risco%TYPE; -- Risco agravado da conta
       vr_risco_atraso      crawepr.dsnivris%TYPE;  -- Risco atraso da operação
+			vr_risco_operacao    crawepr.dsnivris%TYPE;  -- Risco da operação
 			vr_risco_cpf         crawepr.dsnivris%TYPE;  -- Risco CPF
-      vr_risco_final       crapris.innivris%TYPE;  -- Risco final
+      vr_risco_final       crawepr.dsnivris%TYPE;  -- Risco final
       vr_risco_ult_central crawepr.dsnivris%TYPE;  -- Risco da última central
       vr_data_risco_final  crapris.dtdrisco%TYPE;  -- Data do risco final
-      vr_numero_grupo      crapgrp.nrdgrupo%TYPE;  -- Número do grupo econômico vinculado com a conta
+      vr_numero_grupo      VARCHAR2(11);           -- Número do grupo econômico vinculado com a conta
       vr_risco_grupo       crapgrp.dsdrisgp%TYPE;  -- Risco do grupo econômico
-      vr_qtd_dias_risco    INTEGER;                -- Quantidade de dias que o contrato está no risco
       vr_diasatraso        INTEGER;                -- Quantidade de dias em atraso do contrato
       vr_risco_inclusao    crawepr.dsnivris%TYPE;  -- Risco inclusão para contratos de limite de crédito
-			vr_valor_arrasto     NUMBER;
+			vr_valor_arrasto     NUMBER(11);
+			vr_index_linha       INTEGER := 1;
+			vr_chave_cpfcgc      VARCHAR2(11);           -- Chave para indexação da vr_tab_riscos_cpf
+
+			-- Tabelas temporárias para processamento dos dados de riscos
+			vr_tab_dados_risco   typ_tab_riscos;
+			vr_tab_riscos_cpf    typ_tab_cpf;
+			vr_tab_riscos_ge     typ_tab_ge;
 
       ---------->> CURSORES <<--------
 
-      -- Contas de mesmo titular da conta base
-      CURSOR cr_contas_do_titular(rw_cbase IN crapass%ROWTYPE) IS
+      -- Contas vinculadas com a conta base
+      CURSOR cr_contas(rw_cbase IN crapass%ROWTYPE) IS
       SELECT c.cdcooper
            , c.nrdconta
-           , gene0002.fn_mask(c.nrcpfcgc, 
+           , gene0002.fn_mask(c.nrcpfcgc,
 				                    DECODE(c.inpessoa, 1, '99999999999','99999999999999')) nrcpfcgc
            , c.inpessoa
            , c.dsnivris
@@ -717,10 +662,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
              DECODE(rw_cbase.inpessoa, 1,
              gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
              substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-			 ORDER BY ordem;
-      rw_contas_do_titular cr_contas_do_titular%ROWTYPE;
+	  UNION
+	  SELECT DISTINCT cgr.cdcooper
+         , cgr.nrdconta
+         , gene0002.fn_mask(cgr.nrcpfcgc,
+				                    DECODE(cgr.inpessoa, 1, '99999999999','99999999999999')) nrcpfcgc
+         , cgr.inpessoa
+         , cgr.dsnivris
+         , 1 AS ordem
+      FROM crapass cgr
+         , crapgrp grp
+     WHERE grp.nrdgrupo IN (
+               SELECT aux.nrdgrupo
+                 FROM crapgrp aux
+                WHERE aux.cdcooper = rw_cbase.cdcooper
+                  AND DECODE(aux.inpessoa, 1,
+                         gene0002.fn_mask(aux.nrcpfcgc, '99999999999'),
+                         substr(gene0002.fn_mask(aux.nrcpfcgc, '99999999999999'), 1, 8)) =
+                      DECODE(rw_cbase.inpessoa, 1,
+                         gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
+                         substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
+           )
+       AND grp.cdcooper =  rw_cbase.cdcooper
+       AND DECODE(grp.inpessoa, 1,
+                  gene0002.fn_mask(grp.nrcpfcgc, '99999999999'),
+                  substr(gene0002.fn_mask(grp.nrcpfcgc, '99999999999999'), 1, 8)) <>
+           DECODE(rw_cbase.inpessoa, 1,
+                  gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
+                  substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
+       AND DECODE(cgr.inpessoa, 1,
+                  gene0002.fn_mask(cgr.nrcpfcgc, '99999999999'),
+                  substr(gene0002.fn_mask(cgr.nrcpfcgc, '99999999999999'), 1, 8)) <>
+           DECODE(rw_cbase.inpessoa, 1,
+                  gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
+                  substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
+       AND cgr.cdcooper =  grp.cdcooper
+       AND (cgr.nrdconta =  grp.nrdconta OR cgr.nrdconta = grp.nrctasoc)
+			ORDER BY ordem;
+      rw_contas cr_contas%ROWTYPE;
 
-    -- Contratos de empréstimo ativos de uma conta
+    -- Contratos de empréstimo ativos (ou em prejuízo) de uma conta
     CURSOR cr_contratos_emprestimo(pr_cdcooper NUMBER
 		                             , pr_nrdconta NUMBER) IS
     SELECT w.dsnivori
@@ -731,7 +712,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
          , crapepr e
       WHERE e.cdcooper = pr_cdcooper
         AND e.nrdconta = pr_nrdconta
-        AND (e.inliquid = 0 OR e.vlsdprej > 0) -- contratos ativos ou em prejuízo
+        AND (e.inliquid = 0 OR e.vlsdprej > 0) 
         AND w.cdcooper = e.cdcooper
         AND w.nrdconta = e.nrdconta
         AND w.nrctremp = e.nrctremp;
@@ -804,46 +785,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 					 , tipcontr;
 		rw_contratos_limite_desc cr_contratos_limite_desc%ROWTYPE;
 
-    -- Contas dos grupos econômicos aos quais o titular da conta base está ligado
-    CURSOR cr_contas_grupo_economico(rw_cbase IN crapass%ROWTYPE) IS
-    SELECT DISTINCT cgr.cdcooper
-         , cgr.nrdconta
-         , gene0002.fn_mask(cgr.nrcpfcgc, 
-				                    DECODE(cgr.inpessoa, 1, '99999999999','99999999999999')) nrcpfcgc
-         , cgr.inpessoa
-         , cgr.dsnivris
-         , grp.nrdgrupo
-         , grp.dsdrisgp
-      FROM crapass cgr
-         , crapgrp grp
-     WHERE grp.nrdgrupo IN (
-               SELECT aux.nrdgrupo
-                 FROM crapgrp aux
-                WHERE aux.cdcooper = rw_cbase.cdcooper
-                  AND DECODE(aux.inpessoa, 1,
-                         gene0002.fn_mask(aux.nrcpfcgc, '99999999999'),
-                         substr(gene0002.fn_mask(aux.nrcpfcgc, '99999999999999'), 1, 8)) =
-                      DECODE(rw_cbase.inpessoa, 1,
-                         gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-                         substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-           )
-       AND grp.cdcooper =  rw_cbase.cdcooper
-       AND DECODE(grp.inpessoa, 1,
-                  gene0002.fn_mask(grp.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(grp.nrcpfcgc, '99999999999999'), 1, 8)) <>
-           DECODE(rw_cbase.inpessoa, 1,
-                  gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-       AND DECODE(cgr.inpessoa, 1,
-                  gene0002.fn_mask(cgr.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(cgr.nrcpfcgc, '99999999999999'), 1, 8)) <>
-           DECODE(rw_cbase.inpessoa, 1,
-                  gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-       AND cgr.cdcooper =  grp.cdcooper
-       AND (cgr.nrdconta =  grp.nrdconta OR cgr.nrdconta = grp.nrctasoc);
-    rw_contas_grupo_economico cr_contas_grupo_economico%ROWTYPE;
-
     -- Calendário da cooperativa selecionada
     CURSOR cr_dat(pr_cdcooper INTEGER) IS
     SELECT dat.dtmvtolt
@@ -856,7 +797,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
     rw_dat cr_dat%ROWTYPE;
 
 		-- Parâmetro do arrasto --
-    CURSOR cr_tab(pr_cdcooper IN crawepr.cdcooper%TYPE) IS
+    CURSOR cr_tab(pr_cdcooper crawepr.cdcooper%TYPE) IS
     SELECT t.dstextab
       FROM craptab t
      WHERE t.cdcooper = pr_cdcooper
@@ -893,7 +834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         -- Levanta exceção
         RAISE vr_exc_saida;
-      END IF;
+      END IF; 
 
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -927,435 +868,328 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       FETCH cr_base INTO rw_cbase;
       CLOSE cr_base;
 
-      -- Percorre contas de mesmo CPF/CNPJ da conta base
-      FOR rw_contas_do_titular
-       IN cr_contas_do_titular(rw_cbase) LOOP
+      -- Percorre as contas
+      FOR rw_contas
+       IN cr_contas(rw_cbase) LOOP
           -- Busca o grupo econômico da conta
-          pc_busca_grupo_economico(rw_contas_do_titular.cdcooper
-                                 , rw_contas_do_titular.nrdconta
-                                 , rw_contas_do_titular.nrcpfcgc
+          pc_busca_grupo_economico(rw_contas.cdcooper
+                                 , rw_contas.nrdconta
+                                 , rw_contas.nrcpfcgc
                                  , vr_numero_grupo
                                  , vr_risco_grupo);
 
 					-- Busca o risco agravado para a conta
-          vr_risco_agr := fn_busca_risco_agravado(rw_contas_do_titular.cdcooper
-                                                , rw_contas_do_titular.nrdconta
+          vr_risco_agr := fn_busca_risco_agravado(rw_contas.cdcooper
+                                                , rw_contas.nrdconta
 																								, rw_dat.dtmvtoan);
 
           -- Percorre os contratos de empréstimo ativos  da conta
           FOR rw_contratos_emprestimo
-            IN cr_contratos_emprestimo(rw_contas_do_titular.cdcooper
-                                     , rw_contas_do_titular.nrdconta) LOOP
+            IN cr_contratos_emprestimo(rw_contas.cdcooper
+                                     , rw_contas.nrdconta) LOOP
 
-								IF fn_busca_valor_divida(rw_contas_do_titular.cdcooper
-                                       , rw_contas_do_titular.nrdconta
+								IF fn_busca_valor_divida(rw_contas.cdcooper
+                                       , rw_contas.nrdconta
 																			 , rw_contratos_emprestimo.nrctremp
 																			 , rw_dat.dtmvtoan
-																			 , NULL) > vr_valor_arrasto THEN
+																			 , NULL) > vr_valor_arrasto THEN 
 
 										-- Busca o rating do contrato
-										vr_rating := fn_busca_rating(rw_contas_do_titular.cdcooper
-																							 , rw_contas_do_titular.nrdconta
+										vr_rating := fn_busca_rating(rw_contas.cdcooper
+																							 , rw_contas.nrdconta
 																							 , rw_contratos_emprestimo.nrctremp
-																							 , 3
-																							 , rw_dat.dtmvtoan);
+																							 , 3);
 
 										-- Busca a quantidade dias em atraso e o risco final do contrato
-										pc_busca_dados_diaria(rw_contas_do_titular.cdcooper
-																				, rw_contas_do_titular.nrdconta
-																				, rw_contratos_emprestimo.nrctremp
-																				, rw_dat.dtmvtoan
-																				, vr_diasatraso
-																				, vr_risco_final);
+										vr_diasatraso := fn_busca_dias_atraso_emp(rw_contas.cdcooper
+																				                    , rw_contas.nrdconta
+																			                    	, rw_contratos_emprestimo.nrctremp
+																			                    	, rw_dat.dtmvtoan);
 
 										-- Busca o risco atraso da operação
 										vr_risco_atraso := fn_calcula_risco_atraso(vr_diasatraso);
 
-										-- Adiciona registro para a conta/contrato no XML de retorno
-										pc_monta_reg_conta_xml(pr_retxml
-																				 , vr_auxconta
-																				 , vr_dscritic
-																				 , rw_contas_do_titular.nrdconta
-																				 , rw_contas_do_titular.nrcpfcgc
-																				 , rw_contratos_emprestimo.nrctremp
-																				 , rw_contratos_emprestimo.dsnivori
-																				 , vr_risco_grupo
-																				 , vr_rating
-																				 , vr_risco_atraso
-																				 , fn_traduz_risco(vr_risco_agr)
-																				 , greatest(nvl(vr_rating, 'A')
-																									, vr_risco_atraso
-																									, CASE WHEN rw_contratos_emprestimo.dsnivris <> rw_contratos_emprestimo.dsnivori AND rw_contratos_emprestimo.dsnivris = 'A'
-																											THEN rw_contratos_emprestimo.dsnivris ELSE rw_contratos_emprestimo.dsnivori END
-																									, nvl(fn_traduz_risco(vr_risco_agr), 'A'))
-																				 , rw_contas_do_titular.dsnivris
-																				 , vr_numero_grupo
-																				 , rw_contratos_emprestimo.dsnivris
-																				 , fn_traduz_risco(vr_risco_final)
-																				 , 'EMP'
-																				 , 'S');
+										vr_risco_operacao := greatest(nvl(vr_rating, 'A')
+																								, vr_risco_atraso
+																								, CASE WHEN rw_contratos_emprestimo.dsnivris <> rw_contratos_emprestimo.dsnivori AND rw_contratos_emprestimo.dsnivris = 'A'
+																								       THEN rw_contratos_emprestimo.dsnivris ELSE rw_contratos_emprestimo.dsnivori END
+																								, nvl(fn_traduz_risco(vr_risco_agr), 'A'));
 
-										vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+										vr_tab_dados_risco(vr_index_linha).nrdconta     := rw_contas.nrdconta;
+										vr_tab_dados_risco(vr_index_linha).nrcpfcgc     := rw_contas.nrcpfcgc;
+										vr_tab_dados_risco(vr_index_linha).nrctremp     := rw_contratos_emprestimo.nrctremp;
+										vr_tab_dados_risco(vr_index_linha).tiplinha     := 'EMP';
+										vr_tab_dados_risco(vr_index_linha).ris_inclusao := rw_contratos_emprestimo.dsnivori;
+										vr_tab_dados_risco(vr_index_linha).ris_rating   := vr_rating;
+										vr_tab_dados_risco(vr_index_linha).ris_atraso   := vr_risco_atraso;
+										vr_tab_dados_risco(vr_index_linha).ris_agravado := fn_traduz_risco(vr_risco_agr);
+										vr_tab_dados_risco(vr_index_linha).ris_melhora  := rw_contratos_emprestimo.dsnivris;
+										vr_tab_dados_risco(vr_index_linha).ris_operacao := vr_risco_operacao;
+										vr_tab_dados_risco(vr_index_linha).nrdgrupo     := vr_numero_grupo;
+
+										vr_chave_cpfcgc := CASE WHEN length(rw_contas.nrcpfcgc) > 11 THEN
+										                        SUBSTR(rw_contas.nrcpfcgc, 1, 8) ELSE rw_contas.nrcpfcgc END;
+
+									  IF vr_tab_riscos_cpf.exists(vr_chave_cpfcgc) THEN
+											IF vr_risco_operacao > vr_tab_riscos_cpf(vr_chave_cpfcgc) THEN
+												vr_tab_riscos_cpf(vr_chave_cpfcgc) := vr_risco_operacao;
+											END IF;
+										ELSE
+											vr_tab_riscos_cpf(vr_chave_cpfcgc) := vr_risco_operacao;
+										END IF;
+
+										IF vr_numero_grupo IS NOT NULL THEN
+											IF vr_tab_riscos_ge.exists(vr_numero_grupo) THEN
+												IF vr_tab_riscos_cpf(vr_chave_cpfcgc) > vr_tab_riscos_ge(vr_numero_grupo) THEN
+													vr_tab_riscos_ge(vr_numero_grupo) := vr_tab_riscos_cpf(vr_chave_cpfcgc);
+												END IF;
+											ELSE
+												vr_tab_riscos_ge(vr_numero_grupo) := vr_tab_riscos_cpf(vr_chave_cpfcgc);
+											END IF;
+										END IF; 										
+
+										vr_index_linha := vr_index_linha + 1;
 								END IF;
           END LOOP;
 
 					-- Percorre os contratos de limtie de desconto com risco na central
 					FOR rw_contratos_limite_desc
-						IN cr_contratos_limite_desc(rw_contas_do_titular.cdcooper
-                                      , rw_contas_do_titular.nrdconta
+						IN cr_contratos_limite_desc(rw_contas.cdcooper
+                                      , rw_contas.nrdconta
 																			, rw_dat.dtmvtoan
 																			, vr_valor_arrasto) LOOP
 
-					      vr_rating := fn_busca_rating(rw_contas_do_titular.cdcooper
-                                           , rw_contas_do_titular.nrdconta
+					      vr_rating := fn_busca_rating(rw_contas.cdcooper
+                                           , rw_contas.nrdconta
 																			     , rw_contratos_limite_desc.nrctrlim
-																					 , rw_contratos_limite_desc.cdorigem
-																					 , rw_dat.dtmvtoan);
-
+																					 , rw_contratos_limite_desc.cdorigem);
 
 								vr_risco_inclusao := 'A';
 								vr_risco_atraso := fn_calcula_risco_atraso(rw_contratos_limite_desc.qtdiaatr);
 
-								-- Adiciona registro para a conta/contrato no XML de retorno
-                pc_monta_reg_conta_xml(pr_retxml
-                                     , vr_auxconta
-                                     , vr_dscritic
-                                     , rw_contas_do_titular.nrdconta
-                                     , rw_contas_do_titular.nrcpfcgc
-                                     , rw_contratos_limite_desc.nrctrlim
-                                     , vr_risco_inclusao
-                                     , vr_risco_grupo
-                                     , vr_rating
-                                     , vr_risco_atraso
-                                     , fn_traduz_risco(vr_risco_agr)
-                                     , greatest(nvl(vr_rating, 'A')
-																							, vr_risco_inclusao
-																							, vr_risco_atraso
-																							, nvl(fn_traduz_risco(vr_risco_agr), 'A'))
-                                     , rw_contas_do_titular.dsnivris
-                                     , vr_numero_grupo
-																		 , NULL
-																		 , NULL
-																		 , rw_contratos_limite_desc.tipcontr
-																		 , 'S');
+								vr_risco_operacao := greatest(nvl(vr_rating, 'A')
+																								, vr_risco_atraso
+																								, nvl(fn_traduz_risco(vr_risco_agr), 'A'));
 
-					     vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+										vr_tab_dados_risco(vr_index_linha).nrdconta     := rw_contas.nrdconta;
+										vr_tab_dados_risco(vr_index_linha).nrcpfcgc     := rw_contas.nrcpfcgc;
+										vr_tab_dados_risco(vr_index_linha).nrctremp     := rw_contratos_limite_desc.nrctrlim;
+										vr_tab_dados_risco(vr_index_linha).tiplinha     := rw_contratos_limite_desc.tipcontr;
+										vr_tab_dados_risco(vr_index_linha).ris_inclusao := 'A';
+										vr_tab_dados_risco(vr_index_linha).ris_rating   := vr_rating;
+										vr_tab_dados_risco(vr_index_linha).ris_atraso   := vr_risco_atraso;
+										vr_tab_dados_risco(vr_index_linha).ris_agravado := fn_traduz_risco(vr_risco_agr);
+										vr_tab_dados_risco(vr_index_linha).ris_melhora  := NULL;
+										vr_tab_dados_risco(vr_index_linha).ris_operacao := vr_risco_operacao;
+										vr_tab_dados_risco(vr_index_linha).nrdgrupo     := vr_numero_grupo;
+
+										vr_chave_cpfcgc := CASE WHEN length(rw_contas.nrcpfcgc) > 11 THEN
+										                        SUBSTR(rw_contas.nrcpfcgc, 1, 8) ELSE rw_contas.nrcpfcgc END;
+
+									  IF vr_tab_riscos_cpf.exists(vr_chave_cpfcgc) THEN
+											IF vr_risco_operacao > vr_tab_riscos_cpf(vr_chave_cpfcgc) THEN
+												vr_tab_riscos_cpf(vr_chave_cpfcgc) := vr_risco_operacao;
+											END IF;
+										ELSE
+											vr_tab_riscos_cpf(vr_chave_cpfcgc) := vr_risco_operacao;
+										END IF;
+
+										IF vr_numero_grupo IS NOT NULL THEN
+											IF vr_tab_riscos_ge.exists(vr_numero_grupo) THEN
+												IF vr_tab_riscos_cpf(vr_chave_cpfcgc) > vr_tab_riscos_ge(vr_numero_grupo) THEN
+													vr_tab_riscos_ge(vr_numero_grupo) := vr_tab_riscos_cpf(vr_chave_cpfcgc);
+												END IF;
+											ELSE
+												vr_tab_riscos_ge(vr_numero_grupo) := vr_tab_riscos_cpf(vr_chave_cpfcgc);
+											END IF;
+										END IF;
+										
+							 vr_index_linha := vr_index_linha + 1;
 					END LOOP;
 
+
 					-- Processa o contrato de limite de crédito (se a conta possuir) --
-					OPEN cr_contrato_limite_credito(rw_contas_do_titular.cdcooper
-                                        , rw_contas_do_titular.nrdconta
+					OPEN cr_contrato_limite_credito(rw_contas.cdcooper
+                                        , rw_contas.nrdconta
 																				, rw_dat.dtmvtoan);
 
 					FETCH cr_contrato_limite_credito INTO rw_contrato_limite_credito;
 
 					IF cr_contrato_limite_credito%FOUND THEN
-						    vr_rating := fn_busca_rating(rw_contas_do_titular.cdcooper
-                                           , rw_contas_do_titular.nrdconta
+						    vr_rating := fn_busca_rating(rw_contas.cdcooper
+                                           , rw_contas.nrdconta
 																			     , rw_contrato_limite_credito.nrctrlim
-																					 , 1
-																					 , rw_dat.dtmvtoan);
+																					 , 1);
 
 								vr_risco_inclusao := 'A';
 
-								vr_diasatraso := fn_busca_dias_atraso_lc(rw_contas_do_titular.cdcooper
-                                                       , rw_contas_do_titular.nrdconta
-																			                 , rw_contrato_limite_credito.nrctrlim
-																			                 , rw_dat.dtmvtoan
-																											 , vr_valor_arrasto);
+							  vr_risco_atraso := 'A';
 
-							  vr_risco_atraso := fn_calcula_risco_atraso_adp(vr_diasatraso);
+								vr_risco_operacao := greatest(nvl(vr_rating, 'A')
+																								, vr_risco_atraso
+																								, nvl(fn_traduz_risco(vr_risco_agr), 'A'));
 
-					      -- Adiciona registro para a conta/contrato no XML de retorno
-                pc_monta_reg_conta_xml(pr_retxml
-                                     , vr_auxconta
-                                     , vr_dscritic
-                                     , rw_contas_do_titular.nrdconta
-                                     , rw_contas_do_titular.nrcpfcgc
-                                     , rw_contrato_limite_credito.nrctrlim
-                                     , vr_risco_inclusao
-                                     , vr_risco_grupo
-                                     , vr_rating
-                                     , vr_risco_atraso
-                                     , fn_traduz_risco(vr_risco_agr)
-                                     , greatest(nvl(vr_rating, 'A')
-																							, vr_risco_inclusao
-																							, vr_risco_atraso
-																							, nvl(fn_traduz_risco(vr_risco_agr), 'A'))
-                                     , rw_contas_do_titular.dsnivris
-                                     , vr_numero_grupo
-																		 , NULL
-																		 , NULL
-																		 , 'LIM'
-																		 , CASE WHEN fn_busca_valor_divida(rw_contas_do_titular.cdcooper
-                                                                     , rw_contas_do_titular.nrdconta
-																			                               , rw_contrato_limite_credito.nrctrlim
-																			                               , rw_dat.dtmvtoan
-																																		 , NULL) > vr_valor_arrasto
-																		          OR fn_busca_valor_divida(rw_contas_do_titular.cdcooper
-                                                                     , rw_contas_do_titular.nrdconta
-																			                               , rw_contas_do_titular.nrdconta
-																			                               , rw_dat.dtmvtoan
-																																		 , 101) > vr_valor_arrasto
-																						THEN 'S' ELSE 'N' END);
+										vr_tab_dados_risco(vr_index_linha).nrdconta     := rw_contas.nrdconta;
+										vr_tab_dados_risco(vr_index_linha).nrcpfcgc     := rw_contas.nrcpfcgc;
+										vr_tab_dados_risco(vr_index_linha).nrctremp     := rw_contrato_limite_credito.nrctrlim;
+										vr_tab_dados_risco(vr_index_linha).tiplinha     := 'LIM';
+										vr_tab_dados_risco(vr_index_linha).ris_inclusao := 'A';
+										vr_tab_dados_risco(vr_index_linha).ris_rating   := vr_rating;
+										vr_tab_dados_risco(vr_index_linha).ris_atraso   := vr_risco_atraso;
+										vr_tab_dados_risco(vr_index_linha).ris_agravado := fn_traduz_risco(vr_risco_agr);
+										vr_tab_dados_risco(vr_index_linha).ris_melhora  := NULL;
+										vr_tab_dados_risco(vr_index_linha).ris_operacao := vr_risco_operacao;
+										vr_tab_dados_risco(vr_index_linha).nrdgrupo     := vr_numero_grupo;
 
-					     vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+										-- Se deve arrastar o risco da operação
+										IF fn_busca_valor_divida(rw_contas.cdcooper
+                                           , rw_contas.nrdconta
+																			     , rw_contrato_limite_credito.nrctrlim
+																			     , rw_dat.dtmvtoan
+																					 , NULL) > vr_valor_arrasto
+										 OR fn_busca_valor_divida(rw_contas.cdcooper
+                                            , rw_contas.nrdconta
+																			      , rw_contas.nrdconta
+																			      , rw_dat.dtmvtoan
+																						, 101) > vr_valor_arrasto
+										 OR vr_rating IS NOT NULL THEN
+
+										     vr_chave_cpfcgc := CASE WHEN length(rw_contas.nrcpfcgc) > 11 THEN
+										                        SUBSTR(rw_contas.nrcpfcgc, 1, 8) ELSE rw_contas.nrcpfcgc END;
+
+									       IF vr_tab_riscos_cpf.exists(vr_chave_cpfcgc) THEN
+											     IF vr_risco_operacao > vr_tab_riscos_cpf(vr_chave_cpfcgc) THEN
+												     vr_tab_riscos_cpf(vr_chave_cpfcgc) := vr_risco_operacao;
+											     END IF;
+										     ELSE
+											     vr_tab_riscos_cpf(vr_chave_cpfcgc) := vr_risco_operacao;
+										     END IF; 
+												 
+												 IF vr_numero_grupo IS NOT NULL THEN
+														IF vr_tab_riscos_ge.exists(vr_numero_grupo) THEN
+															IF vr_tab_riscos_cpf(vr_chave_cpfcgc) > vr_tab_riscos_ge(vr_numero_grupo) THEN
+																vr_tab_riscos_ge(vr_numero_grupo) := vr_tab_riscos_cpf(vr_chave_cpfcgc);
+															END IF;
+														ELSE
+															vr_tab_riscos_ge(vr_numero_grupo) := vr_tab_riscos_cpf(vr_chave_cpfcgc);
+														END IF;
+												 END IF;
+										END IF; 
+
+							 vr_index_linha := vr_index_linha + 1;
 					ELSE
-						   vr_risco_cpf := CASE WHEN trim(rw_contas_do_titular.dsnivris) IS NULL
-							                      OR trim(rw_contas_do_titular.dsnivris) = ''
-																		THEN 'A'
-																		ELSE rw_contas_do_titular.dsnivris END;
-
-					     vr_diasatraso := fn_busca_dias_atraso_adp(rw_contas_do_titular.cdcooper
-							                                         , rw_contas_do_titular.nrdconta
+						   vr_rating := NULL;
+					     vr_diasatraso := fn_busca_dias_atraso_adp(rw_contas.cdcooper
+							                                         , rw_contas.nrdconta
 																											 , rw_dat.dtmvtoan);
 
 							 vr_risco_atraso := fn_calcula_risco_atraso_adp(vr_diasatraso);
 
-               pc_monta_reg_conta_xml(pr_retxml
-                                     , vr_auxconta
-                                     , vr_dscritic
-                                     , rw_contas_do_titular.nrdconta
-                                     , rw_contas_do_titular.nrcpfcgc
-                                     , NULL
-                                     , NULL
-                                     , vr_risco_grupo
-                                     , NULL
-                                     , vr_risco_atraso
-                                     , fn_traduz_risco(vr_risco_agr)
-                                     , greatest(vr_risco_atraso
-																		          , nvl(fn_traduz_risco(vr_risco_agr), 'A'))
-                                     , vr_risco_cpf
-                                     , vr_numero_grupo
-																		 , NULL
-																		 , NULL
-																		 , 'CTA'
-																		 , CASE WHEN fn_busca_valor_divida(rw_contas_do_titular.cdcooper
-                                                                     , rw_contas_do_titular.nrdconta
-																			                               , rw_contas_do_titular.nrdconta
-																			                               , rw_dat.dtmvtoan
-																																		 , 101) > vr_valor_arrasto
-																						THEN 'S' ELSE 'N' END);
+							 vr_risco_operacao := greatest(nvl(vr_rating, 'A')
+																								, vr_risco_atraso
+																								, nvl(fn_traduz_risco(vr_risco_agr), 'A'));
 
-                vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+										vr_tab_dados_risco(vr_index_linha).nrdconta      := rw_contas.nrdconta;
+										vr_tab_dados_risco(vr_index_linha).nrcpfcgc      := rw_contas.nrcpfcgc;
+										vr_tab_dados_risco(vr_index_linha).nrctremp      := NULL;
+										vr_tab_dados_risco(vr_index_linha).tiplinha      := 'CTA';
+										vr_tab_dados_risco(vr_index_linha).ris_inclusao  := 'A';
+										vr_tab_dados_risco(vr_index_linha).ris_rating    := vr_rating;
+										vr_tab_dados_risco(vr_index_linha).ris_atraso    := vr_risco_atraso;
+										vr_tab_dados_risco(vr_index_linha).ris_agravado  := fn_traduz_risco(vr_risco_agr);
+										vr_tab_dados_risco(vr_index_linha).ris_melhora   := NULL;
+										vr_tab_dados_risco(vr_index_linha).ris_operacao  := vr_risco_operacao;
+										vr_tab_dados_risco(vr_index_linha).nrdgrupo  := vr_numero_grupo;
+										
+										IF fn_busca_valor_divida(rw_contas.cdcooper
+                                           , rw_contas.nrdconta
+																			     , rw_contas.nrdconta
+																			     , rw_dat.dtmvtoan
+																					 , 101) > vr_valor_arrasto THEN
+
+												vr_chave_cpfcgc := CASE WHEN length(rw_contas.nrcpfcgc) > 11 THEN
+																								SUBSTR(rw_contas.nrcpfcgc, 1, 8) ELSE rw_contas.nrcpfcgc END;
+
+												IF vr_tab_riscos_cpf.exists(vr_chave_cpfcgc) THEN
+													IF vr_risco_operacao > vr_tab_riscos_cpf(vr_chave_cpfcgc) THEN
+														vr_tab_riscos_cpf(vr_chave_cpfcgc) := vr_risco_operacao;
+													END IF;
+												ELSE
+													vr_tab_riscos_cpf(vr_chave_cpfcgc) := vr_risco_operacao;
+												END IF;
+
+												IF vr_numero_grupo IS NOT NULL THEN
+													IF vr_tab_riscos_ge.exists(vr_numero_grupo) THEN
+														IF vr_tab_riscos_cpf(vr_chave_cpfcgc) > vr_tab_riscos_ge(vr_numero_grupo) THEN
+															vr_tab_riscos_ge(vr_numero_grupo) := vr_tab_riscos_cpf(vr_chave_cpfcgc);
+														END IF;
+													ELSE
+														vr_tab_riscos_ge(vr_numero_grupo) := vr_tab_riscos_cpf(vr_chave_cpfcgc);
+													END IF;
+												END IF;
+										END IF;
+
+								vr_index_linha := vr_index_linha + 1;
 					END IF;
 
 					CLOSE cr_contrato_limite_credito;
       END LOOP;
 
-      -- Percorre contas dos grupos econômicos em que o titular da conta base faz parte
-      FOR rw_contas_grupo_economico
-        IN cr_contas_grupo_economico(rw_cbase) LOOP
+			vr_auxconta := 0;
 
-				-- Busca o risco agravado para a conta
-				vr_risco_agr := fn_busca_risco_agravado(rw_contas_grupo_economico.cdcooper
-																							, rw_contas_grupo_economico.nrdconta
-																							, rw_dat.dtmvtoan);
+			-- Percorre tabela temporária de contas e monta XML de retorno
+			vr_index_linha := vr_tab_dados_risco.first;
+			WHILE vr_index_linha IS NOT NULL
+      LOOP
+						vr_chave_cpfcgc := CASE WHEN length(vr_tab_dados_risco(vr_index_linha).nrcpfcgc) > 11
+						                        THEN SUBSTR(vr_tab_dados_risco(vr_index_linha).nrcpfcgc, 1, 8)
+																		ELSE vr_tab_dados_risco(vr_index_linha).nrcpfcgc END;
 
-        -- Percorre os contratos de empréstimo ativos da conta
-        FOR rw_contratos_emprestimo
-          IN cr_contratos_emprestimo(rw_contas_grupo_economico.cdcooper
-                                   , rw_contas_grupo_economico.nrdconta) LOOP
-
-            IF fn_busca_valor_divida(rw_contas_grupo_economico.cdcooper
-                                   , rw_contas_grupo_economico.nrdconta
-																	 , rw_contratos_emprestimo.nrctremp
-																	 , rw_dat.dtmvtoan
-																	 , NULL) > vr_valor_arrasto THEN
-
-								-- Busca o rating do contrato
-								vr_rating := fn_busca_rating(rw_contas_grupo_economico.cdcooper
-																	   			 , rw_contas_grupo_economico.nrdconta
-																				   , rw_contratos_emprestimo.nrctremp
-																					 , 3
-																					 , rw_dat.dtmvtoan);
-
-								-- Busca a quantidade de dias em atraso do contato
-								pc_busca_dados_diaria(rw_contas_grupo_economico.cdcooper
-																		, rw_contas_grupo_economico.nrdconta
-																		, rw_contratos_emprestimo.nrctremp
-																		, rw_dat.dtmvtoan
-																		, vr_diasatraso
-																		, vr_risco_final);
-
-								-- Calcula o risco atraso para a operação
-								vr_risco_atraso := fn_calcula_risco_atraso(vr_diasatraso);
-
-								-- Adiciona registro para a conta no XML de retorno
-								pc_monta_reg_conta_xml(pr_retxml
-																	, vr_auxconta
-																	, vr_dscritic
-																	, rw_contas_grupo_economico.nrdconta
-																	, rw_contas_grupo_economico.nrcpfcgc
-																	, rw_contratos_emprestimo.nrctremp
-																	, rw_contratos_emprestimo.dsnivori
-																	, rw_contas_grupo_economico.dsdrisgp
-																	, vr_rating
-																	, vr_risco_atraso
-																	, fn_traduz_risco(vr_risco_agr)
-																	, greatest(nvl(vr_rating, 'A')
-																									, vr_risco_atraso
-																									, CASE WHEN rw_contratos_emprestimo.dsnivris <> rw_contratos_emprestimo.dsnivori AND rw_contratos_emprestimo.dsnivris = 'A'
-																											THEN rw_contratos_emprestimo.dsnivris ELSE rw_contratos_emprestimo.dsnivori END
-																									, nvl(fn_traduz_risco(vr_risco_agr), 'A'))
-																	, rw_contas_grupo_economico.dsnivris -- risco do CPF
-																	, rw_contas_grupo_economico.nrdgrupo
-																	, rw_contratos_emprestimo.dsnivris -- risco melhora
-																	, fn_traduz_risco(vr_risco_final)
-																	, 'EMP'
-																	, 'S');
-
-								vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+						IF vr_tab_riscos_cpf.exists(vr_chave_cpfcgc) THEN
+						     vr_risco_cpf := vr_tab_riscos_cpf(vr_chave_cpfcgc);
+						ELSE
+							   vr_risco_cpf := 'A';
 						END IF;
-          END LOOP;
 
-					-- Percorre os contratos de limtie de desconto com risco na central
-					FOR rw_contratos_limite_desc
-						IN cr_contratos_limite_desc(rw_contas_grupo_economico.cdcooper
-                                      , rw_contas_grupo_economico.nrdconta
-																			, rw_dat.dtmvtoan
-																			, vr_valor_arrasto) LOOP
+						IF vr_tab_dados_risco(vr_index_linha).nrdgrupo IS NOT NULL THEN
+							 IF vr_tab_riscos_ge.exists(vr_tab_dados_risco(vr_index_linha).nrdgrupo) THEN
+						       vr_risco_grupo := vr_tab_riscos_ge(vr_tab_dados_risco(vr_index_linha).nrdgrupo);
+							 ELSE
+								   vr_risco_grupo := vr_risco_cpf;
+							 END IF;
+						ELSE
+						   vr_risco_grupo := NULL;
+						END IF;
 
-					      vr_rating := fn_busca_rating(rw_contas_grupo_economico.cdcooper
-                                           , rw_contas_grupo_economico.nrdconta
-																			     , rw_contratos_limite_desc.nrctrlim
-																					 , rw_contratos_limite_desc.cdorigem
-																					 , rw_dat.dtmvtoan);
+						vr_risco_final := greatest(vr_risco_cpf, nvl(vr_risco_grupo, 'A'));
 
+            pc_monta_reg_conta_xml(pr_retxml
+                                 , vr_auxconta
+                                 , vr_dscritic
+                                 , vr_tab_dados_risco(vr_index_linha).nrdconta
+                                 , vr_tab_dados_risco(vr_index_linha).nrcpfcgc
+                                 , vr_tab_dados_risco(vr_index_linha).nrctremp
+                                 , vr_tab_dados_risco(vr_index_linha).ris_inclusao
+                                 , vr_risco_grupo
+                                 , vr_tab_dados_risco(vr_index_linha).ris_rating
+                                 , vr_tab_dados_risco(vr_index_linha).ris_atraso
+                                 , vr_tab_dados_risco(vr_index_linha).ris_agravado
+                                 , vr_tab_dados_risco(vr_index_linha).ris_operacao
+                                 , vr_risco_cpf
+                                 , vr_tab_dados_risco(vr_index_linha).nrdgrupo
+																 , vr_tab_dados_risco(vr_index_linha).ris_melhora
+																 , vr_risco_final
+																 , vr_tab_dados_risco(vr_index_linha).tiplinha);
 
-								vr_risco_inclusao := 'A';
-								vr_risco_atraso := fn_calcula_risco_atraso(rw_contratos_limite_desc.qtdiaatr);
-
-								-- Adiciona registro para a conta/contrato no XML de retorno
-                pc_monta_reg_conta_xml(pr_retxml
-                                     , vr_auxconta
-                                     , vr_dscritic
-                                     , rw_contas_grupo_economico.nrdconta
-                                     , rw_contas_grupo_economico.nrcpfcgc
-                                     , rw_contratos_limite_desc.nrctrlim
-                                     , vr_risco_inclusao
-                                     , rw_contas_grupo_economico.dsdrisgp
-                                     , vr_rating
-                                     , vr_risco_atraso
-                                     , fn_traduz_risco(vr_risco_agr)
-                                     , greatest(nvl(vr_rating, 'A')
-																							, vr_risco_inclusao
-																							, vr_risco_atraso
-																							, nvl(fn_traduz_risco(vr_risco_agr), 'A'))
-                                     , rw_contas_grupo_economico.dsnivris
-                                     , rw_contas_grupo_economico.nrdgrupo
-																		 , NULL
-																		 , NULL
-																		 , rw_contratos_limite_desc.tipcontr
-																		 , 'S');
-
-					     vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
-					END LOOP;
-
-					OPEN cr_contrato_limite_credito(rw_contas_grupo_economico.cdcooper
-							                          , rw_contas_grupo_economico.nrdconta
-																				, rw_dat.dtmvtoan);
-
-				  FETCH cr_contrato_limite_credito INTO rw_contrato_limite_credito;
-
-					IF cr_contrato_limite_credito%FOUND THEN
-						    vr_rating := fn_busca_rating(rw_contas_grupo_economico.cdcooper
-                                           , rw_contas_grupo_economico.nrdconta
-																			     , rw_contrato_limite_credito.nrctrlim
-																					 , 1
-																					 , rw_dat.dtmvtoan);
-
-						    vr_diasatraso := fn_busca_dias_atraso_adp(rw_contas_grupo_economico.cdcooper
-							                                          , rw_contas_grupo_economico.nrdconta
-																												, rw_dat.dtmvtoan);
-
-							  vr_risco_atraso := fn_calcula_risco_atraso_adp(vr_diasatraso);
-
-								vr_risco_inclusao := 'A';
-
-					      -- Adiciona registro para a conta/contrato no XML de retorno
-                pc_monta_reg_conta_xml(pr_retxml
-                                     , vr_auxconta
-                                     , vr_dscritic
-                                     , rw_contas_grupo_economico.nrdconta
-                                     , rw_contas_grupo_economico.nrcpfcgc
-                                     , rw_contrato_limite_credito.nrctrlim
-                                     , vr_risco_inclusao
-                                     , rw_contas_grupo_economico.dsdrisgp
-                                     , vr_rating
-                                     , vr_risco_atraso
-                                     , fn_traduz_risco(vr_risco_agr)
-                                     , greatest(nvl(vr_rating, 'A')
-																							, vr_risco_inclusao
-																							, vr_risco_atraso
-																							, nvl(fn_traduz_risco(vr_risco_agr), 'A'))
-                                     , rw_contas_grupo_economico.dsnivris
-                                     , rw_contas_grupo_economico.nrdgrupo
-																		 , NULL
-																		 , NULL
-																		 , 'LIM'
-																		 , CASE WHEN fn_busca_valor_divida(rw_contas_grupo_economico.cdcooper
-                                                                     , rw_contas_grupo_economico.nrdconta
-																			                               , rw_contrato_limite_credito.nrctrlim
-																			                               , rw_dat.dtmvtoan
-																																		 , NULL) > vr_valor_arrasto
-																		          OR fn_busca_valor_divida(rw_contas_grupo_economico.cdcooper
-                                                                     , rw_contas_grupo_economico.nrdconta
-																			                               , rw_contas_grupo_economico.nrdconta
-																			                               , rw_dat.dtmvtoan
-																																		 , 101) > vr_valor_arrasto
-																						THEN 'S' ELSE 'N' END);
-
-					     vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
-					ELSE
-						   vr_risco_cpf := CASE WHEN trim(rw_contas_grupo_economico.dsnivris) IS NULL
-							                      OR trim(rw_contas_grupo_economico.dsnivris) = ''
-																		THEN 'A'
-																		ELSE rw_contas_grupo_economico.dsnivris END;
-
-
-							 vr_diasatraso := fn_busca_dias_atraso_adp(rw_contas_grupo_economico.cdcooper
-                                                       , rw_contas_grupo_economico.nrdconta
-																			              	 , rw_dat.dtmvtoan);
-
-							 vr_risco_atraso := fn_calcula_risco_atraso_adp(vr_diasatraso);
-
-               pc_monta_reg_conta_xml(pr_retxml
-                                     , vr_auxconta
-                                     , vr_dscritic
-                                     , rw_contas_grupo_economico.nrdconta
-                                     , rw_contas_grupo_economico.nrcpfcgc
-                                     , NULL
-                                     , NULL
-                                     , rw_contas_grupo_economico.dsdrisgp
-                                     , NULL
-                                     , vr_risco_atraso
-                                     , fn_traduz_risco(vr_risco_agr)
-                                     , greatest(vr_risco_atraso
-																		          , nvl(fn_traduz_risco(vr_risco_agr), 'A'))
-																		 , vr_risco_cpf
-                                     , rw_contas_grupo_economico.nrdgrupo
-																		 , NULL
-																		 , NULL
-																		 , 'CTA'
-																		 , CASE WHEN fn_busca_valor_divida(rw_contas_grupo_economico.cdcooper
-                                                                     , rw_contas_grupo_economico.nrdconta
-																			                               , rw_contas_grupo_economico.nrdconta
-																			                               , rw_dat.dtmvtoan
-																																		 , 101) > vr_valor_arrasto
-																						THEN 'S' ELSE 'N' END);
-
-                vr_auxconta := vr_auxconta + 1;
-					END IF;
-
-					CLOSE cr_contrato_limite_credito;
+			      vr_auxconta := vr_auxconta + 1;
+            vr_index_linha := vr_tab_dados_risco.NEXT(vr_index_linha);
       END LOOP;
-
+			
       -- Busca o risco da última central de riscos (último fechamento)
-      vr_risco_ult_central := fn_busca_risco_ult_central(pr_cdcooper
-                                                       , pr_nrdconta
-                                                       , rw_dat.dtultdma
-																											 , vr_valor_arrasto);
+      vr_risco_ult_central := fn_busca_risco_ult_mensal(pr_cdcooper
+                                                      , pr_nrdconta
+                                                      , rw_dat.dtultdma
+																											, vr_valor_arrasto);
 			vr_data_risco_final := fn_busca_data_risco(pr_cdcooper
                                                , pr_nrdconta
                                                , rw_dat.dtmvtoan
