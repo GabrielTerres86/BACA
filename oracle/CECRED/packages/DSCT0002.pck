@@ -473,6 +473,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --
   --             25/01/2018 - Inclusão da Procedure "pc_busca_parametros_dsctit", referente à 
   --                          migração de Progress para Oracle. (Gustavo Sene - GFT)
+  --
+  --             08/03/2018 - Chamado 847579 - Correção da impressão de estado incorreto na impressao do contrato de limite
   -------------------------------------------------------------------------------------------------------------
   --> Buscar dados do avalista
   PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
@@ -3281,7 +3283,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --> Buscar Dados agencia
     CURSOR cr_crapage(pr_cdcooper crapage.cdcooper%TYPE,
                       pr_cdagenci crapage.cdagenci%TYPE) IS
-      SELECT age.nmcidade
+      SELECT age.nmcidade,
+	         age.cdufdcop
         FROM crapage age
        WHERE age.cdcooper = pr_cdcooper
          AND age.cdagenci = pr_cdagenci;
@@ -4022,7 +4025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     IF pr_idimpres = 1 THEN
       --> Carregar dados para impressao do contrato de limite
       pc_carrega_dados_ctrlim ( pr_nmcidade   => rw_crapage.nmcidade,
-                                pr_cdufdcop   => rw_crapcop.cdufdcop,
+                                pr_cdufdcop   => rw_crapage.cdufdcop,
                                 pr_nrctrlim   => vr_tab_dados_limite(vr_idxlimit).nrctrlim,
                                 pr_nmextcop   => rw_crapcop.nmextcop,
                                 pr_cdagenci   => rw_crapass.cdagenci,
@@ -4099,7 +4102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     ELSIF pr_idimpres = 2  THEN 
       --> Carregar dados para impressao do contrato de limite
       pc_carrega_dados_ctrlim ( pr_nmcidade   => rw_crapage.nmcidade,
-                                pr_cdufdcop   => rw_crapcop.cdufdcop,
+                                pr_cdufdcop   => rw_crapage.cdufdcop,
                                 pr_nrctrlim   => vr_tab_dados_limite(vr_idxlimit).nrctrlim,
                                 pr_nmextcop   => rw_crapcop.nmextcop,
                                 pr_cdagenci   => rw_crapass.cdagenci,

@@ -61,6 +61,10 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --
   --              14/03/2018 - Alteracao para enviar a placa do veiculo sempre em maiusculo
   --                           Alcemir Jr (Mouts) - Chamado 858848
+  --
+  --              14/03/2018 - Correcao no cursor cr_crapbpr, que estava considerando o parametro com ele 
+  --                           mesmo ao inves de comparar com o campo da tabela
+  --                           Everton Souza (Mouts) - Chamado 859015
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicação de tipo e tabela para o arquivo do GRAVAMES
@@ -5779,7 +5783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
        AND crapbpr.tpctrpro = pr_tpctrpro
        AND crapbpr.nrctrpro = pr_nrctrpro
        AND crapbpr.flgalien = 1
-       AND TRIM(UPPER(pr_dschassi)) = UPPER(pr_dschassi);
+       AND TRIM(UPPER(crapbpr.dschassi)) = TRIM(UPPER(pr_dschassi));
     rw_crapbpr cr_crapbpr%ROWTYPE;           
                
     CURSOR cr_craprto(pr_cdoperac IN craprto.cdoperac%TYPE

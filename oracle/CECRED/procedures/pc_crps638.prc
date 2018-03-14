@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 23/02/2018
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 12/03/2018
 
     Dados referente ao programa:
 
@@ -114,6 +114,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                               
                  23/02/2018 - Ajustar crrl636 para contabilizar a receita liquida da mesma forma 
                               que o 634 e 635 (Lucas Ranghetti #846567)
+
+				 12/03/2018 - Ajustar Relatorio de Despesas para contabilizar a receita liquida da
+				              mesma forma que o 634 e 635 (Everton Mouts #857158)
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -582,23 +585,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf - vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
           
           --Acumular valor tarifa sicredi por pessoa fisica
-          IF ((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)) < 0 THEN
-          
-            IF NOT vr_tab_vltrfsic_pf.exists(vr_aux_cdagenci) THEN
-              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := pr_vltrfuni * pr_qtfatura;
-            ELSE 
-              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := vr_tab_vltrfsic_pf(vr_aux_cdagenci) + (pr_vltrfuni * pr_qtfatura);
-            END IF;
-            
-          ELSE
-            
-            IF NOT vr_tab_vltrfsic_pf.exists(vr_aux_cdagenci) THEN
-              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := (pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)));
-            ELSE 
-              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := vr_tab_vltrfsic_pf(vr_aux_cdagenci) + ((pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa))));
-            END IF;
-
-          END IF;          
+          IF NOT vr_tab_vltrfsic_pf.exists(vr_aux_cdagenci) THEN
+            vr_tab_vltrfsic_pf(vr_aux_cdagenci) := (pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)));
+          ELSE 
+            vr_tab_vltrfsic_pf(vr_aux_cdagenci) := vr_tab_vltrfsic_pf(vr_aux_cdagenci) + ((pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa))));
+          END IF;
           
           -- Tratar informações para o arquivo contabil quando não for GPS 
           IF SUBSTR(pr_nmconven,1,3) <> 'GPS' THEN           
@@ -616,24 +607,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           vr_tab_rel635(vr_ind_rel63X).vlrliqpj := vr_tab_rel635(vr_ind_rel63X).vlrliqpj + (pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa);
             vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj - vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
           
-          --Acumular valor tarifa sicredi por pessoa fisica
-          IF ((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)) < 0 THEN
-          
-            IF NOT vr_tab_vltrfsic_pj.exists(vr_aux_cdagenci) THEN
-              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := pr_vltrfuni * pr_qtfatura;
-            ELSE 
-              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := vr_tab_vltrfsic_pj(vr_aux_cdagenci) + (pr_vltrfuni * pr_qtfatura);
-            END IF;
-            
-          ELSE
-            
-            IF NOT vr_tab_vltrfsic_pj.exists(vr_aux_cdagenci) THEN
-              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := (pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)));
-            ELSE 
-              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := vr_tab_vltrfsic_pj(vr_aux_cdagenci) + ((pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa))));
-            END IF;
-
-          END IF; 
+          --Acumular valor tarifa sicredi por pessoa juridica
+          IF NOT vr_tab_vltrfsic_pj.exists(vr_aux_cdagenci) THEN
+            vr_tab_vltrfsic_pj(vr_aux_cdagenci) := (pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)));
+          ELSE 
+            vr_tab_vltrfsic_pj(vr_aux_cdagenci) := vr_tab_vltrfsic_pj(vr_aux_cdagenci) + ((pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa))));
+          END IF;
           
           -- Tratar informações para o arquivo contabil quando não for GPS 
           IF SUBSTR(pr_nmconven,1,3) <> 'GPS' THEN           

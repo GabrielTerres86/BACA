@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl414_maior" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.657341500000001"/>
-	<property name="ireport.x" value="652"/>
+	<property name="ireport.x" value="13"/>
 	<property name="ireport.y" value="0"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -203,13 +203,6 @@
 	</background>
 	<columnHeader>
 		<band height="48">
-			<textField pattern="#,##0;-#,##0">
-				<reportElement uuid="48ba6ca5-a226-4cb3-9ffa-369928d72b6b" x="0" y="8" width="304" height="8"/>
-				<textElement>
-					<font fontName="Courier New" size="7"/>
-				</textElement>
-				<textFieldExpression><![CDATA["LANCAMENTOS INTEGRADOS (CHEQUES MAIORES = " + $F{vlmaichq} + "):"]]></textFieldExpression>
-			</textField>
 			<staticText>
 				<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="0" y="24" width="35" height="8"/>
 				<textElement>
@@ -294,6 +287,13 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlcompdb}]]></textFieldExpression>
 			</textField>
+			<staticText>
+				<reportElement uuid="8092d62d-a95d-4fdb-a730-620526e2a715" x="1" y="8" width="173" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[LANCAMENTOS INTEGRADOS]]></text>
+			</staticText>
 		</band>
 	</columnHeader>
 	<detail>
