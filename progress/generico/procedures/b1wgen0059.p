@@ -190,6 +190,9 @@
 				             da busca_gncdnto e da busca-gncdocp
 							 (Adriano - SD 614408).
 							 				
+                29/03/2017 - Criacao de filtro por tpprodut na busca-craplcr.
+                             (Jaison/James - PRJ298)
+							 				
                  07/06/2016 - Adicionar validacao para nao exibir o historico 
                               1019 na tela autori (Lucas Ranghetti #464211)
 
@@ -3113,6 +3116,7 @@ PROCEDURE busca-craplcr:
     DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdmodali AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_tpprodut AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-craplcr.
@@ -3195,8 +3199,8 @@ PROCEDURE busca-craplcr:
                          craplcr.cdlcremp = par_cdlcremp ELSE TRUE)   AND
                          (IF par_flgstlcr THEN 
                          craplcr.flgstlcr = par_flgstlcr ELSE TRUE)   AND
-                         craplcr.dslcremp MATCHES("*" + par_dslcremp + 
-                                                                "*")  NO-LOCK:
+                         craplcr.dslcremp MATCHES("*" + par_dslcremp + "*") AND
+                         (IF par_tpprodut <> ? THEN craplcr.tpprodut = par_tpprodut ELSE TRUE) NO-LOCK:
         
                     ASSIGN par_qtregist = par_qtregist + 1.
         
