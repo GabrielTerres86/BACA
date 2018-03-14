@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
     Sistema  : Rotinas auxiliares para busca de informacõees do negocio
     Sigla    : GENE
     Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 20/03/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 14/03/2018
 
    Dados referentes ao programa:
 
@@ -17,7 +17,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
 
    Alterações: 20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
                            (Adriano - SD 620221).
-
+							 14/03/2018 - Ajuste na pc_saldo_utiliza para considerar contas em prejuízo
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -882,7 +882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Julho/2004.                         Ultima atualizacao: 07/01/2015
+   Data    : Julho/2004.                         Ultima atualizacao: 14/03/2018
 
    Dados referentes ao programa:
 
@@ -935,9 +935,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 
                07/01/2015 - Incluido possibilidade de buscar o saldo atual (Andrino - RKAM)
 
-			   24/07/2017 - Incluido Replace de ';' para ',' na lista de contratos
+			         24/07/2017 - Incluido Replace de ';' para ',' na lista de contratos
 			                a liquidar (Marcos-Supero)
-
+							 
+							 14/03/2018 - Alteração nos cursores para considerar também contas em prejuízo
+							              Reginaldo (AMcom)
      ............................................................................. */
 
      DECLARE

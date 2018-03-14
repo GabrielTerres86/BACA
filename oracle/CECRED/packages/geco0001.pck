@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
   --  Sistema  : Rotinas genericas focando nas funcionalidades de grupos econômicos
   --  Sigla    : GECO
   --  Autor    : Petter Rafael - Supero Tecnologia
-  --  Data     : Setembro/2012.                   Ultima atualizacao: --/--/----
+  --  Data     : Setembro/2012.                   Ultima atualizacao: 03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -13,6 +13,9 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
   -- Objetivo  : Agrupar rotinas referentes as funcionalidades e administração dos grupos economicos.
   --
   -- Alteracões
+	--            Alteração nos cursores da pc_forma_grupo_economico para considerar contas 
+  --            em prejuízo mesmo que elas tenham a data de eliminação (DTELIMIN) preenchida.
+	--            Reginaldo (AMcom) - Mar/2018
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -596,6 +599,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
    Objetivo  : Controla formação de grupo economico
 
    Alteracoes: 13/09/2013 - Conversão Progress >> Oracle (PLSQL) (Petter - Supero)
+	             14/03/2018 - Ajuste para considear contas em prejuízo com data de 
+							              eliminação preenchida. (Reginaldo - AMcom)
 
   ............................................................................. */
   BEGIN
