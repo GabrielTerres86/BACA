@@ -9,6 +9,8 @@
 
 ************************************************************************/
 
+var detachedAt, detachedElem="";
+
 $(document).ready(function() {	
 	
 	estadoInicial();
@@ -794,13 +796,20 @@ function verificaInpessoa(inpessoa) {
 		if (inpessoa == 1) {
 			$("#individual","#frmTipoConta").habilitaCampo();
 			$("#conjunta_solidaria","#frmTipoConta").habilitaCampo();
-			//$("#conjunta_nao_solidaria","#frmTipoConta").habilitaCampo();
-			$("#cdmodali option[value=2]","#frmTipoConta").css('display','block');
+			//$("#conjunta_nao_solidaria","#frmTipoConta").habilitaCampo();	
+			if (detachedElem != "") { // Foi feito assim por causa do IE
+				$("#cdmodali option[value=2]","#frmTipoConta").removeAttr('disabled').show();
+				$(detachedElem).insertAfter($("#cdmodali option").eq(detachedAt-1));
+				detachedElem = "";
+			}
 		} else {
 			$("#individual","#frmTipoConta").desabilitaCampo().prop("checked",true);
 			$("#conjunta_solidaria","#frmTipoConta").desabilitaCampo().prop("checked",false);
 			//$("#conjunta_nao_solidaria","#frmTipoConta").desabilitaCampo().prop("checked",false);
-			$("#cdmodali option[value=2]","#frmTipoConta").css('display','none');
+			if (detachedElem == "") { // Foi feito assim por causa do IE
+				detachedAt = $("#cdmodali option[value=2]","#frmTipoConta").prevAll().length;
+				detachedElem = $("#cdmodali option[value=2]","#frmTipoConta").detach();
+			}
 		}
 	}
 }
