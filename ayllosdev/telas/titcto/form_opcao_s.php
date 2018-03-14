@@ -35,57 +35,58 @@
                 <option value="S" <?php echo $tpcobran == 'S' ? 'selected' : '' ?>>Cobran&ccedil;a S/ Registro</option>
             </select>
         </div>
+        <div class="saldo_contabil">
+			<label for="dsvencto">Saldo Contabil em:</label>
+			<label for="dtvencto"></label>
+			<input type="text" id="dtvencto" name="dtvencto" value="<?php echo $dtvencto ?>" />
+			<a href="#" class="botao" id="btnOk3">Ok</a>
 
-		<label for="dsvencto">Saldo Contabil em:</label>
-		<label for="dtvencto"></label>
-		<input type="text" id="dtvencto" name="dtvencto" value="<?php echo $dtvencto ?>" />
-		<a href="#" class="botao" id="btnOk3">Ok</a>
+			<br style="clear:both" /><br />
 
-		<br style="clear:both" /><br />
+			<label for="lqtdedas">Qtde.</label>
+			<label for="lvalores">Valor</label>
 
-		<label for="lqtdedas">Qtde.</label>
-		<label for="lvalores">Valor</label>
-
-		<br />
-		
-		<label for="dssldant">Saldo Anterior:</label>
-		<label for="qtsldant"></label>
-		<input type="text" id="qtsldant" name="qtsldant" value="<?php echo getByTagName($dados,'qtsldant') ?>" />
-		<label for="vlsldant"></label>
-		<input type="text" id="vlsldant" name="vlsldant" value="<?php echo getByTagName($dados,'vlsldant') ?>" />
-		
-		<br />
-		
-		<label for="dstitulo">T&iacute;tulos Recebidos:</label>
-		<label for="qttitulo"></label>
-		<input type="text" id="qttitulo" name="qttitulo" value="<?php echo getByTagName($dados,'qttitulo') ?>" />
-		<label for="vltitulo"></label>
-		<input type="text" id="vltitulo" name="vltitulo" value="<?php echo getByTagName($dados,'vltitulo') ?>" />
+			<br />
+			
+			<label for="dssldant">Saldo Anterior:</label>
+			<label for="qtsldant"></label>
+			<input type="text" id="qtsldant" name="qtsldant" value="<?php echo getByTagName($dados->tags,'qtsldant') ?>" />
+			<label for="vlsldant"></label>
+			<input type="text" id="vlsldant" name="vlsldant" value="<?php echo getByTagName($dados->tags,'vlsldant') ?>" />
+			
+			<br />
+			
+			<label for="dstitulo">T&iacute;tulos Recebidos:</label>
+			<label for="qttitulo"></label>
+			<input type="text" id="qttitulo" name="qttitulo" value="<?php echo getByTagName($dados->tags,'qttitulo') ?>" />
+			<label for="vltitulo"></label>
+			<input type="text" id="vltitulo" name="vltitulo" value="<?php echo getByTagName($dados->tags,'vltitulo') ?>" />
 
 
-		<br />
-		
-		<label for="dsvencid">Vencimentos no dia:</label>
-		<label for="qtvencid"></label>
-		<input type="text" id="qtvencid" name="qtvencid" value="<?php echo getByTagName($dados,'qtvencid') ?>" />
-		<label for="vlvencid"></label>
-		<input type="text" id="vlvencid" name="vlvencid" value="<?php echo getByTagName($dados,'vlvencid') ?>" />
+			<br />
+			
+			<label for="dsvencid">Vencimentos no dia:</label>
+			<label for="qtvencid"></label>
+			<input type="text" id="qtvencid" name="qtvencid" value="<?php echo getByTagName($dados->tags,'qtvencid') ?>" />
+			<label for="vlvencid"></label>
+			<input type="text" id="vlvencid" name="vlvencid" value="<?php echo getByTagName($dados->tags,'vlvencid') ?>" />
 
-		<br />
-		
-		<label for="dsderesg">T&iacute;tulos Resgatados:</label>
-		<label for="qtderesg"></label>
-		<input type="text" id="qtderesg" name="qtderesg" value="<?php echo getByTagName($dados,'qtderesg') ?>" />
-		<label for="vlderesg"></label>
-		<input type="text" id="vlderesg" name="vlderesg" value="<?php echo getByTagName($dados,'vlderesg') ?>" />
+			<br />
+			
+			<label for="dsderesg">T&iacute;tulos Resgatados:</label>
+			<label for="qtderesg"></label>
+			<input type="text" id="qtderesg" name="qtderesg" value="<?php echo getByTagName($dados->tags,'qtderesg') ?>" />
+			<label for="vlderesg"></label>
+			<input type="text" id="vlderesg" name="vlderesg" value="<?php echo getByTagName($dados->tags,'vlderesg') ?>" />
 
-		<br style="clear:both" /><br />
-		
-		<label for="dscredit">SALDO ATUAL:</label>
-		<label for="qtcredit"></label>
-		<input type="text" id="qtcredit" name="qtcredit" value="<?php echo getByTagName($dados,'qtcredit') ?>" />
-		<label for="vlcredit"></label>
-		<input type="text" id="vlcredit" name="vlcredit" value="<?php echo getByTagName($dados,'vlcredit') ?>" />
+			<br style="clear:both" /><br />
+			
+			<label for="dscredit">SALDO ATUAL:</label>
+			<label for="qtcredit"></label>
+			<input type="text" id="qtcredit" name="qtcredit" value="<?php echo getByTagName($dados->tags,'qtcredit') ?>" />
+			<label for="vlcredit"></label>
+			<input type="text" id="vlcredit" name="vlcredit" value="<?php echo getByTagName($dados->tags,'vlcredit') ?>" />
+		</div>
 
 	</fieldset>
 

@@ -1,11 +1,11 @@
 <? 
-/*!
+/* !
  * FONTE        : form_opcao_t.php
- * CRIAÇÃO      : Rogérius Militao - (DB1)
- * DATA CRIAÇÃO : 18/01/2012 
- * OBJETIVO     : Formulario que apresenta a opcao T da tela DESCTO
+ * CRIACAO      : Luis Fernando - (GFT)
+ * DATA CRIACAO : 14/03/2018
+ * OBJETIVO     : Formulario que apresenta a consulta da opcao T da tela TITCTO
  * --------------
- * ALTERAÇÕES   :
+ * ALTERACOES   :
  * --------------
  */
  
@@ -24,65 +24,100 @@
 ?>
 
 <form id="frmOpcao" class="formulario" onSubmit="return false;">
+    <fieldset>
+        <legend> Associado </legend>	
+        
+        <label for="nrdconta">Conta:</label>
+        <input type="text" id="nrdconta" name="nrdconta" value="<?php echo formataContaDV($nrdconta) ?>"/>
+        <a><img src="<?php echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
 
-	<?php include('form_associado.php'); ?>
+        <label for="nrcpfcgc">CPF/CNPJ:</label>
+        <input type="text" id="nrcpfcgc" name="nrcpfcgc" value="<?php echo $nrcpfcgc ?>"/>
 
+        <label for="nmprimtl">Titular:</label>
+        <input type="text" id="nmprimtl" name="nmprimtl" value="<?php echo $nmprimtl ?>" />
+    </fieldset>
 	<fieldset>
-		<legend> Documentos a Pesquisar </legend>	
+		<legend> T&iacute;tulos a Pesquisar </legend>
 		
-		<label for="cdbanchq">Banco:</label>
-		<input type="text" id="cdbanchq" name="cdbanchq" value="<?php echo $cdbanchq ?>"/>
+		<label for="tpdepesq">Situa&ccedil;&atilde;o:</label>
+        <select  id="tpdepesq" name="tpdepesq">
+            <option value="T" <?php echo $tpdepesq == 'T' ? 'selected' : '' ?>>Todos</option>
+            <option value="A" <?php echo $tpdepesq == 'A' ? 'selected' : '' ?>>Abertos</option>
+            <option value="L" <?php echo $tpdepesq == 'L' ? 'selected' : '' ?>>Liquidados</option>
+        </select>
 		
-		<label for="nrcheque">Cheque:</label>
-		<input type="text" id="nrcheque" name="nrcheque" value="<?php echo $nrcheque ?>" />
+		<label for="nrdocmto">Boleto:</label>
+		<input type="text" id="nrdocmto" name="nrdocmto" value="<?php echo $nrdocmto ?>" />
 		
-		<label for="vlcheque">Valor:</label>
-		<input type="text" id="vlrchequ" name="vlrchequ" value="<?php echo $vlcheque ?>"/>
+		<label for="vltitulo">Valor:</label>
+		<input type="text" id="vltitulo" name="vltitulo" value="<?php echo $vltitulo ?>"/>
 		
+
+        <div class="tipo_cobranca">
+            <label for="tpcobran">Tipo de Cobran&ccedil;a</label>
+            <select  id="tpcobran" name="tpcobran">
+                <option value="T" <?php echo $tpcobran == 'T' ? 'selected' : '' ?>>Todos</option>
+                <option value="R" <?php echo $tpcobran == 'R' ? 'selected' : '' ?>>Cobran&ccedil;a Registrada</option>
+                <option value="S" <?php echo $tpcobran == 'S' ? 'selected' : '' ?>>Cobran&ccedil;a S/ Registro</option>
+            </select>
+        </div>
 	</fieldset>		
 	
 	
 	<fieldset>
-	<legend> Cheques </legend>
+	<legend> Boletos </legend>
 
 	<div class="divRegistros">	
 		<table class="tituloRegistros">
 			<thead>
 				<tr>
 					<th><? echo utf8ToHtml('Liberacao'); ?></th>
-					<th><? echo utf8ToHtml('Pesquisa'); ?></th>
+					<th><? echo utf8ToHtml('PA'); ?></th>
+					<th><? echo utf8ToHtml('Bc/Cx');  ?></th>
+					<th><? echo utf8ToHtml('Lote');  ?></th>
+					<th><? echo utf8ToHtml('Vencto');  ?></th>
 					<th><? echo utf8ToHtml('Bco');  ?></th>
-					<th><? echo utf8ToHtml('Ag.');  ?></th>
-					<th><? echo utf8ToHtml('Conta');  ?></th>
-					<th><? echo utf8ToHtml('Cheque');  ?></th>
+					<th><? echo utf8ToHtml('Convenio');  ?></th>
+					<th><? echo utf8ToHtml('Tipo Cobr.');  ?></th>
+					<th><? echo utf8ToHtml('Boleto');  ?></th>
 					<th><? echo utf8ToHtml('Valor');  ?></th>
 				</tr>
 			</thead>
 			<tbody>
 				<?
-				foreach ( $registro as $r ) { 
+				foreach ( $registros as $r ) { 
 				?>
 					<tr>
-						<td><span><? echo getByTagName($r->tags,'dtlibera'); ?></span>
-							      <? echo getByTagName($r->tags,'dtlibera'); ?>
+						<td><span><? echo getByTagName($r->tags,'dtlibbdt'); ?></span>
+							      <? echo getByTagName($r->tags,'dtlibbdt'); ?>
 						</td>
-						<td><span><? echo getByTagName($r->tags,'pesquisa'); ?></span>
-							      <? echo getByTagName($r->tags,'pesquisa'); ?>
+						<td><span><? echo getByTagName($r->tags,'cdagenci'); ?></span>
+							      <? echo getByTagName($r->tags,'cdagenci'); ?>
 						</td>
-						<td><span><? echo getByTagName($r->tags,'cdbanchq'); ?></span>
-							      <? echo getByTagName($r->tags,'cdbanchq'); ?>
+						<td><span><? echo getByTagName($r->tags,'cdbccxlt'); ?></span>
+							      <? echo getByTagName($r->tags,'cdbccxlt'); ?>
 						</td>
-						<td><span><? echo getByTagName($r->tags,'cdagechq'); ?></span>
-							      <? echo getByTagName($r->tags,'cdagechq'); ?>
+						<td><span><? echo getByTagName($r->tags,'nrdolote'); ?></span>
+							      <? echo getByTagName($r->tags,'nrdolote'); ?>
 						</td>
-						<td><span><? echo getByTagName($r->tags,'nrctachq'); ?></span>
-							      <? echo getByTagName($r->tags,'nrctachq'); ?>
+						<td><span><? echo getByTagName($r->tags,'dtvencto'); ?></span>
+							      <? echo getByTagName($r->tags,'dtvencto'); ?>
 						</td>
-						<td><span><? echo getByTagName($r->tags,'nrcheque'); ?></span>
-							      <? echo getByTagName($r->tags,'nrcheque'); ?>
+						<td><span><? echo getByTagName($r->tags,'cdbandoc'); ?></span>
+							      <? echo getByTagName($r->tags,'cdbandoc'); ?>
 						</td>
-						<td><span><? echo getByTagName($r->tags,'vlcheque'); ?></span>
-							      <? echo formataMoeda(getByTagName($r->tags,'vlcheque')); ?>
+						<td><span><? echo getByTagName($r->tags,'nrcnvcob'); ?></span>
+							      <? echo getByTagName($r->tags,'nrcnvcob'); ?>
+						</td>
+						<td><span><? echo getByTagName($r->tags,'tpcobran'); ?></span>
+							      <? echo getByTagName($r->tags,'tpcobran'); ?>
+						</td>
+						<td><span><? echo getByTagName($r->tags,'nrdocmto'); ?></span>
+							      <? echo getByTagName($r->tags,'nrdocmto'); ?>
+						</td>
+						<td><span><? echo getByTagName($r->tags,'vltitulo'); ?></span>
+							      <? echo formataMoeda(getByTagName($r->tags,'vltitulo')); ?>
 						</td>
 					</tr>
 			<? } ?>	

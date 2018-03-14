@@ -31,20 +31,12 @@
 	<fieldset>
 		<legend> <? echo utf8ToHtml('Relatório'); ?> </legend>
 
-		<label for="dtiniper"><? echo utf8ToHtml('Data Digitação De:'); ?></label>
-		<input type="text" id="dtiniper" name="dtiniper" value="<?php echo $dtiniper ?>" />
-
-		<label for="dtfimper"><? echo utf8ToHtml('Até:'); ?></label>
-		<input type="text" id="dtfimper" name="dtfimper" value="<?php echo $dtfimper ?>" />
+		<label for="dtvencto"><? echo utf8ToHtml('Listar os lotes do dia:'); ?></label>
+		<input type="text" id="dtvencto" name="dtvencto" value="<?php echo $dtvencto ?>" />
 
 		<label for="cdagenci">PA:</label>
 		<input type="text" id="cdagenci" name="cdagenci" value="<?php echo $cdagenci ?>" />
 
-		<label for="nrdconta">Conta:</label>
-		<input type="text" id="nrdconta" name="nrdconta" value="<?php echo $nrdconta ?>" />
-
-		<label for="nrborder"><? echo utf8ToHtml('Borderô:'); ?></label>
-		<input type="text" id="nrborder" name="nrborder" value="<?php echo $nrborder ?>" />
 	</fieldset>
 
 </form>

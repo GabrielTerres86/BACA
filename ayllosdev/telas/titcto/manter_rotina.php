@@ -30,26 +30,12 @@ $cdagechq = (isset($_POST['cdagechq'])) ? $_POST['cdagechq'] : 0;
 $nrctachq = (isset($_POST['nrctachq'])) ? $_POST['nrctachq'] : 0;
 $nrcheque = (isset($_POST['nrcheque'])) ? $_POST['nrcheque'] : 0;
 
-if ($operacao == 'VC') {
-    $nrcpfcgc = (isset($_POST['nrcpfcgc'])) ? $_POST['nrcpfcgc'] : 0;
-    $nmcheque = (isset($_POST['nmcheque'])) ? $_POST['nmcheque'] : 0;
-} else if ($operacao == 'AC') {
-    $auxnrcpf = (isset($_POST['nrcpfcgc'])) ? $_POST['nrcpfcgc'] : 0;
-    $auxnmchq = (isset($_POST['nmcheque'])) ? $_POST['nmcheque'] : 0;
-    $nrcpfcgc = (isset($_POST['auxnrcpf'])) ? $_POST['auxnrcpf'] : 0;
-    $nmcheque = (isset($_POST['auxnmchq'])) ? $_POST['auxnmchq'] : 0;
-}
-
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
     exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
 }
 
 switch ($operacao) {
     case 'BA': $procedure = 'busca_informacoes_associado';
-        break;
-    case 'VC': $procedure = 'valida_cheques_descontados';
-        break;
-    case 'AC': $procedure = 'alterar_cheques_descontados';
         break;
 }
 
@@ -106,10 +92,5 @@ if ($operacao == 'BA') {
     $associado = $xmlObjeto->roottag->tags[0]->tags[0]->tags; // dados associado
     echo "cNmprimtl.val('" . getByTagName($associado, 'nmprimtl') . "');";
     echo "controlaAssociado();";
-} else if ($operacao == 'VC') {
-    echo "hideMsgAguardo();";
-    echo "showConfirmacao('Confirmar alteracao?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina(\'AC\');','estadoInicial();','sim.gif','nao.gif');";
-} else if ($operacao == 'AC') {
-    echo "estadoInicial();";
 }
 ?>
