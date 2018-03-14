@@ -172,7 +172,7 @@
 	class="botao"
 	id="btnrenovacao"
 	name="btnrenovacao">
-		Renova&ccedil;&atilde;o
+		Renovar
 	</a>
 </div>
 <script type="text/javascript">
