@@ -4180,6 +4180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                              ,pr_vlpraven => pr_vlpraven
                                              ,pr_vlmtapar => pr_vlmtapar
                                              ,pr_vlmrapar => pr_vlmrapar
+                                             ,pr_vliofcpl => pr_vliofcpl
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);
         -- Se houve erro
@@ -15728,8 +15729,147 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       pr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_imoveis_epr --> ' || SQLERRM;
   END pc_valida_imoveis_epr;
   
+  PROCEDURE pc_calcula_iof_epr_web (pr_cdcooper        IN crapepr.cdcooper%TYPE --> Cooperativa conectada
+                                  ,pr_nrdconta        IN crapepr.nrdconta%TYPE --> Conta do associado
+                                  ,pr_nrctremp  IN crapepr.nrctremp%TYPE DEFAULT null
+                                  ,pr_dtmvtolt        IN VARCHAR2
+                                  ,pr_inpessoa        IN crapass.inpessoa%TYPE
+                                  ,pr_cdlcremp        IN crapepr.cdlcremp%TYPE
+                                  ,pr_qtpreemp        IN crapepr.qtpreemp%TYPE
+                                  ,pr_vlpreemp        IN crapepr.vlpreemp%TYPE
+                                  ,pr_vlemprst        IN crapepr.vlemprst%TYPE
+                                  ,pr_dtdpagto        IN VARCHAR2
+                                  ,pr_dtlibera        IN VARCHAR2
+                                  ,pr_tpemprst        IN crawepr.tpemprst%TYPE
+                                  ,pr_dtcarenc        IN VARCHAR2
+                                  ,pr_idcarencia      IN crawepr.idcarenc%TYPE
+                                  ,pr_dscatbem        IN VARCHAR2 DEFAULT NULL            -- Bens em garantia (separados por "|")
+                                  ,pr_idfiniof        IN crapepr.idfiniof%TYPE DEFAULT 1  -- Indicador se financia IOF e tarifa
+                                  ,pr_dsctrliq        IN VARCHAR2 DEFAULT NULL
+                                  ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                  ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    -- ........................................................................
+    --
+    --  Programa : pc_calcula_iof_epr_web          
+    --  Sistema  : Cred
+    --  Sigla    : EMPR0001
+    --  Autor    : Diogo Carlassara (MoutS)
+    --  Data     : 19/01/2015.                      Ultima atualizacao: -
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : calcular valor do iof - chamada pela web
+    --
+    --.............................................................................*/
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      vr_valoriof NUMBER;
+      vr_vliofpri NUMBER;
+      vr_vliofadi NUMBER;
+      vr_flgimune PLS_INTEGER;
+      vr_dtmvtolt crapdat.dtmvtolt%TYPE;
+      vr_dtdpagto crapepr.dtdpagto%TYPE;
+      vr_dtlibera crawepr.dtlibera%TYPE;
+      vr_dtcarenc crawepr.dtcarenc%TYPE;
+      vr_qtdias_carencia  pls_integer;
+      VR_NRDROWID ROWID;                                   
+  BEGIN 
+    
+      vr_dtmvtolt := TO_DATE(pr_dtmvtolt, 'DD/MM/YYYY');
+      vr_dtdpagto := TO_DATE(pr_dtdpagto, 'DD/MM/YYYY');
+      vr_dtlibera := TO_DATE(pr_dtlibera, 'DD/MM/YYYY');
+      vr_dtcarenc := TO_DATE(pr_dtcarenc, 'DD/MM/YYYY');      
+      
+      -- Busca quantidade de dias da carencia
+      EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => pr_idcarencia
+                                         ,pr_qtddias    => vr_qtdias_carencia
+                                         ,pr_cdcritic   => vr_cdcritic
+                                         ,pr_dscritic   => vr_dscritic);
+      -- Se retornou erro
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+     EMPR0001.pc_calcula_iof_epr (pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrctremp => pr_nrctremp
+                                 ,pr_dtmvtolt => vr_dtmvtolt
+                                 ,pr_inpessoa => pr_inpessoa
+                                 ,pr_cdlcremp => pr_cdlcremp                                         
+                                 ,pr_qtpreemp => pr_qtpreemp
+                                 ,pr_vlpreemp => pr_vlpreemp
+                                 ,pr_vlemprst => pr_vlemprst
+                                 ,pr_dtdpagto => vr_dtdpagto
+                                 ,pr_dtlibera => vr_dtlibera
+                                 ,pr_tpemprst => pr_tpemprst
+                                 ,pr_dtcarenc => vr_dtcarenc
+                                 ,pr_qtdias_carencia => vr_qtdias_carencia
+                                 ,pr_valoriof => vr_valoriof
+                                 ,pr_dscatbem => pr_dscatbem
+                                 ,pr_idfiniof => pr_idfiniof
+                                 ,pr_dsctrliq => pr_dsctrliq
+                                 ,pr_vliofpri => vr_vliofpri
+                                 ,pr_vliofadi => vr_vliofadi
+                                 ,pr_flgimune => vr_flgimune
+                                 ,pr_dscritic => vr_dscritic);
+      
+        -- Criar cabeçalho do XML
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+        -- Leitura da tabela temporaria para retornar XML para a WEB
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdcooper', pr_tag_cont => TO_CHAR(pr_cdcooper), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'nrdconta', pr_tag_cont => TO_CHAR(pr_nrdconta), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'nrctremp', pr_tag_cont => TO_CHAR(pr_nrctremp), pr_des_erro => vr_dscritic);        
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'inpessoa', pr_tag_cont => TO_CHAR(pr_inpessoa), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdlcremp', pr_tag_cont => TO_CHAR(pr_cdlcremp), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtpreemp', pr_tag_cont => TO_CHAR(pr_qtpreemp), pr_des_erro => vr_dscritic);
+        if nvl(vr_gb_vlrpreemp,0) > 0 then 
+           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlpreemp', pr_tag_cont => TO_CHAR(vr_gb_vlrpreemp, 'fm999g999g990d00'), pr_des_erro => vr_dscritic);
+        else
+           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlpreemp', pr_tag_cont => TO_CHAR(nvl(pr_vlpreemp,0), 'fm999g999g990d00'), pr_des_erro => vr_dscritic);
+        end if;
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'tpemprst', pr_tag_cont => TO_CHAR(pr_tpemprst), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdias_carencia', pr_tag_cont => TO_CHAR(vr_qtdias_carencia), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'valoriof', pr_tag_cont => TO_CHAR(vr_valoriof,'fm999g999g990d00'), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dsctrliq', pr_tag_cont => TO_CHAR(pr_dsctrliq), pr_des_erro => vr_dscritic);
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || SQLERRM || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em EMPR0001.pc_calcula_iof_epr_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_calcula_iof_epr_web;
+  
   PROCEDURE pc_calcula_iof_epr(pr_cdcooper        IN crapepr.cdcooper%TYPE --> Cooperativa conectada
                               ,pr_nrdconta        IN crapepr.nrdconta%TYPE --> Conta do associado
+                              ,pr_nrctremp  IN crapepr.nrctremp%TYPE DEFAULT null
                               ,pr_dtmvtolt        IN crapdat.dtmvtolt%TYPE
                               ,pr_inpessoa        IN crapass.inpessoa%TYPE
                               ,pr_cdlcremp        IN crapepr.cdlcremp%TYPE
@@ -16555,6 +16695,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          pr_valoriof := pr_valoriof + vr_vliofaditt;
       end if;
       
+    /*  if nvl(vr_vllanmto,0) > 0 
+      and vr_retiof in (1,3) then
+         if pr_valoriof >= vr_vllanmto then
+            pr_valoriof := pr_valoriof - vr_vllanmto;
+         else 
+            pr_valoriof := 0;
+         end if;
+      end if;*/
+
+      if nvl(pr_idfiniof,0) = 1 then -- refazer o calculo de IOF com base no financiamento Tarifa e IOF
+         --ARRED(vlr base ante/((vlr base ante - vliof apurado)/vl base ante);2)
       if nvl(vr_vllanmto,0) > 0 
       and vr_retiof in (1,3) then
          if pr_valoriof >= vr_vllanmto then
@@ -16564,8 +16715,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          end if;
       end if;
 
-      if nvl(pr_idfiniof,0) = 1 then -- refazer o calculo de IOF com base no financiamento Tarifa e IOF
-         --ARRED(vlr base ante/((vlr base ante - vliof apurado)/vl base ante);2)
          if nvl(pr_flgimune ,0) = 1 then
            pr_valoriof := nvl(vr_vliofpritt,0) + nvl(vr_vliofaditt,0);
          end if;
