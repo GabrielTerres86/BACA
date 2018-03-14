@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 21/12/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 01/03/2018
 
   Dados referentes ao programa:
 
@@ -156,9 +156,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
 
               23/10/2017 - Tratamento para lancamentos duplicados também para os consorcios 
                            (Lucas Ranghetti #739738)
+                           
               21/12/2017 - Tratamento para verificar o ultimo dia util do ano,
                            caso for o ultimo vamos pegar o proximo dia util 
                            (Lucas Ranghetti #809954)
+                           
+              01/03/2018 - Incluir tratamento para validar autorizacao somente para novas
+                           inclusoes de debitos(Lucas Ranghetti #849505)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -580,6 +584,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
         pr_cdcritic := 484;
       END IF;
     ELSE 
+      
+      -- Validar autorizacao somente se for uma inclusao
+      IF SUBSTR(vr_dslinharq,158,1) = 0 THEN
       -- Busca autorização de debito (tratar em bloco para caso invalid number considerar 484)
       BEGIN 
         rw_crapatr := null;
@@ -600,6 +607,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
           -- Contrato não encontrado
           pr_cdcritic := 484;
       END;  
+      END IF;
       -- validar valor zerado, se for zerado vamos criticar com a critica 
       -- 502 - Conta nao emitida.
       IF vr_vllanmto = 0 THEN
