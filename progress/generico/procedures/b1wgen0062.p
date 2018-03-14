@@ -2,7 +2,7 @@
 
     Programa: b1wgen0062.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 11/10/2017
+    Data    : Marco/2010                   Ultima atualizacao: 14/03/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSAO FICHA CADASTRAL
 
@@ -76,6 +76,11 @@
                 09/10/2017 - Projeto 410 - RF 52/62 - Adicionado indicador de 
                              impressão da declaração do simples nacional na 
                              crapjur (Diogo - Mouts).
+							 
+				14/03/2018 - Ajuste realizado para que a chamada da procedure 
+							 busca_org_expedidor não esteja com mais inputs que
+						     outputs. (Kelvin)
+				 
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1432,9 +1437,9 @@ PROCEDURE Busca_PF:
                      ASSIGN tt-fcad-respl.dsorgemi = "".
                      RUN busca_org_expedidor IN h-b1wgen0052b 
                                        (INPUT crabttl.idorgexp,
-                                        INPUT tt-fcad-respl.dsorgemi,
-                                        INPUT aux_cdcritic, 
-                                        INPUT aux_dscritic).
+                                        OUTPUT tt-fcad-respl.dsorgemi,
+                                        OUTPUT aux_cdcritic, 
+                                        OUTPUT aux_dscritic).
 
                      DELETE PROCEDURE h-b1wgen0052b.   
 
@@ -1515,9 +1520,9 @@ PROCEDURE Busca_PF:
                   ASSIGN tt-fcad-respl.dsorgemi = "".
                   RUN busca_org_expedidor IN h-b1wgen0052b 
                                      (INPUT crapcrl.idorgexp,
-                                      INPUT tt-fcad-respl.dsorgemi,
-                                      INPUT aux_cdcritic, 
-                                      INPUT aux_dscritic).
+                                      OUTPUT tt-fcad-respl.dsorgemi,
+                                      OUTPUT aux_cdcritic, 
+                                      OUTPUT aux_dscritic).
 
                   DELETE PROCEDURE h-b1wgen0052b.   
 
@@ -1986,9 +1991,9 @@ PROCEDURE Busca_PJ:
                         ASSIGN tt-fcad-respl.dsorgemi = "".
                         RUN busca_org_expedidor IN h-b1wgen0052b 
                                            (INPUT cracttl.idorgexp,
-                                            INPUT tt-fcad-respl.dsorgemi,
-                                            INPUT aux_cdcritic, 
-                                            INPUT aux_dscritic).
+                                            OUTPUT tt-fcad-respl.dsorgemi,
+                                            OUTPUT aux_cdcritic, 
+                                            OUTPUT aux_dscritic).
 
                         DELETE PROCEDURE h-b1wgen0052b.   
 
