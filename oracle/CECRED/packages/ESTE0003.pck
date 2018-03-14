@@ -12,8 +12,13 @@ create or replace package cecred.ESTE0003 is
       Frequencia: Sempre que solicitado
       Objetivo  : BO - Rotinas para envio de informacoes para a Esteira de Credito
 
-      Alteracoes: 18/02/2018 Criação (Carlos Lindon (GFT))
+      Alteracoes: 
+         18/02/2018 Criação (Carlos Lindon (GFT))
+
                   18/02/2018 Adicionado pc_enviar_proposta_esteira (Paulo Penteado (GFT)) 
+
+         14/03/2018 Adicionado os procedimentos pc_verifica_contigenc_esteira e 
+                    pc_verifica_contigenc_motor no cabecalho para serem expostos
 
 .................................................................................................
  Declaração das Procedure para incluir  proposta ao motor
@@ -29,8 +34,23 @@ vr_dscritic varchar2(4000);
 
 
 --> Funcao para formatar data hora conforme padrao da IBRATAN
-function fn_datatempo_ibra (pr_data in date
+function fn_DataTempo_ibra (pr_data in date
                            ) return varchar2;
+
+
+PROCEDURE pc_verifica_contigenc_esteira(pr_cdcooper in crapcop.cdcooper%type
+                                       ,pr_flctgest out boolean
+                                       ,pr_dsmensag out varchar2
+                                       ,pr_dscritic out varchar2
+                                       );
+
+
+PROCEDURE pc_verifica_contigenc_motor(pr_cdcooper in crapcop.cdcooper%type
+                                     ,pr_flctgmot out boolean
+                                     ,pr_dsmensag out varchar2
+                                     ,pr_dscritic out varchar2
+                                     );
+
 
 procedure pc_enviar_proposta_esteira(pr_cdcooper in  craplim.cdcooper%type --> Codigo da cooperativa
                                     ,pr_cdagenci in  crapage.cdagenci%type --> Codigo da agencia
@@ -471,7 +491,7 @@ BEGIN
    end   if;
    close cr_craplim;
    
-   tela_atenda_limdesctit.pc_validar_data_proposta(pr_cdcooper => pr_cdcooper
+   tela_atenda_dscto_tit.pc_validar_data_proposta(pr_cdcooper => pr_cdcooper
                                                   ,pr_nrdconta => rw_craplim.nrdconta
                                                   ,pr_nrctrlim => pr_nrctrlim
                                                   ,pr_tpctrlim => pr_tpctrlim

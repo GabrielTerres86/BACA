@@ -137,7 +137,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
 
     Objetivo  : Centralizar rotinas relacionadas a tela Limite Desconto de Títulos dentro da ATENDA
 
-    Alteracoes: 01/03/2018 - Criação: Paulo Penteado (GFT) / Gustavo Sene (GFT)
+    Alteracoes: 
+      01/03/2018 - Criação: Paulo Penteado (GFT) / Gustavo Sene (GFT)
+      13/03/2018 - Alterado alerta de confirmação quando ocorre contingencia. Teremos que mostrar o alerta somente se 
+                   tanto a esteira quanto o motor estiverem em contingencia (Paulo Penteado (GFT) KE00726701-276)
 
   ---------------------------------------------------------------------------------------------------------------------*/
 
@@ -589,26 +592,23 @@ PROCEDURE pc_confirmar_novo_limite_web(pr_nrdconta  IN crapass.nrdconta%TYPE -->
                                       ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                       ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
 BEGIN
+  /*----------------------------------------------------------------------------------
+   Procedure: pc_confirmar_novo_limite_web
+   Sistema  : CRED
+   Sigla    : TELA_ATENDA_DSCTO_TIT
+   Autor    : Gustavo Guedes de Sene - Company: GFT
+   Data     : Criação: 22/02/2018    Ultima atualização: 22/02/2018
 
-  ----------------------------------------------------------------------------------
-  --
-  -- Procedure: pc_confirmar_novo_limite_web
-  -- Sistema  : CRED
-  -- Sigla    : TELA_ATENDA_DSCTO_TIT
-  -- Autor    : Gustavo Guedes de Sene - Company: GFT
-  -- Data     : Criação: 22/02/2018    Ultima atualização: 22/02/2018
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia:
-  -- Objetivo  :
-  --
-  --
-  -- Histórico de Alterações:
-  --  22/02/2018 - Versão inicial
-  --
-  --
-  ----------------------------------------------------------------------------------
+   Dados referentes ao programa:
+  
+   Frequencia:
+   Objetivo  :
+
+   Histórico de Alterações:
+    22/02/2018 - Versão inicial
+    13/03/2018 - Alterado alerta de confirmação quando ocorre contingencia. Teremos que mostrar o alerta
+                 somente se tanto a esteira quanto o motor estiverem em contingencia (Paulo Penteado (GFT))
+  ----------------------------------------------------------------------------------*/
 
   DECLARE
 
@@ -667,6 +667,8 @@ BEGIN
     vr_vlutilizado  VARCHAR2(100) := '';
     vr_vlexcedido   VARCHAR2(100) := '';
     vr_em_contingencia_ibratan boolean;
+    vr_flctgest     boolean;
+    vr_flctgmot     boolean;
 
   BEGIN
 
@@ -849,12 +851,21 @@ BEGIN
             END IF;
         END IF;
 
-        --  Se está em Contingência...
-        IF  vr_em_contingencia_ibratan THEN
-            /* 07/03/2018 Paulo Penteado (GFT): Segundo Amanda não precisa mais emitir essa mensagem na confirmação. Pois as situações de retorna das analises já deixa isso claro.
-            vr_mensagem_05 := 'O processo de análise IBRATAN está em Contingência. Deseja prosseguir com o processo de Confirmação do Novo Limite mesmo assim?';*/
-            vr_mensagem_05 := null;
-        END IF;
+        --  Verificar se o tanto o motor quanto a esteria estão em contingencia para mostrar a mensagem de alerta, sou seja, mostrar
+        --  mensagem de alerta somente se o motor E a esteira estiverem em contingencia.
+        este0003.pc_verifica_contigenc_motor(pr_cdcooper => vr_cdcooper
+                                            ,pr_flctgmot => vr_flctgmot
+                                            ,pr_dsmensag => vr_mensagem_05 -- somente representativo para out
+                                            ,pr_dscritic => vr_dscritic);
+
+        este0003.pc_verifica_contigenc_esteira(pr_cdcooper => vr_cdcooper
+                                              ,pr_flctgest => vr_flctgest
+                                              ,pr_dsmensag => vr_mensagem_05 -- somente representativo para out
+                                              ,pr_dscritic => vr_dscritic);
+
+        if  vr_flctgest AND vr_flctgmot then
+            vr_mensagem_05 := 'Atenção: Para confirmar é necessário ter efetuado a análise manual do limite! Confirma análise do limite?';
+        end if;
 
         --  Se houver alguma Mensagem/Inconsistência, emitir mensagem para o usuario
         IF  vr_mensagem_01 IS NOT NULL OR vr_mensagem_02 IS NOT NULL OR vr_mensagem_03 IS NOT NULL OR
@@ -1149,6 +1160,7 @@ BEGIN
       BEGIN
         UPDATE craplim
            SET insitlim = 2 -- Situação do Limite = ATIVO
+              ,insitest = 3
               ,insitapr = nvl(pr_insitapr, insitapr) -- Decisão (Depende do Retorno da Análise...)
               ,qtrenova = 0
               ,dtinivig = pr_tab_crapdat.dtmvtolt
@@ -1453,6 +1465,7 @@ BEGIN
       BEGIN
         UPDATE craplim
            SET insitlim = 7 -- Situação do Limite  = REJEITADO
+              ,insitest = 3
               ,insitapr = 6 -- Decisão             = REJEITADO CONTINGENCIA
          WHERE cdcooper = vr_cdcooper
            AND nrdconta = pr_nrdconta
@@ -1471,6 +1484,7 @@ BEGIN
       BEGIN
         UPDATE craplim
            SET insitlim = 7 -- Situação do Limite  = REJEITADO
+              ,insitest = 3
          WHERE cdcooper = vr_cdcooper
            AND nrdconta = pr_nrdconta
            AND nrctrlim = pr_nrctrlim
