@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 20/12/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 07/03/2018
     
    Dados referentes ao programa:
    
@@ -212,6 +212,9 @@
               01/02/2018 - Ajustar na exclui_suspensao_autorizacao para sempre que possivel, utilizar a chave unica da
                            tabela crapatr para encontrar a autorizacao para exclusao da suspensao. Quando isso nao for
                            possivel, continuara buscando pelo cdempcon e cdsegmto (Anderson P285).
+                           
+              07/03/2018 - Alterar validacao do digito do samae Pomerode para validar com o modulo 11
+                           (Lucas Ranghetti #858121).
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1301,7 +1304,8 @@ PROCEDURE valida-dados:
                                      
                     END.
                 ELSE       
-                IF  par_cdhistor = 635 THEN /* SAMAE GASPAR */
+                IF  par_cdhistor = 635 OR /* SAMAE GASPAR   */
+                    par_cdhistor = 619  THEN  /* SAMAE Pomerode */
                     DO:
                          IF  par_cdrefere > 999999 THEN
                              DO:
@@ -1328,7 +1332,6 @@ PROCEDURE valida-dados:
                     END.
                 ELSE
                 IF  par_cdhistor = 616  OR   /* SAMAE Brusque */
-                    par_cdhistor = 619  OR   /* SAMAE Pomerode */
                     par_cdhistor = 900  THEN /* SAMAE Rio Negrinho */
                     DO:
                         IF   par_cdrefere > 999999 THEN
@@ -2555,7 +2558,7 @@ PROCEDURE busca_autorizacoes_cadastradas:
                           (par_cddopcao <> "S"))                        NO-LOCK:
                             
         ASSIGN aux_nmempcon = ""
-               aux_inaltera = FALSE               
+               aux_inaltera = FALSE
                aux_cdempcon = 0
                aux_cdsegmto = 0.
         
@@ -2595,8 +2598,8 @@ PROCEDURE busca_autorizacoes_cadastradas:
                 ELSE 
                     ASSIGN aux_cdempcon = crapcon.cdempcon
                            aux_cdsegmto = crapcon.cdsegmto.                                                    
-            END.            
-            
+            END.   
+
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
             ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
                    aux_nmempcon = REPLACE(aux_nmempcon, "FEBRABAN", "").
@@ -3799,7 +3802,7 @@ PROCEDURE exclui_suspensao_autorizacao:
 
         IF par_cdhistor > 0 THEN
            /* Se vier o cdhistor, vamos dar preferencia a ele pois eh a chave unica (Novo IB) */
-           FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
+        FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                               crapatr.nrdconta = par_nrdconta AND
                               crapatr.cdhistor = par_cdhistor AND
                               crapatr.cdrefere = par_cdrefere
@@ -3807,11 +3810,11 @@ PROCEDURE exclui_suspensao_autorizacao:
         ELSE
            /* Se nao veio, vamos continuar a testar a busca atraves do cdempcon e cdsegmto (Antigo IB) */
            FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
-                              crapatr.nrdconta = par_nrdconta AND
-                              crapatr.cdsegmto = par_cdsegmto AND
-                              crapatr.cdempcon = par_cdempcon AND
-                              crapatr.cdrefere = par_cdrefere
-                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                           crapatr.nrdconta = par_nrdconta AND
+                           crapatr.cdsegmto = par_cdsegmto AND
+                           crapatr.cdempcon = par_cdempcon AND
+                           crapatr.cdrefere = par_cdrefere
+                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
         IF NOT AVAIL crapatr THEN
         DO:
@@ -4076,7 +4079,7 @@ PROCEDURE busca_lancamentos:
                         
                 END.
             END.
-            
+
         CREATE tt-lancamentos.
         ASSIGN tt-lancamentos.dtmvtolt = craplau.dtmvtopg
                tt-lancamentos.nmextcon = IF (crapatr.cdhistor <> 1019) THEN gnconve.nmempres ELSE crapscn.dsnomcnv 
