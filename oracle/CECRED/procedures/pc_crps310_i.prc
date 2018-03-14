@@ -279,9 +279,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  01/02/2018 - Utilizar a data do movimento para atualização da data do risco - Daniel(AMcom)
 
-         15/02/2018 - Nova rotina para Arrasto por CPF/CNPJ (Guilherme/AMcom)
+                 15/02/2018 - Nova rotina para Arrasto por CPF/CNPJ (Guilherme/AMcom)
 
-         20/02/2018 - Incluída procedure pc_busca_dias_acelerados, que retorna os dias da faixa inicial do contrato anterior para composição dos dias de atraso. - Daniel(AMcom)
+                 20/02/2018 - Incluída procedure pc_busca_dias_acelerados, que retorna os dias da faixa inicial do contrato anterior para composição dos dias de atraso. - Daniel(AMcom)
+
+		         14/03/2018 - Inclusão de regra para contagem de dias de Atraso            
+				              A contagem poderá ser efetuada em dias UTEIS ou CORRIDOS - Daniel(AMcom)
   ............................................................................ */
 
     DECLARE
@@ -5073,6 +5076,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               END IF;
 
               vr_dtrisclq := nvl(vr_tab_crapsld(rw_crapass.nrdconta).dtrisclq,pr_rw_crapdat.dtmvtolt);
+
+              -- Regra para contagem de Dias de Atraso - Daniel(AMcom)
+              -- Incluindo regra para data do corte FIXA              
+              IF vr_dtrisclq <= to_date('10/04/2018','DD/MM/RRRR') OR vr_innivris = 10 THEN
+                -- Efetua contagem de dias úteis como já era feito anteriormente a alteração
+                vr_qtdiaatr := nvl(vr_tab_crapsld(rw_crapass.nrdconta).qtdriclq,1);
+              ELSE
+                -- Efetua contagem de dias corridos               
+                vr_qtdiaatr := vr_dtrefere - vr_dtrisclq;
+              END IF;
+
+              /* A informacao "qtdriclq" estah considerando o saldo disponivel em conta + Bloqueado + Cheque Salario.
+                 Para a central de risco somente considera: Saldo Disponivel + Cheque Salario.
+                 Entao caso a conta possuir Saldo Bloqueado, vamos considerar a quantidade de dias de Atraso: 1 dia. */
+              IF vr_qtdiaatr <= 0 THEN
+                vr_qtdiaatr := 1;
+              END IF;
+
               -- Verificar qual nivel de risco o AD se encontra
               CASE
                 -- Regra alterada, considerar para o risco igual a dois somente até o 14 dias de atraso
