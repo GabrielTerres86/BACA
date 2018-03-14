@@ -210,8 +210,8 @@
 		
         <label for="idfiniof">Financiar IOF e Tarifa:</label>
         <select name="idfiniof" id="idfiniof">
-            <option value="1">Sim</option>
-            <option value="0" selected="selected">N&atilde;o</option>
+            <option value="1" selected="selected">Sim</option>
+            <option value="0">N&atilde;o</option>
         </select>
 		<label for="dtdpagto">Data pagto:</label>
 		<input name="dtdpagto" id="dtdpagto" type="text" value="" />

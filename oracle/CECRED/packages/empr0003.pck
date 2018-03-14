@@ -1769,7 +1769,8 @@ BEGIN
           FETCH cr_crapepr INTO rw_crapepr;
           IF cr_crapepr%FOUND THEN
             CLOSE cr_crapepr;
-            vr_vlemprst := nvl(rw_crapepr.vlemprst,0) + nvl(rw_crapepr.vltarifa,0) + nvl(rw_crapepr.vliofepr,0);      
+            --vr_vlemprst := nvl(rw_crapepr.vlemprst,0) + nvl(rw_crapepr.vltarifa,0) + nvl(rw_crapepr.vliofepr,0);      
+            vr_vlemprst := nvl(rw_crapepr.vlemprst,0);
           ELSE
             CLOSE cr_crapepr;
             
@@ -2496,7 +2497,8 @@ BEGIN
       FETCH cr_crapepr INTO rw_crapepr;
       IF cr_crapepr%FOUND THEN
          CLOSE cr_crapepr;
-         vr_vlemprst := nvl(rw_crapepr.vlemprst,0) + nvl(rw_crapepr.vltarifa,0) + nvl(rw_crapepr.vliofepr,0);      
+         --vr_vlemprst := nvl(rw_crapepr.vlemprst,0) + nvl(rw_crapepr.vltarifa,0) + nvl(rw_crapepr.vliofepr,0);      
+         vr_vlemprst := nvl(rw_crapepr.vlemprst,0);
       ELSE
          CLOSE cr_crapepr;
          vr_vlemprst := rw_crawepr.vlemprst;
