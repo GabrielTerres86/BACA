@@ -7873,7 +7873,12 @@ function controlaLayoutLiq(operacao) {
         aux_vlemprst = number_format(parseFloat(arrayLiquidacoes[i]['vlemprst'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
         aux_vlpreemp = number_format(parseFloat(arrayLiquidacoes[i]['vlpreemp'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
         aux_vlsdeved = number_format(parseFloat(arrayLiquidacoes[i]['vlsdeved'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
-        
+
+        aux_idenempr = arrayLiquidacoes[i]['idenempr'];           
+        aux_cdfinemp = arrayLiquidacoes[i]['cdfinemp'];
+        aux_cdlcremp = arrayLiquidacoes[i]['cdlcremp'];
+        aux_qtpreemp = arrayLiquidacoes[i]['qtpreemp'];
+
         // Tratamento para verificar Tipo de Emprestimo
         switch (arrayLiquidacoes[i]['tpemprst']) {
             case '0': // TR
