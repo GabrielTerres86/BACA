@@ -73,6 +73,8 @@
 
                13/03/2018 - Inclusão do novo campo 'perrenov' na TEMP-TABLE 'tt-desconto_titulos' (Leonardo Oliveira - GFT)
 
+			   14/03/2018 - Alteração da ordem dos campos na temp-table 'tt-limite_tit' (Leonardo Oliveira - GFT)
+
 ..............................................................................*/
     
 DEF TEMP-TABLE crawljt NO-UNDO
@@ -147,13 +149,13 @@ DEF TEMP-TABLE tt-limite_tit NO-UNDO
     FIELD qtdiavig LIKE craplim.qtdiavig
     FIELD cddlinha LIKE craplim.cddlinha
     FIELD tpctrlim LIKE craplim.tpctrlim
-    FIELD idcobope LIKE craplim.idcobope
-    FIELD cdageori LIKE craplim.cdageori
     FIELD dssitlim AS CHAR
     FIELD dssitest AS CHAR
     FIELD dssitapr AS CHAR
     FIELD flgenvio AS CHAR
-    FIELD insitlim AS INTE.
+    FIELD insitlim AS INTE
+    FIELD idcobope LIKE craplim.idcobope
+    FIELD cdageori LIKE craplim.cdageori.
 
 DEF TEMP-TABLE tt-dsctit_dados_limite NO-UNDO
     FIELD txdmulta AS DECI
