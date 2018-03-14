@@ -24,6 +24,8 @@
  *
  *                09/02/2018 - Ajuste feito para que a tela seja aberta no navegador IE. (SD 840276 - Kelvin)
  *
+ *				  01/03/2018 - Ajuste na insercao do detalhamento da tarifa. (SD 848069 - Kelvin)
+ *
  * -------------- 
  */
 
@@ -41,8 +43,8 @@ var frmVinculacaoParametro = 'frmVinculacaoParametro';
 //Labels/Campos do cabeçalho
 var rCddopcao, rcdsubgru, rCdsubgru, cCddopcao, cDssubgru, cCdsubgru, cTodosCabecalho, cCdfaixav, cCdpartar, glbTabCdpartar,
 glbTabCdfaixav, glbTabVlinifvl, glbTabVlfinfvl, glbTabCdhistor, glbTabCdhisest, glbTabDshistor, glbTabDshisest,
-glbFcoCdcooper, glbFcoDtdivulg,	glbFcoDtvigenc,	glbFcoVltarifa,	glbFcoVlrepass, glbFcoCdfaixav, glbFcoNmrescop, glbFcoCdfvlcop,
-glbFcoNrconven, glbFcoDsconven, glbFcoCdlcremp, glbFcoDslcremp;
+glbFcoCdcooper, glbFcoDtdivulg,	glbFcoDtvigenc,	glbFcoVltarifa, gblFcoVlpertar,	glbFcoVlrepass, glbFcoCdfaixav, glbFcoNmrescop, glbFcoCdfvlcop,
+gblFcoVlmaxtar, gblFcoVlmintar, glbFcoNrconven, glbFcoDsconven, glbFcoCdlcremp, glbFcoDslcremp, gblFcoTpcobtar;
 
 var lstconve;
 var lstcdfvl;
@@ -2669,9 +2671,13 @@ function buscaAtribuicaoDetalhamento(cdatrdet) {
 	if (cdatrdet == 'I'){
 		glbFcoVltarifa = '0';
 		glbFcoVlrepass = '0';	
+		gblFcoVlpertar = '0';	
+		gblFcoVlmintar = '0';
+		gblFcoVlmaxtar = '0';
 		glbFcoCdfvlcop = '';
 		glbFcoNrconven = '';
 		glbFcoCdlcremp = '';
+		gblFcoTpcobtar = ''; 
 	}	
 
 	var vltarifa2 = number_format(glbFcoVltarifa,2,',','');	
