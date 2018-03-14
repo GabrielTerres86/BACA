@@ -778,7 +778,7 @@ function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,mensa
     }
     else if(mensagem_05 != ''){
 
-        showConfirmacao('<center>' + (mensagem_05 + "<br>Deseja confirmar esta operação?") + '</center>'
+        showConfirmacao('<center>' + mensagem_05 + '</center>'
                        ,"Confirma&ccedil;&atilde;o - Ayllos"
                        ,"verificaMensagens('','','','', '','','','','')"
                        ,"telaOperacaoNaoEfetuada()"
