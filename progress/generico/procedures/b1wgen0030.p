@@ -507,7 +507,10 @@
                25/10/2017 - Projeto 410 - Ajustado cálculo do IOF na baixa do título
                             (James)
 
-			   07/03/2018 - Preenchimento do campo 'dtrenova' na procedure busca_dados_dsctit (Leonardo Oliveira - GFT)
+               07/03/2018 - Preenchimento do campo 'dtrenova' na procedure busca_dados_dsctit (Leonardo Oliveira - GFT)
+
+               13/03/2018 - Preenchimento do campo 'perrenov' na procedure busca_dados_dsctit  (Leonardo Oliveira - GFT)
+               
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -6830,6 +6833,8 @@ PROCEDURE busca_dados_dsctit:
     DEF OUTPUT PARAM TABLE FOR tt-desconto_titulos.
     
     DEF VAR h-b1wgen0001 AS HANDLE NO-UNDO.
+    DEF VAR aux_perrenov AS INTEGER                         NO-UNDO.
+    DEF VAR aux_difdays AS INTEGER                          NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-desconto_titulos.
@@ -6893,7 +6898,8 @@ PROCEDURE busca_dados_dsctit:
                     tt-desconto_titulos.vlutiliz = 0
                     tt-desconto_titulos.qtutiliz = 0
                     tt-desconto_titulos.cddopcao = 2
-                    tt-desconto_titulos.dtrenova = ?.
+                    tt-desconto_titulos.dtrenova = ?
+                    tt-desconto_titulos.perrenov = 0.
                     
              FOR EACH craptdb WHERE (craptdb.cdcooper = par_cdcooper AND
                                      craptdb.nrdconta = par_nrdconta AND
@@ -6936,15 +6942,22 @@ PROCEDURE busca_dados_dsctit:
              ELSE
                   tt-desconto_titulos.dsdlinha = STRING(crapldc.cddlinha) 
                                                  + " - " + crapldc.dsdlinha.
-                 
+                                                 
+             aux_difdays = craplim.dtfimvig - par_dtmvtolt.
+             IF aux_difdays > 15 OR aux_difdays < -60  THEN
+                  aux_perrenov = 0.
+             ELSE
+                  aux_perrenov = 1.
+             
              ASSIGN tt-desconto_titulos.nrctrlim = craplim.nrctrlim
                     tt-desconto_titulos.dtinivig = craplim.dtinivig
                     tt-desconto_titulos.qtdiavig = craplim.qtdiavig
                     tt-desconto_titulos.vllimite = craplim.vllimite
                     tt-desconto_titulos.qtrenova = craplim.qtrenova
                     tt-desconto_titulos.cddopcao = 1
-                    tt-desconto_titulos.dtrenova = craplim.dtrenova.
-                    
+                    tt-desconto_titulos.dtrenova = craplim.dtrenova
+                    tt-desconto_titulos.perrenov = aux_perrenov.
+
              FOR EACH craptdb WHERE (craptdb.cdcooper = par_cdcooper AND
                                      craptdb.nrdconta = par_nrdconta AND
                                      craptdb.insittit =  4)

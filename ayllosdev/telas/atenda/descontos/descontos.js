@@ -31,8 +31,9 @@
 			 
 			 21/07/2017 - Ajuste no cadastro de emitentes. Projeto 300. (Lombardi)
 
-             07/03/2018 - Formatação do novo campo 'Data Renovação' na tela 'titulos' (Leonardo Oliveira - GFT)
+             07/03/2018 - Formatação do novo campo 'Data Renovação' para o formulário de titulos (Leonardo Oliveira - GFT)
 
+             13/03/2018 - Formatação do botão Renovação para  o formulário de titulos. (Leonardo Oliveira - GFT)
 			 
 ************************************************************************/
 
@@ -625,7 +626,8 @@ function formataLayout(nomeForm){
 		var Cvlutilcr = $('#vlutilcr','#'+nomeForm);
 		var Cvlutilsr = $('#vlutilsr','#'+nomeForm);
 		var Cdtrenova = $('#dtrenova','#'+nomeForm);
-		
+		var Cperrenov = $('#hd_perrenov','#'+nomeForm);
+
 		$('#'+nomeForm).css('width','430px');
 		
 		Lnrctrlim.addClass('rotulo').css('width','80px');
@@ -658,6 +660,20 @@ function formataLayout(nomeForm){
 		Cvlutilcr.desabilitaCampo();
 		Cvlutilsr.desabilitaCampo();
 		Cdtrenova.desabilitaCampo();
+
+		if (Cperrenov.val() != 1) {
+			$('#btnrenovacao').css({'color':'gray'});
+			$('#btnrenovacao').css({'cursor':'default'});
+			$('#btnrenovacao').css({'pointer-events':'none'});
+		}
+
+
+		$('#btnrenovacao').unbind('click').bind('click', function(){
+			if (Cperrenov.val() != 1) {return false}
+			acessaValorLimite();
+			return false;			
+		});
+
 
 	}else if ( nomeForm == 'divRestricoes' ){
 	

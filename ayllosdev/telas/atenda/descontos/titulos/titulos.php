@@ -15,9 +15,12 @@
                               informações de títulos descontados com e sem
                               registro (Lucas).
 
-         26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
-         
-         07/03/2018 - Novo campo 'Data Renovação' (Leonardo Oliveira - GFT)
+                 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
+                 
+                 07/03/2018 - Novo campo 'Data Renovação' (Leonardo Oliveira - GFT)
+
+                 13/03/2018 - Ajuste nos botões da tela, novo campo 'Renovação' e novo input perrenov do tipo hidden. (Leonardo Oliveira - GFT)
+
 
 	***************************************************************************/
 	
@@ -95,6 +98,8 @@
 	<fieldset>
 		<legend><? echo utf8ToHtml('Títulos') ?></legend>
 		
+		<input type="hidden" name="hd_perrenov" id="hd_perrenov" value="<?php echo $dados[14]->cdata; ?>" />
+		
 		<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
 		<input type="text" name="nrctrlim" id="nrctrlim" value="<?php echo formataNumericos('zzz.zzz.zz9',$dados[0]->cdata,'.'); ?>" />
 		
@@ -128,16 +133,48 @@
 		<input type="text" name="dtrenova" id="dtrenova" value="<?php echo $dados[13]->cdata ?>"/>
 		<br />
 		
-		
 	</fieldset>
 </form>
 <div id="divBotoes" >
 
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" />
-	<input type="image" name="btnbordero" id="btnbordero" src="<?php echo $UrlImagens; ?>botoes/borderos.gif" <?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> />
-	<input type="image" name="btnlimite" id="btnlimite" src="<?php echo $UrlImagens; ?>botoes/limite.gif" <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> />
-</div>
+	<a
+	href="#"
+	class="botao" 
+	name="btnvoltar"
+	id="btnvoltar"
+	onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" >
+		Voltar
+	</a>
+	<a
+	href="#"
+	class="botao" 
+	type="image" 
+	name="btnbordero" 
+	id="btnbordero"
+	<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+	else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> >
+		Border&ocirc;s
+	</a>
 
+	<a
+	href="#"
+	class="botao"
+	type="image"
+	name="btnlimite"
+	id="btnlimite"
+	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+	else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> >
+		Limite
+	</a>
+
+	<a 
+	href="#" 
+	class="botao"
+	id="btnrenovacao"
+	name="btnrenovacao">
+		Renova&ccedil;&atilde;o
+	</a>
+</div>
 <script type="text/javascript">
 
 dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");
@@ -163,7 +200,7 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 	  //Limite
 	  }else if (cdproduto == 37 ) {
 		$('#btnlimite','#divBotoes').click();
-	  }
+	  } 
 	}
-	
+	 
 </script>

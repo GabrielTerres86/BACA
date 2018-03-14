@@ -112,6 +112,18 @@ PROCEDURE pc_enviar_proposta_manual(pr_nrctrlim in  craplim.nrctrlim%type --> Nu
                                    ,pr_des_erro out varchar2              --> Erros do processo OK ou NOK
                                    );
 
+PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
+                                      ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Titular da Conta
+                                      ,pr_vllimite  IN craplim.vllimite%TYPE --> Valor do limite de desconto
+                                      ,pr_nrctrlim  IN craplim.nrctrlim%TYPE --> Contrato
+                                      ,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
+                                      --------> OUT <--------
+                                      ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                      ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                      ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
+
 END TELA_ATENDA_DSCTO_TIT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
@@ -1645,6 +1657,134 @@ EXCEPTION
        rollback;
 end pc_enviar_proposta_manual;
 
+
+
+PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
+                                      ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Titular da Conta
+                                      ,pr_vllimite  IN craplim.vllimite%TYPE --> Valor do limite de desconto
+                                      ,pr_nrctrlim  IN craplim.nrctrlim%TYPE --> Contrato
+                                      ,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                      ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                      ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_renovar_lim_desc_titulo
+    Sistema : Ayllos Web
+    Autor   : Leonardo Oliveira (GFT)
+    Data    : Março/2018                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para renovar limite de desconto de titulos.
+
+    Alteracoes: 
+    ..............................................................................*/
+    DECLARE
+
+      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+      
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+    BEGIN
+      
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_saida;
+      END IF;
+      
+      -- Verifica se a data esta cadastrada
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+        
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+        
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois haverá raise
+        CLOSE BTCH0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;
+      
+      -- Chama rotina de renovação
+      LIMI0001.pc_renovar_lim_desc_titulo(pr_cdcooper => vr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_idseqttl => pr_idseqttl
+                                         ,pr_vllimite => pr_vllimite
+                                         ,pr_nrctrlim => pr_nrctrlim
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                         ,pr_cdoperad => vr_cdoperad
+                                         ,pr_nmdatela => vr_nmdatela
+                                         ,pr_idorigem => vr_idorigem
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_saida;
+      END IF;
+      
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados>ok</Dados></Root>');
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela pc_renovar_lim_desc_titulo: ' || SQLERRM;
+
+        -- Carregar XML padrão para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_renovar_lim_desc_titulo;
 
 END TELA_ATENDA_DSCTO_TIT;
 /
