@@ -1,6 +1,8 @@
 CREATE OR REPLACE PACKAGE CECRED.TELA_CADRIS IS
 
   PROCEDURE pc_busca_risco(pr_cdnivel_risco  IN tbrisco_cadastro_conta.cdnivel_risco%TYPE --> Nivel de risco
+                          ,pr_containi       IN tbrisco_cadastro_conta.nrdconta%TYPE DEFAULT 0
+                          ,pr_contafim       IN tbrisco_cadastro_conta.nrdconta%TYPE DEFAULT 9999999999
                           ,pr_xmllog         IN VARCHAR2 --> XML com informacoes de LOG
                           ,pr_cdcritic      OUT PLS_INTEGER --> Codigo da critica
                           ,pr_dscritic      OUT VARCHAR2 --> Descricao da critica
@@ -43,7 +45,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
   --  Programa : TELA_CADRIS
   --  Sistema  : Ayllos Web
   --  Autor    : Jaison Fernando
-  --  Data     : Maio - 2016                 Ultima atualizacao:
+  --  Data     : Maio - 2016                 Ultima atualizacao: 14/02/2018
   --
   -- Dados referentes ao programa:
   --
@@ -51,6 +53,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
   --
   -- Alteracoes:
   --
+  /*
+    14/02/2018 - #822034 Alterada a forma como é criado o xml para ganhar
+                 performance; inclusão de filtro de contas e ordenação por conta;
+                 tela não carrega mais todas as contas ao entrar nas opções (Carlos)
+  */
   ---------------------------------------------------------------------------
 
 	-- Tipos de Risco
@@ -58,6 +65,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
   vr_tab_risco typ_tab_risco := typ_tab_risco('','A','B','C','D','E','F','G','H');
 
   PROCEDURE pc_busca_risco(pr_cdnivel_risco  IN tbrisco_cadastro_conta.cdnivel_risco%TYPE --> Nivel de risco
+                          ,pr_containi       IN tbrisco_cadastro_conta.nrdconta%TYPE DEFAULT 0
+                          ,pr_contafim       IN tbrisco_cadastro_conta.nrdconta%TYPE DEFAULT 9999999999
                           ,pr_xmllog         IN VARCHAR2 --> XML com informacoes de LOG
                           ,pr_cdcritic      OUT PLS_INTEGER --> Codigo da critica
                           ,pr_dscritic      OUT VARCHAR2 --> Descricao da critica
@@ -85,16 +94,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
 
       -- Selecionar a listagem de riscos
       CURSOR cr_risco(pr_cdcooper      IN crapcop.cdcooper%TYPE
-                     ,pr_cdnivel_risco IN tbrisco_cadastro_conta.cdnivel_risco%TYPE) IS
+                     ,pr_cdnivel_risco IN tbrisco_cadastro_conta.cdnivel_risco%TYPE
+                     ,pr_containi      IN tbrisco_cadastro_conta.nrdconta%TYPE DEFAULT 0
+                     ,pr_contafim      IN tbrisco_cadastro_conta.nrdconta%TYPE DEFAULT 9999999999) IS
         SELECT tcc.nrdconta
               ,tcc.dsjustificativa
               ,ass.nmprimtl
           FROM tbrisco_cadastro_conta tcc,
                crapass ass
          WHERE tcc.cdcooper      = pr_cdcooper
+           AND tcc.nrdconta BETWEEN pr_containi AND pr_contafim
            AND tcc.cdnivel_risco = pr_cdnivel_risco
            AND tcc.cdcooper      = ass.cdcooper
-           AND tcc.nrdconta      = ass.nrdconta;
+           AND tcc.nrdconta      = ass.nrdconta
+         ORDER BY tcc.nrdconta;
 
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -113,7 +126,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
       vr_idorigem VARCHAR2(100);
       
       -- Variaveis Gerais
-      vr_contador INTEGER := 0;
+      vr_idprglog NUMBER := 0;
+
+      -- Variaveis de XML 
+      vr_xml_temp VARCHAR2(32767);
+      vr_clobxmlc CLOB;
 
     BEGIN
       -- Extrai os dados vindos do XML
@@ -128,52 +145,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
                               ,pr_dscritic => vr_dscritic);
 
       -- Criar cabecalho do XML
-      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      dbms_lob.createtemporary(vr_clobxmlc, TRUE); 
+      dbms_lob.open(vr_clobxmlc, dbms_lob.lob_readwrite);
 
-      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                            ,pr_tag_pai  => 'Root'
-                            ,pr_posicao  => 0
-                            ,pr_tag_nova => 'Dados'
-                            ,pr_tag_cont => NULL
-                            ,pr_des_erro => vr_dscritic);
+      -- Insere o cabeçalho do XML 
+      gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
+                             ,pr_texto_completo => vr_xml_temp 
+                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados>');
 
       -- Listagem de riscos
       FOR rw_risco IN cr_risco(pr_cdcooper      => vr_cdcooper
-                              ,pr_cdnivel_risco => pr_cdnivel_risco) LOOP
+                              ,pr_cdnivel_risco => pr_cdnivel_risco
+                              ,pr_containi      => pr_containi
+                              ,pr_contafim      => pr_contafim) LOOP
 
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'Dados'
-                              ,pr_posicao  => 0
-                              ,pr_tag_nova => 'risco'
-                              ,pr_tag_cont => NULL
-                              ,pr_des_erro => vr_dscritic);
+        gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => 
+                '<risco>' ||
+                '<nrdconta>' || GENE0002.fn_mask_conta(rw_risco.nrdconta) || '</nrdconta>' || 
+                '<nmprimtl>' || rw_risco.nmprimtl || '</nmprimtl>' ||
+                '<dsjustificativa>' || rw_risco.dsjustificativa || '</dsjustificativa>' ||
+                '</risco>');
+      END LOOP;     
 
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'risco'
-                              ,pr_posicao  => vr_contador
-                              ,pr_tag_nova => 'nrdconta'
-                              ,pr_tag_cont => GENE0002.fn_mask_conta(rw_risco.nrdconta)
-                              ,pr_des_erro => vr_dscritic);
+      -- Encerrar a tag raiz 
+      gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
+                             ,pr_texto_completo => vr_xml_temp 
+                             ,pr_texto_novo     => '</Dados></Root>'
+                             ,pr_fecha_xml      => TRUE);
 
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'risco'
-                              ,pr_posicao  => vr_contador
-                              ,pr_tag_nova => 'nmprimtl'
-                              ,pr_tag_cont => rw_risco.nmprimtl
-                              ,pr_des_erro => vr_dscritic);
-
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'risco'
-                              ,pr_posicao  => vr_contador
-                              ,pr_tag_nova => 'dsjustificativa'
-                              ,pr_tag_cont => rw_risco.dsjustificativa
-                              ,pr_des_erro => vr_dscritic);
-
-        vr_contador := vr_contador + 1;
-      END LOOP;
+      pr_retxml := XMLType.createXML(vr_clobxmlc);
 
     EXCEPTION
       WHEN OTHERS THEN
+        
+        cecred.pc_internal_exception;
+      
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na rotina da tela CADRIS: ' || SQLERRM;
 
@@ -197,10 +205,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
 
     /* .............................................................................
 
-    Programa: pc_exclui_risco             Antigo: 
+    Programa: pc_exclui_risco             Antigo:
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Maio/2016                 Ultima atualizacao: 
+    Data    : Maio/2016                 Ultima atualizacao:
 
     Dados referentes ao programa:
 
@@ -208,7 +216,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
 
     Objetivo  : Rotina para excluir o risco.
 
-    Alteracoes: 
+    Alteracoes:
     ..............................................................................*/
     DECLARE
 
@@ -246,7 +254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
 
-	    vr_tab_split := GENE0002.fn_quebra_string(pr_nrdconta,'|');
+      vr_tab_split := GENE0002.fn_quebra_string(pr_nrdconta,'|');
 
       vr_indice := vr_tab_split.FIRST;
       WHILE vr_indice IS NOT NULL LOOP
@@ -261,10 +269,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
           vr_dscritic := 'Problema ao excluir risco: ' || SQLERRM;
           RAISE vr_exc_saida;
         END;
-        
+
         vr_dsmsglog := vr_dsmsglog || vr_ds_enter || TO_CHAR(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                        ' -->  Operador '|| vr_cdoperad || ' - ' ||
-                       'Excluiu a conta: ' || vr_tab_split(vr_indice) || 
+                       'Excluiu a conta: ' || vr_tab_split(vr_indice) ||
                        ' - Nivel de Risco: ' || vr_tab_risco(pr_cdnivel_risco);
         vr_ds_enter := chr(10);
 
@@ -318,10 +326,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
 
     /* .............................................................................
 
-    Programa: pc_inclui_risco             Antigo: 
+    Programa: pc_inclui_risco             Antigo:
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Maio/2016                 Ultima atualizacao: 
+    Data    : Maio/2016                 Ultima atualizacao:
 
     Dados referentes ao programa:
 
@@ -393,7 +401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
       CLOSE BTCH0001.cr_crapdat;
 
-	    BEGIN
+      BEGIN
         INSERT INTO tbrisco_cadastro_conta
                    (cdcooper
                    ,nrdconta
@@ -415,14 +423,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRIS IS
           vr_dscritic := 'Problema ao incluir risco: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
-        
+
       -- Gera log
       BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => 'cadris.log'
                                 ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' -->  Operador '|| vr_cdoperad || ' - ' ||
-                                                    'Incluiu a conta: ' || pr_nrdconta || 
+                                                    'Incluiu a conta: ' || pr_nrdconta ||
                                                     ' - Nivel de Risco: ' || vr_tab_risco(pr_cdnivel_risco) ||
                                                     ' - Justificativa: ' || pr_dsjustificativa);
 

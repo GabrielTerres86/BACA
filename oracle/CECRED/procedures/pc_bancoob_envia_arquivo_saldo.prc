@@ -4,7 +4,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_ENVIA_ARQUIVO_SALDO(pr_dscritic OU
    JOB: PC_BANCOOB_ENVIA_ARQUIVO_SALDO
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : VANESSA KLEIN
-   Data    : Janeiro/2015.                     Ultima atualizacao: 08/01/2018
+   Data    : Janeiro/2015.                     Ultima atualizacao: 28/02/2018
 
    Dados referentes ao programa:
 
@@ -21,6 +21,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_ENVIA_ARQUIVO_SALDO(pr_dscritic OU
 
                08/01/2018 - #796943 Criação do parâmetro de retorno de erro para o job; Tratado 
                             para não executar sábado depois do meio dia, apenas pela manhã (Carlos)
+                            
+               28/02/2018 - #858915 Validar processo apenas até sexta-feira, pois sábado a CECRED
+                            fica com o indicador de processo como solicitado (Carlos)
   ..........................................................................*/
 
   ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -54,7 +57,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_ENVIA_ARQUIVO_SALDO(pr_dscritic OU
        to_char(SYSDATE,'hh24') > 12 THEN
       RETURN;
     END IF;
-
+    
+    -- Validar processo apenas até sexta-feira, pois sábado a CECRED fica com o indicador de processo como solicitado
+    IF to_char(SYSDATE,'d') < 7 THEN
     gene0004.pc_executa_job( pr_cdcooper => 3   --> Codigo da cooperativa
                             ,pr_fldiautl => 0   --> Flag se deve validar dia util
                             ,pr_flproces => 1   --> Flag se deve validar se esta no processo    
@@ -62,6 +67,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_ENVIA_ARQUIVO_SALDO(pr_dscritic OU
                             ,pr_flgerlog => 1   --> indicador se deve gerar log
                             ,pr_nmprogra => 'PC_BANCOOB_ENVIA_ARQUIVO_SALDO'   --> Nome do programa que esta sendo executado no job
                             ,pr_dscritic => vr_dserro);
+    END IF;
 
     -- Se nao retornou critica, chama rotina
     IF TRIM(vr_dserro) IS NULL THEN 

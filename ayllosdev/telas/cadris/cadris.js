@@ -5,6 +5,11 @@
  * OBJETIVO     : Biblioteca de funções da tela CADRIS
  * --------------
  * ALTERAÇÕES   : 
+ 
+    14/02/2018 - #822034 Alterada a forma como é criado o xml para ganhar performance;
+                 inclusão de filtro de contas e ordenação por conta;
+                 tela não carrega mais todas as contas ao entrar nas opções (Carlos)
+ 
  * --------------
  */
 var iCodigoNivelRisco = 2;
@@ -122,9 +127,19 @@ function formataCamposTela(cddopcao){
 
     // Se alterou o list de Nivel de Risco
     cInnivris.unbind('change').bind('change', function () {
-        buscaListagem(cddopcao);
+        buscaListagem(cddopcao,
+                      normalizaNumero($('#ctaini','#frmCadris').val()),
+                      normalizaNumero($('#ctafim','#frmCadris').val()));
     });
 
+    if (cddopcao !== 'C' && cddopcao !== 'E') {
+        $('label[for="ctaini"]', '#frmCadris').hide();
+        $('label[for="ctafim"]', '#frmCadris').hide();
+        $('#ctaini', '#frmCadris').hide();
+        $('#ctafim', '#frmCadris').hide();        
+        $('#btnOK2', '#frmCadris').hide();
+    }
+    
     if (cddopcao == 'I') {
 
         // Exibe o campo de conta e justificativa
@@ -168,7 +183,19 @@ function formataCamposTela(cddopcao){
         // Oculta o campo de conta e justificativa
         $('.clsContaJustif', '#frmCadris').hide();
         
+        if (cddopcao == 'C' || cddopcao == 'E') {
+            var rCtaini = $('label[for="ctaini"]', '#frmCadris');
+            var rCtafim = $('label[for="ctafim"]', '#frmCadris');            
+            var cCtaini = $('#ctaini', '#frmCadris');
+            var cCtafim = $('#ctafim', '#frmCadris');
+            rCtaini.addClass('rotulo-linha').css({'width': '80px'});
+            rCtafim.addClass('rotulo-linha').css({'width': '10px'});
+            cCtaini.addClass('conta campo').css({'width':'80px'});
+            cCtafim.addClass('conta campo').css({'width':'80px'});
+        }
+        
         if (cddopcao == 'C') {
+            
             var rDsjustificativa = $('label[for="dsjustificativa"]', '#frmCadris');
             var cDsjustificativa = $('#dsjustificativa', '#frmCadris');
             
@@ -182,7 +209,7 @@ function formataCamposTela(cddopcao){
     } else {
 		$('label[for="nmdarqui"]','#frmCadrisArquivo').addClass('rotulo').css({'width':'80px'});
 		$('#nmdarqui','#frmCadrisArquivo').css({'width':'415px'}).desabilitaCampo();
-    }
+	}
 
 	layoutPadrao();
 	controlaPesquisas();	
@@ -220,6 +247,13 @@ function controlaPesquisas() {
 	return false;
 }
 
+function listaContas() {
+    $('#fieldListagem').show();
+    buscaListagem($('#cddopcao','#frmCab').val(), 
+                  normalizaNumero($('#ctaini','#frmCadris').val()),
+                  normalizaNumero($('#ctafim','#frmCadris').val()));
+}
+
 /**
 	Funcao responsavel para carregar a tela
 */
@@ -240,7 +274,7 @@ function carregaTelaCadris(){
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divTela').css('z-index')))");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o #1","Alerta - Ayllos","blockBackground(parseInt($('#divTela').css('z-index')))");
 		},
 		success : function(response) {
 			hideMsgAguardo();
@@ -248,7 +282,7 @@ function carregaTelaCadris(){
 				$('#divCadastro').html(response);
 				$('#innivris', '#frmCadris').val(iCodigoNivelRisco);
 				
-                buscaListagem(cCddopcao.val());
+                $('#fieldListagem').hide();
 
                 var nmBotao;
                 var nmFuncao = 'confirmaAcao()';
@@ -274,7 +308,7 @@ function carregaTelaCadris(){
 				return false;
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o #2','Alerta - Ayllos','unblockBackground()');
 			}
 		}
 	});
@@ -283,7 +317,7 @@ function carregaTelaCadris(){
 /**
 	Funcao responsavel por buscar a listagem
 */
-function buscaListagem(cddopcao) {
+function buscaListagem(cddopcao, nrcontaini, nrcontafim) {
 
 	showMsgAguardo("Aguarde...");
 
@@ -296,6 +330,8 @@ function buscaListagem(cddopcao) {
 		data: {			
 			cddopcao: cddopcao,
             innivris: innivris,
+            ctaini: nrcontaini,
+            ctafim: nrcontafim,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -327,7 +363,7 @@ function formataGrid(cddopcao){
     var arrayLargura = new Array();
     var arrayAlinha  = new Array();
 
-    divRegistro.css({'height':'120px'});
+    divRegistro.css({'height':'240px'});
     
     // Se for exclusao
     if (cddopcao == 'E') {
@@ -382,7 +418,7 @@ function confirmaAcao() {
         }
     } else if (cddopcao == 'L') {
 		nmfuncao = 'importarRisco()';
-    }
+	}
 
     showConfirmacao('Confirma a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', nmfuncao, '', 'sim.gif', 'nao.gif');
 }
@@ -487,7 +523,7 @@ function selecionaRisco() {
 
 function resetCodigoNivelRisco(){
 	iCodigoNivelRisco = 2;
-}	
+}
 
 /**
 	Funcao responsavel por importar arquivo de risco
