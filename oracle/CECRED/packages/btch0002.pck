@@ -1134,7 +1134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       pc_grava_critica(pr_cdcooper => pr_cdcooper,
                        pr_dscritic => ' - Cadastrar RDC dia '||
                                       TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
-                       pr_cdsitexc => 1);  
+                       pr_cdsitexc => 0);  
     END IF;  
     CLOSE cr_crapmfx;
     
@@ -1148,7 +1148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       pc_grava_critica(pr_cdcooper => pr_cdcooper,
                        pr_dscritic => ' - Cadastrar CDI Mensal '||
                                       TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
-                       pr_cdsitexc => 1);  
+                       pr_cdsitexc => 0);  
     END IF;  
     CLOSE cr_crapmfx;
 
@@ -1162,7 +1162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       pc_grava_critica(pr_cdcooper => pr_cdcooper,
                        pr_dscritic => ' - Cadastrar CDI Acumulado '||
                                       TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
-                       pr_cdsitexc => 1);  
+                       pr_cdsitexc => 0);  
     END IF;  
     CLOSE cr_crapmfx;
 
@@ -1176,7 +1176,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       pc_grava_critica(pr_cdcooper => pr_cdcooper,
                        pr_dscritic => ' - Cadastrar CDI Diario '||
                                       TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
-                       pr_cdsitexc => 1);  
+                       pr_cdsitexc => 0);  
     END IF;  
     CLOSE cr_crapmfx;
       
