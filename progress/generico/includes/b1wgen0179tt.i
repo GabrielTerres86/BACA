@@ -45,6 +45,8 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD flgsenha AS INTE
     FIELD dsextrat AS CHAR
     FIELD vltarcsh AS DECI
+    FIELD cdgrphis AS INTE
+    FIELD dsgrphis AS CHAR
     FIELD cdprodut AS INTE
     FIELD dsprodut AS CHAR
     FIELD cdagrupa AS INTE

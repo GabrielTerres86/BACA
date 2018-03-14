@@ -120,6 +120,11 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                              ,pr_nmdcampo OUT VARCHAR2                     --> Nome do campo com erro
                              ,pr_des_erro OUT VARCHAR2);                   --> Erros do processo
 
+  -- Funcao para retornar se o produto esta habilitado
+  FUNCTION fn_produto_habilitado(pr_cdcooper  tbcc_produto_oferecido.cdcooper%TYPE --> Codigo da cooperativa
+                                ,pr_nrdconta  tbcc_produto_oferecido.nrdconta%TYPE --> Numero da conta
+                                ,pr_cdproduto tbcc_produto_oferecido.cdproduto%TYPE) RETURN VARCHAR2;--> Codigo do produto
+
   FUNCTION fn_busca_servico (pr_cdproduto IN tbcc_produtos_coop.cdproduto%TYPE) RETURN VARCHAR2;
 
   PROCEDURE pc_consulta_servicos (pr_cdcooper   IN crapcop.cdcooper%TYPE
@@ -135,6 +140,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
   PROCEDURE pc_valida_consistencia (pr_cdcooper   IN crapcop.cdcooper%TYPE
                                    ,pr_tpproduto  IN tbcc_produtos_coop.tpproduto%TYPE  --> tipo de produto
                                    ,pr_tpconta    IN tbcc_produtos_coop.tpconta%TYPE    --> tipo de conta
+                                   ,pr_inpessoa   IN tbcc_produtos_coop.inpessoa%TYPE   --> tipo de pessoa
                                    ,pr_servico    IN VARCHAR2                           --> produtos aderidos
                                    ,pr_xmllog     IN VARCHAR2                           --> XML com informações de LOG
                                    ,pr_cdcritic   OUT crapcri.cdcritic%TYPE             --> Codigo da critica
@@ -146,7 +152,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
   PROCEDURE pc_inclui_servicos (pr_cdcooper   IN crapcop.cdcooper%TYPE
                                ,pr_tpproduto  IN tbcc_produtos_coop.tpproduto%TYPE  --> tipo de produto
                                ,pr_tpconta    IN tbcc_produtos_coop.tpconta%TYPE    --> tipo de conta
+                               ,pr_inpessoa   IN tbcc_produtos_coop.inpessoa%TYPE   --> tipo de pessoa
                                ,pr_servicos   IN VARCHAR2                           --> produtos aderidos
+                               ,pr_vlmincapi  IN NUMBER                             --> Valor minimo de capital
                                ,pr_xmllog     IN VARCHAR2                           --> XML com informações de LOG
                                ,pr_cdcritic   OUT crapcri.cdcritic%TYPE             --> Codigo da critica
                                ,pr_dscritic   OUT VARCHAR2                          --> Descricao da critica
@@ -700,7 +708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 08/01/2018
+  --  Data     : Julho/2014.                   Ultima atualizacao: 07/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -802,6 +810,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             01/02/2017 - Ao validar se existe aplicacao ativa na conta do cooperado, verificar
   --                          tambem na tabela CRAPRDA. Demetrius (Mouts) - Chamado 833672
+  --
+  --             02/01/2018 - Adicionados produtos 11,17,22,25,26,29 na function fn_produto_habilitado. (PRJ366 - Lombardi)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -4196,9 +4206,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           FROM crapatr
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
+           AND tpautori = 0
            AND dtfimatr IS NULL;
       rw_crapatr cr_crapatr%ROWTYPE;
 
+      -- Cursor sobre a tabela de debitos autorizados
+      CURSOR cr_crapatr_2 IS
+        SELECT 1
+          FROM crapatr
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND tpautori <> 0
+           AND dtfimatr IS NULL;
+      rw_crapatr_2 cr_crapatr_2%ROWTYPE;
+      
       -- Cursor sobre a tabela de lancamento de cotas
       CURSOR cr_craplct IS
         SELECT 1
@@ -4367,6 +4388,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          AND lcm.dtmvtolt >= (pr_dtmvtolt - 90);
       rw_craplcm_inss cr_craplcm_inss%ROWTYPE;
        
+      -- Verifica Cartao BB
+      CURSOR cr_cartaobb (pr_cdcooper IN crapcop.cdcooper%TYPE
+                         ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE) IS
+        SELECT 1
+            FROM craptab  tab
+           WHERE tab.nmsistem = 'CRED'          
+             AND tab.tptabela = 'GENERI'        
+             AND tab.cdempres = 0            
+             AND tab.cdacesso = 'VERIFICADOCARTAOBB' 
+             AND tab.tpregist = pr_nrdconta         
+             AND tab.cdcooper = pr_cdcooper;
+      rw_cartaobb cr_cartaobb%ROWTYPE;
+      
+      -- Verifica cartoes
+      CURSOR cr_craplcm_cartoes (pr_cdcooper IN crapcop.cdcooper%TYPE
+                                ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE) IS
+        SELECT 1
+          FROM craplcm lcm 
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.nrdconta = pr_nrdconta
+                                -- Cartões BANCOOB
+           AND lcm.cdhistor IN (1956,1957,1958,1959,1960,1961 
+                               ,444,584); -- Cartões BB
+      rw_craplcm_cartoes cr_craplcm_cartoes%ROWTYPE;
+      
+      --Verifica Contrato de proposta/apólice de seguro
+      CURSOR cr_contratos (pr_cdcooper IN crapcop.cdcooper%TYPE
+                          ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE) IS
+        SELECT 1
+          FROM tbseg_contratos segNov
+         WHERE segNov.cdcooper   = pr_cdcooper
+           AND segNov.nrdconta   = pr_nrdconta
+           AND segNov.Tpseguro   = 'A' -- [A]uto
+           AND segNov.Indsituacao= 'A' -- [A]tivo
+           AND segNov.nrapolice > 0;
+      rw_contratos cr_contratos%ROWTYPE;
+      
+      -- Verifica Cadastro de seguros
+      CURSOR cr_crapseg_auto (pr_cdcooper IN crapcop.cdcooper%TYPE
+                             ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE) IS
+        SELECT 1
+          FROM crapseg seg
+         WHERE seg.cdcooper = pr_cdcooper
+           AND seg.nrdconta = pr_nrdconta
+           AND seg.tpseguro = 2 -- Auto
+           AND seg.cdsitseg = 1; -- Ativo
+      rw_crapseg_auto cr_crapseg_auto%ROWTYPE;
+      
+      -- Verifica pacote de tarifas
+      CURSOR cr_tarifa (pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE) IS
+        SELECT 1
+          FROM tbtarif_contas_pacote tar
+         WHERE tar.cdcooper    = pr_cdcooper
+           AND tar.nrdconta    = pr_nrdconta
+           AND tar.flgsituacao = 1  -- Ativas
+           AND tar.dtcancelamento IS NULL;
+      rw_tarifa cr_tarifa%ROWTYPE;
+      
       -- Variaveis de tratamento de erro
       vr_tab_erro      gene0001.typ_tab_erro;
       vr_des_reto      VARCHAR2(10);
@@ -4377,7 +4457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_tab_saldo_rdca cecred.apli0001.typ_tab_saldo_rdca; --> Record com os saldos de aplicacao
       vr_vlsldapl   crapapl.vlaplica%TYPE;                  --> Saldo da aplicacao
       vr_flgsacad   PLS_INTEGER;                            --> Indicador se possui DDA
-
+      vr_tab_dados_cpa  empr0002.typ_tab_dados_cpa;         --> Dados pre aprovado
 
     BEGIN
 
@@ -4540,7 +4620,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         RETURN 'S'; -- Retorna como produto aderido
 
       ELSIF pr_cdproduto = 11 THEN -- Domicilio Bancario
-        RETURN NULL; -- Conforme conversado com a Sarah, nao deve aparecer se esta aderido ou nao
+        -- Verifica carto BB
+        OPEN cr_cartaobb (pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta);
+        FETCH cr_cartaobb INTO rw_cartaobb;
+        -- Se encontrar
+        IF cr_cartaobb%FOUND THEN
+          CLOSE cr_cartaobb;
+          RETURN 'N'; -- Retorna como produto nao aderido
+        END IF;        
+        CLOSE cr_cartaobb;
+        
+        -- Verifica cartoes
+        OPEN cr_craplcm_cartoes (pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta);
+        FETCH cr_craplcm_cartoes INTO rw_craplcm_cartoes;
+        -- Se encontrar
+        IF cr_craplcm_cartoes%FOUND THEN
+          CLOSE cr_craplcm_cartoes;
+          RETURN 'S'; -- Retorna como produto aderido
+        ELSE -- Se não encontrar
+          CLOSE cr_craplcm_cartoes;
+          RETURN 'N'; -- Retorna como produto nao aderido
+        END IF;
 
       ELSIF pr_cdproduto = 12 THEN -- Integralizacao do Capital
         -- Abre a tabela de lancamento de cotas
@@ -4611,7 +4713,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         RETURN 'S'; -- Retorna como produto aderido
 
       ELSIF pr_cdproduto = 17 THEN -- Seguro Auto
-        RETURN NULL; -- Eh no sistema SICREDI. Nao tem como verificar
+        -- Verifica Contrato de proposta/apólice de seguro
+        OPEN cr_contratos (pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta);
+        FETCH cr_contratos INTO rw_contratos;
+         -- Se encotrou, possui seguro auto
+        IF cr_contratos%FOUND THEN
+          CLOSE cr_contratos;
+          RETURN 'S'; -- Retorna como produto aderido
+        END IF;
+        -- Verifica Cadastro de seguros
+        OPEN cr_crapseg_auto (pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta);
+        FETCH cr_crapseg_auto INTO rw_crapseg_auto;
+        -- Se encotrou, possui seguro auto
+        IF cr_crapseg_auto%FOUND THEN
+          CLOSE cr_crapseg_auto;
+          RETURN 'S'; -- Retorna como produto aderido
+        END IF;
+        RETURN 'N'; -- Retorna como produto nao aderido
 
       ELSIF pr_cdproduto = 18 THEN -- Seguro de Vida
         -- Abre a tabela de Seguros
@@ -4666,7 +4786,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       ELSIF pr_cdproduto = 23 THEN -- Seguro Empresarial
         RETURN NULL; -- Nao sera verificado
+      ELSIF pr_cdproduto = 25 THEN -- Pré-Aprovado
+        -- Verifica se tem crédito pré-aprovado
+        EMPR0002.pc_busca_dados_cpa(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdagenci => 1
+                                   ,pr_nrdcaixa => 1
+                                   ,pr_cdoperad => 1
+                                   ,pr_nmdatela => 'CADA0003'
+                                   ,pr_idorigem => 0 
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_idseqttl => 1 
+                                   ,pr_nrcpfope => 0
+                                   ,pr_tab_dados_cpa => vr_tab_dados_cpa
+                                   ,pr_des_reto => vr_des_reto
+                                   ,pr_tab_erro => vr_tab_erro);
 
+        IF vr_tab_dados_cpa.exists(vr_tab_dados_cpa.first) AND 
+           vr_tab_dados_cpa(vr_tab_dados_cpa.first).vldiscrd > 0 THEN
+          RETURN 'S';
+        ELSE
+          RETURN 'N';
+        END IF;
+      ELSIF pr_cdproduto = 26 THEN -- Pacote de Tarifas
+        -- Abre a tabela de empréstimos
+        OPEN cr_tarifa(pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta);
+        FETCH cr_tarifa INTO rw_tarifa;
+        -- Se encotrou, possui empréstimo ativo
+        IF cr_tarifa%FOUND THEN
+          CLOSE cr_tarifa;
+          RETURN 'S'; -- Retorna como produto aderido
+        END IF;
+        CLOSE cr_tarifa;
+      ELSIF pr_cdproduto = 29 THEN -- Débito Automático Fácil
+        -- Abre a tabela de debitos automaticos
+        OPEN cr_crapatr_2;
+        FETCH cr_crapatr_2 INTO rw_crapatr_2;
+        -- Se nao encotrou, nao possui nenhum debito automatico
+        IF cr_crapatr_2%NOTFOUND THEN
+          CLOSE cr_crapatr_2;
+          RETURN 'N'; -- Retorna como produto nao aderido
+        END IF;
+        CLOSE cr_crapatr_2;
+        RETURN 'S'; -- Retorna como produto aderido
       ELSIF pr_cdproduto = 31 THEN -- Empréstimos
         
         -- Abre a tabela de empréstimos
@@ -4884,21 +5046,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     -- Cursor sobre os dados do associado
     CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-      SELECT crapass.inpessoa,
-             crapass.cdtipcta,
-             crapttl.dtnasttl
-        FROM crapttl,
-             crapass
+      SELECT crapass.inpessoa
+            ,crapass.cdtipcta
+            ,crapttl.dtnasttl
+            ,tpcta.cdmodalidade_tipo  cdmodali
+        FROM crapttl
+            ,crapass
+            ,tbcc_tipo_conta tpcta
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta
          AND crapttl.cdcooper (+)= crapass.cdcooper
          AND crapttl.nrdconta (+)= crapass.nrdconta
-         AND crapttl.idseqttl (+)= 1;
+         AND crapttl.idseqttl (+)= 1
+         AND tpcta.inpessoa      = crapass.inpessoa
+         AND tpcta.cdtipo_conta  = crapass.cdtipcta;
     rw_crapass cr_crapass%ROWTYPE;
 
     -- Cursor sobre os produtos oferecidos
     CURSOR cr_produtos_coop(pr_tpconta  IN tbcc_produtos_coop.tpconta%TYPE
-                           ,pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+                           ,pr_cdcooper IN crapcop.cdcooper%TYPE
+                           ,pr_inpessoa IN tbcc_produtos_coop.inpessoa%TYPE) IS
       SELECT tbcc_produto.cdproduto,
              tbcc_produto.dsproduto,
              decode(tbcc_produtos_coop.tpproduto,1,'obrigatorio','opcional') tpproduto,
@@ -4908,6 +5075,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              tbcc_produtos_coop
        WHERE tbcc_produtos_coop.cdcooper = pr_cdcooper
          AND tbcc_produtos_coop.tpconta  = pr_tpconta
+         AND tbcc_produtos_coop.inpessoa = pr_inpessoa
          AND tbcc_produto.cdproduto      = tbcc_produtos_coop.cdproduto
        ORDER BY tbcc_produtos_coop.tpproduto,
                 tbcc_produtos_coop.nrordem_exibicao;
@@ -4998,7 +5166,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
     -- Efetua o loop sobre os produtos
     FOR rw_produtos_coop IN cr_produtos_coop(pr_tpconta => vr_tpconta
-                                            ,pr_cdcooper => vr_cdcooper) LOOP
+                                            ,pr_cdcooper => vr_cdcooper
+                                            ,pr_inpessoa => rw_crapass.inpessoa) LOOP
 
       -- Se for o primeiro registro do tipo, abre o nó de tipo
       IF rw_produtos_coop.nrreg = 1 THEN
@@ -5096,21 +5265,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Cursor sobre os dados do associado
       CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-        SELECT crapass.inpessoa,
-               crapass.cdtipcta,
-               crapttl.dtnasttl
-          FROM crapttl,
-               crapass
+        SELECT crapass.inpessoa
+              ,crapass.cdtipcta
+              ,crapttl.dtnasttl
+              ,tpcta.cdmodalidade_tipo  cdmodali
+          FROM crapttl
+              ,crapass
+              ,tbcc_tipo_conta tpcta
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta
            AND crapttl.cdcooper (+)= crapass.cdcooper
            AND crapttl.nrdconta (+)= crapass.nrdconta
-           AND crapttl.idseqttl (+)= 1;
+           AND crapttl.idseqttl (+)= 1
+           AND tpcta.inpessoa      = crapass.inpessoa
+           AND tpcta.cdtipo_conta  = crapass.cdtipcta;
       rw_crapass cr_crapass%ROWTYPE;
 
       -- Cursor sobre os produtos oferecidos
       CURSOR cr_produtos_coop(pr_tpconta IN tbcc_produtos_coop.tpconta%TYPE
-                             ,pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+                             ,pr_cdcooper IN crapcop.cdcooper%TYPE
+                             ,pr_inpessoa IN tbcc_produtos_coop.inpessoa%TYPE) IS
         SELECT tbcc_produto.cdproduto,
                tbcc_produto.dsproduto,
                decode(tbcc_produtos_coop.tpproduto,1,'obrigatorio','opcional') tpproduto,
@@ -5120,6 +5294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                tbcc_produtos_coop
          WHERE tbcc_produtos_coop.cdcooper = pr_cdcooper
            AND tbcc_produtos_coop.tpconta  = pr_tpconta
+           AND tbcc_produtos_coop.inpessoa = pr_inpessoa
            AND tbcc_produto.cdproduto      = tbcc_produtos_coop.cdproduto
          ORDER BY tbcc_produtos_coop.tpproduto,
                   tbcc_produtos_coop.nrordem_exibicao;
@@ -5190,7 +5365,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       -- Efetua o loop sobre os produtos
       FOR rw_produtos_coop IN cr_produtos_coop(pr_tpconta => vr_tpconta
-                                              ,pr_cdcooper => vr_cdcooper) LOOP
+                                              ,pr_cdcooper => vr_cdcooper
+                                              ,pr_inpessoa => rw_crapass.inpessoa) LOOP
 
         -- Insere o produto oferecido
         pc_atualiza_produto_oferecido(pr_nrdconta => pr_nrdconta,
@@ -5415,6 +5591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      PROCEDURE pc_consulta_servicos(pr_cdcooper   IN crapcop.cdcooper%TYPE
                                    ,pr_tpproduto  IN tbcc_produtos_coop.tpproduto%TYPE  --> tipo de produto
                                    ,pr_tpconta    IN tbcc_produtos_coop.tpconta%TYPE    --> tipo de conta
+                                   ,pr_inpessoa   IN tbcc_produtos_coop.inpessoa%TYPE    --> tipo de pessoa
                                    ,pr_xmllog     IN VARCHAR2                           --> XML com informações de LOG
                                    ,pr_cdcritic   OUT crapcri.cdcritic%TYPE             --> Codigo da critica
                                    ,pr_dscritic   OUT VARCHAR2                          --> Descricao da critica
@@ -5438,31 +5615,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          Alteracoes: 30/03/2016 - Alterado para filtrar apenas os produtos ativos
 		                          para oferta via tela atenda. (Anderson)
 
+                     08/01/2018 - Retirado filtro para desconsiderar os produtos não 
+                                  listados na ATENDA. (Lombardi)
       ............................................................................. */
 
       -- busca servicos aderidos
       CURSOR cr_prod_aderidos IS
         SELECT tbcc_produtos_coop.cdproduto,
                tbcc_produtos_coop.nrordem_exibicao,
-               tbcc_produto.dsproduto
+               tbcc_produto.dsproduto,
+               tbcc_produtos_coop.inpessoa,
+               nvl(tbcc_produtos_coop.vlminimo_adesao, 0) vlminimo_adesao,
+               nvl(tbcc_produtos_coop.vlmaximo_adesao, 0) vlmaximo_adesao
         FROM   tbcc_produtos_coop,
                tbcc_produto
         WHERE  tbcc_produto.cdproduto = tbcc_produtos_coop.cdproduto
         AND    tbcc_produtos_coop.cdcooper  = pr_cdcooper
         AND    tbcc_produtos_coop.tpconta   = pr_tpconta
         AND    tbcc_produtos_coop.tpproduto = pr_tpproduto
+        AND    tbcc_produtos_coop.inpessoa = pr_inpessoa
+        AND    tbcc_produtos_coop.dtvigencia IS NULL
         ORDER  BY tbcc_produtos_coop.nrordem_exibicao;
 
       -- busca servicos disponiveis
       CURSOR cr_prod_dispo IS
         SELECT tbcc_produto.cdproduto,
-               tbcc_produto.dsproduto
+               tbcc_produto.dsproduto,
+               tbcc_produto.idfaixa_valor
         FROM   tbcc_produto
-		WHERE  tbcc_produto.flgitem_soa = 1  /* Somente os produtos cuja flag "item ofertado na tela atenda" esteja marcada */
         ORDER BY tbcc_produto.dsproduto;
 
+      CURSOR cr_tipo_conta_coop IS
+        SELECT to_char(nvl(vlminimo_capital, 0),'FM999G999G990D00') vlminimo_capital
+          FROM tbcc_tipo_conta_coop ctc
+         WHERE ctc.inpessoa = pr_inpessoa
+           AND ctc.cdcooper = pr_cdcooper
+           AND ctc.cdtipo_conta = pr_tpconta;
+      rw_tipo_conta_coop cr_tipo_conta_coop%ROWTYPE;
+      
       vr_texto_completo VARCHAR2(32600);           --> Variável para armazenar os dados do XML antes de incluir no CLOB
       vr_des_xml        CLOB;                      --> XML tbcc_produto
+      vr_vlmincapi      VARCHAR2(100);
 
       -- exceptions
       vr_exc_saida  EXCEPTION;
@@ -5470,6 +5663,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_dscritic   VARCHAR2(4000);
 
     BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0003'
+                                ,pr_action => null);
+      
       -- Inicializar o CLOB
       vr_des_xml := NULL;
       vr_texto_completo := NULL;
@@ -5477,6 +5675,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       dbms_lob.createtemporary(vr_des_xml, TRUE);
       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,'<?xml version="1.0" encoding="utf-8"?><root>');
+      
+            
+      OPEN cr_tipo_conta_coop;
+      FETCH cr_tipo_conta_coop INTO rw_tipo_conta_coop;
+      IF cr_tipo_conta_coop%FOUND THEN
+        vr_vlmincapi := rw_tipo_conta_coop.vlminimo_capital;
+      ELSE
+        vr_vlmincapi := '';
+      END IF;
+      
+      gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,'<vlmincapi>' || vr_vlmincapi || '</vlmincapi>');
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,'<servicos>');
       -- varre todos os servicos disponiveis
       FOR rw_tbcc_produto IN cr_prod_dispo LOOP
@@ -5485,6 +5694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                         '<disponiveis>'||
                                         '  <codigo>'  ||rw_tbcc_produto.cdproduto||'</codigo>'||
                                         '  <produto>' ||rw_tbcc_produto.dsproduto||'</produto>'||
+                                        '  <fxvalor>' ||rw_tbcc_produto.idfaixa_valor||'</fxvalor>'||
                                         '</disponiveis>');
       END LOOP;
       -- varre todos os servicos aderidos
@@ -5495,6 +5705,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                         '  <codigo>'  ||tbcc_produtos_coop.cdproduto||'</codigo>'||
                                         '  <produto>'  ||tbcc_produtos_coop.dsproduto||'</produto>'||
                                         '  <exibicao>'  ||tbcc_produtos_coop.nrordem_exibicao||'</exibicao>'||
+                                        '  <inpessoa>'  ||tbcc_produtos_coop.inpessoa ||'</inpessoa>'||
+                                        '  <vlminimo>'  ||to_char(tbcc_produtos_coop.vlminimo_adesao,'FM999G999G990D00') ||'</vlminimo>'||
+                                        '  <vlmaximo>'  ||to_char(tbcc_produtos_coop.vlmaximo_adesao,'FM999G999G990D00') ||'</vlmaximo>'||
                                         '</aderidos>');
       END LOOP;
       -- fecha tag servicos
@@ -5536,6 +5749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     PROCEDURE pc_valida_consistencia (pr_cdcooper   IN crapcop.cdcooper%TYPE
                                    ,pr_tpproduto  IN tbcc_produtos_coop.tpproduto%TYPE  --> tipo de produto
                                    ,pr_tpconta    IN tbcc_produtos_coop.tpconta%TYPE    --> tipo de conta
+                                     ,pr_inpessoa   IN tbcc_produtos_coop.inpessoa%TYPE   --> tipo de pessoa
                                    ,pr_servico    IN VARCHAR2                           --> produtos aderidos
                                    ,pr_xmllog     IN VARCHAR2                           --> XML com informações de LOG
                                    ,pr_cdcritic   OUT crapcri.cdcritic%TYPE             --> Codigo da critica
@@ -5572,8 +5786,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       FROM    tbcc_produtos_coop
       WHERE   tbcc_produtos_coop.cdcooper   = pr_cdcooper
       AND     tbcc_produtos_coop.tpconta    = pr_tpconta
+      AND     tbcc_produtos_coop.inpessoa   = pr_inpessoa
       AND     tbcc_produtos_coop.cdproduto  = vr_cdproduto
-      AND     tbcc_produtos_coop.tpproduto  <> pr_tpproduto;
+      AND     tbcc_produtos_coop.tpproduto  <> pr_tpproduto
+      AND 	  tbcc_produtos_coop.dtvigencia IS NULL;
 
     rw_tbcc_produtos_coop cr_consistencia%ROWTYPE; --> tipo de servico
 
@@ -5606,7 +5822,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     PROCEDURE pc_inclui_servicos (pr_cdcooper   IN crapcop.cdcooper%TYPE
                                  ,pr_tpproduto  IN tbcc_produtos_coop.tpproduto%TYPE  --> tipo de produto
                                  ,pr_tpconta    IN tbcc_produtos_coop.tpconta%TYPE    --> tipo de conta
+                                 ,pr_inpessoa   IN tbcc_produtos_coop.inpessoa%TYPE   --> tipo de pessoa
                                  ,pr_servicos   IN VARCHAR2                           --> produtos aderidos
+                                 ,pr_vlmincapi  IN NUMBER                             --> Valor minimo de capital
                                  ,pr_xmllog     IN VARCHAR2                           --> XML com informações de LOG
                                  ,pr_cdcritic   OUT crapcri.cdcritic%TYPE             --> Codigo da critica
                                  ,pr_dscritic   OUT VARCHAR2                          --> Descricao da critica
@@ -5639,77 +5857,225 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_texto_completo VARCHAR2(32600);           --> Variável para armazenar os dados do XML antes de incluir no CLOB
       vr_des_xml        CLOB;                      --> XML tbcc_produto
 
-      vr_quebra   LONG DEFAULT pr_servicos || ';'; --> armazena string com os codigos dos servicos
-      vr_idx      NUMBER; -- indice para quebra de string
+      vr_servicos GENE0002.typ_split; -- tabela de serviços
+      vr_servico  GENE0002.typ_split; -- tabela com os campos do serviço
 
       -- exceptions
       vr_exc_saida  EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
 
+      CURSOR cr_tipo_conta (pr_cdcooper IN tbcc_tipo_conta_coop.cdcooper%TYPE
+                           ,pr_inpessoa IN tbcc_tipo_conta_coop.inpessoa%TYPE
+                           ,pr_tpconta  IN tbcc_tipo_conta_coop.cdtipo_conta%TYPE) IS
+        SELECT 1
+          FROM tbcc_tipo_conta_coop tca
+         WHERE tca.cdcooper     = pr_cdcooper
+           AND tca.inpessoa     = pr_inpessoa
+           AND tca.cdtipo_conta = pr_tpconta;
+      rw_tipo_conta cr_tipo_conta%ROWTYPE;
+      
+      -- Buscar informações do produto
+      CURSOR cr_produto(pr_cdproduto IN tbcc_produtos_coop.cdproduto%TYPE) IS
+        SELECT nvl(tpd.idfaixa_valor, 0) idfaixa_valor
+              ,tpd.dsproduto
+          FROM tbcc_produto tpd
+         WHERE tpd.cdproduto = pr_cdproduto;
+      rw_produto cr_produto%ROWTYPE;
+      
+      CURSOR cr_produtos_coop(pr_cdcooper  IN tbcc_produtos_coop.cdcooper%TYPE
+                             ,pr_tpconta   IN tbcc_produtos_coop.tpconta%TYPE
+                             ,pr_inpessoa  IN tbcc_produtos_coop.inpessoa%TYPE
+                             ,pr_cdproduto IN tbcc_produtos_coop.cdproduto%TYPE) IS
+        SELECT *
+          FROM tbcc_produtos_coop tpc
+         WHERE tpc.cdcooper  = pr_cdcooper
+           AND tpc.tpconta   = pr_tpconta
+           AND tpc.inpessoa  = pr_inpessoa
+           AND tpc.cdproduto = pr_cdproduto;
+      rw_produtos_coop cr_produtos_coop%ROWTYPE;
+      
     BEGIN
 
-      pc_valida_consistencia(pr_cdcooper  => pr_cdcooper
-                         , pr_tpproduto => pr_tpproduto
-                         , pr_tpconta   => pr_tpconta
-                         , pr_servico   => pr_servicos
-                         , pr_xmllog    => pr_xmllog
-                         , pr_cdcritic  => vr_cdcritic
-                         , pr_dscritic  => vr_dscritic
-                         , pr_retxml    => pr_retxml
-                         , pr_nmdcampo  => pr_nmdcampo
-                         , pr_des_erro  => pr_des_erro);
-      IF vr_dscritic  IS NOT NULL THEN
+      IF pr_vlmincapi < 0 THEN
+          vr_dscritic := 'Valor Mínimo de Capital inválido.';
           RAISE vr_exc_saida;
       END IF;
 
-      -- Primeiro sempre exclui o cadastro para poder inserir novamente
+      -- Primeiro coloca data de vigencia para excluir no outro dia
       BEGIN
-        DELETE FROM tbcc_produtos_coop
+        UPDATE tbcc_produtos_coop
+           SET tbcc_produtos_coop.dtvigencia = trunc(SYSDATE)
         WHERE tbcc_produtos_coop.cdcooper  = pr_cdcooper
         AND   tbcc_produtos_coop.tpconta   = pr_tpconta
-        AND   tbcc_produtos_coop.tpproduto = pr_tpproduto;
+           AND tbcc_produtos_coop.tpproduto = pr_tpproduto
+           AND tbcc_produtos_coop.inpessoa  = pr_inpessoa;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'pc_inclui_servicos - Erro ao excluir dados.' || SQLERRM;
           RAISE vr_exc_saida;
       END;
-      -- Inicializa o contador de consultas
-      vr_contador := 1;
-      LOOP
-        -- Identifica ponto de quebra inicial
-        vr_idx := instr(vr_quebra, ';');
-        -- Clausula de saída para o loop
-        exit WHEN nvl(vr_idx, 0) = 0;
-        vr_cdproduto := trim(substr(vr_quebra, 1, vr_idx - 1));
-        -- Atualiza a variável com a string integral eliminando o bloco quebrado
-        vr_quebra := substr(vr_quebra, vr_idx + LENGTH(';'));
-        -- insere novo cadastro de servicos aderidos
+      
+      -- Verifica se existe tipo de conta para cooperativa
+      OPEN cr_tipo_conta (pr_cdcooper => pr_cdcooper
+                         ,pr_inpessoa => pr_inpessoa
+                         ,pr_tpconta  => pr_tpconta);
+      FETCH cr_tipo_conta INTO rw_tipo_conta;
+      
+      IF cr_tipo_conta%FOUND THEN
+        -- Atualiza o valor minimo do capital
+        BEGIN
+          UPDATE tbcc_tipo_conta_coop tca
+             SET tca.vlminimo_capital = pr_vlmincapi
+           WHERE tca.cdcooper     = pr_cdcooper
+             AND tca.inpessoa     = pr_inpessoa
+             AND tca.cdtipo_conta = pr_tpconta;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar valor mínimo do capital. '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+      ELSE
+        -- Atualiza o valor minimo do capital
+        BEGIN
+          INSERT INTO tbcc_tipo_conta_coop 
+          (
+           cdcooper    
+          ,inpessoa    
+          ,cdtipo_conta
+          ,vlminimo_capital
+          )
+          VALUES
+          (
+           pr_cdcooper
+          ,pr_inpessoa
+          ,pr_tpconta
+          ,pr_vlmincapi
+          );
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao gravar tipo de conta. ' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+      END IF;
+      
+      IF pr_servicos IS NOT NULL THEN
+        
+      -- Faz o split dos produtos
+      vr_servicos := GENE0002.fn_quebra_string(pr_string => pr_servicos
+                                              ,pr_delimit => ';');
+      
+      -- Loop pelos produtos
+      FOR vr_indice IN vr_servicos.FIRST()..vr_servicos.LAST() LOOP
+        -- Separa os campos
+        vr_servico := GENE0002.fn_quebra_string(pr_string => vr_servicos(vr_indice)
+                                               ,pr_delimit => '|');
+        -- Valida se ja existe o mesmo produto cadastrado para outro tipo de produto
+        pc_valida_consistencia(pr_cdcooper  => pr_cdcooper
+                              ,pr_tpproduto => pr_tpproduto
+                              ,pr_tpconta   => pr_tpconta
+                              ,pr_inpessoa  => pr_inpessoa
+                              ,pr_servico   => vr_servico(1)
+                              ,pr_xmllog    => pr_xmllog
+                              ,pr_cdcritic  => vr_cdcritic
+                              ,pr_dscritic  => vr_dscritic
+                              ,pr_retxml    => pr_retxml
+                              ,pr_nmdcampo  => pr_nmdcampo
+                              ,pr_des_erro  => pr_des_erro);
+        -- Se retornar alguma crítica
+        IF vr_dscritic  IS NOT NULL THEN
+            RAISE vr_exc_saida;
+        END IF;
+        
+        -- Busca as informações do produto
+        OPEN cr_produto(pr_cdproduto => vr_servico(1));
+        FETCH cr_produto INTO rw_produto;
+        
+          IF cr_produto%NOTFOUND THEN
+          vr_dscritic := 'Produto não encontrado.';
+          RAISE vr_exc_saida;
+        END IF;
+        -- Fecha o cursor
+        CLOSE cr_produto;
+        
+        -- Se tiver faixa de valor
+        IF rw_produto.idfaixa_valor = 1 THEN
+          -- Se valor máximo for 0
+          IF vr_servico(3) = 0 THEN
+            vr_dscritic := 'Produto ' || rw_produto.dsproduto || ' possui faixa de valor para contratação.';
+            RAISE vr_exc_saida;
+          END IF;
+          -- Se valor minimo for maior que valor máximo
+          IF to_number(vr_servico(2)) > to_number(vr_servico(3)) THEN
+            vr_dscritic := 'Produto ' || rw_produto.dsproduto || ' possui valores para contratação inválidos. ' ||
+                             'Valor máximo deve ser maior ou igual ao valor mínimo.';
+            RAISE vr_exc_saida;
+          END IF;
+        END IF;
+        
+        -- Verifica se ja existe o produto cadastrado
+        OPEN cr_produtos_coop(pr_cdcooper  => pr_cdcooper
+                             ,pr_tpconta   => pr_tpconta
+                             ,pr_inpessoa  => pr_inpessoa
+                             ,pr_cdproduto => vr_servico(1));
+        FETCH cr_produtos_coop INTO rw_produtos_coop;
+        -- Se encontrar o registro
+        IF cr_produtos_coop%FOUND THEN
+          -- Atualiza os cadastros que continuam
+          BEGIN
+            UPDATE tbcc_produtos_coop tpc
+               SET tpc.dtvigencia = NULL -- Volta a data vigencia para null
+                  ,tpc.tpproduto = pr_tpproduto
+                  ,tpc.vlminimo_adesao = vr_servico(2)
+                  ,tpc.vlmaximo_adesao = vr_servico(3)
+                  ,tpc.nrordem_exibicao = vr_servico(4)
+             WHERE tpc.cdcooper  = pr_cdcooper
+               AND tpc.tpconta   = pr_tpconta
+               AND tpc.tpproduto = pr_tpproduto
+               AND tpc.inpessoa  = pr_inpessoa
+               AND tpc.cdproduto = vr_servico(1);
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao realizar inclusao. '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+        ELSE
+          -- insere novo cadastro de produtos aderidos
         BEGIN
           INSERT INTO tbcc_produtos_coop
           (
            cdcooper
           ,tpconta
+            ,inpessoa
           ,cdproduto
           ,nrordem_exibicao
           ,tpproduto
+            ,vlminimo_adesao
+            ,vlmaximo_adesao
           )
           VALUES
           (
            pr_cdcooper
           ,pr_tpconta
-          ,vr_cdproduto
-          ,vr_contador
+            ,pr_inpessoa
+            ,vr_servico(1)
+            ,vr_servico(4)
           ,pr_tpproduto
+            ,vr_servico(2)
+            ,vr_servico(3)
           );
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao realizar inclusao. '||SQLERRM;
             RAISE vr_exc_saida;
         END;
-        -- incrementa + 1 no contador
-        vr_contador := vr_contador + 1;
+        END IF;
+        -- Fechar o cursor
+        CLOSE cr_produtos_coop;
+        
       END LOOP;
+      END IF;
+      
       -- salva informacoes inseridas
       COMMIT;
 
@@ -5720,7 +6086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             -- Buscar a descrição
             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           END IF;
-          -- Devolvemos código e critica encontradas das variaveis locais
+/          -- Devolvemos código e critica encontradas das variaveis locais
           pr_cdcritic := NVL(vr_cdcritic,0);
           pr_dscritic := vr_dscritic;
 

@@ -23,7 +23,7 @@
  * 014: [24/05/2017] Lucas Reinert		  : Nova rotina "Impedimentos Desligamento" (PRJ364). 
  * 015: [11/07/2017] Mauro (MOUTS)        : Desenvolvimento da melhoria 364 - Grupo Economico 
  * 016: [02/10/2017] Diogo (MoutS)        : Adicionado campo tpregtrb no formulário principal da contas (Projeto 410).
- */ 
+ */
 
 	session_start();	
 	require_once("../../includes/config.php");
@@ -102,7 +102,8 @@
 	//Atribuições
 	$cabecalho  = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 	$Titulares  = ( isset($xmlObjeto->roottag->tags[2]->tags) ) ? $xmlObjeto->roottag->tags[2]->tags : array();
-	$mensagens  = ( isset($xmlObjeto->roottag->tags[3]->tags) ) ? $xmlObjeto->roottag->tags[3]->tags : array();
+	$mensagens  = ( isset($xmlObjeto->roottag->tags[3]->tags) ) ? $xmlObjeto->roottag->tags[3]->tags : array();
+
 	$tpNatureza = $cabecalho[6]->cdata;
 	
 	// Monta div com os dados de Pessoa Jurídica
@@ -123,7 +124,7 @@
 		
 		echo '    strHTML += \'<label for="cdsitdct">Situa&ccedil;&atilde;o:</label>\';';
 		echo '    strHTML += \'<input name="cdsitdct" id="cdsitdct" type="text" /><br />\';';
-	
+
         echo '    strHTML += \'<input name="tpregtrb" id="tpregtrb" type="hidden" />\';';
 	
 		// Coloca conteúdo HTML no div e exibe
@@ -168,9 +169,70 @@
 	echo '$("#nrcpfcgc","#frmCabContas").val("'.$cabecalho[8]->cdata.'");'; //certo
 	echo '$("#cdsexotl","#frmCabContas").val("'.$cabecalho[9]->cdata.'");'; 
 	echo '$("#cdestcvl","#frmCabContas").val("'.$cabecalho[10]->cdata.' - '.$cabecalho[11]->cdata.'");'; 
-	echo '$("#cdtipcta","#frmCabContas").val("'.$cabecalho[12]->cdata.' - '.$cabecalho[13]->cdata.'");'; //pos.12 descricao tp.conta
-	echo '$("#cdsitdct","#frmCabContas").val("'.$cabecalho[14]->cdata.' - '.$cabecalho[15]->cdata.'");'; //pos.14 descricao
-    echo '$("#nrdctitg","#frmCabContas").val("'.$cabecalho[16]->cdata.'").formataDado("STRING","9.999.999-9",".-",false);';	
+	//echo '$("#cdtipcta","#frmCabContas").val("'.$cabecalho[12]->cdata.' - '.$cabecalho[13]->cdata.'");'; //pos.12 descricao tp.conta
+	
+	// buscar tipos de conta
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <inpessoa>" . $cabecalho[6]->cdata . "</inpessoa>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "CADA0006", "BUSCAR_TIPOS_DE_CONTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlTpContas = getObjectXML($xmlResult);	
+
+	//-----------------------------------------------------------------------------------------------
+	// Controle de Erros
+	//-----------------------------------------------------------------------------------------------
+	if(strtoupper($xmlTpContas->roottag->tags[0]->name == 'ERRO')){	
+		$msgErro = $xmlTpContas->roottag->tags[0]->cdata;
+		if($msgErro == null || $msgErro == ''){
+			$msgErro = $xmlTpContas->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		}
+		exibeErro($msgErro);
+	}
+
+	$tipos_conta = $xmlTpContas->roottag->tags[0]->tags;
+	
+	foreach($tipos_conta as $tipo_conta) {
+		if ( getByTagName($tipo_conta->tags,'cdtipo_conta') == $cabecalho[12]->cdata ) { //pos.12 descricao tp.conta
+			echo '$("#cdtipcta","#frmCabContas").val("' . getByTagName($tipo_conta->tags,'cdtipo_conta') . ' - ' . getByTagName($tipo_conta->tags,'dstipo_conta') .'");';
+		}
+	}
+	
+	//echo '$("#cdsitdct","#frmCabContas").val("'.$cabecalho[14]->cdata.' - '.$cabecalho[15]->cdata.'");'; //pos.14 descricao
+	
+	// buscar tipos de conta
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "CADA0006", "BUSCAR_SITUACOES_CONTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlSituacoes = getObjectXML($xmlResult);	
+
+	//-----------------------------------------------------------------------------------------------
+	// Controle de Erros
+	//-----------------------------------------------------------------------------------------------
+	if(strtoupper($xmlSituacoes->roottag->tags[0]->name == 'ERRO')){	
+		$msgErro = $xmlSituacoes->roottag->tags[0]->cdata;
+		if($msgErro == null || $msgErro == ''){
+			$msgErro = $xmlSituacoes->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		}
+		exibeErro($msgErro);
+	}
+
+	$situacoes = $xmlSituacoes->roottag->tags[0]->tags;
+	
+	foreach($situacoes as $situacao) {
+		if ( getByTagName($situacao->tags,'cdsituacao') == $cabecalho[14]->cdata ) { //pos.14 descricao
+			echo '$("#cdsitdct","#frmCabContas").val("' . getByTagName($situacao->tags,'cdsituacao') . ' - ' . getByTagName($situacao->tags,'dssituacao') .'");';
+		}
+	} 
+	
+    echo '$("#nrdctitg","#frmCabContas").val("'.$cabecalho[16]->cdata.'").formataDado("STRING","9.999.999-9",".-",false);';
 	echo '$("#tpregtrb","#frmCabContas").val("'.$cabecalho[20]->cdata.'");';
 	
 	echo 'var strHTMLTTL = \'\';'; 
@@ -294,7 +356,7 @@
 					$nomeRotina = "Desabilitar Operações"; 
 					$urlRotina  = "liberar_bloquear";
 					break;
-				}
+				}				
 				case "GRUPO ECONOMICO": {
 					$nomeRotina = "Grupo Econômico"; 
 					$urlRotina  = "grupo_economico";
@@ -466,7 +528,7 @@
 	echo 'dtdenasc = "'.$cabecalho[18]->cdata.'";';
 	echo 'cdhabmen = "'.$cabecalho[19]->cdata.'";';
 	echo 'tpregtrb = "'.$cabecalho[20]->cdata.'";';
-	
+
 	if ( $opbackgr == 'true' ) echo 'hideMsgAguardo();';
 		
 	/*Alteração: Mostrar mensagens de alerta em uma tabela de mensagens*/	

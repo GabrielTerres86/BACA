@@ -105,7 +105,8 @@
  * 091: [05/04/2017] Lombardi         (CECRED) : Criadas as funcoes lpad e rpad.
  * 092: [15/09/2017] Kelvin 		  (CECRED) : Alterações referente a melhoria 339.
  * 093: [06/10/2017] Kelvin 		  (CECRED) : Ajuste para ignorar campos com display none na funcao controlaFocoEnter. (PRJ339 - Kelvin).
- */ 	 
+ * 095: [06/02/2018] Lombardi 		  (CECRED) : Colocado tratativa para tirar o background quando o type for 'radio'. (PRJ366)
+*/ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
 var UrlImagens	= UrlSite + "imagens/"; // Url para imagens     
@@ -1905,6 +1906,7 @@ $.fn.extend({
 			var type = this.type;
             var tag = this.tagName.toLowerCase();
             if ((in_array(tag, ['input', 'select', 'textarea'])) && (type != 'image')) {
+				if (type == 'radio') $(this).css('background', 'none');
                 $(this).addClass('campo').removeClass('campoTelaSemBorda').prop('readonly', false).prop('disabled', false);
                 if ($(this).hasClass('pesquisa')) $(this).next().ponteiroMouse();
 			}
@@ -2327,7 +2329,7 @@ function controlaFocoEnter(frmName) {
 				if (jQuery(cTodos[indice]).hasClass('campoTelaSemBorda')) {
 					continue;
 				}
-				
+
 				//Desconsiderar os que estao com display none
 				if (jQuery(cTodos[indice]).css('display') == 'none') {					
 					continue;

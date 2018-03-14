@@ -67,7 +67,8 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 045: [08/05/2017] Andrey (MOUTS)         : Incluir funcao validar_cnpj e validar_cpf.
  * 046: [12/04/2017] Reinert				: Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".
  * 047:	[28/08/2017] Carlos Rafael Tanholi	: Ajuste nas rotinas xmlFilho, dataParaTimestamp, validaPermissao, mensageria. SD 743183. 	
-	 * 045: [28/09/2017] Jean Michel (CECRED)   : Adicionado função get_http_response_code para retornar o status code de arquivo ou domínio
+ * 048: [28/09/2017] Jean Michel (CECRED)   : Adicionado função get_http_response_code para retornar o status code de arquivo ou domínio
+ * 049:	[28/08/2017] Lombardi				: Criada nova rotina buscaDominios. Projeto 366 - Reestruturação dos tipos e situações de conta.
  */
 
 // Função para requisição de dados através de XML 
@@ -1747,5 +1748,33 @@ function validar_cpf($cpf = null) {
 function get_http_response_code($url) {
 	$headers = get_headers($url);
 	return substr($headers[0], 9, 3);
+}
+	  
+function buscaDominios($nmmodulo, $nmdomini) {
+	global $glbvars;
+	
+	// Montar o xml de Requisicao
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <nmmodulo>" . $nmmodulo . "</nmmodulo>";
+	$xml .= "    <nmdomini>" . $nmdomini . "</nmdomini>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+	
+	$xmlResult = mensageria($xml, "GENE0010", "RETORNA_DOMINIOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);	
+	
+	//-----------------------------------------------------------------------------------------------
+	// Controle de Erros
+	//-----------------------------------------------------------------------------------------------
+	if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
+		$msgErro = $xmlObj->roottag->tags[0]->cdata;
+		if($msgErro == null || $msgErro == ''){
+			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		}
+		exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+	}
+	
+	return $xmlObj->roottag->tags[0]->tags;
 }
 ?>
