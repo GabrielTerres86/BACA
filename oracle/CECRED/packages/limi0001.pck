@@ -23,6 +23,9 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
   --                              Heitor (Mouts)
   --
   --                 05/02/2018 - Adicionados campos novos (qtcarpag e qtaltlim) - (Luis Fernando - GFT)
+  --
+  --                 13/08/2018 - Inclusão da Procedure pc_renovar_lim_desc_titulo (Leonardo Oliveira - GFT)
+  --
   ---------------------------------------------------------------------------------------------------------------
   --> Armazenar dados do contrato de limite (antigo b1wge0019tt.i - tt-dados-ctr)
   TYPE typ_rec_dados_ctr 
@@ -211,6 +214,7 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                  ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+
   PROCEDURE pc_ultima_majoracao(pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
                                ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -218,6 +222,19 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+
+  -- Rotina referente a renovacao manual do limite de desconto de titulo
+  PROCEDURE pc_renovar_lim_desc_titulo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                                      ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Titular da Conta
+                                      ,pr_vllimite IN craplim.vllimite%TYPE --> Valor Limite de Desconto
+                                      ,pr_nrctrlim IN craplim.nrctrlim%TYPE --> Contrato
+                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de Movimento
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE --> Código do Operador
+                                      ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da Tela
+                                      ,pr_idorigem IN INTEGER               --> Identificador de Origem
+                                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica   
 END LIMI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
@@ -3393,5 +3410,368 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     end pc_ultima_majoracao;
+
+ -- Rotina referente a renovacao manual do limite de desconto de titulo
+  PROCEDURE pc_renovar_lim_desc_titulo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                                      ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Titular da Conta
+                                      ,pr_vllimite IN craplim.vllimite%TYPE --> Valor Limite de Desconto
+                                      ,pr_nrctrlim IN craplim.nrctrlim%TYPE --> Contrato
+                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de Movimento
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE --> Código do Operador
+                                      ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da Tela
+                                      ,pr_idorigem IN INTEGER               --> Identificador de Origem
+                                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica                                       
+                                      
+  BEGIN
+
+    /* .............................................................................
+
+     Programa: pc_renovar_lim_desc_titulo
+     Sistema : Rotinas referentes ao limite de titulo
+     Autor   : Leonardo Oliveira
+     Data    : 03/2018
+
+     Dados referentes ao programa:
+
+     Objetivo  : Rotina referente a renovacao manual do limite de desconto de titulo
+     
+    ..............................................................................*/
+    
+  DECLARE
+  
+    -- Variaveis para calculo da nova data fim da vigencia
+    vr_dtfimvig craplim.dtfimvig%TYPE;
+    vr_difdias NUMBER;
+  
+    -- Variável para consulta de limite
+    vr_tab_lim_desconto dscc0001.typ_tab_lim_desconto;      
+    
+    --Variaveis auxiliares
+    vr_vllimite craplim.vllimite%TYPE;
+    vr_nrdrowid ROWID;
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    
+    -- Variaveis de Log de Alteracao    
+    vr_flgctitg crapalt.flgctitg%TYPE;
+    vr_dsaltera LONG;
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    
+    -- Cursor Limite de titulo especial
+    CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE     --> Código da Cooperativa
+                     ,pr_nrdconta IN craplim.nrdconta%TYPE     --> Número da Conta
+                     ,pr_nrctrlim IN craplim.nrctrlim%TYPE) IS --> Número do Contrato                    
+                     
+      SELECT craplim.cddlinha,
+             craplim.insitlim,
+             craplim.qtrenova,
+             craplim.dtrenova,
+             craplim.vllimite,
+             nvl(craplim.dtfimvig, craplim.dtinivig + craplim.qtdiavig) as dtfimvig,
+             craplim.qtdiavig
+        FROM craplim
+       WHERE craplim.cdcooper = pr_cdcooper
+         AND craplim.nrdconta = pr_nrdconta
+         AND craplim.nrctrlim = pr_nrctrlim
+         AND craplim.tpctrlim = 3; -- Limite de crédito de desconto de titulo
+    rw_craplim cr_craplim%ROWTYPE;
+    
+    -- Cursor Linhas de Credito de Desconto de Titulo
+    CURSOR cr_crapldc (pr_cdcooper IN craplrt.cdcooper%TYPE,
+                       pr_cddlinha IN craplrt.cddlinha%TYPE) IS
+      SELECT crapldc.flgstlcr
+        FROM crapldc
+       WHERE crapldc.cdcooper = pr_cdcooper 
+         AND crapldc.cddlinha = pr_cddlinha
+         AND crapldc.tpdescto = 3; -- Titulo
+      
+    rw_crapldc cr_crapldc%ROWTYPE;
+    
+    -- Cursor Regras do limite de titulo especial
+    CURSOR cr_craprli (pr_cdcooper IN craprli.cdcooper%TYPE,
+                       pr_inpessoa IN craprli.inpessoa%TYPE) IS
+      SELECT qtmaxren
+        FROM craprli
+       WHERE craprli.cdcooper = pr_cdcooper 
+         AND craprli.inpessoa = DECODE(pr_inpessoa,3,2,pr_inpessoa)
+         AND craprli.tplimite = 3; -- Limite Credito Desconto Titulo
+    
+    rw_craprli cr_craprli%ROWTYPE;
+    
+    -- Cursor Associado
+    CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE,
+                       pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT inpessoa,
+             nrdctitg,
+             flgctitg
+        FROM crapass
+       WHERE crapass.cdcooper = pr_cdcooper 
+         AND crapass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    -- Cursor alteracao de cadastro
+    CURSOR cr_crapalt (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE
+                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+    SELECT crapalt.dsaltera,
+           crapalt.rowid
+      FROM crapalt
+     WHERE crapalt.cdcooper = pr_cdcooper
+       AND crapalt.nrdconta = pr_nrdconta
+       AND crapalt.dtaltera = pr_dtmvtolt;
+    
+     rw_crapalt cr_crapalt%ROWTYPE;
+     
+  BEGIN
+    
+    IF(pr_vllimite <= 0) OR pr_vllimite IS NULL THEN
+      vr_dscritic := 'Valor do limite inválido.';
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- Consultar o limite de credito
+    OPEN cr_craplim(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_nrctrlim => pr_nrctrlim);
+    FETCH cr_craplim INTO rw_craplim;
+
+    -- Verifica se o limite de credito existe
+    IF cr_craplim%NOTFOUND THEN
+      CLOSE cr_craplim;
+      vr_dscritic := 'Associado não possui proposta de limite de desconto titulo.';
+      RAISE vr_exc_saida;
+    ELSE
+      CLOSE cr_craplim;
+    END IF;
+    
+    -- Verifica a situacao do limite do titulo especial
+    IF nvl(rw_craplim.insitlim,0) <> 2 THEN
+      vr_dscritic := 'O contrato de limite de desconto de titulo deve estar ativo.';
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- diferença entre a data do fim da vigencia e a data de movimentação para calcular vencimento
+    vr_difdias := rw_craplim.dtfimvig - pr_dtmvtolt;
+  
+  --vencido
+  IF (vr_difdias < 0 ) THEN
+
+  IF (vr_difdias < -60 ) THEN
+    -- Verificacao para saber se ja se passaram mais de 60 dias limite para a renovacao
+      vr_dscritic := 'Nao e possivel realizar a renovacao do limite de desconto de titulo. Ja se passaram 60 dias do fim da vigencia';     
+      RAISE vr_exc_saida;      
+    END IF;
+  -- calcula o novo fim da vigencia a partir  da data da movimentação
+  vr_dtfimvig := pr_dtmvtolt + NVL(rw_craplim.qtdiavig,0);
+
+  -- não vencido  
+  ELSE
+  
+  -- Verificacao para saber se faltam mais que 15 dias para o vencimento do limite para a renovacao
+  IF (vr_difdias > 15 ) THEN
+      vr_dscritic := 'Nao e possivel realizar a renovacao do limite de desconto de titulo. Faltam mais que 15 dias para o limite ';     
+      RAISE vr_exc_saida;      
+    END IF;
+  -- calcula o novo fim da vigencia a partir do fim da vigencia atual
+  vr_dtfimvig := rw_craplim.dtfimvig + NVL(rw_craplim.qtdiavig,0);
+  END IF;-- fim verificacao vencimento
+      
+    --Guarda valor anterior do limite
+    vr_vllimite := rw_craplim.vllimite;
+    
+    -- Consulta o limite de credito de desconto de titulo 
+    OPEN cr_crapldc(pr_cdcooper => pr_cdcooper,
+                    pr_cddlinha => rw_craplim.cddlinha);
+    FETCH cr_crapldc INTO rw_crapldc;
+
+    -- Verifica se o limite de credito existe
+    IF cr_crapldc%NOTFOUND THEN
+      CLOSE cr_crapldc;
+      vr_dscritic := 'Linha de desconto de titulo nao cadastrada.';
+      RAISE vr_exc_saida;
+    ELSE
+      CLOSE cr_crapldc;
+    END IF;
+    
+    -- Verifica se a linha de credito esta liberada ++ ## (verificada se a linha está bloqueada)
+    IF nvl(rw_crapldc.flgstlcr,0) = 0 THEN
+      vr_dscritic := 'Nao e possivel realizar a renovacao de limite, linha de desconto bloqueada. Incluir novo limite.';
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Consulta o Associado
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    
+    -- Verifica se o limite de credito existe
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      vr_dscritic := 'Associado nao cadastrado.';
+      RAISE vr_exc_saida;
+    ELSE
+      CLOSE cr_crapass;
+    END IF;
+    
+    -- Consulta a regra do limite de titulo especial
+    OPEN cr_craprli(pr_cdcooper => pr_cdcooper,
+                    pr_inpessoa => rw_crapass.inpessoa);
+    FETCH cr_craprli INTO rw_craprli;
+    -- Verifica se o limite de credito existe
+    IF cr_craprli%NOTFOUND THEN
+      CLOSE cr_craprli;
+      vr_dscritic := 'Regras da linha de credito de desconto de titulo nao cadastrada.';
+      RAISE vr_exc_saida;
+    ELSE
+      CLOSE cr_craprli;
+    END IF;
+    
+    -- Verificar a quantidade maxima que pode renovar ##
+    IF ((nvl(rw_craprli.qtmaxren,0) > 0) AND (nvl(rw_craplim.qtrenova,0) >= nvl(rw_craprli.qtmaxren,0))) THEN
+      vr_dscritic := 'Nao e possivel realizar a renovacao do limite. Incluir novo contrato';
+      RAISE vr_exc_saida;
+    END IF;    
+    
+    -- Consulta o limite de desconto por tipo de pessoa
+    DSCC0001.pc_busca_tab_limdescont(pr_cdcooper => pr_cdcooper                  --> Codigo da cooperativa 
+                                    ,pr_inpessoa => rw_crapass.inpessoa          --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
+                                    ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
+                                    ,pr_cdcritic => vr_cdcritic                  --> Código da crítica
+                                    ,pr_dscritic => vr_dscritic);                --> Descrição da crítica                
+    
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_saida;
+    END IF;              
+
+    -- Verifica se o novo limite estipula o limite máximo pelo tipo de pessoa
+    IF(pr_vllimite > vr_tab_lim_desconto(rw_crapass.inpessoa).vllimite) THEN
+      vr_dscritic := 'Nao e possivel realizar a renovacao de limite, valor excede o limite estipulado.';
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Atualiza os dados do limite de titulo especial
+    BEGIN
+      UPDATE craplim
+         SET dtinivig = pr_dtmvtolt,
+             dtfimvig = vr_dtfimvig,
+             vllimite = pr_vllimite,
+             qtrenova = NVL(qtrenova,0) + 1,
+             dtrenova = pr_dtmvtolt,
+             tprenova = 'M' -- Manual
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrctrlim = pr_nrctrlim
+         AND tpctrlim = 3; -- Limite Desconto Titulo
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao renovar o limite de titulo de desconto de titulo: ' || SQLERRM;
+        RAISE vr_exc_saida;
+    END;
+    
+    -- Por default fica como 3
+    vr_flgctitg  := 3;    
+    vr_dsaltera  := 'Renov. Manual Limite Desc Titulo. Ctr: ' || pr_nrctrlim || ',';
+    
+    -- Se for conta integracao ativa, seta a flag para enviar ao BB 
+    IF trim(rw_crapass.nrdctitg) IS NOT NULL AND rw_crapass.flgctitg = 2 THEN  -- Ativa
+      --Conta Integracao
+      vr_flgctitg := 0;
+    END IF;
+    
+    -- Verifica se jah possui alteracao
+    OPEN cr_crapalt (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta
+                    ,pr_dtmvtolt => pr_dtmvtolt);
+    FETCH cr_crapalt INTO rw_crapalt;
+
+    IF cr_crapalt%FOUND THEN
+      CLOSE cr_crapalt;
+      -- Altera o registro
+      BEGIN
+        UPDATE crapalt SET -- ## precisa dessa inclusão ?
+               dsaltera = rw_crapalt.dsaltera || vr_dsaltera,
+               cdoperad = pr_cdoperad,
+               flgctitg = vr_flgctitg
+         WHERE rowid = rw_crapalt.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic:= 'Erro ao atualizar crapalt. '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;       
+    ELSE
+      CLOSE cr_crapalt;
+      --Inserir Alteracao
+      BEGIN
+        INSERT INTO crapalt
+          (nrdconta
+          ,dtaltera
+          ,tpaltera
+          ,dsaltera
+          ,cdcooper
+          ,flgctitg
+          ,cdoperad)
+        VALUES
+          (pr_nrdconta
+          ,pr_dtmvtolt
+          ,2 -- alterações diversas
+          ,vr_dsaltera
+          ,pr_cdcooper
+          ,vr_flgctitg
+          ,pr_cdoperad);
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir crapalt. '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+    END IF;
+       
+    IF vr_vllimite <> pr_vllimite THEN -- ## (mantenho o log da mesma maneira)
+      -- Inclusão de log com retorno do ROWID
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => ''
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem) --> Origem enviada
+                          ,pr_dstransa => 'Alteração do valor limite de desconto de titulo.'
+                          ,pr_dttransa => trunc(SYSDATE)
+                          ,pr_flgtrans => 1 --> TRUE
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                          ,pr_idseqttl => 0
+                          ,pr_nmdatela => 'ATENDA'
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+            
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Valor Limite'
+                               ,pr_dsdadant => to_char(vr_vllimite,'FM999G999G999G999G999D00')
+                               ,pr_dsdadatu => to_char(pr_vllimite,'FM999G999G999G999G999D00'));
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN     
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      ROLLBACK;
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || pr_nmdatela || ': ' || SQLERRM;
+      ROLLBACK;
+    END;
+    
+  END pc_renovar_lim_desc_titulo;
+
 END LIMI0001;
 /

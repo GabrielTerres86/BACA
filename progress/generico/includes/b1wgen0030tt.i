@@ -69,6 +69,10 @@
                
                07/02/2018 - Adicionados novos campos na tt-limite_tit (Luis Fernando - GFT)
 
+			   07/03/2018 - Inclusão do novo campo 'dtrenova' na TEMP-TABLE 'tt-desconto_titulos' (Leonardo Oliveira - GFT)
+
+               13/03/2018 - Inclusão do novo campo 'perrenov' na TEMP-TABLE 'tt-desconto_titulos' (Leonardo Oliveira - GFT)
+
 ..............................................................................*/
     
 DEF TEMP-TABLE crawljt NO-UNDO
@@ -198,8 +202,8 @@ DEF TEMP-TABLE tt-desconto_titulos NO-UNDO
     FIELD vlutilcr AS DECI
     FIELD qtutilsr AS INTE
     FIELD vlutilsr AS DECI
-    FIELD dtrenova AS DATE.
-           
+    FIELD dtrenova AS DATE
+    FIELD perrenov AS INTE.
 
 DEF TEMP-TABLE tt-tot_descontos NO-UNDO
     FIELD vldscchq AS DECI

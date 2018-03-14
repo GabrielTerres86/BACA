@@ -27,6 +27,7 @@
  * 011: [22/11/2016] Jaison/James (CECRED) : Zerar glb_codigoOperadorLiberacao antes da cdopcolb.
  * 012: [09/03/2017] Adriano    (CECRED): Ajuste devido ao tratamento para validar titulos já inclusos em outro borderô - SD 603451.
  * 013: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364).
+ * 014: [13/03/2018] Leonardo Oliveira (GFT): Novos métodos 'acessaValorLimite', 'formataValorLimite', 'renovaValorLimite' e 'converteNumero'.
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -1636,4 +1637,108 @@ function abreProtocoloAcionamento(dsprotocolo) {
             return false;
         }
     });
+}
+
+
+// renovação
+function acessaValorLimite() {
+
+    showMsgAguardo('Aguarde, carregando ...');
+
+    var vllimite = $('#vllimite','#frmTitulos').val();
+    var nrctrlim = $('#nrctrlim','#frmTitulos').val();
+
+    exibeRotina($('#divUsoGenerico'));
+
+    // Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/descontos/titulos/titulos_valor_limite.php',
+        data: {
+            vllimite: vllimite,
+            nrctrlim: nrctrlim,
+            redirect: 'html_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+            $('#divUsoGenerico').html(response);
+            layoutPadrao();
+            formataValorLimite();
+            $('#vllimite','#frmReLimite').desabilitaCampo();
+            hideMsgAguardo();
+            bloqueiaFundo($('#divUsoGenerico'));
+        }
+    });
+
+    return false;
+}
+
+function formataValorLimite() {
+
+    highlightObjFocus( $('#frmReLimite') );
+
+    var Lvllimite = $('label[for="vllimite"]','#frmReLimite');
+
+    var Cvllimite = $('#vllimite','#frmReLimite');
+    Cvllimite.css({'width':'90px','text-align':'right'}).setMask("DECIMAL","zzz.zzz.zz9,99","");
+    Cvllimite.habilitaCampo();
+    Cvllimite.focus();
+
+    Cvllimite.unbind('keypress').bind('keypress', function(e) {
+        if ( divError.css('display') == 'block' ) { return false; }
+        if ( e.keyCode == 13) {
+            renovaValorLimite();
+            return false;
+        }
+    });
+
+    $('#btRenovar').unbind('click').bind('click', function(){
+        renovaValorLimite();
+        return false;
+    });
+
+    return false;
+}
+
+
+function renovaValorLimite() {
+
+    showMsgAguardo('Aguarde, efetuando renovacao...');
+
+    var vllimite = converteNumero($('#vllimite','#frmReLimite').val());
+    var nrctrlim = $('#nrctrlim','#frmReLimite').val();
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_renova_limite.php",
+        data: {
+            nrdconta: nrdconta,
+            vllimite: vllimite,
+            nrctrlim: nrctrlim.replace(/[^0-9]/g,''),
+            redirect: "script_ajax"
+        },
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            try {
+                eval(response);
+            } catch(error) {
+                hideMsgAguardo();
+                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+
+    return false;
+}
+
+function converteNumero (numero){
+  return numero.replace('.','').replace(',','.');
 }
