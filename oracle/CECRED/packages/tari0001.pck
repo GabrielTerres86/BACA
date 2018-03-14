@@ -8140,6 +8140,9 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
           vr_des_corpo := NULL;
         END IF;
       END IF;
+      
+      pr_cdhistor := vr_cdhistor;
+      pr_cdfvlcop := vr_cdfvlcop;
     ELSE
       -- Buscar tarifa emprestimo
       TARI0001.pc_carrega_dados_tarifa_empr(pr_cdcooper => pr_cdcooper

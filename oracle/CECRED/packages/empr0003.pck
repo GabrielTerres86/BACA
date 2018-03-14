@@ -1022,6 +1022,16 @@ BEGIN
     ............................................................................. */
 
       -- Cursor sobre as informacoes de emprestimo
+      CURSOR cr_crapepr IS
+        SELECT crapepr.vltarifa,
+               crapepr.vliofepr,
+               crapepr.vlemprst
+        FROM crapepr
+        WHERE crapepr.cdcooper = pr_cdcooper
+           AND crapepr.nrdconta = pr_nrdconta
+           AND crapepr.nrctremp = pr_nrctremp;
+      rw_crapepr cr_crapepr%ROWTYPE;
+        
       CURSOR cr_crawepr IS
         SELECT crawepr.cdfinemp,
                crawepr.cdlcremp,
@@ -1048,7 +1058,19 @@ BEGIN
                crawepr.txmensal,
                crapage.nmcidade,
                crapage.cdufdcop,
-               crawepr.nrseqrrq
+               crawepr.nrseqrrq,
+               -- Projeto 410 - 14/03/2018 - SM - incluir campos para calculo IOF e tarifa
+               crawepr.idfiniof,
+                crawepr.nrctrliq##1 || ',' ||
+                crawepr.nrctrliq##2 || ',' ||
+                crawepr.nrctrliq##3 || ',' ||
+                crawepr.nrctrliq##4 || ',' ||
+                crawepr.nrctrliq##5 || ',' ||
+                crawepr.nrctrliq##6 || ',' ||
+                crawepr.nrctrliq##7 || ',' ||
+                crawepr.nrctrliq##8 || ',' ||
+                crawepr.nrctrliq##9 || ',' ||
+                crawepr.nrctrliq##10 dsctrliq
           FROM crapage,
                crapass,
                crawepr
@@ -1172,6 +1194,15 @@ BEGIN
       rw_crapavi_01 cr_crapass%ROWTYPE; --armazena informacoes do cursor cr_crapass para avalista 1
       rw_crapavi_02 cr_crapass%ROWTYPE; --armazena informacoes do cursor cr_crapass para avalista 2
 
+     -- Projeto 410 - 14/03/2018 - SM - buscar bens da proposta (Jean - Mout´S) 
+     CURSOR cr_crapbpr IS 
+        SELECT t.dscatbem
+          FROM crapbpr t
+         WHERE t.cdcooper = pr_cdcooper
+               AND t.nrdconta = pr_nrdconta
+               AND t.nrctrpro = pr_nrctremp;
+         rw_crapbpr cr_crapbpr%ROWTYPE;
+       
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
@@ -1201,6 +1232,23 @@ BEGIN
       vr_qrcode         VARCHAR2(100);             --> QR Code para uso da digitalizacao
       vr_cdtipdoc       INTEGER;                   --> Codigo do tipo de documento
       vr_dstextab       craptab.dstextab%TYPE;     --> Descritivo da tab
+      -- Projeto 410 - 14/03/2018 - SM - Verificar informaçoes de IOF e tarifa
+      vr_dscatbem       varchar2(1000);
+      vr_vlemprst       number;
+      vr_vlrdoiof       number;
+      vr_vlrtarif       number;
+      vr_vlrtares       number;
+      vr_vltarbem       number;
+      vr_vliofpri       number;
+      vr_vliofadi       number;
+      vr_flgimune PLS_INTEGER;
+      vr_tpctrato NUMBER := 0;                -- Tipo de contrato
+      vr_cdhisbem NUMBER := 0;                -- Hostorico do bem
+      vr_cdhistor NUMBER := 0;                -- Historico
+      vr_cdusolcr NUMBER := 0;                -- Uso linha de credito
+      vr_vlfinanc NUMBER := 0;
+      vr_cdfvlcop crapfco.cdfvlcop%TYPE;
+
 
       -- Variáveis de portabilidade
       nrcnpjbase_if_origem VARCHAR2(100);
@@ -1715,6 +1763,83 @@ BEGIN
           ELSE
             vr_negociavel := 'S'; -- nao imprime "para uso da digitalizacao" e imprime "nao negociavel"
           END IF;
+          
+          -- Projeto 410 - SM - recalculo de IOF e tarifa para incluir no valor do emprestimo          
+          OPEN  cr_crapepr;
+          FETCH cr_crapepr INTO rw_crapepr;
+          IF cr_crapepr%FOUND THEN
+            CLOSE cr_crapepr;
+            vr_vlemprst := nvl(rw_crapepr.vlemprst,0) + nvl(rw_crapepr.vltarifa,0) + nvl(rw_crapepr.vliofepr,0);      
+          ELSE
+            CLOSE cr_crapepr;
+            
+          vr_vlemprst := rw_crawepr.vlemprst;
+          if rw_crawepr.idfiniof = 1 then
+             vr_dscatbem := '';
+             FOR rw_crapbpr IN cr_crapbpr LOOP
+                 vr_dscatbem := vr_dscatbem || '|' || rw_crapbpr.dscatbem;
+             END LOOP;
+              
+             -- Buscar iof
+             EMPR0001.pc_calcula_iof_epr( pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrctremp => pr_nrctremp
+                                         ,pr_dtmvtolt => rw_crawepr.dtmvtolt
+                                         ,pr_inpessoa => rw_crawepr.inpessoa
+                                         ,pr_cdlcremp => rw_crawepr.cdlcremp
+                                         ,pr_qtpreemp => rw_crawepr.qtpreemp
+                                         ,pr_vlpreemp => rw_crawepr.vlpreemp
+                                         ,pr_vlemprst => rw_crawepr.vlemprst
+                                         ,pr_dtdpagto => rw_crawepr.dtdpagto
+                                         ,pr_dtlibera => rw_crawepr.dtlibera
+                                         ,pr_tpemprst => rw_crawepr.tpemprst
+                                         ,pr_dtcarenc        => null
+                                         ,pr_qtdias_carencia => null
+                                         ,pr_valoriof => vr_vlrdoiof
+                                         ,pr_dscatbem => vr_dscatbem
+                                         ,pr_idfiniof => rw_crawepr.idfiniof
+                                         ,pr_dsctrliq => rw_crawepr.dsctrliq
+                                         ,pr_vliofpri => vr_vliofpri
+                                         ,pr_vliofadi => vr_vliofadi
+                                         ,pr_flgimune => vr_flgimune
+                                         ,pr_dscritic => vr_dscritic);
+                                         
+              -- VERIFICA SE OCORREU UMA CRITICA
+              IF vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_saida;
+              END IF;
+            
+            -- Calcula tarifa
+            TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
+                                     , pr_nrdconta => pr_nrdconta
+                                     , pr_cdlcremp => rw_crawepr.cdlcremp
+                                     , pr_vlemprst => rw_crawepr.vlemprst
+                                     , pr_cdusolcr => rw_craplcr.cdusolcr 
+                                     , pr_tpctrato => rw_craplcr.tpctrato
+                                     , pr_dsbemgar => vr_dscatbem
+                                     , pr_cdprogra => 'RelCET'
+                                     , pr_flgemail => 'N'
+                                     , pr_vlrtarif => vr_vlrtarif
+                                     , pr_vltrfesp => vr_vlrtares
+                                     , pr_vltrfgar => vr_vltarbem
+                                     , pr_cdhistor => vr_cdhistor
+                                     , pr_cdfvlcop => vr_cdfvlcop
+                                     , pr_cdhisgar => vr_cdhistor
+                                     , pr_cdfvlgar => vr_cdfvlcop
+                                     , pr_cdcritic => vr_cdcritic
+                                     , pr_dscritic => vr_dscritic);
+            
+            if vr_dscritic is not null then
+               raise vr_exc_saida;
+            end if;
+            
+            vr_vlrtarif := ROUND(nvl(vr_vlrtarif,0),2) + nvl(vr_vlrtares,0) + nvl(vr_vltarbem,0);
+                                               
+            -- valor total emprestado
+            vr_vlemprst := nvl(rw_crawepr.vlemprst,0) + nvl(vr_vlrdoiof,0) + nvl(vr_vlrtarif,0);      
+            end if;
+          END IF;
+       
           -- gera corpo do xml
           gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                                  '<versao>'        ||vr_nrversao                             ||'</versao>' ||
@@ -1731,7 +1856,7 @@ BEGIN
                                  '<nmcredora>'     ||nomcredora_if_origem                    ||'</nmcredora>'||
                                  '<cnpjdacop>'     ||GENE0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj, 2)              ||'</cnpjdacop>'||
                                  '<dtmvtolt>'||to_char(rw_crawepr.dtmvtolt,'dd/mm/yyyy')     ||'</dtmvtolt>'||
-                                 '<vlemprst>'||'R$ '||to_char(rw_crawepr.vlemprst,'FM99G999G990D00')||'</vlemprst>'||
+                                 '<vlemprst>'||'R$ '||to_char(vr_vlemprst,'FM99G999G990D00')||'</vlemprst>'||
                                  '<txminima>'||to_char(rw_craplcr.txminima,'FM990D00')||' %' ||'</txminima>'||  --% juros remuneratorios ao mes
                                  '<prjurano>'||to_char(rw_craplcr.prjurano ,'FM990D00')||' %'||'</prjurano>'|| --% juros remuneratorios ao ano
                                  '<dsperiod>'||'MENSAL'                                      ||'</dsperiod>'||
@@ -1841,6 +1966,16 @@ BEGIN
     ............................................................................. */
 
       -- Cursor sobre as informacoes de emprestimo
+      CURSOR cr_crapepr IS
+        SELECT crapepr.vltarifa,
+               crapepr.vliofepr,
+               crapepr.vlemprst
+        FROM crapepr
+        WHERE crapepr.cdcooper = pr_cdcooper
+           AND crapepr.nrdconta = pr_nrdconta
+           AND crapepr.nrctremp = pr_nrctremp;
+      rw_crapepr cr_crapepr%ROWTYPE;
+
       CURSOR cr_crawepr IS
         SELECT crawepr.cdlcremp,
                crawepr.dtmvtolt,
@@ -1871,7 +2006,21 @@ BEGIN
                crawepr.dtcarenc,
                DECODE(crapepr.dtmvtolt, NULL, crapdat.dtmvtolt, crapepr.dtmvtolt) dtcalcul,
                DECODE(crapepr.dtmvtolt, NULL, crawepr.dtlibera, crapepr.dtmvtolt) dtefetiv,
-               tbepr_posfix_param_carencia.qtddias
+               tbepr_posfix_param_carencia.qtddias,
+               crawepr.idfiniof,
+               crawepr.vlpreemp,
+               crawepr.dtlibera,
+               crawepr.tpemprst,
+                crawepr.nrctrliq##1 || ',' ||
+                crawepr.nrctrliq##2 || ',' ||
+                crawepr.nrctrliq##3 || ',' ||
+                crawepr.nrctrliq##4 || ',' ||
+                crawepr.nrctrliq##5 || ',' ||
+                crawepr.nrctrliq##6 || ',' ||
+                crawepr.nrctrliq##7 || ',' ||
+                crawepr.nrctrliq##8 || ',' ||
+                crawepr.nrctrliq##9 || ',' ||
+                crawepr.nrctrliq##10 dsctrliq
           FROM crawepr
      LEFT JOIN crapepr
             ON crapepr.cdcooper = crapepr.cdcooper
@@ -1924,7 +2073,8 @@ BEGIN
                ROUND((POWER(1 + (txminima / 100),12) - 1) * 100,2) prjurano,
                perjurmo,
                tpctrato,
-               flgcobmu
+               flgcobmu,
+               cdusolcr
           FROM craplcr
          WHERE cdcooper = pr_cdcooper
            AND cdlcremp = pr_cdlcremp;
@@ -1992,6 +2142,15 @@ BEGIN
            AND cje.idseqttl = 1; 
       rw_crapcje cr_crapcje%ROWTYPE;
       
+     -- Projeto 410 - 14/03/2018 - SM - buscar bens da proposta (Jean - Mout´S) 
+     CURSOR cr_crapbpr IS 
+        SELECT t.dscatbem
+          FROM crapbpr t
+         WHERE t.cdcooper = pr_cdcooper
+               AND t.nrdconta = pr_nrdconta
+               AND t.nrctrpro = pr_nrctremp;
+         rw_crapbpr cr_crapbpr%ROWTYPE;
+              
       -- Tabela temporaria para o descritivo dos avais
       TYPE typ_reg_avl IS RECORD(descricao VARCHAR2(4000));
       TYPE typ_tab_avl IS TABLE OF typ_reg_avl INDEX BY PLS_INTEGER;
@@ -2031,6 +2190,22 @@ BEGIN
       vr_vlminpre       NUMBER;                       --> Valor minimo da parcela
       vr_perjurmo       NUMBER;                       --> Juro mora
 
+      -- Projeto 410 - 14/03/2018 - SM - Verificar informaçoes de IOF e tarifa
+      vr_dscatbem       varchar2(1000);
+      vr_vlemprst       number;
+      vr_vlrdoiof       number;
+      vr_vlrtarif       number;
+      vr_vlrtares       number;
+      vr_vltarbem       number;
+      vr_vliofpri       number;
+      vr_vliofadi       number;
+      vr_flgimune PLS_INTEGER;
+      vr_tpctrato NUMBER := 0;                -- Tipo de contrato
+      vr_cdhisbem NUMBER := 0;                -- Hostorico do bem
+      vr_cdhistor NUMBER := 0;                -- Historico
+      vr_cdusolcr NUMBER := 0;                -- Uso linha de credito
+      vr_vlfinanc NUMBER := 0;
+      vr_cdfvlcop crapfco.cdfvlcop%TYPE;
     BEGIN
       -- Abre o cursor com as informacoes da cooperativa
       OPEN  cr_crapcop;
@@ -2317,7 +2492,83 @@ BEGIN
         END LOOP;
       END IF;
 
-      -- Chama o calculo da parcela
+      OPEN  cr_crapepr;
+      FETCH cr_crapepr INTO rw_crapepr;
+      IF cr_crapepr%FOUND THEN
+         CLOSE cr_crapepr;
+         vr_vlemprst := nvl(rw_crapepr.vlemprst,0) + nvl(rw_crapepr.vltarifa,0) + nvl(rw_crapepr.vliofepr,0);      
+      ELSE
+         CLOSE cr_crapepr;
+         vr_vlemprst := rw_crawepr.vlemprst;
+
+       -- Projeto 410 - SM - recalculo de IOF e tarifa para incluir no valor do emprestimo          
+          if rw_crawepr.idfiniof = 1 then
+             vr_dscatbem := '';
+             FOR rw_crapbpr IN cr_crapbpr LOOP
+                 vr_dscatbem := vr_dscatbem || '|' || rw_crapbpr.dscatbem;
+             END LOOP;
+              
+             -- Buscar iof
+             EMPR0001.pc_calcula_iof_epr( pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrctremp => pr_nrctremp
+                                         ,pr_dtmvtolt => rw_crawepr.dtmvtolt
+                                         ,pr_inpessoa => rw_crawepr.inpessoa
+                                         ,pr_cdlcremp => rw_crawepr.cdlcremp
+                                         ,pr_qtpreemp => rw_crawepr.qtpreemp
+                                         ,pr_vlpreemp => rw_crawepr.vlpreemp
+                                         ,pr_vlemprst => rw_crawepr.vlemprst
+                                         ,pr_dtdpagto => rw_crawepr.dtdpagto
+                                         ,pr_dtlibera => rw_crawepr.dtlibera
+                                         ,pr_tpemprst => rw_crawepr.tpemprst
+                                         ,pr_dtcarenc        => rw_crawepr.dtcarenc
+                                         ,pr_qtdias_carencia => rw_crawepr.qtddias
+                                         ,pr_valoriof => vr_vlrdoiof
+                                         ,pr_dscatbem => vr_dscatbem
+                                         ,pr_idfiniof => rw_crawepr.idfiniof
+                                         ,pr_dsctrliq => rw_crawepr.dsctrliq
+                                         ,pr_vliofpri => vr_vliofpri
+                                         ,pr_vliofadi => vr_vliofadi
+                                         ,pr_flgimune => vr_flgimune
+                                         ,pr_dscritic => vr_dscritic);
+                                         
+              -- VERIFICA SE OCORREU UMA CRITICA
+              IF vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_saida;
+              END IF;
+            
+            -- Calcula tarifa
+            TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
+                                     , pr_nrdconta => pr_nrdconta
+                                     , pr_cdlcremp => rw_crawepr.cdlcremp
+                                     , pr_vlemprst => rw_crawepr.vlemprst
+                                     , pr_cdusolcr => rw_craplcr.cdusolcr 
+                                     , pr_tpctrato => rw_craplcr.tpctrato
+                                     , pr_dsbemgar => vr_dscatbem
+                                     , pr_cdprogra => 'RelCET'
+                                     , pr_flgemail => 'N'
+                                     , pr_vlrtarif => vr_vlrtarif
+                                     , pr_vltrfesp => vr_vlrtares
+                                     , pr_vltrfgar => vr_vltarbem
+                                     , pr_cdhistor => vr_cdhistor
+                                     , pr_cdfvlcop => vr_cdfvlcop
+                                     , pr_cdhisgar => vr_cdhistor
+                                     , pr_cdfvlgar => vr_cdfvlcop
+                                     , pr_cdcritic => vr_cdcritic
+                                     , pr_dscritic => vr_dscritic);
+            
+            if vr_dscritic is not null then
+               raise vr_exc_saida;
+            end if;
+            
+            vr_vlrtarif := ROUND(nvl(vr_vlrtarif,0),2) + nvl(vr_vlrtares,0) + nvl(vr_vltarbem,0);
+                                               
+            -- valor total emprestado
+            vr_vlemprst := nvl(rw_crawepr.vlemprst,0) + nvl(vr_vlrdoiof,0) + nvl(vr_vlrtarif,0);      
+       end if;
+     END IF;
+     
+     -- Chama o calculo da parcela
       EMPR0011.pc_busca_prest_principal_pos(pr_cdcooper        => pr_cdcooper
                                            ,pr_dtefetiv        => rw_crawepr.dtefetiv
                                            ,pr_dtcalcul        => rw_crawepr.dtcalcul
@@ -2325,7 +2576,7 @@ BEGIN
                                            ,pr_dtcarenc        => rw_crawepr.dtcarenc
                                            ,pr_dtdpagto        => rw_crawepr.dtdpagto
                                            ,pr_qtpreemp        => rw_crawepr.qtpreemp
-                                           ,pr_vlemprst        => rw_crawepr.vlemprst
+                                           ,pr_vlemprst        => vr_vlemprst
                                            ,pr_qtdias_carencia => rw_crawepr.qtddias
                                            ,pr_vlpreemp        => vr_vlpreemp
                                            ,pr_vljurcor        => vr_vljurcor
@@ -2335,12 +2586,12 @@ BEGIN
       IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-
+       
       -- Seta valor minimo
       vr_vlminpre := NVL(vr_vlpreemp,0) - NVL(vr_vljurcor,0);
-
+  
       vr_perjurmo := nvl(rw_crawepr.txmensal,0) + nvl(rw_craplcr.perjurmo,0);
-
+          
       -- Gera corpo do xml
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                              '<ind_add_item>' || vr_ind_add_item                             || '</ind_add_item>' || -- Indicador se possui terceiro garantidor (0-Nao / 1-Sim)
@@ -2355,7 +2606,7 @@ BEGIN
                              '<nmconjug>'     || TRIM(rw_crapcje.nmconjug)                   || '</nmconjug>'     ||                             
                              '<conta>'        || TRIM(gene0002.fn_mask_conta(pr_nrdconta))   || '</conta>'        ||
                              '<pa>'           || rw_crawepr.cdagenci                         || '</pa>'           ||
-                             '<vlemprst>'     || 'R$ '|| to_char(rw_crawepr.vlemprst,'FM99G999G990D00')  || '</vlemprst>' ||
+                             '<vlemprst>'     || 'R$ '|| to_char(vr_vlemprst,'FM99G999G990D00')  || '</vlemprst>' ||
                              '<dslcremp>'     || rw_craplcr.dslcremp || ' ('|| rw_crawepr.cdlcremp ||')' || '</dslcremp>' || -- Linha de credito
                              '<origem>'       || rw_crawepr.nmcidade || '- '|| rw_crawepr.cdufdcop       || '</origem>'   || -- Local Origem
                              '<destino>'      || rw_crawepr.nmcidade || '-' || rw_crawepr.cdufdcop       || '</destino>'  || -- Local destino
@@ -2377,10 +2628,7 @@ BEGIN
                              '<vlminpre>'     || 'R$ ' || to_char(vr_vlminpre,'FM99G999G990D00') || ' + 100% do CDI</vlminpre>' ||
                              '<dtpagcar>'     || rw_crawepr.dscarencia                       || '</dtpagcar>'     ||
                              '<dtpricar>'     || nvl(to_char(rw_crawepr.dtcarenc,'DD/MM/YYYY'),UPPER('Sem carência'))   || '</dtpricar>'     ||
-
-                             vr_tab_avl(1).descricao ||
-                             vr_tab_avl(2).descricao
-                             , TRUE);
+                             vr_tab_avl(1).descricao || vr_tab_avl(2).descricao, TRUE);
 
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_des_xml);
