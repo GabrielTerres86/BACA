@@ -474,9 +474,10 @@ function controlaLayout(operacao) {
 			
 			var cbTiposConta = '';
 			
-			if (tiposConta[$(this).val()].idindividual == 1) { cbTiposConta += '<option value="0">Individual</option>'; }
-			if (tiposConta[$(this).val()].idconjunta_solidaria == 1) { cbTiposConta += '<option value="1">Conjunta solid&aacute;ria</option>'; }
-			if (tiposConta[$(this).val()].idconjunta_nao_solidaria == 1) { cbTiposConta += '<option value="2">Conjunta n&atilde;o solid&aacute;ria</option>'; }
+			if (tiposConta[$(this).val()].idindividual == 1) { cbTiposConta += '<option value="1">Individual</option>'; }
+			if (tiposConta[$(this).val()].idconjunta_solidaria == 1) { cbTiposConta += '<option value="2">Conjunta</option>'; }
+			//if (tiposConta[$(this).val()].idconjunta_solidaria == 1) { cbTiposConta += '<option value="2">Conjunta solid&aacute;ria</option>'; }
+			//if (tiposConta[$(this).val()].idconjunta_nao_solidaria == 1) { cbTiposConta += '<option value="3">Conjunta n&atilde;o solid&aacute;ria</option>'; }
 			
 			cCdcatego.html(cbTiposConta);
 			
