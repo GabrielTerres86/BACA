@@ -154,7 +154,7 @@ DEF TEMP-TABLE tt-limite_tit NO-UNDO
     FIELD dssitapr AS CHAR
     FIELD flgenvio AS CHAR
     FIELD insitlim AS INTE
-    FIELD idcobope LIKE craplim.idcobope
+    FIELD idcobope AS INTE /*LIKE craplim.idcobope*/
     FIELD cdageori LIKE craplim.cdageori.
 
 DEF TEMP-TABLE tt-dsctit_dados_limite NO-UNDO
