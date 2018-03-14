@@ -10704,6 +10704,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                       INPUT 0, /* agenci */
                                       INPUT 0, /* caixa  */
                                       INPUT par_dtmvtolt,
+                                      INPUT 'VLIOFOPSN',
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-iof-sn).
        DELETE PROCEDURE h-b1wgen9999.

@@ -860,17 +860,12 @@ BEGIN
             
             --Se nao encontrou 
             IF cr_crapass%NOTFOUND THEN
-               --Fechar Cursor
-               CLOSE cr_crapass;
-               pr_dscritic:= 0;
-               pr_cdcritic:= 'Registro do cooperado nao encontrado.';
-               --Levantar Excecao
-               RAISE vr_exc_saida;
+              vr_relato(vr_indice).cdagenci := 0;
+            ELSE
+              vr_relato(vr_indice).cdagenci := rw_crapass.cdagenci;
             END IF;
-            --Fechar Cursor
+			--Fechar Cursor
             CLOSE cr_crapass;
-            
-            vr_relato(vr_indice).cdagenci := rw_crapass.cdagenci;
 				
             -- Registro lançado
             vr_relato(vr_indice).flglanca := 'SIM';  
@@ -985,7 +980,7 @@ BEGIN
                                  ||'  <nrdolote>'||LPAD(vr_relato(ind).nrdolote,7,'0')||'</nrdolote>'
                                  ||'  <nrseqarq>'||LPAD(vr_relato(ind).nrseqarq,9,'0')||'</nrseqarq>'
                                  ||'  <flglanca>'||vr_relato(ind).flglanca||'</flglanca>'
-								 ||'  <cdagenci>'||vr_relato(ind).cdagenci||'</cdagenci>'
+								 ||'  <cdagenci>'||nvl(vr_relato(ind).cdagenci,0)||'</cdagenci>'
                                  ||'</titulo>');
         
         -- Se NAO foi lancado corretamente
