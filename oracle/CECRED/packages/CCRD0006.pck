@@ -7324,7 +7324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                        SET insituacao = 1
                        WHERE idmensagem = r.idmensagem;
                     END IF;
-                    RETURN('S');
+                    RETURN('N');
                  end if;
              end loop;
 
