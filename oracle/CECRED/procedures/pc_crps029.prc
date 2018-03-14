@@ -165,58 +165,58 @@ BEGIN
                       --FM paralelismo
                       ,pr_cdagenci IN craplpp.cdagenci%TYPE
                       ) IS
-      SELECT /*+ INDEX (lpp craplpp##craplpp4) */ 
-             lpp.nrdconta
-            ,lpp.nrctrrpp
-            ,Count(*) qtlancmto
+    SELECT /*+ INDEX (lpp craplpp##craplpp4) */ 
+           lpp.nrdconta
+          ,lpp.nrctrrpp
+          ,Count(*) qtlancmto
       FROM craplpp lpp,
            crapass
-      WHERE lpp.cdcooper = pr_cdcooper
-      AND lpp.cdhistor IN (158,496)
-      AND lpp.dtmvtolt > pr_dtmvtolt
+     WHERE lpp.cdcooper = pr_cdcooper
+       AND lpp.cdhistor IN (158,496)
+       AND lpp.dtmvtolt > pr_dtmvtolt
        AND lpp.nrdconta = pr_nrdconta
        --FM paralelismo - Inclusão de filtro por agência para tratar o paralelismo
        AND lpp.nrdconta = crapass.nrdconta
        AND lpp.cdcooper = crapass.cdcooper
        AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
-      GROUP BY lpp.nrdconta,lpp.nrctrrpp;
+           GROUP BY lpp.nrdconta,lpp.nrctrrpp;
     rw_craplpp cr_craplpp%ROWTYPE;
-                  
+                
     --Contar a quantidade de resgates das contas
     CURSOR cr_craplrg_saque (pr_cdcooper IN craplrg.cdcooper%TYPE
                             ,pr_nrdconta IN craplrg.nrdconta%TYPE
                             --FM paralelismo
                             ,pr_cdagenci IN craplrg.cdagenci%TYPE) IS
-      SELECT lrg.nrdconta
-            ,lrg.nraplica
-            ,COUNT(*) qtlancmto
+    SELECT lrg.nrdconta
+          ,lrg.nraplica
+          ,COUNT(*) qtlancmto
       FROM craplrg lrg,
            crapass
-      WHERE lrg.cdcooper = pr_cdcooper
-      AND lrg.tpaplica = 4
-      AND lrg.inresgat = 0
+     WHERE lrg.cdcooper = pr_cdcooper
+       AND lrg.tpaplica = 4
+       AND lrg.inresgat = 0
        AND lrg.nrdconta = pr_nrdconta      
        --FM paralelismo - Inclusão de filtro por agência para tratar o paralelismo
        AND lrg.nrdconta = crapass.nrdconta
        AND lrg.cdcooper = crapass.cdcooper
        AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)     
-      GROUP BY lrg.nrdconta,lrg.nraplica;
+           GROUP BY lrg.nrdconta,lrg.nraplica;
     rw_craplrg_saque cr_craplrg_saque%ROWTYPE;
-
+    
     --Selecionar informacoes dos lancamentos de resgate
     CURSOR cr_craplrg (pr_cdcooper IN craplrg.cdcooper%TYPE
                       ,pr_dtresgat IN craplrg.dtresgat%TYPE
                       ,pr_nrdconta IN craplrg.nrdconta%TYPE
                       --FM paralelismo
                       ,pr_cdagenci IN craplrg.cdagenci%TYPE) IS
-      SELECT lrg.nrdconta
-            ,lrg.nraplica
-            ,lrg.tpaplica
-            ,lrg.tpresgat
-            ,NVL(SUM(NVL(lrg.vllanmto,0)),0) vllanmto
+    SELECT lrg.nrdconta
+          ,lrg.nraplica
+          ,lrg.tpaplica
+          ,lrg.tpresgat
+          ,NVL(SUM(NVL(lrg.vllanmto,0)),0) vllanmto
       FROM craplrg lrg,
            crapass
-      WHERE lrg.cdcooper = pr_cdcooper
+     WHERE lrg.cdcooper = pr_cdcooper
        AND lrg.dtresgat <= pr_dtresgat
        AND lrg.inresgat = 0
        AND lrg.tpresgat = 1
@@ -225,12 +225,12 @@ BEGIN
        AND lrg.nrdconta = crapass.nrdconta
        AND lrg.cdcooper = crapass.cdcooper
        AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
-      GROUP BY lrg.nrdconta
-              ,lrg.nraplica
-              ,lrg.tpaplica
-              ,lrg.tpresgat;        
+       GROUP BY lrg.nrdconta
+               ,lrg.nraplica
+               ,lrg.tpaplica
+               ,lrg.tpresgat;        
     rw_craplrg cr_craplrg%ROWTYPE;
-   
+        
     -- Cursor para busca de associados
     CURSOR cr_crapext (pr_cdcooper crapcop.cdcooper%TYPE
                        --FM paralelismo
@@ -279,7 +279,7 @@ BEGIN
                                           AND tbgen_batch_controle.insituacao  = 1
                                           AND tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)))
        ORDER BY crapass.cdagenci;   
-    
+      
     
     ---------------------------- ESTRUTURAS DE TABELA ---------------------
 
@@ -570,7 +570,7 @@ BEGIN
        ORDER BY a.dtmvtolt;
   
   BEGIN
-       
+
     FOR r_dados IN c_dados LOOP
       
       IF r_dados.dschave = 'clobxml1' THEN
@@ -936,17 +936,17 @@ BEGIN
                        
         FETCH cr_craplpp INTO rw_craplpp;
         
-        --Fechar o cursor
-        CLOSE cr_craplpp;
-                        
-          --Se possuir mais de 3 registros
-          IF rw_craplpp.qtlancmto > 3 THEN                                     
-            -- Montar indice para acessar tabela
-            vr_index_craplpp:= LPad(rw_craplpp.nrdconta,10,'0')||LPad(rw_craplpp.nrctrrpp,10,'0');
-            -- Atribuir quantidade encontrada de cada conta ao vetor
-            vr_tab_craplpp(vr_index_craplpp):= rw_craplpp.qtlancmto;
-          END IF;
-                       
+			--Fechar o cursor
+			CLOSE cr_craplpp;
+        
+			--Se possuir mais de 3 registros
+			IF rw_craplpp.qtlancmto > 3 THEN                                     
+			  -- Montar indice para acessar tabela
+			  vr_index_craplpp:= LPad(rw_craplpp.nrdconta,10,'0')||LPad(rw_craplpp.nrctrrpp,10,'0');
+			  -- Atribuir quantidade encontrada de cada conta ao vetor
+			  vr_tab_craplpp(vr_index_craplpp):= rw_craplpp.qtlancmto;
+			END IF;               
+        
         -- Busca registro com total de resgates na poupanca
         OPEN cr_craplrg_saque(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => rw_crapext.nrdconta
@@ -955,7 +955,7 @@ BEGIN
         FETCH cr_craplrg_saque INTO rw_craplrg_saque;
         
         IF cr_craplrg_saque%FOUND THEN
-
+        
           -- Montar Indice para acesso quantidade lancamentos de resgate
           vr_index_craplrg:= LPad(rw_craplrg_saque.nrdconta,10,'0')||LPad(rw_craplrg_saque.nraplica,10,'0');
           -- Popular tabela de memoria
@@ -975,14 +975,14 @@ BEGIN
         FETCH cr_craplrg INTO rw_craplrg;
         
         IF cr_craplrg%FOUND THEN
-               
+        
           -- Montar indice para selecionar total dos resgates na tabela auxiliar
           vr_index_resgate := LPad(rw_craplrg.nrdconta,10,'0') ||
                               LPad(rw_craplrg.tpaplica,05,'0') ||
                               LPad(rw_craplrg.nraplica,10,'0');
           -- Popular a tabela de memoria com a soma dos lancamentos de resgate
           vr_tab_resgate(vr_index_resgate).tpresgat := rw_craplrg.tpresgat;
-          vr_tab_resgate(vr_index_resgate).vllanmto := rw_craplrg.vllanmto;
+          vr_tab_resgate(vr_index_resgate).vllanmto := rw_craplrg.vllanmto;       
                   
         END IF;
           
@@ -1231,6 +1231,17 @@ BEGIN
                               pr_infimsol => pr_infimsol,
                               pr_stprogra => pr_stprogra);
 															
+       if vr_inproces  > 2 and
+          vr_qtdjobs   > 0 and 
+          pr_cdagenci  = 0 then 
+          pc_log_programa(pr_dstiplog   => 'F',
+                       pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                       pr_cdcooper   => pr_cdcooper, 
+                       pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                       pr_idprglog   => vr_idlog_ini_ger,
+                       pr_flgsucesso => 1);   
+       END IF;
+	
     ELSE
        -- Atualiza finalização do batch na tabela de controle 
        gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
