@@ -2976,7 +2976,7 @@ PROCEDURE busca_limites:
                                            "APROVADO MANUAL"
                                          ELSE
                                          IF craplim.insitapr=3 THEN 
-                                           "APROVADO"
+                                           "APROVADA"
                                          ELSE
                                          IF craplim.insitapr=4 THEN 
                                            "REJEITADO MANUAL"
