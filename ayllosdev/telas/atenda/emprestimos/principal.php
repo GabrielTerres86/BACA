@@ -271,7 +271,7 @@
 			arrayProposta['idcarenc'] = '<? echo getByTagName($proposta,'idcarenc'); ?>';
 			arrayProposta['dtcarenc'] = '<? echo getByTagName($proposta,'dtcarenc'); ?>';
 			arrayProposta['insitest'] = '<? echo getByTagName($proposta,'insitest'); ?>';
-			arrayProposta['idfiniof'] = '<? echo getByTagName($proposta,'idfiniof') != '' ? getByTagName($proposta,'idfiniof') : '1'; ?>';
+			arrayProposta['idfiniof'] = '<? echo getByTagName($proposta,'idfiniof') != '' ? getByTagName($proposta,'idfiniof') : '0'; ?>';
 			arrayProposta['vliofepr'] = '<? echo getByTagName($proposta,'vliofepr') != '' ? getByTagName($proposta,'vliofepr') : '0'; ?>';
 			arrayProposta['vlrtarif'] = '<? echo getByTagName($proposta,'vlrtarif') != '' ? getByTagName($proposta,'vlrtarif') : '0'; ?>';
 			arrayProposta['vlrtotal'] = '<? echo getByTagName($proposta,'vlrtotal') != '' ? getByTagName($proposta,'vlrtotal') : '0'; ?>';
@@ -279,6 +279,10 @@
 			arrayProposta['flintcdc'] = '<? echo getByTagName($proposta,'flintcdc'); ?>';
 			arrayProposta['inintegra_cont'] = '<? echo getByTagName($proposta,'inintegra_cont'); ?>';
 			arrayProposta['tpfinali'] = '<? echo getByTagName($proposta,'tpfinali'); ?>';
+
+			//Temporário!
+			arrayProposta['idfiniof'] = '<? echo ($procedure == 'obtem-dados-proposta-emprestimo' && $operacao == 'TI') ? '0' : getByTagName($proposta,'idfiniof') != '' ? getByTagName($proposta,'idfiniof') : '0'; ?>';
+			
 
 			vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];

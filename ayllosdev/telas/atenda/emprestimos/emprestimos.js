@@ -1382,6 +1382,7 @@ function controlaOperacao(operacao) {
                     $("#idfiniof").val(0);
                     arrayProposta['tpemprst'] = 0;
                 }
+                $("#idfiniof").desabilitaCampo();
                 
             } else {
                 eval(response);
@@ -1611,7 +1612,7 @@ function manterRotina(operacao) {
     dtoutspc = (dtoutspc == '') ? '?' : dtoutspc;
     dtoutris = (dtoutris == '') ? '?' : dtoutris;
     nrinfcad = (nrinfcad == '') ? 1 : nrinfcad;
-    idfiniof = (idfiniof == '') ? 1 : idfiniof;
+    idfiniof = (idfiniof == '') ? 0 : idfiniof;
 
     nrcpfcjg = normalizaNumero(nrcpfcjg);
     nrcpfav1 = normalizaNumero(nrcpfav1);
@@ -1810,7 +1811,8 @@ function verificaQtDiaLib() {
             $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
-            $("#idfiniof").habilitaCampo();
+            //$("#idfiniof").habilitaCampo();
+            $("#idfiniof").desabilitaCampo();
             break;
         case '2': // Pos-Fixado
             $('#flgpagto').desabilitaCampo();
@@ -1818,7 +1820,8 @@ function verificaQtDiaLib() {
             $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
-            $("#idfiniof").habilitaCampo();
+            //$("#idfiniof").habilitaCampo();
+            $("#idfiniof").desabilitaCampo();
             break;
     }
     return true;
