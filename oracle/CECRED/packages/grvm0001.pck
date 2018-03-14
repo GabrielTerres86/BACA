@@ -58,7 +58,9 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --                           incluido uma validação do inliquid = 0.
   --						   Alterado rotina pc_gravames_baixa_manual: ao atualizar a crapbpr setar flginclu = 0
   --					       Alterado rotina pc_gravames_processa_retorno: ao atualizar a crapbpr setar flginclu = 0
- 
+  --
+  --              14/03/2018 - Alteracao para enviar a placa do veiculo sempre em maiusculo
+  --                           Alcemir Jr (Mouts) - Chamado 858848
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicação de tipo e tabela para o arquivo do GRAVAMES
@@ -1426,7 +1428,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,bpr.idseqbem
               ,UPPER(TRIM(bpr.dschassi)) dschassi
               ,bpr.tpchassi
-              ,bpr.uflicenc
+              ,UPPER(bpr.uflicenc) uflicenc
               ,bpr.nranobem
               ,bpr.nrmodbem
               ,bpr.ufplnovo
@@ -2759,7 +2761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.nranobem
           ,crawepr.vlemprst
           ,crapbpr.nrcpfbem
-          ,crapbpr.uflicenc
+          ,UPPER(crapbpr.uflicenc) uflicenc
           ,crapbpr.dscatbem
           ,crapbpr.dscorbem
           ,crapbpr.dschassi
@@ -2812,7 +2814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.nranobem
           ,crawepr.vlemprst
           ,crapbpr.nrcpfbem
-          ,crapbpr.uflicenc
+          ,UPPER(crapbpr.uflicenc) uflicenc
           ,crapbpr.dscatbem
           ,crapbpr.dscorbem
           ,crapbpr.dschassi
@@ -3404,7 +3406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.nrdplaca
           ,crapbpr.nranobem
           ,crapbpr.nrcpfbem
-          ,crapbpr.uflicenc
+          ,UPPER(crapbpr.uflicenc) uflicenc
           ,crapbpr.dscatbem
           ,crapbpr.dscorbem
           ,crapbpr.dschassi
@@ -3955,7 +3957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.nrdplaca
           ,crapbpr.nranobem
           ,crapbpr.nrcpfbem
-          ,crapbpr.uflicenc
+          ,UPPER(crapbpr.uflicenc) uflicenc
           ,crapbpr.dscatbem
           ,crapbpr.dscorbem
           ,crapbpr.dschassi
