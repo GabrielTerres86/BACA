@@ -620,6 +620,7 @@ DEF  VAR     aux_dssolici            AS CHAR                         NO-UNDO.
                                            "anderson.fossa@cecred.coop.br," + 
                                            "jean.deschamps@cecred.coop.br," + 
                                            "james.junior@cecred.coop.br," +
+										   "custodia@cecred.coop.br," +
                                            "tesouraria@cecred.coop.br", 
                                      INPUT "'CONTROLE PROCESSO  (" + crapcop.nmrescop + ") ' ",
                                      INPUT SUBSTRING(aux_nmarqimp, 5),
