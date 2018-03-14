@@ -510,6 +510,9 @@
                07/03/2018 - Preenchimento do campo 'dtrenova' na procedure busca_dados_dsctit (Leonardo Oliveira - GFT)
 
                13/03/2018 - Preenchimento do campo 'perrenov' na procedure busca_dados_dsctit  (Leonardo Oliveira - GFT)
+
+			   14/03/2018 - Removido o conteúdo "(CONTINGENCIA)" das situações 3-Aprovada e 6-Rejeitada do campo insitapr da 
+			                procedure busca_limites (Paulo Penteado - GFT)
                
 ..............................................................................*/
 
@@ -2973,7 +2976,7 @@ PROCEDURE busca_limites:
                                            "APROVADO MANUAL"
                                          ELSE
                                          IF craplim.insitapr=3 THEN 
-                                           "APROVADO (CONTINGENCIA)"
+                                           "APROVADO"
                                          ELSE
                                          IF craplim.insitapr=4 THEN 
                                            "REJEITADO MANUAL"
@@ -2982,7 +2985,7 @@ PROCEDURE busca_limites:
                                            "REJEITADO AUTOMATICAMENTE"
                                          ELSE
                                          IF craplim.insitapr=6 THEN 
-                                           "REJEITADO (CONTINGENCIA)"
+                                           "REJEITADO"
                                          ELSE
                                          IF craplim.insitapr=7 THEN 
                                            "NAO ANALISADO"
