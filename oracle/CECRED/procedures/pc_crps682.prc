@@ -15,7 +15,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Jaison
-     Data    : Maio/2014                     Ultima atualizacao: 13/12/2017
+     Data    : Maio/2014                     Ultima atualizacao: 06/03/2018
 
      Dados referentes ao programa:
 
@@ -82,6 +82,9 @@ BEGIN
 		             Melhorias na geracao de LOG de erros para identificar possiveis erros.
 					 Heitor (Mouts)
                  13/12/2017 - Projeto Ligeirinho - Tratar paralelismo para ganho de performance - Mauro       
+
+                 06/03/2017 - Incluso procedimento para execução a partir da LANPRE. Cursor CRAPDAT precisou
+                              ficar no mesmo Loop da leitura das Cooperativas - CRAPCOP - Mauro     
 
 
   ............................................................................ */
@@ -808,6 +811,7 @@ BEGIN
   vr_idparale      integer;
   -- Qtde parametrizada de Jobs
   vr_qtdjobs       number;
+  vr_dia_exec      number;
   -- Job name dos processos criados
   vr_jobname       varchar2(30);
   -- Bloco PLSQL para chamar a execução paralela do pc_crps750
@@ -981,19 +985,10 @@ BEGIN
       vr_tab_risco(rw_riscos.cdcooper || rw_riscos.inpessoa || rw_riscos.dsrisco).cdlcremp := rw_riscos.cdlcremp;
     END LOOP;
 
-    -- Leitura do calendario
-    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-    vr_flgachou := BTCH0001.cr_crapdat%FOUND;
-    CLOSE BTCH0001.cr_crapdat;
-    -- Se nao achou
-    IF NOT vr_flgachou THEN
-       vr_cdcritic := 1;
-       RAISE vr_exc_saida;
-    END IF;
-
     -- Mauro -- Procedimento para atualizar o IDDCARGA
-    If pr_idparale =  0 Then
+    If pr_idparale = 0  And
+       pr_flgexpor = 0  Then -- Incluso validação para só criar a carga quando não for exportação para SPC/SERASA.
+      
        -- Cria a carga
        EMPR0002.pc_inclui_carga (pr_cdcooper => pr_cdcooper
                                 ,pr_idcarga  => vr_idcarga
@@ -1021,17 +1016,33 @@ BEGIN
     -- Listagem de cooperativas
     FOR rw_crapcop IN cr_crapcop(pr_cdcooper => pr_cdcooper) LOOP
 
+    -- Leitura do calendario
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    vr_flgachou := BTCH0001.cr_crapdat%FOUND;
+    CLOSE BTCH0001.cr_crapdat;
+    -- Se nao achou
+    IF NOT vr_flgachou THEN
+       vr_cdcritic := 1;
+       RAISE vr_exc_saida;
+    END IF;
+
     --Mauro **Inicio processo com Paralelismo
     -- Buscar quantidade parametrizada de Jobs
-    vr_qtdjobs := gene0001.fn_retorna_qt_paralelo( pr_cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
+    vr_qtdjobs := gene0001.fn_retorna_qt_paralelo( rw_crapcop.cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
                                                  , vr_cdprogra --pr_cdprogra  IN crapprg.cdprogra%TYPE    --> Código do programa
                                                  ); 
+
+    -- Procedimento para buscar o dia parametrizado para executar o programa com paralelismo.                                              
+    vr_dia_exec:= gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                           ,pr_cdcooper => rw_crapcop.cdcooper
+                                           ,pr_cdacesso => 'DIA_EXEC_CRPS682');                                                 
 
     /* Paralelismo visando performance Rodar Somente no processo Noturno */
     --IF ((rw_crapdat.inproces = 1) -- Caso seja uma geracao manual (carga ou SPC/Serasa) e o processo esteja on-line
     --If acima retirado, pois quando for geração manual, não roda vom paralelismo.
     
-    IF TO_CHAR(Sysdate,'D')= 1  -- Tratamento para execução aos Domingos - Será parelelismo
+    IF TO_CHAR(Sysdate,'D')= Nvl(vr_dia_exec,1)  -- Tratamento para execução aos Domingos - Será parelelismo
       AND vr_qtdjobs          > 0 
       AND pr_cdagenci         = 0   
       AND pr_flgexpor         = 0   then    
@@ -1049,7 +1060,7 @@ BEGIN
        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
      
      -- Envio centralizado de log de erro
-       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+       btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                  ,pr_ind_tipo_log => 2 -- Erro tratato
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
@@ -1063,7 +1074,7 @@ BEGIN
       --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
       pc_log_programa(pr_dstiplog   => 'I',    
                       pr_cdprograma => vr_cdprogra,           
-                      pr_cdcooper   => pr_cdcooper, 
+                      pr_cdcooper   => rw_crapcop.cdcooper, 
                       pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                       pr_idprglog   => vr_idlog_ini_ger);
      
@@ -1077,7 +1088,7 @@ BEGIN
       -- Grava LOG de ocorrência inicial do cursor cr_craprpp
       pc_log_programa(PR_DSTIPLOG           => 'O',
                       PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                      pr_cdcooper           => pr_cdcooper,
+                      pr_cdcooper           => rw_crapcop.cdcooper,
                       pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                       pr_tpocorrencia       => 4,
                       pr_dsmensagem         => ' Id_Paralelo '||vr_idparale,
@@ -1123,7 +1134,7 @@ BEGIN
                     '  wpr_cdcritic NUMBER;' || chr(13) || --
                     '  wpr_dscritic VARCHAR2(1500);' || chr(13) || --
                     'BEGIN' || chr(13) || --
-                    '  pc_crps682( '|| pr_cdcooper || ',' ||
+                    '  pc_crps682( '|| rw_crapcop.cdcooper || ',' ||
                                        rw_crapass_age.cdagenci || ',' ||
                                        vr_idcarga||','||
                                        vr_idparale || ',' ||
@@ -1134,7 +1145,7 @@ BEGIN
                     'END;'; --  
                           
       -- Faz a chamada ao programa paralelo atraves de JOB
-      gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper  --> Código da cooperativa
+      gene0001.pc_submit_job(pr_cdcooper => rw_crapcop.cdcooper  --> Código da cooperativa
                             ,pr_cdprogra => vr_cdprogra  --> Código do programa
                             ,pr_dsplsql  => vr_dsplsql   --> Bloco PLSQL a executar
                             ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
@@ -1168,7 +1179,7 @@ BEGIN
                                 
     -- Verifica se algum job paralelo executou com erro
     vr_qterro := 0;
-    vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+    vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => rw_crapcop.cdcooper,
                                                   pr_cdprogra    => vr_cdprogra,
                                                   pr_dtmvtolt    => rw_crapdat.dtmvtolt,
                                                   pr_tpagrupador => 1,
@@ -1237,7 +1248,7 @@ BEGIN
                              '      CELULAR '    || ' BLOQUEADO' || chr(13));
           
        -- Ler tabela temorária para descarregar linhas geradas
-       FOR rw_crap682 IN cr_crap682(pr_cdcooper => pr_cdcooper
+       FOR rw_crap682 IN cr_crap682(pr_cdcooper => rw_crapcop.cdcooper
                                    ,pr_cdprograma => vr_cdprogra
                                    ,pr_dsrelatorio => 'CRPS682') LOOP
            GENE0001.pc_escr_linha_arquivo(vr_arqhandl,
@@ -1253,7 +1264,7 @@ BEGIN
            Dvlr_maximol
           ,Dvlr_totCre
          From TBGEN_BATCH_RELATORIO_WRK a
-        Where cdcooper = pr_cdcooper
+        Where cdcooper = rw_crapcop.cdcooper
           And cdprograma = vr_cdprogra
           And dsrelatorio = 'CRPS682'
           And tpparcel = 9
@@ -1263,7 +1274,7 @@ BEGIN
         -- Grava LOG de ocorrência inicial do cursor cr_craprpp
            pc_log_programa(PR_DSTIPLOG           => 'O',
                            PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                           pr_cdcooper           => pr_cdcooper,
+                           pr_cdcooper           => rw_crapcop.cdcooper,
                            pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                            pr_tpocorrencia       => 4,
                            pr_dsmensagem         => 'Erro leitura Dvlr_maximol '||SQLERRM,
@@ -1278,7 +1289,7 @@ BEGIN
       GENE0001.pc_escr_linha_arquivo(vr_arqhandl, Dvlr_maximol);
 
       --Nesse ponto, foi incluso procedimento para atualizar o total de crédito pré aprovado 
-      FOR rw_totalcre IN  cr_totalcre(pr_cdcooper => pr_cdcooper
+      FOR rw_totalcre IN  cr_totalcre(pr_cdcooper => rw_crapcop.cdcooper
                                      ,pr_iddcarga => vr_idcarga) Loop 
           
           BEGIN
@@ -1291,7 +1302,7 @@ BEGIN
             WHEN OTHERS THEN
               pc_log_programa(PR_DSTIPLOG           => 'O',
                               PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                              pr_cdcooper           => pr_cdcooper,
+                              pr_cdcooper           => rw_crapcop.cdcooper,
                               pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                               pr_tpocorrencia       => 4,
                               pr_dsmensagem         => 'Erro Update tbepr_carga_pre_aprv : '||sqlerrm,
@@ -1415,7 +1426,7 @@ BEGIN
 
       -- Após a geração do arquivo, no final do paralelismo, limpamos a tabela WRK
       Begin
-        Delete  from TBGEN_BATCH_RELATORIO_WRK A Where A.CDCOOPER = pr_cdcooper And A.CDPROGRAMA = vr_cdprogra;
+        Delete  from TBGEN_BATCH_RELATORIO_WRK A Where A.CDCOOPER = rw_crapcop.cdcooper And A.CDPROGRAMA = vr_cdprogra;
       Exception
         WHEN OTHERS THEN 
           vr_dscritic := 'Problema ao efetuar limpeza na tabela TBGEN_BATCH_RELATORIO_WRK : ' || SQLERRM;
@@ -3309,7 +3320,7 @@ BEGIN
       -- Devolvemos código e critica encontradas das variaveis locais
       pr_cdcritic := nvl(vr_cdcritic, 0);
       pr_dscritic := vr_dscritic;
-      
+
     pc_log_programa(PR_DSTIPLOG           => 'O',
                     PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
                     pr_cdcooper           => pr_cdcooper,
@@ -3391,7 +3402,7 @@ BEGIN
       pr_dscritic := SQLERRM||' Nr Conta '||Nr_DConta;
       
       pc_internal_exception(pr_cdcooper => pr_cdcooper);
-      
+  
   
     pc_log_programa(PR_DSTIPLOG           => 'O',
                     PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
