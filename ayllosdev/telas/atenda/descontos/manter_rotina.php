@@ -98,7 +98,7 @@
 	    $xml .= " <Dados>";
 	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	    $xml .= "   <nrctrlim>".$nrctrlim."</nrctrlim>";
-	    $xml .= "   <vllimite>".$vllimite."</vllimite>";
+	    $xml .= "   <vllimite>".converteFloat($vllimite)."</vllimite>";
 	    $xml .= "   <cddopera>".$cddopera."</cddopera>";
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
