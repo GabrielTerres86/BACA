@@ -221,7 +221,12 @@
 
 				14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
 				             ja estiver com situacao = 4
-							( Jonata - RKAM P364).		  
+							( Jonata - RKAM P364).		  									   
+
+                14/11/2017 - Incluido campo  tt-conta-corr.dtadmiss. PRJ339-CRM(Odirlei-AMcom)
+
+                24/01/2018 - Adicionar validacao para verificar se cooperado teve lancamento
+                             de INSS nos ultimos 3 meses ao mudar de PA (Lucas Ranghetti #835169)
                              
                 06/02/2018 - Adicionado campo cdcatego e flblqtal na tabela crapass. PRJ366 (Lombardi)
 
@@ -292,7 +297,7 @@ PROCEDURE Busca_Dados:
         /* pesquisa o associado */
         FOR FIRST crapass FIELDS(nrdconta cdagenci cdtipcta cdbcochq cdsitdct 
                                  tpavsdeb tpextcta cdsecext nrdctitg 
-                                 flgiddep dtcnsspc dtcnsscr dtdsdspc 
+                                 flgiddep dtcnsspc dtcnsscr dtdsdspc dtadmiss
                                  dtmvtolt dtelimin dtabtcct dtdemiss inadimpl 
                                  inlbacen inpessoa flgctitg flgrestr nrctacns
                                  incadpos indserma idastcjt dtdscore dsdscore
@@ -350,6 +355,7 @@ PROCEDURE Busca_Dados:
             tt-conta-corr.dtelimin = crapass.dtelimin
             tt-conta-corr.dtabtcct = crapass.dtabtcct
             tt-conta-corr.dtdemiss = crapass.dtdemiss
+            tt-conta-corr.dtadmiss = crapass.dtadmiss
             tt-conta-corr.inadimpl = crapass.inadimpl
             tt-conta-corr.inlbacen = crapass.inlbacen
             tt-conta-corr.cdbcoitg = 1
@@ -2411,6 +2417,20 @@ PROCEDURE Grava_Dados:
                   
                   IF NOT AVAIL tt-dados-beneficiario THEN
                      LEAVE.
+                  
+                  /* se a conta nao tiver lançamento pro NB nos últimos 3 meses, vamos considerar inativo
+                     chamado SD 835169 */
+                  FIND FIRST craplcm WHERE craplcm.cdcooper = par_cdcooper
+                                       AND craplcm.nrdconta = crapass.nrdconta
+                                       AND craplcm.cdhistor = 1399
+                                       AND craplcm.dtmvtolt <= par_dtmvtolt
+                                       AND craplcm.dtmvtolt >= (par_dtmvtolt - 90)
+                                       /*Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)*/
+                                       AND DEC(ENTRY(1,craplcm.cdpesqbb, ";")) = crapdbi.nrrecben
+                                       NO-LOCK NO-ERROR.
+                 
+                 IF  NOT AVAILABLE craplcm THEN
+                     NEXT.
                   
                   /*Foi acorado com a area de compensacao que se for solicitado
                     a troca de PA para um cooperado, no qual seu beneficio
