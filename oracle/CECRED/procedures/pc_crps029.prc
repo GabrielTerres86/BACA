@@ -14,7 +14,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/93.                       Ultima atualizacao: 23/02/2018
+   Data    : Fevereiro/93.                       Ultima atualizacao: 05/03/2018
 
    Dados referentes ao programa:
 
@@ -111,6 +111,10 @@ BEGIN
                23/02/2018 - Projeto ligeirinho, alterações para paralelismo.
                             (Fernando Miranda - Amcom).             
                             
+               05/03/2018 - #854706 Separada a geração dos relatórios crrl143 e crrl143b e retirado
+                            o append, não ocasionando mais "Erro ao efetuar Mv do relatório" e 
+                            duplicação de conteúdo em um mesmo relatório (Carlos)               
+
   ............................................................................. */
 
   DECLARE
@@ -284,13 +288,13 @@ BEGIN
     ---------------------------- ESTRUTURAS DE TABELA ---------------------
 
     --Estrutura para Nome dos arquivos que serao gerados
-    TYPE typ_tab_nmarqimp IS VARRAY(9) OF VARCHAR2(7);
+    TYPE typ_tab_nmarqimp IS VARRAY(9) OF VARCHAR2(8);
     --Tabela com o nomes dos arquivos que serao gerados
     vr_tab_nmarqimp typ_tab_nmarqimp:= typ_tab_nmarqimp('crrl040','crrl044',   
                                                         'crrl073','crrl088',
                                                         'crrl209','crrl370',
                                                         'crrl499','crrl143',
-                                                        'crrl143');
+                                                        'crrl143b');
     vr_tab_erro     GENE0001.typ_tab_erro;     --> Armazenar Erros da subrotina
     vr_tab_craptab  APLI0001.typ_tab_ctablq;   --> Armazenar tabela de Conta Bloqueada
     vr_tab_craplpp  APLI0001.typ_tab_craplpp;  --> Armazenar tabela com lancamento poupanca
@@ -372,7 +376,7 @@ BEGIN
         gene0002.pc_escreve_xml(vr_clobxml8,vr_dstexto8,vr_texto||vr_tab_nmarqimp(8)||'><contas>');
         dbms_lob.createtemporary(vr_clobxml9, TRUE, dbms_lob.CALL);
   	    dbms_lob.open(vr_clobxml9, dbms_lob.lob_readwrite);
-        gene0002.pc_escreve_xml(vr_clobxml9,vr_dstexto9,vr_texto||vr_tab_nmarqimp(9)||'b><contas>');
+        gene0002.pc_escreve_xml(vr_clobxml9,vr_dstexto9,vr_texto||vr_tab_nmarqimp(9)||'><contas>');
       ELSIF pr_tipo = 2 THEN
         --Montar texto fixo
         vr_texto:= '</contas></';
@@ -384,7 +388,7 @@ BEGIN
         gene0002.pc_escreve_xml(vr_clobxml6,vr_dstexto6,vr_texto||vr_tab_nmarqimp(6)||'>',TRUE);
         gene0002.pc_escreve_xml(vr_clobxml7,vr_dstexto7,vr_texto||vr_tab_nmarqimp(7)||'>',TRUE);
         gene0002.pc_escreve_xml(vr_clobxml8,vr_dstexto8,vr_texto||vr_tab_nmarqimp(8)||'>',TRUE);
-        gene0002.pc_escreve_xml(vr_clobxml9,vr_dstexto9,vr_texto||vr_tab_nmarqimp(9)||'b>',TRUE);
+        gene0002.pc_escreve_xml(vr_clobxml9,vr_dstexto9,vr_texto||vr_tab_nmarqimp(9)||'>',TRUE);
       END IF;    
     EXCEPTION
       WHEN OTHERS THEN
@@ -1193,9 +1197,7 @@ BEGIN
           --Nao deve imprimir
           vr_flgimpri:= 'N';
           --Path XML
-          vr_dsnoxml:= '/'||vr_tab_nmarqimp(idx)||'b/contas/conta';
-          --Nome do Jasper
-          vr_dsjasper:= vr_tab_nmarqimp(idx)||'b.jasper';
+          vr_dsnoxml:= '/'||vr_tab_nmarqimp(idx)||'/contas/conta';
       END CASE; 
 
       --Executar Relatorios
@@ -1213,7 +1215,7 @@ BEGIN
 											  			   ,pr_nmformul  => vr_nmformul         --> Nome do formulário para impressão
 												  		   ,pr_nrcopias  => vr_nrcopias         --> Número de cópias
 													  	   ,pr_cdrelato  => to_number(substr(vr_tab_nmarqimp(idx),5,3)) --> Codigo do Relatorio
-                                 ,pr_flappend  => 'S'                 --> Fazer append do relatorio se ja existir
+                                 ,pr_flappend  => 'N'                 --> Fazer append do relatorio se ja existir
 													  	   ,pr_des_erro  => vr_dscritic);       --> Saída com erro
       --Se ocorreu erro no relatorio
       IF vr_dscritic IS NOT NULL THEN
@@ -1350,6 +1352,8 @@ BEGIN
       end if;
       
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
+                                   pr_compleme => 'pr_cdagenci: ' || pr_cdagenci);
       -- Efetuar retorno do erro não tratado
       pr_cdcritic:= 0;
       pr_dscritic:= SQLERRM;
