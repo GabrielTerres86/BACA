@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 31/01/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 14/02/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -239,6 +239,9 @@ BEGIN
 
                31/01/2018 - Inclusão das ultimas alterações pós-conversão (Andrei-Mouts)
 
+               14/02/2018 - Tratar mensagens CIR0020 e CIR0021, incluir o tratamento junto com a mensagem STR0003R2
+                            SD 805540 - Marcelo Telles Coelho-Mouts
+
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
              lembrar de tratar a procedure gera_erro_xml.
@@ -382,6 +385,11 @@ BEGIN
     vr_aux_CNPJNLiqdant         VARCHAR2(100);
     vr_aux_FinlddIF             VARCHAR2(100);
     vr_aux_TpPessoaDebtd_Remet  VARCHAR2(100);
+    vr_aux_NumCtrlCIROr         VARCHAR2(100); /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+    vr_aux_NumCtrlCIR           VARCHAR2(100); /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+    vr_aux_NumRemessaOr         VARCHAR2(100); /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+    vr_aux_AgIF                 VARCHAR2(100); /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+    vr_aux_FinlddCIR            VARCHAR2(100); /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
     
 
     vr_aux_msgderro       VARCHAR(1000);
@@ -745,6 +753,9 @@ BEGIN
       IF vr_aux_CodMsg = 'STR0003R2' THEN
         RETURN;
       END IF;
+      IF vr_aux_CodMsg IN ('CIR0020','CIR0021') THEN    /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+        RETURN;
+      END IF;
 
       -- Tratar tamanho da conta
       IF LENGTH(vr_val_nrdconta) > 9 THEN
@@ -973,7 +984,11 @@ BEGIN
                            ,'PAG0108R2','PAG0143R2'-- TED
                            ,'STR0037R2','PAG0137R2'-- TEC
                            ,'STR0026R2' --VR Boleto
-                           ,'STR0005','PAG0107','STR0008','PAG0108','PAG0137','STR0037','STR0026') THEN -- Rejeitadas
+                           ,'STR0005','PAG0107','STR0008','PAG0108','PAG0137','STR0037','STR0026'
+                           ,'CIR0020' /* Pagamento de Lançamento Devido MECIR */    /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+                           ,'CIR0021' /* Lançamento a Crédito Efetivado do MECIR */ /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+						   )
+        THEN -- Rejeitadas
           RETURN FALSE;
         END IF;
       END IF;
@@ -2476,6 +2491,130 @@ BEGIN
           pr_dscritic := 'Erro no tratamento do Node pc_trata_numerario -->'||sqlerrm;
       END;
 
+      PROCEDURE pc_trata_numerario_cir0020(pr_node      IN xmldom.DOMNode
+                                          ,pr_dscritic OUT VARCHAR2) IS
+      /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */       
+
+        -- SubItens da STR0047R2
+        vr_elem_node xmldom.DOMElement;
+        vr_node_list xmldom.DOMNodeList;
+        vr_node_name VARCHAR2(100);
+        vr_item_node xmldom.DOMNode;
+        vr_valu_node xmldom.DOMNode;
+
+        -- VAriaveis genéricas
+        vr_aux_descrica  VARCHAR2(1000);
+
+      BEGIN
+
+        -- Buscar todos os filhos deste nó
+        vr_elem_node := xmldom.makeElement(pr_node);
+        -- Faz o get de toda a lista de filhos
+        vr_node_list := xmldom.getChildrenByTagName(vr_elem_node,'*');
+        -- Percorrer os elementos
+        FOR i IN 0..xmldom.getLength(vr_node_list)-1 LOOP
+          -- Buscar o item atual
+          vr_item_node := xmldom.item(vr_node_list, i);
+          -- Captura o nome e tipo do nodo
+          vr_node_name := xmldom.getNodeName(vr_item_node);
+          -- Sair se o nodo não for elemento
+          IF xmldom.getNodeType(vr_item_node) <> xmldom.ELEMENT_NODE THEN
+            CONTINUE;
+          END IF;
+
+          -- Buscar primeiro filho do nó para buscar seu valor em lógica única
+          vr_valu_node := xmldom.getFirstChild(vr_item_node);
+          vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+          -- Copiar para a respectiva variavel conforme nome da tag
+          IF vr_node_name = 'CodMsg' THEN
+            vr_aux_CodMsg := vr_aux_descrica;
+          ELSIF vr_node_name = 'NumCtrlIF' THEN
+            vr_aux_NumCtrlIF := vr_aux_descrica;
+          ELSIF vr_node_name = 'ISPBIF' THEN
+            vr_aux_ISPBIF := vr_aux_descrica;
+          ELSIF vr_node_name = 'NumCtrlCIROr' THEN
+            vr_aux_NumCtrlCIROr := vr_aux_descrica;
+          ELSIF vr_node_name = 'VlrLanc' THEN
+            vr_aux_DsVlrLanc := vr_aux_descrica;
+          ELSIF vr_node_name = 'DtMovto' THEN
+            vr_aux_DtMovto := vr_aux_descrica;
+          END IF;
+        END LOOP;
+        -- Se houve retorno de valor
+        IF trim(vr_aux_DsVlrLanc) IS NOT NULL THEN
+          vr_aux_VlrLanc := gene0002.fn_char_para_number(vr_aux_DsVlrLanc);
+        END IF;
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_dscritic := 'Erro no tratamento do Node pc_trata_numerario_cir0020 -->'||sqlerrm;
+      END;
+
+      PROCEDURE pc_trata_numerario_cir0021(pr_node      IN xmldom.DOMNode
+                                          ,pr_dscritic OUT VARCHAR2) IS
+      /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */       
+
+        -- SubItens da STR0047R2
+        vr_elem_node xmldom.DOMElement;
+        vr_node_list xmldom.DOMNodeList;
+        vr_node_name VARCHAR2(100);
+        vr_item_node xmldom.DOMNode;
+        vr_valu_node xmldom.DOMNode;
+
+        -- VAriaveis genéricas
+        vr_aux_descrica  VARCHAR2(1000);
+
+      BEGIN
+
+        -- Buscar todos os filhos deste nó
+        vr_elem_node := xmldom.makeElement(pr_node);
+        -- Faz o get de toda a lista de filhos
+        vr_node_list := xmldom.getChildrenByTagName(vr_elem_node,'*');
+        -- Percorrer os elementos
+        FOR i IN 0..xmldom.getLength(vr_node_list)-1 LOOP
+          -- Buscar o item atual
+          vr_item_node := xmldom.item(vr_node_list, i);
+          -- Captura o nome e tipo do nodo
+          vr_node_name := xmldom.getNodeName(vr_item_node);
+          -- Sair se o nodo não for elemento
+          IF xmldom.getNodeType(vr_item_node) <> xmldom.ELEMENT_NODE THEN
+            CONTINUE;
+          END IF;
+
+          -- Buscar primeiro filho do nó para buscar seu valor em lógica única
+          vr_valu_node := xmldom.getFirstChild(vr_item_node);
+          vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+          -- Copiar para a respectiva variavel conforme nome da tag
+          IF vr_node_name = 'CodMsg' THEN
+            vr_aux_CodMsg := vr_aux_descrica;
+          ELSIF vr_node_name = 'NumCtrlCIR' THEN
+            vr_aux_NumCtrlCIR := vr_aux_descrica;
+          ELSIF vr_node_name = 'ISPBIF' THEN
+            vr_aux_ISPBIF := vr_aux_descrica;
+          ELSIF vr_node_name = 'NumCtrlSTR' THEN
+            vr_aux_NumCtrlSTR := vr_aux_descrica;
+          ELSIF vr_node_name = 'NumRemessaOr' THEN
+            vr_aux_NumRemessaOr := vr_aux_descrica;
+          ELSIF vr_node_name = 'AgIF' THEN
+            vr_aux_AgIF := vr_aux_descrica;
+          ELSIF vr_node_name = 'FinlddCIR' THEN
+            vr_aux_FinlddCIR := vr_aux_descrica;
+          ELSIF vr_node_name = 'DtHrBC' THEN
+            vr_aux_DtHrBC := vr_aux_descrica;
+          ELSIF vr_node_name = 'VlrLanc' THEN
+            vr_aux_DsVlrLanc := vr_aux_descrica;
+          ELSIF vr_node_name = 'DtMovto' THEN
+            vr_aux_DtMovto := vr_aux_descrica;
+          END IF;
+        END LOOP;
+        -- Se houve retorno de valor
+        IF trim(vr_aux_DsVlrLanc) IS NOT NULL THEN
+          vr_aux_VlrLanc := gene0002.fn_char_para_number(vr_aux_DsVlrLanc);
+        END IF;
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_dscritic := 'Erro no tratamento do Node pc_trata_numerario_cir0021 -->'||sqlerrm;
+      END;
+
       -- SubRotina para tratar a Transferencia de Valores
       PROCEDURE pc_trata_transfere(pr_node      IN xmldom.DOMNode
                                   ,pr_dscritic OUT VARCHAR2) IS
@@ -3152,6 +3291,12 @@ END;
             -- Recolhimento de Numerários
             pc_trata_numerario(pr_node        => vr_item_node
                               ,pr_dscritic    => vr_dscritic);
+          ELSIF vr_node_name = 'CIR0020' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+            pc_trata_numerario_cir0020(pr_node        => vr_item_node
+                                      ,pr_dscritic    => vr_dscritic);
+          ELSIF vr_node_name = 'CIR0021' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+            pc_trata_numerario_cir0021(pr_node        => vr_item_node
+                                      ,pr_dscritic    => vr_dscritic);
           ELSIF vr_node_name = 'SLC0001' THEN
 	          -- Inclusão tratamento mensagem SLC0001 - Mauricio - 03/11/2017 
             pc_trata_arquivo_slc(pr_node        => vr_item_node
@@ -5072,6 +5217,76 @@ END;
           RETURN;
         END IF;
 
+        IF vr_aux_CodMsg = 'CIR0020' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+          -- Montar email
+          vr_aux_dsdemail := 'Codigo Mensagem: ' || vr_aux_CodMsg || ' <br>'
+                          || 'Número Controle IF: ' || vr_aux_NumCtrlIF || ' <br>'
+                          || 'ISPB IF: ' || vr_aux_ISPBIF || ' <br>'
+                          || 'Número Controle CIR Original: ' || vr_aux_NumCtrlCIROr || ' <br>'
+                          || 'Valor Lançamento: ' || vr_aux_VlrLanc || ' <br>'
+                          || 'Data Movimento: ' || vr_aux_DtMovto || ' <br><br>';
+
+          -- Enviar Email para o Financeiro
+          gene0003.pc_solicita_email(pr_cdcooper        => rw_crapcop_mensag.cdcooper
+                                    ,pr_cdprogra        => vr_glb_cdprogra
+                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',rw_crapcop_mensag.cdcooper,'EMAIL_CARRO_FORTE')
+                                    ,pr_des_assunto     => 'Pagamento de Lançamento Devido MECIR - CECRED'
+                                    ,pr_des_corpo       => vr_aux_dsdemail
+                                    ,pr_des_anexo       => ''
+                                    ,pr_flg_enviar      => 'S'
+                                    ,pr_flg_log_batch   => 'N' --> Incluir inf. no log
+                                    ,pr_des_erro        => vr_dscritic);
+          -- Se ocorreu erro
+          IF trim(vr_dscritic) IS NOT NULL THEN
+            -- Gerar LOG e continuar o processo normal
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3 /*Sempre na Central*/
+                                      ,pr_ind_tipo_log => 1
+                                      ,pr_des_log      => vr_dscritic);
+            -- Limpar critica
+            vr_dscritic := null;
+          END IF;
+
+          -- Retornar a execução
+          RETURN;
+        END IF;
+
+        IF vr_aux_CodMsg = 'CIR0021' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+          -- Montar email
+          vr_aux_dsdemail := 'Codigo Mensagem: ' || vr_aux_CodMsg || ' <br>'
+                          || 'Número Controle CIR: ' || vr_aux_NumCtrlCIR || ' <br>'
+                          || 'ISPB IF: ' || vr_aux_ISPBIF || ' <br>'
+                          || 'Número Controle STR: ' || vr_aux_NumCtrlSTR || ' <br>'
+                          || 'Número Remessa Original: ' || vr_aux_NumRemessaOr || ' <br>'
+                          || 'Agencia IF: ' || vr_aux_AgIF || ' <br>'
+                          || 'Valor Lançamento: ' || vr_aux_VlrLanc || ' <br>'
+                          || 'Finalidade CIR: ' || vr_aux_FinlddCIR || ' <br>'
+                          || 'Data Hora Bacen: ' || vr_aux_DtHrBC || ' <br>'
+                          || 'Data Movimento: ' || vr_aux_DtMovto || ' <br><br>';
+
+          -- Enviar Email para o Financeiro
+          gene0003.pc_solicita_email(pr_cdcooper        => rw_crapcop_mensag.cdcooper
+                                    ,pr_cdprogra        => vr_glb_cdprogra
+                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',rw_crapcop_mensag.cdcooper,'EMAIL_CARRO_FORTE')
+                                    ,pr_des_assunto     => 'Lançamento a Crédito Efetivado do MECIR - CECRED'
+                                    ,pr_des_corpo       => vr_aux_dsdemail
+                                    ,pr_des_anexo       => ''
+                                    ,pr_flg_enviar      => 'S'
+                                    ,pr_flg_log_batch   => 'N' --> Incluir inf. no log
+                                    ,pr_des_erro        => vr_dscritic);
+          -- Se ocorreu erro
+          IF trim(vr_dscritic) IS NOT NULL THEN
+            -- Gerar LOG e continuar o processo normal
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3 /*Sempre na Central*/
+                                      ,pr_ind_tipo_log => 1
+                                      ,pr_des_log      => vr_dscritic);
+            -- Limpar critica
+            vr_dscritic := null;
+          END IF;
+
+          -- Retornar a execução
+          RETURN;
+        END IF;
+
         -- Caso seja estorno de TED de BACENJUD entao despreza
         IF vr_aux_CodMsg IN('STR0025','PAG0121') THEN
           -- Buscar TVL
@@ -5834,6 +6049,8 @@ END;
                                ,'PAG0107R1','PAG0108R1','PAG0137R1'             -- Confirma envio
                                ,'STR0010R1','PAG0111R1'                         -- Confirma devolucao enviada
                                ,'STR0026R2'                                     -- Recebimento VR Boleto
+                               ,'CIR0020'                                       -- Pagamento de Lançamento Devido MECIR /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+                               ,'CIR0021'                                       -- Lançamento a Crédito Efetivado do MECIR /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
                                ,'STR0047R1','STR0048R1','STR0047R2') THEN       -- Portabilidade de Credito
           -- Se o processo estiver rodando
           IF NOT fn_verifica_processo THEN
@@ -6425,6 +6642,33 @@ END;
             pc_salva_arquivo;
             -- Processo finalizado
             RAISE vr_exc_next;
+          END IF;
+        ELSIF vr_aux_CodMsg = 'CIR0020' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+            /* Busca cooperativa */
+            OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+            FETCH cr_crapcop
+             INTO rw_crapcop_mensag;
+            -- Se não encontrou
+            IF cr_crapcop%NOTFOUND THEN
+              vr_aux_flgderro := TRUE;
+            END IF;
+            CLOSE cr_crapcop;
+        ELSIF vr_aux_CodMsg = 'CIR0021' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+          -- Tenta converter agencia para numero
+          IF NOT fn_numerico(SUBSTR(vr_aux_AgIF,8,4)) THEN
+            vr_aux_flgderro := TRUE;
+          END IF;
+          -- Se não deu erro
+          IF NOT vr_aux_flgderro THEN
+            -- Busca dados da Coope por cdagectl
+            OPEN cr_crapcop(pr_cdagectl => SUBSTR(vr_aux_AgIF,8,4));
+            FETCH cr_crapcop
+             INTO rw_crapcop_mensag;
+            -- Se não encontrou
+            IF cr_crapcop%NOTFOUND THEN
+              vr_aux_flgderro := TRUE;
+            END IF;
+            CLOSE cr_crapcop;
           END IF;
         ELSE
           -- Tenta converter agencia para numero
