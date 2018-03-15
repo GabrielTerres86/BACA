@@ -14,7 +14,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/93.                       Ultima atualizacao: 23/02/2018
+   Data    : Fevereiro/93.                       Ultima atualizacao: 05/03/2018
 
    Dados referentes ao programa:
 
@@ -111,6 +111,10 @@ BEGIN
                23/02/2018 - Projeto ligeirinho, alterações para paralelismo.
                             (Fernando Miranda - Amcom).             
                             
+               05/03/2018 - #854706 Separada a geração dos relatórios crrl143 e crrl143b e retirado
+                            o append, não ocasionando mais "Erro ao efetuar Mv do relatório" e 
+                            duplicação de conteúdo em um mesmo relatório (Carlos)               
+
   ............................................................................. */
 
   DECLARE
@@ -132,7 +136,7 @@ BEGIN
     vr_cdcritic   PLS_INTEGER;
     vr_des_reto   VARCHAR2(3);
     vr_dscritic   VARCHAR2(4000);
-    
+  
     --FM Paralelismo
     vr_inproces      crapdat.inproces%type; 
     vr_qtdjobs       number;
@@ -195,7 +199,7 @@ BEGIN
      WHERE lrg.cdcooper = pr_cdcooper
        AND lrg.tpaplica = 4
        AND lrg.inresgat = 0
-       AND lrg.nrdconta = pr_nrdconta 
+       AND lrg.nrdconta = pr_nrdconta      
        --FM paralelismo - Inclusão de filtro por agência para tratar o paralelismo
        AND lrg.nrdconta = crapass.nrdconta
        AND lrg.cdcooper = crapass.cdcooper
@@ -254,7 +258,7 @@ BEGIN
        AND crapext.cdcooper = crapass.cdcooper
        AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
        ORDER BY crapext.cdcooper,crapext.tpextrat,crapext.nrdconta,crapext.progress_recid;
-       
+      
     -- Cursor para busca de associados para paralelismo
     CURSOR cr_crapext_para (pr_cdcooper crapcop.cdcooper%TYPE,
                             pr_qterro   IN number,
@@ -284,13 +288,13 @@ BEGIN
     ---------------------------- ESTRUTURAS DE TABELA ---------------------
 
     --Estrutura para Nome dos arquivos que serao gerados
-    TYPE typ_tab_nmarqimp IS VARRAY(9) OF VARCHAR2(7);
+    TYPE typ_tab_nmarqimp IS VARRAY(9) OF VARCHAR2(8);
     --Tabela com o nomes dos arquivos que serao gerados
     vr_tab_nmarqimp typ_tab_nmarqimp:= typ_tab_nmarqimp('crrl040','crrl044',   
                                                         'crrl073','crrl088',
                                                         'crrl209','crrl370',
                                                         'crrl499','crrl143',
-                                                        'crrl143');
+                                                        'crrl143b');
     vr_tab_erro     GENE0001.typ_tab_erro;     --> Armazenar Erros da subrotina
     vr_tab_craptab  APLI0001.typ_tab_ctablq;   --> Armazenar tabela de Conta Bloqueada
     vr_tab_craplpp  APLI0001.typ_tab_craplpp;  --> Armazenar tabela com lancamento poupanca
@@ -372,7 +376,7 @@ BEGIN
         gene0002.pc_escreve_xml(vr_clobxml8,vr_dstexto8,vr_texto||vr_tab_nmarqimp(8)||'><contas>');
         dbms_lob.createtemporary(vr_clobxml9, TRUE, dbms_lob.CALL);
   	    dbms_lob.open(vr_clobxml9, dbms_lob.lob_readwrite);
-        gene0002.pc_escreve_xml(vr_clobxml9,vr_dstexto9,vr_texto||vr_tab_nmarqimp(9)||'b><contas>');
+        gene0002.pc_escreve_xml(vr_clobxml9,vr_dstexto9,vr_texto||vr_tab_nmarqimp(9)||'><contas>');
       ELSIF pr_tipo = 2 THEN
         --Montar texto fixo
         vr_texto:= '</contas></';
@@ -384,7 +388,7 @@ BEGIN
         gene0002.pc_escreve_xml(vr_clobxml6,vr_dstexto6,vr_texto||vr_tab_nmarqimp(6)||'>',TRUE);
         gene0002.pc_escreve_xml(vr_clobxml7,vr_dstexto7,vr_texto||vr_tab_nmarqimp(7)||'>',TRUE);
         gene0002.pc_escreve_xml(vr_clobxml8,vr_dstexto8,vr_texto||vr_tab_nmarqimp(8)||'>',TRUE);
-        gene0002.pc_escreve_xml(vr_clobxml9,vr_dstexto9,vr_texto||vr_tab_nmarqimp(9)||'b>',TRUE);
+        gene0002.pc_escreve_xml(vr_clobxml9,vr_dstexto9,vr_texto||vr_tab_nmarqimp(9)||'>',TRUE);
       END IF;    
     EXCEPTION
       WHEN OTHERS THEN
@@ -570,7 +574,7 @@ BEGIN
        ORDER BY a.dtmvtolt;
   
   BEGIN
-       
+
     FOR r_dados IN c_dados LOOP
       
       IF r_dados.dschave = 'clobxml1' THEN
@@ -739,19 +743,19 @@ BEGIN
       -- Envio centralizado de log de erro
       RAISE vr_exc_saida;
     END IF;
-
+  
     --FM - Inicio paralelismo
     -- Buscar quantidade parametrizada de Jobs
     vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
                                                  ,pr_cdprogra => vr_cdprogra --pr_cdprogra  IN crapprg.cdprogra%TYPE    --> Código do programa
                                                  ); 
-        
+  
   
     --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
 	--Apenas inicia clob quando é um job paralelo ou quando nãom roda em paralelo
     IF pr_idparale <> 0 OR vr_qtdjobs  = 0 THEN
       --habilitar CLOBs
-      pc_habilita_clob(1);  
+    pc_habilita_clob(1);
     END IF;
 
     -- Busca do diretório base da cooperativa para a geração de relatórios
@@ -907,167 +911,167 @@ BEGIN
                       pr_dsmensagem         => 'Início - cursor cr_crapext. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
                       PR_IDPRGLOG           => vr_idlog_ini_par); 
     
-      /*  Leitura Arquivo de contas que deverao ter seus extratos impressos.  */
+		/*  Leitura Arquivo de contas que deverao ter seus extratos impressos.  */
       FOR rw_crapext IN cr_crapext (pr_cdcooper => pr_cdcooper, -- Cod. Cooperativa
                                     pr_cdagenci => pr_cdagenci) LOOP   
 
-        --Se for Poupanca Programada (tpextrat = 5) carregar tabelas de memoria
-        IF rw_crapext.tpextrat IN (5,10) AND NOT vr_flgcarga THEN
-          --Rodou a carga
-          vr_flgcarga:= TRUE;
-          
-          --Popular tabelas de Memoria para a procedure                                               
-          vr_tab_craptab.DELETE;
-          vr_tab_craplpp.DELETE;
-          vr_tab_craplrg.DELETE;
-          vr_tab_resgate.DELETE;
+      --Se for Poupanca Programada (tpextrat = 5) carregar tabelas de memoria
+      IF rw_crapext.tpextrat IN (5,10) AND NOT vr_flgcarga THEN
+        --Rodou a carga
+        vr_flgcarga:= TRUE;
+        
+        --Popular tabelas de Memoria para a procedure                                               
+        vr_tab_craptab.DELETE;
+        vr_tab_craplpp.DELETE;
+        vr_tab_craplrg.DELETE;
+        vr_tab_resgate.DELETE;
 
-          -- Carregar tabela de memoria de contas bloqueadas
-          -- (Nao informa a conta para carregar todos os registros)
-          TABE0001.pc_carrega_ctablq(pr_cdcooper => pr_cdcooper
-                                    ,pr_nrdconta => rw_crapext.nrdconta
-                                    ,pr_tab_cta_bloq => vr_tab_craptab);
+        -- Carregar tabela de memoria de contas bloqueadas
+        -- (Nao informa a conta para carregar todos os registros)
+        TABE0001.pc_carrega_ctablq(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => rw_crapext.nrdconta
+                                  ,pr_tab_cta_bloq => vr_tab_craptab);
 
-          -- Busca registro de lancamentos na poupanca
-          OPEN cr_craplpp(pr_cdcooper => pr_cdcooper
-                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt - 180
+        -- Busca registro de lancamentos na poupanca
+        OPEN cr_craplpp(pr_cdcooper => pr_cdcooper
+                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt - 180
                          ,pr_nrdconta => rw_crapext.nrdconta
                          ,pr_cdagenci => pr_cdagenci);
-                         
-          FETCH cr_craplpp INTO rw_craplpp;
-          
-        --Fechar o cursor
-        CLOSE cr_craplpp;
-          
-        --Se possuir mais de 3 registros
-        IF rw_craplpp.qtlancmto > 3 THEN                                     
-          -- Montar indice para acessar tabela
-          vr_index_craplpp:= LPad(rw_craplpp.nrdconta,10,'0')||LPad(rw_craplpp.nrctrrpp,10,'0');
-          -- Atribuir quantidade encontrada de cada conta ao vetor
-          vr_tab_craplpp(vr_index_craplpp):= rw_craplpp.qtlancmto;
-        END IF;               
-          
-          -- Busca registro com total de resgates na poupanca
-          OPEN cr_craplrg_saque(pr_cdcooper => pr_cdcooper
+                       
+        FETCH cr_craplpp INTO rw_craplpp;
+        
+			--Fechar o cursor
+			CLOSE cr_craplpp;
+        
+			--Se possuir mais de 3 registros
+			IF rw_craplpp.qtlancmto > 3 THEN                                     
+			  -- Montar indice para acessar tabela
+			  vr_index_craplpp:= LPad(rw_craplpp.nrdconta,10,'0')||LPad(rw_craplpp.nrctrrpp,10,'0');
+			  -- Atribuir quantidade encontrada de cada conta ao vetor
+			  vr_tab_craplpp(vr_index_craplpp):= rw_craplpp.qtlancmto;
+			END IF;               
+        
+        -- Busca registro com total de resgates na poupanca
+        OPEN cr_craplrg_saque(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => rw_crapext.nrdconta
                                ,pr_cdagenci => pr_cdagenci);
-                         
-          FETCH cr_craplrg_saque INTO rw_craplrg_saque;
+                       
+        FETCH cr_craplrg_saque INTO rw_craplrg_saque;
+        
+        IF cr_craplrg_saque%FOUND THEN
+        
+          -- Montar Indice para acesso quantidade lancamentos de resgate
+          vr_index_craplrg:= LPad(rw_craplrg_saque.nrdconta,10,'0')||LPad(rw_craplrg_saque.nraplica,10,'0');
+          -- Popular tabela de memoria
+          vr_tab_craplrg(vr_index_craplrg):= rw_craplrg_saque.qtlancmto;        
+                  
+        END IF;
           
-          IF cr_craplrg_saque%FOUND THEN
-          
-            -- Montar Indice para acesso quantidade lancamentos de resgate
-            vr_index_craplrg:= LPad(rw_craplrg_saque.nrdconta,10,'0')||LPad(rw_craplrg_saque.nraplica,10,'0');
-            -- Popular tabela de memoria
-            vr_tab_craplrg(vr_index_craplrg):= rw_craplrg_saque.qtlancmto;        
-                    
-          END IF;
-            
-          --Fechar o cursor
-          CLOSE cr_craplrg_saque;          
-          
-          -- Busca registro com total resgatado por conta e aplicacao
-          OPEN cr_craplrg(pr_cdcooper => pr_cdcooper
-                         ,pr_dtresgat => rw_crapdat.dtmvtopr
+        --Fechar o cursor
+        CLOSE cr_craplrg_saque;          
+        
+        -- Busca registro com total resgatado por conta e aplicacao
+        OPEN cr_craplrg(pr_cdcooper => pr_cdcooper
+                       ,pr_dtresgat => rw_crapdat.dtmvtopr
                          ,pr_nrdconta => rw_crapext.nrdconta
                          ,pr_cdagenci => pr_cdagenci);
-                         
-          FETCH cr_craplrg INTO rw_craplrg;
-          
-          IF cr_craplrg%FOUND THEN
-          
-            -- Montar indice para selecionar total dos resgates na tabela auxiliar
-            vr_index_resgate := LPad(rw_craplrg.nrdconta,10,'0') ||
-                                LPad(rw_craplrg.tpaplica,05,'0') ||
-                                LPad(rw_craplrg.nraplica,10,'0');
-            -- Popular a tabela de memoria com a soma dos lancamentos de resgate
-            vr_tab_resgate(vr_index_resgate).tpresgat := rw_craplrg.tpresgat;
-            vr_tab_resgate(vr_index_resgate).vllanmto := rw_craplrg.vllanmto;       
-                    
-          END IF;
-            
-          --Fechar o cursor
-          CLOSE cr_craplrg;          
-          
-        END IF;  --rw_crapext.tpextrat = 5 AND NOT vr_flgcarga
+                       
+        FETCH cr_craplrg INTO rw_craplrg;
         
-        --Tarifa
-        vr_flgtarif:= rw_crapext.inisenta = 0;
+        IF cr_craplrg%FOUND THEN
+        
+          -- Montar indice para selecionar total dos resgates na tabela auxiliar
+          vr_index_resgate := LPad(rw_craplrg.nrdconta,10,'0') ||
+                              LPad(rw_craplrg.tpaplica,05,'0') ||
+                              LPad(rw_craplrg.nraplica,10,'0');
+          -- Popular a tabela de memoria com a soma dos lancamentos de resgate
+          vr_tab_resgate(vr_index_resgate).tpresgat := rw_craplrg.tpresgat;
+          vr_tab_resgate(vr_index_resgate).vllanmto := rw_craplrg.vllanmto;       
+                  
+        END IF;
+          
+        --Fechar o cursor
+        CLOSE cr_craplrg;          
+        
+      END IF;  --rw_crapext.tpextrat = 5 AND NOT vr_flgcarga
+      
+      --Tarifa
+      vr_flgtarif:= rw_crapext.inisenta = 0;
 
-        --Gerar Impressao
-        EXTR0002.pc_gera_impressao(pr_cdcooper => pr_cdcooper          --Codigo Cooperativa
-                                  ,pr_cdagenci => pr_cdagenci           --Codigo Agencia
-                                  ,pr_nrdcaixa => 0                     --Numero do Caixa
-                                  ,pr_idorigem => 1                     --Origem dos Dados
-                                  ,pr_nmdatela => UPPER(vr_cdprogra)    --Nome da Tela
-                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --Data Movimento
-                                  ,pr_dtmvtopr => rw_crapdat.dtmvtopr   --Data Proximo Movimento
-                                  ,pr_cdprogra => vr_cdprogra           --Codigo Programa
-                                  ,pr_inproces => rw_crapdat.inproces   --Indicador Processo
-                                  ,pr_cdoperad => '1'                   --Codigo Operador
-                                  ,pr_dsiduser => NULL                  --Identificador Usuario
-                                  ,pr_flgrodar => FALSE                 --Flag Executar
-                                  ,pr_nrdconta => rw_crapext.nrdconta   --Numero da Conta do Associado
-                                  ,pr_idseqttl => 1                     --Sequencial do Titular
-                                  ,pr_tpextrat => rw_crapext.tpextrat   --Tipo de Extrato
-                                  ,pr_dtrefere => rw_crapext.dtrefere   --Data de Referencia
-                                  ,pr_dtreffim => rw_crapext.dtreffim   --Data Referencia Final
-                                  ,pr_flgtarif => vr_flgtarif           --Indicador Cobra tarifa
-                                  ,pr_inrelext => rw_crapext.inselext   --Indicador Relatorio Extrato
-                                  ,pr_inselext => rw_crapext.inselext   --Indicador Selecao Extrato
-                                  ,pr_nrctremp => rw_crapext.nrctremp   --Numero Contrato Emprestimo
-                                  ,pr_nraplica => rw_crapext.nraplica   --Numero Aplicacao
-                                  ,pr_nranoref => rw_crapext.nranoref   --Ano de Referencia
-                                  ,pr_flgerlog => TRUE                  --Escreve erro Log
-                                  ,pr_clobxml1 => vr_clobxml1           --Clob arquivo de dados crrl040
-                                  ,pr_dstexto1 => vr_dstexto1           --Texto para Clob 1
-                                  ,pr_clobxml2 => vr_clobxml2           --Clob arquivo de dados crrl044
-                                  ,pr_dstexto2 => vr_dstexto2           --Texto para Clob 2
-                                  ,pr_clobxml3 => vr_clobxml3           --Clob arquivo de dados crrl073
-                                  ,pr_dstexto3 => vr_dstexto3           --Texto para Clob 3
-                                  ,pr_clobxml4 => vr_clobxml4           --Clob arquivo de dados crrl088
-                                  ,pr_dstexto4 => vr_dstexto4           --Texto para Clob 4
-                                  ,pr_clobxml5 => vr_clobxml5           --Clob arquivo de dados crrl209
-                                  ,pr_dstexto5 => vr_dstexto5           --Texto para Clob 5
-                                  ,pr_clobxml6 => vr_clobxml6           --Clob arquivo de dados crrl370
-                                  ,pr_dstexto6 => vr_dstexto6           --Texto para Clob 6
-                                  ,pr_clobxml7 => vr_clobxml7           --Clob arquivo de dados crrl499
-                                  ,pr_dstexto7 => vr_dstexto7           --Texto para Clob 7
-                                  ,pr_clobxml8 => vr_clobxml8           --Clob arquivo de dados crrl143
-                                  ,pr_dstexto8 => vr_dstexto8           --Texto para Clob 8
-                                  ,pr_clobxml9 => vr_clobxml9           --Clob arquivo de dados crrl143b
-                                  ,pr_dstexto9 => vr_dstexto9           --Texto para Clob 9
-                                  ,pr_tab_craptab => vr_tab_craptab     --Tabela de Conta Bloqueada
-                                  ,pr_tab_craplpp => vr_tab_craplpp     --Tabela com lancamento poupanca
-                                  ,pr_tab_craplrg => vr_tab_craplrg     --Tabela com resgates
-                                  ,pr_tab_resgate => vr_tab_resgate     --Tabela com valores dos resgates das contas por aplicacao
-                                  ,pr_intpextr => 2                     --Tipo Extrato (1-Simplificado 2-Detalhado)
-                                  ,pr_nmarqimp => vr_nmarqimp           --Nome Arquivo Impressao
-                                  ,pr_nmarqpdf => vr_nmarqpdf           --Nome Arquivo PDF
-                                  ,pr_tab_erro => vr_tab_erro           --Tabela de Erros
-                                  ,pr_des_reto => vr_des_reto);         --Descricao Erro
-        --Se ocorreu erro
-        IF vr_des_reto = 'NOK' THEN
-          --Se tem erro no vetor
-          IF vr_tab_erro.COUNT > 0 THEN
-            vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-          ELSE    
-            --Adicionar a conta na mensagem erro
-            vr_dscritic:= 'Erro na geracao do extrato. '||vr_dscritic||' CONTA = '||rw_crapext.nrdconta;
-          END IF;          
+      --Gerar Impressao
+      EXTR0002.pc_gera_impressao(pr_cdcooper => pr_cdcooper          --Codigo Cooperativa
+                                ,pr_cdagenci => pr_cdagenci           --Codigo Agencia
+                                ,pr_nrdcaixa => 0                     --Numero do Caixa
+                                ,pr_idorigem => 1                     --Origem dos Dados
+                                ,pr_nmdatela => UPPER(vr_cdprogra)    --Nome da Tela
+                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --Data Movimento
+                                ,pr_dtmvtopr => rw_crapdat.dtmvtopr   --Data Proximo Movimento
+                                ,pr_cdprogra => vr_cdprogra           --Codigo Programa
+                                ,pr_inproces => rw_crapdat.inproces   --Indicador Processo
+                                ,pr_cdoperad => '1'                   --Codigo Operador
+                                ,pr_dsiduser => NULL                  --Identificador Usuario
+                                ,pr_flgrodar => FALSE                 --Flag Executar
+                                ,pr_nrdconta => rw_crapext.nrdconta   --Numero da Conta do Associado
+                                ,pr_idseqttl => 1                     --Sequencial do Titular
+                                ,pr_tpextrat => rw_crapext.tpextrat   --Tipo de Extrato
+                                ,pr_dtrefere => rw_crapext.dtrefere   --Data de Referencia
+                                ,pr_dtreffim => rw_crapext.dtreffim   --Data Referencia Final
+                                ,pr_flgtarif => vr_flgtarif           --Indicador Cobra tarifa
+                                ,pr_inrelext => rw_crapext.inselext   --Indicador Relatorio Extrato
+                                ,pr_inselext => rw_crapext.inselext   --Indicador Selecao Extrato
+                                ,pr_nrctremp => rw_crapext.nrctremp   --Numero Contrato Emprestimo
+                                ,pr_nraplica => rw_crapext.nraplica   --Numero Aplicacao
+                                ,pr_nranoref => rw_crapext.nranoref   --Ano de Referencia
+                                ,pr_flgerlog => TRUE                  --Escreve erro Log
+                                ,pr_clobxml1 => vr_clobxml1           --Clob arquivo de dados crrl040
+                                ,pr_dstexto1 => vr_dstexto1           --Texto para Clob 1
+                                ,pr_clobxml2 => vr_clobxml2           --Clob arquivo de dados crrl044
+                                ,pr_dstexto2 => vr_dstexto2           --Texto para Clob 2
+                                ,pr_clobxml3 => vr_clobxml3           --Clob arquivo de dados crrl073
+                                ,pr_dstexto3 => vr_dstexto3           --Texto para Clob 3
+                                ,pr_clobxml4 => vr_clobxml4           --Clob arquivo de dados crrl088
+                                ,pr_dstexto4 => vr_dstexto4           --Texto para Clob 4
+                                ,pr_clobxml5 => vr_clobxml5           --Clob arquivo de dados crrl209
+                                ,pr_dstexto5 => vr_dstexto5           --Texto para Clob 5
+                                ,pr_clobxml6 => vr_clobxml6           --Clob arquivo de dados crrl370
+                                ,pr_dstexto6 => vr_dstexto6           --Texto para Clob 6
+                                ,pr_clobxml7 => vr_clobxml7           --Clob arquivo de dados crrl499
+                                ,pr_dstexto7 => vr_dstexto7           --Texto para Clob 7
+                                ,pr_clobxml8 => vr_clobxml8           --Clob arquivo de dados crrl143
+                                ,pr_dstexto8 => vr_dstexto8           --Texto para Clob 8
+                                ,pr_clobxml9 => vr_clobxml9           --Clob arquivo de dados crrl143b
+                                ,pr_dstexto9 => vr_dstexto9           --Texto para Clob 9
+                                ,pr_tab_craptab => vr_tab_craptab     --Tabela de Conta Bloqueada
+                                ,pr_tab_craplpp => vr_tab_craplpp     --Tabela com lancamento poupanca
+                                ,pr_tab_craplrg => vr_tab_craplrg     --Tabela com resgates
+                                ,pr_tab_resgate => vr_tab_resgate     --Tabela com valores dos resgates das contas por aplicacao
+                                ,pr_intpextr => 2                     --Tipo Extrato (1-Simplificado 2-Detalhado)
+                                ,pr_nmarqimp => vr_nmarqimp           --Nome Arquivo Impressao
+                                ,pr_nmarqpdf => vr_nmarqpdf           --Nome Arquivo PDF
+                                ,pr_tab_erro => vr_tab_erro           --Tabela de Erros
+                                ,pr_des_reto => vr_des_reto);         --Descricao Erro
+      --Se ocorreu erro
+      IF vr_des_reto = 'NOK' THEN
+        --Se tem erro no vetor
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE    
+          --Adicionar a conta na mensagem erro
+          vr_dscritic:= 'Erro na geracao do extrato. '||vr_dscritic||' CONTA = '||rw_crapext.nrdconta;
+        END IF;  
                       
-          -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_nmarqlog     => GENE0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(SYSDATE,
-                                                            'hh24:mi:ss') ||
-                                                    ' - ' || vr_cdprogra ||
-                                                    ' --> ' || vr_dscritic);
+        -- Envio centralizado de log de erro
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => GENE0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                  ,pr_des_log      => to_char(SYSDATE,
+                                                          'hh24:mi:ss') ||
+                                                  ' - ' || vr_cdprogra ||
+                                                  ' --> ' || vr_dscritic);
         
-        END IF;            
+      END IF;
 
-     END LOOP; --cr_crapext
+    END LOOP; --cr_crapext
 
      --FM paralelismo
      --Gravar resultado da geração dos textos e das variaveis clob em tabela work
@@ -1149,87 +1153,85 @@ BEGIN
         END IF;
       END IF;
       
-      -- Fechar CLOBs
-      pc_habilita_clob(2);
-         
-      --Gerar os relatorios
-      FOR idx IN 1..9 LOOP 
-        --Formulario Padrao
-        vr_nmformul:= '80col';
-        vr_qtcoluna:= 80;
-        --Indicar se deve imprimir
-        vr_flgimpri:= 'S';
-        --Nodo Base para o XMl
-        vr_dsnoxml:= '/'||vr_tab_nmarqimp(idx)||'/contas/conta';
-        --Nome Arquivo Jasper
-        vr_dsjasper:= vr_tab_nmarqimp(idx)||'.jasper';
+    -- Fechar CLOBs
+    pc_habilita_clob(2);
 
-        --Limpar o CLOB final responsavel pela impressao
-        vr_clobxml:= empty_clob;
-        --Copiar dados do Clob do relatorio para o Clob de impressao
-        CASE idx 
-          WHEN 1 THEN --crrl040
-            vr_clobxml:= vr_clobxml1;
-          WHEN 2 THEN --crrl044
-            vr_clobxml:= vr_clobxml2;
-          WHEN 3 THEN --crrl073
-            vr_clobxml:= vr_clobxml3;
-          WHEN 4 THEN --crrl088
-            vr_clobxml:= vr_clobxml4;
-          WHEN 5 THEN --crrl209
-            vr_clobxml:= vr_clobxml5;
-          WHEN 6 THEN --crrl370
-            vr_clobxml:= vr_clobxml6;
-          WHEN 7 THEN --crrl499
-            vr_clobxml:= vr_clobxml7;
-            vr_nmformul:= '132col';
-            vr_qtcoluna:= 132;
-          WHEN 8 THEN --crrl143
-            vr_clobxml:= vr_clobxml8;
-            --Nao deve imprimir
-            vr_flgimpri:= 'N';
-          WHEN 9 THEN --crrl143b
-            vr_clobxml:= vr_clobxml9;
-            --Nao deve imprimir
-            vr_flgimpri:= 'N';
-            --Path XML
-            vr_dsnoxml:= '/'||vr_tab_nmarqimp(idx)||'b/contas/conta';
-            --Nome do Jasper
-            vr_dsjasper:= vr_tab_nmarqimp(idx)||'b.jasper';
-        END CASE; 
+    --Gerar os relatorios
+    FOR idx IN 1..9 LOOP 
+      --Formulario Padrao
+      vr_nmformul:= '80col';
+      vr_qtcoluna:= 80;
+      --Indicar se deve imprimir
+      vr_flgimpri:= 'S';
+      --Nodo Base para o XMl
+      vr_dsnoxml:= '/'||vr_tab_nmarqimp(idx)||'/contas/conta';
+      --Nome Arquivo Jasper
+      vr_dsjasper:= vr_tab_nmarqimp(idx)||'.jasper';
 
-        --Executar Relatorios
-        gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
-                                   ,pr_cdprogra  => vr_cdprogra         --> Programa chamador
-                                   ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
-                                   ,pr_dsxml     => vr_clobxml          --> Arquivo XML de dados
-                                   ,pr_dsxmlnode => vr_dsnoxml          --> Nó base do XML para leitura dos dados
-                                   ,pr_dsjasper  => vr_dsjasper         --> Arquivo de layout do iReport
-                                   ,pr_dsparams  => NULL                --> Sem parâmetros
-                                   ,pr_dsarqsaid => vr_nom_direto_rl||'/'||vr_tab_nmarqimp(idx)||'.lst' --> Arquivo final 
-                                   ,pr_qtcoluna  => vr_qtcoluna         --> 132/80 colunas
-                                   ,pr_flg_gerar => 'N'                 --> Geraçao na hora
-                                   ,pr_flg_impri => vr_flgimpri         --> Chamar a impressão (Imprim.p)
-                                   ,pr_nmformul  => vr_nmformul         --> Nome do formulário para impressão
-                                   ,pr_nrcopias  => vr_nrcopias         --> Número de cópias
-                                   ,pr_cdrelato  => to_number(substr(vr_tab_nmarqimp(idx),5,3)) --> Codigo do Relatorio
-                                   ,pr_flappend  => 'S'                 --> Fazer append do relatorio se ja existir
-                                   ,pr_des_erro  => vr_dscritic);       --> Saída com erro
-        --Se ocorreu erro no relatorio
-        IF vr_dscritic IS NOT NULL THEN
-          --Levantar Excecao
-          RAISE vr_exc_saida;
-        END IF; 
-      END LOOP; -- Imprimir os 9 arquivos
+      --Limpar o CLOB final responsavel pela impressao
+      vr_clobxml:= empty_clob;
+      --Copiar dados do Clob do relatorio para o Clob de impressao
+      CASE idx 
+        WHEN 1 THEN --crrl040
+          vr_clobxml:= vr_clobxml1;
+        WHEN 2 THEN --crrl044
+          vr_clobxml:= vr_clobxml2;
+        WHEN 3 THEN --crrl073
+          vr_clobxml:= vr_clobxml3;
+        WHEN 4 THEN --crrl088
+          vr_clobxml:= vr_clobxml4;
+        WHEN 5 THEN --crrl209
+          vr_clobxml:= vr_clobxml5;
+        WHEN 6 THEN --crrl370
+          vr_clobxml:= vr_clobxml6;
+        WHEN 7 THEN --crrl499
+          vr_clobxml:= vr_clobxml7;
+          vr_nmformul:= '132col';
+          vr_qtcoluna:= 132;
+        WHEN 8 THEN --crrl143
+          vr_clobxml:= vr_clobxml8;
+          --Nao deve imprimir
+          vr_flgimpri:= 'N';
+        WHEN 9 THEN --crrl143b
+          vr_clobxml:= vr_clobxml9;
+          --Nao deve imprimir
+          vr_flgimpri:= 'N';
+          --Path XML
+          vr_dsnoxml:= '/'||vr_tab_nmarqimp(idx)||'/contas/conta';
+      END CASE; 
 
-     
-      ----------------- ENCERRAMENTO DO PROGRAMA -------------------
+      --Executar Relatorios
+  		gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
+	  	 												   ,pr_cdprogra  => vr_cdprogra         --> Programa chamador
+		  												   ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
+			  											   ,pr_dsxml     => vr_clobxml          --> Arquivo XML de dados
+				  										   ,pr_dsxmlnode => vr_dsnoxml          --> Nó base do XML para leitura dos dados
+					  									   ,pr_dsjasper  => vr_dsjasper         --> Arquivo de layout do iReport
+						  								   ,pr_dsparams  => NULL                --> Sem parâmetros
+							  							   ,pr_dsarqsaid => vr_nom_direto_rl||'/'||vr_tab_nmarqimp(idx)||'.lst' --> Arquivo final 
+								  						   ,pr_qtcoluna  => vr_qtcoluna         --> 132/80 colunas
+									  					   ,pr_flg_gerar => 'N'                 --> Geraçao na hora
+										  				   ,pr_flg_impri => vr_flgimpri         --> Chamar a impressão (Imprim.p)
+											  			   ,pr_nmformul  => vr_nmformul         --> Nome do formulário para impressão
+												  		   ,pr_nrcopias  => vr_nrcopias         --> Número de cópias
+													  	   ,pr_cdrelato  => to_number(substr(vr_tab_nmarqimp(idx),5,3)) --> Codigo do Relatorio
+                                 ,pr_flappend  => 'N'                 --> Fazer append do relatorio se ja existir
+													  	   ,pr_des_erro  => vr_dscritic);       --> Saída com erro
+      --Se ocorreu erro no relatorio
+      IF vr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_saida;
+      END IF; 
+    END LOOP; -- Imprimir os 9 arquivos
 
-        -- Processo OK, devemos chamar a fimprg
-        btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
-                                  pr_cdprogra => vr_cdprogra,
-                                  pr_infimsol => pr_infimsol,
-                                  pr_stprogra => pr_stprogra);
+   
+    ----------------- ENCERRAMENTO DO PROGRAMA -------------------
+
+    -- Processo OK, devemos chamar a fimprg
+    btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
+                              pr_cdprogra => vr_cdprogra,
+                              pr_infimsol => pr_infimsol,
+                              pr_stprogra => pr_stprogra);
 															
        if vr_inproces  > 2 and
           vr_qtdjobs   > 0 and 
@@ -1254,7 +1256,7 @@ BEGIN
                                     ,pr_des_erro => vr_dscritic);
     
     END IF;
-    -- commit final
+		-- commit final
 		COMMIT;
     
   EXCEPTION
@@ -1350,6 +1352,8 @@ BEGIN
       end if;
       
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
+                                   pr_compleme => 'pr_cdagenci: ' || pr_cdagenci);
       -- Efetuar retorno do erro não tratado
       pr_cdcritic:= 0;
       pr_dscritic:= SQLERRM;
