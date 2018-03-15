@@ -1,12 +1,9 @@
 <?php
 /* !
  * FONTE        : form_cabecalho.php
- * CRIAÇÃO      : Rogerius Militão (DB1)
- * DATA CRIAÇÃO : 26/12/2011
- * OBJETIVO     : Cabeçalho para a tela DESCTO
- * --------------
- * ALTERAÇÕES   : 21/09/2016 - Projeto 300: Inclusao das opcoes L e N. (Jaison/Daniel)
- * --------------
+ * CRIACAO      : Luis Fernando - (GFT)
+ * DATA CRIACAO : 08/03/2018
+ * OBJETIVO     : Cabeçalho para TITCTO
  */
 
 session_start();

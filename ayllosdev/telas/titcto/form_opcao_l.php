@@ -1,9 +1,9 @@
 <? 
 /*!
  * FONTE        : form_opcao_l.php
- * CRIAÇÃO      : Jaison
- * DATA CRIAÇÃO : 21/09/2016
- * OBJETIVO     : Formulario que apresenta a opcao L da tela DESCTO
+ * CRIACAO      : Luis Fernando - (GFT)
+ * DATA CRIACAO : 14/03/2018
+ * OBJETIVO     : Formulario que apresenta a consulta da opcao F da tela TITCTO
  * --------------
  * ALTERAÇÕES   : 
  * --------------
