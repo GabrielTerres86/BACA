@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 02/06/2017
+    Ultima Atualizacao: 12/12/2017
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -242,11 +242,15 @@
 				        17/02/2017 - Incluir validacao de senha na procedure valida_senha_cartao (Lucas Ranghetti #597410)						
 									 		 
                17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339). 
+                             crapass, crapttl, crapjur (Adriano - P339). 
 
                 02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
 									 		 
+			    23/08/2017 - Alterado para validar as informacoes do operador 
+							 pelo AD. (PRJ339 - Reinert)
+							
+                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 -----------------------------------------------------------------------------*/
                              
 {dbo/bo-erro1.i}
@@ -2204,7 +2208,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                  INPUT p-idtipcar, 
                                  INPUT i-nro-docto,        /* Nrd Documento */               
                                  INPUT aux_cdhistor,
-                                 INPUT p-nrcartao,
+                                 INPUT STRING(p-nrcartao),
                                  INPUT aux_vllanmto,
                                  INPUT p-cod-operador,   /* Código do Operador */
                                  INPUT p-cod-banco,
@@ -3045,16 +3049,50 @@ PROCEDURE verifica-operador:
              RETURN "NOK".
          END.
 
-    IF   crapope.cddsenha <> p-senha-operador   THEN
+/* PRJ339 - REINERT (INICIO) */         
+    /* Validacao de senha do usuario no AD somente no ambiente de producao */
+    IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
+         DO:
+      
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+       /* Efetuar a chamada da rotina Oracle */ 
+       RUN STORED-PROCEDURE pc_valida_senha_AD
+           aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
+                                               INPUT p-cod-operador,   /*Operador   */
+                                               INPUT p-senha-operador, /*Nr.da Senha*/
+                                              OUTPUT 0,                /*Cod. critica */
+                                              OUTPUT "").              /*Desc. critica*/
+
+       /* Fechar o procedimento para buscarmos o resultado */ 
+       CLOSE STORED-PROC pc_valida_senha_AD
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+       HIDE MESSAGE NO-PAUSE.
+
+       /* Busca possíveis erros */ 
+       ASSIGN i-cod-erro  = 0
+              c-desc-erro = ""
+              i-cod-erro  = pc_valida_senha_AD.pr_cdcritic 
+                            WHEN pc_valida_senha_AD.pr_cdcritic <> ?
+              c-desc-erro = pc_valida_senha_AD.pr_dscritic 
+                            WHEN pc_valida_senha_AD.pr_dscritic <> ?.
+                            
+      /* Apresenta a crítica */
+      IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
          DO:
              RUN cria-erro (INPUT p-cooper,        
                             INPUT p-cod-agencia,
                             INPUT p-nro-caixa,
-                            INPUT 003,
+                             INPUT i-cod-erro,
                             INPUT "",
                             INPUT YES).
              RETURN "NOK".
          END.
+    END.
+/* PRJ339 - REINERT (FIM) */
 
     /* Nivel 2-Coordenador / 3-Gerente */
     IF   crapope.nvoperad < 2   THEN
@@ -3143,16 +3181,51 @@ PROCEDURE verifica-operador-ted:
     IF  TRIM(p-cod-operador) <> ""   AND
         TRIM(p-senha-operador) <> "" THEN
         DO:
-            IF  crapope.cddsenha <> p-senha-operador THEN
+      /* PRJ339 - REINERT (INICIO) */         
+          /* Validacao de senha do usuario no AD somente no ambiente de producao */
+          IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
+            DO:
+            
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+             /* Efetuar a chamada da rotina Oracle */ 
+             RUN STORED-PROCEDURE pc_valida_senha_AD
+                 aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
+                                                     INPUT p-cod-operador,   /*Operador   */
+                                                     INPUT p-senha-operador, /*Nr.da Senha*/
+                                                    OUTPUT 0,                /*Cod. critica */
+                                                    OUTPUT "").              /*Desc. critica*/
+
+             /* Fechar o procedimento para buscarmos o resultado */ 
+             CLOSE STORED-PROC pc_valida_senha_AD
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+             HIDE MESSAGE NO-PAUSE.
+
+             /* Busca possíveis erros */ 
+             ASSIGN i-cod-erro  = 0
+                    c-desc-erro = ""
+                    i-cod-erro  = pc_valida_senha_AD.pr_cdcritic 
+                                  WHEN pc_valida_senha_AD.pr_cdcritic <> ?
+                    c-desc-erro = pc_valida_senha_AD.pr_dscritic 
+                                  WHEN pc_valida_senha_AD.pr_dscritic <> ?.
+                                  
+            /* Apresenta a crítica */
+            IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
                 DO:
                     RUN cria-erro (INPUT p-cooper,        
                                    INPUT p-cod-agencia,
                                    INPUT p-nro-caixa,
-                                   INPUT 003,
+                                   INPUT i-cod-erro,
                                    INPUT "",
                                    INPUT YES).
                     RETURN "NOK".
                 END.
+          END.
+      /* PRJ339 - REINERT (FIM) */
+
         END.
 
     /* Validar quando o valor do TED ultrapassar o limite 
