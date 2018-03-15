@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes
-   Data    : Novembro/2004                   Ultima atualizacao: 26/01/2018.
+   Data    : Novembro/2004                   Ultima atualizacao: 05/03/2018.
 
    Dados referentes ao programa:
 
@@ -90,11 +90,14 @@
                22/11/2013 - Substituido endereço de e-mail 
                             operacao_fln@multitasknet.com.br para 
                             noc@multitask.com.br (Daniele). 
-                            
+               
                26/01/2018 - Ajustes para nao usar a gera_criticas_proces.p
                             e criado a procedure gera_critica_proces no lugar
                             pois acontecia problemas na hora de usar a work table
                             wt_critica_proces (Tiago).
+                            
+               05/03/2018 - Ajustes para por extensao .txt no arquivo enviado por email
+                            e no titulo do email adicionado qual cooperativa gerou o email.
 /*----------------------------------------------------------------------------*/
 
                             
@@ -535,7 +538,7 @@ DEF  VAR     aux_dssolici            AS CHAR                         NO-UNDO.
 
   /* criar arquivo anexo para email */
   ASSIGN aux_nmarqimp = "arq/" + glb_cdprogra +
-                        "_ANEXO" + STRING(TIME).
+                        "_ANEXO" + STRING(TIME) + ".txt".
                                             
   OUTPUT STREAM str_3 TO VALUE(aux_nmarqimp).
 
@@ -600,7 +603,7 @@ DEF  VAR     aux_dssolici            AS CHAR                         NO-UNDO.
                                            + "anderson.fossa@cecred.coop.br,"  
                                            + "jean.deschamps@cecred.coop.br,"  
                                            + "james.junior@cecred.coop.br", 
-                                     INPUT "'CONTROLE PROCESSO   ' ",
+                                     INPUT "'CONTROLE PROCESSO  (" + crapcop.nmrescop + ") ' ",
                                      INPUT SUBSTRING(aux_nmarqimp, 5),
                                      INPUT FALSE).
    ELSE
@@ -611,13 +614,13 @@ DEF  VAR     aux_dssolici            AS CHAR                         NO-UNDO.
                                            "pinotti@multitasknet.com.br," +
                                            "cpd@cecred.coop.br," +
                                            "compe@cecred.coop.br," + 
-                                     "suporte.operacional@cecred.coop.br," +
+                                           "suporte.operacional@cecred.coop.br," +
                                            "mirtes@cecred.coop.br," +
                                            "eduardo@cecred.coop.br," +
                                            "anderson.fossa@cecred.coop.br," + 
                                            "jean.deschamps@cecred.coop.br," + 
                                            "james.junior@cecred.coop.br", 
-                                     INPUT "'CONTROLE PROCESSO   ' ",
+                                     INPUT "'CONTROLE PROCESSO  (" + crapcop.nmrescop + ") ' ",
                                      INPUT SUBSTRING(aux_nmarqimp, 5),
                                      INPUT FALSE).
 
