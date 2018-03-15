@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
   --  Sistema  : Rotinas genericas focando nas funcionalidades de grupos econômicos
   --  Sigla    : GECO
   --  Autor    : Petter Rafael - Supero Tecnologia
-  --  Data     : Setembro/2012.                   Ultima atualizacao: --/--/----
+  --  Data     : Setembro/2012.                   Ultima atualizacao: 03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -13,6 +13,9 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
   -- Objetivo  : Agrupar rotinas referentes as funcionalidades e administração dos grupos economicos.
   --
   -- Alteracões
+	--            Alteração nos cursores da pc_forma_grupo_economico para considerar contas 
+  --            em prejuízo mesmo que elas tenham a data de eliminação (DTELIMIN) preenchida.
+	--            Reginaldo (AMcom) - Mar/2018
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -742,7 +745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Petter
-   Data    : Setembro/2013.                        Ultima atualizacao: 18/12/2017
+   Data    : Setembro/2013.                        Ultima atualizacao: 14/03/2018
 
    Dados referentes ao programa:
 
@@ -758,6 +761,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                           - Tratamento erros others
                           - Incluída validação para restringir a query: cp.dtdemiss IS NULL
                            (Ana - Envolti - Chamado 813390 / 813391)
+
+	             14/03/2018 - Ajuste para considear contas em prejuízo com data de 
+							              eliminação preenchida. (Reginaldo - AMcom)
   ............................................................................. */
   BEGIN
     DECLARE
@@ -828,12 +834,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
               ,ca.nrdocsoc
               ,cp.nrcpfcgc
               ,cp.cdagenci
+							,DECODE(NVL((SELECT max(inprejuz)
+                             FROM crapepr epr
+                            WHERE epr.cdcooper = cp.cdcooper
+                              AND epr.nrdconta = cp.nrdconta
+                              AND epr.inprejuz = 1
+                              AND epr.vlsdprej > 0
+                       ),0),1,NULL,cp.dtelimin) dtelimin
+              ,NVL((SELECT max(inprejuz)
+                      FROM crapepr epr
+                     WHERE epr.cdcooper = cp.cdcooper
+                       AND epr.nrdconta = cp.nrdconta
+                       AND epr.inprejuz = 1
+                       AND epr.vlsdprej > 0
+                   ),0) tem_prejuizo
         FROM crapepa ca, crapass cp
         WHERE ca.cdcooper = pr_cdcooper
           AND ca.persocio >= pr_persocio
           AND ca.cdcooper = cp.cdcooper
-          AND ca.nrdconta = cp.nrdconta
-          AND cp.dtelimin IS NULL;
+          AND ca.nrdconta = cp.nrdconta;
 
       /* Buscar dados de associados */
       CURSOR cr_crapass(pr_cdcooper IN crapepa.cdcooper%TYPE) IS  --> Código da cooperativa
@@ -841,8 +860,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
               ,cs.nrdconta
               ,cs.nrcpfcgc
               ,cs.cdagenci
-              ,cs.dtelimin
               ,cs.inpessoa
+							,DECODE(NVL((SELECT max(inprejuz)
+                             FROM crapepr epr
+                            WHERE epr.cdcooper = cs.cdcooper
+                              AND epr.nrdconta = cs.nrdconta
+                              AND epr.inprejuz = 1
+                              AND epr.vlsdprej > 0
+                       ),0),1,NULL,cs.dtelimin) dtelimin
+              ,NVL((SELECT max(inprejuz)
+                      FROM crapepr epr
+                     WHERE epr.cdcooper = cs.cdcooper
+                       AND epr.nrdconta = cs.nrdconta
+                       AND epr.inprejuz = 1
+                       AND epr.vlsdprej > 0
+                   ),0) tem_prejuizo
         FROM crapass cs
         WHERE cs.cdcooper = pr_cdcooper;
 
@@ -928,6 +960,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
               ,cp.inpessoa
               ,cp.cdagenci
               ,ct.dtnascto
+							,DECODE(NVL((SELECT max(inprejuz)
+                             FROM crapepr epr
+                            WHERE epr.cdcooper = cp.cdcooper
+                              AND epr.nrdconta = cp.nrdconta
+                              AND epr.inprejuz = 1
+                              AND epr.vlsdprej > 0
+                      ),0),1,NULL,cp.dtelimin) dtelimin
+              ,NVL((SELECT max(inprejuz)
+                     FROM crapepr epr
+                    WHERE epr.cdcooper = cp.cdcooper
+                      AND epr.nrdconta = cp.nrdconta
+                      AND epr.inprejuz = 1
+                      AND epr.vlsdprej > 0
+                   ),0) tem_prejuizo
         FROM crapavt ct, crapass cp
         WHERE ct.cdcooper = pr_cdcooper
           AND ct.tpctrato = 6
@@ -935,7 +981,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           AND ct.flgdepec = 1
           AND cp.cdcooper = ct.cdcooper
           AND cp.nrdconta = ct.nrdconta
-          AND cp.dtelimin IS NULL
           AND cp.dtdemiss IS NULL;
           
     BEGIN

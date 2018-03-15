@@ -127,6 +127,7 @@
  * 102: [26/02/2018] Ajuste na tela da simulacao da proposta para filtrar a linha de credito dos produtos TR/PP. (James)
  * 102: [21/12/2017] Alterado para quando a linha de credito for (6901 - Cessao Cartao Credito) a 
  *                   qualificacao da operacao seja (5 - Cessao de Cartao) (Diego Simas - AMcom)
+* 103: [21/02/2018] Alterado para tratar limite/adp na tela de seleção para liquidar (Simas - AMcom)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -7776,7 +7777,7 @@ function validaLiquidacoes(flgContinuar, operacao) {
     var vlsdeved = (flgContinuar) ? 0 : arrayLiquidacoes[indarray]['vlsdeved'];
     var tosdeved = number_format(tot_vlsdeved, 2, ',', '');
     var nrctremp = (flgContinuar) ? 0 : arrayLiquidacoes[indarray]['nrctremp'];
-
+    var idenempr = (flgContinuar) ? 0 : arrayLiquidacoes[indarray]['idenempr'];
 
     if (!flgContinuar && vlsdeved == '0') {
         return;
@@ -7791,7 +7792,7 @@ function validaLiquidacoes(flgContinuar, operacao) {
             dtmvtoep: dtmvtoep, qtlinsel: qtlinsel,
             vlemprst: vlemprst, vlsdeved: vlsdeved,
             tosdeved: tosdeved, operacao: operacao,
-            nrctremp: nrctremp,
+            nrctremp: nrctremp, idenempr: idenempr,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -7853,7 +7854,11 @@ function mostraLiquidacoes(opLiq, operacao) {
 
 function controlaLayoutLiq(operacao) {
 
-    var aux_nrctremp, aux_vlemprst, aux_vlpreemp, aux_vlsdeved;
+    var aux_nrctremp, aux_vlemprst, 
+        aux_vlpreemp, aux_vlsdeved, 
+        aux_tpemprst, aux_dstipemp,
+        aux_cdfinemp, aux_cdlcremp,
+        aux_idenempr;
 
     // Formata o tamanho da tabela
     $('#divTabLiquidacoes').css({'height': '208px', 'width': '625px'});
@@ -7868,6 +7873,11 @@ function controlaLayoutLiq(operacao) {
         aux_vlpreemp = number_format(parseFloat(arrayLiquidacoes[i]['vlpreemp'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
         aux_vlsdeved = number_format(parseFloat(arrayLiquidacoes[i]['vlsdeved'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
 
+        aux_idenempr = arrayLiquidacoes[i]['idenempr'];           
+        aux_cdfinemp = arrayLiquidacoes[i]['cdfinemp'];
+        aux_cdlcremp = arrayLiquidacoes[i]['cdlcremp'];
+        aux_qtpreemp = arrayLiquidacoes[i]['qtpreemp'];
+
         // Tratamento para verificar Tipo de Emprestimo
         switch (arrayLiquidacoes[i]['tpemprst']) {
             case '0': // TR
@@ -7881,17 +7891,26 @@ function controlaLayoutLiq(operacao) {
                 break;
         }
 
+        if (aux_idenempr == 2){
+            aux_cdfinemp = ' - ';
+            aux_cdlcremp = ' - ';
+            aux_vlemprst = ' - ';
+            aux_qtpreemp = ' - ';
+            aux_vlpreemp = ' - '; 
+            aux_dstipemp = 'CC';
+        }
+
         $('#divTabLiquidacoes > div > table > tbody').append('<tr></tr>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td><span>' + arrayLiquidacoes[i]['idseleca'] + '</span>' + arrayLiquidacoes[i]['idseleca'] + '<input type="hidden" id="indarray" name="indarray" value="' + i + '" /></td>');
-        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + arrayLiquidacoes[i]['cdfinemp'] + '</td>');
-        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + arrayLiquidacoes[i]['cdlcremp'] + '</td>');
+        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_cdfinemp + '</td>');
+        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_cdlcremp + '</td>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_nrctremp + '</td>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + arrayLiquidacoes[i]['dtmvtolt'] + '</td>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_vlemprst + '</td>');
-        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + arrayLiquidacoes[i]['qtpreemp'] + '</td>');
+        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_qtpreemp + '</td>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_vlpreemp + '</td>');
         $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_vlsdeved + '</td>');
-        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_tpemprst + '</td>');
+        $('#divTabLiquidacoes > div > table > tbody > tr:last-child').append('<td>' + aux_dstipemp + '</td>'); 
 
     }
 
