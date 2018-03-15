@@ -761,11 +761,7 @@ IS
       END;
       --
       begin
-        UPDATE TBGEN_BANNER_FILTRO_GENERICO
-        SET    DSFILTRO_COOPERATIVAS      = pr_dsfiltro_cooperativas
-              ,DSFILTRO_TIPOS_CONTA       = pr_dsfiltro_tipos_conta
-              ,INOUTROS_FILTROS           = pr_inoutros_filtros
-              ,DSFILTRO_PRODUTO           = pr_dsfiltro_produto
+        DELETE FROM  TBGEN_BANNER_FILTRO_GENERICO
          WHERE CDBANNER = vr_cdbanner
         AND   CDCANAL   = pr_cdcanal;
        exception
@@ -773,7 +769,34 @@ IS
          vr_dscritic := 'Erro ao atualizar registro (TBGEN_BANNER_FILTRO_GENERICO) ' || '. Erro: ' || SQLERRM;
          RAISE;                                     
       end;
+      
+       --
+      if pr_tpfiltro = 0 then
+        begin
+          insert into TBGEN_BANNER_FILTRO_GENERICO(CDBANNER
+                                                  ,CDCANAL
+                                                  ,DSFILTRO_COOPERATIVAS
+                                                  ,DSFILTRO_TIPOS_CONTA
+                                                  ,INOUTROS_FILTROS
+                                                  ,DSFILTRO_PRODUTO)
+                                            values(vr_cdbanner
+                                                  ,pr_cdcanal
+                                                  ,pr_dsfiltro_cooperativas
+                                                  ,pr_dsfiltro_tipos_conta
+                                                  ,pr_inoutros_filtros
+                                                  ,pr_dsfiltro_produto);
+          
+        exception
+          WHEN OTHERS THEN
+             vr_dscritic := 'Erro ao inserir registro (TBGEN_BANNER_FILTRO_GENERICO) - ' || vr_seq_banner || '. Erro: ' || SQLERRM;
+             RAISE;  
+        end;
+      ELSIF pr_tpfiltro = 1 then
+        NULL;
+      end if;
     end if;
+    
+    
     
                         
   EXCEPTION
@@ -1057,7 +1080,7 @@ IS
 
     vr_contador NUMBER(10);
     vr_user_urlserver VARCHAR(500);
-	vr_pwd_urlserver VARCHAR(500);
+	  vr_pwd_urlserver VARCHAR(500);
 
   BEGIN
 
@@ -1078,9 +1101,9 @@ IS
 	begin
 	
 		SELECT 
-		NMUSUARIO_IMAGESERVER,
-		CDDSENHA_IMAGESERVER
-		INTO vr_user_urlserver, vr_pwd_urlserver
+		   NMUSUARIO_IMAGESERVER,
+		   CDDSENHA_IMAGESERVER
+		   INTO vr_user_urlserver, vr_pwd_urlserver
 		FROM TBGEn_BANNER_PARAM
 		WHERE CDCANAL = pr_cdcanal; 
 
