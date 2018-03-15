@@ -66,6 +66,12 @@
 
              02/08/2016 - Removido EXCLUSIVE-LOCK da crapmdw que totalizava os valores
                           (Douglas - Chamado 496644)
+
+             12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).
+             
+             31/01/2017 - Validar corretamente a conta beneficiaria CRAPASS (Lucas Ranghetti #603860)
+			 
+			 15/03/2018 - Aumentado o tamanho do campo v_nrsequniC de 7 caracteres para 9 (Tiago #INC0010516)
 -->
 
 <html>
@@ -82,7 +88,7 @@
     <title>LIBERAÇÃO DE ENVELOPES</title>
 </head>
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);">
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
 <script language="JavaScript">
  
     function validarData( data ) {
@@ -392,6 +398,8 @@
     DEF VAR p-nro-lote   AS INTEGER                                NO-UNDO.
     DEF VAR v_dinheiro   AS CHARACTER                              NO-UNDO.
     DEF VAR v_cheque     AS CHARACTER                              NO-UNDO.
+    
+    DEF BUFFER crabcop FOR crapcop.
     
     DEFINE TEMP-TABLE w-craperr  NO-UNDO
            FIELD cdagenci   LIKE craperr.cdagenc
@@ -876,7 +884,13 @@
                                                        /* caso conta foi transferida, pega o numero da nova conta */
                                                        DO WHILE TRUE:
                                                     
-                                                          FIND FIRST crapass WHERE crapass.cdcooper = crapcop.cdcooper AND
+                                                          FIND FIRST crabcop WHERE crabcop.nmrescop = TRIM(ENTRY(1,aux_nmcopdst,"-"))
+                                                                             NO-LOCK NO-ERROR.
+                                                                             
+                                                          IF  NOT AVAIL crabcop THEN
+                                                              LEAVE.
+                                                              
+                                                          FIND FIRST crapass WHERE crapass.cdcooper = crabcop.cdcooper AND
                                                                                    crapass.nrdconta = INT(v_conta) 
                                                                                    NO-LOCK NO-ERROR.
                                                     
@@ -887,7 +901,7 @@
                                                              DO:
                                                                 IF CAN-DO("2,4,6,8",STRING(crapass.cdsitdtl))   THEN  
                                                                    DO:
-                                                                      FIND FIRST craptrf WHERE craptrf.cdcooper = crapcop.cdcooper AND
+                                                                      FIND FIRST craptrf WHERE craptrf.cdcooper = crapass.cdcooper AND
                                                                                                craptrf.nrdconta = crapass.nrdconta AND
                                                                                                craptrf.tptransa = 1                AND
                                                                                                craptrf.insittrs = 2 
@@ -2006,7 +2020,7 @@
                     </tr>
                     <tr>
                         <td width="30%" align="right" class="linhaform">Data:</td>
-                        <td width="70%" align="left"  class="linhaform" colspan="2"> <input type="text" name="v_dtmvtoltC" id="v_dtmvtoltC" value="`v_dtmvtoltC`" style="width: 65;" class="input" maxlength="10" onKeyUp="JavaScript:FormataData(this,this.value);" onblur="if ( validarData(this.value) && (this.value.length!=0) ){alert('Data Invalida!');this.value=''; this.focus();}"  >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Confer&ecirc;ncia:&nbsp;<input type="text" name="v_nrsequniC" id="v_nrsequniC" value="`v_nrsequniC`" maxlength="7" class="input" style="width: 55px; text-align: right;" onKeyDown="JavaScript:validaInteiro(event);" onchange="JavaScript:insereEnvelope(2);"></td>
+                        <td width="70%" align="left"  class="linhaform" colspan="2"> <input type="text" name="v_dtmvtoltC" id="v_dtmvtoltC" value="`v_dtmvtoltC`" style="width: 65;" class="input" maxlength="10" onKeyUp="JavaScript:FormataData(this,this.value);" onblur="if ( validarData(this.value) && (this.value.length!=0) ){alert('Data Invalida!');this.value=''; this.focus();}"  >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Confer&ecirc;ncia:&nbsp;<input type="text" name="v_nrsequniC" id="v_nrsequniC" value="`v_nrsequniC`" maxlength="9" class="input" style="width: 60px; text-align: right;" onKeyDown="JavaScript:validaInteiro(event);" onchange="JavaScript:insereEnvelope(2);"></td>
                     </tr>
 
                     <tr>
