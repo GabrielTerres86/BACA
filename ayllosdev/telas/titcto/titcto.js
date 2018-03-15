@@ -934,7 +934,7 @@ function formataOpcaoT() {
 
 // opcao S
 function formataOpcaoS() {
-
+    /* CONTABIL */
     //label
     rTpcobran = $('label[for="tpcobran"]', '#' + frmOpcao);
     rDssldant = $('label[for="dssldant"]', '#' + frmOpcao);
@@ -982,7 +982,6 @@ function formataOpcaoS() {
     rLqtdedas.addClass('rotulo').css({'width': '350px'});
     rLvalores.addClass('rotulo-linha').css({'width': '130px'});
 
-
     // input
     cTpcobran = $('#tpcobran', '#' + frmOpcao);
     cQtsldant = $("#qtsldant", '#' + frmOpcao);
@@ -1010,6 +1009,77 @@ function formataOpcaoS() {
     cVlderesg.css({'width': '120px'}).addClass('monetario');
     cVlcredit.css({'width': '120px'}).addClass('monetario');
     cDtvencto.css({'width': '90px'}).addClass('data');
+
+    /* CONTABIL RESIDUAL*/
+    //label
+    rDssldant_residual = $('label[for="dssldant_residual"]', '#' + frmOpcao);
+    rDstitulo_residual = $('label[for="dstitulo_residual"]', '#' + frmOpcao);
+    rDsvencid_residual = $('label[for="dsvencid_residual"]', '#' + frmOpcao);
+    rDsderesg_residual = $('label[for="dsderesg_residual"]', '#' + frmOpcao);
+    rDscredit_residual = $('label[for="dscredit_residual"]', '#' + frmOpcao);
+    rDsvencto_residual = $('label[for="dsvencto_residual"]', '#' + frmOpcao);
+
+    rQtsldant_residual = $('label[for="qtsldant_residual"]', '#' + frmOpcao);
+    rQttitulo_residual = $('label[for="qttitulo_residual"]', '#' + frmOpcao);
+    rQtvencid_residual = $('label[for="qtvencid_residual"]', '#' + frmOpcao);
+    rQtderesg_residual = $('label[for="qtderesg_residual"]', '#' + frmOpcao);
+    rQtcredit_residual = $('label[for="qtcredit_residual"]', '#' + frmOpcao);
+    rVlsldant_residual = $('label[for="vlsldant_residual"]', '#' + frmOpcao);
+    rVltitulo_residual = $('label[for="vltitulo_residual"]', '#' + frmOpcao);
+    rVlvencid_residual = $('label[for="vlvencid_residual"]', '#' + frmOpcao);
+    rVlderesg_residual = $('label[for="vlderesg_residual"]', '#' + frmOpcao);
+    rVlcredit_residual = $('label[for="vlcredit_residual"]', '#' + frmOpcao);
+
+    rLqtdedas_residual = $('label[for="lqtdedas_residual"]', '#' + frmOpcao);
+    rLvalores_residual = $('label[for="lvalores_residual"]', '#' + frmOpcao);
+
+
+
+    rDssldant_residual.addClass('rotulo').css({'width': '250px'});
+    rDstitulo_residual.addClass('rotulo').css({'width': '250px'});
+    rDsvencid_residual.addClass('rotulo').css({'width': '250px'});
+    rDsderesg_residual.addClass('rotulo').css({'width': '250px'});
+    rDscredit_residual.addClass('rotulo').css({'width': '250px'});
+    rDsvencto_residual.addClass('rotulo').css({'width': '250px'});
+
+    rQtsldant_residual.addClass('rotulo-linha').css({'width': '20px'});
+    rQttitulo_residual.addClass('rotulo-linha').css({'width': '20px'});
+    rQtvencid_residual.addClass('rotulo-linha').css({'width': '20px'});
+    rQtderesg_residual.addClass('rotulo-linha').css({'width': '20px'});
+    rQtcredit_residual.addClass('rotulo-linha').css({'width': '20px'});
+    rVlsldant_residual.addClass('rotulo-linha').css({'width': '20px'});
+    rVltitulo_residual.addClass('rotulo-linha').css({'width': '20px'});
+    rVlvencid_residual.addClass('rotulo-linha').css({'width': '20px'});
+    rVlderesg_residual.addClass('rotulo-linha').css({'width': '20px'});
+    rVlcredit_residual.addClass('rotulo-linha').css({'width': '20px'});
+
+    rLqtdedas_residual.addClass('rotulo').css({'width': '350px'});
+    rLvalores_residual.addClass('rotulo-linha').css({'width': '130px'});
+
+
+    // input
+    cQtsldant_residual = $("#qtsldant_residual", '#' + frmOpcao);
+    cQttitulo_residual = $("#qttitulo_residual", '#' + frmOpcao);
+    cQtvencid_residual = $("#qtvencid_residual", '#' + frmOpcao);
+    cQtderesg_residual = $("#qtderesg_residual", '#' + frmOpcao);
+    cQtcredit_residual = $("#qtcredit_residual", '#' + frmOpcao);
+    cVlsldant_residual = $("#vlsldant_residual", '#' + frmOpcao);
+    cVltitulo_residual = $("#vltitulo_residual", '#' + frmOpcao);
+    cVlvencid_residual = $("#vlvencid_residual", '#' + frmOpcao);
+    cVlderesg_residual = $("#vlderesg_residual", '#' + frmOpcao);
+    cVlcredit_residual = $("#vlcredit_residual", '#' + frmOpcao);
+
+
+    cQtsldant_residual.css({'width': '120px'}).addClass('inteiro');
+    cQttitulo_residual.css({'width': '120px'}).addClass('inteiro');
+    cQtvencid_residual.css({'width': '120px'}).addClass('inteiro');
+    cQtderesg_residual.css({'width': '120px'}).addClass('inteiro');
+    cQtcredit_residual.css({'width': '120px'}).addClass('inteiro');
+    cVlsldant_residual.css({'width': '120px'}).addClass('monetario');
+    cVltitulo_residual.css({'width': '120px'}).addClass('monetario');
+    cVlvencid_residual.css({'width': '120px'}).addClass('monetario');
+    cVlderesg_residual.css({'width': '120px'}).addClass('monetario');
+    cVlcredit_residual.css({'width': '120px'}).addClass('monetario');
 
     // Outros	
     btnOK3 = $('#btnOk3', '#' + frmOpcao);
@@ -1185,7 +1255,10 @@ function btnVoltar() {
             trocaBotao('Prosseguir');
         }
     } else if (cddopcao == 'S'){
-        if(!isHabilitado(cTpcobran)){
+        if(isHabilitado(cTpcobran)){
+            estadoInicial();
+        } 
+        else {
             $('#' + frmOpcao +' .saldo_contabil').hide();
             cTpcobran.habilitaCampo().focus();
         } 
