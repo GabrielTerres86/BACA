@@ -29,8 +29,10 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             01/12/2016 - Ajuste na navegacao dos campos (correcao M271) 
                         (Douglas - Chamado 563281)
                         
-                        
             29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)                 
+            
+            08/12/2017 - MELHORIA 458, incluir campo para cadastrar o tipo do PAGAMENTO
+                         ANTONIO R. JUNIOR (mouts)
 -->
 
 <html>
@@ -41,8 +43,8 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
 <meta name="ProgId" content="FrontPage.Editor.Document">
 <meta http-equiv="cache-control" content="no-cache">
-<meta http-equiv="Pragma"        content="No-Cache">
-<meta http-equiv="Expires"       content="0">
+    <meta http-equiv="Pragma" content="No-Cache">
+    <meta http-equiv="Expires" content="0">
 <script language=JavaScript src="/script/formatadadosie.js"></script>
 <script language=JavaScript src="/script/jquery.js"></script>
 <script language=JavaScript src="/script/jquery.mask.mv.js"></script>
@@ -53,34 +55,39 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 
     var leitora = true;
     var running = false;
-    var	count   = 0;
-    var	run_for = 300;
-    var	fim     = false;
-    var	fatura  = false;			
-    var flmask  = false;
+        var count = 0;
+        var run_for = 300;
+        var fim = false;
+        var fatura = false;
+        var flmask = false;
 
     /*nome de campos para serem usados pelo jquery*/
     var cCodBarras = "#v_fmtcodbar";
     var cHcodBarra = "#v_codbarras";
-    var cTpProces  = "#v_tpproces";
-    var cTipDocto  = "#v_tipdocto";
+        var cTpProces = "#v_tpproces";
+        var cTipDocto = "#v_tipdocto";
     var btnCancela = "#btnCancela";
     var btnOk = "#btnOk";
-    var cValor     = "#v_valor";
-    var flblqval   = "#v_flblqval";
+        var cValor = "#v_valor";
+        var flblqval = "#v_flblqval";
 
-    function resetaCampo(){
+        function resetaCampo() {
     	running = false;
-    	count   = 0;
+            count = 0;
     	run_for = 300;
-    	fim     = false;
-    	fatura  = false;
+            fim = false;
+            fatura = false;
     	flmask = false;
     
     	$('#v_fmtcodbar').unmask();			
         $('#v_fmtcodbar').mask('00000000000000000000000000000000000000000000');
         $('#v_fmtcodbar').val('');
         $('#v_codbarras').val('');
+
+        $('#v_cod').val('');
+        $('#v_senha').val('');
+        $("#v_cod").prop("disabled", true);
+        $("#v_senha").prop("disabled", true);
 
         $(cValor).prop("disabled", false);
     }	
@@ -90,19 +97,21 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
     function submitFormulario() {
        document.forms[0].submit();
                
-       for(var i=0;i<document.forms[0].length;i++){
-          document.forms[0].elements[i].disabled=true;
+            for (var i = 0; i < document.forms[0].length; i++) {
+                document.forms[0].elements[i].disabled = true;
        }
        
     }
     
 
-    $( document ).ready(function(){         
+        $(document).ready(function () {
 
-        $(btnCancela).unbind("click").bind( "click", function(){resetaCampo();$(cValor).val("");$(cCodBarras).focus();} );
-        $(btnOk).unbind("click").bind( "click", function(){document.forms[0].submit();} );
+            $(btnCancela).unbind("click").bind("click", function () { resetaCampo(); $(cValor).val(""); $(cCodBarras).focus(); });
+            $(btnOk).unbind("click").bind("click", function () { document.forms[0].submit(); });
+			
+			$(cCodBarras).focus();
 
-        $(cCodBarras).attr("maxlength","57");
+            $(cCodBarras).attr("maxlength", "57");
         //$(cCodBarras).css("width","350px");
 
         if ($(cCodBarras).val() == "") {
@@ -110,21 +119,21 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             $(cTipDocto).val("1"); /*1-TITULO|2-FATURA*/
             $(cCodBarras).unmask();
             $(cCodBarras).mask('00000000000000000000000000000000000000000000');
-        }else{
+            } else {
             
             if ($(cTpProces).val() == '2') {
             
                 /*Verificar fatura ou titulo*/
-                if( $(cCodBarras).val().substr(0,1) == '8' ){
+                    if ($(cCodBarras).val().substr(0, 1) == '8') {
                     $(cCodBarras).unmask();
                     $(cCodBarras).mask('00000000000-0 00000000000-0 00000000000-0 00000000000-0'); /*FATURA*/
-                    $(cCodBarras).attr("maxlength","55");
+                        $(cCodBarras).attr("maxlength", "55");
                     $(cTipDocto).val("2");
                     $(cValor).val("");
-                }else{
+                    } else {
                     $(cCodBarras).unmask();
                     $(cCodBarras).mask('00000.00000 00000.000000 00000.000000 0 00000000000000'); /*TITULO*/
-                    $(cCodBarras).attr("maxlength","54");
+                        $(cCodBarras).attr("maxlength", "54");
                     $(cTipDocto).val("1");							
                 }
     
@@ -135,39 +144,39 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
         }
 
         // Caso marcado para bloquear campo de valor 
-        if (flblqval == 1 ) {        
+            if (flblqval == 1) {
           $(cValor).prop("disabled", true);
         }
         
-  		var end_counter = function() {
+            var end_counter = function () {
 			if (running) {
 				running = false;
-				fim     = true;
+                    fim = true;
 				started_at = 0;
                 
                 /*Identifica se eh leitora*/
-				if(count >= 4){
+                    if (count >= 4) {
 					leitora = true;	
-				}else{
+                    } else {
 					leitora = false;
 				}				
 			}
 		};
 		
-        $(cCodBarras).keypress(function(e) {  
+            $(cCodBarras).keypress(function (e) {
 
-            if( $(cCodBarras).val().length == 0 ){
+                if ($(cCodBarras).val().length == 0) {
                 /*zera variaveis de controle*/
                 running = false;
-                count   = 0;
+                    count = 0;
                 run_for = 300;
-                fim     = false;
-                fatura  = false;
-                flmask  = false;
+                    fim = false;
+                    fatura = false;
+                    flmask = false;
                 leitora = true;
 
-                if (flblqval != 1 ) {  
-                   $(cValor).prop("disabled", false);
+                    if (flblqval != 1) {
+                $(cValor).prop("disabled", false);
                 }
 
                 $(cCodBarras).unmask();
@@ -175,7 +184,7 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             }
 
 
-		    if(!fim){
+                if (!fim) {
 				if (running) {
 					count++;  
 				} else {
@@ -183,38 +192,38 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 					count = 0;
 					setTimeout(end_counter, run_for);
 				}
-			}else{
+                } else {
 				/*Verificar leitora ou digitacao manual*/
-				if(leitora){
+                    if (leitora) {
                     
                     $(cTpProces).val('1');
 
                     $(cCodBarras).unmask();
                     $(cCodBarras).mask('00000000000000000000000000000000000000000000'); 
                     
-					if( $(cCodBarras).val().substr(0,1) == '8' ){
+                        if ($(cCodBarras).val().substr(0, 1) == '8') {
 					    $(cTipDocto).val("2"); /*FATURA*/
 					    $(cValor).val("");
-					}else{
+                        } else {
 						$(cTipDocto).val("1"); /*TITULO*/
 					}
 
-				}else{
+                    } else {
 					
-					if( $(cCodBarras).val().length > 4 && !flmask){
+                        if ($(cCodBarras).val().length > 4 && !flmask) {
 						
                         $(cTpProces).val('2');
                         
 						/*Verificar fatura ou titulo*/
-						if( $(cCodBarras).val().substr(0,1) == '8' ){
+                            if ($(cCodBarras).val().substr(0, 1) == '8') {
 							$(cCodBarras).unmask();
 							$(cCodBarras).mask('00000000000-0 00000000000-0 00000000000-0 00000000000-0'); /*FATURA*/
-							$(cCodBarras).attr("maxlength","55");
+                                $(cCodBarras).attr("maxlength", "55");
 							$(cTipDocto).val("2");
-						}else{
+                            } else {
 							$(cCodBarras).unmask();
 							$(cCodBarras).mask('00000.00000 00000.000000 00000.000000 0 00000000000000'); /*TITULO*/
-							$(cCodBarras).attr("maxlength","54");
+                                $(cCodBarras).attr("maxlength", "54");
 							$(cTipDocto).val("1");							
 						}
 						
@@ -226,21 +235,21 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 		});	
 
 
-		$(cCodBarras).keyup(function(event) {
+            $(cCodBarras).keyup(function (event) {
 		
             
-			if( $(cCodBarras).val().length == 0 ){
+                if ($(cCodBarras).val().length == 0) {
 				/*zera variaveis de controle*/
 				running = false;
-				count   = 0;
+                    count = 0;
 				run_for = 300;
-				fim     = false;
-				fatura  = false;
-                flmask  = false;
+                    fim = false;
+                    fatura = false;
+                    flmask = false;
                 leitora = true;
 
-                if (flblqval != 1 ) {  
-                   $(cValor).prop("disabled", false);
+                    if (flblqval != 1) {
+                $(cValor).prop("disabled", false);
                 }
 
                 $(cCodBarras).unmask();
@@ -256,12 +265,12 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             var keyCodesPermitidos = new Array();
              
             //numeros e 0 a 9 do teclado alfanumerico
-            for(x=48;x<=57;x++){
+                for (x = 48; x <= 57; x++) {
                 keyCodesPermitidos.push(x);
             }
              
             //numeros e 0 a 9 do teclado numerico
-            for(x=96;x<=105;x++){
+                for (x = 96; x <= 105; x++) {
                 keyCodesPermitidos.push(x);
             }
             
@@ -272,18 +281,18 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             var keyCode = event.keyCode;
           /**********************************************************/
 
-            if (($.inArray(keyCode,keyCodesPermitidos) >= 0)){
+                if (($.inArray(keyCode, keyCodesPermitidos) >= 0)) {
 
                 /* tratamento para lancamento via leitora */
-                if ($(cCodBarras).cleanVal().length == 44 && leitora){
+                    if ($(cCodBarras).cleanVal().length == 44 && leitora) {
                     
                     /*zera variaveis de controle */
                     
                     running = false;
-                    count   = 0;
+                        count = 0;
                     run_for = 300;
-                    fatura  = false;
-                    flmask  = false; 
+                        fatura = false;
+                        flmask = false;
 
                     //resetaCampo();
     
@@ -301,13 +310,13 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                        $(cIdtpdpag).val("2"); //TITULO
                     }             */
 
-                    setTimeout(function(){
+                        setTimeout(function () {
                         $("#manual").val("");
                         $(cTpProces).val('1');
 
-                        if( $(cCodBarras).val().substr(0,1) == '8' ){
+                            if ($(cCodBarras).val().substr(0, 1) == '8') {
                             $(cTipDocto).val("2"); /*FATURA*/
-                        }else{
+                            } else {
                             $(cTipDocto).val("1"); /*TITULO*/
                         }
 
@@ -316,9 +325,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                             //document.forms[0].submit();
                             submitFormulario();
                         }    
-                    },300); 
+                        }, 300);
     
-                }else{  
+                    } else {
     
                     if (($(cTipDocto).val() == "1" && $(cCodBarras).cleanVal().length == 47) || 
                         ($(cTipDocto).val() == "2" && $(cCodBarras).cleanVal().length == 48) &&
@@ -326,21 +335,21 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                         
                         /*zera variaveis de controle */
                         running = false;
-                        count   = 0;
+                            count = 0;
                         run_for = 300;
-                        fatura  = false;
-                        flmask  = false;
+                            fatura = false;
+                            flmask = false;
     
                         $(cHcodBarra).val($(cCodBarras).cleanVal());
     
-                        setTimeout(function(){
+                            setTimeout(function () {
                             $("#manual").val("manual");
                              
                             if ($(cCodBarras).cleanVal() == $(cHcodBarra).val()) {
                                //document.forms[0].submit();
                                submitFormulario();
                             } 
-                        },300);
+                            }, 300);
                     
       
                     }                              
@@ -382,9 +391,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 		});	*/
         
                     
-		$(cCodBarras).bind('paste', function(event) {		
+            $(cCodBarras).bind('paste', function (event) {
             //aumentar campo antes de copiar para que nao seja perdido nenhuma informação
-            $(cCodBarras).attr("maxlength","57");
+                $(cCodBarras).attr("maxlength", "57");
             $(cCodBarras).unmask();
             $(cCodBarras).mask('000000000000000000000000000000000000000000000000000000000'); // para não perder informações
 
@@ -393,27 +402,27 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 
             setTimeout(function () {
                 // qnd copiar verificar qual mascara deverá ser utilizada 
-                if ($(cCodBarras).val().substr(0,1) == '8'){
+                    if ($(cCodBarras).val().substr(0, 1) == '8') {
                     
-                    $(cCodBarras).attr("maxlength","55");
+                        $(cCodBarras).attr("maxlength", "55");
                     // antes de atribuir nova mascara, limpar a atual
                     $(cCodBarras).unmask();
                     $(cCodBarras).mask('00000000000-0 00000000000-0 00000000000-0 00000000000-0'); //FATURA
                     $(cTipDocto).val("2"); //1-TITULO|2-FATURA
                     fatura = true;
                     
-                }else{
-                    $(cCodBarras).attr("maxlength","54");
+                    } else {
+                        $(cCodBarras).attr("maxlength", "54");
                     $(cCodBarras).unmask();
                     // antes de atribuir nova mascara, limpar a atual
                     $(cCodBarras).mask('00000.00000 00000.000000 00000.000000 0 00000000000000'); //TITULO
                     $(cTipDocto).val("1"); //1-TITULO|2-FATURA
                     fatura = false;
                 } 
-                flmask  = true;
+                    flmask = true;
 
                 //setTimeout(function(){document.forms[0].submit();},100);
-                setTimeout(function(){submitFormulario();},100);
+                    setTimeout(function () { submitFormulario(); }, 100);
                 
                 //document.forms[0].submit(); 
             });
@@ -429,7 +438,7 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 		    if ($(cTipDocto).val() == "2") {
 		        $(cValor).val("");
 		        $(cValor).prop("disabled", true);
-		    } else if (flblqval != 1 ) {
+                } else if (flblqval != 1) {
 		        $(cValor).prop("disabled", false);
 		    }
 
@@ -442,7 +451,7 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 		});
 
         /* Controle do foco no campo */
-        if( $(cValor).val().length > 0 ) {
+            if ($(cValor).val().length > 0) {
 		       // $(cValor).focus();
            document.forms[0].vh_foco.value = "11";
         } else {
@@ -458,25 +467,33 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
-<form onKeyDown="change_page(event)" method=post >
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onkeyup="callBlass(event); callBLini(event); callBLsal(event);">
+    <form onkeydown="change_page(event)" method=post>
 <input type="hidden" name="v_msg">
 <input type="hidden" name="vh_foco" value="6">
 <input type="hidden" name="v_msg_vencido" id="v_msg_vencido" value="no">
+<input type="hidden" name="hdnEstorno" id="hdnEstorno" value="">
+<input type="hidden" name="hdnVerifEstorno" id="hdnVerifEstorno" value="">
+<input type="hidden" name="hdnValorAcima" id="hdnValorAcima" value="">
 <p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
 <div align="center">
   <center>
   <table width="100%" class=cabtab>
     <tr>
-      <td width="15%" align="center"> <input type="text" name="v_coop" size="11" class="transp" readOnly>
+                        <td width="15%" align="center">
+                            <input type="text" name="v_coop" size="11" class="transp" readonly>
       </td>
-      <td width="20%" align="center"> PA&nbsp; <input type="text" name="v_pac" size="1" class="transp"  readOnly>
+                        <td width="20%" align="center">
+                            PA&nbsp; <input type="text" name="v_pac" size="1" class="transp" readonly>
       </td>
-      <td width="20%" align="center"> CAIXA&nbsp; <input type="text" name="v_caixa" size="1" class="transp" readOnly>
+                        <td width="20%" align="center">
+                            CAIXA&nbsp; <input type="text" name="v_caixa" size="1" class="transp" readonly>
       </td>
-      <td width="30%" align="center"> OPERADOR&nbsp; <input type="text" name="v_operador" size="7" class="transp" readOnly>
+                        <td width="30%" align="center">
+                            OPERADOR&nbsp; <input type="text" name="v_operador" size="7" class="transp" readonly>
       </td>
-      <td width="15%" align="center"><input type="text" name="v_data" size="10" class="transp" readOnly>
+                        <td width="15%" align="center">
+                            <input type="text" name="v_data" size="10" class="transp" readonly>
       </td>
     </tr>
   </table>
@@ -493,9 +510,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
   </center>
 </div>
 <div align="center">
-<table cellspacing = 1 cellpadding= 1 width=115% class=tcampo>
+            <table cellspacing=1 cellpadding=1 width=115% class=tcampo>
 	<tr> 
-        <td width=15% >&nbsp;</td>
+                    <td width=15%>&nbsp;</td>
 	</tr>  
     <!--
    <tr> 
@@ -512,10 +529,29 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             Fatura
         </td>
     </tr>  -->
+
+                <tr>
+                    <td width=14% align="right"> </td>
+                    <td>
+                        <table cellspacing="0" cellpadding="0" width="100%">
+                            <tr>
+                                <td class="linhaform" style="width: 30%;">
+                                    <input type="radio" value="0" id="v_tppagmto0" name="v_tppagmto" checked>
+                                    Conta
+                                </td>
+                                <td class="linhaform" style="width: 70%;">
+                                    <input type="radio" value="1" id="v_tppagmto1" name="v_tppagmto">
+                                    Espécie
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
     <tr height=40 valign="bottom"> 
         <td align="right" width=15%>Conta/DV:</td>
         <td>
-            <input type="text" name="v_conta"  maxlength="12" OnKeyDown="JavaScript:return false;" size="20" class="input" style="text-align: right;" disabled>
+                        <input type="text" name="v_conta" maxlength="12" onkeydown="JavaScript:return false;" size="20" class="input" style="text-align: right;" disabled>
             <input type="text" name="v_nome" size="45" class="input" style="font-weight: bold" disabled>
         </td>
     </tr>
@@ -540,9 +576,18 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                 <td> <input type="text" name="v_valor" id="v_valor" size="20" class="input" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,14,event)" maxlength="18" style="text-align: right"></td>
     </tr>
     <tr>
+        <td width=15% align="right">Código:</td>
+        <td><input class="input" type="text" id="v_cod" name="v_cod" size="12" maxlength="10" disabled></td>
+    </tr>
+    <tr>
+        <td width="15%" align="right">Senha:</td>
+        <td><input class="input" type="password" id="v_senha" name="v_senha" size="12" maxlength="10" disabled>
+        </td>
+    </tr>
+    <tr>
         <td align="right" class="linhaform" colspan="2" height="50">
            <p align="center">
-                <input type="button" value="Ok" name="btnOk" id="btnOk" class="button" id="btnOk" name="btnOk" >
+                            <input type="button" value="Ok" name="btnOk" id="btnOk" class="button" id="btnOk" name="btnOk">
                 <input type="button" value="Cancelar" name="btnCancela" id="btnCancela" class="button">
            </p>
         </td>
@@ -554,16 +599,31 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
   <table width="100%">
       <tr>
          <td align="right" class="linhaform">
-          <input type="button" value="Estorno" name="estorno" class="button" onClick="JavaScript:redir_login('crap015.w')"></td>
+                        <input type="button" value="Estorno" name="estorno" class="button" onclick="JavaScript:redir_login('crap015.w')">
+                    </td>
       </tr>
   </table>      
 </div>
 
 </form>
 </body>
+<script language=JavaScript>
+
+  if($("#hdnVerifEstorno").val() == 0 || $("#hdnVerifEstorno").val() == "" || $("#hdnVerifEstorno").val() == null){
+    $("#hdnVerifEstorno").val(0);
+  }
+  
+  function habilitarCampos(){     
+
+    if($("#hdnValorAcima").val() == 0 || $("#hdnValorAcima").val() == "" || $("#hdnValorAcima").val() == null){
+      $("#hdnValorAcima").val(0);
+      $("#v_cod").prop("disabled", true);
+      $("#v_senha").prop("disabled", true);
+    }else{
+      $("#hdnValorAcima").val(1);
+      $("#v_cod").prop("disabled", false);
+      $("#v_senha").prop("disabled", false);
+    }
+  }
+</script>
 </html>
-
-
-
-
-
