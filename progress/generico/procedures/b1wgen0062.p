@@ -2,7 +2,7 @@
 
     Programa: b1wgen0062.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 09/10/2017
+    Data    : Marco/2010                   Ultima atualizacao: 11/10/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSAO FICHA CADASTRAL
 
@@ -69,6 +69,9 @@
 
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom) 
+                11/10/2017 - Ajuste referente ao projeto 339. (Kelvin)
+                03/10/2017 - Correcao para carregar campo DSNACION.
+                             (Jaison/Andrino - PRJ339)	 
 
                 09/10/2017 - Projeto 410 - RF 52/62 - Adicionado indicador de 
                              impressão da declaração do simples nacional na 
@@ -585,6 +588,13 @@ PROCEDURE Busca_PF:
                LEAVE BuscaPf.
             END.
 
+        /* Buscar a Nacionalidade */
+        FOR FIRST crapnac FIELDS(dsnacion)
+                          WHERE crapnac.cdnacion = crabttl.cdnacion
+                                NO-LOCK:
+            ASSIGN tt-fcad-psfis.dsnacion = crapnac.dsnacion.
+        END.
+
         /* Retornar orgao expedidor */
         IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
             RUN sistema/generico/procedures/b1wgen0052b.p 
@@ -673,8 +683,8 @@ PROCEDURE Busca_PF:
         
         /* Endereco Comercial */
         /* se for Emp. Diversas, pega da crapenc, senao pega da crapemp */
-        IF((par_cdcooper = 2 AND tt-fcad-comer.cdempres = 88) OR
-           (par_cdcooper <> 2 AND tt-fcad-comer.cdempres = 81)) THEN
+/*        IF((par_cdcooper = 2 AND tt-fcad-comer.cdempres = 88) OR
+           (par_cdcooper <> 2 AND tt-fcad-comer.cdempres = 81)) THEN*/
             DO:
                FOR FIRST crabenc FIELDS(dsendere complend nmbairro nmcidade
                                         cdufende nrcxapst nrendere nrcepend)
@@ -699,7 +709,7 @@ PROCEDURE Busca_PF:
                                                              "99999,999").
                END.
             END.
-        ELSE
+        /*ELSE
            DO:
               FOR FIRST crapemp FIELDS(dsendemp dscomple nmbairro nmcidade 
                                        cdufdemp nrendemp nrcepend) 
@@ -721,7 +731,7 @@ PROCEDURE Busca_PF:
                                    STRING(crapemp.nrcepend,"99999,999").
               END.
 
-           END.
+           END.*/
         
 
         /* Empresa */
@@ -1164,6 +1174,13 @@ PROCEDURE Busca_PF:
                   tt-fcad-procu.dthabmen = crapavt.dthabmen
                   tt-fcad-procu.cpfprocu = crapavt.nrcpfcgc.
                     
+                  /* Buscar a Nacionalidade */
+                  FOR FIRST crapnac FIELDS(dsnacion)
+                                    WHERE crapnac.cdnacion = crapavt.cdnacion
+                                          NO-LOCK:
+                      ASSIGN tt-fcad-procu.dsnacion = crapnac.dsnacion.
+                  END.
+
                   /* Retornar orgao expedidor */
                    IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
                       RUN sistema/generico/procedures/b1wgen0052b.p 
@@ -1260,6 +1277,13 @@ PROCEDURE Busca_PF:
                       tt-fcad-procu.dtemddoc = crabass.dtemdptl
                       tt-fcad-procu.dtnascto = crabass.dtnasctl
                       tt-fcad-procu.cdnacion = crabass.cdnacion.
+
+               /* Buscar a Nacionalidade */
+               FOR FIRST crapnac FIELDS(dsnacion)
+                                 WHERE crapnac.cdnacion = crabass.cdnacion
+                                       NO-LOCK:
+                   ASSIGN tt-fcad-procu.dsnacion = crapnac.dsnacion.
+               END.
 
                /* Retornar orgao expedidor */
                IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
@@ -1398,6 +1422,13 @@ PROCEDURE Busca_PF:
                                                              "xxx.xxx.xxx-xx")
                              tt-fcad-respl.nrcpfmen = crapcrl.nrcpfmen.
 
+                     /* Buscar a Nacionalidade */
+                     FOR FIRST crapnac FIELDS(dsnacion)
+                                       WHERE crapnac.cdnacion = crabttl.cdnacion
+                                             NO-LOCK:
+                         ASSIGN tt-fcad-respl.dsnacion = crapnac.dsnacion.
+                     END.
+
                      /* Retornar orgao expedidor */
                      IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
                         RUN sistema/generico/procedures/b1wgen0052b.p 
@@ -1473,6 +1504,13 @@ PROCEDURE Busca_PF:
                                                   "99999999999"),
                                                   "xxx.xxx.xxx-xx")
                          tt-fcad-respl.nrcpfmen = crapcrl.nrcpfmen.
+
+                  /* Buscar a Nacionalidade */
+                  FOR FIRST crapnac FIELDS(dsnacion)
+                                    WHERE crapnac.cdnacion = crapcrl.cdnacion
+                                          NO-LOCK:
+                      ASSIGN tt-fcad-respl.dsnacion = crapnac.dsnacion.
+                  END.
 
                   /* Retornar orgao expedidor */
                   IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
@@ -1687,6 +1725,13 @@ PROCEDURE Busca_PJ:
                   tt-fcad-procu.persocio = crapavt.persocio
                   tt-fcad-procu.cpfprocu = crapass.nrcpfcgc.
 
+                  /* Buscar a Nacionalidade */
+                  FOR FIRST crapnac FIELDS(dsnacion)
+                                    WHERE crapnac.cdnacion = crapavt.cdnacion
+                                          NO-LOCK:
+                      ASSIGN tt-fcad-procu.dsnacion = crapnac.dsnacion.
+                  END.
+
                   /* Retornar orgao expedidor */
                   IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
                       RUN sistema/generico/procedures/b1wgen0052b.p 
@@ -1784,6 +1829,13 @@ PROCEDURE Busca_PJ:
                       tt-fcad-procu.dsproftl = crapavt.dsproftl
                       tt-fcad-procu.dtnascto = crabass.dtnasctl
                       tt-fcad-procu.cdnacion = crabass.cdnacion.
+
+                /* Buscar a Nacionalidade */
+                FOR FIRST crapnac FIELDS(dsnacion)
+                                  WHERE crapnac.cdnacion = crabass.cdnacion
+                                        NO-LOCK:
+                    ASSIGN tt-fcad-procu.dsnacion = crapnac.dsnacion.
+                END.
 
                 /* Retornar orgao expedidor */
                 IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
@@ -1924,6 +1976,13 @@ PROCEDURE Busca_PJ:
                                 tt-fcad-respl.nrcpfmen = crapcrl.nrcpfmen
                                 tt-fcad-respl.nrctamen = crapcrl.nrctamen.
                             
+                        /* Buscar a Nacionalidade */
+                        FOR FIRST crapnac FIELDS(dsnacion)
+                                          WHERE crapnac.cdnacion = cracttl.cdnacion
+                                                NO-LOCK:
+                            ASSIGN tt-fcad-respl.dsnacion = crapnac.dsnacion.
+                        END.
+
                          /* Retornar orgao expedidor */
                         IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
                             RUN sistema/generico/procedures/b1wgen0052b.p 
@@ -2000,6 +2059,13 @@ PROCEDURE Busca_PJ:
                                                      "xxx.xxx.xxx-xx")
                             tt-fcad-respl.nrcpfmen = crapcrl.nrcpfmen
                             tt-fcad-respl.nrctamen = crapcrl.nrctamen.
+           
+                     /* Buscar a Nacionalidade */
+                     FOR FIRST crapnac FIELDS(dsnacion)
+                                       WHERE crapnac.cdnacion = crapcrl.cdnacion
+                                             NO-LOCK:
+                         ASSIGN tt-fcad-respl.dsnacion = crapnac.dsnacion.
+                     END.
 
                      /* Retornar orgao expedidor */
                      IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
