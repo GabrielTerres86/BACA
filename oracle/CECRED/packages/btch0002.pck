@@ -1124,17 +1124,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         
     END LOOP;  -- Fim Loop crapage
     
-      /*  Verifica se a Taxa de Aplicacao (RDC) esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                      pr_tpmoefix => 6);
-      FETCH cr_crapmfx INTO rw_crapmfx;
+    /*  Verifica se a Taxa de Aplicacao (RDC) esta cadastrada  */
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                    pr_tpmoefix => 6);
+    FETCH cr_crapmfx INTO rw_crapmfx;
       
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar RDC dia '||
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar RDC dia '||
                                       TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
-                       pr_cdsitexc => 1);  
+                       pr_cdsitexc => 0);  
     END IF;  
     CLOSE cr_crapmfx;
     
@@ -1148,7 +1148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       pc_grava_critica(pr_cdcooper => pr_cdcooper,
                        pr_dscritic => ' - Cadastrar CDI Mensal '||
                                       TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
-                       pr_cdsitexc => 1);  
+                       pr_cdsitexc => 0);  
     END IF;  
     CLOSE cr_crapmfx;
 
@@ -1162,7 +1162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       pc_grava_critica(pr_cdcooper => pr_cdcooper,
                        pr_dscritic => ' - Cadastrar CDI Acumulado '||
                                       TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
-                       pr_cdsitexc => 1);  
+                       pr_cdsitexc => 0);  
     END IF;  
     CLOSE cr_crapmfx;
 
@@ -1176,23 +1176,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       pc_grava_critica(pr_cdcooper => pr_cdcooper,
                        pr_dscritic => ' - Cadastrar CDI Diario '||
                                       TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'),
-                       pr_cdsitexc => 1);  
-      END IF;  
-      CLOSE cr_crapmfx;
+                       pr_cdsitexc => 0);  
+    END IF;  
+    CLOSE cr_crapmfx;
       
-      /*  Verifica se a Taxa de Aplicacao (RDC) esta cadastrada  */
+    /*  Verifica se a Taxa de Aplicacao (RDC) esta cadastrada  */
     /*
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                      pr_tpmoefix => 13);
-      FETCH cr_crapmfx INTO rw_crapmfx;
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                    pr_tpmoefix => 13);
+    FETCH cr_crapmfx INTO rw_crapmfx;
       
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar RDC dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
-      END IF;  
-      CLOSE cr_crapmfx;
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar RDC dia '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
+    END IF;  
+    CLOSE cr_crapmfx;
   */  
     -- Verificar se é virada de mês
     IF TO_CHAR(rw_crapdat.dtmvtolt,'MM') <> TO_CHAR(rw_crapdat.dtmvtopr,'MM') THEN
@@ -1238,44 +1238,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       END LOOP;  
     END IF; -- Fim virada do mês  
     
-      /*  Verifica se a TR P/RDC esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                      pr_tpmoefix => 11);
-      FETCH cr_crapmfx INTO rw_crapmfx;
+    /*  Verifica se a TR P/RDC esta cadastrada  */
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                    pr_tpmoefix => 11);
+    FETCH cr_crapmfx INTO rw_crapmfx;
       
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
-      END IF;  
-      CLOSE cr_crapmfx;
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
+    END IF;  
+    CLOSE cr_crapmfx;
       
-      /*  Verifica se a TAXA DE JUROS P/RDC esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                      pr_tpmoefix => 10);
-      FETCH cr_crapmfx INTO rw_crapmfx;
+    /*  Verifica se a TAXA DE JUROS P/RDC esta cadastrada  */
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                    pr_tpmoefix => 10);
+    FETCH cr_crapmfx INTO rw_crapmfx;
       
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar JUROS P/APLICACAO RDC dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
-      END IF;  
-      CLOSE cr_crapmfx;
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar JUROS P/APLICACAO RDC dia '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
+    END IF;  
+    CLOSE cr_crapmfx;
     
-      /*  Verifica se a TR P/RDC esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtopr,
-                      pr_tpmoefix => 11);
-      FETCH cr_crapmfx INTO rw_crapmfx;
+    /*  Verifica se a TR P/RDC esta cadastrada  */
+    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapdat.dtmvtopr,
+                    pr_tpmoefix => 11);
+    FETCH cr_crapmfx INTO rw_crapmfx;
       
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtopr,'DD/MM/RRRR'));  
-      END IF;  
-      CLOSE cr_crapmfx;            
+    IF cr_crapmfx%NOTFOUND THEN
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
+                                      TO_CHAR(RW_CRAPDAT.dtmvtopr,'DD/MM/RRRR'));  
+    END IF;  
+    CLOSE cr_crapmfx;            
     
     /* Verifica se ha resgates de RDCA para o dia seguinte. Se houver,
        exige a UFIR do dia seguinte. */
