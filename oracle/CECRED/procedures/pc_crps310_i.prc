@@ -3561,6 +3561,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_innivris_upd crapris.innivris%TYPE; -- Guardar nível do risco para update
         vr_dtdrisco_upd crapris.dtdrisco%TYPE; -- Guardar data do risco para update
         vr_cdvencto_upd crapvri.cdvencto%TYPE; -- Código do vencimento para atualização
+        vr_updatass     PLS_INTEGER:=1;   -- Controlar se deve atualizar Risco no Associado
         
         -- Busca de todas as contas de limite não utilizado
         CURSOR cr_crapris_1901 IS
@@ -3842,7 +3843,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- Para o primeiro registro da conta
           IF rw_crapris.sequencia = 1
           OR vr_innivris = -1 THEN
+
+            -- Zerar variaveis controle
+            IF rw_crapris.sequencia = 1 THEN
+              vr_updatass := 1;                        
+            END IF;
+
             vr_innivris := -1;
+            vr_qtdrisco := 0;
 
             IF rw_crapris.vldivida > pr_vlarrasto THEN
             vr_dtdrisco := rw_crapris.dtdrisco;
@@ -3858,7 +3866,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 END IF;
               END IF;
               -- Usado para controlar a atualização do ASS
-              vr_qtdrisco := vr_qtdrisco + 1;
+              vr_qtdrisco := 1;
                           
             END IF;
           END IF;
@@ -3926,7 +3934,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- APENAS MENOR QUE MATERIALIDADE
           IF rw_crapris.vldivida <= pr_vlarrasto THEN
             -- O RISCO ATUAL É DIFERENTE DO RISCO PARA O QUAL ELE VAI?
-            IF rw_crapris.innivris <> vr_innivris_upd   THEN
+            IF rw_crapris.innivori <> vr_innivori   THEN
               -- SE SIM, MUDA DATA DO RISCO
               vr_dtdrisco_upd := vr_dtrefere;
             END IF;
@@ -3944,15 +3952,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 RAISE vr_exc_erro;
             END;
             
-            -- Atualizar o nível na conta
-            pc_atualiza_risco_crapass(pr_nrdconta => rw_crapris.nrdconta
-                                     ,pr_innivris => rw_crapris.innivris
-                                     ,pr_des_erro => vr_des_erro);
-            -- Se retornou erro
-            IF vr_des_erro IS NOT NULL THEN
-              RAISE vr_exc_erro;
+            -- SO LEVA PARA O ASSOCIADO QUANDO NAO HOUVER
+            -- NENHUM OUTRO RISCO MAIOR QUE MATERIALIDADE
+            IF vr_updatass = 1 THEN
+            
+              -- Atualizar o nível na conta
+              pc_atualiza_risco_crapass(pr_nrdconta => rw_crapris.nrdconta
+                                       ,pr_innivris => vr_innivori --rw_crapris.innivris
+                                       ,pr_des_erro => vr_des_erro);
+              -- Se retornou erro
+              IF vr_des_erro IS NOT NULL THEN
+                RAISE vr_exc_erro;
+              END IF;
             END IF;
-
             
             CONTINUE;
           END IF;
@@ -3984,6 +3996,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
         -- Novamente somente para o primeiro risco da conta/Primeiro é o maior
           IF vr_qtdrisco = 1 THEN
+
+            -- SE ENTROU, ATUALIZOU ASS APENAS 1 VEZ E NAO ATUALIZA MAIS
+            vr_updatass := 0;
+            vr_qtdrisco := 0;
             -- Atualizar o nível na conta
             pc_atualiza_risco_crapass(pr_nrdconta => rw_crapris.nrdconta
                                      ,pr_innivris => vr_innivris_upd
@@ -4264,28 +4280,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           FOR rw_crapass IN cr_crapass(pr_cdcooper => pr_cdcooper,
                                        pr_cpf_cnpj => rw_cpfcnpj_contas.cpf_cnpj ) LOOP
 
-          -- RETORNA O MAIOR RISCO DO CPF/CNPJ RAIZ COM BASE NA CENTRAL DE RISCO
+            -- RETORNA O MAIOR RISCO DO CPF/CNPJ RAIZ COM BASE NA CENTRAL DE RISCO DO DIA
             OPEN cr_max_risco_cpfcnpj(pr_nrdconta => rw_crapass.nrdconta
                                    ,pr_dtrefere => vr_dtrefere);
           FETCH cr_max_risco_cpfcnpj INTO rw_max_risco_cpfcnpj;
-          -- Se não encontrou, procura baseado na ultima central
+
           IF cr_max_risco_cpfcnpj%NOTFOUND THEN
             CLOSE cr_max_risco_cpfcnpj;
-            -- Com base no ultimo dia do mes anterior
-              OPEN cr_max_risco_cpfcnpj(pr_nrdconta => rw_crapass.nrdconta
-                                     ,pr_dtrefere => pr_rw_crapdat.dtultdma);
-            FETCH cr_max_risco_cpfcnpj INTO rw_max_risco_cpfcnpj;
+                -- Se não encontrou central para o dia, Assume risco 2(A)
+              vr_maxrisco_tmp := 2;
 
-            IF cr_max_risco_cpfcnpj%NOTFOUND THEN
-                vr_maxrisco_tmp := vr_tab_risco(rw_cpfcnpj_contas.dsnivris); -- Recebe o que está no ASS
-               -- Não encontrou, é Risco A
-            ELSE
-                vr_maxrisco_tmp := rw_max_risco_cpfcnpj.maior_risco;
-            END IF;
           ELSE
               vr_maxrisco_tmp := rw_max_risco_cpfcnpj.maior_risco;
+              CLOSE cr_max_risco_cpfcnpj;          
           END IF;
-          CLOSE cr_max_risco_cpfcnpj;          
+
 
             --> caso o encontrado for maior que o ja encontrado
             IF vr_maxrisco_tmp > vr_maxrisco THEN
