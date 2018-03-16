@@ -4153,7 +4153,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.vltarifa = aux_vltarifa
               crapepr.vltaxiof = aux_vltaxiof
               crapepr.vlaqiofc = aux_vlaqiofc
-              crapepr.vltariof = aux_vltariof
+			  crapepr.vltariof = (IF crawepr.tpemprst = 2 THEN aux_vltariof ELSE aux_vltotiof)
               crapepr.iddcarga = aux_idcarga
               crapepr.vliofadc = aux_vltotiofadi
               crapepr.vliofcpl = aux_vltotiofcpl
