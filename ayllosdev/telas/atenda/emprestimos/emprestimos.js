@@ -1633,11 +1633,16 @@ function manterRotina(operacao) {
 
     var dscatbem = "";
     //Carrega a lista de bens para enviar junto no POST
+    if (typeof arrayHipotecas != typeof undefined){
     for (i in arrayHipotecas) {
         dscatbem += arrayHipotecas[i]['dscatbem'] + '|';
     }
+    }
+
+    if (typeof arrayAlienacoes != typeof undefined){    
     for (i in arrayAlienacoes) {
         dscatbem += arrayAlienacoes[i]['dscatbem'] + '|';
+    }
     }
 
     // Executa script de confirmação através de ajax
