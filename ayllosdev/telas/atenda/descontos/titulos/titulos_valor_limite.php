@@ -6,7 +6,7 @@
  * OBJETIVO     : Tela para renovação do valor limite de desconto de titulo
  * ALTERAÇÕES   : 
  * --------------
- *
+ * 001: [16/03/2018] Leonardo Oliveira (GFT): Novos campos 'linha de crédito', 'descrição da linha', e uso da flgstlcr para verificar se a linha é bloqueada
  *
  *
  */	
@@ -29,47 +29,82 @@
 	
 	$vllimite = (isset($_POST['vllimite'])) ? $_POST['vllimite'] : 0;
 	$nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : 0;
-	
+	$cddlinha = (isset($_POST['cddlinha'])) ? $_POST['cddlinha'] : 0;
+	$flgstlcr = (isset($_POST['flgstlcr'])) ? $_POST['flgstlcr'] : 0;
+	$dsdlinha = (isset($_POST['dsdlinha'])) ? $_POST['dsdlinha'] : 0;
 ?>
+<div id="divValorLimite">
+	<div class="divRegistros">
+		<form id="frmReLimite" onsubmit="return false;">
+			<fieldset>
+			
 
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-	<tr>
-		<td align="center">		
-			<table border="0" cellpadding="0" cellspacing="0" width="288px">
-				<tr>
-					<td>
-						<table width="100%" border="0" cellspacing="0" cellpadding="0">
-							<tr>
-								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">DESCONTO DE TITULOS</td>
-								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divUsoGenerico'),divRotina);"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
-								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
-							</tr>
-						</table>     
-					</td> 
-				</tr>    
-				<tr>
-					<td class="tdConteudoTela" align="center">	
-						<table width="100%" border="0" cellspacing="0" cellpadding="0">
-							<tr>
-								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
-									<form id="frmReLimite" onsubmit="return false;">
-										<br>
-										<label for="vllimite"> Valor Limite: </label>
-										<input type="text" class="campo" id="vllimite" name="vllimite" value="<? echo $vllimite; ?>" />
-										<input type="hidden" class="campo" id="nrctrlim" name="nrctrlim" value="<? echo $nrctrlim; ?>" />
-									</form>
-									<div style="width: 240px;" id="divConteudoAltara" class="divBotoes">
-										<a href="#" class="botao" style="margin: 6px 0px 0px 0px;" id="btVoltar" onClick="fechaRotina($('#divUsoGenerico'), $('#divRotina'));return false;"> Voltar </a>
-										<a href="#" class="botao" style="margin: 6px 0px 0px 0px;" id="btRenovar"> Renovar </a>
-									</div>
-									
-								</td>
-							</tr>
-						</table>			    
-					</td> 
-				</tr>
-			</table>
-		</td>
-	</tr>
-</table>
+			<input type="hidden" id="nrctrlim" name="nrctrlim" value="<? echo $nrctrlim; ?>" />
+
+			<input type="hidden" id="flgstlcr" name="flgstlcr" value="<? echo $flgstlcr; ?>" />
+
+
+			<?php if ($flgstlcr == 0){ ?>
+
+				<label for="cddlinha"><? echo utf8ToHtml('Linha de Crédito: ') ?></label>
+				<input name="cddlinha" id="cddlinha" type="text" value="<? echo $cddlinha ?>" />
+				<a>
+					<img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif">
+				</a>
+
+				<br/>
+
+				<label for="dsdlinha"></label>
+				<input name="dsdlinha" id="dsdlinha" type="text" value="<? echo $dsdlinha ?>" />
+
+				<br />
+			<?php } else { ?>
+
+				<input type="hidden" id="cddlinha" name="cddlinha" value="<? echo $nrctrlim; ?>" />
+
+			<?php }?>
+			
+			<label for="vllimite"> Valor Limite: </label>
+			<input type="text" id="vllimite" name="vllimite" value="<? echo $vllimite; ?>" />
+
+			</fieldset>
+		</form>			    
+					
+	</div>
+</div>
+<div id="divBotoes" class="divBotoes">
+	
+
+<input 
+	type="button" 
+	class="botao gft" 
+	value="Voltar"  
+	id="btnVoltar" 
+	name="btnVoltar" 
+	onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;"/>
+
+<input 
+	type="button" 
+	class="botao gft" 
+	value="Renovar"
+	id="btRenovar"
+	name="btRenovar" 
+	onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;"/>
+</div>
+
+<script type="text/javascript">
+
+	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
+
+	// Muda o título da tela
+	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - VALOR LIMITE");
+
+	formataLayout('divValorLimite');
+
+	// Esconde mensagem de aguardo
+	hideMsgAguardo();
+
+	// Bloqueia conteúdo que está átras do div da rotina
+	blockBackground(parseInt($("#divRotina").css("z-index")));
+
+</script>
