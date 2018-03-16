@@ -16695,6 +16695,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          pr_valoriof := pr_valoriof + vr_vliofaditt;
       end if;
       
+      if nvl(pr_idfiniof,0) = 1 then -- refazer o calculo de IOF com base no financiamento Tarifa e IOF
+         --ARRED(vlr base ante/((vlr base ante - vliof apurado)/vl base ante);2)
       if nvl(vr_vllanmto,0) > 0 
       and vr_retiof in (1,3) then
          if pr_valoriof >= vr_vllanmto then
@@ -16704,8 +16706,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          end if;
       end if;
 
-      if nvl(pr_idfiniof,0) = 1 then -- refazer o calculo de IOF com base no financiamento Tarifa e IOF
-         --ARRED(vlr base ante/((vlr base ante - vliof apurado)/vl base ante);2)
          if nvl(pr_flgimune ,0) = 1 then
            pr_valoriof := nvl(vr_vliofpritt,0) + nvl(vr_vliofaditt,0);
          end if;
