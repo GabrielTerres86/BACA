@@ -26,6 +26,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
                    11/08/2016 - Adicionado novo filtro por tipo de limite de crédito (Linhares)
 
                    01/12/2016 - Fazer tratamento para incorporação. (Oscar)
+
+				   16/03/2018 - Chama rotina pc_cancela_limite60.prc de cancelamento de limite - Daniel(AMcom)      
     ............................................................................ */
 
     DECLARE
@@ -845,6 +847,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
         END LOOP; /* END LOOP FOR rw_craplim */
       
       END LOOP; /* END LOOP FOR rw_craprli */
+
+      -- Chama rotina de cancelamento de limite - Daniel(AMcom)
+      pc_cancela_limite60(pr_cdcooper => pr_cdcooper   -- Cooperativa
+                         ,pr_cdcritic => vr_cdcritic   -- Código do erro
+                         ,pr_dscritic => vr_dscritic); -- Descrição do erro
+        -- Verifica erro
+        IF vr_cdcritic = 0 THEN
+          RAISE vr_exc_saida;
+        END IF;
         
       -- Gerar relatorios dos limites de creditos vencidos que nao foram renovados
       pc_imprime_crrl692(pr_tab_rel692  => vr_tab_rel692,
