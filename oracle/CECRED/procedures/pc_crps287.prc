@@ -96,11 +96,16 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                
                06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão
                             tratada exceção 9999 ( Belli Envolti ) - Ch 665812
-
+               
                20/09/2017 - Ajuste no cursor crapcst para nao mais efetuar validacao atraves
 			                do nrborder = 0 e sim atraves de leitura da crapcdb quando o cheque
 							nao tiver data de devolução. (Daniel) 
                
+               21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
+                            (Ana - Envolti - Chamado 746134)
+
+               12/01/2018 - Melhoria na gravacao de LOG ao gerar criticas no processamento dos cheques
+                            Heitor (Mouts) - Chamado 827706
      ............................................................................. */
 
      DECLARE
@@ -146,6 +151,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        vr_tab_crapage  typ_tab_doctpchq;
        vr_tab_cheques  typ_tab_cheques;
 
+       vr_log_nrdconta crapass.nrdconta%type;
+       vr_log_dsdocmc7 crapcst.dsdocmc7%type;
        /* Cursores da rotina crps287 */
 
        -- Selecionar os dados da Cooperativa
@@ -475,7 +482,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        DECLARE
          vr_modulo           VARCHAR2   (100);
          vr_acao             VARCHAR2   (100);            
-         vr_nmarqlog         VARCHAR2  (4000);    
+         vr_nmarqlog         VARCHAR2  (4000) := NULL;    
          vr_dstpocorrencia   varchar2  (4000);
          vr_des_log          varchar2  (4000);  
          vr_tpocorrencia     number       (5) := null; 
@@ -516,10 +523,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
    
          if vr_tpocorrencia in (3, 4) then
                 vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
-            
          elsif vr_tpocorrencia in (1, 2) then
                 vr_dstpocorrencia := 'ERRO: '; -- 1 erro de negócio 
-            
          else
                 vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
          end if;
@@ -529,22 +534,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          vr_des_log := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra 
          || ' --> ' 
          || vr_dstpocorrencia
+         ||' Cta: '||vr_log_nrdconta||' - CMC7: '||vr_log_dsdocmc7||' - '
          || vr_des_erro                                  
          || ' - Module: ' || vr_modulo || ' - Action: ' || vr_acao;
 
          BEGIN
-           vr_nmarqlog := NVL(gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_BATCH'),'proc_batch.log');
-         EXCEPTION
-           WHEN OTHERS THEN
-             DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - gene0001.fn_param_sistema' 
-             || ' , vr_des_log= '  || vr_des_log
-             || ' , pr_cdcooper= ' || pr_cdcooper
-             || ' , vr_cdcritic= ' || vr_cdcritic); 
-             DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - 2 - Verificar essa saida com erro=' || sqlerrm);
-             vr_nmarqlog := 'proc_batch.log';
-         END;       
-                               
-         BEGIN        
            cecred.pc_log_programa(
            pr_dstiplog      => 'O',              -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
            pr_cdprograma    => vr_cdprogra,      -- tbgen_prglog
@@ -743,6 +737,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                                     ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
                                     ,pr_dtmvtopr  => rw_crapdat.dtmvtopr ) LOOP
          BEGIN
+           vr_log_nrdconta := rw_crapcst.nrdconta;
+           vr_log_dsdocmc7 := rw_crapcst.dsdocmc7;
 
            --Criar ponto de restauracao
            SAVEPOINT sv_crapcst;
@@ -915,6 +911,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                      RAISE vr_exc_erro;
                  END;
                ELSE
+
                  --Incrementa cheques compensados
                  vr_tot_qtchcomp:= Nvl(vr_tot_qtchcomp,0) + 1;
                  --Incrementa valor cheques compensados
@@ -933,6 +930,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                                                      ,pr_cdcritic => vr_cdcritic          --Codigo erro
                                                      ,pr_dscritic => vr_des_erro          --Descricao erro
                                                      ,pr_tab_erro => vr_tab_erro);        --Tabela de erros
+
                  --Se Ocorreu erro
                  IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
                    --Se possui erro na tabela erros
@@ -959,6 +957,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                    --Continuar processamento com proximo registro
                    CONTINUE loop_crapcst;
                  END IF;
+                 --Inclusão nome do módulo logado - Chamado 696499
+                 gene0001.pc_set_modulo(pr_module => 'PC_CRPS287'
+                                       ,pr_action => null);
 
                  /* RUN deposito-bloqueado. */
 
@@ -1423,6 +1424,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
            END IF; --last-of nrdconta
          EXCEPTION
            WHEN vr_exc_erro THEN
+             -- Gera log
+             pc_log;
              ROLLBACK TO SAVEPOINT sv_crapcst;
              --Levantar Excecao
              --Nao executar raise e pular para o proximo cheque
