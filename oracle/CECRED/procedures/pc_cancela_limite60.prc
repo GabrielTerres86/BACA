@@ -42,9 +42,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CANCELA_LIMITE60(pr_cdcooper  IN crapcop.c
     -- Calendário da cooperativa selecionada
     CURSOR cr_dat(pr_cdcooper INTEGER) IS
     SELECT dat.dtmvtolt
-         , (CASE WHEN TO_CHAR(trunc(dat.dtmvtolt), 'mm') = TO_CHAR(trunc(dat.dtmvtoan), 'mm')
-              THEN dat.dtmvtoan
-              ELSE dat.dtultdma END) dtmvtoan
+         , (SELECT MAX(dtrefere) FROM crapris WHERE cdcooper = pr_cdcooper) dtmvtoan
          , dat.dtultdma
       FROM crapdat dat
      WHERE dat.cdcooper = pr_cdcooper;
@@ -53,16 +51,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CANCELA_LIMITE60(pr_cdcooper  IN crapcop.c
     -- Busca conta corrente que possui limite de crédito e está em ADP
     CURSOR cr_conta(pr_cdcooper INTEGER) IS
     SELECT DISTINCT ris.cdcooper, ris.nrdconta, ris.nrctremp, rlim.nrctremp nrctrlim
-      FROM crapris ris
+      FROM crapris ris, crapass ass
          , (SELECT r.cdcooper, r.nrdconta, r.nrctremp, r.dtrefere
               FROM crapris r
              WHERE r.cdcooper = pr_cdcooper
-               AND r.dtrefere = rw_dat.dtmvtoan -- Buscar Central Atual **Antes de Rodar a Central de Risco
+               AND r.dtrefere = rw_dat.dtmvtoan -- Buscar Central Atual **Antes de Rodar a Central de Risco               
                AND r.cdmodali = 201) rlim -- Limite de crédito
      WHERE rlim.cdcooper = ris.cdcooper
        AND rlim.nrdconta = ris.nrdconta
        AND rlim.dtrefere = ris.dtrefere
-       -- **Incluir leitura de parâmetro Cancelamento Automático de Limite de Crédito='SIM'
+       AND ris.cdcooper  = ass.cdcooper
+       AND ris.nrdconta  = ass.nrdconta
+       AND ass.flcnaulc  = 1 -- Cancelamento automatico do Limite de Crédito igual 'Sim'
        AND ris.qtdiaatr >= 60
        AND ris.cdmodali  = 101 -- ADP
        AND ris.cdorigem  = 1   -- Conta corrente
@@ -86,7 +86,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CANCELA_LIMITE60(pr_cdcooper  IN crapcop.c
         -- Efetua cancelamento dos limites
         UPDATE craplim lim
            SET lim.insitlim        = 3 -- Cancelado
---             , lim.idinadimplencia = 1 -- Inadimplencia
+             , lim.ininadim        = 1 -- Inadimplencia
              , lim.cdmotcan        = 0
              , lim.cdopeexc        = '1'
              , lim.cdageexc        = NULL
@@ -188,7 +188,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CANCELA_LIMITE60(pr_cdcooper  IN crapcop.c
         CLOSE BTCH0001.cr_crapdat;
       END IF;
       
-      -- INICIO PROCESSAMENTO
+    --************************--
+    --  INICIO PROCESSAMENTO  --
+    --************************--      
       BEGIN
         FOR rw_conta IN cr_conta(pr_cdcooper) LOOP
 
@@ -214,29 +216,29 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CANCELA_LIMITE60(pr_cdcooper  IN crapcop.c
 
           -- Desativar Rating
           -- RATI0001.pc_desativa_rating
-          -- Desativar o Rating associado a esta operaçao            
-          rati0001.pc_desativa_rating(pr_cdcooper   => pr_cdcooper         --> Código da Cooperativa
-                                     ,pr_cdagenci   => 0                   --> Código da agência
-                                     ,pr_nrdcaixa   => 0                   --> Número do caixa
-                                     ,pr_cdoperad   => '1'                 --> Código do operador
-                                     ,pr_rw_crapdat => rw_crapdat          --> Vetor com dados de parâmetro (CRAPDAT)
-                                     ,pr_nrdconta   => rw_conta.nrdconta   --> Conta do associado
-                                     ,pr_tpctrrat   => 1                   --> Tipo do Rating (1-Limite de crédito)
-                                     ,pr_nrctrrat   => rw_conta.nrctrlim   --> Número do contrato de Rating
-                                     ,pr_flgefeti   => 'S'                 --> Flag para efetivação ou não do Rating
-                                     ,pr_idseqttl   => 1                   --> Sequencia de titularidade da conta
-                                     ,pr_idorigem   => 1                   --> Indicador da origem da chamada
-                                     ,pr_inusatab   => vr_inusatab         --> Indicador de utilização da tabela de juros
-                                     ,pr_nmdatela   => 'PC_CANCELA_LIMITE60'--> Nome datela conectada
-                                     ,pr_flgerlog   => 'N'                 --> Gerar log S/N
-                                     ,pr_des_reto   => vr_des_reto         --> Retorno OK / NOK
+          -- Desativar o Rating associado a esta operação
+          rati0001.pc_desativa_rating(pr_cdcooper   => pr_cdcooper          -- Cooperativa
+                                     ,pr_cdagenci   => 0                    -- Agência
+                                     ,pr_nrdcaixa   => 0                    -- Caixa
+                                     ,pr_cdoperad   => '1'                  -- Operador
+                                     ,pr_rw_crapdat => rw_crapdat           -- Vetor com dados de parâmetro (CRAPDAT)
+                                     ,pr_nrdconta   => rw_conta.nrdconta    -- Conta do associado
+                                     ,pr_tpctrrat   => 1                    -- Tipo do Rating (1-Limite de crédito)
+                                     ,pr_nrctrrat   => rw_conta.nrctrlim    -- Contrato de Rating
+                                     ,pr_flgefeti   => 'S'                  -- Flag para efetivação ou não do Rating
+                                     ,pr_idseqttl   => 1                    -- Sequencia de titularidade da conta
+                                     ,pr_idorigem   => 1                    -- Indicador da origem da chamada
+                                     ,pr_inusatab   => vr_inusatab          -- Indicador de utilização da tabela de juros
+                                     ,pr_nmdatela   => 'PC_CANCELA_LIMITE60'-- Nome datela conectada
+                                     ,pr_flgerlog   => 'N'                  -- Gerar log S/N
+                                     ,pr_des_reto   => vr_des_reto          -- Retorno OK / NOK
                                      ,pr_tab_erro   => vr_tab_erro);       --> Tabela com possíves erros
            -- Verifica erro
            IF vr_des_reto = 'NOK' THEN
              --Se tem erro na tabela 
              IF vr_tab_erro.COUNT = 0 THEN
                vr_cdcritic:= 0;
-               vr_dscritic:= 'Erro na rati0001.pc_desativa_rating.';
+               vr_dscritic:= 'Erro na rati0001.pc_desativa_rating';
              ELSE
                vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
                vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
