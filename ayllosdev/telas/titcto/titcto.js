@@ -1380,13 +1380,8 @@ function gerarImpressaoConsulta() {
     $("#dtvencto","#frmImprimirConsultaTitcto").val(dtvencto);
     
     var action = $("#frmImprimirConsultaTitcto").attr("action");
-    var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
-
-    console.log("[action] - " + action);
-    console.log("[callafter] - " + callafter);
-    
+    var callafter = "hideMsgAguardo();";
     carregaImpressaoAyllos("frmImprimirConsultaTitcto",action,callafter);
-    hideMsgAguardo();
     return false;
 }
 
@@ -1399,7 +1394,7 @@ function gerarImpressaoLote() {
     $("#cdagenci","#frmImprimirLoteTitcto").val(cdagenci);
     
     var action = $("#frmImprimirLoteTitcto").attr("action");
-    var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
+    var callafter = "hideMsgAguardo();";
 
     console.log("[action] - " + action);
     console.log("[callafter] - " + callafter);
