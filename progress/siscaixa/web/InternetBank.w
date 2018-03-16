@@ -1731,11 +1731,7 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for pagamento de GPS **/
                   CAN-DO("153",STRING(aux_operacao)) AND (aux_tpoperac = 3 OR aux_tpoperac = 5)
-               ) OR
-               (
-                  /** Nao utiliza criptografia se for pagamento de emprestimo **/
-                  CAN-DO("158",STRING(aux_operacao))
-               ) OR
+               ) OR               
                (
                   /** Nao utiliza criptografia se for reprovacao de transacao pendente **/
                   CAN-DO("163",STRING(aux_operacao))
@@ -5140,7 +5136,7 @@ PROCEDURE proc_operacao80:
            aux_rowidcti = GET-VALUE("aux_rowidcti").
            aux_flexclui = GET-VALUE("aux_flregist").
 
-    IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND aux_flgexecu AND aux_rowidcti = ""  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  NOT aux_flgcript AND aux_flgexecu AND aux_rowidcti = ""  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -7653,6 +7649,14 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao158:
 
+    IF  NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END. 
+
     aux_nrctremp = INT(GET-VALUE("nrctremp")).
     aux_ordempgo = GET-VALUE("ordempgo").
     aux_qtdprepr = INT(GET-VALUE("qtdprepr")).
@@ -8089,7 +8093,7 @@ PROCEDURE proc_operacao173:
          aux_nrdddtfc = DECI(GET-VALUE("nrdddtfc"))
          aux_nrtelefo = DECI(GET-VALUE("nrtelefo")).
 
-  IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "E")  THEN /* Nao possui criptografia no front e autenticao e realizada junto com a propria operacao*/
+  IF  NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "E")  THEN /* Nao possui criptografia no front e autenticao e realizada junto com a propria operacao*/
       DO:
           RUN proc_operacao2.
 
@@ -8189,7 +8193,7 @@ END PROCEDURE.
 /* Cancelar integralizacao de cotas de capital */
 PROCEDURE proc_operacao177:
     
-    IF  aux_nrcpfope = 0 AND NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -8242,7 +8246,7 @@ PROCEDURE proc_operacao178:
                  aux_nriniseq =  INT(GET-VALUE("aux_nriniseq"))
                  aux_nrregist =  INT(GET-VALUE("aux_nrregist")).
                               
-    IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND aux_operacao = 6 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  NOT aux_flgcript AND aux_operacao = 6 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
