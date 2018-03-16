@@ -70,6 +70,8 @@
              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).
              
              31/01/2017 - Validar corretamente a conta beneficiaria CRAPASS (Lucas Ranghetti #603860)
+			 
+			 15/03/2018 - Aumentado o tamanho do campo v_nrsequniC de 7 caracteres para 9 (Tiago #INC0010516)
 -->
 
 <html>
@@ -2018,7 +2020,7 @@
                     </tr>
                     <tr>
                         <td width="30%" align="right" class="linhaform">Data:</td>
-                        <td width="70%" align="left"  class="linhaform" colspan="2"> <input type="text" name="v_dtmvtoltC" id="v_dtmvtoltC" value="`v_dtmvtoltC`" style="width: 65;" class="input" maxlength="10" onKeyUp="JavaScript:FormataData(this,this.value);" onblur="if ( validarData(this.value) && (this.value.length!=0) ){alert('Data Invalida!');this.value=''; this.focus();}"  >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Confer&ecirc;ncia:&nbsp;<input type="text" name="v_nrsequniC" id="v_nrsequniC" value="`v_nrsequniC`" maxlength="7" class="input" style="width: 55px; text-align: right;" onKeyDown="JavaScript:validaInteiro(event);" onchange="JavaScript:insereEnvelope(2);"></td>
+                        <td width="70%" align="left"  class="linhaform" colspan="2"> <input type="text" name="v_dtmvtoltC" id="v_dtmvtoltC" value="`v_dtmvtoltC`" style="width: 65;" class="input" maxlength="10" onKeyUp="JavaScript:FormataData(this,this.value);" onblur="if ( validarData(this.value) && (this.value.length!=0) ){alert('Data Invalida!');this.value=''; this.focus();}"  >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Confer&ecirc;ncia:&nbsp;<input type="text" name="v_nrsequniC" id="v_nrsequniC" value="`v_nrsequniC`" maxlength="9" class="input" style="width: 60px; text-align: right;" onKeyDown="JavaScript:validaInteiro(event);" onchange="JavaScript:insereEnvelope(2);"></td>
                     </tr>
 
                     <tr>
