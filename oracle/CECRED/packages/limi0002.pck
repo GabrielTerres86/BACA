@@ -772,11 +772,12 @@ DECLARE
    select nvl(sum(tdb.vltitulo), 0) vltitulo
    from   craptdb tdb -- Titulos contidos do Bordero de desconto de titulos
          ,crapbdt dbt -- Cadastro de borderos de descontos de titulos
-   where  tdb.dtlibbdt is not null -- somente os titulos que realmente foram descontados
+   where  tdb.dtresgat is null
+   and    tdb.dtlibbdt is not null -- somente os titulos que realmente foram descontados
+   and    tdb.dtvencto between pr_dtmvtolt_de and pr_dtmvtolt_ate 
    and    tdb.nrborder = dbt.nrborder
    and    tdb.nrdconta = dbt.nrdconta
    and    tdb.cdcooper = dbt.cdcooper
-   and    dbt.dtmvtolt between pr_dtmvtolt_de and pr_dtmvtolt_ate
    and    dbt.nrdconta = pr_nrdconta
    and    dbt.cdcooper = pr_cdcooper
    --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
@@ -798,12 +799,13 @@ DECLARE
    select nvl(sum(tdb.vltitulo),0) vltitulo
    from   craptdb tdb
          ,crapbdt dbt
-   where  tdb.dtlibbdt                 is not null
+   where  tdb.dtresgat                is null
+   and    tdb.dtlibbdt                is not null
    and   (tdb.dtvencto + pr_qtcarpag) <= nvl(tdb.dtdpagto, trunc(sysdate))
+   and   (tdb.dtvencto + pr_qtcarpag) between pr_dtmvtolt_de and pr_dtmvtolt_ate
    and    tdb.nrborder                = dbt.nrborder
    and    tdb.nrdconta                = dbt.nrdconta
    and    tdb.cdcooper                = dbt.cdcooper
-   and    dbt.dtmvtolt                between pr_dtmvtolt_de and pr_dtmvtolt_ate
    and    dbt.nrdconta                = pr_nrdconta
    and    dbt.cdcooper                = pr_cdcooper
    --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
