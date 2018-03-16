@@ -130,6 +130,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
   PROCEDURE pc_consulta_servicos (pr_cdcooper   IN crapcop.cdcooper%TYPE
                                  ,pr_tpproduto  IN tbcc_produtos_coop.tpproduto%TYPE  --> tipo de produto
                                  ,pr_tpconta    IN tbcc_produtos_coop.tpconta%TYPE    --> tipo de conta
+                                 ,pr_inpessoa   IN tbcc_produtos_coop.inpessoa%TYPE    --> tipo de pessoa
                                  ,pr_xmllog     IN VARCHAR2                           --> XML com informações de LOG
                                  ,pr_cdcritic   OUT crapcri.cdcritic%TYPE             --> Codigo da critica
                                  ,pr_dscritic   OUT VARCHAR2                          --> Descricao da critica
@@ -6086,7 +6087,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             -- Buscar a descrição
             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           END IF;
-/          -- Devolvemos código e critica encontradas das variaveis locais
+          -- Devolvemos código e critica encontradas das variaveis locais
           pr_cdcritic := NVL(vr_cdcritic,0);
           pr_dscritic := vr_dscritic;
 
