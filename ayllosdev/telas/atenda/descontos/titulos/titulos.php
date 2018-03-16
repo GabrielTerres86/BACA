@@ -21,6 +21,7 @@
 
                  13/03/2018 - Ajuste nos botões da tela, novo campo 'Renovação' e novo input perrenov do tipo hidden. (Leonardo Oliveira - GFT)
 
+				 16/03/2018 - Novos campos flgstlcr e cddlinha, ambos do tipo hidden. (Leonardo Oliveira - GFT)
 
 	***************************************************************************/
 	
@@ -99,7 +100,9 @@
 		<legend><? echo utf8ToHtml('Títulos') ?></legend>
 		
 		<input type="hidden" name="hd_perrenov" id="hd_perrenov" value="<?php echo $dados[14]->cdata; ?>" />
-		
+		<input type="hidden" name="flgstlcr" id="flgstlcr" value="<?php echo $dados[15]->cdata; ?>" />
+		<input type="hidden" name="cddlinha" id="cddlinha" value="<?php echo $dados[16]->cdata; ?>" />
+
 		<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
 		<input type="text" name="nrctrlim" id="nrctrlim" value="<?php echo formataNumericos('zzz.zzz.zz9',$dados[0]->cdata,'.'); ?>" />
 		
@@ -176,31 +179,30 @@
 	</a>
 </div>
 <script type="text/javascript">
+	dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");
 
-dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");
+	// Muda o título da tela
+	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS");
 
-// Muda o título da tela
-$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS");
+	formataLayout('frmTitulos');
 
-formataLayout('frmTitulos');
+	// Esconde mensagem de aguardo
+	hideMsgAguardo();
 
-// Esconde mensagem de aguardo
-hideMsgAguardo();
-
-// Bloqueia conteúdo que está átras do div da rotina
-blockBackground(parseInt($("#divRotina").css("z-index")));
-	
-	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
-	if (executandoProdutos == true) {
-	
-       //Bordero	
-	  if (cdproduto == 35 ) {
-		$('#btnbordero','#divBotoes').click();
+	// Bloqueia conteúdo que está átras do div da rotina
+	blockBackground(parseInt($("#divRotina").css("z-index")));
 		
-	  //Limite
-	  }else if (cdproduto == 37 ) {
-		$('#btnlimite','#divBotoes').click();
-	  } 
-	}
+		//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
+		if (executandoProdutos == true) {
+		
+	       //Bordero	
+		  if (cdproduto == 35 ) {
+			$('#btnbordero','#divBotoes').click();
+			
+		  //Limite
+		  }else if (cdproduto == 37 ) {
+			$('#btnlimite','#divBotoes').click();
+		  } 
+		}
 	 
 </script>

@@ -14,6 +14,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                 02/03/2018 - Inclusão da Função    fn_em_contingencia_ibratan (Gustavo Sene (GFT))
                 02/03/2018 - Inclusão da Procedure pc_confirmar_novo_limite   (Gustavo Sene (GFT))
                 02/03/2018 - Inclusão da Procedure pc_negar_proposta          (Gustavo Sene (GFT))
+                13/03/2018 - Inclusão da Procedure pc_renovar_lim_desc_titulo (Leonardo Oliveira - GFT)
+                16/03/2018 - Inclusão do parâmetro de input 'crapldc' na procedure pc_renovar_lim_desc_titulo (Leonardo Oliveira - GFT)
 
   ---------------------------------------------------------------------------------------------------------------------*/
 
@@ -116,6 +118,7 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
                                       ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Titular da Conta
                                       ,pr_vllimite  IN craplim.vllimite%TYPE --> Valor do limite de desconto
                                       ,pr_nrctrlim  IN craplim.nrctrlim%TYPE --> Contrato
+                                      ,pr_cddlinha  IN crapldc.cddlinha%TYPE --> Código da Linha
                                       ,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
                                       --------> OUT <--------
                                       ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
@@ -1672,17 +1675,18 @@ EXCEPTION
 end pc_enviar_proposta_manual;
 
 
-
+ 
 PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
                                       ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Titular da Conta
                                       ,pr_vllimite  IN craplim.vllimite%TYPE --> Valor do limite de desconto
                                       ,pr_nrctrlim  IN craplim.nrctrlim%TYPE --> Contrato
+                                      ,pr_cddlinha  IN crapldc.cddlinha%TYPE --> Código da Linha
                                       ,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
-                                      ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
-                                      ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                      ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+                                      ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
                                       ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
-                                      ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                      ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+                                      ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+                                      ,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
   BEGIN
 
     /* .............................................................................
@@ -1718,10 +1722,10 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
       vr_nmeacao  VARCHAR2(100);
       vr_cdagenci VARCHAR2(100);
       vr_nrdcaixa VARCHAR2(100);
+      vr_cddlinha VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
 
     BEGIN
-      
       -- Extrai os dados vindos do XML
       GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -1763,6 +1767,7 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                          ,pr_cdoperad => vr_cdoperad
                                          ,pr_nmdatela => vr_nmdatela
+                                         ,pr_cddlinha => pr_cddlinha
                                          ,pr_idorigem => vr_idorigem
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
@@ -1799,6 +1804,7 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
     END;
 
   END pc_renovar_lim_desc_titulo;
+
 
 END TELA_ATENDA_DSCTO_TIT;
 /

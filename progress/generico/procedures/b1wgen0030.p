@@ -513,6 +513,8 @@
 
 			   14/03/2018 - Removido o conteúdo "(CONTINGENCIA)" das situações 3-Aprovada e 6-Rejeitada do campo insitapr da 
 			                procedure busca_limites (Paulo Penteado - GFT)
+
+               16/03/2018 - Preenchimento dos campos  'flgstlcr' e 'cddlinha' na procedure busca_dados_dsctit (Leonardo Oliveira - GFT)
                
 ..............................................................................*/
 
@@ -6945,6 +6947,8 @@ PROCEDURE busca_dados_dsctit:
              ELSE
                   tt-desconto_titulos.dsdlinha = STRING(crapldc.cddlinha) 
                                                  + " - " + crapldc.dsdlinha.
+                  tt-desconto_titulos.cddlinha = crapldc.cddlinha.
+                  tt-desconto_titulos.flgstlcr = crapldc.flgstlcr.
                                                  
              aux_difdays = craplim.dtfimvig - par_dtmvtolt.
              IF aux_difdays > 15 OR aux_difdays < -60  THEN

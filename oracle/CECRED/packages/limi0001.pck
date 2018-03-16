@@ -24,7 +24,9 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
   --
   --                 05/02/2018 - Adicionados campos novos (qtcarpag e qtaltlim) - (Luis Fernando - GFT)
   --
-  --                 13/08/2018 - Inclusão da Procedure pc_renovar_lim_desc_titulo (Leonardo Oliveira - GFT)
+  --                 13/03/2018 - Inclusão da Procedure pc_renovar_lim_desc_titulo (Leonardo Oliveira - GFT)
+  --
+  --                 16/03/2018 - Inclusão do parâmetro de input 'crapldc' na procedure pc_renovar_lim_desc_titulo (Leonardo Oliveira - GFT)
   --
   ---------------------------------------------------------------------------------------------------------------
   --> Armazenar dados do contrato de limite (antigo b1wge0019tt.i - tt-dados-ctr)
@@ -223,7 +225,7 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
-  -- Rotina referente a renovacao manual do limite de desconto de titulo
+ -- Rotina referente a renovacao manual do limite de desconto de titulo
   PROCEDURE pc_renovar_lim_desc_titulo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
                                       ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
                                       ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Titular da Conta
@@ -232,6 +234,7 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de Movimento
                                       ,pr_cdoperad IN crapope.cdoperad%TYPE --> Código do Operador
                                       ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da Tela
+                                      ,pr_cddlinha IN crapldc.cddlinha%TYPE --> Código da Linha
                                       ,pr_idorigem IN INTEGER               --> Identificador de Origem
                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica   
@@ -3411,7 +3414,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     end pc_ultima_majoracao;
 
- -- Rotina referente a renovacao manual do limite de desconto de titulo
+   
+  -- Rotina referente a renovacao manual do limite de desconto de titulo
   PROCEDURE pc_renovar_lim_desc_titulo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
                                       ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
                                       ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Titular da Conta
@@ -3420,6 +3424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de Movimento
                                       ,pr_cdoperad IN crapope.cdoperad%TYPE --> Código do Operador
                                       ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da Tela
+                                      ,pr_cddlinha IN crapldc.cddlinha%TYPE --> Código da Linha
                                       ,pr_idorigem IN INTEGER               --> Identificador de Origem
                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica                                       
@@ -3587,7 +3592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
     -- Consulta o limite de credito de desconto de titulo 
     OPEN cr_crapldc(pr_cdcooper => pr_cdcooper,
-                    pr_cddlinha => rw_craplim.cddlinha);
+                    pr_cddlinha => pr_cddlinha);--rw_craplim.cddlinha
     FETCH cr_crapldc INTO rw_crapldc;
 
     -- Verifica se o limite de credito existe
@@ -3632,7 +3637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       CLOSE cr_craprli;
     END IF;
     
-    -- Verificar a quantidade maxima que pode renovar ##
+    -- Verificar a quantidade maxima que pode renovar
     IF ((nvl(rw_craprli.qtmaxren,0) > 0) AND (nvl(rw_craplim.qtrenova,0) >= nvl(rw_craprli.qtmaxren,0))) THEN
       vr_dscritic := 'Nao e possivel realizar a renovacao do limite. Incluir novo contrato';
       RAISE vr_exc_saida;
@@ -3664,7 +3669,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              vllimite = pr_vllimite,
              qtrenova = NVL(qtrenova,0) + 1,
              dtrenova = pr_dtmvtolt,
-             tprenova = 'M' -- Manual
+             tprenova = 'M', -- Manual
+             cddlinha = pr_cddlinha
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
          AND nrctrlim = pr_nrctrlim
@@ -3771,7 +3777,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       ROLLBACK;
     END;
     
-  END pc_renovar_lim_desc_titulo;
+  END pc_renovar_lim_desc_titulo;   
 
 END LIMI0001;
 /

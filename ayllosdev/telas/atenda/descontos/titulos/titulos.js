@@ -28,6 +28,7 @@
  * 012: [09/03/2017] Adriano    (CECRED): Ajuste devido ao tratamento para validar titulos já inclusos em outro borderô - SD 603451.
  * 013: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364).
  * 014: [13/03/2018] Leonardo Oliveira (GFT): Novos métodos 'acessaValorLimite', 'formataValorLimite', 'renovaValorLimite' e 'converteNumero'.
+ * 015: [16/03/2018] Leonardo Oliveira (GFT): Alteração dos métodos 'acessaValorLimite', 'formataValorLimite' e 'renovaValorLimite' para mostrar dialogo de confirmação e condirerar alteração de linha
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -66,7 +67,7 @@ var cdageori = "";
 //novos
 var situacao_analise = ""; // Variável para armazenar a situação da análise atualmente selecionado
 var decisao = ""; // Variável para armazenar a decisão atualmente selecionado
-var valor_limite = ""; // Variável para armazenar  o valor do limite atualmente selecionado
+var valor_limite = 0; // Variável para armazenar  o valor do limite atualmente selecionado
 
 
 // ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
@@ -688,7 +689,7 @@ function efetuarNovoLimite(){
 
 function confirmaNovoLimite(cddopera) {
     showMsgAguardo("Aguarde, confirmando novo limite ...");
-
+    
     var operacao = "CONFIMAR_NOVO_LIMITE";
     $.ajax({        
         type: "POST", 
@@ -1641,16 +1642,39 @@ function abreProtocoloAcionamento(dsprotocolo) {
 
 
 // renovação
-function acessaValorLimite() {
+function acessaValorLimite(flgvalida) {
 
+    if(!flgvalida){
+        flgvalida = 0;
+    }
     showMsgAguardo('Aguarde, carregando ...');
 
     var vllimite = $('#vllimite','#frmTitulos').val();
     var nrctrlim = $('#nrctrlim','#frmTitulos').val();
+    var flgstlcr = $('#flgstlcr','#frmTitulos').val() == "yes"?1:0;
+    var cddlinha = $('#cddlinha','#frmTitulos').val();
+    var dsdlinha = $('#dsdlinha','#frmTitulos').val();
 
+    if(flgvalida == 0 && flgstlcr == 1){
+       showConfirmacao(
+        "Deseja renovar o Limite de desconto de título atual?",
+        "Confirma&ccedil;&atilde;o - Ayllos",
+        "acessaValorLimite(1);",
+        "hideMsgAguardo();","sim.gif","nao.gif");
+        return false; 
+    }
+    
+    if(flgvalida == 0 && flgstlcr == 0){
+        showError(
+            "inform",
+            "Linha de crédito bloqueada, para realizar a operação altere para uma linha liberada ou efetue o desbloqueio da linha",
+            "Alerta - Ayllos",
+            "acessaValorLimite(1);");
+        return false;
+    }
+
+    //mostrat rotina valor limite
     exibeRotina($('#divUsoGenerico'));
-
-    // Carrega conteúdo da opção através do Ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -1658,6 +1682,9 @@ function acessaValorLimite() {
         data: {
             vllimite: vllimite,
             nrctrlim: nrctrlim,
+            cddlinha: cddlinha,
+            flgstlcr: flgstlcr,
+            dsdlinha: dsdlinha,
             redirect: 'html_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1665,37 +1692,115 @@ function acessaValorLimite() {
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
-            $('#divUsoGenerico').html(response);
-            layoutPadrao();
+            //$('#divUsoGenerico').html(response);
+            $("#divOpcoesDaOpcao2").html(response);
+            //layoutPadrao();
             formataValorLimite();
             $('#vllimite','#frmReLimite').desabilitaCampo();
             hideMsgAguardo();
-            bloqueiaFundo($('#divUsoGenerico'));
+           // bloqueiaFundo($('#divUsoGenerico'));
         }
     });
 
-    return false;
+    return false;   
 }
 
 function formataValorLimite() {
-
     highlightObjFocus( $('#frmReLimite') );
 
     var Lvllimite = $('label[for="vllimite"]','#frmReLimite');
-
+    var Lcddlinha = $('label[for="cddlinha"]','#frmReLimite');
+    var Ldsdlinha = $('label[for="dsdlinha"]','#frmReLimite');
+    
     var Cvllimite = $('#vllimite','#frmReLimite');
-    Cvllimite.css({'width':'90px','text-align':'right'}).setMask("DECIMAL","zzz.zzz.zz9,99","");
-    Cvllimite.habilitaCampo();
-    Cvllimite.focus();
+    var Ccddlinha = $('#cddlinha','#frmReLimite');
+    var Cdsdlinha = $('#dsdlinha','#frmReLimite');
 
-    Cvllimite.unbind('keypress').bind('keypress', function(e) {
-        if ( divError.css('display') == 'block' ) { return false; }
-        if ( e.keyCode == 13) {
-            renovaValorLimite();
+    if(Lcddlinha.length && Ccddlinha.length){
+
+        Lcddlinha.css({'width': '60px'}).addClass('rotulo');
+        Ccddlinha.css({'width': '60px'}).addClass('codigo pesquisa');
+
+        Ldsdlinha.css({'width': '60px'}).addClass('rotulo');
+        Cdsdlinha.css({'width': '180px'}).addClass('descricao');
+        Cdsdlinha.desabilitaCampo();
+
+        //pesquisa
+        var campoAnterior = '';
+        var qtReg, filtrosPesq, filtrosDesc, colunas;
+      
+        $('a', '#frmReLimite').ponteiroMouse();
+        $('a', '#frmReLimite').each( function(i) {
+        
+            if ( !$(this).prev().hasClass('campoTelaSemBorda') ) {
+                $(this).css('cursor','pointer');
+            }
+                    
+            $(this).click( function() {
+                if ( $(this).prev().hasClass('campoTelaSemBorda') ) {
+                    return false;
+                } else {                        
+                    campoAnterior = $(this).prev().attr('name');
+
+                    if ( campoAnterior == 'cddlinha' ) {
+                        filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + '|;flgstlcr;;;1;N';
+                        colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
+                        fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
+                        mostraPesquisa('zoom0001',
+                        'BUSCALINHAS', 
+                        'Linhas de Crédito',
+                        '20', 
+                        filtrosPesq,
+                        colunas,
+                        divRotina,
+                        fncOnClose);
+                    }
+                }
+            });
+        });
+
+        Cdsdlinha.unbind('change').bind('change', function() {
+            filtrosDesc = 'tpdlinha|' + inpessoa + ';flgstlcr|1;nriniseq|1;nrregist|30';
+            buscaDescricao(
+                'zoom0001',
+                'BUSCALINHAS',
+                'Linhas de Crédito',
+                $(this).attr('name'),'dsdlinha',$(this).val(),
+                'dsdlinha',
+                filtrosDesc,
+                'frmNovoLimite');
             return false;
-        }
-    });
+        }).next().unbind('click').bind('click', function () {
+            filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + '|;flgstlcr;;;1;N';
+            colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
+            fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
+            mostraPesquisa('zoom0001',
+                'BUSCALINHAS', 
+                'Linhas de Crédito',
+                '20', 
+                filtrosPesq,
+                colunas,
+                divRotina,
+                fncOnClose);
+            return false;
+        });
 
+    }
+    
+    if(Lvllimite.length && Cvllimite.length){
+        Lvllimite.css({'width': '60px'}).addClass('rotulo');
+        Cvllimite.css({'width': '100px'});
+        Cvllimite.habilitaCampo();
+        Cvllimite.focus();
+
+        Cvllimite.unbind('keypress').bind('keypress', function(e) {
+            if ( divError.css('display') == 'block' ) { return false; }
+            if ( e.keyCode == 13) {
+                renovaValorLimite();
+                return false;
+            }
+        });
+    }
     $('#btRenovar').unbind('click').bind('click', function(){
         renovaValorLimite();
         return false;
@@ -1711,6 +1816,7 @@ function renovaValorLimite() {
 
     var vllimite = converteNumero($('#vllimite','#frmReLimite').val());
     var nrctrlim = $('#nrctrlim','#frmReLimite').val();
+    var cddlinha = $('#cddlinha','#frmReLimite').val();
 
     // Carrega conteúdo da opção através de ajax
     $.ajax({
@@ -1719,6 +1825,7 @@ function renovaValorLimite() {
         data: {
             nrdconta: nrdconta,
             vllimite: vllimite,
+            cddlinha: cddlinha,
             nrctrlim: nrctrlim.replace(/[^0-9]/g,''),
             redirect: "script_ajax"
         },
