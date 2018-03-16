@@ -3304,7 +3304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
           vr_tab_erro GENE0001.typ_tab_erro;
     BEGIN
           
-          BEGIN
+    BEGIN
             /* Parametros de saida da cobranca registrada */
             vr_vlrjuros := 0;
             vr_vlrmulta := 0;
@@ -3766,7 +3766,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
                                                      || '<inserasa>' || rw_parcelas.inserasa || '</inserasa>'
                                                      || '<vldocmto_boleto>'  || rw_parcelas.vltitulo  || '</vldocmto_boleto>' 
                                                      || '<vlcobrado_boleto>' || vr_vlcobrado_boleto || '</vlcobrado_boleto>'
-                                                     || '<dtvencto_boleto>'  || vr_dtvencto_boleto  || '</dtvencto_boleto>'
+                                                     || '<dtvencto_boleto>'  || TO_CHAR(vr_dtvencto_boleto,'DD/MM/RRRR') || '</dtvencto_boleto>'
                                                      || '<linhadigitavel>'   || vr_lindigit         || '</linhadigitavel>'
                                                      || '<codigobarras>'     || vr_dscodbar         || '</codigobarras>'
                                                      || '<dsdespec>'         || vr_dsdespec         || '</dsdespec>'

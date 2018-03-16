@@ -366,6 +366,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
     PROCEDURE pc_verifica_conv_pgto(pr_cdcooper  IN crapcop.cdcooper%TYPE  -- Código da cooperativa
                                    ,pr_nrdconta  IN crapass.nrdconta%TYPE  -- Numero Conta do cooperado
                                    ,pr_nrconven OUT INTEGER                -- Numero do Convenio
+                                   ,pr_dtadesao OUT DATE                   -- Data de adesao
                                    ,pr_flghomol OUT INTEGER                -- Convenio esta homologado
                                    ,pr_idretorn OUT INTEGER                -- Retorno para o Cooperado (1-Internet/2-FTP)
                                    ,pr_fluppgto OUT INTEGER                -- Flag possui convenio habilitado
@@ -8282,6 +8283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
   PROCEDURE pc_verifica_conv_pgto(pr_cdcooper  IN crapcop.cdcooper%TYPE  -- Código da cooperativa
                                  ,pr_nrdconta  IN crapass.nrdconta%TYPE  -- Numero Conta do cooperado
                                  ,pr_nrconven OUT INTEGER                -- Numero do Convenio
+                                 ,pr_dtadesao OUT DATE                   -- Data de adesao
                                  ,pr_flghomol OUT INTEGER                -- Convenio esta homologado
                                  ,pr_idretorn OUT INTEGER                -- Retorno para o Cooperado (1-Internet/2-FTP)
                                  ,pr_fluppgto OUT INTEGER                -- Flag possui convenio habilitado
@@ -8316,6 +8318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       SELECT cpt.cdcooper
             ,cpt.nrdconta
             ,cpt.nrconven
+            ,cpt.dtdadesa
             ,cpt.flghomol
             ,cpt.idretorn
         FROM crapcpt cpt
@@ -8337,6 +8340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
   BEGIN
     -- Inicializar os retornos
     pr_nrconven := 0; -- Convenio
+    pr_dtadesao := NULL;
     pr_flghomol := 0; -- Nao Homologado
     pr_idretorn := 0;
     pr_fluppgto := 0;
@@ -8352,6 +8356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       pr_fluppgto := 1;
       -- Se o convenio esta homologado devolver os dados
       pr_nrconven := rw_convenio.nrconven;
+      pr_dtadesao := rw_convenio.dtdadesa;
       pr_flghomol := rw_convenio.flghomol;
       pr_idretorn := rw_convenio.idretorn;
     END IF;
