@@ -45,3 +45,9 @@
 	<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
 	<a href="#" class="botao" onclick="btnContinuar(); return false;" >Prosseguir</a>
 </div>
+
+
+<?php 
+    // Forms com os dados para fazer a chamada da geração de PDF    
+    include("impressao_form_l.php");
+?>

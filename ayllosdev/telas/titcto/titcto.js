@@ -1312,8 +1312,7 @@ function btnContinuar() {
             controlaOperacao('CT', nriniseq, nrregist);
         }
         else if ($('#' + frmOpcao + ' fieldset:eq(1)').css('display')=='block') {
-            hideMsgAguardo();
-            alert('imprimir()');
+            gerarImpressaoConsulta();
         }
     } else if (cddopcao == 'F'){
         if(isHabilitado(cNrdconta)) {
@@ -1354,13 +1353,59 @@ function btnContinuar() {
             showError("error","O dia deve ser informado.","Alerta - Ayllos","cDtvencto.focus()");
         } else {
             hideMsgAguardo();
-            alert('imprimir');
+            gerarImpressaoLote();
         }
     }
 
     controlaPesquisas();
     //hideMsgAguardo();
     
+    return false;
+}
+
+function gerarImpressaoConsulta() {
+    
+    var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
+    var nrcpfcgc = normalizaNumero($('#nrcpfcgc', '#' + frmOpcao).val());
+    var nmprimtl = $('#nmprimtl', '#' + frmOpcao).val();
+    var tpcobran = $('#tpcobran', '#' + frmOpcao).val();
+    var flresgat = $("#flresgat", '#' + frmOpcao).prop("checked")?"S":"";
+    var dtvencto = $('#dtvencto', '#' + frmOpcao).val();
+    
+    $("#nrdconta","#frmImprimirConsultaTitcto").val(nrdconta);
+    $("#nrcpfcgc","#frmImprimirConsultaTitcto").val(nrcpfcgc);
+    $("#nmprimtl","#frmImprimirConsultaTitcto").val(nmprimtl);
+    $("#tpcobran","#frmImprimirConsultaTitcto").val(tpcobran);
+    $("#flresgat","#frmImprimirConsultaTitcto").val(flresgat);
+    $("#dtvencto","#frmImprimirConsultaTitcto").val(dtvencto);
+    
+    var action = $("#frmImprimirConsultaTitcto").attr("action");
+    var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
+
+    console.log("[action] - " + action);
+    console.log("[callafter] - " + callafter);
+    
+    carregaImpressaoAyllos("frmImprimirConsultaTitcto",action,callafter);
+    hideMsgAguardo();
+    return false;
+}
+
+function gerarImpressaoLote() {
+    
+    var dtvencto = $('#dtvencto', '#' + frmOpcao).val();
+    var cdagenci = $('#cdagenci', '#' + frmOpcao).val();
+    
+    $("#dtvencto","#frmImprimirLoteTitcto").val(dtvencto);
+    $("#cdagenci","#frmImprimirLoteTitcto").val(cdagenci);
+    
+    var action = $("#frmImprimirLoteTitcto").attr("action");
+    var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
+
+    console.log("[action] - " + action);
+    console.log("[callafter] - " + callafter);
+    
+    carregaImpressaoAyllos("frmImprimirLoteTitcto",action,callafter);
+    hideMsgAguardo();
     return false;
 }
 

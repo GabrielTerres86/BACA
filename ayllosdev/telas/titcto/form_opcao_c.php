@@ -153,6 +153,15 @@ include('form_cabecalho.php');
         </tr>
     </table>
 </div> -->
+
+
+
+<?php 
+    // Forms com os dados para fazer a chamada da geração de PDF    
+    include("impressao_form_c.php");
+?>
+
+
 <script type="text/javascript">
 
     $('a.paginacaoAnt').unbind('click').bind('click', function() {
