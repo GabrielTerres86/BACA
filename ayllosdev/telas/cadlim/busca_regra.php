@@ -7,6 +7,10 @@
  * --------------
  * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Inclusão dos campos
  *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
+ *
+ *				  16/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento)
+ *							   Diego Simas (AMcom) 		
+ *
  * -------------- 
  */
     session_start();
@@ -61,6 +65,8 @@
     $('#nrrevcad','#frmRegra').val('<?= getByTagName($regra->tags,'nrrevcad'); ?>');
     $('#qtmincta','#frmRegra').val('<?= getByTagName($regra->tags,'qtmincta'); ?>');
     $('#qtdiaren','#frmRegra').val('<?= getByTagName($regra->tags,'qtdiaren'); ?>');
+	//Diego Simas (AMcom)
+	$('#qtmeslic','#frmRegra').val('<?= getByTagName($regra->tags,'qtmeslic'); ?>');
     $('#qtmaxren','#frmRegra').val('<?= getByTagName($regra->tags,'qtmaxren'); ?>');
     $('#qtdiaatr','#frmRegra').val('<?= getByTagName($regra->tags,'qtdiaatr'); ?>');
     $('#qtatracc','#frmRegra').val('<?= getByTagName($regra->tags,'qtatracc'); ?>');

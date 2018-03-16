@@ -6,6 +6,10 @@
  * --------------
  * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Inclusão dos campos
  *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
+ *
+ *                16/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento)
+ *                             Diego Simas (AMcom)
+ *
  * --------------
  */
 $(document).ready(function() {
@@ -150,6 +154,8 @@ function formataRegra(){
 		var rQtmaxren = $('label[for="qtmaxren"]');
 		var rQtdiaatr = $('label[for="qtdiaatr"]');
 		var rQtatracc = $('label[for="qtatracc"]');
+	    //Diego Simas (AMcom)
+		var rQtmeslic = $('label[for="qtmeslic"]');
 		// Situacao da Conta		
 		var rDssitdop = $('label[for="dssitdop"]');		
 		var rDssitopt = $('label[for="sit1"], label[for="sit2"], label[for="sit3"], label[for="sit4"], label[for="sit5"], label[for="sit6"], label[for="sit8"], label[for="sit9"]');
@@ -161,11 +167,13 @@ function formataRegra(){
 		var rPcliqdez = $('label[for="pcliqdez"]');
 		var rQtdialiq = $('label[for="qtdialiq"]');
 
-		rVlmaxren.css({width:'200px'});
-		rQtdiaren.css({width:'200px'});
-		rQtmaxren.css({width:'200px'});
-		rQtdiaatr.css({width:'200px'});
-		rQtatracc.css({width:'200px'});		
+	    //Diego Simas (AMcom)
+		rVlmaxren.css({width:'262px'});
+		rQtdiaren.css({width:'262px'});
+		rQtmeslic.css({width:'262px'});
+		rQtmaxren.css({width:'262px'});
+		rQtdiaatr.css({width:'262px'});
+		rQtatracc.css({width:'262px'});		
 		rDssitdop.css({width:'200px'});
 		rDssitopt.css({width:'19px'});		
 		rDsriscop.css({width:'200px'});
@@ -177,7 +185,9 @@ function formataRegra(){
 
 		// Campos
 		var cVlmaxren = $('#vlmaxren');	
-		var cQtdiaren = $('#qtdiaren');	
+		var cQtdiaren = $('#qtdiaren');
+	    //Diego Simas (AMcom)
+		var cQtmeslic = $('#qtmeslic');
 		var cQtmaxren = $('#qtmaxren');	
 		var cQtdiaatr = $('#qtdiaatr');	
 		var cQtatracc = $('#qtatracc');
@@ -193,7 +203,9 @@ function formataRegra(){
 		cQtdiaren.addClass('campo').setMask('INTEGER','zzz9');
 		cQtmaxren.addClass('campo').setMask('INTEGER','zz9');
 		cQtdiaatr.addClass('campo').setMask('INTEGER','zz9');
-		cQtatracc.addClass('campo').setMask('INTEGER','zz9');		
+		cQtatracc.addClass('campo').setMask('INTEGER', 'zz9');
+	    //Diego Simas (AMcom)
+		cQtmeslic.addClass('campo').setMask('INTEGER','zz9');
 		cDssitopt.css({border:'0px'});
 		cDstipopt.css({border:'0px'});
 		cDsrisopt.css({border:'0px'});		
@@ -260,11 +272,26 @@ function formataRegra(){
 
 			if ( divError.css('display') == 'block' ) { return false; }
 
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
-				$('#sit1','#frmRegra').focus();
+			if (e.keyCode == 13 || e.keyCode == 9) {
+			    //Diego Simas (AMcom)
+				$('#qtmeslic','#frmRegra').focus();
 				return false;
 			}	
 		});
+		
+	    //Diego Simas (AMcom)
+		cQtmeslic.unbind('keypress').bind('keypress', function (e) {
+
+			if (divError.css('display') == 'block') {
+				return false;
+			}
+
+			if (e.keyCode == 13 || e.keyCode == 9) {
+				$('#sit1', '#frmRegra').focus();
+				return false;
+			}
+		});
+
 		
 		$('#sit1','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 
@@ -484,7 +511,9 @@ function controlaCampos(op, tplimite) {
 			$('#qtdiaren','#frmRegra').habilitaCampo();
 			$('#qtmaxren','#frmRegra').habilitaCampo();
 			$('#qtdiaatr','#frmRegra').habilitaCampo();
-			$('#qtatracc','#frmRegra').habilitaCampo();			
+			$('#qtatracc','#frmRegra').habilitaCampo();	
+	        //Diego Simas (AMcom)
+			$('#qtmeslic', '#frmRegra').habilitaCampo();
 			$("input[type=checkbox][name='dssitdop']",'#frmRegra').habilitaCampo();
 			$("input[type=checkbox][name='dstipcta']",'#frmRegra').habilitaCampo();
 			$("input[type=checkbox][name='dsriscop']",'#frmRegra').habilitaCampo();
@@ -598,6 +627,8 @@ function alteraRegra() {
     var inpessoa = $('#inpessoa','#frmCab').val();
 	var vlmaxren = $('#vlmaxren','#frmRegra').val();
 	var qtdiaren = $('#qtdiaren','#frmRegra').val();
+    //Diego Simas (AMcom)
+	var qtmeslic = $('#qtmeslic', '#frmRegra').val();
 	var qtmaxren = $('#qtmaxren','#frmRegra').val();
 	var qtdiaatr = $('#qtdiaatr','#frmRegra').val();
 	var qtatracc = $('#qtatracc','#frmRegra').val();
@@ -628,6 +659,8 @@ function alteraRegra() {
 			inpessoa: inpessoa,
 			vlmaxren: vlmaxren,
 			qtdiaren: qtdiaren,
+		    //Diego Simas (AMcom)
+			qtmeslic: qtmeslic,
 			qtmaxren: qtmaxren,
 			qtdiaatr: qtdiaatr,
 			qtatracc: qtatracc,

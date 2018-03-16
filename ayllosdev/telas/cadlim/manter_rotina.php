@@ -7,6 +7,10 @@
  * --------------
  * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Inclusão dos campos
  *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
+ *
+ *                16/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento)
+ *                             Diego Simas (AMcom)
+ *    
  * -------------- 
  */
     session_start();
@@ -21,6 +25,8 @@
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '';
 	$vlmaxren = (isset($_POST['vlmaxren'])) ? converteFloat($_POST['vlmaxren']) : '';
 	$qtdiaren = (isset($_POST['qtdiaren'])) ? $_POST['qtdiaren'] : '';
+	//Diego Simas (AMcom)
+	$qtmeslic = (isset($_POST['qtmeslic'])) ? $_POST['qtmeslic'] : '';
 	$qtmaxren = (isset($_POST['qtmaxren'])) ? $_POST['qtmaxren'] : '';
 	$qtdiaatr = (isset($_POST['qtdiaatr'])) ? $_POST['qtdiaatr'] : '';
 	$qtatracc = (isset($_POST['qtatracc'])) ? $_POST['qtatracc'] : '';
@@ -45,6 +51,8 @@
 		$xml .= "   <nrrevcad>".$nrrevcad."</nrrevcad>";
 		$xml .= "   <qtmincta>".$qtmincta."</qtmincta>";
 		$xml .= "   <qtdiaren>".$qtdiaren."</qtdiaren>";
+		//Diego Simas (AMcom)
+		$xml .= "   <qtmeslic>".$qtmeslic."</qtmeslic>";
 		$xml .= "   <qtmaxren>".$qtmaxren."</qtmaxren>";
 		$xml .= "   <qtdiaatr>".$qtdiaatr."</qtdiaatr>";
 		$xml .= "   <qtatracc>".$qtatracc."</qtatracc>";		

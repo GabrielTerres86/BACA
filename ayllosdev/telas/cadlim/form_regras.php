@@ -6,6 +6,7 @@
  * OBJETIVO     : Formulario de Regras.
  * --------------
  * ALTERAÇÕES   : 21/09/2016 - Inclusão dos campos "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
+ *                16/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento) (Diego Simas - AMcom)
  * --------------
  */	
 ?>
@@ -44,6 +45,13 @@
 				<td>
 					<label for="qtatracc">Conta Corrente em Atraso:</label>	
 					<input name="qtatracc" type="text"  id="qtatracc" /> <label>&nbsp;Dias</label>
+				</td>
+			</tr>
+			<!-- DIEGO SIMAS (AMcom) !-->
+			<tr>
+				<td>
+					<label for="qtmeslic">Inclusão de Novo Limite após o cancelamento:</label>	
+					<input name="qtmeslic" type="text"  id="qtmeslic" /> <label>&nbsp;Meses</label>
 				</td>
 			</tr>
 			<tr>		
