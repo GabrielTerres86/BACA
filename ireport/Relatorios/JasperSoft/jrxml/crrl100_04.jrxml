@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-03-08T14:29:47 -->
+<!-- 2018-03-13T13:46:22 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_04" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.5"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="3902"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl100_04"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrrl_emprestimos"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -220,7 +220,7 @@
 	<field name="cob_perminimo" class="java.lang.String">
 		<fieldDescription><![CDATA[cob_perminimo]]></fieldDescription>
 	</field>
-	<field name="cob_nrctater" class="java.lang.Integer">
+	<field name="cob_nrctater" class="java.lang.String">
 		<fieldDescription><![CDATA[cob_nrctater]]></fieldDescription>
 	</field>
 	<field name="cob_inaddcob" class="java.lang.Integer">
@@ -228,6 +228,9 @@
 	</field>
 	<field name="cob_inresaut" class="java.lang.Integer">
 		<fieldDescription><![CDATA[cob_inresaut]]></fieldDescription>
+	</field>
+	<field name="cob_nminterv" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_nminterv]]></fieldDescription>
 	</field>
 	<background>
 		<band height="850" splitType="Stretch">
@@ -799,7 +802,7 @@ d) O descumprimento das obrigações previstas nas alíneas “a” e “b” do
 					<textElement textAlignment="Justified">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{cob_perminimo} + "% (por cento) do saldo devedor da operação de crédito concedida, vinculado à conta corrente n° " + $F{conta}.trim() + ", de titularidade de " + $F{nmemitente} + "."]]></textFieldExpression>
+					<textFieldExpression><![CDATA[$F{cob_perminimo} + "% (por cento) do saldo devedor da operação de crédito concedida, vinculado à conta corrente n° " + ($F{cob_nrctater} != "0"  ? $F{cob_nrctater} : $F{conta}.trim()) + ", de titularidade de " + ($F{cob_nrctater} != "0" ? $F{cob_nminterv} : $F{nmemitente}) + "."]]></textFieldExpression>
 				</textField>
 				<staticText>
 					<reportElement x="3" y="2" width="461" height="11" uuid="7f411478-c93d-425c-82fa-05ac0fe90ed4"/>
@@ -957,7 +960,7 @@ f) Caso não seja verificado o pagamento na data do vencimento, o Emitente estar
 		</band>
 		<band height="46">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} > 0]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} != "0"]]></printWhenExpression>
 			<staticText>
 				<reportElement x="6" y="0" width="466" height="46" uuid="4b5f84bd-0190-4455-bdb3-8affea6016b5">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -970,7 +973,7 @@ f) Caso não seja verificado o pagamento na data do vencimento, o Emitente estar
 		</band>
 		<band height="38">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} == 0]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} == "0"]]></printWhenExpression>
 			<staticText>
 				<reportElement x="6" y="0" width="466" height="38" uuid="9b6fc2fd-3942-4e4b-8852-b5b29cc3da29">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-03-08T11:25:22 -->
+<!-- 2018-03-13T16:38:23 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_24" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="17"/>
@@ -151,7 +151,7 @@
 	<field name="cob_perminimo" class="java.lang.String">
 		<fieldDescription><![CDATA[cob_perminimo]]></fieldDescription>
 	</field>
-	<field name="cob_nrctater" class="java.lang.Integer">
+	<field name="cob_nrctater" class="java.lang.String">
 		<fieldDescription><![CDATA[cob_nrctater]]></fieldDescription>
 	</field>
 	<field name="cob_inaddcob" class="java.lang.Integer">
@@ -159,6 +159,9 @@
 	</field>
 	<field name="cob_inresaut" class="java.lang.Integer">
 		<fieldDescription><![CDATA[cob_inresaut]]></fieldDescription>
+	</field>
+	<field name="cob_nminterv" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_nminterv]]></fieldDescription>
 	</field>
 	<variable name="vr_nrtopico" class="java.lang.Integer">
 		<variableExpression><![CDATA[$F{cob_inaddcob}.intValue() > 0 ?  $V{vr_nrtopico} + 1 : $V{vr_nrtopico}]]></variableExpression>
@@ -935,7 +938,7 @@
 					<textElement textAlignment="Justified">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{cob_perminimo} + "% (por cento) do saldo devedor da operação de crédito concedida, vinculado à conta corrente n° " + $F{conta}.trim() + ", de titularidade de " + $F{nmemitente} + "."]]></textFieldExpression>
+					<textFieldExpression><![CDATA[$F{cob_perminimo} + "% (por cento) do saldo devedor da operação de crédito concedida, vinculado à conta corrente n° " + ($F{cob_nrctater} != "0"  ? $F{cob_nrctater} : $F{conta}.trim()) + ", de titularidade de " + ($F{cob_nrctater} != "0" ? $F{cob_nminterv} : $F{nmemitente}) + "."]]></textFieldExpression>
 				</textField>
 				<textField>
 					<reportElement x="3" y="2" width="461" height="11" uuid="207a0ac9-1838-44e7-85c2-4e359f4ba954">
@@ -1186,42 +1189,6 @@
 				<textFieldExpression><![CDATA["<b>6.5.</b> Na data do pagamento da parcela, o(a) <b>Emitente/Cooperado(a)</b> obriga-se a manter, na conta indicada para pagamento, saldo disponível e suficiente para suportar os débitos ora autorizados, sendo que a insuficiência de saldo configurará atraso no pagamento e incidência dos encargos moratórios."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="7" y="72" width="466" height="11" uuid="3e921baf-206b-442e-8f17-e2fd4a4f6c6e">
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-				</reportElement>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA["<b>6.6.</b> Na hipótese de não haver saldo suficiente na conta corrente para quitar todas as despesas referidas nesta cláusula, a <b>Credora/Cooperativa</b> realizará o resgate automático da(s) aplicação(ões) financeira(s) bloqueada(s) e dada(s) em garantia pelo <b>Emitente/Cooperado(a)</b>" + ($F{cob_nrctater} > 0 ? " e/ou Terceiro(s) Garantidor(es) nesta cédula." : ".")]]></textFieldExpression>
-			</textField>
-			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="7" y="108" width="466" height="11" uuid="65ffbfd4-7c9a-4d93-a7ef-9e753fa26b85">
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-				</reportElement>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA["<b>6.6.3.</b> Restando infrutíferas as tentativas acima para pagamento da parcela em atraso, a <b>Credora/Cooperativa</b> poderá utilizar o valor correspondente às outras aplicações financeiras, inclusive poupança programada, para liquidação, total ou parcial, do saldo devedor desta Cédula, nos termos do item 11 das Condições Gerais desta contratação, sem qualquer necessidade de comunicação prévia e, ainda, poderá realizar o débito dos respectivos valores em qualquer outra conta de titularidade do(a) <b>Emitente/Cooperado(a)</b>"  + ($F{cob_nrctater} > 0 ? " e do(s) Terceiro(s) Garantidor(es)." : ".")]]></textFieldExpression>
-			</textField>
-			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="7" y="120" width="466" height="11" uuid="3943e95a-a25b-4263-98db-afe2592b7c7e">
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-				</reportElement>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA["<b>6.7.</b> Caso não seja verificado o pagamento na data do vencimento, o(a) <b>Emitente/Cooperado(a)</b>" + ($F{cob_nrctater} > 0 ? " e o(s) Terceiros(s) Garantidor(es)": "") + " estará(ão) em atraso e a <b>Credora/Cooperativa</b> poderá comunicar o fato à SERASA, ao SPC e a qualquer outro órgão encarregado de cadastrar atraso de pagamento e descumprimento de obrigação contratual."]]></textFieldExpression>
-			</textField>
-			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="7" y="132" width="466" height="11" uuid="237b18bb-0f96-4b2a-9f1b-15859601be7e">
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-				</reportElement>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA["<b>6.8.</b> A <b>Credora/Cooperativa</b> poderá, a seu critério, disponibilizar ao <b>Emitente/Cooperado(a)</b> " + ($F{cob_nrctater} > 0 ? "e ao(s) Terceiros(s) Garantidor(es)": "") + " a possibilidade do pagamento das parcelas vencidas e não pagas via boleto bancário. Nesta hipótese, o referido título será emitido pelo Posto de Atendimento mediante solicitação do(s) <b>Emitente/Cooperado(a)</b> " + ($F{cob_nrctater} > 0 ? "e/ou do(s) Terceiro(s) Garantidor(es),": "") + " ou diretamente via conta online disponível no site da Cooperativa."]]></textFieldExpression>
-			</textField>
-			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="84" width="466" height="11" uuid="dcf99f65-d5c3-4e82-94ca-e438fcbf690c">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
@@ -1238,6 +1205,42 @@
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA["<b>6.6.2.</b> No intuito de evitar o acúmulo de encargos em caso de não pagamento da parcela via débito em conta e durante o prazo de carência concedido antes do resgate automático do valor de aplicação(ões) financeira(s), a <b>Credora/Cooperativa</b> verificará diariamente a existência de saldos e, a partir do momento em que a conta do(a) <b>Emitente/Cooperado(a)</b> apresentar saldo disponível, independentemente do valor, realizará o débito, total ou parcial, do valor do saldo devedor da parcela, acrescido dos encargos moratórios conforme item \"Atraso no Pagamento e Multa\", até o limite disponível na conta, inclusive, utilizando do limite de crédito, se contratado."]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="7" y="72" width="466" height="11" uuid="abbdad22-854c-4c8a-af2d-c714c61c1995">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>6.6.</b> Na hipótese de não haver saldo suficiente na conta corrente para quitar todas as despesas referidas nesta cláusula, a <b>Credora/Cooperativa</b> realizará o resgate automático da(s) aplicação(ões) financeira(s) bloqueada(s) e dada(s) em garantia pelo <b>Emitente/Cooperado(a)</b>" + ($F{cob_nrctater} != "0" ? " e/ou Terceiro(s) Garantidor(es) nesta cédula." : ".")]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="7" y="108" width="466" height="11" uuid="ae555f2d-c40b-44bb-949e-defd48ac359a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>6.6.3.</b> Restando infrutíferas as tentativas acima para pagamento da parcela em atraso, a <b>Credora/Cooperativa</b> poderá utilizar o valor correspondente às outras aplicações financeiras, inclusive poupança programada, para liquidação, total ou parcial, do saldo devedor desta Cédula, nos termos do item 11 das Condições Gerais desta contratação, sem qualquer necessidade de comunicação prévia e, ainda, poderá realizar o débito dos respectivos valores em qualquer outra conta de titularidade do(a) <b>Emitente/Cooperado(a)</b>"  + ($F{cob_nrctater} != "0" ? " e do(s) Terceiro(s) Garantidor(es)." : ".")]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="7" y="120" width="466" height="11" uuid="9d1cabc6-47c1-4e8e-95dc-f328b8c67551">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>6.7.</b> Caso não seja verificado o pagamento na data do vencimento, o(a) <b>Emitente/Cooperado(a)</b>" + ($F{cob_nrctater} != "0" ? " e o(s) Terceiros(s) Garantidor(es)": "") + " estará(ão) em atraso e a <b>Credora/Cooperativa</b> poderá comunicar o fato à SERASA, ao SPC e a qualquer outro órgão encarregado de cadastrar atraso de pagamento e descumprimento de obrigação contratual."]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="7" y="132" width="466" height="11" uuid="cf1984d3-bfa5-431c-b7d0-faaf07d5e417">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>6.8.</b> A <b>Credora/Cooperativa</b> poderá, a seu critério, disponibilizar ao <b>Emitente/Cooperado(a)</b> " + ($F{cob_nrctater} != "0" ? "e ao(s) Terceiros(s) Garantidor(es)": "") + " a possibilidade do pagamento das parcelas vencidas e não pagas via boleto bancário. Nesta hipótese, o referido título será emitido pelo Posto de Atendimento mediante solicitação do(s) <b>Emitente/Cooperado(a)</b> " + ($F{cob_nrctater} != "0" ? "e/ou do(s) Terceiro(s) Garantidor(es),": "") + " ou diretamente via conta online disponível no site da Cooperativa."]]></textFieldExpression>
 			</textField>
 		</band>
 		<band height="503">

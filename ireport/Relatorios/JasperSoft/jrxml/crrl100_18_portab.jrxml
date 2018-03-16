@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-03-08T15:39:17 -->
+<!-- 2018-03-13T15:42:15 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.2396694214876092"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="3692"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl100_18_portab"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrrl_emprestimos"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -193,7 +193,7 @@
 	<field name="dsqrcode" class="java.lang.String">
 		<fieldDescription><![CDATA[dsqrcode]]></fieldDescription>
 	</field>
-	<field name="cob_nrctater" class="java.lang.Integer">
+	<field name="cob_nrctater" class="java.lang.String">
 		<fieldDescription><![CDATA[cob_nrctater]]></fieldDescription>
 	</field>
 	<field name="cob_inaddcob" class="java.lang.Integer">
@@ -207,6 +207,9 @@
 	</field>
 	<field name="cob_qtdiatraso" class="java.lang.String">
 		<fieldDescription><![CDATA[cob_qtdiatraso]]></fieldDescription>
+	</field>
+	<field name="cob_nminterv" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_nminterv]]></fieldDescription>
 	</field>
 	<variable name="vr_nrtopico" class="java.lang.Integer">
 		<variableExpression><![CDATA[$F{cob_inaddcob}.intValue() > 0 ?  $V{vr_nrtopico} + 1 : $V{vr_nrtopico}]]></variableExpression>
@@ -814,7 +817,7 @@
 					<textElement textAlignment="Justified">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{cob_perminimo} + "% (por cento) do saldo devedor da operação de crédito concedida, vinculado à conta corrente n° " + $F{conta}.trim() + ", de titularidade de " + $F{nmemitente} + "."]]></textFieldExpression>
+					<textFieldExpression><![CDATA[$F{cob_perminimo} + "% (por cento) do saldo devedor da operação de crédito concedida, vinculado à conta corrente n° " + ($F{cob_nrctater} != "0"  ? $F{cob_nrctater} : $F{conta}.trim()) + ", de titularidade de " + ($F{cob_nrctater} != "0" ? $F{cob_nminterv} : $F{nmemitente}) + "."]]></textFieldExpression>
 				</textField>
 				<staticText>
 					<reportElement x="3" y="2" width="461" height="11" uuid="2861e01a-3327-4df4-a7dc-f41f6917800d"/>
@@ -909,7 +912,7 @@ f) Caso não seja verificado o pagamento na data do vencimento, o Emitente estar
 		</band>
 		<band height="46">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} > 0]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} != "0"]]></printWhenExpression>
 			<staticText>
 				<reportElement x="4" y="0" width="466" height="46" uuid="b5882a92-8304-46f0-a5b0-257dae2b29d9"/>
 				<textElement textAlignment="Justified" markup="html">
@@ -920,7 +923,7 @@ f) Caso não seja verificado o pagamento na data do vencimento, o Emitente estar
 		</band>
 		<band height="38">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} == 0]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} == "0"]]></printWhenExpression>
 			<staticText>
 				<reportElement x="4" y="0" width="466" height="38" uuid="a5f3b040-33e4-466c-a872-a306755e6ad6">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>

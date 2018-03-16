@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-03-08T11:24:29 -->
+<!-- 2018-03-13T15:58:48 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_22" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="17"/>
@@ -154,7 +154,7 @@
 	<field name="cob_perminimo" class="java.lang.String">
 		<fieldDescription><![CDATA[cob_perminimo]]></fieldDescription>
 	</field>
-	<field name="cob_nrctater" class="java.lang.Integer">
+	<field name="cob_nrctater" class="java.lang.String">
 		<fieldDescription><![CDATA[cob_nrctater]]></fieldDescription>
 	</field>
 	<field name="cob_inaddcob" class="java.lang.Integer">
@@ -162,6 +162,9 @@
 	</field>
 	<field name="cob_inresaut" class="java.lang.Integer">
 		<fieldDescription><![CDATA[cob_inresaut]]></fieldDescription>
+	</field>
+	<field name="cob_nminterv" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_nminterv]]></fieldDescription>
 	</field>
 	<variable name="vr_nrtopico" class="java.lang.Integer">
 		<variableExpression><![CDATA[$F{cob_inaddcob}.intValue() > 0 ?  $V{vr_nrtopico} + 1 : $V{vr_nrtopico}]]></variableExpression>
@@ -947,7 +950,7 @@
 					<textElement textAlignment="Justified">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{cob_perminimo} + "% (por cento) do saldo devedor da operação de crédito concedida, vinculado à conta corrente n° " + $F{conta}.trim() + ", de titularidade de " + $F{nmemitente} + "."]]></textFieldExpression>
+					<textFieldExpression><![CDATA[$F{cob_perminimo} + "% (por cento) do saldo devedor da operação de crédito concedida, vinculado à conta corrente n° " + ($F{cob_nrctater} != "0"  ? $F{cob_nrctater} : $F{conta}.trim()) + ", de titularidade de " + ($F{cob_nrctater} != "0" ? $F{cob_nminterv} : $F{nmemitente}) + "."]]></textFieldExpression>
 				</textField>
 				<textField>
 					<reportElement x="3" y="2" width="461" height="11" uuid="c52492fa-54ae-4494-9956-6bd0797707a6">
@@ -1204,7 +1207,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b>6.6.</b> Na hipótese de não haver saldo suficiente na conta corrente para quitar todas as despesas referidas nesta cláusula, a <b>Credora/Cooperativa</b> realizará o resgate automático da(s) aplicação(ões) financeira(s) bloqueada(s) e dada(s) em garantia pelo <b>Emitente/Cooperado(a)</b>" + ($F{cob_nrctater} > 0 ? " e/ou Terceiro(s) Garantidor(es) nesta cédula." : ".")]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b>6.6.</b> Na hipótese de não haver saldo suficiente na conta corrente para quitar todas as despesas referidas nesta cláusula, a <b>Credora/Cooperativa</b> realizará o resgate automático da(s) aplicação(ões) financeira(s) bloqueada(s) e dada(s) em garantia pelo <b>Emitente/Cooperado(a)</b>" + ($F{cob_nrctater} != "0" ? " e/ou Terceiro(s) Garantidor(es) nesta cédula." : ".")]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="108" width="466" height="11" uuid="7a328eda-a3ea-4ab1-8071-d7f3b59382e8">
@@ -1213,7 +1216,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b>6.6.3.</b> Restando infrutíferas as tentativas acima para pagamento da parcela em atraso, a <b>Credora/Cooperativa</b> poderá utilizar o valor correspondente às outras aplicações financeiras, inclusive poupança programada, para liquidação, total ou parcial, do saldo devedor desta Cédula, nos termos do item 11 das Condições Gerais desta contratação, sem qualquer necessidade de comunicação prévia e, ainda, poderá realizar o débito dos respectivos valores em qualquer outra conta de titularidade do(a) <b>Emitente/Cooperado(a)</b>"  + ($F{cob_nrctater} > 0 ? " e do(s) Terceiro(s) Garantidor(es)." : ".")]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b>6.6.3.</b> Restando infrutíferas as tentativas acima para pagamento da parcela em atraso, a <b>Credora/Cooperativa</b> poderá utilizar o valor correspondente às outras aplicações financeiras, inclusive poupança programada, para liquidação, total ou parcial, do saldo devedor desta Cédula, nos termos do item 11 das Condições Gerais desta contratação, sem qualquer necessidade de comunicação prévia e, ainda, poderá realizar o débito dos respectivos valores em qualquer outra conta de titularidade do(a) <b>Emitente/Cooperado(a)</b>"  + ($F{cob_nrctater} != "0" ? " e do(s) Terceiro(s) Garantidor(es)." : ".")]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="120" width="466" height="11" uuid="1b35cb86-2452-49ba-887c-7b628f145d52">
@@ -1222,7 +1225,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b>6.7.</b> Caso não seja verificado o pagamento na data do vencimento, o(a) <b>Emitente/Cooperado(a)</b>" + ($F{cob_nrctater} > 0 ? " e o(s) Terceiros(s) Garantidor(es)": "") + " estará(ão) em atraso e a <b>Credora/Cooperativa</b> poderá comunicar o fato à SERASA, ao SPC e a qualquer outro órgão encarregado de cadastrar atraso de pagamento e descumprimento de obrigação contratual."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b>6.7.</b> Caso não seja verificado o pagamento na data do vencimento, o(a) <b>Emitente/Cooperado(a)</b>" + ($F{cob_nrctater} != "0" ? " e o(s) Terceiros(s) Garantidor(es)": "") + " estará(ão) em atraso e a <b>Credora/Cooperativa</b> poderá comunicar o fato à SERASA, ao SPC e a qualquer outro órgão encarregado de cadastrar atraso de pagamento e descumprimento de obrigação contratual."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="132" width="466" height="11" uuid="892fd8cd-6b43-4c61-ac05-2aedf0281145">
@@ -1231,7 +1234,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b>6.8.</b> A <b>Credora/Cooperativa</b> poderá, a seu critério, disponibilizar ao <b>Emitente/Cooperado(a)</b> " + ($F{cob_nrctater} > 0 ? "e ao(s) Terceiros(s) Garantidor(es)": "") + " a possibilidade do pagamento das parcelas vencidas e não pagas via boleto bancário. Nesta hipótese, o referido título será emitido pelo Posto de Atendimento mediante solicitação do(s) <b>Emitente/Cooperado(a)</b> " + ($F{cob_nrctater} > 0 ? "e/ou do(s) Terceiro(s) Garantidor(es),": "") + " ou diretamente via conta online disponível no site da Cooperativa."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b>6.8.</b> A <b>Credora/Cooperativa</b> poderá, a seu critério, disponibilizar ao <b>Emitente/Cooperado(a)</b> " + ($F{cob_nrctater} != "0" ? "e ao(s) Terceiros(s) Garantidor(es)": "") + " a possibilidade do pagamento das parcelas vencidas e não pagas via boleto bancário. Nesta hipótese, o referido título será emitido pelo Posto de Atendimento mediante solicitação do(s) <b>Emitente/Cooperado(a)</b> " + ($F{cob_nrctater} != "0" ? "e/ou do(s) Terceiro(s) Garantidor(es),": "") + " ou diretamente via conta online disponível no site da Cooperativa."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="84" width="466" height="11" uuid="bd0eda5b-aec8-45b1-bab8-f7091dfd8d87">

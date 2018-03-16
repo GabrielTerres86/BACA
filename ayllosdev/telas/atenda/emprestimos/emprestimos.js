@@ -1142,6 +1142,9 @@ function controlaOperacao(operacao) {
             $('table > tbody > tr', 'div.divRegistros').each(function() {
                 if ($(this).hasClass('corSelecao')) {
                     nrctremp = $('#nrctremp', $(this)).val();
+					tplcremp = $('#tplcremp', $(this)).val();
+					flgimppr = $('#flgimppr', $(this)).val();
+					flgimpnp = $('#flgimpnp', $(this)).val();
                 }
             });
             break;

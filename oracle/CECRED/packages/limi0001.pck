@@ -2503,13 +2503,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     CURSOR cr_tbgar_cobertura_operacao(pr_cdcooper   tbgar_cobertura_operacao.cdcooper%TYPE
                                       ,pr_nrdconta   tbgar_cobertura_operacao.nrdconta%TYPE
                                       ,pr_nrcontrato tbgar_cobertura_operacao.nrcontrato%TYPE) IS
-      SELECT cob.cdcooper
-            ,cob.nrdconta
+      SELECT cob.nrconta_terceiro
         FROM tbgar_cobertura_operacao cob
        WHERE cob.cdcooper   = pr_cdcooper  
          AND cob.nrdconta   = pr_nrdconta  
          AND cob.nrcontrato = pr_nrcontrato
-         AND cob.nrconta_terceiro = 1;
+         AND cob.inaplicacao_terceiro = 1;
 
     rw_tbgar_cobertura_operacao cr_tbgar_cobertura_operacao%ROWTYPE;
 
@@ -2521,7 +2520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
           ,lim.vllimite -- sobre xx
           ,lim.qtdiavig
           ,lim.dsencfin##1 -- Encargos financeiros
-          ,to_char(lim.dsencfin##2, 'fm990d00') dsencfin##2 -- Juros na contratação – (Aplicável x%)
+          ,nvl(lim.dsencfin##2,0) dsencfin##2 -- Juros na contratação – (Aplicável x%)
           ,lim.dsencfin##3 -- Periodicidade da capitalização (Mensal)
           ,(SELECT nmcidade || ' - ' || cdufdcop FROM crapcop cop WHERE cop.cdcooper = pr_cdcooper AND rownum = 1) nmcidade -- Lugar do Pagamento (cidade local do PA) 
           ,cob.perminimo -- Valor(es) da aplicação(ões) financeira(s) bloqueada(a): x%  do limite de crédito concedido
@@ -2600,6 +2599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_nrcpfcgc        VARCHAR2(50) := '';
 
     vr_contaval        INTEGER := 0;
+		vr_ind_interv      INTEGER := 0;
 
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
@@ -2832,8 +2832,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       -- Sai quando chegar ao fim dos registros
       EXIT WHEN cr_tbgar_cobertura_operacao%NOTFOUND;            
 
-      OPEN cr_crapass(pr_cdcooper => rw_tbgar_cobertura_operacao.cdcooper
-                     ,pr_nrdconta=>  rw_tbgar_cobertura_operacao.nrdconta);
+      OPEN cr_crapass(pr_cdcooper => rw_crapass.cdcooper
+                     ,pr_nrdconta=>  rw_tbgar_cobertura_operacao.nrconta_terceiro);
 
       FETCH cr_crapass INTO rw_crapass;
 
@@ -2860,18 +2860,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         END IF;
 
       END IF;   
+      -- Possui interveninente
+			vr_ind_interv := 1;
             
-      pc_escreve_xml('<nminterv>'|| rw_crapass.nmprimtl || '</nminterv>' ||
-                     '<nrcpfcgc>'|| rw_crapass.nrcpfcgc || '</nrcpfcgc>' ||
+      pc_escreve_xml('<nrdconta_interv>'|| trim(gene0002.fn_mask_conta(rw_crapass.nrdconta)) || '</nrdconta_interv>' ||
+			               '<nminterv>'|| rw_crapass.nmprimtl || '</nminterv>' ||
+                     '<nrcpfcgc>'|| gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc
+										                                         ,rw_crapass.inpessoa) || '</nrcpfcgc>' ||
                      '<dsendere>'|| rw_crapenc.dsendere || '</dsendere>' ||
                      '<nrendere>'|| rw_crapenc.nrendere || '</nrendere>' ||
                      '<complend>'|| rw_crapenc.complend || '</complend>' ||                     
                      '<nmbairro>'|| rw_crapenc.nmbairro || '</nmbairro>' ||
                      '<nmcidade>'|| rw_crapenc.nmcidade || '</nmcidade>' ||
                      '<cdufende>'|| rw_crapenc.cdufende || '</cdufende>' ||
-                     '<nrcepend>'|| rw_crapenc.nrcepend || '</nrcepend>');
+                     '<nrcepend>'|| gene0002.fn_mask_cep(rw_crapenc.nrcepend) || '</nrcepend>');
     END LOOP;
-    pc_escreve_xml('</interveniente>'); 
+    pc_escreve_xml('<vr_ind_interv>'|| vr_ind_interv ||'</vr_ind_interv>' ||
+		               '</interveniente>'); 
     --> Fim interveniente/Garantidor
 
     IF pr_idimpres = 1  THEN --> Completa 

@@ -1399,7 +1399,7 @@ BEGIN
       END IF;
 
       -- relatorio crrl100_03
-      IF rw_craplcr.tpctrato = 1 AND -- modelo = 1 NORMAL
+      IF rw_craplcr.tpctrato IN (1,4) AND -- modelo = 1 NORMAL ou 4 = APLICAÇÃO
          rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
          rw_crawepr.tpemprst = 1 AND -- Tipo PP
          rw_crawepr.inpessoa = 2 THEN -- pessoa juridica
@@ -1413,7 +1413,7 @@ BEGIN
          vr_dsjasper := 'crrl100_14.jasper'; -- nome do jasper
 
       -- relatorio crrl100_04
-      ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
+      ELSIF rw_craplcr.tpctrato IN (1,4) AND -- modelo = 1 NORMAL ou 4 = APLICAÇÃO
          rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
          rw_crawepr.tpemprst = 1 AND -- Tipo PP
          rw_crawepr.inpessoa = 1 THEN -- pessoa fisica
@@ -1469,7 +1469,7 @@ BEGIN
          END IF;
 
       -- relatorios crrl100_02 e crrl100_09 e crrl100_16
-      ELSIF rw_craplcr.tpctrato = 2 AND -- MODELO: 2 ALIENAÇÃO
+      ELSIF rw_craplcr.tpctrato IN (2,4) AND -- MODELO: 2 ALIENAÇÃO ou 4 APLICAÇÃO
             rw_craplcr.cdusolcr = 0 THEN -- Cod Uso = NORMAL
          pc_busca_bens(pr_cdcooper => pr_cdcooper
                      , pr_nrdconta => pr_nrdconta
@@ -1511,7 +1511,7 @@ BEGIN
          END IF;
 
       -- relatorio crrl100_06
-      ELSIF rw_craplcr.tpctrato = 3 AND -- MODELO: = 3 Hipoteca
+      ELSIF rw_craplcr.tpctrato IN (3,4) AND -- MODELO: = 3 Hipoteca ou 4 Aplicação
          rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
          rw_crawepr.tpemprst = 1 THEN -- Tipo PP
          -- clausula 2 do relatorio
@@ -1530,7 +1530,7 @@ BEGIN
                      );
 
       -- relatorio crrl100_07, crrl100_08, crrl100_17 ou crrl100_18
-      ELSIF rw_craplcr.tpctrato = 2 AND -- MODELO: 2 ALIENAÇÃO
+      ELSIF rw_craplcr.tpctrato IN (2,4) AND -- MODELO: 2 ALIENAÇÃO ou 4 Aplicação
             rw_craplcr.cdusolcr = 1 THEN -- Cod Uso = MICROCRÉDITO
         IF rw_crawepr.tpemprst = 1 THEN -- Tipo PP
            IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
@@ -1580,7 +1580,7 @@ BEGIN
                     );
 
       -- relatorio crrl100_01
-      ELSIF  rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
+      ELSIF  rw_craplcr.tpctrato IN (1,4) AND -- MODELO: = 1 NORMAL ou 4 = APLICAÇÃO
         rw_crawepr.tpemprst = 1 AND -- Tipo PP
         rw_craplcr.cdusolcr = 1 AND -- codigo de uso = 1 Microcreditorw_craplcr.dsoperac IN ('FINANCIAMENTO', 'EMPRESTIMO') AND
         rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
@@ -2496,6 +2496,15 @@ BEGIN
          WHERE tco.idcobertura = pr_idcobert;
       rw_cobertura cr_cobertura%ROWTYPE;
 
+      -- Cursor para buscar nome do titular da conta
+      CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+			                 ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+				SELECT ass.nmprimtl
+				  FROM crapass ass
+				 WHERE ass.cdcooper = pr_cdcooper
+				   AND ass.nrdconta = pr_nrdconta;
+			rw_crapass cr_crapass%ROWTYPE;
+			
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
@@ -2516,6 +2525,7 @@ BEGIN
       vr_inaddcob       INTEGER := 0;
       vr_inresaut       INTEGER := 0;
       vr_nrctater       INTEGER := 0;
+			vr_nminterv       crapass.nmprimtl%TYPE;
 
       -- variaveis de críticas
       vr_tab_erro       GENE0001.typ_tab_erro;
@@ -2598,9 +2608,32 @@ BEGIN
           vr_flgachou := cr_cobertura%FOUND;
           CLOSE cr_cobertura;
           -- Se achou
-          IF vr_flgachou THEN
+          IF vr_flgachou THEN	
+						 
+					   -- Se possui conta de interveniente
+					   IF rw_cobertura.nrconta_terceiro > 0 THEN
+							 -- Buscar conta do cooperado
+							 OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+							                ,pr_nrdconta => rw_cobertura.nrconta_terceiro);
+							 FETCH cr_crapass INTO rw_crapass;
+							 
+							 -- Se não encontrou
+							 IF cr_crapass%NOTFOUND THEN
+								 -- Fechar cursor
+								 CLOSE cr_crapass;
+								 -- Gerar crítica
+								 vr_cdcritic := 9;
+								 -- Levantar exceção
+								 RAISE vr_exc_saida;
+							 END IF;
+							 -- Fechar cursor
+							 CLOSE cr_crapass;							 
+							 
+							 -- Capturar nome e conta do interveniente
+							 vr_nminterv := rw_crapass.nmprimtl;
+							 vr_nrctater := gene0002.fn_mask_conta(rw_cobertura.nrconta_terceiro);
+						 END IF;
              vr_inaddcob := 1;
-             vr_nrctater := rw_cobertura.nrconta_terceiro;
              vr_inresaut := rw_cobertura.inresgate_automatico;
              GENE0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                                     '<cob_qtdiatraso>' || rw_cobertura.qtdias_atraso_permitido || '</cob_qtdiatraso>' ||
@@ -2611,7 +2644,8 @@ BEGIN
 
       -- Cria nos de cobertura de operacao e resgate automatico
       GENE0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
-                             '<cob_nrctater>' || vr_nrctater || '</cob_nrctater>' ||
+                             '<cob_nrctater>' || vr_nrctater|| '</cob_nrctater>' ||
+                             '<cob_nminterv>' || trim(vr_nminterv) || '</cob_nminterv>' ||														 
                              '<cob_inaddcob>' || vr_inaddcob || '</cob_inaddcob>' ||
                              '<cob_inresaut>' || vr_inresaut || '</cob_inresaut>');
 
@@ -2681,7 +2715,7 @@ BEGIN
       vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nmsubdir => 'rl');
-
+																						
       -- Solicita geracao do PDF
       gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
                                  , pr_cdprogra  => vr_cdprogra

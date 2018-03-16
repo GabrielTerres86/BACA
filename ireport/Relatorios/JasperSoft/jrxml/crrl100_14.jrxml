@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-03-08T15:46:44 -->
+<!-- 2018-03-13T14:13:27 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.3636363636363662"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="3380"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl100_14"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrrl_emprestimos"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -187,7 +187,7 @@
 	<field name="cob_inresaut" class="java.lang.Integer">
 		<fieldDescription><![CDATA[cob_inresaut]]></fieldDescription>
 	</field>
-	<field name="cob_nrctater" class="java.lang.Integer">
+	<field name="cob_nrctater" class="java.lang.String">
 		<fieldDescription><![CDATA[cob_nrctater]]></fieldDescription>
 	</field>
 	<field name="cob_perminimo" class="java.lang.String">
@@ -195,6 +195,9 @@
 	</field>
 	<field name="cob_qtdiatraso" class="java.lang.String">
 		<fieldDescription><![CDATA[cob_qtdiatraso]]></fieldDescription>
+	</field>
+	<field name="cob_nminterv" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_nminterv]]></fieldDescription>
 	</field>
 	<background>
 		<band height="850" splitType="Stretch">
@@ -732,7 +735,7 @@ a) O Emitente autoriza o débito na mesma conta corrente, para liquidação de e
 					<textElement textAlignment="Justified">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{cob_perminimo} + "% (por cento) do saldo devedor da operação de crédito concedida, vinculado à conta corrente n° " + $F{conta}.trim() + ", de titularidade de " + $F{nmemitente} + "."]]></textFieldExpression>
+					<textFieldExpression><![CDATA[$F{cob_perminimo} + "% (por cento) do saldo devedor da operação de crédito concedida, vinculado à conta corrente n° " + ($F{cob_nrctater} != "0"  ? $F{cob_nrctater} : $F{conta}.trim()) + ", de titularidade de " + ($F{cob_nrctater} != "0" ? $F{cob_nminterv} : $F{nmemitente}) + "."]]></textFieldExpression>
 				</textField>
 				<staticText>
 					<reportElement x="3" y="2" width="461" height="11" uuid="b51b7b87-920f-464d-9bc0-98835c85ec32"/>
@@ -856,7 +859,7 @@ f) Caso não seja verificado o pagamento na data do vencimento, o Emitente estar
 		</band>
 		<band height="46">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} > 0]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} != "0"]]></printWhenExpression>
 			<staticText>
 				<reportElement x="4" y="0" width="466" height="46" uuid="1cb2b6a3-2c0d-48b2-bff9-c071f2a6e0c4"/>
 				<textElement textAlignment="Justified" markup="html">
@@ -867,7 +870,7 @@ f) Caso não seja verificado o pagamento na data do vencimento, o Emitente estar
 		</band>
 		<band height="38">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} == 0]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} == "0"]]></printWhenExpression>
 			<staticText>
 				<reportElement x="4" y="0" width="466" height="38" uuid="04ba7f41-d57c-422c-ad57-6dc88d7679be">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
