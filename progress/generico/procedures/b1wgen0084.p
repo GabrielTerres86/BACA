@@ -3666,9 +3666,9 @@ PROCEDURE grava_efetivacao_proposta:
 		  DO:
              ASSIGN aux_nrdolote_cred = 650004.
 
-             IF   aux_floperac   THEN             /* Financiamento*/
+       IF   aux_floperac   THEN             /* Financiamento*/
                   ASSIGN aux_cdhistor_cred = 2327.
-             ELSE                                 /* Emprestimo */
+       ELSE                                 /* Emprestimo */
                   ASSIGN aux_cdhistor_cred = 2326.
          END.
      ELSE
@@ -3699,16 +3699,16 @@ PROCEDURE grava_efetivacao_proposta:
              END.
          END.
 
-          RUN sistema/generico/procedures/b1wgen0134.p PERSISTENT SET h-b1wgen0134.
+       RUN sistema/generico/procedures/b1wgen0134.p PERSISTENT SET h-b1wgen0134.
 
-          RUN cria_lancamento_lem IN h-b1wgen0134
-                                  (INPUT par_cdcooper,
-                                   INPUT par_dtmvtolt,
-                                   INPUT par_cdagenci,
-                                   INPUT 100,          /* cdbccxlt */
-                                   INPUT par_cdoperad,
-                                   INPUT par_cdagenci,
-                                   INPUT 4,            /* tplotmov */
+       RUN cria_lancamento_lem IN h-b1wgen0134
+                               (INPUT par_cdcooper,
+                                INPUT par_dtmvtolt,
+                                INPUT par_cdagenci,
+                                INPUT 100,          /* cdbccxlt */
+                                INPUT par_cdoperad,
+                                INPUT par_cdagenci,
+                                INPUT 4,            /* tplotmov */
                               INPUT aux_nrdolote_cred, /* nrdolote */
                                    INPUT par_nrdconta,
                               INPUT aux_cdhistor_cred,
@@ -3749,10 +3749,10 @@ PROCEDURE grava_efetivacao_proposta:
                                    INPUT par_cdoperad,
                                    INPUT par_cdagenci,
                                    INPUT 4,            /* tplotmov */
-                                   INPUT aux_nrdolote, /* nrdolote */
-                                   INPUT par_nrdconta,
-                                     INPUT aux_cdhistor,
-                                   INPUT par_nrctremp,
+                                INPUT aux_nrdolote, /* nrdolote */
+                                INPUT par_nrdconta,
+                                INPUT aux_cdhistor,
+                                INPUT par_nrctremp,
                                      INPUT aux_vltotiof, /* Valor IOF */
                                    INPUT par_dtmvtolt,
                                    INPUT craplcr.txdiaria,
@@ -3947,7 +3947,7 @@ PROCEDURE grava_efetivacao_proposta:
           END.
 
           END.
-      
+
         END. /* IF crawepr.idfiniof = 0 THEN */
         
         /* Agrupar valor de tarifas cobradas */
@@ -4153,7 +4153,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.vltarifa = aux_vltarifa
               crapepr.vltaxiof = aux_vltaxiof
               crapepr.vlaqiofc = aux_vlaqiofc
-              crapepr.vltariof = aux_vltariof
+			  crapepr.vltariof = (IF crawepr.tpemprst = 2 THEN aux_vltariof ELSE aux_vltotiof)
               crapepr.iddcarga = aux_idcarga
               crapepr.vliofadc = aux_vltotiofadi
               crapepr.vliofcpl = aux_vltotiofcpl
@@ -4373,9 +4373,9 @@ PROCEDURE grava_efetivacao_proposta:
                                             "o cadastro restritivo.".
                    UNDO EFETIVACAO, LEAVE EFETIVACAO.
 
-                END.
+                 END.
 
-          END.
+       END.
 
        IF aux_cdcritic <> 0   THEN
           UNDO EFETIVACAO , LEAVE EFETIVACAO.
@@ -4884,7 +4884,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
         FIND FIRST crawepr WHERE crawepr.cdcooper = par_cdcooper
                              AND crawepr.nrdconta = par_nrdconta
                              AND crawepr.nrctremp = par_nrctremp NO-LOCK NO-ERROR NO-WAIT.
-                             
+
         IF NOT AVAILABLE crawepr THEN
           DO:
             ASSIGN aux_dscritic = "Registro de proposta de emprestimo nao encontrado.".
@@ -5038,7 +5038,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
 		    DO:
 			    UNDO Desfaz , LEAVE Desfaz.
 		    END.
-     
+
         RUN sistema/generico/procedures/b1wgen0043.p PERSISTEN SET h-b1wgen0043.
 
         RUN volta-atras-rating IN h-b1wgen0043 ( INPUT  par_cdcooper,
