@@ -1618,7 +1618,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                     INNER JOIN crapcob ON crapcob.cdcooper = craptdb.cdcooper AND
                                             crapcob.nrdconta = craptdb.nrdconta AND
                                             crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                                            crapcob.nrdocmto = craptdb.nrdocmto
+                                            crapcob.nrdocmto = craptdb.nrdocmto AND
+                                            crapcob.cdbandoc = craptdb.cdbandoc AND 
+                                            crapcob.nrdctabb = craptdb.nrdctabb 
                     LEFT JOIN crapope ON crapope.cdoperad=craptdb.cdoperad AND crapope.cdcooper=craptdb.cdcooper
                     
                   WHERE                     
@@ -2063,6 +2065,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     vr_nmmodulo        VARCHAR2(50);
     vr_nmrelato        VARCHAR2(50);
     vr_qtdtotal        VARCHAR2(50);
+    
+    vr_dtmvtsys        VARCHAR2(20);
        
      -- CURSOR PARA OBTER OS DADOS DA COOPERATIVA
     CURSOR cr_crapcop IS
@@ -2082,6 +2086,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        WHERE cop.cdcooper = vr_cdcooper;
 
     rw_crapcop cr_crapcop%ROWTYPE;
+    
+    rw_crapdat btch0001.cr_crapdat%rowtype;
 
 	  procedure pc_escreve_xml( pr_des_dados in varchar2
 	                          , pr_fecha_xml in boolean default false
@@ -2121,7 +2127,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
      FETCH cr_crapcop into rw_crapcop;
      CLOSE cr_crapcop; 
      
-
+     
+     OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+        FETCH btch0001.cr_crapdat into rw_crapdat;
+        IF    btch0001.cr_crapdat%notfound then
+              CLOSE btch0001.cr_crapdat;
+              vr_cdcritic := 1;
+              raise vr_exc_erro;
+        END   IF;
+        CLOSE btch0001.cr_crapdat; 
+     
+     
+     vr_dtmvtsys := to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR');
+     
+   
 	    if  vr_des_reto = 'NOK' then
 	        if  vr_tab_erro.exists(vr_tab_erro.first) then
 	            vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
@@ -2153,7 +2172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        
       pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
       
-      pc_escreve_xml('<cdagenci>' ||	vr_cdagenci || '</cdagenci>' ||
+      pc_escreve_xml('<cdagenci>' ||	pr_cdagenci || '</cdagenci>' ||
                      '<qtregist>' || vr_qtregist  || '</qtregist>'
                     );
       
@@ -2196,11 +2215,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     
     vr_params := 'PR_NMRESCOP##' || vr_nmrescop || '@@' ||
                  'PR_NMRELATO##' || vr_nmrelato || '@@' ||
-                 'PR_DTMVTOLT##' || pr_dtmvtolt || '@@' ||
+                 'PR_DTMVTOLT##' || vr_dtmvtsys || '@@' ||
                  'PR_NMMODULO##' || vr_nmmodulo || '@@' ||
                  'PR_DTACESSO##' || vr_dtacesso || '@@' ||
                  'PR_HRACESSO##' || vr_hracesso || '@@' ||
                  'PR_QTREGIST##' || vr_qtregist || '@@' ||
+                 'PR_CDAGENCI##' || pr_cdagenci || '@@' ||
                  'PR_VLRTOTAL##' || vr_qtdtotal;     
       
       --> Solicita geracao do PDF
