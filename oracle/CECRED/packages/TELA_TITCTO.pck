@@ -2153,7 +2153,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        
       pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
       
-      pc_escreve_xml('<cdagenci>' ||	vr_cdagenci ||'</cdagenci>');
+      pc_escreve_xml('<cdagenci>' ||	vr_cdagenci || '</cdagenci>' ||
+                     '<qtregist>' || vr_qtregist  || '</qtregist>'
+                    );
+      
       
        -- ler os registros de titcto e incluir no xml
 	    vr_index := vr_tab_dados_titcto.first;
