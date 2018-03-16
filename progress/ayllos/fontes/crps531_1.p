@@ -354,8 +354,6 @@ DEF VAR aux_NumCtrlCIR    AS CHAR                                   NO-UNDO. /* 
 DEF VAR aux_NumRemessaOr  AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
 DEF VAR aux_AgIF          AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
 DEF VAR aux_FinlddCIR     AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
-DEF VAR aux_NumCtrlSTR    AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
-DEF VAR aux_ISPBIF        AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
