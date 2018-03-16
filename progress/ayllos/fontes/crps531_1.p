@@ -335,7 +335,7 @@ DEF VAR aux_FinlddCli     AS CHAR                                   NO-UNDO.
 DEF VAR aux_NumCtrlLTR    AS CHAR                                   NO-UNDO.
 DEF VAR aux_ISPBLTR       AS CHAR                                   NO-UNDO.
 DEF VAR aux_IdentdPartCamr AS CHAR                                  NO-UNDO.
-DEF VAR aux_NumCtrlSTR          AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumCtrlSTR    AS CHAR                                   NO-UNDO.
 DEF VAR aux_NumCtrlSLC    AS CHAR                                   NO-UNDO.
 DEF VAR aux_ISPBIF        AS CHAR                                   NO-UNDO.
 DEF VAR aux_TpInf         AS CHAR                                   NO-UNDO.
@@ -349,6 +349,10 @@ DEF VAR aux_CNPJNLiqdantCredtd AS CHAR                              NO-UNDO.
 DEF VAR aux_IdentLinhaBilat AS CHAR                                 NO-UNDO.
 DEF VAR aux_TpDebCred     AS CHAR                                   NO-UNDO.
 DEF VAR aux_insere_msg    AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumCtrlCIROr  AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+DEF VAR aux_NumCtrlCIR    AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+DEF VAR aux_NumRemessaOr  AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+DEF VAR aux_AgIF          AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -3679,7 +3683,7 @@ PROCEDURE trata_numerario_cir0020.
        ELSE
        IF hSubNode:NAME = "DtMovto" THEN
           ASSIGN aux_DtMovto = aux_descrica.
-            END.
+   END.
 
 END PROCEDURE.
 
