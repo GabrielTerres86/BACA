@@ -138,7 +138,7 @@
 							"Correcao por Valor Fixo". SD 761675 (Carlos Rafael Tanholi)
                09/10/2017 - Retornar protocolo da ultima alteracao no plano na
                             procedure obtem-novo-plano (David)
-               
+
                04/11/2018 - Adicionar validacao para nao permitir cadastrar plano de cotas
                             se a data do primeiro debito for ?.
                             Ajustado detalhamento das mensagens de validacao para a data
@@ -1048,7 +1048,7 @@ PROCEDURE valida-dados-plano:
             DO:
               ASSIGN aux_cdcritic = 0
                      aux_dscritic = "Data de inicio do plano nao pode ser nos dias 29, 30 ou 31".
-                LEAVE.
+              LEAVE.
             END.
 
         /* Verifica se valor informado nao esta abaixo do valor minimo para 
@@ -2371,7 +2371,7 @@ PROCEDURE dados_protocolo:
     ELSE
     DO:
         IF INDEX(STRING(tt-autorizacao.vlcorfix), ",") > 0 THEN
-            ASSIGN aux_vlcorfix = STRING(tt-autorizacao.vlcorfix).
+            ASSIGN aux_vlcorfix = TRIM(STRING(tt-autorizacao.vlcorfix,"zzz,zzz,zz9.99")).
         ELSE
             ASSIGN aux_vlcorfix = STRING(tt-autorizacao.vlcorfix) + ",00".
 
@@ -2386,7 +2386,7 @@ PROCEDURE dados_protocolo:
                           tt-autorizacao.diadebit
 
            par_dsinfor3 = "O associado acima qualificado autoriza a realizacao " +
-                          "do debito mensal em sua conta corrente de deposito a vista," +
+                          "do debito mensal em sua conta corrente de deposito a vista, " +
                           "no valor de R$ " + 
                           TRIM(STRING(tt-autorizacao.vlprepla,
                                       "zzz,zzz,zz9.99")) + " (" +

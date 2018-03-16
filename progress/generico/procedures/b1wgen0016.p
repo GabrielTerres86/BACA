@@ -524,11 +524,14 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
                            ser cadastrados para debito automatico (David).
                            
               27/11/2017 - Encontrar agendamento para cancelamento atraves do parametro idlancto (David)
-					   
+						   
               
               
               07/12/2018 - Adicionar a opcao de regaste de custodia, opcao 18
                            (Rafael Monteiro - MoutS)
+
+              28/02/2018 - Alterar procedure convenios_aceitos para retornar o nome resumido mais amigavel, 
+                           conforme acontece na b1wgen0092.busca_convenios_codbarras. (Anderson - P285)
 
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
@@ -1276,7 +1279,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     ELSE 
                     IF  tbgen_trans_pend.tptransacao = 17 THEN /*OK*/
                               aux_dstiptra = "Cancelamento SMS Cobrança".
-                                                              ELSE
+                    ELSE 
                     IF tbgen_trans_pend.tptransacao = 18 THEN
                       DO:
                         aux_dstiptra = "Resgate de cheque em custodia".
@@ -1383,7 +1386,7 @@ PROCEDURE paga_convenio:
            par_cdsegmto = ""
            aux_cdcritic = 0
            par_dscritic = ""
-                     
+
            par_dstransa = pc_paga_convenio_prog.pr_dstransa
                           WHEN pc_paga_convenio_prog.pr_dstransa <> ?
            par_dsprotoc = pc_paga_convenio_prog.pr_dsprotoc
@@ -1402,11 +1405,11 @@ PROCEDURE paga_convenio:
                           WHEN pc_paga_convenio_prog.pr_cdcritic <> ?
            par_dscritic = pc_paga_convenio_prog.pr_dscritic
                           WHEN pc_paga_convenio_prog.pr_dscritic <> ?.
-             
+                     
     /* Se houveram criticas, retorno NOK */
     IF  aux_cdcritic > 0 OR par_dscritic <> "" THEN
              RETURN "NOK".
-                                                         
+             
     RETURN "OK".
 
 END PROCEDURE.
@@ -1427,6 +1430,11 @@ PROCEDURE convenios_aceitos:
     DEF VAR aux_dssegmto AS CHAR EXTENT 8                                  NO-UNDO.
     DEF VAR aux_fldebaut AS LOGI                                           NO-UNDO.
     DEF VAR aux_cdhisdeb LIKE crapcon.cdhistor                             NO-UNDO.
+    DEF VAR aux_hhini_bancoob AS CHAR                                      NO-UNDO.
+    DEF VAR aux_hhfim_bancoob AS CHAR                                      NO-UNDO.
+    DEF VAR aux_hhcan_bancoob AS CHAR                                      NO-UNDO.
+	DEF VAR aux_nmempcon AS CHAR NO-UNDO.
+    
     
     EMPTY TEMP-TABLE tt-convenios_aceitos.
     
@@ -1476,7 +1484,8 @@ PROCEDURE convenios_aceitos:
                                    crapcon.flginter = TRUE 
                                    BY crapcon.nmextcon:
 								   
-        ASSIGN aux_cdhisdeb = crapcon.cdhistor.
+        ASSIGN aux_cdhisdeb = crapcon.cdhistor
+               aux_nmempcon = crapcon.nmrescon.
 
         IF  crapcon.flgcnvsi = TRUE THEN
             DO:		    				
@@ -1489,7 +1498,13 @@ PROCEDURE convenios_aceitos:
                 IF  NOT AVAIL crapscn THEN
                     ASSIGN aux_fldebaut = NO.
                 ELSE
+                    DO:
                     ASSIGN aux_fldebaut = YES.
+                        IF(crapscn.dsnomres <> "") then
+                           ASSIGN aux_nmempcon = crapscn.dsnomres.
+                        ELSE
+                           ASSIGN aux_nmempcon = crapscn.dsnomcnv.
+                    END.
             END.
         ELSE
             DO:                 
@@ -1512,13 +1527,19 @@ PROCEDURE convenios_aceitos:
                 IF  NOT AVAILABLE gnconve  THEN
                     ASSIGN aux_fldebaut = NO.
                 ELSE 
+                    DO:
                     ASSIGN aux_fldebaut = YES
                            aux_cdhisdeb = gnconve.cdhisdeb.					
+                               
+                        IF gnconve.cdconven <> 87  AND
+                           gnconve.cdconven <> 108 THEN
+                           ASSIGN aux_nmempcon = gnconve.nmempres.
+                    END.
             END.								   
     
         CREATE tt-convenios_aceitos.
         ASSIGN tt-convenios_aceitos.nmextcon = crapcon.nmextcon
-               tt-convenios_aceitos.nmrescon = crapcon.nmrescon
+               tt-convenios_aceitos.nmrescon = aux_nmempcon
                tt-convenios_aceitos.cdempcon = crapcon.cdempcon 
                tt-convenios_aceitos.cdsegmto = crapcon.cdsegmto
                tt-convenios_aceitos.dssegmto = aux_dssegmto[crapcon.cdsegmto]
@@ -4991,7 +5012,7 @@ PROCEDURE busca_darf_das:
             ASSIGN tt-tbpagto_darf_das_trans_pend.idagendamento        =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "idagendamento".
             ASSIGN tt-tbpagto_darf_das_trans_pend.idrowid              =      xText:NODE-VALUE  WHEN xField:NAME = "idrowid".    
             
-        END.
+          END.                
         END.
         
         SET-SIZE(ponteiro_xml) = 0. 
@@ -11177,10 +11198,10 @@ PROCEDURE aprova_trans_pend:
                                                 INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
                                                 INPUT 0, /*tt-tbtarif_pacote_trans_pend.vlpacote,*/
                                                 INPUT aux_conttran).
-                    END. /* 13 */
-					
-					ELSE IF tt-tbgen_trans_pend.tptransacao = 18 THEN /*  cheque em custodia */
-                    DO: /*Inicio 18*/
+                    END. /* 13 */                
+ 
+                ELSE IF tt-tbgen_trans_pend.tptransacao = 18 THEN /*  cheque em custodia */
+                  DO: /*Inicio 18*/
                     /*Se ultimo aprovador e se a tela eh a de confirmacao faca*/
                     IF par_indvalid = 1 AND aux_conttran = 1 THEN
                       DO:
@@ -11261,10 +11282,10 @@ PROCEDURE aprova_trans_pend:
                       
                       
                         
-                  END. /*FIM 18*/  					
- 
-                        IF par_indvalid = 1 THEN
-                      DO:
+                  END. /*FIM 18*/                  
+                  
+                IF par_indvalid = 1 THEN
+                    DO: 
                         FOR FIRST tbgen_aprova_trans_pend WHERE tbgen_aprova_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente
                                                             AND tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = aux_nrcpfrep EXCLUSIVE-LOCK:
                     

@@ -45,27 +45,27 @@
                             do XML. (Projeto Boleto formato carne - Douglas)
 
                04/02/2016 - Ajustes Projeto Negativação Serasa (Daniel) 
-                           
-                           15/08/2016 - Removido validacao de convenio na consulta da tela
-                                                        manutencao, conforme solicitado no chamado 497079.
-                                                        (Kelvin)
+			   
+			   15/08/2016 - Removido validacao de convenio na consulta da tela
+							manutencao, conforme solicitado no chamado 497079.
+							(Kelvin)
 
-                           03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
                02/01/2017 - Melhorias referentes a performance no IB na parte 
-                                        de cobrança, incluido flprotes no xml de retorno
-                                                        (Tiago/Ademir SD573538).                  
+			                de cobrança, incluido flprotes no xml de retorno
+							(Tiago/Ademir SD573538).  			   
 
                20/04/2017 - Adicionado vencimento original (dtvctori) e 
                             flag de boleto dda (flgcbdda) no xml de retorno
                             (P340 - Rafael)
-														
-			   05/07/2017 - Ajuste da flgcbdda, inserido condicao de ROLLOUT
-							e tratamento para descontos, Prj. 340 (Jean Michel)
+                                                                                                                
+                           05/07/2017 - Ajuste da flgcbdda, inserido condicao de ROLLOUT
+                                                        e tratamento para descontos, Prj. 340 (Jean Michel)
 
-			   30/10/2017 - Trocar a chamada da rotina verifica-rollout pela
+                           30/10/2017 - Trocar a chamada da rotina verifica-rollout pela
                             verifica-titulo-npc-cip (SD784234 - AJFink)
-
+                            
                07/12/2017 - Adicionado o retorno dos campo dtmvtatu e flgvenci
                             (Douglas - Chamado 805008)
 
@@ -321,7 +321,7 @@ DO:
                           "</dsmsgerr>".  
     RETURN "NOK".
 END.
-	
+        
 FOR EACH tt-consulta-blt NO-LOCK:
 
     ASSIGN aux_nmprimtl_ben = tt-consulta-blt.nmprimtl
@@ -336,11 +336,11 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                                 OUTPUT aux_npc_cip). 
 
     IF tt-consulta-blt.cdmensag = 0 /*OR 
-	   tt-consulta-blt.cdmensag = 1*/ THEN
-		ASSIGN aux_vldescto = 0.
-	ELSE
-		ASSIGN aux_vldescto = tt-consulta-blt.vldescto.										   
-		
+           tt-consulta-blt.cdmensag = 1*/ THEN
+                ASSIGN aux_vldescto = 0.
+        ELSE
+                ASSIGN aux_vldescto = tt-consulta-blt.vldescto.                                                                                   
+
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "<BOLETO><nossonro>" +
                                    tt-consulta-blt.nossonro +
@@ -484,7 +484,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                     "<vltitulo_atualizado>" + STRING(tt-consulta-blt.vltitulo_atualizado,"zzzzzzzzz9.99") + "</vltitulo_atualizado>" +
                                     "<vlmormul_atualizado>" + STRING(tt-consulta-blt.vlmormul_atualizado,"zzzzzzzzz9.99") + "</vlmormul_atualizado>" +
                                     "<flg2viab>" + STRING(tt-consulta-blt.flg2viab) + "</flg2viab>" +
-                                                                        "<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
+									"<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
                                     /* Aviso SMS */
                                     "<inavisms>" + STRING(tt-consulta-blt.inavisms) + "</inavisms>" +
                                     "<insmsant>" + STRING(tt-consulta-blt.insmsant) + "</insmsant>" +
@@ -496,7 +496,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                       ELSE 
                                         tt-consulta-blt.dtvctori, "99/99/9999") + "</dtvctori>" + 
                                    "<flgcbdda>" + STRING(IF aux_npc_cip = 1 THEN "S" ELSE "N") + "</flgcbdda>" +
-								   "<vldocmto>" + STRING(tt-consulta-blt.vldocmto)+ "</vldocmto>" +
+                                   "<vldocmto>" + STRING(tt-consulta-blt.vldocmto)+ "</vldocmto>" +
                                    "<dtmvtatu>" + STRING(tt-consulta-blt.dtmvtatu,"99/99/9999") + "</dtmvtatu>" +
                                    "<flgvenci>" + STRING(tt-consulta-blt.flgvenci) + "</flgvenci>" +
                                    "<vldocmto_boleto>" + STRING(tt-consulta-blt.vldocmto_boleto,"zzzzzzzzz9.99") + "</vldocmto_boleto>" +
@@ -511,8 +511,8 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    "<dsdinst3>" + STRING(tt-consulta-blt.dsdinst3) + "</dsdinst3>" +                                   
                                    "<dsdinst4>" + STRING(tt-consulta-blt.dsdinst4) + "</dsdinst4>" +                                   
                                    "<dsdinst5>" + STRING(tt-consulta-blt.dsdinst5) + "</dsdinst5>" +                                                                      
-                                   "</BOLETO>".       
-  END.
+                                   "</BOLETO>".
+END.
 
 DELETE PROCEDURE h-b1wgen0010.
 
