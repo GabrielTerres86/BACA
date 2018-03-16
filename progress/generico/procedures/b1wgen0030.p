@@ -516,6 +516,7 @@
 
                16/03/2018 - Preenchimento dos campos  'flgstlcr' e 'cddlinha' na procedure busca_dados_dsctit (Leonardo Oliveira - GFT)
                
+			   16/03/2018 - Filtrar as operações de desconto que foram inclusas no sistema e não tiverem a liberação/efetivação dentro de até 120 dias corridos em 'busca_borderos' (Leonardo Oliveira - GFT)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -6349,6 +6350,11 @@ PROCEDURE busca_borderos:
                 crapbdt.insitbdt = 4                  THEN  
                 NEXT.
 
+		 IF crapbdt.dtmvtolt <> ?  THEN
+            IF (crapbdt.dtmvtolt <= par_dtmvtolt - 120) AND
+               (crapbdt.insitbdt = 1 OR crapbdt.insitbdt = 2) THEN
+                NEXT.
+
         ASSIGN aux_qttottit = 0
                aux_vltottit = 0.
                
@@ -6904,7 +6910,9 @@ PROCEDURE busca_dados_dsctit:
                     tt-desconto_titulos.qtutiliz = 0
                     tt-desconto_titulos.cddopcao = 2
                     tt-desconto_titulos.dtrenova = ?
-                    tt-desconto_titulos.perrenov = 0.
+                    tt-desconto_titulos.perrenov = 0
+                    tt-desconto_titulos.cddlinha = 0
+                    tt-desconto_titulos.flgstlcr = ?.
                     
              FOR EACH craptdb WHERE (craptdb.cdcooper = par_cdcooper AND
                                      craptdb.nrdconta = par_nrdconta AND
