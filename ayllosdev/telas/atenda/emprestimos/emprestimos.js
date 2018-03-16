@@ -739,7 +739,7 @@ function controlaOperacao(operacao) {
             break;
         case 'AI_ALIENACAO':
             mensagem = 'abrindo altera ...';
-            cddopcao = 'A';            
+            cddopcao = 'A';
             break;
         case 'A_ALIENACAO' :
 
@@ -857,7 +857,7 @@ function controlaOperacao(operacao) {
             contHipotecas = 0;
             contIntervis = 0;
             resposta = '';
-            cddopcao = 'I';           
+            cddopcao = 'I';
             break;
         case 'I_DADOS_AVAL' :
             if (contAvalistas < nrAvalistas) {
