@@ -280,6 +280,7 @@
 			arrayProposta['inintegra_cont'] = '<? echo getByTagName($proposta,'inintegra_cont'); ?>';
 			arrayProposta['tpfinali'] = '<? echo getByTagName($proposta,'tpfinali'); ?>';
 
+
 			vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];
 			bkp_dslcremp = arrayProposta["dslcremp"];
@@ -933,7 +934,7 @@
 		$vlrtotal = str_replace(',', '.', str_replace('.', '', $vlempres));
 		if ($idfiniof > 0){				
 			$vlrtotal += $vltarifaF + $valoriofF;
-		}
+	}
 
 
 		//Recalcula o CET, levando em consideração o valor da parcela retornado no cálculo do IOF

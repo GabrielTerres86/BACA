@@ -1312,6 +1312,8 @@ BEGIN
                                pr_dsbemgar => vr_dsbemgar, 
                                pr_cdprogra => 'CRPS149', 
                                pr_flgemail => 'N', 
+                               pr_tpemprst => rw_crabepr.tpemprst,
+                               pr_idfiniof => rw_crabepr.idfiniof,
                                pr_vlrtarif => vr_vlrtarif, 
                                pr_vltrfesp => vr_vltrfesp, 
                                pr_vltrfgar => vr_vltrfgar, 
