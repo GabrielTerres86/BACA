@@ -109,6 +109,9 @@
                            PRJ339-CRM (Odirlei-AMcom)
 			  27/02/2018 - Na procedure grava_dados removido o endereco comercial quando a
                      natureza da ocupaçao for 12(Sem vinculo) (Tiago #857499)
+					 
+			  16/06/2018 - Bloqueio realizado para que nao seja possivel salvar o CNPJ da empresa
+						   com o cpf do titular. (SD 860231 - Kelvin).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -567,7 +570,22 @@ PROCEDURE Valida_Dados:
                    aux_cdcritic = 27.
                LEAVE Valida.
             END.
-
+		
+		FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+						   crapttl.nrdconta = par_nrdconta AND
+						   crapttl.idseqttl = par_idseqttl 
+						   NO-LOCK NO-ERROR.
+						   
+		IF  STRING(par_nrcpfemp) = STRING(crapttl.nrcpfcgc) THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "nrcpfemp"
+                   aux_cdcritic = 0.
+				   aux_dscritic = "CNPJ nao pode ser o mesmo do titular".
+				   
+               LEAVE Valida.
+            END.
+			
         /* funcao */
         IF  par_dsproftl = "" THEN
             DO:
