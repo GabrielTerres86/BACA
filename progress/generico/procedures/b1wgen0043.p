@@ -246,6 +246,8 @@
 
               26/01/2018 - PRGJ450 - Criada funcao verificaQualificacao para posicionar o contrato para 
 						   pegar a Qualificacao da Operacao (Controle). (Diego Simas - AMcom)
+               
+			  16/03/2018 - Alterado proc calcula_rating_fisica, caso as variaveis aux_vlsalari e rat_vlsalcje sejam nulas, atribuir 0 a elas. Chamado 830113 Alcemir (Mouts).
 .............................................................................*/
   
   
@@ -5225,10 +5227,17 @@ PROCEDURE calcula_rating_fisica:
                        crapcje.idseqttl = 1 
                        NO-LOCK NO-ERROR.
 
-    IF   AVAIL crapcje   THEN
-       ASSIGN aux_vlsalari = crapcje.vlsalari
-              rat_vlsalcje = crapcje.vlsalari.
-
+    IF   AVAIL crapcje   THEN	      	
+    
+ 	    ASSIGN aux_vlsalari = crapcje.vlsalari
+               rat_vlsalcje = crapcje.vlsalari.
+	  
+	IF aux_vlsalari = ? THEN 
+	   ASSIGN aux_vlsalari = 0.
+	
+	IF rat_vlsalcje = ? THEN
+	   ASSIGN rat_vlsalcje = 0.
+	 		  
     IF  (crapttl.vlsalari + 
          crapttl.vldrendi[1] + crapttl.vldrendi[2] + 
          crapttl.vldrendi[3] + crapttl.vldrendi[4] + 
