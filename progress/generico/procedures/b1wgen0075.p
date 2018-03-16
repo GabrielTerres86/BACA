@@ -575,17 +575,18 @@ PROCEDURE Valida_Dados:
 						   crapttl.nrdconta = par_nrdconta AND
 						   crapttl.idseqttl = par_idseqttl 
 						   NO-LOCK NO-ERROR.
-						   
-		IF  STRING(par_nrcpfemp) = STRING(crapttl.nrcpfcgc) THEN
-            DO:
-               ASSIGN 
-                   par_nmdcampo = "nrcpfemp"
-                   aux_cdcritic = 0.
-				   aux_dscritic = "CNPJ nao pode ser o mesmo do titular".
-				   
-               LEAVE Valida.
-            END.
-			
+		IF AVAIL crapttl THEN
+		DO:
+			IF  STRING(par_nrcpfemp) = STRING(crapttl.nrcpfcgc) THEN
+				DO:
+				   ASSIGN 
+					   par_nmdcampo = "nrcpfemp"
+					   aux_cdcritic = 0.
+					   aux_dscritic = "CNPJ da empresa nao pode ser o CPF da conta".
+					   
+				   LEAVE Valida.
+				END.
+		END.	
         /* funcao */
         IF  par_dsproftl = "" THEN
             DO:
