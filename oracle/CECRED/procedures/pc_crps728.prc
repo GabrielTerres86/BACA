@@ -65,10 +65,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
   CURSOR cr_crapcop IS
     SELECT cop.cdcooper
           ,cop.nmrescop
-          ,cop.cdagectl
+          ,cop.cdagebcb 
       FROM crapcop cop
      WHERE cop.flgativo = 1  -- Somente ativas
        ORDER BY cdcooper;
+
+  -- Busca dos dados da cooperativa central
+  CURSOR cr_crapcop_central (pr_cdcooper INTEGER) IS
+    SELECT cop.cdcooper
+          ,cop.nmrescop
+          ,cop.cdagebcb 
+      FROM crapcop cop
+     WHERE cop.cdcooper = pr_cdcooper;     
+  rw_crapcop_central cr_crapcop_central%ROWTYPE;   
 
   -- Buscar controle
   CURSOR cr_gncontr(pr_cdcooper crapcop.cdcooper%TYPE
@@ -169,13 +178,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                                              pr_cdcooper => 3, 
                                              pr_cdacesso => 'DIR_CONNECT_BANCOOB');
       
+    -- Busca dos dados da cooperativa central
+    OPEN cr_crapcop_central (pr_cdcooper => 3);
+    FETCH cr_crapcop_central INTO rw_crapcop_central;
+    IF cr_crapcop_central%NOTFOUND THEN
+      CLOSE cr_crapcop_central;
+      vr_dscritic := 'Cooperativa central nao encontrada.';
+      RAISE vr_exc_saida;
+    ELSE
+      CLOSE cr_crapcop_central;
+    END IF;
+    
+      
     vr_dtproces := SYSDATE;
     
     --> Listar cooperativas ativas
     FOR rw_crapcop IN cr_crapcop LOOP
         
       BEGIN
-        vr_nmarquiv := to_char(rw_crapcop.cdagectl,'fm0000')||'-RT%'||to_char(vr_dtproces,'RRRRMMDD')||'%';
+      
+        vr_nmarquiv := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||to_char(vr_dtproces,'RRRRMMDD')||'%'||rw_crapcop_central.nmrescop||'%';
         
         --> Buscar arquivos 
         gene0001.pc_lista_arquivos(pr_path     => vr_dsdircon||'/recebe', 
@@ -305,6 +327,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                                                        pr_tpincons => 2, 
                                                        pr_dsregist => 'Arquivo: '|| vr_tab_arquiv(idx), 
                                                        pr_dsincons => vr_dscritic, 
+                                                       pr_flg_enviar => 'N', 
                                                        pr_des_erro => vr_des_erro, 
                                                        pr_dscritic => vr_dscritic_aux);
                     
@@ -337,6 +360,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                                                      pr_dsregist => 'Arquivo: '|| vr_tab_arquiv(idx) ||
                                                                     '<br> NSR: '|| vr_tab_linhas(i)('NRSEQREG').numero, 
                                                      pr_dsincons => vr_tab_linhas(i)('DSMTVREC').texto, 
+                                                     pr_flg_enviar => 'N',
                                                      pr_des_erro => vr_des_erro, 
                                                      pr_dscritic => vr_dscritic_aux);  
                   
@@ -383,6 +407,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                                                    pr_tpincons => 1, 
                                                    pr_dsregist => 'Arquivo: '|| vr_tab_arquiv(idx), 
                                                    pr_dsincons => 'Arquivo incompleto: registro Z não encontrado.', 
+                                                   pr_flg_enviar => 'N',
                                                    pr_des_erro => vr_des_erro, 
                                                    pr_dscritic => vr_dscritic_aux);
                     

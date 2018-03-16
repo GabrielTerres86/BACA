@@ -273,7 +273,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                         ,pr_dtcompet OUT DATE                 --> Data da competencia
                                         ,pr_dtvencto OUT DATE                 --> Data de vencimento/validade
                                         ,pr_vldocmto OUT NUMBER               --> Valor do documento
-                                        ,pr_nrsqgrde OUT NUMBER               --> Sequencial da GRDE 
+                                        ,pr_nrsqgrde OUT VARCHAR2             --> Sequencial da GRDE 
                                         ,pr_dscritic OUT VARCHAR2);           --> Critica
                                         
   PROCEDURE pc_validacoes_bancoob (pr_cdcooper IN crapcop.cdcooper%type      -- Codigo Cooperativa
@@ -5053,7 +5053,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                         ,pr_dtcompet OUT DATE                 --> Data da competencia
                                         ,pr_dtvencto OUT DATE                 --> Data de vencimento/validade
                                         ,pr_vldocmto OUT NUMBER               --> Valor do documento
-                                        ,pr_nrsqgrde OUT NUMBER               --> Sequencial da GRDE 
+                                        ,pr_nrsqgrde OUT VARCHAR2             --> Sequencial da GRDE 
         
                                         ,pr_dscritic OUT VARCHAR2) IS         --> Critica
     /* ..........................................................................
@@ -5096,7 +5096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      vr_nrrecolh      NUMBER;
      vr_vldocmto      NUMBER;
      vr_nrdocmto      NUMBER;
-     vr_nrsqgrde      NUMBER;
+     vr_nrsqgrde      VARCHAR2(44);
      
      
     BEGIN
@@ -5321,7 +5321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      vr_dtcompet    DATE  ;
      vr_dtvencto    DATE  ;
      vr_vldocmto    NUMBER;
-     vr_nrsqgrde    NUMBER;
+     vr_nrsqgrde    VARCHAR2(44);
      
      vr_dstxtxml    VARCHAR2(2000);
      
@@ -5438,7 +5438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                      '<cdtributo>'       || vr_dsempcon                       ||'</cdtributo>'      ||
                      '<dtvalidade>'      || to_char(vr_dtvencto,'DD/MM/RRRR') ||'</dtvalidade>'     ||
                      '<competencia>'     || to_char(vr_dtcompet,'MM/RRRR')    ||'</competencia>'    ||
-                     '<nrseqgrde>'       || vr_nrsqgrde                       ||'<nrseqgrde>'       ||
+                     '<nrseqgrde>'       || vr_nrsqgrde                       ||'</nrseqgrde>'      ||
                      '<identificador>'   || vr_nrrecolh                       ||'</identificador>'  ||   
                      '<nrdocumento>'     || vr_nrdocmto                       ||'</nrdocumento>'    ||      
                      '<vlrtotal>'        || vr_vldocmto                       ||'</vlrtotal>';
