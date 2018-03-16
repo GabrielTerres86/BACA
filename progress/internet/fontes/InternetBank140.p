@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Junho/2015                        Ultima atualizacao: 16/11/2015
+   Data    : Junho/2015                        Ultima atualizacao: 13/03/2017
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -12,6 +12,9 @@
    Objetivo  :
       
    Alteracoes: 16/11/2015 - Estado de crise (Gabriel-RKAM).
+   
+			   13/03/2017 - Adicionando paginacao na tela de folha, conforme 
+			     		    solicitado no chamado 626091 (Kelvin).               						
 ..............................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }
@@ -23,7 +26,8 @@ DEF INPUT  PARAM par_cdcooper LIKE crapcop.cdcooper                    NO-UNDO.
 DEF INPUT  PARAM par_nrdconta LIKE crapass.nrdconta                    NO-UNDO.
 DEF INPUT  PARAM par_dtiniper LIKE crapdat.dtmvtolt                    NO-UNDO.
 DEF INPUT  PARAM par_dtfimper LIKE crapdat.dtmvtolt                    NO-UNDO.
-
+DEF INPUT  PARAM par_nrregist AS INTEGER 	                           NO-UNDO.
+DEF INPUT  PARAM par_nriniseq AS INTEGER 	                           NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
@@ -44,7 +48,6 @@ DEF VAR aux_cdcritic AS INT                                            NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
 DEF VAR h-b1wgen0015 AS HANDLE                                         NO-UNDO.
-
 
 RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET h-b1wgen0015.
 
@@ -69,6 +72,8 @@ RUN STORED-PROCEDURE pc_busca_dados_pagto_ib aux_handproc = PROC-HANDLE NO-ERROR
                       INPUT par_nrdconta,
                       INPUT par_dtiniper,
                       INPUT par_dtfimper,
+					  INPUT par_nrregist,
+					  INPUT par_nriniseq,
                       OUTPUT 0,
                       OUTPUT "",
                       OUTPUT "").
