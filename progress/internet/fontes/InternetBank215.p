@@ -3,7 +3,7 @@
    Programa: sistema/internet/fontes/InternetBank215.p
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : Ederson Luiz Camargo
+   Autor   : Dionathan Henchel
    Data    : Março/2018                       Ultima atualizacao:   /  /    
    
    Dados referentes ao programa:
@@ -18,9 +18,9 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/var_oracle.i   }
 
-DEF  INPUT PARAM par_cdcooper AS INTE                                  NO-UNDO.
-DEF  INPUT PARAM par_nrdconta AS INTE                                  NO-UNDO.
-DEF  INPUT PARAM par_idseqttl AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_cdcooper LIKE crapttl.cdcooper                    NO-UNDO.
+DEF  INPUT PARAM par_nrdconta LIKE crapttl.nrdconta                    NO-UNDO.
+DEF  INPUT PARAM par_idseqttl LIKE crapttl.idseqttl                    NO-UNDO.
 DEF  INPUT PARAM par_cdcanal AS INTE                                   NO-UNDO.
 
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -30,10 +30,10 @@ DEF VAR xml_ret AS CHAR 									           NO-UNDO.
  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
  
  RUN STORED-PROCEDURE pc_consulta_banner aux_handproc = PROC-HANDLE NO-ERROR
-                         (INPUT par_cdcooper,    /* pr_cdcooper */
-                          INPUT par_nrdconta,    /* pr_nrdconta */
-						  INPUT par_idseqttl,    /* pr_idseqttl */
-						  INPUT par_cdcanal,	 /* pr_cdcanal  */
+                         (INPUT par_cdcooper,
+                          INPUT par_nrdconta,
+                          INPUT par_idseqttl,
+						  INPUT par_cdcanal,
                           OUTPUT "").
 
     CLOSE STORED-PROC pc_consulta_banner aux_statproc = PROC-STATUS
@@ -46,4 +46,4 @@ DEF VAR xml_ret AS CHAR 									           NO-UNDO.
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = xml_ret.
 
-/*...........................................................................*/
+RETURN "OK".
