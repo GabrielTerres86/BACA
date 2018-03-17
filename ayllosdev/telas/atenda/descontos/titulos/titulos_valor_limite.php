@@ -60,7 +60,7 @@
 				<br />
 			<?php } else { ?>
 
-				<input type="hidden" id="cddlinha" name="cddlinha" value="<? echo $nrctrlim; ?>" />
+				<input type="hidden" id="cddlinha" name="cddlinha" value="<? echo $cddlinha; ?>" />
 
 			<?php }?>
 			
