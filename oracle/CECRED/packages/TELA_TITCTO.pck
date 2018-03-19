@@ -3,7 +3,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TITCTO IS
     Programa : TELA_TITCTO
     Sistema  : Ayllos Web
     Autor    : Luis Fernando (GFT)
-    Data     : Março - 2018                 Ultima atualizacao: 19/03/2018
+    Data     : Março - 2018                 Ultima atualizacao: 08/03/2018
 
     Dados referentes ao programa:
 
@@ -185,6 +185,16 @@ PROCEDURE pc_obtem_dados_loteamento_web(pr_nrdconta    IN crapass.nrdconta%TYPE 
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       );
                                       
+PROCEDURE pc_obtem_dados_lotes (pr_cdcooper    IN crapcop.cdcooper%TYPE, --> Código da Cooperativa
+                                    pr_dtmvtolt    IN VARCHAR2,                  --> Data da movimentacao
+                                    pr_cdagenci    IN INTEGER,                   --> Numero do PA
+                                    --> out
+                                    pr_qtregist    OUT INTEGER,                  -- Quantidade de resultados
+                                    pr_tab_dados_lotes   out  typ_tab_dados_lotes, --> Tabela de retorno
+                                    pr_cdcritic out number,                         --> codigo da critica
+                                    pr_dscritic out varchar2                        --> descricao da critica.                    
+                                );
+    
 PROCEDURE pc_gerar_impressao_titcto_c(
                                         pr_nrdconta in  crapass.nrdconta%type --> conta do associado
                                         ,pr_tpcobran    IN CHAR                  --> Filtro de tipo de cobranca
@@ -216,7 +226,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     Programa : TELA_TITCTO
     Sistema  : Ayllos Web
     Autor    : Luis Fernando (GFT)
-    Data     : Março - 2018                 Ultima atualizacao: 19/03/2018
+    Data     : Março - 2018                 Ultima atualizacao: 08/03/2018
 
     Dados referentes ao programa:
 
