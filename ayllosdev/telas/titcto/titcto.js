@@ -373,7 +373,7 @@ function formataCabecalho() {
 
     // Input
     cCddopcao = $('#cddopcao', '#' + frmCab);
-    cCddopcao.css({'width': '800px'});
+    cCddopcao.css({'width': '970px'});
 
     // Outros   
     cTodosCabecalho = $('input[type="text"], select', '#' + frmCab);
@@ -467,17 +467,17 @@ function formataOpcaoC() {
     var ordemInicial = new Array();
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '67';
-    arrayLargura[1] = '67';
-    arrayLargura[2] = '70';
-    arrayLargura[3] = '77';
-    arrayLargura[4] = '35';
-    arrayLargura[5] = '60';
-    arrayLargura[6] = '65';
-    arrayLargura[7] = '65';
-    arrayLargura[8] = '';
-    arrayLargura[9] = '80';
-    arrayLargura[10] = '80';
+    arrayLargura[0] = '68';
+    arrayLargura[1] = '68';
+    arrayLargura[2] = '68';
+    arrayLargura[3] = '75';
+    arrayLargura[4] = '40';
+    arrayLargura[5] = '70';
+    arrayLargura[6] = '80';
+    arrayLargura[7] = '80';
+    arrayLargura[8] = '80';
+    arrayLargura[9] = '100';
+    arrayLargura[10] = '';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'left';
@@ -490,7 +490,7 @@ function formataOpcaoC() {
     arrayAlinha[7] = 'right';
     arrayAlinha[8] = 'center';
     arrayAlinha[9] = 'left';
-    arrayAlinha[9] = 'left';
+    arrayAlinha[10] = 'left';
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 
