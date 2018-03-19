@@ -115,7 +115,7 @@ RUN STORED-PROCEDURE pc_processa_tributos
                                        ,INPUT par_dtvencto               /* pr_dtvencto */
                                        ,INPUT par_dtapurac               /* pr_dtapurac */
                                        ,INPUT par_vlrtotal               /* pr_vlrtotal */
-                                       ,INPUT par_nrrefere               /* pr_nrrefere */
+                                       ,INPUT STRING(par_nrrefere)       /* pr_nrrefere */
                                        ,INPUT par_dsidepag               /* pr_dsidepag */
                                        ,INPUT par_dtmvtopg               /* pr_dtmvtopg */
                                        ,INPUT par_idagenda               /* pr_idagenda */
