@@ -1,5 +1,5 @@
 /*!
- * FONTE        : blqjud.js                     Última alteração: 29/07/2016
+ * FONTE        : blqjud.js                     Última alteração: 16/01/2018
  * CRIAÇÃO      : Guilherme / SUPERO
  * DATA CRIAÇÃO : 23/04/2013
  * OBJETIVO     : Biblioteca de funções da tela BLQJUD
@@ -20,6 +20,13 @@
 
                   29/07/2016 - Ajuste para controle de permissão sobre as subrotinas de cada opção
                                (Adriano - SD 492902).
+
+                  29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)
+				  
+				  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
+
+                  02/01/2018 - Melhoria 460 - (Diogo - Mouts) - Ajuste no valor de desbloqueio, pois sem a validação, 
+                               sempre desbloqueava o valor total
  * --------------
  */
  
@@ -135,12 +142,14 @@ function controlaLayout() {
     rDtenvdes           = $('label[for="dtenvdes"]' ,'#frmDesbloqueio');
 	rDsinfdes           = $('label[for="dsinfdes"]' ,'#frmDesbloqueio');
 	rFldestrf			= $('label[for="fldestrf"]' ,'#frmDesbloqueio');
+	rVldesblo           = $('label[for="vldesblo"]', '#frmDesbloqueio');
 	
 	cNrofides           = $('#nrofides' ,'#frmDesbloqueio');
 	cNrprodes           = $('#nrprodes' ,'#frmDesbloqueio');
 	cDsjuides           = $('#dsjuides' ,'#frmDesbloqueio');
     cDtenvdes           = $('#dtenvdes' ,'#frmDesbloqueio');
     cDsinfdes           = $('#dsinfdes' ,'#frmDesbloqueio');
+    cVldesblo           = $('#vldesblo' ,'#frmDesbloqueio');
     cFldestrf			= $('input[id="#fldestrf"]' ,'#frmDesbloqueio');	
 
     // CAMPOS frmConsulta
@@ -172,6 +181,7 @@ function controlaLayout() {
 	$('#divAcaojud').css({'display':'none'});
 	$('#divAssociado').css({'display':'none'});
 	$('#divRegistros').css({'display':'none'});	
+	$('#divRegistrosOficios').css({ 'display': 'none' });
 	$('#divDesbloqueio').css({'display':'none'});	
 	$('#div_tabblqjud').css({'display':'none'});
 	
@@ -197,6 +207,8 @@ function controlaLayout() {
             rVlbloque.addClass('rotulo').css({'width':'170px'});
             rVlsaldo.addClass('rotulo-linha').css({'width':'180px'});
 			
+            rVlbloque.show();
+            rVlbloque.next().show();
 			
             cNroficio.addClass('rotulo').css({'width':'200px'});
             cNrproces.addClass('rotulo').css({'width':'200px'});
@@ -231,6 +243,9 @@ function controlaLayout() {
             rNrctacon.addClass('rotulo-linha').css({'width':'125px'});
             cNroficon.addClass('rotulo').css({'width':'200px'});
             cNrctacon.addClass('rotulo-linha').css({'width':'110px'}).setMask('INTEGER','zzzzzzzzzzzzz9','','');
+			
+            rVlbloque.hide();
+            rVlbloque.next().hide();
 			
 			cCampos.habilitaCampo();
 			cCamposDesbloqueio.habilitaCampo();
@@ -814,19 +829,32 @@ function layoutConsulta() {
 
 	// Configurações da tabela
 	var divRegistro = $('div.divRegistros');		
+    var divRegistroOficio = $('div.divRegistrosOficios');
 	var tabela      = $('table', divRegistro );
+    var tabelaOficio = $('table', divRegistroOficio);
 	var linha       = $('table > tbody > tr', divRegistro );
 		
-	divRegistro.css('height','180px');
+    divRegistro.css('height', '90px');
+    divRegistroOficio.css('height', '90px');
 		
 	var ordemInicial = new Array();
 	ordemInicial = [[0,0]];			
 		
+    var ordemInicialOficio = new Array();
+    ordemInicialOficio = [[0, 0]];
+
 		var arrayLargura = new Array();
 		arrayLargura[0] = '79px';
-		arrayLargura[1] = '119px';
-		arrayLargura[2] = '117px';
-		arrayLargura[3] = '113px';
+        arrayLargura[1] = '115px';
+        arrayLargura[2] = '124px';
+        arrayLargura[3] = '60px';
+        arrayLargura[4] = '44px';
+        arrayLargura[5] = '46px';
+
+    var arrayLarguraOficio = new Array();
+        arrayLarguraOficio[0] = '170px';
+        arrayLarguraOficio[1] = '170px';
+        arrayLarguraOficio[2] = '125px';
 		
 	var arrayAlinha = new Array();
 		arrayAlinha[0] = 'right';
@@ -834,14 +862,25 @@ function layoutConsulta() {
 		arrayAlinha[2] = 'right';
 		arrayAlinha[3] = 'right';
 		arrayAlinha[4] = 'center';
+        arrayAlinha[5] = 'center';
+
+    var arrayAlinhaOficio = new Array();
+        arrayAlinhaOficio[0] = 'center';
+        arrayAlinhaOficio[1] = 'center';
+        arrayAlinhaOficio[2] = 'center';
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );		
+    tabelaOficio.formataTabela(ordemInicialOficio, arrayLarguraOficio, arrayAlinhaOficio, '');
 			
 	divRotina.css('width',largura);	
 	$('#divRotina').css({'height':altura,'width':largura});
 	
 	layoutPadrao();
 	removeOpacidade('#divRegistros');
+
+    $('form#frmConsultaDadosOficio .divRegistrosOficios table tbody tr:first').click();
+    $('form#frmConsultaDados .divRegistros table tbody tr:first').click();
+
 }
 
 function executaPesquisa() {
@@ -886,6 +925,7 @@ function executaPesquisa() {
 	cDtenvdes.addClass('data').css({'width':'80px'});
 	cDsinfdes.addClass('rotulo').css({'width':'330px'});
 	cFldestrf.addClass('rotulo').css({'width':'100px'});
+	rVldesblo.addClass('rotulo').css({ 'width': '200px' });
 		
 	if ( $.browser.msie ) {	
 		cFllauton.addClass('rotulo').css({'width':'18px'});			
@@ -950,6 +990,7 @@ function executaPesquisa() {
 		$("#dsinfdes","#frmDesbloqueio").desabilitaCampo();
 		$("#flgsim","#frmDesbloqueio").desabilitaCampo();		
 		$("#flgnao","#frmDesbloqueio").desabilitaCampo();	
+		$("#vldesblo", "#frmDesbloqueio").desabilitaCampo();
 		controlaBotoes(4);												
 				
 	} else if (cdoperac == 'D' ) {
@@ -1268,10 +1309,16 @@ function efetuaDesbloqueio() {
 	var vlbloque = $("#vlbloque","#frmAcaojud").val();
 	var flblcrft = $("#flblcrft","#frmAcaojud").val();
 	var dsinfadc = $("#dsinfadc","#frmAcaojud").val();
+	var cdmodali = $("#cdmodali","#frmAcaojud").val();
 	
 	var nrofides = $("#nrofides","#frmDesbloqueio").val();
 	var dtenvdes = $("#dtenvdes","#frmDesbloqueio").val();
 	var dsinfdes = $("#dsinfdes", "#frmDesbloqueio").val();
+	var vldesblo = converteMoedaFloat($("#vldesblo", "#frmDesbloqueio").val());
+	var vltmpbloque = converteMoedaFloat($("#vltmpbloque", "#frmDesbloqueio").val());
+
+    // cpf pode ter mais de uma conta, por isso, pegar a conta selecionada
+	nrdconta = normalizaNumero($('#frmConsultaDados .divRegistros tr.corSelecao td:first span').text());
 
 	var fldestrf = 0;
 
@@ -1300,6 +1347,17 @@ function efetuaDesbloqueio() {
 	}
 	cDsinfdes.removeClass('campoErro');
 		
+	if (vldesblo == '' || vldesblo == '0' || vldesblo == '0.00' || vldesblo == '0,00' || vldesblo <= 0) {
+		showError('error','Valor do Desbloqueio não informado.','Alerta - BLQJUD','focaCampoErro(\'vldesblo\',\'frmDesbloqueio\');');
+		return false;
+	}
+	
+	if (vldesblo > vltmpbloque) {
+		showError('error','Valor do Desbloqueio está limitado ao valor bloqueado ('+$("#vltmpbloque", "#frmDesbloqueio").val()+').','Alerta - BLQJUD','focaCampoErro(\'vldesblo\',\'frmDesbloqueio\');');
+		return false;
+	}
+	cVldesblo.removeClass('campoErro');
+
 	showMsgAguardo("Aguarde, efetuando opera&ccedil;&atilde;o ...");
 	
 	// Executa script de consulta através de ajax
@@ -1323,6 +1381,8 @@ function efetuaDesbloqueio() {
 			dtenvdes: dtenvdes,
 			dsinfdes: dsinfdes,
 			fldestrf: fldestrf,
+			vldesblo: vldesblo,
+			cdmodali: cdmodali,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) { 
@@ -1330,8 +1390,8 @@ function efetuaDesbloqueio() {
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
-				eval(response);
 				$('#btnDesbloqueio','#divBotoes').hide();		
+				eval(response);
 			}
 		
 	});
@@ -1497,7 +1557,7 @@ function formataSenha() {
 	cSenha		= $('#codsenha', '#frmSenha');
 	
 	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
-    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
+    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','30');		
 	
 	$('#divConteudoSenha').css({'width':'400px', 'height':'120px'});	
 
@@ -1712,7 +1772,14 @@ function uncheck(){
 	flgradio = 'false';
 }
 
-function selecionaBloqueio(seq){
+function selecionaOficio(oficio, conta) {
+    $('form#frmConsultaDados div.divRegistros table tr.tr_oficio').hide();
+    $('form#frmConsultaDados div.divRegistros table tr.ofi_' + oficio + "_" + conta).css('display', 'table-row');
+    $('form#frmConsultaDados div.divRegistros table tr.ofi_' + oficio + "_" + conta).first().click();
+}
+
+function selecionaBloqueio(seq, cdmodali) {
+    $('#divDesbloqueio').css({ 'display': 'block' });
 	if (arrbloqueios[seq]['flblcrft'] == "yes"){
 		$('#flblcrft','#frmAcaojud').val(arrbloqueios[seq]['flblcrft']).attr('disabled','true').attr('checked','true');
 	}else{
@@ -1729,18 +1796,25 @@ function selecionaBloqueio(seq){
     $('#nrofides','#frmDesbloqueio').val(arrbloqueios[seq]['nrofides']);
     $('#dtenvdes','#frmDesbloqueio').val(arrbloqueios[seq]['dtenvdes']);
     $('#dsinfdes','#frmDesbloqueio').val(arrbloqueios[seq]['dsinfdes']);
+	$('#cdmodali','#frmAcaojud').val(cdmodali);
 	
 	if (arrbloqueios[seq]['fldestrf'] == "yes"){
 		$('#flgsim','#frmDesbloqueio').prop('checked','true');
+        $('legend', '#frmDesbloqueio').html("Dados Judiciais - Ofício Transferência");
 	}else{   
         $('#flgnao','#frmDesbloqueio').prop('checked','true');
+        $('legend', '#frmDesbloqueio').html("Dados Judiciais - Ofício Desbloqueio");
 	}
 	
 	if(cCddopcao.val() == "T"){
 		$('#divDesbloqueio').css({'display':'none'});
 	}else if (arrbloqueios[seq]['dtblqfim'] != "" || cCdoperac.val() == "A" || cCdoperac.val() == "C" || cCdoperac.val() == "D") {
+		$('#vldesblo','#frmDesbloqueio').val('');//valor bloqueio, preencho o máximo
+		$('#vltmpbloque','#frmDesbloqueio').val(''); //campo para controle e validação do valor
 		if((($('#div_tabblqjud').css('display') == "block") && (arrbloqueios[seq]['dtblqfim'] != "" || cCdoperac.val() == "D"))){
 			$('#divDesbloqueio').css({'display':'block'});
+			$('#vldesblo','#frmDesbloqueio').val(arrbloqueios[seq]['vlbloque']);//valor bloqueio, preencho o máximo
+			$('#vltmpbloque','#frmDesbloqueio').val(arrbloqueios[seq]['vlbloque']); //campo para controle e validação do valor
 		}
 	}
 	

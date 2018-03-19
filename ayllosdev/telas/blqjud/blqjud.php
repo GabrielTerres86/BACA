@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 23/04/2013
  * OBJETIVO     : Mostrar tela BLQJUD
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)
  *					   
  * --------------
  */
@@ -99,8 +99,9 @@
 																			<? include('form_impressao.php'); ?>
                                                                             <? include('form_operacao.php'); ?>
 																			<? include('form_consulta.php'); ?>	
-																			<? include('form_desbloqueio.php'); ?>
+																			<div id="div_tabblqjud"></div>
                                                                             <? include('form_acaojud.php'); ?>																			
+																			<? include('form_desbloqueio.php'); ?>
 																			<? include('form_pesquisa_ass.php'); ?>
 																																																												
 																			<div id="divBotoes" style='text-align:center; margin-bottom: 10px; display:none;' >

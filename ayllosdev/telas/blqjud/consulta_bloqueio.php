@@ -25,7 +25,9 @@
 	//***             08/02/2017 - Chamda da funcao RemoveCaracteresInvalido ***// 
 	//*** 						   para ajustar o problema do chamado		 ***//
 	//***	  					   562089 (Kelvin)							 ***//                                                    
-	//**************************************************************************//
+  //***                                                                      ***//
+  //***             29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)   ***//
+	//****************************************************************************//
 	
 	
 	session_start();
@@ -101,6 +103,24 @@
 	}		
 	$dados = $xmlObjConsulta->roottag->tags[0]->tags;
 	
+  // Monta o xml de requisição
+	$xmlConsultaOficio  = "";
+	$xmlConsultaOficio .= "<Root>";
+	$xmlConsultaOficio .= "	<Cabecalho>";
+	$xmlConsultaOficio .= "		<Bo>b1wgen0155.p</Bo>";
+	$xmlConsultaOficio .= "		<Proc>consulta-bloqueio-jud-oficio</Proc>";
+	$xmlConsultaOficio .= "	</Cabecalho>";
+	$xmlConsultaOficio .= "	<Dados>";
+	$xmlConsultaOficio .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xmlConsultaOficio .= "		<nrctacon>".$nrctacon."</nrctacon>";
+	$xmlConsultaOficio .= "		<nroficon>".$nroficon."</nroficon>";
+	$xmlConsultaOficio .= "	</Dados>";
+	$xmlConsultaOficio .= "</Root>";
+	
+	$xmlResultOficio = getDataXML($xmlConsultaOficio);
+	$xmlObjConsultaOficio = getObjectXML($xmlResultOficio);
+	$oficios = $xmlObjConsultaOficio->roottag->tags[0]->tags;
+	
 	echo "<script>";
 	echo "arrbloqueios.length = 0;"; //limpando array
 	$seq = 0;
@@ -121,7 +141,10 @@
 		echo "arrbloqu".$seq."['nrofides'] = '".getByTagName($banco->tags,'NROFIDES')."';";
 		echo "arrbloqu".$seq."['dtenvdes'] = '".getByTagName($banco->tags,'DTENVDES')."';";
 		echo "arrbloqu".$seq."['dsinfdes'] = '".getByTagName($banco->tags,'DSINFDES')."';";
+		echo "arrbloqu".$seq."['idmodali'] = '".getByTagName($banco->tags,'IDMODALI')."';";
+		echo "arrbloqu".$seq."['vlbloque'] = '".number_format(str_replace(",",".",getByTagName($banco->tags,'VLBLOQUE')),2,",",".")."';";
 		echo "arrbloqueios[".$seq."] = arrbloqu".$seq.";";
+
 		$seq = $seq + 1;
 	}	
 	echo "$('#divConsulta').css({'display':'block'});";
@@ -130,13 +153,24 @@
 	echo "</script>";
 				
 	if ($operacao == "C" || $operacao == "D" || $operacao == "A") {
+		include('form_consulta_oficio.php');
 		include('form_consulta_dados.php'); 
 		if($operacao == "C" || $operacao == "D"){
-			include('form_desbloqueio.php');	
+			//include('form_desbloqueio.php');
 		}
 		echo "<script>$('#div_tabblqjud').css({'display':'block'});layoutConsulta();</script>";
 	}
-	// selecinando a primeira linha do grid
-	echo "<script>if(arrbloqueios.length > 0){ selecionaBloqueio(0);} hideMsgAguardo();</script>";
+	
+	//Busca a primeira linha no grid de ofícios e a seleciona. Ao selecionar, preenche com o valor total bloqueado o campo de desbloqueio
+	$tmp_nroficio = '';
+	$tmp_nrdconta = '';
+	if (count($oficios) > 0) { 
+		$oficio = $oficios[0];
+		$tmp_nroficio = preg_replace("/[^0-9]/", "", getByTagName($oficio->tags,'NROFICIO'));
+		$tmp_nrdconta = getByTagName($oficio->tags,'NRDCONTA');
+	}
+
+	echo "<script>if(arrbloqueios.length > 0){ selecionaOficio('$tmp_nroficio','$tmp_nrdconta');} hideMsgAguardo();</script>";
+
 	
 ?>
