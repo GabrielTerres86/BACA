@@ -332,7 +332,18 @@ DO  WHILE TRUE  ON ENDKEY UNDO, LEAVE:
              END.
 
              FOR EACH tt-tarifxml:
-                 
+
+				 IF (tt-tarifxml.d-DtRef < aux_dtiniper) OR (tt-tarifxml.d-DtRef > aux_dtfimper) THEN
+                     DO:
+ 					   ASSIGN glb_cdcritic = 0
+                              glb_dscritic = "Data dos registros não conferem com parâmetros digitados. Registro a ser importado: Mês:" +
+											STRING(MONTH(tt-tarifxml.d-DtRef), "99") + " - Ano:" +
+                                            STRING(YEAR(tt-tarifxml.d-DtRef)).
+                       MESSAGE glb_dscritic.
+                       BELL.               
+                       NEXT.	
+                    END.
+					                 
                  CREATE crapetf.
                  ASSIGN crapetf.cdorigem = tel_cdorigem
                         crapetf.dsmensag = tt-tarifxml.c-CodMsgOr
