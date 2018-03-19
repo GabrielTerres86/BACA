@@ -7674,7 +7674,13 @@ function buscaLiquidacoes(operacao) {
     var vltotemp = parseFloat($('#valueRot1').html().replace(/[.R$ ]*/g, '').replace(',', '.'));
     var cdlcremp = $('#cdlcremp', '#' + nomeForm).val();
 
-    if ((vltotemp > 0) && (cdlcremp != 100)) {
+    //Variaveis para contabilizar e deixar selecionar LIMITE/ADP quando não houver empréstimos a renegociar
+    var vlDepAVista = parseFloat($('#valueRot3').html().replace(/[.R$ ]*/g, '').replace(',', '.'));
+    var vlLimCred = parseFloat($('#valueRot4').html().replace(/[.R$ ]*/g, '').replace(',', '.'));
+    var vlLimiteAdp = vlDepAVista + vlLimCred;
+
+    //Alterado a forma como abre as liquidacoes, para considerar também limite/adp quando não houver empréstimos a renegociar
+    if (((vltotemp > 0) && (cdlcremp != 100)) || vlLimiteAdp < 0) {
 
         showMsgAguardo('Aguarde, buscando liquida&ccedil;&otilde;es...');
 
@@ -7886,16 +7892,15 @@ function controlaLayoutLiq(operacao) {
         // Tratamento para verificar Tipo de Emprestimo
         switch (arrayLiquidacoes[i]['tpemprst']) {
             case '0': // TR
-            aux_tpemprst = 'TR';
+                aux_dstipemp = 'TR';
                 break;
             case '1': // Pre-Fixado
-            aux_tpemprst = 'PP';
+                aux_dstipemp = 'PP';
                 break;
             case '2': // Pos-Fixado
-                aux_tpemprst = 'POS';
+                aux_dstipemp = 'POS';
                 break;
         }
-
         if (aux_idenempr == 2){
             aux_cdfinemp = ' - ';
             aux_cdlcremp = ' - ';
