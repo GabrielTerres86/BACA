@@ -7670,7 +7670,13 @@ function buscaLiquidacoes(operacao) {
     var vltotemp = parseFloat($('#valueRot1').html().replace(/[.R$ ]*/g, '').replace(',', '.'));
     var cdlcremp = $('#cdlcremp', '#' + nomeForm).val();
 
-    if ((vltotemp > 0) && (cdlcremp != 100)) {
+    //Variaveis para contabilizar e deixar selecionar LIMITE/ADP quando não houver empréstimos a renegociar
+    var vlDepAVista = parseFloat($('#valueRot3').html().replace(/[.R$ ]*/g, '').replace(',', '.'));
+    var vlLimCred = parseFloat($('#valueRot4').html().replace(/[.R$ ]*/g, '').replace(',', '.'));
+    var vlLimiteAdp = vlDepAVista + vlLimCred;
+
+    //Alterado a forma como abre as liquidacoes, para considerar também limite/adp quando não houver empréstimos a renegociar
+    if (((vltotemp > 0) && (cdlcremp != 100)) || vlLimiteAdp < 0) {
 
         showMsgAguardo('Aguarde, buscando liquida&ccedil;&otilde;es...');
 
