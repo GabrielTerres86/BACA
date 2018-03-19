@@ -691,6 +691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         FROM crapass cs
         WHERE cs.cdcooper = pr_cdcooper
         AND cs.cdagenci = decode(pr_cdagenci,0,cs.cdagenci,pr_cdagenci);
+       
 
       /* Buscar dados de pessoas jurídicas */
       CURSOR cr_crapjur(pr_cdcooper IN crapjur.cdcooper%TYPE) IS  --> Código da cooperativa
