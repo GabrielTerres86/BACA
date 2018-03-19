@@ -213,7 +213,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             
                28/12/2017 - #783710 Melhoria das informações dos logs quando ñ encontrar os 
                             registros crapfdc; e alterado o arquivo de log dos mesmos, de 
-                            proc_batch para proc_message (Carlos)
+                            proc_batch para proc_message (Carlos)			   
+
+               19/03/2018 - Consistencia para considerar dias úteis ou corridos na atualização do saldo - Daniel(AMcom)
      ............................................................................. */
 
      DECLARE
@@ -694,6 +696,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_dtmvtolt  DATE;
        vr_dtmvtopr  DATE;
        vr_dtmvtoan  DATE;
+
+       vr_dtrisclq_aux DATE;
+       vr_qtddsdev_aux  NUMBER:= 0;
 
        -- Variáveis de CPMF
        vr_dtinipmf DATE;
