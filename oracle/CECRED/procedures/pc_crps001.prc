@@ -2459,12 +2459,38 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              -- Atualiza dias de credito em liquidacao
              --Se estourou limite
              IF vr_flgestou THEN
-               --Incrementar quantidade dias devedor
-               rw_crapsld.qtddsdev:= Nvl(rw_crapsld.qtddsdev,0) + 1;
-               --Incrementar quantidade total dias conta devedora
-               rw_crapsld.qtddtdev:= Nvl(rw_crapsld.qtddtdev,0) + 1;
-               --Incrementar quantidade dias saldo negativo risco
-               rw_crapsld.qtdriclq:= Nvl(rw_crapsld.qtdriclq,0) + 1;
+               --
+               vr_dtrisclq_aux := nvl(rw_crapsld.dtrisclq, rw_crapdat.dtmvtolt);
+               --
+               IF vr_dtrisclq_aux <= '01/02/2018' THEN -- Daniel(AMcom)
+                 -- Considerar dias úteis -- Regra atual
+                 -- Incrementar quantidade dias devedor
+                 rw_crapsld.qtddsdev := Nvl(rw_crapsld.qtddsdev,0) + 1;
+                 -- Incrementar quantidade total dias conta devedora
+                 rw_crapsld.qtddtdev := Nvl(rw_crapsld.qtddtdev,0) + 1;
+                 -- Incrementar quantidade dias saldo negativo risco
+                 rw_crapsld.qtdriclq := Nvl(rw_crapsld.qtdriclq,0) + 1;                 
+               ELSE
+                 -- Considerar dias corridos -- Daniel(AMcom)
+                 -- Guardar posição inicial de quantidade de dias SLD
+                 vr_qtddsdev_aux     := nvl(rw_crapsld.qtddsdev,0);
+                 --
+                 IF rw_crapdat.dtmvtolt = vr_dtrisclq_aux THEN
+                   -- Incrementar quantidade dias corridos devedor 
+                   rw_crapsld.qtddsdev := 1;
+                   -- Incrementar quantidade total dias corridos conta devedora
+                   rw_crapsld.qtddtdev := nvl(rw_crapsld.qtddtdev,0)+1;
+                   -- Incrementar quantidade dias corridos saldo negativo risco
+                   rw_crapsld.qtdriclq := 1;
+                 ELSE 
+                   -- Incrementar quantidade dias corridos devedor 
+                   rw_crapsld.qtddsdev := (rw_crapdat.dtmvtolt-vr_dtrisclq_aux);
+                   -- Incrementar quantidade total dias corridos conta devedora
+                   rw_crapsld.qtddtdev := nvl(rw_crapsld.qtddtdev,0)+(rw_crapsld.qtddsdev-vr_qtddsdev_aux);
+                   -- Incrementar quantidade dias corridos saldo negativo risco
+                   rw_crapsld.qtdriclq := (rw_crapdat.dtmvtolt-vr_dtrisclq_aux);                   
+                 END IF;
+               END IF;
              ELSE
                --Zerar quantidade dias devedor
                rw_crapsld.qtddsdev:= 0;
