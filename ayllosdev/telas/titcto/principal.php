@@ -109,6 +109,7 @@ switch ($operacao) {
         $xml .= "   <tpdepesq>".$tpdepesq."</tpdepesq>";
         $xml .= "   <nrdocmto>".$nrdocmto."</nrdocmto>";
         $xml .= "   <vltitulo>".converteFloat($vltitulo)."</vltitulo>";
+        $xml .= "   <dtmvtolt>".$glbvars['dtmvtolt']."</dtmvtolt>";
         $xml .= " </Dados>";
         $xml .= "</Root>";
 
