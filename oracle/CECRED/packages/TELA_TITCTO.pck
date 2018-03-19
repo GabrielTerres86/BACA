@@ -3,7 +3,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TITCTO IS
     Programa : TELA_TITCTO
     Sistema  : Ayllos Web
     Autor    : Luis Fernando (GFT)
-    Data     : Março - 2018                 Ultima atualizacao: 08/03/2018
+    Data     : Março - 2018                 Ultima atualizacao: 19/03/2018
 
     Dados referentes ao programa:
 
@@ -32,30 +32,30 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TITCTO IS
   
   /* Tabela de retorno para o resumo do dia */
   TYPE typ_reg_resumo_dia IS RECORD(
-       	 qtcredit	INTEGER,
-         vlcredit 	NUMBER,
-         qttitulo	INTEGER,
-         vltitulo 	NUMBER,
-         qtderesg	INTEGER,
-         vlderesg 	NUMBER,
-         qtdpagto	INTEGER,
-         vldpagto 	NUMBER
+         qtcredit INTEGER,
+         vlcredit   NUMBER,
+         qttitulo INTEGER,
+         vltitulo   NUMBER,
+         qtderesg INTEGER,
+         vlderesg   NUMBER,
+         qtdpagto INTEGER,
+         vldpagto   NUMBER
   );
   TYPE typ_tab_resumo_dia IS TABLE OF typ_reg_resumo_dia INDEX BY BINARY_INTEGER;
   
   /* Tabela de retorno para conciliacao contabil */
   TYPE typ_reg_dados_conciliacao IS RECORD(
-          dtvencto		DATE,
-          qtsldant		INTEGER,
-          vlsldant		NUMBER,
-          qtderesg		INTEGER,
-          vlderesg		NUMBER,
-          qtvencid		INTEGER,
-          vlvencid		NUMBER,
-          qttitulo		INTEGER,
-          vltitulo		NUMBER,
-          qtcredit		INTEGER,
-          vlcredit		NUMBER
+          dtvencto    DATE,
+          qtsldant    INTEGER,
+          vlsldant    NUMBER,
+          qtderesg    INTEGER,
+          vlderesg    NUMBER,
+          qtvencid    INTEGER,
+          vlvencid    NUMBER,
+          qttitulo    INTEGER,
+          vltitulo    NUMBER,
+          qtcredit    INTEGER,
+          vlcredit    NUMBER
   );
   TYPE typ_tab_dados_conciliacao IS TABLE OF typ_reg_dados_conciliacao INDEX BY BINARY_INTEGER;
   
@@ -209,13 +209,14 @@ PROCEDURE pc_gerar_impressao_titcto_c(
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       );
 END TELA_TITCTO;
+
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
   /*---------------------------------------------------------------------------------------------------------------------
     Programa : TELA_TITCTO
     Sistema  : Ayllos Web
     Autor    : Luis Fernando (GFT)
-    Data     : Março - 2018                 Ultima atualizacao: 08/03/2018
+    Data     : Março - 2018                 Ultima atualizacao: 19/03/2018
 
     Dados referentes ao programa:
 
@@ -363,50 +364,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                         ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       ) is
-	  -- variaveis de retorno
-	  vr_tab_dados_titcto typ_tab_dados_titcto;
+    -- variaveis de retorno
+    vr_tab_dados_titcto typ_tab_dados_titcto;
 
-	  vr_tab_erro         gene0001.typ_tab_erro;
-	  vr_qtregist         number;
+    vr_tab_erro         gene0001.typ_tab_erro;
+    vr_qtregist         number;
     vr_des_reto varchar2(3);
     
-	  -- variaveis de entrada vindas no xml
-	  vr_cdcooper integer;
-	  vr_cdoperad varchar2(100);
-	  vr_nmdatela varchar2(100);
-	  vr_nmeacao  varchar2(100);
-	  vr_cdagenci varchar2(100);
-	  vr_nrdcaixa varchar2(100);
-	  vr_idorigem varchar2(100);
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
 
-	  -- variáveis para armazenar as informaçoes em xml
-	  vr_des_xml        clob;
-	  vr_texto_completo varchar2(32600);
-	  vr_index          PLS_INTEGER;
+    -- variáveis para armazenar as informaçoes em xml
+    vr_des_xml        clob;
+    vr_texto_completo varchar2(32600);
+    vr_index          PLS_INTEGER;
 
-	  procedure pc_escreve_xml( pr_des_dados in varchar2
-	                          , pr_fecha_xml in boolean default false
-	                          ) is
-	  begin
-	      gene0002.pc_escreve_xml( vr_des_xml
-	                             , vr_texto_completo
-	                             , pr_des_dados
-	                             , pr_fecha_xml );
-	  end;
+    procedure pc_escreve_xml( pr_des_dados in varchar2
+                            , pr_fecha_xml in boolean default false
+                            ) is
+    begin
+        gene0002.pc_escreve_xml( vr_des_xml
+                               , vr_texto_completo
+                               , pr_des_dados
+                               , pr_fecha_xml );
+    end;
 
-	  begin
-	    gene0004.pc_extrai_dados( pr_xml      => pr_retxml
-	                            , pr_cdcooper => vr_cdcooper
-	                            , pr_nmdatela => vr_nmdatela
-	                            , pr_nmeacao  => vr_nmeacao
-	                            , pr_cdagenci => vr_cdagenci
-	                            , pr_nrdcaixa => vr_nrdcaixa
-	                            , pr_idorigem => vr_idorigem
-	                            , pr_cdoperad => vr_cdoperad
-	                            , pr_dscritic => vr_dscritic);
+    begin
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
 
 
-	    pc_obtem_dados_titcto( vr_cdcooper,
+      pc_obtem_dados_titcto( vr_cdcooper,
                                         pr_nrdconta,
                                         pr_tpcobran,
                                         pr_flresgat,
@@ -415,32 +416,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                         vr_tab_dados_titcto,
                                         pr_cdcritic,
                                         pr_dscritic
-	                             );
+                               );
 
-	    if  vr_des_reto = 'NOK' then
-	        if  vr_tab_erro.exists(vr_tab_erro.first) then
-	            vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
-	            vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
-	        else
-	            vr_dscritic := 'nao foi possivel obter dados de titcto.';
-	        end if;
-	        raise vr_exc_erro;
-	    end if;
+      if  vr_des_reto = 'NOK' then
+          if  vr_tab_erro.exists(vr_tab_erro.first) then
+              vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+          else
+              vr_dscritic := 'nao foi possivel obter dados de titcto.';
+          end if;
+          raise vr_exc_erro;
+      end if;
 
-	    -- inicializar o clob
-	    vr_des_xml := null;
-	    dbms_lob.createtemporary(vr_des_xml, true);
-	    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-	    -- inicilizar as informaçoes do xml
-	    vr_texto_completo := null;
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
 
-	    pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
-	                   '<root><dados qtregist="' || vr_qtregist ||'" >');
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados qtregist="' || vr_qtregist ||'" >');
 
-	    -- ler os registros de titcto e incluir no xml
-	    vr_index := vr_tab_dados_titcto.first;
-	    while vr_index is not null loop
-	          pc_escreve_xml('<inf>'||
+      -- ler os registros de titcto e incluir no xml
+      vr_index := vr_tab_dados_titcto.first;
+      while vr_index is not null loop
+            pc_escreve_xml('<inf>'||
                              '<dtlibbdt>' || to_char(vr_tab_dados_titcto(vr_index).dtlibbdt,'dd/mm/rrrr') || '</dtlibbdt>' ||
                              '<dtvencto>' || to_char(vr_tab_dados_titcto(vr_index).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
                              '<nrborder>' || vr_tab_dados_titcto(vr_index).nrborder || '</nrborder>' ||
@@ -455,30 +456,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                              '<tpcobran>' || vr_tab_dados_titcto(vr_index).tpcobran || '</tpcobran>' ||
                              '<nrdconta>' || TRIM(gene0002.fn_mask(vr_tab_dados_titcto(vr_index).nrdconta,'zzzz.zzz.z'))   || '</nrdconta>' ||
                              '<nmprimt>'  || vr_tab_dados_titcto(vr_index).nmprimt  || '</nmprimt>'  ||
-	                         '</inf>'
-	                        );
-	        /* buscar proximo */
-	        vr_index := vr_tab_dados_titcto.next(vr_index);
-	    end loop;
-	    pc_escreve_xml ('</dados></root>',true);
-	    pr_retxml := xmltype.createxml(vr_des_xml);
+                           '</inf>'
+                          );
+          /* buscar proximo */
+          vr_index := vr_tab_dados_titcto.next(vr_index);
+      end loop;
+      pc_escreve_xml ('</dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
 
-	    /* liberando a memória alocada pro clob */
-	    dbms_lob.close(vr_des_xml);
-	    dbms_lob.freetemporary(vr_des_xml);
-	  exception
-	    when vr_exc_erro then
-	         /*  se foi retornado apenas código */
-	         if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
-	             /* buscar a descriçao */
-	             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-	         end if;
-	         /* variavel de erro recebe erro ocorrido */
-	         pr_cdcritic := nvl(vr_cdcritic,0);
-	         pr_dscritic := vr_dscritic;
-	    when others then
-	         /* montar descriçao de erro nao tratado */
-	         pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_titcto_web ' ||sqlerrm;
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+    exception
+      when vr_exc_erro then
+           /*  se foi retornado apenas código */
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           /* variavel de erro recebe erro ocorrido */
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+      when others then
+           /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_titcto_web ' ||sqlerrm;
   END pc_obtem_dados_titcto_web;
   
   
@@ -549,14 +550,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
           rw_craptdb cr_craptdb%ROWTYPE;
           
        -- Variaveis de retorno
-       	 vr_qtcredit	INTEGER;
-         vr_vlcredit 	NUMBER;
-         vr_qttitulo	INTEGER;
-         vr_vltitulo 	NUMBER;
-         vr_qtderesg	INTEGER;
-         vr_vlderesg 	NUMBER;
-         vr_qtdpagto	INTEGER;
-         vr_vldpagto 	NUMBER;
+         vr_qtcredit  INTEGER;
+         vr_vlcredit  NUMBER;
+         vr_qttitulo  INTEGER;
+         vr_vltitulo  NUMBER;
+         vr_qtderesg  INTEGER;
+         vr_vlderesg  NUMBER;
+         vr_qtdpagto  INTEGER;
+         vr_vldpagto  NUMBER;
           
 
     BEGIN 
@@ -581,7 +582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                               ,pr_action => NULL);
       
       -- Começa a listagem da tabela
-      	 vr_qtcredit := 0;
+         vr_qtcredit := 0;
          vr_vlcredit := 0;
          vr_qttitulo := 0;
          vr_vltitulo := 0;
@@ -648,49 +649,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                         ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       ) is
-	  -- variaveis de retorno
-	  vr_tab_resumo_dia typ_tab_resumo_dia;
+    -- variaveis de retorno
+    vr_tab_resumo_dia typ_tab_resumo_dia;
 
-	  vr_tab_erro         gene0001.typ_tab_erro;
-	  vr_qtregist         number;
+    vr_tab_erro         gene0001.typ_tab_erro;
+    vr_qtregist         number;
     
-	  -- variaveis de entrada vindas no xml
-	  vr_cdcooper integer;
-	  vr_cdoperad varchar2(100);
-	  vr_nmdatela varchar2(100);
-	  vr_nmeacao  varchar2(100);
-	  vr_cdagenci varchar2(100);
-	  vr_nrdcaixa varchar2(100);
-	  vr_idorigem varchar2(100);
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
 
-	  -- variáveis para armazenar as informaçoes em xml
-	  vr_des_xml        clob;
-	  vr_texto_completo varchar2(32600);
-	  vr_index          PLS_INTEGER;
+    -- variáveis para armazenar as informaçoes em xml
+    vr_des_xml        clob;
+    vr_texto_completo varchar2(32600);
+    vr_index          PLS_INTEGER;
 
-	  procedure pc_escreve_xml( pr_des_dados in varchar2
-	                          , pr_fecha_xml in boolean default false
-	                          ) is
-	  begin
-	      gene0002.pc_escreve_xml( vr_des_xml
-	                             , vr_texto_completo
-	                             , pr_des_dados
-	                             , pr_fecha_xml );
-	  end;
+    procedure pc_escreve_xml( pr_des_dados in varchar2
+                            , pr_fecha_xml in boolean default false
+                            ) is
+    begin
+        gene0002.pc_escreve_xml( vr_des_xml
+                               , vr_texto_completo
+                               , pr_des_dados
+                               , pr_fecha_xml );
+    end;
 
-	  begin
-	    gene0004.pc_extrai_dados( pr_xml      => pr_retxml
-	                            , pr_cdcooper => vr_cdcooper
-	                            , pr_nmdatela => vr_nmdatela
-	                            , pr_nmeacao  => vr_nmeacao
-	                            , pr_cdagenci => vr_cdagenci
-	                            , pr_nrdcaixa => vr_nrdcaixa
-	                            , pr_idorigem => vr_idorigem
-	                            , pr_cdoperad => vr_cdoperad
-	                            , pr_dscritic => vr_dscritic);
+    begin
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
 
 
-	    pc_obtem_dados_resumo_dia( vr_cdcooper,
+      pc_obtem_dados_resumo_dia( vr_cdcooper,
                                         pr_nrdconta,
                                         pr_tpcobran,
                                         pr_dtvencto,
@@ -699,23 +700,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                         vr_tab_resumo_dia,
                                         pr_cdcritic,
                                         pr_dscritic
-	                             );
+                               );
 
 
-	    -- inicializar o clob
-	    vr_des_xml := null;
-	    dbms_lob.createtemporary(vr_des_xml, true);
-	    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-	    -- inicilizar as informaçoes do xml
-	    vr_texto_completo := null;
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
 
-	    pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
-	                   '<root><dados >');
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados >');
 
-	    -- ler os registros de titcto e incluir no xml
-	    vr_index := vr_tab_resumo_dia.first;
-	    while vr_index is not null loop
-	          pc_escreve_xml('<inf>'||
+      -- ler os registros de titcto e incluir no xml
+      vr_index := vr_tab_resumo_dia.first;
+      while vr_index is not null loop
+            pc_escreve_xml('<inf>'||
                              '<qtcredit>' || vr_tab_resumo_dia(vr_index).qtcredit || '</qtcredit>' ||
                              '<vlcredit>' || vr_tab_resumo_dia(vr_index).vlcredit || '</vlcredit>' ||
                              '<qttitulo>' || vr_tab_resumo_dia(vr_index).qttitulo || '</qttitulo>' ||
@@ -724,30 +725,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                              '<vlderesg>' || vr_tab_resumo_dia(vr_index).vlderesg || '</vlderesg>' ||
                              '<qtdpagto>' || vr_tab_resumo_dia(vr_index).qtdpagto || '</qtdpagto>' ||
                              '<vldpagto>' || vr_tab_resumo_dia(vr_index).vldpagto || '</vldpagto>' ||
-	                         '</inf>'
-	                        );
-	        /* buscar proximo */
-	        vr_index := vr_tab_resumo_dia.next(vr_index);
-	    end loop;
-	    pc_escreve_xml ('</dados></root>',true);
-	    pr_retxml := xmltype.createxml(vr_des_xml);
+                           '</inf>'
+                          );
+          /* buscar proximo */
+          vr_index := vr_tab_resumo_dia.next(vr_index);
+      end loop;
+      pc_escreve_xml ('</dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
 
-	    /* liberando a memória alocada pro clob */
-	    dbms_lob.close(vr_des_xml);
-	    dbms_lob.freetemporary(vr_des_xml);
-	  exception
-	    when vr_exc_erro then
-	         /*  se foi retornado apenas código */
-	         if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
-	             /* buscar a descriçao */
-	             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-	         end if;
-	         /* variavel de erro recebe erro ocorrido */
-	         pr_cdcritic := nvl(vr_cdcritic,0);
-	         pr_dscritic := vr_dscritic;
-	    when others then
-	         /* montar descriçao de erro nao tratado */
-	         pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_resumo_dia_web ' ||sqlerrm;
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+    exception
+      when vr_exc_erro then
+           /*  se foi retornado apenas código */
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           /* variavel de erro recebe erro ocorrido */
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+      when others then
+           /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_resumo_dia_web ' ||sqlerrm;
   END pc_obtem_dados_resumo_dia_web;
   
   PROCEDURE pc_obtem_dados_conciliacao (pr_cdcooper    IN crapcop.cdcooper%TYPE, --> Código da Cooperativa
@@ -842,7 +843,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                                    crapcob.nrdocmto = craptdb.nrdocmto AND
                                                    (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
          WHERE
-         	    craptdb.cdcooper  = pr_cdcooper
+              craptdb.cdcooper  = pr_cdcooper
               AND craptdb.dtdpagto  > vr_dtrefere
               AND craptdb.dtdpagto <= vr_dtmvtoan
               AND craptdb.insittit  = 2
@@ -894,7 +895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                                    crapcob.nrdocmto = craptdb.nrdocmto AND
                                                    (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
          WHERE
-         	    craptdb.cdcooper = pr_cdcooper
+              craptdb.cdcooper = pr_cdcooper
               AND craptdb.dtlibbdt = vr_dtvencto
          ;       
        rw_recebidos_dia cr_recebidos_dia%ROWTYPE; 
@@ -909,7 +910,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
               crapcob.cdbandoc,
               craptdb.dtdpagto,
               craptdb.dtresgat,
-              craptdb.dtvencto
+              craptdb.dtvencto,
+              craptdb.dtdebito
          FROM 
               craptdb 
               INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
@@ -920,14 +922,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                                    crapcob.nrdocmto = craptdb.nrdocmto AND
                                                    (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
          WHERE
-         	    craptdb.cdcooper = pr_cdcooper
+              craptdb.cdcooper = pr_cdcooper
          ;       
        rw_saldo_anterior cr_saldo_anterior%ROWTYPE; 
        
                                      
        -- Variaveis de retorno
-         vr_qtderesg	   INTEGER;
-         vr_vlderesg 	   NUMBER;
+         vr_qtderesg     INTEGER;
+         vr_vlderesg     NUMBER;
          vr_qtvencid     INTEGER;
          vr_vlvencid     NUMBER;
          vr_qttitulo     INTEGER;
@@ -1092,6 +1094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                   IF (rw_saldo_anterior.insittit = 4) THEN
                     vr_vlsaldo := vr_vlsaldo + rw_saldo_anterior.vltitulo;
                     vr_qtsaldo := vr_qtsaldo + 1;
+                    CONTINUE;
                   END IF;
                   /* D + 1 para titulos pagos via COMPE */
                   /* apenas para titulos do BB */
@@ -1099,17 +1102,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                     IF (rw_saldo_anterior.dtdpagto >= vr_dtmvtoan) THEN
                       vr_vlpgdepois := vr_vlpgdepois + rw_saldo_anterior.vltitulo;
                       vr_qtpgdepois := vr_qtpgdepois + 1;
+                      CONTINUE;
                     END IF;
                   ELSE
                     IF (rw_saldo_anterior.dtdpagto >= vr_dtvencto) THEN
                       vr_vlpgdepois := vr_vlpgdepois + rw_saldo_anterior.vltitulo;
                       vr_qtpgdepois := vr_qtpgdepois + 1;
+                      CONTINUE;
                     END IF;
                   END IF;
                   
                   IF (rw_saldo_anterior.dtresgat >= vr_dtvencto) THEN
                     vr_vlrgdepois := vr_vlrgdepois + rw_saldo_anterior.vltitulo;
                     vr_qtrgdepois := vr_qtrgdepois + 1;
+                    CONTINUE;
                   END IF;
                   
                   
@@ -1122,7 +1128,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                       AND tmp_diffdias IN (1,2,3) THEN
                       vr_vlbxdepois := vr_vlbxdepois + rw_saldo_anterior.vltitulo;
                       vr_qtbxdepois := vr_qtbxdepois +1;
+                      CONTINUE;
                   END IF;
+                  
+                  IF  (rw_saldo_anterior.insittit  = 3 AND (rw_saldo_anterior.dtdebito > vr_dtmvtoan OR (rw_saldo_anterior.dtdebito IS NULL AND rw_saldo_anterior.dtvencto >= vr_dtmvtoan))) THEN
+                      vr_vlbxdepois := vr_vlbxdepois + rw_saldo_anterior.vltitulo;
+                      vr_qtbxdepois := vr_qtbxdepois +1;
+                  END IF; 
+                  
          end   loop;
          vr_qtsldant := (vr_qtpgdepois + vr_qtrgdepois + vr_qtbxdepois) + (vr_qtsaldo - vr_qtliberado) ;
          vr_qtcredit := vr_qtsldant + vr_qtvencid +vr_qttitulo + vr_qtderesg ;
@@ -1156,49 +1169,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                         ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       ) is
-	  -- variaveis de retorno
-	  vr_tab_dados_conciliacao typ_tab_dados_conciliacao;
+    -- variaveis de retorno
+    vr_tab_dados_conciliacao typ_tab_dados_conciliacao;
 
-	  vr_tab_erro         gene0001.typ_tab_erro;
-	  vr_qtregist         number;
+    vr_tab_erro         gene0001.typ_tab_erro;
+    vr_qtregist         number;
     
-	  -- variaveis de entrada vindas no xml
-	  vr_cdcooper integer;
-	  vr_cdoperad varchar2(100);
-	  vr_nmdatela varchar2(100);
-	  vr_nmeacao  varchar2(100);
-	  vr_cdagenci varchar2(100);
-	  vr_nrdcaixa varchar2(100);
-	  vr_idorigem varchar2(100);
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
 
-	  -- variáveis para armazenar as informaçoes em xml
-	  vr_des_xml        clob;
-	  vr_texto_completo varchar2(32600);
-	  vr_index          PLS_INTEGER;
+    -- variáveis para armazenar as informaçoes em xml
+    vr_des_xml        clob;
+    vr_texto_completo varchar2(32600);
+    vr_index          PLS_INTEGER;
 
-	  procedure pc_escreve_xml( pr_des_dados in varchar2
-	                          , pr_fecha_xml in boolean default false
-	                          ) is
-	  begin
-	      gene0002.pc_escreve_xml( vr_des_xml
-	                             , vr_texto_completo
-	                             , pr_des_dados
-	                             , pr_fecha_xml );
-	  end;
+    procedure pc_escreve_xml( pr_des_dados in varchar2
+                            , pr_fecha_xml in boolean default false
+                            ) is
+    begin
+        gene0002.pc_escreve_xml( vr_des_xml
+                               , vr_texto_completo
+                               , pr_des_dados
+                               , pr_fecha_xml );
+    end;
 
-	  begin
-	    gene0004.pc_extrai_dados( pr_xml      => pr_retxml
-	                            , pr_cdcooper => vr_cdcooper
-	                            , pr_nmdatela => vr_nmdatela
-	                            , pr_nmeacao  => vr_nmeacao
-	                            , pr_cdagenci => vr_cdagenci
-	                            , pr_nrdcaixa => vr_nrdcaixa
-	                            , pr_idorigem => vr_idorigem
-	                            , pr_cdoperad => vr_cdoperad
-	                            , pr_dscritic => vr_dscritic);
+    begin
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
 
 
-	    pc_obtem_dados_conciliacao( vr_cdcooper,
+      pc_obtem_dados_conciliacao( vr_cdcooper,
                                         pr_tpcobran,
                                         pr_dtvencto,
                                         pr_dtmvtolt,
@@ -1206,23 +1219,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                         vr_tab_dados_conciliacao,
                                         pr_cdcritic,
                                         pr_dscritic
-	                             );
+                               );
 
 
-	    -- inicializar o clob
-	    vr_des_xml := null;
-	    dbms_lob.createtemporary(vr_des_xml, true);
-	    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-	    -- inicilizar as informaçoes do xml
-	    vr_texto_completo := null;
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
 
-	    pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
-	                   '<root><dados >');
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados >');
 
-	    -- ler os registros de titcto e incluir no xml
-	    vr_index := vr_tab_dados_conciliacao.first;
-	    while vr_index is not null loop
-	          pc_escreve_xml('<inf>'||
+      -- ler os registros de titcto e incluir no xml
+      vr_index := vr_tab_dados_conciliacao.first;
+      while vr_index is not null loop
+            pc_escreve_xml('<inf>'||
                               '<dtvencto>' || vr_tab_dados_conciliacao(vr_index).dtvencto || '</dtvencto>' ||
                               '<qtsldant>' || vr_tab_dados_conciliacao(vr_index).qtsldant || '</qtsldant>' ||
                               '<vlsldant>' || vr_tab_dados_conciliacao(vr_index).vlsldant || '</vlsldant>' ||
@@ -1234,30 +1247,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                               '<vltitulo>' || vr_tab_dados_conciliacao(vr_index).vltitulo || '</vltitulo>' ||
                               '<qtcredit>' || vr_tab_dados_conciliacao(vr_index).qtcredit || '</qtcredit>' ||
                               '<vlcredit>' || vr_tab_dados_conciliacao(vr_index).vlcredit || '</vlcredit>' ||
-	                         '</inf>'
-	                        );
-	        /* buscar proximo */
-	        vr_index := vr_tab_dados_conciliacao.next(vr_index);
-	    end loop;
-	    pc_escreve_xml ('</dados></root>',true);
-	    pr_retxml := xmltype.createxml(vr_des_xml);
+                           '</inf>'
+                          );
+          /* buscar proximo */
+          vr_index := vr_tab_dados_conciliacao.next(vr_index);
+      end loop;
+      pc_escreve_xml ('</dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
 
-	    /* liberando a memória alocada pro clob */
-	    dbms_lob.close(vr_des_xml);
-	    dbms_lob.freetemporary(vr_des_xml);
-	  exception
-	    when vr_exc_erro then
-	         /*  se foi retornado apenas código */
-	         if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
-	             /* buscar a descriçao */
-	             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-	         end if;
-	         /* variavel de erro recebe erro ocorrido */
-	         pr_cdcritic := nvl(vr_cdcritic,0);
-	         pr_dscritic := vr_dscritic;
-	    when others then
-	         /* montar descriçao de erro nao tratado */
-	         pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_conciliacao_web ' ||sqlerrm;
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+    exception
+      when vr_exc_erro then
+           /*  se foi retornado apenas código */
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           /* variavel de erro recebe erro ocorrido */
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+      when others then
+           /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_conciliacao_web ' ||sqlerrm;
   END pc_obtem_dados_conciliacao_web;
   
   PROCEDURE pc_obtem_dados_loteamento (pr_cdcooper    IN crapcop.cdcooper%TYPE, --> Código da Cooperativa
@@ -1405,8 +1418,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
         
     END;
     EXCEPTION
-	    when vr_exc_erro then
-	         pr_dscritic := vr_dscritic;
+      when vr_exc_erro then
+           pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
            /* montar descriçao de erro nao tratado */
            pr_dscritic := 'erro nao tratado na TELA_TITCTO.pc_obtem_dados_loteamento ' ||sqlerrm;
@@ -1695,26 +1708,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       ) is
 
-	  -- variaveis de retorno
-	  vr_tab_dados_titcto typ_tab_dados_titcto;
+    -- variaveis de retorno
+    vr_tab_dados_titcto typ_tab_dados_titcto;
 
-	  vr_tab_erro         gene0001.typ_tab_erro;
-	  vr_qtregist         number;
+    vr_tab_erro         gene0001.typ_tab_erro;
+    vr_qtregist         number;
     vr_des_reto varchar2(3);
     
-	  -- variaveis de entrada vindas no xml
-	  vr_cdcooper integer;
-	  vr_cdoperad varchar2(100);
-	  vr_nmdatela varchar2(100);
-	  vr_nmeacao  varchar2(100);
-	  vr_cdagenci varchar2(100);
-	  vr_nrdcaixa varchar2(100);
-	  vr_idorigem varchar2(100);
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
 
-	  -- variáveis para armazenar as informaçoes em xml
-	  vr_des_xml        clob;
-	  vr_texto_completo varchar2(32600);
-	  vr_index          PLS_INTEGER;
+    -- variáveis para armazenar as informaçoes em xml
+    vr_des_xml        clob;
+    vr_texto_completo varchar2(32600);
+    vr_index          PLS_INTEGER;
     
     
     vr_dstitulo varchar2(300);
@@ -1771,30 +1784,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
 
     rw_crapcop cr_crapcop%ROWTYPE;
 
-	  procedure pc_escreve_xml( pr_des_dados in varchar2
-	                          , pr_fecha_xml in boolean default false
-	                          ) is
-	  begin
-	      gene0002.pc_escreve_xml( vr_des_xml
-	                             , vr_texto_completo
-	                             , pr_des_dados
-	                             , pr_fecha_xml );
-	  end;
+    procedure pc_escreve_xml( pr_des_dados in varchar2
+                            , pr_fecha_xml in boolean default false
+                            ) is
+    begin
+        gene0002.pc_escreve_xml( vr_des_xml
+                               , vr_texto_completo
+                               , pr_des_dados
+                               , pr_fecha_xml );
+    end;
 
 
-	  begin
-	    gene0004.pc_extrai_dados( pr_xml      => pr_retxml
-	                            , pr_cdcooper => vr_cdcooper
-	                            , pr_nmdatela => vr_nmdatela
-	                            , pr_nmeacao  => vr_nmeacao
-	                            , pr_cdagenci => vr_cdagenci
-	                            , pr_nrdcaixa => vr_nrdcaixa
-	                            , pr_idorigem => vr_idorigem
-	                            , pr_cdoperad => vr_cdoperad
-	                            , pr_dscritic => vr_dscritic);
+    begin
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
 
       
-	    pc_obtem_dados_titcto( vr_cdcooper,
+      pc_obtem_dados_titcto( vr_cdcooper,
                                         pr_nrdconta,
                                         pr_tpcobran,
                                         pr_flresgat,
@@ -1803,7 +1816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                         vr_tab_dados_titcto,
                                         pr_cdcritic,
                                         pr_dscritic
-	                             );
+                               );
               
      OPEN cr_crapass;
      FETCH cr_crapass into rw_crapass;
@@ -1814,28 +1827,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
      CLOSE cr_crapcop; 
      
 
-	    if  vr_des_reto = 'NOK' then
-	        if  vr_tab_erro.exists(vr_tab_erro.first) then
-	            vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
-	            vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
-	        else
-	            vr_dscritic := 'nao foi possivel obter dados de titcto.';
+      if  vr_des_reto = 'NOK' then
+          if  vr_tab_erro.exists(vr_tab_erro.first) then
+              vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+          else
+              vr_dscritic := 'nao foi possivel obter dados de titcto.';
 
-	        end if;
+          end if;
 
-	        raise vr_exc_erro;
-	    end if;
+          raise vr_exc_erro;
+      end if;
 
 
-	    -- inicializar o clob
-	    vr_des_xml := null;
-	    dbms_lob.createtemporary(vr_des_xml, true);
-	    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-	    -- inicilizar as informaçoes do xml
-	    vr_texto_completo := null;
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
       
       
-	      --> INICIO
+        --> INICIO
       vr_nmmodulo := 'TITCTO';
       vr_nmrelato := 'Opção Consulta';
       vr_dstitulo := 'Consulta de títulos descontados que não foram pagos';
@@ -1845,9 +1858,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        
       pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
       pc_escreve_xml( 
-                            '<dtacesso>' ||	vr_dtacesso             || '</dtacesso>' ||
-                            '<hracesso>' ||	vr_hracesso             || '</hracesso>' ||
-                            '<dstitulo>' ||	vr_dstitulo             || '</dstitulo>' ||
+                            '<dtacesso>' || vr_dtacesso             || '</dtacesso>' ||
+                            '<hracesso>' || vr_hracesso             || '</hracesso>' ||
+                            '<dstitulo>' || vr_dstitulo             || '</dstitulo>' ||
                             '<nrdconta>' || TRIM(gene0002.fn_mask(pr_nrdconta,'zzzz.zzz.z')) || '</nrdconta>' ||
                             '<nmtitula>' || rw_crapass.nmprimtl     || '</nmtitula>' ||
                             '<nrcpfcgc>' || rw_crapass.nrcpfcgc     || '</nrcpfcgc>' ||
@@ -1855,9 +1868,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
       );
       
        -- ler os registros de titcto e incluir no xml
-	    vr_index := vr_tab_dados_titcto.first;
+      vr_index := vr_tab_dados_titcto.first;
       
-	    while vr_index is not null loop
+      while vr_index is not null loop
           
           pc_escreve_xml(
             '<titulo>' ||
@@ -1875,13 +1888,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                      '<tpcobran>' || vr_tab_dados_titcto(vr_index).tpcobran || '</tpcobran>'      ||
                      '<nrdconta>' || TRIM(gene0002.fn_mask(vr_tab_dados_titcto(vr_index).nrdconta,'zzzz.zzz.z'))  || '</nrdconta>'      ||
                      '<nmprimt>'  || vr_tab_dados_titcto(vr_index).nmprimt  || '</nmprimt>'       ||  
-    	      '</titulo>'
+            '</titulo>'
            );
            
            vr_qtdtotal := vr_qtdtotal + vr_tab_dados_titcto(vr_index).vltitulo;
 
-	        vr_index := vr_tab_dados_titcto.next(vr_index);
-	    end loop;
+          vr_index := vr_tab_dados_titcto.next(vr_index);
+      end loop;
       pc_escreve_xml('</raiz>',TRUE);
       
       --Buscar diretorio da cooperativa
@@ -1987,19 +2000,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                             ,pr_tag_cont => vr_nmarqpdf
                             ,pr_des_erro => vr_dscritic);
     
-	  exception
-	    when vr_exc_erro then
-	         /*  se foi retornado apenas código */
-	         if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
-	             /* buscar a descriçao */
-	             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-	         end if;
-	         /* variavel de erro recebe erro ocorrido */
-	         pr_cdcritic := nvl(vr_cdcritic,0);
-	         pr_dscritic := vr_dscritic;
-	    when others then
-	         /* montar descriçao de erro nao tratado */
-	         pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_titcto_web ' ||sqlerrm;
+    exception
+      when vr_exc_erro then
+           /*  se foi retornado apenas código */
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           /* variavel de erro recebe erro ocorrido */
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+      when others then
+           /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_titcto_web ' ||sqlerrm;
   END pc_gerar_impressao_titcto_c;
   
   PROCEDURE pc_gerar_impressao_titcto_l(pr_dtmvtolt IN VARCHAR2
@@ -2012,26 +2025,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       ) is
 
-	  -- variaveis de retorno
-	  vr_tab_dados_titcto typ_tab_dados_lotes;
+    -- variaveis de retorno
+    vr_tab_dados_titcto typ_tab_dados_lotes;
 
-	  vr_tab_erro         gene0001.typ_tab_erro;
-	  vr_qtregist         number;
+    vr_tab_erro         gene0001.typ_tab_erro;
+    vr_qtregist         number;
     vr_des_reto varchar2(3);
     
-	  -- variaveis de entrada vindas no xml
-	  vr_cdcooper integer;
-	  vr_cdoperad varchar2(100);
-	  vr_nmdatela varchar2(100);
-	  vr_nmeacao  varchar2(100);
-	  vr_cdagenci varchar2(100);
-	  vr_nrdcaixa varchar2(100);
-	  vr_idorigem varchar2(100);
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
 
-	  -- variáveis para armazenar as informaçoes em xml
-	  vr_des_xml        clob;
-	  vr_texto_completo varchar2(32600);
-	  vr_index          PLS_INTEGER;
+    -- variáveis para armazenar as informaçoes em xml
+    vr_des_xml        clob;
+    vr_texto_completo varchar2(32600);
+    vr_index          PLS_INTEGER;
     
     
     vr_dstitulo varchar2(300);
@@ -2078,30 +2091,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     
     rw_crapdat btch0001.cr_crapdat%rowtype;
 
-	  procedure pc_escreve_xml( pr_des_dados in varchar2
-	                          , pr_fecha_xml in boolean default false
-	                          ) is
-	  begin
-	      gene0002.pc_escreve_xml( vr_des_xml
-	                             , vr_texto_completo
-	                             , pr_des_dados
-	                             , pr_fecha_xml );
-	  end;
+    procedure pc_escreve_xml( pr_des_dados in varchar2
+                            , pr_fecha_xml in boolean default false
+                            ) is
+    begin
+        gene0002.pc_escreve_xml( vr_des_xml
+                               , vr_texto_completo
+                               , pr_des_dados
+                               , pr_fecha_xml );
+    end;
 
 
-	  begin
-	    gene0004.pc_extrai_dados( pr_xml      => pr_retxml
-	                            , pr_cdcooper => vr_cdcooper
-	                            , pr_nmdatela => vr_nmdatela
-	                            , pr_nmeacao  => vr_nmeacao
-	                            , pr_cdagenci => vr_cdagenci
-	                            , pr_nrdcaixa => vr_nrdcaixa
-	                            , pr_idorigem => vr_idorigem
-	                            , pr_cdoperad => vr_cdoperad
-	                            , pr_dscritic => vr_dscritic);
+    begin
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
 
-			
-	    pc_obtem_dados_lotes( vr_cdcooper
+      
+      pc_obtem_dados_lotes( vr_cdcooper
                            ,pr_dtmvtolt
                            ,pr_cdagenci
                            --> out
@@ -2130,28 +2143,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
      vr_dtmvtsys := to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR');
      
    
-	    if  vr_des_reto = 'NOK' then
-	        if  vr_tab_erro.exists(vr_tab_erro.first) then
-	            vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
-	            vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
-	        else
-	            vr_dscritic := 'nao foi possivel obter dados de titcto.';
+      if  vr_des_reto = 'NOK' then
+          if  vr_tab_erro.exists(vr_tab_erro.first) then
+              vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+          else
+              vr_dscritic := 'nao foi possivel obter dados de titcto.';
 
-	        end if;
+          end if;
 
-	        raise vr_exc_erro;
-	    end if;
+          raise vr_exc_erro;
+      end if;
 
 
-	    -- inicializar o clob
-	    vr_des_xml := null;
-	    dbms_lob.createtemporary(vr_des_xml, true);
-	    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-	    -- inicilizar as informaçoes do xml
-	    vr_texto_completo := null;
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
       
       
-	      --> INICIO
+        --> INICIO
       vr_nmmodulo := 'TITCTO';
       vr_nmrelato := 'Opção Lotes';
       vr_dstitulo := 'Listagem de lotes de descontos de titulos efetuados na data';
@@ -2161,20 +2174,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        
       pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
       
-      pc_escreve_xml('<cdagenci>' ||	pr_cdagenci || '</cdagenci>' ||
+      pc_escreve_xml('<cdagenci>' ||  pr_cdagenci || '</cdagenci>' ||
                      '<qtregist>' || vr_qtregist  || '</qtregist>'
                     );
       
       
        -- ler os registros de titcto e incluir no xml
-	    vr_index := vr_tab_dados_titcto.first;
+      vr_index := vr_tab_dados_titcto.first;
       
-	    while vr_index is not null loop
+      while vr_index is not null loop
           
           pc_escreve_xml(
             '<lote>' ||
-                            '<dtmvtolt>'   	||	NVL(TO_CHAR(vr_tab_dados_titcto(vr_index).dtmvtolt,'DD/MM/RRRR'), '') 	    || '</dtmvtolt>'     ||
-                            '<cdagenci>'    ||	vr_tab_dados_titcto(vr_index).cdagenci              || '</cdagenci>'     	  ||
+                            '<dtmvtolt>'    ||  NVL(TO_CHAR(vr_tab_dados_titcto(vr_index).dtmvtolt,'DD/MM/RRRR'), '')       || '</dtmvtolt>'     ||
+                            '<cdagenci>'    ||  vr_tab_dados_titcto(vr_index).cdagenci              || '</cdagenci>'        ||
                             '<nrdolote>'    ||  gene0002.fn_mask(to_char(vr_tab_dados_titcto(vr_index).nrdolote),'zzz.zz9') || '</nrdolote>'     ||
                             '<nrdconta>'    ||  TRIM(gene0002.fn_mask(vr_tab_dados_titcto(vr_index).nrdconta,'zzzz.zzz.z')) || '</nrdconta>'     ||
                             '<nrborder>'    ||  TRIM(GENE0002.fn_mask_contrato(vr_tab_dados_titcto(vr_index).nrborder))     || '</nrborder>'     ||
@@ -2183,11 +2196,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                             '<vltittot_cr>' ||  vr_tab_dados_titcto(vr_index).vltittot_cr           || '</vltittot_cr>'     ||
                             '<vltittot_sr>' ||  vr_tab_dados_titcto(vr_index).vltittot_sr           || '</vltittot_sr>'     ||
                             '<nmoperad>'    ||  vr_tab_dados_titcto(vr_index).nmoperad              || '</nmoperad>'        ||
-    	      '</lote>'
+            '</lote>'
            );
                   
-	        vr_index := vr_tab_dados_titcto.next(vr_index);
-	    end loop;
+          vr_index := vr_tab_dados_titcto.next(vr_index);
+      end loop;
       pc_escreve_xml('</raiz>',TRUE);
       
       --Buscar diretorio da cooperativa
@@ -2294,19 +2307,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                             ,pr_tag_cont => vr_nmarqpdf
                             ,pr_des_erro => vr_dscritic);
     
-	  exception
-	    when vr_exc_erro then
-	         /*  se foi retornado apenas código */
-	         if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
-	             /* buscar a descriçao */
-	             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-	         end if;
-	         /* variavel de erro recebe erro ocorrido */
-	         pr_cdcritic := nvl(vr_cdcritic,0);
-	         pr_dscritic := vr_dscritic;
-	    when others then
-	         /* montar descriçao de erro nao tratado */
-	         pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_titcto_web ' ||sqlerrm;
+    exception
+      when vr_exc_erro then
+           /*  se foi retornado apenas código */
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           /* variavel de erro recebe erro ocorrido */
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+      when others then
+           /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_titcto_web ' ||sqlerrm;
   END pc_gerar_impressao_titcto_l;
   
 END TELA_TITCTO;
