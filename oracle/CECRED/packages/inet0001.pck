@@ -627,7 +627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --            08/02/2018 - Criado a procedure pc_atu_trans_pend_prep que faz a atualização das transacoes
   --                         pendentes de aprovação por preposto de conta PJ sem ass conjunta (Tiago #775776).
   --
-  --            12/03/2018 - Ajuste na pc_verifica_operacao para impedir agendamentos para data retroativa. (Pablão)
+  --            19/03/2018 - Ajuste na pc_verifica_operacao para impedir agendamentos para data retroativa. (Pablão)
   --
   ---------------------------------------------------------------------------------------------------------------*/
 
