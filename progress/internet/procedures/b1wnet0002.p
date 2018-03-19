@@ -3579,13 +3579,13 @@ PROCEDURE permissoes-menu:
                       (INPUT par_cdcooper, /* Codigo da Cooperativa */
                        INPUT par_nrdconta, /* Numero da Conta */
                       OUTPUT 0,            /* Numero do Convenio */
+                      OUTPUT ?,            /* Data de adesao */
                       OUTPUT 0,            /* Convenio esta homologado */
                       OUTPUT 0,            /* Retorno para o Cooperado (1-Internet/2-FTP) */
                       OUTPUT 0,            /* Flag convenio homologado */
                       OUTPUT 0,            /* Flag enviou arquivo remessa */
                       OUTPUT 0,            /* Cód. da crítica */
-                      OUTPUT "").          /* Descricao da critica */
-    
+                      OUTPUT "").          /* Descricao da critica */    
     
     CLOSE STORED-PROC pc_verifica_conv_pgto
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -4017,7 +4017,7 @@ END PROCEDURE.
 PROCEDURE organiza-nomes-titulares:
 
     DEF INPUT-OUTPUT PARAM TABLE FOR tt-titulares.
-    
+
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
     DEF VAR aux_posinome AS INTE                                    NO-UNDO.
     DEF VAR aux_novonome AS CHAR                                    NO-UNDO.
