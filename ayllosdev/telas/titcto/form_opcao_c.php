@@ -105,7 +105,7 @@ include('form_cabecalho.php');
                                 <?php echo getByTagName($r->tags, 'dsoperes'); ?>
                             </td>
                             <td><span><?php echo getByTagName($r->tags, 'nmprimt'); ?></span>
-                                <?php echo getByTagName($r->tags, 'nmprimt'); ?>
+                                <?php echo trim(getByTagName($r->tags, 'nmprimt')); ?>
                             </td>
                         </tr>
                     <?php } ?>	
