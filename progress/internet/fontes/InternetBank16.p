@@ -424,9 +424,12 @@ ELSE  /* APLICACOES ANTIGAS */
 
     END.
 
-IF aux_dtvencto = ? THEN
+IF  aux_dtvencto = ?  THEN
     ASSIGN aux_dtvencto = " ".
 
+IF  TRIM(aux_dssitapl) = ""  THEN
+    ASSIGN aux_dssitapl = "DISPONIVEL".
+    
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<APLICACOES dssitapl='" + aux_dssitapl + "'" +
                                           " idtipapl='" + aux_idtipapl + "'" +

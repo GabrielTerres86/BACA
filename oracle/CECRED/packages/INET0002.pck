@@ -6508,6 +6508,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       va_existe_operador NUMBER(1);
       va_nrcpfcgc crapsnh.nrcpfcgc%type;
       va_vllimweb crapsnh.vllimweb%type;
+      vr_vllimpgo crapsnh.vllimpgo%type;
+      vr_vllimtrf crapsnh.vllimtrf%type;
+      vr_vllimted crapsnh.vllimted%type;
+      vr_vllimvrb crapsnh.vllimvrb%type;
       
       --Pagamento
       vr_cdcopdes VARCHAR2(100);
@@ -6624,6 +6628,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       
       vr_tab_limite_pend INET0002.typ_tab_limite_pend;
       vr_tab_internet    INET0001.typ_tab_internet;
+      vr_tab_internet_conta INET0001.typ_tab_internet;
       vr_tab_agen        APLI0002.typ_tab_agen; 
       vr_tab_agen_det    APLI0002.typ_tab_agen_det;
       vr_tab_crapavt     CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
@@ -6813,6 +6818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         
         --Limpar Tabela Memoria de Limites
         vr_tab_internet.DELETE;
+        vr_tab_internet_conta.DELETE;
         BEGIN
           -- Inicializa variavel
           va_existe_operador := 0;
@@ -6874,8 +6880,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                 RAISE vr_exc_erro;
               END IF;        
             END IF;
+          -- Comentado pois fará a busca de limites da conta mais abaixo independente se possui assinatura conjunta
+          /*
         ELSE   
-          /* Buscar Limites da internet */
+            -- Buscar Limites da internet 
           INET0001.pc_busca_limites (pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
                                     ,pr_nrdconta     => pr_nrdconta  --Numero da conta
                                     ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
@@ -6891,7 +6899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;  -- Validar se esá habilitado assinatura conjunta                                      
-
+          */
         END IF; 
         EXCEPTION
           WHEN OTHERS THEN
@@ -6899,15 +6907,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             vr_dscritic := 'Erro ao buscar os limites '||SQLERRM;
             RAISE vr_exc_erro;
         END;
-        /*--Buscar Limites  
+        
+        --Buscar Limites  
         INET0001.pc_busca_limites(pr_cdcooper     => pr_cdcooper   --Codigo Cooperativa
-                                 ,pr_nrdconta     => pr_dsorigempr_nrdconta   --Numero da conta
+                                 ,pr_nrdconta     => pr_nrdconta   --Numero da conta
                                  ,pr_idseqttl     => vr_idseqttl   --Seq de Titularidade
                                  ,pr_flglimdp     => FALSE         --Indicador limite deposito
                                  ,pr_dtmvtopg     => pr_dtmvtolt   --Data do proximo pagamento
                                  ,pr_flgctrag     => FALSE         --Indicador validacoes
                                  ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)
-                                 ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de limites
+                                 ,pr_tab_internet => vr_tab_internet_conta --Tabelas de retorno de limites
                                  ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
                                  ,pr_dscritic     => vr_dscritic); --Descricao do erro 
 
@@ -6915,38 +6924,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
            --Levantar Excecao
            RAISE vr_exc_erro;
-        END IF;  */                                                                 
+        END IF;                                                                   
         
         --Montar Tag Xml de Limites
         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                                ,pr_texto_completo => vr_xml_temp 
                                ,pr_texto_novo     => '<limites>'); 
         
-        vr_ind := vr_tab_internet.FIRST;
+        vr_ind := vr_tab_internet_conta.FIRST;
         WHILE vr_ind IS NOT NULL LOOP
+           
+           vr_vllimpgo := CASE WHEN vr_tab_internet.COUNT > 0 AND nvl(vr_tab_internet(vr_ind).vllimpgo,0) > 0 THEN nvl(vr_tab_internet(vr_ind).vllimpgo,0) ELSE nvl(vr_tab_internet_conta(vr_ind).vllimpgo,0) END;
+           vr_vllimtrf := CASE WHEN vr_tab_internet.COUNT > 0 AND nvl(vr_tab_internet(vr_ind).vllimtrf,0) > 0 THEN nvl(vr_tab_internet(vr_ind).vllimtrf,0) ELSE nvl(vr_tab_internet_conta(vr_ind).vllimtrf,0) END; 
+           vr_vllimted := CASE WHEN vr_tab_internet.COUNT > 0 AND nvl(vr_tab_internet(vr_ind).vllimted,0) > 0 THEN nvl(vr_tab_internet(vr_ind).vllimted,0) ELSE nvl(vr_tab_internet_conta(vr_ind).vllimted,0) END; 
+           vr_vllimvrb := CASE WHEN vr_tab_internet.COUNT > 0 AND nvl(vr_tab_internet(vr_ind).vllimvrb,0) > 0 THEN nvl(vr_tab_internet(vr_ind).vllimvrb,0) ELSE nvl(vr_tab_internet_conta(vr_ind).vllimvrb,0) END; 
            
            gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc
                                   ,pr_texto_completo => vr_xml_temp 
                                   ,pr_texto_novo     => '<limite>' 
-                                                     ||   '<idseqttl>'||nvl(vr_tab_internet(vr_ind).idseqttl,0)||'</idseqttl>'
-                                                     ||   '<vllimweb>'||TO_CHAR(nvl(va_vllimweb,nvl(vr_tab_internet(vr_ind).vllimweb,0)),'fm999g999g990d00')||'</vllimweb>'
-                                                     ||   '<vllimpgo>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimpgo,0),'fm999g999g990d00')||'</vllimpgo>'
-                                                     ||   '<vllimtrf>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimtrf,0),'fm999g999g990d00')||'</vllimtrf>'
-                                                     ||   '<vllimted>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimted,0),'fm999g999g990d00')||'</vllimted>'
-                                                     ||   '<vllimvrb>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimvrb,0),'fm999g999g990d00')||'</vllimvrb>'
-                                                     ||   '<vlutlweb>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlutlweb,0),'fm999g999g990d00')||'</vlutlweb>'
-                                                     ||   '<vlutlpgo>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlutlpgo,0),'fm999g999g990d00')||'</vlutlpgo>'
-                                                     ||   '<vlutltrf>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlutltrf,0),'fm999g999g990d00')||'</vlutltrf>'
-                                                     ||   '<vlutlted>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlutlted,0),'fm999g999g990d00')||'</vlutlted>'
-                                                     ||   '<vldspweb>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vldspweb,0),'fm999g999g990d00')||'</vldspweb>'
-                                                     ||   '<vldsppgo>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vldsppgo,0),'fm999g999g990d00')||'</vldsppgo>'
-                                                     ||   '<vldsptrf>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vldsptrf,0),'fm999g999g990d00')||'</vldsptrf>'
-                                                     ||   '<vldspted>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vldspted,0),'fm999g999g990d00')||'</vldspted>'
-                                                     ||   '<vlwebcop>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlwebcop,0),'fm999g999g990d00')||'</vlwebcop>'
-                                                     ||   '<vlpgocop>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlpgocop,0),'fm999g999g990d00')||'</vlpgocop>'
-                                                     ||   '<vltrfcop>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vltrfcop,0),'fm999g999g990d00')||'</vltrfcop>'
-                                                     ||   '<vltedcop>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vltedcop,0),'fm999g999g990d00')||'</vltedcop>'
-                                                     ||   '<vlvrbcop>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlvrbcop,0),'fm999g999g990d00')||'</vlvrbcop>'
+                                                     ||   '<idseqttl>'||nvl(vr_tab_internet_conta(vr_ind).idseqttl,0)||'</idseqttl>'
+                                                     ||   '<vllimweb>'||TO_CHAR(nvl(va_vllimweb,nvl(vr_tab_internet_conta(vr_ind).vllimweb,0)),'fm999g999g990d00')||'</vllimweb>'
+                                                     ||   '<vllimpgo>'||TO_CHAR(vr_vllimpgo,'fm999g999g990d00')||'</vllimpgo>'
+                                                     ||   '<vllimtrf>'||TO_CHAR(vr_vllimtrf,'fm999g999g990d00')||'</vllimtrf>'
+                                                     ||   '<vllimted>'||TO_CHAR(vr_vllimted,'fm999g999g990d00')||'</vllimted>'
+                                                     ||   '<vllimvrb>'||TO_CHAR(vr_vllimvrb,'fm999g999g990d00')||'</vllimvrb>'
+                                                     ||   '<vlutlweb>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlutlweb,0),'fm999g999g990d00')||'</vlutlweb>'
+                                                     ||   '<vlutlpgo>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlutlpgo,0),'fm999g999g990d00')||'</vlutlpgo>'
+                                                     ||   '<vlutltrf>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlutltrf,0),'fm999g999g990d00')||'</vlutltrf>'
+                                                     ||   '<vlutlted>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlutlted,0),'fm999g999g990d00')||'</vlutlted>'
+                                                     ||   '<vldspweb>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vldspweb,0),'fm999g999g990d00')||'</vldspweb>'
+                                                     ||   '<vldsppgo>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vldsppgo,0),'fm999g999g990d00')||'</vldsppgo>'
+                                                     ||   '<vldsptrf>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vldsptrf,0),'fm999g999g990d00')||'</vldsptrf>'
+                                                     ||   '<vldspted>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vldspted,0),'fm999g999g990d00')||'</vldspted>'
+                                                     ||   '<vlwebcop>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlwebcop,0),'fm999g999g990d00')||'</vlwebcop>'
+                                                     ||   '<vlpgocop>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlpgocop,0),'fm999g999g990d00')||'</vlpgocop>'
+                                                     ||   '<vltrfcop>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vltrfcop,0),'fm999g999g990d00')||'</vltrfcop>'
+                                                     ||   '<vltedcop>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vltedcop,0),'fm999g999g990d00')||'</vltedcop>'
+                                                     ||   '<vlvrbcop>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlvrbcop,0),'fm999g999g990d00')||'</vlvrbcop>'
                                                      || '</limite>'); 
            vr_ind := vr_tab_internet.NEXT(vr_ind);
         END LOOP;

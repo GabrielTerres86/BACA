@@ -26,7 +26,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                             (Jonata - RKAM).
                                            
 			   29/01/2018 - Inclusão da rotina pc_busca_qualif_oper_web - Diego Simas (AMcom).			   
-  
+
 			   09/02/2018 - Inclusão de rotina pc_consultar_limite_adp - Daniel(AMcom).			   
 
   ---------------------------------------------------------------------------------------------------------------*/
@@ -93,9 +93,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     ,flgstfin crapfin.flgstfin%TYPE
     ,tpfinali crapfin.tpfinali%TYPE);
        
-  /* Tabela para guardar as finalidades de empréstimos */
+   /* Tabela para guardar as finalidades de empréstimos */
   TYPE typ_tab_finalidades_empr IS TABLE OF typ_finalidades_empr INDEX BY PLS_INTEGER;
-  
+              
   /* Tabela para guardar as naturezas de ocupação */
   TYPE typ_natureza_ocupacao IS RECORD 
     (cdnatocp gncdnto.cdnatocp%TYPE
@@ -311,8 +311,8 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                           ,pr_des_erro OUT VARCHAR2             -- Saida OK/NOK
                                           ,pr_clob_ret OUT CLOB                 -- Tabela clob                                 
                                           ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
-                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro   
-                                                                                  
+                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro                                           
+                                                                                                        
   PROCEDURE pc_busca_gncdnto_car( pr_cdnatocp IN gncdnto.cdnatocp%TYPE -- Código da finalidade
                                  ,pr_rsnatocp IN gncdnto.rsnatocp%TYPE -- Descrição da finalidade
                                  ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
@@ -459,7 +459,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                          ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
                          ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
                          ,pr_des_erro  OUT VARCHAR2);                                                                                    
-                                                                                                                                         
+  
   PROCEDURE pc_busca_tipo_conta (pr_inpessoa     IN tbcc_tipo_conta.inpessoa%TYPE -- Tipo de pessoa
                                 ,pr_cdcooper     IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
                                 ,pr_cdtipo_conta IN tbcc_tipo_conta.cdtipo_conta%TYPE -- Codigo do tipo de conta
@@ -472,7 +472,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                 ,pr_retxml   IN OUT NOCOPY XMLType        -- Arquivo de retorno do XML
                                 ,pr_nmdcampo    OUT VARCHAR2              -- Nome do Campo
                                 ,pr_des_erro    OUT VARCHAR2);            -- Saida OK/NOK
-  									   
+
   PROCEDURE pc_busca_grupo_historico(pr_cdgrupo_historico IN tbcc_grupo_historico.cdgrupo_historico%TYPE -- Codigo do tipo de conta
                                     ,pr_dsgrupo_historico IN tbcc_grupo_historico.dsgrupo_historico%TYPE -- Descrição do tipo de conta
                                     ,pr_nrregist          IN INTEGER               -- Quantidade de registros                            
@@ -501,6 +501,10 @@ PROCEDURE pc_consultar_limite_adp(pr_cdcooper IN NUMBER             --> Cooperat
                                  ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2);      --> Erros do processo
 
+  PROCEDURE pc_busca_operadoras(pr_cdopetfn IN NUMBER            -- Codigo da operadora
+                               ,pr_nmopetfn IN VARCHAR2          -- Descricao da operadora
+                               ,pr_retxml   OUT NOCOPY XMLType); -- Arquivo de retorno do XML                              
+                                                                                                          
 END ZOOM0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
@@ -526,7 +530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                                     
                12/06/2016 - Criação das rotinas para consulta de linhas de crédito e finalidades de empréstimo
                             (Andrei - RKAM).
-                    
+                                                 
                07/02/2017 - Criacao da pc_busca_operacao_conta. (Jaison/Oscar - PRJ335)
                22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
                                                    
@@ -4022,7 +4026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_dscritic:= 'Erro na pc_busca_finalidades_empr_car --> '|| SQLERRM;
       
   END pc_busca_finalidades_empr_car; 
-  
+
   PROCEDURE pc_busca_operacao_conta(pr_cdoperacao IN tbcc_operacao.cdoperacao%TYPE --> Codigo da operacao
                                    ,pr_dsoperacao IN tbcc_operacao.dsoperacao%TYPE --> Descricao da operacao
                                    ,pr_nrregist   IN INTEGER                       --> Quantidade de registros                            
@@ -6328,7 +6332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                          '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
       
   END pc_busca_conta_cosif;
-
+  
   PROCEDURE pc_busca_tipo_conta (pr_inpessoa     IN tbcc_tipo_conta.inpessoa%TYPE -- Tipo de pessoa
                                 ,pr_cdcooper     IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
                                 ,pr_cdtipo_conta IN tbcc_tipo_conta.cdtipo_conta%TYPE -- Codigo do tipo de conta
@@ -6404,8 +6408,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     -- Variaveis de Excecoes
     vr_exc_ok    EXCEPTION;                                       
     vr_exc_erro  EXCEPTION;      
-  
-  
+
+
   BEGIN
     -- Incluir nome do modulo logado
     GENE0001.pc_informa_acesso(pr_module => 'pc_busca_tipo_conta'
@@ -6999,6 +7003,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_dscritic := 'Erro pc_consultar_limite_adp: '||SQLERRM;
       ROLLBACK;
   END pc_consultar_limite_adp;  
+
+  PROCEDURE pc_busca_operadoras(pr_cdopetfn IN NUMBER              -- Codigo da operadora
+                               ,pr_nmopetfn IN VARCHAR2            -- Descricao da operadora
+                               ,pr_retxml   OUT NOCOPY XMLType) IS -- Arquivo de retorno do XML 
+                               
+    vr_dscritic VARCHAR2(4000);   
+    vr_contador NUMBER := 0; 
+    vr_xml VARCHAR2(10000);                           
+
+    CURSOR cr_craptab IS    
+     SELECT tab.tpregist
+           ,tab.dstextab
+       FROM craptab tab
+      WHERE tab.cdcooper        = 0 
+        AND UPPER(tab.nmsistem) = 'CRED'
+        AND UPPER(tab.tptabela) = 'USUARI'     
+        AND tab.cdempres        = 11           
+        AND UPPER(tab.cdacesso) = 'OPETELEFON'  
+        AND (pr_cdopetfn IS NULL OR (pr_cdopetfn IS NOT NULL AND tab.tpregist = pr_cdopetfn))
+        AND (pr_nmopetfn IS NULL OR (pr_nmopetfn IS NOT NULL AND tab.dstextab LIKE '%'||pr_nmopetfn||'%'));
+    rw_craptab cr_craptab%ROWTYPE;
+                               
+  BEGIN
+
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="UTF-8"?><Root/>');
+      
+      FOR rw_craptab IN cr_craptab LOOP
+                      
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root',      pr_posicao => 0,           pr_tag_nova => 'Operadora', pr_tag_cont => NULL,                pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Operadora', pr_posicao => vr_contador, pr_tag_nova => 'Codigo',    pr_tag_cont => rw_craptab.tpregist, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Operadora', pr_posicao => vr_contador, pr_tag_nova => 'Descricao', pr_tag_cont => rw_craptab.dstextab, pr_des_erro => vr_dscritic);
+        
+        vr_contador := vr_contador + 1;
+        
+      END LOOP; 
+                               
+  END pc_busca_operadoras;                              
   
 END ZOOM0001;
 /

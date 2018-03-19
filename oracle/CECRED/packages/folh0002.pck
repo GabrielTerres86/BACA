@@ -9083,12 +9083,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                               ,pr_cdacesso => 'FOLHAIB_QTD_DIA_ENV_COMP');
                                               
       IF rw_crappfp.qtsubtra > vr_qtdiaenv THEN        
-        vr_cdcritic := 'O envio dos comprovantes deve ser efetuado no máximo ' || TO_CHAR(vr_qtdiaenv) || ' dia(s) após o pagamento.';
+        vr_dscritic := 'O envio dos comprovantes deve ser efetuado no máximo ' || TO_CHAR(vr_qtdiaenv) || ' dia(s) após o pagamento.';
         RAISE vr_erro;
       END IF;     
       
       IF rw_crappfp.flsitcre NOT IN (1,2) THEN
-        vr_cdcritic := 'Apenas registros creditados podem ser enviados.';
+        vr_dscritic := 'Apenas registros creditados podem ser enviados.';
         RAISE vr_erro;        
       END IF;
 

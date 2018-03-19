@@ -2371,7 +2371,7 @@ PROCEDURE dados_protocolo:
     ELSE
     DO:
         IF INDEX(STRING(tt-autorizacao.vlcorfix), ",") > 0 THEN
-            ASSIGN aux_vlcorfix = STRING(tt-autorizacao.vlcorfix).
+            ASSIGN aux_vlcorfix = TRIM(STRING(tt-autorizacao.vlcorfix,"zzz,zzz,zz9.99")).
         ELSE
             ASSIGN aux_vlcorfix = STRING(tt-autorizacao.vlcorfix) + ",00".
 
@@ -2386,7 +2386,7 @@ PROCEDURE dados_protocolo:
                           tt-autorizacao.diadebit
 
            par_dsinfor3 = "O associado acima qualificado autoriza a realizacao " +
-                          "do debito mensal em sua conta corrente de deposito a vista," +
+                          "do debito mensal em sua conta corrente de deposito a vista, " +
                           "no valor de R$ " + 
                           TRIM(STRING(tt-autorizacao.vlprepla,
                                       "zzz,zzz,zz9.99")) + " (" +
