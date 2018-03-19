@@ -257,17 +257,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
       
        vr_idtabtitcto PLS_INTEGER;
        aux_flregis INTEGER;
-          
-       -- Verifica Conta (Cadastro de associados)
-       CURSOR cr_crapass IS
-         select nmprimtl
-               ,inpessoa
-               ,nrdconta
-         from   crapass
-         where  
-                crapass.cdcooper = pr_cdcooper
-                AND    crapass.nrdconta = pr_nrdconta;
-       rw_crapass cr_crapass%rowtype;
        
        CURSOR cr_craptdb IS
           SELECT 
@@ -282,7 +271,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
              crapope.cdoperad AS cdoperad,
              crapope.nmoperad AS nmoperad,
              crapcob.flgregis AS flgregis,
-             craptdb.nrdconta AS nrdconta
+             craptdb.nrdconta AS nrdconta,
+             crapass.nmprimtl AS nmprimtl
           FROM 
              craptdb
              INNER JOIN crapcob ON crapcob.cdcooper = craptdb.cdcooper AND
@@ -293,6 +283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                                     crapcob.nrdocmto = craptdb.nrdocmto  AND
                                                     (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
              LEFT JOIN crapope ON crapope.cdcooper = craptdb.cdcooper AND crapope.cdoperad = craptdb.cdoperes 
+             LEFT JOIN crapass ON crapass.cdcooper = craptdb.cdcooper AND crapass.nrdconta = craptdb.nrdconta
           WHERE
              (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta)
              AND (
@@ -318,8 +309,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
               aux_flregis := NULL;
            END IF;
          END IF;
-         
-         OPEN cr_crapass;
          
          OPEN  cr_craptdb;
          LOOP
@@ -352,7 +341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                          pr_tab_dados_titcto(vr_idtabtitcto).tpcobran := ' ';
                END CASE;
                pr_tab_dados_titcto(vr_idtabtitcto).nrdconta := rw_craptdb.nrdconta;
-               pr_tab_dados_titcto(vr_idtabtitcto).nmprimt  := rw_crapass.nmprimtl;
+               pr_tab_dados_titcto(vr_idtabtitcto).nmprimt  := rw_craptdb.nmprimtl;
          end   loop;
         
     END;
@@ -464,7 +453,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                              '<nmoperad>' || vr_tab_dados_titcto(vr_index).nmoperad || '</nmoperad>' ||
                              '<dsoperes>' || vr_tab_dados_titcto(vr_index).dsoperes || '</dsoperes>' ||
                              '<tpcobran>' || vr_tab_dados_titcto(vr_index).tpcobran || '</tpcobran>' ||
-                             '<nrdconta>' || vr_tab_dados_titcto(vr_index).nrdconta || '</nrdconta>' ||
+                             '<nrdconta>' || TRIM(gene0002.fn_mask(vr_tab_dados_titcto(vr_index).nrdconta,'zzzz.zzz.z'))   || '</nrdconta>' ||
                              '<nmprimt>'  || vr_tab_dados_titcto(vr_index).nmprimt  || '</nmprimt>'  ||
 	                         '</inf>'
 	                        );
@@ -1859,7 +1848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                             '<dtacesso>' ||	vr_dtacesso             || '</dtacesso>' ||
                             '<hracesso>' ||	vr_hracesso             || '</hracesso>' ||
                             '<dstitulo>' ||	vr_dstitulo             || '</dstitulo>' ||
-                            '<nrdconta>' || pr_nrdconta             || '</nrdconta>' ||
+                            '<nrdconta>' || TRIM(gene0002.fn_mask(pr_nrdconta,'zzzz.zzz.z')) || '</nrdconta>' ||
                             '<nmtitula>' || rw_crapass.nmprimtl     || '</nmtitula>' ||
                             '<nrcpfcgc>' || rw_crapass.nrcpfcgc     || '</nrcpfcgc>' ||
                             '<qtregist>' || vr_qtregist             || '</qtregist>'
@@ -1884,7 +1873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                      '<nmoperad>' || vr_tab_dados_titcto(vr_index).nmoperad || '</nmoperad>'      ||
                      '<dsoperes>' || vr_tab_dados_titcto(vr_index).dsoperes || '</dsoperes>'      ||
                      '<tpcobran>' || vr_tab_dados_titcto(vr_index).tpcobran || '</tpcobran>'      ||
-                     '<nrdconta>' || vr_tab_dados_titcto(vr_index).nrdconta || '</nrdconta>'      ||
+                     '<nrdconta>' || TRIM(gene0002.fn_mask(vr_tab_dados_titcto(vr_index).nrdconta,'zzzz.zzz.z'))  || '</nrdconta>'      ||
                      '<nmprimt>'  || vr_tab_dados_titcto(vr_index).nmprimt  || '</nmprimt>'       ||  
     	      '</titulo>'
            );
@@ -2184,16 +2173,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
           
           pc_escreve_xml(
             '<lote>' ||
-                            '<dtmvtolt>'   	||	vr_tab_dados_titcto(vr_index).dtmvtolt              || '</dtmvtolt>'     ||
-                            '<cdagenci>'    ||	vr_tab_dados_titcto(vr_index).cdagenci              || '</cdagenci>'     ||
-                            '<nrdolote>'    ||  vr_tab_dados_titcto(vr_index).nrdolote              || '</nrdolote>'     ||
-                            '<nrdconta>'    ||  vr_tab_dados_titcto(vr_index).nrdconta              || '</nrdconta>'     ||
-                            '<nrborder>'    ||  vr_tab_dados_titcto(vr_index).nrborder              || '</nrborder>'     ||
-                            '<qttittot_cr>' ||  vr_tab_dados_titcto(vr_index).qttittot_cr           || '</qttittot_cr>'  ||
-                            '<qttittot_sr>' ||  vr_tab_dados_titcto(vr_index).qttittot_sr           || '</qttittot_sr>'  ||
-                            '<vltittot_cr>' ||  vr_tab_dados_titcto(vr_index).vltittot_cr           || '</vltittot_cr>'  ||
-                            '<vltittot_sr>' ||  vr_tab_dados_titcto(vr_index).vltittot_sr           || '</vltittot_sr>'  ||
-                            '<nmoperad>'    ||  vr_tab_dados_titcto(vr_index).nmoperad              || '</nmoperad>'     ||
+                            '<dtmvtolt>'   	||	NVL(TO_CHAR(vr_tab_dados_titcto(vr_index).dtmvtolt,'DD/MM/RRRR'), '') 	    || '</dtmvtolt>'     ||
+                            '<cdagenci>'    ||	vr_tab_dados_titcto(vr_index).cdagenci              || '</cdagenci>'     	  ||
+                            '<nrdolote>'    ||  gene0002.fn_mask(to_char(vr_tab_dados_titcto(vr_index).nrdolote),'zzz.zz9') || '</nrdolote>'     ||
+                            '<nrdconta>'    ||  TRIM(gene0002.fn_mask(vr_tab_dados_titcto(vr_index).nrdconta,'zzzz.zzz.z')) || '</nrdconta>'     ||
+                            '<nrborder>'    ||  TRIM(GENE0002.fn_mask_contrato(vr_tab_dados_titcto(vr_index).nrborder))     || '</nrborder>'     ||
+                            '<qttittot_cr>' ||  vr_tab_dados_titcto(vr_index).qttittot_cr           || '</qttittot_cr>'     ||
+                            '<qttittot_sr>' ||  vr_tab_dados_titcto(vr_index).qttittot_sr           || '</qttittot_sr>'     ||
+                            '<vltittot_cr>' ||  vr_tab_dados_titcto(vr_index).vltittot_cr           || '</vltittot_cr>'     ||
+                            '<vltittot_sr>' ||  vr_tab_dados_titcto(vr_index).vltittot_sr           || '</vltittot_sr>'     ||
+                            '<nmoperad>'    ||  vr_tab_dados_titcto(vr_index).nmoperad              || '</nmoperad>'        ||
     	      '</lote>'
            );
                   
@@ -2226,7 +2215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
       --> Solicita geracao do PDF
     gene0002.pc_solicita_relato(pr_cdcooper   => vr_cdcooper
                                , pr_cdprogra  => 'TITCTO'
-                               , pr_dtmvtolt  => to_date(pr_dtmvtolt, 'DD/MM/RRRR') --> alterar para pegar param procedure
+                               , pr_dtmvtolt  => to_date(pr_dtmvtolt, 'DD/MM/RRRR')
                                , pr_dsxml     => vr_des_xml
                                , pr_dsxmlnode => vr_dsxmlnode
                                , pr_dsjasper  => vr_nmjasper
