@@ -194,7 +194,7 @@ PROCEDURE pc_obtem_dados_lotes (pr_cdcooper    IN crapcop.cdcooper%TYPE, --> Cód
                                     pr_cdcritic out number,                         --> codigo da critica
                                     pr_dscritic out varchar2                        --> descricao da critica.                    
                                 );
-    
+
 PROCEDURE pc_gerar_impressao_titcto_c(
                                         pr_nrdconta in  crapass.nrdconta%type --> conta do associado
                                         ,pr_tpcobran    IN CHAR                  --> Filtro de tipo de cobranca
@@ -219,9 +219,7 @@ PROCEDURE pc_gerar_impressao_titcto_c(
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       );
 END TELA_TITCTO;
-
-/
-CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
+/CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
   /*---------------------------------------------------------------------------------------------------------------------
     Programa : TELA_TITCTO
     Sistema  : Ayllos Web
@@ -1246,7 +1244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
       vr_index := vr_tab_dados_conciliacao.first;
       while vr_index is not null loop
             pc_escreve_xml('<inf>'||
-                              '<dtvencto>' || vr_tab_dados_conciliacao(vr_index).dtvencto || '</dtvencto>' ||
+                              '<dtvencto>' || to_char(vr_tab_dados_conciliacao(vr_index).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
                               '<qtsldant>' || vr_tab_dados_conciliacao(vr_index).qtsldant || '</qtsldant>' ||
                               '<vlsldant>' || vr_tab_dados_conciliacao(vr_index).vlsldant || '</vlsldant>' ||
                               '<qtderesg>' || vr_tab_dados_conciliacao(vr_index).qtderesg || '</qtderesg>' ||
@@ -1355,7 +1353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
               (
                 (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND craptdb.insittit = 2 AND (pr_tpdepesq='T' OR pr_tpdepesq='L'))
                 OR (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND craptdb.insittit = 3 AND pr_tpdepesq='T')
-                OR (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND craptdb.insittit = 4 AND (pr_tpdepesq='T' OR (pr_tpdepesq='A' AND craptdb.dtvencto = vr_dtmvtoan)))
+                OR (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND craptdb.insittit = 4 AND (pr_tpdepesq='T' OR (pr_tpdepesq='A' AND craptdb.dtvencto > vr_dtmvtoan)))
               )
               AND (
                   ((pr_nrdocmto>0 AND pr_nrdocmto = craptdb.nrdocmto) OR nvl(pr_nrdocmto,0)=0) --caso tenha passado numero do boleto
@@ -1518,11 +1516,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
       vr_index := vr_tab_dados_loteamento.first;
       while vr_index is not null loop
             pc_escreve_xml('<inf>'||
-                              '<dtlibbdt>' || vr_tab_dados_loteamento(vr_index).dtlibbdt || '</dtlibbdt>' ||
+                              '<dtlibbdt>' || to_char(vr_tab_dados_loteamento(vr_index).dtlibbdt,'dd/mm/rrrr') || '</dtlibbdt>' ||
                               '<cdagenci>' || vr_tab_dados_loteamento(vr_index).cdagenci || '</cdagenci>' ||
                               '<cdbccxlt>' || vr_tab_dados_loteamento(vr_index).cdbccxlt || '</cdbccxlt>' ||
                               '<nrdolote>' || vr_tab_dados_loteamento(vr_index).nrdolote || '</nrdolote>' ||
-                              '<dtvencto>' || vr_tab_dados_loteamento(vr_index).dtvencto || '</dtvencto>' ||
+                              '<dtvencto>' || to_char(vr_tab_dados_loteamento(vr_index).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
                               '<cdbandoc>' || vr_tab_dados_loteamento(vr_index).cdbandoc || '</cdbandoc>' ||
                               '<nrcnvcob>' || vr_tab_dados_loteamento(vr_index).nrcnvcob || '</nrcnvcob>' ||
                               '<nrdocmto>' || vr_tab_dados_loteamento(vr_index).nrdocmto || '</nrdocmto>' ||
@@ -1868,9 +1866,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        
       pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
       pc_escreve_xml( 
-                            '<dtacesso>' || vr_dtacesso             || '</dtacesso>' ||
-                            '<hracesso>' || vr_hracesso             || '</hracesso>' ||
-                            '<dstitulo>' || vr_dstitulo             || '</dstitulo>' ||
+                            '<dtacesso>' ||  vr_dtacesso             || '</dtacesso>' ||
+                            '<hracesso>' ||  vr_hracesso             || '</hracesso>' ||
+                            '<dstitulo>' ||  vr_dstitulo             || '</dstitulo>' ||
                             '<nrdconta>' || TRIM(gene0002.fn_mask(pr_nrdconta,'zzzz.zzz.z')) || '</nrdconta>' ||
                             '<nmtitula>' || rw_crapass.nmprimtl     || '</nmtitula>' ||
                             '<nrcpfcgc>' || rw_crapass.nrcpfcgc     || '</nrcpfcgc>' ||
@@ -2196,8 +2194,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
           
           pc_escreve_xml(
             '<lote>' ||
-                            '<dtmvtolt>'    ||  NVL(TO_CHAR(vr_tab_dados_titcto(vr_index).dtmvtolt,'DD/MM/RRRR'), '')       || '</dtmvtolt>'     ||
-                            '<cdagenci>'    ||  vr_tab_dados_titcto(vr_index).cdagenci              || '</cdagenci>'        ||
+                            '<dtmvtolt>'     ||  NVL(TO_CHAR(vr_tab_dados_titcto(vr_index).dtmvtolt,'DD/MM/RRRR'), '')       || '</dtmvtolt>'     ||
+                            '<cdagenci>'    ||  vr_tab_dados_titcto(vr_index).cdagenci              || '</cdagenci>'         ||
                             '<nrdolote>'    ||  gene0002.fn_mask(to_char(vr_tab_dados_titcto(vr_index).nrdolote),'zzz.zz9') || '</nrdolote>'     ||
                             '<nrdconta>'    ||  TRIM(gene0002.fn_mask(vr_tab_dados_titcto(vr_index).nrdconta,'zzzz.zzz.z')) || '</nrdconta>'     ||
                             '<nrborder>'    ||  TRIM(GENE0002.fn_mask_contrato(vr_tab_dados_titcto(vr_index).nrborder))     || '</nrborder>'     ||
@@ -2333,4 +2331,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
   END pc_gerar_impressao_titcto_l;
   
 END TELA_TITCTO;
+
 /
