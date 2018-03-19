@@ -701,6 +701,10 @@
                  
                  09/10/2017 - Ajustes de retorno na operacao 31 (David)
 
+				 05/03/2018 - Incluído o carrossel de banners para o mobile 
+							  (6214  -  Ederson - Supero)
+
+
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1697,7 +1701,7 @@ PROCEDURE process-web-request :
 
         /* Verificar senha e frase */
         IF  (aux_flgcript AND NOT CAN-DO("2,11,18",STRING(aux_operacao)))  OR /** Utiliza criptografia **/
-           (
+            (
                NOT aux_flgcript AND aux_nrcpfope = 0 AND
                ( 
                  (
@@ -2382,6 +2386,9 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 214 THEN /* Obter quantidade de notificações não visualizadas do cooperado */
                 RUN proc_operacao214.
+		ELSE
+            IF  aux_operacao = 215 THEN /* Obter banners para o carrossel do mobile */
+                RUN proc_operacao215.
     END.
 /*....................................................................*/
     
@@ -5878,11 +5885,11 @@ PROCEDURE proc_operacao99:
                                          OUTPUT TABLE xml_operacao).
 
     IF RETURN-VALUE <> "OK" THEN
-            {&out} aux_dsmsgerr. 
+       {&out} aux_dsmsgerr. 
     ELSE
-    FOR EACH xml_operacao NO-LOCK:
-        {&out} xml_operacao.dslinxml.
-        END.
+       FOR EACH xml_operacao NO-LOCK:
+           {&out} xml_operacao.dslinxml.
+       END.
 
     {&out} aux_tgfimprg.
 
@@ -7098,7 +7105,7 @@ PROCEDURE proc_operacao141:
            aux_xmldados = GET-VALUE("xmldados")
            aux_dssessao = GET-VALUE("dssessao")
            aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
-           
+
     IF  aux_tpoperac = 3 OR aux_tpoperac = 6  THEN
         ASSIGN aux_dtmvtocd = DATE(GET-VALUE("dtmvtolt")).       
 
@@ -9335,6 +9342,24 @@ PROCEDURE proc_operacao214:
     {&out} aux_tgfimprg.
 
 END PROCEDURE.
+
+PROCEDURE proc_operacao215:
+    
+    RUN sistema/internet/fontes/InternetBank215.p (INPUT aux_cdcooper,
+                                                   INPUT aux_nrdconta,
+                                                   INPUT aux_idseqttl,
+                                                   INPUT aux_cdcanal,
+                                                   OUTPUT TABLE xml_operacao).
+
+    FOR EACH xml_operacao NO-LOCK:
+        {&out} xml_operacao.dslinxml.
+    END.
+    
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+
 
 /*............................................................................*/
 

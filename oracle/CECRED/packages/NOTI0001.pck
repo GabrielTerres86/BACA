@@ -275,7 +275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
     vr_dhenvio_push    DATE;
   
   BEGIN
-   
+    
     IF pr_cdmensagem IS NULL OR pr_cdmensagem <= 0 THEN
       RETURN;
     END IF;
@@ -301,8 +301,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
         ,pr_destinatarios(idx).dsvariaveis
         ,pr_dhenvio
         ,vr_sysdate);
-  
-    COMMIT;
   
     /*------------------ENVIA OS PUSH NOTIFICATION PARA O CECRED MOBILE------------------*/
   
@@ -349,11 +347,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
           ,vr_tab_dispositivos(idx).dispositivomobileid
           ,push_pendente
           ,vr_dhenvio_push);
-        
-      COMMIT; -- COMMIT A CADA LOTE
     
     END IF; -- IF rw_params.inenviar_push = 1
   
+  EXCEPTION
+    WHEN OTHERS THEN
+       cecred.pc_internal_exception(pr_cdcooper => NULL
+                                   ,pr_compleme => 'pr_cdmensagem = '||pr_cdmensagem);
   END pc_cria_notificacoes;
   
   PROCEDURE pc_cria_notificacoes(pr_cdorigem_mensagem tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE
@@ -381,6 +381,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
                           ,pr_destinatarios => pr_destinatarios);
     END IF;
     
+  EXCEPTION
+    WHEN OTHERS THEN
+       cecred.pc_internal_exception(pr_cdcooper => NULL
+                                   ,pr_compleme => 'pr_cdorigem_mensagem = '||pr_cdorigem_mensagem || ', pr_cdmotivo_mensagem = '||pr_cdmotivo_mensagem);
   END pc_cria_notificacoes;
 
   -- Cria uma notificação única (Recebe os dados da conta quebrados, um por parâmetro, com variáveis)
@@ -392,6 +396,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
                                ,pr_idseqttl    tbgen_notificacao.idseqttl%TYPE DEFAULT NULL
                                ,pr_variaveis   typ_variaveis_notif) IS
                                
+    CURSOR cr_params IS
+    SELECT NVL(aut.inmensagem_ativa, 0) inmensagem_ativa
+      FROM tbgen_notif_automatica_prm aut
+     WHERE aut.cdorigem_mensagem = pr_cdorigem_mensagem
+       AND aut.cdmotivo_mensagem = pr_cdmotivo_mensagem;
+    rw_params cr_params%ROWTYPE;
+    
     CURSOR cr_destinatarios(pr_dsvariaveis IN VARCHAR2) IS
     SELECT usu.cdcooper
           ,usu.nrdconta
@@ -405,33 +416,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
     vr_dsvariaveis tbgen_notificacao.dsvariaveis%TYPE;
     
   BEGIN
+  
+    OPEN cr_params;
+    FETCH cr_params
+    INTO rw_params;
+    CLOSE cr_params;
     
-    vr_dsvariaveis := fn_gera_str_variaveis(pr_variaveis);
-   
-    IF pr_idseqttl IS NULL THEN -- Se não possuir titular, cria um registro para cada usuário da conta
+    -- Valida se a mensagem está ativa
+    IF rw_params.inmensagem_ativa = 1 THEN
+    
+      vr_dsvariaveis := fn_gera_str_variaveis(pr_variaveis);
+     
+      IF pr_idseqttl IS NULL THEN -- Se não possuir titular, cria um registro para cada usuário da conta
+        
+        OPEN cr_destinatarios(vr_dsvariaveis);
+       FETCH cr_destinatarios BULK COLLECT
+        INTO vr_destinatarios;
+       CLOSE cr_destinatarios;
+                                   
+      ELSE -- Se recebeu titular por parâmetro, cria apenas um registro fixo
+        
+        -- Cria um objeto de destinatário a partir dos parâmetros
+        vr_destinatarios(1).cdcooper := pr_cdcooper;
+        vr_destinatarios(1).nrdconta := pr_nrdconta;
+        vr_destinatarios(1).idseqttl := pr_idseqttl;
+        vr_destinatarios(1).dsvariaveis := vr_dsvariaveis;
+         
+      END IF;
       
-      OPEN cr_destinatarios(vr_dsvariaveis);
-     FETCH cr_destinatarios BULK COLLECT
-      INTO vr_destinatarios;
-     CLOSE cr_destinatarios;
-                                 
-    ELSE -- Se recebeu titular por parâmetro, cria apenas um registro fixo
-      
-      -- Cria um objeto de destinatário a partir dos parâmetros
-      vr_destinatarios(1).cdcooper := pr_cdcooper;
-      vr_destinatarios(1).nrdconta := pr_nrdconta;
-      vr_destinatarios(1).idseqttl := pr_idseqttl;
-      vr_destinatarios(1).dsvariaveis := vr_dsvariaveis;
-       
+      -- Cria as notificações
+      noti0001.pc_cria_notificacoes(pr_cdorigem_mensagem => pr_cdorigem_mensagem
+                                   ,pr_cdmotivo_mensagem => pr_cdmotivo_mensagem
+                                   ,pr_dhenvio           => pr_dhenvio
+                                   ,pr_destinatarios     => vr_destinatarios);
     END IF;
     
-    -- Cria as notificações
-    noti0001.pc_cria_notificacoes(pr_cdorigem_mensagem => pr_cdorigem_mensagem
-                                 ,pr_cdmotivo_mensagem => pr_cdmotivo_mensagem
-                                 ,pr_dhenvio           => pr_dhenvio
-                                 ,pr_destinatarios     => vr_destinatarios);
-  
-  END;
+  EXCEPTION
+    WHEN OTHERS THEN
+       cecred.pc_internal_exception(pr_cdcooper => NULL
+                                   ,pr_compleme => 'pr_cdorigem_mensagem = '||pr_cdorigem_mensagem || ', pr_cdmotivo_mensagem = '||pr_cdmotivo_mensagem);
+  END pc_cria_notificacao;
   
   -- Cria uma notificação única (Recebe os dados da conta quebrados, um por parâmetro, sem variáveis)
   PROCEDURE pc_cria_notificacao(pr_cdorigem_mensagem tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE
@@ -444,16 +468,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
     vr_variaveis typ_variaveis_notif;
     
   BEGIN
+      noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => pr_cdorigem_mensagem
+                                  ,pr_cdmotivo_mensagem => pr_cdmotivo_mensagem
+                                  ,pr_dhenvio    => pr_dhenvio   
+                                  ,pr_cdcooper   => pr_cdcooper  
+                                  ,pr_nrdconta   => pr_nrdconta  
+                                  ,pr_idseqttl   => pr_idseqttl
+                                  ,pr_variaveis  => vr_variaveis);
   
-    noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => pr_cdorigem_mensagem
-                                ,pr_cdmotivo_mensagem => pr_cdmotivo_mensagem
-                                ,pr_dhenvio    => pr_dhenvio   
-                                ,pr_cdcooper   => pr_cdcooper  
-                                ,pr_nrdconta   => pr_nrdconta  
-                                ,pr_idseqttl   => pr_idseqttl
-                                ,pr_variaveis  => vr_variaveis);
-  
-  END;
+  EXCEPTION
+    WHEN OTHERS THEN
+       cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                   ,pr_compleme => 'pr_cdorigem_mensagem = '||pr_cdorigem_mensagem || ', pr_cdmotivo_mensagem = '||pr_cdmotivo_mensagem);
+  END pc_cria_notificacao;
 
   PROCEDURE pc_job_notificacoes_autom(pr_dhexecucao IN DATE) IS
   
@@ -603,8 +630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
         vr_sql_destinatarios := vr_sql_destinatarios || CASE WHEN pr_tpfiltro_mobile = 1 THEN 'NOT IN' ELSE 'IN' END;
         vr_sql_destinatarios := vr_sql_destinatarios || '(SELECT dsp.cooperativaid,dsp.numeroconta,dsp.titularid ' ||
                                                            'FROM dispositivomobile dsp ' ||
-                                                          'WHERE dsp.pushhabilitado = 1 ' ||
-                                                            'AND dsp.autorizado = 1 ' ||
+                                                          'WHERE dsp.autorizado = 1 ' ||
                                                             'AND dsp.habilitado = 1 ';
         IF pr_tpfiltro_mobile = 3 THEN
           -- Android
