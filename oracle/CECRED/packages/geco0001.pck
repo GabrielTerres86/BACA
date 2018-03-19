@@ -485,7 +485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       /* Buscar dados primários na formação de grupos */
       CURSOR cr_crapgrp(pr_cdcooper  IN crapgrp.cdcooper%TYPE      --> Código da cooperativa
                        ,pr_nrdgrupo  IN crapgrp.nrdgrupo%TYPE) IS  --> Número do grupo
-        SELECT cg.cdcooper
+        SELECT DISTINCT cg.cdcooper
               ,cg.nrcpfcgc
               ,cg.nrdgrupo
               ,count(distinct cg.nrdgrupo) over (partition by cg.cdcooper,cg.nrcpfcgc) qtd 
