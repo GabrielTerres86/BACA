@@ -7888,14 +7888,15 @@ function controlaLayoutLiq(operacao) {
         // Tratamento para verificar Tipo de Emprestimo
         switch (arrayLiquidacoes[i]['tpemprst']) {
             case '0': // TR
-            aux_tpemprst = 'TR';
+                aux_dstipemp = 'TR';
                 break;
             case '1': // Pre-Fixado
-            aux_tpemprst = 'PP';
+                aux_dstipemp = 'PP';
                 break;
             case '2': // Pos-Fixado
-                aux_tpemprst = 'POS';
+                aux_dstipemp = 'POS';
                 break;
+        }
         if (aux_idenempr == 2){
             aux_cdfinemp = ' - ';
             aux_cdlcremp = ' - ';
