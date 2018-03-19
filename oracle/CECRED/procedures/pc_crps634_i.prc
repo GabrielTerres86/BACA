@@ -97,6 +97,7 @@ BEGIN
     cursor cr_crapepa_age (pr_cdcooper in crapage.cdcooper%type,
                            pr_qterro   in number,
                            pr_dtmvtolt in tbgen_batch_controle.dtmvtolt%TYPE) is
+
         SELECT DISTINCT cp.cdagenci
         FROM crapepa ca, crapass cp
         WHERE ca.cdcooper = pr_cdcooper
@@ -113,18 +114,29 @@ BEGIN
                                            AND tbgen_batch_controle.cdagrupador = cp.cdagenci
                                            AND tbgen_batch_controle.insituacao  = 1
                                            AND tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)))       
-          ORDER BY cp.cdagenci;
+          union
+            select CDAGEAGR as cdagenci
+            from crapage
+            where cdcooper = pr_cdcooper
+            and CDAGEAGR > 0
+            and cdageagr not in(SELECT DISTINCT cp.cdagenci
+                                FROM crapepa ca, crapass cp
+                                where ca.cdcooper = cp.cdcooper
+                                AND ca.nrdconta = cp.nrdconta
+                                AND ca.cdcooper = pr_cdcooper
+                                AND ca.persocio >= pr_persocio
+                                AND cp.dtelimin IS NULL);
           
    /* Buscar dados da formação de grupos */
    CURSOR cr_crapgrpb(pr_cdcooper IN crapgrp.cdcooper%TYPE) IS  --> Código da cooperativa
-        SELECT cg.nrdgrupo
+        SELECT distinct cg.nrdgrupo
               ,NVL((LAG(cg.nrdgrupo) OVER(ORDER BY cg.nrdgrupo)), 0) nrdgrupoa
         FROM crapgrp cg
         WHERE cg.cdcooper = pr_cdcooper
         ORDER BY cg.nrdgrupo;          
           
           
-   PROCEDURE pc_grava_crapgrp (pr_cdcooper in tbgen_batch_relatorio_wrk.cdcooper%type,
+   PROCEDURE pc_carrega_tabgrupo (pr_cdcooper in tbgen_batch_relatorio_wrk.cdcooper%type,
                                 pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type,
                                 pr_des_erro out varchar2) IS
         cursor c_crapgrupo is                         
@@ -150,7 +162,7 @@ BEGIN
                 where wrk.cdcooper    = pr_cdcooper
                   and wrk.cdprograma  = 'pc_crps634_i'
                   and wrk.dsrelatorio = 'rptGrupoEconomico'
-                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  --and wrk.dtmvtolt    = pr_dtmvtolt
                ) tab;
        BEGIN
          BEGIN
@@ -177,9 +189,9 @@ BEGIN
            END LOOP;
          EXCEPTION
            WHEN OTHERS THEN
-              pr_des_erro:= 'Erro pc_grava_crapgrp: '||sqlerrm;
+              pr_des_erro:= 'Erro pc_carrega_tabgrupo: '||sqlerrm;
          END;
-       END pc_grava_crapgrp;          
+       END pc_carrega_tabgrupo;          
 
   BEGIN
     
@@ -226,6 +238,15 @@ BEGIN
       -- Envio centralizado de log de erro
       raise vr_exc_erro;
     end if;
+    
+      -- Para os programas em paralelo devemos buscar o array crapdat.
+      -- Leitura do calendário da cooperativa
+      IF pr_tab_crapdat.dtmvtolt IS NULL THEN
+        OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        FETCH btch0001.cr_crapdat
+          INTO pr_tab_crapdat;
+        CLOSE btch0001.cr_crapdat;
+      END IF;    
       
     -- Buscar a data do movimento
     open btch0001.cr_crapdat(pr_cdcooper);
@@ -531,13 +552,64 @@ BEGIN
                 pr_dsmensagem         => 'Fim Montar Grupo Econônico ' || to_char(sysdate,'hh24:mi:ss') || ' Coperativa ' ||pr_cdcooper || ' Agencia: ' ||pr_cdagenci||' - INPROCES: '||vr_inproces || ' Registros ' ||vr_tab_crapgrp.count,
                 PR_IDPRGLOG           => vr_idlog_ini_par);                                          
 
-        -- grava tab temporária   tbgen_batch_relatorio_wrk 
+        
+        --Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F',    
+                  pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                  pr_cdcooper   => pr_cdcooper, 
+                  pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                  pr_idprglog   => vr_idlog_ini_par,
+                  pr_flgsucesso => 1); 
+
+     END IF;
+   
+   -- executor principal do job 
+   IF vr_inproces  > 2 AND 
+      vr_qtdjobs   > 0 and 
+      pr_cdagenci  = 0 then  
+   
+   -- Inicio carregar tabela memória  vr_tab_crapgrp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                  PR_CDPROGRAMA         => pr_cdprogra || '$',
+                  pr_cdcooper           => pr_cdcooper,
+                  pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                  pr_tpocorrencia       => 4,
+                  pr_dsmensagem         => 'carrega da wrk para memória  vr_tab_crapgrp -> ' || to_char(sysdate,'hh24:mi:ss'),
+                  PR_IDPRGLOG           => vr_idlog_ini_par);                      
+
+         -- carrega tabela memória.
+			   pc_carrega_tabgrupo (pr_cdcooper => pr_cdcooper,
+                           pr_dtmvtolt =>  rw_crapdat.dtmvtolt,
+                           pr_des_erro =>  vr_dscritic);
+         
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;                                                  
+         
+        -- Fim carregar tabela memória  vr_tab_crapgrp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                  PR_CDPROGRAMA         => pr_cdprogra ||'_'|| pr_cdagenci || '$',
+                  pr_cdcooper           => pr_cdcooper,
+                  pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                  pr_tpocorrencia       => 4,
+                  pr_dsmensagem         => 'Fim carregar tabela memória  vr_tab_crapgrp ' || vr_tab_crapgrp.COUNT || ' - ' || to_char(sysdate,'hh24:mi:ss'),
+                  PR_IDPRGLOG           => vr_idlog_ini_par); 
+
+   END IF;                                  
+   
+   -- executa com ou sem paralelismo.
+   IF (vr_qtdjobs   = 0 AND pr_cdagenci  = 0) OR 
+      (vr_qtdjobs   > 0 AND pr_cdagenci  = 0) THEN  
+
+      -- grava tab temporária   tbgen_batch_relatorio_wrk 
           pc_log_programa(PR_DSTIPLOG           => 'O',
                   PR_CDPROGRAMA         => pr_cdprogra ||'_'|| pr_cdagenci || '$',
                   pr_cdcooper           => pr_cdcooper,
                   pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                   pr_tpocorrencia       => 4,
-                  pr_dsmensagem         => 'gravar temporária wrk ' || vr_tab_crapgrp.COUNT,
+                  pr_dsmensagem         => 'gravar temporária wrk ' || vr_tab_crapgrp.COUNT || ' - ' || to_char(sysdate,'hh24:mi:ss'),
                   PR_IDPRGLOG           => vr_idlog_ini_par);   
                   
         
@@ -590,62 +662,11 @@ BEGIN
                   pr_cdcooper           => pr_cdcooper,
                   pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                   pr_tpocorrencia       => 4,
-                  pr_dsmensagem         => 'Termintou Temporária wrk ' || vr_tab_crapgrp.COUNT,
-                  PR_IDPRGLOG           => vr_idlog_ini_par);  
-
-        --Grava data fim para o JOB na tabela de LOG 
-        pc_log_programa(pr_dstiplog   => 'F',    
-                  pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
-                  pr_cdcooper   => pr_cdcooper, 
-                  pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                  pr_idprglog   => vr_idlog_ini_par,
-                  pr_flgsucesso => 1); 
-
-     END IF;
-   
-   -- executor principal do job 
-   IF vr_inproces  > 2 AND 
-      vr_qtdjobs   > 0 and 
-      pr_cdagenci  = 0 then  
-   
-   -- Inicio carregar tabela memória  vr_tab_crapgrp
-        pc_log_programa(PR_DSTIPLOG           => 'O',
-                  PR_CDPROGRAMA         => pr_cdprogra || '$',
-                  pr_cdcooper           => pr_cdcooper,
-                  pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                  pr_tpocorrencia       => 4,
-                  pr_dsmensagem         => 'carrega da wrk para memória  vr_tab_crapgrp ->' ,
-                  PR_IDPRGLOG           => vr_idlog_ini_par);                      
-
-         -- carrega tabela memória.
-			   pc_grava_crapgrp (pr_cdcooper => pr_cdcooper,
-                           pr_dtmvtolt =>  rw_crapdat.dtmvtolt,
-                           pr_des_erro =>  vr_dscritic);
-         
-            --Se retornou erro
-            IF vr_dscritic IS NOT NULL THEN
-               --Levantar Exceção
-               RAISE vr_exc_saida;
-            END IF;                                                  
-         
-        -- Fim carregar tabela memória  vr_tab_crapgrp
-        pc_log_programa(PR_DSTIPLOG           => 'O',
-                  PR_CDPROGRAMA         => pr_cdprogra ||'_'|| pr_cdagenci || '$',
-                  pr_cdcooper           => pr_cdcooper,
-                  pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                  pr_tpocorrencia       => 4,
-                  pr_dsmensagem         => 'Fim carregar tabela memória  vr_tab_crapgrp ' || vr_tab_crapgrp.COUNT,
-                  PR_IDPRGLOG           => vr_idlog_ini_par); 
-
-   END IF;                                    
-   
-   -- executa com ou sem paralelismo.
-   IF (vr_qtdjobs   = 0 AND pr_cdagenci  = 0) OR 
-      (vr_qtdjobs   > 0 AND pr_cdagenci  = 0) THEN  
+                  pr_dsmensagem         => 'Termintou Temporária wrk ' || vr_tab_crapgrp.COUNT || ' - ' || to_char(sysdate,'hh24:mi:ss'),
+                  PR_IDPRGLOG           => vr_idlog_ini_par);
 
 
-
-      pc_log_programa(PR_DSTIPLOG           => 'O',
+       pc_log_programa(PR_DSTIPLOG           => 'O',
                       PR_CDPROGRAMA         => pr_cdprogra ||'_'|| pr_cdagenci || '$',
                       pr_cdcooper           => pr_cdcooper,
                       pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)

@@ -130,14 +130,19 @@ BEGIN
     vr_persocio := to_number(substr(rw_craptab.dstextab, 91, 6));
   END IF;
   
-    -- limpa wrk para paralelismo
+  
+      -- limpa wrk para paralelismo
     DELETE
     from tbgen_batch_relatorio_wrk wrk
     where wrk.cdcooper    = pr_cdcooper
     and wrk.cdprograma  = 'pc_crps634_i'
-    and wrk.dsrelatorio = 'rptGrupoEconomico'
-    and wrk.dtmvtolt    = rw_crapdat.dtmvtolt;
-    COMMIT;
+    and wrk.dsrelatorio = 'rptGrupoEconomico';
+    --and wrk.dtmvtolt    = rw_crapdat.dtmvtolt;
+
+    
+                -- limpa tabela de grupo.
+            DELETE FROM crapgrp cp WHERE cp.cdcooper = pr_cdcooper;
+            COMMIT; 
 
   -- Incluir include
   PC_CRPS634_I(pr_cdcooper    => pr_cdcooper
@@ -163,6 +168,15 @@ BEGIN
                            ,pr_cdprogra => vr_cdprogra
                            ,pr_infimsol => pr_infimsol
                            ,pr_stprogra => pr_stprogra);
+                           
+    -- limpa wrk para paralelismo
+    DELETE
+    from tbgen_batch_relatorio_wrk wrk
+    where wrk.cdcooper    = pr_cdcooper
+    and wrk.cdprograma  = 'pc_crps634_i'
+    and wrk.dsrelatorio = 'rptGrupoEconomico';
+    --and wrk.dtmvtolt    = rw_crapdat.dtmvtolt;
+                   
   COMMIT;
   
 EXCEPTION
