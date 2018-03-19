@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0155.p
    Autor   : Guilherme / SUPERO
-   Data    : Abril/2013                     Ultima atualizacao: 15/09/2014
+   Data    : Abril/2013                     Ultima atualizacao: 14/03/2018
 
    Dados referentes ao programa:
 
@@ -13,6 +13,9 @@
                             
                15/09/2014 - Adicionado retorno de "OK" em procedure
                             efetua-desbloqueio-jud. (Jorge)
+				
+			   14/03/2018 - Adicionado parametro que faltava na chamada da procedure
+				     		consulta-bloqueio-jud. (Kelvin)
 ............................................................................ */
 
 DEF VAR aux_cooperad AS DECI NO-UNDO.
@@ -404,6 +407,8 @@ PROCEDURE imprime_bloqueio_jud:
                                     INPUT aux_dtmvtolt,
                                     INPUT aux_nroficon,
                                     INPUT aux_nrctacon,
+									INPUT aux_operacao,
+									input aux_cddopcao,
                                    OUTPUT aux_nmarqimp,
                                    OUTPUT aux_nmarqpdf,
                                    OUTPUT TABLE tt-erro).

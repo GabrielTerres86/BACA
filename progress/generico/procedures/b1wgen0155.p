@@ -1725,6 +1725,8 @@ PROCEDURE imprime_bloqueio_jud:
     DEF INPUT  PARAM par_dtmvtolt AS DATE                              NO-UNDO.
     DEF INPUT  PARAM par_nroficio AS CHAR                              NO-UNDO.
     DEF INPUT  PARAM par_nrctacpf AS CHAR                              NO-UNDO.
+	DEF INPUT  PARAM par_operacao AS CHAR                              NO-UNDO.
+	DEF INPUT  PARAM par_cddopcao AS CHAR                              NO-UNDO.
     
     DEF OUTPUT PARAM aux_nmarqimp AS CHAR                              NO-UNDO.
     DEF OUTPUT PARAM aux_nmarqpdf AS CHAR                              NO-UNDO.
@@ -1824,9 +1826,9 @@ PROCEDURE imprime_bloqueio_jud:
                      SKIP(1).
 
     RUN consulta-bloqueio-jud (INPUT par_cdcooper,
-                               INPUT "C",	 
-                               INPUT "C",
-                               INPUT par_nrctacpf, /*nroconta/nrcpfcgc*/
+                               INPUT par_operacao,
+							   INPUT par_cddopcao,
+                               INPUT par_nrctacpf, 
                                INPUT par_nroficio,
                                OUTPUT TABLE tt-dados-blq,
                                OUTPUT TABLE tt-erro).
