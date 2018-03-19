@@ -285,6 +285,9 @@
 
               14/12/2017 - Bloqueio/Desbloqueio de Aplicacoes vinculadas ao Efetivar/Desfazer Efetivacao.
                            (Jaison/Marcos Martini - PRJ404)
+                           
+              16/03/2018 - Ajuste para ignorar validacao alerta_fraude quando for cessao de credito (crps714).
+                           Chamado 858710 (Mateus Z / Mouts).             
 
 ............................................................................. */
 
@@ -2237,6 +2240,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
     DEF VAR h-b1wgen0110 AS HANDLE  NO-UNDO.
     DEF VAR aux_nrctrliq AS CHAR    NO-UNDO.
     DEF VAR aux_flgativo AS INTEGER NO-UNDO.
+    
     DEF VAR aux_flgcescr AS LOG INIT FALSE                             NO-UNDO.
 	  /* DEF VAR aux_flimovel AS INTEGER NO-UNDO. 17/02/2017 - Validaçao removida */
 
@@ -2309,45 +2313,6 @@ PROCEDURE valida_dados_efetivacao_proposta:
                              STRING((STRING(crapass.nrcpfcgc,
                                      "99999999999999")),
                                      "xx.xxx.xxx/xxxx-xx")).
-
-    /*Verifica se o associado esta no cadastro restritivo*/
-    RUN alerta_fraude IN h-b1wgen0110(INPUT par_cdcooper,
-                                      INPUT par_cdagenci,
-                                      INPUT par_nrdcaixa,
-                                      INPUT par_cdoperad,
-                                      INPUT par_nmdatela,
-                                      INPUT par_dtmvtolt,
-                                      INPUT par_idorigem,
-                                      INPUT crapass.nrcpfcgc,
-                                      INPUT crapass.nrdconta,
-                                      INPUT par_idseqttl,
-                                      INPUT TRUE, /*bloqueia operacao*/
-                                      INPUT 33, /*cdoperac*/
-                                      INPUT aux_dsoperac,
-                                      OUTPUT TABLE tt-erro).
-
-    IF VALID-HANDLE(h-b1wgen0110) THEN
-       DELETE PROCEDURE(h-b1wgen0110).
-
-    IF RETURN-VALUE <> "OK" THEN
-       DO:
-          IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
-             DO:
-                ASSIGN aux_dscritic = "Nao foi possivel verificar o " +
-                                      "cadastro restritivo.".
-
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1, /*sequencia*/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-
-             END.
-
-                  RETURN "NOK".
-
-        END.
 
     ASSIGN aux_cdempres = 0.
 
@@ -2495,6 +2460,57 @@ PROCEDURE valida_dados_efetivacao_proposta:
         
               RETURN "NOK".
         END.
+        
+   FOR FIRST crapfin FIELDS(tpfinali)
+        WHERE crapfin.cdcooper = par_cdcooper AND
+              crapfin.cdfinemp = crawepr.cdfinemp
+              NO-LOCK: END.    
+    
+    IF AVAIL crapfin AND crapfin.tpfinali = 1 THEN
+       ASSIGN aux_flgcescr = TRUE.
+          
+    /* Validar apenas se nao for cessao de credito */
+    IF  NOT aux_flgcescr THEN
+        DO:
+            /*Verifica se o associado esta no cadastro restritivo*/
+            RUN alerta_fraude IN h-b1wgen0110(INPUT par_cdcooper,
+                                              INPUT par_cdagenci,
+                                              INPUT par_nrdcaixa,
+                                              INPUT par_cdoperad,
+                                              INPUT par_nmdatela,
+                                              INPUT par_dtmvtolt,
+                                              INPUT par_idorigem,
+                                              INPUT crapass.nrcpfcgc,
+                                              INPUT crapass.nrdconta,
+                                              INPUT par_idseqttl,
+                                              INPUT TRUE, /*bloqueia operacao*/
+                                              INPUT 33, /*cdoperac*/
+                                              INPUT aux_dsoperac,
+                                              OUTPUT TABLE tt-erro).
+
+            IF VALID-HANDLE(h-b1wgen0110) THEN
+               DELETE PROCEDURE(h-b1wgen0110).
+
+            IF RETURN-VALUE <> "OK" THEN
+               DO:
+                  IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
+                     DO:
+                        ASSIGN aux_dscritic = "Nao foi possivel verificar o " +
+                                              "cadastro restritivo.".
+
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT par_cdagenci,
+                                       INPUT par_nrdcaixa,
+                                       INPUT 1, /*sequencia*/
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+
+                     END.
+
+                          RETURN "NOK".
+
+                END.
+        END.     
      
 	 /* Verificar se a analise foi finalizada */
         IF crawepr.insitest <> 3 THEN DO:

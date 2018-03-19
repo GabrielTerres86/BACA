@@ -720,6 +720,9 @@
               31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)	 
 
               15/12/2017 - Inserção do campo idcobope. Inclusão do vinculo com a cobertura. PRJ404 (Lombardi)
+              
+              16/03/2018 - Ajuste para ignorar validacao alerta_fraude quando for cessao de credito (crps714).
+                           Chamado 858710 (Mateus Z / Mouts).
 
  ..............................................................................*/
 
@@ -3353,9 +3356,15 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        aux_flgativo AS INTEGER                        NO-UNDO.
     DEF   VAR        aux_contaliq AS INTEGER                        NO-UNDO.
     DEF   VAR        aux_inobriga AS CHAR                           NO-UNDO.
+    
+    DEF   VAR        aux_flgcescr AS LOG INIT FALSE                 NO-UNDO.
 		
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
+           
+    /* Carregar flag de cessao de credito */
+    IF par_nmdatela = "CRPS714" THEN
+       ASSIGN aux_flgcescr = TRUE.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-msg-confirma.
@@ -3410,48 +3419,52 @@ PROCEDURE valida-dados-gerais:
                                 STRING((STRING(crapass.nrcpfcgc,
                                         "99999999999999")),
                                         "xx.xxx.xxx/xxxx-xx")).
+      
+    /* Validar fraude apenas se nao for cessao de credito */
+    IF  NOT aux_flgcescr THEN
+      DO:
+        /*Verifica se o associado esta no cadastro restritivo*/
+        RUN alerta_fraude IN h-b1wgen0110(INPUT par_cdcooper,
+                                          INPUT par_cdagenci,
+                                          INPUT par_nrdcaixa,
+                                          INPUT par_cdoperad,
+                                          INPUT par_nmdatela,
+                                          INPUT par_dtmvtolt,
+                                          INPUT par_idorigem,
+                                          INPUT crapass.nrcpfcgc,
+                                          INPUT crapass.nrdconta,
+                                          INPUT par_idseqttl,
+                                          INPUT TRUE, /*bloqueia operacao*/
+                                          INPUT (IF par_cddopcao = "A" THEN
+                                                    9 /*cdoperac*/
+                                                 ELSE
+                                                    12), /*cdoperac*/
+                                          INPUT aux_dsoperac,
+                                          OUTPUT TABLE tt-erro).
 
-    /*Verifica se o associado esta no cadastro restritivo*/
-    RUN alerta_fraude IN h-b1wgen0110(INPUT par_cdcooper,
-                                      INPUT par_cdagenci,
-                                      INPUT par_nrdcaixa,
-                                      INPUT par_cdoperad,
-                                      INPUT par_nmdatela,
-                                      INPUT par_dtmvtolt,
-                                      INPUT par_idorigem,
-                                      INPUT crapass.nrcpfcgc,
-                                      INPUT crapass.nrdconta,
-                                      INPUT par_idseqttl,
-                                      INPUT TRUE, /*bloqueia operacao*/
-                                      INPUT (IF par_cddopcao = "A" THEN
-                                                9 /*cdoperac*/
-                                             ELSE
-                                                12), /*cdoperac*/
-                                      INPUT aux_dsoperac,
-                                      OUTPUT TABLE tt-erro).
+        IF VALID-HANDLE(h-b1wgen0110) THEN
+           DELETE PROCEDURE(h-b1wgen0110).
 
-    IF VALID-HANDLE(h-b1wgen0110) THEN
-       DELETE PROCEDURE(h-b1wgen0110).
+        IF RETURN-VALUE <> "OK" THEN
+           DO:
+              IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
+                 DO:
+                    ASSIGN aux_dscritic = "Nao foi possivel verificar o " +
+                                          "cadastro restritivo.".
 
-    IF RETURN-VALUE <> "OK" THEN
-       DO:
-          IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
-             DO:
-                ASSIGN aux_dscritic = "Nao foi possivel verificar o " +
-                                      "cadastro restritivo.".
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1, /*sequencia*/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
 
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1, /*sequencia*/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
+                 END.
 
-             END.
+              RETURN "NOK".
 
-          RETURN "NOK".
-
-       END.
+           END.
+      END.
     
     DO WHILE TRUE:
 
@@ -5953,6 +5966,8 @@ PROCEDURE grava-proposta-completa:
     DEF  VAR         aux_dstransa AS CHAR                           NO-UNDO.
     DEF  VAR         aux_dsorigem AS CHAR                           NO-UNDO.  
     DEF	 VAR 		     aux_mensagens AS CHAR						              NO-UNDO.
+    
+    DEF VAR          aux_flgcescr AS LOG INIT FALSE                 NO-UNDO.
 
     DEF  BUFFER      crabavt FOR  crapavt.
 
@@ -5962,6 +5977,10 @@ PROCEDURE grava-proposta-completa:
            aux_dscritic = ""
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Gravar as informacoes da proposta de credito".
+           
+    /* Carregar flag de cessao de credito */
+    IF par_nmdatela = "CRPS714" THEN
+       ASSIGN aux_flgcescr = TRUE.       
 
     FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                        crapass.nrdconta = par_nrdconta
@@ -6011,47 +6030,51 @@ PROCEDURE grava-proposta-completa:
                                         "99999999999999")),
                                         "xx.xxx.xxx/xxxx-xx")).
 
-    /*Verifica se o associado esta no cadastro restritivo*/
-    RUN alerta_fraude IN h-b1wgen0110(INPUT par_cdcooper,
-                                      INPUT par_cdagenci,
-                                      INPUT par_nrdcaixa,
-                                      INPUT par_cdoperad,
-                                      INPUT par_nmdatela,
-                                      INPUT par_dtmvtolt,
-                                      INPUT par_idorigem,
-                                      INPUT crapass.nrcpfcgc,
-                                      INPUT crapass.nrdconta,
-                                      INPUT par_idseqttl,
-                                      INPUT TRUE, /*bloqueia operacao*/
-                                      INPUT (IF par_cddopcao = "A" THEN
-                                                9 /*cdoperac*/
-                                             ELSE
-                                                12), /*cdoperac*/
-                                      INPUT aux_dsoperac,
-                                      OUTPUT TABLE tt-erro).
+    /* Validar fraude apenas se nao for cessao de credito */
+    IF  NOT aux_flgcescr THEN
+      DO:
+        /*Verifica se o associado esta no cadastro restritivo*/
+        RUN alerta_fraude IN h-b1wgen0110(INPUT par_cdcooper,
+                                          INPUT par_cdagenci,
+                                          INPUT par_nrdcaixa,
+                                          INPUT par_cdoperad,
+                                          INPUT par_nmdatela,
+                                          INPUT par_dtmvtolt,
+                                          INPUT par_idorigem,
+                                          INPUT crapass.nrcpfcgc,
+                                          INPUT crapass.nrdconta,
+                                          INPUT par_idseqttl,
+                                          INPUT TRUE, /*bloqueia operacao*/
+                                          INPUT (IF par_cddopcao = "A" THEN
+                                                    9 /*cdoperac*/
+                                                 ELSE
+                                                    12), /*cdoperac*/
+                                          INPUT aux_dsoperac,
+                                          OUTPUT TABLE tt-erro).
 
-    IF VALID-HANDLE(h-b1wgen0110) THEN
-       DELETE PROCEDURE(h-b1wgen0110).
+        IF VALID-HANDLE(h-b1wgen0110) THEN
+           DELETE PROCEDURE(h-b1wgen0110).
 
-    IF RETURN-VALUE <> "OK" THEN
-       DO:
-          IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
-             DO:
-                ASSIGN aux_dscritic = "Nao foi possivel verificar o " +
-                                      "cadastro restritivo.".
+        IF RETURN-VALUE <> "OK" THEN
+           DO:
+              IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
+                 DO:
+                    ASSIGN aux_dscritic = "Nao foi possivel verificar o " +
+                                          "cadastro restritivo.".
 
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1, /*sequencia*/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1, /*sequencia*/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
 
-             END.
+                 END.
 
-          RETURN "NOK".
+              RETURN "NOK".
 
-       END.
+           END.
+      END.
     
     ASSIGN aux_contbens = 0
            aux_contabns = 0

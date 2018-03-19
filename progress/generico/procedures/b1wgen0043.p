@@ -243,6 +243,9 @@
                            cessao da fatura de cartao de credito (Anderson).
 
               11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
+              
+              16/03/2018 - Ajuste para ignorar validacao valida-item-rating quando for cessao de credito (crps714).
+                           Chamado 858710 (Mateus Z / Mouts).
 .............................................................................*/
   
   
@@ -1687,12 +1690,17 @@ PROCEDURE valida-itens-rating:
     DEF OUTPUT PARAM TABLE FOR tt-erro.                            
                                                                    
     DEF  VAR         aux_flgvalid AS LOGI                            NO-UNDO.
+    DEF  VAR         aux_flgcescr AS LOG INIT FALSE                  NO-UNDO.
 
 
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
+           
+    /* Carregar flag de cessao de credito */
+    IF par_nmdatela = "CRPS714" THEN
+       ASSIGN aux_flgcescr = TRUE.       
 
     IF  par_flgerlog  THEN
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -1715,25 +1723,29 @@ PROCEDURE valida-itens-rating:
        /* Para cooperativa 3 somente sera necessario validar o campo Liquidez*/
        IF  par_cdcooper = 3  THEN
            DO:
-                RUN valida-item-rating (INPUT  par_cdcooper,
-                                        INPUT  0,
-                                        INPUT  0,
-                                        INPUT  par_cdoperad,
-                                        INPUT  par_dtmvtolt,
-                                        INPUT  3, /*6*/
-                                        INPUT  3, /*2*/
-                                        INPUT  par_nrinfcad,
-                                        INPUT  par_idseqttl,
-                                        INPUT  par_idorigem,
-                                        INPUT  par_nmdatela,
-                                        OUTPUT aux_flgvalid).
+                /* Validar apenas se nao for cessao de credito */
+                 IF  NOT aux_flgcescr THEN
+                    DO:
+                        RUN valida-item-rating (INPUT  par_cdcooper,
+                                                INPUT  0,
+                                                INPUT  0,
+                                                INPUT  par_cdoperad,
+                                                INPUT  par_dtmvtolt,
+                                                INPUT  3, /*6*/
+                                                INPUT  3, /*2*/
+                                                INPUT  par_nrinfcad,
+                                                INPUT  par_idseqttl,
+                                                INPUT  par_idorigem,
+                                                INPUT  par_nmdatela,
+                                                OUTPUT aux_flgvalid).
 
-                IF   NOT aux_flgvalid   THEN
-                     DO:
-                         aux_dscritic = "014 - Opcao errada - Informacoes cadastrais.".
-                         LEAVE.
+                        IF   NOT aux_flgvalid   THEN
+                             DO:
+                                 aux_dscritic = "014 - Opcao errada - Informacoes cadastrais.".
+                                 LEAVE.
 
-                     END.
+                             END.
+                    END.
 
                RUN valida-item-rating (INPUT  par_cdcooper,
                                         INPUT  0,
@@ -1781,25 +1793,29 @@ PROCEDURE valida-itens-rating:
                          LEAVE.
                      END.
 
-                 RUN valida-item-rating (INPUT  par_cdcooper,
-                                         INPUT  0,
-                                         INPUT  0,
-                                         INPUT  par_cdoperad,
-                                         INPUT  par_dtmvtolt,
-                                         INPUT  1,
-                                         INPUT  4,
-                                         INPUT  par_nrinfcad,
-                                         INPUT  par_idseqttl,
-                                         INPUT  par_idorigem,
-                                         INPUT  par_nmdatela,
-                                         OUTPUT aux_flgvalid).
+                 /* Validar apenas se nao for cessao de credito */
+                 IF  NOT aux_flgcescr THEN
+                    DO: 
+                       RUN valida-item-rating (INPUT  par_cdcooper,
+                                               INPUT  0,
+                                               INPUT  0,
+                                               INPUT  par_cdoperad,
+                                               INPUT  par_dtmvtolt,
+                                               INPUT  1,
+                                               INPUT  4,
+                                               INPUT  par_nrinfcad,
+                                               INPUT  par_idseqttl,
+                                               INPUT  par_idorigem,
+                                               INPUT  par_nmdatela,
+                                               OUTPUT aux_flgvalid).
 
-                IF   NOT aux_flgvalid   THEN
-                     DO:
-                         aux_dscritic =
-                            "014 - Opcao errada - Informacoes cadastrais.".
-                         LEAVE.
-                     END.
+                      IF   NOT aux_flgvalid   THEN
+                           DO:
+                               aux_dscritic =
+                                  "014 - Opcao errada - Informacoes cadastrais.".
+                               LEAVE.
+                           END.
+                    END.
 
                 RUN valida-item-rating (INPUT  par_cdcooper,
                                         INPUT  0,
@@ -1883,24 +1899,28 @@ PROCEDURE valida-itens-rating:
                          LEAVE.
                      END.
 
-                RUN valida-item-rating (INPUT  par_cdcooper,
-                                        INPUT  0,
-                                        INPUT  0,
-                                        INPUT  par_cdoperad,
-                                        INPUT  par_dtmvtolt,
-                                        INPUT  3, /*6*/
-                                        INPUT  3, /*2*/
-                                        INPUT  par_nrinfcad,
-                                        INPUT  par_idseqttl,
-                                        INPUT  par_idorigem,
-                                        INPUT  par_nmdatela,
-                                        OUTPUT aux_flgvalid).
+                 /* Validar apenas se nao for cessao de credito */
+                 IF  NOT aux_flgcescr THEN
+                    DO:
+                        RUN valida-item-rating (INPUT  par_cdcooper,
+                                                INPUT  0,
+                                                INPUT  0,
+                                                INPUT  par_cdoperad,
+                                                INPUT  par_dtmvtolt,
+                                                INPUT  3, /*6*/
+                                                INPUT  3, /*2*/
+                                                INPUT  par_nrinfcad,
+                                                INPUT  par_idseqttl,
+                                                INPUT  par_idorigem,
+                                                INPUT  par_nmdatela,
+                                                OUTPUT aux_flgvalid).
 
-                IF   NOT aux_flgvalid   THEN
-                     DO:
-                         aux_dscritic = "014 - Opcao errada - Informacoes cadastrais.".
-                         LEAVE.
-                     END.
+                        IF   NOT aux_flgvalid   THEN
+                             DO:
+                                 aux_dscritic = "014 - Opcao errada - Informacoes cadastrais.".
+                                 LEAVE.
+                             END.
+                    END.
 
                 RUN valida-item-rating (INPUT  par_cdcooper,
                                         INPUT  0,
