@@ -1200,13 +1200,13 @@ function validaCampo(campo, valor) {
 // botoes
 function btnVoltar() {
     if (cddopcao == 'C'){
-        if(isHabilitado(cNrdconta)) {
+        if((!cNrdconta.hasClass('campoTelaSemBorda'))) {
             estadoInicial();
-        } else if (isHabilitado(cNrcpfcgc)) {
+        } else if ((!cNrcpfcgc.hasClass('campoTelaSemBorda'))) {
             cNrdconta.habilitaCampo().focus();
             cNrcpfcgc.desabilitaCampo().val('');
 
-        } else if (isHabilitado(cTpcobran)) {
+        } else if ((!cTpcobran.hasClass('campoTelaSemBorda'))) {
             if ((normalizaNumero(cNrdconta.val()) == 0 && normalizaNumero(cNrcpfcgc.val()) == 0) || normalizaNumero(cNrcpfcgc.val()) > 0) {
                 cNrcpfcgc.habilitaCampo().focus();
                 cNrdconta.desabilitaCampo().val('');
@@ -1220,7 +1220,7 @@ function btnVoltar() {
             cTpcobran.desabilitaCampo().val('T');
             cFlresgat.desabilitaCampo().prop("checked",false);
             cNmprimtl.val('');
-        } else if (!isHabilitado(cTpcobran)) {
+        } else if (!(!cTpcobran.hasClass('campoTelaSemBorda'))) {
             $('#' + frmOpcao + ' fieldset:eq(1)').hide();
             $('#divPesquisaRodape', '#divTela').hide();
             cTpcobran.habilitaCampo().focus();
@@ -1228,13 +1228,13 @@ function btnVoltar() {
             trocaBotao('Prosseguir');
         } 
     } else if (cddopcao =='F'){
-        if(isHabilitado(cNrdconta)) {
+        if((!cNrdconta.hasClass('campoTelaSemBorda'))) {
             estadoInicial();
-        } else if (isHabilitado(cNrcpfcgc)) {
+        } else if ((!cNrcpfcgc.hasClass('campoTelaSemBorda'))) {
             cNrdconta.habilitaCampo().focus();
             cNrcpfcgc.desabilitaCampo().val('');
 
-        }else if(isHabilitado(cTpcobran)) {
+        }else if((!cTpcobran.hasClass('campoTelaSemBorda'))) {
             if ((normalizaNumero(cNrdconta.val()) == 0 && normalizaNumero(cNrcpfcgc.val()) == 0) || normalizaNumero(cNrcpfcgc.val()) > 0) {
                 cNrcpfcgc.habilitaCampo().focus();
                 cNrdconta.desabilitaCampo().val('');
@@ -1247,7 +1247,7 @@ function btnVoltar() {
             cTpcobran.val('T').desabilitaCampo();
             $('#' + frmOpcao +' .tipo_cobranca').hide();
             trocaBotao('Prosseguir');
-        } else if (isHabilitado(cDtvencto)) {
+        } else if ((!cDtvencto.hasClass('campoTelaSemBorda'))) {
             $('#' + frmOpcao + ' fieldset:eq(1)').hide();
             $('input', '#' + frmOpcao + ' fieldset:eq(1)').limpaFormulario();
             cTpcobran.habilitaCampo().focus();
@@ -1255,7 +1255,7 @@ function btnVoltar() {
             trocaBotao('Prosseguir');
         }
     } else if (cddopcao == 'S'){
-        if(isHabilitado(cTpcobran)){
+        if((!cTpcobran.hasClass('campoTelaSemBorda'))){
             estadoInicial();
         } 
         else {
@@ -1263,16 +1263,16 @@ function btnVoltar() {
             cTpcobran.habilitaCampo().focus();
         } 
      } else if (cddopcao == 'T'){
-        if (isHabilitado(cNrdconta)){
+        if ((!cNrdconta.hasClass('campoTelaSemBorda'))){
             estadoInicial();
         }
-        else if(isHabilitado(cTpdepesq)) {
+        else if((!cTpdepesq.hasClass('campoTelaSemBorda'))) {
             $('#' + frmOpcao + ' fieldset:eq(1)').hide();
             $('input', '#' + frmOpcao + ' fieldset:eq(1)').limpaFormulario();
             cNrdconta.habilitaCampo().select();
             cNmprimtl.val('');
             cTpdepesq.desabilitaCampo();
-        } else if(isHabilitado(cTpcobran)){
+        } else if((!cTpcobran.hasClass('campoTelaSemBorda'))){
             cTpdepesq.habilitaCampo().focus();
             cNrdocmto.habilitaCampo();
             cVltitulo.habilitaCampo();
@@ -1304,11 +1304,11 @@ function btnContinuar() {
     showMsgAguardo(mensagem);
 
     if(cddopcao == 'C'){
-        if (isHabilitado(cNrdconta)) {
+        if ((!cNrdconta.hasClass('campoTelaSemBorda'))) {
             cNrdconta.keydown();
-        } else if (isHabilitado(cNrcpfcgc)) {
+        } else if ((!cNrcpfcgc.hasClass('campoTelaSemBorda'))) {
             cNrcpfcgc.keydown();
-        } else if (isHabilitado(cTpcobran)) {
+        } else if ((!cTpcobran.hasClass('campoTelaSemBorda'))) {
             cNrdconta.desabilitaCampo();
             controlaOperacao('CT', nriniseq, nrregist);
         }
@@ -1316,17 +1316,17 @@ function btnContinuar() {
             gerarImpressaoConsulta();
         }
     } else if (cddopcao == 'F'){
-        if(isHabilitado(cNrdconta)) {
+        if((!cNrdconta.hasClass('campoTelaSemBorda'))) {
             cNrdconta.keydown();
         }
-        else if(isHabilitado(cTpcobran)){
+        else if((!cTpcobran.hasClass('campoTelaSemBorda'))){
             cTpcobran.desabilitaCampo();
             hideMsgAguardo();
             trocaBotao('');
             $('#' + frmOpcao + ' fieldset:eq(1)').show();
             cDtvencto.habilitaCampo().val(dtmvtopr).select();
         }
-        else if(isHabilitado(cDtvencto)){
+        else if((!cDtvencto.hasClass('campoTelaSemBorda'))){
 
         }
     } else if (cddopcao == 'S') {
@@ -1337,14 +1337,16 @@ function btnContinuar() {
         cDtvencto.habilitaCampo().select();
         trocaBotao('');
     } else if (cddopcao == 'T'){
-        if(isHabilitado(cTpdepesq)) {
+        if((!cNrdconta.hasClass('campoTelaSemBorda'))) {
+            cNrdconta.keydown();
+        } else if((!cTpdepesq.hasClass('campoTelaSemBorda'))) {
             hideMsgAguardo();
             $('#' + frmOpcao +' .tipo_cobranca').show();
             cTpcobran.habilitaCampo().focus();
             cTpdepesq.desabilitaCampo();
             cNrdocmto.desabilitaCampo();
             cVltitulo.desabilitaCampo();
-        } else if(isHabilitado(cTpcobran)){
+        } else if((!cTpcobran.hasClass('campoTelaSemBorda'))){
             cTpcobran.desabilitaCampo();
             controlaOperacao('BT', nriniseq, nrregist);
         }
