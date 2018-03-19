@@ -1355,7 +1355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
               (
                 (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND craptdb.insittit = 2 AND (pr_tpdepesq='T' OR pr_tpdepesq='L'))
                 OR (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND craptdb.insittit = 3 AND pr_tpdepesq='T')
-                OR (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND craptdb.insittit = 4 AND (pr_tpdepesq='T' OR (pr_tpdepesq='A' AND craptdb.dtvencto = vr_dtmvtoan)))
+                OR (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND craptdb.insittit = 4 AND (pr_tpdepesq='T' OR (pr_tpdepesq='A' AND craptdb.dtvencto > vr_dtmvtoan)))
               )
               AND (
                   ((pr_nrdocmto>0 AND pr_nrdocmto = craptdb.nrdocmto) OR nvl(pr_nrdocmto,0)=0) --caso tenha passado numero do boleto
