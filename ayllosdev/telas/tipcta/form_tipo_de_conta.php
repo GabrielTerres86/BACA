@@ -56,12 +56,13 @@
 		<label style="margin-left: 4px;"><? echo utf8ToHtml("Individual"); ?></label>
 		<input type="checkbox" id="individual" name="cdcatego" >
 		
-		<label><? echo utf8ToHtml("Conjunta solid&aacute;ria"); ?></label>
+		<label><? echo utf8ToHtml("Conjunta"); ?></label>
+		<!--<label>< ? echo utf8ToHtml("Conjunta solid&aacute;ria"); ?></label> -->
 		<input type="checkbox" id="conjunta_solidaria" name="cdcatego" >
-		
-		<label><? echo utf8ToHtml("Conjunta n&atilde;o solid&aacute;ria"); ?></label>
+		<!--
+		<label>< ? echo utf8ToHtml("Conjunta n&atilde;o solid&aacute;ria"); ?></label>
 		<input type="checkbox" id="conjunta_nao_solidaria" name="cdcatego" >
-		
+		-->
 		<label for="tpcadast"><? echo utf8ToHtml("Tipo de Cadastro:"); ?></label>
 		<select id="tpcadast">
 			<option value="1">Intermedi&aacute;rio</option>

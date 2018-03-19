@@ -192,7 +192,7 @@
 		echo '$("#cdcatego","#frmCabCadcta").val("");';
 	}
 	
-    echo '$("#nrdctitg","#frmCabCadcta").val("'.$cabecalho[16]->cdata.'").formataDado("STRING","9.999.999-9",".-",false);';
+	echo '$("#nrdctitg","#frmCabCadcta").val("'.$cabecalho[16]->cdata.'").formataDado("STRING","9.999.999-9",".-",false);';
 	
 	echo 'var strHTMLTTL = \'\';'; 
 	// PJ
