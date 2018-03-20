@@ -6751,7 +6751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_autoriza := rw_consiste_limite.autoriza;
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
-
+	  --
   EXCEPTION
     WHEN OTHERS THEN
       pr_cdcritic := 999;
