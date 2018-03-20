@@ -29,7 +29,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
 
 			   09/02/2018 - Inclusão de rotina pc_consultar_limite_adp - Daniel(AMcom).	
 
-               20/03/2018 - Inlusão de rotina pc_consultar_ccl_limite - Daniel(AMcom)			   		   
+               20/03/2018 - Inclusão de rotina pc_consultar_ccl_limite - Daniel(AMcom).
+			   
+			   20/03/2018 - Inclusão de rotina pc_consiste_limite - Daniel(AMcom).
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -487,7 +489,14 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                    ,pr_tipo     OUT NUMBER            --> Tipo do registro
                                    ,pr_data     OUT VARCHAR2          --> Data
                                    ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
-                                   ,pr_dscritic OUT VARCHAR2);        --> Erros do processo                                 
+                                   ,pr_dscritic OUT VARCHAR2);        --> Erros do processo
+
+  PROCEDURE pc_consiste_novo_limite(pr_cdcooper IN NUMBER             --> Cooperativa
+                                   ,pr_nrdconta IN NUMBER             --> Conta
+                                   -- OUT
+                                   ,pr_autoriza OUT NUMBER            --> 1-Inadimplente 0-Adimplente
+                                   ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2);        --> Erros do processo
 
 END ZOOM0001;
 /
@@ -6605,13 +6614,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_saldo    := rw_consulta_limite_adp.saldo;
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
-      
-  EXCEPTION
-    WHEN OTHERS THEN
-      pr_cdcritic := 999;
-      pr_dscritic := 'Erro pc_consultar_limite_adp: '||SQLERRM;
-      ROLLBACK;
-  END pc_consultar_limite_adp;  
+       
+   EXCEPTION
+     WHEN OTHERS THEN
+       pr_cdcritic := 999;
+       pr_dscritic := 'Erro pc_consultar_limite_adp: '||SQLERRM;
+       ROLLBACK;
+   END pc_consultar_limite_adp;  
 
    PROCEDURE pc_consultar_ccl_limite(pr_cdcooper IN NUMBER             --> Cooperativa
                                     ,pr_nrdconta IN NUMBER             --> Conta
@@ -6635,7 +6644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
         Observacao: -----
         Alteracoes:
       ..............................................................................*/
------------>>> VARIAVEIS <<<--------
+      ----------->>> VARIAVEIS <<<--------
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
       vr_dscritic VARCHAR2(1000);        --> Desc. Erro
@@ -6670,13 +6679,85 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_data     := rw_consulta_ccl_limite.data;
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
+ 
+   EXCEPTION
+     WHEN OTHERS THEN
+       pr_cdcritic := 999;
+       pr_dscritic := 'Erro consulta_ccl_limite: '||SQLERRM;
+       ROLLBACK;
+   END pc_consultar_ccl_limite;
+
+   PROCEDURE pc_consiste_novo_limite(pr_cdcooper IN NUMBER             --> Cooperativa
+                                   ,pr_nrdconta IN NUMBER             --> Conta
+                                    -- OUT
+                                   ,pr_autoriza OUT NUMBER            --> 0-Sim 1-Não autoriza
+                                   ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2) IS      --> Erros do processo
+    /* .............................................................................
+
+        Programa: pc_consite_novo_limite
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel/AMcom
+        Data    : Março/2018                 Ultima atualizacao:
+
+        Dados referentes ao programa:
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina para consultar permissões para inclusão de novo limite
+        Observacao: -----
+        Alteracoes:
+      ..............................................................................*/
+      ----------->>> VARIAVEIS <<<--------
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      ---------->> CURSORES <<--------
+      CURSOR cr_consiste_limite(pr_cdcooper IN NUMBER
+                               ,pr_nrdconta IN NUMBER) IS
+      SELECT 1 autoriza
+        FROM craplim lim
+       WHERE lim.insitlim = 3 -- Cancelado
+         AND lim.ininadim = 1 -- Inadimplência 
+         AND lim.cdcooper = pr_cdcooper      
+         AND lim.nrdconta = pr_nrdconta 
+         AND lim.dtfimvig = (SELECT MAX(mlim.dtfimvig) 
+                               FROM craplim mlim
+                              WHERE mlim.cdcooper = pr_cdcooper
+                                AND mlim.nrdconta = pr_nrdconta
+                                AND mlim.insitlim = 3 -- Cancelado
+                                AND mlim.ininadim = 1) -- Inadimplência
+         AND (SELECT dat.dtmvtolt FROM crapdat dat 
+               WHERE dat.cdcooper =  pr_cdcooper)-lim.dtfimvig < 60; --> Incluir parâmetro
+      rw_consiste_limite cr_consiste_limite%ROWTYPE;
+
+    BEGIN
+      
+      OPEN cr_consiste_limite(pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => pr_nrdconta);
+     FETCH cr_consiste_limite
+      INTO rw_consiste_limite;
+     CLOSE cr_consiste_limite;
+
+      -- CAMPOS
+      -- Busca os dados
+      -- 0-Autoriza / 1-Não autoriza
+      IF rw_consiste_limite.autoriza IS NULL THEN
+        rw_consiste_limite.autoriza := 0;
+      END IF;
+      --
+      pr_autoriza := rw_consiste_limite.autoriza;
+      pr_cdcritic := NULL;
+      pr_dscritic := NULL;
 
   EXCEPTION
     WHEN OTHERS THEN
       pr_cdcritic := 999;
-      pr_dscritic := 'Erro consulta_ccl_limite: '||SQLERRM;
+      pr_dscritic := 'Erro consite_novo_limite: '||SQLERRM;
       ROLLBACK;
-  END pc_consultar_ccl_limite;
+  END pc_consiste_novo_limite;
 
 END ZOOM0001;
 /
