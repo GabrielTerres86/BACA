@@ -338,7 +338,6 @@ function liberaAnalisaBorderoDscTit(opcao, idconfir, idconfi2, idconfi3, idconfi
 function carregaLimitesTitulos() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando limites de desconto de t&iacute;tulos ...");
-
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
@@ -496,7 +495,6 @@ function excluirLimiteDscTit() {
 function carregaDadosConsultaLimiteDscTit() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados de desconto de t&iacute;tulos ...");
-    
     // Carrega conteúdo da opção através de ajax
     $.ajax({        
         type: "POST", 
@@ -1640,7 +1638,6 @@ function abreProtocoloAcionamento(dsprotocolo) {
     });
 }
 
-
 // renovação
 function acessaValorLimite(flgvalida) {
 
@@ -1651,9 +1648,9 @@ function acessaValorLimite(flgvalida) {
 
     var vllimite = $('#vllimite','#frmTitulos').val();
     var nrctrlim = $('#nrctrlim','#frmTitulos').val();
-    var flgstlcr = $('#flgstlcr','#frmTitulos').val() == "yes"?1:0;
-    var cddlinha = $('#cddlinha','#frmTitulos').val();
-    var dsdlinha = $('#dsdlinha','#frmTitulos').val();
+    var flgstlcr = $('#flgstlcr','#frmTitulos').val() == "yes"?1:0;;
+    var cddlinha = $('#cddlinha','#frmTitulos').val();;
+    var dsdlinha = $('#dsdlinha','#frmTitulos').val();;
 
     if(flgvalida == 0 && flgstlcr == 1){
        showConfirmacao(
@@ -1725,6 +1722,13 @@ function formataValorLimite() {
         Cdsdlinha.css({'width': '180px'}).addClass('descricao');
         Cdsdlinha.desabilitaCampo();
 
+        if($('#flgstlcr','#frmReLimite').val() == "yes" || $('#flgstlcr','#frmReLimite').val() ==1){
+            $('#btnVoltar','#divBotoes').disabled = false;
+        }else{
+            $('#btnVoltar','#divBotoes').disabled = true;
+        }
+                 
+
         //pesquisa
         var campoAnterior = '';
         var qtReg, filtrosPesq, filtrosDesc, colunas;
@@ -1743,11 +1747,11 @@ function formataValorLimite() {
                     campoAnterior = $(this).prev().attr('name');
 
                     if ( campoAnterior == 'cddlinha' ) {
-                        filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + '|;flgstlcr;;;1;N';
-                        colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
-                        fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
+                        filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;|;flgstlcr;;;1;N';
+                        colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center|;flgstlcr;1%;center;;N';
+                        fncOnClose = 'cddlinha = $("#cddlinha","#frmReLimite").val();';
                         mostraPesquisa('zoom0001',
-                        'BUSCALINHAS', 
+                        'BUSCALINHASTIT', 
                         'Linhas de Crédito',
                         '20', 
                         filtrosPesq,
@@ -1760,10 +1764,10 @@ function formataValorLimite() {
         });
 
         Cdsdlinha.unbind('change').bind('change', function() {
-            filtrosDesc = 'tpdlinha|' + inpessoa + ';flgstlcr|1;nriniseq|1;nrregist|30';
+             filtrosDesc = 'tpdlinha|2;flgstlcr|1;nriniseq|1;nrregist|30';
             buscaDescricao(
                 'zoom0001',
-                'BUSCALINHAS',
+                'BUSCALINHASTIT',
                 'Linhas de Crédito',
                 $(this).attr('name'),'dsdlinha',$(this).val(),
                 'dsdlinha',
@@ -1771,11 +1775,11 @@ function formataValorLimite() {
                 'frmNovoLimite');
             return false;
         }).next().unbind('click').bind('click', function () {
-            filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + '|;flgstlcr;;;1;N';
-            colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
-            fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
+            filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;|;flgstlcr;;;1;N';
+            colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center|;flgstlcr;1%;center;;N';
+            fncOnClose = 'cddlinha = $("#cddlinha","#frmReLimite").val();';
             mostraPesquisa('zoom0001',
-                'BUSCALINHAS', 
+                'BUSCALINHASTIT', 
                 'Linhas de Crédito',
                 '20', 
                 filtrosPesq,
@@ -1809,15 +1813,23 @@ function formataValorLimite() {
     return false;
 }
 
+function fecharPesquisa(cddlinha, flgstlcrPesquisa){
+    if(flgstlcrPesquisa == 1){
+        $('#flgstlcr','#frmTitulos').val("yes");
+    }else{
+        $('#flgstlcr','#frmTitulos').val("no");
+    }
+    $('#cddlinha','#frmTitulos').val(cddlinha);
+    //$('#cddlinha','#frmTitulos').trigger("change");
+    acessaValorLimite(0);
+
+}
 
 function renovaValorLimite() {
-
     showMsgAguardo('Aguarde, efetuando renovacao...');
-
     var vllimite = converteNumero($('#vllimite','#frmReLimite').val());
     var nrctrlim = $('#nrctrlim','#frmReLimite').val();
     var cddlinha = $('#cddlinha','#frmReLimite').val();
-
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",

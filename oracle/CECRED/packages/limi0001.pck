@@ -3415,6 +3415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     end pc_ultima_majoracao;
 
    
+ 
   -- Rotina referente a renovacao manual do limite de desconto de titulo
   PROCEDURE pc_renovar_lim_desc_titulo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
                                       ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
@@ -3448,7 +3449,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   
     -- Variaveis para calculo da nova data fim da vigencia
     vr_dtfimvig craplim.dtfimvig%TYPE;
-    vr_difdias NUMBER;
+    vr_difdias  NUMBER;
+    vr_cdlantar craplat.cdlantar%TYPE;
   
     -- Variável para consulta de limite
     vr_tab_lim_desconto dscc0001.typ_tab_lim_desconto;      
@@ -3467,6 +3469,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
+    
+   --     Busca dos dados da cooperativa
+   cursor cr_crapcop is
+   select cop.nmrescop
+         ,cop.nmextcop
+         ,cop.nrdocnpj
+   from   crapcop cop
+   where  cop.cdcooper = pr_cdcooper;
+   rw_crapcop cr_crapcop%rowtype;
     
     -- Cursor Limite de titulo especial
     CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE     --> Código da Cooperativa
@@ -3533,6 +3544,191 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
      rw_crapalt cr_crapalt%ROWTYPE;
      
+     -- Cursor genérico de calendário
+     rw_crapdat btch0001.cr_crapdat%rowtype;
+
+   --> Rotina para cobrança das tarifas de renovação de contrato
+   PROCEDURE pc_gera_tarifa_renova(pr_cdcooper crapcop.cdcooper%type  --> Código da Cooperativa
+                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de Movimento
+                                    ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                                    ,pr_vllimite IN craplim.vllimite%TYPE --> Valor Limite de Desconto
+                                    ,pr_nrctrlim IN craplim.nrctrlim%TYPE --> Contrato
+                                    ,pr_inpessoa IN craprli.inpessoa%TYPE
+                                    ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2) IS --> Data de Movimento
+        
+        vr_idprglog tbgen_prglog.idprglog%type     := 0;
+        /*
+        cursor cr_craplim_tari is
+        select ass.inpessoa
+              ,ass.nrdconta
+              ,lim.nrctrlim
+              ,lim.vllimite 
+        from   craplim lim
+              ,crapass ass
+        where  lim.cdcooper = ass.cdcooper
+        and    lim.nrdconta = ass.nrdconta
+        and    lim.cdcooper = pr_cdcooper
+        and    lim.tpctrlim = 3 -- Desconto de Titulos
+        and    lim.insitlim = 2 -- Ativo
+        and    lim.dtrenova = pr_dtmvtolt
+        and    lim.tprenova = 'M' -- Manual
+        and    lim.qtrenova > 0;
+        */
+        
+         -- Buscar dados do associado
+    CURSOR cr_crapass (pr_cdcooper  crapass.cdcooper%TYPE,
+                       pr_nrdconta  crapass.nrdconta%TYPE) IS
+      SELECT crapass.nrdconta,
+             crapass.nmprimtl,
+             crapass.inpessoa,
+             crapass.nrcpfcgc,
+             crapass.nrdctitg,
+             crapass.cdagenci,
+             crapass.vllimcre,
+             crapass.cdcooper
+        FROM crapass
+       WHERE crapass.cdcooper = pr_cdcooper
+         AND crapass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;   
+    
+        --> Critica
+        vr_cdcritic pls_integer;
+        vr_dscritic varchar2(4000);
+        vr_tab_erro gene0001.typ_tab_erro;
+              
+        -- Variaveis de tarifa
+        vr_cdhistor craphis.cdhistor%type;
+        vr_cdhisest craphis.cdhistor%type;
+        vr_dtdivulg date;
+        vr_dtvigenc date;
+        vr_cdfvlcop crapfco.cdfvlcop%type;
+        vr_vltarifa crapfco.vltarifa%type;
+        
+        vr_cdbattar varchar2(10);
+        vr_rowid         rowid;
+        vr_email_tarif VARCHAR2(300); --> Email da area de taifa.
+        
+      
+     BEGIN
+ 
+        --> buscar os limites renovados hj para cobrança de Tarifa
+        --for rw_craplim_tari in cr_craplim_tari loop
+            --  1 - Pessoa Fisica
+            if  pr_inpessoa = 1 then
+                vr_cdbattar := 'DSTRENOVPF'; -- Renovacao contrato pessoa fisica
+            else            
+                vr_cdbattar := 'DSTRENOVPJ'; -- Renovacao contrato pessoa juridica
+            end if;
+   
+            -- Busca valor da tarifa
+            tari0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
+                                                 ,pr_cdbattar => vr_cdbattar
+                                                 ,pr_vllanmto => pr_vllimite
+                                                 ,pr_cdprogra => 'ATENDA'
+                                                 ,pr_cdhistor => vr_cdhistor
+                                                 ,pr_cdhisest => vr_cdhisest
+                                                 ,pr_vltarifa => vr_vltarifa
+                                                 ,pr_dtdivulg => vr_dtdivulg
+                                                 ,pr_dtvigenc => vr_dtvigenc
+                                                 ,pr_cdfvlcop => vr_cdfvlcop
+                                                 ,pr_cdcritic => vr_cdcritic
+                                                 ,pr_dscritic => vr_dscritic
+                                                 ,pr_tab_erro => vr_tab_erro);
+             
+            -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+            gene0001.pc_set_modulo(pr_module => pr_nmdatela
+                                  ,pr_action => 'LIMI0001.pc_renovar_lim_desc_titulo'); 
+
+            --  Se ocorreu erro
+            if  vr_cdcritic is not null or trim(vr_dscritic) is not null then
+                --  Se possui erro no vetor
+                if  vr_tab_erro.count() > 0 then
+                    pr_cdcritic:= vr_tab_erro(vr_tab_erro.first).cdcritic;
+                    pr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
+                    RAISE vr_exc_saida;
+                else
+                    pr_cdcritic:= 0;
+                    pr_dscritic:= 'Nao foi possivel carregar a tarifa.';
+                end if;
+               
+                -- Se não Existe Tarifa
+                RETURN;
+            end if;
+            
+            --  Verifica se valor da tarifa esta zerado
+            if  vr_vltarifa = 0 then
+                RETURN;
+            end if;
+                         
+                      
+                                      
+             ---     
+            -- Criar Lançamento automatico Tarifas de contrato de desconto de titulo
+            tari0001.pc_lan_tarifa_online( pr_cdcooper => pr_cdcooper --Codigo Cooperativa
+                                          ,pr_cdagenci => 1 --Codigo Agencia destino
+                                          ,pr_nrdconta => pr_nrdconta--Numero da Conta Destino
+                                          ,pr_cdbccxlt => 100--Codigo banco/caixa
+                                          ,pr_nrdolote => 10300--Numero do Lote
+                                          ,pr_tplotmov => 1--Tipo Lote
+                                          ,pr_cdoperad => pr_cdoperad--Codigo Operador
+                                          ,pr_dtmvtlat => rw_crapdat.dtmvtolt--Data Tarifa
+                                          ,pr_dtmvtlcm => rw_crapdat.dtmvtocd--Data lancamento
+                                          ,pr_nrdctabb => pr_nrdconta--Numero Conta BB
+                                          ,pr_nrdctitg => gene0002.fn_mask(pr_nrdconta,'99999999')--Conta Integracao
+                                          ,pr_cdhistor => vr_cdhistor--Codigo Historico
+                                          ,pr_cdpesqbb => 'Fato gerador tarifa:' || to_char(pr_nrctrlim)--Codigo pesquisa
+                                          ,pr_cdbanchq => 0--Codigo Banco Cheque
+                                          ,pr_cdagechq => 0--Codigo Agencia Cheque
+                                          ,pr_nrctachq => 0--Numero Conta Cheque
+                                          ,pr_flgaviso => false--Flag Aviso
+                                          ,pr_tpdaviso => 0--Tipo Aviso
+                                          ,pr_vltarifa => vr_vltarifa--Valor tarifa
+                                          ,pr_nrdocmto => 0--Numero Documento
+                                          ,pr_cdcoptfn => rw_crapass.cdcooper--Codigo Cooperativa Terminal
+                                          ,pr_cdagetfn => rw_crapass.cdagenci--Codigo Agencia Terminal
+                                          ,pr_nrterfin => 0--Numero Terminal Financeiro
+                                          ,pr_nrsequni => 0--Numero Sequencial Unico
+                                          ,pr_nrautdoc => 0--Numero Autenticacao Documento
+                                          ,pr_dsidenti => null--Descricao Identificacao
+                                          ,pr_cdfvlcop => vr_cdfvlcop--Codigo Faixa Valor Cooperativa
+                                          ,pr_inproces => rw_crapdat.inproces--Indicador Processo
+                                          ,pr_cdlantar => vr_cdlantar--Codigo Lancamento tarifa
+                                          ,pr_tab_erro => vr_tab_erro--Tabela de erro
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic
+                                          );
+
+            -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+            GENE0001.pc_set_modulo(pr_module => pr_nmdatela
+                                  ,pr_action => 'LIMI0001.pc_renovar_lim_desc_titulo'); 
+
+            --  Se ocorreu erro
+            if  vr_cdcritic is not null or trim(vr_dscritic) is not null then
+                --  Se possui erro no vetor
+                if  vr_tab_erro.count > 0 then
+                    pr_cdcritic:= vr_tab_erro(vr_tab_erro.first).cdcritic;
+                    pr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
+                    RAISE vr_exc_saida;
+                else
+                    pr_cdcritic:= 0;
+                    pr_dscritic:= 'Erro no lancamento Tarifa de contrato de limite de desconto de titulo';
+                end if;
+                -- Limpa valores das variaveis de critica
+                pr_cdcritic:= 0;
+                pr_dscritic:= null;
+            end if;
+        
+     EXCEPTION
+        when others then
+             pr_dscritic:= 'Não foi possivel gerar tarifa de renovação: '||sqlerrm; 
+             -- Envio centralizado de log de erro
+             -- Limpa valores das variaveis de critica
+             --vr_cdcritic:= 0;
+             --vr_dscritic:= null;
+     END pc_gera_tarifa_renova;
+
+   
   BEGIN
     
     IF(pr_vllimite <= 0) OR pr_vllimite IS NULL THEN
@@ -3564,29 +3760,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     -- diferença entre a data do fim da vigencia e a data de movimentação para calcular vencimento
     vr_difdias := rw_craplim.dtfimvig - pr_dtmvtolt;
   
-  --vencido
-  IF (vr_difdias < 0 ) THEN
+    --vencido
+    IF (vr_difdias < 0 ) THEN
 
-  IF (vr_difdias < -60 ) THEN
-    -- Verificacao para saber se ja se passaram mais de 60 dias limite para a renovacao
-      vr_dscritic := 'Nao e possivel realizar a renovacao do limite de desconto de titulo. Ja se passaram 60 dias do fim da vigencia';     
-      RAISE vr_exc_saida;      
-    END IF;
-  -- calcula o novo fim da vigencia a partir  da data da movimentação
-  vr_dtfimvig := pr_dtmvtolt + NVL(rw_craplim.qtdiavig,0);
+      IF (vr_difdias < -60 ) THEN
+         -- Verificacao para saber se ja se passaram mais de 60 dias limite para a renovacao
+         vr_dscritic := 'Nao e possivel realizar a renovacao do limite de desconto de titulo. Ja se passaram 60 dias do fim da vigencia';     
+         RAISE vr_exc_saida;      
+         END IF;
+      -- calcula o novo fim da vigencia a partir  da data da movimentação
+      vr_dtfimvig := pr_dtmvtolt + NVL(rw_craplim.qtdiavig,0);
 
-  -- não vencido  
-  ELSE
-  
-  -- Verificacao para saber se faltam mais que 15 dias para o vencimento do limite para a renovacao
-  IF (vr_difdias > 15 ) THEN
-      vr_dscritic := 'Nao e possivel realizar a renovacao do limite de desconto de titulo. Faltam mais que 15 dias para o limite ';     
-      RAISE vr_exc_saida;      
-    END IF;
-  -- calcula o novo fim da vigencia a partir do fim da vigencia atual
-  vr_dtfimvig := rw_craplim.dtfimvig + NVL(rw_craplim.qtdiavig,0);
-  END IF;-- fim verificacao vencimento
-      
+    -- não vencido  
+    ELSE
+    
+       -- Verificacao para saber se faltam mais que 15 dias para o vencimento do limite para a renovacao
+       IF (vr_difdias > 15 ) THEN
+          vr_dscritic := 'Nao e possivel realizar a renovacao do limite de desconto de titulo. Faltam mais que 15 dias para o limite ';     
+          RAISE vr_exc_saida;      
+          END IF;
+    
+          -- calcula o novo fim da vigencia a partir do fim da vigencia atual
+          vr_dtfimvig := rw_craplim.dtfimvig + NVL(rw_craplim.qtdiavig,0);
+    END IF;-- fim verificacao vencimento
+        
     --Guarda valor anterior do limite
     vr_vllimite := rw_craplim.vllimite;
     
@@ -3604,7 +3801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       CLOSE cr_crapldc;
     END IF;
     
-    -- Verifica se a linha de credito esta liberada ++ ## (verificada se a linha está bloqueada)
+    -- Verifica se a linha de credito esta liberada
     IF nvl(rw_crapldc.flgstlcr,0) = 0 THEN
       vr_dscritic := 'Nao e possivel realizar a renovacao de limite, linha de desconto bloqueada. Incluir novo limite.';
       RAISE vr_exc_saida;
@@ -3702,7 +3899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       CLOSE cr_crapalt;
       -- Altera o registro
       BEGIN
-        UPDATE crapalt SET -- ## precisa dessa inclusão ?
+        UPDATE crapalt SET
                dsaltera = rw_crapalt.dsaltera || vr_dsaltera,
                cdoperad = pr_cdoperad,
                flgctitg = vr_flgctitg
@@ -3740,7 +3937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       
     END IF;
        
-    IF vr_vllimite <> pr_vllimite THEN -- ## (mantenho o log da mesma maneira)
+    IF vr_vllimite <> pr_vllimite THEN
       -- Inclusão de log com retorno do ROWID
       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => pr_cdoperad
@@ -3761,6 +3958,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                ,pr_dsdadatu => to_char(pr_vllimite,'FM999G999G999G999G999D00'));
     END IF;
     
+   --    Leitura do calendário da cooperativa
+   open  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+   fetch btch0001.cr_crapdat into rw_crapdat;
+   if    btch0001.cr_crapdat%notfound then
+         close btch0001.cr_crapdat;
+         vr_dscritic:= 'Não foi possivel recuperar Data do sistema. '||SQLERRM;
+         raise vr_exc_saida;
+   end   if;
+   close btch0001.cr_crapdat;
+    
+    --> Rotina para cobrança das tarifas de renovação de contrato
+   pc_gera_tarifa_renova(pr_cdcooper => pr_cdcooper                  --> Cooperativa
+                         ,pr_dtmvtolt => pr_dtmvtolt                 --> Data de Movimento
+                         ,pr_nrdconta => pr_nrdconta                 --> Número da Conta
+                         ,pr_vllimite => pr_vllimite                 --> Valor Limite de Desconto
+                         ,pr_nrctrlim => pr_nrctrlim                 --> Contrato
+                         ,pr_inpessoa => rw_crapass.inpessoa         --> Tipo de Pessoa
+                         ,pr_cdcritic => vr_cdcritic                 --> Código da crítica
+                         ,pr_dscritic => vr_dscritic);               --> Descrição da crítica 
+
+    
   EXCEPTION
     WHEN vr_exc_saida THEN     
       IF vr_cdcritic <> 0 THEN
@@ -3778,6 +3996,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     END;
     
   END pc_renovar_lim_desc_titulo;   
+    
+     
 
 END LIMI0001;
 /

@@ -107,4 +107,4 @@
 	// Bloqueia conteúdo que está átras do div da rotina
 	blockBackground(parseInt($("#divRotina").css("z-index")));
 
-</script>
+</script> 
