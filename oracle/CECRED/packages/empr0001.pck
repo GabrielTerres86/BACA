@@ -16513,10 +16513,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       RETURN;
     END IF;
     
-    if  vr_retiof = 1 
+   /* if  vr_retiof = 1 
     and pr_idfiniof = 0 then -- Refinanciamento referente a contratos anteriores a 31/03/2018, cobra só adicional
         return;
-    end if;
+    end if;*/
     
     -- Buscar a taxa de juros
     OPEN cr_craplcr;

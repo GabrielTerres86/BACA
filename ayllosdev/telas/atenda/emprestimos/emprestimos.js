@@ -1377,7 +1377,7 @@ function controlaOperacao(operacao) {
                     busca_uf_pa_ass();
                 }
                 
-                if (arrayProposta['tpemprst'] == 0){
+                if ((typeof arrayProposta != typeof undefined) && (arrayProposta['tpemprst'] == 0)) {
                     $("#idfiniof").desabilitaCampo();
                     $("#idfiniof").val(0);
                     arrayProposta['tpemprst'] = 0;
@@ -1632,11 +1632,16 @@ function manterRotina(operacao) {
 
     var dscatbem = "";
     //Carrega a lista de bens para enviar junto no POST
-    for (i in arrayHipotecas) {
-        dscatbem += arrayHipotecas[i]['dscatbem'] + '|';
+    if (typeof arrayHipotecas != typeof undefined){
+        for (i in arrayHipotecas) {
+            dscatbem += arrayHipotecas[i]['dscatbem'] + '|';
+        }
     }
-    for (i in arrayAlienacoes) {
-        dscatbem += arrayAlienacoes[i]['dscatbem'] + '|';
+
+    if (typeof arrayAlienacoes != typeof undefined){    
+        for (i in arrayAlienacoes) {
+            dscatbem += arrayAlienacoes[i]['dscatbem'] + '|';
+        }
     }
 
     // Executa script de confirmação através de ajax
