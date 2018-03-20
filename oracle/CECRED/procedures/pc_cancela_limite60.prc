@@ -1,6 +1,6 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CANCELA_LIMITE60(pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa
-                                                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                                                                  ,pr_dscritic OUT VARCHAR2) AS           --> Texto de erro/critica encontrada
+                                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                                      ,pr_dscritic OUT VARCHAR2) AS           --> Texto de erro/critica encontrada
   BEGIN
     /* ............................................................................
      Programa: PC_CANCELA_LIMITE60
@@ -89,7 +89,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CANCELA_LIMITE60(pr_cdcooper  IN crapcop.c
              , lim.ininadim        = 1 -- Inadimplencia
              , lim.cdmotcan        = 0
              , lim.cdopeexc        = '1'
-             , lim.cdageexc        = NULL
+             , lim.cdageexc        = 0
              , lim.dtinsexc = rw_dat.dtmvtolt
              , lim.dtfimvig = rw_dat.dtmvtolt
          WHERE lim.cdcooper = pr_cdcooper
@@ -105,6 +105,29 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CANCELA_LIMITE60(pr_cdcooper  IN crapcop.c
            -- Efetuar rollback
            ROLLBACK;
     END pc_cancela_limite;
+
+    -- Cancela limite de crédito Conta
+    PROCEDURE pc_cancela_limite_cta(pr_cdcooper IN NUMBER         -- Cooperativa
+                                   ,pr_nrdconta IN NUMBER         -- Conta Corrente
+                                   ,pr_cdcritic OUT PLS_INTEGER   -- Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2) IS  -- Erros do processo
+      BEGIN
+        pr_cdcritic := NULL;
+        pr_dscritic := NULL;
+
+        -- Efetua cancelamento dos limites
+        UPDATE crapass ass
+           SET ass.vllimcre = 0
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta;
+         --
+       EXCEPTION
+         WHEN OTHERS THEN
+           pr_cdcritic := 0;
+           pr_dscritic := 'Erro PC_CANCELA_LIMITE_CTA: '||SQLERRM;
+           -- Efetuar rollback
+           ROLLBACK;
+    END pc_cancela_limite_cta;
 
     -- Cancela Microfilmagem
     PROCEDURE pc_cancela_microfilmagem(pr_cdcooper IN NUMBER  -- Cooperativa
@@ -199,6 +222,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CANCELA_LIMITE60(pr_cdcooper  IN crapcop.c
                            ,pr_nrctrlim => rw_conta.nrctrlim  -- Contrato de Limite
                            ,pr_cdcritic => vr_cdcritic        -- Código da crítica
                            ,pr_dscritic => vr_dscritic);      -- Erros do processo
+          -- Verifica erro
+          IF vr_cdcritic = 0 THEN
+            RAISE vr_exc_saida;
+          END IF;
+
+          pc_cancela_limite_cta(pr_cdcooper => pr_cdcooper        -- Cooperativa
+                               ,pr_nrdconta => rw_conta.nrdconta  -- Conta Corrente
+                               ,pr_cdcritic => vr_cdcritic        -- Código da crítica
+                               ,pr_dscritic => vr_dscritic);      -- Erros do processo
           -- Verifica erro
           IF vr_cdcritic = 0 THEN
             RAISE vr_exc_saida;
