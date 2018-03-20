@@ -103,6 +103,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --
   --             27/04/2017 - Nas linhas de reversao verificar se é uma data util,(pc_risco_k, pc_risco_t)
   --                          (Tiago/Thiago SD 589074).  
+  --
+  --             26/02/2018 - Tabela CRAPTIP substituida pela TBCC_TIPO_CONTA. PRJ366 (Lombardi).
   ---------------------------------------------------------------------------------------------------------------
 
   -- constantes para geracao de arquivos contabeis
@@ -111,15 +113,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
   vr_dtrefris DATE;
 
-  type typ_reg_craptip is record
-       (cdtipcta  craptip.cdtipcta%type,
-        dstipcta  craptip.dstipcta%type,
-        cdcooper  craptip.cdcooper%type);
+  type typ_reg_tipo_conta is record
+       (cdtipcta  tbcc_tipo_conta.cdtipo_conta%type,
+        dstipcta  tbcc_tipo_conta.dstipo_conta%type,
+        inpessoa  tbcc_tipo_conta.inpessoa%type);
 
-  type typ_tab_craptip is table of typ_reg_craptip
+  type typ_tab_tipo_conta is table of typ_reg_tipo_conta
   index by varchar2(15); --cdcooper(10) + cdtipcta(+)
 
-  vr_tab_craptip typ_tab_craptip;
+  vr_tab_tipo_conta typ_tab_tipo_conta;
 
 
 
@@ -6713,21 +6715,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_nrdrowid ROWID;
       -- Informações negativas da conta
       CURSOR cr_crapneg IS
-        SELECT cdhisest
-              ,cdobserv
-              ,nrseqdig
-              ,dtiniest
-              ,dtfimest
-              ,qtdiaest
-              ,vlestour
-              ,nrdctabb
-              ,nrdocmto
-              ,vllimcre
-              ,cdtctant
-              ,cdtctatu
+        SELECT crapneg.cdhisest
+              ,crapneg.cdobserv
+              ,crapneg.nrseqdig
+              ,crapneg.dtiniest
+              ,crapneg.dtfimest
+              ,crapneg.qtdiaest
+              ,crapneg.vlestour
+              ,crapneg.nrdctabb
+              ,crapneg.nrdocmto
+              ,crapneg.vllimcre
+              ,crapneg.cdtctant
+              ,crapneg.cdtctatu
+              ,crapass.inpessoa
           FROM crapneg
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta;
+              ,crapass
+         WHERE crapneg.cdcooper = pr_cdcooper
+           AND crapneg.nrdconta = pr_nrdconta
+           AND crapass.cdcooper = crapneg.cdcooper
+           AND crapass.nrdconta = crapneg.nrdconta;
       -- Variaveis genéricas para preenchimento da pltable
       vr_cdhisest VARCHAR2(30);
       vr_dsobserv crapali.dsalinea%type;
@@ -6744,23 +6750,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       rw_crapali cr_crapali%ROWTYPE;
 
       -- Busca do cadastro de tipo de contas
-      CURSOR cr_craptip
+      CURSOR cr_tipo_conta
                        IS
-        SELECT dstipcta,
-               cdcooper,
-               cdtipcta
-          FROM craptip;
+        SELECT tipcta.dstipo_conta dstipcta,
+               tipcta.inpessoa inpessoa,
+               tipcta.cdtipo_conta cdtipcta
+          FROM tbcc_tipo_conta tipcta;
     BEGIN
 
       -- popular temp table de contas se estiver vazia
-      IF vr_tab_craptip.COUNT = 0 THEN
+      IF vr_tab_tipo_conta.COUNT = 0 THEN
 
-        FOR rw_craptip IN cr_craptip LOOP
+        FOR rw_tipo_conta IN cr_tipo_conta LOOP
           -- definir index
-          vr_idx := lpad(rw_craptip.cdcooper,10,'0')||lpad(rw_craptip.cdtipcta,5,'0');
-          vr_tab_craptip(vr_idx).cdcooper := rw_craptip.cdcooper;
-          vr_tab_craptip(vr_idx).cdtipcta := rw_craptip.cdtipcta;
-          vr_tab_craptip(vr_idx).dstipcta := rw_craptip.dstipcta;
+          vr_idx := rw_tipo_conta.inpessoa||lpad(rw_tipo_conta.cdtipcta,5,'0');
+          vr_tab_tipo_conta(vr_idx).inpessoa := rw_tipo_conta.inpessoa;
+          vr_tab_tipo_conta(vr_idx).cdtipcta := rw_tipo_conta.cdtipcta;
+          vr_tab_tipo_conta(vr_idx).dstipcta := rw_tipo_conta.dstipcta;
         END LOOP;
 
       END IF;
@@ -6813,23 +6819,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         -- Para o histórico 2
         IF rw_crapneg.cdhisest = 2 THEN
           -- Buscaremos o cadastro de tipo de conta anterior
-          vr_idx := lpad(pr_cdcooper,10,'0')||lpad(rw_crapneg.cdtctant,5,'0');
+          vr_idx := lpad(rw_crapneg.inpessoa,10,'0')||lpad(rw_crapneg.cdtctant,5,'0');
           -- Se não encontrar
-          IF NOT vr_tab_craptip.exists(vr_idx) THEN
+          IF NOT vr_tab_tipo_conta.exists(vr_idx) THEN
             vr_dscodant := rw_crapneg.cdtctant;
           ELSE
             -- Usamos a descrição dele
-            vr_dscodant := vr_tab_craptip(vr_idx).dstipcta;
+            vr_dscodant := vr_tab_tipo_conta(vr_idx).dstipcta;
           END IF;
 
           -- Buscaremos o cadastro de tipo de conta para a atual
           vr_idx := lpad(pr_cdcooper,10,'0')||lpad(rw_crapneg.cdtctatu,5,'0');
           -- Se não encontrar
-          IF NOT vr_tab_craptip.exists(vr_idx) THEN
+          IF NOT vr_tab_tipo_conta.exists(vr_idx) THEN
             vr_dscodatu := rw_crapneg.cdtctatu;
           ELSE
             -- Usamos a descrição dele
-            vr_dscodatu := vr_tab_craptip(vr_idx).dstipcta;
+            vr_dscodatu := vr_tab_tipo_conta(vr_idx).dstipcta;
           END IF;
         END IF;
         -- Para o histórico 3

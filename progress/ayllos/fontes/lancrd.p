@@ -43,10 +43,13 @@
 			 14/02/2017 - Ajustando o format do campo nrctrcrd nos relatórios que o utilizam.
 			    		  SD 594718 (Kelvin).			 
              
+             08/03/2018 - Substituida validacao "cdtipcta = 5, 6, 7, 17, 18" por "cdmodali = 2,3"
+                          PRJ366 (Lombardi).
              
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i } 
 { includes/var_online.i }
 
 DEF       VAR tel_dtmvtolt AS DATE    FORMAT "99/99/9999"          NO-UNDO.
@@ -76,6 +79,10 @@ DEF       VAR aux_cddopcao AS CHAR                                 NO-UNDO.
 DEF       VAR aux_nrlotant AS INT                                  NO-UNDO.
 DEF       VAR aux_dsoperac AS CHAR                                 NO-UNDO.
 DEF       VAR h-b1wgen0110 AS HANDLE                               NO-UNDO.
+
+DEF       VAR aux_cdmodali AS INT                                  NO-UNDO.
+DEF       VAR aux_des_erro AS CHAR                                 NO-UNDO.
+DEF       VAR aux_dscritic AS CHAR                                 NO-UNDO.
 
 FORM SPACE(1) WITH ROW 4 COLUMN 1 OVERLAY 16 DOWN WIDTH 80
                       TITLE glb_tldatela FRAME f_moldura.
@@ -842,11 +849,39 @@ DO WHILE TRUE:
 
                   END.
 
-               IF crapass.cdtipcta = 5  OR 
-                  crapass.cdtipcta = 6  OR
-                  crapass.cdtipcta = 7  OR 
-                  crapass.cdtipcta = 17 OR
-                  crapass.cdtipcta = 18 THEN
+               
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+               RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                                    INPUT crapass.cdtipcta, /* Tipo de conta */
+                                                   OUTPUT 0,                /* Modalidade */
+                                                   OUTPUT "",               /* Flag Erro */
+                                                   OUTPUT "").              /* Descrição da crítica */
+
+               CLOSE STORED-PROC pc_busca_modalidade_tipo
+                     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+               ASSIGN aux_cdmodali = 0
+                      aux_des_erro = ""
+                      aux_dscritic = ""
+                      aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                     WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                      aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                     WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                      aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                     WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+               IF aux_des_erro = "NOK"  THEN
+                   DO:
+                      ASSIGN glb_dscritic = aux_dscritic.
+                      NEXT-PROMPT tel_nrdconta WITH FRAME f_lancrd.
+                      NEXT.
+                   END.
+               
+               IF CAN-DO("2,3",STRING(aux_cdmodali)) THEN
                   DO:
                       ASSIGN glb_cdcritic = 332.
                       NEXT-PROMPT tel_nrdconta WITH FRAME f_lancrd.

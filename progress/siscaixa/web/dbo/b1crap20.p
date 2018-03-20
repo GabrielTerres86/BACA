@@ -1407,6 +1407,9 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
     DEF VAR aux_nmdBanco AS CHAR                  NO-UNDO.
     DEF VAR aux_cddBanco AS CHAR                  NO-UNDO.   
 
+    DEF VAR aux_tpsconta AS CHAR                  NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                  NO-UNDO.
+    
     DEF VAR aux_qtacobra AS INTE                  NO-UNDO.
     DEF VAR aux_fliseope AS INTE                  NO-UNDO.
     DEF VAR aux_cdcritic AS INTE                  NO-UNDO.
@@ -1577,6 +1580,46 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
             IF   p-tipo-pessoa-de = 1  THEN
                  DO:
                     aux_contador = 0.
+                    
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                    RUN STORED-PROCEDURE pc_lista_tipo_modalidade
+                      aux_handproc = PROC-HANDLE NO-ERROR
+                                              (INPUT 1,     /* Tipo de pessoa */
+                                               INPUT "2,3", /* Tipo de conta */
+                                              OUTPUT "",    /* Descriçao do Tipo de conta */
+                                              OUTPUT "",    /* Flag Erro */
+                                              OUTPUT "").   /* Descriçao da crítica */
+                    
+                    CLOSE STORED-PROC pc_lista_tipo_modalidade
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                    
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    ASSIGN aux_tpsconta = ""
+                           aux_des_erro = ""
+                           aux_dscritic = ""
+                           aux_tpsconta = pc_lista_tipo_modalidade.pr_tpcontas 
+                                           WHEN pc_lista_tipo_modalidade.pr_tpcontas <> ?
+                           aux_des_erro = pc_lista_tipo_modalidade.pr_des_erro 
+                                           WHEN pc_lista_tipo_modalidade.pr_des_erro <> ?
+                           aux_dscritic = pc_lista_tipo_modalidade.pr_dscritic
+                                           WHEN pc_lista_tipo_modalidade.pr_dscritic <> ?.
+                    
+                    IF aux_des_erro = "NOK"  THEN
+                         DO:
+                            ASSIGN i-cod-erro  = 0
+                                   c-desc-erro = aux_dscritic.
+                                 
+                            RUN cria-erro (INPUT p-cooper,
+                                           INPUT p-cod-agencia,
+                                           INPUT p-nro-caixa,
+                                           INPUT i-cod-erro,
+                                           INPUT c-desc-erro,
+                                           INPUT YES).
+                            
+                            RETURN "NOK".
+                         END.
+                    
                     FOR EACH crapttl WHERE 
                              crapttl.cdcooper = crapcop.cdcooper  AND
                              crapttl.nrcpfcgc = DEC(p-cpfcnpj-de) NO-LOCK,
@@ -1584,7 +1627,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                               crapass.cdcooper = crapcop.cdcooper  AND
                               crapass.nrdconta = crapttl.nrdconta  AND
                               crapass.dtdemiss = ?                 AND
-                              NOT CAN-DO("5,6,7,17,18",STRING(crapass.cdtipcta))
+                              NOT CAN-DO(aux_tpsconta, STRING(crapass.cdtipcta))
                               NO-LOCK:
 
                         ASSIGN aux_contador   = aux_contador + 1

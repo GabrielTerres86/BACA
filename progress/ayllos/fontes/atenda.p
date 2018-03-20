@@ -541,9 +541,10 @@
                            em "Situacao de acesso a conta via internet".
                            (Jorge/David) Projeto 131 - Multipla Assinatura PJ
 
-			  13/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			               crapass, crapttl, crapjur 
-              			   (Adriano - P339).
+		       	  13/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                     crapass, crapttl, crapjur (Adriano - P339).
+
+		       	  06/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. PRJ366 (Lombardi)
 
 ............................................................................. */
 
@@ -614,6 +615,8 @@ DEF        VAR aux_dscritic AS CHAR                                    NO-UNDO.
 DEF        VAR aux_vlparepr AS DEC                                     NO-UNDO.
 DEF        VAR aux_vlsaldod AS DEC                                     NO-UNDO.
 DEF        VAR aux_flgconso AS LOGI                                    NO-UNDO.
+DEF        VAR aux_dstipcta AS CHAR                                    NO-UNDO.
+DEF        VAR aux_des_erro AS CHAR                                    NO-UNDO.
 
 DEF        VAR aux_vlsldrgt AS DEC                                     NO-UNDO.
 DEF        VAR aux_vlsldtot AS DEC                                     NO-UNDO.
@@ -1737,83 +1740,42 @@ DO WHILE TRUE:
                     
     IF   crapass.cdtipcta > 0   THEN
          DO:
-             FIND craptip WHERE craptip.cdcooper = glb_cdcooper     AND
-                                craptip.cdtipcta = crapass.cdtipcta 
-                                NO-LOCK NO-ERROR.
-
-             IF   AVAILABLE craptip   THEN
-                  DO:
-                     IF  crapass.cdtipcta = 8  THEN
-                         DO:
-                             IF  crapass.cdbcochq = 756 THEN
-                                 DO:
-                                     ASSIGN tel_dstipcta = 
-                                            STRING(crapass.cdtipcta,"z9") + 
-                                            " - Normal Conv-BCB".
-                                 END.
-                             ELSE
-                                 DO: 
-                                     ASSIGN tel_dstipcta = 
-                                            STRING(crapass.cdtipcta,"z9") + 
-                                            " - Normal Conv-CTR".
-                                 END.
-                         END.
-                     ELSE
-                     IF  crapass.cdtipcta = 9  THEN
-                         DO:
-                             IF  crapass.cdbcochq = 756 THEN
-                                 DO:
-                                     ASSIGN tel_dstipcta = 
-                                            STRING(crapass.cdtipcta,"z9") + 
-                                            " - Espec. Conv-BCB".
-                                 END.
-                             ELSE
-                                 DO: 
-                                     ASSIGN tel_dstipcta = 
-                                            STRING(crapass.cdtipcta,"z9") + 
-                                            " - Espec. Conv-CTR".
-                                 END.
-                         END.
-                     ELSE
-                     IF  crapass.cdtipcta = 10  THEN
-                         DO:
-                             IF  crapass.cdbcochq = 756 THEN
-                                 DO:
-                                     ASSIGN tel_dstipcta = 
-                                            STRING(crapass.cdtipcta,"z9") + 
-                                            " - Cj. Conv-BCB".
-                                 END.
-                             ELSE
-                                 DO: 
-                                     ASSIGN tel_dstipcta = 
-                                            STRING(crapass.cdtipcta,"z9") + 
-                                            " - Cj. Conv-CTR".
-                                 END.
-                         END.
-                     ELSE
-                     IF  crapass.cdtipcta = 11  THEN
-                         DO:
-                             IF  crapass.cdbcochq = 756 THEN
-                                 DO:
-                                     ASSIGN tel_dstipcta = 
-                                            STRING(crapass.cdtipcta,"z9") + 
-                                            " - Cj.Esp.Conv-BCB".
-                                 END.
-                             ELSE
-                                 DO: 
-                                     ASSIGN tel_dstipcta = 
-                                            STRING(crapass.cdtipcta,"z9") + 
-                                            " - Cj.Esp.Conv-CTR".
-                                 END.
-                         END.
-                      ELSE
-                         ASSIGN tel_dstipcta = 
-                                STRING(crapass.cdtipcta,"z9") + " - " +
-                                craptip.dstipcta.
-
-                  END.
-             ELSE
-                  tel_dstipcta = STRING(crapass.cdtipcta,"z9").
+            
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+             RUN STORED-PROCEDURE pc_descricao_tipo_conta
+               aux_handproc = PROC-HANDLE NO-ERROR
+                                       (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                        INPUT crapass.cdtipcta, /* Tipo de conta */
+                                       OUTPUT "",               /* Descrição do Tipo de conta */
+                                       OUTPUT "",               /* Flag Erro */
+                                       OUTPUT "").              /* Descrição da crítica */
+             
+             CLOSE STORED-PROC pc_descricao_tipo_conta
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+             
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+     
+             ASSIGN aux_dstipcta = ""
+                    aux_des_erro = ""
+                    aux_dscritic = ""
+                    aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                                    WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+                    aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                                    WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+                    aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                                    WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+     
+             IF aux_des_erro = "NOK"  THEN
+                DO:
+                    glb_dscritic = aux_dscritic.
+                    BELL.
+                    MESSAGE glb_dscritic.
+                    glb_cdcritic = 0.
+                    NEXT.
+                END.
+             
+             ASSIGN tel_dstipcta = STRING(crapass.cdtipcta,"z9") + " - " + aux_dstipcta.
+             
          END.
     ELSE
          tel_dstipcta = STRING(crapass.cdtipcta,"z9").

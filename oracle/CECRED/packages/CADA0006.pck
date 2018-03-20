@@ -120,6 +120,12 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                    ,pr_des_erro     OUT VARCHAR2 --> Código da crítica
                                    ,pr_dscritic     OUT VARCHAR2); --> Descrição da crítica
                                     
+  PROCEDURE pc_lista_tipo_conta_itg(pr_indconta_itg  IN tbcc_tipo_conta.indconta_itg%TYPE --> flag conta integração
+                                   ,pr_cdmodalidade  IN tbcc_tipo_conta.cdmodalidade_tipo%TYPE --> modalidade
+                                   ,pr_tiposconta   OUT CLOB --> tipos de conta
+                                   ,pr_des_erro     OUT VARCHAR2 --> Código da crítica
+                                   ,pr_dscritic     OUT VARCHAR2); --> Descrição da crítica
+                                    
   PROCEDURE pc_valida_grupo_historico(pr_cdgrupo_historico IN tbcc_grupo_historico.cdgrupo_historico%TYPE --> codigo do tipo de conta
                                      ,pr_flggphis         OUT VARCHAR2 --> flag existe grupo de historico (0-Nao/1-Sim)
                                      ,pr_des_erro         OUT VARCHAR2 --> Código da crítica
@@ -1862,8 +1868,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
     END;
   END pc_busca_tipo_conta_itg;
   
-  PROCEDURE pc_lista_tipo_conta_itg(pr_indconta_itg  IN tbcc_tipo_conta.indconta_itg%TYPE --> tipo de pessoa
-                                   ,pr_cdmodalidade  IN tbcc_tipo_conta.cdmodalidade_tipo%TYPE --> lista de modalidades
+  PROCEDURE pc_lista_tipo_conta_itg(pr_indconta_itg  IN tbcc_tipo_conta.indconta_itg%TYPE --> flag conta integração
+                                   ,pr_cdmodalidade  IN tbcc_tipo_conta.cdmodalidade_tipo%TYPE --> modalidade
+                                   ,pr_tiposconta   OUT CLOB --> tipos de conta
                                    ,pr_des_erro     OUT VARCHAR2 --> Código da crítica
                                    ,pr_dscritic     OUT VARCHAR2) IS --> Descrição da crítica
     /* .............................................................................
@@ -1898,7 +1905,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       -- Variaveis auxiliares
       vr_clob CLOB;   
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_retxml XMLType;
       
       -- Busca tipo de conta
       CURSOR cr_tipo_conta(pr_indconta_itg IN tbcc_tipo_conta.indconta_itg%TYPE
@@ -1925,7 +1931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       -- Criar cabeçalho do XML
       gene0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><tipos_conta>');
+                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root>');
         
       FOR rw_tipo_conta IN cr_tipo_conta(pr_indconta_itg => pr_indconta_itg
                                         ,pr_cdmodalidade => pr_cdmodalidade) LOOP
@@ -1941,11 +1947,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       -- Encerrar a tag raiz
       gene0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '</tipos_conta></Root>'
+                             ,pr_texto_novo     => '</Root>'
                              ,pr_fecha_xml      => TRUE);
 
       -- Atualiza o XML de retorno
-      vr_retxml := xmltype(vr_clob);
+      pr_tiposconta := vr_clob;
       
       pr_des_erro := 'OK';
       

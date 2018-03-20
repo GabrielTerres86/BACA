@@ -234,7 +234,11 @@
 						   no relatorio de cheques 085
 						   (Adriano - SD 744959).
 
+              06/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. PRJ366 (Lombardi)
+
 ..............................................................................*/
+
+{ sistema/generico/includes/var_oracle.i }
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
 DEF INPUT  PARAM p-cddevolu AS INT                                   NO-UNDO.
@@ -335,6 +339,10 @@ DEF        VAR aux_linhaarq AS CHAR                                  NO-UNDO.
 DEF        VAR aux_contador AS INT                                   NO-UNDO.
 
 DEF        VAR aux_flcraptco AS LOGICAL                              NO-UNDO.
+
+DEF        VAR aux_dstipcta AS CHAR                                  NO-UNDO.
+DEF        VAR aux_des_erro AS CHAR                                  NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
 
 DEF BUFFER crabcop FOR crapcop.
 DEF BUFFER crabtco FOR craptco.
@@ -1578,7 +1586,7 @@ PROCEDURE gera_impressao:
 
     FORM crapass.nrdconta LABEL "Conta/dv"
          crapass.nmprimtl LABEL "Titular"       FORMAT "x(40)" 
-         craptip.dstipcta LABEL "Tipo de conta" 
+         aux_dstipcta     LABEL "Tipo de conta" 
          crapdev.nrctachq LABEL "Conta Cheque"  FORMAT "zzzz,zz9,9"
          crapdev.nrcheque LABEL "Cheque"        FORMAT "zzz,zz9,9"
          crapdev.vllanmto LABEL "Valor"         FORMAT "zzzz,zz9.99"
@@ -1877,12 +1885,44 @@ PROCEDURE gera_impressao:
                           (p-cddevolu = 3                         AND
                            crapass.nrdctitg = crapdev.nrdctitg))  NO-LOCK,
         EACH crapope WHERE crapope.cdcooper = p-cdcooper          AND
-                           crapope.cdoperad = crapdev.cdoperad    NO-LOCK,
-        EACH craptip WHERE craptip.cdcooper = p-cdcooper          AND
-                           craptip.cdtipcta = crapass.cdtipcta    NO-LOCK
+                           crapope.cdoperad = crapdev.cdoperad    NO-LOCK
                            BREAK BY crapdev.cdbccxlt
                                  BY crapdev.nrdctabb
                                  BY crapdev.nrcheque:
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                   INPUT crapass.cdtipcta, /* Tipo de conta */
+                                  OUTPUT "",               /* Descrição do Tipo de conta */
+                                  OUTPUT "",               /* Flag Erro */
+                                  OUTPUT "").              /* Descrição da crítica */
+        
+        CLOSE STORED-PROC pc_descricao_tipo_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+ 
+        ASSIGN aux_dstipcta = ""
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                               WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+ 
+        IF aux_des_erro = "NOK"  THEN
+           DO:
+               glb_dscritic = aux_dscritic.
+               UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                                 glb_cdprogra + "' --> '" + glb_dscritic +
+                                 " CRED-GENERI-00-VALORESVLB-001 " +
+                                 " >> log/proc_message.log").
+               RETURN.
+           END.
 
         IF   LINE-COUNTER(str_1) > 80 THEN
              DO:
@@ -1895,7 +1935,7 @@ PROCEDURE gera_impressao:
                     rel_vlchqdev = 0.
 
         DISPLAY STREAM str_1 crapass.nrdconta  crapass.nmprimtl
-                             craptip.dstipcta  crapdev.nrctachq
+                             aux_dstipcta      crapdev.nrctachq
                              crapdev.nrcheque  crapdev.vllanmto
                              crapdev.cdalinea  crapass.cdagenci
                              crapope.nmoperad  WITH FRAME f_todos.
@@ -2741,14 +2781,35 @@ PROCEDURE gera_arquivo_cecred:
        
                 IF  AVAILABLE crapass  THEN
                      DO:
-                         FIND craptip WHERE craptip.cdcooper = p-cdcooper   AND
-                                            craptip.cdtipcta = crapass.cdtipcta
-                                            NO-LOCK NO-ERROR.
-                          
-                        IF  AVAILABLE craptip THEN
-                              aux_dstipcta = craptip.dstipcta.
-                         ELSE
+                         
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+                          aux_handproc = PROC-HANDLE NO-ERROR
+                                                  (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                                   INPUT crapass.cdtipcta, /* Tipo de conta */
+                                                  OUTPUT "",               /* Descrição do Tipo de conta */
+                                                  OUTPUT "",               /* Flag Erro */
+                                                  OUTPUT "").              /* Descrição da crítica */
+                        
+                        CLOSE STORED-PROC pc_descricao_tipo_conta
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                        
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                 
+                        ASSIGN aux_dstipcta = ""
+                               aux_des_erro = ""
+                               aux_dscritic = ""
+                               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                                               WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+                               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+                               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+                 
+                        IF aux_des_erro = "NOK"  THEN
                               aux_dstipcta = "NAO ENCONTRADO".
+                           
+                        
                      END.
                 ELSE
                     aux_dstipcta = "NAO ENCONTRADO".

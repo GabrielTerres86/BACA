@@ -629,7 +629,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --             27/10/2017 - #781654 Na rotina pc_processar_arq_pgto, alterado o arquivo de log de null (proc_batch)
 --                          para proc_message (Carlos)
 --
---             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
+--             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).  
+--
+--             26/02/2018 - Alterado cursor cr_crapass da procedure pc_busca_termo_servico, 
+--                          substituindo o acesso à tabela CRAPTIP, pela tabela TBCC_TIPO_CONTA.
+--                          PRJ366 (Lombardi).
+--
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -938,7 +943,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
              ,gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc,crapass.inpessoa) nrcpfcgc
              ,crapass.nmprimtl
              ,crapass.inpessoa
-             ,craptip.dstipcta
+             ,tpcta.dstipo_conta
              ,INITCAP(crapenc.dsendere)||', '||crapenc.nrendere||DECODE(crapenc.complend,' ','',', '||crapenc.complend) dsendere
              ,crapenc.nmcidade
              ,crapenc.cdufende
@@ -946,10 +951,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
              ,gene0002.fn_mask(crapass.cdbcochq,'9999') cdbcoctl
              ,gene0002.fn_mask(crapass.cdagenci,'9999') cdagectl
          FROM crapass crapass
-             ,craptip craptip
+             ,tbcc_tipo_conta tpcta
              ,crapenc crapenc
-        WHERE crapass.cdcooper = craptip.cdcooper
-          AND crapass.cdtipcta = craptip.cdtipcta
+        WHERE crapass.inpessoa = tpcta.inpessoa
+          AND crapass.cdtipcta = tpcta.cdtipo_conta
           AND crapass.cdcooper = crapenc.cdcooper
           AND crapass.nrdconta = crapenc.nrdconta
           AND crapass.cdcooper = pr_cdcooper
@@ -1447,7 +1452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           vr_dstextab := REPLACE(vr_dstextab,'#NRCEP#',rw_crapass.nrcepend);
           vr_dstextab := REPLACE(vr_dstextab,'#CDBCOCTL#',rw_crapcop.cdbcoctl);
           vr_dstextab := REPLACE(vr_dstextab,'#CDAGECTL#',rw_crapcop.cdagectl);
-          vr_dstextab := REPLACE(vr_dstextab,'#DSTIPCTA#',rw_crapass.dstipcta);
+          vr_dstextab := REPLACE(vr_dstextab,'#DSTIPCTA#',rw_crapass.dstipo_conta);
 
           -- Variaveis do Termo - Detalhes do Registro do Termo
           vr_dsregis  := REPLACE(vr_dsregis,'#ordm#','&ordm');

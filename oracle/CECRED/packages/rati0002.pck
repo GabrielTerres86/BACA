@@ -197,6 +197,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
   --                          Heitor (RKAM) - Chamado 513641
   --
   --             01/12/2016 - Fazer tratamento para incorporação. (Oscar)   
+  --
+  --             26/02/2018 - Retirada a validação do NOT IN dos tipos de contas 6, 7, 17 e 18, substituído pelo 
+  --                          NOT IN dos tipos de contas que tem a modalidade 3 – Conta Aplicação.
+  --                          PRJ366 (Lombardi).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina que indica se deve habilitar / desabilitar o parecer da analise de credito
@@ -2470,7 +2475,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
            AND crapass_2.nrcpfcgc = crapass.nrcpfcgc
            AND crapass_2.nrdconta <> crapass.nrdconta
            AND crapass_2.dtelimin IS NULL -- O mesmo tem que estar ativo
-           AND crapass_2.cdtipcta NOT IN (6, 7, 17, 18); -- Desconsiderar contas de aplicacao
+           AND crapass_2.cdtipcta NOT IN (SELECT tpcta.cdtipo_conta -- Desconsiderar contas de aplicacao
+                                            FROM tbcc_tipo_conta tpcta
+                                           WHERE tpcta.cdmodalidade_tipo = 3
+                                             AND tpcta.inpessoa = crapass.inpessoa);
+           
 
       -- Cursor para busca dos dados da conta do titular
       CURSOR cr_crapass(pr_nrdconta crapass.nrdconta%TYPE) IS

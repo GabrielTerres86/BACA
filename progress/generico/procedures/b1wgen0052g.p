@@ -173,6 +173,9 @@
                 09/10/2017 - Incluido rotina para ao cadastrar cooperado carregar dados
                              da pessoa do cadastro unificado, para completar o cadastro com dados
                              que nao estao na tela. PRJ339 - CRM (Odirlei-AMcom)
+
+                12/03/2018 - Alterado de forma que o tipo de conta nao seja mais fixo e sim 
+                             parametrizado através da tela CADPAR. PRJ366 (Lombardi).
 .............................................................................*/
                                                      
 
@@ -4251,6 +4254,11 @@ PROCEDURE Inclui PRIVATE :
     DEF VAR aux_tpendass AS INTE                                    NO-UNDO.
     DEF VAR h-b1crapenc  AS HANDLE                                  NO-UNDO.
 
+    DEF VAR aux_cdpartar AS INTE                                    NO-UNDO.
+    DEF VAR aux_flgtpcta AS CHAR                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
+    
     DEF BUFFER crabass FOR crapass.
     DEF BUFFER crabenc FOR crapenc.
 
@@ -4331,6 +4339,57 @@ PROCEDURE Inclui PRIVATE :
                     /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
 
 
+                   IF par_inpessoa = 1 THEN
+                       aux_cdpartar = 38.
+                   ELSE
+                       aux_cdpartar = 39.
+                       
+                   FIND crappco WHERE crappco.cdcooper = par_cdcooper AND
+                                      crappco.cdpartar = aux_cdpartar NO-ERROR NO-WAIT.
+                   
+                   IF NOT AVAILABLE crappco THEN
+                       DO:
+                           ASSIGN par_dscritic = "Parametro de tipo de conta inicial nao cadastrado.".
+                           LEAVE ContadorAss.
+                       END.
+                              
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   RUN STORED-PROCEDURE pc_valida_tipo_conta_coop
+                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,          /* cooperativa */
+                                                        INPUT par_inpessoa,          /* tipo de pessoa */
+                                                        INPUT INT(crappco.dsconteu), /* tipo de conta */
+                                                       OUTPUT "",                    /* Descricao do tipo de conta */
+                                                       OUTPUT "",                    /* Flag Erro */
+                                                       OUTPUT "").                   /* Descrição da crítica */
+                   
+                   CLOSE STORED-PROC pc_valida_tipo_conta_coop
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   ASSIGN aux_flgtpcta = ""
+                          aux_des_erro = ""
+                          aux_dscritic = ""
+                          aux_flgtpcta = pc_valida_tipo_conta_coop.pr_flgtpcta 
+                                         WHEN pc_valida_tipo_conta_coop.pr_flgtpcta <> ?
+                          aux_des_erro = pc_valida_tipo_conta_coop.pr_des_erro 
+                                         WHEN pc_valida_tipo_conta_coop.pr_des_erro <> ?
+                          aux_dscritic = pc_valida_tipo_conta_coop.pr_dscritic
+                                         WHEN pc_valida_tipo_conta_coop.pr_dscritic <> ?.
+                   
+                   IF aux_des_erro = "NOK"  THEN
+                       DO:
+                           ASSIGN par_dscritic = aux_dscritic.
+                           LEAVE ContadorAss.
+                       END.
+                   
+                   IF aux_flgtpcta = "0" THEN
+                       DO:
+                           ASSIGN par_dscritic = "Tipo de Conta do parametro, nao cadastrado para cooperativa.".
+                           LEAVE ContadorAss.
+                       END.
+                    
                    CREATE crabass.
                    ASSIGN 
                        crabass.cdcooper = par_cdcooper
@@ -4345,7 +4404,7 @@ PROCEDURE Inclui PRIVATE :
                        crabass.inconrfb = par_inconrfb 
                        crabass.hrinicad = par_hrinicad 
                        crabass.cdsitdct = 6  /* Normal S/Talao */
-                       crabass.cdtipcta = 8  /* Normal Convenio */
+                       crabass.cdtipcta = INT(crappco.dsconteu)  /* Normal Convenio */
                        /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                        crabass.cdopeori = par_cdoperad
                        crabass.cdageori = par_cdagenci

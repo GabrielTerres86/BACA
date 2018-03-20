@@ -69,7 +69,11 @@
                 29/03/2017 - Criacao do novo parametro aux_tpprodut na busca_linhas_credito.
                              (Jaison/James - PRJ298)
 
-				15/07/2017 - Nova procedure. busca-crapass para listar os associados. (Mauro).
+				15/07/2017 - Nova procedure. busca-crapass para listar os associados. (Mauro).	 
+                
+                13/03/2018 - Removida procedure "Busca_Tipo_Conta" pois nao e mais usada. 
+                             PRJ366 (Lombardi).
+
 .............................................................................*/
 
                                                                              
@@ -1378,46 +1382,6 @@ PROCEDURE Busca_Destino_Extrato:
             RUN piXmlNew.
             RUN piXmlExport (INPUT TEMP-TABLE tt-crapdes:HANDLE,
                              INPUT "DestExtrato").
-            RUN piXmlAtributo (INPUT "qtregist",INPUT STRING(aux_qtregist)).
-            RUN piXmlSave.
-        END.
-
-    RUN remove-objeto.
-
-END PROCEDURE.
-
-PROCEDURE Busca_Tipo_Conta:
-
-    RUN carrega-objeto.
-
-    RUN busca-craptip IN h-b1wgen0059
-        ( INPUT aux_cdcooper,
-          INPUT aux_cdtipcta,
-          INPUT aux_dstipcta,
-          INPUT (IF aux_nrregist = 0 THEN 1 ELSE aux_nrregist),
-          INPUT aux_nriniseq,
-         OUTPUT aux_qtregist,
-         OUTPUT TABLE tt-craptip ).
-
-    IF  LOOKUP(RETURN-VALUE,"OK,") = 0 THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-            IF  NOT AVAILABLE tt-erro  THEN
-                DO:
-                    CREATE tt-erro.
-                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
-                                              "busca de dados.".
-                END.
-
-            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
-                            INPUT "Erro").
-        END.
-    ELSE
-        DO:
-            RUN piXmlNew.
-            RUN piXmlExport (INPUT TEMP-TABLE tt-craptip:HANDLE,
-                             INPUT "TipoConta").
             RUN piXmlAtributo (INPUT "qtregist",INPUT STRING(aux_qtregist)).
             RUN piXmlSave.
         END.

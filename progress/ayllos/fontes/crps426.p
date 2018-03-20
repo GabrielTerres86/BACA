@@ -111,7 +111,12 @@
                             (Reinert)
                             
                24/01/2014 - Incluir VALIDATE crapeca,craptrq,crapreq (Lucas R.)
+
+		           07/03/2018 - Ajuste para buscar os tipo de conta integracao 
+                            da Package CADA0006 do orcale. PRJ366 (Lombardi).
 ............................................................................ */
+
+{ sistema/generico/includes/var_oracle.i } 
 
 { includes/var_batch.i  } 
 
@@ -125,6 +130,10 @@ DEFINE TEMP-TABLE crawarq                                            NO-UNDO
        FIELD nrsequen  AS INTEGER
        FIELD qtassoci  AS INTEGER
        INDEX crawarq_1 AS PRIMARY nmarquiv nrsequen.
+ 
+DEFINE TEMP-TABLE tt_tipos_conta
+       FIELD inpessoa AS INTEGER
+       FIELD cdtipcta AS INTEGER.
  
 DEFINE BUFFER crabtab FOR craptab.
 
@@ -153,6 +162,18 @@ DEFINE VARIABLE aux_contador AS INT                                  NO-UNDO.
 DEFINE VARIABLE aux_flaglast AS LOGICAL                              NO-UNDO.
 
 DEFINE VARIABLE log_nmdcampo AS CHAR                                 NO-UNDO.
+
+/* Variaveis para o XML */ 
+DEFINE VARIABLE xDoc          AS HANDLE                              NO-UNDO.   
+DEFINE VARIABLE xRoot         AS HANDLE                              NO-UNDO.  
+DEFINE VARIABLE xRoot2        AS HANDLE                              NO-UNDO.  
+DEFINE VARIABLE xField        AS HANDLE                              NO-UNDO. 
+DEFINE VARIABLE xText         AS HANDLE                              NO-UNDO. 
+DEFINE VARIABLE aux_cont_raiz AS INTEGER                             NO-UNDO. 
+DEFINE VARIABLE aux_cont      AS INTEGER                             NO-UNDO. 
+DEFINE VARIABLE ponteiro_xml  AS MEMPTR                              NO-UNDO. 
+DEFINE VARIABLE aux_tpsconta  AS LONGCHAR                            NO-UNDO.
+DEFINE VARIABLE aux_des_erro  AS CHAR                                NO-UNDO.
 
 /* nome do arquivo de log */
 DEFINE VARIABLE aux_nmarqlog AS CHAR                                 NO-UNDO.
@@ -695,13 +716,97 @@ PROCEDURE proc_processa_arquivo:
                               crapass.dtabcitg = glb_dtmvtolt
                               crapass.nrdctitg = SUBSTR(aux_setlinha,404,08).
                               
-                       IF   crapass.cdtipcta = 08   OR 
-                            crapass.cdtipcta = 09   OR
-                            crapass.cdtipcta = 10   OR
-                            crapass.cdtipcta = 11   OR /* Contas BANCOOB */
-                            
-                            crapass.cdtipcta = 17   OR
-                            crapass.cdtipcta = 18   THEN
+                       
+                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                 
+                       RUN STORED-PROCEDURE pc_lista_tipo_conta_itg
+                       aux_handproc = PROC-HANDLE NO-ERROR (INPUT 1,    /* Flag conta itg */
+                                                            INPUT 0,    /* modalidade */
+                                                           OUTPUT "",   /* Tipos de conta */
+                                                           OUTPUT "",   /* Flag Erro */
+                                                           OUTPUT "").  /* Descrição da crítica */
+                 
+                       CLOSE STORED-PROC pc_lista_tipo_conta_itg
+                             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                 
+                       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                 
+                       ASSIGN aux_tpsconta = ""
+                              aux_des_erro = ""
+                              aux_dscritic = ""
+                              aux_tpsconta = pc_lista_tipo_conta_itg.pr_tiposconta 
+                                             WHEN pc_lista_tipo_conta_itg.pr_tiposconta <> ?
+                              aux_des_erro = pc_lista_tipo_conta_itg.pr_des_erro 
+                                             WHEN pc_lista_tipo_conta_itg.pr_des_erro <> ?
+                              aux_dscritic = pc_lista_tipo_conta_itg.pr_dscritic
+                                             WHEN pc_lista_tipo_conta_itg.pr_dscritic <> ?.
+                 
+                       IF aux_des_erro = "NOK"  THEN
+                           DO:
+                               glb_dscritic = aux_dscritic.
+                               UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                                                 " - " + glb_cdprogra + "' --> '"  +
+                                                 glb_dscritic + " >> " + aux_nmarqlog).
+                               NEXT.
+                           END.
+                       
+                       /* Inicializando objetos para leitura do XML */ 
+                       CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+                       CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+                       CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+                       CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+                       CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+                       
+                       EMPTY TEMP-TABLE tt_tipos_conta.
+                       
+                       /* Efetuar a leitura do XML*/ 
+                       SET-SIZE(ponteiro_xml) = LENGTH(aux_tpsconta) + 1. 
+                       PUT-STRING(ponteiro_xml,1) = aux_tpsconta. 
+                          
+                       IF ponteiro_xml <> ? THEN
+                           DO:
+                               xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+                               xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+                           
+                               DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+                           
+                                   xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+                           
+                                   IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                                    NEXT. 
+                           
+                                   IF xRoot2:NUM-CHILDREN > 0 THEN
+                                     CREATE tt_tipos_conta.
+                           
+                                   DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+                                       
+                                       xRoot2:GET-CHILD(xField,aux_cont).
+                                           
+                                       IF xField:SUBTYPE <> "ELEMENT" THEN 
+                                           NEXT. 
+                                       
+                                       xField:GET-CHILD(xText,1).
+                                      
+                                       ASSIGN tt_tipos_conta.inpessoa =  INT(xText:NODE-VALUE) WHEN xField:NAME = "inpessoa".
+                                       ASSIGN tt_tipos_conta.cdtipcta =  INT(xText:NODE-VALUE) WHEN xField:NAME = "cdtipo_conta".
+                                       
+                                   END. 
+                                   
+                               END.
+                           
+                               SET-SIZE(ponteiro_xml) = 0. 
+                           END.
+                 
+                       DELETE OBJECT xDoc. 
+                       DELETE OBJECT xRoot. 
+                       DELETE OBJECT xRoot2. 
+                       DELETE OBJECT xField. 
+                       DELETE OBJECT xText.
+                       
+                       FIND craptrq WHERE tt_tipos_conta.inpessoa = crapass.inpessoa AND
+                                          tt_tipos_conta.cdtipcta = crapass.cdtipcta NO-ERROR NO-WAIT.
+
+                       IF AVAILABLE craptrq THEN
                             NEXT.
 
                         /*************  CRIA  A  REQUISICAO  *************/

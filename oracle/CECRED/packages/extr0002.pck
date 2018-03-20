@@ -3606,7 +3606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 17/11/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 20/02/2018
   --
   -- Dados referentes ao programa:
   --
@@ -3694,6 +3694,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --                           registro deve ser igonardo. Será exibido somente no cursor cr_crapret
   --                           (SD793999 e SD795994 - AJFink)
   -- 
+  --              20/02/2018 - Alterada validação cdtipcta IN (1,2,...) para modalidade = 1.
+  --                           PRJ366 (Lombardi).
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -3708,9 +3711,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,crapass.cdagenci
               ,crapass.cdtipcta
               ,crapass.cdsitdct
+              ,tpcta.cdmodalidade_tipo cdmodali
         FROM crapass crapass
+            ,tbcc_tipo_conta tpcta
         WHERE crapass.cdcooper = pr_cdcooper
-        AND   crapass.nrdconta = pr_nrdconta;
+        AND   crapass.nrdconta = pr_nrdconta
+        AND   tpcta.inpessoa   = crapass.inpessoa
+        AND   tpcta.cdtipo_conta = crapass.cdtipcta;
       rw_crapass cr_crapass%ROWTYPE;  
       --Selecionar Saldos da Conta
       CURSOR cr_crapsld (pr_cdcooper IN crapsld.cdcooper%TYPE
@@ -4452,7 +4459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Fechar Cursor
         CLOSE cr_crapsld;
         /*  Nao calcula programados para quem movimenta com talao de cheques  */
-        IF rw_crapass.cdtipcta IN (1,2,3,4,8,9,10,11,12,13,14,15) AND rw_crapass.cdsitdct = 1 THEN
+        IF rw_crapass.cdmodali = 1 AND rw_crapass.cdsitdct = 1 THEN
           --Sem Lancamentos futuros
           pr_tab_totais_futuros(1).vllautom:= 0;
           --Levantar Excecao Saida com Sucesso

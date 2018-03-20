@@ -43,6 +43,8 @@
                              
                 06/02/2018 - Incluido campo FIELD cdcatego e flblqtal. PRJ366 (Lombardi)
                              
+                12/02/2018 - Retirada referencia a tabela CRAPTIP. PRJ366 (Lombardi)
+                             
 .............................................................................*/
 
 
@@ -55,7 +57,7 @@ DEFINE TEMP-TABLE tt-conta-corr NO-UNDO
     FIELD cdsitdct LIKE crapass.cdsitdct
     FIELD dssitdct AS CHAR
     FIELD cdtipcta LIKE crapass.cdtipcta
-    FIELD dstipcta LIKE craptip.dstipcta
+    FIELD dstipcta AS CHAR
     FIELD cdbcochq LIKE crapass.cdbcochq
     FIELD nrdctitg LIKE crapass.nrdctitg
     FIELD dssititg AS CHAR

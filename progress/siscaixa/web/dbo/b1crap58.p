@@ -34,7 +34,10 @@
                 05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
 
                 30/01/2017 - Nao permitir pagamento para o produto Pos-Fixado.
-                             (Jaison/James - PRJ298)
+                             (Jaison/James - PRJ298)	
+
+                16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
+                             modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
 
 ----------------------------------------------------------------------------*/
  
@@ -205,6 +208,10 @@ PROCEDURE valida-conta-contrato:
     DEF OUTPUT PARAM p-nome-titular          AS CHAR.
     DEF OUTPUT PARAM p-transferencia-conta   AS CHAR.
 
+    DEF VAR aux_cdmodali AS INTE                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                    NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                    NO-UNDO.
+
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
 
     ASSIGN p-nro-conta = DEC(REPLACE(STRING(p-nro-conta),".","")).
@@ -354,8 +361,44 @@ PROCEDURE valida-conta-contrato:
 
     ASSIGN p-nome-titular = crapass.nmprimtl.
     
-    IF  crapass.cdtipcta = 6    OR
-        crapass.cdtipcta = 7    THEN    /* Conta tipo Poupanca */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                         INPUT crapass.cdtipcta, /* Tipo de conta */
+                                        OUTPUT 0,                /* Modalidade */
+                                        OUTPUT "",               /* Flag Erro */
+                                        OUTPUT "").              /* Descriçao da crítica */
+
+    CLOSE STORED-PROC pc_busca_modalidade_tipo
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdmodali = 0
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+           aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                          WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+           aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                          WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+    
+    IF aux_des_erro = "NOK"  THEN
+        DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = aux_dscritic.
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+        END.
+        
+    IF  aux_cdmodali = 3 THEN    /* Conta tipo Poupanca */
         DO:
             ASSIGN i-cod-erro  = 17 /* Tipo de Conta Errada */
                    c-desc-erro = " ".           

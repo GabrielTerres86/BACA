@@ -206,13 +206,16 @@
                             cdbccxlt, nrdolote, nrseqdig. (Jaison/James)
 
 
-			   28/06/2016 - Incluir conta na busca do maximo Float na consulta-lancamento-periodo
-			                (Marcos-Supero #477843)
+               28/06/2016 - Incluir conta na busca do maximo Float na consulta-lancamento-periodo
+                            (Marcos-Supero #477843)
 
                09/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
-         05/10/2017 - Ajuste para desconsiderar a situacao da folha de pagamento quando esta em 
-                      Transacao Pendente (Rafael Monteiro - Mouts)
+               05/10/2017 - Ajuste para desconsiderar a situacao da folha de pagamento quando esta em 
+                            Transacao Pendente (Rafael Monteiro - Mouts)
+
+               12/03/2018 - Substituida verificacao "cdtipcta IN (1,2,3,4,..." pela modalidade do 
+                            tipo de conta igual a 1. PRJ366 (Lombardi).
 
 ............................................................................ */
 
@@ -645,6 +648,10 @@ PROCEDURE consulta-lancamento-periodo.
 
     DEF VAR aux_vllanmto AS DECI           NO-UNDO.
 
+    DEF VAR aux_cdmodali AS INTE           NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR           NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR           NO-UNDO.
+
     DEF VAR h-b1wgen0002 AS HANDLE         NO-UNDO.
     DEF VAR h-b1wgen0159 AS HANDLE         NO-UNDO.
     
@@ -730,7 +737,52 @@ PROCEDURE consulta-lancamento-periodo.
             /*  Nao calcula programados para quem movimenta com talao 
                 de cheques  */
     
-            IF  CAN-DO('1,2,3,4,8,9,10,11,12,13,14,15',STRING(crapass.cdtipcta)) AND
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+            RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
+                                                 INPUT crapass.cdtipcta,    /* tipo de conta */
+                                                OUTPUT 0,                /* Modalidade */
+                                                OUTPUT "",   /* Flag Erro */
+                                                OUTPUT "").  /* Descrição da crítica */
+            
+            CLOSE STORED-PROC pc_busca_modalidade_tipo
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_cdmodali = 0
+                   aux_des_erro = ""
+                   aux_dscritic = ""
+                   aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                  WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                   aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                  WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                   aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                  WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+            
+            IF aux_des_erro = "NOK"  THEN
+                DO:
+                    ASSIGN i-cod-erro = 0 
+                           c-dsc-erro = aux_dscritic.
+                    
+                    {sistema/generico/includes/b1wgen0001.i}
+                    
+                    RUN proc_gerar_log (INPUT p-cdcooper,
+                                        INPUT p-cod-operador,
+                                        INPUT "",
+                                        INPUT aux_dsorigem,
+                                        INPUT aux_dstransa,
+                                        INPUT FALSE,
+                                        INPUT p-idseqttl,
+                                        INPUT p-nmdatela,
+                                        INPUT p-nro-conta,
+                                       OUTPUT aux_nrdrowid).
+                  
+                    RETURN "NOK". 
+                END.
+            
+            IF  aux_cdmodali = 1      AND
                 crapass.cdsitdct = 1  THEN
                 DO:
                     CREATE tt-totais-futuros.

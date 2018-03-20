@@ -228,7 +228,11 @@
                 24/01/2018 - Adicionar validacao para verificar se cooperado teve lancamento
                              de INSS nos ultimos 3 meses ao mudar de PA (Lucas Ranghetti #835169)
                              
-                06/02/2018 - Adicionado campo cdcatego e flblqtal na tabela crapass. PRJ366 (Lombardi)
+                06/02/2018 - Adicionado campo cdcatego e flblqtal na tabela crapass. PRJ366 (Lombardi)	
+
+                14/03/2018 - Alterado para passar "inpessoa" ao inves de "cdcooper" na 
+                             procedure que busca pela descricao do tipo de conta.
+                             PRJ366 (Lombardi).
 
 .............................................................................*/
 
@@ -542,7 +546,7 @@ PROCEDURE Busca_Dados:
 
         /* Tipo da Conta */
         DYNAMIC-FUNCTION("BuscaTipoConta" IN h-b1wgen0060,
-                         INPUT par_cdcooper,
+                         INPUT tt-conta-corr.inpessoa,
                          INPUT tt-conta-corr.cdtipcta,
                         OUTPUT tt-conta-corr.dstipcta,
                         OUTPUT aux_dscritic).
@@ -1175,7 +1179,7 @@ PROCEDURE Valida_Dados_Altera:
         IF  par_cdtipcta <> crapass.cdtipcta  THEN
             DO:
                DYNAMIC-FUNCTION("BuscaTipoConta" IN h-b1wgen0060,
-                                INPUT par_cdcooper,
+                                INPUT crapass.inpessoa,
                                 INPUT par_cdtipcta,
                                OUTPUT aux_dsresult,
                                OUTPUT par_dscritic).

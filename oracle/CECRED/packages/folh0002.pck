@@ -5130,6 +5130,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                 
                 22/02/2016 - Realizado ajuste para para trazer a razao social ao inves
                              do nome resumido, conforme solicitado no chamado 590014. (Kelvin)
+                
+                20/02/2018 - Alterado cursor cr_crapass, substituindo o acesso à tabela CRAPTIP
+                             pela tabela TBCC_TIPO_CONTA. PRJ366 (Lombardi).
+                             
+                             
     ............................................................................. */
 
      -- Seleciona os dados da Cooperativa
@@ -5157,7 +5162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
              ,gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc,crapass.inpessoa) nrcpfcgc
              ,crapass.nmprimtl
              ,crapass.inpessoa
-             ,craptip.dstipcta
+             ,tpcta.dstipo_conta dstipcta
              ,INITCAP(crapenc.dsendere)||', '||crapenc.nrendere||DECODE(crapenc.complend,' ','',', '||crapenc.complend) dsendere
              ,crapenc.nmcidade
              ,crapenc.nmbairro
@@ -5166,10 +5171,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
              ,gene0002.fn_mask(crapass.cdbcochq,'9999') cdbcoctl
              ,gene0002.fn_mask(crapass.cdagenci,'9999') cdagectl
          FROM crapass crapass
-             ,craptip craptip
+             ,tbcc_tipo_conta tpcta
              ,crapenc crapenc
-        WHERE crapass.cdcooper = craptip.cdcooper
-          AND crapass.cdtipcta = craptip.cdtipcta
+        WHERE crapass.inpessoa = tpcta.inpessoa
+          AND crapass.cdtipcta = tpcta.cdtipo_conta
           AND crapass.cdcooper = crapenc.cdcooper
           AND crapass.nrdconta = crapenc.nrdconta
           AND crapass.cdcooper = p_cdcooper

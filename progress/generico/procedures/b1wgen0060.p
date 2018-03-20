@@ -24,14 +24,18 @@
                             (Adriano).
 
                02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
-                            (Jaison/Anderson)                                             
+                            (Jaison/Anderson)   
 
                19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
-  				             "Desligamento por determinação do BACEN" 
-							( Jonata - RKAM P364).							
+                            "Desligamento por determinação do BACEN" 
+                            ( Jonata - RKAM P364).										
+
+               14/03/2018 - Ajuste para buscar a descricao do tipo de conta do 
+                            oracle. PRJ366 (Lombardi).							
 
 .............................................................................*/
 
+{ sistema/generico/includes/var_oracle.i }
 
 /*................................ DEFINICOES ...............................*/
 DEFINE VARIABLE aux_qtregist AS INTEGER     NO-UNDO.
@@ -772,21 +776,40 @@ END FUNCTION.
 
 /* Tipo da Conta */
 FUNCTION BuscaTipoConta RETURNS LOGICAL 
-    ( INPUT  par_cdcooper AS INTEGER,
+    ( INPUT  par_inpessoa AS INTEGER,
       INPUT  par_cdtipcta AS INTEGER,
       OUTPUT par_dstipcta AS CHARACTER,
       OUTPUT par_dscritic AS CHARACTER ):
 
-    RUN Busca_Valor 
-        ( INPUT "craptip",
-          INPUT "dstipcta",
-          INPUT ("cdcooper = " + STRING(par_cdcooper) + " ," +
-                 "cdtipcta = " + STRING(par_cdtipcta)),
-         OUTPUT aux_qtregist,
-         OUTPUT par_dstipcta ).
+    DEFINE VARIABLE aux_des_erro AS CHARACTER   NO-UNDO.
+    DEFINE VARIABLE aux_dscritic AS CHARACTER   NO-UNDO.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    RUN STORED-PROCEDURE pc_descricao_tipo_conta
+      aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT par_inpessoa,     /* Tipo de pessoa */
+                               INPUT par_cdtipcta,     /* Tipo de conta */
+                              OUTPUT "",               /* Descriçao do Tipo de conta */
+                              OUTPUT "",               /* Flag Erro */
+                              OUTPUT "").              /* Descriçao da crítica */
+    
+    CLOSE STORED-PROC pc_descricao_tipo_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-    IF  aux_qtregist = 0 THEN
-        ASSIGN par_dscritic = BuscaCritica(17).
+    ASSIGN par_dstipcta = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           par_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                           WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+           aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                           WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+           aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                           WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+
+    IF aux_des_erro = "NOK"  THEN
+        ASSIGN par_dscritic = aux_dscritic.
 
         RETURN (par_dscritic = "").
 

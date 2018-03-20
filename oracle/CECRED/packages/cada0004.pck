@@ -3983,9 +3983,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   /******************************************************************************/
   /**       Funcao para buscar descrição do tipo de conta do cooperado         **/
   /******************************************************************************/
-  FUNCTION fn_dstipcta(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Codigo da cooperativa
-                       pr_cdtipcta IN crapass.cdtipcta%TYPE,  --> Tipo de conta
-                       pr_cdbcochq IN crapass.cdbcochq%TYPE ) --> Banco para emissao de cheques do cooperado.
+  FUNCTION fn_dstipcta(pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE,  --> Tipo de pessoa
+                       pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)  --> Tipo de conta
                        RETURN VARCHAR2 IS
   
     /* ..........................................................................
@@ -4003,56 +4002,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --  Alteração : 22/10/2015 - Conversão Progress -> Oracle (Odirlei)
     --
-    --
+    --              20/02/2018 - Busca a descrição do tipo de conta da tabela
+    --                           TBCC_TIPO_CONTA. PRJ366 (Lombardi).
     -- ..........................................................................*/
     
     --------------> CURSOR <---------------
-    CURSOR cr_craptip IS
-      SELECT craptip.dstipcta
-        FROM craptip
-       WHERE craptip.cdcooper = pr_cdcooper
-         AND craptip.cdtipcta = pr_cdtipcta;
-     rw_craptip cr_craptip%ROWTYPE;
+    CURSOR cr_tipo_conta IS
+      SELECT tpcta.dstipo_conta
+        FROM tbcc_tipo_conta tpcta
+       WHERE tpcta.inpessoa = pr_inpessoa
+         AND tpcta.cdtipo_conta = pr_cdtipcta;
+    rw_tipo_conta cr_tipo_conta%ROWTYPE;
+    
      vr_dstipcta VARCHAR2(100) := NULL;    
-     
   BEGIN
     -- Buscar descrição do tipo de conta
-    OPEN cr_craptip;
-    FETCH cr_craptip INTO rw_craptip;
+    OPEN cr_tipo_conta;
+    FETCH cr_tipo_conta INTO rw_tipo_conta;
     
-    IF cr_craptip%FOUND THEN
-      CLOSE cr_craptip;
-      
-      -- Tratar descrições dos tipos
-      CASE pr_cdtipcta
-        WHEN 8 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Normal Conv';
-        WHEN 9 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Espec. Conv';
-        WHEN 10 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Cj. Conv';  
-        WHEN 11 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Cj.Esp.Conv';   
-        ELSE
-           vr_dstipcta:= pr_cdtipcta ||' - '|| rw_craptip.dstipcta;
-        END CASE;
-        
-        -- Tratar tipos por banco
-        IF pr_cdtipcta IN (8,9,10,11) THEN
-          IF pr_cdbcochq = 756 THEN
-            vr_dstipcta:= vr_dstipcta ||'-BCB';
-          ELSE
-            vr_dstipcta:= vr_dstipcta ||'-CTR';
-          END IF;
-        END IF;
-        
+    IF cr_tipo_conta%FOUND THEN
+      CLOSE cr_tipo_conta;
+      vr_dstipcta := pr_cdtipcta || ' - ' || rw_tipo_conta.dstipo_conta;
         RETURN vr_dstipcta;
-        
     ELSE
-      CLOSE cr_craptip;
+      CLOSE cr_tipo_conta;
       RETURN pr_cdtipcta;
     END IF;
-    
     
   END fn_dstipcta;  
   
@@ -4250,6 +4225,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              18/12/2017 - Inclusao da leitura do parametro para apresentar a mensagem de fatura
     --                           de cartao de credito em atraso (Anderson).
     -- 
+    --              20/02/2018 - Alteracao da verificação de tipos de conta individuais, pela 
+    --                           verificação da categoria da conta. PRJ366 (Lombardi).
+    --              
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4272,7 +4250,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              crapass.flgctitg,
              crapass.idimprtr,
              crapass.idastcjt,
-             crapass.cdsitdct
+             crapass.cdsitdct,
+             crapass.cdcatego
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
@@ -5544,8 +5523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     --> Verifica Se Tipo de Conta Individual e possui mais de um Titular 
     IF rw_crapass.inpessoa = 1  THEN
-      IF vr_qttitula > 1 AND 
-         rw_crapass.cdtipcta IN (1,2,7,8,9,12,13,18) THEN
+      IF vr_qttitula > 1 AND rw_crapass.cdcatego = 1 THEN
         --> Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => 'Tipo de conta nao permite MAIS DE UM TITULAR.',
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
@@ -5940,18 +5918,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Alteração : 22/10/2015 - Conversão Progress -> Oracle (Odirlei)
     --
     --              01/12/2015 - Carregar o campo cdclcnae da crapass (Jaison/Andrino)
-	                
-					25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                     crapass, crapttl, crapjur 
-							    (Adriano - P339).
-
-					23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
-  				                 "Desligamento por determinação do BACEN" 
-							     ( Jonata - RKAM P364).	
-
-                    20/09/2017 - Ajuste nome do segundo titular para concatenar e/ou.
-                                 PRJ339 - CRM(Odirlei-AMcom) 
-
+	 --              
+	--              25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+	--                           crapass, crapttl, crapjur 
+	--		                     (Adriano - P339).
+    --              
+	--	            23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
+  	--                           "Desligamento por determinação do BACEN" 
+	--                           ( Jonata - RKAM P364).	
+    --              
+    --              20/09/2017 - Ajuste nome do segundo titular para concatenar e/ou.
+    --                           PRJ339 - CRM(Odirlei-AMcom) 
+    --              
+    --              20/09/2017 - Ajuste nos parametros da procedure fn_dstipcta
+    --                           PRJ366 (Lombardi)
+    --              
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -6092,9 +6073,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).cdsecext := rw_crapass.cdsecext;
     pr_tab_cabec(vr_idxcab).indnivel := rw_crapass.indnivel;
     
-    pr_tab_cabec(vr_idxcab).dstipcta := fn_dstipcta (pr_cdcooper => pr_cdcooper,  --> Codigo da cooperativa
-                                                     pr_cdtipcta => rw_crapass.cdtipcta,  --> Tipo de conta
-                                                     pr_cdbcochq => rw_crapass.cdbcochq ); --> Banco para emissao de cheques do cooperado.
+    pr_tab_cabec(vr_idxcab).dstipcta := fn_dstipcta (pr_inpessoa => rw_crapass.inpessoa,  --> Codigo da cooperativa
+                                                     pr_cdtipcta => rw_crapass.cdtipcta); --> Tipo de conta
     
     pr_tab_cabec(vr_idxcab).dssitdct := fn_dssitdct(pr_cdsitdct => rw_crapass.cdsitdct);  --> Codigo da situacao da conta;
     pr_tab_cabec(vr_idxcab).cdsitdct := rw_crapass.cdsitdct; 

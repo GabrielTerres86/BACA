@@ -202,6 +202,9 @@
                 30/11/2017 - Ajuste na verifica_prova_vida_inss - Chamado 784845 - 
 				             Prova de vida nao aparecendo na AV - Andrei - Mouts							
 
+                12/03/2018 - Substituida verificacao "cdtipcta = 1,2,7,..." por "cdcatego = 1".
+                             PRJ366 (Lombardi).
+
 
                 
 .............................................................................*/
@@ -1177,14 +1180,7 @@ PROCEDURE obtem-mensagens-alerta:
                      
            IF AVAILABLE crapttl  THEN
               DO:
-                  IF  (crapass.cdtipcta = 1   OR
-                      crapass.cdtipcta = 2    OR
-                      crapass.cdtipcta = 7    OR
-                      crapass.cdtipcta = 8    OR
-                      crapass.cdtipcta = 9    OR
-                      crapass.cdtipcta = 12   OR
-                      crapass.cdtipcta = 13   OR
-                      crapass.cdtipcta = 18)  AND
+                  IF  crapass.cdcatego = 1    AND
                       crapttl.idseqttl > 1    THEN
                       RUN cria-registro-msg ("Tipo de conta nao permite " +
                                              "MAIS DE UM TITULAR.").
@@ -1672,7 +1668,7 @@ PROCEDURE obtem-mensagens-alerta-contas:
        EMPTY TEMP-TABLE tt-erro.
        EMPTY TEMP-TABLE tt-mensagens-contas.
        
-       FOR FIRST crapass FIELDS(inpessoa cdtipcta dtdemiss)
+       FOR FIRST crapass FIELDS(inpessoa cdcatego dtdemiss)
                          WHERE crapass.cdcooper = par_cdcooper AND
                                crapass.nrdconta = par_nrdconta 
                                NO-LOCK:
@@ -1710,14 +1706,7 @@ PROCEDURE obtem-mensagens-alerta-contas:
 
                IF AVAILABLE crapttl  THEN
                   DO:
-                     IF (crapass.cdtipcta = 1   OR
-                         crapass.cdtipcta = 2   OR
-                         crapass.cdtipcta = 7   OR
-                         crapass.cdtipcta = 8   OR
-                         crapass.cdtipcta = 9   OR
-                         crapass.cdtipcta = 12  OR
-                         crapass.cdtipcta = 13  OR
-                         crapass.cdtipcta = 18) AND
+                     IF  crapass.cdcatego = 1   AND
                          crapttl.idseqttl > 1   THEN
                          DO:
                             RUN cria-registro-msg-contas

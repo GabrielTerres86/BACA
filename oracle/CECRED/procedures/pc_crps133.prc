@@ -97,6 +97,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
                28/05/2015 - Realizando a retirada dos tratamentos de restart, pois o programa
                             apresentou erros no processo batch. Os códigos foram comentados e 
                             podem ser removidos em futuras alterações do fonte. (Renato - Supero)
+
+               05/03/2018 - Substituída verificacao do tipo de conta "NOT IN (5,6,7,17,18)" para a 
+                            modalidade do tipo de conta diferente de "2" e "3". PRJ366. (Lombardi)
+                            
 ............................................................................. */
   -- Busca o saldo médio
   cursor cr_craptab is
@@ -421,6 +425,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
        and crap.tpdocmto < 3;
   -- Registro para receber o resultado dos cursores acima, por agência
   rw_gera_registro_pac      cr_crapaut%rowtype;
+  -- Cursor para busca dos tipos de conta
+  CURSOR cr_tipcta IS
+    SELECT inpessoa
+          ,cdtipo_conta cdtipcta
+          ,cdmodalidade_tipo cdmodali
+      FROM tbcc_tipo_conta;
 
   -- Registro para armazenar os dados gerais (PAC e empresa)
   type tab_geral is record (vr_codigo    number(10),
@@ -464,6 +474,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
   -- Variável utilizada para indexar a PL/Table
   vr_indice_val    varchar2(16);
 
+  -- Definicao do tipo de tabela para os tipos de conta
+  TYPE typ_reg_tipcta   IS RECORD(cdmodali tbcc_tipo_conta.cdmodalidade_tipo%TYPE);        
+  TYPE typ_tab_tipcta_2 IS TABLE OF typ_reg_tipcta   INDEX BY PLS_INTEGER;        
+  TYPE typ_tab_tipcta   IS TABLE OF typ_tab_tipcta_2 INDEX BY PLS_INTEGER;          
+  -- Vetor para armazenar os dados para o processo definitivo
+  vr_tab_tipcta typ_tab_tipcta;
+  
   -- Código do programa
   vr_cdprogra      crapprg.cdprogra%type;
   -- Data do movimento
@@ -732,6 +749,11 @@ begin
     end if;
   close cr_crapcop;
 
+  /*  Carrega tabela de tipos de conta  */
+  FOR rw_tipcta IN cr_tipcta LOOP
+    vr_tab_tipcta(rw_tipcta.inpessoa)(rw_tipcta.cdtipcta).cdmodali := rw_tipcta.cdmodali;
+  END LOOP; /*  Fim do LOOP -- Carga da tabela de tipos de conta  */
+        
   -- Buscar o saldo médio
   open cr_craptab;
     fetch cr_craptab into rw_craptab;
@@ -975,7 +997,7 @@ begin
           vr_tab_pac(vr_indice_pac).vr_qtassoci := vr_tab_pac(vr_indice_pac).vr_qtassoci + 1;
           vr_tab_emp(vr_indice_emp).vr_qtassoci := vr_tab_emp(vr_indice_emp).vr_qtassoci + 1;
         end if;
-        if rw_crapass.cdtipcta not in (5, 6, 7, 17, 18) then
+        if vr_tab_tipcta(rw_crapass.inpessoa)(rw_crapass.cdtipcta).cdmodali not in (2, 3) then
           if rw_crapass.cdsitdct = 6 then
             if rw_crapsld.vlsmstre >= vr_vlsldmed then
               vr_tab_pac(vr_indice_pac).vr_qtctacor := vr_tab_pac(vr_indice_pac).vr_qtctacor + 1;

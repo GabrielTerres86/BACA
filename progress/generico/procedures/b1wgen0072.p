@@ -90,7 +90,10 @@
                              Projeto 339 - CRM. (Lombardi)	 
 							           
 				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
-							 CH, RE, PP E CT. (PRJ339 - Reinert)
+							 CH, RE, PP E CT. (PRJ339 - Reinert)  
+            
+                14/03/2018 - Substituida verificacao se o tipo de conta é maior ou igual a 12
+                             pelo indicador de conta itg. PRJ366 (Lombardi).
                 
  .............................................................................*/
 
@@ -619,6 +622,8 @@ PROCEDURE Busca_Dados_Cto:
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
 
     DEF VAR aux_flgsuces AS LOG                                     NO-UNDO.
+    DEF VAR aux_idctaitg AS INTE                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
 
     DEF BUFFER crabass FOR crapass.
     DEF BUFFER crabttl FOR crapttl.
@@ -682,7 +687,37 @@ PROCEDURE Busca_Dados_Cto:
 
         ASSIGN aux_flgsuces = TRUE.
         
-        IF crabass.cdtipcta >= 12 THEN
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass.inpessoa, /* Tipo de pessoa */
+                                             INPUT crabass.cdtipcta, /* Tipo de conta */
+                                            OUTPUT 0,                /* Modalidade */
+                                            OUTPUT "",               /* Flag Erro */
+                                            OUTPUT "").              /* Descriçao da crítica */
+
+        CLOSE STORED-PROC pc_busca_tipo_conta_itg
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_idctaitg = 0
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_idctaitg = pc_busca_tipo_conta_itg.pr_indconta_itg 
+                              WHEN pc_busca_tipo_conta_itg.pr_indconta_itg <> ?
+               aux_des_erro = pc_busca_tipo_conta_itg.pr_des_erro 
+                              WHEN pc_busca_tipo_conta_itg.pr_des_erro <> ?
+               aux_dscritic = pc_busca_tipo_conta_itg.pr_dscritic
+                              WHEN pc_busca_tipo_conta_itg.pr_dscritic <> ?.
+
+        IF aux_des_erro = "NOK"  THEN
+            DO:
+              ASSIGN par_dscritic = aux_dscritic.
+              LEAVE Busca.
+            END.
+        
+        IF aux_idctaitg = 1 THEN
            FOR EACH crabttl FIELDS(indnivel) 
                             WHERE crabttl.cdcooper = crabass.cdcooper AND
                                   crabttl.nrdconta = crabass.nrdconta 

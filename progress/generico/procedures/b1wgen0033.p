@@ -232,6 +232,10 @@
                 27/11/2017 - Chamado 792418 - Incluir opções de cancelamento 10 e 11
                              (Andrei Vieira - MOUTs)
 
+                12/03/2018 - Substituida verificacao cdtipcta = (5, 6, 7, 17, 18) pelo 
+                             código da modalidade to tipo de conta igual a "2" ou "3".
+                             PRJ366 (Lombardi).
+
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -3395,6 +3399,9 @@ PROCEDURE imprimir_proposta_seguro:
     DEF VAR aux_qtsegass AS INTE                               NO-UNDO.
     DEF VAR aux_vltotseg AS DECI                               NO-UNDO.
     DEF VAR aux_dsmesref AS CHAR                               NO-UNDO.
+    DEF VAR aux_cdmodali AS INTE                               NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                               NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                               NO-UNDO.
 
     DEF VAR aux_cdempres LIKE crapemp.cdempres                 NO-UNDO.
 
@@ -3681,26 +3688,56 @@ PROCEDURE imprimir_proposta_seguro:
         IF  tt-empresa.tpdebseg = 2   AND
             tt-empresa.inavsseg = 1   AND
             rel_ddvencto     < 11  THEN
-            IF  tt-associado.cdtipcta = 5  OR
-                tt-associado.cdtipcta = 6  OR
-                tt-associado.cdtipcta = 7  OR
-                tt-associado.cdtipcta = 17 OR
-                tt-associado.cdtipcta = 18 OR
-                tt-associado.cdsitdct = 5  THEN
-                IF  aux_cdempres =  1   OR
-                   (aux_cdempres =  4   AND
-                   (tt-associado.cdagenci = 14   OR
-                    tt-associado.cdagenci = 15)) THEN
-                    ASSIGN aux_vlpreseg    = ROUND(rel_vlpreseg *
-                                                   (1 + tab_txcpmfcc),2)
-                           rel_dsbemseg[4] = "O ASSOCIADO DEVERA DEIXAR" +
-                                             " EM CONTA " +
-                                             "CORRENTE O VALOR DE R$" +
-                                            STRING(aux_vlpreseg,"zzz,zz9.99") +
-                                             ", PARA  QUE"
-                           rel_dsbemseg[5] = "POSSA SER EFETUADO O" +
-                                             " DEBITO DA " +
-                                             "PRIMEIRA PARCELA.".
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT tt-associado.inpessoa, /* tipo de pessoa */
+                                                     INPUT tt-associado.cdtipcta, /* tipo de conta */
+                                                    OUTPUT 0,                     /* Modalidade */
+                                                    OUTPUT "",                    /* Flag Erro */
+                                                    OUTPUT "").                   /* Descrição da crítica */
+                
+                CLOSE STORED-PROC pc_busca_modalidade_tipo
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux_cdmodali = 0
+                       aux_des_erro = ""
+                       aux_dscritic = ""
+                       aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                      WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                       aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                      WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                       aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                      WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+                
+                IF aux_des_erro = "NOK"  THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = aux_dscritic.
+                         LEAVE carrega.
+                    END.
+                
+                IF  aux_cdmodali          = 2  OR
+                    aux_cdmodali          = 3  OR
+                    tt-associado.cdsitdct = 5  THEN
+                    IF  aux_cdempres =  1   OR
+                       (aux_cdempres =  4   AND
+                       (tt-associado.cdagenci = 14   OR
+                        tt-associado.cdagenci = 15)) THEN
+                        ASSIGN aux_vlpreseg    = ROUND(rel_vlpreseg *
+                                                       (1 + tab_txcpmfcc),2)
+                               rel_dsbemseg[4] = "O ASSOCIADO DEVERA DEIXAR" +
+                                                 " EM CONTA " +
+                                                 "CORRENTE O VALOR DE R$" +
+                                                STRING(aux_vlpreseg,"zzz,zz9.99") +
+                                                 ", PARA  QUE"
+                               rel_dsbemseg[5] = "POSSA SER EFETUADO O" +
+                                                 " DEBITO DA " +
+                                                 "PRIMEIRA PARCELA.".
+            END.
 
         RUN busca_seguros(INPUT par_cdcooper,
                                   INPUT par_cdagenci,

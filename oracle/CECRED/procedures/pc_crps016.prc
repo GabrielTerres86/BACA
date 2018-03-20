@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS016" (pr_cdcooper in craptab.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/92.                      Ultima atualizacao: 14/10/2013
+   Data    : Fevereiro/92.                      Ultima atualizacao: 28/02/2018
 
    Dados referentes ao programa:
 
@@ -33,6 +33,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS016" (pr_cdcooper in craptab.cdcooper
 
                14/10/2013 - Ajustes na rotina para prever a nova forma de retorno
                             das criticas e chamadas a fimprg.p (Douglas Pagel).
+               
+               28/02/2018 - Incluida quebra por tipo de pessoa. Aumentada mascara
+                            dos campos de totais. PRJ366 (Lombardi).
 ............................................................................. */
   -- Data do movimento
   cursor cr_crapdat(pr_cdcooper in craptab.cdcooper%type) is
@@ -48,11 +51,16 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS016" (pr_cdcooper in craptab.cdcooper
   -- Rowtype para validacao da data
   rw_crapdat btch0001.cr_crapdat%rowtype;
   -- Busca os tipos de conta com a descrição
-  cursor cr_craptip (pr_cdcooper in craptip.cdcooper%type) is
-    select craptip.cdtipcta,
-           to_char(craptip.cdtipcta, 'fm00')||'-'||craptip.dstipcta dstipcta
-      from craptip
-     where craptip.cdcooper = pr_cdcooper;
+  cursor cr_tipo_conta (pr_cdcooper in craptip.cdcooper%type) is
+    SELECT cta.inpessoa 
+          ,ctc.cdtipo_conta
+          --,cta.dstipo_conta
+          ,to_char(ctc.cdtipo_conta, 'fm00')||'-'||cta.dstipo_conta dstipo_conta
+      FROM tbcc_tipo_conta      cta
+          ,tbcc_tipo_conta_coop ctc
+     WHERE cta.cdtipo_conta = ctc.cdtipo_conta
+       AND cta.inpessoa     = ctc.inpessoa
+       AND ctc.cdcooper     = pr_cdcooper;
   -- Busca a descrição da agência
   cursor cr_crapage (pr_cdcooper in crapage.cdcooper%type,
                      pr_cdagenci in crapage.cdagenci%type) is
@@ -66,6 +74,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS016" (pr_cdcooper in craptab.cdcooper
                     pr_dtmvtolt in crapsld.dtrefere%type) is
     select cdagenci,
            cdtipcta,
+           inpessoa,
            sum(ativo) ativo,
            sum(demitido) demitido,
            sum(round(vlstotal, 0)) vlstotal,
@@ -74,13 +83,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS016" (pr_cdcooper in craptab.cdcooper
            sum(round(vlsegmes, 0)) vlsegmes,
            sum(round(vltermes, 0)) vltermes
       from (select crapass.cdagenci,
+                   crapass.inpessoa,
                    decode(crapass.cdbcochq,
-                          85, decode(crapass.cdtipcta,
-                                     8, 96,
-                                     9, 97,
-                                     10, 98,
-                                     11, 99,
-                                     crapass.cdtipcta),
+                          85, crapass.cdtipcta,
                           crapass.cdtipcta) cdtipcta,
                    decode(crapass.dtdemiss,
                           null, 1,
@@ -143,8 +148,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS016" (pr_cdcooper in craptab.cdcooper
                and crapsld.cdcooper = crapass.cdcooper
                and crapsld.nrdconta = crapass.nrdconta)
      group by cdagenci,
+              inpessoa,
               cdtipcta
      order by cdagenci,
+              inpessoa,
               cdtipcta;
   --
   -- PL/Table contendo os tipos de conta e a soma dos valores
@@ -157,11 +164,15 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS016" (pr_cdcooper in craptab.cdcooper
                            vr_vlsegmes    crapsld.vltsalan%type,
                            vr_vltermes    crapsld.vltsalan%type);
   -- Definição da tabela para armazenar os tipos de conta
-  type typ_tab_tipo is table of typ_tipo index by binary_integer;
+  type typ_tab_tipo_2 is table of typ_tipo index by binary_integer;
+  
+  type typ_tab_tipo is table of typ_tab_tipo_2 index by binary_integer;
+  
   -- Instância da tabela. O índice é o tipo de conta
   vr_tab_tipo      typ_tab_tipo;
   -- Índice para leitura da PL/Table
   vr_ind           binary_integer;
+  vr_ind_2         binary_integer;
   -- Código do programa
   vr_cdprogra      crapprg.cdprogra%type;
   -- Data do movimento
@@ -172,6 +183,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS016" (pr_cdcooper in craptab.cdcooper
   vr_dsmes3        varchar2(15);
   -- Controle da quebra do relatório
   vr_cdagenci      crapage.cdagenci%type := 0;
+  vr_inpessoa      crapass.inpessoa%type := 0;
+  -- Descricao tipo de pessoa
+  vr_dsinpessoa    VARCHAR2(29);
   -- Variáveis para armazenar o total por agência
   vr_qtativo       number(6);
   vr_qtdemitido    number(6);
@@ -255,14 +269,8 @@ begin
   vr_dsmes2 := gene0001.vr_vet_nmmesano(to_char(add_months(vr_dtmvtolt, -1), 'mm'));
   vr_dsmes3 := gene0001.vr_vet_nmmesano(to_char(add_months(vr_dtmvtolt, -2), 'mm'));
   -- Buscar a descrição dos tipos de contas e armazenar em PL/Table
-  for rw_craptip in cr_craptip (pr_cdcooper) loop
-    -- Se for conta convênio, inclui o código do banco na descrição, para diferenciar
-    if rw_craptip.cdtipcta in (8, 9, 10, 11) then
-      vr_tab_tipo(rw_craptip.cdtipcta).vr_dstipcta := rw_craptip.dstipcta||' (756)';
-      vr_tab_tipo(rw_craptip.cdtipcta+88).vr_dstipcta := rw_craptip.dstipcta||' (085)';
-    else
-      vr_tab_tipo(rw_craptip.cdtipcta).vr_dstipcta := rw_craptip.dstipcta;
-    end if;
+  for rw_tipo_conta in cr_tipo_conta (pr_cdcooper) loop
+    vr_tab_tipo(rw_tipo_conta.inpessoa)(rw_tipo_conta.cdtipo_conta).vr_dstipcta := rw_tipo_conta.dstipo_conta;
   end loop;
   -- Inicializar o CLOB para armazenar o arquivo XML
   vr_des_xml := null;
@@ -292,11 +300,11 @@ begin
       if vr_cdagenci <> 0 then
         pc_escreve_xml('<qtativos_tot>'||to_char(vr_qtativo, 'fm999G990')||'</qtativos_tot>'||
                        '<qtdemitidos_tot>'||to_char(vr_qtdemitido, 'fm999G990')||'</qtdemitidos_tot>'||
-                       '<vltsalan_tot>'||to_char(vr_vltsalan, 'fm999G999G990')||'</vltsalan_tot>'||
-                       '<vlstotal_tot>'||to_char(vr_vlstotal, 'fm999G999G990')||'</vlstotal_tot>'||
-                       '<vlprimes_tot>'||to_char(vr_vlprimes, 'fm999G999G990')||'</vlprimes_tot>'||
-                       '<vlsegmes_tot>'||to_char(vr_vlsegmes, 'fm999G999G990')||'</vlsegmes_tot>'||
-                       '<vltermes_tot>'||to_char(vr_vltermes, 'fm999G999G990')||'</vltermes_tot>');
+                       '<vltsalan_tot>'||to_char(vr_vltsalan, 'fm999G999G999G990')||'</vltsalan_tot>'||
+                       '<vlstotal_tot>'||to_char(vr_vlstotal, 'fm999G999G999G990')||'</vlstotal_tot>'||
+                       '<vlprimes_tot>'||to_char(vr_vlprimes, 'fm999G999G999G990')||'</vlprimes_tot>'||
+                       '<vlsegmes_tot>'||to_char(vr_vlsegmes, 'fm999G999G999G990')||'</vlsegmes_tot>'||
+                       '<vltermes_tot>'||to_char(vr_vltermes, 'fm999G999G999G990')||'</vltermes_tot>');
         pc_escreve_xml('</agencia>');
       end if;
       -- Inclui a quebra no arquivo
@@ -312,15 +320,25 @@ begin
       vr_vlsegmes := 0;
       vr_vltermes := 0;
     end if;
+    
+    IF rw_crapsld.inpessoa = 1 THEN
+      vr_dsinpessoa := 'Tipo de Pessoa PF';
+    ELSIF rw_crapsld.inpessoa = 2 THEN
+      vr_dsinpessoa := 'Tipo de Pessoa PJ';
+    ELSE
+      vr_dsinpessoa := 'Tipo de Pessoa PJ Cooperativa';
+    END IF;
+    
     -- Inclui a linha no XML
-    pc_escreve_xml('<tipo dstipcta="'||vr_tab_tipo(rw_crapsld.cdtipcta).vr_dstipcta||'">'||
+    pc_escreve_xml('<tipo dstipcta="'||vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_dstipcta||'">'||
                      '<qtativos>'||to_char(rw_crapsld.ativo, 'fm999G990')||'</qtativos>'||
                      '<qtdemitidos>'||to_char(rw_crapsld.demitido, 'fm999G990')||'</qtdemitidos>'||
-                     '<vltsalan>'||to_char(rw_crapsld.vltsalan, 'fm999G999G990')||'</vltsalan>'||
-                     '<vlstotal>'||to_char(rw_crapsld.vlstotal, 'fm999G999G990')||'</vlstotal>'||
-                     '<vlprimes>'||to_char(rw_crapsld.vlprimes, 'fm999G999G990')||'</vlprimes>'||
-                     '<vlsegmes>'||to_char(rw_crapsld.vlsegmes, 'fm999G999G990')||'</vlsegmes>'||
-                     '<vltermes>'||to_char(rw_crapsld.vltermes, 'fm999G999G990')||'</vltermes>'||
+                     '<vltsalan>'||to_char(rw_crapsld.vltsalan, 'fm999G999G999G990')||'</vltsalan>'||
+                     '<vlstotal>'||to_char(rw_crapsld.vlstotal, 'fm999G999G999G990')||'</vlstotal>'||
+                     '<vlprimes>'||to_char(rw_crapsld.vlprimes, 'fm999G999G999G990')||'</vlprimes>'||
+                     '<vlsegmes>'||to_char(rw_crapsld.vlsegmes, 'fm999G999G999G990')||'</vlsegmes>'||
+                     '<vltermes>'||to_char(rw_crapsld.vltermes, 'fm999G999G999G990')||'</vltermes>'||
+                     '<inpessoa>'||vr_dsinpessoa||'</inpessoa>'||
                    '</tipo>');
     -- Soma os totais
     vr_qtativo := vr_qtativo + rw_crapsld.ativo;
@@ -331,24 +349,24 @@ begin
     vr_vlsegmes := vr_vlsegmes + rw_crapsld.vlsegmes;
     vr_vltermes := vr_vltermes + rw_crapsld.vltermes;
     -- Acumula totais por tipo de conta na PL/Table para montar o resumo
-    vr_tab_tipo(rw_crapsld.cdtipcta).vr_qtativo := nvl(vr_tab_tipo(rw_crapsld.cdtipcta).vr_qtativo, 0) + rw_crapsld.ativo;
-    vr_tab_tipo(rw_crapsld.cdtipcta).vr_qtdemitido := nvl(vr_tab_tipo(rw_crapsld.cdtipcta).vr_qtdemitido, 0) + rw_crapsld.demitido;
-    vr_tab_tipo(rw_crapsld.cdtipcta).vr_vltsalan := nvl(vr_tab_tipo(rw_crapsld.cdtipcta).vr_vltsalan, 0) + rw_crapsld.vltsalan;
-    vr_tab_tipo(rw_crapsld.cdtipcta).vr_vlstotal := nvl(vr_tab_tipo(rw_crapsld.cdtipcta).vr_vlstotal, 0) + rw_crapsld.vlstotal;
-    vr_tab_tipo(rw_crapsld.cdtipcta).vr_vlprimes := nvl(vr_tab_tipo(rw_crapsld.cdtipcta).vr_vlprimes, 0) + rw_crapsld.vlprimes;
-    vr_tab_tipo(rw_crapsld.cdtipcta).vr_vlsegmes := nvl(vr_tab_tipo(rw_crapsld.cdtipcta).vr_vlsegmes, 0) + rw_crapsld.vlsegmes;
-    vr_tab_tipo(rw_crapsld.cdtipcta).vr_vltermes := nvl(vr_tab_tipo(rw_crapsld.cdtipcta).vr_vltermes, 0) + rw_crapsld.vltermes;
+    vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_qtativo := nvl(vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_qtativo, 0) + rw_crapsld.ativo;
+    vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_qtdemitido := nvl(vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_qtdemitido, 0) + rw_crapsld.demitido;
+    vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_vltsalan := nvl(vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_vltsalan, 0) + rw_crapsld.vltsalan;
+    vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_vlstotal := nvl(vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_vlstotal, 0) + rw_crapsld.vlstotal;
+    vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_vlprimes := nvl(vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_vlprimes, 0) + rw_crapsld.vlprimes;
+    vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_vlsegmes := nvl(vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_vlsegmes, 0) + rw_crapsld.vlsegmes;
+    vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_vltermes := nvl(vr_tab_tipo(rw_crapsld.inpessoa)(rw_crapsld.cdtipcta).vr_vltermes, 0) + rw_crapsld.vltermes;
   end loop;
   -- Verifica se gerou informação no arquivo
   if vr_cdagenci <> 0 then
     -- Inclui os totais da última agência e fecha a quebra
     pc_escreve_xml('<qtativos_tot>'||to_char(vr_qtativo, 'fm999G990')||'</qtativos_tot>'||
                    '<qtdemitidos_tot>'||to_char(vr_qtdemitido, 'fm999G990')||'</qtdemitidos_tot>'||
-                   '<vltsalan_tot>'||to_char(vr_vltsalan, 'fm999G999G990')||'</vltsalan_tot>'||
-                   '<vlstotal_tot>'||to_char(vr_vlstotal, 'fm999G999G990')||'</vlstotal_tot>'||
-                   '<vlprimes_tot>'||to_char(vr_vlprimes, 'fm999G999G990')||'</vlprimes_tot>'||
-                   '<vlsegmes_tot>'||to_char(vr_vlsegmes, 'fm999G999G990')||'</vlsegmes_tot>'||
-                   '<vltermes_tot>'||to_char(vr_vltermes, 'fm999G999G990')||'</vltermes_tot>');
+                   '<vltsalan_tot>'||to_char(vr_vltsalan, 'fm999G999G999G990')||'</vltsalan_tot>'||
+                   '<vlstotal_tot>'||to_char(vr_vlstotal, 'fm999G999G999G990')||'</vlstotal_tot>'||
+                   '<vlprimes_tot>'||to_char(vr_vlprimes, 'fm999G999G999G990')||'</vlprimes_tot>'||
+                   '<vlsegmes_tot>'||to_char(vr_vlsegmes, 'fm999G999G999G990')||'</vlsegmes_tot>'||
+                   '<vltermes_tot>'||to_char(vr_vltermes, 'fm999G999G999G990')||'</vltermes_tot>');
     pc_escreve_xml('</agencia>');
     -- R E S U M O
     -- Inclui a quebra para o resumo
@@ -364,44 +382,59 @@ begin
     -- Leitura da PL/Table com os totais por tipo de conta
     vr_ind := vr_tab_tipo.first;
     while vr_ind is not null loop
+      vr_ind_2 := vr_tab_tipo(vr_ind).first;
+      while vr_ind_2 is not null loop
       -- Trata o registro somente se houver algum valor
-      if nvl(vr_tab_tipo(vr_ind).vr_qtativo, 0) <> 0 or
-         nvl(vr_tab_tipo(vr_ind).vr_qtdemitido, 0) <> 0 or
-         nvl(vr_tab_tipo(vr_ind).vr_vltsalan, 0) <> 0 or
-         nvl(vr_tab_tipo(vr_ind).vr_vlstotal, 0) <> 0 or
-         nvl(vr_tab_tipo(vr_ind).vr_vlprimes, 0) <> 0 or
-         nvl(vr_tab_tipo(vr_ind).vr_vlsegmes, 0) <> 0 or
-         nvl(vr_tab_tipo(vr_ind).vr_vltermes, 0) <> 0 then
+        if nvl(vr_tab_tipo(vr_ind)(vr_ind_2).vr_qtativo, 0) <> 0 or
+           nvl(vr_tab_tipo(vr_ind)(vr_ind_2).vr_qtdemitido, 0) <> 0 or
+           nvl(vr_tab_tipo(vr_ind)(vr_ind_2).vr_vltsalan, 0) <> 0 or
+           nvl(vr_tab_tipo(vr_ind)(vr_ind_2).vr_vlstotal, 0) <> 0 or
+           nvl(vr_tab_tipo(vr_ind)(vr_ind_2).vr_vlprimes, 0) <> 0 or
+           nvl(vr_tab_tipo(vr_ind)(vr_ind_2).vr_vlsegmes, 0) <> 0 or
+           nvl(vr_tab_tipo(vr_ind)(vr_ind_2).vr_vltermes, 0) <> 0 THEN
+           
+          IF vr_ind = 1 THEN
+            vr_dsinpessoa := 'Tipo de Pessoa PF';
+          ELSIF vr_ind = 2 THEN
+            vr_dsinpessoa := 'Tipo de Pessoa PJ';
+          ELSE
+            vr_dsinpessoa := 'Tipo de Pessoa PJ Cooperativa';
+          END IF;
+           
         -- Inclui a linha no XML
-        pc_escreve_xml('<tipo dstipcta="'||vr_tab_tipo(vr_ind).vr_dstipcta||'">'||
-                         '<qtativos>'||to_char(vr_tab_tipo(vr_ind).vr_qtativo, 'fm999G990')||'</qtativos>'||
-                         '<qtdemitidos>'||to_char(vr_tab_tipo(vr_ind).vr_qtdemitido, 'fm999G990')||'</qtdemitidos>'||
-                         '<vltsalan>'||to_char(vr_tab_tipo(vr_ind).vr_vltsalan, 'fm999G999G990')||'</vltsalan>'||
-                         '<vlstotal>'||to_char(vr_tab_tipo(vr_ind).vr_vlstotal, 'fm999G999G990')||'</vlstotal>'||
-                         '<vlprimes>'||to_char(vr_tab_tipo(vr_ind).vr_vlprimes, 'fm999G999G990')||'</vlprimes>'||
-                         '<vlsegmes>'||to_char(vr_tab_tipo(vr_ind).vr_vlsegmes, 'fm999G999G990')||'</vlsegmes>'||
-                         '<vltermes>'||to_char(vr_tab_tipo(vr_ind).vr_vltermes, 'fm999G999G990')||'</vltermes>'||
+          pc_escreve_xml('<tipo dstipcta="'||vr_tab_tipo(vr_ind)(vr_ind_2).vr_dstipcta||'">'||
+                           '<qtativos>'||to_char(vr_tab_tipo(vr_ind)(vr_ind_2).vr_qtativo, 'fm999G990')||'</qtativos>'||
+                           '<qtdemitidos>'||to_char(vr_tab_tipo(vr_ind)(vr_ind_2).vr_qtdemitido, 'fm999G990')||'</qtdemitidos>'||
+                           '<vltsalan>'||to_char(vr_tab_tipo(vr_ind)(vr_ind_2).vr_vltsalan, 'fm999G999G999G990')||'</vltsalan>'||
+                           '<vlstotal>'||to_char(vr_tab_tipo(vr_ind)(vr_ind_2).vr_vlstotal, 'fm999G999G999G990')||'</vlstotal>'||
+                           '<vlprimes>'||to_char(vr_tab_tipo(vr_ind)(vr_ind_2).vr_vlprimes, 'fm999G999G999G990')||'</vlprimes>'||
+                           '<vlsegmes>'||to_char(vr_tab_tipo(vr_ind)(vr_ind_2).vr_vlsegmes, 'fm999G999G999G990')||'</vlsegmes>'||
+                           '<vltermes>'||to_char(vr_tab_tipo(vr_ind)(vr_ind_2).vr_vltermes, 'fm999G999G999G990')||'</vltermes>'||
+                           '<inpessoa>'||vr_dsinpessoa||'</inpessoa>'||
                        '</tipo>');
         -- Soma os totais
-        vr_qtativo := vr_qtativo + vr_tab_tipo(vr_ind).vr_qtativo;
-        vr_qtdemitido := vr_qtdemitido + vr_tab_tipo(vr_ind).vr_qtdemitido;
-        vr_vltsalan := vr_vltsalan + vr_tab_tipo(vr_ind).vr_vltsalan;
-        vr_vlstotal := vr_vlstotal + vr_tab_tipo(vr_ind).vr_vlstotal;
-        vr_vlprimes := vr_vlprimes + vr_tab_tipo(vr_ind).vr_vlprimes;
-        vr_vlsegmes := vr_vlsegmes + vr_tab_tipo(vr_ind).vr_vlsegmes;
-        vr_vltermes := vr_vltermes + vr_tab_tipo(vr_ind).vr_vltermes;
+          vr_qtativo := vr_qtativo + vr_tab_tipo(vr_ind)(vr_ind_2).vr_qtativo;
+          vr_qtdemitido := vr_qtdemitido + vr_tab_tipo(vr_ind)(vr_ind_2).vr_qtdemitido;
+          vr_vltsalan := vr_vltsalan + vr_tab_tipo(vr_ind)(vr_ind_2).vr_vltsalan;
+          vr_vlstotal := vr_vlstotal + vr_tab_tipo(vr_ind)(vr_ind_2).vr_vlstotal;
+          vr_vlprimes := vr_vlprimes + vr_tab_tipo(vr_ind)(vr_ind_2).vr_vlprimes;
+          vr_vlsegmes := vr_vlsegmes + vr_tab_tipo(vr_ind)(vr_ind_2).vr_vlsegmes;
+          vr_vltermes := vr_vltermes + vr_tab_tipo(vr_ind)(vr_ind_2).vr_vltermes;
       end if;
+        -- Passa para o próximo registro da PL/Table
+        vr_ind_2 := vr_tab_tipo(vr_ind).next(vr_ind_2);
+      end loop;
       -- Passa para o próximo registro da PL/Table
       vr_ind := vr_tab_tipo.next(vr_ind);
     end loop;
     -- Inclui os totais do resumo e fecha a quebra
     pc_escreve_xml('<qtativos_tot>'||to_char(vr_qtativo, 'fm999G990')||'</qtativos_tot>'||
                    '<qtdemitidos_tot>'||to_char(vr_qtdemitido, 'fm999G990')||'</qtdemitidos_tot>'||
-                   '<vltsalan_tot>'||to_char(vr_vltsalan, 'fm999G999G990')||'</vltsalan_tot>'||
-                   '<vlstotal_tot>'||to_char(vr_vlstotal, 'fm999G999G990')||'</vlstotal_tot>'||
-                   '<vlprimes_tot>'||to_char(vr_vlprimes, 'fm999G999G990')||'</vlprimes_tot>'||
-                   '<vlsegmes_tot>'||to_char(vr_vlsegmes, 'fm999G999G990')||'</vlsegmes_tot>'||
-                   '<vltermes_tot>'||to_char(vr_vltermes, 'fm999G999G990')||'</vltermes_tot>');
+                   '<vltsalan_tot>'||to_char(vr_vltsalan, 'fm999G999G999G990')||'</vltsalan_tot>'||
+                   '<vlstotal_tot>'||to_char(vr_vlstotal, 'fm999G999G999G990')||'</vlstotal_tot>'||
+                   '<vlprimes_tot>'||to_char(vr_vlprimes, 'fm999G999G999G990')||'</vlprimes_tot>'||
+                   '<vlsegmes_tot>'||to_char(vr_vlsegmes, 'fm999G999G999G990')||'</vlsegmes_tot>'||
+                   '<vltermes_tot>'||to_char(vr_vltermes, 'fm999G999G999G990')||'</vltermes_tot>');
     pc_escreve_xml('</agencia>');
   end if;
   -- Fecha a tag principal para encerrar o XML
@@ -427,6 +460,7 @@ begin
                               pr_flg_impri => 'S',    --> Chamar a impressão (Imprim.p)
                               pr_nmformul  => '',     --> Nome do formulário para impressão
                               pr_nrcopias  => 1,      --> Número de cópias para impressão
+                              pr_nrvergrl => 1,
                               pr_des_erro  => vr_dscritic);       --> Saída com erro
 
   -- Liberando a memória alocada para os CLOBs

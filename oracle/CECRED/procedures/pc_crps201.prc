@@ -54,6 +54,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
                               Incluir Exceptions dentro dos Loopings de Insert.
                               Tratar crapger.cdempres com 9999 em vez de 999
                               (Evandro).
+                 
+                 05/03/2018 - Removidas regras que contabilizam cheques do BB e do
+                              Bancoob pelas cooperativas. PRJ366 (Lombardi).
     ............................................................................. */
 
       ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -102,9 +105,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
       vr_qtretemp INTEGER;
       vr_qtsolpac INTEGER;
       vr_qtretpac INTEGER;
-
+      /*
       vr_tab_qt_bb typ_tab_qt;
       vr_tab_qt_bc typ_tab_qt;
+      */
       vr_tab_qt_ct typ_tab_qt;
 
       ------------------------------- CURSORES ---------------------------------
@@ -323,7 +327,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
         IF rw_crapreq.nrfinchq < 1  THEN
           vr_qttalona := 0;
         END IF;
-
+        /*
         IF rw_crapreq.cdtipcta < 5 OR -- 1-NORMAL | 2-ESPECIAL | 3-NORMAL CONJUNTA | 4-ESPEC. CONJUNTA
           (rw_crapreq.cdtipcta > 11 AND -- 12-NORMAL ITG | 13-ESPECIAL ITG | 14-NORMAL CJTA ITG | 15-ESPEC.CJTA ITG
           rw_crapreq.cdtipcta < 16) THEN
@@ -355,16 +359,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
           -- Quantidade de tal?es de cheque requisitados. Pelo codigo da agencia do associado
           vr_tab_qt_bb(rw_crapass.cdagenci).qtretpac := vr_qtretpac + vr_qttalona;
         END IF;
-
+        */
         -- Zerando as variaveis de auxilio
         vr_qtsolemp := 0;
         vr_qtretemp := 0;
         vr_qtsolpac := 0;
         vr_qtretpac := 0;
+        /*
         IF rw_crapreq.cdtipcta > 7 AND -- 8-NORMAL CONVENIO | 9-ESPEC. CONVENIO | 10-CONJ. CONVENIO | 11-CONJ.ESP.CONV.
            rw_crapreq.cdtipcta < 12 THEN
           IF  rw_crapass.cdbcochq = rw_crapcop.cdbcoctl  THEN -- Se for CECRED
-
+        */
             -- Preenchimento das variaveis de auxilio para depois incrementar na tabela.
             IF vr_tab_qt_ct.EXISTS(vr_cdempres) THEN
               vr_qtsolemp := nvl(vr_tab_qt_ct(vr_cdempres).qtsolemp,0);
@@ -386,6 +391,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
 
             -- Quantidade de tal?es de cheque requisitados. Pelo codigo da agencia do associado
             vr_tab_qt_ct(rw_crapass.cdagenci).qtretpac := vr_qtretpac + vr_qttalona;
+        /*
           ELSE -- Se for BANCOOB
 
             -- Preenchimento das variaveis de auxilio para depois incrementar na tabela.
@@ -411,6 +417,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
             vr_tab_qt_bc(rw_crapass.cdagenci).qtretpac := vr_qtretpac + vr_qttalona;
           END IF;
         END IF;
+        */
       END LOOP;
 
       -- Se n?o existir registros, encerra o procedure
@@ -422,7 +429,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
       vr_nrctares := vr_nrctares + 1;
 
       -- Inicializa as variaveis que receber?o as somas
-
+      /*
       -- Banco do Brasil
       IF NOT vr_tab_qt_bb.EXISTS(999) THEN
         vr_tab_qt_bb(999).qtsolemp := 0;
@@ -438,7 +445,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
         vr_tab_qt_bc(999).qtretemp := 0;
         vr_tab_qt_bc(999).qtretpac := 0;
       END IF;
-
+      */
       -- Cecred
       IF NOT vr_tab_qt_ct.EXISTS(999) THEN
         vr_tab_qt_ct(999).qtsolemp := 0;
@@ -448,6 +455,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
       END IF;
 
       FOR vr_contador IN vr_nrctares .. 998 LOOP
+        /*
         -- Banco do Brasil
         IF NOT vr_tab_qt_bb.EXISTS(vr_contador) THEN -- Se n?o existir, inicializa os campos
           vr_tab_qt_bb(vr_contador).qtsolemp := 0;
@@ -473,7 +481,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
           vr_tab_qt_bc(999).qtretemp := vr_tab_qt_bc(999).qtretemp + vr_tab_qt_bc(vr_contador).qtretemp;
           vr_tab_qt_bc(999).qtretpac := vr_tab_qt_bc(999).qtretpac + vr_tab_qt_bc(vr_contador).qtretpac;
         END IF;
-
+        */
         -- Cecred
         IF NOT vr_tab_qt_ct.EXISTS(vr_contador) THEN -- Se n?o existir, inicializa os campos
           vr_tab_qt_ct(vr_contador).qtsolemp := 0;
@@ -487,20 +495,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
           vr_tab_qt_ct(999).qtretpac := vr_tab_qt_ct(999).qtretpac + vr_tab_qt_ct(vr_contador).qtretpac;
         END IF;
 
-        IF   vr_tab_qt_bb(vr_contador).qtsolpac > 0   OR
+        IF /*vr_tab_qt_bb(vr_contador).qtsolpac > 0   OR
              vr_tab_qt_bb(vr_contador).qtretpac > 0   OR
              vr_tab_qt_bc(vr_contador).qtsolpac > 0   OR
-             vr_tab_qt_bc(vr_contador).qtretpac > 0   OR
+             vr_tab_qt_bc(vr_contador).qtretpac > 0   OR*/
              vr_tab_qt_ct(vr_contador).qtsolpac > 0   OR
              vr_tab_qt_ct(vr_contador).qtretpac > 0   THEN
 
           BEGIN
             UPDATE crapger
-               SET crapger.qtrettal = crapger.qtrettal + vr_tab_qt_bb(vr_contador).qtretpac
+               SET /*crapger.qtrettal = crapger.qtrettal + vr_tab_qt_bb(vr_contador).qtretpac
                   ,crapger.qtsoltal = crapger.qtsoltal + vr_tab_qt_bb(vr_contador).qtsolpac
                   ,crapger.qtrttlbc = crapger.qtrttlbc + vr_tab_qt_bc(vr_contador).qtretpac
-                  ,crapger.qtsltlbc = crapger.qtsltlbc + vr_tab_qt_bc(vr_contador).qtsolpac
-                  ,crapger.qtrttlct = crapger.qtrttlct + vr_tab_qt_ct(vr_contador).qtretpac
+                  ,crapger.qtsltlbc = crapger.qtsltlbc + vr_tab_qt_bc(vr_contador).qtsolpac*/
+                   crapger.qtrttlct = crapger.qtrttlct + vr_tab_qt_ct(vr_contador).qtretpac
                   ,crapger.qtsltlct = crapger.qtsltlct + vr_tab_qt_ct(vr_contador).qtsolpac
             WHERE crapger.cdcooper = pr_cdcooper
               AND crapger.dtrefere = vr_dtdiault
@@ -521,20 +529,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
                           ,dtrefere
                           ,cdempres
                           ,cdagenci
-                          ,qtrettal
+                        /*,qtrettal
                           ,qtsoltal
                           ,qtrttlbc
-                          ,qtsltlbc
+                          ,qtsltlbc*/
                           ,qtrttlct
                           ,qtsltlct)
                     VALUES (pr_cdcooper
                            ,vr_dtdiault
                            ,0
                            ,vr_contador
-                           ,vr_tab_qt_bb(vr_contador).qtretpac
+                         /*,vr_tab_qt_bb(vr_contador).qtretpac
                            ,vr_tab_qt_bb(vr_contador).qtsolpac
                            ,vr_tab_qt_bc(vr_contador).qtretpac
-                           ,vr_tab_qt_bc(vr_contador).qtsolpac
+                           ,vr_tab_qt_bc(vr_contador).qtsolpac*/
                            ,vr_tab_qt_ct(vr_contador).qtretpac
                            ,vr_tab_qt_ct(vr_contador).qtsolpac);
                 EXCEPTION
@@ -547,19 +555,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
          
         END IF;
 
-        IF  vr_tab_qt_bb(vr_contador).qtsolemp > 0   OR
+        IF  /*vr_tab_qt_bb(vr_contador).qtsolemp > 0   OR
             vr_tab_qt_bb(vr_contador).qtretemp > 0   OR
             vr_tab_qt_bc(vr_contador).qtsolemp > 0   OR
-            vr_tab_qt_bc(vr_contador).qtretemp > 0   OR
+            vr_tab_qt_bc(vr_contador).qtretemp > 0   OR*/
             vr_tab_qt_ct(vr_contador).qtsolemp > 0   OR
             vr_tab_qt_ct(vr_contador).qtretemp > 0   THEN
           BEGIN
             UPDATE crapger
-               SET crapger.qtrettal = crapger.qtrettal + vr_tab_qt_bb(vr_contador).qtretemp
+               SET /*crapger.qtrettal = crapger.qtrettal + vr_tab_qt_bb(vr_contador).qtretemp
                   ,crapger.qtsoltal = crapger.qtsoltal + vr_tab_qt_bb(vr_contador).qtsolemp
                   ,crapger.qtrttlbc = crapger.qtrttlbc + vr_tab_qt_bc(vr_contador).qtretemp
-                  ,crapger.qtsltlbc = crapger.qtsltlbc + vr_tab_qt_bc(vr_contador).qtsolemp
-                  ,crapger.qtrttlct = crapger.qtrttlct + vr_tab_qt_ct(vr_contador).qtretemp
+                  ,crapger.qtsltlbc = crapger.qtsltlbc + vr_tab_qt_bc(vr_contador).qtsolemp*/
+                   crapger.qtrttlct = crapger.qtrttlct + vr_tab_qt_ct(vr_contador).qtretemp
                   ,crapger.qtsltlct = crapger.qtsltlct + vr_tab_qt_ct(vr_contador).qtsolemp
             WHERE crapger.cdcooper = pr_cdcooper
               AND crapger.dtrefere = vr_dtdiault
@@ -581,20 +589,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
                           ,dtrefere
                           ,cdempres
                           ,cdagenci
-                          ,qtrettal
+                        /*,qtrettal
                           ,qtsoltal
                           ,qtrttlbc
-                          ,qtsltlbc
+                          ,qtsltlbc*/
                           ,qtrttlct
                           ,qtsltlct)
                     VALUES (pr_cdcooper
                            ,vr_dtdiault
                            ,vr_contador
                            ,0
-                           ,vr_tab_qt_bb(vr_contador).qtretemp
+                         /*,vr_tab_qt_bb(vr_contador).qtretemp
                            ,vr_tab_qt_bb(vr_contador).qtsolemp
                            ,vr_tab_qt_bc(vr_contador).qtretemp
-                           ,vr_tab_qt_bc(vr_contador).qtsolemp
+                           ,vr_tab_qt_bc(vr_contador).qtsolemp*/
                            ,vr_tab_qt_ct(vr_contador).qtretemp
                            ,vr_tab_qt_ct(vr_contador).qtsolemp);
               EXCEPTION
@@ -611,13 +619,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
       BEGIN
        --Tenta atualizar o registro com informacoes gerenciais
        UPDATE crapger
-           SET crapger.qtrettal = crapger.qtrettal + vr_tab_qt_bb(999).qtretemp
+           SET /*crapger.qtrettal = crapger.qtrettal + vr_tab_qt_bb(999).qtretemp
               ,crapger.qtsoltal = crapger.qtsoltal + vr_tab_qt_bb(999).qtsolemp
 
               ,crapger.qtrttlbc = crapger.qtrttlbc + vr_tab_qt_bc(999).qtretemp
-              ,crapger.qtsltlbc = crapger.qtsltlbc + vr_tab_qt_bc(999).qtsolemp
+              ,crapger.qtsltlbc = crapger.qtsltlbc + vr_tab_qt_bc(999).qtsolemp*/
 
-              ,crapger.qtrttlct = crapger.qtrttlct + vr_tab_qt_ct(999).qtretemp
+              crapger.qtrttlct = crapger.qtrttlct + vr_tab_qt_ct(999).qtretemp
               ,crapger.qtsltlct = crapger.qtsltlct + vr_tab_qt_ct(999).qtsolemp
         WHERE crapger.cdcooper = pr_cdcooper
           AND crapger.dtrefere = vr_dtdiault
@@ -639,20 +647,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
                       ,dtrefere
                       ,cdempres
                       ,cdagenci
-                      ,qtrettal
+                    /*,qtrettal
                       ,qtsoltal
                       ,qtrttlbc
-                      ,qtsltlbc
+                      ,qtsltlbc*/
                       ,qtrttlct
                       ,qtsltlct)
                 VALUES (pr_cdcooper
                        ,vr_dtdiault
                        ,999999
                        ,0
-                       ,vr_tab_qt_bb(999).qtretemp
+                     /*,vr_tab_qt_bb(999).qtretemp
                        ,vr_tab_qt_bb(999).qtsolemp
                        ,vr_tab_qt_bc(999).qtretemp
-                       ,vr_tab_qt_bc(999).qtsolemp
+                       ,vr_tab_qt_bc(999).qtsolemp*/
                        ,vr_tab_qt_ct(999).qtretemp
                        ,vr_tab_qt_ct(999).qtsolemp);
 
@@ -667,13 +675,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
       BEGIN
        --Tenta atualizar o registro com informacoes gerenciais
        UPDATE crapger
-           SET crapger.qtrettal = crapger.qtrettal + vr_tab_qt_bb(999).qtretemp
+           SET /*crapger.qtrettal = crapger.qtrettal + vr_tab_qt_bb(999).qtretemp
               ,crapger.qtsoltal = crapger.qtsoltal + vr_tab_qt_bb(999).qtsolemp
 
               ,crapger.qtrttlbc = crapger.qtrttlbc + vr_tab_qt_bc(999).qtretemp
-              ,crapger.qtsltlbc = crapger.qtsltlbc + vr_tab_qt_bc(999).qtsolemp
+              ,crapger.qtsltlbc = crapger.qtsltlbc + vr_tab_qt_bc(999).qtsolemp*/
 
-              ,crapger.qtrttlct = crapger.qtrttlct + vr_tab_qt_ct(999).qtretemp
+               crapger.qtrttlct = crapger.qtrttlct + vr_tab_qt_ct(999).qtretemp
               ,crapger.qtsltlct = crapger.qtsltlct + vr_tab_qt_ct(999).qtsolemp
         WHERE crapger.cdcooper = pr_cdcooper
           AND crapger.dtrefere = vr_dtdiault
@@ -696,20 +704,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps201(pr_cdcooper IN crapcop.cdcooper%TY
                       ,dtrefere
                       ,cdagenci
                       ,cdempres
-                      ,qtrettal
+                    /*,qtrettal
                       ,qtsoltal
                       ,qtrttlbc
-                      ,qtsltlbc
+                      ,qtsltlbc*/
                       ,qtrttlct
                       ,qtsltlct)
                 VALUES (pr_cdcooper
                        ,vr_dtdiault
                        ,0
                        ,0
-                       ,vr_tab_qt_bb(999).qtretemp
+                     /*,vr_tab_qt_bb(999).qtretemp
                        ,vr_tab_qt_bb(999).qtsolemp
                        ,vr_tab_qt_bc(999).qtretemp
-                       ,vr_tab_qt_bc(999).qtsolemp
+                       ,vr_tab_qt_bc(999).qtsolemp*/
                        ,vr_tab_qt_ct(999).qtretemp
                        ,vr_tab_qt_ct(999).qtsolemp);
 

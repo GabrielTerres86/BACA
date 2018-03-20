@@ -44,8 +44,10 @@ BEGIN
                18/02/2015 - Conversão Progress >> Oracle PL/SQL (Vanessa).
 
 			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
+			                      crapass, crapttl, crapjur (Adriano - P339).
+
+			         24/04/2017 - Substituida validacao "cdtipcta in (1,2..)" pela categoria
+                            da conta. PRJ366 (Lombardi).
 
 
 ............................................................................. */
@@ -71,14 +73,14 @@ BEGIN
         
       vr_flgsitua  VARCHAR2(10);
       vr_dstipcta  VARCHAR2(200);
-      vr_cdtipcta  crapass.cdtipcta%TYPE;
+      vr_cdcatego  crapass.cdtipcta%TYPE;
       vr_nrcpfcgc  crapass.nrcpfcgc%TYPE;
       vr_nrcpfstl  crapttl.nrcpfcgc%TYPE;
       vr_nmtitula  VARCHAR2(200);
       
       vr_dstipcta2 VARCHAR2(200);
       vr_nmtitula2 VARCHAR2(200);
-      vr_cdtipcta2 crapass.cdtipcta%TYPE;
+      vr_cdcatego2 crapass.cdtipcta%TYPE;
       vr_nrcpfcgc2 crapass.nrcpfcgc%TYPE;
       vr_nrcpfstl2 crapttl.nrcpfcgc%TYPE;
       vr_nrdconta2 craplcm.nrdconta%TYPE;
@@ -111,7 +113,7 @@ BEGIN
                 lcm.nrdocmto,
                 lcm.vllanmto,
                 ass.nmprimtl,
-                ass.cdtipcta,
+                ass.cdcatego,
                 ass.nrcpfcgc,
 				ass.inpessoa,
                 tip.dstipcta 
@@ -137,7 +139,7 @@ BEGIN
                 lcm.cdcooper,
                 lcm.nrdconta,
                 ass.nmprimtl,
-                ass.cdtipcta,
+                ass.cdcatego,
                 ass.nrcpfcgc,
 				ass.inpessoa,
                 tip.dstipcta 
@@ -231,7 +233,7 @@ BEGIN
                 
             vr_dstipcta := rw_craplcm.dstipcta;
             vr_nmtitula := rw_craplcm.nmprimtl;
-            vr_cdtipcta := rw_craplcm.cdtipcta; 
+            vr_cdcatego := rw_craplcm.cdcatego; 
             vr_nrcpfcgc := rw_craplcm.nrcpfcgc;
             vr_nrcpfstl := 0;
 
@@ -260,7 +262,7 @@ BEGIN
                 vr_flgsitua := 'CORRETO';
                 vr_dstipcta2 := rw_craplcm2.dstipcta;
                 vr_nmtitula2 := rw_craplcm2.nmprimtl;
-                vr_cdtipcta2 := rw_craplcm2.cdtipcta;
+                vr_cdcatego2 := rw_craplcm2.cdcatego;
                 vr_nrcpfcgc2 := rw_craplcm2.nrcpfcgc;
                 vr_nrcpfstl2 := 0;
                 vr_nrdconta2 := rw_craplcm2.nrdconta;
@@ -282,15 +284,15 @@ BEGIN
 
 				END IF;
                       
-                IF(vr_cdtipcta  IN(1,2,5,7,8,9,12,13,18)AND vr_cdtipcta2 IN(3,4,6,10,11,14,15,17)) THEN
+                IF(vr_cdcatego = 1 AND vr_cdcatego2 IN(2,3)) THEN
                    vr_flgsitua := 'ERRADO'; -- individual para conjunta 
-                ELSIF(vr_cdtipcta  IN(1,2,5,7,8,9,12,13,18)AND vr_cdtipcta2 IN(1,2,5,7,8,9,12,13,18)) THEN
+                ELSIF(vr_cdcatego = 1 AND vr_cdcatego2 = 1) THEN
                         
                    IF vr_nrcpfcgc <> vr_nrcpfcgc2 THEN
                       vr_flgsitua := 'ERRADO'; -- individual para individual diferente
                    END IF;
-                ELSIF (vr_cdtipcta  IN(3,4,6,10,11,14,15,17)) THEN
-                   IF (vr_cdtipcta2 IN(1,2,5,7,8,9,12,13,18)) THEN
+                ELSIF vr_cdcatego  IN(2,3) THEN
+                   IF vr_cdcatego2 = 1 THEN
                             
                       IF(vr_nrcpfcgc2 <> vr_nrcpfcgc AND vr_nrcpfcgc2 <> vr_nrcpfstl) THEN
                          vr_flgsitua := 'ERRADO'; /* conjunta para individual */

@@ -129,6 +129,9 @@
                  19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                  crapass, crapttl, crapjur 
 							 (Adriano - P339).
+                              
+                 12/03/2018 - Alterado para buscar descricao do tipo de conta do oracle. 
+                              PRJ366 (Lombardi).
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -184,6 +187,9 @@ DEF        VAR aux_novolote AS INTE                                  NO-UNDO.
 DEF        VAR aux_nrborder AS INTE                                  NO-UNDO.
 DEF        VAR aux_contalan AS INTE                                  NO-UNDO.
 DEF        VAR aux_somalanc AS DECI                                  NO-UNDO.  
+
+DEF        VAR aux_dstipcta AS CHAR                                  NO-UNDO.
+DEF        VAR aux_des_erro AS CHAR                                  NO-UNDO.
 
 DEFINE STREAM str_1. /* Relatorio  */   
 
@@ -379,15 +385,36 @@ PROCEDURE consulta_alteracoes_tp_conta:
          tt-detalhe-conta.dsagenci = STRING(crapass.cdagenci,"zz9") + " - " +
                                      crapage.nmresage.
 
-    FIND craptip WHERE craptip.cdcooper = par_cdcooper     
-                   AND craptip.cdtipcta = crapass.cdtipcta NO-LOCK NO-ERROR.
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_descricao_tipo_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
+                                         INPUT crapass.cdtipcta,    /* tipo de conta */
+                                        OUTPUT "",   /* Descricao do tipo de conta */
+                                        OUTPUT "",   /* Flag Erro */
+                                        OUTPUT "").  /* Descrição da crítica */
+    
+    CLOSE STORED-PROC pc_descricao_tipo_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-    IF   NOT AVAILABLE craptip   THEN
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_dstipcta = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                          WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+           aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                          WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+           aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                          WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+    
+    IF aux_des_erro = "NOK"  THEN
          tt-detalhe-conta.dstipcta = STRING(crapass.cdtipcta,"99") + 
                                      " - " + FILL("*",15).
     ELSE
          tt-detalhe-conta.dstipcta = STRING(crapass.cdtipcta,"99") + 
-                                     " - " + craptip.dstipcta.
+                                     " - " + aux_dstipcta.
 
     IF   crapass.flgctitg = 2   THEN
          tt-detalhe-conta.dssititg = "Ativa".
@@ -407,27 +434,74 @@ PROCEDURE consulta_alteracoes_tp_conta:
         CREATE tt-alt-tip-conta.
         ASSIGN tt-alt-tip-conta.dtalttct = crapact.dtalttct.
 
-        FIND craptip WHERE 
-             craptip.cdcooper = par_cdcooper     AND 
-             craptip.cdtipcta = crapact.cdtctant NO-LOCK NO-ERROR.
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND 
+                           crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
 
-        IF   NOT AVAILABLE craptip   THEN
+        IF   NOT AVAILABLE crapass   THEN
+            DO:
+            END.
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
+                                             INPUT crapact.cdtctant,    /* tipo de conta */
+                                            OUTPUT "",   /* Descricao do tipo de conta */
+                                            OUTPUT "",   /* Flag Erro */
+                                            OUTPUT "").  /* Descrição da crítica */
+        
+        CLOSE STORED-PROC pc_descricao_tipo_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dstipcta = ""
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                              WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                              WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                              WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+        
+        IF aux_des_erro = "NOK"  THEN
              tt-alt-tip-conta.dstctant = STRING(crapact.cdtctant,"99") + 
                                          " - " + FILL("*",15).
         ELSE
              tt-alt-tip-conta.dstctant = STRING(crapact.cdtctant,"99") + 
-                                         " - " + craptip.dstipcta.
+                                         " - " + aux_dstipcta.
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
+                                             INPUT crapact.cdtctatu,    /* tipo de conta */
+                                            OUTPUT "",   /* Descricao do tipo de conta */
+                                            OUTPUT "",   /* Flag Erro */
+                                            OUTPUT "").  /* Descrição da crítica */
+        
+        CLOSE STORED-PROC pc_descricao_tipo_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-        FIND craptip WHERE 
-             craptip.cdcooper = par_cdcooper     AND 
-             craptip.cdtipcta = crapact.cdtctatu NO-LOCK NO-ERROR.
-
-        IF   NOT AVAILABLE craptip   THEN
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dstipcta = ""
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                              WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                              WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                              WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+        
+        IF aux_des_erro = "NOK"  THEN
              tt-alt-tip-conta.dstctatu = STRING(crapact.cdtctatu,"99") + 
                                          " - " + FILL("*",15).
         ELSE
              tt-alt-tip-conta.dstctatu = STRING(crapact.cdtctatu,"99") + 
-                                         " - " + craptip.dstipcta.
+                                         " - " + aux_dstipcta.
 
     END.  /*  Fim do FOR EACH  --  Leitura do crapact  */
 

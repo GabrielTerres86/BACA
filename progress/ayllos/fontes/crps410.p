@@ -146,9 +146,11 @@
               19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                            PRJ339 - CRM (Odirlei-AMcom)  
 
-			  13/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			               crapass, crapttl, crapjur 
-              	           (Adriano - P339).
+              13/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                           crapass, crapttl, crapjur (Adriano - P339).
+
+              07/03/2018 - Substituida verificado "cdtipcta igual a 1, 2, 7, 8..." por 
+                           "cdcatego = 1". PRJ366 (Lombardi).
 
                            
 .............................................................................*/
@@ -928,15 +930,8 @@ FOR EACH  cratalt NO-LOCK,
                       
              IF   AVAILABLE crapttl   THEN
                   DO:
-                      IF  (crapass.cdtipcta = 1    OR
-                           crapass.cdtipcta = 2    OR
-                           crapass.cdtipcta = 7    OR
-                           crapass.cdtipcta = 8    OR
-                           crapass.cdtipcta = 9    OR
-                           crapass.cdtipcta = 12   OR
-                           crapass.cdtipcta = 13   OR
-                           crapass.cdtipcta = 18)  AND
-                           crapttl.idseqttl > 1    THEN
+                      IF crapass.cdcatego = 1 AND
+                         crapttl.idseqttl > 1 THEN
                            DO:
                                FOR EACH crapalt WHERE 
                                         crapalt.cdcooper = glb_cdcooper     AND

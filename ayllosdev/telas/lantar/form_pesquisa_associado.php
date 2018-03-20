@@ -6,6 +6,7 @@
  * OBJETIVO     : Tela de exibição pesquisa associados
  * --------------
  * ALTERAÇÕES   : 15/08/2013 - Alteração da sigla PAC para PA (Carlos).
+ *				  19/03/2018 - Buscar tipos de conta do oracle. Chamada no js. PRJ366 (Lombardi).
  */		
 ?>
 
@@ -18,35 +19,6 @@
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
 	isPostMethod();		
-	
-	// Monta o xml de requisição
-	$xmlConsulta  = "";
-	$xmlConsulta .= "<Root>";
-	$xmlConsulta .= "  <Cabecalho>";
-	$xmlConsulta .= "    <Bo>b1wgen0153.p</Bo>";
-	$xmlConsulta .= "    <Proc>lista-tipo-conta</Proc>";
-	$xmlConsulta .= "  </Cabecalho>";
-	$xmlConsulta .= "  <Dados>";
-	$xmlConsulta .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xmlConsulta .= "    <cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-	$xmlConsulta .= "    <nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xmlConsulta .= "    <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlConsulta .= "    <nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-	$xmlConsulta .= "    <idorigem>".$glbvars["idorigem"]."</idorigem>";
-	$xmlConsulta .= "  </Dados>";
-	$xmlConsulta .= "</Root>";		
-				
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlConsulta);
-
-	// Cria objeto para classe de tratamento de XML
-	$xmlObjeto = getObjectXML($xmlResult);
-	
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('')",false);
-	}	
-	
-	$contas = $xmlObjeto->roottag->tags[0]->tags;
 	
 ?>
 
@@ -70,17 +42,6 @@
 				</select>
 				<label for="cdtipcta"><? echo utf8ToHtml('Tipo conta') ?></label>
 				<select name="cdtipcta" id="cdtipcta">
-				<option value=""><? echo utf8ToHtml('< Todos >') ?></option> 
-					<?
-						$total = count($contas);						
-						foreach($contas as $registro ) {
-						
-							$cdtipcta = getByTagName($registro->tags,'cdtipcta');
-							$dstipcta = getByTagName($registro->tags,'dstipcta'); 
-					?>
-							<option value="<? echo $cdtipcta; ?>"><? echo $cdtipcta; ?> - <? echo $dstipcta; ?></option>
-					<? } ?>		
-					
 				</select>
 			</td>
 		</tr>

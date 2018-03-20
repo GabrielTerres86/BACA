@@ -467,7 +467,8 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
   
   
   --> Rotina para retornar descrição do tipo de conta
-  FUNCTION fn_des_cdtipcta (pr_cdtipcta  IN NUMBER) --> Codigo do tipo de conta
+  FUNCTION fn_des_cdtipcta (pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE,  --> Tipo de pessoa
+                            pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)  --> Tipo de conta
                             RETURN VARCHAR2 IS 
   /* ..........................................................................
     
@@ -482,32 +483,35 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para retornar descrição do tipo de conta
     
-      Alteração : 
+      Alteração : 20/02/2018 - Busca a descrição do tipo de conta da tabela
+                               TBCC_TIPO_CONTA. PRJ366 (Lombardi).
         
     ..........................................................................*/
     -----------> CURSORES <-----------    
+    CURSOR cr_tipo_conta IS
+      SELECT tpcta.dstipo_conta
+        FROM tbcc_tipo_conta tpcta
+       WHERE tpcta.inpessoa = pr_inpessoa
+         AND tpcta.cdtipo_conta = pr_cdtipcta;
+    rw_tipo_conta cr_tipo_conta%ROWTYPE;
     
     -----------> VARIAVEIS <-----------   
     vr_dstipcta VARCHAR2(100) := NULL;
     
   BEGIN
     
-    SELECT CASE pr_cdtipcta 
-             WHEN  1 THEN 'NORMAL'
-             WHEN  2 THEN 'ESPECIAL'
-             WHEN  3 THEN 'NORMAL CONJUNTA'
-             WHEN  4 THEN 'ESPEC. CONJUNTA'
-             WHEN  5 THEN 'CHEQUE SALARIO'
-             WHEN  6 THEN 'CTA APLIC CONJ.'
-             WHEN  7 THEN 'CTA APLIC INDIV'
-             WHEN  8 THEN 'NORMAL CONVENIO'
-             WHEN  9 THEN 'ESPEC. CONVENIO'
-             WHEN 10 THEN 'CONJ. CONVENIO'
-             ELSE NULL
-           END CASE  
-      INTO vr_dstipcta FROM dual;         
+    -- Buscar descrição do tipo de conta
+    OPEN cr_tipo_conta;
+    FETCH cr_tipo_conta INTO rw_tipo_conta;
       
+    IF cr_tipo_conta%FOUND THEN
+      CLOSE cr_tipo_conta;
+      vr_dstipcta := rw_tipo_conta.dstipo_conta;
       RETURN vr_dstipcta;
+    ELSE
+      CLOSE cr_tipo_conta;
+      RETURN NULL;
+    END IF;
         
   EXCEPTION
     WHEN OTHERS THEN

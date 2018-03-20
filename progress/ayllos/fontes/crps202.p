@@ -32,7 +32,10 @@
                             formulario para 132col. (Henrique)
                
                09/09/2013 - Nova forma de chamar as agências, de PAC agora 
-                            a escrita será PA (André Euzébio - Supero).                            
+                            a escrita será PA (André Euzébio - Supero).
+               
+               06/03/2018 - Retirados os valores referentes a cheques BB e Bancoob 
+                            e a coluna total do relatório. PRJ366 (Lombardi).
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -51,8 +54,6 @@ DEF        VAR rel_nmempres AS CHAR                                   NO-UNDO.
 
 
 DEF        VAR aux_primvez  AS LOG     INITIAL yes.                        
-DEF        VAR aux_totret   AS INT     FORMAT ">>>>9"                 NO-UNDO.
-DEF        VAR aux_totsol   AS INT     FORMAT ">>>>9"                 NO-UNDO.
 DEF        VAR aux_mesrefer AS CHAR    FORMAT "x(20)"                 NO-UNDO.
 DEF        VAR aux_dtrefere AS DATE                                   NO-UNDO.
 DEF        VAR aux_nmarqimp AS CHAR                                   NO-UNDO.
@@ -71,34 +72,22 @@ FORM  aux_mesrefer AT 20 LABEL "REFERENCIA"
       SKIP(2)
       WITH SIDE-LABELS NO-BOX WIDTH 132 FRAME f_mes.
 
-FORM  SPACE(21) "QTD. TALOES SOLICITADOS"
-      SPACE(12) "QTD.  TALOES ENTREGUES"
+FORM  SPACE(21) "QTD. TALOES"
+      SPACE(4)  "QTD. TALOES"
       SKIP
       WITH NO-LABELS NO-BOX COLUMN 5 WIDTH 132 FRAME f_cab_ambos.
 
 FORM  aux_dsagenci     LABEL "PA"
-      crapger.qtsoltal LABEL "B.BRASIL"
-      crapger.qtsltlbc LABEL "BANCOOB"
-      crapger.qtsltlct LABEL "CECRED"
-      aux_totsol       LABEL " TOTAL"
+      crapger.qtsltlct LABEL "SOLICITADOS"
       SPACE(4)
-      crapger.qtrettal LABEL "B.BRASIL"
-      crapger.qtrttlbc LABEL "BANCOOB"
-      crapger.qtrttlct LABEL "CECRED"
-      aux_totret       LABEL "TOTAL"
+      crapger.qtrttlct LABEL " ENTREGUES"
       SKIP(1)
       WITH NO-LABELS NO-BOX DOWN COLUMN 5 WIDTH 132 FRAME f_pacs.
 
 FORM  aux_dsempres     LABEL "EMPRESA"
-      crapger.qtsoltal LABEL "B.BRASIL"
-      crapger.qtsltlbc LABEL "BANCOOB"
-      crapger.qtsltlct LABEL "CECRED"
-      aux_totsol       LABEL " TOTAL"
+      crapger.qtsltlct LABEL "SOLICITADOS"
       SPACE(4)
-      crapger.qtrettal LABEL "B.BRASIL"
-      crapger.qtrttlbc LABEL "BANCOOB"
-      crapger.qtrttlct LABEL "CECRED"
-      aux_totret       LABEL "TOTAL"
+      crapger.qtrttlct LABEL " ENTREGUES"
       SKIP(1)
       WITH NO-LABELS NO-BOX DOWN COLUMN 5 WIDTH 132 FRAME f_emp.
 
@@ -142,13 +131,10 @@ FOR EACH crapage WHERE crapage.cdcooper = glb_cdcooper      NO-LOCK,
 
         END.
        
-    ASSIGN aux_totsol = crapger.qtsoltal + crapger.qtsltlbc + crapger.qtsltlct
-           aux_totret = crapger.qtrettal + crapger.qtrttlbc + crapger.qtrttlct.
-    
     DISPLAY STREAM str_1
             aux_dsagenci 
-            crapger.qtsoltal crapger.qtsltlbc crapger.qtsltlct aux_totsol  
-            crapger.qtrettal crapger.qtrttlbc crapger.qtrttlct aux_totret
+            crapger.qtsltlct 
+            crapger.qtrttlct
             WITH FRAME f_pacs.
 
     DOWN STREAM str_1 WITH FRAME f_pacs.
@@ -158,14 +144,11 @@ FOR EACH crapger WHERE crapger.cdcooper = glb_cdcooper  AND
                        crapger.dtrefere = aux_dtrefere  AND
                        crapger.cdagenci = 0             AND
                        crapger.cdempres = 0             NO-LOCK :
-                        
-    ASSIGN aux_totsol  = crapger.qtsoltal + crapger.qtsltlbc + crapger.qtsltlct
-           aux_totret  = crapger.qtrettal + crapger.qtrttlbc + crapger.qtrttlct.
            
     DISPLAY STREAM str_1
             "RESUMO GERAL"  @ aux_dsagenci
-            crapger.qtsoltal crapger.qtsltlbc crapger.qtsltlct aux_totsol   
-            crapger.qtrettal crapger.qtrttlbc crapger.qtrttlct aux_totret
+            crapger.qtsltlct   
+            crapger.qtrttlct
             WITH FRAME f_pacs.
 
     DOWN STREAM str_1 WITH FRAME f_pacs.
@@ -195,14 +178,12 @@ FOR EACH crapemp WHERE crapemp.cdcooper = glb_cdcooper      NO-LOCK,
     IF   aux_primvez THEN
          DISPLAY STREAM str_1  WITH FRAME f_cab_ambos.
            
-    ASSIGN aux_primvez = no
-           aux_totsol  = crapger.qtsoltal + crapger.qtsltlbc + crapger.qtsltlct
-           aux_totret  = crapger.qtrettal + crapger.qtrttlbc + crapger.qtrttlct.
+    ASSIGN aux_primvez = no.
 
     DISPLAY STREAM str_1
             aux_dsempres 
-            crapger.qtsoltal crapger.qtsltlbc crapger.qtsltlct aux_totsol  
-            crapger.qtrettal crapger.qtrttlbc crapger.qtrttlct aux_totret
+            crapger.qtsltlct  
+            crapger.qtrttlct
             WITH FRAME f_emp.
 
     DOWN STREAM str_1 WITH FRAME f_emp.
@@ -213,13 +194,10 @@ FOR EACH crapger WHERE crapger.cdcooper = glb_cdcooper  AND
                        crapger.cdagenci = 0             AND
                        crapger.cdempres = 9999           NO-LOCK :
      
-    ASSIGN aux_totsol = crapger.qtsoltal + crapger.qtsltlbc + crapger.qtsltlct
-           aux_totret = crapger.qtrettal + crapger.qtrttlbc + crapger.qtrttlct.
- 
     DISPLAY STREAM str_1
             "RESUMO GERAL"  @ aux_dsempres
-            crapger.qtsoltal crapger.qtsltlbc crapger.qtsltlct aux_totsol  
-            crapger.qtrettal crapger.qtrttlbc crapger.qtrttlct aux_totret
+            crapger.qtsltlct  
+            crapger.qtrttlct
             WITH FRAME f_emp.
 
 END.

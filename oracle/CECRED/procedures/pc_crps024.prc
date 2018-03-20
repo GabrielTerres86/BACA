@@ -66,7 +66,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
            24/01/2017 - Apresentar critica 17 para o proc_message e não parar o processo
                         como faz hoje. (Lucas Ranghetti #580524)
            
-           15/01/2018 - Projeto Ligeirinho. Fabiano Girardi AMcom. Alterado para paralelizar a execução deste relatorio.
+           15/01/2018 - Projeto Ligeirinho. Fabiano Girardi AMcom. Alterado para paralelizar a execução deste relatorio.			 
+           
+           05/03/2018 - Alterada a verificação para identificar contas individuais ou conjuntas 
+                        atraves do campo CRAPASS.CDCATEGO. PRJ366 (Lombardi)
            
 ............................................................................. */
   ds_character_separador constant varchar2(1) := '#';
@@ -120,6 +123,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
            cdagenci,
            nmprimtl,
            cdtipcta,
+           cdcatego,
            cdsitdct,
            inpessoa
       from crapass
@@ -130,6 +134,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
     (cdagenci crapass.cdagenci%type,
      nmprimtl crapass.nmprimtl%type,
      cdtipcta crapass.cdtipcta%type,
+     cdcatego crapass.cdcatego%type,
      cdsitdct crapass.cdsitdct%type,
      inpessoa crapass.inpessoa%type);  
       
@@ -204,6 +209,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
                                 cdempres  crapttl.cdempres%type,
                                 nmprimtl  crapass.nmprimtl%type,
                                 cdtipcta  crapass.cdtipcta%type,
+                                cdcatego  crapass.cdcatego%type,
                                 cdsitdct  crapass.cdsitdct%type,
                                 nmtipcta  varchar2(65), /* Conta individual ou conjunta + lista de tipos */
                                 nrflspad number(3),
@@ -262,6 +268,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
   vr_cdagenci      crapass.cdagenci%type;
   vr_nmprimtl      crapass.nmprimtl%type;
   vr_cdtipcta      crapass.cdtipcta%type;
+  vr_cdcatego      crapass.cdcatego%type;
   vr_cdsitdct      crapass.cdsitdct%type;
   vr_inpessoa      crapass.inpessoa%type;
   vr_cdempres      crapttl.cdempres%type;
@@ -484,6 +491,7 @@ begin
     vr_tab_crapass(rw_crapass.nrdconta).cdagenci:= rw_crapass.cdagenci;
     vr_tab_crapass(rw_crapass.nrdconta).nmprimtl:= rw_crapass.nmprimtl;
     vr_tab_crapass(rw_crapass.nrdconta).cdtipcta:= rw_crapass.cdtipcta;
+    vr_tab_crapass(rw_crapass.nrdconta).cdcatego:= rw_crapass.cdcatego;
     vr_tab_crapass(rw_crapass.nrdconta).cdsitdct:= rw_crapass.cdsitdct;
     vr_tab_crapass(rw_crapass.nrdconta).inpessoa:= rw_crapass.inpessoa;
   end loop;                                               
@@ -506,6 +514,7 @@ begin
           vr_cdagenci:= vr_tab_crapass(r_crapfdc(idx).nrdconta).cdagenci;
           vr_nmprimtl:= vr_tab_crapass(r_crapfdc(idx).nrdconta).nmprimtl;
           vr_cdtipcta:= vr_tab_crapass(r_crapfdc(idx).nrdconta).cdtipcta;
+          vr_cdcatego:= vr_tab_crapass(r_crapfdc(idx).nrdconta).cdcatego;
           vr_cdsitdct:= vr_tab_crapass(r_crapfdc(idx).nrdconta).cdsitdct;
           vr_inpessoa:= vr_tab_crapass(r_crapfdc(idx).nrdconta).inpessoa;
         else
@@ -546,13 +555,13 @@ begin
         end if;
         --
         -- Identificar o tipo de conta (individual ou conjunta)
-        if vr_cdtipcta in (1,2,5,6,7,8,9,12,13,17,18) then
+        if vr_cdcatego = 1 then
           vr_intipcta := 1; -- Conta individual
-          vr_nmtipcta := 'CONTAS INDIVIDUAIS (TIPOS: 1,2,5,6,7,8,9,12,13,17,18)';
+          vr_nmtipcta := 'CONTAS INDIVIDUAIS';
           vr_nrflspad := vr_nrflsind;
-        elsif vr_cdtipcta in (3,4,10,11,14,15) then
+        elsif vr_cdcatego in (2,3) then
           vr_intipcta := 2; -- Conta conjunta
-          vr_nmtipcta := 'CONTAS CONJUNTAS (TIPOS: 3,4,10,11,14,15)';
+          vr_nmtipcta := 'CONTAS CONJUNTAS';
           vr_nrflspad := vr_nrflscon;
         else
           vr_cdcritic := 17; -- Tipo de conta errado
@@ -589,6 +598,7 @@ begin
       vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).cdempres := vr_cdempres;
       vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).nmprimtl := vr_nmprimtl;
       vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).cdtipcta := vr_cdtipcta;
+      vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).cdcatego := vr_cdcatego;
       vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).cdsitdct := vr_cdsitdct;
         vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).intipcta := vr_intipcta;
       --

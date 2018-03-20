@@ -22,6 +22,9 @@
 				25/10/2017 -  Ajustado para especificar adesão de DDA pelo Mobile
 							  PRJ356.4 - DDA (Ricardo Linhares)  							    
 
+				         14/03/2018 -  Ajuste para buscar a descricao do tipo de conta do oracle. 
+                               PRJ366 (Lombardi)
+
 .............................................................................*/
 
 
@@ -622,6 +625,9 @@ PROCEDURE imprime-termo-adesao:
     DEF VAR aux_nmextcop AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
 
+    DEF VAR aux_dstipcta AS CHAR                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
+    
     DEF VAR aux_dsdecoop AS CHAR                                    NO-UNDO.
     DEF VAR aux_cpftest1 AS CHAR                                    NO-UNDO.
     DEF VAR aux_cpftest2 AS CHAR                                    NO-UNDO.
@@ -797,15 +803,32 @@ PROCEDURE imprime-termo-adesao:
                  LEAVE.
              END.
               
-        /* Tipo de conta */
-        FIND craptip WHERE craptip.cdcooper = par_cdcooper     AND
-                           craptip.cdtipcta = crapass.cdtipcta NO-LOCK NO-ERROR.
-
-        IF   NOT AVAIL craptip   THEN
-             DO:
-                 aux_cdcritic = 17.
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                   INPUT crapass.cdtipcta, /* Tipo de conta */
+                                  OUTPUT "",               /* Descriçao do Tipo de conta */
+                                  OUTPUT "",               /* Flag Erro */
+                                  OUTPUT "").              /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_descricao_tipo_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dstipcta = ""
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                               WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+        
+        IF aux_des_erro = "NOK"  THEN
                  LEAVE.
-             END.
 
         RUN busca-coop (INPUT par_cdcooper,
                         INPUT par_cdagenci,
@@ -990,6 +1013,8 @@ PROCEDURE imprime-termo-exclusao:
     DEF VAR aux_cpftest1 AS CHAR                                    NO-UNDO.
     DEF VAR aux_cpftest2 AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+    DEF VAR aux_dstipcta AS CHAR                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
     DEF VAR h-b1wgen0024 AS HANDLE                                  NO-UNDO.
                                   
 
@@ -1151,15 +1176,32 @@ PROCEDURE imprime-termo-exclusao:
                  LEAVE.
              END.
               
-        /* Tipo de conta */
-        FIND craptip WHERE craptip.cdcooper = par_cdcooper     AND
-                           craptip.cdtipcta = crapass.cdtipcta NO-LOCK NO-ERROR.
-
-        IF   NOT AVAIL craptip   THEN
-             DO:
-                 aux_cdcritic = 17.
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                   INPUT crapass.cdtipcta, /* Tipo de conta */
+                                  OUTPUT "",               /* Descriçao do Tipo de conta */
+                                  OUTPUT "",               /* Flag Erro */
+                                  OUTPUT "").              /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_descricao_tipo_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dstipcta = ""
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                               WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+        
+        IF aux_des_erro = "NOK"  THEN
                  LEAVE.
-             END.
 
         RUN busca-coop (INPUT par_cdcooper,
                         INPUT par_cdagenci,

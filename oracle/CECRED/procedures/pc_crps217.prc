@@ -232,6 +232,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
                                 extrato por e-mail, alterado forma de leitura da crapass 
                                 e retirado todas procedures e variaveis não utilizadas (Daniel)                       
 
+                   06/03/2018 - Alterada verificação "cdtipcta NOT IN (0,5, 6, 7, 17, 18)" para
+                                modalidade do tipo de conta diferente de 2 e 3. PRJ366 (Lombardi).
+
     -- ............................................................................. **/
       -- Código do programa
       vr_cdprogra crapprg.cdprogra%TYPE;
@@ -336,13 +339,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
               ,ass.nmprimtl
               ,ass.cdagenci
               ,ass.cdsecext
-          FROM crapcra cra, crapass ass
+          FROM crapcra cra
+              ,crapass ass
+              ,tbcc_tipo_conta tpcta
          WHERE cra.cdcooper = pr_cdcooper
            AND cra.cdprogra = 217
            AND cra.cdrelato = 171
            AND ass.cdcooper = cra.cdcooper
            AND ass.nrdconta = cra.nrdconta
-           AND ass.cdtipcta NOT IN(0,5,6,7,17,18)
+           AND ass.inpessoa = tpcta.inpessoa
+           AND ass.cdtipcta = tpcta.cdtipo_conta
+           AND tpcta.cdmodalidade_tipo NOT IN(2,3)
            -- Cooperado ainda esteja ativo OU estava no mês passado OU seja da Cooperativa 3 - Cecred
            AND(ass.dtdemiss IS NULL OR ass.dtdemiss > pr_dtultdma OR pr_cdcooper = 3);
       rw_crapass cr_crapass%ROWTYPE;

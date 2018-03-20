@@ -5,6 +5,8 @@
  * OBJETIVO     : Biblioteca de funções da tela LANTAR
  * --------------
  * ALTERAÇÕES   : 15/08/2013 - Alteração da sigla PAC para PA (Carlos).
+ *
+ *				  19/03/2018 - Buscar tipos de conta do oracle. Chamada no js. PRJ366 (Lombardi).
  * -----------------------------------------------------------------------
  */
 
@@ -1071,6 +1073,10 @@ function formataConsultaAssociado() {
 	$('#anopsqch','#divBuscaAssociados').desabilitaCampo();
 	
 	
+	cInpessoa.unbind('change').bind('change', function(e) {
+			buscar_tipos_de_conta(cInpessoa.val());
+	});
+	
 	cFlgchcus.unbind('click').bind('click', function(e) {
 			
 		if( $(this).prop("checked") == true ){
@@ -1092,7 +1098,9 @@ function formataConsultaAssociado() {
 	});
 	
 	controlaFocusPesquisa();
-		
+	
+	buscar_tipos_de_conta(cInpessoa.val());
+	
 	layoutPadrao();
 	
 	return false;
@@ -1242,6 +1250,55 @@ function vinculaContas() {
 	
 }
 
+// Função para chamar a manter_rotina.php
+function buscar_tipos_de_conta (inpessoa) {
+	
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/cadsoa/buscar_tipos_de_conta.php',
+		data: {
+			inpessoa: inpessoa,
+			redirect: 'script_ajax'
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','Nao foi possivel concluir a operacao.','Alerta - Ayllos','unblockBackground()');
+		},
+		success: function(response) {
+			try {
+				hideMsgAguardo();
+				
+				var cCdtipcta = $('#cdtipcta','#divBuscaAssociados');
+				
+				var xml = response;
+				cCdtipcta.html('<option value=""> < Todos ></option>');
+				glb_tipos_de_conta = [];
+				
+				$(xml).find('tipo_conta').each(function() {
+					
+					var cdtipo_conta = $(this).find('cdtipo_conta').text();
+					var dstipo_conta = $(this).find('dstipo_conta').text();
+					
+					var tipo_de_conta = {
+						cdtipo_conta: cdtipo_conta
+					}
+					
+					glb_tipos_de_conta.push(tipo_de_conta);
+					cCdtipcta
+					cCdtipcta.append('<option value="' + cdtipo_conta + '"> ' + cdtipo_conta + ' - ' + dstipo_conta + "</option>");
+					
+				});
+				cCdtipcta.val(0);
+				
+				return false;
+			} catch(error) {
+				hideMsgAguardo();
+				showError('error','Nao foi possivel concluir a operacao.','Alerta - Ayllos','unblockBackground()');
+			}
+		}
+	});
+}
 
 function controlaFocusPesquisa() {
 

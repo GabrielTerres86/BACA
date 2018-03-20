@@ -129,6 +129,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
                             os PA's com 3 digitos - SD 251855.
                             (Andre Santos - SUPERO)
 
+               05/03/2018 - Alterada a verificação para identificar o calculo do acumulador de
+                            correntista ou de conta salário atraves da modalidade do tipo de conta.
+                            PRJ366 (Lombardi).
+
 ............................................................................. */
 
     DECLARE
@@ -164,11 +168,19 @@ CREATE OR REPLACE PROCEDURE CECRED.
           FROM craphis
          WHERE cdcooper = pr_cdcooper;
 
+      -- Cursor para busca dos tipos de conta
+      CURSOR cr_tipcta IS
+        SELECT inpessoa
+              ,cdtipo_conta cdtipcta
+              ,cdmodalidade_tipo cdmodali
+          FROM tbcc_tipo_conta;
+
       -- Cursor sobre os dados dos associados
       CURSOR cr_crapass IS
         SELECT cdagenci,
                nrdconta,
                cdtipcta,
+               inpessoa,
                nrdctitg,
                row_number() over(partition by cdagenci order by cdagenci) regagenci,
                count(1)     over(partition by cdagenci order by cdagenci) qtdagenci
@@ -237,6 +249,18 @@ CREATE OR REPLACE PROCEDURE CECRED.
       -- Vetor para armazenar os dados para o processo definitivo
       vr_tab_craphis typ_tab_craphis;
 
+      -- Definicao do tipo de tabela para os tipos de conta
+      TYPE typ_reg_tipcta IS
+        RECORD(cdmodali tbcc_tipo_conta.cdmodalidade_tipo%TYPE);        
+      TYPE typ_tab_tipcta_2 IS
+        TABLE OF typ_reg_tipcta
+        INDEX BY PLS_INTEGER;        
+       TYPE typ_tab_tipcta IS
+        TABLE OF typ_tab_tipcta_2
+        INDEX BY PLS_INTEGER;          
+      -- Vetor para armazenar os dados para o processo definitivo
+      vr_tab_tipcta typ_tab_tipcta;
+      
       -- Substituidas variaveis por campos na Temp-Table
       TYPE typ_reg_extent IS
         RECORD(cdhistor     craphis.cdhistor%TYPE,
@@ -433,6 +457,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
         vr_tab_craphis(rw_craphis.cdhistor).indebcre := rw_craphis.indebcre;
       END LOOP; /*  Fim do LOOP -- Carga da tabela de historicos  */
 
+      /*  Carrega tabela de tipos de conta  */
+      FOR rw_tipcta IN cr_tipcta LOOP
+        vr_tab_tipcta(rw_tipcta.inpessoa)(rw_tipcta.cdtipcta).cdmodali := rw_tipcta.cdmodali;
+      END LOOP; /*  Fim do LOOP -- Carga da tabela de tipos de conta  */
+      
       -- Inicializa com zeros os vetores
       FOR ind IN 1..1000 LOOP
         vr_dev_vlbancob(ind) := 0;
@@ -504,10 +533,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
         END IF; -- Final do primeiro registro da agencia
 
         -- Efetua o acumulador de correntista ou de conta salario
-        IF rw_crapass.cdtipcta IN (1,2,3,4,8,9,10,11,12,13,14,15) THEN -- se o associado eh um correntista
+        IF vr_tab_tipcta(rw_crapass.inpessoa)(rw_crapass.cdtipcta).cdmodali = 1 THEN -- se o associado eh um correntista
           vr_age_qtcorren := nvl(vr_age_qtcorren,0) + 1;
           vr_ger_qtcorren := nvl(vr_ger_qtcorren,0) + 1;
-        ELSIF rw_crapass.cdtipcta IN (5,6,7,17,18) THEN -- Se for do tipo cheque salario
+        ELSIF vr_tab_tipcta(rw_crapass.inpessoa)(rw_crapass.cdtipcta).cdmodali IN (2,3) THEN -- Se for do tipo cheque salario
           vr_age_qtchqsal := nvl(vr_age_qtchqsal,0) + 1;
           vr_ger_qtchqsal := nvl(vr_ger_qtchqsal,0) + 1;
         END IF;

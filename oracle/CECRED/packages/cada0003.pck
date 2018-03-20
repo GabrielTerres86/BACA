@@ -797,6 +797,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             07/12/2017 - Gerar log da data de demissão e motivo (Jonata - RKAM P364).
   --
   --             02/01/2018 - Adicionados produtos 11,17,22,25,26,29 na function fn_produto_habilitado. (PRJ366 - Lombardi)
+  --
+  --             20/03/2018 - Substituida verificacao do campo cdtipcta pelo campo cdmodali. (PRJ366 - Lombardi)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -4739,12 +4741,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 	 
 
     -- Atualiza o tipo de conta
-    IF rw_crapass.cdtipcta = 5 THEN -- Cheque Salario
+    IF rw_crapass.cdmodali = 2 THEN -- Conta Salario
       vr_tpconta := 2; -- Conta Salario
     ELSIF rw_crapass.dtnasttl IS NOT NULL AND
       TRUNC((to_char(sysdate,'yyyymmdd') - to_char(rw_crapass.dtnasttl,'yyyymmdd')) / 10000) < 18 THEN
       vr_tpconta := 3; -- Conta de menor
-    ELSIF rw_crapass.cdtipcta IN (6,7,17,18) THEN -- Conta de aplicacao
+    ELSIF rw_crapass.cdmodali = 2 THEN -- Conta de aplicacao
       vr_tpconta := 4; -- Conta Aplicacao
     ELSIF rw_crapass.inpessoa = 1 THEN --PF
       vr_tpconta := 1; -- Conta PF
@@ -4941,12 +4943,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       CLOSE cr_crapass;
 
       -- Atualiza o tipo de conta
-      IF rw_crapass.cdtipcta = 5 THEN -- Cheque Salario
+      IF rw_crapass.cdmodali = 2 THEN -- Cheque Salario
         vr_tpconta := 2; -- Conta Salario
       ELSIF rw_crapass.dtnasttl IS NOT NULL AND
         TRUNC((to_char(sysdate,'yyyymmdd') - to_char(to_date(rw_crapass.dtnasttl),'yyyymmdd')) / 10000) < 18 THEN
         vr_tpconta := 3; -- Conta de menor
-      ELSIF rw_crapass.cdtipcta IN (6,7,17,18) THEN -- Conta de aplicacao
+      ELSIF rw_crapass.cdmodali = 3 THEN -- Conta de aplicacao
         vr_tpconta := 4; -- Conta Aplicacao
       ELSIF rw_crapass.inpessoa = 1 THEN --PF
         vr_tpconta := 1; -- Conta PF

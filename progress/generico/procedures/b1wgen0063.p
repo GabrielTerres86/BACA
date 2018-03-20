@@ -2,7 +2,7 @@
 
     Programa: b1wgen0063.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 07/12/2017
+    Data    : Marco/2010                   Ultima atualizacao: 14/03/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSOES
 
@@ -58,6 +58,9 @@
 				07/12/2017 - Realizado ajuste onde o relatório completo para contas menores de idade
 							 com dois responsaveis legais sem conta na viacredi não estava abrindo. 
 						     SD 802764. (Kelvin)
+
+                14/03/2018 - Comentada verificaçao para exibir a mensagem "Tipo de 
+                             conta nao necessita de termo.". PRJ366 (Lombardi).
 
 .......................................................................................*/
 
@@ -1708,12 +1711,12 @@ FUNCTION AlertaTermo RETURNS CHARACTER
                             crafass.nrdconta = par_nrdconta NO-LOCK:
 
     END.
-
+/*
     IF  NOT(CAN-DO("8,9,10,11",STRING(crapass.cdtipcta))      OR
            ((crapass.nrdctitg <> "" AND crapass.flgctitg = 2) OR
             (crapass.nrdctitg = ""  AND crapass.flgctitg = 0))) THEN
         RETURN "Tipo de conta nao necessita de termo.".
-        
+  */      
     RETURN "".
 
 END FUNCTION. 

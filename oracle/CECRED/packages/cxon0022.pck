@@ -2376,10 +2376,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
    Alteracoes: 14/12/2016 - Corrigida atribuicao da variavel vr_aux_nrctachq para incorporacao (Diego).
 
-	           26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-						   (Adriano - P339).
+               26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                            crapass, crapttl, crapjur 
+                            (Adriano - P339).
 
+               20/02/2018 - Comentada verificação do cdtipcta entre 8 e 11.
+                            PRJ366 (Lombardi).
   ---------------------------------------------------------------------------------------------------------------*/
 
   
@@ -5031,7 +5033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                     
                     /* Atualiza os campos de acordo com o tipo
                     da conta do associado que recebe o cheque */
-                    
+                    /*
                     IF rw_verifica_ass.cdtipcta >= 8  AND
                        rw_verifica_ass.cdtipcta <= 11 THEN                       
                        
@@ -5039,14 +5041,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                           vr_aux_cdbandep := 756;
                           vr_aux_cdagedep := rw_cod_coop_dest.cdagebcb;
                        ELSE
+                    */
                           vr_aux_cdbandep := rw_cod_coop_dest.cdbcoctl;
                           vr_aux_cdagedep := rw_cod_coop_dest.cdagectl;
+                  	/*
                        END IF;
                     ELSE
                        -- BANCO DO BRASIL - SEM DIGITO
                        vr_aux_cdbandep := 1;
                        vr_aux_cdagedep := SUBSTR(rw_cod_coop_dest.cdagedbb,LENGTH(rw_cod_coop_dest.cdagedbb)-1);
                     END IF;                      
+                    */
                   
                     UPDATE crapfdc fdc
                        SET fdc.incheque = fdc.incheque + 5

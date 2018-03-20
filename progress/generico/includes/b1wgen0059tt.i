@@ -94,6 +94,9 @@
 			                 crapass, crapttl, crapjur 
 							 (Adriano - P339).
 
+                08/03/2018 - Alteracao na declaraçao da temp-table "tt-craptip" para 
+                             nao referenciar mais a tabela craptip. PRJ366 (Lombardi).
+                
 ............................................................................*/
 
 &IF DEFINED(VAR-AMB) <> 0 &THEN
@@ -181,7 +184,10 @@ DEFINE TEMP-TABLE tt-crapban NO-UNDO LIKE crapban.
 
 DEFINE TEMP-TABLE tt-crapagb NO-UNDO LIKE crapagb.
 
-DEFINE TEMP-TABLE tt-craptip NO-UNDO LIKE craptip.
+DEFINE TEMP-TABLE tt-craptip NO-UNDO
+    FIELD cdtipcta AS INTEGER
+	  FIELD dstipcta AS CHARACTER
+	  FIELD cdcooper AS INTEGER.
 
 DEFINE TEMP-TABLE tt-produtos  NO-UNDO 
     FIELD cdarnego AS INTEGER

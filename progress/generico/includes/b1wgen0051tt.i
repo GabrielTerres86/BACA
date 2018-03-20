@@ -29,6 +29,10 @@
 				            (Projeto 410 - RF 2 e 3 - Diogo - Mouts)		
                              
                 06/02/2018 -  Incluido campo cdcatego na tt-cabec. PRJ366 (Lombardi)					 
+
+                08/03/2018 - Declaraçao da variável "dstipcta" alterada para nao 
+                             referenciar mais a tabela CRAPTIP. PRJ366 (Lombardi).
+                             
 ..............................................................................*/
 
 
@@ -46,7 +50,7 @@ DEFINE TEMP-TABLE tt-cabec NO-UNDO
     FIELD cdestcvl LIKE crapttl.cdestcvl
     FIELD dsestcvl LIKE gnetcvl.rsestcvl
     FIELD cdtipcta LIKE crapass.cdtipcta
-    FIELD dstipcta LIKE craptip.dstipcta
+    FIELD dstipcta AS CHAR 
     FIELD cdsitdct LIKE crapass.cdsitdct
     FIELD dssitdct AS CHAR
     FIELD nrdctitg LIKE crapass.nrdctitg

@@ -417,6 +417,8 @@
                              pois haviam casos em que nao estavamos entrando na rotina
                              na procedure gera-tarifa-extrato (Lucas Ranghetti #787894)
 
+                12/03/2018 - Alterado para buscar descricao do tipo de conta do oracle. PRJ366 (Lombardi).
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -6409,58 +6411,38 @@ END FUNCTION.
 
 FUNCTION fgetdstipcta RETURNS CHARACTER (INPUT p-cdcooper AS INTEGER):
 
-    FIND craptip WHERE 
-         craptip.cdcooper = p-cdcooper     AND
-         craptip.cdtipcta = crapass.cdtipcta
-         NO-LOCK NO-ERROR.
+    DEF VAR aux_dstipcta AS CHAR                              NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                              NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                              NO-UNDO.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_descricao_tipo_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
+                                         INPUT crapass.cdtipcta,    /* tipo de conta */
+                                        OUTPUT "",   /* Descricao do tipo de conta */
+                                        OUTPUT "",   /* Flag Erro */
+                                        OUTPUT "").  /* Descrição da crítica */
+    
+    CLOSE STORED-PROC pc_descricao_tipo_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-    IF  AVAILABLE craptip   THEN
-        DO:
-            IF  crapass.cdtipcta = 8  THEN
-                DO:
-                    IF  crapass.cdbcochq = 756 THEN
-                        RETURN STRING(crapass.cdtipcta,"z9") + 
-                               " - Normal Conv-BCB".
-                    ELSE
-                        RETURN STRING(crapass.cdtipcta,"z9") + 
-                               " - Normal Conv-CTR".
-                END.
-            ELSE
-            IF  crapass.cdtipcta = 9  THEN
-                DO:
-                    IF  crapass.cdbcochq = 756 THEN
-                        RETURN STRING(crapass.cdtipcta,"z9") + 
-                               " - Espec. Conv-BCB".
-                    ELSE
-                        RETURN STRING(crapass.cdtipcta,"z9") + 
-                               " - Espec. Conv-CTR".
-                END.
-            ELSE
-            IF  crapass.cdtipcta = 10  THEN
-                DO:
-                    IF  crapass.cdbcochq = 756 THEN
-                        RETURN STRING(crapass.cdtipcta,"z9") + 
-                               " - Cj. Conv-BCB".
-                    ELSE
-                        RETURN STRING(crapass.cdtipcta,"z9") + 
-                               " - Cj. Conv-CTR".
-                END.
-            ELSE
-            IF  crapass.cdtipcta = 11  THEN
-                DO:
-                    IF  crapass.cdbcochq = 756 THEN
-                        RETURN STRING(crapass.cdtipcta,"z9") + 
-                               " - Cj.Esp.Conv-BCB".
-                    ELSE
-                        RETURN STRING(crapass.cdtipcta,"z9") + 
-                               " - Cj.Esp.Conv-CTR".
-                END.
-            ELSE
-                RETURN STRING(crapass.cdtipcta,"z9") + " - " +
-                              craptip.dstipcta.
-        END. /* fim do if avail */
-    ELSE 
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_dstipcta = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                          WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+           aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                          WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+           aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                          WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+    
+    IF aux_des_erro = "NOK"  THEN
         RETURN STRING(crapass.cdtipcta,"z9").
+    
+    RETURN STRING(crapass.cdtipcta,"z9") + " - " + aux_dstipcta.
 
 END FUNCTION.
 

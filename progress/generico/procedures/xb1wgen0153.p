@@ -32,7 +32,10 @@
 
                07/11/2017 - Adicionados campos para comportar o cadastro de 
                             tarifas por porcentual na ALTTAR.
-                            Everton (Mouts) - Melhoria 150.
+                            Everton (Mouts) - Melhoria 150.	  
+                            
+               19/03/2018 - Procedure lista-tipo-conta deletada pois nao sera mais usada. 
+                            PRJ366 (Lombardi).
 ..............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                       NO-UNDO.
@@ -4279,48 +4282,6 @@ PROCEDURE lista-associado:
         END.
         
 END PROCEDURE.
-
-/******************************************************************************
- Listagem de tipos de contas 
-******************************************************************************/
-PROCEDURE lista-tipo-conta:
-
-    RUN lista-tipo-conta IN hBO(INPUT aux_cdcooper,
-                         INPUT aux_cdagenci,
-                         INPUT aux_nrdcaixa,
-                         INPUT aux_cdoperad,
-                         INPUT aux_nmdatela,
-                         INPUT aux_idorigem,
-                         INPUT aux_nrregist,
-                         INPUT aux_nriniseq,
-                         OUTPUT aux_qtregist,
-                         OUTPUT TABLE tt-tpconta).
-
-    IF  RETURN-VALUE = "NOK"  THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-      
-            IF  NOT AVAILABLE tt-erro  THEN
-                DO:
-                    CREATE tt-erro.
-                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
-                                              "operacao.".
-                END.
-                
-            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
-                            INPUT "Erro").
-        END.
-    ELSE
-        DO:
-            RUN piXmlNew.
-            RUN piXmlExport (INPUT TEMP-TABLE tt-tpconta:HANDLE,
-                             INPUT "contas").
-            RUN piXmlAtributo (INPUT "qtregist",INPUT STRING(aux_qtregist)).
-            RUN piXmlSave.
-        END.
-
-END PROCEDURE.
-
 
 /******************************************************************************
  Lancamento manul de tarifas

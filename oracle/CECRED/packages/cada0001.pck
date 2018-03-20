@@ -1684,7 +1684,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao:
+   Data    : Janeiro/2014.                        Ultima atualizacao: 19/02/2018
 
    Dados referentes ao programa:
 
@@ -1692,6 +1692,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Objetivo  : Procedure para verificar se o cooperado é primeiro titular em outra conta
 
    Alteracoes: 08/01/2014 - Conversao Progress >> Oracle (PLSQL) (Alisson-AMcom)
+
+               19/02/2018 - Retirada a validação do NOT IN dos tipos de contas 6, 7, 17 e 18, 
+                            substituído pelo NOT IN dos tipos de contas que tem a modalidade 3 – Conta Aplicação.
+                            PRJ366 (Lombardi).
 
   ............................................................................. */
   BEGIN
@@ -1731,7 +1735,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta
         AND   crapass.dtdemiss IS NULL
-        AND   crapass.cdtipcta NOT IN (6,7,17,18); /** Ignora conta aplicacao **/
+        AND NOT EXISTS (SELECT 1
+                          FROM tbcc_tipo_conta tpcta
+                         WHERE tpcta.cdmodalidade_tipo = 3
+                           AND tpcta.inpessoa = crapass.inpessoa
+                           AND tpcta.cdtipo_conta = crapass.cdtipcta); /** Ignora conta aplicacao **/
+        
+        
       --Selecionar Historico alteracoes na crapass
       CURSOR cr_crapalt (pr_cdcooper IN crapass.cdcooper%type
                         ,pr_nrdconta IN crapass.nrdconta%type) IS
@@ -2703,7 +2713,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao:
+   Data    : Janeiro/2014.                        Ultima atualizacao: 19/02/2018
 
    Dados referentes ao programa:
 
@@ -2711,6 +2721,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Objetivo  : Procedure para buscar dados empresa participante pela conta Contato
 
    Alteracoes: 09/01/2014 - Conversao Progress >> Oracle (PLSQL) (Alisson-AMcom)
+
+               19/02/2018 - Comentado validação se o cadastro do contato está completo.
+                            PRJ366 (Lombardi).
 
   ............................................................................. */
   BEGIN
@@ -2813,6 +2826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       END IF;
       --Fechar Cursor
       CLOSE cr_crapass;
+      /*
       --Verificar cadastro incompleto
       IF rw_crapass.indnivel < 2 AND rw_crapass.cdtipcta > 7 THEN
         --Mensagem Critica
@@ -2820,6 +2834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      */
       --Encontrar proximo indice para tabela
       vr_index:= pr_tab_crapavt.count+1;
       /* Endereco */
@@ -3306,7 +3321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao: 24/07/2017
+   Data    : Janeiro/2014.                        Ultima atualizacao: 19/02/2018
 
    Dados referentes ao programa:
 
@@ -3327,6 +3342,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                24/07/2017 - Alterar cdoedptl para idorgexp.
                             PRJ339-CRM  (Odirlei-AMcom)             
 
+               19/02/2018 - A validação se o tipo de conta é maior ou igual a 12 alterada de 
+                            forma que seja validada através da modalidade e do indicador de 
+                            situação da conta ITG. PRJ366 (Lombardi).
+
   ............................................................................. */
   BEGIN
     DECLARE
@@ -3339,6 +3358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               ,crapass.nrdconta
               ,crapass.cdcooper
               ,crapass.nrcpfcgc
+              ,crapass.flgctitg
         FROM crapass
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta;
@@ -3351,6 +3371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               ,crapass.nrdconta
               ,crapass.cdcooper
               ,crapass.nrcpfcgc
+              ,crapass.flgctitg
         FROM crapass
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrcpfcgc = pr_nrcpfcgc
@@ -3432,6 +3453,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         AND   crapcrl.nrdconta = pr_nrdctato
         AND   crapcrl.nrcpfcgc = pr_nrcpfcto;
       rw_crapcrl cr_crapcrl%ROWTYPE;
+      --Selecionar modalidade
+      CURSOR cr_tipo_conta (pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE
+                           ,pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE) IS
+        SELECT tpcta.cdmodalidade_tipo
+        FROM tbcc_tipo_conta tpcta
+        WHERE tpcta.cdtipo_conta = pr_cdtipcta
+        AND   tpcta.inpessoa = pr_inpessoa;
+      rw_tipo_conta cr_tipo_conta%ROWTYPE;
+      
       --Variaveis Locais
       vr_flgsuces BOOLEAN;
       vr_crapass  BOOLEAN;
@@ -3524,8 +3554,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       --Marcar Sucesso
       vr_flgsuces:= TRUE;
 
+      OPEN cr_tipo_conta (pr_cdtipcta => rw_crapass.cdtipcta
+                         ,pr_inpessoa => rw_crapass.inpessoa);
+      FETCH cr_tipo_conta INTO rw_tipo_conta;
+      --Se Encontrou
+      IF cr_tipo_conta%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_tipo_conta;
+        vr_dscritic:= 'Tipo de conta nao encontrado.';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_tipo_conta;
+      
       --Tipo da Conta
-      IF rw_crapass.cdtipcta >= 12 THEN
+      IF rw_tipo_conta.cdmodalidade_tipo = 3 AND rw_crapass.flgctitg IN (2,3) THEN
         --Selecionar Titulares
         OPEN cr_crapttl2 (pr_cdcooper => rw_crapass.cdcooper
                          ,pr_nrdconta => rw_crapass.nrdconta);

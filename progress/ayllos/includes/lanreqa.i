@@ -30,6 +30,9 @@
             10/12/2013 - Alteracao referente a integracao Progress X 
                          Dataserver Oracle 
                          Inclusao do VALIDATE ( André Euzébio / SUPERO)                           
+                         
+            08/03/2018 - Comentados Ifs que verificam se tipo de conta e igual a 1 ou 2 
+                         e igual a 3 e 4 para retornar a critica 26. PRJ366 (Lombardi).
 ............................................................................. */
 
 DO WHILE TRUE:
@@ -446,6 +449,7 @@ DO WHILE TRUE:
                       END.
                    ELSE
                       DO:
+                          /*
                           IF  crapass.inpessoa = 1   AND
                              (crapass.cdtipcta = 1   OR
                               crapass.cdtipcta = 2)  AND
@@ -465,7 +469,7 @@ DO WHILE TRUE:
                                   NEXT-PROMPT tel_qtreqtal
                                               WITH FRAME f_lanreq.
                               END.
-                          ELSE         /*
+                          ELSE         
                           IF   (crapass.inpessoa = 2   OR
                                 crapass.inpessoa = 3)  AND
                                tel_qtreqtal > 20   THEN

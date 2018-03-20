@@ -55,14 +55,18 @@
                25/01/2016 - #383108 Ajuste das opcoes da tela pois nao estavam
                             aparecendo as opcoes BENS e INF. ADICIONAIS
                             corretamente (Carlos)
+
+               08/03/2018 - Declaraçao das variáveis "shr_cdtipcta" e "shr_dstipcta" 
+                            alteradas para nao referenciarem mais a tabela CRAPTIP.
+                            PRJ366 (Lombardi).
 .............................................................................*/
 
 DEF {1} SHARED VAR shr_nrdconta LIKE crapttl.nrdconta                NO-UNDO.
 DEF {1} SHARED VAR shr_idseqttl LIKE crapttl.idseqttl                NO-UNDO.
 DEF {1} SHARED VAR shr_dsnatura AS CHAR                              NO-UNDO.
 DEF {1} SHARED VAR shr_inpessoa AS INT                               NO-UNDO.
-DEF {1} SHARED VAR shr_cdtipcta LIKE craptip.cdtipcta                NO-UNDO.
-DEF {1} SHARED VAR shr_dstipcta LIKE craptip.dstipcta                NO-UNDO.
+DEF {1} SHARED VAR shr_cdtipcta AS INT                               NO-UNDO.
+DEF {1} SHARED VAR shr_dstipcta AS CHAR    FORMAT "x(50)"            NO-UNDO.
 DEF {1} SHARED VAR shr_cdsecext LIKE crapdes.cdsecext                NO-UNDO.
 DEF {1} SHARED VAR shr_nmsecext LIKE crapdes.nmsecext                NO-UNDO.
 
