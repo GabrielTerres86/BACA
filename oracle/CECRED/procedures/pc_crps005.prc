@@ -1,9 +1,11 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa Solicitada
-                                      ,pr_flgresta  IN PLS_INTEGER           --> Flag 0/1 para utilizar restart na chamada
-                                      ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
-                                      ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
-                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
-                                      ,pr_dscritic OUT varchar2) IS          --> Texto de erro/critica encontrada
+                                             ,pr_flgresta  IN PLS_INTEGER           --> Flag 0/1 para utilizar restart na chamada
+                                             ,pr_cdagenci  IN PLS_INTEGER DEFAULT 0  --> Código da agência, utilizado no paralelismo
+                                             ,pr_idparale  IN PLS_INTEGER DEFAULT 0  --> Identificador do job executando em paralelo.
+                                             ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
+                                             ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
+                                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
+                                             ,pr_dscritic OUT varchar2) IS          --> Texto de erro/critica encontrada
   BEGIN
 
   /* .............................................................................
@@ -12,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 26/04/2017
+   Data    : Novembro/91.                    Ultima atualizacao: 27/02/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch - Background).
@@ -378,11 +380,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                26/04/2017 - Retirado a geração do arquivo microcredito_coop_59dias
                             (Tiago/Rodrigo #654647).
 				
-			   26/07/2017 - 706774-Tratar relatórios para valores acima de 1 bilhão
-							(Andrey Formigari - Mouts)
+               26/07/2017 - 706774-Tratar relatórios para valores acima de 1 bilhão
+                            (Andrey Formigari - Mouts)
 
-			   01/08/2017 - ajuste no relatorio 007 - inclusão de uma subdivisão 
+               01/08/2017 - ajuste no relatorio 007 - inclusão de uma subdivisão 
 
+               01/02/2018 - Alteração para permitir paralelismo. Projeto Ligeirinho. (Josiane - AMcom)
      ............................................................................. */
 
      DECLARE
@@ -472,7 +475,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
               ,vlsdbltl NUMBER
               ,vlstotal NUMBER
               ,dsdacstp VARCHAR2(11)
-              ,nrcpfcgc VARCHAR2(20));
+              ,nrcpfcgc VARCHAR2(20)
+              ,vlindice VARCHAR2(50)); -- projeto ligeirinho
 
        --Definicao do tipo de registro para relatorio crat030
        TYPE typ_reg_crat030 IS
@@ -598,7 +602,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
               ,vltttfis NUMBER
               ,vltttjur NUMBER);
 
-     --Definicao do tipo de registro para tabela bndes
+       --Definicao do tipo de registro para tabela bndes
        TYPE typ_reg_bndes IS
        RECORD (nrdconta crapbnd.nrdconta%TYPE    --Conta Corrente
               ,vladtodp crapbnd.vladtodp%TYPE    --Adto Depositantes
@@ -606,6 +610,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
               ,vlchqesp crapbnd.vlchqesp%TYPE    --Tot.Chq.Espec
               ,vldepavs crapbnd.vldepavs%TYPE);  --Dep.Vista
 
+
+       --Definicao do tipo de registro para  relatorio crat006 (contabilizar)
+       -- Projeto ligeirinho
+       TYPE typ_reg_contab IS
+       RECORD (cdagenci      crapass.cdagenci%TYPE     --Conta Corrente
+              ,con_vlsaqblq  number  --Saque S/ bloq
+              ,con_vladiant  number  --Adiantamento depósito
+              ,con_vlutiliz  number);--Utilizado
 
        -- Definicao do tipo de tabela para relatorio gn099
        TYPE typ_tab_gn099 IS
@@ -727,6 +739,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          TABLE OF typ_reg_crapsld
          INDEX BY PLS_INTEGER;
 
+       --Definicao do tipo de tabela para relatorio crat006 (contabilizar)
+       -- Projeto ligeirinho
+       TYPE typ_tab_contab IS
+          TABLE OF typ_reg_contab
+          INDEX BY VARCHAR2(25);
+
        /* Vetores de memória */
        vr_tab_tot_qtcstdct   typ_reg_tot; --Totalizador da quantidade em custodia
        vr_tab_tot_vlcstdct   typ_reg_tot; --Totalizador do valor em custodia
@@ -797,6 +815,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_tab_rel_agpsdbjd   typ_reg_tot;
        vr_tab_rel_agpvlbjd   typ_reg_tot;
        vr_tab_rel_vlcntinv   typ_reg_tot; -- P307 CONTA INVESTIMENTO
+       -- Projeto ligeirinho         
+       vr_tab_contab         typ_tab_contab;         
 
        /* Cursores da pc_crps005 */
 
@@ -841,7 +861,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                ,crapage.nmresage
          FROM crapage crapage
          WHERE crapage.cdcooper = pr_cdcooper
+         --Inclusão de filtro por agência para tratar o paralelismo
+         and crapage.cdagenci = decode(pr_cdagenci,0,crapage.cdagenci,pr_cdagenci)         
          ORDER BY crapage.cdagenci;
+
+
+       -- Seleciona as agências para a submissão dos Jobs
+       cursor cr_crapass_job (pr_cdcooper in craprpp.cdcooper%type,
+                              pr_dtmvtolt in crapdat.dtmvtolt%type,
+                              pr_cdprogra in tbgen_batch_controle.cdprogra%type,
+                              pr_qterro   in number) is 
+         select crapage.cdagenci
+           from crapage
+          where crapage.cdcooper  = pr_cdcooper
+            and (pr_qterro = 0 or
+                (pr_qterro > 0 and exists (select 1
+                                             from tbgen_batch_controle
+                                            where tbgen_batch_controle.cdcooper    = pr_cdcooper
+                                              and tbgen_batch_controle.cdprogra    = pr_cdprogra
+                                              and tbgen_batch_controle.tpagrupador = 1
+                                              and tbgen_batch_controle.cdagrupador = crapage.cdagenci
+                                              and tbgen_batch_controle.insituacao  = 1
+                                              and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)))
+         order by crapage.cdagenci;
+          
 
        --Selecionar informacoes dos associados e saldos das contas
        --O uso do partition by é para conseguir ordenar pelo saldo total decrescente
@@ -865,15 +908,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
        --Selecionar informacoes dos titulares da conta
        CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%TYPE
-                         ,pr_idseqttl IN crapttl.idseqttl%TYPE) IS
+                         ,pr_idseqttl IN crapttl.idseqttl%TYPE
+                         ,pr_cdagenci IN crapass.cdagenci%type) IS -- projeto ligeirinho
          SELECT crapttl.cdcooper
                ,crapttl.nrdconta
                ,crapttl.cdempres
                ,crapttl.cdturnos
-         FROM crapttl crapttl
-         WHERE crapttl.cdcooper = pr_cdcooper
-         AND   crapttl.idseqttl = pr_idseqttl;
+         FROM crapttl crapttl,
+              crapass crapass -- projeto ligeirinho
+         WHERE crapttl.cdcooper = crapass.cdcooper 
+         AND   crapttl.nrdconta = crapass.nrdconta
+         AND   crapttl.cdcooper = pr_cdcooper
+         AND   crapttl.idseqttl = pr_idseqttl
+         --Inclusão de filtro por agência para tratar o paralelismo (projeto ligeirinho)
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci);
+       
        rw_crapttl cr_crapttl%ROWTYPE;
+
 
        --Selecionar informacoes dos titulares da conta
        CURSOR cr_crapjur (pr_cdcooper IN crapjur.cdcooper%TYPE
@@ -884,7 +935,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          AND   crapjur.nrdconta = pr_nrdconta;
 
        --Selecionar informacoes dos saldos dos associados
-       CURSOR cr_crapsld (pr_cdcooper IN crapsld.cdcooper%TYPE) IS
+       CURSOR cr_crapsld (pr_cdcooper IN crapsld.cdcooper%TYPE
+                         ,pr_cdagenci IN crapass.cdagenci%TYPE) IS -- projeto ligeirinho) IS
          SELECT crapsld.cdcooper
                ,crapsld.nrdconta
                ,crapsld.vlsdbloq
@@ -903,8 +955,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                  nvl(crapsld.vlsdblfp,0) +
                  nvl(crapsld.vlsddisp,0) +
                  nvl(crapsld.vlsdchsl,0)) vlsldtot
-         FROM crapsld crapsld
-         WHERE crapsld.cdcooper = pr_cdcooper;
+         FROM crapsld crapsld,
+              crapass crapass -- projeto ligeirinho
+         WHERE crapsld.cdcooper = crapass.cdcooper 
+         AND   crapsld.nrdconta = crapass.nrdconta
+         AND   crapsld.cdcooper = pr_cdcooper
+         --Inclusão de filtro por agência para tratar o paralelismo (projeto ligeirinho)
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci);
+
        rw_crapsld cr_crapsld%ROWTYPE;
 
        --Selecionar informacoes dos lancamentos
@@ -938,11 +996,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
        --Selecionar informacoes das contra-ordens
        CURSOR cr_crapcor (pr_cdcooper IN crapcor.cdcooper%TYPE
-                         ,pr_flgativo IN crapcor.flgativo%TYPE) IS
+                         ,pr_flgativo IN crapcor.flgativo%TYPE
+                         ,pr_cdagenci IN crapass.cdagenci%TYPE) IS -- projeto ligeirinho
          SELECT crapcor.nrdconta
-         FROM crapcor crapcor
-         WHERE crapcor.cdcooper = pr_cdcooper
-         AND   crapcor.flgativo = pr_flgativo;
+         FROM crapcor crapcor,
+              crapass crapass -- projeto ligeirinho
+         WHERE crapcor.cdcooper = crapass.cdcooper 
+         AND   crapcor.nrdconta = crapass.nrdconta
+         AND   crapcor.cdcooper = pr_cdcooper
+         AND   crapcor.flgativo = pr_flgativo
+         --Inclusão de filtro por agência para tratar o paralelismo (projeto ligeirinho)
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci);
 
        --Selecionar informacoes de Custodia de Cheques
        CURSOR cr_crapcst (pr_cdcooper IN crapcst.cdcooper%TYPE
@@ -967,19 +1031,27 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
        --Selecionar informacoes das contas investimento
        CURSOR cr_crapsli (pr_cdcooper IN crapsli.cdcooper%TYPE
-                         ,pr_dtrefere IN crapsli.dtrefere%TYPE) IS
+                         ,pr_dtrefere IN crapsli.dtrefere%TYPE
+                         ,pr_cdagenci IN crapass.cdagenci%TYPE) IS -- projeto ligeirinho
          SELECT  crapsli.nrdconta
                 ,Nvl(crapsli.vlsddisp,0) vlsddisp
-         FROM crapsli crapsli
-         WHERE crapsli.cdcooper = pr_cdcooper
-         AND   crapsli.dtrefere = pr_dtrefere;
+         FROM crapsli crapsli,
+              crapass crapass -- projeto ligeirinho
+         WHERE crapsli.cdcooper = crapass.cdcooper 
+         AND   crapsli.nrdconta = crapass.nrdconta
+         AND   crapsli.cdcooper = pr_cdcooper
+         AND   crapsli.dtrefere = pr_dtrefere
+         --Inclusão de filtro por agência para tratar o paralelismo (projeto ligeirinho)
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci);
+
 
        /* O select na craplcr é necessário para selecionar as linhas de credito
          sem usar o camando instr...
          --AND   INSTR(pr_listalcr,','||crapepr.cdlcremp||',') > 0; */
        --Selecionar informacoes dos emprestimos para tabela auxiliar
        CURSOR cr_crapepr_conta (pr_cdcooper IN crapepr.cdcooper%TYPE
-                               ,pr_inliquid IN crapepr.inliquid%TYPE) IS
+                               ,pr_inliquid IN crapepr.inliquid%TYPE
+                               ,pr_cdagenci IN crapass.cdagenci%TYPE) IS -- projeto ligeirinho
          SELECT crapepr.vlsdeved
                ,crapepr.nrdconta
                ,crapepr.nrctremp
@@ -989,9 +1061,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                ,crapepr.dtultpag
                ,crapepr.cdcooper
                ,crapepr.cdagenci
-         FROM crapepr crapepr
-         WHERE crapepr.cdcooper = pr_cdcooper
+         FROM crapepr crapepr,
+              crapass crapass -- projeto ligeirinho
+         WHERE crapepr.cdcooper = crapass.cdcooper 
+         AND   crapepr.nrdconta = crapass.nrdconta
+         AND   crapepr.cdcooper = pr_cdcooper
          AND   crapepr.inliquid = pr_inliquid
+         --Inclusão de filtro por agência para tratar o paralelismo (projeto ligeirinho)
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
          AND   EXISTS (SELECT 1 FROM craplcr
                        WHERE craplcr.cdcooper = crapepr.cdcooper
                        AND   craplcr.cdlcremp = crapepr.cdlcremp
@@ -1041,14 +1118,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        rw_craplcr2   cr_craplcr2%ROWTYPE;
 
        --Selecionar informacoes dos telefones dos titulares das contas
-       CURSOR cr_craptfc (pr_cdcooper IN craptfc.cdcooper%TYPE) IS
+       CURSOR cr_craptfc (pr_cdcooper IN craptfc.cdcooper%TYPE
+                         ,pr_cdagenci IN crapass.cdagenci%TYPE) IS -- projeto ligeirinho)
          SELECT craptfc.cdcooper
                ,craptfc.nrdconta
                ,craptfc.tptelefo
                ,craptfc.nrdddtfc
                ,craptfc.nrtelefo
-         FROM  craptfc craptfc
-         WHERE craptfc.cdcooper = pr_cdcooper
+         FROM  craptfc craptfc,
+               crapass crapass -- projeto ligeirinho
+         WHERE craptfc.cdcooper = crapass.cdcooper 
+         AND   craptfc.nrdconta = crapass.nrdconta
+         AND   craptfc.cdcooper = pr_cdcooper
+         --Inclusão de filtro por agência para tratar o paralelismo (projeto ligeirinho)
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
          ORDER BY craptfc.nrdconta
                  ,craptfc.tptelefo
                  ,craptfc.progress_recid DESC;
@@ -1195,6 +1278,34 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_exc_fimprg EXCEPTION;
        vr_exc_pula   EXCEPTION;
 
+       -- variáveis projeto ligeirinho
+        vr_ds_xml               TBGEN_BATCH_RELATORIO_WRK.DSXML%TYPE;
+        ds_character_separador  VARCHAR2(1):='#';
+        vr_indice_crat030       VARCHAR2(50);
+        vr_indice_crat225       VARCHAR2(50);
+        vr_indice_crat226       VARCHAR2(50);
+        vr_indice_crat006       VARCHAR2(50);
+        vr_indice_crat372       VARCHAR2(50);
+        vr_indice_crattotais    VARCHAR2(50);  
+        
+        -- Qtde parametrizada de Jobs
+        vr_qtdjobs       number;
+        -- Job name dos processos criados
+        vr_jobname       varchar2(30);  
+        -- ID para o paralelismo
+        vr_idparale      integer;
+        -- Bloco PLSQL para chamar a execução paralela do pc_crps750
+        vr_dsplsql       varchar2(4000);  
+        vr_inproces      crapdat.inproces%type;
+        --Código de controle retornado pela rotina gene0001.pc_grava_batch_controle
+        vr_idcontrole    tbgen_batch_controle.idcontrole%TYPE;  
+        vr_idlog_ini_ger tbgen_prglog.idprglog%type;
+        vr_idlog_ini_par tbgen_prglog.idprglog%type;    
+        vr_tpexecucao    tbgen_prglog.tpexecucao%type; 
+        vr_qterro        number := 0;
+        
+        
+        
        --Funcao para concatenar os telefones da conta
        FUNCTION fn_concatena_fones (pr_cdcooper IN crapdat.cdcooper%TYPE
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE
@@ -1474,6 +1585,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          vr_tab_rel_agnsdstl.DELETE;
          vr_tab_rel_agpsdbjd.DELETE;
          vr_tab_rel_agpvlbjd.DELETE;
+         vr_tab_contab.DELETE; -- projeto ligeirinho
 
        EXCEPTION
          WHEN OTHERS THEN
@@ -1522,6 +1634,2872 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            RAISE vr_exc_erro;
        END;
 
+       ----------------------------------------------
+       -- Rotina para popular tabela de trabalho
+       -- Projeto Ligeirinho
+       ----------------------------------------------
+       PROCEDURE pc_popular_tbgen_batch_rel_wrk (pr_cdcooper     in tbgen_batch_relatorio_wrk.cdcooper%type,
+                                                 pr_nmtabmemoria in tbgen_batch_relatorio_wrk.cdprograma%type,
+                                                 pr_dtmvtolt     in tbgen_batch_relatorio_wrk.dtmvtolt%type,
+                                                 pr_dschave      in tbgen_batch_relatorio_wrk.dschave%type,
+                                                 pr_dsxml        in tbgen_batch_relatorio_wrk.dsxml%type,
+                                                 pr_des_erro     out varchar2) is
+                                                 
+                                                 
+       begin
+          insert into tbgen_batch_relatorio_wrk
+              (cdcooper
+              ,cdprograma 
+              ,dsrelatorio
+              ,dtmvtolt
+              ,cdagenci
+              ,nrdconta
+              ,dschave
+              ,dsxml) 
+            values 
+             (pr_cdcooper
+             ,'CRPS005'
+             ,pr_nmtabmemoria
+             ,pr_dtmvtolt
+             ,99999
+             ,9999999999
+             ,pr_dschave 
+             ,pr_dsxml);
+       
+        commit;
+       EXCEPTION
+         WHEN OTHERS THEN
+          --Montar mensagem de erro
+          pr_des_erro:= 'Erro ao inserir na tabela tbgen_batch_relatorio_wrk. '||SQLERRM;
+       END pc_popular_tbgen_batch_rel_wrk;
+
+       ----------------------------------------------
+       -- Rotina para limpar tabela de trabalho WRK
+       -- Projeto Ligeirinho
+       ----------------------------------------------
+       PROCEDURE pc_limpa_tbgen_batch_rel_wrk (pr_cdcooper   in tbgen_batch_relatorio_wrk.cdcooper%type,
+                                               pr_dtmvtolt   in tbgen_batch_relatorio_wrk.dtmvtolt%type,
+                                               pr_des_erro  out varchar2) is
+                                                 
+                                                 
+       begin
+          delete tbgen_batch_relatorio_wrk
+            where cdcooper   = pr_cdcooper
+              and cdprograma = 'CRPS005'
+              and dtmvtolt   = pr_dtmvtolt
+              and cdagenci   = 99999
+              and nrdconta   = 9999999999;
+        commit;
+       EXCEPTION
+         WHEN OTHERS THEN
+          --Montar mensagem de erro
+          pr_des_erro:= 'Erro ao limpar na tabela tbgen_batch_relatorio_wrk. '||SQLERRM;
+       END pc_limpa_tbgen_batch_rel_wrk;
+       
+       -------------------------------------------------------------
+       -- Grava os dados da tabela de trabalho na tabela de memoria
+       -- para serem utilizados pelos relatórios
+       -- Projeto Ligeirinho 
+       -------------------------------------------------------------
+       PROCEDURE pc_grava_tab_men_geral (pr_cdcooper in tbgen_batch_relatorio_wrk.cdcooper%type,
+                                         pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type,
+                                         pr_des_erro out varchar2) IS
+                                         
+       -- cursores que lê a tabela WRK, de acordo com a tabela de memória a ser populada                                         
+       cursor c_crapage2 is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nmresage,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAPAGE'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+               
+       -- VR_TAB_CRAPTFC
+       cursor c_craptfc is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) nrdddtfc,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrtelefo,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) vr_indice
+         from (select  wrk.dschave dsxml
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAPTFC'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+
+       -- VR_TAB_CRAPTTL
+       cursor c_crapttl is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdempres,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) cdturnos,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAPTTL'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+
+       -- VR_TAB_CRAPSLI
+       cursor c_crapsli is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vlsddisp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) vr_indice
+         from (select wrk.dschave dsxml
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAPSLI'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+               
+       -- VR_TAB_CRAPCOR
+       cursor c_crapcor is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) vr_indice
+         from (select wrk.dschave dsxml
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAPCOR'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+
+       -- VR_TAB_CRAPEPR
+       cursor c_crapepr is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) vr_indice
+         from (select wrk.dschave dsxml
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAPEPR'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+
+
+       -- VR_TAB_CRAPSLD
+       cursor c_crapsld is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vlsdbloq,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) vlsdblpr,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) vlsdblfp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) vlsdchsl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,5) +1,instr(tab.dsxml,'#',1,6)-instr(tab.dsxml,'#',1,5)-1) vlsddisp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,6) +1,instr(tab.dsxml,'#',1,7)-instr(tab.dsxml,'#',1,6)-1) vlipmfpg,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,7) +1,instr(tab.dsxml,'#',1,8)-instr(tab.dsxml,'#',1,7)-1) vlipmfap,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,8) +1,instr(tab.dsxml,'#',1,9)-instr(tab.dsxml,'#',1,8)-1) dtdsdclq,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,9) +1,instr(tab.dsxml,'#',1,10)-instr(tab.dsxml,'#',1,9)-1) qtddsdev,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,10)+1,instr(tab.dsxml,'#',1,11)-instr(tab.dsxml,'#',1,10)-1) vlblqjud,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,11) +1,instr(tab.dsxml,'#',1,12)-instr(tab.dsxml,'#',1,11)-1) vlsldtot,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,12)+1,instr(tab.dsxml,'#',1,13)-instr(tab.dsxml,'#',1,12)-1) vr_rowid,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,13)+1,instr(tab.dsxml,'#',1,14)-instr(tab.dsxml,'#',1,13)-1) vr_indice
+         from (select wrk.dschave dsxml
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAPSLD'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+
+               
+       --  VR_TAB_LIS_AGNSDBTL       
+       cursor c_agnsdbtl is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_LIS_AGNSDBTL'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;      
+
+       -- Saldo total da agencia - VR_TAB_LIS_AGNSDSTL
+       cursor c_agnsdstl is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_LIS_AGNSDSTL'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab; 
+          
+       -- Total disponivel da agencia - VR_TAB_LIS_AGNSDDIS
+       cursor c_agnsddis is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) vr_indice
+         from (select wrk.dschave dsxml
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_LIS_AGNSDDIS'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab; 
+               
+        -- Total do limite da agencia - VR_TAB_LIS_AGNVLLIM
+       cursor c_agnvllim is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) vr_indice
+         from (select wrk.dschave dsxml
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_LIS_AGNVLLIM'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab; 
+
+       -- VR_TAB_CONTAB
+       cursor c_contab is
+       select SUM(con_vlsaqblq ) con_vlsaqblq,
+              SUM(con_vladiant) con_vladiant,
+              SUM(con_vlutiliz) con_vlutiliz
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) con_vlsaqblq,
+                      substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) con_vladiant,
+                      substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) con_vlutiliz,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_CONTAB'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                          and wrk.dschave   <> '999'
+                       ) tab
+                );
+                 
+
+       BEGIN
+         BEGIN
+           -- Agencias
+           FOR r_crapage2 IN c_crapage2  
+           LOOP
+               --Criar registro na crapage
+               vr_tab_crapage(r_crapage2.vr_indice).cdagenci:= r_crapage2.cdagenci;
+               vr_tab_crapage(r_crapage2.vr_indice).nmresage:= r_crapage2.nmresage;
+           END LOOP;
+                                   
+           -- VR_TAB_CRAPTFC
+           FOR r_craptfc IN c_craptfc  
+           LOOP
+               --Criar registro na vr_tab_craptfc
+               vr_tab_craptfc(r_craptfc.vr_indice).nrdddtfc:= r_craptfc.nrdddtfc;
+               vr_tab_craptfc(r_craptfc.vr_indice).nrtelefo:= r_craptfc.nrtelefo;
+           END LOOP;
+
+           -- VR_TAB_CRAPTTL
+           FOR r_crapttl IN c_crapttl  
+           LOOP
+               --Criar registro na vr_tab_crapttl
+               vr_tab_crapttl(r_crapttl.vr_indice).cdempres:= r_crapttl.cdempres;
+               vr_tab_crapttl(r_crapttl.vr_indice).cdturnos:= r_crapttl.cdturnos;
+           END LOOP;
+
+           -- VR_TAB_CRAPSLI
+           FOR r_crapsli IN c_crapsli  
+           LOOP
+               --Criar registro na vr_tab_crapsli
+              vr_tab_crapsli(r_crapsli.vr_indice).vlsddisp:= r_crapsli.vlsddisp;
+           END LOOP;
+           
+           -- VR_TAB_CRAPCOR
+           FOR r_crapcor IN c_crapcor  
+           LOOP
+               --Criar registro na vr_tab_crapcor
+               vr_tab_crapcor(r_crapcor.vr_indice):= r_crapcor.vr_total;
+           END LOOP;
+
+           -- VR_TAB_CRAPEPR
+           FOR r_crapepr IN c_crapepr  
+           LOOP
+               --Criar registro na vr_tab_crapepr
+               vr_tab_crapepr(r_crapepr.vr_indice):= r_crapepr.vr_total;
+           END LOOP;
+
+           -- vr_tab_crapsld
+           FOR r_crapsld IN c_crapsld  
+           LOOP
+               --Criar registro na vr_tab_crapsld
+               vr_tab_crapsld(r_crapsld.vr_indice).vlsdbloq := r_crapsld.vlsdbloq;
+               vr_tab_crapsld(r_crapsld.vr_indice).vlsdblpr := r_crapsld.vlsdblpr;
+               vr_tab_crapsld(r_crapsld.vr_indice).vlsdblfp := r_crapsld.vlsdblfp;
+               vr_tab_crapsld(r_crapsld.vr_indice).vlsdchsl := r_crapsld.vlsdchsl;
+               vr_tab_crapsld(r_crapsld.vr_indice).vlsddisp := r_crapsld.vlsddisp;
+               vr_tab_crapsld(r_crapsld.vr_indice).vlipmfpg := r_crapsld.vlipmfpg;
+               vr_tab_crapsld(r_crapsld.vr_indice).vlipmfap := r_crapsld.vlipmfap;
+               vr_tab_crapsld(r_crapsld.vr_indice).dtdsdclq := r_crapsld.dtdsdclq;
+               vr_tab_crapsld(r_crapsld.vr_indice).qtddsdev := r_crapsld.qtddsdev;
+               vr_tab_crapsld(r_crapsld.vr_indice).vlblqjud := r_crapsld.vlblqjud;
+               vr_tab_crapsld(r_crapsld.vr_indice).vlsldtot := r_crapsld.vlsldtot;
+               vr_tab_crapsld(r_crapsld.vr_indice).vr_rowid := r_crapsld.vr_rowid;
+           END LOOP;
+
+           -- Total bloqueado da agencia - VR_TAB_LIS_AGNSDBTL
+           FOR r_agnsdbtl IN c_agnsdbtl  
+           LOOP
+               --Criar registro na vr_tab_lis_agnsdbtl
+               vr_tab_lis_agnsdbtl(r_agnsdbtl.vr_indice):= r_agnsdbtl.vr_total;
+           END LOOP;
+       
+           -- Saldo total da agencia - VR_TAB_LIS_AGNSDSTL
+           FOR r_agnsdstl IN c_agnsdstl  
+           LOOP
+               --Criar registro na vr_tab_lis_agnsdbtl
+               vr_tab_lis_agnsdstl(r_agnsdstl.vr_indice):= r_agnsdstl.vr_total;
+           END LOOP;
+         
+           -- Total disponivel da agencia - VR_TAB_LIS_AGNSDDIS
+           FOR r_agnsddis IN c_agnsddis  
+           LOOP
+               --Criar registro na vr_tab_lis_agnsdbtl
+               vr_tab_lis_agnsddis(r_agnsddis.vr_indice):= r_agnsddis.vr_total;
+           END LOOP;
+         
+           -- Total do limite da agencia - VR_TAB_LIS_AGNVLLIM
+           FOR r_agnvllim IN c_agnvllim  
+           LOOP
+               --Criar registro na vr_tab_lis_agnvllim
+               vr_tab_lis_agnvllim(r_agnvllim.vr_indice):= r_agnvllim.vr_total;
+           END LOOP;
+
+           -- VR_TAB_CONTAB
+           FOR r_contab IN c_contab  
+           LOOP
+               --Criar registro na vr_tab_contab
+               vr_tab_contab(1).cdagenci:= 99999;
+               vr_tab_contab(1).con_vlsaqblq:= r_contab.con_vlsaqblq;
+               vr_tab_contab(1).con_vladiant:= r_contab.con_vladiant;
+               vr_tab_contab(1).con_vlutiliz:= r_contab.con_vlutiliz;                              
+           END LOOP;
+
+         EXCEPTION
+           WHEN OTHERS THEN
+              pr_des_erro:= 'Erro pc_grava_tab_men_geral: '||sqlerrm;
+         END;
+       END pc_grava_tab_men_geral;
+       
+       
+       -------------------------------------------------------------
+       -- Grava os dados da tabela de trabalho na tabela de memoria
+       -- Projeto Ligeirinho 
+       -------------------------------------------------------------
+       PROCEDURE pc_grava_tab_men_crrl055 (pr_cdcooper in tbgen_batch_relatorio_wrk.cdcooper%type,
+                                           pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type,
+                                           pr_des_erro out varchar2) IS
+       cursor c_crrl0551 is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrdconta,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) nmprimtl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) vlsddisp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,5) +1,instr(tab.dsxml,'#',1,6)-instr(tab.dsxml,'#',1,5)-1) vllimcre,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,6) +1,instr(tab.dsxml,'#',1,7)-instr(tab.dsxml,'#',1,6)-1) vlsdbltl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,7) +1,instr(tab.dsxml,'#',1,8)-instr(tab.dsxml,'#',1,7)-1) vlstotal,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,8) +1,instr(tab.dsxml,'#',1,9)-instr(tab.dsxml,'#',1,8)-1) dsdacstp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,9) +1,instr(tab.dsxml,'#',1,10)-instr(tab.dsxml,'#',1,9)-1) nrcpfcgc,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,10) +1,instr(tab.dsxml,'#',1,11)-instr(tab.dsxml,'#',1,10)-1) vr_indice
+         from (select wrk.dschave dsxml 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAT055'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+       BEGIN
+         BEGIN
+           FOR r_crrl0551 IN c_crrl0551  
+           LOOP
+               --Criar registro na crat055
+               vr_tab_crat055(r_crrl0551.vr_indice).cdagenci:= r_crrl0551.cdagenci;
+               vr_tab_crat055(r_crrl0551.vr_indice).nrdconta:= r_crrl0551.nrdconta;
+               vr_tab_crat055(r_crrl0551.vr_indice).dsdacstp:= r_crrl0551.dsdacstp;
+               vr_tab_crat055(r_crrl0551.vr_indice).nmprimtl:= r_crrl0551.nmprimtl;
+               vr_tab_crat055(r_crrl0551.vr_indice).nrcpfcgc:= r_crrl0551.nrcpfcgc;
+               vr_tab_crat055(r_crrl0551.vr_indice).vllimcre:= r_crrl0551.vllimcre;
+               vr_tab_crat055(r_crrl0551.vr_indice).vlsddisp:= r_crrl0551.vlsddisp;
+               vr_tab_crat055(r_crrl0551.vr_indice).vlsdbltl:= r_crrl0551.vlsdbltl;
+               vr_tab_crat055(r_crrl0551.vr_indice).vlstotal:= r_crrl0551.vlstotal;
+               vr_tab_crat055(r_crrl0551.vr_indice).vlindice:= r_crrl0551.vr_indice; 
+           END LOOP;
+         EXCEPTION
+           WHEN OTHERS THEN
+              pr_des_erro:= 'Erro pc_grava_tab_men_crrl055: '||sqlerrm;
+         END;
+       END pc_grava_tab_men_crrl055;
+
+       -------------------------------------------------------------
+       -- Grava os dados da tabela de trabalho na tabela de memoria
+       -- Projeto Ligeirinho 
+       -------------------------------------------------------------
+       PROCEDURE pc_grava_tab_men_crrl030 (pr_cdcooper in tbgen_batch_relatorio_wrk.cdcooper%type,
+                                           pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type,
+                                           pr_des_erro out varchar2) IS
+       -- VR_TAB_CRAT030                                           
+       cursor c_crrl0301 is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrdconta,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) nmprimtl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) vlsddisp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,5) +1,instr(tab.dsxml,'#',1,6)-instr(tab.dsxml,'#',1,5)-1) vllimcre,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,6) +1,instr(tab.dsxml,'#',1,7)-instr(tab.dsxml,'#',1,6)-1) vlsdchsl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,7) +1,instr(tab.dsxml,'#',1,8)-instr(tab.dsxml,'#',1,7)-1) dtdsdclq,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,8) +1,instr(tab.dsxml,'#',1,9)-instr(tab.dsxml,'#',1,8)-1) qtddsdev,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,9) +1,instr(tab.dsxml,'#',1,10)-instr(tab.dsxml,'#',1,9)-1) vlstotal,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,10) +1,instr(tab.dsxml,'#',1,11)-instr(tab.dsxml,'#',1,10)-1) vlsdbltl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,11) +1,instr(tab.dsxml,'#',1,12)-instr(tab.dsxml,'#',1,11)-1) vr_indice
+         from (select wrk.dschave dsxml
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAT030'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+       BEGIN
+         BEGIN
+           FOR r_crrl0301 IN c_crrl0301  
+           LOOP
+               --Criar registro na crat030
+               vr_tab_crat030(r_crrl0301.vr_indice).cdagenci:= r_crrl0301.cdagenci;
+               vr_tab_crat030(r_crrl0301.vr_indice).nrdconta:= r_crrl0301.nrdconta;
+               vr_tab_crat030(r_crrl0301.vr_indice).nmprimtl:= r_crrl0301.nmprimtl;
+               vr_tab_crat030(r_crrl0301.vr_indice).vlsddisp:= r_crrl0301.vlsddisp;
+               vr_tab_crat030(r_crrl0301.vr_indice).vllimcre:= r_crrl0301.vllimcre;
+               vr_tab_crat030(r_crrl0301.vr_indice).vlsdchsl:= r_crrl0301.vlsdchsl;
+               vr_tab_crat030(r_crrl0301.vr_indice).dtdsdclq:= r_crrl0301.dtdsdclq; 
+               vr_tab_crat030(r_crrl0301.vr_indice).qtddsdev:= r_crrl0301.qtddsdev;
+               vr_tab_crat030(r_crrl0301.vr_indice).vlstotal:= r_crrl0301.vlstotal;
+               vr_tab_crat030(r_crrl0301.vr_indice).vlsdbltl:= r_crrl0301.vlsdbltl;
+           END LOOP;
+         EXCEPTION
+           WHEN OTHERS THEN
+              pr_des_erro:= 'Erro pc_grava_tab_men_crrl030: '||sqlerrm;
+         END;
+       END pc_grava_tab_men_crrl030;
+
+
+       PROCEDURE pc_grava_tab_men_crrl225 (pr_cdcooper in tbgen_batch_relatorio_wrk.cdcooper%type,
+                                           pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type,
+                                           pr_des_erro out varchar2) IS
+       -- VR_TAB_CRAT225                                         
+       cursor c_crrl2251 is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrdconta,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) nmprimtl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) cdempres,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,5) +1,instr(tab.dsxml,'#',1,6)-instr(tab.dsxml,'#',1,5)-1) cdturnos,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,6) +1,instr(tab.dsxml,'#',1,7)-instr(tab.dsxml,'#',1,6)-1) qtddsdev,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,7) +1,instr(tab.dsxml,'#',1,8)-instr(tab.dsxml,'#',1,7)-1) vlsddisp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,8) +1,instr(tab.dsxml,'#',1,9)-instr(tab.dsxml,'#',1,8)-1) vllimcre,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,9) +1,instr(tab.dsxml,'#',1,10)-instr(tab.dsxml,'#',1,9)-1) nrdofone,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,10) +1,instr(tab.dsxml,'#',1,11)-instr(tab.dsxml,'#',1,10)-1) dsdacstp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,11) +1,instr(tab.dsxml,'#',1,12)-instr(tab.dsxml,'#',1,11)-1) vlestour,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,12) +1,instr(tab.dsxml,'#',1,13)-instr(tab.dsxml,'#',1,12)-1) vlsdbltl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,13) +1,instr(tab.dsxml,'#',1,14)-instr(tab.dsxml,'#',1,13)-1) vlstotal,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAT225'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+       BEGIN
+         BEGIN
+           FOR r_crrl2251 IN c_crrl2251  
+           LOOP
+               --Criar registro na crat225
+               vr_tab_crat225(r_crrl2251.vr_indice).cdagenci:= r_crrl2251.cdagenci;
+               vr_tab_crat225(r_crrl2251.vr_indice).nrdconta:= r_crrl2251.nrdconta;
+               vr_tab_crat225(r_crrl2251.vr_indice).nmprimtl:= r_crrl2251.nmprimtl;
+               vr_tab_crat225(r_crrl2251.vr_indice).cdempres:= r_crrl2251.cdempres;
+               vr_tab_crat225(r_crrl2251.vr_indice).cdturnos:= r_crrl2251.cdturnos;
+               vr_tab_crat225(r_crrl2251.vr_indice).qtddsdev:= r_crrl2251.qtddsdev;
+               vr_tab_crat225(r_crrl2251.vr_indice).vlsddisp:= r_crrl2251.vlsddisp; 
+               vr_tab_crat225(r_crrl2251.vr_indice).vllimcre:= r_crrl2251.vllimcre;
+               vr_tab_crat225(r_crrl2251.vr_indice).nrdofone:= r_crrl2251.nrdofone;
+               vr_tab_crat225(r_crrl2251.vr_indice).dsdacstp:= r_crrl2251.dsdacstp;
+               vr_tab_crat225(r_crrl2251.vr_indice).vlestour:= r_crrl2251.vlestour;
+               vr_tab_crat225(r_crrl2251.vr_indice).vlsdbltl:= r_crrl2251.vlsdbltl;
+               vr_tab_crat225(r_crrl2251.vr_indice).vlstotal:= r_crrl2251.vlstotal;                                             
+           END LOOP;
+         EXCEPTION
+           WHEN OTHERS THEN
+              pr_des_erro:= 'Erro pc_grava_tab_men_crrl225: '||sqlerrm;
+         END;
+       END pc_grava_tab_men_crrl225;
+
+       PROCEDURE pc_grava_tab_men_crrl226 (pr_cdcooper in tbgen_batch_relatorio_wrk.cdcooper%type,
+                                           pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type,
+                                           pr_des_erro out varchar2) IS
+       --  VR_TAB_CRAT226                                          
+       cursor c_crrl2261 is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrdconta,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) nmprimtl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) cdempres,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,5) +1,instr(tab.dsxml,'#',1,6)-instr(tab.dsxml,'#',1,5)-1) qtddsdev,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,6) +1,instr(tab.dsxml,'#',1,7)-instr(tab.dsxml,'#',1,6)-1) vlsddisp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,7) +1,instr(tab.dsxml,'#',1,8)-instr(tab.dsxml,'#',1,7)-1) vllimcre,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,8) +1,instr(tab.dsxml,'#',1,9)-instr(tab.dsxml,'#',1,8)-1) cdturnos,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,9) +1,instr(tab.dsxml,'#',1,10)-instr(tab.dsxml,'#',1,9)-1) tpvincul,              
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,10) +1,instr(tab.dsxml,'#',1,11)-instr(tab.dsxml,'#',1,10)-1) dsdacstp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,11) +1,instr(tab.dsxml,'#',1,12)-instr(tab.dsxml,'#',1,11)-1) vlestour,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,12) +1,instr(tab.dsxml,'#',1,13)-instr(tab.dsxml,'#',1,12)-1) vlsdbltl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,13) +1,instr(tab.dsxml,'#',1,14)-instr(tab.dsxml,'#',1,13)-1) vlstotal,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAT226'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+       BEGIN
+         BEGIN
+           FOR r_crrl2261 IN c_crrl2261  
+           LOOP
+               --Criar registro na crat226
+               vr_tab_crat226(r_crrl2261.vr_indice).cdagenci:= r_crrl2261.cdagenci;
+               vr_tab_crat226(r_crrl2261.vr_indice).nrdconta:= r_crrl2261.nrdconta;
+               vr_tab_crat226(r_crrl2261.vr_indice).nmprimtl:= r_crrl2261.nmprimtl;
+               vr_tab_crat226(r_crrl2261.vr_indice).cdempres:= r_crrl2261.cdempres;
+               vr_tab_crat226(r_crrl2261.vr_indice).qtddsdev:= r_crrl2261.qtddsdev;
+               vr_tab_crat226(r_crrl2261.vr_indice).vlsddisp:= r_crrl2261.vlsddisp; 
+               vr_tab_crat226(r_crrl2261.vr_indice).vllimcre:= r_crrl2261.vllimcre;
+               vr_tab_crat226(r_crrl2261.vr_indice).cdturnos:= r_crrl2261.cdturnos;
+               vr_tab_crat226(r_crrl2261.vr_indice).tpvincul:= r_crrl2261.tpvincul;
+               vr_tab_crat226(r_crrl2261.vr_indice).dsdacstp:= r_crrl2261.dsdacstp;
+               vr_tab_crat226(r_crrl2261.vr_indice).vlestour:= r_crrl2261.vlestour;
+               vr_tab_crat226(r_crrl2261.vr_indice).vlsdbltl:= r_crrl2261.vlsdbltl;
+               vr_tab_crat226(r_crrl2261.vr_indice).vlstotal:= r_crrl2261.vlstotal;                                             
+           END LOOP;
+         EXCEPTION
+           WHEN OTHERS THEN
+              pr_des_erro:= 'Erro pc_grava_tab_men_crrl226: '||sqlerrm;
+         END;
+       END pc_grava_tab_men_crrl226;
+       
+       PROCEDURE pc_grava_tab_men_crrl007 (pr_cdcooper in tbgen_batch_relatorio_wrk.cdcooper%type,
+                                           pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type,
+                                           pr_des_erro out varchar2) IS
+       --  VR_TAB_CRAT007                                          
+       cursor c_crrl007 is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrdconta,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) nmprimtl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) qtddsdev,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,5) +1,instr(tab.dsxml,'#',1,6)-instr(tab.dsxml,'#',1,5)-1) vlsddisp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,6) +1,instr(tab.dsxml,'#',1,7)-instr(tab.dsxml,'#',1,6)-1) vllimcre,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,7) +1,instr(tab.dsxml,'#',1,8)-instr(tab.dsxml,'#',1,7)-1) nrdofone,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,8) +1,instr(tab.dsxml,'#',1,9)-instr(tab.dsxml,'#',1,8)-1) vlestour,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,9) +1,instr(tab.dsxml,'#',1,10)-instr(tab.dsxml,'#',1,9)-1) vlsdbltl,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,10) +1,instr(tab.dsxml,'#',1,11)-instr(tab.dsxml,'#',1,10)-1) qtcompbb,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,11) +1,instr(tab.dsxml,'#',1,12)-instr(tab.dsxml,'#',1,11)-1) vlcompbb,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,12) +1,instr(tab.dsxml,'#',1,13)-instr(tab.dsxml,'#',1,12)-1) qtcmpbcb,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,13) +1,instr(tab.dsxml,'#',1,14)-instr(tab.dsxml,'#',1,13)-1) vlcmpbcb,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,14) +1,instr(tab.dsxml,'#',1,15)-instr(tab.dsxml,'#',1,14)-1) qtcmpctl,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,15) +1,instr(tab.dsxml,'#',1,16)-instr(tab.dsxml,'#',1,15)-1) vlcmpctl,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,16) +1,instr(tab.dsxml,'#',1,17)-instr(tab.dsxml,'#',1,16)-1) qtcstdct,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,17) +1,instr(tab.dsxml,'#',1,18)-instr(tab.dsxml,'#',1,17)-1) vlcstdct,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,18) +1,instr(tab.dsxml,'#',1,19)-instr(tab.dsxml,'#',1,18)-1) flsldapl,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,19) +1,instr(tab.dsxml,'#',1,20)-instr(tab.dsxml,'#',1,19)-1) flgdevolu_autom,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,20) +1,instr(tab.dsxml,'#',1,21)-instr(tab.dsxml,'#',1,20)-1) qtdevolu,                                                                                    
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAT007'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+       
+       --  VR_TAB_CRAT071 
+       cursor c_crrl0071 is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrdconta,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) cdempres,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) nmprimtl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,5) +1,instr(tab.dsxml,'#',1,6)-instr(tab.dsxml,'#',1,5)-1) vlsddisp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,6) +1,instr(tab.dsxml,'#',1,7)-instr(tab.dsxml,'#',1,6)-1) cdturnos,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,7) +1,instr(tab.dsxml,'#',1,8)-instr(tab.dsxml,'#',1,7)-1) vlstotal,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,8) +1,instr(tab.dsxml,'#',1,9)-instr(tab.dsxml,'#',1,8)-1) dsdacstp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,9) +1,instr(tab.dsxml,'#',1,10)-instr(tab.dsxml,'#',1,9)-1) nrdofone,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAT071'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;  
+   
+               
+       -- VR_TAB_TOT_AGNSDDIS
+       cursor c_agnsddis is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_TOT_AGNSDDIS'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;        
+               
+       -- VR_TAB_TOT_AGNVLLIM
+       cursor c_agnvllim is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_TOT_AGNVLLIM'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;        
+               
+       -- VR_TAB_TOT_AGNSDBTL
+       cursor c_agnsdbtl is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_TOT_AGNSDBTL'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;     
+                  
+       -- VR_TAB_TOT_VLCSTDCT
+       cursor c_vlcstdct is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_TOT_VLCSTDCT'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;        
+
+       --VR_TAB_TOT_QTCSTDCT
+       cursor c_qtcstdct is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_TOT_QTCSTDCT'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;       
+         
+       -- VR_TAB_REL_AGNSDDIS
+       cursor c_ragnsddis is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_AGNSDDIS'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                         ) tab
+                ) a
+        group by  a.vr_indice;
+
+       -- VR_TAB_REL_AGNVLLIM
+       cursor c_ragnvllim is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_AGNVLLIM'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                         ) tab
+                ) a
+        group by  a.vr_indice;
+
+       -- VR_TAB_REL_AGNSDBTL
+       cursor c_ragnsdbtl is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_AGNSDBTL'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                         ) tab
+                ) a
+        group by  a.vr_indice;        
+              
+         BEGIN
+           FOR r_crrl007 IN c_crrl007  
+           LOOP
+               --Criar registro na crat07
+               vr_tab_crat007(r_crrl007.vr_indice).cdagenci:= r_crrl007.cdagenci;
+               vr_tab_crat007(r_crrl007.vr_indice).nrdconta:= r_crrl007.nrdconta;
+               vr_tab_crat007(r_crrl007.vr_indice).nmprimtl:= r_crrl007.nmprimtl;
+               vr_tab_crat007(r_crrl007.vr_indice).qtddsdev:= r_crrl007.qtddsdev;
+               vr_tab_crat007(r_crrl007.vr_indice).vlsddisp:= r_crrl007.vlsddisp;
+               vr_tab_crat007(r_crrl007.vr_indice).vllimcre:= r_crrl007.vllimcre; 
+               vr_tab_crat007(r_crrl007.vr_indice).nrdofone:= r_crrl007.nrdofone;
+               vr_tab_crat007(r_crrl007.vr_indice).vlestour:= r_crrl007.vlestour;
+               vr_tab_crat007(r_crrl007.vr_indice).vlsdbltl:= r_crrl007.vlsdbltl;
+               vr_tab_crat007(r_crrl007.vr_indice).qtcompbb:= r_crrl007.qtcompbb;
+               vr_tab_crat007(r_crrl007.vr_indice).vlcompbb:= r_crrl007.vlcompbb;
+               vr_tab_crat007(r_crrl007.vr_indice).qtcmpbcb:= r_crrl007.qtcmpbcb;
+               vr_tab_crat007(r_crrl007.vr_indice).vlcmpbcb:= r_crrl007.vlcmpbcb;                                             
+               vr_tab_crat007(r_crrl007.vr_indice).qtcmpctl:= r_crrl007.qtcmpctl;                                             
+               vr_tab_crat007(r_crrl007.vr_indice).vlcmpctl:= r_crrl007.vlcmpctl;                                             
+               vr_tab_crat007(r_crrl007.vr_indice).qtcstdct:= r_crrl007.qtcstdct;                                             
+               vr_tab_crat007(r_crrl007.vr_indice).vlcstdct:= r_crrl007.vlcstdct;                                             
+               vr_tab_crat007(r_crrl007.vr_indice).flsldapl:= r_crrl007.flsldapl;                                             
+               vr_tab_crat007(r_crrl007.vr_indice).flgdevolu_autom:= r_crrl007.flgdevolu_autom;                                             
+               vr_tab_crat007(r_crrl007.vr_indice).qtdevolu:= r_crrl007.qtdevolu;                                             
+           END LOOP;
+           --
+           
+           -- VR_TAB_CRAT071
+           FOR r_crrl0071 IN c_crrl0071  
+           LOOP
+               --Criar registro na crat071
+               vr_tab_crat071(r_crrl0071.vr_indice).cdagenci:= r_crrl0071.cdagenci;
+               vr_tab_crat071(r_crrl0071.vr_indice).nrdconta:= r_crrl0071.nrdconta;
+               vr_tab_crat071(r_crrl0071.vr_indice).cdempres:= r_crrl0071.cdempres;
+               vr_tab_crat071(r_crrl0071.vr_indice).nmprimtl:= r_crrl0071.nmprimtl;
+               vr_tab_crat071(r_crrl0071.vr_indice).vlsddisp:= r_crrl0071.vlsddisp;
+               vr_tab_crat071(r_crrl0071.vr_indice).cdturnos:= r_crrl0071.cdturnos; 
+               vr_tab_crat071(r_crrl0071.vr_indice).vlstotal:= r_crrl0071.vlstotal;
+               vr_tab_crat071(r_crrl0071.vr_indice).dsdacstp:= r_crrl0071.dsdacstp;
+               vr_tab_crat071(r_crrl0071.vr_indice).nrdofone:= r_crrl0071.nrdofone;
+           END LOOP;
+           
+           
+            -- VR_TAB_TOT_AGNSDDIS
+           FOR r_agnsddis IN c_agnsddis 
+           LOOP
+               --Criar registro na vr_tab_rel_vladiclq
+               vr_tab_tot_agnsddis(r_agnsddis.vr_indice):= r_agnsddis.vr_total;
+           END LOOP;
+           
+            -- VR_TAB_TOT_AGNVLLIM
+           FOR r_agnvllim IN c_agnvllim
+           LOOP
+               --Criar registro na vr_tab_rel_vladiclq
+               vr_tab_tot_agnvllim(r_agnvllim.vr_indice):= r_agnvllim.vr_total;
+           END LOOP;
+
+            -- VR_TAB_TOT_AGNSDBTL
+           FOR r_agnsdbtl IN c_agnsdbtl
+           LOOP
+               --Criar registro na vr_tab_rel_vladiclq
+               vr_tab_tot_agnsdbtl(r_agnsdbtl.vr_indice):= r_agnsdbtl.vr_total;
+           END LOOP;
+
+            -- VR_TAB_TOT_VLCSTDCT
+           FOR r_vlcstdct IN c_vlcstdct
+           LOOP
+               --Criar registro na vr_tab_rel_vladiclq
+               vr_tab_tot_vlcstdct(r_vlcstdct.vr_indice):= r_vlcstdct.vr_total;
+           END LOOP;
+           
+           -- VR_TAB_TOT_QTCSTDCT
+           FOR r_qtcstdct IN c_qtcstdct
+           LOOP
+               --Criar registro na vr_tab_rel_vladiclq
+               vr_tab_tot_qtcstdct(r_qtcstdct.vr_indice):= r_qtcstdct.vr_total;
+           END LOOP;
+           
+           -- VR_TAB_REL_AGNSDDIS
+           FOR r_ragnsddis IN c_ragnsddis  
+           LOOP
+               --Criar registro na vr_tab_rel_vlcntinv
+               vr_tab_rel_agnsddis(r_ragnsddis.vr_indice):= r_ragnsddis.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_AGNVLLIM
+           FOR r_ragnvllim IN c_ragnvllim  
+           LOOP
+               --Criar registro na vr_tab_rel_vlcntinv
+               vr_tab_rel_agnvllim(r_ragnvllim.vr_indice):= r_ragnvllim.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_AGNSDBTL
+           FOR r_ragnsdbtl IN c_ragnsdbtl  
+           LOOP
+               --Criar registro na vr_tab_rel_vlcntinv
+               vr_tab_rel_agnsdbtl(r_ragnsdbtl.vr_indice):= r_ragnsdbtl.vr_total;
+           END LOOP;
+                      
+         EXCEPTION
+           WHEN OTHERS THEN
+              pr_des_erro:= 'Erro pc_grava_tab_men_crrl007 '||sqlerrm;
+       END pc_grava_tab_men_crrl007;
+       
+       PROCEDURE pc_grava_tab_men_crrl006 (pr_cdcooper in tbgen_batch_relatorio_wrk.cdcooper%type,
+                                           pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type,
+                                           pr_des_erro out varchar2) IS
+       -- VR_TAB_CRAT006                                           
+       cursor c_crrl0061 is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrdconta,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) nmprimtl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) vlsaqmax,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,5) +1,instr(tab.dsxml,'#',1,6)-instr(tab.dsxml,'#',1,5)-1) vlsddisp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,6) +1,instr(tab.dsxml,'#',1,7)-instr(tab.dsxml,'#',1,6)-1) vllimcre,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,7) +1,instr(tab.dsxml,'#',1,8)-instr(tab.dsxml,'#',1,7)-1) vlsdbltl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,8) +1,instr(tab.dsxml,'#',1,9)-instr(tab.dsxml,'#',1,8)-1) vlsdchsl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,9) +1,instr(tab.dsxml,'#',1,10)-instr(tab.dsxml,'#',1,9)-1) vlstotal,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,10) +1,instr(tab.dsxml,'#',1,11)-instr(tab.dsxml,'#',1,10)-1) vlblqjud,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,11) +1,instr(tab.dsxml,'#',1,12)-instr(tab.dsxml,'#',1,11)-1) dsdacstp,                            
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,12) +1,instr(tab.dsxml,'#',1,13)-instr(tab.dsxml,'#',1,12)-1) vr_indice                            
+         from (select wrk.dschave dsxml
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAT006'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+       -----------------------------------------
+       -- DEM
+       -----------------------------------------
+       -- VR_TAB_DEM_AGPSDMAX
+       cursor c_dagpsdmax is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_DEM_AGPSDMAX'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;  
+
+       -- VR_TAB_DEM_AGPSDDIS
+       cursor c_dagpsddis is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_DEM_AGPSDDIS'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;  
+
+       -- VR_TAB_DEM_AGPVLLIM
+       cursor c_dagpvllim is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_DEM_AGPVLLIM'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;  
+
+       -- VR_TAB_DEM_AGPSDBTL
+       cursor c_dagpsdbtl is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_DEM_AGPSDBTL'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;  
+
+       -- VR_TAB_DEM_AGPSDCHS
+       cursor c_dagpsdchs is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_DEM_AGPSDCHS'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;  
+
+       -- VR_TAB_DEM_AGPSDSTL
+       cursor c_dagpsdstl is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_DEM_AGPSDSTL'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;  
+
+       -- VR_TAB_DEM_AGPVLBJD
+       cursor c_dagpvlbjd is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_DEM_AGPVLBJD'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;  
+
+       -----------------------------------------
+       -- REL
+       -----------------------------------------
+       -- VR_TAB_REL_AGPSDMAX
+       cursor c_ragpsdmax is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_AGPSDMAX'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                         ) tab
+                ) a
+        group by  a.vr_indice;
+               
+       -- VR_TAB_REL_AGPSDDIS
+       cursor c_ragpsddis is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_AGPSDDIS'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                         ) tab
+                ) a
+        group by  a.vr_indice;
+
+       -- VR_TAB_REL_AGPVLLIM
+       cursor c_ragpvllim is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_AGPVLLIM'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab
+                ) a
+        group by  a.vr_indice;
+
+       -- VR_TAB_REL_AGPSDBTL
+       cursor c_ragpsdbtl is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_AGPSDBTL'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab  
+                ) a
+        group by  a.vr_indice;
+
+       -- VR_TAB_REL_AGPSDCHS
+       cursor c_ragpsdchs is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_AGPSDCHS'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab  
+                ) a
+        group by  a.vr_indice;
+
+       -- VR_TAB_REL_AGPSDSTL
+       cursor c_ragpsdstl is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_AGPSDSTL'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab
+                ) a
+        group by  a.vr_indice;
+
+       -- VR_TAB_REL_AGPSDBJD
+       cursor c_ragpsdbjd is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_AGPSDBJD'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab  
+                ) a
+        group by  a.vr_indice;
+               
+
+       -- VR_TAB_REL_VLSLDLIQ
+       cursor c_rvlsldliq is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_VLSLDLIQ'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab  
+                ) a
+        group by  a.vr_indice;
+
+       -- VR_TAB_REL_VLSUTILI
+       cursor c_rvlsutili is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_VLSUTILI'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab
+                ) a
+        group by  a.vr_indice;
+                        
+
+       -- VR_TAB_REL_VLSAQBLQ
+       cursor c_rvlsaqblq is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_VLSAQBLQ'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab
+                ) a
+        group by  a.vr_indice;
+                 
+
+       -- VR_TAB_REL_VLSADIAN
+       cursor c_rvlsadian is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_VLSADIAN'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab
+                ) a
+        group by  a.vr_indice;
+                         
+
+       -- VR_TAB_REL_VLADICLQ
+       cursor c_rvladiclq is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_VLADICLQ'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab
+                ) a
+        group by  a.vr_indice;
+                 
+               
+       -- VR_TAB_REL_VLCNTINV
+       cursor c_rvlcntinv is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_VLCNTINV'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab
+                ) a
+        group by  a.vr_indice;
+        
+       -- VR_TAB_REL_VLBLQJUD
+       cursor c_vlblqjud is
+       select sum(a.vr_total) vr_total, a.vr_indice
+         from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) vr_total,
+                      tab.dschave vr_indice
+                 from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                              wrk.dschave 
+                         from tbgen_batch_relatorio_wrk wrk
+                        where wrk.cdcooper    = pr_cdcooper
+                          and wrk.cdprograma  = 'CRPS005'
+                          and wrk.dsrelatorio = 'VR_TAB_REL_VLBLQJUD'
+                          and wrk.dtmvtolt    = pr_dtmvtolt
+                          and wrk.cdagenci    = 99999
+                          and wrk.nrdconta    = 9999999999
+                       ) tab 
+         ) a
+        group by  a.vr_indice;                       
+                       
+       -- VR_TAB_TOTAIS                    
+       -- VR_TAB_TOTAIS                    
+       cursor c_totais is
+       select sum(a.vltttfis) vltttfis,
+              sum(a.vltttjur) vltttjur,
+              a.cdlcremp,
+              a.tipo,
+              a.vr_indice
+        from (select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdlcremp,
+                     substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) tipo,
+                     substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) vltttfis,
+                     substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) vltttjur,
+                     tab.dschave vr_indice
+                from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                             wrk.dschave 
+                        from tbgen_batch_relatorio_wrk wrk
+                       where wrk.cdcooper    = pr_cdcooper
+                         and wrk.cdprograma  = 'CRPS005'
+                         and wrk.dsrelatorio = 'VR_TAB_TOTAIS'
+                         and wrk.dtmvtolt    = pr_dtmvtolt
+                         and wrk.cdagenci    = 99999
+                         and wrk.nrdconta    = 9999999999
+                       ) tab
+               )a
+         group by  a.cdlcremp,
+                   a.tipo,
+                   a.vr_indice;
+
+
+       -- VR_TAB_DETALHES                    
+       cursor c_detalhes is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrdconta,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) nmprimtl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) cdlcremp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,5) +1,instr(tab.dsxml,'#',1,6)-instr(tab.dsxml,'#',1,5)-1) nrctremp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,6) +1,instr(tab.dsxml,'#',1,7)-instr(tab.dsxml,'#',1,6)-1) dtmvtolt,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,7) +1,instr(tab.dsxml,'#',1,8)-instr(tab.dsxml,'#',1,7)-1) vlemprst,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,8) +1,instr(tab.dsxml,'#',1,9)-instr(tab.dsxml,'#',1,8)-1) vlsdeved,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,9) +1,instr(tab.dsxml,'#',1,10)-instr(tab.dsxml,'#',1,9)-1) vr_indice
+         from (select wrk.dschave dsxml
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_DETALHES'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+
+       -- VR_TAB_ATRASADOS                    
+       cursor c_atrasados is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrdconta,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) cdlcremp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) nrctremp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,5) +1,instr(tab.dsxml,'#',1,6)-instr(tab.dsxml,'#',1,5)-1) dtultpag,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,6) +1,instr(tab.dsxml,'#',1,7)-instr(tab.dsxml,'#',1,6)-1) vlsdeved,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,7) +1,instr(tab.dsxml,'#',1,8)-instr(tab.dsxml,'#',1,7)-1) vr_indice
+         from (select wrk.dschave dsxml
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_ATRASADOS'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+
+       -- VR_TAB_GN006 
+       cursor c_gn006 is
+        select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+               substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrdconta,
+               substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) vlstotal,
+               tab.dschave vr_indice
+          from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                       wrk.dschave 
+                  from tbgen_batch_relatorio_wrk wrk
+                 where wrk.cdcooper    = pr_cdcooper
+                   and wrk.cdprograma  = 'CRPS005'
+                   and wrk.dsrelatorio = 'VR_TAB_GN006'
+                   and wrk.dtmvtolt    = pr_dtmvtolt
+                   and wrk.cdagenci    = 99999
+                   and wrk.nrdconta    = 9999999999
+                ) tab;               
+       BEGIN
+         BEGIN
+           FOR r_crrl0061 IN c_crrl0061  
+           LOOP
+               --Criar registro na crat372
+               vr_tab_crat006(r_crrl0061.vr_indice).cdagenci:= r_crrl0061.cdagenci;
+               vr_tab_crat006(r_crrl0061.vr_indice).nrdconta:= r_crrl0061.nrdconta;
+               vr_tab_crat006(r_crrl0061.vr_indice).nmprimtl:= r_crrl0061.nmprimtl;
+               vr_tab_crat006(r_crrl0061.vr_indice).vlsaqmax:= r_crrl0061.vlsaqmax;
+               vr_tab_crat006(r_crrl0061.vr_indice).vlsddisp:= r_crrl0061.vlsddisp;
+               vr_tab_crat006(r_crrl0061.vr_indice).vllimcre:= r_crrl0061.vllimcre; 
+               vr_tab_crat006(r_crrl0061.vr_indice).vlsdbltl:= r_crrl0061.vlsdbltl;
+               vr_tab_crat006(r_crrl0061.vr_indice).vlsdchsl:= r_crrl0061.vlsdchsl;
+               vr_tab_crat006(r_crrl0061.vr_indice).vlstotal:= r_crrl0061.vlstotal;
+               vr_tab_crat006(r_crrl0061.vr_indice).vlblqjud:= r_crrl0061.vlblqjud;                                             
+               vr_tab_crat006(r_crrl0061.vr_indice).dsdacstp:= r_crrl0061.dsdacstp;                                                            
+           END LOOP;
+           
+           ------------------------------------------
+           -- DEM
+           ------------------------------------------
+           -- VR_TAB_DEM_AGPSDMAX
+           FOR r_dagpsdmax IN c_dagpsdmax  
+           LOOP
+               --Criar registro na vr_tab_dem_agpsdmax
+               vr_tab_dem_agpsdmax(r_dagpsdmax.vr_indice):= r_dagpsdmax.vr_total;
+           END LOOP;
+
+           -- VR_TAB_DEM_AGPSDDIS
+           FOR r_dagpsddis IN c_dagpsddis  
+           LOOP
+               --Criar registro na vr_tab_dem_agpvllim
+               vr_tab_dem_agpsddis(r_dagpsddis.vr_indice):= r_dagpsddis.vr_total;
+           END LOOP;
+
+           -- VR_TAB_DEM_AGPVLLIM
+           FOR r_dagpvllim IN c_dagpvllim  
+           LOOP
+               --Criar registro na vr_tab_dem_agpvllim
+               vr_tab_dem_agpvllim(r_dagpvllim.vr_indice):= r_dagpvllim.vr_total;
+           END LOOP;
+
+           -- VR_TAB_DEM_AGPSDBTL
+           FOR r_dagpsdbtl IN c_dagpsdbtl  
+           LOOP
+               --Criar registro na vr_tab_dem_agpsdbtl
+               vr_tab_dem_agpsdbtl(r_dagpsdbtl.vr_indice):= r_dagpsdbtl.vr_total;
+           END LOOP;
+
+           -- VR_TAB_DEM_AGPSDCHS
+           FOR r_dagpsdchs IN c_dagpsdchs  
+           LOOP
+               --Criar registro na vr_tab_dem_agpsdchs
+               vr_tab_dem_agpsdchs(r_dagpsdchs.vr_indice):= r_dagpsdchs.vr_total;
+           END LOOP;
+
+           -- VR_TAB_DEM_AGPSDSTL
+           FOR r_dagpsdstl IN c_dagpsdstl  
+           LOOP
+               --Criar registro na vr_tab_dem_agpsdstl
+               vr_tab_dem_agpsdstl(r_dagpsdstl.vr_indice):= r_dagpsdstl.vr_total;
+           END LOOP;
+
+           -- VR_TAB_DEM_AGPVLBJD
+           FOR r_dagpvlbjd IN c_dagpvlbjd  
+           LOOP
+               --Criar registro na vr_tab_dem_agpvlbjd
+               vr_tab_dem_agpvlbjd(r_dagpvlbjd.vr_indice):= r_dagpvlbjd.vr_total;
+           END LOOP;
+          
+           -------------------------------------
+           -- REL
+           -------------------------------------
+           --VR_TAB_REL_AGPSDMAX
+           FOR r_ragpsdmax IN c_ragpsdmax  
+           LOOP
+               --Criar registro na vr_tab_rel_agpsddis
+               vr_tab_rel_agpsdmax(r_ragpsdmax.vr_indice):= r_ragpsdmax.vr_total;
+           END LOOP;
+           
+           -- VR_TAB_REL_AGPSDDIS
+           FOR r_ragpsddis IN c_ragpsddis  
+           LOOP
+               --Criar registro na vr_tab_rel_agpsddis
+               vr_tab_rel_agpsddis(r_ragpsddis.vr_indice):= r_ragpsddis.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_AGPVLLIM
+           FOR r_ragpvllim IN c_ragpvllim  
+           LOOP
+               --Criar registro na vr_tab_rel_agpvllim
+               vr_tab_rel_agpvllim(r_ragpvllim.vr_indice):= r_ragpvllim.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_AGPSDBTL
+           FOR r_ragpsdbtl IN c_ragpsdbtl  
+           LOOP
+               --Criar registro na vr_tab_rel_agpvllim
+               vr_tab_rel_agpsdbtl(r_ragpsdbtl.vr_indice):= r_ragpsdbtl.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_AGPSDCHS
+           FOR r_ragpsdchs IN c_ragpsdchs  
+           LOOP
+               --Criar registro na vr_tab_rel_agpsdchs
+               vr_tab_rel_agpsdchs(r_ragpsdchs.vr_indice):= r_ragpsdchs.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_AGPSDSTL
+           FOR r_ragpsdstl IN c_ragpsdstl  
+           LOOP
+               --Criar registro na vr_tab_rel_agpsdstl
+               vr_tab_rel_agpsdstl(r_ragpsdstl.vr_indice):= r_ragpsdstl.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_AGPSDBJD
+           FOR r_ragpsdbjd IN c_ragpsdbjd
+           LOOP
+               --Criar registro na vr_tab_rel_agpsdbjd
+               vr_tab_rel_agpsdbjd(r_ragpsdbjd.vr_indice):= r_ragpsdbjd.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_VLSLDLIQ
+           FOR r_rvlsldliq IN c_rvlsldliq  
+           LOOP
+               --Criar registro na vr_tab_rel_vlsldliq
+               vr_tab_rel_vlsldliq(r_rvlsldliq.vr_indice):= r_rvlsldliq.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_VLSUTILI
+           FOR r_rvlsutili IN c_rvlsutili  
+           LOOP
+               --Criar registro na vr_tab_rel_vlsutili
+               vr_tab_rel_vlsutili(r_rvlsutili.vr_indice):= r_rvlsutili.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_VLSAQBLQ
+           FOR r_rvlsaqblq IN c_rvlsaqblq  
+           LOOP
+               --Criar registro na vr_tab_rel_vlsaqblq
+               vr_tab_rel_vlsaqblq(r_rvlsaqblq.vr_indice):= r_rvlsaqblq.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_VLSADIAN
+           FOR r_rvlsadian IN c_rvlsadian 
+           LOOP
+               --Criar registro na vr_tab_rel_vlsadian
+               vr_tab_rel_vlsadian(r_rvlsadian.vr_indice):= r_rvlsadian.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_VLADICLQ
+           FOR r_rvladiclq IN c_rvladiclq 
+           LOOP
+               --Criar registro na vr_tab_rel_vladiclq
+               vr_tab_rel_vladiclq(r_rvladiclq.vr_indice):= r_rvladiclq.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_VLCNTINV
+           FOR r_rvlcntinv IN c_rvlcntinv  
+           LOOP
+               --Criar registro na vr_tab_rel_vlcntinv
+               vr_tab_rel_vlcntinv(r_rvlcntinv.vr_indice):= r_rvlcntinv.vr_total;
+           END LOOP;
+
+           -- VR_TAB_REL_VLBLQJUD
+           FOR r_vlblqjud IN c_vlblqjud  
+           LOOP
+               --Criar registro na vr_tab_rel_vlcntinv
+               vr_tab_rel_vlblqjud(r_vlblqjud.vr_indice):= r_vlblqjud.vr_total;
+           END LOOP;
+
+           -- VR_TAB_TOTAIS
+           FOR r_totais IN c_totais  
+           LOOP
+               --Criar registro na vr_tab_totais
+               vr_tab_totais(r_totais.vr_indice).cdlcremp:= r_totais.cdlcremp;
+               vr_tab_totais(r_totais.vr_indice).tipo:= r_totais.tipo;
+               vr_tab_totais(r_totais.vr_indice).vltttfis:= r_totais.vltttfis;
+               vr_tab_totais(r_totais.vr_indice).vltttjur:= r_totais.vltttjur;                              
+           END LOOP;
+
+           -- VR_TAB_DETALHES
+           FOR r_detalhes IN c_detalhes  
+           LOOP
+               --Criar registro na vr_tab_detalhes
+               vr_tab_detalhes(r_detalhes.vr_indice).cdagenci:= r_detalhes.cdagenci;
+               vr_tab_detalhes(r_detalhes.vr_indice).nrdconta:= r_detalhes.nrdconta;
+               vr_tab_detalhes(r_detalhes.vr_indice).nmprimtl:= r_detalhes.nmprimtl;
+               vr_tab_detalhes(r_detalhes.vr_indice).cdlcremp:= r_detalhes.cdlcremp;                              
+               vr_tab_detalhes(r_detalhes.vr_indice).nrctremp:= r_detalhes.nrctremp;                              
+               vr_tab_detalhes(r_detalhes.vr_indice).dtmvtolt:= r_detalhes.dtmvtolt;                                                            
+               vr_tab_detalhes(r_detalhes.vr_indice).vlemprst:= r_detalhes.vlemprst;                                             
+               vr_tab_detalhes(r_detalhes.vr_indice).vlsdeved:= r_detalhes.vlsdeved;                    
+           END LOOP;
+
+           -- VR_TAB_ATRASADOS
+           FOR r_atrasados IN c_atrasados  
+           LOOP
+               --Criar registro na vr_tab_atrasados
+               vr_tab_atrasados(r_atrasados.vr_indice).cdagenci:= r_atrasados.cdagenci;
+               vr_tab_atrasados(r_atrasados.vr_indice).nrdconta:= r_atrasados.nrdconta;
+               vr_tab_atrasados(r_atrasados.vr_indice).cdlcremp:= r_atrasados.cdlcremp;
+               vr_tab_atrasados(r_atrasados.vr_indice).nrctremp:= r_atrasados.nrctremp;                              
+               vr_tab_atrasados(r_atrasados.vr_indice).dtultpag:= r_atrasados.dtultpag;                              
+               vr_tab_atrasados(r_atrasados.vr_indice).vlsdeved:= r_atrasados.vlsdeved;                                                            
+           END LOOP;
+
+           -- VR_TAB_GN006
+           FOR r_gn006 IN c_gn006  
+           LOOP
+               --Criar registro na vr_tab_gn006
+               vr_tab_gn006(r_gn006.vr_indice).cdagenci:= r_gn006.cdagenci;
+               vr_tab_gn006(r_gn006.vr_indice).nrdconta:= r_gn006.nrdconta;
+               vr_tab_gn006(r_gn006.vr_indice).vlstotal:= r_gn006.vlstotal;
+           END LOOP;
+    
+         EXCEPTION
+           WHEN OTHERS THEN
+              pr_des_erro:= 'Erro pc_grava_tab_men_crrl006: '||sqlerrm;
+         END;
+       END pc_grava_tab_men_crrl006;
+       
+       
+       PROCEDURE pc_grava_tab_men_crrl372 (pr_cdcooper in tbgen_batch_relatorio_wrk.cdcooper%type,
+                                           pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type,
+                                           pr_des_erro out varchar2) IS
+           
+       -- VR_TAB_CRAT372                                     
+       cursor c_crrl3721 is
+       select substr(tab.dsxml,instr(tab.dsxml,'#',1,1) +1,instr(tab.dsxml,'#',1,2)-instr(tab.dsxml,'#',1,1)-1) cdagenci,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,2) +1,instr(tab.dsxml,'#',1,3)-instr(tab.dsxml,'#',1,2)-1) nrdconta,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,3) +1,instr(tab.dsxml,'#',1,4)-instr(tab.dsxml,'#',1,3)-1) cdempres,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,4) +1,instr(tab.dsxml,'#',1,5)-instr(tab.dsxml,'#',1,4)-1) cdturnos,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,5) +1,instr(tab.dsxml,'#',1,6)-instr(tab.dsxml,'#',1,5)-1) vlsddisp,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,6) +1,instr(tab.dsxml,'#',1,7)-instr(tab.dsxml,'#',1,6)-1) nmprimtl,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,7) +1,instr(tab.dsxml,'#',1,8)-instr(tab.dsxml,'#',1,7)-1) nrdofone,
+              tab.dschave vr_indice
+         from (select dbms_lob.substr(wrk.dsxml,4000,1) dsxml,
+                      wrk.dschave 
+                 from tbgen_batch_relatorio_wrk wrk
+                where wrk.cdcooper    = pr_cdcooper
+                  and wrk.cdprograma  = 'CRPS005'
+                  and wrk.dsrelatorio = 'VR_TAB_CRAT372'
+                  and wrk.dtmvtolt    = pr_dtmvtolt
+                  and wrk.cdagenci    = 99999
+                  and wrk.nrdconta    = 9999999999
+               ) tab;
+       BEGIN
+         BEGIN
+           FOR r_crrl3721 IN c_crrl3721  
+           LOOP
+               --Criar registro na crat372
+               vr_tab_crat372(r_crrl3721.vr_indice).cdagenci:= r_crrl3721.cdagenci;
+               vr_tab_crat372(r_crrl3721.vr_indice).nrdconta:= r_crrl3721.nrdconta;
+               vr_tab_crat372(r_crrl3721.vr_indice).cdempres:= r_crrl3721.cdempres;
+               vr_tab_crat372(r_crrl3721.vr_indice).cdturnos:= r_crrl3721.cdturnos;
+               vr_tab_crat372(r_crrl3721.vr_indice).vlsddisp:= r_crrl3721.vlsddisp;
+               vr_tab_crat372(r_crrl3721.vr_indice).nmprimtl:= r_crrl3721.nmprimtl; 
+               vr_tab_crat372(r_crrl3721.vr_indice).nrdofone:= r_crrl3721.nrdofone;
+           END LOOP;
+         EXCEPTION
+           WHEN OTHERS THEN
+              pr_des_erro:= 'Erro pc_grava_tab_men_crrl372: '||sqlerrm;
+         END;
+       END pc_grava_tab_men_crrl372;    
+       
+          
+       ------------------------------------------------------------------
+       -- Lê as tabelas de memoria e salva os dados na tabela de trabalho
+       -- Projeto Ligeirinho
+       ------------------------------------------------------------------
+       PROCEDURE pc_grava_tab_wrk_geral (pr_des_erro out varchar2) IS
+        -- Grava agencias - VR_TAB_CRAPAGE
+        vr_indice varchar2(50);
+        vr_exc_erro  exception;
+       BEGIN
+        vr_indice := vr_tab_crapage.first;
+        while vr_indice is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_crapage(vr_indice).cdagenci||ds_character_separador||
+                       vr_tab_crapage(vr_indice).nmresage||ds_character_separador;
+           
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CRAPAGE',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_indice,
+                                          pr_dsxml         => vr_ds_xml,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_CRAPAGE - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice:= vr_tab_crapage.next(vr_indice);
+        end loop; -- vr_tab_cratpage
+           
+        -- VR_TAB_CRAPTFC 
+        vr_indice := vr_tab_craptfc.first;
+        while vr_indice is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_craptfc(vr_indice).nrdddtfc||ds_character_separador||
+                       vr_tab_craptfc(vr_indice).nrtelefo||ds_character_separador||
+                       vr_indice||ds_character_separador;
+
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CRAPTFC',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_ds_xml,
+                                          pr_dsxml         => null,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_CRAPTFC - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice:= vr_tab_craptfc.next(vr_indice);
+        end loop; -- vr_tab_craptfc
+        
+        -- VR_TAB_CRAPSLI 
+        vr_indice := vr_tab_crapsli.first;
+        while vr_indice is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_crapsli(vr_indice).vlsddisp||ds_character_separador||
+                       vr_indice||ds_character_separador;
+
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CRAPSLI',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_ds_xml,
+                                          pr_dsxml         => null,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_CRAPSLI - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice:= vr_tab_crapsli.next(vr_indice);
+        end loop; -- vr_tab_crapsli
+        
+        -- VR_TAB_CRAPCOR 
+        vr_indice := vr_tab_crapcor.first;
+        while vr_indice is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_crapcor(vr_indice)||ds_character_separador||
+                       vr_indice||ds_character_separador;
+
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CRAPCOR',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_ds_xml,
+                                          pr_dsxml         => null,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'vr_tab_crapcor - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice:= vr_tab_crapcor.next(vr_indice);
+        end loop; -- vr_tab_crapcor
+
+        -- VR_TAB_CRAPEPR 
+        vr_indice := vr_tab_crapepr.first;
+        while vr_indice is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_crapepr(vr_indice)||ds_character_separador||
+                       vr_indice||ds_character_separador;
+
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CRAPEPR',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_ds_xml,
+                                          pr_dsxml         => null,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_CRAPEPR - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice:= vr_tab_crapepr.next(vr_indice);
+        end loop; -- vr_tab_crapepr
+        
+        -- VR_TAB_CRAPSLD 
+        vr_indice := vr_tab_crapsld.first;
+        while vr_indice is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_crapsld(vr_indice).vlsdbloq||ds_character_separador||
+                       vr_tab_crapsld(vr_indice).vlsdblpr||ds_character_separador||
+                       vr_tab_crapsld(vr_indice).vlsdblfp||ds_character_separador||                                              
+                       vr_tab_crapsld(vr_indice).vlsdchsl||ds_character_separador||
+                       vr_tab_crapsld(vr_indice).vlsddisp||ds_character_separador||
+                       vr_tab_crapsld(vr_indice).vlipmfpg||ds_character_separador||                                              
+                       vr_tab_crapsld(vr_indice).vlipmfap||ds_character_separador||
+                       vr_tab_crapsld(vr_indice).dtdsdclq||ds_character_separador||
+                       vr_tab_crapsld(vr_indice).qtddsdev||ds_character_separador||                                              
+                       vr_tab_crapsld(vr_indice).vlblqjud||ds_character_separador||                                              
+                       vr_tab_crapsld(vr_indice).vlsldtot||ds_character_separador||                                              
+                       vr_tab_crapsld(vr_indice).vr_rowid||ds_character_separador||
+                       vr_indice||ds_character_separador;                                            
+
+                                          
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CRAPSLD',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_ds_xml,
+                                          pr_dsxml         => NULL,
+                                          pr_des_erro      => vr_des_erro);                                          
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_CRAPSLD - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice:= vr_tab_crapsld.next(vr_indice);
+        end loop; -- vr_tab_crapsld
+
+
+        -- Total bloqueado da agencia - VR_TAB_LIS_AGNSDBTL
+        vr_indice := vr_tab_lis_agnsdbtl.first;
+        while vr_indice is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_lis_agnsdbtl(vr_indice)||ds_character_separador||
+                       vr_indice||ds_character_separador;
+        
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_LIS_AGNSDBTL',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_ds_xml,
+                                          pr_dsxml         => null,
+                                          pr_des_erro      => vr_des_erro);
+           if vr_des_erro is not null then
+              vr_des_erro:= 'VR_TAB_LIS_AGNSDBTL - '||vr_des_erro;
+              raise vr_exc_erro;
+           end if;                                            
+           vr_indice:= vr_tab_lis_agnsdbtl.next(vr_indice);
+         end loop;
+        
+        -- Saldo total da agencia - vr_tab_lis_agnsdstl
+        vr_indice := vr_tab_lis_agnsdstl.first;
+        while vr_indice is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_lis_agnsdstl(vr_indice)||ds_character_separador;
+        
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_LIS_AGNSDSTL',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_indice,
+                                          pr_dsxml         => vr_ds_xml,
+                                          pr_des_erro      => vr_des_erro);
+           if vr_des_erro is not null then
+              vr_des_erro:= 'VR_TAB_LIS_AGNSDSTL - '||vr_des_erro;
+              raise vr_exc_erro;
+           end if;                                            
+           vr_indice:= vr_tab_lis_agnsdstl.next(vr_indice);
+         end loop;
+         
+         
+         -- Total disponivel da agencia - vr_tab_lis_agnsddis
+         vr_indice := vr_tab_lis_agnsddis.first;
+         while vr_indice is not null loop
+            vr_ds_xml:= ds_character_separador||
+                        vr_tab_lis_agnsddis(vr_indice)||ds_character_separador||
+                        vr_indice||ds_character_separador;
+        
+            pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                           pr_nmtabmemoria  => 'VR_TAB_LIS_AGNSDDIS',
+                                           pr_dtmvtolt      => vr_dtmvtolt,
+                                           pr_dschave       => vr_ds_xml,
+                                           pr_dsxml         => null,
+                                           pr_des_erro      => vr_des_erro);
+           if vr_des_erro is not null then
+              vr_des_erro:= 'VR_TAB_LIS_AGNSDDIS - '||vr_des_erro;
+              raise vr_exc_erro;
+           end if;                                            
+            vr_indice:= vr_tab_lis_agnsddis.next(vr_indice);
+         end loop;
+         
+         -- Total do limite da agencia - VR_TAB_LIS_AGNVLLIM
+         vr_indice := vr_tab_lis_agnvllim.first;
+         while vr_indice is not null loop
+            vr_ds_xml:= ds_character_separador||
+                        vr_tab_lis_agnvllim(vr_indice)||ds_character_separador||
+                        vr_indice||ds_character_separador;
+        
+            pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                           pr_nmtabmemoria  => 'VR_TAB_LIS_AGNVLLIM',
+                                           pr_dtmvtolt      => vr_dtmvtolt,
+                                           pr_dschave       => vr_ds_xml,
+                                           pr_dsxml         => null,
+                                           pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_LIS_AGNVLLIM - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice:= vr_tab_lis_agnvllim.next(vr_indice);
+         end loop;
+         
+        -- VR_TAB_CONTAB
+        vr_indice := vr_tab_contab.first;
+        while vr_indice is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_contab(vr_indice).cdagenci||ds_character_separador||
+                       vr_tab_contab(vr_indice).con_vlsaqblq||ds_character_separador||
+                       vr_tab_contab(vr_indice).con_vladiant||ds_character_separador||
+                       vr_tab_contab(vr_indice).con_vlutiliz||ds_character_separador;
+           
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CONTAB',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_indice,
+                                          pr_dsxml         => vr_ds_xml,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_CONTAB - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice:= vr_tab_contab.next(vr_indice);
+        end loop; -- vr_tab_contab  
+        
+       EXCEPTION
+         WHEN vr_exc_erro THEN
+            pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_geral)';
+         WHEN OTHERS THEN
+            pr_des_erro:= 'Erro pc_grava_tab_wrk_geral: '||sqlerrm;
+       END pc_grava_tab_wrk_geral;
+
+       ------------------------------------------------------------------
+       -- Lê as tabelas de memoria e salva os dados na tabela de trabalho
+       -- Projeto Ligeirinho
+       ------------------------------------------------------------------
+       PROCEDURE pc_grava_tab_wrk_crrl055 (pr_des_erro out varchar2) IS
+        -- VR_TAB_CRAT055
+        vr_exc_erro  exception;  
+        vr_indice    varchar2(50);      
+       BEGIN
+        vr_indice := vr_tab_crat055.first;
+        while vr_indice is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_crat055(vr_indice).cdagenci||ds_character_separador||
+                       vr_tab_crat055(vr_indice).nrdconta||ds_character_separador||
+                       vr_tab_crat055(vr_indice).nmprimtl||ds_character_separador||
+                       vr_tab_crat055(vr_indice).vlsddisp||ds_character_separador||
+                       vr_tab_crat055(vr_indice).vllimcre||ds_character_separador||
+                       vr_tab_crat055(vr_indice).vlsdbltl||ds_character_separador||
+                       vr_tab_crat055(vr_indice).vlstotal||ds_character_separador||
+                       vr_tab_crat055(vr_indice).dsdacstp||ds_character_separador||
+                       vr_tab_crat055(vr_indice).nrcpfcgc||ds_character_separador||
+                       vr_indice||ds_character_separador;
+                       
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CRAT055',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_ds_xml,
+                                          pr_dsxml         => null,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_CRAT055 - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice:= vr_tab_crat055.next(vr_indice);
+        end loop; -- vr_tab_crat055
+       EXCEPTION
+         WHEN vr_exc_erro THEN
+            pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl055)';
+         WHEN OTHERS THEN
+            pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL055: '||sqlerrm;
+       END pc_grava_tab_wrk_crrl055;
+       
+       ------------------------------------------------------------------
+       -- Lê as tabelas de memoria e salva os dados na tabela de trabalho
+       -- Projeto Ligeirinho
+       ------------------------------------------------------------------
+       PROCEDURE pc_grava_tab_wrk_crrl030 (pr_des_erro out varchar2) IS
+        -- VR_TAB_CRAT225
+        vr_indice varchar2(50);
+        vr_exc_erro  exception;        
+       BEGIN
+        vr_indice_crat030 := vr_tab_crat030.first;
+        while vr_indice_crat030 is not null loop
+           vr_indice:= lpad(vr_tab_crat030(vr_indice_crat030).cdagenci,5,'0')||lpad(vr_tab_crat030(vr_indice_crat030).nrdconta,10,'0');
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_crat030(vr_indice_crat030).cdagenci||ds_character_separador||
+                       vr_tab_crat030(vr_indice_crat030).nrdconta||ds_character_separador||
+                       vr_tab_crat030(vr_indice_crat030).nmprimtl||ds_character_separador||
+                       vr_tab_crat030(vr_indice_crat030).vlsddisp||ds_character_separador||
+                       vr_tab_crat030(vr_indice_crat030).vllimcre||ds_character_separador||
+                       vr_tab_crat030(vr_indice_crat030).vlsdchsl||ds_character_separador||
+                       vr_tab_crat030(vr_indice_crat030).dtdsdclq||ds_character_separador||
+                       vr_tab_crat030(vr_indice_crat030).qtddsdev||ds_character_separador||
+                       vr_tab_crat030(vr_indice_crat030).vlstotal||ds_character_separador||
+                       vr_tab_crat030(vr_indice_crat030).vlsdbltl||ds_character_separador||
+                       vr_indice||ds_character_separador;
+
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CRAT030',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_ds_xml,
+                                          pr_dsxml         => null,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_CRAT030 - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice_crat030:= vr_tab_crat030.next(vr_indice_crat030);
+        end loop; -- vr_tab_crat030
+       EXCEPTION
+         WHEN vr_exc_erro THEN
+            pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl030)';
+         WHEN OTHERS THEN
+            pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL030: '||sqlerrm;
+       END pc_grava_tab_wrk_crrl030;
+       
+     
+       PROCEDURE pc_grava_tab_wrk_crrl225 (pr_des_erro out varchar2) IS
+       -- VR_TAB_CRAT225
+       vr_indice varchar2(50);
+       vr_exc_erro  exception;        
+       BEGIN
+        vr_indice_crat225 := vr_tab_crat225.first;
+        while vr_indice_crat225 is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).cdagenci||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).nrdconta||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).nmprimtl||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).cdempres||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).cdturnos||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).qtddsdev||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).vlsddisp||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).vllimcre||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).nrdofone||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).dsdacstp||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).vlestour||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).vlsdbltl||ds_character_separador||
+                       vr_tab_crat225(vr_indice_crat225).vlstotal||ds_character_separador;                                                                     
+                       
+           vr_indice:= lpad(vr_tab_crat225(vr_indice_crat225).cdagenci,5,'0')||lpad(vr_tab_crat225(vr_indice_crat225).nrdconta,10,'0');
+           
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CRAT225',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_indice,
+                                          pr_dsxml         => vr_ds_xml,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_CRAT225 - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+                                          
+            vr_indice_crat225:= vr_tab_crat225.next(vr_indice_crat225);
+        end loop; -- vr_tab_crat225
+       EXCEPTION
+         WHEN vr_exc_erro THEN
+            pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl225)';
+         WHEN OTHERS THEN
+            pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL225: '||sqlerrm;
+       END pc_grava_tab_wrk_crrl225; 
+       
+      
+       PROCEDURE pc_grava_tab_wrk_crrl226 (pr_des_erro out varchar2) IS
+       -- VR_TAB_CRAT030
+       vr_indice varchar2(50);
+       vr_exc_erro  exception;      
+       BEGIN
+        vr_indice_crat226 := vr_tab_crat226.first;
+        while vr_indice_crat226 is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).cdagenci||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).nrdconta||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).nmprimtl||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).cdempres||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).qtddsdev||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).vlsddisp||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).vllimcre||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).cdturnos||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).tpvincul||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).dsdacstp||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).vlestour||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).vlsdbltl||ds_character_separador||
+                       vr_tab_crat226(vr_indice_crat226).vlstotal||ds_character_separador;                                                                     
+                       
+           vr_indice:= lpad(vr_tab_crat226(vr_indice_crat226).cdagenci,5,'0')||lpad(vr_tab_crat226(vr_indice_crat226).nrdconta,10,'0');
+           
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CRAT226',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_indice,
+                                          pr_dsxml         => vr_ds_xml,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_CRAT226 - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice_crat226:= vr_tab_crat226.next(vr_indice_crat226);
+        end loop; -- vr_tab_crat226
+       EXCEPTION
+         WHEN vr_exc_erro THEN
+            pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl226)';
+         WHEN OTHERS THEN
+            pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL226: '||sqlerrm;
+       END pc_grava_tab_wrk_crrl226; 
+       
+       PROCEDURE pc_grava_tab_wrk_crrl007 (pr_des_erro out varchar2) IS
+        -- VR_TAB_CRAT007
+        vr_indice    varchar2(50);
+        vr_exc_erro  exception;
+        
+       BEGIN
+         vr_indice := vr_tab_crat007.first;
+         while vr_indice is not null loop
+            vr_ds_xml:= ds_character_separador||
+                        vr_tab_crat007(vr_indice).cdagenci||ds_character_separador||
+                        vr_tab_crat007(vr_indice).nrdconta||ds_character_separador||
+                        vr_tab_crat007(vr_indice).nmprimtl||ds_character_separador||
+                        vr_tab_crat007(vr_indice).qtddsdev||ds_character_separador||
+                        vr_tab_crat007(vr_indice).vlsddisp||ds_character_separador||
+                        vr_tab_crat007(vr_indice).vllimcre||ds_character_separador||
+                        vr_tab_crat007(vr_indice).nrdofone||ds_character_separador||
+                        vr_tab_crat007(vr_indice).vlestour||ds_character_separador||
+                        vr_tab_crat007(vr_indice).vlsdbltl||ds_character_separador||
+                        vr_tab_crat007(vr_indice).qtcompbb||ds_character_separador||                      
+                        vr_tab_crat007(vr_indice).vlcompbb||ds_character_separador||                     
+                        vr_tab_crat007(vr_indice).qtcmpbcb||ds_character_separador||                                             
+                        vr_tab_crat007(vr_indice).vlcmpbcb||ds_character_separador||                                            
+                        vr_tab_crat007(vr_indice).qtcmpctl||ds_character_separador||                                            
+                        vr_tab_crat007(vr_indice).vlcmpctl||ds_character_separador||                                            
+                        vr_tab_crat007(vr_indice).qtcstdct||ds_character_separador||                                           
+                        vr_tab_crat007(vr_indice).vlcstdct||ds_character_separador||                                                                    
+                        vr_tab_crat007(vr_indice).flsldapl||ds_character_separador||
+                        vr_tab_crat007(vr_indice).flgdevolu_autom||ds_character_separador||                        
+                        vr_tab_crat007(vr_indice).qtdevolu||ds_character_separador;                       
+                    
+            pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                           pr_nmtabmemoria  => 'VR_TAB_CRAT007',
+                                           pr_dtmvtolt      => vr_dtmvtolt,
+                                           pr_dschave       => vr_indice,
+                                           pr_dsxml         => vr_ds_xml,
+                                           pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_CRAT007 - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_crat007.next(vr_indice);
+         end loop; -- vr_tab_crat007
+         
+         -- VR_TAB_CRAT071
+         vr_indice := vr_tab_crat071.first;
+         while vr_indice is not null loop
+            vr_ds_xml:= ds_character_separador||
+                        vr_tab_crat071(vr_indice).cdagenci||ds_character_separador||
+                        vr_tab_crat071(vr_indice).nrdconta||ds_character_separador||
+                        vr_tab_crat071(vr_indice).cdempres||ds_character_separador||
+                        vr_tab_crat071(vr_indice).nmprimtl||ds_character_separador||
+                        vr_tab_crat071(vr_indice).vlsddisp||ds_character_separador||
+                        vr_tab_crat071(vr_indice).cdturnos||ds_character_separador||
+                        vr_tab_crat071(vr_indice).vlstotal||ds_character_separador||
+                        vr_tab_crat071(vr_indice).dsdacstp||ds_character_separador||
+                        vr_tab_crat071(vr_indice).nrdofone||ds_character_separador;
+
+                    
+            pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                           pr_nmtabmemoria  => 'VR_TAB_CRAT071',
+                                           pr_dtmvtolt      => vr_dtmvtolt,
+                                           pr_dschave       => vr_indice,
+                                           pr_dsxml         => vr_ds_xml,
+                                           pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_CRAT071 - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_crat071.next(vr_indice);
+         end loop; -- vr_tab_crat071
+         
+         -- VR_TAB_TOT_AGNSDDIS
+         vr_indice := vr_tab_tot_agnsddis.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_tot_agnsddis(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_TOT_AGNSDDIS',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_TOT_AGNSDDIS - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_tot_agnsddis.next(vr_indice);
+         end loop;
+         
+         -- VR_TAB_TOT_AGNVLLIM
+         vr_indice := vr_tab_tot_agnvllim.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_tot_agnvllim(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_TOT_AGNVLLIM',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_TOT_AGNVLLIM - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_tot_agnvllim.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_TOT_AGNSDBTL
+         vr_indice := vr_tab_tot_agnsdbtl.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_tot_agnsdbtl(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_TOT_AGNSDBTL',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_TOT_AGNSDBTL - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_tot_agnsdbtl.next(vr_indice);
+         end loop;
+         
+         -- VR_TAB_TOT_VLCSTDCT
+         vr_indice := vr_tab_tot_vlcstdct.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_tot_vlcstdct(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_TOT_VLCSTDCT',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_TOT_VLCSTDCT - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_tot_vlcstdct.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_TOT_QTCSTDCT
+         vr_indice := vr_tab_tot_qtcstdct.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_tot_qtcstdct(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_TOT_QTCSTDCT',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_TOT_QTCSTDCT - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_tot_qtcstdct.next(vr_indice);
+         end loop;
+         
+          -- VR_TAB_REL_AGNSDDIS
+         vr_indice := vr_tab_rel_agnsddis.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_agnsddis(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_AGNSDDIS',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_AGNSDDIS - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_agnsddis.next(vr_indice);
+         end loop;
+         
+          -- VR_TAB_REL_AGNVLLIM
+         vr_indice := vr_tab_rel_agnvllim.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_agnvllim(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_AGNVLLIM',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_AGNVLLIM - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_agnvllim.next(vr_indice);
+         end loop;
+
+          -- VR_TAB_REL_AGNSDBTL
+         vr_indice := vr_tab_rel_agnsdbtl.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_agnsdbtl(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_AGNSDBTL',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_AGNSDBTL - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_agnsdbtl.next(vr_indice);
+         end loop;
+
+       EXCEPTION
+         WHEN vr_exc_erro THEN
+            pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl007)';
+         WHEN OTHERS THEN
+            pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL007: '||sqlerrm;
+       END pc_grava_tab_wrk_crrl007; 
+
+       PROCEDURE pc_grava_tab_wrk_crrl006 (pr_des_erro out varchar2) IS
+        -- VR_TAB_CRAT006
+        vr_indice    varchar2(50);
+        vr_exc_erro  exception;
+        
+       BEGIN
+         vr_indice_crat006 := vr_tab_crat006.first;
+         while vr_indice_crat006 is not null loop
+            vr_indice:= lpad(vr_tab_crat006(vr_indice_crat006).cdagenci,5,'0')||
+                        lpad(vr_tab_crat006(vr_indice_crat006).nrdconta,10,'0');
+            vr_ds_xml:= ds_character_separador||
+                        vr_tab_crat006(vr_indice_crat006).cdagenci||ds_character_separador||
+                        vr_tab_crat006(vr_indice_crat006).nrdconta||ds_character_separador||
+                        vr_tab_crat006(vr_indice_crat006).nmprimtl||ds_character_separador||
+                        vr_tab_crat006(vr_indice_crat006).vlsaqmax||ds_character_separador||
+                        vr_tab_crat006(vr_indice_crat006).vlsddisp||ds_character_separador||
+                        vr_tab_crat006(vr_indice_crat006).vllimcre||ds_character_separador||
+                        vr_tab_crat006(vr_indice_crat006).vlsdbltl||ds_character_separador||
+                        vr_tab_crat006(vr_indice_crat006).vlsdchsl||ds_character_separador||
+                        vr_tab_crat006(vr_indice_crat006).vlstotal||ds_character_separador||
+                        vr_tab_crat006(vr_indice_crat006).vlblqjud||ds_character_separador||                      
+                        vr_tab_crat006(vr_indice_crat006).dsdacstp||ds_character_separador||
+                        vr_indice||ds_character_separador;                    
+                           
+            pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                           pr_nmtabmemoria  => 'VR_TAB_CRAT006',
+                                           pr_dtmvtolt      => vr_dtmvtolt,
+                                           pr_dschave       => vr_ds_xml,
+                                           pr_dsxml         => null,
+                                           pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_CRAT006 - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice_crat006:= vr_tab_crat006.next(vr_indice_crat006);
+         end loop; -- vr_tab_crat006
+          
+         ----------------------------------------------- 
+         -- DEM
+         -----------------------------------------------
+         -- saque maximo da agencia - VR_TAB_DEM_AGPSDMAX
+         vr_indice := vr_tab_dem_agpsdmax.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_dem_agpsdmax(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_DEM_AGPSDMAX',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_DEM_AGPSDMAX - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_dem_agpsdmax.next(vr_indice);
+         end loop;
+
+         -- valor limite da agencia - VR_TAB_DEM_AGPSDDIS
+         vr_indice := vr_tab_dem_agpsddis.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_dem_agpsddis(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_DEM_AGPSDDIS',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_DEM_AGPSDDIS - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_dem_agpsddis.next(vr_indice);
+         end loop;
+
+         -- saldo disponivel da agencia - VR_TAB_DEM_AGPVLLIM
+         vr_indice := vr_tab_dem_agpvllim.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_dem_agpvllim(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_DEM_AGPVLLIM',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_DEM_AGPVLLIM - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_dem_agpvllim.next(vr_indice);
+         end loop;
+   
+         -- saldo bloqueado total da agencia - VR_TAB_DEM_AGPSDBTL
+         vr_indice := vr_tab_dem_agpsdbtl.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_dem_agpsdbtl(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_DEM_AGPSDBTL',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_DEM_AGPSDBTL - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_dem_agpsdbtl.next(vr_indice);
+         end loop;
+
+         -- saldo cheque salario da agencia - VR_TAB_DEM_AGPSDCHS
+         vr_indice := vr_tab_dem_agpsdchs.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_dem_agpsdchs(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_DEM_AGPSDCHS',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_DEM_AGPSDCHS - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_dem_agpsdchs.next(vr_indice);
+         end loop;
+
+         -- saldo total da agencia - VR_TAB_DEM_AGPSDSTL
+         vr_indice := vr_tab_dem_agpsdstl.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_dem_agpsdstl(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_DEM_AGPSDSTL',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_DEM_AGPSDSTL - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_dem_agpsdstl.next(vr_indice);
+         end loop;
+
+         -- saldo bloqueado Judicialmente agencia - VR_TAB_DEM_AGPVLBJD
+         vr_indice := vr_tab_dem_agpvlbjd.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_dem_agpvlbjd(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_DEM_AGPVLBJD',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_DEM_AGPVLBJD - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_dem_agpvlbjd.next(vr_indice);
+         end loop;
+
+         ---------------------------------------------------------
+         -- REL
+         ---------------------------------------------------------
+         -- VR_TAB_REL_AGPSDMAX
+         vr_indice := vr_tab_rel_agpsdmax.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_agpsdmax(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_AGPSDMAX',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_AGPSDMAX - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_agpsdmax.next(vr_indice);
+         end loop;
+         
+         -- VR_TAB_REL_AGPSDDIS
+         vr_indice := vr_tab_rel_agpsddis.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_agpsddis(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_AGPSDDIS',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_AGPSDDIS - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_agpsddis.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_REL_AGPVLLIM
+         vr_indice := vr_tab_rel_agpvllim.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_agpvllim(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_AGPVLLIM',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_AGPVLLIM - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_agpvllim.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_REL_AGPSDBTL
+         vr_indice := vr_tab_rel_agpsdbtl.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_agpsdbtl(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_AGPSDBTL',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_AGPSDBTL - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_agpsdbtl.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_REL_AGPSDCHS
+         vr_indice := vr_tab_rel_agpsdchs.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_agpsdchs(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_AGPSDCHS',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_AGPSDCHS - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_agpsdchs.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_REL_AGPSDSTL
+         vr_indice := vr_tab_rel_agpsdstl.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_agpsdstl(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_AGPSDSTL',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_AGPSDSTL - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_agpsdstl.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_REL_AGPSDBJD
+         vr_indice := vr_tab_rel_agpsdbjd.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_agpsdbjd(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_AGPSDBJD',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_AGPSDBJD - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_agpsdbjd.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_REL_VLSLDLIQ
+         vr_indice := vr_tab_rel_vlsldliq.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_vlsldliq(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_VLSLDLIQ',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_VLSLDLIQ - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_vlsldliq.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_REL_VLSUTILI
+         vr_indice := vr_tab_rel_vlsutili.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_vlsutili(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_VLSUTILI',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_VLSUTILI - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_vlsutili.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_REL_VLSAQBLQ
+         vr_indice := vr_tab_rel_vlsaqblq.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_vlsaqblq(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_VLSAQBLQ',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_VLSAQBLQ - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_vlsaqblq.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_REL_VLSADIAN
+         vr_indice := vr_tab_rel_vlsadian.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_vlsadian(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_VLSADIAN',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_VLSADIAN - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_vlsadian.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_REL_VLADICLQ
+         vr_indice := vr_tab_rel_vladiclq.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_vladiclq(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_VLADICLQ',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_VLADICLQ - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_vladiclq.next(vr_indice);
+         end loop;
+
+         -- VR_TAB_REL_VLCNTINV
+         vr_indice := vr_tab_rel_vlcntinv.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_vlcntinv(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_VLCNTINV',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_VLCNTINV - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_vlcntinv.next(vr_indice);
+         end loop;
+         
+         -- VR_TAB_REL_VLBLQJUD
+         vr_indice := vr_tab_rel_vlblqjud.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_rel_vlblqjud(vr_indice)||ds_character_separador;
+          
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_REL_VLBLQJUD',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_REL_VLBLQJUD - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_rel_vlblqjud.next(vr_indice);
+         end loop;
+         
+         -- VR_TAB_TOTAIS
+         vr_indice_crattotais := vr_tab_totais.first;
+         while vr_indice_crattotais is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_totais(vr_indice_crattotais).cdlcremp||ds_character_separador||
+                         vr_tab_totais(vr_indice_crattotais).tipo||ds_character_separador||
+                         vr_tab_totais(vr_indice_crattotais).vltttfis||ds_character_separador||
+                         vr_tab_totais(vr_indice_crattotais).vltttjur||ds_character_separador;
+                                                                                     
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_TOTAIS',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_indice_crattotais,
+                                            pr_dsxml         => vr_ds_xml,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_TOTAIS - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice_crattotais:= vr_tab_totais.next(vr_indice_crattotais);
+         end loop;        
+
+         -- VR_TAB_DETALHES
+         vr_indice := vr_tab_detalhes.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_detalhes(vr_indice).cdagenci||ds_character_separador||
+                         vr_tab_detalhes(vr_indice).nrdconta||ds_character_separador||
+                         vr_tab_detalhes(vr_indice).nmprimtl||ds_character_separador||
+                         vr_tab_detalhes(vr_indice).cdlcremp||ds_character_separador||
+                         vr_tab_detalhes(vr_indice).nrctremp||ds_character_separador||
+                         vr_tab_detalhes(vr_indice).dtmvtolt||ds_character_separador||
+                         vr_tab_detalhes(vr_indice).vlemprst||ds_character_separador||
+                         vr_tab_detalhes(vr_indice).vlsdeved||ds_character_separador||
+                         vr_indice||ds_character_separador;
+                                                                                     
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_DETALHES',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_ds_xml,
+                                            pr_dsxml         => null,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_DETALHES - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_detalhes.next(vr_indice);
+         end loop;   
+
+         -- VR_TAB_ATRASADOS
+         vr_indice := vr_tab_atrasados.first;
+         while vr_indice is not null loop
+             vr_ds_xml:= ds_character_separador||
+                         vr_tab_atrasados(vr_indice).cdagenci||ds_character_separador||
+                         vr_tab_atrasados(vr_indice).nrdconta||ds_character_separador||
+                         vr_tab_atrasados(vr_indice).cdlcremp||ds_character_separador||
+                         vr_tab_atrasados(vr_indice).nrctremp||ds_character_separador||
+                         vr_tab_atrasados(vr_indice).dtultpag||ds_character_separador||
+                         vr_tab_atrasados(vr_indice).vlsdeved||ds_character_separador||
+                         vr_indice||ds_character_separador;
+                                                                                     
+             pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                            pr_nmtabmemoria  => 'VR_TAB_ATRASADOS',
+                                            pr_dtmvtolt      => vr_dtmvtolt,
+                                            pr_dschave       => vr_ds_xml,
+                                            pr_dsxml         => null,
+                                            pr_des_erro      => vr_des_erro);
+             if vr_des_erro is not null then
+                vr_des_erro:= 'VR_TAB_ATRASADOS - '||vr_des_erro;
+                raise vr_exc_erro;
+             end if;                                            
+             vr_indice:= vr_tab_atrasados.next(vr_indice);
+         end loop;   
+         
+        -- VR_TAB_GN006
+        vr_indice := vr_tab_gn006.first;
+        while vr_indice is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_gn006(vr_indice).cdagenci||ds_character_separador||
+                       vr_tab_gn006(vr_indice).nrdconta||ds_character_separador||
+                       vr_tab_gn006(vr_indice).vlstotal||ds_character_separador;
+           
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_GN006',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_indice,
+                                          pr_dsxml         => vr_ds_xml,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_GN006 - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice:= vr_tab_gn006.next(vr_indice);
+        end loop; -- vr_tab_gn006  
+                  
+       EXCEPTION
+         WHEN vr_exc_erro THEN
+            pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl006)';
+         WHEN OTHERS THEN
+            pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL006: '||sqlerrm;
+       END pc_grava_tab_wrk_crrl006; 
+       
+
+       PROCEDURE pc_grava_tab_wrk_crrl372 (pr_des_erro out varchar2) IS
+        -- VR_TAB_CRAT372
+        vr_indice varchar2(50);
+        vr_exc_erro  exception;      
+       BEGIN
+        vr_indice_crat372 := vr_tab_crat372.first;
+        while vr_indice_crat372 is not null loop
+           vr_ds_xml:= ds_character_separador||
+                       vr_tab_crat372(vr_indice_crat372).cdagenci||ds_character_separador||
+                       vr_tab_crat372(vr_indice_crat372).nrdconta||ds_character_separador||
+                       vr_tab_crat372(vr_indice_crat372).cdempres||ds_character_separador||
+                       vr_tab_crat372(vr_indice_crat372).cdturnos||ds_character_separador||
+                       vr_tab_crat372(vr_indice_crat372).vlsddisp||ds_character_separador||
+                       vr_tab_crat372(vr_indice_crat372).nmprimtl||ds_character_separador||
+                       vr_tab_crat372(vr_indice_crat372).nrdofone||ds_character_separador;
+                       
+           vr_indice:= lpad(vr_tab_crat372(vr_indice_crat372).cdagenci,5,'0')||lpad(vr_tab_crat372(vr_indice_crat372).nrdconta,10,'0');
+           
+           pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
+                                          pr_nmtabmemoria  => 'VR_TAB_CRAT372',
+                                          pr_dtmvtolt      => vr_dtmvtolt,
+                                          pr_dschave       => vr_indice,
+                                          pr_dsxml         => vr_ds_xml,
+                                          pr_des_erro      => vr_des_erro);
+            if vr_des_erro is not null then
+               vr_des_erro:= 'VR_TAB_CRAT372 - '||vr_des_erro;
+               raise vr_exc_erro;
+            end if;                                            
+            vr_indice_crat372:= vr_tab_crat372.next(vr_indice_crat372);
+        end loop; -- vr_tab_crat226
+       EXCEPTION
+         WHEN vr_exc_erro THEN
+            pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl372)';
+         WHEN OTHERS THEN
+            pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL372: '||sqlerrm;
+       END pc_grava_tab_wrk_crrl372; 
+                 
+       
        --Geração do relatório de Maiores Depositantes (crrl055)
        PROCEDURE pc_imprime_crrl055 (pr_des_erro OUT VARCHAR2) IS
 
@@ -2526,6 +5504,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
             vr_index_crapage := vr_tab_crapage.NEXT(vr_index_crapage);
           END LOOP; --vr_tab_crapage
 
+
           --Se for uma cooperativa que deve enviar arquivo
           IF vr_dircptxt IS NOT NULL THEN
             BEGIN
@@ -2554,7 +5533,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
             -- Excluir o arquivo slddev após a cópia
             vr_comando:= 'rm -f '||vr_nom_direto||'/'||vr_nmarqtxt;
             -- Executar o comando no unix
-            GENE0001.pc_OScommand(pr_typ_comando => 'S'
+           GENE0001.pc_OScommand(pr_typ_comando => 'S'
                                  ,pr_des_comando => vr_comando
                                  ,pr_typ_saida   => vr_typ_saida
                                  ,pr_des_saida   => vr_des_erro);
@@ -3300,6 +6279,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                          <med_vlsmnblq>'||to_char(vr_rel_vlsmnblq,'fm999999999g990d00')||'</med_vlsmnblq>');
          --Finaliza agrupador Medias e Inicia Contabilizacao
          /*  Totais para contabilizacao  */
+
+         -- Verifica se está executando ou não em paralelo 
+         -- Se for execução em paralelo atualiza a tabela de memória
+         -- Projeto ligeirinho
+         if pr_idparale = 0 and
+            pr_cdagenci = 0 and
+            vr_inproces > 2 and
+            vr_qtdjobs  > 0 then 
+            vr_tot_vlsaqblq:=  vr_tab_contab(1).con_vlsaqblq;
+            vr_tot_vladiant:=  vr_tab_contab(1).con_vladiant;
+            vr_tot_vlutiliz:=  vr_tab_contab(1).con_vlutiliz;
+         end if;
+         -- Processar todos os registros dos contabilizado             
          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</medias><contabilizacao>');
          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<con_vlutiliz>'||to_char(vr_tot_vlutiliz,'fm999999999g990d00')||'</con_vlutiliz>
                          <con_vlsaqblq>'||to_char(vr_tot_vlsaqblq,'fm999999999g990d00')||'</con_vlsaqblq>
@@ -4451,6 +7443,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          vr_dtmvtoan:= rw_crapdat.dtmvtoan;
          --Ultimo dia do mes anterior
          vr_dtultdia:= rw_crapdat.dtultdia;
+         -- projeto ligeirinho
+         vr_inproces:= rw_crapdat.inproces;
        END IF;
 
 
@@ -4561,72 +7555,282 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            vr_lispnmpo:= vr_lispnmpo ||rw_craplcr.cdlcremp||',';
          END IF;
        END LOOP;
+       -----------------------------------------------------------
+       -- Controle de paralelismo
+       -- projeto ligeirinho
+       ------------------------------------------------------------
+       -- Buscar quantidade parametrizada de Jobs
+       vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
+                                                    ,pr_cdprogra => vr_cdprogra --pr_cdprogra  IN crapprg.cdprogra%TYPE    --> Código do programa
+                                                     );   
 
+        
+       /* Paralelismo visando performance Rodar Somente no processo Noturno */
+       if vr_inproces  > 2 and
+          vr_qtdjobs   > 0 and 
+          pr_cdagenci  = 0 then  
 
-       --Carregar tabela de memoria de telefones
-       FOR rw_craptfc IN cr_craptfc (pr_cdcooper => pr_cdcooper) LOOP
-         --Montar o indice para o vetor de telefone
-         vr_index_craptfc:= LPad(rw_craptfc.cdcooper,10,'0')||
-                            LPad(rw_craptfc.nrdconta,10,'0')||
-                            LPad(rw_craptfc.tptelefo,05,'0');
-         vr_tab_craptfc(vr_index_craptfc).nrdddtfc:=  rw_craptfc.nrdddtfc;
-         vr_tab_craptfc(vr_index_craptfc).nrtelefo:=  rw_craptfc.nrtelefo;
-       END LOOP;
+          -- Gerar o ID para o paralelismo
+          vr_idparale := gene0001.fn_gera_id_paralelo;
+            
+          -- Se houver algum erro, o id vira zerado
+          IF vr_idparale = 0 THEN
+             -- Levantar exceção
+             vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_id_paralelo.';
+             RAISE vr_exc_saida;
+          END IF;
 
-       --Carregar tabela de memoria de titulares da conta
-       FOR rw_crapttl IN cr_crapttl (pr_cdcooper => pr_cdcooper
-                                    ,pr_idseqttl => 1) LOOP
-         --Montar o indice para o vetor de telefone
-         vr_index_crapttl:= LPad(rw_crapttl.cdcooper,10,'0')||
-                            LPad(rw_crapttl.nrdconta,10,'0');
-         vr_tab_crapttl(vr_index_crapttl).cdempres:=  rw_crapttl.cdempres;
-         vr_tab_crapttl(vr_index_crapttl).cdturnos:=  rw_crapttl.cdturnos;
-       END LOOP;
+          --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
+          pc_log_programa(pr_dstiplog   => 'I',    
+                          pr_cdprograma => vr_cdprogra,           
+                          pr_cdcooper   => pr_cdcooper, 
+                          pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_idprglog   => vr_idlog_ini_ger);
 
-       --Carregar tabela de memoria de saldos investimento
-       FOR rw_crapsli IN cr_crapsli (pr_cdcooper => pr_cdcooper
-                                    ,pr_dtrefere => vr_dtultdia) LOOP
-         --Montar indice para selecionar os saldos de investimento
-         vr_index_crapsli:= LPad(pr_cdcooper,10,'0')||LPad(rw_crapsli.nrdconta,10,'0');
-         vr_tab_crapsli(vr_index_crapsli).vlsddisp:= rw_crapsli.vlsddisp;
-       END LOOP;
+          
+          -- Verifica se algum job paralelo executou com erro
+          vr_qterro := 0;
+          vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                        pr_cdprogra    => vr_cdprogra,
+                                                        pr_dtmvtolt    => vr_dtmvtolt,
+                                                        pr_tpagrupador => 1,
+                                                        pr_nrexecucao  => 1);    
 
-       --Carregar tabela de memoria de contra-ordens
-       FOR rw_crapcor IN cr_crapcor (pr_cdcooper => pr_cdcooper
-                                    ,pr_flgativo => 1) LOOP
-         --Montar indice para selecionar os saldos de investimento
-         vr_index_crapcor:= LPad(pr_cdcooper,10,'0')||LPad(rw_crapcor.nrdconta,10,'0');
-         vr_tab_crapcor(vr_index_crapcor):= rw_crapcor.nrdconta;
-       END LOOP;
+          --Limpa a tabela WRK utilizada na geração dos relatórios 
+          --quando o processo é executado em paralelo
+          --somente quando não houver jobs com erro no inicio da execução.
+          -- Projeto ligeirinho
+          if pr_idparale = 0 and
+             vr_qterro = 0 then
+             pc_limpa_tbgen_batch_rel_wrk (pr_cdcooper  => pr_cdcooper,
+                                           pr_dtmvtolt  => vr_dtmvtolt,
+                                           pr_des_erro  => vr_dscritic);
+              -- Testar saida com erro
+              if vr_dscritic is not null then
+                -- Levantar exceçao
+                raise vr_exc_saida;
+              end if;                                
+          end if;
+                                                  
+          -- Retorna as agências
+          for rw_crapass_job in cr_crapass_job (pr_cdcooper => pr_cdcooper
+                                               ,pr_dtmvtolt => vr_dtmvtolt
+                                               ,pr_cdprogra => vr_cdprogra
+                                               ,pr_qterro   => vr_qterro) loop
+                                                      
+            -- Montar o prefixo do código do programa para o jobname
+            vr_jobname := vr_cdprogra ||'_'|| rw_crapass_job.cdagenci || '$';  
 
-       --Carregar tabela de memoria de emprestimos
-       FOR rw_crapepr_conta IN cr_crapepr_conta (pr_cdcooper => pr_cdcooper
-                                                ,pr_inliquid => 0) LOOP
-         --Montar indice para selecionar os saldos de investimento
-         vr_index_crapepr:= LPad(pr_cdcooper,10,'0')||LPad(rw_crapepr_conta.nrdconta,10,'0');
-         vr_tab_crapepr(vr_index_crapepr):= rw_crapepr_conta.nrdconta;
-       END LOOP;
+            -- Cadastra o programa paralelo
+            gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
+                                      ,pr_idprogra => LPAD(rw_crapass_job.cdagenci,3,'0') --> Utiliza a agência como id programa
+                                      ,pr_des_erro => vr_dscritic);
+                                        
+            -- Testar saida com erro
+            if vr_dscritic is not null then
+              -- Levantar exceçao
+              raise vr_exc_saida;
+            end if;     
+            
+            -- Montar o bloco PLSQL que será executado
+            -- Ou seja, executaremos a geração dos dados
+            -- para a agência atual atraves de Job no banco
+            vr_dsplsql := 'DECLARE' || chr(13) || --
+                          '  wpr_stprogra NUMBER;' || chr(13) || --
+                          '  wpr_infimsol NUMBER;' || chr(13) || --
+                          '  wpr_cdcritic NUMBER;' || chr(13) || --
+                          '  wpr_dscritic VARCHAR2(1500);' || chr(13) || --
+                          'BEGIN' || chr(13) || --
+                          '  pc_crps005( '|| pr_cdcooper || ',' ||
+                                             '0'||','||
+                                             rw_crapass_job.cdagenci || ',' ||
+                                             vr_idparale || ',' ||
+                                             ' wpr_stprogra, wpr_infimsol, wpr_cdcritic, wpr_dscritic);' ||
+                          chr(13) || --
+                          'END;'; --  
 
+             -- Faz a chamada ao programa paralelo atraves de JOB
+             gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper  --> Código da cooperativa
+                                   ,pr_cdprogra => vr_cdprogra  --> Código do programa
+                                   ,pr_dsplsql  => vr_dsplsql   --> Bloco PLSQL a executar
+                                   ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
+                                   ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                                   ,pr_jobname  => vr_jobname   --> Nome randomico criado
+                                   ,pr_des_erro => vr_dscritic);    
+                                 
+             -- Testar saida com erro
+             if vr_dscritic is not null then 
+                -- Levantar exceçao
+                raise vr_exc_saida;
+             end if;
+               
+             -- Chama rotina que irá pausar este processo controlador
+             -- caso tenhamos excedido a quantidade de JOBS em execuçao
+             gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                         ,pr_qtdproce => vr_qtdjobs --> Máximo de 10 jobs neste processo
+                                         ,pr_des_erro => vr_dscritic);
+             -- Testar saida com erro
+             if  vr_dscritic is not null then 
+               -- Levantar exceçao
+               raise vr_exc_saida;
+             end if;                                 
+          end loop;
+          
+          -- Chama rotina de aguardo agora passando 0, para esperarmos
+          -- até que todos os Jobs tenha finalizado seu processamento
+          gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                      ,pr_qtdproce => 0
+                                      ,pr_des_erro => vr_dscritic);
+                                        
+          -- Testar saida com erro
+          if  vr_dscritic is not null then 
+            -- Levantar exceçao
+            raise vr_exc_saida;
+          end if;                                  
+                                        
 
-       --Carregar tabela de memória de saldos das contas
-       FOR rw_crapsld_1 IN cr_crapsld (pr_cdcooper => pr_cdcooper) LOOP
-         vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsdbloq:= rw_crapsld_1.vlsdbloq;
-         vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsdblpr:= rw_crapsld_1.vlsdblpr;
-         vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsdblfp:= rw_crapsld_1.vlsdblfp;
-         vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsdchsl:= rw_crapsld_1.vlsdchsl;
-         vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsddisp:= rw_crapsld_1.vlsddisp;
-         vr_tab_crapsld(rw_crapsld_1.nrdconta).vlipmfpg:= rw_crapsld_1.vlipmfpg;
-         vr_tab_crapsld(rw_crapsld_1.nrdconta).vlipmfap:= rw_crapsld_1.vlipmfap;
-         vr_tab_crapsld(rw_crapsld_1.nrdconta).dtdsdclq:= rw_crapsld_1.dtdsdclq;
-         vr_tab_crapsld(rw_crapsld_1.nrdconta).qtddsdev:= rw_crapsld_1.qtddsdev;
-         vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsldtot:= rw_crapsld_1.vlsldtot;
-         vr_tab_crapsld(rw_crapsld_1.nrdconta).vlblqjud:= rw_crapsld_1.vlblqjud;
-       END LOOP;
+          -- Verifica se algum job paralelo executou com erro
+          vr_qterro := 0;
+          vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                        pr_cdprogra    => vr_cdprogra,
+                                                        pr_dtmvtolt    => vr_dtmvtolt,
+                                                        pr_tpagrupador => 1,
+                                                        pr_nrexecucao  => 1);
 
-       --Carregar tabela de memoria com as agencias
+          if vr_qterro > 0 then 
+            vr_cdcritic := 0;
+            vr_dscritic := 'Paralelismo possui job executado com erro. Verificar na tabela tbgen_batch_controle e tbgen_prglog';
+            raise vr_exc_saida;
+          end if;      
+      else
+        if pr_cdagenci <> 0 then
+          vr_tpexecucao := 2;
+        else
+          vr_tpexecucao := 1;
+        end if; 
+          
+        -- Grava controle de batch por agência
+        gene0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper               -- Codigo da Cooperativa
+                                        ,pr_cdprogra    => vr_cdprogra               -- Codigo do Programa
+                                        ,pr_dtmvtolt    => vr_dtmvtolt               -- Data de Movimento
+                                        ,pr_tpagrupador => 1                         -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                        ,pr_cdagrupador => pr_cdagenci               -- Codigo do agrupador conforme (tpagrupador)
+                                        ,pr_cdrestart   => null                      -- Controle do registro de restart em caso de erro na execucao
+                                        ,pr_nrexecucao  => 1                         -- Numero de identificacao da execucao do programa
+                                        ,pr_idcontrole  => vr_idcontrole             -- ID de Controle
+                                        ,pr_cdcritic    => pr_cdcritic               -- Codigo da critica
+                                        ,pr_dscritic    => vr_dscritic              
+                                         );   
+        -- Testar saida com erro
+        if  vr_dscritic is not null then 
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if;                                         
+
+        
+        if pr_cdagenci = 0 and
+           pr_idparale = 0 then
+            --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
+            pc_log_programa(pr_dstiplog   => 'I',    
+                            pr_cdprograma => vr_cdprogra,           
+                            pr_cdcooper   => pr_cdcooper, 
+                            pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_idprglog   => vr_idlog_ini_ger);
+        end if;                  
+        
+        --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
+        pc_log_programa(pr_dstiplog   => 'I',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao,     -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par); 
+                            
+        -- Grava LOG de ocorrência inicial do cursor cr_craprpp
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início - cursor cr_crapage. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces||' - Horário: '||to_char(sysdate,'dd/mm/yyyy hh24:mi:ss'),
+                        PR_IDPRGLOG           => vr_idlog_ini_par);  
+
+       ------------------------------------------------------
+       -- Abrir o cursor das agencias e utilizar a agencia no 
+       -- filtro dos cursores abaixo 
+       -- parâmetro incluído nos cursores abaixo (pr_cdagenci)
+       -- projeto ligeirinho
+       -------------------------------------------------------
        FOR rw_crapage IN cr_crapage (pr_cdcooper => pr_cdcooper) LOOP
-         vr_tab_crapage(rw_crapage.cdagenci).cdagenci:= rw_crapage.cdagenci;
-         vr_tab_crapage(rw_crapage.cdagenci).nmresage:= rw_crapage.nmresage;
+         --Carregar tabela de memoria de telefones
+         FOR rw_craptfc IN cr_craptfc (pr_cdcooper => pr_cdcooper,
+                                       pr_cdagenci => rw_crapage.cdagenci) LOOP 
+           --Montar o indice para o vetor de telefone
+           vr_index_craptfc:= LPad(rw_craptfc.cdcooper,10,'0')||
+                              LPad(rw_craptfc.nrdconta,10,'0')||
+                              LPad(rw_craptfc.tptelefo,05,'0');
+           vr_tab_craptfc(vr_index_craptfc).nrdddtfc:=  rw_craptfc.nrdddtfc;
+           vr_tab_craptfc(vr_index_craptfc).nrtelefo:=  rw_craptfc.nrtelefo;
+         END LOOP;
+
+         --Carregar tabela de memoria de titulares da conta
+         FOR rw_crapttl IN cr_crapttl (pr_cdcooper => pr_cdcooper,
+                                       pr_idseqttl => 1,
+                                       pr_cdagenci => rw_crapage.cdagenci) LOOP
+           --Montar o indice para o vetor de telefone
+           vr_index_crapttl:= LPad(rw_crapttl.cdcooper,10,'0')||
+                              LPad(rw_crapttl.nrdconta,10,'0');
+           vr_tab_crapttl(vr_index_crapttl).cdempres:=  rw_crapttl.cdempres;
+           vr_tab_crapttl(vr_index_crapttl).cdturnos:=  rw_crapttl.cdturnos;
+         END LOOP;
+
+         --Carregar tabela de memoria de saldos investimento
+         FOR rw_crapsli IN cr_crapsli (pr_cdcooper => pr_cdcooper,
+                                       pr_dtrefere => vr_dtultdia,
+                                       pr_cdagenci => rw_crapage.cdagenci) LOOP
+           --Montar indice para selecionar os saldos de investimento
+           vr_index_crapsli:= LPad(pr_cdcooper,10,'0')||LPad(rw_crapsli.nrdconta,10,'0');
+           vr_tab_crapsli(vr_index_crapsli).vlsddisp:= rw_crapsli.vlsddisp;
+         END LOOP;
+
+         --Carregar tabela de memoria de contra-ordens
+         FOR rw_crapcor IN cr_crapcor (pr_cdcooper => pr_cdcooper,
+                                       pr_flgativo => 1,
+                                       pr_cdagenci => rw_crapage.cdagenci) LOOP
+           --Montar indice para selecionar os saldos de investimento
+           vr_index_crapcor:= LPad(pr_cdcooper,10,'0')||LPad(rw_crapcor.nrdconta,10,'0');
+           vr_tab_crapcor(vr_index_crapcor):= rw_crapcor.nrdconta;
+         END LOOP;
+
+         --Carregar tabela de memoria de emprestimos
+         FOR rw_crapepr_conta IN cr_crapepr_conta (pr_cdcooper => pr_cdcooper,
+                                                   pr_inliquid => 0,
+                                                   pr_cdagenci => rw_crapage.cdagenci) LOOP
+           --Montar indice para selecionar os saldos de investimento
+           vr_index_crapepr:= LPad(pr_cdcooper,10,'0')||LPad(rw_crapepr_conta.nrdconta,10,'0');
+           vr_tab_crapepr(vr_index_crapepr):= rw_crapepr_conta.nrdconta;
+         END LOOP;
+
+         --Carregar tabela de memória de saldos das contas
+         FOR rw_crapsld_1 IN cr_crapsld (pr_cdcooper => pr_cdcooper,
+                                         pr_cdagenci => rw_crapage.cdagenci) LOOP
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsdbloq:= rw_crapsld_1.vlsdbloq;
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsdblpr:= rw_crapsld_1.vlsdblpr;
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsdblfp:= rw_crapsld_1.vlsdblfp;
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsdchsl:= rw_crapsld_1.vlsdchsl;
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsddisp:= rw_crapsld_1.vlsddisp;
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).vlipmfpg:= rw_crapsld_1.vlipmfpg;
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).vlipmfap:= rw_crapsld_1.vlipmfap;
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).dtdsdclq:= rw_crapsld_1.dtdsdclq;
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).qtddsdev:= rw_crapsld_1.qtddsdev;
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsldtot:= rw_crapsld_1.vlsldtot;
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).vlblqjud:= rw_crapsld_1.vlblqjud;
+         END LOOP;
+
+         -- projeto ligeirinho abrir o cursor acima para filtar por agencia
+         --Carregar tabela de memoria com as agencias
+         --FOR rw_crapage IN cr_crapage (pr_cdcooper => pr_cdcooper) LOOP
+           vr_tab_crapage(rw_crapage.cdagenci).cdagenci:= rw_crapage.cdagenci;
+           vr_tab_crapage(rw_crapage.cdagenci).nmresage:= rw_crapage.nmresage;
        END LOOP;
 
        --Posicionar no primeiro registro
@@ -4727,7 +7931,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
              END IF;
 
              /* Verifica se ha micro-credito  */
-
              -- Verifica se os valores estao zerados
              IF Nvl(rw_crapsld.vlsdbloq,0) = 0 AND  --> Se o valor bloqueado
                 Nvl(rw_crapsld.vlblqjud,0) = 0 AND  --> Se o valor bloqueado Judicial
@@ -4902,6 +8105,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                END IF;
              END IF;
 
+
              /*  Resumo dos Maiores depositantes  */
 
              --Se o saldo total for maior ou igual valor maior deposito
@@ -4921,6 +8125,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                vr_tab_crat055(vr_index_crat055).vlsddisp:= rw_crapsld.vlsddisp;
                vr_tab_crat055(vr_index_crat055).vlsdbltl:= vr_rel_vlsdbltl;
                vr_tab_crat055(vr_index_crat055).vlstotal:= vr_rel_vlstotal;
+               vr_tab_crat055(vr_index_crat055).vlindice:= vr_index_crat055; -- projeto ligeirinho - guardar o indice para utilizar na copia da tabela wrk para a tabela de memoria
              END IF;
 
              /*  Resumo dos Creditos em Liquidacao  */
@@ -5272,6 +8477,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                        vr_tab_gn099(vr_cdagenci).vladiclq:= 0;
                      END IF;
 
+
                      --Acumular no Total Adiantamento deposito o disponivel + cheque salario + limite credito + bloqueado
                      vr_tab_rel_vlsadian(rw_crapass.inpessoa):= vr_tab_rel_vlsadian(rw_crapass.inpessoa) +
                                                                 (nvl(rw_crapsld.vlsddisp,0) + nvl(rw_crapsld.vlsdchsl,0) +
@@ -5366,6 +8572,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                   END IF;
                 END IF;
               END IF;
+               --Criar saldo contabilizacao no vetor  
+               -- Projeto Ligeirinho
+               vr_tab_contab(vr_cdagenci).cdagenci    := vr_cdagenci;
+               vr_tab_contab(vr_cdagenci).con_vlsaqblq:= vr_tot_vlsaqblq;
+               vr_tab_contab(vr_cdagenci).con_vladiant:= vr_tot_vladiant;
+               vr_tab_contab(vr_cdagenci).con_vlutiliz:= vr_tot_vlutiliz;
+
 
               --linha(1341)
 
@@ -5382,6 +8595,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
               -- 7=CTA APLIC INDIV
               --17=CTA APL.CNJ.ITG
               --18=CTA APL.IND.ITG
+
 
               /* Saldos conta poupanca >= 15,00 ou > 4,00*/
               IF rw_crapsld.vlsddisp >= vr_vlminpop AND rw_crapass.cdtipcta IN (6,7,17,18) THEN
@@ -5694,7 +8908,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                 /* Buscar se conta possui devolucao automatica de cheques ou nao */
 
 
-
                 cada0003.pc_verifica_sit_dev(pr_cdcooper => pr_cdcooper, 
                                              pr_nrdconta => rw_crapass.nrdconta, 
                                              pr_flgdevolu_autom => vr_flgdevolu_autom);
@@ -5996,7 +9209,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                   END IF;
                 END IF;
 
-
                 --Se o tipo de vinculação estiver preenchido e o valor do estouro for maior zero ou
                  --valor saldo disponivel + valor limite credito for negativo
 
@@ -6256,7 +9468,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                       
                     END IF;
                     
-                  EXCEPTION
+                 EXCEPTION
                     WHEN vr_exc_saida THEN
                       RAISE vr_exc_saida;
                     WHEN vr_exc_pula THEN
@@ -6278,12 +9490,112 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                 --Levantar Excecao
                 RAISE vr_exc_saida;
             END;
+            
+        
+            
           END LOOP; --rw_crapass
-
           -- Buscar o próximo registro da tabela
           vr_index_crapage := vr_tab_crapage.NEXT(vr_index_crapage);
         END LOOP; --vr_tab_crapage
+        ------------------------------------------------------------------
+        -- Lê as tabelas de memoria e salva os dados na tabela de trabalho 
+        -- Somente quando for executado por paralelismo
+        -- Projeto Ligeirinho
+        ------------------------------------------------------------------
+        if  pr_idparale > 0 and
+            pr_cdagenci > 0 and
+            vr_inproces > 2 and
+            vr_qtdjobs  > 0 then           
+            pc_log_programa(PR_DSTIPLOG           => 'O',
+                            PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_tpocorrencia       => 4,
+                            pr_dsmensagem         => 'Início grava tabela wrk. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces||' - Horário: '||to_char(sysdate,'dd/mm/yyyy hh24:mi:ss'),
+                            PR_IDPRGLOG           => vr_idlog_ini_par);  
 
+            pc_grava_tab_wrk_geral (pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+            
+            pc_grava_tab_wrk_crrl055 (pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+
+            pc_grava_tab_wrk_crrl030 (pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+
+            pc_grava_tab_wrk_crrl225 (pr_des_erro => vr_dscritic);
+            
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+            
+            pc_grava_tab_wrk_crrl226 (pr_des_erro => vr_dscritic);
+            
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+            
+            pc_grava_tab_wrk_crrl007 (pr_des_erro => vr_dscritic);
+            
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+            
+            pc_grava_tab_wrk_crrl006 (pr_des_erro => vr_dscritic);
+            
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+            
+            pc_grava_tab_wrk_crrl372 (pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+            
+            pc_log_programa(PR_DSTIPLOG           => 'O',
+                            PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_tpocorrencia       => 4,
+                            pr_dsmensagem         => 'Fim grava tabela wrk. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces||' - Horário: '||to_char(sysdate,'dd/mm/yyyy hh24:mi:ss'),
+                            PR_IDPRGLOG           => vr_idlog_ini_par); 
+        end if;                
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 1); 
+                        
+    end if; -- end if paralelismo  - projeto ligeirinho
+  
+    if pr_idparale = 0 then
         
         -- P307 Totaliza conta investimento
         vr_tab_rel_vlcntinv(1) := fn_totalizar_conta_inves(pr_cdcooper => pr_cdcooper
@@ -6295,9 +9607,129 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
         vr_tab_rel_vlcntinv(3) := fn_totalizar_conta_inves(pr_cdcooper => pr_cdcooper
                                                           ,pr_inpessoa => 3);                                                          
 
+        --------------------------------------------------------
+        -- grava os dados da tabela WRK para a tabela de memoria
+        -- que será utilizada pelo relatório 
+        -- somente quando é executado por paraleleismo
+        -- projeto ligeirinho
+        ---------------------------------------------------------
+        -- Grava LOG de ocorrência inicial das rotinas que gravam na tabela de memória
+        if pr_idparale = 0 and
+           pr_cdagenci = 0 and
+           vr_qtdjobs  > 0 then
+            pc_log_programa(PR_DSTIPLOG           => 'O',
+                            PR_CDPROGRAMA         => vr_cdprogra,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_tpocorrencia       => 4,
+                            pr_dsmensagem         => 'Início grava tabela memoria. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces||' - Horário: '||to_char(sysdate,'dd/mm/yyyy hh24:mi:ss'),
+                            PR_IDPRGLOG           => vr_idlog_ini_ger);  
+                            
+
+            pc_grava_tab_men_geral (pr_cdcooper => pr_cdcooper,
+                                      pr_dtmvtolt => vr_dtmvtolt,
+                                      pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+
+            pc_grava_tab_men_crrl055 (pr_cdcooper => pr_cdcooper,
+                                      pr_dtmvtolt => vr_dtmvtolt,
+                                      pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+
+            pc_grava_tab_men_crrl030 (pr_cdcooper => pr_cdcooper,
+                                      pr_dtmvtolt => vr_dtmvtolt,
+                                      pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+
+            pc_grava_tab_men_crrl225 (pr_cdcooper => pr_cdcooper,
+                                      pr_dtmvtolt => vr_dtmvtolt,
+                                      pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+            
+            pc_grava_tab_men_crrl226 (pr_cdcooper => pr_cdcooper,
+                                      pr_dtmvtolt => vr_dtmvtolt,
+                                      pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+            
+            pc_grava_tab_men_crrl007 (pr_cdcooper => pr_cdcooper,
+                                      pr_dtmvtolt => vr_dtmvtolt,
+                                      pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+
+            
+            pc_grava_tab_men_crrl006 (pr_cdcooper => pr_cdcooper,
+                                      pr_dtmvtolt => vr_dtmvtolt,
+                                      pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+
+            pc_grava_tab_men_crrl372 (pr_cdcooper => pr_cdcooper,
+                                      pr_dtmvtolt => vr_dtmvtolt,
+                                      pr_des_erro => vr_dscritic);
+
+            --Se retornou erro
+            IF vr_dscritic IS NOT NULL THEN
+               --Levantar Exceção
+               RAISE vr_exc_saida;
+            END IF;
+            
+            pc_log_programa(PR_DSTIPLOG           => 'O',
+                            PR_CDPROGRAMA         => vr_cdprogra,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_tpocorrencia       => 4,
+                            pr_dsmensagem         => 'Fim grava tabela memoria. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces||' - Horário: '||to_char(sysdate,'dd/mm/yyyy hh24:mi:ss'),
+                            PR_IDPRGLOG           => vr_idlog_ini_ger);  
+        end if;
+        --------------------------------------------
+        --  Geração dos relatórios
+        --------------------------------------------
+        -- Grava LOG de ocorrência inicial da impressão dos relatório
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Início imprime relatórios. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces||' - Horário: '||to_char(sysdate,'dd/mm/yyyy hh24:mi:ss'),
+                        PR_IDPRGLOG           => vr_idlog_ini_ger);  
 
         --Gerar relatorio Maiores Depositantes
         pc_imprime_crrl055(pr_des_erro => vr_dscritic); 
+        
         --Se retornou erro
         IF vr_dscritic IS NOT NULL THEN
           --Levantar Exceção
@@ -6334,6 +9766,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
         --Gerar relatorio Saldos Devedores dos Associados
         pc_imprime_crrl007(pr_vlsaldisp => vr_vlsaldisp
                           ,pr_des_erro  => vr_dscritic);
+       
         --Se retornou erro
         IF vr_dscritic IS NOT NULL THEN
           -- Levantar Exceção
@@ -6353,11 +9786,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
         --Gerar relatorio Saldos Conta Investimento
         pc_imprime_crrl372(pr_des_erro => vr_dscritic);
+       
         --Se retornou erro
         IF vr_dscritic IS NOT NULL THEN
           --Levantar Exceção
           RAISE vr_exc_saida;
         END IF;
+
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Fim imprime relatórios. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces||' - Horário: '||to_char(sysdate,'dd/mm/yyyy hh24:mi:ss'),
+                        PR_IDPRGLOG           => vr_idlog_ini_ger);  
 
        /* Criação dos registros do BNDES quebrados por conta */
 
@@ -6400,6 +9842,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          END;  
        END IF;
 
+       
        /* Gravacao de dados no banco generico - Relatorios Gerenciais */
        BEGIN
          FORALL idx IN INDICES OF vr_tab_gn099 SAVE EXCEPTIONS
@@ -6439,14 +9882,67 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        --Zerar tabela de memoria auxiliar
        pc_limpa_tabela;
 
-       -- Processo OK, devemos chamar a fimprg
-       btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
+       --Limpa a tabela WRK utilizada na geração dos relatórios 
+       --quando o processo é executado em paralelo
+       --somente quando não houver jobs com erro ao final da execução.
+       -- Projeto Ligeirinho
+       if vr_qterro = 0 then 
+          pc_limpa_tbgen_batch_rel_wrk (pr_cdcooper  => pr_cdcooper,  
+                                        pr_dtmvtolt  => vr_dtmvtolt,
+                                        pr_des_erro  => vr_dscritic);
+          -- Testar saida com erro
+          if vr_dscritic is not null then
+             -- Levantar exceçao
+             raise vr_exc_saida;
+          end if;       
+       end if;
+    
+      -- Processo OK, devemos chamar a fimprg
+      btch0001.pc_valida_fimprg (pr_cdcooper => pr_cdcooper
                                 ,pr_cdprogra => vr_cdprogra
                                 ,pr_infimsol => pr_infimsol
                                 ,pr_stprogra => pr_stprogra);
 
-       --Salvar informacoes no banco de dados
-       COMMIT;
+      if vr_idcontrole <> 0 then
+        -- Atualiza finalização do batch na tabela de controle 
+        gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                           ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                           ,pr_dscritic   => vr_dscritic);
+                                           
+        -- Testar saida com erro
+        if  vr_dscritic is not null then 
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if; 
+                                                        
+      end if;    
+      
+      --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
+      pc_log_programa(pr_dstiplog   => 'F',    
+                      pr_cdprograma => vr_cdprogra,           
+                      pr_cdcooper   => pr_cdcooper, 
+                      pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_idprglog   => vr_idlog_ini_ger,
+                      pr_flgsucesso => 1);                 
+
+      --Salvar informacoes no banco de dados
+      commit;
+    
+    --Se for job chamado pelo programa do batch     
+    else
+      -- Atualiza finalização do batch na tabela de controle 
+      gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                         ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                         ,pr_dscritic   => vr_dscritic);  
+                                             
+      -- Encerrar o job do processamento paralelo dessa agência
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                  ,pr_des_erro => vr_dscritic);  
+    
+      --Salvar informacoes no banco de dados
+      commit;
+    end if;
 
      EXCEPTION
        WHEN vr_exc_fimprg THEN
@@ -6469,6 +9965,31 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                   ,pr_cdprogra => vr_cdprogra
                                   ,pr_infimsol => pr_infimsol
                                   ,pr_stprogra => pr_stprogra);
+                                  
+         if pr_idparale <> 0 then 
+            -- Grava LOG de Erro
+            pc_log_programa(PR_DSTIPLOG           => 'E',
+                            PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_tpocorrencia       => 2,
+                            pr_dsmensagem         => 'vr_exc_fimprg - pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                     'pr_dscritic:'||vr_dscritic,
+                            PR_IDPRGLOG           => vr_idlog_ini_par);  
+
+            --Grava data fim para o JOB na tabela de LOG 
+            pc_log_programa(pr_dstiplog   => 'F',    
+                            pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                            pr_cdcooper   => pr_cdcooper, 
+                            pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_idprglog   => vr_idlog_ini_par,
+                            pr_flgsucesso => 0);  
+                            
+            -- Encerrar o job do processamento paralelo dessa agência
+            gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                        ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                        ,pr_des_erro => vr_dscritic);
+         end if;                                    
          -- Efetuar commit pois gravaremos o que foi processado até então
          COMMIT;
 
@@ -6482,6 +10003,31 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          pr_cdcritic := NVL(vr_cdcritic,0);
          pr_dscritic := vr_dscritic;
          -- Efetuar rollback
+        
+         if pr_idparale <> 0 then 
+            --Grava LOG
+            pc_log_programa(PR_DSTIPLOG           => 'E',
+                            PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_tpocorrencia       => 2,
+                            pr_dsmensagem         => ' VR_EXC_SAIDA - pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                     'pr_dscritic:'||pr_dscritic,
+                            PR_IDPRGLOG           => vr_idlog_ini_par);   
+
+            --Grava data fim para o JOB na tabela de LOG 
+            pc_log_programa(pr_dstiplog   => 'F',    
+                            pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                            pr_cdcooper   => pr_cdcooper, 
+                            pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_idprglog   => vr_idlog_ini_par,
+                            pr_flgsucesso => 0);  
+          
+            -- Encerrar o job do processamento paralelo dessa agência
+            gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                        ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                        ,pr_des_erro => vr_dscritic);
+          end if;
          ROLLBACK;
        WHEN OTHERS THEN
          -- Efetuar retorno do erro não tratado
@@ -6489,6 +10035,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          pr_dscritic := SQLERRM;
          -- Efetuar rollback
          ROLLBACK;
+         if pr_idparale <> 0 then 
+            --Grava LOG
+            pc_log_programa(PR_DSTIPLOG           => 'E',
+                            PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_tpocorrencia       => 2,
+                            pr_dsmensagem         => 'WHEN OTHERS - pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                     'pr_dscritic:'||pr_dscritic,
+                            PR_IDPRGLOG           => vr_idlog_ini_par);   
+
+            --Grava data fim para o JOB na tabela de LOG 
+            pc_log_programa(pr_dstiplog   => 'F',    
+                            pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                            pr_cdcooper   => pr_cdcooper, 
+                            pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_idprglog   => vr_idlog_ini_par,
+                            pr_flgsucesso => 0);  
+          
+            -- Encerrar o job do processamento paralelo dessa agência
+            gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                        ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                        ,pr_des_erro => vr_dscritic);
+         end if;         
      END;
    END PC_CRPS005;
 /
