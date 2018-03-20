@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps625(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : André Santos/Supero
-       Data    : Agosto/2012                     Ultima atualizacao: 02/01/2017
+       Data    : Agosto/2012                     Ultima atualizacao: 20/03/2018
 
        Dados referentes ao programa:
 
@@ -39,6 +39,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps625(pr_cdcooper  IN crapcop.cdcooper%T
                    02/01/2017 - #530616 Corrigido o programa para verificar se há mais informações na pltable além das 
                                 linhas de cabeçalho e trailler do arquivo, para não gerar o mesmo desnecessariamente (Carlos)
                    
+                   20/03/2018 - #RITM0010364 Mover arquivo apenas quando não ocorrer crítica de erro no layout pois as mesmas
+                                renomeiam o arquivo para ERR_ (Carlos)                   
     ............................................................................ */
 
     DECLARE
@@ -73,6 +75,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps625(pr_cdcooper  IN crapcop.cdcooper%T
       vr_fecha_arq  EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
+      vr_flarqerr   PLS_INTEGER := 0;
 
       -- Variaveis locais
       vr_dtanmarq crapdat.dtmvtolt%TYPE;
@@ -376,6 +379,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps625(pr_cdcooper  IN crapcop.cdcooper%T
             -- Gera critica no log
             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) || 'err_'||vr_nmarquiv;
             
+            -- Sinaliza crítica de erro no layout do cabeçalho
+            vr_flarqerr := 1;
+
             -- Processar próximo arquivo
             RAISE vr_fecha_arq;
 
@@ -624,18 +630,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps625(pr_cdcooper  IN crapcop.cdcooper%T
         gene0001.pc_fecha_arquivo(pr_utlfileh => vr_file_handle);
       END IF;
             
-      -- Após todos o processamento relacionado, mover o arquivo para a pasta salvar
-      gene0001.pc_OScommand_Shell(pr_des_comando => 'mv ' || vr_caminho_integra||'/'||vr_nmarquiv || ' ' || vr_caminho_salvar
-                                 ,pr_typ_saida   => vr_typ_said
-                                 ,pr_des_saida   => vr_dscritic);
+      -- Mover arquivo quando não ocorrer crítica de erro no layout pois as mesmas renomeiam o arquivo para ERR_
+      IF vr_flarqerr = 0 THEN
+        -- Após todos o processamento relacionado, mover o arquivo para a pasta salvar
+        gene0001.pc_OScommand_Shell(pr_des_comando => 'mv ' || vr_caminho_integra||'/'||vr_nmarquiv || ' ' || vr_caminho_salvar
+                                   ,pr_typ_saida   => vr_typ_said
+                                   ,pr_des_saida   => vr_dscritic);
 
-      -- Verificar retorno de erro
-      IF NVL(vr_typ_said, ' ') = 'ERR' THEN
-        -- O comando shell executou com erro, gerar log e sair do processo
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao mover arquivo . Erro: ' || vr_dscritic;
-        RAISE vr_exc_saida;
-      END IF;
+        -- Verificar retorno de erro
+        IF NVL(vr_typ_said, ' ') = 'ERR' THEN
+          -- O comando shell executou com erro, gerar log e sair do processo
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao mover arquivo . Erro: ' || vr_dscritic;
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;      
       
       -- Gerar critica 190
       vr_cdcritic := 190;
