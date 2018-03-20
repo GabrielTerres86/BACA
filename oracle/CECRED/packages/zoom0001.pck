@@ -27,7 +27,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
 
 			   29/01/2018 - Inclusão da rotina pc_busca_qualif_oper_web - Diego Simas (AMcom).
 
-			   09/02/2018 - Inclusão de rotina pc_consultar_limite_adp - Daniel(AMcom).			   
+			   09/02/2018 - Inclusão de rotina pc_consultar_limite_adp - Daniel(AMcom).	
+
+               20/03/2018 - Inlusão de rotina pc_consultar_ccl_limite - Daniel(AMcom)			   		   
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -461,22 +463,31 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                          ,pr_des_erro  OUT VARCHAR2);
   
 
-PROCEDURE pc_busca_qualif_oper_web(pr_xmllog    IN VARCHAR2                --XML com informações de LOG
-                                   ,pr_cdcritic  OUT PLS_INTEGER            --Código da crítica
-                                   ,pr_dscritic  OUT VARCHAR2               --Descrição da crítica
-                                   ,pr_retxml    IN OUT NOCOPY XMLType      --Arquivo de retorno do XML
-                                   ,pr_nmdcampo  OUT VARCHAR2               --Nome do Campo
-                                   ,pr_des_erro  OUT VARCHAR2);             --Saida OK/NOK
+  PROCEDURE pc_busca_qualif_oper_web(pr_xmllog    IN VARCHAR2                --XML com informações de LOG
+                                    ,pr_cdcritic  OUT PLS_INTEGER            --Código da crítica
+                                    ,pr_dscritic  OUT VARCHAR2               --Descrição da crítica
+                                    ,pr_retxml    IN OUT NOCOPY XMLType      --Arquivo de retorno do XML
+                                    ,pr_nmdcampo  OUT VARCHAR2               --Nome do Campo
+                                    ,pr_des_erro  OUT VARCHAR2);             --Saida OK/NOK
 
-PROCEDURE pc_consultar_limite_adp(pr_cdcooper IN NUMBER             --> Cooperativa
-                                 ,pr_nrdconta IN NUMBER             --> Conta
-                                 -- OUT
-                                 ,pr_tipo     OUT NUMBER            --> Tipo do registro
-                                 ,pr_data     OUT VARCHAR2          --> Data
-                                 ,pr_contrato OUT NUMBER            --> Contrato
-                                 ,pr_saldo    OUT NUMBER            --> Saldo à liquidar
-                                 ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
-                                 ,pr_dscritic OUT VARCHAR2);      --> Erros do processo
+  PROCEDURE pc_consultar_limite_adp(pr_cdcooper IN NUMBER             --> Cooperativa
+                                   ,pr_nrdconta IN NUMBER             --> Conta
+                                   -- OUT
+                                   ,pr_tipo     OUT NUMBER            --> Tipo do registro
+                                   ,pr_data     OUT VARCHAR2          --> Data
+                                   ,pr_contrato OUT NUMBER            --> Contrato
+                                   ,pr_saldo    OUT NUMBER            --> Saldo à liquidar
+                                   ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2);      --> Erros do processo
+
+  PROCEDURE pc_consultar_ccl_limite(pr_cdcooper IN NUMBER             --> Cooperativa
+                                   ,pr_nrdconta IN NUMBER             --> Conta
+                                   ,pr_nrctrlim IN NUMBER             --> Contrato de limite de crédito
+                                   -- OUT
+                                   ,pr_tipo     OUT NUMBER            --> Tipo do registro
+                                   ,pr_data     OUT VARCHAR2          --> Data
+                                   ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2);        --> Erros do processo                                 
 
 END ZOOM0001;
 /
@@ -6601,6 +6612,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_dscritic := 'Erro pc_consultar_limite_adp: '||SQLERRM;
       ROLLBACK;
   END pc_consultar_limite_adp;  
+
+   PROCEDURE pc_consultar_ccl_limite(pr_cdcooper IN NUMBER             --> Cooperativa
+                                    ,pr_nrdconta IN NUMBER             --> Conta
+                                    ,pr_nrctrlim IN NUMBER             --> Contrato de limite de crédito
+                                    -- OUT
+                                    ,pr_tipo     OUT NUMBER            --> Tipo do registro
+                                    ,pr_data     OUT VARCHAR2          --> Data
+                                    ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2) IS      --> Erros do processo
+    /* .............................................................................
+
+        Programa: pc_consultar_ccl_limite
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel/AMcom
+        Data    : Março/2018                 Ultima atualizacao:
+
+        Dados referentes ao programa:
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina para consultar informações de cancelamento automatico de limite de crédito
+        Observacao: -----
+        Alteracoes:
+      ..............................................................................*/
+----------->>> VARIAVEIS <<<--------
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      ---------->> CURSORES <<--------
+      CURSOR cr_consulta_ccl_limite (pr_cdcooper IN NUMBER
+                                    ,pr_nrdconta IN NUMBER
+                                    ,pr_nrctrlim IN NUMBER) IS
+       SELECT lim.ininadim tipo -- 1- Inadimplência(Cancelamento Automático)
+            , lim.dtfimvig data -- Data do cancelamento
+         FROM craplim lim
+         WHERE lim.cdcooper = pr_cdcooper
+           AND lim.nrdconta = pr_nrdconta
+           AND lim.nrctrlim = pr_nrctrlim
+           AND lim.insitlim = 3; -- Cancelado
+      rw_consulta_ccl_limite cr_consulta_ccl_limite%ROWTYPE;
+
+    BEGIN
+
+      OPEN cr_consulta_ccl_limite(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrctrlim => pr_nrctrlim);
+     FETCH cr_consulta_ccl_limite
+      INTO rw_consulta_ccl_limite;
+     CLOSE cr_consulta_ccl_limite;
+
+    -- CAMPOS
+    -- Busca os dados
+      pr_tipo     := rw_consulta_ccl_limite.tipo;
+      pr_data     := rw_consulta_ccl_limite.data;
+      pr_cdcritic := NULL;
+      pr_dscritic := NULL;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 999;
+      pr_dscritic := 'Erro consulta_ccl_limite: '||SQLERRM;
+      ROLLBACK;
+  END pc_consultar_ccl_limite;
 
 END ZOOM0001;
 /
