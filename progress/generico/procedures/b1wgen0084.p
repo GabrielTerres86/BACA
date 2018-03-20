@@ -5917,7 +5917,6 @@ PROCEDURE desfaz_transferencia_prejuizo.
             FOR EACH craplem
                 WHERE craplem.cdcooper = par_cdcooper
                   AND craplem.dtmvtolt = par_dtmvtolt
-                  AND craplem.cdagenci = par_cdagenci
                   AND craplem.cdbccxlt = 100
                   AND craplem.nrdolote = 600029
                   AND craplem.nrdconta = par_nrdconta
