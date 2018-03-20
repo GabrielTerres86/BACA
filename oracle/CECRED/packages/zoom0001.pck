@@ -6707,7 +6707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
         Observacao: -----
         Alteracoes:
       ..............................................................................*/
-      ----------->>> VARIAVEIS <<<--------
+----------->>> VARIAVEIS <<<--------
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
       vr_dscritic VARCHAR2(1000);        --> Desc. Erro
@@ -6721,26 +6721,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
         FROM craplim lim
        WHERE lim.insitlim = 3 -- Cancelado
          AND lim.ininadim = 1 -- Inadimplência 
-         AND lim.cdcooper = pr_cdcooper      
-         AND lim.nrdconta = pr_nrdconta 
-         AND lim.dtfimvig = (SELECT MAX(mlim.dtfimvig) 
+         AND lim.dtfimvig = (SELECT MAX(mlim.dtfimvig)
                                FROM craplim mlim
-                              WHERE mlim.cdcooper = pr_cdcooper
-                                AND mlim.nrdconta = pr_nrdconta
-                                AND mlim.insitlim = 3 -- Cancelado
-                                AND mlim.ininadim = 1) -- Inadimplência
-         AND (SELECT dat.dtmvtolt FROM crapdat dat 
-               WHERE dat.cdcooper =  pr_cdcooper)-lim.dtfimvig < 60; --> Incluir parâmetro
+                              WHERE mlim.insitlim = 3 -- Cancelado
+                                AND mlim.ininadim = 1 -- Inadimplência 
+                                AND mlim.cdcooper = pr_cdcooper      
+                                AND mlim.nrdconta = pr_nrdconta)
+         AND lim.cdcooper = pr_cdcooper      
+         AND lim.nrdconta = pr_nrdconta
+         -- Compara dias
+         AND nvl(((SELECT dtmvtolt FROM crapdat WHERE cdcooper = pr_cdcooper) - lim.dtfimvig),0) <
+             -- Parâmetro
+             nvl((SELECT DISTINCT (rli.qtmeslic*30) 
+                    FROM craprli rli 
+                   WHERE rli.cdcooper = pr_cdcooper
+                     AND rli.tplimite = 1 -- Limite de crédito
+                     AND rli.inpessoa = (SELECT DISTINCT inpessoa 
+                                           FROM crapass 
+                                          WHERE cdcooper = pr_cdcooper 
+                                            AND nrdconta = pr_nrdconta)),0);
       rw_consiste_limite cr_consiste_limite%ROWTYPE;
 
-    BEGIN
-      
+    BEGIN      
       OPEN cr_consiste_limite(pr_cdcooper => pr_cdcooper
-                            ,pr_nrdconta => pr_nrdconta);
+                             ,pr_nrdconta => pr_nrdconta);
      FETCH cr_consiste_limite
       INTO rw_consiste_limite;
      CLOSE cr_consiste_limite;
-
+     
       -- CAMPOS
       -- Busca os dados
       -- 0-Autoriza / 1-Não autoriza
@@ -6751,7 +6759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_autoriza := rw_consiste_limite.autoriza;
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
-	  --
+
   EXCEPTION
     WHEN OTHERS THEN
       pr_cdcritic := 999;
