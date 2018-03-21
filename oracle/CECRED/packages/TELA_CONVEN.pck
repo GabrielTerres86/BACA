@@ -667,8 +667,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
         ELSE
           
           --> Verificar se convenio é Sicredi
-          IF rw_crapcon.flgacsic = 1 THEN
-            vr_dscritic := 'Convênios Sicredi não podem ser excluidos.';  
+          IF rw_crapcon.tparrecd = 1 THEN
+            vr_dscritic := 'Convênios Sicredi não podem ser replicados.';  
             RAISE vr_exc_erro;
           END IF;
           

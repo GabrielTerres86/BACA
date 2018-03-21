@@ -5433,11 +5433,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                              ,pr_texto_novo     => '<Root><CDBARRAS>');   
       
       --> Adicionar campos em comun                          
-      vr_dstxtxml := '<tpdaguia>'        || pr_tpdaguia                       ||'<tpdaguia>'        ||
+      vr_dstxtxml := '<tpdaguia>'        || pr_tpdaguia                       ||'</tpdaguia>'       ||
                      '<nridentificacao>' || vr_nrinsemp                       ||'</nridentificacao>'||
                      '<cdtributo>'       || vr_dsempcon                       ||'</cdtributo>'      ||
                      '<dtvalidade>'      || to_char(vr_dtvencto,'DD/MM/RRRR') ||'</dtvalidade>'     ||
-                     '<competencia>'     || to_char(vr_dtcompet,'MM/RRRR')    ||'</competencia>'    ||
+                     '<competencia>'     || to_char(vr_dtcompet,'DD/MM/RRRR') ||'</competencia>'    ||
                      '<nrseqgrde>'       || vr_nrsqgrde                       ||'</nrseqgrde>'      ||
                      '<identificador>'   || vr_nrrecolh                       ||'</identificador>'  ||   
                      '<nrdocumento>'     || vr_nrdocmto                       ||'</nrdocumento>'    ||      
@@ -7211,6 +7211,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
            AND cdcooper  = DECODE(pr_cdcooper, 0, cdcooper, pr_cdcooper);
       --
       rw_cooper cr_cooper%ROWTYPE;
+      
+      -- Busca dos dados da cooperativa central
+      CURSOR cr_crapcop_central (pr_cdcooper INTEGER) IS
+        SELECT cop.cdcooper
+              ,cop.nmrescop
+              ,cop.cdagebcb 
+          FROM crapcop cop
+         WHERE cop.cdcooper = pr_cdcooper;     
+      rw_crapcop_central cr_crapcop_central%ROWTYPE;   
+      
       -- Busca convênios
       CURSOR cr_conven(pr_cdconven tbconv_arrecadacao.cdempres%TYPE
                       ,pr_cdcooper crapcon.cdcooper%TYPE
@@ -7224,6 +7234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
               ,tbconv_arrecadacao.vltarifa_taa
               ,tbconv_arrecadacao.vltarifa_caixa
               ,tbconv_arrecadacao.nrlayout
+              ,crapcon.nmextcon
               ,craplft.dtvencto
               ,craplft.cdbarras
               ,craplft.vllanmto
@@ -7285,13 +7296,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       FUNCTION fn_nm_arquivo(pr_cdagebcb IN crapcop.cdagebcb%TYPE
                             ,pr_cdempres IN tbconv_arrecadacao.cdempres%TYPE
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                            ,pr_nmcopcen IN crapcop.nmrescop%TYPE
                             ,pr_nrnsa    IN NUMBER
                             ) RETURN VARCHAR2 IS
         --
       BEGIN
         --
         --RETURN lpad(pr_cdagectl, 4, '0') || '-' || 'EG'|| lpad(pr_cdempres, 10, '0') || to_char(pr_dtmvtolt, 'YYYYMMDD') || '.CNV';
-        RETURN lpad(pr_cdagebcb, 4, '0') || '-' || 'FC'|| lpad(pr_cdempres, 10, '0') || to_char(pr_dtmvtolt, 'YYYYMMDD') || '.' || lpad(pr_nrnsa, 3, '0');
+        RETURN lpad(pr_cdagebcb, 4, '0') || '-' || 'FC'|| lpad(pr_cdempres, 10, '0') || 
+               to_char(pr_dtmvtolt, 'YYYYMMDD') || '.' || lpad(pr_nrnsa, 3, '0')||'.'||pr_nmcopcen;
         --
       END fn_nm_arquivo;
       
@@ -7510,6 +7523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                  ,pr_dstextab  IN  craptab.dstextab%TYPE
                                  ,pr_cdempres  IN  tbconv_arrecadacao.cdempres%TYPE
                                  ,pr_nrlayout  IN  tbconv_arrecadacao.nrlayout%TYPE
+                                 ,pr_nmextcon  IN  crapcon.nmextcon%TYPE
                                  ,pr_cabecalho OUT VARCHAR2
                                  ,pr_dscritic  OUT VARCHAR2
                                  ) IS
@@ -7522,11 +7536,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         -- Código do convênio
         pr_cabecalho := pr_cabecalho || RPAD(nvl(pr_cdempres, ' '), 20, ' ');
         -- Nome da Empresa/Órgão
-        pr_cabecalho := pr_cabecalho || RPAD('BANCOOB', 20, ' ');
+        pr_cabecalho := pr_cabecalho || RPAD(pr_nmextcon, 20, ' ');
         -- Código da Instituição Financeira
-        pr_cabecalho := pr_cabecalho || '756';
+        pr_cabecalho := pr_cabecalho || '085';
         -- Nome da Instituição Financeira
-        pr_cabecalho := pr_cabecalho || RPAD(nvl(substr(fn_busca_desc_banco(pr_cdbccxlt => 756
+        pr_cabecalho := pr_cabecalho || RPAD(nvl(substr(fn_busca_desc_banco(pr_cdbccxlt => 085
                                                                            ), 0, 20), ' '), 20, ' ');
         -- Data da geração do arquivo
         pr_cabecalho := pr_cabecalho || to_char(pr_dtmvtolt, 'YYYYMMDD');
@@ -7638,6 +7652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                 ,pr_qtregist IN  NUMBER
                                 ,pr_vltotrec IN  NUMBER
                                 ,pr_vltrftot IN  NUMBER
+                                ,pr_nmcopcen IN crapcop.nmrescop%TYPE
                                 ,pr_nmarqtxt OUT VARCHAR2
                                 ,pr_dscritic OUT VARCHAR2
                                 ) IS
@@ -7659,6 +7674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           pr_nmarqtxt := fn_nm_arquivo(pr_cdagebcb => pr_cdagebcb -- IN
                                       ,pr_cdempres => pr_cdempres -- IN
                                       ,pr_dtmvtolt => pr_dtmvtolt -- IN
+                                      ,pr_nmcopcen => pr_nmcopcen -- IN
                                       ,pr_nrnsa    => substr(fn_busca_nsa(pr_cdcooper => pr_cdcooper -- IN
                                                                                         ,pr_cdconven => pr_cdempres -- IN
                                                                          ), 0, 6) -- IN
@@ -7818,6 +7834,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
                                     ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> Iniciada geração dos arquivos de arrecadação do BANCOOB.'   -- Texto para escrita
                                     );
+      
+      
+      -- Busca dos dados da cooperativa central
+      OPEN cr_crapcop_central (pr_cdcooper => 3);
+      FETCH cr_crapcop_central INTO rw_crapcop_central;
+      IF cr_crapcop_central%NOTFOUND THEN
+        CLOSE cr_crapcop_central;
+        vr_dscritic := 'Cooperativa central nao encontrada.';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_crapcop_central;
+      END IF;
+      
+      
       --
       OPEN cr_cooper(pr_cdcooper);
       --
@@ -7880,6 +7910,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                       ,pr_qtregist => vr_qtregist          -- IN
                                       ,pr_vltotrec => vr_vltotrec          -- IN
                                       ,pr_vltrftot => vr_vltrftot          -- IN
+                                      ,pr_nmcopcen => rw_crapcop_central.nmrescop -- IN
                                       ,pr_nmarqtxt => vr_nmarqtxt          -- OUT
                                       ,pr_dscritic => vr_dscritic          -- OUT
                                       );
@@ -7984,6 +8015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                                                 )        -- IN
                                    ,pr_cdempres	 => rw_conven.cdempres   -- IN
                                    ,pr_nrlayout  => rw_conven.nrlayout   -- IN
+                                   ,pr_nmextcon  => rw_conven.nmextcon   -- IN
                                    ,pr_cabecalho => vr_linha             -- OUT
                                    ,pr_dscritic  => vr_dscritic          -- OUT
                                    );
@@ -8093,6 +8125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                               ,pr_qtregist => vr_qtregist          -- IN
                               ,pr_vltotrec => vr_vltotrec          -- IN
                               ,pr_vltrftot => vr_vltrftot          -- IN
+                              ,pr_nmcopcen => rw_crapcop_central.nmrescop -- IN
                               ,pr_nmarqtxt => vr_nmarqtxt          -- OUT
                               ,pr_dscritic => vr_dscritic          -- OUT
                               );

@@ -4843,6 +4843,10 @@ END pc_comprovantes_recebidos;
                          '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
                      '</infosac>';
                      
+      gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha); 
+                                            
       IF vr_tab_campos.exists(UPPER('cdempcon')) THEN
         IF vr_tab_campos(UPPER('cdempcon')) IN (178,240) THEN
           vr_cdtipdoc := 'FGTS – GRDE';

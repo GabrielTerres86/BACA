@@ -89,10 +89,13 @@ var dtmvtglb = '<?php echo ( isset($glbvars['dtmvtolt']) ) ? $glbvars['dtmvtolt'
 																		<!-- INCLUDE DA TELA DE PESQUISA ASSOCIADO -->
 																		<? require_once("../../includes/pesquisa/pesquisa_associados.php"); ?>
 																		
-																		<div id="divRotina"></div>
-																		<div id="divUsoGenerico"></div>
 																		
 																		<div id="divTela">
+                                                                        
+                                                                        
+																		<div id="divRotina"></div>
+																		<div id="divUsoGenerico"></div>
+                                                                        
 																		    <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 																		
 																		    <!-- Formulario para o cabecalho -->

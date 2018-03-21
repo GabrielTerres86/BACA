@@ -21,12 +21,13 @@ $(document).ready(function() {
  * Formatacao dos campos e acoes da tela
  */
 function estadoInicial() {
-	$('#divTela').css({'display':'inline'}).fadeTo(0,0.1);
+	$('#divTela').css({'display':'block'}).fadeTo(0,0.1);
 	
 	// Formatar o layout da tela
 	formataBotoes();
 	formataCabecalho();
 	formataFormularioSicredi();
+    formataFormularioBancoob();
 	controlaNavegacaoFrmSicredi();
 	formataFiltros();
 
@@ -94,6 +95,9 @@ function formataCabecalho() {
  * Formatacao dos campos do filtro de consulta
  */
 function formataFiltros(){
+    
+   
+    
   // Limpar todos os campos do formulario, e remover o destaque dos campos com erro
 	$('input[type="text"],select','#fsetFiltroConsultar').limpaFormulario().removeClass('campoErro');
   
@@ -106,7 +110,7 @@ function formataFiltros(){
    
   // CAMPOS - Filtro
   $('#tlcooper','#frmFiltros').css({'width':'100px'});
-  $('#cdempres','#frmFiltros').addClass('inteiro').css({'width':'100px'}).habilitaCampo();
+  $('#cdempres','#frmFiltros').addClass('inteiro').css({'width':'100px'}).habilitaCampo().attr('maxlength','10');
   $('#nmextcon','#frmFiltros').css({'width':'300'}).desabilitaCampo();
   $('#dtiniper','#frmFiltros').css({'width':'75px','text-align':'right'}).habilitaCampo().addClass('inteiro').attr('maxlength','14').setMask("DATE","","","");
   $('#dtiniper','#frmFiltros').val(dtmvtglb);
@@ -138,19 +142,42 @@ function formataFiltros(){
 	  $('#dtiniper','#frmFiltros').css({'display':'inline'});
 	  $('#dtfimper','#frmFiltros').css({'display':'inline'});
 	  $('#nmarquiv','#frmDetalhe').css({'display':'inline'});
-	  $('#nrsequen','#frmDetalhe').css({'display':'inline'});      
+	  $('#nrsequen','#frmDetalhe').css({'display':'inline'}).attr('maxlength','6');      
       $('#dssitret','#frmDetalhe').css({'display':'inline'});
   }
   
   
   if ($('#glcooper','#frmCab').val() == '3') {
-	  if ($('#cddopcao','#frmCab').val() == 'A') {
-		  document.getElementById('tlcooper').value = $('#glcooper','#frmCab').val();
-		  $('#tlcooper','#frmFiltros').desabilitaCampo();
-	  } else {
-		  $('#tlcooper','#frmFiltros').habilitaCampo();
-		  document.getElementById('tlcooper').value = $('#glcooper','#frmCab').val();
-	  }
+	 
+	   $('#tlcooper','#frmFiltros').habilitaCampo();
+	   document.getElementById('tlcooper').value = $('#glcooper','#frmCab').val();
+	 
+       var xtlcooper = document.getElementById('tlcooper');
+       if ($('#cddopcao','#frmCab').val() == 'C') {
+           // Incluir opcao Todas
+           var aux_existe = false;
+           for (i = 0; i < xtlcooper.length; i++) {
+               if (xtlcooper.options[i].text == "Todas"){ 
+                   aux_existe = true;               
+               }              
+           } 
+           
+           if (aux_existe == false){
+               var optionTodas = document.createElement("option");
+               optionTodas.text = "Todas";
+               optionTodas.value = "0";
+               xtlcooper.add(optionTodas);
+           }
+           document.getElementById('tlcooper').value = 0;
+       }else{
+           // Remover opcao todas
+           for (i = 0; i < xtlcooper.length; i++) {
+               if (xtlcooper.options[i].text == "Todas"){ 
+                   xtlcooper.remove(i);                
+               }              
+           }         
+       }
+      
     
   } else {
     document.getElementById('tlcooper').value = $('#glcooper','#frmCab').val();
@@ -163,7 +190,7 @@ function formataFiltros(){
     procedure   = 'TAB057_LISTA_CONVENIOS';
     titulo      = 'Convênios de Arrecadação';
     qtReg       = '20';
-    filtrosPesq = 'Codigo;cdempres;70px;S;;S;codigo|Descricao;nmextcon;200px;S;;S;descricao|;cdcooper;;N;' + $('#tlcooper','#frmFiltros').val() + ';N;codigo';
+    filtrosPesq = 'Codigo;cdempres;70px;S;;S;descricao|Descricao;nmextcon;200px;S;;S;descricao|;cdcooper;;N;' + $('#tlcooper','#frmFiltros').val() + ';N;codigo';
     colunas     = 'Codigo;cdempres;30%;center|Descricao;nmextcon;70%;left';
     mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas);
     
@@ -215,7 +242,7 @@ function formataFiltros(){
    $('label[for="seqarnsa"]','#frmDadosBancoob').addClass('rotulo').css({'width':'200px'});
    
    // CAMPOS - Dados Gerais
-   $('#seqarnsa','#frmDadosBancoob').addClass('inteiro').css({'width':'60px'}).habilitaCampo();
+   $('#seqarnsa','#frmDadosBancoob').addClass('inteiro').css({'width':'60px'}).attr('maxlength','6').habilitaCampo();
    
    layoutPadrao();
    
@@ -232,9 +259,9 @@ function formataFiltros(){
    $('label[for="seqconso"]','#frmDadosSicredi').addClass('rotulo').css({'width':'200px'});
    
    // CAMPOS - Dados Gerais
-   $('#seqarfat','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'});
-   $('#seqtrife','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'});
-   $('#seqconso','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'});
+   $('#seqarfat','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'}).attr('maxlength','6');
+   $('#seqtrife','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'}).attr('maxlength','6');
+   $('#seqconso','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'}).attr('maxlength','6');
    
    layoutPadrao();
    
@@ -423,8 +450,9 @@ function controlaCamposFiltroConsulta(){
 		}	
 	});
 	
-	// Validacao do campo cdempres para quando executar o TAB ou ENTER
+    // Validacao do campo cdempres para quando executar o TAB ou ENTER
 	$('#cdempres','#frmFiltros').unbind('keypress').bind('keypress', function(e) {
+       
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
 		  if (!$('#cdempres','#frmFiltros').val() && $('#cddopcao','#frmCab').val() == 'C'){
 			$('#nmextcon','#frmFiltros').val('Todos');
@@ -438,9 +466,44 @@ function controlaCamposFiltroConsulta(){
 					} else {
 						prosseguir();
 					}
-				}
-			}	
+				}else{
+                    $('#dtiniper','#frmFiltros').focus();
+                } 
+			}
 		}
+	});
+    
+	// Validacao do campo cdempres para quando executar o TAB ou ENTER
+	$('#cdempres','#frmFiltros').unbind('change').bind('change', function(e) {
+       
+		//if ( e.keyCode == 9 || e.keyCode == 13 ) {
+		  if (!$('#cdempres','#frmFiltros').val() && $('#cddopcao','#frmCab').val() == 'C'){
+			$('#nmextcon','#frmFiltros').val('Todos');
+			// Setar foco no campo dtiniper
+			$('#dtiniper','#frmFiltros').focus();
+			return false;
+		  } else {
+			  if ($('#cddopcao','#frmCab').val() == 'A') {
+				  if (!$('#cdempres','#frmFiltros').val()) {
+					  showError("error","Convênio é obrigatório.","Alerta - Ayllos","");
+					} else {
+						prosseguir();
+					}
+				} else {
+                    
+                    
+                    bo          = 'TAB057'
+                    procedure   = 'TAB057_LISTA_CONVENIOS';
+                    titulo      = 'Convênios de Arrecadação';                    
+                    
+                    filtrosDesc = 'cdempres|'+ $('#cdempres','#frmFiltros').val();
+                    buscaDescricao(bo,procedure,titulo,'cdempres','nmextcon',$('#cdempres','#frmFiltros').val(),'nmextcon',filtrosDesc,'frmFiltros','');
+                    
+                    return false;
+                    
+                }
+			}	
+		//}
 	});
   
   // Validacao do campo dtiniper para quando executar o TAB ou ENTER
@@ -469,6 +532,8 @@ function controlaCamposFiltroConsulta(){
  * Funcao para controlar a execucao do botao VOLTAR
  */
 function voltar() {
+    
+    
 	// Validar a opcao selecionada em tela
 	switch($("#cddopcao","#frmCab").val()) {
 		
@@ -485,12 +550,13 @@ function voltar() {
 		break;
 		
 		case "A": // Alterar Historicos
-			if($('#cdhistor','#frmHistorico').prop('disabled')){
+			if($('#seqarnsa','#frmDadosBancoob').prop('disabled')){
 				// Se o campo CDHISTOR, da tela de Historico estiver desabilitado
 				// vamos voltar apenas uma etapa
 				// liberando os campos da opcao de alterar
+                
 				liberaAcaoAlterar();							
-			}else{
+			}else{                
 				// Volta para o estado inicial da tela
 				estadoInicial();
 			}
@@ -520,7 +586,13 @@ function prosseguir() {
 			showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','focoBtVoltar();','','sim.gif','nao.gif');
 		  //Bancoob
 		  } else {
-			showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','consultaBancoob(1,50);','','sim.gif','nao.gif');
+              
+            if (validaPeriodo() == false){              
+              return false;
+            }
+            consultaBancoob(1,50);
+			//showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','consultaBancoob(1,50);','','sim.gif','nao.gif');
+            
 		  }
 		break;
 		
@@ -535,9 +607,11 @@ function prosseguir() {
 					if ( $("#frmDadosBancoob").css("display") != 'block' || $('#btSalvar').html() == 'Prosseguir') {
 						trocaBotao('Alterar');
 						consultaSeqBancoob();
+                        
 						$("#divConsulta").css({'display':'block'});
 						$('a', '#frmFiltros').css({'display':'none'});
 						$('#cdempres').desabilitaCampo();
+                        formataFormularioBancoob();
 					} else {
 						showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','alterarBancoob();','','sim.gif','nao.gif');
 					}

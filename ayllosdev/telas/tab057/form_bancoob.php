@@ -70,12 +70,14 @@
 	
 	// Se clicar no btVoltar
 	$('#btVoltar','#divBotoes').unbind('click').bind('click', function() { 		
-		
-		trocaBotao('Prosseguir');
-		$("#divConsulta").css({'display':'none'});
-		$('a', '#frmFiltros').css({'display':'block'});
-		$('#cdempres').habilitaCampo();
-				
+		if ( $('#divConsulta').css('display') == 'block' ) {         
+            trocaBotao('Prosseguir');
+            $("#divConsulta").css({'display':'none'});
+            $('a', '#frmFiltros').css({'display':'block'});
+            $('#cdempres').habilitaCampo();
+		}else{
+            estadoInicial();
+        }		
 		return false;
 
 	});	

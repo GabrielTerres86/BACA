@@ -35,17 +35,17 @@
 	if ($cdagente == 'S') {
 		if ((!isset($_POST['seqarfat'])) || $_POST['seqarfat'] == ''){
 		  echo 'hideMsgAguardo();';
-		  echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PJ &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#seqarfat\', \'#frmDadosSicredi\').focus()");';
+		  echo 'showError("error","Sequencial do arquivo de arrecadação de fatura é obrigat&oacute;rio! Favor preench&ecirc;-lo","Alerta - Ayllos","$(\'#seqarfat\', \'#frmDadosSicredi\').focus()");';
 		  exit();
 		}
 		if ((!isset($_POST['seqtrife'])) || $_POST['seqtrife'] == ''){
 		  echo 'hideMsgAguardo();';
-		  echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PJ &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#seqtrife\', \'#frmDadosSicredi\').focus()");';
+		  echo 'showError("error","Sequencial do arquivo de Tributo Federeal é obrigat&oacute;rio! Favor preench&ecirc;-lo","Alerta - Ayllos","$(\'#seqtrife\', \'#frmDadosSicredi\').focus()");';
 		  exit();
 		}
 		if ((!isset($_POST['seqconso'])) || $_POST['seqconso'] == ''){
 		  echo 'hideMsgAguardo();';
-		  echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PJ &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#seqconso\', \'#frmDadosSicredi\').focus()");';
+		  echo 'showError("error","Sequencial do arquivo de atualização de consórcio é obrigat&oacute;rio! Favor preench&ecirc;-lo","Alerta - Ayllos","$(\'#seqconso\', \'#frmDadosSicredi\').focus()");';
 		  exit();
 		}
 		
@@ -71,7 +71,7 @@
 		  exit();
 		}
 		
-		echo 'showError("inform","Parametro alterado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
+		echo 'showError("inform","Operação efetuada com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
 	  //Bancoob
 	} else {
 		if ((!isset($_POST['seqarnsa'])) || $_POST['seqarnsa'] == ''){
@@ -101,7 +101,7 @@
 		  exit();
 		}
 		
-		echo 'showError("inform","Parametro alterado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
+		echo 'showError("inform","Operação efetuada com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
 	}
 	//Consulta
   } else {

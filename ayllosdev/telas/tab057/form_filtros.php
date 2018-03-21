@@ -13,7 +13,7 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
 	
-  $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
+  //$cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
   
   $xml = "<Root>";
   $xml .= " <Dados>";
@@ -57,6 +57,7 @@
         <label for="tlcooper"><? echo utf8ToHtml('Cooperativa:') ?></label>
         <select id="tlcooper" name="tlcooper">
 		<?php
+        
 		  if ($cddopcao == 'C') { ?>
 			<option value="0"><? echo utf8ToHtml(' Todas') ?></option> 
         <?php
@@ -77,7 +78,7 @@
 			<tr>
 				<td>
 					<label for="cdempres"><? echo utf8ToHtml('Convênio:') ?></label>
-					<input id="cdempres" name="cdempres" type="text"/>
+					<input id="cdempres" name="cdempres" type="text" />
           <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
           <input type="text" id="nmextcon" name="nmextcon" />
         </td>

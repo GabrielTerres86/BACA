@@ -373,7 +373,8 @@ create or replace package body cecred.tela_tab057 is
                        ,pr_cdempres tbconv_arrecadacao.cdempres%TYPE -- Código do convênio
                        ,pr_nmextcon crapcon.nmextcon%TYPE            -- Descrição do convênio
                        ) IS
-      SELECT tbconv_arrecadacao.cdempres
+      SELECT DISTINCT 
+             tbconv_arrecadacao.cdempres
             ,crapcon.nmextcon
         FROM tbconv_arrecadacao
             ,crapcon
