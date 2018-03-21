@@ -17,9 +17,11 @@
  * 004: [28/08/2012] Lucas R         (CECRED) : Alimentado variavel flgProposta
  * 005: [23/11/2012] Adriano		 (CECRED) : Alterado a função onClick do botao btSalvar na 
 											    divDadosAvalistas de validarAvalistas para buscaGrupoEconomico.
-*  006: [06/04/2015] Jonata             (RKAM):	Consultas automatizadas.							
-*  007: [01/06/2015] Lucas Reinert	 (CECRED) : Alterado para apresentar mensagem de confirmacao de proposta para
-*												menores nao emancipados. (Reinert)
+ * 006: [06/04/2015] Jonata            (RKAM) :	Consultas automatizadas.							
+ * 007: [01/06/2015] Lucas Reinert	 (CECRED) : Alterado para apresentar mensagem de confirmacao de proposta para
+ *	   											menores nao emancipados. (Reinert)
+ * 008: [15/03/2018] Diego Simas	 (AMcom)  : Alterado para exibir tratativas quando o limite de crédito foi 
+ *                                              cancelado de forma automática pelo Ayllos.  
  */	  
 ?>
 
@@ -76,7 +78,6 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjLimite = getObjectXML($xmlResult);
 	
-	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjLimite->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','');
 		
@@ -93,7 +94,44 @@
 	}
 	
 	$limite = $xmlObjLimite->roottag->tags[0]->tags[0]->tags;
-	
+
+	if($cddopcao == 'N'){
+		//Verifica se pode ser incluído novo limite
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "  <Dados>";
+		$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "  </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "ZOOM0001", "CONSISTE_NOVO_LIMITE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+		$xmlObjeto = getObjectXML($xmlResult);	
+		
+		$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+		$autnovlim = getByTagName($param->tags,'autoriza');	
+		
+		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+		}	
+
+		if($autnovlim == 1){
+			// MENSAGEM DE INADIMPLÊNCIA
+			echo '<script type="text/javascript">';
+			echo 'hideMsgAguardo();';
+			echo 'showError("inform","Limite de Crédito cancelado por motivo de inadimplência, não é possível realizar a operação!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+			echo '</script>';
+			$travaCamposLimite = 'S';
+			// PEDE SENHA COORDENADOR
+			echo '<script type="text/javascript">';
+			echo 'bloqueiaFundo(divRotina);';
+			echo 'hideMsgAguardo();';
+			echo 'pedeSenhaCoordenador(2,"continuaLimite();","");';
+			echo '</script>';
+		}	
+	}		
+
 	$nrctrlim = getByTagName($limite,"nrctrpro");
 	$vllimite = str_replace(",",".",getByTagName($limite,"vllimpro"));
 	$flgimpnp = getByTagName($limite,"flgimpnp");
@@ -146,8 +184,7 @@
 	var metodoContinue  = "<? echo $metodoContinue; ?>";
 	var metodoAvanca	= "<? echo $metodoAvanca; ?>";
 	var metodoSucesso   = "<? echo $fncImpressao; ?>";
-	    flgProposta		= "<? echo $flgProposta;  ?>";
-		
+	    flgProposta		= "<? echo $flgProposta;  ?>";		
 		
 	var nrgarope        = "<? echo $nrgarope;  ?>";
 	var nrinfcad        = "<? echo $nrinfcad;  ?>";		
@@ -227,7 +264,7 @@
 				<input type="hidden" name="idimpres" id="idimpres" value="">
 				<input type="hidden" name="flgemail" id="flgemail" value="">
 				<input type="hidden" name="flgimpnp" id="flgimpnp" value="">
-				<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">		
+				<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">						
 			</form>		
 			
 		</td>
@@ -242,15 +279,37 @@
 	$("#divDadosAvalistas").css("display","none");
 
 	$("#tdTitDivDadosLimite").html("DADOS DO " + strTitRotinaUC);
-	$("#divDadosLimite").css("display","block");
+	$("#divDadosLimite").css("display","block");	
 
 	// Se for inclusao/alteracao, habilitar avalista
 	habilitaAvalista(<? echo ($cddopcao == 'N') ?>);
 	
 	controlaLayout('<? echo $cddopcao; ?>');
 
+	<? if($travaCamposLimite == 'S'){ ?>
+		travaCamposLimite();
+	<? } ?>
+
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);
 	
 </script>												
 
+<script>
+	function continuaLimite(){
+		$("#divDadosRenda").css("display","none");
+		$("#divDadosObservacoes").css("display","none");
+		$("#divDadosAvalistas").css("display","none");
+
+		$("#tdTitDivDadosLimite").html("DADOS DO " + strTitRotinaUC);
+		$("#divDadosLimite").css("display","block");	
+
+		// Se for inclusao/alteracao, habilitar avalista
+		habilitaAvalista(<? echo ($cddopcao == 'N') ?>);
+		
+		controlaLayout('<? echo $cddopcao; ?>');
+		
+		hideMsgAguardo();
+		bloqueiaFundo(divRotina);		
+	}	
+</script>

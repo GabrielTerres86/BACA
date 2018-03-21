@@ -32,9 +32,11 @@
  * 018:[26/01/2016] Heitor     (RKAM)    : Chamado 364592 - Alterada atribuicao ao campo vloutras, nao estava preenchendo corretamente ao retornar valor decimal
  *
  * 018: [17/12/2015] Lunelli   (CECRED)  : Edição de número do contrato de limite (Lucas Lunelli - SD 360072 [M175])
- * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
+ * 019: [15/07/2016] Andrei      (RKAM)  : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
  * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.
  * 021: [01/12/2017] Jonata      (RKAM)  : Não permitir acesso a opção de incluir quando conta demitida.
+ * 022: [15/03/2018] Diego Simas (AMcom) : Alterado para exibir tratativas quando o limite de crédito foi
+ *                                         cancelado de forma automática pelo Ayllos.
  */
 
 var callafterLimiteCred = '';
@@ -59,7 +61,6 @@ var aux_inconfi2 = ""; /*Variável usada para controlar validações que serão 
 
 var idSocio = 0; 	   // Indicador do socio para as consultas automatizadas
 var ant_inconcje = 0;
-
 
 // Variável que armazena o nome da rotina conforme tipo de pessoa (1 - Física / 2 - Jurídica)
 var strTitRotinaLC = inpessoa == 1 ? "Limite de Cr&eacute;dito" : "Limite Empresarial";
@@ -594,6 +595,22 @@ function validarAvalistas() {
             }
         }
     });
+}
+
+function travaCamposLimite(){
+    //----------------------------------------------------------------
+    // FORMULÁRIO NOVO LIMITE 
+    //----------------------------------------------------------------		
+    var cTodosLimite = $('input, select', '#' + nomeForm + ' .fsLimiteCredito');
+    $('label', '#' + nomeForm + ' .fsLimiteCredito').addClass('rotulo').css('width', '200px');
+    $('#nrctrlim', '#' + nomeForm + ' .fsLimiteCredito').addClass('contrato').css('width', '60px');
+    $('#cddlinha', '#' + nomeForm + ' .fsLimiteCredito').addClass('codigo pesquisa').attr('maxlength', '3').css('width', '35px');
+    $('#dsdlinha', '#' + nomeForm + ' .fsLimiteCredito').addClass('descricao').css('width', '170px');
+    $('#vllimite', '#' + nomeForm + ' .fsLimiteCredito').addClass('moeda').css('width', '90px');
+    $('#flgimpnp', '#' + nomeForm + ' .fsLimiteCredito').css('width', '70px');
+    $('#dsobserv', '#' + nomeForm + ' .fsObservacoes').addClass('campo');
+
+    cTodosLimite.desabilitaCampo();    
 }
 
 // Função para formata o layout
