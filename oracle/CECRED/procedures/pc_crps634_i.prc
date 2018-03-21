@@ -98,34 +98,19 @@ BEGIN
                            pr_qterro   in number,
                            pr_dtmvtolt in tbgen_batch_controle.dtmvtolt%TYPE) is
 
-        SELECT DISTINCT cp.cdagenci
-        FROM crapepa ca, crapass cp
-        WHERE ca.cdcooper = pr_cdcooper
-          AND ca.persocio >= pr_persocio
-          AND ca.cdcooper = cp.cdcooper
-          AND ca.nrdconta = cp.nrdconta
-          AND cp.dtelimin IS NULL
-          AND (pr_qterro = 0 or
-              (pr_qterro > 0 and exists (SELECT 1
+         SELECT distinct cs.cdagenci
+        FROM crapass cs
+        WHERE cs.cdcooper = pr_cdcooper
+        AND (pr_qterro = 0 or
+            (pr_qterro > 0 and exists (SELECT 1
                                           FROM tbgen_batch_controle
-                                         WHERE tbgen_batch_controle.cdcooper    = pr_cdcooper
+                                       WHERE tbgen_batch_controle.cdcooper    = pr_cdcooper
                                            AND tbgen_batch_controle.cdprogra    = pr_cdprogra
                                            AND tbgen_batch_controle.tpagrupador = 1
-                                           AND tbgen_batch_controle.cdagrupador = cp.cdagenci
+                                           AND tbgen_batch_controle.cdagrupador = cs.cdagenci
                                            AND tbgen_batch_controle.insituacao  = 1
-                                           AND tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)))       
-          union
-            select CDAGEAGR as cdagenci
-            from crapage
-            where cdcooper = pr_cdcooper
-            and CDAGEAGR > 0
-            and cdageagr not in(SELECT DISTINCT cp.cdagenci
-                                FROM crapepa ca, crapass cp
-                                where ca.cdcooper = cp.cdcooper
-                                AND ca.nrdconta = cp.nrdconta
-                                AND ca.cdcooper = pr_cdcooper
-                                AND ca.persocio >= pr_persocio
-                                AND cp.dtelimin IS NULL);
+                                           AND tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)));       
+
           
    /* Buscar dados da formação de grupos */
    CURSOR cr_crapgrpb(pr_cdcooper IN crapgrp.cdcooper%TYPE) IS  --> Código da cooperativa
@@ -320,7 +305,8 @@ BEGIN
             DELETE FROM crapgrp cp WHERE cp.cdcooper = pr_cdcooper;
             COMMIT;           
          END IF;
-                  
+              
+                 
             pc_log_programa(PR_DSTIPLOG      => 'O',
             PR_CDPROGRAMA         => pr_cdprogra ,
             pr_cdcooper           => pr_cdcooper,
@@ -564,7 +550,7 @@ BEGIN
      END IF;
    
    -- executor principal do job 
-   IF vr_inproces  > 2 AND 
+   /*IF vr_inproces  > 2 AND 
       vr_qtdjobs   > 0 and 
       pr_cdagenci  = 0 then  
    
@@ -596,8 +582,8 @@ BEGIN
                   pr_tpocorrencia       => 4,
                   pr_dsmensagem         => 'Fim carregar tabela memória  vr_tab_crapgrp ' || vr_tab_crapgrp.COUNT || ' - ' || to_char(sysdate,'hh24:mi:ss'),
                   PR_IDPRGLOG           => vr_idlog_ini_par); 
-
-   END IF;                                  
+ 
+   END IF;    */                              
    
    -- executa com ou sem paralelismo.
    IF (vr_qtdjobs   = 0 AND pr_cdagenci  = 0) OR 

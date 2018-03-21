@@ -186,6 +186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
   ............................................................................. */
   BEGIN
     DECLARE
+    vr_idlog_ini_ger number;
       /* PL Table para armazenar naturezas de operação */
       TYPE typ_reg_gncdntj IS
         RECORD(cdnatjur gncdntj.cdnatjur%TYPE);
@@ -315,6 +316,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       IF vr_tab_crapass.count = 0 THEN
         -- Gerar PL Table
         FOR registro IN cr_crapass(pr_cdcooper) LOOP
+          
+        if registro.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => 'conta - 6849539 em crapass Mn -'|| registro.cdagenci ,
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;   
+        
+        
           -- Cria registro para posicionar índice
           IF (lpad(registro.cdcooper, 3, '0') || lpad(registro.nrcpfcgc, 20, '0')) <>
              (lpad(nvl(registro.cdcooperAnt, 0), 3, '0') || lpad(nvl(registro.nrcpfcgcAnt, 0), 20, '0')) THEN
@@ -339,6 +354,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       IF vr_tab_crapjur.count = 0 THEN
         -- Gerar PL Table
         FOR registro IN cr_crapjur(pr_cdcooper) LOOP
+        
+        if registro.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => 'conta - 6849539 em crapjur Mn -' ,
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;   
           -- Cria registro para posicionar índice
           IF lpad(registro.nrdconta, 20, '0') <> lpad(nvl(registro.nrdcontaAnt, 0), 20, '0') THEN
             vr_index := 1;
@@ -359,6 +386,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         -- Monta vínculos de pessoa física
         IF vr_tab_crapass(lpad(pr_cdcooper, 3, '0') || lpad(pr_nrcpfcgc, 20, '0') || lpad('1', 10, '0')).inpessoa = 1 THEN
           FOR rw_ttlass IN cr_ttlass(pr_cdcooper, pr_nrcpfcgc) LOOP
+            
+          
+          if rw_ttlass.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => 'conta - 6849539 em ttlass Mn -' ,
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;   
             -- Se não encontrar este relacionamento no grupo
             OPEN cr_crapgrp10(rw_ttlass.cdcooper, pr_nrdgrupo, rw_ttlass.nrcpfcgc, rw_ttlass.nrdconta, rw_ttlass.idseqttl);
             FETCH cr_crapgrp10 INTO rw_crapgrp10;
@@ -369,6 +409,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
               -- Criar registros de grupo
               BEGIN
+                
+                      if rw_crapgrp10.nrdconta = 6849539 then
+                        vr_idlog_ini_ger := null;
+                      
+                        pc_log_programa(PR_DSTIPLOG      => 'O',
+                        PR_CDPROGRAMA         => 'jhdc' ,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => 1,   -- 
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'insert 6849539 em crapgrp Mn -' ,
+                        PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                       end if;   
                 INSERT INTO crapgrp(cdcooper
                                    ,nrdgrupo
                                    ,nrdconta
@@ -399,6 +451,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         ELSE
           -- Consulta se localiza registros de grupos com o mesmo CNPJ/CPF
           FOR rw_crajurgnc IN cr_crajurgnc(pr_cdcooper, pr_nrcpfcgc) LOOP
+            
+          
+              if rw_crajurgnc.nrdconta = 6849539 then
+                vr_idlog_ini_ger := null;
+              
+                pc_log_programa(PR_DSTIPLOG      => 'O',
+                PR_CDPROGRAMA         => 'jhdc' ,
+                pr_cdcooper           => pr_cdcooper,
+                pr_tpexecucao         => 1,   -- 
+                pr_tpocorrencia       => 4,
+                pr_dsmensagem         => 'conta - 6849539 em crajurgnc Mn -' ,
+                PR_IDPRGLOG           => vr_idlog_ini_ger); 
+               end if;   
+               
             --- Verifica se a natureza de operação existe
             IF vr_tab_gncdntj.exists(rw_crajurgnc.natjurid) THEN
               -- Busca dados de grupos com o mesmo número de conta
@@ -411,6 +477,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
 				-- Se não encontrar vai criar grupo
                 BEGIN
+                  
+                       if rw_crajurgnc.nrdconta = 6849539 then
+                        vr_idlog_ini_ger := null;
+                      
+                        pc_log_programa(PR_DSTIPLOG      => 'O',
+                        PR_CDPROGRAMA         => 'jhdc' ,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => 1,   -- 
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'insert 6849539 em rw_crajurgnc 1 Mn -' ,
+                        PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                       end if;
                   INSERT INTO crapgrp(cdcooper
                                      ,nrdgrupo
                                      ,nrdconta
@@ -605,6 +683,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
   ............................................................................. */
   BEGIN
     DECLARE
+    v_resp number;
+    
+    vr_idlog_ini_ger number;
       /* PL Table para manter os dados da tabela CRAPASS */
       TYPE typ_reg_crapass IS
         RECORD(cdcooper crapass.cdcooper%TYPE
@@ -680,8 +761,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           AND cp.dtelimin IS NULL;
 
       /* Buscar dados de associados */
-      CURSOR cr_crapass(pr_cdcooper IN crapepa.cdcooper%TYPE
-                        ,pr_cdagenci IN crapass.cdagenci%TYPE) IS  --> Código da cooperativa
+     CURSOR cr_crapass(pr_cdcooper IN crapepa.cdcooper%TYPE, pr_persocio IN crapepa.persocio%TYPE ) IS  --> Código da cooperativa
+        /*SELECT cs.cdcooper
+              ,cs.nrdconta
+              ,cs.nrcpfcgc
+              ,cs.cdagenci
+              ,cs.dtelimin
+              ,cs.inpessoa
+        FROM crapass cs
+        WHERE cs.cdcooper = pr_cdcooper;*/
+        
+         SELECT cs.cdcooper
+              ,cs.nrdconta
+              ,cs.nrcpfcgc
+              ,cs.cdagenci
+              ,cs.dtelimin
+              ,cs.inpessoa
+        FROM crapass cs
+        WHERE cs.cdcooper = pr_cdcooper
+        and  cs.nrdconta in (SELECT distinct
+                                    ca.nrctasoc
+                              FROM crapepa ca, crapass cp
+                              WHERE ca.cdcooper = pr_cdcooper
+                                AND ca.persocio >= pr_persocio
+                                AND ca.cdcooper = cp.cdcooper
+                                AND ca.nrdconta = cp.nrdconta
+                                AND cp.dtelimin IS NULL
+                               )
+        
+       union
+        
         SELECT cs.cdcooper
               ,cs.nrdconta
               ,cs.nrcpfcgc
@@ -690,15 +799,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
               ,cs.inpessoa
         FROM crapass cs
         WHERE cs.cdcooper = pr_cdcooper
-        AND cs.cdagenci = decode(pr_cdagenci,0,cs.cdagenci,pr_cdagenci);
+        and  cs.nrdconta in (SELECT distinct
+                                    ca.nrdconta
+                              FROM crapepa ca, crapass cp
+                              WHERE ca.cdcooper = pr_cdcooper
+                                AND ca.persocio >= pr_persocio
+                                AND ca.cdcooper = cp.cdcooper
+                                AND ca.nrdconta = cp.nrdconta
+                                AND cp.dtelimin IS NULL
+                               );
        
 
       /* Buscar dados de pessoas jurídicas */
-      CURSOR cr_crapjur(pr_cdcooper IN crapjur.cdcooper%TYPE) IS  --> Código da cooperativa
+      CURSOR cr_crapjur(pr_cdcooper IN crapjur.cdcooper%TYPE,
+                        pr_cdagenci in crapass.cdagenci%type) IS  --> Código da cooperativa
         SELECT cr.natjurid
               ,cr.nrdconta
-        FROM crapjur cr
-        WHERE cr.cdcooper = pr_cdcooper;
+        FROM crapjur cr, crapass cs
+        where cr.cdcooper = cs.cdcooper
+        and   cr.nrdconta = cs.nrdconta
+        and cr.cdcooper = pr_cdcooper;
+        --AND cs.cdagenci = decode(pr_cdagenci,0,cs.cdagenci,pr_cdagenci);
 
       /* Buscar dados de tipos de natureza de operação */
       CURSOR cr_gncdntj IS
@@ -760,7 +881,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
       /* Buscar dados da formação de grupos */
       CURSOR cr_crapgrpb(pr_cdcooper IN crapgrp.cdcooper%TYPE) IS  --> Código da cooperativa
-        SELECT cg.nrdgrupo
+        SELECT distinct cg.nrdgrupo
               ,NVL((LAG(cg.nrdgrupo) OVER(ORDER BY cg.nrdgrupo)), 0) nrdgrupoa
         FROM crapgrp cg
         WHERE cg.cdcooper = pr_cdcooper
@@ -812,14 +933,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                         ,pr_persocio => pr_persocio);
 
       -- Eliminar todos os grupos da cooperativa
-      --IF pr_cdagenci = 0 THEN
-      --   DELETE FROM crapgrp cp WHERE cp.cdcooper = pr_cdcooper;
-      --   COMMIT;
-      --END IF;
+      IF pr_cdagenci = 0 THEN
+         DELETE FROM crapgrp cp WHERE cp.cdcooper = pr_cdcooper;
+         COMMIT;
+      END IF;
 
       -- Carregar PL Table da tabela CRAPASS
       IF vr_tab_crapass.count = 0 THEN
-        FOR registro IN cr_crapass(pr_cdcooper,pr_cdagenci) LOOP
+        FOR registro IN cr_crapass(pr_cdcooper,pr_persocio) LOOP
+          
+                  
+           if registro.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => 'conta - 6849539 em crapass n -'|| registro.cdagenci ,
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;   
+        
+        
+        
+        
+        
           IF registro.dtelimin IS NULL THEN
             vr_tab_crapass(lpad(registro.nrdconta, 40, '0')).cdcooper := registro.cdcooper;
             vr_tab_crapass(lpad(registro.nrdconta, 40, '0')).nrdconta := registro.nrdconta;
@@ -843,7 +982,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
       -- Caregar PL Table da tabela CRAPJUR
       IF vr_tab_crapjur.count = 0 THEN
-        FOR registro IN cr_crapjur(pr_cdcooper) LOOP
+        FOR registro IN cr_crapjur(pr_cdcooper,pr_cdagenci) LOOP
+          
+        
+        if registro.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => 'conta - 6849539 em crapjur n -' || pr_cdagenci,
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;   
+        
+        
           vr_tab_crapjur(lpad(registro.nrdconta, 15, '0')).natjurid := registro.natjurid;
         END LOOP;
       END IF;
@@ -859,6 +1013,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       IF vr_tab_crapttl.count = 0 THEN
         FOR registro IN cr_crapttl(pr_cdcooper, pr_cdagenci) LOOP
           IF registro.nrdconta <> nvl(registro.nrdcontalag, 0) THEN
+            
+          
+          
+          if registro.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => 'conta - 6849539 em crapttl -',
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;   
+          
+          
             vr_tab_crapttl(lpad(registro.nrdconta, 20, '0')).nrdconta := registro.nrdconta;
             vr_tab_crapttl(lpad(registro.nrdconta, 20, '0')).cdcooper := registro.cdcooper;
             vr_tab_crapttl(lpad(registro.nrdconta, 20, '0')).inhabmen := registro.inhabmen;
@@ -870,11 +1040,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       -- Carregar PL Table da tabela CRAPCRL
       IF vr_tab_crapcrl.count = 0 THEN
         FOR registro IN cr_crapcrl(pr_cdcooper) LOOP
+          
+        if registro.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => 'conta - 6849539 em CRAPCRL -',
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;   
+          
+        
+        
           IF registro.nrctamen <> nvl(registro.nrctamenant, 0) THEN
             vr_index := 1;
           ELSE
             vr_index := vr_index + 1;
           END IF;
+          
+          
 
           vr_tab_crapcrl(lpad(registro.nrctamen, 20 ,'0') || lpad(vr_index, 10, '0')).nrdconta := registro.nrdconta;
           vr_tab_crapcrl(lpad(registro.nrctamen, 20 ,'0') || lpad(vr_index, 10, '0')).nrctamen := registro.nrctamen;
@@ -885,6 +1072,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       -- Carregar PL Table da tabela CRAPCRL com outros campos e ordenação
       IF vr_tab_crapcrf.count = 0 THEN
         FOR registro IN cr_crapcrlb(pr_cdcooper) LOOP
+          
+        if registro.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => 'conta - 6849539 em CRAPCRL 1 -',
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;   
           IF registro.nrcpfmen <> nvl(registro.nrcpfmenAnt, 0) THEN
             vr_indexf := 1;
           ELSE
@@ -901,26 +1100,112 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       FOR rw_crapepa IN cr_crapepa(pr_cdcooper => pr_cdcooper, pr_persocio => pr_persocio, pr_cdagenci => pr_cdagenci) LOOP
         -- Verifica se existe registro como pessoa jurídica
         IF vr_tab_crapjur.EXISTS(lpad(rw_crapepa.nrdconta, 15, '0')) THEN
+          
+         if rw_crapepa.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => 'existe na crapjur - ' || rw_crapepa.nrdconta,
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;   
+        
+        
+        
           -- Verifica se existe registro de natureza de operações
           IF vr_tab_gncdntj.EXISTS(lpad(vr_tab_crapjur(lpad(rw_crapepa.nrdconta, 15, '0')).natjurid, 19, '0') || '1') THEN
+            
+               if rw_crapepa.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => ' vr_tab_gncdntj.EXISTS - ' || rw_crapepa.nrdconta,
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;   
+          
             -- Não é formado grupo se a empresa sócia proprietaria nao possuir c/c na cooperativa
             IF rw_crapepa.nrctasoc = 0 AND NOT vr_tab_crapass.exists(lpad(rw_crapepa.nrctasoc, 40, '0')) THEN
+                 
+                           if rw_crapepa.nrdconta = 6849539 then
+                            vr_idlog_ini_ger := null;
+                          
+                            pc_log_programa(PR_DSTIPLOG      => 'O',
+                            PR_CDPROGRAMA         => 'jhdc' ,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => 1,   -- 
+                            pr_tpocorrencia       => 4,
+                            pr_dsmensagem         => 'Não é formado grupo se a empresa sócia proprietaria nao possuir c/c na cooperativa - ' || rw_crapepa.nrctasoc ,
+                            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                           end if;     
+            
               CONTINUE;
             END IF;
 
             -- Não é formado o grupo se a empresa socia proprietaria não tiver percentual de soc. obrigatoria
             IF vr_tab_crapjur.exists(lpad(rw_crapepa.nrctasoc, 15, '0')) THEN
               IF vr_tab_gncdntj.exists(lpad(vr_tab_crapjur(lpad(rw_crapepa.nrctasoc, 15, '0')).natjurid, 19, '0') || '0') THEN
+                
+                    if rw_crapepa.nrdconta = 6849539 then
+                            vr_idlog_ini_ger := null;
+                          
+                            pc_log_programa(PR_DSTIPLOG      => 'O',
+                            PR_CDPROGRAMA         => 'jhdc' ,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => 1,   -- 
+                            pr_tpocorrencia       => 4,
+                            pr_dsmensagem         => ' Não é formado o grupo se a empresa socia proprietaria não tiver percentual de soc. obrigatoria - ' || rw_crapepa.nrctasoc ,
+                            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                           end if;               
+              
+              
+              
                 CONTINUE;
               END IF;
             END IF;
 
             -- Não é formado grupo se a empresa socia proprietaria não possuir c/c na cooperativa
             IF NOT vr_tab_crapass.exists(lpad(rw_crapepa.nrctasoc, 40, '0')) THEN
+              
+                    if rw_crapepa.nrdconta = 6849539 then
+                            vr_idlog_ini_ger := null;
+                          
+                            pc_log_programa(PR_DSTIPLOG      => 'O',
+                            PR_CDPROGRAMA         => 'jhdc' ,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => 1,   -- 
+                            pr_tpocorrencia       => 4,
+                            pr_dsmensagem         => ' Não é formado grupo se a empresa socia proprietaria não possuir c/c na cooperativa - ' || rw_crapepa.nrctasoc ,
+                            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                           end if;     
+            
+            
               CONTINUE;
             ELSE
         -- Verifica se a data de eliminação do associado é nula
               IF vr_tab_crapass(LPad(rw_crapepa.nrctasoc, 40, '0')).dtelimin IS NOT NULL THEN
+                
+                    if rw_crapepa.nrdconta = 6849539 then
+                            vr_idlog_ini_ger := null;
+                          
+                            pc_log_programa(PR_DSTIPLOG      => 'O',
+                            PR_CDPROGRAMA         => 'jhdc' ,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => 1,   -- 
+                            pr_tpocorrencia       => 4,
+                            pr_dsmensagem         => ' Verifica se a data de eliminação do associado é nula - ' || rw_crapepa.nrctasoc ,
+                            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                           end if; 
+              
+              
+              
+              
                  CONTINUE;
               END IF;
             END IF;
@@ -948,7 +1233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
               ELSE
                 CLOSE cr_crapgrp;
 
-                -- Assimila valores para as variáveis
+				-- Assimila valores para as variáveis
                 vr_nrultgrp := vr_nrultgrp + 1;
                 vr_nrdgrupo := vr_nrultgrp;
                 vr_nrultgrp := vr_nrdgrupo;
@@ -962,6 +1247,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
             -- Cria a formadora de grupo
             BEGIN
+              
+            
+             if rw_crapepa.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => 'insert - 6849539 em rw_crapepa 1 -',
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;  
+           
               INSERT INTO crapgrp(cdcooper
                                  ,nrdgrupo
                                  ,nrdconta
@@ -992,7 +1291,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                            ,pr_nrdgrupo    => vr_nrdgrupo
                            ,pr_nrdconta    => rw_crapepa.nrdconta
                            ,pr_nrcpfcgc    => rw_crapepa.nrcpfcgc
-                           --,pr_cdagenci    => rw_crapepa.cdagenci
                            ,pr_des_erro    => pr_dscritic);
 
             -- Verifica se ocorreram erros na formação dos grupos
@@ -1002,6 +1300,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
             -- Cria registro do grupo
             BEGIN
+              
+            
+            if rw_crapepa.nrdconta = 6849539 then
+            vr_idlog_ini_ger := null;
+          
+            pc_log_programa(PR_DSTIPLOG      => 'O',
+            PR_CDPROGRAMA         => 'jhdc' ,
+            pr_cdcooper           => pr_cdcooper,
+            pr_tpexecucao         => 1,   -- 
+            pr_tpocorrencia       => 4,
+            pr_dsmensagem         => 'insert - 6849539 em rw_crapepa 2 -',
+            PR_IDPRGLOG           => vr_idlog_ini_ger); 
+           end if;  
+           
               INSERT INTO crapgrp(cdcooper
                                  ,nrdgrupo
                                  ,nrdconta
@@ -1041,6 +1353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           END IF;
         END IF;
       END LOOP;
+
 
       -- Procuradores/socio proprietario da empresa
       FOR rw_vtass IN cr_vtass(pr_cdcooper,pr_persocio) LOOP
@@ -1119,6 +1432,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                           IF vr_tab_crapcrl(vr_vindex).nrctamen <> NVL(vr_tab_crapcrl(vr_vindex).nrctamena, 9999999) THEN
                             -- Inserir novo grupo
                             BEGIN
+                              
+                            
+                            
+                            if rw_vtass.nrdconta = 6849539 then
+                                vr_idlog_ini_ger := null;
+                              
+                                pc_log_programa(PR_DSTIPLOG      => 'O',
+                                PR_CDPROGRAMA         => 'jhdc' ,
+                                pr_cdcooper           => pr_cdcooper,
+                                pr_tpexecucao         => 1,   -- 
+                                pr_tpocorrencia       => 4,
+                                pr_dsmensagem         => 'insert - 6849539 em rw_vtass.nrdconta 4 vr_nrdconta -',
+                                PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                               end if;  
                               INSERT INTO crapgrp(cdcooper
                                                  ,nrdgrupo
                                                  ,nrdconta
@@ -1159,6 +1486,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
                           -- Cria novo grupo "filho"
                           BEGIN
+                            
+                          
+                          if rw_vtass.nrdconta = 6849539 then
+                                vr_idlog_ini_ger := null;
+                              
+                                pc_log_programa(PR_DSTIPLOG      => 'O',
+                                PR_CDPROGRAMA         => 'jhdc' ,
+                                pr_cdcooper           => pr_cdcooper,
+                                pr_tpexecucao         => 1,   -- 
+                                pr_tpocorrencia       => 4,
+                                pr_dsmensagem         => 'insert - 6849539 em rw_vtass.nrdconta 3 -',
+                                PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                               end if;  
                             INSERT INTO crapgrp(cdcooper
                                                ,nrdgrupo
                                                ,nrdconta
@@ -1245,6 +1585,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                             IF vr_vindex = lpad(rw_vtass.nrcpfcgc, 20, '0') || lpad('1', 10, '0') THEN
                               -- Inserir novo grupo formador
                               BEGIN
+                                
+                              
+                                if rw_vtass.nrdconta = 6849539 then
+                                vr_idlog_ini_ger := null;
+                              
+                                pc_log_programa(PR_DSTIPLOG      => 'O',
+                                PR_CDPROGRAMA         => 'jhdc' ,
+                                pr_cdcooper           => pr_cdcooper,
+                                pr_tpexecucao         => 1,   -- 
+                                pr_tpocorrencia       => 4,
+                                pr_dsmensagem         => 'insert - 6849539 em rw_vtass.nrdconta 3 -',
+                                PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                               end if;  
                                 INSERT INTO crapgrp(cdcooper
                                                    ,nrdgrupo
                                                    ,nrdconta
@@ -1285,6 +1638,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
                             -- Inserir novo membro no grupo
                             BEGIN
+                              
+                                if rw_vtass.nrdconta = 6849539 then
+                                vr_idlog_ini_ger := null;
+                              
+                                pc_log_programa(PR_DSTIPLOG      => 'O',
+                                PR_CDPROGRAMA         => 'jhdc' ,
+                                pr_cdcooper           => pr_cdcooper,
+                                pr_tpexecucao         => 1,   -- 
+                                pr_tpocorrencia       => 4,
+                                pr_dsmensagem         => 'insert - 6849539 em rw_vtass.nrdconta 3 -' || vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).nrdconta,
+                                PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                               end if;  
                               INSERT INTO crapgrp(cdcooper
                                                  ,nrdgrupo
                                                  ,nrdconta
@@ -1352,6 +1717,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
                 -- Inserir conta formadora
                 BEGIN
+                  
+                                if rw_vtass.nrdconta = 6849539 then
+                                vr_idlog_ini_ger := null;
+                              
+                                pc_log_programa(PR_DSTIPLOG      => 'O',
+                                PR_CDPROGRAMA         => 'jhdc' ,
+                                pr_cdcooper           => pr_cdcooper,
+                                pr_tpexecucao         => 1,   -- 
+                                pr_tpocorrencia       => 4,
+                                pr_dsmensagem         => 'insert - 6849539 em rw_vtass.nrdconta 3 -' || vr_nrdconta,
+                                PR_IDPRGLOG           => vr_idlog_ini_ger); 
+                               end if;  
+          
+                
                   INSERT INTO crapgrp(cdcooper
                                      ,nrdgrupo
                                      ,nrdconta
@@ -1431,38 +1810,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           END IF;
       END LOOP;
 
-      -- Mesclar grupos
-      /*pc_mesclar_grupos(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdgrupo => 0
-                       ,pr_des_erro => pr_dscritic);
+      IF UPPER(pr_cdprogra) <> 'CRPS634' and UPPER(pr_cdprogra) <> 'CRPS627' THEN
+        -- Mesclar grupos
+        pc_mesclar_grupos(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdgrupo => 0
+                         ,pr_des_erro => pr_dscritic);
 
-      -- Verifica se ocorreram erros
-      IF pr_dscritic IS NOT NULL THEN
-        RAISE vr_erro;
-      END IF;*/
-      
-
-      -- Processar grupos para cálculo de risco
-      /*FOR rw_crapgrpb IN cr_crapgrpb(pr_cdcooper) LOOP
-        -- Verifica se é o primeiro registro do grupo
-        IF rw_crapgrpb.nrdgrupo <> rw_crapgrpb.nrdgrupoa THEN
-      -- Calcular endividamento do grupo
-          pc_calc_endivid_risco_grupo(pr_cdcooper    => pr_cdcooper
-                                     ,pr_cdagenci    => pr_cdagenci
-                                     ,pr_nrdcaixa    => pr_nrdcaixa
-                                     ,pr_cdoperad    => pr_cdoperad
-                                     ,pr_cdprogra    => pr_cdprogra
-                                     ,pr_idorigem    => pr_idorigem
-                                     ,pr_nrdgrupo    => rw_crapgrpb.nrdgrupo
-                                     ,pr_tpdecons    => TRUE
-                                     ,pr_tab_crapdat => pr_tab_crapdat
-                                     ,pr_tab_grupo   => pr_tab_grupo
-                                     ,pr_dstextab    => vr_dstextab
-                                     ,pr_dsdrisco    => opt_dsdrisco
-                                     ,pr_vlendivi    => opt_vlendivi
-                                     ,pr_des_erro    => pr_dscritic);
+        -- Verifica se ocorreram erros
+        IF pr_dscritic IS NOT NULL THEN
+          RAISE vr_erro;
         END IF;
-      END LOOP;*/
+        
+
+        -- Processar grupos para cálculo de risco
+        FOR rw_crapgrpb IN cr_crapgrpb(pr_cdcooper) LOOP
+        -- Verifica se é o primeiro registro do grupo
+          IF rw_crapgrpb.nrdgrupo <> rw_crapgrpb.nrdgrupoa THEN
+        -- Calcular endividamento do grupo
+            pc_calc_endivid_risco_grupo(pr_cdcooper    => pr_cdcooper
+                                       ,pr_cdagenci    => pr_cdagenci
+                                       ,pr_nrdcaixa    => pr_nrdcaixa
+                                       ,pr_cdoperad    => pr_cdoperad
+                                       ,pr_cdprogra    => pr_cdprogra
+                                       ,pr_idorigem    => pr_idorigem
+                                       ,pr_nrdgrupo    => rw_crapgrpb.nrdgrupo
+                                       ,pr_tpdecons    => TRUE
+                                       ,pr_tab_crapdat => pr_tab_crapdat
+                                       ,pr_tab_grupo   => pr_tab_grupo
+                                       ,pr_dstextab    => vr_dstextab
+                                       ,pr_dsdrisco    => opt_dsdrisco
+                                       ,pr_vlendivi    => opt_vlendivi
+                                       ,pr_des_erro    => pr_dscritic);
+          END IF;
+        END LOOP;
+      END IF;
+      
 
       -- Finalização com sucesso
       pr_dscritic := 'OK';
