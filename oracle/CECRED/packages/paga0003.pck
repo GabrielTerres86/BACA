@@ -1223,11 +1223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_dsinfor3 := vr_dsinfor3 || '#Descrição do Pagamento: ' || pr_dsidepag;
       vr_dsinfor3 := vr_dsinfor3 || '#Data do Pagamento: ' || pr_dtmvtolt;
       vr_dsinfor3 := vr_dsinfor3 || '#Horario do Pagamento: ' || to_char(to_date(pr_hrautent,'SSSSS'),'HH24:MI:SS');
-      vr_dsinfor3 := vr_dsinfor3 || '#Canal de Recebimento: ' || (CASE pr_idorigem
-                                                                    WHEN 3 THEN 'Internet Banking'
-                                                                    WHEN 4 THEN 'TAA'
-                                                                    ELSE 'Caixa'  
-                                                                  END);
+      vr_dsinfor3 := vr_dsinfor3 || '#Canal de Recebimento: ' || pr_idorigem;
     
     
     --> DAE
@@ -1255,11 +1251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_dsinfor3 := vr_dsinfor3 || '#Descrição do Pagamento: ' || pr_dsidepag;
       vr_dsinfor3 := vr_dsinfor3 || '#Data do Pagamento: ' || pr_dtmvtolt;
       vr_dsinfor3 := vr_dsinfor3 || '#Horario do Pagamento: ' || to_char(to_date(pr_hrautent,'SSSSS'),'HH24:MI:SS');
-      vr_dsinfor3 := vr_dsinfor3 || '#Canal de Recebimento: ' || (CASE pr_idorigem
-                                                                    WHEN 90 THEN 'Internet Banking'
-                                                                    WHEN 91 THEN 'TAA'
-                                                                    ELSE 'Caixa'  
-                                                                  END );
+      vr_dsinfor3 := vr_dsinfor3 || '#Canal de Recebimento: ' || pr_idorigem;
     
     END IF; --> Fim IF pr_cdtippro  
     

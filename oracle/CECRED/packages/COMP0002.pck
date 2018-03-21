@@ -4741,11 +4741,11 @@ END pc_comprovantes_recebidos;
                 vr_idx := 'VLDOCMTO';
               WHEN 'DESCRIÇÃO DO PAGAMENTO' THEN
                 vr_idx := 'DSDPAGTO';
-              WHEN '#DATA DO PAGAMENTO' THEN
+              WHEN 'DATA DO PAGAMENTO' THEN
                 vr_idx := 'DTTRANSA';
-              WHEN '#HORARIO DO PAGAMENTO' THEN
+              WHEN 'HORARIO DO PAGAMENTO' THEN
                 vr_idx := 'HRAUTENT';
-              WHEN '#CANAL DE RECEBIMENTO' THEN
+              WHEN 'CANAL DE RECEBIMENTO' THEN
                 vr_idx := 'DSORIGEM';              
               ELSE
                 vr_idx := NULL;
@@ -4868,7 +4868,7 @@ END pc_comprovantes_recebidos;
                        '<dsresdoc>'|| vr_cdtipdoc                           || '</dsresdoc>';
                        
       IF vr_tab_campos.exists('DSORIGEM') THEN
-        vr_dsdlinha := vr_dsdlinha || '<dsdcanal>'|| vr_tab_campos('DSORIGEM') ||'</dsdcanal>	';
+        vr_dsdlinha := vr_dsdlinha || '<cdorigem>'|| vr_tab_campos('DSORIGEM') ||'</cdorigem>	';
       END IF;
       vr_dsdlinha := vr_dsdlinha ||     
                        '<nrtelsac>'|| vr_protocolo(vr_ind).nrtelsac ||'</nrtelsac>'||
@@ -5028,11 +5028,11 @@ END pc_comprovantes_recebidos;
                 vr_idx := 'VLDOCMTO';
               WHEN 'DESCRIÇÃO DO PAGAMENTO' THEN
                 vr_idx := 'DSDPAGTO';
-              WHEN '#DATA DO PAGAMENTO' THEN
+              WHEN 'DATA DO PAGAMENTO' THEN
                 vr_idx := 'DTTRANSA';
-              WHEN '#HORARIO DO PAGAMENTO' THEN
+              WHEN 'HORARIO DO PAGAMENTO' THEN
                 vr_idx := 'HRAUTENT';
-              WHEN '#CANAL DE RECEBIMENTO' THEN
+              WHEN 'CANAL DE RECEBIMENTO' THEN
                 vr_idx := 'DSORIGEM';              
               ELSE
                 vr_idx := NULL;
@@ -5116,7 +5116,7 @@ END pc_comprovantes_recebidos;
       vr_dsdlinha := '<infbancoob>'||                       
                        '<nmressin>'|| vr_protocolo(vr_ind).nmrescop || '</nmressin>';
       IF vr_tab_campos.exists('DSORIGEM') THEN
-        vr_dsdlinha := vr_dsdlinha || '<dsdcanal>'|| vr_tab_campos('DSORIGEM') ||'</dsdcanal>	';
+        vr_dsdlinha := vr_dsdlinha || '<cdorigem>'|| vr_tab_campos('DSORIGEM') ||'</cdorigem>	';
       END IF;
       vr_dsdlinha := vr_dsdlinha ||     
                        '<nrtelsac>'|| vr_protocolo(vr_ind).nrtelsac ||'</nrtelsac>'||

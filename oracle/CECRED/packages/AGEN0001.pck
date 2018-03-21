@@ -125,7 +125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
         
         CASE
           WHEN vr_cdtiptra = 2          THEN vr_dsagenda := pr_tab_dados_agendamento.dscedent;
-          WHEN vr_cdtiptra = 10         THEN 
+          WHEN vr_cdtiptra IN (10,12,13) THEN 
               
             vr_dsagenda := pr_tab_dados_agendamento.dsidpgto;
             
