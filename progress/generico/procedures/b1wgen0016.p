@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 27/11/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 21/03/2018
     
     Dados referentes ao programa:
 
@@ -532,6 +532,8 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
 
               28/02/2018 - Alterar procedure convenios_aceitos para retornar o nome resumido mais amigavel, 
                            conforme acontece na b1wgen0092.busca_convenios_codbarras. (Anderson - P285)
+                           
+              21/03/2018 - Validar corretamente o retorno de critica na paga_titulo (Lucas Ranghetti INC0010520)
 
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
@@ -2078,24 +2080,11 @@ PROCEDURE paga_titulo:
                           WHEN pc_paga_titulo.pr_cdcritic <> ?   
            par_dscritic = pc_paga_titulo.pr_dscritic             /*pr_dscritic --Descricao critica             */
                           WHEN pc_paga_titulo.pr_dscritic <> ?.       
-        
+                        
     /* Verificar se retornou critica */
-        IF  aux_cdcritic > 0 OR 
-            par_dscritic <> "" THEN
-             DO:
-             RUN gera_erro (INPUT par_cdcooper,
-                            INPUT 90,
-                            INPUT 900,
-                            INPUT 1,            /** Sequencia **/
-                            INPUT aux_cdcritic,
-                            INPUT-OUTPUT par_dscritic).
-                                      
-             END.                               
-          
-        IF   par_dscritic <> ""   THEN
-                        DO:
-             UNDO, RETURN "NOK".
-        END.       
+    IF  aux_cdcritic > 0 OR par_dscritic <> "" THEN
+        RETURN "NOK".
+        
     
     RETURN "OK".
 
