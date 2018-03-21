@@ -1278,8 +1278,12 @@ BEGIN
 
    for rw_cadlim in cr_cadlim loop 
 
+       if  cr_craplim_crapass%isopen then
+           close cr_craplim_crapass;
+       end if;
+
        open  cr_craplim_crapass(pr_inpessoa => rw_cadlim.inpessoa
-                               ,pr_dtmvtolt => rw_crapdat.dtmvtoan
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                ,pr_qtdiaren => rw_cadlim.qtdiaren);
        fetch cr_craplim_crapass into rw_craplim_crapass;
        if    cr_craplim_crapass%found then
@@ -1418,7 +1422,7 @@ BEGIN
              close cr_crapalt;
             
              --  Verifica a revisao cadastral se estah dentro do periodo
-             if  ((add_months(rw_crapdat.dtmvtoan, - (rw_cadlim.nrrevcad)) > vr_dtaltera) or (vr_dtaltera is null)) then
+             if  ((add_months(rw_crapdat.dtmvtolt, - (rw_cadlim.nrrevcad)) > vr_dtaltera) or (vr_dtaltera is null)) then
                  pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass
                                ,pr_dsnrenov        => 'Revisao Cadastral'
                                ,pr_dsvlrmot        => to_char(vr_dtaltera,'DD/MM/RRRR'));
@@ -1455,8 +1459,8 @@ BEGIN
 
              --    Valor Total Descontado com vencimento dentro do período
              open  cr_craptdb_desc(pr_nrdconta     => rw_craplim_crapass.nrdconta
-                                  ,pr_dtmvtolt_de  => rw_crapdat.dtmvtoan - rw_cadlim.qtdialiq
-                                  ,pr_dtmvtolt_ate => rw_crapdat.dtmvtoan);
+                                  ,pr_dtmvtolt_de  => rw_crapdat.dtmvtolt - rw_cadlim.qtdialiq
+                                  ,pr_dtmvtolt_ate => rw_crapdat.dtmvtolt);
              fetch cr_craptdb_desc into rw_craptdb_desc;
              close cr_craptdb_desc;
             
@@ -1466,8 +1470,8 @@ BEGIN
              else 
                  -- Valor Total descontado pago com atraso de até x dias e não pagos
                  open  cr_craptdb_npag(pr_nrdconta     => rw_craplim_crapass.nrdconta
-                                      ,pr_dtmvtolt_de  => rw_crapdat.dtmvtoan - rw_cadlim.qtdialiq
-                                      ,pr_dtmvtolt_ate => rw_crapdat.dtmvtoan
+                                      ,pr_dtmvtolt_de  => rw_crapdat.dtmvtolt - rw_cadlim.qtdialiq
+                                      ,pr_dtmvtolt_ate => rw_crapdat.dtmvtolt
                                       ,pr_qtcarpag     => rw_cadlim.qtcarpag);
                  fetch cr_craptdb_npag into rw_craptdb_npag;
                  close cr_craptdb_npag;
@@ -1717,8 +1721,8 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
             ,rowid
       from   craplim lim
       where((lim.insitlim        = 2  /** Ativo **/
-      and   (rw_crapdat.dtmvtolt between (lim.dtfimvig - 15) and lim.dtfimvig)) 
-       or    lim.insitlim        = 4) /** Vigente **/
+      and   (lim.dtfimvig between (lim.dtfimvig - 15) and rw_crapdat.dtmvtolt)
+            ) or lim.insitlim    = 4) /** Vigente **/
       and    lim.tpctrlim        = 3
       and    lim.cdcooper        = vr_cdcooper
       order  by lim.insitlim, lim.dtfimvig;
