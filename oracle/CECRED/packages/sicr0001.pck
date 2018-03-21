@@ -225,7 +225,7 @@ create or replace package body cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 17/07/2017
+     Data    : Abril/2013                       Ultima atualizacao: 21/03/2018
 
      Dados referentes ao programa:
 
@@ -313,7 +313,10 @@ create or replace package body cecred.SICR0001 is
                       
                  17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
                               conta e referencia no mesmo dia(dtmvtolt) porem com valores
-                              diferentes (Lucas Ranghetti #684123)                      
+                              diferentes (Lucas Ranghetti #684123)    
+                              
+                 21/03/2018 - Verificar indice craplcm#3 antes de inserir na craplcm
+                              (Lucas Ranghetti #INC0010966)
   ..............................................................................*/
 
   -- Objetos para armazenar as variáveis da notificação
@@ -1191,7 +1194,7 @@ create or replace package body cecred.SICR0001 is
     --   Sistema : Conta-Corrente - Cooperativa de Credito
     --   Sigla   : CRED
     --   Autor   : Lucas Ranghetti
-    --   Data    : Maio/2014                       Ultima atualizacao: 17/07/2017
+    --   Data    : Maio/2014                       Ultima atualizacao: 21/03/2018
     --
     -- Dados referentes ao programa:
     --
@@ -1238,6 +1241,9 @@ create or replace package body cecred.SICR0001 is
     --             17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
     --                          conta e referencia no mesmo dia(dtmvtolt) porem com valores
     --                          diferentes (Lucas Ranghetti #684123)
+    --          
+    --             21/03/2018 - Verificar indice craplcm#3 antes de inserir na craplcm
+    --                          (Lucas Ranghetti #INC0010966)
     --------------------------------------------------------------------------------------------------------------------
   BEGIN
   
@@ -1384,6 +1390,24 @@ create or replace package body cecred.SICR0001 is
            AND lcm.nrdctabb = pr_nrdconta
            AND lcm.nrdocmto = pr_nrdocmto;
       rw_craplcm cr_craplcm%ROWTYPE;
+    
+      --CDCOOPER, DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRSEQDIG (CRAPLCM##CRAPLCM3)
+      CURSOR cr_craplcm_dig(pr_cdcooper IN craplcm.cdcooper%TYPE
+                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                           ,pr_cdagenci IN crapage.cdagenci%TYPE
+                           ,pr_cdbccxlt IN craplcm.cdbccxlt%TYPE
+                           ,pr_nrdolote IN craplcm.nrdolote%TYPE
+                           ,pr_nrseqdig IN craplcm.nrseqdig%TYPE) IS
+        SELECT lcm.nrseqdig
+              ,lcm.nrdolote
+          FROM craplcm lcm
+           WHERE lcm.cdcooper = pr_cdcooper
+             AND lcm.dtmvtolt = pr_dtmvtolt
+             AND lcm.cdagenci = pr_cdagenci
+             AND lcm.cdbccxlt = pr_cdbccxlt
+             AND lcm.nrdolote = pr_nrdolote
+             AND lcm.nrseqdig = pr_nrseqdig;      
+        rw_craplcm_dig cr_craplcm_dig%ROWTYPE;
     
       CURSOR cr_crapatr(pr_cdcooper IN crapatr.cdcooper%TYPE
                        ,pr_nrdconta IN crapatr.nrdconta%TYPE
@@ -2001,6 +2025,32 @@ create or replace package body cecred.SICR0001 is
           -- Fechar cursor de lançamento
           CLOSE cr_craplcm;
         
+          -- > Verificar chave unica CRAPLCM##3 NRSEQDIG
+          LOOP
+            IF cr_craplcm_dig%ISOPEN THEN
+              CLOSE cr_craplcm_dig;
+            END IF;
+            -- verificar existencia de lançamento
+            OPEN cr_craplcm_dig (pr_cdcooper => pr_cdcooper
+                                ,pr_dtmvtolt => pr_dtmvtolt
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_cdbccxlt => vr_cdbccxlt
+                                ,pr_nrdolote => vr_nrdolote
+                                ,pr_nrseqdig => rw_craplot.nrseqdig);
+                                  
+            FETCH cr_craplcm_dig INTO rw_craplcm_dig;
+            -- se existir lançamento então o numero da sequencia do lote é incrementado
+            IF cr_craplcm_dig%FOUND THEN
+                
+               -- Atualiza o sequencial da capa do lote
+               rw_craplot.nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1;
+
+              CONTINUE;
+            END IF;
+            CLOSE cr_craplcm_dig;
+            EXIT;
+          END LOOP;
+        
           ---> Gerar autenticação do pagamento
           CXON0000.pc_grava_autenticacao_internet 
                             (pr_cooper       => rw_craplau.cdcooper
@@ -2037,9 +2087,6 @@ create or replace package body cecred.SICR0001 is
             RAISE vr_exc_erro;
           END IF;
         
-          -- Atualiza o sequencial da capa do lote
-          rw_craplot.nrseqdig := nvl(rw_craplot.nrseqdig, 0) + 1;
-        
           -- cria registro na tabela de lançamentos
           BEGIN
             INSERT INTO craplcm
@@ -2068,7 +2115,7 @@ create or replace package body cecred.SICR0001 is
               ,rw_craplau.vllanaut
               ,vr_nrdconta
               ,rw_craplau.cdhistor
-              ,rw_craplot.nrseqdig + 1
+              ,rw_craplot.nrseqdig
               ,rw_craplau.nrdctabb
               ,vr_nrautdoc
               ,'Lote ' || to_char(rw_craplau.dtmvtolt, 'dd')              || '/' ||
