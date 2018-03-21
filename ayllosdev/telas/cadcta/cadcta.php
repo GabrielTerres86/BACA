@@ -192,6 +192,9 @@ $crm_cdagenci = isset($glbvars['CRM_CDAGENCI']) ? $glbvars['CRM_CDAGENCI'] : 0;
                                                                                     <label for="cdsitdct"><? echo utf8ToHtml('Situação:') ?></label>
                                                                                     <input name="cdsitdct" id="cdsitdct" type="text" />
 
+                                                                                    <label for="cdcatego" style="display: none;">Categoria:</label>
+                                                                                    <input name="cdcatego" id="cdcatego" type="text" style="display: none;" />
+
                                                                                     <div class="pessoaJuridica">
                                                                                         <label for="nmctajur">Nome da Conta:</label>
                                                                                         <input name="nmctajur" id="nmctajur" type="text"/>

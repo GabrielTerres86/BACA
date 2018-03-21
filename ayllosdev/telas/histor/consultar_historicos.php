@@ -28,6 +28,7 @@
 	$cdhistor	= (isset($_POST['cdhistor'])) ? $_POST['cdhistor'] : '';
 	$dshistor	= (isset($_POST['dshistor'])) ? $_POST['dshistor'] : '';
 	$tpltmvpq	= (isset($_POST['tpltmvpq'])) ? $_POST['tpltmvpq'] : 0;
+	$cdgrphis	= (isset($_POST['cdgrphis'])) ? $_POST['cdgrphis'] : 0;
 	$nrregist	= (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0;
 	$nriniseq	= (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0;
 	
@@ -54,6 +55,7 @@
 	$xml .= '       <cdhistor>'.$cdhistor.'</cdhistor>';
 	$xml .= '       <dshistor>'.$dshistor.'</dshistor>';
 	$xml .= '       <tpltmvpq>'.$tpltmvpq.'</tpltmvpq>';
+	$xml .= '       <cdgrphis>'.$cdgrphis.'</cdgrphis>';
 	$xml .= '       <nrregist>'.$nrregist.'</nrregist>';
 	$xml .= '       <nriniseq>'.$nriniseq.'</nriniseq>';
 	$xml .= '	</Dados>';

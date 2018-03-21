@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS139" (pr_cdcooper in craptab.cdcooper
    Programa: PC_CRPS139 (Antigo Fontes/crps139.p)
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : Odair                              Ultima atualizacao: 11/11/2013
+   Autor   : Odair                              Ultima atualizacao: 08/03/2018
    Data    : Novembro/95
 
    Dados referentes ao programa:
@@ -45,8 +45,19 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS139" (pr_cdcooper in craptab.cdcooper
                             em inglês quando executada pela Progress - usar o vetor
                             da gene0001 que possui os meses por extenso (Marcos-Supero)
 
-			  24/07/2017 -  706774-Tratar relatórios para valores acima de 1 bilhão
-							(Andrey Formigari - Mouts)
+        			 24/07/2017 - 706774-Tratar relatórios para valores acima de 1 bilhão
+  			                    9Andrey Formigari - Mouts)
+
+               08/03/2018 - Ao encontrar um associado não cadastrado:
+                            - Não abortar o programa e apresentar menagem "Nome nao cadastrado"
+                            - Inclusão log início e fim de execução
+                            - Exception não utilizada vr_exc_fimprg -> eliminada
+                            - Ocorria a tentativa de gravar logs com nomes diferentes. Porém, quando é 
+                              gravado o início do programa, é mantido sempre o memso nome de log
+                              para todas as outras gravações da tbgen_prglog. Sendo assim, nunca 
+                              gravaria 2 logs dentro da mesma execução com noems diferentes.
+                              Mantido nmarqlog = 'CRPS139'
+                            (Ana - Envolti - Ch 805994)
 
 ............................................................................. */
   -- Data do movimento
@@ -54,6 +65,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS139" (pr_cdcooper in craptab.cdcooper
     select dat.dtmvtolt
       from crapdat dat
      where dat.cdcooper = pr_cdcooper;
+
   -- Buscar o valor separador dos maiores cotistas
   cursor cr_craptab is
     select to_number(substr(craptab.dstextab,17,15)) dstextab
@@ -65,6 +77,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS139" (pr_cdcooper in craptab.cdcooper
        and upper(craptab.cdacesso) = 'MAIORESDEP'
        and craptab.tpregist = 1;
   rw_craptab   cr_craptab%rowtype;
+
   -- Lista dos saldos dos últimos 3 meses
   cursor cr_crapsld(pr_cdcooper in crapsld.cdcooper%type,
                     pr_dtmvtolt in crapsld.dtrefere%type) is
@@ -127,11 +140,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS139" (pr_cdcooper in craptab.cdcooper
             where crapsld.cdcooper = pr_cdcooper) crapsld
      where crapass.cdcooper(+) = crapsld.cdcooper
        and crapass.nrdconta(+) = crapsld.nrdconta
-     order by 5 desc,
-              crapsld.nrdconta;
+     order by 5 desc, crapsld.nrdconta;
   --
   -- Código do programa
-  vr_cdprogra      crapprg.cdprogra%type;
+  vr_cdprogra      crapprg.cdprogra%type := 'CRPS139';
+  
   -- Data do movimento
   vr_dtmvtolt      crapdat.dtmvtolt%type;
   -- Nome dos meses que serão calculados
@@ -142,7 +155,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS139" (pr_cdcooper in craptab.cdcooper
   cont             number(7) := 0;
   -- Tratamento de erros
   vr_exc_erro      exception;
-  vr_exc_fimprg    exception;
+  vr_cdcritic      PLS_INTEGER;
+  vr_dscritic      VARCHAR2(4000);
   -- Variáveis para armazenar as informações em XML
   vr_des_xml       clob;
   vr_des_xml2      clob;
@@ -153,6 +167,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS139" (pr_cdcooper in craptab.cdcooper
   vr_vlsdmact      crapcot.vldcotas%type;
   -- Variável auxiliar para definir se irá escrever a informação nos dois arquivos
   vr_escreve_arquivo_2  boolean;
+
   -- Subrotina para escrever texto na variável CLOB do XML
   procedure pc_escreve_xml(pr_des_dados in varchar2,
                            pr_escreve_arquivo_2 in boolean) is
@@ -162,10 +177,42 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS139" (pr_cdcooper in craptab.cdcooper
       dbms_lob.writeappend(vr_des_xml2, length(pr_des_dados), pr_des_dados);
     end if;
   end;
-  --
+
+  -- Inclusao do log padrão - Chamado 805994 - 08/03/2018
+  -- Controla log em banco de dados
+  PROCEDURE pc_gera_log(pr_dstiplog      IN VARCHAR2, -- Tipo de Log
+                        pr_tpocorrencia  IN NUMBER,   -- Tipo de ocorrencia
+                        pr_dscritic      IN VARCHAR2, -- Descrição do Log
+                        pr_cdcritic      IN NUMBER,   -- Codigo da crítica
+                        pr_cdcriticidade IN VARCHAR2)
+  IS
+  BEGIN         
+    --> Controlar geração de log de execução dos jobs
+    --Como executa na cadeira, utiliza pc_gera_log_batch
+    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper   
+                              ,pr_ind_tipo_log  => pr_tpocorrencia 
+                              ,pr_nmarqlog      => vr_cdprogra
+                              ,pr_dstiplog      => NVL(pr_dstiplog,'E')
+                              ,pr_cdprograma    => vr_cdprogra     
+                              ,pr_tpexecucao    => 1 -- batch      
+                              ,pr_cdcriticidade => pr_cdcriticidade
+                              ,pr_cdmensagem    => pr_cdcritic    
+                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
+                                                  ||vr_cdprogra||'-->'||pr_dscritic);
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log  
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+  END pc_gera_log;
+
 begin
-  -- Nome do programa
-  vr_cdprogra := 'CRPS139';
+  --Programa iniciado - Chamado 805994
+  pc_gera_log(pr_dstiplog      => 'I'
+             ,pr_tpocorrencia  => NULL
+             ,pr_dscritic      => NULL
+             ,pr_cdcritic      => NULL
+             ,pr_cdcriticidade => 0);
+
   -- Validações iniciais do programa
   btch0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                            ,pr_flgbatch => 1
@@ -174,23 +221,41 @@ begin
                            ,pr_cdcritic => pr_cdcritic);
   -- Se retornou algum erro
   if pr_cdcritic <> 0 then
-    -- Buscar descrição do erro
-    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
     -- Envio centralizado de log de erro
     raise vr_exc_erro;
   end if;
   pr_cdcritic := 0;
+
   -- Incluir nome do módulo logado
-  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS139',
-                             pr_action => vr_cdprogra);
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS139', pr_action => NULL);
+
   -- Buscar a data do movimento
   open cr_crapdat(pr_cdcooper);
     fetch cr_crapdat into vr_dtmvtolt;
-  close cr_crapdat;
+  if cr_crapdat%notfound then
+    -- Fechar o cursor pois efetuaremos raise
+    close cr_crapdat;
+    --Não tinha a validação abaixo, sendo assim, será gravado log mas não será efetuado raise
+    -- Montar mensagem de critica
+    vr_cdcritic := 1;
+    vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+    --Grava log - Chamado 805994
+    pc_gera_log(pr_dstiplog      => 'E'
+               ,pr_tpocorrencia  => 1 -- grava 4 - Mensagems
+               ,pr_dscritic      => vr_dscritic
+               ,pr_cdcritic      => vr_cdcritic
+               ,pr_cdcriticidade => 0);
+    --
+  else
+    -- Apenas fechar o cursor
+    close cr_crapdat;
+  end if;
+
   -- Identificar os meses que serão utilizados para calcular a média
   vr_dsmes1 := GENE0001.vr_vet_nmmesano(to_char(vr_dtmvtolt, 'MM'))||'/'||to_char(vr_dtmvtolt, 'yyyy');
   vr_dsmes2 := GENE0001.vr_vet_nmmesano(to_char(add_months(vr_dtmvtolt, -1),'MM'))||'/'||to_char(add_months(vr_dtmvtolt, -1), 'yyyy');
   vr_dsmes3 := GENE0001.vr_vet_nmmesano(to_char(add_months(vr_dtmvtolt, -2),'MM'))||'/'||to_char(add_months(vr_dtmvtolt, -2), 'yyyy');
+
   -- Buscar o valor separador dos maiores cotistas
   open cr_craptab;
     fetch cr_craptab into rw_craptab;
@@ -203,6 +268,7 @@ begin
       end if;
     end if;
   close cr_craptab;
+  
   -- Inicializar os CLOBs para armazenar os arquivos XML
   -- Serão gerados 2 arquivos. Um com todos os cotistas (crrl361) e outro com os maiores cotistas (crrl028).
   -- O parâmetro boolean da pc_escreve_xml define se irá escrever nos dois arquivos (true) ou somente no primeiro (false).
@@ -219,6 +285,7 @@ begin
                  '<dsmes2>'||vr_dsmes2||'</dsmes2>'||
                  '<dsmes3>'||vr_dsmes3||'</dsmes3>',
                  true);
+                 
   -- Leitura dos cotistas para inclusão no arquivo XML
   for rw_crapsld in cr_crapsld (pr_cdcooper,
                                 vr_dtmvtolt) loop
@@ -231,28 +298,44 @@ begin
        rw_crapsld.vlprimes < 0 or
        rw_crapsld.vlsegmes < 0 or
        rw_crapsld.vltermes < 0 then
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 1,
-                                 pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                    || vr_cdprogra || ' --> '
-                                                    || 'SALDO MEDIO NEGATIVO:  CONTA: '||to_char(rw_crapsld.nrdconta, 'fm9999G999G9'),
-                                 pr_nmarqlog     => vr_cdprogra);
+
+       vr_cdcritic := 1196;  --Saldo medio negativo
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||to_char(rw_crapsld.nrdconta, 'fm9999G999G9');
+
+      --Grava log - Chamado 805994
+      pc_gera_log(pr_dstiplog      => 'E'
+                 ,pr_tpocorrencia  => 1 -- grava 4 - Mensagems
+                 ,pr_dscritic      => vr_dscritic
+                 ,pr_cdcritic      => vr_cdcritic
+                 ,pr_cdcriticidade => 0);
       continue;
     end if;
+
     -- Descartar os registros com saldo médio zerado
     if rw_crapsld.vlsldmed = 0 then
       continue;
     end if;
+
     -- Verifica se o associado existe. Caso não exista, aborta a execução.
     if rw_crapsld.nmprimtl = 'NAO CADASTRADO' then
-      pr_cdcritic := 9;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-      raise vr_exc_erro;
+      --Substituir a crítica "Associado nao cadastrado" por "Nome nãoc adastrado" e não parar a execução
+      vr_cdcritic := 1189;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+
+      --Grava log informativo mas não pára execução - Chamado 805994
+      pc_gera_log(pr_dstiplog      => 'E'
+                 ,pr_tpocorrencia  => 1 -- grava 4 - Mensagem
+                 ,pr_dscritic      => vr_dscritic
+                 ,pr_cdcritic      => vr_cdcritic
+                 ,pr_cdcriticidade => 0);
+
+      rw_crapsld.nmprimtl := vr_dscritic;
     end if;
     -- Se o valor do cotista for maior que o limite, escreve nos dois arquivos.
     vr_escreve_arquivo_2 := (rw_crapsld.vlsldmed >= vr_vlsdmact);
     -- Incrementa o contador de registros
     cont := cont + 1;
+
     -- Inclui a linha no XML
     pc_escreve_xml('<cotista>'||
                      '<agencia>'||rw_crapsld.cdagenci||'</agencia>'||
@@ -271,6 +354,7 @@ begin
                    '</cotista>',
                    vr_escreve_arquivo_2);
   end loop;
+
   -- Fecha a tag principal para encerrar o XML
   pc_escreve_xml('</crps139>', true);
   -- Busca do diretório base da cooperativa
@@ -297,11 +381,16 @@ begin
                               pr_des_erro  => pr_dscritic);       --> Saída com erro
   -- Verifica se ocorreu erro na geração do arquivo ou na solicitação do relatório
   if pr_dscritic is not null then
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, -- Erro tratado
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> '|| pr_dscritic,
-                               pr_nmarqlog => vr_cdprogra);
+    --Grava log - Chamado 805994
+    pc_gera_log(pr_dstiplog      => 'E'
+               ,pr_tpocorrencia  => 2 -- Grava 1 - Erro tratado
+               ,pr_dscritic      => pr_dscritic
+               ,pr_cdcritic      => 0
+               ,pr_cdcriticidade => 1);
   end if;
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS139', pr_action => NULL);
+
   -- Executa o relatório com a relação de todas as contas com saldo médio positivo
   vr_nom_arquivo := 'crrl116_'||gene0001.fn_param_sistema('CRED',pr_cdcooper,'SUFIXO_RELATO_TOTAL');
   -- Chamada do iReport para gerar o arquivo de saída
@@ -319,12 +408,8 @@ begin
                               pr_des_erro  => pr_dscritic);       --> Saída com erro
 
   -- Verifica se ocorreu erro na geração do arquivo ou na solicitação do relatório
-  if pr_dscritic is not null then
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, -- Erro tratado
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> '|| pr_dscritic,
-                               pr_nmarqlog => vr_cdprogra);
-  end if;
+  --Retirada a gravacao de log daqui, agora grava na exception - Ch 805994
+
   -- Liberando a memória alocada para os CLOBs
   dbms_lob.close(vr_des_xml);
   dbms_lob.freetemporary(vr_des_xml);
@@ -336,52 +421,55 @@ begin
     pr_cdcritic := 0;
     raise vr_exc_erro;
   end if;
+  
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS139', pr_action => NULL);
+
   -- Processo OK, devemos chamar a fimprg
   btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                            ,pr_cdprogra => vr_cdprogra
                            ,pr_infimsol => pr_infimsol
                            ,pr_stprogra => pr_stprogra);
   --
+  --Programa finalizado - Chamado 805994
+  pc_gera_log(pr_dstiplog      => 'F'
+             ,pr_tpocorrencia  => NULL
+             ,pr_dscritic      => NULL
+             ,pr_cdcritic      => NULL
+             ,pr_cdcriticidade => 0);
+
   commit;
 EXCEPTION
-  WHEN vr_exc_fimprg THEN
-    -- Se foi retornado apenas código
-    IF nvl(pr_cdcritic,0) > 0 AND pr_dscritic IS NULL THEN
-      -- Buscar a descrição
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
-    END IF;
-    -- Se foi gerada critica para envio ao log
-    IF nvl(pr_cdcritic,0) > 0 OR pr_dscritic IS NOT NULL THEN
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || pr_dscritic );
-    END IF;
-    -- Limpa as variaveis, pois o retorno pelo fimprg tem que ser limpo
-    pr_dscritic := NULL;
-    pr_cdcritic := 0;
-    -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-    btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                             ,pr_cdprogra => vr_cdprogra
-                             ,pr_infimsol => pr_infimsol
-                             ,pr_stprogra => pr_stprogra);
-    -- Efetuar commit pois gravaremos o que foi processo até então
-    COMMIT;
   WHEN vr_exc_erro THEN
-    -- Se foi retornado apenas código
-    IF nvl(pr_cdcritic,0) > 0 AND pr_dscritic IS NULL THEN
-      -- Buscar a descrição
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
-    END IF;
+    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, pr_dscritic);
+
+    --Grava log - Chamado 805994
+    pc_gera_log(pr_dstiplog      => 'E'
+               ,pr_tpocorrencia  => 2 -- grava 1 - Erro de negócio
+               ,pr_dscritic      => pr_dscritic
+               ,pr_cdcritic      => pr_cdcritic
+               ,pr_cdcriticidade => 1);
+
+
     -- Efetuar rollback
     ROLLBACK;
-  when others then
-    pr_cdcritic := 0;
-    pr_dscritic := sqlerrm;
-    -- Desfazer as alterações
-    rollback;
+  WHEN others then
+    -- Efetuar retorno do erro não tratado
+    -- Padronização - Chamado 805994
+    pr_cdcritic := 9999;
+    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'PC_CRPS139'|| '. ' || SQLERRM;
+
+    --Grava log - Chamado 805994
+    pc_gera_log(pr_dstiplog      => 'E'
+               ,pr_tpocorrencia  => 3 -- Grava 2 - Erro não tratado
+               ,pr_dscritic      => pr_dscritic
+               ,pr_cdcritic      => pr_cdcritic
+               ,pr_cdcriticidade => 2);
+
+    -- Efetuar rollback
+    ROLLBACK;
+
+    -- No caso de erro de programa gravar tabela especifica de log - Chamado 805994
+    CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
 end;
 /
-

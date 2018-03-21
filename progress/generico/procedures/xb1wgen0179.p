@@ -82,6 +82,7 @@ DEF VAR log_vltarcsh AS DECI                                         NO-UNDO.
 
 DEF VAR aux_cdagrupa AS INTE                                         NO-UNDO.
 DEF VAR aux_dsagrupa AS CHAR                                         NO-UNDO.
+DEF VAR aux_cdgrphis AS INTE                                         NO-UNDO.
 
 DEF VAR aux_cdprodut AS INTE                                         NO-UNDO.
 DEF VAR aux_dsprodut AS CHAR                                         NO-UNDO.
@@ -156,6 +157,7 @@ PROCEDURE valores_entrada:
 
              WHEN "cdprodut" THEN aux_cdprodut = INTE(tt-param.valorCampo).
              WHEN "dsprodut" THEN aux_dsprodut = tt-param.valorCampo.
+             WHEN "cdgrphis" THEN aux_cdgrphis = INTE(tt-param.valorCampo).
 
          END CASE.
 
@@ -184,6 +186,7 @@ PROCEDURE Busca_Dados:
                      INPUT aux_dshistor,                            
                      INPUT aux_tpltmvpq,                       
                      INPUT aux_cdhinovo,                  
+                     INPUT aux_cdgrphis,
                      INPUT aux_nrregist,                            
                      INPUT aux_nriniseq,                            
                      INPUT TRUE,                                    
@@ -360,6 +363,9 @@ PROCEDURE Grava_Dados:
                      
                      INPUT aux_ingercre,     
                      INPUT aux_ingerdeb,     
+                     
+                     INPUT aux_cdgrphis,
+                     
                      INPUT aux_flgsenha,     
                      INPUT aux_cdprodut,     
                      INPUT aux_cdagrupa,     

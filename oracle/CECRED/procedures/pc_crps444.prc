@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 14/12/2017
+     Data    : Marco/2005.                     Ultima atualizacao: 21/02/2018
 
      Dados referentes ao programa:
 
@@ -360,6 +360,11 @@ BEGIN
                               
                  15/12/2017 - Chamado 779705 - Inclusão de informações do histórico 
                               0729TRANSF RECEBIDA em arquivo contábil (Andrei-Mouts)
+
+			     15/12/2017 - Ajuste no cursor cr_craplcm_tot, desta forma, agora os cheques
+							  registrados com histórico 50 serão inseridos no Relatório 414, 
+							  página de "Lançamentos Integrados".
+							  Chamado 792327 (Gabriel / Mouts)
                               
      ............................................................................. */
 
@@ -819,8 +824,7 @@ BEGIN
                            ,pr_dtmvtolt  IN craplcm.dtmvtolt%type
                            ,pr_cdagenci  IN craplcm.cdagenci%type
                            ,pr_cdbccxlt  IN craplcm.cdbccxlt%type
-                           ,pr_nrdolote  IN craplcm.nrdolote%type
-                           ,pr_vllanmto  IN craplcm.vllanmto%type) IS
+                           ,pr_nrdolote  IN craplcm.nrdolote%type) IS
        SELECT craplcm.nrdctabb
              ,craplcm.nrdocmto
              ,craplcm.nrdconta
@@ -834,8 +838,7 @@ BEGIN
        AND   craplcm.cdagenci  = pr_cdagenci
        AND   craplcm.cdbccxlt  = pr_cdbccxlt
        AND   craplcm.nrdolote  = pr_nrdolote
-       AND   craplcm.cdhistor  IN (50,59)
-       AND   craplcm.vllanmto >= pr_vllanmto;
+       AND   craplcm.cdhistor  IN (50,59);
 
      --Selecionar Rejeitados Retroativos
      CURSOR cr_craprej_ret (pr_cdcooper IN craprej.cdcooper%type
@@ -2429,10 +2432,6 @@ BEGIN
        --Valor limite saldo negativo
        vr_vlmaichq:= gene0002.fn_char_para_number(substr(vr_dstextab,01,15));
      END IF;
-
-     /* Valor dos maiores cheques do BB - 3000,00 - nao usa da tabela pois a
-        tabela eh usada em outros programas */
-     vr_vlmaichq:= 3000;
 
      /*  Le tabela com as contas convenio do Banco do Brasil - CTA. ITG. ....... */
      vr_lsconta4:= gene0005.fn_busca_conta_centralizadora(pr_cdcooper => pr_cdcooper
@@ -5318,8 +5317,7 @@ BEGIN
                                               ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
                                               ,pr_cdagenci  => vr_cdagenci
                                               ,pr_cdbccxlt  => vr_cdbccxlt
-                                              ,pr_nrdolote  => vr_nrdolote
-                                              ,pr_vllanmto  => vr_vlmaichq) LOOP
+                                              ,pr_nrdolote  => vr_nrdolote) LOOP
            --Incrementar total registros e valor
            vr_tot_contareg:= Nvl(vr_tot_contareg,0) + 1;
            vr_tot_vllanmto:= Nvl(vr_tot_vllanmto,0) + rw_craplcm_tot.vllanmto;

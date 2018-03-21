@@ -107,6 +107,8 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
 
                19/12/2017 - Desconsiderar do valor pendente o que foi debitado no mes
                             Demetrius (Mouts) - Chamado 813105
+
+			   07/03/2018 - Revertendo alteração realizada no chamado 813105 - (Antonio R Jr - Mouts)
 							 
 ............................................................................. */
   -- Buscar os dados da cooperativa
@@ -731,7 +733,7 @@ BEGIN
          set crappla.dtdpagto = vr_dtdpagto,
              crappla.indpagto = vr_indpagto,
              crappla.vlpenden = decode(vr_flgrejei,
-                                       1, greatest(crappla.vlprepla - crappla.vlpagmes,0),
+                                       1, crappla.vlprepla,
                                        0),
              crappla.flgatupl = vr_indatupl
        where crappla.rowid = rw_crappla.rowid;

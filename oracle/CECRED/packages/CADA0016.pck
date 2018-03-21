@@ -252,6 +252,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
   --  
   --              29/01/2017 - Ajustes para atualizar a data de alteração, para posicionar que essa pessoa teve 
   --                           alguma alteração cadastral. PRJ309-CRM(Odirlei-AMcom)
+  --
+  --              16/03/2018 - colocado NVL nos valores que irão atualizar ou inserir no campo vlsalari tabela crapcje, pois caso o campo vlsalari estiver nulo,
+  --                           irá impactar no caluclo do rating. Chamado 830113 (Alcemir Mouts).
   ---------------------------------------------------------------------------------------------------------------*/
   
   vr_dtpadrao DATE := to_date('01/01/1900','DD/MM/RRRR');
@@ -1991,7 +1994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      cje.cdnvlcgo = pr_renda_new.cdnivel_cargo,
                      cje.cdturnos = pr_renda_new.cdturno,       
                      cje.dtadmemp = pr_renda_new.dtadmissao,
-                     cje.vlsalari = pr_renda_new.vlrenda,         
+                     cje.vlsalari = nvl(pr_renda_new.vlrenda,0),         
                      cje.nmextemp = substr(rw_pessoa_renda.nmpessoa,1,40),
                      cje.nrdocnpj = rw_pessoa_renda.nrcpfcgc                 
                WHERE cje.cdcooper = vr_tab_contas(idx).cdcooper
@@ -5178,7 +5181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     rw_renda.cdnivel_cargo,      --> cdnvlcgo
                     rw_renda.cdturno,            --> cdturnos
                     rw_renda.dtadmissao,         --> dtadmemp
-                    rw_renda.vlrenda,            --> vlsalari
+                    nvl(rw_renda.vlrenda,0),     --> vlsalari
                     -- Telefone -- 3 Comercial
                     rw_telefone.dstelefone,      --> nrfonemp
                     rw_telefone.nrramal          --> nrramemp                    
@@ -5196,7 +5199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    cdnvlcgo = rw_renda.cdnivel_cargo,      --> cdnvlcgo
                    cdturnos = rw_renda.cdturno,            --> cdturnos
                    dtadmemp = rw_renda.dtadmissao,         --> dtadmemp
-                   vlsalari = rw_renda.vlrenda,            --> vlsalari
+                   vlsalari = nvl(rw_renda.vlrenda,0),            --> vlsalari
                    -- Telefone -- 3 Comercial
                    nrfonemp = rw_telefone.dstelefone,      --> nrfonemp
                    nrramemp = rw_telefone.nrramal          --> nrramemp  
@@ -5273,7 +5276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     rw_renda.cdnivel_cargo,             --> cdnvlcgo
                     rw_renda.cdturno,                   --> cdturnos
                     rw_renda.dtadmissao,                --> dtadmemp
-                    rw_renda.vlrenda,                   --> vlsalari
+                    nvl(rw_renda.vlrenda,0),            --> vlsalari
                     -- Telefone -- 3 Comercial
                     rw_telefone.dstelefone,             --> nrfonemp
                     rw_telefone.nrramal                 --> nrramemp                    
@@ -5305,7 +5308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    cdnvlcgo = rw_renda.cdnivel_cargo,             --> cdnvlcgo
                    cdturnos = rw_renda.cdturno,                   --> cdturnos
                    dtadmemp = rw_renda.dtadmissao,                --> dtadmemp
-                   vlsalari = rw_renda.vlrenda,                   --> vlsalari
+                   vlsalari = nvl(rw_renda.vlrenda,0),            --> vlsalari
                    -- Telefone -- 3 Comercial
                    nrfonemp = rw_telefone.dstelefone,             --> nrfonemp
                    nrramemp = rw_telefone.nrramal                 --> nrramemp   

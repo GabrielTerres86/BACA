@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
     Sistema  : Rotinas auxiliares para busca de informacõees do negocio
     Sigla    : GENE
     Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 20/03/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 14/03/2018
   
    Dados referentes ao programa:
   
@@ -18,6 +18,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
    Alterações: 20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
                            (Adriano - SD 620221).
 
+               14/03/2018 - Ajuste na pc_saldo_utiliza para considerar contas em prejuízo
   
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -882,7 +883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Julho/2004.                         Ultima atualizacao: 07/01/2015
+   Data    : Julho/2004.                         Ultima atualizacao: 14/03/2018
 
    Dados referentes ao programa:
 
@@ -938,6 +939,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 			   24/07/2017 - Incluido Replace de ';' para ',' na lista de contratos 
 			                a liquidar (Marcos-Supero)
 
+			   14/03/2018 - Alteração nos cursores para considerar também contas em prejuízo
+			                Reginaldo (AMcom)
      ............................................................................. */
 
      DECLARE
@@ -961,20 +964,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 
        -- Selecionar o limite de credito usando diretamente a conta ja passada
        CURSOR cr_crapass_cta IS
-         SELECT crapass.vllimcre
-           FROM crapass
+         SELECT cp.vllimcre
+           FROM crapass cp
           WHERE cdcooper = pr_cdcooper
             AND nrdconta = pr_nrdconta -- Conta solicitada
-            AND dtelimin IS NULL;
+            AND ((SELECT max(inprejuz)
+                      FROM crapepr epr
+                     WHERE epr.cdcooper = cp.cdcooper
+                       AND epr.nrdconta = cp.nrdconta
+                       AND epr.inprejuz = 1
+                       AND epr.vlsdprej > 0
+                   ) = 1 OR dtelimin IS NULL);
 
        -- Selecionar os associados da cooperativa por CPF/CGC
        CURSOR cr_crapass_cpfcgc IS
          SELECT nrdconta
                ,vllimcre
-           FROM crapass
+           FROM crapass cp
           WHERE cdcooper = pr_cdcooper
             AND nrcpfcgc = pr_nrcpfcgc -- CPF/CGC passado
-            AND dtelimin IS NULL;
+            AND ((SELECT max(inprejuz)
+                      FROM crapepr epr
+                     WHERE epr.cdcooper = cp.cdcooper
+                       AND epr.nrdconta = cp.nrdconta
+                       AND epr.inprejuz = 1
+                       AND epr.vlsdprej > 0
+                   ) = 1 OR dtelimin IS NULL);
 
        -- Selecionar informacoes dos emprestimos
        CURSOR cr_crapepr(pr_nrdconta IN crapepr.nrdconta%TYPE) IS

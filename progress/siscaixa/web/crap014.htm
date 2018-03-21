@@ -109,6 +109,8 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             $(btnCancela).unbind("click").bind("click", function () { resetaCampo(); $(cValor).val(""); $(cCodBarras).focus(); });
             $(btnOk).unbind("click").bind("click", function () { document.forms[0].submit(); });
 
+			$(cCodBarras).focus();
+
             $(cCodBarras).attr("maxlength", "57");
         //$(cCodBarras).css("width","350px");
 
@@ -174,7 +176,7 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                 leitora = true;
 
                     if (flblqval != 1) {
-                $(cValor).prop("disabled", false);
+                   $(cValor).prop("disabled", false);
                 }
 
                 $(cCodBarras).unmask();
@@ -247,7 +249,7 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                 leitora = true;
 
                     if (flblqval != 1) {
-                $(cValor).prop("disabled", false);
+                   $(cValor).prop("disabled", false);
                 }
 
                 $(cCodBarras).unmask();
@@ -465,7 +467,7 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onload="JavaScript: mudaFoco(); click();" onkeyup="callBlass(event); callBLini(event); callBLsal(event);">
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onkeyup="callBlass(event); callBLini(event); callBLsal(event);">
     <form onkeydown="change_page(event)" method=post>
 <input type="hidden" name="v_msg">
 <input type="hidden" name="vh_foco" value="6">
@@ -610,7 +612,7 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
   if($("#hdnVerifEstorno").val() == 0 || $("#hdnVerifEstorno").val() == "" || $("#hdnVerifEstorno").val() == null){
     $("#hdnVerifEstorno").val(0);
   }
-  
+
   function habilitarCampos(){     
 
     if($("#hdnValorAcima").val() == 0 || $("#hdnValorAcima").val() == "" || $("#hdnValorAcima").val() == null){

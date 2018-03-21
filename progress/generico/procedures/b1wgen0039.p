@@ -2,7 +2,7 @@
 
    Programa: b1wgen0039.p
    Autor   : Gabriel
-   Data    : Maio/2009                  Ultima Atualizacao: 28/06/2016
+   Data    : Maio/2009                  Ultima Atualizacao: 07/03/2017
 
    Dados referentes ao programa:
 
@@ -67,11 +67,14 @@
                             Na procedure obtem-historico adicionado condicao para
                             ignorar eventos cancelados na listagem (Lucas Ranghetti #395793)
                             
-                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
                 
-				28/06/2016 - Alterado rotina grava-nova-situacao para quando for alterado a situaçao
-                             para excluido, chamar a rotina para excluir o registro.
-                             PRJ229 - Melhorias OQS (Odirlei-AMcom)
+               28/06/2016 - Alterado rotina grava-nova-situacao para quando for alterado a situaçao
+                            para excluido, chamar a rotina para excluir o registro.
+                            PRJ229 - Melhorias OQS (Odirlei-AMcom).
+                            
+               07/03/2018 - Alterado obtem-detalhe-evento para exibir o nome do facilitador
+                            em eventos assembleares, SD840422 (Jean Michel).
                             
 ..............................................................................*/
 
@@ -1759,229 +1762,192 @@ Procedure que traz os detalhes do evento selecionado.
 
 PROCEDURE obtem-detalhe-evento:
 
+  DEF INPUT PARAM par_cdcooper AS INTE  NO-UNDO.
+  DEF INPUT PARAM par_cdagenci AS INTE  NO-UNDO.
+  DEF INPUT PARAM par_nrdcaixa AS INTE  NO-UNDO.
+  DEF INPUT PARAM par_cdoperad AS CHAR  NO-UNDO.
+  DEF INPUT PARAM par_dtmvtolt AS DATE  NO-UNDO.
+  DEF INPUT PARAM par_nrdconta AS INTE  NO-UNDO.
+  DEF INPUT PARAM par_dtanoage AS INTE  NO-UNDO.
+  DEF INPUT PARAM par_rowidedp AS ROWID NO-UNDO.
+  DEF INPUT PARAM par_rowidadp AS ROWID NO-UNDO.
+  DEF INPUT PARAM par_idseqttl AS INTE  NO-UNDO.
+  DEF INPUT PARAM par_idorigem AS INTE  NO-UNDO.
+  DEF INPUT PARAM par_nmdatela AS CHAR  NO-UNDO.
+  DEF INPUT PARAM par_flgerlog AS LOGI  NO-UNDO.
 
-    DEF  INPUT  PARAM par_cdcooper AS INTE                           NO-UNDO.
-    DEF  INPUT  PARAM par_cdagenci AS INTE                           NO-UNDO.
-    DEF  INPUT  PARAM par_nrdcaixa AS INTE                           NO-UNDO.
-    DEF  INPUT  PARAM par_cdoperad AS CHAR                           NO-UNDO.
-    DEF  INPUT  PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT  PARAM par_nrdconta AS INTE                           NO-UNDO.
-    DEF  INPUT  PARAM par_dtanoage AS INTE                           NO-UNDO.
-    DEF  INPUT  PARAM par_rowidedp AS ROWID                          NO-UNDO.
-    DEF  INPUT  PARAM par_rowidadp AS ROWID                          NO-UNDO.
-    DEF  INPUT  PARAM par_idseqttl AS INTE                           NO-UNDO.
-    DEF  INPUT  PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT  PARAM par_nmdatela AS CHAR                           NO-UNDO.
-    DEF  INPUT  PARAM par_flgerlog AS LOGI                           NO-UNDO.
-
-    DEF  OUTPUT PARAM TABLE FOR tt-erro.
-    DEF  OUTPUT PARAM TABLE FOR tt-detalhe-evento.
+  DEF OUTPUT PARAM TABLE FOR tt-erro.
+  DEF OUTPUT PARAM TABLE FOR tt-detalhe-evento.
     
+  DEF VAR aux_contador AS INTE           NO-UNDO.
+  DEF VAR aux_nmfacili AS CHAR           NO-UNDO. 
+  DEF VAR aux_dsconteu AS CHAR EXTENT 99 NO-UNDO.
 
-    DEF  VAR aux_contador          AS INTE                           NO-UNDO.
-    DEF  VAR aux_nmfacili          AS CHAR                           NO-UNDO. 
-    DEF  VAR aux_dsconteu          AS CHAR      EXTENT 99            NO-UNDO.
+  EMPTY TEMP-TABLE tt-erro.
+  EMPTY TEMP-TABLE tt-detalhe-evento.    
 
+  ASSIGN aux_cdcritic = 0
+         aux_dscritic = ""
+         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+         aux_dstransa = "Mostrar os detalhes do evento"
+         aux_dsmesref = "JANEIRO,FEVEREIRO,MARCO,ABRIL,MAIO,JUNHO," +
+                        "JULHO,AGOSTO,SETEMBRO,OUTUBRO,NOVEMBRO,DEZEMBRO".
 
-    EMPTY TEMP-TABLE tt-erro.
-    EMPTY TEMP-TABLE tt-detalhe-evento.
-    
+  /* Registro da tabela de cooperados */
+  FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
 
-    ASSIGN aux_cdcritic = 0
-           aux_dscritic = ""
-           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Mostrar os detalhes do evento"
-           aux_dsmesref = "JANEIRO,FEVEREIRO,MARCO,ABRIL,MAIO,JUNHO," +
-                          "JULHO,AGOSTO,SETEMBRO,OUTUBRO,NOVEMBRO,DEZEMBRO".
+  /* Encontra evento selecionado */
+  FIND crapedp WHERE ROWID (crapedp) = par_rowidedp NO-LOCK NO-ERROR.
 
-    /* Registro da tabela de cooperados */
-    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
-    
-    /* Encontra evento selecionado */
-    FIND crapedp WHERE ROWID (crapedp) = par_rowidedp NO-LOCK NO-ERROR.
-    
-    /* Encontrar a agenda do evento selecionado */
-    FIND crapadp WHERE ROWID (crapadp) = par_rowidadp NO-LOCK NO-ERROR.
+  /* Encontrar a agenda do evento selecionado */
+  FIND crapadp WHERE ROWID (crapadp) = par_rowidadp NO-LOCK NO-ERROR.
                       
-    IF   NOT AVAILABLE crapadp   OR
-         NOT AVAILABLE crapcop   OR
-         NOT AVAILABLE crapedp   THEN
-         DO:
-             IF   NOT AVAILABLE crapadp   THEN
-                  aux_dscritic = "Registro da agenda do evento " +
-                                 "não foi encontrado".
-             ELSE
-             IF   NOT AVAILABLE crapcop   THEN
-                  aux_cdcritic = 651. 
-             ELSE     
-                  aux_dscritic = "Registro do evento não foi encontrado".
+  IF NOT AVAILABLE crapadp OR NOT AVAILABLE crapcop OR NOT AVAILABLE crapedp THEN
+    DO:
+      IF NOT AVAILABLE crapadp   THEN
+        aux_dscritic = "Registro da agenda do evento não foi encontrado".
+      ELSE
+        IF NOT AVAILABLE crapcop THEN
+          aux_cdcritic = 651. 
+        ELSE     
+          aux_dscritic = "Registro do evento não foi encontrado".
 
-             RUN gera_erro (INPUT par_cdcooper,
-                            INPUT par_cdagenci,
-                            INPUT par_nrdcaixa,
-                            INPUT 1,            /** Sequencia **/
-                            INPUT aux_cdcritic,
-                            INPUT-OUTPUT aux_dscritic).
+      RUN gera_erro (INPUT par_cdcooper,
+                     INPUT par_cdagenci,
+                     INPUT par_nrdcaixa,
+                     INPUT 1,            /** Sequencia **/
+                     INPUT aux_cdcritic,
+                     INPUT-OUTPUT aux_dscritic).
              
-             IF   par_flgerlog   THEN
-                  RUN proc_gerar_log (INPUT par_cdcooper,
-                                      INPUT par_cdoperad,
-                                      INPUT aux_dscritic,
-                                      INPUT aux_dsorigem,
-                                      INPUT aux_dstransa,
-                                      INPUT FALSE,
-                                      INPUT par_idseqttl,
-                                      INPUT par_nmdatela,
-                                      INPUT par_nrdconta,
-                                     OUTPUT aux_nrdrowid).
-             RETURN "NOK".
-         END.
-
-    /* Local do evento - IDEVENTO eh sempre 1 para locais */
-    
-         /** ASSEMBLEIA **/
-    IF   crapadp.cdagenci = 0   THEN
-         DO:
-             FIND FIRST crapldp WHERE crapldp.cdcooper = crapadp.cdcooper   AND
-                                      crapldp.idevento = 1                  AND
-                                      crapldp.nrseqdig = crapadp.cdlocali
-                                      NO-LOCK NO-ERROR.
-         END.
-    ELSE /** PROGRID  **/
-         DO:
-             FIND FIRST crapldp WHERE crapldp.cdcooper = crapadp.cdcooper   AND
-                                      crapldp.idevento = 1                  AND
-                                      crapldp.cdagenci = crapadp.cdagenci   AND
-                                      crapldp.nrseqdig = crapadp.cdlocali  
-                                      NO-LOCK NO-ERROR.
-
-             /* Custo do evento */
-             FIND FIRST crapcdp WHERE crapcdp.cdcooper = crapadp.cdcooper   AND
-                                      crapcdp.idevento = crapadp.idevento   AND
-                                      crapcdp.cdevento = crapadp.cdevento   AND
-                                      crapcdp.cdagenci = crapadp.cdagenci   AND
-                                      crapcdp.dtanoage = par_dtanoage 
-                                      NO-LOCK NO-ERROR.
-
-             IF   AVAILABLE crapcdp   THEN
-                  DO:
-                      /* Fornecedor do evento */
-                      FIND gnapfdp WHERE gnapfdp.cdcooper = 0                AND
-                                         gnapfdp.idevento = crapadp.idevento AND
-                                         gnapfdp.nrcpfcgc = crapcdp.nrcpfcgc   
-                                         NO-LOCK NO-ERROR.
-
-                      /* Cadastro de Propostas para eventos do Progrid */
-                      FIND gnappdp WHERE gnappdp.cdcooper = 0                AND
-                                         gnappdp.idevento = crapcdp.idevento AND
-                                         gnappdp.nrcpfcgc = crapcdp.nrcpfcgc AND
-                                         gnappdp.nrpropos = crapcdp.nrpropos 
-                                         NO-LOCK NO-ERROR.
-             
-                      IF   AVAILABLE gnappdp  THEN
-                           DO:
-                               /* Quebra o conteudo do curso em linhas */
-                               DO aux_contador = 1 TO 
-                                  NUM-ENTRIES(gnappdp.dsconteu,";"):
-
-                                   aux_dsconteu[aux_contador] = 
-                                       ENTRY(aux_contador,gnappdp.dsconteu,";")
-                                       NO-ERROR.
-                                   
-                                   /* Comecar com asterisco  */
-                                   aux_dsconteu[aux_contador] =
-                                      REPLACE (aux_dsconteu[aux_contador],KEYFUNCTION(149),"* ").
-            
-                                 
-                               END.
-                      
-                               FIND FIRST gnfacep WHERE 
-                                          gnfacep.cdcooper = 0    AND
-                                          gnfacep.idevento = gnappdp.idevento 
-                                          AND
-                                          gnfacep.nrcpfcgc = gnappdp.nrcpfcgc
-                                          AND
-                                          gnfacep.nrpropos = gnappdp.nrpropos 
-                                          NO-LOCK NO-ERROR.
-
-                               IF   AVAILABLE gnfacep   THEN   
-                                    DO:
-                                        FIND gnapfep WHERE 
-                                             gnapfep.cdcooper = 0   
-                                             AND
-                                             gnapfep.nrcpfcgc = gnfacep.nrcpfcgc
-                                             AND
-                                             gnapfep.cdfacili = gnfacep.cdfacili
-                                             AND
-                                             gnapfep.idevento = gnfacep.idevento
-                                             NO-LOCK NO-ERROR.
-                            
-                                        IF   AVAILABLE gnapfep   THEN
-                                             aux_nmfacili = gnapfep.nmfacili.
-
-                                    END. 
-                           END.
-                  END.
-         
-         END. /* Fim - PROGRID */
-         
-    CREATE tt-detalhe-evento.
-    ASSIGN tt-detalhe-evento.nmevento = crapedp.nmevento
-           tt-detalhe-evento.dshroeve = crapadp.dshroeve 
-                                        WHEN crapadp.dshroeve <> ""
-
-           tt-detalhe-evento.dslocali = crapldp.dslocali 
-                                        WHEN AVAIL crapldp
-           
-           tt-detalhe-evento.nmfacili = aux_nmfacili 
-                                        WHEN aux_nmfacili <> ""
-           
-           tt-detalhe-evento.dtinieve = IF   crapadp.dtinieve = ?   THEN
-                                             ENTRY(crapadp.nrmeseve,
-                                             aux_dsmesref)
-                                        ELSE
-                                           STRING(crapadp.dtinieve,"99/99/9999")
-          
-           tt-detalhe-evento.dtfineve = IF   crapadp.dtfineve = ?   THEN
-                                             ENTRY(crapadp.nrmeseve,
-                                                               aux_dsmesref)
-                                        ELSE
-                                          STRING(crapadp.dtfineve,"99/99/9999").
-                                         
-
-    /* Alimenta o campo fornecedor - Quando ASSEMBLEIA o fornecedor eh */
-                          /* a propria cooperativa */
-
-    IF   AVAIL gnapfdp   THEN
-         tt-detalhe-evento.nmfornec = gnapfdp.nmfornec.
-    ELSE
-    IF   crapadp.cdagenci = 0   OR
-         crapadp.cdevento = 4   THEN     
-         tt-detalhe-evento.nmfornec = crapcop.nmextcop. 
-
-
-    /* Conteudo do curso */
-    DO aux_contador = 1 TO 99:
-
-       IF   aux_dsconteu[aux_contador] = ""  THEN
-            LEAVE.     
-
-       tt-detalhe-evento.dsconteu[aux_contador] = aux_dsconteu[aux_contador].
-   
+      IF par_flgerlog   THEN
+        RUN proc_gerar_log(INPUT par_cdcooper,
+                           INPUT par_cdoperad,
+                           INPUT aux_dscritic,
+                           INPUT aux_dsorigem,
+                           INPUT aux_dstransa,
+                           INPUT FALSE,
+                           INPUT par_idseqttl,
+                           INPUT par_nmdatela,
+                           INPUT par_nrdconta,
+                          OUTPUT aux_nrdrowid).
+      RETURN "NOK".
     END.
+
+  IF crapadp.idevento = 1 THEN /* PROGRID */
+    DO:
+      FIND FIRST crapldp WHERE crapldp.cdcooper = crapadp.cdcooper   
+                           AND crapldp.idevento = 1                  
+                           AND crapldp.cdagenci = crapadp.cdagenci   
+                           AND crapldp.nrseqdig = crapadp.cdlocali NO-LOCK NO-ERROR.
+
+      /* Custo do evento */
+      FIND FIRST crapcdp WHERE crapcdp.cdcooper = crapadp.cdcooper  
+                           AND crapcdp.idevento = crapadp.idevento   
+                           AND crapcdp.cdevento = crapadp.cdevento   
+                           AND crapcdp.cdagenci = crapadp.cdagenci   
+                           AND crapcdp.dtanoage = par_dtanoage NO-LOCK NO-ERROR.
+
+      IF AVAILABLE crapcdp THEN
+        DO:
+          /* Fornecedor do evento */
+          FIND gnapfdp WHERE gnapfdp.cdcooper = 0               
+                         AND gnapfdp.idevento = crapadp.idevento
+                         AND gnapfdp.nrcpfcgc = crapcdp.nrcpfcgc NO-LOCK NO-ERROR.
+
+          /* Cadastro de Propostas para eventos do Progrid */
+          FIND gnappdp WHERE gnappdp.cdcooper = 0               
+                         AND gnappdp.idevento = crapcdp.idevento
+                         AND gnappdp.nrcpfcgc = crapcdp.nrcpfcgc
+                         AND gnappdp.nrpropos = crapcdp.nrpropos NO-LOCK NO-ERROR.
+                 
+          IF AVAILABLE gnappdp THEN
+            DO:
+              /* Quebra o conteudo do curso em linhas */
+              DO aux_contador = 1 TO NUM-ENTRIES(gnappdp.dsconteu,";"):
+      
+                ASSIGN aux_dsconteu[aux_contador] = ENTRY(aux_contador,gnappdp.dsconteu,";") NO-ERROR.
+                                       
+                /* Comecar com asterisco  */
+                ASSIGN aux_dsconteu[aux_contador] = REPLACE (aux_dsconteu[aux_contador],KEYFUNCTION(149),"* ").
+                
+              END. /* AVAILABLE gnappdp */
+                          
+              FIND FIRST gnfacep WHERE gnfacep.cdcooper = 0
+                                   AND gnfacep.idevento = gnappdp.idevento 
+                                   AND gnfacep.nrcpfcgc = gnappdp.nrcpfcgc
+                                   AND gnfacep.nrpropos = gnappdp.nrpropos NO-LOCK NO-ERROR.
+
+              IF AVAILABLE gnfacep THEN
+                DO:
+                  FIND gnapfep WHERE gnapfep.cdcooper = 0   
+                                 AND gnapfep.nrcpfcgc = gnfacep.nrcpfcgc
+                                 AND gnapfep.cdfacili = gnfacep.cdfacili
+                                 AND gnapfep.idevento = gnfacep.idevento NO-LOCK NO-ERROR.
+                                    
+                  IF AVAILABLE gnapfep THEN
+                    ASSIGN aux_nmfacili = gnapfep.nmfacili.
+
+                END. /* AVAILABLE gnfacep */
+          
+          END. /* AVAILABLE gnappdp */
+        END. /* AVAILABLE crapcdp */
+    END. /* FIM PROGRID */
+  ELSE IF crapadp.idevento = 2 THEN /* ASSEMBLEIAS */
+    DO:
+      /* LOCAL */
+      FIND FIRST crapldp WHERE crapldp.cdcooper = crapadp.cdcooper
+                           AND crapldp.idevento = 1 /* IDEVENTO é sempre 1 para locais */
+                           AND crapldp.nrseqdig = crapadp.cdlocali NO-LOCK NO-ERROR NO-WAIT.
+                           
+      /* FACILITADOR */                     
+      FIND FIRST crapfea WHERE crapfea.cdcooper = crapadp.cdcooper
+                           AND crapfea.nrseqfea = crapadp.nrseqfea
+                           AND crapfea.idsitfea = 1 NO-LOCK NO-ERROR NO-WAIT.
+                                   
+      IF AVAILABLE crapfea THEN
+        DO:
+          ASSIGN aux_nmfacili = crapfea.nmfacili.
+        END.                                   
+                                   
+    END. /* FIM ASSEMBLEIAS */
+      
+  CREATE tt-detalhe-evento.
+  ASSIGN tt-detalhe-evento.nmevento = crapedp.nmevento
+         tt-detalhe-evento.dshroeve = crapadp.dshroeve WHEN crapadp.dshroeve <> ""
+         tt-detalhe-evento.dslocali = crapldp.dslocali WHEN AVAIL crapldp
+         tt-detalhe-evento.nmfacili = aux_nmfacili WHEN aux_nmfacili <> ""
+         tt-detalhe-evento.dtinieve = IF crapadp.dtinieve = ? THEN ENTRY(crapadp.nrmeseve,aux_dsmesref) ELSE STRING(crapadp.dtinieve,"99/99/9999")
+         tt-detalhe-evento.dtfineve = IF crapadp.dtfineve = ? THEN ENTRY(crapadp.nrmeseve,aux_dsmesref) ELSE STRING(crapadp.dtfineve,"99/99/9999").
+                                         
+  /* Alimenta o campo fornecedor - Quando ASSEMBLEIA o fornecedor eh a propria cooperativa */
+
+  IF AVAILABLE gnapfdp THEN
+    ASSIGN tt-detalhe-evento.nmfornec = gnapfdp.nmfornec.
+  ELSE IF crapadp.cdagenci = 0 OR crapadp.cdevento = 4 THEN     
+    ASSIGN tt-detalhe-evento.nmfornec = crapcop.nmextcop. 
+
+  /* Conteudo do curso */
+  DO aux_contador = 1 TO 99:
+
+    IF aux_dsconteu[aux_contador] = ""  THEN
+      LEAVE.     
+
+    ASSIGN tt-detalhe-evento.dsconteu[aux_contador] = aux_dsconteu[aux_contador].
+ 
+  END.
            
-    IF   par_flgerlog  THEN
-         RUN proc_gerar_log (INPUT par_cdcooper,
-                             INPUT par_cdoperad,
-                             INPUT "",
-                             INPUT aux_dsorigem,
-                             INPUT aux_dstransa,
-                             INPUT TRUE,
-                             INPUT par_idseqttl,
-                             INPUT par_nmdatela,
-                             INPUT par_nrdconta,
-                            OUTPUT aux_nrdrowid).
-    RETURN "OK".
+  IF par_flgerlog  THEN
+    RUN proc_gerar_log (INPUT par_cdcooper,
+                        INPUT par_cdoperad,
+                        INPUT "",
+                        INPUT aux_dsorigem,
+                        INPUT aux_dstransa,
+                        INPUT TRUE,
+                        INPUT par_idseqttl,
+                        INPUT par_nmdatela,
+                        INPUT par_nrdconta,
+                       OUTPUT aux_nrdrowid).
+  RETURN "OK".
 
 END PROCEDURE.
 
@@ -2680,4 +2646,3 @@ END PROCEDURE.
 
 
 /*...........................................................................*/
-

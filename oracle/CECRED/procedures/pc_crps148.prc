@@ -44,6 +44,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                
                29/12/2017 - Criação de função para atualizar craptrd - Projeto Ligeirinho - 
                             Jonatas Jaqmam (AMcom)
+                          
+               09/03/2018 - Ajuste na geração dos lançamentos de poupança programada, retirado
+                            tratamento do crps148 e mantido na APLI0001 - Projeto Ligeirinho -
+                            Jonatas Jaqmam (AMcom)
 ............................................................................. */
 
   -- Agências por cooperativa, com poupança programada
@@ -112,29 +116,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
      where a.cdcooper    = pr_cdcooper
        and a.cdprograma  = 'CRPS148'
        and a.dsrelatorio = 'CRAPLOT'
-       and a.dtmvtolt    = pr_dtmvtolt;  
-       
-  --Cursor para buscar lançamentos gerados na apli0001 e reajustar nrseqdig     
-  cursor cr_craplpp(pr_dtmvtolt in craplpp.dtmvtolt%type) is
-    select rownum nrseqdig, 
-           b.rowid,
-           count(*) over() nr_ultseqdig
-      from (select a.*
-              from craplpp a
-             where a.cdcooper = pr_cdcooper 
-               and a.dtmvtolt = pr_dtmvtolt
-               and a.nrdolote = 8384
-               and a.cdbccxlt = 100
-            order by a.cdagenci, 
-                     a.nrseqdig) b;      
+       and a.dtmvtolt    = pr_dtmvtolt;        
 
   --PL TABLE para armazenar indice para realizar update forall
   TYPE typ_tbgen_relwrk IS TABLE OF cr_tbgen_relwrk_trd%ROWTYPE INDEX BY PLS_INTEGER;
   vr_typ_tbgen_relwrk   typ_tbgen_relwrk; 
-  
-  --PL TABLE para armazenar indice para realizar update forall
-  TYPE typ_craplpp IS TABLE OF cr_craplpp%ROWTYPE INDEX BY PLS_INTEGER;
-  vr_typ_craplpp   typ_craplpp;   
   
   vr_tbgen_relwrk_lot cr_tbgen_relwrk_lot%rowtype;
   -- Registro para armazenar as datas
@@ -172,7 +158,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
   vr_tpexecucao    tbgen_prglog.tpexecucao%type; 
   vr_qterro        number := 0; 
   vr_nrseqdig      craplot.nrseqdig%type;  
-  vr_nr_ultseqdig  craplot.nrseqdig%type;  
+  
   
         begin
 
@@ -246,7 +232,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
     
     begin
       update craplot
-         set craplot.tplotmov = 14
+         set craplot.tplotmov = 14,
+             craplot.nrseqdig = CRAPLOT_8384_SEQ.NEXTVAL
        where craplot.cdcooper = pr_cdcooper
          and craplot.dtmvtolt = rw_crapdat.dtmvtopr
          and craplot.cdagenci = 1
@@ -296,7 +283,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
     commit;    
     
   end if;
-
+  
   -- Buscar quantidade parametrizada de Jobs
   vr_qtdjobs := gene0001.fn_retorna_qt_paralelo( pr_cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
                                                , vr_cdprogra --pr_cdprogra  IN crapprg.cdprogra%TYPE    --> Código do programa
@@ -324,7 +311,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                                                   pr_dtmvtolt    => rw_crapdat.dtmvtolt,
                                                   pr_tpagrupador => 1,
                                                   pr_nrexecucao  => 1);     
-
+                                          
     -- Retorna as agências, com poupança programada
     for rw_craprpp_age in cr_craprpp_age (pr_cdcooper,
                                           vr_dtmvtopr,
@@ -473,7 +460,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                                  pr_dtmvtolt  => rw_crapdat.dtmvtolt,  --> Data do processo
                                  pr_dtmvtopr  => vr_dtmvtopr,          --> Próximo dia útil
                                  pr_rpp_rowid => rw_craprpp.rowid,     --> Identificador do registro da tabela CRAPRPP em processamento
-                                 pr_cdagenci  => pr_cdagenci,          --> Código da agência paralelizada          
                                  pr_vlsdrdpp  => vr_vlsdrdpp,          --> Saldo da poupança programada
                                  pr_cdcritic  => pr_cdcritic,          --> Código da critica de erro
                                  pr_des_erro  => pr_dscritic);         --> Descrição do erro encontrado
@@ -510,56 +496,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                     pr_cdcooper           => pr_cdcooper,
                     pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                     pr_tpocorrencia       => 4,
-                    pr_dsmensagem         => 'Inicio - Atualiza tabela craplpp.',
-                    PR_IDPRGLOG           => vr_idlog_ini_ger); 
-                    
-    -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
-    pc_log_programa(PR_DSTIPLOG           => 'O',
-                    PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                    pr_cdcooper           => pr_cdcooper,
-                    pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                    pr_tpocorrencia       => 4,
-                    pr_dsmensagem         => 'Inicio - Atualiza tabela craplpp.',
-                    PR_IDPRGLOG           => vr_idlog_ini_ger);  
-                                        
-    --Ajusta nrseqdi tabela craplpp                     
-    open cr_craplpp(rw_crapdat.dtmvtopr); 
-    loop 
-      --fetch no cursor carregando 200 mil registros
-      fetch cr_craplpp bulk collect into vr_typ_craplpp limit 200000; 
-      
-        --Sai após processar os registros.
-        exit when vr_typ_craplpp.count = 0; 
-        --Realiza update dos registros utilizando forall
-        forall idx in 1 .. vr_typ_craplpp.count 
-          update craplpp lpp 
-             set lpp.nrdocmto = vr_typ_craplpp(idx).nrseqdig,
-                 lpp.nrseqdig = vr_typ_craplpp(idx).nrseqdig,
-                 lpp.cdagenci = 1
-           where rowid = vr_typ_craplpp(idx).rowid; 
-             
-      if vr_nr_ultseqdig is null then
-        vr_nr_ultseqdig := vr_typ_craplpp(vr_typ_craplpp.count).nr_ultseqdig;
-      end if;
-    end loop;
-    close cr_craplpp;
-
-    -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
-    pc_log_programa(PR_DSTIPLOG           => 'O',
-                    PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                    pr_cdcooper           => pr_cdcooper,
-                    pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                    pr_tpocorrencia       => 4,
-                    pr_dsmensagem         => 'Fim - Atualiza tabela craplpp.',
-                    PR_IDPRGLOG           => vr_idlog_ini_ger);   
-
-  
-    -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
-    pc_log_programa(PR_DSTIPLOG           => 'O',
-                    PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                    pr_cdcooper           => pr_cdcooper,
-                    pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                    pr_tpocorrencia       => 4,
                     pr_dsmensagem         => 'Inicio - Atualiza tabela craptrd.',
                     PR_IDPRGLOG           => vr_idlog_ini_ger); 
                     
@@ -567,7 +503,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
     open cr_tbgen_relwrk_trd(rw_crapdat.dtmvtolt); 
     loop 
       --fetch no cursor carregando 5 mil registros
-      fetch cr_tbgen_relwrk_trd bulk collect into vr_typ_tbgen_relwrk limit 5000; 
+      fetch cr_tbgen_relwrk_trd bulk collect into vr_typ_tbgen_relwrk limit 50000; 
         --Sai após processar os registros.
         exit when vr_typ_tbgen_relwrk.count = 0; 
         --Realiza update dos registros utilizando forall
@@ -613,7 +549,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
                craplot.qtcompln = vr_tbgen_relwrk_lot.qtcompln,
                craplot.vlinfodb = vr_tbgen_relwrk_lot.vlinfodb,
                craplot.vlcompdb = vr_tbgen_relwrk_lot.vlcompdb,
-               craplot.nrseqdig = vr_nr_ultseqdig
+               craplot.nrseqdig = CRAPLOT_8384_SEQ.NEXTVAL
          where craplot.dtmvtolt = rw_crapdat.dtmvtopr
            and craplot.cdagenci = 1
            and craplot.cdbccxlt = 100

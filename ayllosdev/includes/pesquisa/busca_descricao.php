@@ -9,11 +9,12 @@
  * --------------
 	* 001: [25/03/2010] Rodolpho Telmo (DB1): Alterada função "buscaDescricao" acrescentando os parâmetros "campoRetorno" e "filtros"
 	* 002: [31/03/2010] Rodolpho Telmo (DB1): Alterada função "buscaDescricao" acrescentando o parâmetro "nomeFormulario"
-	* 003: [22/10/2020] David			(CECRED) : Incluir novo parametro para a funcao getDataXML (David).
- * 004: [17/07/2015] Gabriel        (RKAM): Suporte para chamar rotinas Oracle.
-	* 005: [27/07/2016] Carlos R.	    (CECRED): Corrigi o tratamento para o retorno de erro do XML. SD 479874.
-    * 006: [06/06/2017] Jonata        (Mouts): Ajuste para inclusão da busca de dominios - P408.
-	* 007: [13/08/2017] Jonata       (Mouts): Ajuste para incluir a passagem de novo parâmetro na rotina buscaDescricao - P364.
+	* 003: [22/10/2020] David		(CECRED): Incluir novo parametro para a funcao getDataXML (David).
+    * 004: [17/07/2015] Gabriel		  (RKAM): Suporte para chamar rotinas Oracle.
+	* 005: [27/07/2016] Carlos R.	(CECRED): Corrigi o tratamento para o retorno de erro do XML. SD 479874.
+    * 006: [06/06/2017] Jonata		 (Mouts): Ajuste para inclusão da busca de dominios - P408.
+	* 007: [13/08/2017] Jonata		 (Mouts): Ajuste para incluir a passagem de novo parâmetro na rotina buscaDescricao - P364.
+	* 008: [16/01/2018] Lombardi	(CECRED): Ajuste para busca de tipo de conta - P366.
  */	
 
 	session_start();
@@ -128,8 +129,11 @@
 	
 	if (count($descricao) == 0) {		
 		// Atribui descrição ao respectivo campo
+		if( $nomeProcedure == 'BUSCA_TIPO_CONTA' ){
+			echo '$("input[name=\''.$campoDescricao.'\']","#'.$nomeFormulario.'").val("");';
+		} else {
 		echo '$("input[name=\''.$campoDescricao.'\']").val("");';
-
+		}
 		if( $nomeProcedure == 'BUSCADESCDOMINIOS' ){
 			echo '$("input[id=\'iddominio_'.$campoCodigo.'\']").val("");';
 		}
@@ -146,7 +150,11 @@
 	// Volta a formatação padrão para o campo código
 	echo '$("input[name=\''.$campoCodigo.'\']").removeClass("campoErro");';
 	// Atribui descrição ao respectivo campo
+	if( $nomeProcedure == 'BUSCA_TIPO_CONTA' ){
+		echo '$("input[name=\''.$campoDescricao.'\']","#'.$nomeFormulario.'").val("'.getByTagName($descricao,$campoRetorno).'");';
+	} else {
 	echo '$("input[name=\''.$campoDescricao.'\']").val("'.getByTagName($descricao,$campoRetorno).'");';
+	}
 	    	
 	if( $nomeProcedure == 'BUSCADESCDOMINIOS' ){
 		echo '$("input[id=\'iddominio_'.$campoCodigo.'\']").val("'.getByTagName($descricao,"iddominio").'");';
