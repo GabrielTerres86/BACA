@@ -366,7 +366,7 @@ function controlaLayout(operacao) {
     var cTodos = $('input, select', '#' + nomeForm);
     var cCodigo = $('#cdagepac,#cdsecext', '#' + nomeForm);
     var cRadio = $('input[name="flgiddep"],input[name="tpextcta"],input[name="tpavsdeb"],input[name="flgrestr"],' +
-				   'input[name="indserma"],input[name="flgdevolu_autom"],input[name="idastcjt"]', '#' + nomeForm);
+				   'input[name="indserma"],input[name="flgdevolu_autom"],input[name="idastcjt"],input[name="inlbacen"]', '#' + nomeForm);
     var cSelect = $('select', '#' + nomeForm);
     var cDatas = $('#dtabtcoo,#dtabtcct,#dtelimin,#dtdemiss,#dtcnsscr', '#' + nomeForm);
 
