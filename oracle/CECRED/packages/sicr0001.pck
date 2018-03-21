@@ -5,7 +5,7 @@ create or replace package cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 28/10/2016
+     Data    : Abril/2013                       Ultima atualizacao: 11/04/2017
 
      Dados referentes ao programa:
 
@@ -42,17 +42,23 @@ create or replace package cecred.SICR0001 is
 
                  28/10/2016 - SD509982 - Atualiza critica LAU - pc_efetua_debito_automatico
                               para DEBCON (Guilherme/SUPERO)
+
+				22/12/2016 - Alterado o tipo do campo dscooper
+                             (Adriano - SD 582204).
+  
+	            11/04/2017 - Busca o nome resumido (Ricarod Linhares #547566)
+  
   ..............................................................................*/
 
   -- Chave = dsorigem||fldebito||fltiptra||fltipdoc||lpad(cdcooper,5,'0')||lpad(cdagenci,3,'0')||lpad(nrdconta,9,'0')||ROWID
   TYPE typ_reg_agendamentos IS
   RECORD ( nrchave VARCHAR2(100) --
           ,cdcooper NUMBER(2)    --  FORMAT "z9"
-          ,dscooper VARCHAR2(11) --  FORMAT "x(11)"
+          ,dscooper crapcop.nmrescop%TYPE
           ,cdagenci NUMBER(3)    --  FORMAT "zz9"
           ,nrdconta NUMBER       --  FORMAT "zzzz,zzz,9"
           ,nmprimtl crapass.nmprimtl%TYPE --  FORMAT "x(40)"
-          ,cdtiptra NUMBER(1)    --  FORMAT "9"
+          ,cdtiptra NUMBER(2)    --  FORMAT "99"
           ,fltiptra BOOLEAN
           ,dstiptra VARCHAR2(13) --  FORMAT "x(13)"
           ,fltipdoc VARCHAR2(10) --  CONVENIO ou TITULO
@@ -219,7 +225,7 @@ create or replace package body cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 21/11/2016
+     Data    : Abril/2013                       Ultima atualizacao: 17/07/2017
 
      Dados referentes ao programa:
 
@@ -298,7 +304,25 @@ create or replace package body cecred.SICR0001 is
                               posicoes, devemos incluir um hifen para completar 12 posicoes 
                               ex: 40151016407- na procedure pc_gera_crapndb 
                               (Lucas Ranghetti #560620/453337)
+                              
+                 19/01/2017 - Incluir validacao em casos que a DEBNET chamar a procedure
+                              pc_identifica_crapatr (Lucas Ranghetti #533520)
+
+				 04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				              (Jonata - RKAM M311).
+                      
+                 17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
+                              conta e referencia no mesmo dia(dtmvtolt) porem com valores
+                              diferentes (Lucas Ranghetti #684123)                      
   ..............................................................................*/
+
+  -- Objetos para armazenar as variáveis da notificação
+  vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+  
+  /* CONSTANTES */
+  ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 3;
+  MOTIVO_SALDO_INSUFICIENTE  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 8;
+  MOTIVO_LIMITE_EXCEDIDO     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 9;
 
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
   PROCEDURE pc_obtem_agendamentos_debito( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da cooperativa
@@ -1031,6 +1055,8 @@ create or replace package body cecred.SICR0001 is
     vr_idmotivo               tbconv_motivo_msg.idmotivo%TYPE;
     vr_valores_dinamicos      VARCHAR2(500);
 
+    vr_motivo_mensagem tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE;
+
 
   BEGIN
 
@@ -1042,6 +1068,7 @@ create or replace package body cecred.SICR0001 is
         vr_dsdassun := 'Transação não efetivada';
         vr_dsdplchv := 'Sem Saldo para Pagamento';
         vr_idmotivo := 30;
+        vr_motivo_mensagem := MOTIVO_SALDO_INSUFICIENTE;
 
       WHEN 967 THEN -- excede limite
         vr_cdtipo_mensagem_IB  := 4;
@@ -1049,6 +1076,7 @@ create or replace package body cecred.SICR0001 is
         vr_dsdassun := 'Fatura excede limite débito automático';
         vr_dsdplchv := 'Débito Automático';
         vr_idmotivo := 31;
+        vr_motivo_mensagem := MOTIVO_LIMITE_EXCEDIDO;
 
       ELSE RETURN;
     END CASE;
@@ -1066,6 +1094,20 @@ create or replace package body cecred.SICR0001 is
 
     --> Se for todos ou Msg Ibank
     IF pr_tpdnotif IN (0,1) THEN
+      
+      vr_variaveis_notif('#datadebito') := to_char(pr_dtmvtopg,'DD/MM/RRRR');
+      vr_variaveis_notif('#convenio') := vr_nmconven;
+      vr_variaveis_notif('#valor') := to_char(pr_vllanaut,'fm999G999G990D00');
+      vr_variaveis_notif('#limite') := to_char(pr_vlrmaxdb,'fm999G999G990D00');  
+      
+      -- Cria uma notificação
+      NOTI0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
+                                  ,pr_cdmotivo_mensagem => vr_motivo_mensagem
+                                  --,pr_dhenvio => SYSDATE
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_variaveis => vr_variaveis_notif);
+      
       --> Buscar pessoas que possuem acesso a conta
       FOR rw_crapsnh IN cr_crapsnh (pr_cdcooper  => pr_cdcooper
                                    ,pr_nrdconta  => pr_nrdconta
@@ -1149,7 +1191,7 @@ create or replace package body cecred.SICR0001 is
     --   Sistema : Conta-Corrente - Cooperativa de Credito
     --   Sigla   : CRED
     --   Autor   : Lucas Ranghetti
-    --   Data    : Maio/2014                       Ultima atualizacao: 24/08/2016
+    --   Data    : Maio/2014                       Ultima atualizacao: 17/07/2017
     --
     -- Dados referentes ao programa:
     --
@@ -1187,6 +1229,15 @@ create or replace package body cecred.SICR0001 is
     --             08/09/2016 - Remover condicao temporaria de criacao de protocolo. Agora todos os debitos
     --                          podem ter seu comprovante gerado normalmente, devido ao ajuste na estrutura
     --                          da tabela crapaut. (Anderson #511078)
+	--
+    --             11/04/2017 - Busca o nome resumido (Ricarod Linhares #547566)
+	--
+	--             04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+	--			               (Jonata - RKAM M311).
+	--
+    --             17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
+    --                          conta e referencia no mesmo dia(dtmvtolt) porem com valores
+    --                          diferentes (Lucas Ranghetti #684123)
     --------------------------------------------------------------------------------------------------------------------
   BEGIN
   
@@ -1205,6 +1256,7 @@ create or replace package body cecred.SICR0001 is
       vr_nmconven     crapcon.nmextcon%TYPE;
       vr_flultexe     INTEGER;
       vr_qtdexec      INTEGER;
+      vr_cdrefere     NUMBER;
     
       vr_dsinfor1     crappro.dsinform##1%TYPE;
       vr_dsinfor2     crappro.dsinform##1%TYPE;
@@ -1296,6 +1348,7 @@ create or replace package body cecred.SICR0001 is
               ,lau.nrcpfpre
               ,lau.nmprepos
               ,lau.idseqttl
+              ,lau.idlancto
           FROM craplau lau
               ,crapass ass
          WHERE lau.cdcooper = pr_cdcooper
@@ -1421,6 +1474,13 @@ create or replace package body cecred.SICR0001 is
            AND crapcon.cdempcon = pr_cdempcon
            AND crapcon.cdsegmto = pr_cdsegmto;
       rw_crapcon cr_crapcon%ROWTYPE;
+    
+      CURSOR cr_crapscn (pr_cdempres IN crapscn.cdempres%TYPE) IS
+       SELECT scn.dsnomres 
+         FROM crapscn scn
+        WHERE scn.cdempres = pr_cdempres;
+        
+       rw_crapscn cr_crapscn%ROWTYPE;
     
       -- Procedimento para inserir o lote e não deixar tabela lockada
       PROCEDURE pc_insere_lote(pr_cdcooper IN craplot.cdcooper%TYPE
@@ -1578,6 +1638,16 @@ create or replace package body cecred.SICR0001 is
         END IF;
         CLOSE cr_crapcon;
       
+       -- Busca o nome resumido
+        OPEN cr_crapscn(rw_craplau.cdempres);
+        FETCH cr_crapscn INTO rw_crapscn;
+        IF cr_crapscn%FOUND THEN
+          IF (TRIM(rw_crapscn.dsnomres) IS NOT NULL AND rw_crapscn.dsnomres <> '') THEN  
+            vr_nmconven := rw_crapscn.dsnomres;
+          END IF;
+        END IF;
+        CLOSE cr_crapscn;
+      
         OPEN cr_craphis(pr_cdcooper => vr_cdcooper -- CODIGO DA COOPERATIVA
                        ,pr_cdhistor => rw_craplau.cdhistor); -- CODIGO DO HISTORICO
         FETCH cr_craphis INTO rw_craphis;
@@ -1608,6 +1678,12 @@ create or replace package body cecred.SICR0001 is
           vr_cdcritic := 64; -- Cooperado demitido
         END IF;
       
+        IF vr_cdcritic = 453 THEN
+          vr_cdrefere:= rw_craplau.nrdocmto;
+        ELSE
+          vr_cdrefere:= rw_crapatr.cdrefere;
+        END IF;
+          
         IF vr_cdcritic > 0 THEN
         
           -- Gerar registros na crapndb para devolucao de debitos automaticos
@@ -1617,11 +1693,12 @@ create or replace package body cecred.SICR0001 is
                              ,pr_cdrefere => rw_craplau.nrdocmto -- CÓDIGO DE REFERÊNCIA
                              ,pr_vllanaut => rw_craplau.vllanaut -- VALOR LANCAMENTO
                              ,pr_cdseqtel => rw_craplau.cdseqtel -- CÓDIGO SEQUENCIAL
-                             ,pr_nrdocmto => rw_craplau.nrdocmto -- NÚMERO DO DOCUMENTO
+                             ,pr_nrdocmto => vr_cdrefere         -- NÚMERO DO DOCUMENTO
                              ,pr_cdagesic => pr_cdagesic -- AGÊNCIA SICREDI
                              ,pr_nrctacns => rw_craplau.nrctacns -- CONTA DO CONSÓRCIO
                              ,pr_cdagenci => rw_craplau.cdagenci_ass -- CODIGO DO PA
                              ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                             ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                              ,pr_codcriti => vr_cdcritic -- CÓDIGO DO ERRO
                              ,pr_cdcritic => vr_aux_cdcritic -- CÓDIGO DO ERRO
                              ,pr_dscritic => vr_dscritic); -- DESCRICAO DO ERRO
@@ -1721,11 +1798,12 @@ create or replace package body cecred.SICR0001 is
                                  ,pr_cdrefere => rw_craplau.nrdocmto -- CÓDIGO DE REFERÊNCIA
                                  ,pr_vllanaut => rw_craplau.vllanaut -- VALOR LANCAMENTO
                                  ,pr_cdseqtel => rw_craplau.cdseqtel -- CÓDIGO SEQUENCIAL
-                                 ,pr_nrdocmto => rw_craplau.nrdocmto -- NÚMERO DO DOCUMENTO
+                                 ,pr_nrdocmto => vr_cdrefere         -- NÚMERO DO DOCUMENTO
                                  ,pr_cdagesic => pr_cdagesic         -- AGÊNCIA SICREDI
                                  ,pr_nrctacns => rw_craplau.nrctacns -- CONTA DO CONSÓRCIO
                                  ,pr_cdagenci => rw_craplau.cdagenci_ass -- CODIGO DO PA
                                  ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                                 ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                                  ,pr_codcriti => vr_cdcritic         -- CÓDIGO DO ERRO
                                  ,pr_cdcritic => vr_aux_cdcritic     -- CÓDIGO DO ERRO
                                  ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO
@@ -1806,7 +1884,7 @@ create or replace package body cecred.SICR0001 is
                                      pr_dtmvtolt => pr_dtmvtolt,
                                      pr_nrdconta => rw_craplau.nrdconta,
                                      pr_cdempres => rw_craplau.cdempres,
-                                     pr_nrdocmto => rw_craplau.nrdocmto,
+                                     pr_nrdocmto => vr_cdrefere,
                                      pr_nrctacns => rw_craplau.nrctacns,
                                      pr_vllanaut => rw_craplau.vllanaut,
                                      pr_cdagenci => vr_cdagenci,
@@ -1875,7 +1953,7 @@ create or replace package body cecred.SICR0001 is
                                      pr_dtmvtolt => pr_dtmvtolt,
                                      pr_nrdconta => rw_craplau.nrdconta,
                                      pr_cdempres => rw_craplau.cdempres,
-                                     pr_nrdocmto => rw_craplau.nrdocmto,
+                                     pr_nrdocmto => vr_cdrefere,
                                      pr_nrctacns => rw_craplau.nrctacns,
                                      pr_vllanaut => rw_craplau.vllanaut,
                                      pr_cdagenci => vr_cdagenci,
@@ -1999,7 +2077,7 @@ create or replace package body cecred.SICR0001 is
                           GENE0002.fn_mask(rw_craplau.cdbccxlt, '999')    || '-' ||
                           GENE0002.fn_mask(rw_craplau.nrdolote, '999999') || '-' ||
                           GENE0002.fn_mask(rw_craplau.nrseqdig, '99999')  || '-' ||
-                          rw_craplau.nrdocmto);
+                          vr_cdrefere);
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir craplcm: ' || SQLERRM;
@@ -2094,7 +2172,7 @@ create or replace package body cecred.SICR0001 is
           OPEN cr_crapatr(pr_cdcooper => rw_craplau.cdcooper,
                           pr_nrdconta => rw_craplau.nrdconta,
                           pr_cdhistor => rw_craplau.cdhistor,
-                          pr_cdrefere => rw_craplau.nrdocmto);
+                          pr_cdrefere => vr_cdrefere);
           FETCH cr_crapatr INTO rw_crapatr;
         
           IF cr_crapatr%NOTFOUND THEN
@@ -2636,15 +2714,18 @@ create or replace package body cecred.SICR0001 is
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Odirlei Busana - AMcom
-  --   Data    : Novembro/2015                       Ultima atualizacao: 17/11/2015
+  --   Data    : Novembro/2015                       Ultima atualizacao: 17/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: Sempre que chamado
   -- Objetivo  : Procedimento para identificar se cooperado possui debito autorizado
   --
-  --  Alteracoes:
+  --  Alteracoes: 19/01/2017 - Incluir validacao em casos que a DEBNET chamar (Lucas Ranghetti #533520)
   --
+  --             17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
+  --                          conta e referencia no mesmo dia(dtmvtolt) porem com valores
+  --                          diferentes (Lucas Ranghetti #684123)
   --------------------------------------------------------------------------------------------------------------------*/
     -------------> CURSOR <--------------
     -- BUSCA CADASTRO DAS AUTORIZACOES DE DEBITO EM CONTA
@@ -2732,7 +2813,40 @@ create or replace package body cecred.SICR0001 is
         END IF;
 
       END LOOP; -- FIM DO LOOP
+    ELSIF pr_cdprogra IN( 'PAGA0001', 'SICR0001') THEN
+      
+      vr_flagatr := 0;
+      OPEN cr_crapatr(pr_cdcooper => pr_cdcooper,
+                      pr_nrdconta => pr_nrdconta,
+                      pr_cdhistor => pr_cdhistor,
+                      pr_nrcrcard => pr_nrcrcard);
 
+      FETCH cr_crapatr INTO rw_crapatr;
+      
+      IF cr_crapatr%NOTFOUND THEN
+        CLOSE cr_crapatr;
+        
+        OPEN cr_crapatr(pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta,
+                        pr_cdhistor => pr_cdhistor,
+                        pr_nrcrcard => pr_nrdocmto);
+
+        FETCH cr_crapatr INTO rw_crapatr;
+          
+        IF cr_crapatr%NOTFOUND THEN
+          CLOSE cr_crapatr;
+          -- FLAG PARA REGISTROS DA CRAPATR NAO ENCONTRADO
+          vr_flagatr := 0;
+        ELSE
+          CLOSE cr_crapatr;
+          -- FLAG PARA REGISTROS DA CRAPATR ENCONTRADO
+          vr_flagatr := 1;
+        END IF;  
+      ELSE
+        CLOSE cr_crapatr;
+        -- FLAG PARA REGISTROS DA CRAPATR ENCONTRADO
+        vr_flagatr := 1;
+      END IF;   
     ELSE
       -- BUSCA CADASTRO DAS AUTORIZACOES DE DEBITO EM CONTA
       OPEN cr_crapatr(pr_cdcooper => pr_cdcooper,
