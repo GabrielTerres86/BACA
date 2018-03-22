@@ -68,7 +68,7 @@ begin
                         nmproced, 
                         lstparam, 
                         nrseqrdr) 
-                 VALUES('CONSULTAR_ccl_limite',
+                 VALUES('CONSULTAR_CCL_LIMITE',
                         'ZOOM0001',
                         'pc_consultar_ccl_limite',
                         'pr_cdcooper, pr_nrdconta, pr_nrctrlim',
