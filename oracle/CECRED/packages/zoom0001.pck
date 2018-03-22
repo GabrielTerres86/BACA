@@ -6735,7 +6735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'data',
-                             pr_tag_cont => rw_consulta_ccl_limite.data,
+                             pr_tag_cont => to_char(rw_consulta_ccl_limite.data,'DD/MM/YYYY'),
                              pr_des_erro => vr_dscritic);
 
   EXCEPTION
