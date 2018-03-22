@@ -37,6 +37,8 @@
  * 021: [01/12/2017] Jonata      (RKAM)  : Não permitir acesso a opção de incluir quando conta demitida.
  * 022: [15/03/2018] Diego Simas (AMcom) : Alterado para exibir tratativas quando o limite de crédito foi
  *                                         cancelado de forma automática pelo Ayllos.
+ * 023: [22/03/2018] Diego Simas (AMcom) : Implementado nova situação para considerar Cancelamento Automático de Limite
+ *                                         por inadimplência e também novo campo onde contém a data do cancelamento automático.
  */
 
 var callafterLimiteCred = '';
@@ -755,6 +757,8 @@ function formataPrincipal() {
     rDsencfi2 = $('label[for="dsencfi2"]', '#frmDadosLimiteCredito');
     rDsencfi3 = $('label[for="dsencfi3"]', '#frmDadosLimiteCredito');
     rDssitlli = $('label[for="dssitlli"]', '#frmDadosLimiteCredito');
+    rDtultmaj = $('label[for="dtultmaj"]', '#frmDadosLimiteCredito');
+    rDtcanlim = $('label[for="dtcanlim"]', '#frmDadosLimiteCredito');
     rNmoperad = $('label[for="nmoperad"]', '#frmDadosLimiteCredito');
     rNmopelib = $('label[for="nmopelib"]', '#frmDadosLimiteCredito');
     rFlgenvio = $('label[for="flgenvio"]', '#frmDadosLimiteCredito');
@@ -772,6 +776,8 @@ function formataPrincipal() {
     rDsencfi2.addClass('rotulo').css({ 'width': '126px' });
     rDsencfi3.addClass('rotulo').css({ 'width': '126px' });
     rDssitlli.addClass('rotulo').css({ 'width': '126px' });
+    rDtultmaj.addClass('rotulo').css({ 'width': '126px' });
+    rDtcanlim.addClass('rotulo-linha').css({ 'width': '250px' });
     rNmoperad.addClass('rotulo').css({ 'width': '126px' });
     rNmopelib.addClass('rotulo').css({ 'width': '126px' });
     rFlgenvio.addClass('rotulo').css({ 'width': '126px' });
@@ -790,6 +796,8 @@ function formataPrincipal() {
     cDsencfi2 = $('#dsencfi2', '#frmDadosLimiteCredito');
     cDsencfi3 = $('#dsencfi3', '#frmDadosLimiteCredito');
     cDssitlli = $('#dssitlli', '#frmDadosLimiteCredito');
+    cDtultmaj = $('#dtultmaj', '#frmDadosLimiteCredito');
+    cDtcanlim = $('#dtcanlim', '#frmDadosLimiteCredito');
     cNmoperad = $('#nmoperad', '#frmDadosLimiteCredito');
     cNmopelib = $('#nmopelib', '#frmDadosLimiteCredito');
     cFlgenvio = $('#flgenvio', '#frmDadosLimiteCredito');
@@ -806,10 +814,12 @@ function formataPrincipal() {
     cDsencfi1.css({ 'width': '336px' });
     cDsencfi2.css({ 'width': '336px' });
     cDsencfi3.css({ 'width': '336px' });
-    cDssitlli.css({ 'width': '250px' });
-    cNmoperad.css({ 'width': '250px' });
-    cNmopelib.css({ 'width': '250px' });
-    cFlgenvio.css({ 'width': '250px' });
+    cDssitlli.css({ 'width': '336px' });
+    cDtultmaj.css({ 'width': '80px' });
+    cDtcanlim.css({ 'width': '70px' });
+    cNmoperad.css({ 'width': '336px' });
+    cNmopelib.css({ 'width': '336px' });
+    cFlgenvio.css({ 'width': '336px' });
     cDstprenv.css({ 'width': '80px' });
     cQtrenova.css({ 'width': '70px' });
     cDtrenova.css({ 'width': '70px' });

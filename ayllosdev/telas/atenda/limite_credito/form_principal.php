@@ -9,6 +9,8 @@
  *                10/10/2016 - Remover verificacao de digitalizaco para o botao de consultar imagem (Lucas Ranghetti #510032)
  *                15/12/2016 - Alterado tag do botão consultar imagem href para Onclick adaptando-se a função controlaFoco() (Evandro Guaranha-Mout's TI #562864)
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ *                22/03/2018 - Implementado nova situação para considerar Cancelamento Automático de Limite
+ *							   por inadimplência e também novo campo onde contém a data do cancelamento automático.
  *
  */	
 ?>
@@ -48,6 +50,13 @@
 		<label for="dtrenova"><? echo utf8ToHtml('Data Renova&ccedil;&atilde;o:') ?></label>
 		<input id="dtrenova" name="dtrenova" type="text" value="<?= $dtrenova ?>" />
 		<br />
+
+		<label for="dtultmaj"><? echo utf8ToHtml('Ult. Majora&ccedil;&atilde;o:') ?></label>	
+		<input id="dtultmaj" name="dtultmaj" type="text" value="<?php echo $dtultmaj; ?>" />
+
+		<label for="dtcanlim"><? echo utf8ToHtml('Data Cancelamento:') ?></label>	
+		<input id="dtcanlim" name="dtcanlim" type="text" value="<?php echo $dtcanlim; ?>" />
+		<br />
 		
 		<label for="dsencfi1"><? echo utf8ToHtml('Encargos Financeiros:') ?></label>	
 		<input id="dsencfi1" name="dsencfi1" type="text" style="width: 322px;" value="<?php echo $dsencfi1; ?>" />
@@ -63,9 +72,6 @@
 		
 		<label for="dssitlli"><? echo utf8ToHtml('Situa&ccedil;&atilde;o:') ?></label>	
 		<input id="dssitlli" name="dssitlli" type="text" value="<?php echo $dssitlli.(trim($dsmotivo) == "" ? "" : " - ".$dsmotivo); ?>" />	
-
-		<label for="dtultmaj"><? echo utf8ToHtml('Ult. Majora&ccedil;&atilde;o:') ?></label>	
-		<input id="dtultmaj" name="dtultmaj" type="text" value="<?php echo $dtultmaj; ?>" />
 
 		<br />
 

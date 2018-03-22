@@ -3,67 +3,73 @@
 	//************************************************************************//
 	//*** Fonte: principal.php                                             ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Fevereiro/2008               Última Alteração: 20/07/2015 ***//
+	//*** Data : Fevereiro/2008               Ãšltima AlteraÃ§Ã£o: 22/03/2018 ***//
 	//***                                                                  ***//
-	//*** Objetivo  : Mostrar opção Principal da rotina de Limite de       ***//
-	//***             Crédito da tela ATENDA                               ***//
+	//*** Objetivo  : Mostrar opÃ§Ã£o Principal da rotina de Limite de       ***//
+	//***             CrÃ©dito da tela ATENDA                               ***//
 	//***                                                                  ***//
-	//*** Alterações: 28/06/2010 - Incluir campo de envio a sede           ***//
-	//****						  (Gabrel)								   ***//
+	//*** AlteraÃ§Ãµes: 28/06/2010 - Incluir campo de envio a sede           ***//
+	//****						  (Gabrel)								                           ***//
 	//***                                                                  ***//
 	//***             16/09/2010 - Ajuste para enviar impressoes via email ***//
 	//***                          para o PAC Sede (David).                ***//
 	//***                                                                  ***//
 	//***             27/10/2010 - Tratamento para projeto de linhas de    ***//
-	//***                          crédito (David).                        ***//
-	//***                    											   ***//
+	//***                          crÃ©dito (David).                        ***//
+	//***                    											                         ***//
 	//***             13/01/2011 - Inclusao do campo dsencfi3 (Adriano).   ***//
-	//***																   ***//
-	//***             28/06/2011 - Tabless (Rogerius - DB1).			   ***//
-	//***																   ***//
-	//***			  09/07/2012 - Retirado campo "redirect" (Jorge)       ***//
-	//***																   ***//
-	//***			  18/03/2014 - Incluir botao consultar imagem e os     ***//
-	//***						   devidos ajustes (Lucas R.)   		   ***//
+	//***																                                   ***//
+	//***             28/06/2011 - Tabless (Rogerius - DB1).			         ***//
+	//***																                                   ***//
+	//***			  09/07/2012 - Retirado campo "redirect" (Jorge)             ***//
+	//***																                                   ***//
+	//***			  18/03/2014 - Incluir botao consultar imagem e os           ***//
+	//***						   devidos ajustes (Lucas R.)   		                   ***//
 	//***                                                                  ***//
 	//***             02/07/2014 - Permitir alterar a observacao da        ***//
 	//****                         proposta (Chamado 169007) (Jonata-RKAM) ***//
 	//***                                                                  ***//
 	//***             23/12/2014 - Incluir o campo data de renovacao  e    ***//
-	//***						   Tipo da Renovacao. (James)              ***//
+	//***						   Tipo da Renovacao. (James)                          ***//
 	//***                                                                  ***//
 	//***             02/01/2015 - Ajuste format numero contrato/bordero   ***//
 	//***                          para consultar imagem do contrato;      ***//
 	//***                          adequacao ao format pre-definido para   ***//
 	//***                          nao ocorrer divergencia ao              ***//
-    //***                          pesquisar no SmartShare.                ***//
-    //***                          (Chamado 181988) - (Fabricio)           ***//
-    //***                                                                  ***//
-    //***             09/01/2015 - Altercoes referentes ao projeto de      ***//
-    //***                          melhoria para alteracao de propoosta    ***//
-    //***                          SD237152 (Tiago/Gielow).                ***//
+  //***                          pesquisar no SmartShare.                ***//
+  //***                          (Chamado 181988) - (Fabricio)           ***//
+  //***                                                                  ***//
+  //***             09/01/2015 - Altercoes referentes ao projeto de      ***//
+  //***                          melhoria para alteracao de propoosta    ***//
+  //***                          SD237152 (Tiago/Gielow).                ***//
 	//***                                                                  ***//
 	//***             06/04/2015 - Consultas automatizadas (Jonata-RKAM)   ***//   
 	//***                                                                  ***//
-	//***  			  08/07/2015 - Tratamento de caracteres especiais e	   ***// 
-	//***						   remover quebra de linha da observação   ***//
-	//***						   (Lunelli - SD SD 300819 | 300893) 	   ***//
-	//***																   ***//
-	//***    		  20/07/2015 - Ajuste no tratamento de caracteres 	   ***//
-	//***                         (Kelvin)	   							   ***//
+	//***  			  08/07/2015 - Tratamento de caracteres especiais e	       ***// 
+	//***						   remover quebra de linha da observaÃ§Ã£o               ***//
+	//***						   (Lunelli - SD SD 300819 | 300893) 	                 ***//
+	//***																                                   ***//
+	//***    		  20/07/2015 - Ajuste no tratamento de caracteres 	       ***//
+	//***                         (Kelvin)	   							               ***//
 	//***                                                                  ***//
 	//***             08/08/2017 - Implementacao da melhoria 438.          ***//
 	//***                          Heitor (Mouts).                         ***//
+  //***                                                                  ***//
+	//***             22/03/2018 - Verifica situacao do limite,            ***// 
+  //***                          se foi cancelado automaticamente        ***//  
+  //***                          por inadimplencia.                      ***//
+	//***                          Diego Simas (AMcom).                    ***//
+  //***                                                                  ***//     
 	//************************************************************************//
 	
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");
 	require_once("../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mÃ©todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
@@ -73,7 +79,7 @@
 		exibeErro($msgError);		
 	}	
 	
-	// Verifica se o número da conta foi informado
+	// Verifica se o nÃºmero da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
@@ -81,12 +87,12 @@
 	$nrdconta = $_POST["nrdconta"];
 	$cddopcao = $_POST["cddopcao"];
 
-	// Verifica se o número da conta é um inteiro válido
+	// Verifica se o nÃºmero da conta Ã© um inteiro vÃ¡lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
 	
-	// Monta o xml de requisição
+	// Monta o xml de requisiÃ§Ã£o
 	$xmlGetLimite  = "";
 	$xmlGetLimite .= "<Root>";
 	$xmlGetLimite .= "	<Cabecalho>";
@@ -112,7 +118,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjLimite = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
 	
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjLimite->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
@@ -160,7 +166,7 @@
 	$xmlResult = mensageria($xml, "ATENDA", "LIM_ULTIMA_MAJ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjMaj = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjMaj->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjMaj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
@@ -168,10 +174,36 @@
 	$majora = $xmlObjMaj->roottag->tags[0]->tags[0]->tags;
 	
 	$dtultmaj = getByTagName($majora,"dtultmaj");	
+
+	//Verifica situacao do limite, se foi cancelado automaticamente por inadimplencia
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "    <nrctrlim>".$nrctrlim."</nrctrlim>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "ZOOM0001", "CONSULTAR_CCL_LIMITE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
 	
+	$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+	$cancAuto = getByTagName($param->tags,'tipo');	
+	$dtcanlim = getByTagName($param->tags,'data');
+		
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+	}else{
+		if($cancAuto == 1){
+			$dssitlli = "Cancelado Automaticamente por Inadimpl&ecirc;ncia";				
+		}
+	}
+
 	include ("form_principal.php");
 
-	// Função para exibir erros na tela através de javascript
+	// FunÃ§Ã£o para exibir erros na tela atravÃ©s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
