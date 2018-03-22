@@ -39,7 +39,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 12/09/2017
+      Data     : Maio/2017.                   Ultima atualizacao: 20/03/2018
 
       Dados referentes ao programa:
 
@@ -53,6 +53,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                Heitor (Mouts) - Chamado 778505
 
                   12/12/2017 - Projeto 410 - Incluir o tratamento para o IOF por atraso - (Jean / MOut´S)
+                  
+                  20/03/2018 - #INC0010628 Não considerar contratos que foram para prejuízo (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -3173,6 +3175,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- varrer temptable de emprestimos
       vr_idxempr := vr_tab_dados_epr.first;
       WHILE vr_idxempr IS NOT NULL LOOP
+
+        -- Não considerar contratos de empréstimo que foram para prejuízo
+        IF vr_tab_dados_epr(vr_idxempr).inprejuz = 1 THEN
+          vr_idxempr := vr_tab_dados_epr.next(vr_idxempr);
+          continue;
+        END IF;
+      
         -- Para aqueles com saldo devedor
         IF vr_tab_dados_epr(vr_idxempr).vlsdeved > 0 THEN
           -- Chamar calculo de dias em atraso
@@ -3248,8 +3257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             INTO vr_vlpclpag;
           CLOSE cr_craplem_pago;
           -- Quantidade Parcelas paga é Valor Paga nos ultimos 6 meses / Valor da Parcela
-          vr_qtpclpag := ROUND(vr_vlpclpag / vr_tab_dados_epr(vr_idxempr)
-                               .vlpreemp);
+          vr_qtpclpag := ROUND(vr_vlpclpag / vr_tab_dados_epr(vr_idxempr).vlpreemp);
         
           -- Descontar da quantidade paga a quantidade em atraso, pq mesmo tendo pago 
           -- proporcionalmente o valor total da parcela, se teve multa no mês significa
