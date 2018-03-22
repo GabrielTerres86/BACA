@@ -478,6 +478,19 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                     ,pr_retxml        IN OUT NOCOPY XMLType        -- Arquivo de retorno do XML
                                     ,pr_nmdcampo         OUT VARCHAR2              -- Nome do Campo
                                     ,pr_des_erro         OUT VARCHAR2);            -- Saida OK/NOK 
+
+  PROCEDURE pc_busca_cartorios(pr_nmcartorio     IN tbcobran_cartorio_protesto.nmcartorio%TYPE -- Nome do cartorio
+                             ,pr_dscidade       IN crapmun.dscidesp%TYPE -- Cidade do cartorio
+                             ,pr_documento      IN tbcobran_cartorio_protesto.nrcpf_cnpj%TYPE -- CNPJ/CPF do cartorio
+                             ,pr_tpdorgan       IN INTEGER                 -- Ordenação dos cartorios                      
+                             ,pr_nrregist       IN INTEGER                 -- Quantidade de registros
+                             ,pr_nriniseq       IN INTEGER                 -- Qunatidade inicial
+                             ,pr_xmllog         IN VARCHAR2                -- XML com informações de LOG
+                             ,pr_cdcritic       OUT PLS_INTEGER            -- Código da crítica
+                             ,pr_dscritic       OUT VARCHAR2               -- Descrição da crítica
+                             ,pr_retxml         IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                             ,pr_nmdcampo       OUT VARCHAR2               -- Nome do Campo
+                             ,pr_des_erro       OUT VARCHAR2);
   
 END ZOOM0001;
 /
@@ -6659,7 +6672,183 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
   
-  END pc_busca_grupo_historico;      
+  END pc_busca_grupo_historico;   
+  
+  PROCEDURE pc_busca_cartorios(pr_nmcartorio     IN tbcobran_cartorio_protesto.nmcartorio%TYPE -- Nome do cartorio
+                             ,pr_dscidade       IN crapmun.dscidesp%TYPE -- Cidade do cartorio
+                             ,pr_documento      IN tbcobran_cartorio_protesto.nrcpf_cnpj%TYPE -- CNPJ/CPF do cartorio
+                             ,pr_tpdorgan       IN INTEGER                 -- Ordenação dos cartorios                      
+                             ,pr_nrregist       IN INTEGER                 -- Quantidade de registros
+                             ,pr_nriniseq       IN INTEGER                 -- Qunatidade inicial
+                             ,pr_xmllog         IN VARCHAR2                -- XML com informações de LOG
+                             ,pr_cdcritic       OUT PLS_INTEGER            -- Código da crítica
+                             ,pr_dscritic       OUT VARCHAR2               -- Descrição da crítica
+                             ,pr_retxml         IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                             ,pr_nmdcampo       OUT VARCHAR2               -- Nome do Campo
+                             ,pr_des_erro       OUT VARCHAR2) IS
+
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : pc_busca_cartorios                            antiga:
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Helinton Steffens (Supero)
+    Data     : Março/2018                           Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: -----
+    Objetivo   : Pesquisa de cartorios
+
+    Alterações :
+    -------------------------------------------------------------------------------------------------------------*/
+
+    CURSOR cr_tbcobran_cartorio_protesto(pr_nmcartorio     IN tbcobran_cartorio_protesto.nmcartorio%TYPE
+                             		,pr_dscidade       IN crapmun.dscidesp%TYPE
+                             		,pr_documento      IN tbcobran_cartorio_protesto.nrcpf_cnpj%TYPE
+                             		,pr_tpdorgan       IN INTEGER) IS
+    SELECT cartorio.nrcpf_cnpj
+    	  ,cartorio.nmcartorio
+	  ,mununicio.dscidesp
+    FROM tbcobran_cartorio_protesto cartorio
+	,crapmun mununicio
+    WHERE cartorio.idcidade = mununicio.idcidade
+      AND cartorio.flgativo = 1
+      AND 1 = (CASE WHEN pr_documento is null THEN 1 WHEN cartorio.nrcpf_cnpj = pr_documento THEN 1 ELSE 0 END)
+      AND 1 = (CASE WHEN pr_nmcartorio is null THEN 1 WHEN cartorio.nmcartorio = pr_nmcartorio THEN 1 ELSE 0 END)
+      AND 1 = (CASE WHEN pr_dscidade is null THEN 1 WHEN mununicio.dscidesp = pr_dscidade THEN 1 ELSE 0 END)
+    ORDER BY CASE WHEN pr_tpdorgan = 1 THEN cartorio.nmcartorio ELSE null END,
+             CASE WHEN pr_tpdorgan = 2 THEN cartorio.nrcpf_cnpj ELSE null END;
+    rw_tbcobran_cartorio_protesto cr_tbcobran_cartorio_protesto%ROWTYPE;
+
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    --Variaveis Locais
+    vr_qtregist INTEGER := 0;
+    vr_clob     CLOB;
+    vr_xml_temp VARCHAR2(32726) := '';
+    vr_nrregist INTEGER;
+    vr_contador INTEGER :=0;
+    vr_flgfirst BOOLEAN := TRUE;
+
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;
+    vr_exc_erro  EXCEPTION;
+
+    BEGIN
+
+      --limpar tabela erros
+      vr_tab_erro.DELETE;
+
+      --Inicializar Variaveis
+      vr_nrregist:= pr_nrregist;
+      vr_cdcritic:= 0;
+      vr_dscritic:= NULL;
+
+    -- Criar cabeçalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="UTF-8"?><Root/>');
+    
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+    
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'inf'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic); 
+
+    FOR rw_tbcobran_cartorio_protesto IN cr_tbcobran_cartorio_protesto(pr_nmcartorio => pr_nmcartorio
+                                      ,pr_dscidade   => pr_dscidade
+				      ,pr_documento  => pr_documento
+				      ,pr_tpdorgan   => pr_tpdorgan) LOOP
+
+      --Incrementar Quantidade Registros do Parametro
+      vr_qtregist:= nvl(vr_qtregist,0) + 1;
+
+      /* controles da paginacao */
+      IF (vr_qtregist < pr_nriniseq) OR
+         (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+         --Proximo Cartorio
+        CONTINUE;
+      END IF;
+
+      --Numero Registros
+      IF vr_nrregist > 0 THEN
+
+        -- gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmcartorio', pr_tag_cont => rw_tbcobran_cartorio_protesto.nmcartorio, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dscidade', pr_tag_cont => rw_tbcobran_cartorio_protesto.dscidesp, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'documento', pr_tag_cont => gene0002.fn_mask_cpf_cnpj(rw_tbcobran_cartorio_protesto.nrcpf_cnpj,1), pr_des_erro => vr_dscritic);
+
+        vr_contador := vr_contador + 1;
+        vr_flgfirst := FALSE;
+
+      END IF;
+
+      --Diminuir registros
+      vr_nrregist:= nvl(vr_nrregist,0) - 1;
+
+    END LOOP;
+                                            
+                          
+    -- Insere atributo na tag Dados com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                             ,pr_tag   => 'dados'            --> Nome da TAG XML
+                             ,pr_atrib => 'qtregist'             --> Nome do atributo
+                             ,pr_atval => vr_qtregist    --> Valor do atributo
+                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_cartorios --> '|| SQLERRM;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+  END pc_busca_cartorios;   
 
 END ZOOM0001;
 /

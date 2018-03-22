@@ -41,7 +41,9 @@
 				<option value="conciliado" <?php echo $indconci == 'conciliado'  ? 'selected' : '' ?> ><? echo utf8ToHtml('Conciliado') ?></option>
 			</select>
 			<label for="dscartor"><? echo utf8ToHtml('Cart&oacuterio de origem');  ?>:</label>
-			<input type="text" id="dscartor" name="dscartor" value="<?php echo $dscartor ?>"/>
+            <input type="text" id="dscartor" name="dscartor" value="dscartor"/>
+            <a id="lupaConta" style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisaCartorio();return false;">
+            <img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
 		</div>
 	</div>		
 </form>

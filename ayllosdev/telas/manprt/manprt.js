@@ -198,6 +198,8 @@ function buscaOpcao() {
 
             if (cddopcao == 'T') {
                 formataOpcaoT();
+            } else if (cddopcao == 'R') {
+                formataOpcaoR();
             }
 
 			if (flgimped){
@@ -250,18 +252,56 @@ function formataOpcaoT() {
     cInivlpro.css({ 'width': '50px' }).addClass('inteiro');
     cFimvlpro.css({ 'width': '50px' }).addClass('inteiro');
     cIndconci.css({ 'width': '160px' });
-    cDscartor.css({ 'width': '148px' });
-
-
+    cDscartor.css({ 'width': '130px' });
 
     layoutPadrao();
     return false;
 }
 
-function controlaLayoutT() {
+function controlaLayout() {
 
     $('#divFiltro').css({ 'display': 'block' });
 
+    return false;
+}
+
+function formataOpcaoR() {
+
+    highlightObjFocus($('#frmOpcao'));
+
+    $('#divFiltro').css({ 'border': '1px solid #777', 'padding': '10px', 'min-height': '50px' });
+
+    rInidtpro = $('label[for="inidtpro"]', '#' + frmOpcao);
+    rFimdtpro = $('label[for="fimdtpro"]', '#' + frmOpcao);
+    rNmrescop = $('label[for="nmrescop"]', '#' + frmOpcao);
+    rNrdconta = $('label[for="nrdconta"]', '#' + frmOpcao);
+    rCduflogr = $('label[for="cduflogr"]', '#' + frmOpcao);
+    rDscartor = $('label[for="dscartor"]', '#' + frmOpcao);
+    
+    rInidtpro.css({ 'width': '68px' }).addClass('rotulo');
+    rFimdtpro.css({ 'width': '65px' }).addClass('rotulo-linha'); 
+    rNmrescop.css({ 'width': '85px', 'margin-left':'50px' }).addClass('rotulo-linha');
+    rNrdconta.css({ 'width': '70px' }).addClass('rotulo-linha');
+    rCduflogr.css({ 'margin-left':'43px' }).addClass('rotulo-linha');
+    rDscartor.css({ 'width': '120px', 'margin-left':'50px' }).addClass('rotulo-linha');
+        
+    cInidtpro = $('#inidtpro', '#' + frmOpcao);
+    cFimdtpro = $('#fimdtpro', '#' + frmOpcao);
+    cNmrescop = $('#nmrescop', '#' + frmOpcao);
+    cNrdconta = $('#nrdconta', '#' + frmOpcao);
+    cCduflogr = $('#cduflogr', '#' + frmOpcao);
+    cDscartor = $('#dscartor', '#' + frmOpcao);
+    
+    cInidtpro.css({ 'width': '75px' }).addClass('data');
+    cInidtpro.removeClass('campo');
+    cFimdtpro.css({ 'width': '75px' }).addClass('data');
+    cFimdtpro.removeClass('campo');
+    cNmrescop.css({'width': '180px'}); 
+    cNrdconta.addClass('conta pesquisa').css({'width': '80px'});
+    cCduflogr.css('width', '25px').attr('maxlength', '2');
+    cDscartor.css({ 'width': '130px' });
+
+    layoutPadrao();
     return false;
 }
 
@@ -288,8 +328,10 @@ function btnContinuar() {
             return false;
         }
         
-        controlaLayoutT();
+        controlaLayout();
         controlaOperacao(nriniseq, nrregist);
+    } else if (cddopcao == 'R') {
+        controlaLayout();
     }
 
     return false;
@@ -323,7 +365,7 @@ function controlaOpcao() {
         $('#divBotoes:eq(0)', '#divTela').remove();
         formataTabelaTeds();
         formataOpcaoT();
-        controlaLayoutT();
+        controlaLayout();
         $('input, select', '#' + frmOpcao).desabilitaCampo();
         $('#btVoltar', '#divBotoes').focus();
     }
@@ -470,4 +512,35 @@ function hasValidRange(){
         return false;
     }
     return true;
+}
+
+function controlaPesquisa(opcao) {
+
+    if (opcao == 1) {
+
+		if ($('#nrdconta', '#' + frmOpcao).hasClass('campoTelaSemBorda')) {
+            return false;
+    }
+
+        mostraPesquisaAssociado('nrdconta', frmOpcao);
+    } else {
+        if (opcao == 2) {
+
+		if ($('#nrdcontx', '#' + frmOpcao).hasClass('campoTelaSemBorda')) {
+            return false;
+        }
+
+            mostraPesquisaAssociado('nrdcontx', frmOpcao);
+    }
+    }
+    return false;
+}
+
+function controlaPesquisaCartorio() {
+    if ($('#dscartor ', '#' + frmOpcao).hasClass('campoTelaSemBorda')) {
+        return false;
+    }
+    
+    mostraPesquisaCartorio('dscartor', frmOpcao);
+    return false;
 }

@@ -79,6 +79,9 @@
 																		
 																		<!-- INCLUDE DA TELA DE PESQUISA ASSOCIADO -->
 																		<? require_once("../../includes/pesquisa/pesquisa_associados.php"); ?>
+
+																		<!-- INCLUDE DA TELA DE PESQUISA CARTORIOS -->
+																		<? require_once("../../includes/pesquisa/pesquisa_cartorios.php"); ?>
 																		
 																		<div id="divRotina"></div>
 																		<div id="divUsoGenerico"></div>

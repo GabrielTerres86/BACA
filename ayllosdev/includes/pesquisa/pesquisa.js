@@ -1084,6 +1084,76 @@ function mostraPesquisaAssociado(campoRetorno, formRetorno, divBloqueia, fncFech
     controlaFoco();
 }
 
+function mostraPesquisaCartorio(campoRetorno, formRetorno, divBloqueia, fncFechar,cdCooper) {
+
+	if (cdCooper == '' || cdCooper == null || cdCooper == "undefined"){
+		cdCooper = 0;
+	}else if(cdCooper == 0){
+		cdCooper = 3;
+	}
+
+	// Mostra mensagem de aguardo	
+	showMsgAguardo('Aguarde, carregando Pesquisa de Associados ...');	
+	
+	vg_campoRetorno = campoRetorno.split("|");
+	vg_formRetorno  = formRetorno;	
+		
+	$('#frmPesquisaCartorios').append('<input type="hidden" name="cdcooper" id="cdcooper" value="'+cdCooper+'"/>');	
+	
+	
+	// Limpar campos de pesquisa
+	$('#nmdbusca','#frmPesquisaCartorios').val('');
+	$('#tpdorgan','#frmPesquisaCartorios').val('1');	
+	$('#nrcpfcgc','#frmPesquisaCartorios').val('');	
+	$('#cdcidade','#frmPesquisaCartorios').val('');		
+	
+	// Formatação Inicial
+	$('#nmdbusca','#frmPesquisaCartorios').removeClass('campoTelaSemBorda').addClass('campo').removeProp('disabled');	
+	$('#nrcpfcgc, #cdcidade','#frmPesquisaCartorios').removeClass('campo').addClass('campoTelaSemBorda').prop('disabled',true);	
+	
+	// Alterando-se o tipo de pesquisa, habilita/desabilita os devidos campos
+	// Alterando-se o tipo de pesquisa, habilita/desabilita os devidos campos
+	$('input[type="radio"]','#frmPesquisaCartorios').change( function() {
+		
+		if ( $(this).val() == '1' ) {
+			// Habilita
+			$('#nmdbusca','#frmPesquisaCartorios').removeClass('campoTelaSemBorda').addClass('campo').removeProp('disabled');	
+			// Desabilita
+			$('#nrcpfcgc','#frmPesquisaCartorios').removeClass('campo').addClass('campoTelaSemBorda').prop('disabled',true);
+			$('#cdcidade','#frmPesquisaCartorios').removeClass('campo').addClass('campoTelaSemBorda').prop('disabled',true);
+			// Foca
+			$('#nmdbusca','#frmPesquisaCartorios').focus();
+		} else if ( $(this).val() == '2' ) {
+			// Desabilita
+			$('#nmdbusca','#frmPesquisaCartorios').removeClass('campo').addClass('campoTelaSemBorda').prop('disabled',true);
+			$('#nrcpfcgc','#frmPesquisaCartorios').prop('disabled',true);
+			// Habilita
+			$('#cdcidade','#frmPesquisaCartorios').removeClass('campoTelaSemBorda').addClass('campo').removeProp('disabled');
+			// Foca
+			$('#cdcidade','#frmPesquisaCartorios').val('').focus();
+		} else if ( $(this).val() == '3' ) {
+			// Habilita
+			$('#nrcpfcgc','#frmPesquisaCartorios').removeClass('campoTelaSemBorda').addClass('campo').removeProp('disabled');			
+			// Desabilita
+			$('#nmdbusca, #cdcidade','#frmPesquisaCartorios').removeClass('campo').addClass('campoTelaSemBorda').prop('disabled',true);
+			// Foca
+			$('#nrcpfcgc','#frmPesquisaCartorios').focus();		
+		}
+	});
+	
+	$('.fecharPesquisa','#divPesquisaCartorios').click( function() {
+		// 015 - Retirado tratamento do tipo do divBloqueia e acrescentado a fncFechar
+		fechaRotina($('#divPesquisaCartorios'),divBloqueia,fncFechar);
+	});	
+	
+	// Limpa Tabela de pesquisa
+	$('#divResultadoPesquisaCartorio').empty();
+	
+	hideMsgAguardo();	
+	exibeRotina($('#divPesquisaCartorios'));
+    controlaFoco();
+}
+
 /*!
  * ALTERAÇÃO  : 002
  * OBJETIVO   : Função para efetuar pesquisa de associados
@@ -1151,6 +1221,65 @@ function pesquisaAssociado(nriniseq) {
             controlaFoco();
         }
     });
+}
+
+function pesquisaCartorio(nriniseq) {
+	
+	showMsgAguardo('Aguarde, pesquisando cartorios ...');
+	
+    var cdpesqui = $('input[type="radio"]:checked', '#frmPesquisaCartorios').val();
+    var nmdbusca = $('#nmdbusca', '#frmPesquisaCartorios').val();
+    var cdagpesq = $('#cdagpesq', '#frmPesquisaCartorios').val();
+    var tpdorgan = $('#tpdorgan', '#frmPesquisaCartorios').val();
+    var nrcpfcgc = $('#nrcpfcgc', '#frmPesquisaCartorios').val();
+	var cdcidade = $('#cdcidade', '#frmPesquisaCartorios').val();
+	var cdcooper = $('#cdcooper', '#frmPesquisaCartorios').val();
+    if (cdpesqui == '1' && nmdbusca == '') {
+        hideMsgAguardo();
+        showError('error', 'Informe o nome do cart&oacuterio.', 'Alerta - Ayllos', "$('#cdagpesq','#frmPesquisaCartorios').focus();bloqueiaFundo($('#divPesquisaCartorios'));");
+        return false;
+    }
+
+    if (cdpesqui == '2' && cdcidade == '') {
+        hideMsgAguardo();
+        showError('error', 'Informe o nome da cidade do cart&oacuterio.', 'Alerta - Ayllos', "$('#cdcidade','#frmPesquisaCartorios').focus();bloqueiaFundo($('#divPesquisaCartorios'));");
+        return false;
+    }
+
+    if (cdpesqui == '3' && nrcpfcgc == '') {
+        hideMsgAguardo();
+        showError('error', 'Informe o CPF/CNPJ a ser pesquisado.', 'Alerta - Ayllos', "$('#nrcpfcgc','#frmPesquisaCartorios').focus();bloqueiaFundo($('#divPesquisaCartorios'));");
+        return false;
+    }
+
+    // Carrega dados da conta através de ajax
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'includes/pesquisa/realiza_pesquisa_cartorios.php',
+        data: {
+            cdpesqui: cdpesqui,
+            nmdbusca: nmdbusca,
+            cdagpesq: cdagpesq,
+			cdcidade: cdcidade,
+            nriniseq: nriniseq,
+            tpdorgan: tpdorgan,
+            nrcpfcgc: nrcpfcgc,
+            cdcooper: cdcooper,
+            redirect: 'html_ajax' // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo($('#divPesquisaCartorios'));");
+        },
+        success: function (response) {
+            $('#divResultadoPesquisaCartorio').html(response);
+            zebradoLinhaTabela($('#divPesquisaCartoriosItens > table > tbody > tr'));
+            $('#divPesquisaCartorioRodape').formataRodapePesquisa();
+            controlaFoco();
+        }
+    });
+
+	return false;
 }
 
 //Função para controle de navegação
@@ -1276,7 +1405,15 @@ function selecionaAssociado(conta,nmprimtl,dsnivris,nrcpfcgc) {
 	
 }
 
-
+function selecionaCartorio(nrcpfcgc) {	
+	// Chama o evento click do botão fechar, que foi previamente configurado na função "mostraPesquisaAssociado"
+	$('.fecharPesquisa','#divPesquisaCartorios').click();
+	
+	// Atribui conta consultada para campo e formulários contidos nas respectivas variáveis globais 
+	$('#'+vg_campoRetorno[0],'#'+vg_formRetorno).val(nrcpfcgc);
+	// Da foco no campo
+	$('#'+vg_campoRetorno[0],'#'+vg_formRetorno).focus();	
+}
 
 
 /*!
