@@ -522,6 +522,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
        vr_dtfimfis  DATE;
 
        vr_dtrisclq_aux DATE;
+	   vr_dtcorte_prm  DATE;
+
        vr_qtddsdev_aux  NUMBER:= 0;
 
        --Variaveis do ipmf
@@ -1733,10 +1735,23 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
   								 RAISE vr_exc_saida;
   							 END;
                 
-				 --
-                 vr_dtrisclq_aux := nvl(rw_crapsld.dtrisclq, rw_crapdat.dtmvtolt);
-                 --
-                 IF vr_dtrisclq_aux <= '01/02/2018' THEN -- Daniel(AMcom)
+				--
+                -- Regra para cálculo de dias úteis ou dias corridos - Daniel(AMcom)
+                vr_dtrisclq_aux := nvl(rw_crapsld.dtrisclq, rw_crapdat.dtmvtolt);
+                --
+                BEGIN
+                  -- Buscar data parametro de referencia para calculo de juros
+                  vr_dtcorte_prm := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                                      ,pr_nmsistem => 'CRED'
+                                                                      ,pr_cdacesso => 'DT_CORTE_REGCRE')
+                                                                      ,'DD/MM/RRRR');
+      
+ 	  	          EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_dtcorte_prm := rw_crapdat.dtmvtolt;
+                END;               
+                --
+                IF vr_dtrisclq_aux <= vr_dtcorte_prm THEN 
                    -- Considerar dias úteis -- Regra atual
                    -- Incrementar quantidade dias devedor
                    rw_crapsld.qtddsdev := Nvl(rw_crapsld.qtddsdev,0) + 1;
