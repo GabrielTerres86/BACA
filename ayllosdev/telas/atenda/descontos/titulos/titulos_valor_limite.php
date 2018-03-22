@@ -7,7 +7,7 @@
  * ALTERAÇÕES   : 
  * --------------
  * 001: [16/03/2018] Leonardo Oliveira (GFT): Novos campos 'linha de crédito', 'descrição da linha', e uso da flgstlcr para verificar se a linha é bloqueada
- *
+ * 002: [22/03/2018] Leonardo Oliveira (GFT): Esconder o botão de renovação quando a linha de crédito for bloqueada.
  *
  */	
 ?>
@@ -37,17 +37,14 @@
 	<div class="divRegistros">
 		<form id="frmReLimite" onsubmit="return false;">
 			<fieldset>
-			
 
 			<input type="hidden" id="nrctrlim" name="nrctrlim" value="<? echo $nrctrlim; ?>" />
-
 			<input type="hidden" id="flgstlcr" name="flgstlcr" value="<? echo $flgstlcr; ?>" />
-
 
 			<?php if ($flgstlcr == 0){ ?>
 
 				<label for="cddlinha"><? echo utf8ToHtml('Linha de Crédito: ') ?></label>
-				<input name="cddlinha" id="cddlinha" type="text" value="<? echo $cddlinha ?>" />
+				<input name="cddlinha" id="cddlinha" type="text" value="<? echo $cddlinha ?>"/>
 				<a>
 					<img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif">
 				</a>
@@ -58,6 +55,7 @@
 				<input name="dsdlinha" id="dsdlinha" type="text" value="<? echo $dsdlinha ?>" />
 
 				<br />
+
 			<?php } else { ?>
 
 				<input type="hidden" id="cddlinha" name="cddlinha" value="<? echo $cddlinha; ?>" />
@@ -81,15 +79,17 @@
 	value="Voltar"  
 	id="btnVoltar" 
 	name="btnVoltar" 
-	onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;"/>
-
+	onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos(); return false;"/>
+<?php if($flgstlcr != 0){?>
 <input 
 	type="button" 
 	class="botao gft" 
 	value="Renovar"
 	id="btRenovar"
-	name="btRenovar" 
-	onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;"/>
+	name="btRenovar"
+	onClick="renovaValorLimite();voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;"/>
+	<?php } ?>
+	
 </div>
 
 <script type="text/javascript">
