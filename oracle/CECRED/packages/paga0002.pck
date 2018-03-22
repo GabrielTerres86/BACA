@@ -9323,7 +9323,7 @@ create or replace package body cecred.PAGA0002 is
           vr_cdreceit := rw_tbtribt.cdtributo;
           vr_nrrefere := rw_tbtribt.nridentificador;
           vr_vlrtotal := rw_craplau.vllanaut;
-          vr_dstiptra := (CASE WHEN rw_tbtribt.tppagamento = 1 THEN 'DARF' ELSE 'DAS' END);        
+          vr_dstiptra := (CASE WHEN rw_tbtribt.tppagamento = 3 THEN 'FGTS' WHEN rw_tbtribt.tppagamento = 4 THEN 'DAE' ELSE '' END);        
         
         END IF;
 

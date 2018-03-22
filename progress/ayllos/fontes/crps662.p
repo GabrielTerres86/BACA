@@ -1282,11 +1282,7 @@ PROCEDURE gera_arq:
 
         WHEN "ARQUIVOS BANCOOB" THEN 
           DO:          
-            RUN atualiza_status_execucao (INPUT par_nmprgexe,
-                                          INPUT par_dtmvtolt,
-                                          INPUT par_cdcooper).
 
-            IF   RETURN-VALUE = "NOK" THEN  DO:          
                /* Grava Data e Hora da execucao */ 
                RUN grava_dthr_proc(INPUT par_cdcooper,
                                    INPUT par_dtmvtolt,
@@ -1304,7 +1300,7 @@ PROCEDURE gera_arq:
                                       INPUT "Fim execucao", 
                                       INPUT 3,
                                       INPUT "TODAS").               
-             END.  
+           
           END.
     END CASE.
 
@@ -3966,6 +3962,7 @@ PROCEDURE gera_arrecadacao_bancoob:
     RUN STORED-PROCEDURE pc_gera_arrecadacao_bancoob 
         aux_handproc = PROC-HANDLE NO-ERROR
            (INPUT par_cdcooper,
+            INPUT "0", /* pr_cdconven */ 
             INPUT '0').
 
     IF  ERROR-STATUS:ERROR  THEN DO:
