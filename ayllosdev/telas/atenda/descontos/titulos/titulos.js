@@ -29,6 +29,7 @@
  * 013: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364).
  * 014: [13/03/2018] Leonardo Oliveira (GFT): Novos métodos 'acessaValorLimite', 'formataValorLimite', 'renovaValorLimite' e 'converteNumero'.
  * 015: [16/03/2018] Leonardo Oliveira (GFT): Alteração dos métodos 'acessaValorLimite', 'formataValorLimite' e 'renovaValorLimite' para mostrar dialogo de confirmação e condirerar alteração de linha
+ * 016: [22/03/2018] Leonardo Oliveira (GFT): Ajustes no fluxo de renovação do limite de desconto de titulos, validação das linhas de credito bloqueadas
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -1639,25 +1640,32 @@ function abreProtocoloAcionamento(dsprotocolo) {
 }
 
 // renovação
-function acessaValorLimite(flgvalida) {
-
-    if(!flgvalida){
-        flgvalida = 0;
-    }
+function renovarLimiteTitulo() {
     showMsgAguardo('Aguarde, carregando ...');
 
     var vllimite = $('#vllimite','#frmTitulos').val();
     var nrctrlim = $('#nrctrlim','#frmTitulos').val();
-    var flgstlcr = $('#flgstlcr','#frmTitulos').val() == "yes"?1:0;;
-    var cddlinha = $('#cddlinha','#frmTitulos').val();;
-    var dsdlinha = $('#dsdlinha','#frmTitulos').val();;
+    var flgstlcr = $('#flgstlcr','#frmTitulos').val() == "yes"?1:0;
+    var cddlinha = $('#cddlinha','#frmTitulos').val();
+    var dsdlinha = $('#dsdlinha','#frmTitulos').val();
+
+    fluxoRenovacaoLimite(0, vllimite, nrctrlim, flgstlcr, cddlinha, dsdlinha);
+}
+
+function fluxoRenovacaoLimite(flgvalida, vllimite, nrctrlim, flgstlcr, cddlinha, dsdlinha){
+    if(!flgvalida){
+        flgvalida = 0;
+    }
+    var callback = "fluxoRenovacaoLimite(1, '"+vllimite+"', '"+nrctrlim+"', '"+flgstlcr+"', '"+cddlinha+"', '"+dsdlinha+"');";
 
     if(flgvalida == 0 && flgstlcr == 1){
        showConfirmacao(
         "Deseja renovar o Limite de desconto de título atual?",
         "Confirma&ccedil;&atilde;o - Ayllos",
-        "acessaValorLimite(1);",
-        "hideMsgAguardo();","sim.gif","nao.gif");
+        callback,
+        "voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS'); carregaTitulos(); hideMsgAguardo();",
+        "sim.gif",
+        "nao.gif");
         return false; 
     }
     
@@ -1666,9 +1674,10 @@ function acessaValorLimite(flgvalida) {
             "inform",
             "Linha de crédito bloqueada, para realizar a operação altere para uma linha liberada ou efetue o desbloqueio da linha",
             "Alerta - Ayllos",
-            "acessaValorLimite(1);");
+            callback);
         return false;
     }
+
 
     //mostrat rotina valor limite
     exibeRotina($('#divUsoGenerico'));
@@ -1679,8 +1688,8 @@ function acessaValorLimite(flgvalida) {
         data: {
             vllimite: vllimite,
             nrctrlim: nrctrlim,
-            cddlinha: cddlinha,
             flgstlcr: flgstlcr,
+            cddlinha: cddlinha,
             dsdlinha: dsdlinha,
             redirect: 'html_ajax'
         },
@@ -1689,17 +1698,17 @@ function acessaValorLimite(flgvalida) {
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
-            //$('#divUsoGenerico').html(response);
+
             $("#divOpcoesDaOpcao2").html(response);
-            //layoutPadrao();
+
             formataValorLimite();
             $('#vllimite','#frmReLimite').desabilitaCampo();
             hideMsgAguardo();
-           // bloqueiaFundo($('#divUsoGenerico'));
         }
     });
 
-    return false;   
+    return false;
+
 }
 
 function formataValorLimite() {
@@ -1720,19 +1729,15 @@ function formataValorLimite() {
 
         Ldsdlinha.css({'width': '60px'}).addClass('rotulo');
         Cdsdlinha.css({'width': '180px'}).addClass('descricao');
+        Ccddlinha.desabilitaCampo();
         Cdsdlinha.desabilitaCampo();
-
-        if($('#flgstlcr','#frmReLimite').val() == "yes" || $('#flgstlcr','#frmReLimite').val() ==1){
-            $('#btnVoltar','#divBotoes').disabled = false;
-        }else{
-            $('#btnVoltar','#divBotoes').disabled = true;
-        }
                  
 
         //pesquisa
         var campoAnterior = '';
         var qtReg, filtrosPesq, filtrosDesc, colunas;
-      
+        fncOnClose = 'fecharPesquisa();';
+
         $('a', '#frmReLimite').ponteiroMouse();
         $('a', '#frmReLimite').each( function(i) {
         
@@ -1741,16 +1746,15 @@ function formataValorLimite() {
             }
                     
             $(this).click( function() {
-                if ( $(this).prev().hasClass('campoTelaSemBorda') ) {
-                    return false;
-                } else {                        
-                    campoAnterior = $(this).prev().attr('name');
 
-                    if ( campoAnterior == 'cddlinha' ) {
-                        filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;|;flgstlcr;;;1;N';
-                        colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center|;flgstlcr;1%;center;;N';
-                        fncOnClose = 'cddlinha = $("#cddlinha","#frmReLimite").val();';
-                        mostraPesquisa('zoom0001',
+                campoAnterior = $(this).prev().attr('name');
+
+                if ( campoAnterior == 'cddlinha' ) {
+
+                    filtrosPesq =   'Código;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|;flgstlcr;;;;N|Tipo;tpdescto;;;3;N';
+                    colunas =       'Código;cddlinha;15%;right|Descrição;dsdlinha;60%;left|Status;flgstlcr;25%;center;';//|Tipo;tpdescto;;;;N
+
+                    mostraPesquisa('zoom0001',
                         'BUSCALINHASTIT', 
                         'Linhas de Crédito',
                         '20', 
@@ -1758,39 +1762,13 @@ function formataValorLimite() {
                         colunas,
                         divRotina,
                         fncOnClose);
-                    }
                 }
+              
             });
         });
 
-        Cdsdlinha.unbind('change').bind('change', function() {
-             filtrosDesc = 'tpdlinha|2;flgstlcr|1;nriniseq|1;nrregist|30';
-            buscaDescricao(
-                'zoom0001',
-                'BUSCALINHASTIT',
-                'Linhas de Crédito',
-                $(this).attr('name'),'dsdlinha',$(this).val(),
-                'dsdlinha',
-                filtrosDesc,
-                'frmNovoLimite');
-            return false;
-        }).next().unbind('click').bind('click', function () {
-            filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;|;flgstlcr;;;1;N';
-            colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center|;flgstlcr;1%;center;;N';
-            fncOnClose = 'cddlinha = $("#cddlinha","#frmReLimite").val();';
-            mostraPesquisa('zoom0001',
-                'BUSCALINHASTIT', 
-                'Linhas de Crédito',
-                '20', 
-                filtrosPesq,
-                colunas,
-                divRotina,
-                fncOnClose);
-            return false;
-        });
-
     }
-    
+        
     if(Lvllimite.length && Cvllimite.length){
         Lvllimite.css({'width': '60px'}).addClass('rotulo');
         Cvllimite.css({'width': '100px'});
@@ -1805,24 +1783,19 @@ function formataValorLimite() {
             }
         });
     }
-    $('#btRenovar').unbind('click').bind('click', function(){
-        renovaValorLimite();
-        return false;
-    });
 
     return false;
 }
 
-function fecharPesquisa(cddlinha, flgstlcrPesquisa){
-    if(flgstlcrPesquisa == 1){
-        $('#flgstlcr','#frmTitulos').val("yes");
-    }else{
-        $('#flgstlcr','#frmTitulos').val("no");
-    }
-    $('#cddlinha','#frmTitulos').val(cddlinha);
-    //$('#cddlinha','#frmTitulos').trigger("change");
-    acessaValorLimite(0);
-
+function fecharPesquisa(){
+    var vllimite = $('#vllimite','#frmReLimite').val();
+    var nrctrlim = $('#nrctrlim','#frmReLimite').val();
+    var flgstlcr = $('#flgstlcr','#frmReLimite').val().toLowerCase()  == "Bloqueado".toLowerCase()?0:1;
+    var cddlinha = $('#cddlinha','#frmReLimite').val();
+    var dsdlinha = $('#dsdlinha','#frmReLimite').val();
+    var dsdlinha = $('#dsdlinha','#frmReLimite').val();
+   
+    fluxoRenovacaoLimite(0, vllimite, nrctrlim, flgstlcr, cddlinha, dsdlinha);   
 }
 
 function renovaValorLimite() {
@@ -1830,6 +1803,7 @@ function renovaValorLimite() {
     var vllimite = converteNumero($('#vllimite','#frmReLimite').val());
     var nrctrlim = $('#nrctrlim','#frmReLimite').val();
     var cddlinha = $('#cddlinha','#frmReLimite').val();
+
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",

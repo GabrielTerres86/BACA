@@ -225,7 +225,7 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
- -- Rotina referente a renovacao manual do limite de desconto de titulo
+  -- Rotina referente a renovacao manual do limite de desconto de titulo
   PROCEDURE pc_renovar_lim_desc_titulo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
                                       ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
                                       ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Titular da Conta
@@ -237,7 +237,8 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                       ,pr_cddlinha IN crapldc.cddlinha%TYPE --> Código da Linha
                                       ,pr_idorigem IN INTEGER               --> Identificador de Origem
                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                      ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica   
+                                      ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica                                       
+                                       
 END LIMI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
@@ -3415,7 +3416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     end pc_ultima_majoracao;
 
    
- 
+   
   -- Rotina referente a renovacao manual do limite de desconto de titulo
   PROCEDURE pc_renovar_lim_desc_titulo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
                                       ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
@@ -3558,23 +3559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                     ,pr_dscritic OUT VARCHAR2) IS --> Data de Movimento
         
         vr_idprglog tbgen_prglog.idprglog%type     := 0;
-        /*
-        cursor cr_craplim_tari is
-        select ass.inpessoa
-              ,ass.nrdconta
-              ,lim.nrctrlim
-              ,lim.vllimite 
-        from   craplim lim
-              ,crapass ass
-        where  lim.cdcooper = ass.cdcooper
-        and    lim.nrdconta = ass.nrdconta
-        and    lim.cdcooper = pr_cdcooper
-        and    lim.tpctrlim = 3 -- Desconto de Titulos
-        and    lim.insitlim = 2 -- Ativo
-        and    lim.dtrenova = pr_dtmvtolt
-        and    lim.tprenova = 'M' -- Manual
-        and    lim.qtrenova > 0;
-        */
+
         
          -- Buscar dados do associado
     CURSOR cr_crapass (pr_cdcooper  crapass.cdcooper%TYPE,

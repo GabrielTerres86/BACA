@@ -24,6 +24,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                            
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
                             (Jonata - RKAM).
+
+               22/03/2018 - Criação da rotina 'pc_busca_crapldc' para pesquisa de linhas de desconto de títulos (Leonardo Oliveira - GFT)
+
                                            
   ---------------------------------------------------------------------------------------------------------------*?
   
@@ -455,18 +458,18 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                          ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
                          ,pr_des_erro  OUT VARCHAR2);
 
-PROCEDURE pc_busca_craplrt_tit(pr_cddlinha  IN craplrt.cddlinha%TYPE -- Codigo da linha
-                            ,pr_dsdlinha  IN craplrt.dsdlinha%TYPE -- Descricao da linha
-                            ,pr_tpdlinha  IN craplrt.tpdlinha%TYPE -- Tipo da linha
-                            ,pr_flgstlcr  IN craplrt.flgstlcr%TYPE -- Ativo/Inativo
-                            ,pr_nrregist  IN INTEGER  --> Quantidade de registros
-                            ,pr_nriniseq  IN INTEGER  --> Qunatidade inicial
+    PROCEDURE pc_busca_crapldc(pr_cddlinha  IN crapldc.cddlinha%TYPE -- Codigo da linha
+                            ,pr_dsdlinha  IN crapldc.dsdlinha%TYPE   -- Descricao da linha
+                            ,pr_tpdescto  IN crapldc.tpdescto%TYPE   -- Tipo da linha
+                            ,pr_flgstlcr  IN crapldc.flgstlcr%TYPE   -- Ativo/Inativo
+                            ,pr_nrregist  IN INTEGER                 --> Quantidade de registros
+                            ,pr_nriniseq  IN INTEGER                 --> Qunatidade inicial
                             ,pr_xmllog    IN VARCHAR2                --XML com informações de LOG
                             ,pr_cdcritic  OUT PLS_INTEGER            --Código da crítica
                             ,pr_dscritic  OUT VARCHAR2               --Descrição da crítica
                             ,pr_retxml    IN OUT NOCOPY XMLType      --Arquivo de retorno do XML
                             ,pr_nmdcampo  OUT VARCHAR2               --Nome do Campo
-                            ,pr_des_erro  OUT VARCHAR2);            --Saida OK/NOK    
+                            ,pr_des_erro  OUT VARCHAR2);             --Saida OK/NOK 
                                                                                                                                                                  
 END ZOOM0001;
 /
@@ -6275,23 +6278,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       
   END pc_busca_conta_cosif;
 
-
-  PROCEDURE pc_busca_craplrt_tit(pr_cddlinha  IN craplrt.cddlinha%TYPE -- Codigo da linha
-                            ,pr_dsdlinha  IN craplrt.dsdlinha%TYPE -- Descricao da linha
-                            ,pr_tpdlinha  IN craplrt.tpdlinha%TYPE -- Tipo da linha
-                            ,pr_flgstlcr  IN craplrt.flgstlcr%TYPE -- Ativo/Inativo
-                            ,pr_nrregist  IN INTEGER  --> Quantidade de registros
-                            ,pr_nriniseq  IN INTEGER  --> Qunatidade inicial
-                            ,pr_xmllog    IN VARCHAR2                --XML com informações de LOG
-                            ,pr_cdcritic  OUT PLS_INTEGER            --Código da crítica
-                            ,pr_dscritic  OUT VARCHAR2               --Descrição da crítica
-                            ,pr_retxml    IN OUT NOCOPY XMLType      --Arquivo de retorno do XML
-                            ,pr_nmdcampo  OUT VARCHAR2               --Nome do Campo
-                            ,pr_des_erro  OUT VARCHAR2)IS            --Saida OK/NOK
+  PROCEDURE pc_busca_crapldc(pr_cddlinha  IN crapldc.cddlinha%TYPE -- Codigo da linha
+                            ,pr_dsdlinha  IN crapldc.dsdlinha%TYPE -- Descricao da linha
+                            ,pr_tpdescto  IN crapldc.tpdescto%TYPE -- Tipo da linha
+                            ,pr_flgstlcr  IN crapldc.flgstlcr%TYPE -- Ativo/Inativo
+                            ,pr_nrregist  IN INTEGER               --> Quantidade de registros
+                            ,pr_nriniseq  IN INTEGER               --> Qunatidade inicial
+                            ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
+                            ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
+                            ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                            ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                            ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
+                            ,pr_des_erro  OUT VARCHAR2)IS          --Saida OK/NOK
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_busca_craplrt_tit                            antiga: b1wgen0059\busca-craplrt
+    Programa : pc_busca_crapldc
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Leonardo Oliveira
@@ -6300,29 +6302,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     Dados referentes ao programa:
 
     Frequencia: -----
-    Objetivo   : Pesquisa para linhas de crédito
+    Objetivo   : Pesquisa para linhas de desconto de títulos
 
     Alterações :
+    
     -------------------------------------------------------------------------------------------------------------*/
-    CURSOR cr_craplrt(pr_cdcooper IN craplrt.cdcooper%TYPE
-                     ,pr_cddlinha IN craplrt.cddlinha%TYPE
-                     ,pr_tpdlinha IN craplrt.tpdlinha%TYPE
-                     ,pr_flgstlrc IN craplrt.flgstlcr%TYPE
-                     ,pr_dsdlinha IN craplrt.dsdlinha%TYPE)IS
-    SELECT craplrt.cddlinha
-          ,craplrt.dsdlinha
-          ,craplrt.tpdlinha
-          ,craplrt.txjurfix
-          ,craplrt.flgstlcr
-      FROM craplrt
-     WHERE craplrt.cdcooper = pr_cdcooper
+    CURSOR cr_crapldc(pr_cdcooper IN crapldc.cdcooper%TYPE
+                     ,pr_cddlinha IN crapldc.cddlinha%TYPE
+                     ,pr_dsdlinha IN crapldc.dsdlinha%TYPE
+                     ,pr_tpdescto IN crapldc.tpdescto%TYPE
+                     ,pr_flgstlrc IN crapldc.flgstlcr%TYPE)IS
+    SELECT crapldc.cddlinha
+          ,crapldc.dsdlinha
+          ,crapldc.tpdescto
+          ,crapldc.flgstlcr
+    FROM 
+          crapldc
+    WHERE crapldc.cdcooper = pr_cdcooper
        AND(pr_cddlinha = 0
-        OR craplrt.cddlinha = pr_cddlinha)
-       AND(pr_tpdlinha = 0
-        OR craplrt.tpdlinha = pr_tpdlinha)
-       AND(craplrt.flgstlcr = pr_flgstlcr)
+        OR crapldc.cddlinha = pr_cddlinha)
+       AND(pr_tpdescto = 0
+        OR crapldc.tpdescto = pr_tpdescto)
+       AND(pr_flgstlrc <> 1
+        OR crapldc.flgstlcr = pr_flgstlcr)--tpdescto
        AND(trim(pr_dsdlinha) IS NULL
-        OR upper(craplrt.dsdlinha) LIKE '%' || upper(pr_dsdlinha) || '%');
+        OR upper(crapldc.dsdlinha) LIKE '%' || upper(pr_dsdlinha) || '%');
+
 
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -6388,9 +6393,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                            ,pr_texto_completo => vr_xml_temp
                            ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><linhas>');
 
-    FOR rw_craplrt IN cr_craplrt(pr_cdcooper => vr_cdcooper
+    FOR rw_crapldc IN cr_crapldc(pr_cdcooper => vr_cdcooper
                                 ,pr_cddlinha => nvl(pr_cddlinha,0)
-                                ,pr_tpdlinha => nvl(pr_tpdlinha,0)
+                                ,pr_tpdescto => nvl(pr_tpdescto,0)
                                 ,pr_flgstlrc => nvl(pr_flgstlcr,0)
                                 ,pr_dsdlinha => pr_dsdlinha) LOOP
 
@@ -6410,11 +6415,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
         gene0002.pc_escreve_xml(pr_xml            => vr_clob
                                ,pr_texto_completo => vr_xml_temp
                                ,pr_texto_novo     => '<linha>'||
-                                                     '  <cddlinha>' || rw_craplrt.cddlinha ||'</cddlinha>'||
-                                                     '  <dsdlinha>' || rw_craplrt.dsdlinha ||'</dsdlinha>'||
-                                                     '  <dsdtxfix>' || to_char(rw_craplrt.txjurfix,'990D00','NLS_NUMERIC_CHARACTERS='',.''') || '% + TR' ||'</dsdtxfix>'||
-                                                     '  <dsdtplin>' || (CASE rw_craplrt.tpdlinha WHEN 1 THEN 'Limite PF' ELSE 'Limite PJ' END) ||'</dsdtplin>'||
-                                                     '  <flgstlcr>' || (CASE rw_craplrt.flgstlcr WHEN 1 THEN '1' ELSE '0' END) ||'</flgstlcr>'||
+                                                     '  <cddlinha>' || rw_crapldc.cddlinha ||'</cddlinha>'||
+                                                     '  <dsdlinha>' || rw_crapldc.dsdlinha ||'</dsdlinha>'||
+                                                     '  <tpdescto>' || rw_crapldc.tpdescto ||'</tpdescto>'||
+                                                     '  <flgstlcr>' || (CASE rw_crapldc.flgstlcr WHEN 1 THEN 'Desbloqueado' ELSE 'Bloqueado' END) ||'</flgstlcr>'||
                                                      '</linha>');
        END IF;
 
@@ -6475,7 +6479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
-  END pc_busca_craplrt_tit;
+  END pc_busca_crapldc;
 
 END ZOOM0001;
 /
