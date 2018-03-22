@@ -47,6 +47,11 @@
 
 				 05/10/2017 - Incluindo procedure para replicar informacoes do crm. 
 							 (PRJ339 - Kelvin/Andrino).
+							 
+			     22/03/2018 - Ajustado a rotina de alteração de telefone do TAA para 
+				              que quando já exista o telefone informado apenas atualize 
+							  o registro existente assim como o sequencial e não deleta-lo 
+							  e inseri-lo novamente. (SD 854018 - Kelvin)
 .............................................................................*/
 
 
@@ -890,46 +895,55 @@ PROCEDURE gerenciar-telefone:
                         UNDO TRANS_FONE, LEAVE TRANS_FONE.
 
                     IF  AVAIL craptfc THEN
-                        DELETE craptfc.
+						DO:
+							ASSIGN craptfc.nrdddtfc = par_nrdddtfc
+								   craptfc.nrdramal = par_nrdramal
+								   craptfc.nrtelefo = par_nrtelefo
+								   craptfc.tptelefo = par_tptelefo
+								   craptfc.cdseqtfc = aux_cdseqtfc.
+						END.
 
                 END. /* FIM par_idorigem = 4 */
 
-               
-                CREATE craptfc.
-                ASSIGN craptfc.cdcooper = par_cdcooper
-                       craptfc.nrdconta = par_nrdconta
-                       craptfc.idseqttl = par_idseqttl
-                       craptfc.cdseqtfc = aux_cdseqtfc
-                       craptfc.tptelefo = par_tptelefo
-                       craptfc.cdopetfn = IF  par_tptelefo = 2  THEN
-                                              par_cdopetfn
-                                          ELSE
-                                              0
-                       craptfc.nrdddtfc = par_nrdddtfc
-                       craptfc.nrtelefo = par_nrtelefo
-                       craptfc.nrdramal = par_nrdramal
-                       craptfc.secpscto = CAPS(par_secpscto)
-                       craptfc.nmpescto = IF  par_tptelefo = 3  OR 
-                                              par_tptelefo = 4  THEN 
-                                              CAPS(par_nmpescto)
-                                          ELSE
-                                              ""
-                       craptfc.prgqfalt = par_prgqfalt
-                       craptfc.idsittfc = par_idsittfc
-                       craptfc.idorigem = par_idorigee.
-                VALIDATE craptfc.
+				 
+                IF  par_idorigem <> 4 THEN 
+					DO:
+						CREATE craptfc.
+						ASSIGN craptfc.cdcooper = par_cdcooper
+							   craptfc.nrdconta = par_nrdconta
+							   craptfc.idseqttl = par_idseqttl
+							   craptfc.cdseqtfc = aux_cdseqtfc
+							   craptfc.tptelefo = par_tptelefo
+							   craptfc.cdopetfn = IF  par_tptelefo = 2  THEN
+													  par_cdopetfn
+												  ELSE
+													  0
+							   craptfc.nrdddtfc = par_nrdddtfc
+							   craptfc.nrtelefo = par_nrtelefo
+							   craptfc.nrdramal = par_nrdramal
+							   craptfc.secpscto = CAPS(par_secpscto)
+							   craptfc.nmpescto = IF  par_tptelefo = 3  OR 
+													  par_tptelefo = 4  THEN 
+													  CAPS(par_nmpescto)
+												  ELSE
+													  ""
+							   craptfc.prgqfalt = par_prgqfalt
+							   craptfc.idsittfc = par_idsittfc
+							   craptfc.idorigem = par_idorigee.
+						VALIDATE craptfc.
 
-                /** Cria registro vazio para executar buffer-compare **/
-                CREATE tt-craptfc-old. 
-                CREATE tt-craptfc-new.
-                BUFFER-COPY craptfc TO tt-craptfc-new. 
+						/** Cria registro vazio para executar buffer-compare **/
+						CREATE tt-craptfc-old. 
+						CREATE tt-craptfc-new.
+						BUFFER-COPY craptfc TO tt-craptfc-new. 
 
-                IF  par_nmdatela = "CONTAS"  AND
-                    par_flgerlog             THEN
-                    DO:
-                        { sistema/generico/includes/b1wgenalog.i }
-                        { sistema/generico/includes/b1wgenllog.i }
-                    END.
+						IF  par_nmdatela = "CONTAS"  AND
+							par_flgerlog             THEN
+							DO:
+								{ sistema/generico/includes/b1wgenalog.i }
+								{ sistema/generico/includes/b1wgenllog.i }
+							END.
+					END.		
             END.
         ELSE
             DO: 
