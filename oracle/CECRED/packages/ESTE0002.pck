@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
+CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
@@ -13,6 +13,8 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
       Objetivo  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN - Motor de Credito
 
       Alteracoes: 23/11/2017 - Alterações para o projeto 404. (Lombardi)
+	              
+				  12/12/2017 - Projeto 410 - inclusão do IOF sobre atraso - (JEan - MOut´S)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -30,7 +32,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
 									
 END ESTE0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
+CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
@@ -50,6 +52,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
                                na frente ocasionam problemas devido ao parenteses.
                                Heitor (Mouts) - Chamado 778505
 
+                  12/12/2017 - Projeto 410 - Incluir o tratamento para o IOF por atraso - (Jean / MOut´S)
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -907,7 +910,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 19/10/2017
+        Data     : Maio/2017.                    Ultima atualizacao: 21/12/2017
       
         Dados referentes ao programa:
       
@@ -918,6 +921,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
         Alteração : 19/10/2017 - Renomear "quantDiasAtrasoEmprest" para "quantDiasMaiorAtrasoEmprest"
                                  Criar campo "quantDiasAtrasoEmprest" com a maior quantidade de dias em atraso (Lombardi)
           
+                    21/12/2017 - Ajustar tratamento de erro, para que a mensagem seja exibida em tela
+                               - Ajustar passagem de parametro cdcritic e dscritic 
+                               (Douglas - Chamado 819146)
     ..........................................................................*/
     DECLARE
       -- Variáveis para exceções
@@ -2792,6 +2798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
     
       vr_vlsldapl := vr_vlsldapl + vr_vlsldrgt;
     
+
       -- Buscar informações e Saldos das Poupanças Programadas
       apli0001.pc_consulta_poupanca(pr_cdcooper      => pr_cdcooper --> Cooperativa 
                                    ,pr_cdagenci      => 1 --> Codigo da Agencia
@@ -2841,7 +2848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-      
+    
       -- Busca Saldo Bloqueado Judicial para Poupanças
       gene0005.pc_retorna_valor_blqjud(pr_cdcooper => pr_cdcooper --> Cooperativa
                                       ,pr_nrdconta => pr_nrdconta --> Conta
@@ -2886,7 +2893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
       vr_obj_generic2.put('temPoupProgamBloqueada',(vr_vlsldppr_aux <> vr_vlsldppr));
       vr_obj_generic2.put('saldoDisponPoupProgram',este0001.fn_decimal_ibra(vr_vlsldppr_aux));
       vr_obj_generic2.put('saldoTotalPoupProgram',este0001.fn_decimal_ibra(nvl(vr_vlsldppr,0)));
-      
+    
       -- Enviar informações das aplicações para o JSON
       vr_obj_generic2.put('temAplicacao', (nvl(vr_vlsldapl,0) > 0));
       vr_obj_generic2.put('temAplicacaoBloqueada', (vr_vlsldapl_aux <> vr_vlsldapl));
@@ -3037,8 +3044,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
                                      ,pr_vldctitu           => rw_craplim_tit.vllimite /* Valor Limite Titulos */
                                      ,pr_vlutitit           => rw_craptdb.vltitulo /* Valor utilizado Titulos */
                                      ,pr_tab_co_responsavel => vr_tab_co_responsavel
-                                     ,pr_dscritic           => vr_cdcritic
-                                     ,pr_cdcritic           => vr_dscritic);
+                                     ,pr_dscritic           => vr_dscritic
+                                     ,pr_cdcritic           => vr_cdcritic);
     
       -- Testar possíveis erros no retorno prevendo já o formato convertido… 
       IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
@@ -3055,12 +3062,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
           -- Se ha pagamento a pagar
           IF NVL(vr_tab_co_responsavel(vr_ind_coresp).vlpreapg,0)
            + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmrapar,0)
-           + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmtapar,0) > 0 THEN
+           + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmtapar,0)
+           + NVL(vr_tab_co_responsavel(vr_ind_coresp).vliofcpl,0)  > 0 THEN
            -- Acumular atraso
             vr_tot_qtprecal := vr_tot_qtprecal + 1;
             vr_ava_vlsdeved := vr_ava_vlsdeved + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlpreapg,0)
                                                + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmrapar,0)
-                                               + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmtapar,0);
+                                               + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmtapar,0)
+                                               + NVL(vr_tab_co_responsavel(vr_ind_coresp).vliofcpl,0);
           END IF;
           /* Somar totais */
           vr_tot_vlsdeved := vr_tot_vlsdeved + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlsdeved,0);
@@ -3167,15 +3176,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
         -- Para aqueles com saldo devedor
         IF vr_tab_dados_epr(vr_idxempr).vlsdeved > 0 THEN
           -- Chamar calculo de dias em atraso
-          empr0001.pc_calc_dias_atraso(pr_cdcooper   => pr_cdcooper
-                                      ,pr_cdprogra   => 'ATENDA'
+          pc_calc_dias_atraso(pr_cdcooper => pr_cdcooper  
                                       ,pr_nrdconta   => pr_nrdconta
-                                      ,pr_nrctremp   => vr_tab_dados_epr(vr_idxempr)
-                                                        .nrctremp
-                                      ,pr_rw_crapdat => rw_crapdat
-                                      ,pr_inusatab   => TRUE
-                                      ,pr_vlsdeved   => vr_vlsdeved
-                                      ,pr_qtprecal   => vr_qtprecal
+                             ,pr_nrctremp => vr_tab_dados_epr(vr_idxempr).nrctremp  
+                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                             ,pr_dtmvtoan => rw_crapdat.dtmvtoan
+                             ,pr_dtmvtopr => rw_crapdat.dtmvtopr
+                             ,pr_tpemprst => vr_tab_dados_epr(vr_idxempr).tpemprst   
+                             ,pr_qtmesdec => vr_tab_dados_epr(vr_idxempr).qtmesdec   
+                             ,pr_dtdpagto => vr_tab_dados_epr(vr_idxempr).dtdpagto   
+                             ,pr_qtprecal => vr_tab_dados_epr(vr_idxempr).qtprecal   
+                             ,pr_flgpagto => vr_tab_dados_epr(vr_idxempr).flgpagto   
                                       ,pr_qtdiaatr   => vr_dias
                                       ,pr_cdcritic   => vr_cdcritic
                                       ,pr_des_erro   => vr_dscritic);
@@ -3194,7 +3205,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
             -- Acumular saldo em atraso
             vr_vltotatr := vr_vltotatr + vr_tab_dados_epr(vr_idxempr).vlpreapg
                                        + vr_tab_dados_epr(vr_idxempr).vlmrapar
-                                       + vr_tab_dados_epr(vr_idxempr).vlmtapar;
+                                       + vr_tab_dados_epr(vr_idxempr).vlmtapar
+                                       + vr_tab_dados_epr(vr_idxempr).vliofcpl;
             -- Meses em atraso
             vr_qtpclven := vr_qtpclven + CEIL(vr_dias/30);                          
           END IF;
@@ -3202,8 +3214,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
         END IF;
       
         -- Calculo de Parcelas conforme tipo de empréstimo 
-        IF vr_tab_dados_epr(vr_idxempr).tpemprst = 1 THEN
-          -- Para PP, buscaremos no cadastro de parcelas a quantidade de parcelas pagas em atraso
+        IF vr_tab_dados_epr(vr_idxempr).tpemprst IN (1,2) THEN
+          -- Para PP ou POS, buscaremos no cadastro de parcelas a quantidade de parcelas pagas em atraso
           OPEN cr_crappep_atraso(rw_crapdat.dtmvtolt
 					                      ,vr_tab_dados_epr(vr_idxempr).nrctremp
 																,vr_qthisemp);
@@ -3567,10 +3579,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
+      
       WHEN OTHERS THEN
+        IF SQLCODE < 0 THEN
+          -- Caso ocorra exception gerar o código do erro com a linha do erro
+          vr_dscritic:= vr_dscritic ||
+                        dbms_utility.format_error_backtrace;
+                       
+        END IF;  
+
+        -- Montar a mensagem final do erro 
+        vr_dscritic:= 'Erro na montagem dos dados para análise automática da proposta (1): ' ||
+                       vr_dscritic || ' -- SQLERRM: ' || SQLERRM;
+                       
+        -- Remover as ASPAS que quebram o texto
+        vr_dscritic:= replace(vr_dscritic,'"', '');
+        vr_dscritic:= replace(vr_dscritic,'''','');
+        -- Remover as quebras de linha
+        vr_dscritic:= replace(vr_dscritic,chr(10),'');
+        vr_dscritic:= replace(vr_dscritic,chr(13),'');
+      
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro na montagem dos dados para análise automática da proposta: ' ||
-                       SQLERRM;
+        pr_dscritic := vr_dscritic;
     END;
   END pc_gera_json_pessoa_ass;
 
@@ -3890,7 +3920,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
              ,ass.inpessoa
              ,DECODE(wpr.flgpagto,0,'CONTA','FOLHA') despagto
              ,lcr.txminima
-             ,wpr.idcobope
+             ,wpr.dtdpagto
+             ,wpr.dtlibera
+             ,wpr.dtcarenc
+             ,wpr.percetop
         FROM crawepr wpr
             ,craplcr lcr
             ,crapfin fin      
@@ -4149,7 +4182,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
 		vr_qtdiarpv      INTEGER;
-    vr_vlcobert      NUMBER;
+    vr_valoriof      NUMBER;
+    vr_vliofpri      NUMBER;
+    vr_vliofadi      NUMBER;
+    vr_flgimune      PLS_INTEGER;
     vr_tab_split     gene0002.typ_split;
     vr_dsliquid      VARCHAR2(1000);
     vr_sum_vlpreemp  crapepr.vlpreemp%TYPE := 0;
@@ -4368,7 +4404,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
       END IF;
     END IF;  
 
+    -- Buscar IOF
+    EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                               ,pr_inpessoa => rw_crawepr.inpessoa
+                               ,pr_cdlcremp => rw_crawepr.cdlcremp
+                               ,pr_qtpreemp => rw_crawepr.qtpreemp
+                               ,pr_vlpreemp => rw_crawepr.vlpreemp
+                               ,pr_vlemprst => rw_crawepr.vlemprst
+                               ,pr_dtdpagto => rw_crawepr.dtdpagto
+                               ,pr_dtlibera => rw_crawepr.dtlibera
+                               ,pr_tpemprst => rw_crawepr.tpemprst
+                               ,pr_dtcarenc => rw_crawepr.dtcarenc
+                               ,pr_qtdias_carencia => 0
+                               ,pr_valoriof => vr_valoriof
+                               ,pr_vliofpri => vr_vliofpri
+                               ,pr_vliofadi => vr_vliofadi
+                               ,pr_flgimune => vr_flgimune
+                               ,pr_dscritic => vr_dscritic);
+
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
+    vr_obj_generico.put('CETValor', este0001.fn_decimal_ibra(nvl(rw_crawepr.percetop,0)));
+    vr_obj_generico.put('IOFValor', este0001.fn_decimal_ibra(nvl(vr_valoriof,0)));
+    vr_obj_generico.put('IOFPrincipal', este0001.fn_decimal_ibra(nvl(vr_vliofpri,0)));
+    vr_obj_generico.put('IOFAdicional', este0001.fn_decimal_ibra(nvl(vr_vliofadi,0)));
+    vr_obj_generico.put('flgimune', nvl(vr_flgimune,0));
+    
     
     IF rw_crawepr.dsliquid <> '0,0,0,0,0,0,0,0,0,0' THEN
       vr_tab_split := gene0002.fn_quebra_string(rw_crawepr.dsliquid, ',');
@@ -5027,8 +5089,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
       pr_dscritic := vr_dscritic;
 
     WHEN OTHERS THEN 
+      IF SQLCODE < 0 THEN
+        -- Caso ocorra exception gerar o código do erro com a linha do erro
+        vr_dscritic:= vr_dscritic ||
+                      dbms_utility.format_error_backtrace;
+                       
+      END IF;  
+
+      -- Montar a mensagem final do erro 
+      vr_dscritic:= 'Erro na montagem dos dados para análise automática da proposta (2): ' ||
+                     vr_dscritic || ' -- SQLERRM: ' || SQLERRM;
+                       
+      -- Remover as ASPAS que quebram o texto
+      vr_dscritic:= replace(vr_dscritic,'"', '');
+      vr_dscritic:= replace(vr_dscritic,'''','');
+      -- Remover as quebras de linha
+      vr_dscritic:= replace(vr_dscritic,chr(10),'');
+      vr_dscritic:= replace(vr_dscritic,chr(13),'');
+      
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na montagem dos dados para análise automática da proposta: '||sqlerrm;
+      pr_dscritic := vr_dscritic;
+
   END pc_gera_json_analise;
   
   PROCEDURE pc_gera_json_limite ( pr_cdcooper   IN crapass.cdcooper%TYPE   --> Codigo da cooperativa
@@ -5492,8 +5573,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
 			CLOSE cr_crapprp;
       vr_obj_generico.put('conjugeCoResponv',nvl(rw_crapprp.flgdocje,0)=1);
 
-    END IF;
-    
+      END IF;  
+
     -- Efetuar laço para trazer todos os registros 
     FOR rw_crapbpr IN cr_crapbpr(pr_cdcooper => pr_cdcooper,
                                  pr_nrdconta => pr_nrdconta,
@@ -5511,9 +5592,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
 
       -- Adicionar Bem na lista
       vr_lst_generic2.append(vr_obj_generic2.to_json_value());
-  
-    END LOOP; -- Final da leitura dos Bens
 
+    END LOOP; -- Final da leitura dos Bens
+      
     -- Adicionar o array bemEmGarantia
     IF vr_flgbens THEN
       vr_obj_generico.put('bemEmGarantia', vr_lst_generic2);
