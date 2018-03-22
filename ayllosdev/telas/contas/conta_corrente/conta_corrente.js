@@ -465,13 +465,6 @@ function controlaLayout(operacao) {
                 cBcoCheque.val(cdbcoctl);
             }
 
-            // Utiliza flag para evitar a chamada da função quando o método trigger for acionado
-            if (flgfirst) {
-                flgfirst = false;
-            } else {
-                manterRotina('VE');
-            }
-			
 			var cbTiposConta = '';
 			
 			if (tiposConta[$(this).val()].idindividual == 1) { cbTiposConta += '<option value="1">Individual</option>'; }
@@ -481,7 +474,13 @@ function controlaLayout(operacao) {
 			
 			cCdcatego.html(cbTiposConta);
 			
+            // Utiliza flag para evitar a chamada da função quando o método trigger for acionado
+            if (flgfirst) {
+                flgfirst = false;
+            } else {
+                manterRotina('VE');
 			cCdcatego.prop("selectedIndex", -1);
+            }
 			
         });
 		
@@ -505,7 +504,7 @@ function controlaLayout(operacao) {
     layoutPadrao();
     hideMsgAguardo();
     bloqueiaFundo(divRotina);
-    //cTipoConta.trigger('change');
+    cTipoConta.trigger('change');
     cContaITG.trigger('blur');
 	highlightObjFocus($('#frmContaCorrente'));
 	controlaFocoEnter("frmContaCorrente");
