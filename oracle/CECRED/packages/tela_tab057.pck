@@ -766,6 +766,7 @@ create or replace package body cecred.tela_tab057 is
         FROM gncontr
             ,crapcop
        WHERE gncontr.cdcooper = crapcop.cdcooper
+         AND gncontr.tpdcontr = 6 -- Bancoob
          AND gncontr.cdcooper = decode(pr_cdcooper, 0, gncontr.cdcooper, pr_cdcooper)
          AND gncontr.cdconven = decode(pr_cdempres, 0, gncontr.cdconven, pr_cdempres)
          AND gncontr.dtmvtolt BETWEEN to_date(pr_dtiniper, 'DD/MM/YYYY') AND to_date(pr_dtfimper, 'DD/MM/YYYY');

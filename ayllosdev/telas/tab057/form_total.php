@@ -69,7 +69,7 @@
   $('#vltarifa','#frmDetalhe').css({'width':'150px','text-align':'right'}).desabilitaCampo();
   $('#vlapagar','#frmDetalhe').css({'width':'150px','text-align':'right'}).desabilitaCampo();
   
-  $('#nmarquiv','#frmDetalhe').css({'width':'245px','text-align':'left'}).desabilitaCampo().addClass('alphanum').attr('maxlength','24');
+  $('#nmarquiv','#frmDetalhe').css({'width':'270px','text-align':'left'}).desabilitaCampo().addClass('alphanum').attr('maxlength','24');
   $('#nrsequen','#frmDetalhe').addClass('inteiro').css({'width':'95px'}).desabilitaCampo();
   $('#dssitret','#frmDetalhe').addClass('alpha').css({'width':'245px','text-align':'left'}).desabilitaCampo();
   
