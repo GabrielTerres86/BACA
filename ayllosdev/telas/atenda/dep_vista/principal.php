@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 	 /************************************************************************
 	   Fonte: principal.php
@@ -11,34 +11,35 @@
 	   Alterações: 02/09/2010 - Ajuste no xml de retorno (David).
 				   24/06/2011 - Alterado para layout padrão (Gabriel - DB1).
 				   12/04/2012 - Ajustar leitura das tags do XML (David).
-				   04/06/2013 - Incluir label vlblqjud Bloq. Judicial (Lucas R.)   
+				   04/06/2013 - Incluir label vlblqjud Bloq. Judicial (Lucas R.)
 				   06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos,
 								Prj. 302 (Jean Michel).
 				   11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
-	
+					 12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
+
 	 ************************************************************************/
-	
+
 	session_start();
-	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+
+	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");
 	require_once("../../../includes/controla_secao.php");
 
 	// Verifica se tela foi chamada pelo método POST
-	isPostMethod();	
-		
+	isPostMethod();
+
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
-	
+
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
-		exibeErro($msgError);		
-	}	
-	
+		exibeErro($msgError);
+	}
+
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
-	}	
+	}
 
 	$nrdconta = $_POST["nrdconta"];
 
@@ -46,7 +47,7 @@
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
-	
+
 	// Monta o xml de requisição
 	$xmlGetDepVista  = "";
 	$xmlGetDepVista .= "<Root>";
@@ -69,13 +70,13 @@
 	$xmlGetDepVista .= "		<flgerlog>true</flgerlog>";
 	$xmlGetDepVista .= "	</Dados>";
 	$xmlGetDepVista .= "</Root>";
-		
+
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlGetDepVista);
-	
+
 	// Cria objeto para classe de tratamento de XML
 	$xmlGetDepVista = getObjectXML($xmlResult);
-	
+
     // Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlGetDepVista->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlGetDepVista->roottag->tags[0]->tags[0]->tags[4]->cdata);
@@ -90,8 +91,8 @@
 	$xml .= "		<idseqttl>1</idseqttl>";
 	$xml .= "		<nrcpfope>0</nrcpfope>";
 	$xml .= " </Dados>";
-	$xml .= "</Root>";	
-	
+	$xml .= "</Root>";
+
 	// Chamada mensageria
     $xmlResult = mensageria($xml, "EMPR0002", "BUSCA_DTPRJATR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObjeto = getObjectXML($xmlResult);
@@ -111,28 +112,28 @@
 	$xml .= "		<idseqttl>1</idseqttl>";
 	$xml .= "		<nrcpfope>0</nrcpfope>";
 	$xml .= " </Dados>";
-	$xml .= "</Root>";	
-	
+	$xml .= "</Root>";
+
 	// Chamada mensageria
     $xmlResult = mensageria($xml, "ATENDA", "CONSULTA_CARGA_CPA_VIGENTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObjeto = getObjectXML($xmlResult);
 
-	//----------------------------------------------------------------------------------------------------------------------------------	
+	//----------------------------------------------------------------------------------------------------------------------------------
 	// Controle de Erros
 	//----------------------------------------------------------------------------------------------------------------------------------
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
 	}
-	
+
 	$depvista  = $xmlGetDepVista->roottag->tags[0]->tags[0]->tags;
 	$liberaepr = $xmlGetDepVista->roottag->tags[1]->tags;
 	$qtLibEpr  = count($liberaepr);
-	
+
 	$camposLimData = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
-	
+
 	// Monta mensagem para aviso sobre liberação de empréstimos
-	$msgLibera = "";	
+	$msgLibera = "";
 	for ($i = 0; $i < $qtLibEpr; $i++) {
 		if ($i == 0) {
 			$msgLibera = "Liberacao de emprestimos para ".$liberaepr[$i]->tags[0]->cdata." (".number_format($liberaepr[$i]->tags[1]->cdata,2,",",".").")";
@@ -140,45 +141,45 @@
 			$msgLibera .= ", ".$liberaepr[$i]->tags[0]->cdata." (".number_format($liberaepr[$i]->tags[1]->cdata,2,",",".").")";
 		}
 	}
-	
+
 	// Função para exibir erros na tela através de javascript
-	function exibeErro($msgErro) { 
+	function exibeErro($msgErro) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
-	} 
-	
+	}
+
 ?>
 <form action="" method="post" name="frmDadosDepVista" id="frmDadosDepVista" class="formulario" >
 
 	<fieldset>
-		
+
 		<label for="vlsddisp"><? echo utf8ToHtml('Disponível:') ?></label>
 		<input name="vlsddisp" id="vlsddisp" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsddisp")),2,",","."); ?>" />
-			
+
 		<label for="vlsaqmax"><? echo utf8ToHtml('SAQUE MÁXIMO:') ?></label>
 		<input name="vlsaqmax" id="vlsaqmax" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsaqmax")),2,",","."); ?>" />
 		<br />
-		
+
 		<label for="vlsdbloq"><? echo utf8ToHtml('Bloqueado:') ?></label>
 		<input name="vlsdbloq" id="vlsdbloq" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsdbloq")),2,",","."); ?>" />
-			
+
 		<label for="vlacerto"><? echo utf8ToHtml('ACERTO DE CONTA:') ?></label>
 		<input name="vlacerto" id="vlacerto" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlacerto")),2,",","."); ?>" />
 		<br />
-		
+
 		<label for="vlsdblpr"><? echo utf8ToHtml('Bloqueado Praça:') ?></label>
 		<input name="vlsdblpr" id="vlsdblpr" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsdblpr")),2,",","."); ?>" />
 		<br />
 
 		<label for="vlipmfpg"><? echo utf8ToHtml('Prox. Deb. CPMF:') ?></label>
 		<input name="vlipmfpg" id="vlipmfpg" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlipmfpg")),2,",","."); ?>" />
-		
+
 		<label for="vlsdblfp"><? echo utf8ToHtml('Bloq. Fora Praça:') ?></label>
 		<input name="vlsdblfp" id="vlsdblfp" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsdblfp")),2,",","."); ?>" />
-		
+
 		<label for="vllimdis"><? echo utf8ToHtml('Limite Pré-aprovado disponível:') ?></label>
 		<input name="vllimdis" id="vllimdis" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($camposLimData,"vllimdis")),2,",","."); ?>" />
 
@@ -202,21 +203,21 @@
 
 		<label for="vlstotal"><? echo utf8ToHtml('Saldo Total:') ?></label>
 		<input name="vlstotal" id="vlstotal" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlstotal")),2,",",".");  ?>" />
-		
+
 		<div style="float: right; padding-right: 5px;">
 			<a href="#" class="botao" id="btDetVoltar" onClick="mostraDetalhesAtraso();" style="padding: 3px 6px;">Detahes de atraso/preju&iacute;zo</a>
 		</div>
 	</fieldset>
-	
+
 	<fieldset>
-		
+
 		<label for="vllimcre"><? echo utf8ToHtml('Limite Crédito:') ?></label>
 		<input name="vllimcre" id="vllimcre" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vllimcre")),2,",","."); ?>" />
-		
+
 		<label for="dtultlcr"><? echo utf8ToHtml('Útima Atualização:') ?></label>
 		<input name="dtultlcr" id="dtultlcr" type="text" value="<?php echo getByTagName($depvista,"dtultlcr"); ?>" />
 		<br />
-		
+
 	</fieldset>
 
 </form>
