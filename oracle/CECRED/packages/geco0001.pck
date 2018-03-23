@@ -38,9 +38,9 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
   TYPE typ_tab_crapgrp IS TABLE OF typ_reg_crapgrp INDEX BY VARCHAR2(100);
   
   
-  PROCEDURE pc_mesclar_grupos(pr_cdcooper IN PLS_INTEGER                --> Código da cooperativa
+ /* PROCEDURE pc_mesclar_grupos(pr_cdcooper IN PLS_INTEGER                --> Código da cooperativa
                              ,pr_nrdgrupo IN PLS_INTEGER                --> Número do grupo
-                             ,pr_des_erro OUT VARCHAR2);              --> Descrição de erros
+                             ,pr_des_erro OUT VARCHAR2);              --> Descrição de erros */
 
   /* Procedure para controlar a formação de grupos econômicos */
   PROCEDURE pc_forma_grupo_economico(pr_cdcooper    IN PLS_INTEGER                       --> Código da cooperativa
@@ -167,6 +167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                            ,pr_nrdgrupo    IN PLS_INTEGER                 --> Número do grupo
                            ,pr_nrdconta    IN PLS_INTEGER                 --> Número da conta
                            ,pr_nrcpfcgc    IN NUMBER                      --> CNPJ/CPF
+                           ,pr_cdagenci    IN pls_integer                 --> agencia
                            ,pr_des_erro    OUT VARCHAR2) IS               --> Erros do processo
   /* .............................................................................
 
@@ -198,7 +199,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       vr_tab_gncdntj typ_tab_gncdntj;       --> PL Table para armazenar dados da tabela GNCDNTJ
 
       /* Busca dados de associados */
-      CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE) IS  --> Código do associado
+      CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE,
+                        pr_cdagenci IN crapass.cdagenci%TYPE) IS  --> Código do associado
         SELECT cs.inpessoa
               ,cs.dtelimin
               ,cs.cdagenci
@@ -209,6 +211,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
               ,LAG(cs.nrcpfcgc) OVER(ORDER BY cs.nrcpfcgc) nrcpfcgcAnt
         FROM crapass cs
         WHERE cs.cdcooper = pr_cdcooper
+        AND   cs.cdagenci = decode(pr_cdagenci,0,cs.cdagenci,pr_cdagenci)
         ORDER BY cs.cdcooper
                 ,cs.nrcpfcgc
                 ,cs.progress_recid;
@@ -218,13 +221,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                        ,pr_nrdgrupo IN crapgrp.nrdgrupo%TYPE      --> Número do grupo
                        ,pr_nrcpfcgc IN crapgrp.nrcpfcgc%TYPE      --> CNPJ/CPF
                        ,pr_nrdconta IN crapgrp.nrdconta%TYPE      --> Número da conta
-                       ,pr_idseqttl IN crapgrp.idseqttl%TYPE) IS  --> ID da sequencia
+                       ,pr_idseqttl IN crapgrp.idseqttl%TYPE
+                       ,pr_cdagenci IN crapass.cdagenci%TYPE) IS  --> ID da sequencia
         SELECT cg.progress_recid
-        FROM crapgrp cg
+        FROM crapgrp cg, crapass cs
         WHERE cg.cdcooper = pr_cdcooper
           AND cg.nrdgrupo = pr_nrdgrupo
           AND cg.nrcpfcgc = pr_nrcpfcgc
           AND cg.nrdconta = pr_nrdconta
+          AND cs.cdcooper = cg.cdcooper
+          AND cs.nrdconta = cg.nrdconta
+          --AND cs.cdagenci = decode(pr_cdagenci,0,cs.cdagenci,pr_cdagenci)
           AND (cg.idseqttl = pr_idseqttl
            OR (cg.idseqttl = decode(pr_idseqttl, NULL, 1)
                OR cg.idseqttl = decode(pr_idseqttl, NULL, 999)
@@ -236,7 +243,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                          ,pr_nrdgrupo IN crapgrp.nrdgrupo%TYPE      --> Número do grupo
                          ,pr_nrcpfcgc IN crapgrp.nrcpfcgc%TYPE      --> CNPJ/CPF
                          ,pr_nrdconta IN crapgrp.nrdconta%TYPE      --> Número da conta
-                         ,pr_idseqttl IN crapgrp.idseqttl%TYPE) IS  --> ID da sequencia
+                         ,pr_idseqttl IN crapgrp.idseqttl%TYPE
+                         ,pr_cdagenci IN crapass.cdagenci%TYPE) IS  --> ID da sequencia
         SELECT cg.progress_recid
              ,cg.cdcooper
              ,cg.nrdgrupo
@@ -247,26 +255,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
              ,cg.idseqttl
              ,cg.cdagenci
              ,cg.dtmvtolt
-        FROM crapgrp cg
+        FROM crapgrp cg, crapass cs
         WHERE cg.cdcooper = pr_cdcooper
           AND cg.nrdgrupo = pr_nrdgrupo
           AND cg.nrcpfcgc = pr_nrcpfcgc
           AND cg.nrdconta = pr_nrdconta
-          AND cg.idseqttl = pr_idseqttl;
+          AND cg.idseqttl = pr_idseqttl
+          --AND cs.cdagenci = decode(pr_cdagenci,0,cs.cdagenci,pr_cdagenci)
+          AND cs.cdcooper = cg.cdcooper
+          AND cs.nrdconta = cg.nrdconta;
+          
       rw_crapgrp10 cr_crapgrp10%ROWTYPE;
 
       /* Buscar dados de pessoas jurídicas */
-      CURSOR cr_crapjur(pr_cdcooper IN crapass.cdcooper%TYPE) IS  --> Código do associado
+      CURSOR cr_crapjur(pr_cdcooper IN crapass.cdcooper%TYPE,
+                        pr_cdagenci IN crapass.cdagenci%TYPE) IS  --> Código do associado
         SELECT cj.natjurid
               ,cj.nrdconta
               ,lag(cj.nrdconta) over(ORDER BY cj.nrdconta) nrdcontaAnt
-        FROM crapjur cj
+        FROM crapjur cj, crapass cs
         WHERE cj.cdcooper = pr_cdcooper
+        AND   cj.cdcooper = cs.cdcooper
+        AND   cj.nrdconta = cs.nrdconta
+        --AND cs.cdagenci = decode(pr_cdagenci,0,cs.cdagenci,pr_cdagenci)
         ORDER BY cj.progress_recid;
 
       /* Join das tabelas CRAPASS e CRAPTTL para grupos de pessoa física pelo titular do grupo e que não foram eliminados */
       CURSOR cr_ttlass(pr_cdcooper IN crapttl.cdcooper%TYPE       --> Código da cooperativa
-                      ,pr_nrcpfcgc IN crapttl.nrcpfcgc%TYPE) IS   --> Númedor do CNPJ/CPF
+                      ,pr_nrcpfcgc IN crapttl.nrcpfcgc%TYPE
+                      ,pr_cdagenci IN crapass.cdagenci%TYPE) IS   --> Númedor do CNPJ/CPF
         SELECT cl.cdcooper
               ,cl.nrcpfcgc
               ,cl.nrdconta
@@ -278,12 +295,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           AND cl.idseqttl = 1
           AND cl.cdcooper = ca.cdcooper
           AND cl.nrdconta = ca.nrdconta
+          --AND ca.cdagenci = decode(pr_cdagenci,0,ca.cdagenci,pr_cdagenci)
           AND ca.dtelimin IS NULL
         ORDER BY ca.nrdconta;
 
       /* Join das tabelas CRAPASS, CRAPJUR e GNCDNTJ para grupos de associados */
       CURSOR cr_crajurgnc(pr_cdcooper IN crapass.cdcooper%TYPE       --> Código da cooperativa
-                         ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE) IS   --> Númedor do CNPJ/CPF
+                         ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE
+                         ,pr_cdagenci IN crapass.cdagenci%TYPE) IS   --> Númedor do CNPJ/CPF
         SELECT cp.cdcooper
               ,cp.nrcpfcgc
               ,cp.nrdconta
@@ -296,6 +315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           AND cp.dtelimin IS NULL
           AND cj.cdcooper = cp.cdcooper
           AND cj.nrdconta = cp.nrdconta
+          AND cp.cdagenci = decode(pr_cdagenci,0,cp.cdagenci,pr_cdagenci)
         ORDER BY cj.nrdconta;
 
       /* Buscar informações sobre a natureza de operação pela posição societária */
@@ -316,20 +336,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       IF vr_tab_crapass.count = 0 THEN
         -- Gerar PL Table
         FOR registro IN cr_crapass(pr_cdcooper) LOOP
-          
-        if registro.nrdconta = 6849539 then
-            vr_idlog_ini_ger := null;
-          
-            pc_log_programa(PR_DSTIPLOG      => 'O',
-            PR_CDPROGRAMA         => 'jhdc' ,
-            pr_cdcooper           => pr_cdcooper,
-            pr_tpexecucao         => 1,   -- 
-            pr_tpocorrencia       => 4,
-            pr_dsmensagem         => 'conta - 6849539 em crapass Mn -'|| registro.cdagenci ,
-            PR_IDPRGLOG           => vr_idlog_ini_ger); 
-           end if;   
-        
-        
           -- Cria registro para posicionar índice
           IF (lpad(registro.cdcooper, 3, '0') || lpad(registro.nrcpfcgc, 20, '0')) <>
              (lpad(nvl(registro.cdcooperAnt, 0), 3, '0') || lpad(nvl(registro.nrcpfcgcAnt, 0), 20, '0')) THEN
@@ -400,7 +406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
             PR_IDPRGLOG           => vr_idlog_ini_ger); 
            end if;   
             -- Se não encontrar este relacionamento no grupo
-            OPEN cr_crapgrp10(rw_ttlass.cdcooper, pr_nrdgrupo, rw_ttlass.nrcpfcgc, rw_ttlass.nrdconta, rw_ttlass.idseqttl);
+            OPEN cr_crapgrp10(rw_ttlass.cdcooper, pr_nrdgrupo, rw_ttlass.nrcpfcgc, rw_ttlass.nrdconta, rw_ttlass.idseqttl,rw_ttlass.cdagenci);
             FETCH cr_crapgrp10 INTO rw_crapgrp10;
 
             -- Verifica se existe relacionamento no grupo
@@ -468,7 +474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
             --- Verifica se a natureza de operação existe
             IF vr_tab_gncdntj.exists(rw_crajurgnc.natjurid) THEN
               -- Busca dados de grupos com o mesmo número de conta
-              OPEN cr_crapgrp(rw_crajurgnc.cdcooper, pr_nrdgrupo, rw_crajurgnc.nrcpfcgc, rw_crajurgnc.nrdconta, NULL);
+              OPEN cr_crapgrp(rw_crajurgnc.cdcooper, pr_nrdgrupo, rw_crajurgnc.nrcpfcgc, rw_crajurgnc.nrdconta, NULL,rw_crajurgnc.cdagenci);
               FETCH cr_crapgrp INTO rw_crapgrp;
 
               -- Verifica se foi localizado grupo
@@ -533,6 +539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
   /* Procedure para mesclar os grupos economicos */
   PROCEDURE pc_mesclar_grupos(pr_cdcooper IN PLS_INTEGER                --> Código da cooperativa
                              ,pr_nrdgrupo IN PLS_INTEGER                --> Número do grupo
+                             ,pr_cdagenci IN pls_integer                --> agencia
                              ,pr_des_erro OUT VARCHAR2) IS              --> Descrição de erros
   /* .............................................................................
 
@@ -562,24 +569,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       vr_achou      BOOLEAN:= TRUE;             --> Controle cpf outro grupo
       /* Buscar dados primários na formação de grupos */
       CURSOR cr_crapgrp(pr_cdcooper  IN crapgrp.cdcooper%TYPE      --> Código da cooperativa
-                       ,pr_nrdgrupo  IN crapgrp.nrdgrupo%TYPE) IS  --> Número do grupo
+                       ,pr_nrdgrupo  IN crapgrp.nrdgrupo%TYPE
+                       ,pr_cdagenci  IN crapass.cdagenci%TYPE) IS  --> Número do grupo
         SELECT DISTINCT cg.cdcooper
               ,cg.nrcpfcgc
               ,cg.nrdgrupo
-              ,count(distinct cg.nrdgrupo) over (partition by cg.cdcooper,cg.nrcpfcgc) qtd 
-        FROM crapgrp cg
+              ,count(distinct cg.nrdgrupo) over (partition by cg.cdcooper,cg.nrcpfcgc,cg.cdagenci) qtd 
+              ,cg.cdagenci
+        FROM crapgrp cg, crapass cs
         WHERE cg.cdcooper = pr_cdcooper
-          AND cg.nrdgrupo = nvl(pr_nrdgrupo, cg.nrdgrupo);
+          AND cg.nrdgrupo = nvl(pr_nrdgrupo, cg.nrdgrupo)
+          --AND cs.cdagenci = decode(pr_cdagenci,0,cs.cdagenci,pr_cdagenci)
+          AND cg.cdcooper = cs.cdcooper
+          AND cg.nrdconta = cs.nrdconta;
 
       /* Buscar Cpfs que possuem mais de 1 grupo */
       CURSOR cr_outro (pr_cdcooper  IN crapgrp.cdcooper%TYPE      --> Código da cooperativa
                       ,pr_nrcpfcgc  IN crapgrp.nrcpfcgc%TYPE      --> Numero CPF
-                      ,pr_nrdgrupo  IN crapgrp.nrdgrupo%TYPE) IS  --> Número do grupo
+                      ,pr_nrdgrupo  IN crapgrp.nrdgrupo%TYPE
+                      ,pr_cdagenci  IN crapass.cdagenci%TYPE) IS  --> Número do grupo
         SELECT cp.nrdgrupo
-        FROM crapgrp cp
+        FROM crapgrp cp, crapass cs
         WHERE cp.cdcooper = pr_cdcooper
         AND   cp.nrcpfcgc = pr_nrcpfcgc
         AND   cp.nrdgrupo <> pr_nrdgrupo
+        AND   cp.cdcooper = cs.cdcooper
+        AND   cp.cdagenci = cs.cdagenci
+        --AND   cs.cdagenci = decode(pr_cdagenci,0,cp.cdagenci,pr_cdagenci)
         ORDER BY cp.progress_recid;
       rw_outro cr_outro%rowtype;
       
@@ -590,13 +606,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         vr_continue:= FALSE;
         -- Verifica se o número do grupo é zero para agregar grupos por CPF/CNPJ
         IF pr_nrdgrupo = 0 THEN   
-          FOR rw_crapgrp IN cr_crapgrp(pr_cdcooper, NULL) LOOP
+          FOR rw_crapgrp IN cr_crapgrp(pr_cdcooper, NULL,pr_cdagenci) LOOP
             --Se possuir mais de um grupo para o cpf/cnpj
             IF rw_crapgrp.qtd > 1 THEN 
               --verificar se o cpf esta em outro grupo
               OPEN cr_outro (rw_crapgrp.cdcooper
                             ,rw_crapgrp.nrcpfcgc
-                            ,rw_crapgrp.nrdgrupo);
+                            ,rw_crapgrp.nrdgrupo
+                            ,rw_crapgrp.cdagenci);
               FETCH cr_outro INTO rw_outro;
               --verificar se achou outro grupo no mesmo cpf
               vr_achou:= cr_outro%FOUND;
@@ -617,13 +634,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           END LOOP;
         ELSE
         -- Busca registros de grupos
-          FOR rw_crapgrp IN cr_crapgrp(pr_cdcooper, pr_nrdgrupo) LOOP
+          FOR rw_crapgrp IN cr_crapgrp(pr_cdcooper, pr_nrdgrupo,pr_cdagenci) LOOP
             --Se possuir mais de um grupo para o cpf/cnpj
             IF rw_crapgrp.qtd > 1 THEN 
               --verificar se o cpf esta em outro grupo
               OPEN cr_outro (rw_crapgrp.cdcooper
                             ,rw_crapgrp.nrcpfcgc
-                            ,rw_crapgrp.nrdgrupo);
+                            ,rw_crapgrp.nrdgrupo
+                            ,rw_crapgrp.cdagenci);
               FETCH cr_outro INTO rw_outro;
               --verificar se achou outro grupo no mesmo cpf
               vr_achou:= cr_outro%FOUND;
@@ -771,7 +789,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         FROM crapass cs
         WHERE cs.cdcooper = pr_cdcooper;*/
         
-         SELECT cs.cdcooper
+        SELECT cs.cdcooper
               ,cs.nrdconta
               ,cs.nrcpfcgc
               ,cs.cdagenci
@@ -788,9 +806,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                 AND ca.nrdconta = cp.nrdconta
                                 AND cp.dtelimin IS NULL
                                )
-        
+       
        union
-        
+
         SELECT cs.cdcooper
               ,cs.nrdconta
               ,cs.nrcpfcgc
@@ -831,7 +849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       CURSOR cr_crapgrp(pr_cdcooper IN crapgrp.cdcooper%TYPE      --> Código da cooperativa
                        ,pr_nrcpfcgc IN crapgrp.nrcpfcgc%TYPE) IS  --> CNPJ/CPF
         SELECT cg.nrdgrupo
-        FROM crapgrp cg
+        FROM crapgrp cg, crapass cs
         WHERE cg.cdcooper = pr_cdcooper
           AND cg.nrcpfcgc = pr_nrcpfcgc
           AND rownum = 1
@@ -855,6 +873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         WHERE cl.cdcooper = cs.cdcooper
         AND   cl.nrdconta = cs.nrdconta
         AND   cl.cdcooper = pr_cdcooper
+         --AND CS.cdagenci = decode(pr_cdagenci,0,CS.cdagenci,pr_cdagenci)
         ORDER BY cl.nrdconta
                 ,cl.progress_recid;
 
@@ -881,11 +900,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
       /* Buscar dados da formação de grupos */
       CURSOR cr_crapgrpb(pr_cdcooper IN crapgrp.cdcooper%TYPE) IS  --> Código da cooperativa
-        SELECT distinct cg.nrdgrupo
+        SELECT cg.nrdgrupo
               ,NVL((LAG(cg.nrdgrupo) OVER(ORDER BY cg.nrdgrupo)), 0) nrdgrupoa
         FROM crapgrp cg
         WHERE cg.cdcooper = pr_cdcooper
-        ORDER BY cg.nrdgrupo;
+        ORDER BY cg.nrdgrupo;*/
 
       /* Join das tabelas CRAPASS e CRAPAVT para buscar dados os proprietários por juros e condição economica */
       CURSOR cr_vtass(pr_cdcooper IN crapavt.cdcooper%TYPE      --> Código da cooperativa
@@ -906,6 +925,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           AND ct.flgdepec = 1
           AND cp.cdcooper = ct.cdcooper
           AND cp.nrdconta = ct.nrdconta
+          --AND cp.cdagenci = decode(pr_cdagenci,0,cp.cdagenci,pr_cdagenci)
+          
           AND cp.dtelimin IS NULL;
 
     BEGIN
@@ -1060,7 +1081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           ELSE
             vr_index := vr_index + 1;
           END IF;
-          
+
           
 
           vr_tab_crapcrl(lpad(registro.nrctamen, 20 ,'0') || lpad(vr_index, 10, '0')).nrdconta := registro.nrdconta;
@@ -1233,7 +1254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
               ELSE
                 CLOSE cr_crapgrp;
 
-				-- Assimila valores para as variáveis
+                -- Assimila valores para as variáveis
                 vr_nrultgrp := vr_nrultgrp + 1;
                 vr_nrdgrupo := vr_nrultgrp;
                 vr_nrultgrp := vr_nrdgrupo;
@@ -1344,6 +1365,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                            ,pr_nrdgrupo    => vr_nrdgrupo
                            ,pr_nrdconta    => rw_crapepa.nrctasoc
                            ,pr_nrcpfcgc    => rw_crapepa.nrdocsoc
+                           ,pr_cdagenci    => rw_crapepa.cdagenci
                            ,pr_des_erro    => pr_dscritic);
 
             -- Verifica se ocorreram erros na formação dos grupos
@@ -1476,6 +1498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                            ,pr_nrdgrupo    => vr_nrdgrupo
                                            ,pr_nrdconta    => vr_nrdconta
                                            ,pr_nrcpfcgc    => vr_nrcpfcgc
+                                           ,pr_cdagenci    => rw_vtass.cdagenci
                                            ,pr_des_erro    => pr_dscritic);
 
                             -- Verifica se ocorreram erros
@@ -1530,6 +1553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                          ,pr_nrdgrupo    => vr_nrdgrupo
                                          ,pr_nrdconta    => vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).nrdconta
                                          ,pr_nrcpfcgc    => vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).nrcpfcgc
+                                         ,pr_cdagenci    => vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).cdagenci
                                          ,pr_des_erro    => pr_dscritic);
 
                           -- Verifica se ocorreram erros
@@ -1628,6 +1652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                              ,pr_nrdgrupo    => vr_nrdgrupo
                                              ,pr_nrdconta    => vr_nrdconta
                                              ,pr_nrcpfcgc    => vr_nrcpfcgc
+                                             ,pr_cdagenci    => rw_vtass.cdagenci
                                              ,pr_des_erro    => pr_dscritic);
 
                               -- Verifica se ocorreram erros
@@ -1681,6 +1706,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                            ,pr_nrdgrupo    => vr_nrdgrupo
                                            ,pr_nrdconta    => vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).nrdconta
                                            ,pr_nrcpfcgc    => vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).nrcpfcgc
+                                           ,pr_cdagenci    => vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).cdagenci
                                            ,pr_des_erro    => pr_dscritic);
 
                             -- Verifica se ocorreram erros
@@ -1761,6 +1787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                ,pr_nrdgrupo    => vr_nrdgrupo
                                ,pr_nrdconta    => vr_nrdconta
                                ,pr_nrcpfcgc    => vr_nrcpfcgc
+                               ,pr_cdagenci    => rw_vtass.cdagenci
                                ,pr_des_erro    => pr_dscritic);
 
                 -- Verifica se ocasionou erro
@@ -1800,6 +1827,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                ,pr_nrdgrupo    => vr_nrdgrupo
                                ,pr_nrdconta    => rw_vtass.nrdctato
                                ,pr_nrcpfcgc    => rw_vtass.nrcpfcgc
+                               ,pr_cdagenci    => rw_vtass.cdagenci
                                ,pr_des_erro    => pr_dscritic);
 
                 -- Verifica se ocorreram erros e passa para a próximo iteração
@@ -1811,37 +1839,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       END LOOP;
 
       IF UPPER(pr_cdprogra) <> 'CRPS634' and UPPER(pr_cdprogra) <> 'CRPS627' THEN
-        -- Mesclar grupos
+      -- Mesclar grupos
         pc_mesclar_grupos(pr_cdcooper => pr_cdcooper
-                         ,pr_nrdgrupo => 0
-                         ,pr_des_erro => pr_dscritic);
+                       ,pr_nrdgrupo => 0
+                       ,pr_des_erro => pr_dscritic
+                       ,pr_cdagenci => pr_cdagenci);
 
-        -- Verifica se ocorreram erros
-        IF pr_dscritic IS NOT NULL THEN
-          RAISE vr_erro;
+      -- Verifica se ocorreram erros
+      IF pr_dscritic IS NOT NULL THEN
+        RAISE vr_erro;
         END IF;
-        
+      
 
-        -- Processar grupos para cálculo de risco
+      -- Processar grupos para cálculo de risco
         FOR rw_crapgrpb IN cr_crapgrpb(pr_cdcooper) LOOP
         -- Verifica se é o primeiro registro do grupo
-          IF rw_crapgrpb.nrdgrupo <> rw_crapgrpb.nrdgrupoa THEN
-        -- Calcular endividamento do grupo
-            pc_calc_endivid_risco_grupo(pr_cdcooper    => pr_cdcooper
-                                       ,pr_cdagenci    => pr_cdagenci
-                                       ,pr_nrdcaixa    => pr_nrdcaixa
-                                       ,pr_cdoperad    => pr_cdoperad
-                                       ,pr_cdprogra    => pr_cdprogra
-                                       ,pr_idorigem    => pr_idorigem
-                                       ,pr_nrdgrupo    => rw_crapgrpb.nrdgrupo
-                                       ,pr_tpdecons    => TRUE
-                                       ,pr_tab_crapdat => pr_tab_crapdat
-                                       ,pr_tab_grupo   => pr_tab_grupo
-                                       ,pr_dstextab    => vr_dstextab
-                                       ,pr_dsdrisco    => opt_dsdrisco
-                                       ,pr_vlendivi    => opt_vlendivi
-                                       ,pr_des_erro    => pr_dscritic);
-          END IF;
+        IF rw_crapgrpb.nrdgrupo <> rw_crapgrpb.nrdgrupoa THEN
+      -- Calcular endividamento do grupo
+          pc_calc_endivid_risco_grupo(pr_cdcooper    => pr_cdcooper
+                                     ,pr_cdagenci    => rw_crapgrpb.cdagenci
+                                     ,pr_nrdcaixa    => pr_nrdcaixa
+                                     ,pr_cdoperad    => pr_cdoperad
+                                     ,pr_cdprogra    => pr_cdprogra
+                                     ,pr_idorigem    => pr_idorigem
+                                     ,pr_nrdgrupo    => rw_crapgrpb.nrdgrupo
+                                     ,pr_tpdecons    => TRUE
+                                     ,pr_tab_crapdat => pr_tab_crapdat
+                                     ,pr_tab_grupo   => pr_tab_grupo
+                                     ,pr_dstextab    => vr_dstextab
+                                     ,pr_dsdrisco    => opt_dsdrisco
+                                     ,pr_vlendivi    => opt_vlendivi
+                                     ,pr_des_erro    => pr_dscritic);
+        END IF;
         END LOOP;
       END IF;
       
