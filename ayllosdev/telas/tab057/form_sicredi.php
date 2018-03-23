@@ -16,6 +16,10 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
   
+  $cdcooper = (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : 0;
+  $cdempres = (isset($_POST['cdempres'])) ? $_POST['cdempres'] : 0;
+	
+  
   $xml = "<Root>";
   $xml .= " <Dados>";
   $xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";

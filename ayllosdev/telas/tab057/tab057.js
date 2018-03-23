@@ -80,9 +80,10 @@ function formataCabecalho() {
 	
 	//Define ação para CLICK no botão de OK
 	$("#btnOK","#frmCab").unbind('click').bind('click', function() {
+      
     exibeFormulario();
 		// Remover o click do botao, para nao executar mais de uma vez
-		$(this).unbind('click');
+		//$(this).unbind('click');
 		return false;
     });	
 	
@@ -263,6 +264,16 @@ function formataFiltros(){
    $('#seqtrife','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'}).attr('maxlength','6');
    $('#seqconso','#frmDadosSicredi').addClass('inteiro').css({'width':'60px'}).attr('maxlength','6');
    
+   if ($("#cddopcao","#frmCab").val() == 'C') {
+    $("#seqarfat","#frmDadosSicredi").desabilitaCampo();
+    $("#seqtrife","#frmDadosSicredi").desabilitaCampo();
+    $("#seqconso","#frmDadosSicredi").desabilitaCampo();
+  } else {
+    $("#seqarfat","#frmDadosSicredi").habilitaCampo();
+    $("#seqtrife","#frmDadosSicredi").habilitaCampo();
+    $("#seqconso","#frmDadosSicredi").habilitaCampo();
+  }
+   
    layoutPadrao();
    
    return false;
@@ -329,11 +340,19 @@ function formataBotoes(){
  * Função para exibir o formulário de acordo com o agente selecionado
  */
 function exibeFormulario() {
+    
+    if($('#cdagente','#frmCab').prop('disabled')){
+        return false;
+    }
+    
+    
   //Sicredi
   if ($("#cdagente","#frmCab").val() == 'S') {
     $('#frmDadosSicredi').css({'display':'block'});
+    consultaSeqSicredi();
     //Consulta
     if ($("#cddopcao","#frmCab").val() == 'C') {
+        
       $("#btSalvar", "#divBotoes").hide();
       $("#btVoltar", "#divBotoes").focus();
     //Alteração
@@ -360,16 +379,6 @@ function exibeFormulario() {
   // Desabilitar a opção e agente
   $("#cddopcao","#frmCab").desabilitaCampo();
   $("#cdagente","#frmCab").desabilitaCampo();
-  
-  if ($("#cddopcao","#frmCab").val() == 'C') {
-    $("#seqarfat","#frmDadosSicredi").desabilitaCampo();
-    $("#seqtrife","#frmDadosSicredi").desabilitaCampo();
-    $("#seqconso","#frmDadosSicredi").desabilitaCampo();
-  } else {
-    $("#seqarfat","#frmDadosSicredi").habilitaCampo();
-    $("#seqtrife","#frmDadosSicredi").habilitaCampo();
-    $("#seqconso","#frmDadosSicredi").habilitaCampo();
-  }
   
   $('#divBotoes').css({'display':'block','padding-bottom':'15px'});
 }
@@ -464,7 +473,7 @@ function controlaCamposFiltroConsulta(){
 				  if (!$('#cdempres','#frmFiltros').val()) {
 					  showError("error","Convênio é obrigatório.","Alerta - Ayllos","");
 					} else {
-						prosseguir();
+						 $('#btSalvar','#divBotoes').focus();
 					}
 				}else{
                     $('#dtiniper','#frmFiltros').focus();
@@ -483,11 +492,22 @@ function controlaCamposFiltroConsulta(){
 			$('#dtiniper','#frmFiltros').focus();
 			return false;
 		  } else {
+              
+              
 			  if ($('#cddopcao','#frmCab').val() == 'A') {
 				  if (!$('#cdempres','#frmFiltros').val()) {
 					  showError("error","Convênio é obrigatório.","Alerta - Ayllos","");
 					} else {
-						prosseguir();
+                        
+                        bo          = 'TAB057'
+                        procedure   = 'TAB057_LISTA_CONVENIOS';
+                        titulo      = 'Convênios de Arrecadação';                    
+                        
+                        filtrosDesc = 'cdcooper|' + $('#tlcooper','#frmFiltros').val() ;
+                        buscaDescricao(bo,procedure,titulo,'cdempres','nmextcon',$('#cdempres','#frmFiltros').val(),'nmextcon',filtrosDesc,'frmFiltros','');
+                        
+                        return false;
+						//prosseguir();
 					}
 				} else {
                     
@@ -496,7 +516,7 @@ function controlaCamposFiltroConsulta(){
                     procedure   = 'TAB057_LISTA_CONVENIOS';
                     titulo      = 'Convênios de Arrecadação';                    
                     
-                    filtrosDesc = 'cdempres|'+ $('#cdempres','#frmFiltros').val();
+                    filtrosDesc = 'cdcooper|' + $('#tlcooper','#frmFiltros').val() ;
                     buscaDescricao(bo,procedure,titulo,'cdempres','nmextcon',$('#cdempres','#frmFiltros').val(),'nmextcon',filtrosDesc,'frmFiltros','');
                     
                     return false;
@@ -831,6 +851,62 @@ function consultaSeqBancoob() {
         }*/
 	});
 }
+
+/**
+ * Função para consultar a sequencia Sicredi
+ */
+function consultaSeqSicredi() {
+	showMsgAguardo('Aguarde efetuando operacao...');
+	
+	var cdcooper = $('#tlcooper','#frmFiltros').val();
+	var cdempres = $('#cdempres','#frmFiltros').val();
+	
+	$.ajax({		
+		type	: 'POST',
+		dataType: 'html',
+		url		: UrlSite + 'telas/tab057/form_sicredi.php', 
+		data    :
+				{ 
+				  cdcooper : cdcooper,
+				  cdempres : cdempres,
+				  redirect : 'script_ajax'
+				  
+				},
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o(cod.01).', 'Alerta - Ayllos', 'estadoInicial();');
+        },
+		success: function(response) {
+			hideMsgAguardo();
+				if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+					try {
+						$('#divConsulta').html(response);
+                        $("#divConsulta").css({'display':'block'});
+                        formataFormularioSicredi();
+						return false;
+					} catch(error) {						
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.(cod.02)','Alerta - Ayllos','estadoInicial();');
+					}
+				} else {
+					try {
+						eval( response );						
+					} catch(error) {
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.(cod.03)','Alerta - Ayllos','estadoInicial();');
+					}
+				}
+        }
+        /*success: function(response) {
+            try {
+                eval(response);	
+                return false;
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.(cod.02)', 'Alerta - Ayllos', 'estadoInicial();');
+            }
+        }*/
+	});
+}
+
 
 /**
  * Função para consultar os dados Bancoob

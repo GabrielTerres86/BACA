@@ -76,7 +76,7 @@
 	} else {
 		if ((!isset($_POST['seqarnsa'])) || $_POST['seqarnsa'] == ''){
 		  echo 'hideMsgAguardo();';
-		  echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PJ &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#seqarnsa\', \'#frmDadosBancoob\').focus()");';
+		  echo 'showError("error","Sequencial obrigat&oacute;rio! Favor preench&ecirc;-lo","Alerta - Ayllos","$(\'#seqarnsa\', \'#frmDadosBancoob\').focus()");';
 		  exit();
 		}
 		

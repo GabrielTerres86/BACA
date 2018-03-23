@@ -105,7 +105,7 @@ var dtmvtglb = '<?php echo ( isset($glbvars['dtmvtolt']) ) ? $glbvars['dtmvtolt'
 																			<? include('form_filtros.php'); ?>
 																			
 																			<!-- Formulario para editar os dados Sicredi -->
-																			<? include('form_sicredi.php'); ?>
+																			<? //include('form_sicredi.php'); ?>
                                       
 																			<!-- Formulario para editar os dados Bancoob -->
 																			<? //include('form_bancoob.php'); ?>

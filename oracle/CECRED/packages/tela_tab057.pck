@@ -637,6 +637,8 @@ create or replace package body cecred.tela_tab057 is
     vr_nrdcaixa    varchar2(25);
     vr_idorigem    varchar2(25);
     vr_cdoperad    varchar2(25);
+    vr_dscritic    varchar2(2000);
+    vr_exc_erro    EXCEPTION;
     --
     vr_dstextab    craptab.dstextab%TYPE;
     vr_dsdircop    crapcop.dsdircop%TYPE;
@@ -656,15 +658,42 @@ create or replace package body cecred.tela_tab057 is
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => pr_dscritic);
     --
-    SELECT substr(craptab.dstextab, 0, 6)
-      INTO vr_dstextab
-      FROM craptab
-     WHERE nmsistem = 'CRED'
-       AND tptabela = 'GENERI'
-       AND cdacesso = 'ARQBANCOOB'
-       AND tpregist = 00
-       AND cdempres = pr_cdempres
-       AND cdcooper = pr_cdcooper; 
+    BEGIN
+      SELECT substr(craptab.dstextab, 0, 6)
+        INTO vr_dstextab
+        FROM craptab
+       WHERE nmsistem = 'CRED'
+         AND tptabela = 'GENERI'
+         AND cdacesso = 'ARQBANCOOB'
+         AND tpregist = 00
+         AND cdempres = pr_cdempres
+         AND cdcooper = pr_cdcooper; 
+    EXCEPTION
+      WHEN no_data_found THEN
+        BEGIN
+          INSERT INTO craptab
+                      ( nmsistem, 
+                        tptabela, 
+                        cdempres, 
+                        cdacesso, 
+                        tpregist, 
+                        dstextab, 
+                        cdcooper)
+               VALUES ( 'CRED',                    -- nmsistem
+                        'GENERI',                  -- tptabela
+                        pr_cdempres,               -- cdempres
+                        'ARQBANCOOB',              -- cdacesso
+                        00,                        -- tpregist
+                        lpad(pr_seqarnsa, 6, '0'), -- dstextab
+                        pr_cdcooper);              -- cdcooper
+                
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao inserir sequencial: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+    
+    END;
     --
     UPDATE craptab
        SET craptab.dstextab = lpad(pr_seqarnsa, 6, '0') || ' ' || substr(craptab.dstextab, 8, 8)
@@ -705,6 +734,15 @@ create or replace package body cecred.tela_tab057 is
     END;
     --
   EXCEPTION
+    WHEN vr_exc_erro THEN
+    
+      -- Atribui exceção para os parametros de crítica
+      pr_cdcritic := 0;
+      pr_dscritic := vr_dscritic;
+      
+      pr_des_erro := 'NOK';
+      
+    
     WHEN OTHERS THEN
       -- Atribui exceção para os parametros de crítica
       pr_cdcritic := 0;
