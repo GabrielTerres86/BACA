@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 22/09/2017
+    Data      : Janeiro/2009                  Ultima Atualizacao: 23/03/2018
     
     Dados referentes ao programa:
 
@@ -113,6 +113,10 @@
                05/10/2017 - Alterado rotina alterar-endereco-viainternetbank
                             para garantir que nao crie 2 enc com tipo 12. 
 							              PRJ339 -CRM (Odirlei-AMcom).	
+                            
+               23/03/2018 - #inc0010928 na rotina validar-endereco, inclusao do parametro 
+                            par_dsendere na critica para que o operador saiba qual
+                            endereco esta invalido (Carlos)
 .............................................................................*/
 
 
@@ -1480,7 +1484,7 @@ PROCEDURE validar-endereco:
                             OR TRIM(par_dsendere) MATCHES
                                ("*" + TRIM(crapdne.nmreslog) + "*"))) THEN
             DO:
-                ASSIGN aux_dscritic = "Endereco nao pertence ao CEP.".
+                ASSIGN aux_dscritic = "Endereco nao pertence ao CEP: " + par_dsendere.
                 LEAVE.
             END.
             
