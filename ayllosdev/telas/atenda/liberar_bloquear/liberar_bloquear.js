@@ -8,6 +8,7 @@
  *                27/07/2016 - Adicionados novos campos para a fase 3 do projeto pre aprovado (Lombardi)
  *                03/05/2017 - Ajuste na label do campo flgrenli para o projeto 300. (Lombardi)
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ *								15/03/2018 - Campo de selecao de cancelamento automatico de credito (Marcel Kohls / AMCom)
  * --------------
  */
 // Função para acessar opções da rotina
@@ -20,19 +21,19 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando " + msg + " ...");
-	
+
 	// Atribui cor de destaque para aba da opção
 	for (var i = 0; i < nrOpcoes; i++) {
 		if (id == i) { // Atribui estilos para foco da opção
 			$("#linkAba" + id).attr("class","txtBrancoBold");
-			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");				
+			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");
 			$("#imgAbaDir" + id).attr("src",UrlImagens + "background/mnu_sld.gif");
 			$("#imgAbaCen" + id).css("background-color","#969FA9");
-			continue;			
+			continue;
 		}
-		
+
 		$("#linkAba" + i).attr("class","txtNormalBold");
-		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");			
+		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");
 		$("#imgAbaDir" + i).attr("src",UrlImagens + "background/mnu_nld.gif");
 		$("#imgAbaCen" + i).css("background-color","#C6C8CA");
 	}
@@ -40,7 +41,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 	// Carrega conteúdo da opção através de ajax
 	if (opcao == "0") {	// Opção extrato
 		$.ajax({
-			type: "POST", 
+			type: "POST",
 			dataType: "html",
 			url: UrlSite + "telas/atenda/liberar_bloquear/conta_corrente.php",
 			data: {
@@ -51,18 +52,18 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 				hideMsgAguardo();
 				showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina));
 			},
-			success: function(response) {		
+			success: function(response) {
 				if ( response.indexOf('showError("error"') == -1 ) {
 					$('#divConteudoOpcao').html(response);
 				} else {
-					eval( response );				
+					eval( response );
 				}
 				return false;
-			}				
+			}
 		});
-	}else if (opcao == "1") {	// Opção saldos anteriores		
+	}else if (opcao == "1") {	// Opção saldos anteriores
 	    $.ajax({
-			type: "POST", 
+			type: "POST",
 			dataType: "html",
 			url: UrlSite + "telas/atenda/liberar_bloquear/principal.php",
 			data: {
@@ -73,14 +74,14 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 				hideMsgAguardo();
 				showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina));
 			},
-			success: function(response) {		
+			success: function(response) {
 				if ( response.indexOf('showError("error"') == -1 ) {
 					$('#divConteudoOpcao').html(response);
 				} else {
-					eval( response );				
+					eval( response );
 				}
 				return false;
-			}				
+			}
 		});
 	}
 }
@@ -88,7 +89,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 function controlaOperacao(operacao, msgRetorno) {
 
 	// Verifica permissões de acesso
-	if ( ((operacao == 'CA') && (flgAlterar != '1') ) || ((operacao == 'MA') && (flgAlterar != '1')) ) { 
+	if ( ((operacao == 'CA') && (flgAlterar != '1') ) || ((operacao == 'MA') && (flgAlterar != '1')) ) {
 		showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina);');
 		return false;
 	}
@@ -97,24 +98,24 @@ function controlaOperacao(operacao, msgRetorno) {
 	var msgOperacao = '';
 	var operacaoOrg = operacao;
 
-	switch (operacao) {			
+	switch (operacao) {
 		// Consulta para Alteração
-		case 'CA': 
+		case 'CA':
 			msgOperacao = 'abrindo altera&ccedil;&atilde;o';
 			cddopcao    = 'A';
 			break;
 		// Alteração para Consulta
-		case 'AC': 
+		case 'AC':
 			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
-			break;	
+			break;
 		// Consulta para Alteração
-		case 'MA': 
+		case 'MA':
 			msgOperacao = 'abrindo altera&ccedil;&atilde;o';
 			cddopcao    = 'A';
 			break;
 		// Alteração para Consulta
-		case 'AM': 
+		case 'AM':
 			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
@@ -131,27 +132,27 @@ function controlaOperacao(operacao, msgRetorno) {
 			manterRotina(operacao);
 			operacao = 'AM';
 			break;
-		default: 
+		default:
 			msgOperacao = 'abrindo consulta';
 			cddopcao    = '@';
 			break;
 	}
-	
+
 	showMsgAguardo('Aguarde, ' + msgOperacao + '...');
 	if (operacaoOrg != 'ALTERARC') {
 		if (operacao == '') {
 			acessaOpcaoAba(2,0,0);
 		} else if (operacao == 'MA' || operacao == 'AM') { // Executa script de através de ajax
-		
+
 			$.ajax({
 				type: 'POST',
 				dataType: 'html',
-				url: UrlSite + 'telas/atenda/liberar_bloquear/conta_corrente.php', 
+				url: UrlSite + 'telas/atenda/liberar_bloquear/conta_corrente.php',
 				data: {
 					nrdconta: nrdconta,
 					operacao: operacao,
 					redirect: "html_ajax"
-				},  
+				},
 				error: function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();
 					showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
@@ -160,21 +161,21 @@ function controlaOperacao(operacao, msgRetorno) {
 					if ( response.indexOf('showError("error"') == -1 ) {
 						$('#divConteudoOpcao').html(response);
 					} else {
-						eval( response );				
+						eval( response );
 					}
 					return false;
-				}				
+				}
 			});
 		} else {
 			$.ajax({
 				type: 'POST',
 				dataType: 'html',
-				url: UrlSite + 'telas/atenda/liberar_bloquear/principal.php', 
+				url: UrlSite + 'telas/atenda/liberar_bloquear/principal.php',
 				data: {
 					nrdconta: nrdconta,
 					operacao: operacao,
 					redirect: "html_ajax"
-				},  
+				},
 				error: function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();
 					showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
@@ -183,10 +184,10 @@ function controlaOperacao(operacao, msgRetorno) {
 					if ( response.indexOf('showError("error"') == -1 ) {
 						$('#divConteudoOpcao').html(response);
 					} else {
-						eval( response );				
+						eval( response );
 					}
 					return false;
-				}				
+				}
 			});
 		}
 	}
@@ -199,21 +200,23 @@ function manterRotina(operacao) {
 	if (operacao == 'ALTERARC') {
 		var flgrenli = $('#flgrenli', '#frmContaCorrente').val();
 		var flmajora = $('#flmajora', '#frmContaCorrente').val();
+		var flcnaulc = $('#flcnaulc', '#frmContaCorrente').val();
 		var dsmotmaj = $('#motivo_bloqueio_maj', '#frmContaCorrente').val();
 	} else {
 		var flgcrdpa = $('#flgcrdpa', '#frmLiberarBloquear').val();
 	}
 
-	$.ajax({		
+	$.ajax({
 		type: 'POST',
-		url: UrlSite + 'telas/atenda/liberar_bloquear/manter_rotina.php', 		
+		url: UrlSite + 'telas/atenda/liberar_bloquear/manter_rotina.php',
 		data: {
-			nrdconta: nrdconta, 
+			nrdconta: nrdconta,
 			flgrenli: flgrenli,
             flgcrdpa: flgcrdpa,
 			flmajora: flmajora,
+			flcnaulc: flcnaulc,
 			dsmotmaj: dsmotmaj,
-			operacao: operacao, 
+			operacao: operacao,
 			redirect: 'script_ajax'
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -230,14 +233,15 @@ function manterRotina(operacao) {
 			}
 			hideMsgAguardo();
 			bloqueiaFundo(divRotina);
-		}				
+		}
 	});
 }
 
-function controlaLayout(operacao) {	
-	
+function controlaLayout(operacao) {
+
 	var rFlgrenli = $('label[for="flgrenli"]', '#frmContaCorrente');
 	var rFlmajora = $('label[for="flmajora"]', '#frmContaCorrente');
+	var rFlcnaulc = $('label[for="flcnaulc"]', '#frmContaCorrente');
 	var rMotivo_bloqueio_maj = $('label[for="motivo_bloqueio_maj"]', '#frmContaCorrente');
 	var rCdopemaj = $('label[for="cdopemaj"]', '#frmContaCorrente');
 	//
@@ -251,6 +255,7 @@ function controlaLayout(operacao) {
 	//
 	var cFlgrenli = $('#flgrenli', '#frmContaCorrente');
 	var cFlmajora = $('#flmajora', '#frmContaCorrente');
+	var cFlcnaulc = $('#flcnaulc', '#frmContaCorrente');
 	var cMotivo_bloqueio_maj = $('#motivo_bloqueio_maj', '#frmContaCorrente');
 	var cCdopemaj = $('#cdopemaj', '#frmContaCorrente');
 	var cNmopemaj = $('#nmopemaj', '#frmContaCorrente');
@@ -265,9 +270,10 @@ function controlaLayout(operacao) {
 	var cDtfinal = $('#dtfinal', '#frmLiberarBloquear');
 	//
 	$('#divConteudoOpcao').hide(0, function() {
-		$('#frmLiberarBloquear').css({'padding-top':'5px','padding-bottom':'15px'});		
+		$('#frmLiberarBloquear').css({'padding-top':'5px','padding-bottom':'15px'});
 		cFlgrenli.css('width','50px').desabilitaCampo();
 		cFlmajora.css('width','50px').desabilitaCampo();
+		cFlcnaulc.css('width','50px').desabilitaCampo();
 		cMotivo_bloqueio_maj.css('width', '350px').desabilitaCampo();
 		cCdopemaj.css('width','67px').desabilitaCampo();
 		cNmopemaj.css('width','280px').desabilitaCampo();
@@ -280,10 +286,11 @@ function controlaLayout(operacao) {
 		cDscarga.css('width', '285px').desabilitaCampo();
 		cDtinicial.css('width', '80px').desabilitaCampo();
 		cDtfinal.css('width', '80px').desabilitaCampo();
-		
+
 		// Formatação dos rotulos
 		rFlgrenli.css('width', '381px');
 		rFlmajora.css('width', '381px');
+		rFlcnaulc.css('width', '381px');
 		rMotivo_bloqueio_maj.css('width', '180px');
 		rCdopemaj.css('width', '180');
 		//
@@ -294,35 +301,36 @@ function controlaLayout(operacao) {
 		rLiberado_man.css('width', '245px');
 		rDscarga.css('width', '245px').addClass('rotulo');
 		rDtinicial.css('width', '245px').addClass('rotulo');
-		
+
 		switch(operacao) {
 			// Consulta Alteração
-			case 'CA': 
+			case 'CA':
 			    cFlgcrdpa.habilitaCampo();
 				break;
 			case 'MA':
 				cFlgrenli.habilitaCampo();
 				cFlmajora.habilitaCampo();
+				cFlcnaulc.habilitaCampo();
 				cMotivo_bloqueio_maj.habilitaCampo();
 				break;
 		}
-		
+
 		divRotina.css('width','600px');
 		layoutPadrao();
 		hideMsgAguardo();
-		bloqueiaFundo(divRotina);	
+		bloqueiaFundo(divRotina);
 		$(this).fadeIn(1000);
 		controlaFoco(operacao);
-		divRotina.centralizaRotinaH(); 
-	});	
-	
-	return false;	
-}	
+		divRotina.centralizaRotinaH();
+	});
+
+	return false;
+}
 
 function controlaFoco(operacao) {
 	if (in_array(operacao,['AC',''])) {
 		$('#btAlterar','#divBotoes').focus();
-	} else {		
+	} else {
 		$('#flgrenli','#frmLiberarBloquear').focus();
 	}
 	return false;
