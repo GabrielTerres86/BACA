@@ -96,12 +96,14 @@
 		<table>
 			<thead>
 				<tr>
-					<th>Data</th>
+					<th>Data Proposta</th>
 					<th>Border&ocirc;</th>
 					<th>Contrato</th>
 					<th>Qt.Tits</th>
 					<th>Valor</th>
-					<th>Situa&ccedil;&atilde;o</th>
+					<th>Situa&ccedil;&atilde;o do Border&ocirc;</th>
+					<th>Decis&atilde;o da An&aacute;lise</th>
+					<th>Data Libera&ccedil;&atilde;o</th>
 				</tr>			
 			</thead>
 			<tbody>
@@ -127,6 +129,8 @@
 							<? echo number_format(str_replace(",",".",$borderos[$i]->tags[4]->cdata),2,",","."); ?></td>
 						
 						<td><? echo $borderos[$i]->tags[5]->cdata; ?></td>
+						<td><? echo $borderos[$i]->tags[6]->cdata; ?></td>
+						<td><? echo $borderos[$i]->tags[7]->cdata; ?></td>
 					</tr>							
 				<?} // Fim do for ?>			
 			</tbody>
@@ -150,12 +154,18 @@
 		
 	<?}else{?>
 		
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
+		<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
 	
 	<?}?>
-		
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/pre-analise.gif"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostraDadosBorderoDscTit(\'N\');return false;"'; } ?> />
+
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/incluir.gif" onClick="alert('Implementação em desenvolvimento.');return false;" />
+
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscTit(\'C\');return false;"'; } ?> />
+
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" onClick="alert('Implementação em desenvolvimento.');return false;" />
+
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/analisar.gif" onClick="alert('Implementação em desenvolvimento.');return false;" />
+	
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/excluir.gif"   <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscTit(\'E\');return false;"'; } ?> />
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/liberar.gif"   <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostraDadosBorderoDscTit(\'L\');return false;"'; } ?> />
