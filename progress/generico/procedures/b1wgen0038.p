@@ -101,11 +101,18 @@
                17/01/2017 - Adicionado chamada a procedure de replicacao do 
                             endereco para o CDC. (Reinert Prj 289)		
 
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)
+                            
 				16/08/2017 - Ajuste realizado para que ao informar cep 0 no endereço do tipo (13,14)
 							 e exista registro na crapenc, deletamos o mesmo. (Kelvin/Andrino)
                             
                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                             o idseqttl como zero (Luacas Ranghetti #756813)
+               
+               05/10/2017 - Alterado rotina alterar-endereco-viainternetbank
+                            para garantir que nao crie 2 enc com tipo 12. 
+							              PRJ339 -CRM (Odirlei-AMcom).	
 .............................................................................*/
 
 
@@ -371,13 +378,15 @@ PROCEDURE alterar-endereco-viainternetbank:
                                           crapenc.cdcooper = par_cdcooper AND
                                           crapenc.nrdconta = par_nrdconta AND
                                           crapenc.idseqttl = par_idseqttl AND
-                                          crapenc.tpendass = 12           AND
-                                          crapenc.dsendere = par_dsendere AND
-                                          crapenc.nrendere = par_nrendere
+                                          crapenc.tpendass = 12           
                                           NO-LOCK NO-ERROR.
                                        
                                 IF  AVAILABLE crapenc  THEN
                                     DO:
+                                      IF crapenc.dsendere = par_dsendere AND
+                                         crapenc.nrendere = par_nrendere THEN
+                                        DO:
+                                    
                                         ASSIGN aux_cdcritic = 0
                                                aux_dscritic = "Endereco ja " +
                                                               "cadastrado para "
@@ -387,6 +396,61 @@ PROCEDURE alterar-endereco-viainternetbank:
                                         LEAVE TRANS_ENDERECO.
                                     END.
 
+                                        /* Caso ja exista o tipo de endereco 
+                                           deve atualizar o registro */
+                                        
+                                        DO aux_contador = 1 TO 10:
+        
+                                          ASSIGN aux_cdcritic = 0
+                                                 aux_dscritic = "".
+                                                 
+                                FIND LAST crapenc WHERE 
+                                          crapenc.cdcooper = par_cdcooper AND
+                                          crapenc.nrdconta = par_nrdconta AND
+                                            crapenc.idseqttl = par_idseqttl AND
+                                            crapenc.tpendass = 12  
+                                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.  
+                                            
+                                          IF  NOT AVAILABLE crapenc  THEN
+                                          DO:
+                                              IF  LOCKED crapenc  THEN
+                                                  DO:
+                                                      ASSIGN aux_dscritic = "Registro " +
+                                                             "do endereco esta sendo " +
+                                                             "alterado. Tente novamente.".
+                                                      PAUSE 1 NO-MESSAGE.
+                                                      NEXT.
+                                                  END.
+                                              ELSE    
+                                                  ASSIGN aux_dscritic = "Endereco para " +
+                                                         "cooperado nao cadastrado.".
+                                          END.
+                          
+                                          LEAVE.  
+                                          
+                                          
+                                        END. /** Fim do DO ... TO **/
+                     
+                                        IF  aux_dscritic <> ""  THEN
+                                            UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
+                                            
+                                        ASSIGN crapenc.dsendere = CAPS(par_dsendere)
+                                               crapenc.nrendere = par_nrendere
+                                               crapenc.cdufende = CAPS(par_cdufende)
+                                               crapenc.nmbairro = CAPS(par_nmbairro)
+                                               crapenc.nmcidade = CAPS(par_nmcidade)
+                                               crapenc.complend = CAPS(par_complend)
+                                               crapenc.nrdoapto = par_nrdoapto
+                                               crapenc.cddbloco = CAPS(par_cddbloco)
+                                               crapenc.nrcepend = par_nrcepend
+                                               crapenc.nrcxapst = par_nrcxapst
+                                               crapenc.idorigem = 1. /** Alteracao pelo InternetBank sera feita pelo cooperado **/    
+                                            
+
+                                    END.
+                                /* Senao irá criar */    
+                                ELSE 
+                                DO:
                                 FIND LAST crapenc WHERE 
                                           crapenc.cdcooper = par_cdcooper AND
                                           crapenc.nrdconta = par_nrdconta AND
@@ -415,6 +479,7 @@ PROCEDURE alterar-endereco-viainternetbank:
                                        crapenc.nrcxapst = par_nrcxapst
                                        crapenc.idorigem = 1. /** Alteracao pelo InternetBank sera feita pelo cooperado **/
                                 VALIDATE crapenc.
+                            END.
                             END.
                         ELSE
                             ASSIGN par_flgerlog = FALSE.
@@ -1845,7 +1910,8 @@ PROCEDURE alterar-endereco:
                                              crapdoc.nrdconta = par_nrdconta AND
                                              crapdoc.tpdocmto = 3            AND
                                              crapdoc.dtmvtolt = par_dtmvtolt AND
-                                             crapdoc.idseqttl = aux_idseqttl 
+                                             crapdoc.idseqttl = aux_idseqttl AND
+                                             crapdoc.nrcpfcgc = aux_nrcpfcgc
                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1871,8 +1937,8 @@ PROCEDURE alterar-endereco:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 3
-                                           crapdoc.idseqttl = aux_idseqttl.
-                                           
+                                           crapdoc.idseqttl = aux_idseqttl
+                                           crapdoc.nrcpfcgc = aux_nrcpfcgc.
                                     VALIDATE crapdoc.
                                             
                                     LEAVE ContadorDoc3.
