@@ -8277,7 +8277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : AGEN
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 28/09/2016
+    --  Data     : Junho/2013.                   Ultima atualizacao: 23/03/2018
     --
     --  Dados referentes ao programa:
     --
@@ -8327,7 +8327,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                            (Adriano - SD 394710)
     --
     --                28/09/2016 - Incluir ROLLBACK TO undopoint na saida de critica da pc_insere_lote
-    --                             (Lucas Ranghetti #511679)                      
+    --                             (Lucas Ranghetti #511679)  
+    --
+    --                23/03/2018 - Incluido validações de valores negativos ou zerados de pagamento (Tiago/Jean INC0010838)                    
     -- ..........................................................................
 
   BEGIN
@@ -8800,6 +8802,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         --Historico Debito
         vr_cdhisdeb:= 508;
       END IF;
+      
+      IF NVL(pr_vllanmto,0) <= 0 THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Valor negativo ou zero não permitido.';
+        RAISE vr_exc_erro;        
+      END IF;
+      
       /* Data do sistema */
       -- Verifica se a data esta cadastrada
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -23222,4 +23231,3 @@ end;';
 
 END PAGA0001;
 /
-

@@ -2878,7 +2878,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Junho/2007                        Ultima atualizacao: 16/01/2018
+      Data    : Junho/2007                        Ultima atualizacao: 23/03/2018
 
       Dados referentes ao programa:
 
@@ -2957,6 +2957,7 @@ create or replace package body cecred.PAGA0002 is
                               para uma data anterior a data atual do sistema
                               (Douglas - Chamado 829446)
 
+                 23/03/2018 - Incluido validações de valor de pagamento negativo ou zerado (Tiago/Jean #INC0010838)
     .................................................................................*/
     ----------------> CURSORES  <---------------
     -- Cursor para encontrar a conta/corrente
@@ -3153,6 +3154,12 @@ create or replace package body cecred.PAGA0002 is
         RAISE vr_exc_erro;
       END IF;
     END IF;
+    
+    IF NVL(pr_vllanmto,0) <= 0 THEN
+      -- Gerar mensagem de erro para não permitir o pagamento
+      vr_dscritic := 'Valor não permitido para pagamento.';
+      RAISE vr_exc_erro;
+    END IF;      
 
     -- Definir descrição da transação
     SELECT DECODE(NVL(pr_idagenda,0),1,'Pagamento','Agendamento para pagamento')||
