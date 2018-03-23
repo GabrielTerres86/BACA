@@ -274,7 +274,7 @@ function formataLayout(nomeForm){
 				
 	}else if ( nomeForm == 'divBorderos' ){
 	
-		$('#'+nomeForm).css('width','785px');
+		$('#'+nomeForm).css('width','950px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -284,24 +284,25 @@ function formataLayout(nomeForm){
 		var ordemInicial = new Array();
 				
 		var arrayLargura = new Array();
-		arrayLargura[0] = '65px';
+		arrayLargura[0] = '85px';
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '55px';
-		arrayLargura[4] = '100px';
-		arrayLargura[5] = '55px';
-		arrayLargura[6] = '100px';
-		arrayLargura[7] = '90px';
+		arrayLargura[4] = '80px';
+		arrayLargura[5] = '130px';
+		arrayLargura[6] = '130px';
+		arrayLargura[7] = '100px';
+		arrayLargura[8] = '15px';
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'right';
 		arrayAlinha[2] = 'right';
-		arrayAlinha[3] = 'right';
+		arrayAlinha[3] = 'center';
 		arrayAlinha[4] = 'right';
-		arrayAlinha[5] = 'right';
-		arrayAlinha[6] = 'right';
-		arrayAlinha[7] = 'left';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+		arrayAlinha[7] = 'center';
 		arrayAlinha[8] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
