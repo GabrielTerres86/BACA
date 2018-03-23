@@ -1040,7 +1040,7 @@ PROCEDURE Valida_Dados_Altera:
                    END.
             END.
 
-        IF crapass.cdtipcta <> par_cdtipcta THEN
+        /*IF crapass.cdtipcta <> par_cdtipcta THEN
             DO:
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
                 
@@ -1070,8 +1070,9 @@ PROCEDURE Valida_Dados_Altera:
                 
                 IF par_cdcritic <> 0 OR par_dscritic <> "" THEN
                     LEAVE ValidaAltera.
-            END.
+            END.*/
         
+        /* Esta funcionalidade não será tratada nesta primeira liberação
         IF crapass.cdsitdct <> par_cdsitdct THEN
             DO:
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
@@ -1104,7 +1105,7 @@ PROCEDURE Valida_Dados_Altera:
                 
                 IF par_cdcritic <> 0 OR par_dscritic <> "" THEN
                     LEAVE ValidaAltera.
-            END.
+            END.	  */
         
         IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
             RUN sistema/generico/procedures/b1wgen0060.p
