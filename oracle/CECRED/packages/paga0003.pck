@@ -6735,8 +6735,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
       vr_fltipdoc := '';
 
+      -- se é pagamento
+      IF  rw_craplau.cdtiptra = 2  THEN /** Pagamento **/
+        -- Tipo de transação
+        vr_fltiptra := FALSE;
+        -- Descrição do tipo de transação
+        vr_dstiptra := 'Pagamento';
+
+        -- se o tamanho da linha digitável é de 55 posições é convênio
+        IF rw_craplau.nrseqagp <> 0 THEN
+          vr_fltipdoc := 'GPS'; /** GPS - Guia Previdencia Social **/
+        ELSIF  LENGTH(rw_craplau.dslindig) = 55 THEN
+          vr_fltipdoc := 'CONVENIOS'; /** Convenio **/
+        ELSE
+          vr_fltipdoc := 'TITULO'; /** Titulo   **/
+        END IF;
+        
+        -- Cedente
+        vr_dstransa := rw_craplau.dscedent;
       -- se é pagamento FGTS
-      IF  rw_craplau.cdtiptra = 12  THEN 
+      ELSIF  rw_craplau.cdtiptra = 12  THEN 
         -- Tipo de transação
         vr_fltiptra := FALSE;
         -- Descrição do tipo de transação
@@ -6915,6 +6933,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
 
   BEGIN
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'DEBBAN'
+                                ,pr_action => null);
+
   
     -- Verifica se a cooperativa esta cadastrada
       OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
