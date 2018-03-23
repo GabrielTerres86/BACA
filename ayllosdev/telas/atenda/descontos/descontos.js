@@ -670,7 +670,7 @@ function formataLayout(nomeForm){
 
 		$('#btnrenovacao').unbind('click').bind('click', function(){
 			if (Cperrenov.val() != 1) {return false}
-			acessaValorLimite();
+			renovarLimiteTitulo();
 			return false;			
 		});
 
