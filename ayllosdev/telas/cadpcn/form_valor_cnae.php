@@ -35,12 +35,10 @@
 	
 	<label for="cdcnae" class="rotulo rotulo-90">CNAE:</label>
 
-	<input name="cdcnae" id="cdcnae" type="text" class="pesquisa" value="<? echo getByTagName() ?>" />
+	<input name="cdcnae" id="cdcnae" type="text" class="pesquisa" maxlength="15" value="<? echo getByTagName() ?>" />
 
 	<a class="lupa" style="cursor: pointer;" onclick="controlaPesquisas();">
-		
 		<img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" />	
-
 	</a>
 
 	<input name="dscnae" id="dscnae" type="text" class="descricao" value="" />
