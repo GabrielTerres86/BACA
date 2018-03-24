@@ -83,7 +83,9 @@
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
 		
 		$msgErro =  $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+
 		echo $msgErro;
+
 
 	} elseif($operacao == 'E'){ 
 
@@ -106,12 +108,9 @@
 
 		$valor_cnae = $xmlObjeto->roottag->tags[2]->cdata == "" ? ""  : $xmlObjeto->roottag->tags[2]->cdata;
 
-		if($valor_cnae > 0 ){
+		if($valor_cnae <> "" ){
 
-			//$valor_cnae = number_format($valor_cnae, 2, ",", ".");
-			
 			echo($valor_cnae);
-
 		}
 	}
 ?>
