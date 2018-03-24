@@ -1,12 +1,11 @@
+
 /*********************************************************************************************
- Fonte: cadpcn.js                                       			                   
- Autor: Andrew Luis Golden
- Data : Março/2018                                                                  
- Alterações:                                          Ultima Alteracao: 18/03/2018
- 																					
- 19/03/2018 - Ajustes gerais para liberacao. (______)	
- 
+* Fonte: cadpcn.js                                       			                   
+* CRIAÇÃO      : André (DB1)
+* DATA CRIAÇÃO : 15/03/2018
+* OBJETIVO     : Mostrar tela CADPCN
 *********************************************************************************************/
+
 
 // Definição de algumas variáveis globais 
 var cddopcao, cTodosCabecalho;
@@ -54,7 +53,9 @@ var escolheOpcao;
 		unblockBackground();
 		hideMsgAguardo();
 		controlaFoco();
-
+		trocaBotaon('Prosseguir');
+		
+		
 		$('#cddopcao','#frmCab').habilitaCampo();
 		$('#cddopcao option[value="C"]').attr("selected", "selected");
 		$('#cddopcao','#frmCab').focus();
@@ -63,8 +64,6 @@ var escolheOpcao;
 
 		cTodosFormCnae = $('input[type="text"],select,input[type="checkbox"]','#frmValorMaximoCnae'); 
 		cTodosFormCnae.limpaFormulario();
-
-
 
 		return false;
 	}
@@ -79,9 +78,11 @@ var escolheOpcao;
 		
 		//Ajusta layout para o Internet Explorer
 		if ( $.browser.msie ) {
+
 			rCddopcao.css('width','40px');
 			
 		}else {
+
 			rCddopcao.css('width','44px');
 		}
 		
@@ -131,8 +132,7 @@ var escolheOpcao;
 		// Controle de Máscaras
 		$('#vlcnae','#frmValorMaximoCnae').desabilitaCampo();
 		
-		$('#vlcnae','#frmValorMaximoCnae').setMask('DECIMAL','zzz.zzz.zz9,99',',','');
-		//$('#vlcnae','#frmValorMaximoCnae').setMaskOnKeyUp("INTEGER","zzzzzzzzzzz","",e);
+//		$('#vlcnae','#frmValorMaximoCnae').setMask('DECIMAL','zzz.zzz.zz9,99',',','');
 
 		$('#vlcnae','#frmValorMaximoCnae').trigger('blur');
 
@@ -155,6 +155,7 @@ var escolheOpcao;
 
 
 	function controlaOperacao(action) {
+
 
 		if(action){
 			cddopcao = action;
@@ -179,24 +180,19 @@ var escolheOpcao;
 			
 			} else if (cddopcao == "I"){
 			
-				controlaFocoFormulariosCnae('I');
-				//mostraRotina('manter_rotina');
-				mostraRotina('principal');
+				showConfirmacao('Confirma a operacao?','Confirma&ccedil;&atilde;o - Ayllos','mostraRotina(\'principal\');','btnVoltar();','sim.gif','nao.gif');
 
 				return false;
 
 			} else if (cddopcao == "A"){
 			
-				controlaFocoFormulariosCnae('A');
-				//mostraRotina('manter_rotina');
-				mostraRotina('principal');
+				showConfirmacao('Confirma a operacao?','Confirma&ccedil;&atilde;o - Ayllos','mostraRotina(\'principal\');','btnVoltar();','sim.gif','nao.gif');
 				return false;
 
 			} else if (cddopcao == "E"){
 
 				controlaFocoFormulariosCnae('E');
-				//mostraRotina('manter_rotina');
-				mostraRotina('principal');
+				showConfirmacao('Confirma a operacao?','Confirma&ccedil;&atilde;o - Ayllos','mostraRotina(\'principal\');','btnVoltar();','sim.gif','nao.gif');
 				return false;
 
 			} else if (cddopcao == "AE"){
@@ -223,29 +219,29 @@ var escolheOpcao;
 		$('#divBotoes', '#divTela').css({'display':'block'});
 		$('#frmValorMaximoCnae').css({'display':'block'});
 
-
 		if(param == 'I'){
 
 			$('#vlcnae','#frmValorMaximoCnae').habilitaCampo();
+			$('#vlcnae','#frmValorMaximoCnae').setMask('DECIMAL','zzz.zzz.zz9,99',',','');
 		}
 
 		if(param == 'A'){
 
 			$('#vlcnae','#frmValorMaximoCnae').habilitaCampo();
+			$('#vlcnae','#frmValorMaximoCnae').setMask('DECIMAL','zzz.zzz.zz9,99',',','');
 		}
 
 
 		$('#cdcnae','#frmValorMaximoCnae').unbind('blur').bind('blur',function() {
 
-					if(!cdcnae){
-						
-						$('#cdcnae').val();
-					}
+			if(!cdcnae){
+					
+				cdcnae = $('#cdcnae').val();
+			}
 
-					buscaDescricaoCnae(cdcnae);
+			buscaDescricaoCnae(cdcnae);
 
 		});
-
 
 
 		cdcnae.focus().unbind('keypress').bind('keypress', function(e) {
@@ -254,17 +250,15 @@ var escolheOpcao;
 				
 				if(param == 'E' || param == 'C' || param == 'AE'){
 
-							$(this).removeClass('campoErro');
-							
-							btSalvar.focus();
-
-							return false;
+					$(this).removeClass('campoErro');
+					btSalvar.focus();
+					return false;
 
 				} else {
 
-							$(this).removeClass('campoErro');
-							vlcnae.focus();
-							return false;
+					$(this).removeClass('campoErro');
+					vlcnae.focus();
+					return false;
 				}
 			}	
 		});	
@@ -277,7 +271,7 @@ var escolheOpcao;
 				return false;
 			}	
 
-			$('#vlcnae','#frmValorMaximoCnae').setMask('DECIMAL','zzz.zzz.zz9,99',',','');
+			//$('#vlcnae','#frmValorMaximoCnae').setMask('DECIMAL','zzz.zzz.zz9,99',',','');
 		});	
 	}
 
@@ -293,6 +287,7 @@ var escolheOpcao;
 		var cdcnae  = $('#cdcnae').val();
 		var dscnae  = $('#dscnae').val();
 		var vlcnae  = $('#vlcnae').val();
+
 
 		$('#btSalvar','#frmValorMaximoCnae').desabilitaCampo();
 
@@ -323,44 +318,56 @@ var escolheOpcao;
 
 		if(cddopcao == 'C'){
 
-				showMsgAguardo('Aguarde, buscando ...');
+			showMsgAguardo('Aguarde, buscando ...');
 
 			// Executa script de confirmação através de ajax
-				$.ajax({		
-					type: "POST",
-					dataType: 'html',
-					url: UrlSite + 'telas/cadpcn/principal.php', 
-					data: {
-						cddopcao: cddopcao,
-						cdcnae: cdcnae,
-						dscnae: dscnae,
-						vlcnae: vlcnae,
-						redirect: 'html_ajax'
-					}, 
-					error: function(objAjax,responseError,objExcept) {
-						hideMsgAguardo();
-						showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
-					},
-
-					success: function(response) {
+			$.ajax({		
+				type: "POST",
+				dataType: 'html',
+				url: UrlSite + 'telas/cadpcn/principal.php', 
+				data: {
+					cddopcao: cddopcao,
+					cdcnae: cdcnae,
+					dscnae: dscnae,
+					vlcnae: vlcnae,
+					//vlcnae: normalizaNumero(vlcnae),
+					redirect: 'html_ajax'
+				}, 
+				error: function(objAjax,responseError,objExcept) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				},
+				success: function(response) {
 
 						try {
-							hideMsgAguardo();				
-							eval(response);
-
-								$('#vlcnae').val(response);
-								//$('#vlcnae','#frmValorMaximoCnae').setMask('DECIMAL','zzz.zzz.zz9,99',',','');	
-
-						} catch(error) {
 
 							hideMsgAguardo();
-							showError("error",response,"Alerta - Ayllos","hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
+							eval(response);
+							$('#vlcnae').val(response);
+							$('#btVoltar').focus('');
+							trocaBotao('');
+						
+						} catch(error) {
+							hideMsgAguardo();
 							
-						}
-					}				
-				});			
-			
+							var verify = parseInt(response);
 
+						if( ( isNaN( eval(verify) ) ) ){
+
+							showError("error",response,"Alerta - Ayllos","hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
+							$('#cdcnae').val('');
+							$('#dscnae').val('');
+							$('#vlcnae').val('');
+
+						} else {
+
+							$('#vlcnae').val(response);
+							$('#btVoltar').focus('');
+							trocaBotao('');
+						}
+					}
+				}				
+			});			
 		}
 
 
@@ -368,45 +375,58 @@ var escolheOpcao;
 
 			cddopcao = 'C';
 
-				showMsgAguardo('Aguarde, buscando ...');
+			showMsgAguardo('Aguarde, buscando ...');
 
 			// Executa script de confirmação através de ajax
-				$.ajax({		
-					type: "POST",
-					dataType: 'html',
-					url: UrlSite + 'telas/cadpcn/principal.php', 
-					data: {
-						cddopcao: cddopcao,
-						cdcnae: cdcnae,
-						dscnae: dscnae,
-						vlcnae: vlcnae,
-						redirect: 'html_ajax'
-					}, 
-					error: function(objAjax,responseError,objExcept) {
+			$.ajax({		
+				type: "POST",
+				dataType: 'html',
+				url: UrlSite + 'telas/cadpcn/principal.php', 
+				data: {
+					cddopcao: cddopcao,
+					cdcnae: cdcnae,
+					dscnae: dscnae,
+					vlcnae: vlcnae,
+					redirect: 'html_ajax'
+				}, 
+				error: function(objAjax,responseError,objExcept) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				},
+
+				success: function(response) {
+
+					try {
+						hideMsgAguardo();				
+						//eval(response);
+						$('#vlcnae').val(response);
+						cddopcao = 'E';
+						trocaBotao('Excluir');
+						$('#btSalvar').focus();
+
+					} catch(error) {
+
 						hideMsgAguardo();
-						showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
-					},
+						cddopcao = 'AE';
+						
+						var verify = parseInt(response);
 
-					success: function(response) {
+						if( ( isNaN( eval(verify) ) ) ){
 
-						try {
-							hideMsgAguardo();				
-							eval(response);
-							$('#vlcnae').val(response);
-							cddopcao = 'E';
-							trocaBotao('Excluir');
-							$('#btSalvar').focus();
-
-
-						} catch(error) {
-							hideMsgAguardo();
-							cddopcao = 'AE';
 							showError("error",response,"Alerta - Ayllos","hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
-							
-						}
-					}				
-				});			
+							$('#cdcnae').val('');
+							$('#dscnae').val('');
+							$('#vlcnae').val('');
 
+						} else {
+
+							$('#vlcnae').val(response);
+							$('#btVoltar').focus('');
+							trocaBotao('');
+						}
+					}
+				}				
+			});			
 		}
 	}
 
@@ -420,14 +440,12 @@ var escolheOpcao;
 		var vlcnae  = $('#vlcnae').val();
 
 		if(cddopcao == 'AE'){
-
 			cddopcao = 'E';
 		}
 
-
 		if (pagina === undefined){
 		
-			showError('error','N&atilde;o foi poss&iacute;vel concluirrrrr a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
 			return false;
 		}
 
@@ -469,7 +487,7 @@ var escolheOpcao;
 					}, 
 				error: function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();			
-					showError('error','Não foi possível concluir1111 a requisição.','Alerta - Ayllos',"unblockBackground()");
+					showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
 				},
 
 				success: function(response) {
@@ -485,8 +503,9 @@ var escolheOpcao;
 					}
 						hideMsgAguardo();
 						$msgOK = "Dados exclu&iacute;dos com sucesso";
-						showError('error', $msgOK, 'Alerta - Ayllos', "hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
-						estadoInicial();
+						showError('inform', $msgOK, 'Alerta - Ayllos', "hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
+						//estadoInicial();
+						$('#vlcnae').val('');
 				}
 			});
 		} 
@@ -518,13 +537,18 @@ var escolheOpcao;
 						hideMsgAguardo();				
 						eval(response);
 
-							$('#vlcnae').val(response);
-							$('#vlcnae','#frmValorMaximoCnae').setMask('DECIMAL','zzz.zzz.zz9,99',',','');
+						//$('#vlcnae').val(response);
+						//$('#vlcnae','#frmValorMaximoCnae').setMask('DECIMAL','zzz.zzz.zz9,99',',','');
 
-							showError("inform","Dados alterados com sucesso","Alerta - Ayllos","hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
+						$('#vlcnae').val('');
+						$('#cdcnae').val('');
+						$('#dscnae').val('');
+
+						
+
+						showError("inform","Dados alterados com sucesso","Alerta - Ayllos","hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
 
 					} catch(error) {
-
 						hideMsgAguardo();
 						showError("error",response,"Alerta - Ayllos","hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
 					}
@@ -549,7 +573,7 @@ var escolheOpcao;
 					}, 
 				error: function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();			
-					showError('error','Não foi possível concluir1111 a requisição.','Alerta - Ayllos',"unblockBackground()");
+					showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
 				},
 
 				success: function(response) {
@@ -558,12 +582,15 @@ var escolheOpcao;
 
 						hideMsgAguardo();				
 						eval(response);
-							$('#vlcnae').val(response);
-							$('#vlcnae','#frmValorMaximoCnae').setMask('DECIMAL','zzz.zzz.zz9,99',',','');	
+						//$('#vlcnae').val(response);
+						//$('#vlcnae','#frmValorMaximoCnae').setMask('DECIMAL','zzz.zzz.zz9,99',',','');	
 					} catch(error) {
 
 						hideMsgAguardo();
 						showError("error",response,"Alerta - Ayllos","hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
+						$('#vlcnae').val('');
+						$('#cdcnae').val('');
+						$('#dscnae').val('');
 					}
 				}
 			});
@@ -583,14 +610,27 @@ var escolheOpcao;
 	function btnVoltar() {
 
 		var cddopcao  = $('#cddopcao');
-		
+
 		// verifica se existe display block no formulario de valor CNAE
 		if($('#frmValorMaximoCnae').css('display') == "block") {
 			
 			$('#cdcnae').attr( "aux", " " );
 			estadoInicial();
+			//buscaDescricaoCnae();
 			return false;
 		} 	
+
+	    estadoInicial();
+		highlightObjFocus( $('#frmCab') );
+		$("#frmCab").css({"display":"block"});
+		$("#divTela").css({"width":"700px","padding-bottom":"2px"});
+		trocaBotaon('Prosseguir');
+
+		controlaFocoFormulariosCnae();
+
+		$( "#cddopcao" ).focus();
+
+
 	}
 
 
@@ -600,15 +640,36 @@ var escolheOpcao;
 
 		$('#divBotoes','#divTela').html('');
 		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>');
-		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Cancelar</a>');
 
 		if ( botao != '') {
-			var cddopcao = 'E';
 			$('#divBotoes','#divTela', '#').append('&nbsp;<a href="#" class="botao"  id="btSalvar" onClick="controlaOperacaoExcluir(); return false;" >'+botao+'</a>');
 		}
 
 		return false;
 	}
+
+
+
+	function trocaBotaon( botao ) {
+
+		$('#divBotoes','#divTela').html('');
+		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>');
+
+		if ( botao != '') {
+			$('#divBotoes','#divTela', '#').append('&nbsp;<a href="#" class="botao"  id="btSalvar" onClick="controlaOperacao(); return false;" >'+botao+'</a>');
+		}
+
+		return false;
+	}
+
+
+
+
+
+
+
+
+
 
 
 	function controlaPesquisas() {
@@ -639,11 +700,15 @@ var escolheOpcao;
 				$(this).val(),'dscnae',filtrosDesc,'frmValorMaximoCnae');
 		});	
 		$('#vlcnae').val("");
+		return false;
 	}
 
 
 
 	function buscaDescricaoCnae(cdcnae) {
+
+	
+		if(cdcnae){
 
 		var bo 				= 'b1wgen0059.p';
 		var procedure		= 'BUSCA_CNAE';
@@ -654,4 +719,8 @@ var escolheOpcao;
 		buscaDescricao('ZOOM0001', procedure, titulo, 'cdcnae', 'dscnae', cdcnae.val(),'dscnae',filtrosDesc,'frmValorMaximoCnae');
 		$('#vlcnae').val("");
 	    return false;
+		
+
+		}
+
 	}
