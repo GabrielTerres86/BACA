@@ -146,29 +146,30 @@
 	$dispL = (!in_array("L",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
 
-<div id="divBotoes" >
+<div id="divBotoes">
 	
 	<?if($executandoProdutos == 'true'){?>
-		
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina(true);return false;" />
+		<input type="button" class="botao" value="Voltar" onClick="encerraRotina(true);return false;"/>
 		
 	<?}else{?>
-		
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
+		<input type="button" class="botao" value="Voltar" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;"/>
 	
 	<?}?>
+	<input type="button" class="botao" value="Incluir" onClick="alert('Implementação em desenvolvimento.');return false;" />
 
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/incluir.gif" onClick="alert('Implementação em desenvolvimento.');return false;" />
+	<input type="button" class="botao" value="Consultar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscTit(\'C\');return false;"'; } ?> />
 
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscTit(\'C\');return false;"'; } ?> />
+	<input type="button" class="botao" value="Alterar"  onClick="alert('Implementação em desenvolvimento.');return false;" />
 
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" onClick="alert('Implementação em desenvolvimento.');return false;" />
-
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/analisar.gif" onClick="alert('Implementação em desenvolvimento.');return false;" />
+	<input type="button" class="botao" value="Analisar" onClick="alert('Implementação em desenvolvimento.');return false;" />
 	
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/excluir.gif"   <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscTit(\'E\');return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/liberar.gif"   <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostraDadosBorderoDscTit(\'L\');return false;"'; } ?> />
+	<input type="button" class="botao" value="Excluir"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscTit(\'E\');return false;"'; } ?> />
+	<input type="button" class="botao" value="Imprimir" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
+	<input type="button" class="botao" value="Liberar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostraDadosBorderoDscTit(\'L\');return false;"'; } ?> />
+
+
+	<input type="button" class="botao" value="Rejeitar" onClick="alert('Implementação em desenvolvimento.');return false;"/>
+	
 </div>
 
 <script type="text/javascript">
