@@ -1245,6 +1245,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                               ,pr_tab_erro => vr_tab_erro   --Tabela de erros
                                               ,pr_des_erro => vr_des_erro   --identificador de erro
                                               ,pr_dscritic => vr_dscritic); --Descricao do erro;
+
+        IF NVL(LENGTH(TRIM(vr_dscritic)),0) > 0 THEN
+          GENE0001.pc_gera_erro(pr_cdcooper => rw_craptdb.cdcooper
+                               ,pr_cdagenci => pr_cdagenci
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_nrsequen => 1 /** Sequencia **/
+                               ,pr_cdcritic => 0
+                               ,pr_dscritic => vr_dscritic
+                               ,pr_tab_erro => vr_tab_erro);
+        END IF;
+
         --Se ocorreu erro
         IF vr_des_erro = 'NOK' THEN
           --Mensagem erro
@@ -1474,6 +1485,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
       COMMIT;
 
+      IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+        GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 /** Sequencia **/
+                             ,pr_cdcritic => NVL(vr_cdcritic,0)
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => vr_tab_erro);
+      END IF;
+
+      IF NVL(vr_tab_erro.Count,0) > 0 THEN
+        pr_tab_erro := vr_tab_erro;
+      END IF;
+
     EXCEPTION
       WHEN vr_exc_saida THEN
         ROLLBACK;
@@ -1505,7 +1530,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              ,pr_cdcritic => pr_cdcritic
                              ,pr_dscritic => pr_dscritic
                              ,pr_tab_erro => vr_tab_erro);
-                             
+
+        pr_tab_erro := vr_tab_erro;
+
         ROLLBACK;                             
         
     END;    
@@ -3109,8 +3136,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                  ,pr_cdagenci => pr_cdagenci
                                  ,pr_nrdcaixa => pr_nrdcaixa
                                  ,pr_nrsequen => 1 /** Sequencia **/
-                                 ,pr_cdcritic => NVL(pr_cdcritic,0)
-                                 ,pr_dscritic => pr_dscritic
+                                 ,pr_cdcritic => 0
+                                 ,pr_dscritic => vr_dscritic
                                  ,pr_tab_erro => vr_tab_erro);
           END IF;
 
@@ -3276,13 +3303,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       --Limpar tabela contas
       vr_tab_conta.DELETE;
 
-      IF NVL(LENGTH(TRIM(vr_dscritic)),0) > 0 THEN
+      IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
         GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
                              ,pr_nrsequen => 1 /** Sequencia **/
-                             ,pr_cdcritic => NVL(pr_cdcritic,0)
-                             ,pr_dscritic => pr_dscritic
+                             ,pr_cdcritic => NVL(vr_cdcritic,0)
+                             ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => vr_tab_erro);
       END IF;
 
