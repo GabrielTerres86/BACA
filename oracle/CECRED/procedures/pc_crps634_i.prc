@@ -6,6 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps634_i(pr_cdcooper IN NUMBER           
                                         ,pr_tab_crapdat IN OUT btch0001.rw_crapdat%TYPE           --> Pool de consulta de datas do sistema
                                         ,pr_impcab      IN VARCHAR2 DEFAULT 'N'               --> Controle de impressão de cabeçalho
                                         ,pr_idparale    IN PLS_INTEGER DEFAULT 0              --> Identificador do job executando em paralelo.                      
+                                        ,pr_flgresta  IN PLS_INTEGER    --> Indicador para utilização de restart
                                         ,pr_stprogra    OUT PLS_INTEGER                       --> Saída de termino da execução
                                         ,pr_infimsol    OUT PLS_INTEGER                       --> Saída de termino da solicitação
                                         ,pr_cdcritic    OUT PLS_INTEGER                       --> Código crítica
@@ -353,6 +354,7 @@ BEGIN
                            'rw_crapdat'|| ',' ||
                            ''''||pr_impcab ||''''   || ',' ||
                            vr_idparale || ',' ||
+                           pr_flgresta || ',' ||
                            ' wpr_stprogra, wpr_infimsol, wpr_cdcritic, wpr_dscritic);' ||
         chr(13) || 
         'END;';                         
@@ -564,7 +566,7 @@ BEGIN
                   PR_IDPRGLOG           => vr_idlog_ini_par);                      
 
          -- carrega tabela memória.
-			   pc_carrega_tabgrupo (pr_cdcooper => pr_cdcooper,
+         pc_carrega_tabgrupo (pr_cdcooper => pr_cdcooper,
                            pr_dtmvtolt =>  rw_crapdat.dtmvtolt,
                            pr_des_erro =>  vr_dscritic);
          
@@ -661,7 +663,7 @@ BEGIN
                       PR_IDPRGLOG           => vr_idlog_ini_par);  
       -- Mesclar grupos
                                
-      geco0001.pc_mesclar_grupos(pr_cdcooper => pr_cdcooper
+      /*geco0001.pc_mesclar_grupos(pr_cdcooper => pr_cdcooper
                                 ,pr_nrdgrupo => 0
                                 ,pr_des_erro => pr_dscritic);
 
@@ -716,7 +718,7 @@ BEGIN
                       pr_tpocorrencia       => 4,
                       pr_dsmensagem         => 'Fim calculo risco endividamento grupo ' ||pr_cdcooper  || ' - ' || to_char(sysdate,'hh24:mi:ss') ,
                       PR_IDPRGLOG           => vr_idlog_ini_par);
-      
+      */
         pc_log_programa(PR_DSTIPLOG           => 'O',
                       PR_CDPROGRAMA         => pr_cdprogra ||'_'|| pr_cdagenci || '$',
                       pr_cdcooper           => pr_cdcooper,

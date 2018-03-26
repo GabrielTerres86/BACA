@@ -106,9 +106,9 @@ BEGIN
   CLOSE btch0001.cr_crapdat;
 
   -- Nao rodar na mensal
-  IF to_char(rw_crapdat.dtmvtolt,'mm') <> to_char(rw_crapdat.dtmvtopr,'mm')  THEN
+  /*IF to_char(rw_crapdat.dtmvtolt,'mm') <> to_char(rw_crapdat.dtmvtopr,'mm')  THEN
     RAISE vr_exc_fimprg;
-  END IF;
+  END IF;*/
 
   -- Buscar a descrição das faixas contido na craptab
   OPEN cr_craptab(pr_cdcooper, 'CRED', 'GENERI', 00, 'PROVISAOCL', 999);
@@ -153,6 +153,7 @@ BEGIN
               ,pr_tab_crapdat => rw_crapdat
               ,pr_impcab      => 'S'
               ,pr_idparale    => 0
+              ,pr_flgresta    => pr_flgresta
               ,pr_stprogra    => vr_stprogra
               ,pr_infimsol    => vr_infimsol              
               ,pr_cdcritic    => vr_cdcritic
