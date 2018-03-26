@@ -2,7 +2,7 @@
  * FONTE        : verpro.js
  * CRIAÇÃO      : Rogerius Militão (DB1) 
  * DATA CRIAÇÃO : 25/10/2011
- * OBJETIVO     : Biblioteca de funções da tela VERPRO       Última alteração: 16/11/2015
+ * OBJETIVO     : Biblioteca de funções da tela VERPRO       Última alteração: 23/03/2017
  * --------------
  * ALTERAÇÕES   :
  * 001: 02/07/2012 - Jorge (CECRED) : Alterado funcao Gera_Impressao(), novo esquema para impressao.
@@ -13,6 +13,9 @@
  * 006: 09/06/2015 - Vanessa (CECRED) : Inclusão do campo ISPB para TEDS
  * 007: 16/11/2015 - Andre Santos (SUPERO) : Aumento do campo Lin.Digitavel e Cod.Barras 
  * 008: 05/07/2016 - Odirlei (AMcom) : Exibir protocolo 15 - pagamento debaut - PRJ320 - Oferta Debaut
+ * 009: 19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+ * 010: 23/03/2017 - Alterações referente a recarga de celular. (PRJ321 - Reinert)
+ * 011: 26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
  * --------------
  */
 
@@ -85,6 +88,12 @@ function estadoInicial() {
     $('#divBotoes').css({'display': 'block'});
 
     cNrdconta.focus();
+
+	// Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
+		btnOK.click();
+    }
 
 }
 
@@ -494,7 +503,30 @@ function formataVerpro() {
     rCarencia = $('label[for="carencia"]', '#' + frmDados);
     rDtcarenc = $('label[for="dtcarenc"]', '#' + frmDados);
     rTxperiod = $('label[for="txperiod"]', '#' + frmDados);
-
+	
+	//DARF/DAS
+	rDsagtare = $('label[for="dsagtare"]', '#' + frmDados);
+	rDsagenci = $('label[for="dsagenci"]', '#' + frmDados);
+	rTpdocmto = $('label[for="tpdocmto"]', '#' + frmDados);
+	rDsnomfon = $('label[for="dsnomfon"]', '#' + frmDados);
+    rNmsolici_drf = $('label[for="nmsolici_drf"]', '#' + frmDados);
+    rDtvencto_drf = $('label[for="dtvencto_drf"]', '#' + frmDados);
+	rDtapurac = $('label[for="dtapurac"]', '#' + frmDados);
+	rNrcpfcgc = $('label[for="nrcpfcgc"]', '#' + frmDados);
+	rCdtribut = $('label[for="cdtribut"]', '#' + frmDados);
+	rNrrefere = $('label[for="nrrefere"]', '#' + frmDados);
+	rVlrecbru = $('label[for="vlrecbru"]', '#' + frmDados);
+	rVlpercen = $('label[for="vlpercen"]', '#' + frmDados);
+	rVlprinci = $('label[for="vlprinci"]', '#' + frmDados);
+	rVlrmulta = $('label[for="vlrmulta"]', '#' + frmDados);
+	rVlrjuros = $('label[for="vlrjuros"]', '#' + frmDados);
+	rVltotfat = $('label[for="vltotfat"]', '#' + frmDados);
+	rDsidepag = $('label[for="vltotfat"]', '#' + frmDados);
+	rDtmvtdrf = $('label[for="vltotfat"]', '#' + frmDados);
+	rHrautdrf = $('label[for="vltotfat"]', '#' + frmDados);
+	rNrdocmto_das  = $('label[for="nrdocmto_das"]', '#' + frmDados);
+	rNrdocmto_drf = $('label[for="nrdocmto_drf"]', '#' + frmDados);
+	
     //labels protocolo de resgate de aplicação
     rDtresgat = $('label[for="dtresgat"]', '#' + frmDados);
     rHrresgat = $('label[for="hrresgat"]', '#' + frmDados);
@@ -544,6 +576,29 @@ function formataVerpro() {
     rDtcarenc.addClass('rotulo').css({'width': '130px'});
     rTxperiod.addClass('rotulo').css({'width': '115px'});
 
+	//DARF/DAS
+	rDsagtare.addClass('rotulo').css({'width': '130px'});
+	rDsagenci.addClass('rotulo').css({'width': '130px'});
+	rTpdocmto.addClass('rotulo').css({'width': '130px'});
+	rDsnomfon.addClass('rotulo').css({'width': '130px'});	
+    rNmsolici_drf.addClass('rotulo').css({'width': '130px'});
+	rDtvencto_drf.addClass('rotulo').css({'width': '130px'});	
+	rDtapurac.addClass('rotulo').css({'width': '130px'});	
+	rNrcpfcgc.addClass('rotulo').css({'width': '130px'});	
+	rCdtribut.addClass('rotulo').css({'width': '130px'});	
+	rNrrefere.addClass('rotulo').css({'width': '130px'});	
+	rVlrecbru.addClass('rotulo').css({'width': '130px'});	
+	rVlpercen.addClass('rotulo').css({'width': '130px'});	
+	rVlprinci.addClass('rotulo').css({'width': '130px'});	
+	rVlrmulta.addClass('rotulo').css({'width': '130px'});	
+	rVlrjuros.addClass('rotulo').css({'width': '130px'});	
+	rVltotfat.addClass('rotulo').css({'width': '130px'});	
+	rDsidepag.addClass('rotulo').css({'width': '130px'});	
+	rDtmvtdrf.addClass('rotulo').css({'width': '130px'});	
+	rHrautdrf.addClass('rotulo').css({'width': '130px'});	
+	rNrdocmto_das.addClass('rotulo').css({'width': '130px'});	
+	rNrdocmto_drf.addClass('rotulo').css({'width': '130px'});	
+
     rDtresgat.addClass('rotulo').css({'width': '130px'});
     rHrresgat.addClass('rotulo').css({'width': '130px'});
     rVlrbruto.addClass('rotulo').css({'width': '130px'});
@@ -591,6 +646,29 @@ function formataVerpro() {
     cDtcarenc = $('#dtcarenc', '#' + frmDados);
     cTxperiod = $('#txperiod', '#' + frmDados);
 
+	//DARF/DAS
+	cDsagtare = $('#dsagtare', '#' + frmDados);
+	cDsagenci = $('#dsagenci', '#' + frmDados);
+	cTpdocmto = $('#tpdocmto', '#' + frmDados);
+	cDsnomfon = $('#dsnomfon', '#' + frmDados);
+    cNmsolici_drf = $('#nmsolici_drf', '#' + frmDados);
+    cDtvencto_drf = $('#dtvencto_drf', '#' + frmDados);    
+	cDtapurac = $('#dtapurac', '#' + frmDados);
+	cNrcpfcgc = $('#nrcpfcgc', '#' + frmDados);
+	cCdtribut = $('#cdtribut', '#' + frmDados);
+	cNrrefere = $('#nrrefere', '#' + frmDados);
+	cVlrecbru = $('#vlrecbru', '#' + frmDados);
+	cVlpercen = $('#vlpercen', '#' + frmDados);
+	cVlprinci = $('#vlprinci', '#' + frmDados);
+	cVlrmulta = $('#vlrmulta', '#' + frmDados);
+	cVlrjuros = $('#vlrjuros', '#' + frmDados);
+	cVltotfat = $('#vltotfat', '#' + frmDados);
+	cDsidepag = $('#dsidepag', '#' + frmDados);
+	cDtmvtdrf = $('#dtmvtdrf', '#' + frmDados);
+	cHrautdrf = $('#hrautdrf', '#' + frmDados);
+	cNrdocmto_das  = $('#nrdocmto_das', '#' + frmDados);
+	cNrdocmto_drf = $('#nrdocmto_das', '#' + frmDados);
+
     //Campos protoclo aplicação
     cDtresgat = $('#dtresgat', '#' + frmDados);
     cHrresgat = $('#hrresgat', '#' + frmDados);
@@ -637,6 +715,29 @@ function formataVerpro() {
     cDtcarenc.css({'width': '400px'});
     cTxperiod.css({'width': '400px'});
 
+	//DARF/DAS
+	cDsagtare.css({'width': '400px'});
+	cDsagenci.css({'width': '400px'});
+	cTpdocmto.css({'width': '400px'});
+	cDsnomfon.css({'width': '400px'});
+    cNmsolici_drf.css({'width': '400px'});
+    cDtvencto_drf.css({'width': '400px'});	
+	cDtapurac.css({'width': '400px'});
+	cNrcpfcgc.css({'width': '400px'});
+	cCdtribut.css({'width': '400px'});
+	cNrrefere.css({'width': '400px'});
+	cVlrecbru.css({'width': '400px'});
+	cVlpercen.css({'width': '400px'});
+	cVlprinci.css({'width': '400px'});
+	cVlrmulta.css({'width': '400px'});
+	cVlrjuros.css({'width': '400px'});
+	cVltotfat.css({'width': '400px'});
+	cDsidepag.css({'width': '400px'});
+	cDtmvtdrf.css({'width': '400px'});
+	cHrautdrf.css({'width': '400px'});
+	cNrdocmto_das.css({'width': '400px'});
+	cNrdocmto_drf.css({'width': '400px'});
+
     cDtresgat.css({'width': '400px'});
     cHrresgat.css({'width': '400px'});
     cVlrbruto.css({'width': '400px'});
@@ -663,7 +764,26 @@ function formataVerpro() {
     cDspacote.css({ 'width': '440px' });
     cDtdiadeb.css({ 'width': '440px' });
     cDtinivig.css({ 'width': '440px' });
-
+	
+	// Campos Recarga de Celular: Inicio
+	rVlrecarga   = $('label[for="vlrecarga"]', 	 '#' + frmDados).addClass('rotulo').css({'width': '130px'});
+	rNmoperadora = $('label[for="nmoperadora"]', '#' + frmDados).addClass('rotulo').css({'width': '130px'});
+	rNrtelefo 	 = $('label[for="nrtelefo"]', 	 '#' + frmDados).addClass('rotulo').css({'width': '130px'});
+	rDtrecarga 	 = $('label[for="dtrecarga"]', 	 '#' + frmDados).addClass('rotulo').css({'width': '130px'});
+	rHrrecarga 	 = $('label[for="hrrecarga"]', 	 '#' + frmDados).addClass('rotulo-linha').css({'width': '45px'});
+	rDtdebito 	 = $('label[for="dtdebito"]', 	 '#' + frmDados).addClass('rotulo').css({'width': '130px'});
+	rNsuopera 	 = $('label[for="nsuopera"]', 	 '#' + frmDados).addClass('rotulo').css({'width': '130px'});		
+	
+	cVlrecarga	 = $('#vlrecarga', 	 '#' + frmDados).css({'width': '425px'});
+	cNmoperadora = $('#nmoperadora', '#' + frmDados).css({'width': '425px'});
+	cNrtelefo 	 = $('#nrtelefo', 	 '#' + frmDados).css({'width': '425px'});
+	cDtrecarga 	 = $('#dtrecarga', 	 '#' + frmDados).css({'width': '200px'});
+	cHrrecarga 	 = $('#hrrecarga', 	 '#' + frmDados).css({'width': '174px'});
+	cDtdebito 	 = $('#dtdebito', 	 '#' + frmDados).css({'width': '425px'});
+	cNsuopera 	 = $('#nsuopera', 	 '#' + frmDados).css({'width': '425px'});
+	
+	// Campos Recarga de Celular: Fim
+	
     if ($.browser.msie) {
         rTpdpagto.css({'width': '48px'});
         rHrautenx.css({'width': '48px'});
@@ -740,13 +860,57 @@ function formataVerpro() {
     cDtcarenc.css({'display': 'none'});
     cTxperiod.css({'display': 'none'});
 
+	//DARF/DAS
+	rDsagtare.css({'display': 'none'});
+	rDsagenci.css({'display': 'none'});
+	rTpdocmto.css({'display': 'none'});
+	rDsnomfon.css({'display': 'none'});
+    rNmsolici_drf.css({'display': 'none'});
+    rDtvencto_drf.css({'display': 'none'});	
+	rDtapurac.css({'display': 'none'});
+	rNrcpfcgc.css({'display': 'none'});
+	rCdtribut.css({'display': 'none'});
+	rNrrefere.css({'display': 'none'});
+	rVlrecbru.css({'display': 'none'});
+	rVlpercen.css({'display': 'none'});
+	rVlprinci.css({'display': 'none'});
+	rVlrmulta.css({'display': 'none'});
+	rVlrjuros.css({'display': 'none'});
+	rVltotfat.css({'display': 'none'});
+	rDsidepag.css({'display': 'none'});
+	rDtmvtdrf.css({'display': 'none'});
+	rHrautdrf.css({'display': 'none'});
+	rNrdocmto_das.css({'display': 'none'});
+	rNrdocmto_drf.css({'display': 'none'});
+
+	cDsagtare.css({'display': 'none'});
+	cDsagenci.css({'display': 'none'});
+	cTpdocmto.css({'display': 'none'});
+	cDsnomfon.css({'display': 'none'});
+    cNmsolici_drf.css({'display': 'none'});
+    cDtvencto_drf.css({'display': 'none'});	
+	cDtapurac.css({'display': 'none'});
+	cNrcpfcgc.css({'display': 'none'});
+	cCdtribut.css({'display': 'none'});
+	cNrrefere.css({'display': 'none'});
+	cVlrecbru.css({'display': 'none'});
+	cVlpercen.css({'display': 'none'});
+	cVlprinci.css({'display': 'none'});
+	cVlrmulta.css({'display': 'none'});
+	cVlrjuros.css({'display': 'none'});
+	cVltotfat.css({'display': 'none'});	
+	cDsidepag.css({'display': 'none'});
+	cDtmvtdrf.css({'display': 'none'});
+	cHrautdrf.css({'display': 'none'});
+	cNrdocmto_das.css({'display': 'none'});
+	cNrdocmto_drf.css({'display': 'none'});
+
     cDtresgat.css({'display': 'none'});
     cHrresgat.css({'display': 'none'});
     cVlrbruto.css({'display': 'none'});
     cVldoirrf.css({'display': 'none'});
     cVlaliqir.css({'display': 'none'});
     cVlliquid.css({'display': 'none'});
-
 
     rDsageban.html('Agencia Favorecido:');
 
@@ -1002,8 +1166,199 @@ function formataVerpro() {
        
        rDsprotoc.css({'display': 'block'});
        cDsprotoc.css({'display': 'block'});
-    
-    } else {
+	   
+	//DARF/DAS	
+    } else if (cdtippro >= 16 && cdtippro <= 19) {
+		
+		var tpcaptur = $('#tpcaptur', '#' + frmDados).val();
+		var cdtribut = $('#cdtribut', '#' + frmDados).val();
+		
+		$("input[type='text']", '#' + frmDados).css({'width': '400px'});
+		$("label", '#' + frmDados).css({'width': '130px'});		
+		
+		// Ocultar
+		rDscedent.css({'display': 'none'});
+		cDscedent.css({'display': 'none'});
+		
+		rDsdbanco.css({'display': 'none'});
+		cDsdbanco.css({'display': 'none'});
+		
+		rNmsolici.css({'display': 'none'});
+		cNmsolici.css({'display': 'none'});
+		
+		rDttransa.css({'display': 'none'});
+		cDttransa.css({'display': 'none'});
+		
+		rVldocmto.css({'display': 'none'});
+        cVldocmto.css({'display': 'none'});
+		
+		rDtmvtolt.css({'display': 'none'});
+		cDtmvtolt.css({'display': 'none'});
+       
+		rHrautenx.css({'display': 'none'});
+		cHrautenx.css({'display': 'none'});
+		
+		// Exibir 	   		
+		if (tpcaptur == 1) {
+			
+			rCdbarras.css({'display': 'block'});
+			cCdbarras.css({'display': 'block'});
+		
+			rLndigita.css({'display': 'block'});
+			cLndigita.css({'display': 'block'});
+			
+			rDtvencto_drf.css({'display': 'block'});
+			cDtvencto_drf.css({'display': 'block'});	
+			
+			if (cdtippro == 17 || cdtippro == 19) { //DAS 
+				rNrdocmto_das.css({'display': 'block'});
+				cNrdocmto_das.css({'display': 'block'});			
+			} else if (cCdbarras.val().substr(15, 4) == 385 && cCdbarras.val().substr(1, 1) == 5){ // DARF385				
+				rNrdocmto_drf.css({'display': 'block'});
+				cNrdocmto_drf.css({'display': 'block'});			
+			}
+			
+		} else if (tpcaptur == 2) {
+			
+			$("input[type='text']", '#' + frmDados).css({'width': '330px'});
+			$("label", '#' + frmDados).css({'width': '200px'});		
+			
+			rDtapurac.css({'display': 'block'});
+			cDtapurac.css({'display': 'block'});
+			
+			rNrcpfcgc.css({'display': 'block'});
+			cNrcpfcgc.css({'display': 'block'});
+			
+			rCdtribut.css({'display': 'block'});
+			cCdtribut.css({'display': 'block'});
+			
+			if (cdtribut == '6106'){			
+				rVlrecbru.css({'display': 'block'});
+				cVlrecbru.css({'display': 'block'});
+				
+				rVlpercen.css({'display': 'block'});
+				cVlpercen.css({'display': 'block'});
+				
+				rNrrefere.css({'display': 'none'});
+				cNrrefere.css({'display': 'none'});
+				
+				rDtvencto_drf.css({'display': 'none'});
+				cDtvencto_drf.css({'display': 'none'});				
+			} else {
+				rVlrecbru.css({'display': 'none'});
+				cVlrecbru.css({'display': 'none'});
+				
+				rVlpercen.css({'display': 'none'});
+				cVlpercen.css({'display': 'none'});
+				
+				rNrrefere.css({'display': 'block'});
+				cNrrefere.css({'display': 'block'});
+				
+				rDtvencto_drf.css({'display': 'block'});
+				cDtvencto_drf.css({'display': 'block'});	
+ 
+			}
+			
+			rVlprinci.css({'display': 'block'});
+			cVlprinci.css({'display': 'block'});
+			
+			rVlrmulta.css({'display': 'block'});
+			cVlrmulta.css({'display': 'block'});
+			
+			rVlrjuros.css({'display': 'block'});
+			cVlrjuros.css({'display': 'block'});
+			
+		}
+		
+		rVltotfat.css({'display': 'block'});
+		cVltotfat.css({'display': 'block'});
+		
+		rNmsolici_drf.css({'display': 'block'});
+		cNmsolici_drf.css({'display': 'block'});
+		
+		rDsagtare.css({'display': 'block'});
+	    cDsagtare.css({'display': 'block'});
+		
+		rDsagenci.css({'display': 'block'});
+		cDsagenci.css({'display': 'block'});
+		
+		rTpdocmto.css({'display': 'block'});
+		cTpdocmto.css({'display': 'block'});		
+		
+		//Opcional: Nome/Telefone
+		if (cDsnomfon.val().trim() != "") {
+			rDsnomfon.css({'display': 'block'});
+			cDsnomfon.css({'display': 'block'});
+		}
+	   	   
+		//Opcional: Descrição do Pagamento
+		if (cDsidepag.val().trim() != "") {
+			rDsidepag.css({'display': 'block'});
+			cDsidepag.css({'display': 'block'});
+		}
+		
+		rHrautdrf.css({'display': 'block'});
+	    cHrautdrf.css({'display': 'block'});
+		
+		rDtmvtdrf.css({'display': 'block'});
+	    cDtmvtdrf.css({'display': 'block'});
+       
+       rNrdocmto.css({'display': 'block'});
+       cNrdocmto.css({'display': 'block'});
+       rNrdocmto.html('Nr. Documento:');
+       
+       rNrseqaut.css({'display': 'block'});
+       cNrseqaut.css({'display': 'block'});
+       rNrseqaut.html('Seq. Autentica&ccedil;&atilde;o:');
+       
+       rDsprotoc.css({'display': 'block'});
+       cDsprotoc.css({'display': 'block'});
+	// Recarga de celular			
+    } else if (cdtippro == '20'){
+		// Esconder Labels
+		rDsdbanco.css({'display': 'none'});
+		rDscedent.css({'display': 'none'});
+		rDttransa.css({'display': 'none'});
+		rHrautenx.css({'display': 'none'});
+		rDtmvtolt.css({'display': 'none'});
+		rVldocmto.css({'display': 'none'});
+		rNrdocmto.css({'display': 'none'});
+		rNrseqaut.css({'display': 'none'});
+
+		// Esconder Campos
+		cDsdbanco.css({'display': 'none'});
+		cDscedent.css({'display': 'none'});
+		cDttransa.css({'display': 'none'});
+		cHrautenx.css({'display': 'none'});
+		cDtmvtolt.css({'display': 'none'});
+		cVldocmto.css({'display': 'none'});
+		cNrdocmto.css({'display': 'none'});
+		cNrseqaut.css({'display': 'none'});
+		
+		// Exibir Labels
+		rVlrecarga.css({'display': 'block'});
+		rNmoperadora.css({'display': 'block'});
+		rNrtelefo.css({'display': 'block'});
+		rDtrecarga.css({'display': 'block'});
+		rHrrecarga.css({'display': 'block'});
+		rDtdebito.css({'display': 'block'});
+		rNsuopera.css({'display': 'block'});
+		rDsprotoc.css({'display': 'block'}).css('width', '130px');
+		rNmprepos.css('width', '130px');
+		rNmoperad.css('width', '130px');
+
+		// Exibir Campos
+		cVlrecarga.css({'display': 'block'});
+		cNmoperadora.css({'display': 'block'});
+		cNrtelefo.css({'display': 'block'});
+		cDtrecarga.css({'display': 'block'});
+		cHrrecarga.css({'display': 'block'});
+		cDtdebito.css({'display': 'block'});
+		cNsuopera.css({'display': 'block'});
+		cDsprotoc.css({'display': 'block'}).css('width', '425px');
+		cNmprepos.css('width', '425px');
+		cNmoperad.css('width', '425px');
+	}else {
 
         if (cdtippro == '3') {
             rDsdbanco.html('Nr. do Plano:');
@@ -1061,6 +1416,42 @@ function formataVerpro() {
 			
 			rNrseqaut.css({'display': 'block','width':'170px'});
 			cNrseqaut.css({'display': 'block','width':'100px'});
+		}
+		
+		if (cdtippro == '21')  {
+			var rNmprepos = $('label[for="nmprepos"]', '#' + frmDados);
+			var cNmprepos = $('#nmprepos', '#' + frmDados);
+			var rNmoperad = $('label[for="nmoperad"]', '#' + frmDados);
+			var cNmoperad = $('#nmoperad', '#' + frmDados);
+			var rDttransa = $('label[for="dttransa"]', '#' + frmDados);
+			var cDttransa = $('#dttransa', '#' + frmDados);
+			var rVlrtrans = $('label[for="vlrtrans"]', '#' + frmDados);
+			var cVlrtrans = $('#vlrtrans', '#' + frmDados);
+			var rVlrboleto = $('label[for="vlrboleto"]', '#' + frmDados);
+			var cVlrboleto = $('#vlrboleto', '#' + frmDados);
+			var rVlrted = $('label[for="vlrted"]', '#' + frmDados);
+			var cVlrted = $('#vlrted', '#' + frmDados);
+			var rVlrvrbol = $('label[for="vlrvrbol"]', '#' + frmDados);
+			var cVlrvrbol = $('#vlrvrbol', '#' + frmDados);
+			var rVlrflpgto = $('label[for="vlrflpgto"]', '#' + frmDados);
+			var cVlrflpgto = $('#vlrflpgto', '#' + frmDados);
+			
+			rNmprepos.addClass('rotulo').css({'width': '125px'});
+			cNmprepos.css({'width': '430px'});
+			rNmoperad.addClass('rotulo').css({'width': '125px'});
+			cNmoperad.css({'width': '430px'});
+			rDttransa.addClass('rotulo').css({'width': '125px'});
+			cDttransa.css({'width': '180px'});
+			rVlrtrans.addClass('rotulo').css({'width': '98px'});
+			cVlrtrans.css({'width': '160px'});
+			rVlrboleto.addClass('rotulo-linha').css({'width': '98px'});
+			cVlrboleto.css({'width': '160px'});
+			rVlrted.addClass('rotulo').css({'width': '98px'});
+			cVlrted.css({'width': '160px'});
+			rVlrvrbol.addClass('rotulo-linha').css({'width': '98px'});
+			cVlrvrbol.css({'width': '160px'});
+			rVlrflpgto.addClass('rotulo').css({'width': '98px'});
+			cVlrflpgto.css({'width': '160px'});
 		}
 		
     }

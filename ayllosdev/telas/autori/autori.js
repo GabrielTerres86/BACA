@@ -41,9 +41,17 @@
  *
  *				  31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
  *
+ *				  24/10/2016 - Ajustar mensagem de critica no cancelamento da operacao, sem efetuar a operacao (Lucas Ranghetti #537829)
+ *
  *                31/10/2016 - Incluir validação para passar histórico 1019 caso for Sicredi e não for 
  *							   operação de consulta (Lucas Ranghetti #547448)
  *
+ *				  16/01/2017 - Arrumar a gravacao da flginassele (Lucas Ranghetti #564654)
+ *
+ *                12/09/2017 - Tratamento para não permitir o prosseguimento da rotina caso ocorra erro de digito 
+ *                             para a referencia no caso de sicredi sim (Lucas Ranghetti #751239)
+ *
+ *                26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
  */
 
 // Definição de algumas variáveis globais 
@@ -60,17 +68,23 @@ var arrayAutori   	= new Array();
 
 var valida = 0; // 0 = Segue com operacao/ 1 = Barra operacao
 
+var erroRef = 0;
 
 $(document).ready(function() {	
 	
-	controlaOperacao();
+	controlaOperacao();			
 });
 
 function controlaOperacao( novaOp ) {
 
 	operacao = ( typeof novaOp != 'undefined' ) ? novaOp : operacao;	
 	
-	
+	// Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCabAutori").val() == 1) {
+        $("#nrdconta","#frmCabAutori").val($("#crm_nrdconta","#frmCabAutori").val());
+		nrdconta = $("#crm_nrdconta","#frmCabAutori").val();
+		obtemCabecalho();
+    }
 	var mensagem = '';
 	var cdhistor = normalizaNumero($('#cdhistor','#frmAutori').val());
     var cdrefere = $('#cdrefere','#frmAutori').val();
@@ -111,8 +125,8 @@ function controlaOperacao( novaOp ) {
 		cdhistor = 1019;
 	}	
 	
-	showMsgAguardo( mensagem );
-	
+	showMsgAguardo( mensagem );	
+
 	// Carrega dados da conta através de ajax
 	$.ajax({		
 		type	: 'POST',
@@ -210,6 +224,7 @@ function manterRotina() {
 	
 	var nmfatura = '';
 	var nmempres = '';
+	erroRef = 0;
 	
 	if (operacao == 'I4') {
 		if ( $('#dshistor','#frmAutori').val() == '') {
@@ -222,7 +237,9 @@ function manterRotina() {
 		}
 		if ($('#flgsicre','#frmAutori').val() == 'S') {
 			calculoDigito('referencia','cdrefere');
-			//return false;
+			if (erroRef == 1) {
+			  return false;
+			}
 		}
 	}
 	
@@ -1166,7 +1183,7 @@ function calculoDigito(operacao, nomcampo) {
 	
 	$.ajax({
 			type  : 'POST',
-			async : true ,
+			async : false ,
 			url   : UrlSite + 'telas/autori/calcula_digito.php',
 			data: {
 				operacao: operacao,
@@ -1467,10 +1484,14 @@ function mensagem(tipo){
 		showConfirmacao("Deseja realmente cancelar a senha?","Confirma&ccedil;&atilde;o - Ayllos","mensagem('2');","mostraSenha();","sim.gif","nao.gif");
 	}else if(tipo == 2){
 		showConfirmacao("Deseja continuar com a autoriza&ccedil;&atilde;o assinada?","Confirma&ccedil;&atilde;o - Ayllos","mensagem('3');","mensagem('4');","sim.gif","nao.gif");
-	}else if(tipo == 4){
-		showError('inform','Autoriza&ccedil;&atilde;o cancelada.','Alerta - Ayllos','controlaOperacao("");');
+	} else if (tipo == 4) {
+	    if (operacao == 'E5') {
+	        showError('inform', 'Cancelamento/exclus&atilde;o n&atilde;o realizado!', 'Alerta - Ayllos', 'controlaOperacao("");');
+	    } else {
+	        showError('inform', 'Opera&ccedil;&atilde;o cancelada!', 'Alerta - Ayllos', 'controlaOperacao("");');
+	    }		
 	}else if(tipo == 3){
-		flginassele == 2; // atualizar o campo inassele para 2
+		flginassele = 2; // atualizar o campo inassele para 2
 		showError('inform','Requisite a assinatura do cooperado.','Alerta - Ayllos','controlaOperacao("' + operacao_aux + '");');
 	}
 }
