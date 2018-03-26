@@ -1660,13 +1660,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => vr_tab_erro);
-                             
-        vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
 
-        -- Log de erro de execucao
-        pc_controla_log_batch(pr_dstiplog => 'E',
-                              pr_dscritic => vr_dscritic);
+        FOR idx in vr_tab_erro.FIRST .. vr_tab_erro.LAST LOOP
+          vr_cdcritic := vr_tab_erro(idx).cdcritic;
+          vr_dscritic := vr_tab_erro(idx).dscritic;
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_dstiplog => 'E',
+                                pr_dscritic => vr_dscritic);
+        END LOOP;
 
         ROLLBACK;
         
@@ -1683,12 +1684,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => vr_tab_erro);
 
-        vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-
-        -- Log de erro de execucao
-        pc_controla_log_batch(pr_dstiplog => 'E',
-                              pr_dscritic => vr_dscritic);
+        FOR idx in vr_tab_erro.FIRST .. vr_tab_erro.LAST LOOP
+          vr_cdcritic := vr_tab_erro(idx).cdcritic;
+          vr_dscritic := vr_tab_erro(idx).dscritic;
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_dstiplog => 'E',
+                                pr_dscritic => vr_dscritic);
+        END LOOP;
 
         ROLLBACK;                             
         
