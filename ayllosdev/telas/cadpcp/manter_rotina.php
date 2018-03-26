@@ -59,7 +59,7 @@ switch ($operacao){
 		// Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 			$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;			
-			exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#nrinssac\', \'#'.$form.'\').val(\'\').focus()',false);
+			exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#nmdsacad\', \'#'.$form.'\').val(\'\');$(\'#nrinssac\', \'#'.$form.'\').val(\'\').focus()',false);
 		} 
 			
 		$nmdsacad	= getByTagname($xmlObjeto->roottag->tags[0]->tags,'nmdsacad');
@@ -72,7 +72,6 @@ switch ($operacao){
 	case 'AP':
 		if (!validaInteiro($nrdconta) || $nrdconta == 0) exibirErro('error','Informe o número da conta.','Alerta - Ayllos','$(\'#nrdconta\', \'#'.$form.'\').focus()',false);
 		if (!validaInteiro($nrinssac) || $nrinssac == 0) exibirErro('error','Informe o número do CPF/CNPJ.','Alerta - Ayllos','$(\'#nrinssac\', \'#'.$form.'\').focus()',false);
-		if (!validaInteiro($vlpercen) || $vlpercen == 0) exibirErro('error','Informe o número do CPF/CNPJ.','Alerta - Ayllos','$(\'#vlpercen\', \'#'.$form.'\').focus()',false);
 		$xml  = "";
 		$xml .= "<Root>";
 		$xml .= "	<Dados>";
