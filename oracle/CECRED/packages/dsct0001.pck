@@ -3103,6 +3103,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                 ,pr_tab_erro => vr_tab_erro   --Tabela de erros
                                                 ,pr_des_erro => vr_des_erro   --identificador de erro
                                                 ,pr_dscritic => vr_dscritic); --Descricao do erro;
+
+          IF NVL(LENGTH(TRIM(vr_dscritic)),0) > 0 THEN
+            GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdagenci => pr_cdagenci
+                                 ,pr_nrdcaixa => pr_nrdcaixa
+                                 ,pr_nrsequen => 1 /** Sequencia **/
+                                 ,pr_cdcritic => NVL(pr_cdcritic,0)
+                                 ,pr_dscritic => pr_dscritic
+                                 ,pr_tab_erro => vr_tab_erro);
+          END IF;
+
           --Se ocorreu erro
           IF vr_des_erro = 'NOK' THEN
             --Mensagem erro
@@ -3265,6 +3276,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       --Limpar tabela contas
       vr_tab_conta.DELETE;
 
+      IF NVL(LENGTH(TRIM(vr_dscritic)),0) > 0 THEN
+        GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 /** Sequencia **/
+                             ,pr_cdcritic => NVL(pr_cdcritic,0)
+                             ,pr_dscritic => pr_dscritic
+                             ,pr_tab_erro => vr_tab_erro);
+      END IF;
+
+      IF NVL(vr_tab_erro.Count,0) > 0 THEN
+        pr_tab_erro := vr_tab_erro;
+      END IF;
+
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic:= vr_cdcritic;
@@ -3281,6 +3306,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                ,pr_tab_erro => vr_tab_erro);
         END IF;
 
+        pr_tab_erro := vr_tab_erro;
+
       WHEN OTHERS THEN
         -- Erro
         pr_cdcritic:= 0;
@@ -3293,6 +3320,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              ,pr_cdcritic => pr_cdcritic
                              ,pr_dscritic => pr_dscritic
                              ,pr_tab_erro => vr_tab_erro);
+
+        pr_tab_erro := vr_tab_erro;
 
     END;
   END pc_efetua_baixa_titulo;
