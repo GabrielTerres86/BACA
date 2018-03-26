@@ -638,11 +638,13 @@ create or replace package body cecred.tela_tab057 is
     vr_idorigem    varchar2(25);
     vr_cdoperad    varchar2(25);
     vr_dscritic    varchar2(2000);
+    vr_cdcritic    NUMBER;
     vr_exc_erro    EXCEPTION;
     --
     vr_dstextab    craptab.dstextab%TYPE;
     vr_dsdircop    crapcop.dsdircop%TYPE;
     vr_nmoperad    crapope.nmoperad%TYPE;
+    vr_tab_crapcon typ_tab_crapcon;
     -- Variável do arquivo log
     vr_input_log   utl_file.file_type;
     --
@@ -657,6 +659,26 @@ create or replace package body cecred.tela_tab057 is
                             ,pr_idorigem => vr_idorigem
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => pr_dscritic);
+    
+    -- Rotina para buscar os convênios
+    pc_busca_convenios( pr_cdcooper     => pr_cdcooper    -- Código da cooperativa
+                       ,pr_cdempres     => pr_cdempres    -- Código do convênio
+                       ,pr_nmextcon     => NULL           -- Descrição do convênio
+                       ,pr_tab_crapcon  => vr_tab_crapcon -- PLTABLE com os dados
+                       ,pr_cdcritic     => vr_cdcritic    -- Codigo da crítica
+                       ,pr_dscritic     => vr_dscritic);  -- Descricao da crítica
+
+    IF nvl(vr_cdcritic,0) > 0 OR   
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;      
+    END IF;   
+    
+    IF vr_tab_crapcon.count = 0 THEN
+      vr_dscritic := 'Não há convênio de Arrecadação com o código informado.';
+      RAISE vr_exc_erro;      
+    END IF;
+   
+   
     --
     BEGIN
       SELECT substr(craptab.dstextab, 0, 6)

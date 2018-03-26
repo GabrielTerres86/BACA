@@ -2209,7 +2209,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      (pr_cdcooper in craplft.cdcooper%type,
                       pr_dtmvtolt in craplft.dtmvtolt%type,
                       pr_cdempcon in craplft.cdempcon%type,
-                      pr_cdsegmto in craplft.cdsegmto%TYPE) is
+                      pr_cdsegmto in craplft.cdsegmto%TYPE,
+                      pr_cdhistor in craplft.cdhistor%TYPE) is
     SELECT craplft.cdagenci,
            lead (craplft.cdagenci,1) OVER (ORDER BY craplft.cdagenci) AS proxima_agencia,
            decode(craplft.cdagenci,
@@ -2224,6 +2225,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND craplft.dtmvtolt = pr_dtmvtolt
        AND craplft.cdempcon = pr_cdempcon
        and craplft.cdsegmto = pr_cdsegmto
+       AND craplft.cdhistor = pr_cdhistor
        and crapass.cdcooper (+) = craplft.cdcooper
        and crapass.nrdconta (+) = craplft.nrdconta
      group BY craplft.cdagenci,
@@ -8542,7 +8544,8 @@ BEGIN
     FOR rw_craplft IN cr_craplft_bancoob (pr_cdcooper => pr_cdcooper,
                                           pr_dtmvtolt => vr_dtmvtolt,
                                           pr_cdempcon => rw_crapcon.cdempcon,
-                                          pr_cdsegmto => rw_crapcon.cdsegmto) LOOP 
+                                          pr_cdsegmto => rw_crapcon.cdsegmto,
+                                          pr_cdhistor => rw_crapcon.cdhistor) LOOP 
   
       -- Faz a soma dos valores, pois é possível existir mais de uma fatura com agencia 90 ou 91
       vr_vllanmto_fat := vr_vllanmto_fat + rw_craplft.vllanmto;

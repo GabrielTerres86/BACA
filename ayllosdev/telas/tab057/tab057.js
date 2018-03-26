@@ -240,7 +240,7 @@ function formataFiltros(){
  */
  function formataFormularioBancoob() {
    // LABEL
-   $('label[for="seqarnsa"]','#frmDadosBancoob').addClass('rotulo').css({'width':'200px'});
+   $('label[for="seqarnsa"]','#frmDadosBancoob').addClass('rotulo').css({'width':'173px'});
    
    // CAMPOS - Dados Gerais
    $('#seqarnsa','#frmDadosBancoob').addClass('inteiro').css({'width':'60px'}).attr('maxlength','6').habilitaCampo();
@@ -627,11 +627,12 @@ function prosseguir() {
 					if ( $("#frmDadosBancoob").css("display") != 'block' || $('#btSalvar').html() == 'Prosseguir') {
 						trocaBotao('Alterar');
 						consultaSeqBancoob();
-                        
-						$("#divConsulta").css({'display':'block'});
-						$('a', '#frmFiltros').css({'display':'none'});
-						$('#cdempres').desabilitaCampo();
-                        formataFormularioBancoob();
+                        setTimeout(function(){ 
+  						    $("#divConsulta").css({'display':'block'});
+						    $('a', '#frmFiltros').css({'display':'none'});
+					        $('#cdempres').desabilitaCampo();
+                            formataFormularioBancoob();
+                        }, 400);
 					} else {
 						showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','alterarBancoob();','','sim.gif','nao.gif');
 					}
