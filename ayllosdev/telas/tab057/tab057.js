@@ -505,6 +505,9 @@ function controlaCamposFiltroConsulta(){
                         
                         filtrosDesc = 'cdcooper|' + $('#tlcooper','#frmFiltros').val() ;
                         buscaDescricao(bo,procedure,titulo,'cdempres','nmextcon',$('#cdempres','#frmFiltros').val(),'nmextcon',filtrosDesc,'frmFiltros','');
+                        setTimeout(function(){ 
+                            validaBuscaDescricao('cdempres','nmextcon','frmFiltros');
+                        }, 800);
                         
                         return false;
 						//prosseguir();
@@ -517,8 +520,10 @@ function controlaCamposFiltroConsulta(){
                     titulo      = 'Convênios de Arrecadação';                    
                     
                     filtrosDesc = 'cdcooper|' + $('#tlcooper','#frmFiltros').val() ;
-                    buscaDescricao(bo,procedure,titulo,'cdempres','nmextcon',$('#cdempres','#frmFiltros').val(),'nmextcon',filtrosDesc,'frmFiltros','');
-                    
+                    buscaDescricao(bo,procedure,titulo,'cdempres','nmextcon',$('#cdempres','#frmFiltros').val(),'nmextcon',filtrosDesc,'frmFiltros','validaBuscaDescricao(\'cdempres\',\'nmextcon\',\'frmFiltros\');');
+                    setTimeout(function(){ 
+                            validaBuscaDescricao('cdempres','nmextcon','frmFiltros');
+                        }, 800);
                     return false;
                     
                 }
@@ -546,6 +551,17 @@ function controlaCamposFiltroConsulta(){
       return false;
 		}
 	});
+}
+
+function validaBuscaDescricao(campoCod,campoDesc,formulario){
+    
+    if ( $('#'+campoDesc,'#'+formulario).val() == "" || 
+         $('#'+campoDesc,'#'+formulario).val() == "undefined" ){
+             
+             $('#'+campoCod,'#'+formulario).val("");
+         }
+    
+    return false;   
 }
 
 /**

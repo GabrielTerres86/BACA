@@ -7494,6 +7494,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               RAISE vr_exc_saida;
             END IF;
 
+      --> validar se esta pagando tributo na opcao correta. 
+      PAGA0003.pc_valid_pag_menu_trib 
+                             ( pr_cdbarras  => pr_cdbarras   -- Código de barras da guia
+                              ,pr_flmobile  => pr_flmobile   -- Indicador Mobile
+                              ,pr_tpdaguia  => 0             -- Tipo da guia (1 – DARF, 2 – DAS, 3-FGTS, 4-DAE)  
+                              ,pr_dscritic  => pr_dscritic); -- retorna critica
+                                    
+      IF pr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
             IF NOT(vr_dsempcon = 270 AND vr_dssegmto = '5') THEN
               IF pr_flmobile = 1 THEN
               pr_dscritic := 'Convênio deve ser pago na opção ''Pagamentos - Boletos e Convênios''';

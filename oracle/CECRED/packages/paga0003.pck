@@ -5363,6 +5363,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         ELSE -- Conta Online
           vr_dscritic := 'GPS deve ser paga na opção ''Pagamentos - Tributos - GPS'' do menu de serviços.';
         END IF;
+      END IF; 
+      
+      IF NOT(vr_dsempcon IN(0178,0179,0180,0181,0239,0240,0451,0432) AND vr_dssegmto = '5') THEN
+         IF pr_flmobile = 1 THEN
+            vr_dscritic := 'Convênio deve ser pago na opção ''Pagamentos - Boletos e Convênios''';
+         ELSE
+            vr_dscritic := 'Convênio deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços.';
+         END IF;
+         RAISE vr_exc_saida;
       END IF;  
             
       --> Se for pagamento de FGTS
