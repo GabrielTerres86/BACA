@@ -28,6 +28,8 @@
                
                07/04/2016 - Adicionado a remocao do caracter "&" para vazio para
                             correcao do chamado 430305 (Kelvin).
+
+               26/03/2017 - Adicionado remocao do caracter "Ü" e "ü" para corrigir o chamado 869784 (Alcemir - Mouts).
 .............................................................................*/
 
 
@@ -64,6 +66,9 @@ ASSIGN par_dsstring = REPLACE(par_dsstring,"Á","A")
        
        par_dsstring = REPLACE(par_dsstring,"ý","")
 	     par_dsstring = REPLACE(par_dsstring,"ý","y")
+       
+	   par_dsstring = REPLACE(par_dsstring,"ü","u")
+	   par_dsstring = REPLACE(par_dsstring,"Ü","U")
 	   
        par_dsstring = REPLACE(par_dsstring,"Ñ","N").
        
