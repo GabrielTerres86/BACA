@@ -132,6 +132,20 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
   -- variavel utilizada para contar registros rejeitados
   vr_qtrejeit INTEGER;
   
+  -- Estrutura situação IFs
+  TYPE typ_reg_situacao_if IS RECORD(nrispbif PLS_INTEGER
+                                    ,cdsitope PLS_INTEGER);
+  TYPE typ_tab_situacao_if IS TABLE OF typ_reg_situacao_if
+                              INDEX BY PLS_INTEGER;
+                              
+  -- Estrutura Estado Crise
+  TYPE typ_reg_estado_crise IS RECORD(cdcooper NUMBER
+                                     ,dtintegr DATE
+                                     ,inestcri NUMBER);
+  TYPE typ_tab_estado_crise IS TABLE OF typ_reg_estado_crise
+                              INDEX BY PLS_INTEGER;
+                              
+
   /** Enviar mensagem STR0026 para a cabine SPB **/
   PROCEDURE pc_proc_envia_vr_boleto (pr_cdcooper IN INTEGER         /* Cooperativa*/
                                     ,pr_cdagenci IN INTEGER         /* Cod. Agencia  */
@@ -301,9 +315,19 @@ PROCEDURE pc_trfsal_opcao_x(pr_cdcooper IN INTEGER    --> Cooperativa
                            ,pr_cdcritic OUT INTEGER    --> Codigo do erro
                            ,pr_dscritic OUT VARCHAR2); --> Descricao do erro                             
 
+PROCEDURE pc_estado_crise_tb (pr_flproces  IN VARCHAR2 DEFAULT 'N' -- Indica para verificar o processo
+                             ,pr_inestcri OUT INTEGER -- 0-Sem crise / 1-Com Crise
+                             ,pr_tbestcri OUT typ_tab_estado_crise); -- Tabela com informacoes crise
+
 PROCEDURE pc_estado_crise (pr_flproces  IN VARCHAR2 DEFAULT 'N' -- Indica para verificar o processo
                           ,pr_inestcri OUT INTEGER -- 0-Sem crise / 1-Com Crise
                           ,pr_clobxmlc OUT CLOB); -- XML com informações de LOG
+
+PROCEDURE pc_proc_pag0101_tb(pr_cdprogra IN  VARCHAR2   -- Código do programa
+                            ,pr_nmarqxml IN  VARCHAR2   -- Nome do arquivo xml
+                            ,pr_nmarqlog IN  VARCHAR2   -- Nome do arquivo de log
+                            ,pr_tab_situa_if IN typ_tab_situacao_if -- Tabela com os dados das IF
+                            ,pr_des_erro OUT VARCHAR2); -- Retorno OK/NOK
 
 PROCEDURE pc_proc_pag0101(pr_cdprogra IN  VARCHAR2   -- Código do programa
 												 ,pr_nmarqxml IN  VARCHAR2   -- Nome do arquivo xml
@@ -5292,16 +5316,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   END pc_trfsal_opcao_x;
   
   /* Procedure para retornar o estado de crise */
-  PROCEDURE pc_estado_crise (pr_flproces  IN VARCHAR2 DEFAULT 'N' -- Indica para verificar o processo
+  PROCEDURE pc_estado_crise_tb (pr_flproces  IN VARCHAR2 DEFAULT 'N'     -- Indica para verificar o processo
                             ,pr_inestcri OUT INTEGER -- 0-Sem crise / 1-Com Crise
-                            ,pr_clobxmlc OUT CLOB) IS -- XML com informações de LOG
+                               ,pr_tbestcri OUT typ_tab_estado_crise) IS -- Tabela com informacoes crise
     -- .........................................................................
     --
-    --  Programa  : pc_estado_crise
+    --  Programa  : pc_estado_crise_tb
     --  Sistema   : CRED
     --  Sigla     : SSPB0001
-    --  Autor     : Jaison
-    --  Data      : Outubro/2015.                   Ultima atualizacao: --/--/----
+    --  Autor     : Andrei(MOUTs)
+    --  Data      : Agosto/2017.                   Ultima atualizacao: --/--/----
     --
     --  Dados referentes ao programa:
     --
@@ -5314,11 +5338,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       vr_flestcri VARCHAR2(1);
       vr_inestcri INTEGER;
       vr_dtintegr DATE;
+      
       --Registro do tipo data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
-      -- Variaveis de XML 
-      vr_xml_temp VARCHAR2(32767);
-      vr_clobxmlc CLOB;
       
       -- Busca as cooperativas
       CURSOR cr_crapcop IS
@@ -5359,15 +5381,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
       -- Se for para verificar no processo os programas CRPS0001 e CRPS0008
       IF pr_flproces = 'S' THEN
-
-        -- Criar documento XML
-        dbms_lob.createtemporary(vr_clobxmlc, TRUE);
-        dbms_lob.open(vr_clobxmlc, dbms_lob.lob_readwrite);
-
-        -- Insere o cabeçalho do XML 
-        GENE0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
-                               ,pr_texto_completo => vr_xml_temp 
-                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>');
 
         -- Listagem das cooperativas
         FOR rw_crapcop IN cr_crapcop LOOP
@@ -5422,15 +5435,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
           END IF;
 
-          -- Montar XML com registros
+          -- Montar registro na tab
+          pr_tbestcri(pr_tbestcri.count()+1).cdcooper := vr_cdcooper;
+          pr_tbestcri(pr_tbestcri.count()).dtintegr := vr_dtintegr;
+          pr_tbestcri(pr_tbestcri.count()).inestcri := vr_inestcri;
+
+        END LOOP;
+          END IF;
+
+    END;
+  END pc_estado_crise_tb;  
+
+  /* Procedure para retornar o estado de crise */
+  PROCEDURE pc_estado_crise (pr_flproces  IN VARCHAR2 DEFAULT 'N' -- Indica para verificar o processo
+                            ,pr_inestcri OUT INTEGER -- 0-Sem crise / 1-Com Crise
+                            ,pr_clobxmlc OUT CLOB) IS -- XML com informações de LOG
+    -- .........................................................................
+    --
+    --  Programa  : pc_estado_crise
+    --  Sistema   : CRED
+    --  Sigla     : SSPB0001
+    --  Autor     : Jaison
+    --  Data      : Outubro/2015.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Procedure para retornar o estado de crise
+  BEGIN
+    DECLARE
+      -- Variaveis de XML 
+      vr_xml_temp VARCHAR2(32767);
+      vr_clobxmlc CLOB;
+
+      -- Tab de memória
+      vr_tbestcri typ_tab_estado_crise;
+
+    BEGIN
+      
+      -- Acionar rotina TB 
+      pc_estado_crise_tb(pr_flproces => pr_flproces
+                        ,pr_inestcri => pr_inestcri
+                        ,pr_tbestcri => vr_tbestcri);
+      
+      -- Se for para verificar no processo os programas CRPS0001 e CRPS0008
+      IF pr_flproces = 'S' THEN
+
+        -- Criar documento XML
+        dbms_lob.createtemporary(vr_clobxmlc, TRUE);
+        dbms_lob.open(vr_clobxmlc, dbms_lob.lob_readwrite);
+
+        -- Insere o cabeçalho do XML 
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>');
+
+        -- Listagem de todos os registros da tab
+        FOR vr_idx IN vr_tbestcri.first..vr_tbestcri.last LOOP
+          -- Copiar da PLTable para o XML 
           GENE0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
                                  ,pr_texto_completo => vr_xml_temp 
                                  ,pr_texto_novo     => '<coop>'
-                                                    || '  <cdcooper>' || vr_cdcooper || '</cdcooper>'
-                                                    || '  <dtintegr>' || TO_CHAR(vr_dtintegr, 'dd/mm/rrrr') || '</dtintegr>'
-                                                    || '  <inestcri>' || vr_inestcri || '</inestcri>'
+                                                    || '  <cdcooper>' || vr_tbestcri(vr_idx).cdcooper || '</cdcooper>'
+                                                    || '  <dtintegr>' || TO_CHAR(vr_tbestcri(vr_idx).dtintegr, 'dd/mm/rrrr') || '</dtintegr>'
+                                                    || '  <inestcri>' || vr_tbestcri(vr_idx).inestcri || '</inestcri>'
                                                     || '</coop>');  
-
         END LOOP;
 
         -- Encerrar a tag raiz 
@@ -5451,10 +5520,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END;
   END pc_estado_crise;
   
-  PROCEDURE pc_proc_pag0101(pr_cdprogra IN  VARCHAR2 -- Código do programa
+  PROCEDURE pc_proc_pag0101_tb(pr_cdprogra IN  VARCHAR2 -- Código do programa
                               ,pr_nmarqxml IN  VARCHAR2 -- Nome do arquivo xml
                               ,pr_nmarqlog IN  VARCHAR2 -- Nome do arquivo de log
-													 ,pr_clobxml  IN  CLOB     -- CLOB com os dados das IF
+                              ,pr_tab_situa_if IN typ_tab_situacao_if -- Tabela com os dados das IF
                               ,pr_des_erro OUT VARCHAR2) IS -- Retorno OK/NOK
     BEGIN                                              
     ------------------------------------------------------------------------------
@@ -5497,6 +5566,116 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            AND ban.flgdispb = 1;
       rw_crapban_bb cr_crapban_bb%ROWTYPE;
 
+    BEGIN         
+      -- Percorre IFs
+      IF pr_tab_situa_if.count() > 0 THEN
+        FOR vr_idx IN  pr_tab_situa_if.first..pr_tab_situa_if.last LOOP
+          -- Se for uma das duas situações
+          IF pr_tab_situa_if(vr_idx).cdsitope IN(4,5) THEN
+            -- Quando for BB precisamos filtrar por Código do banco e número do ISPB
+            IF pr_tab_situa_if(vr_idx).nrispbif = 0 THEN     
+              -- Verifica se situação atuel é operante
+              IF pr_tab_situa_if(vr_idx).cdsitope = 4 THEN
+                -- Verificar se é operante no ispb
+                OPEN cr_crapban_bb(pr_nrispbif => pr_tab_situa_if(vr_idx).nrispbif);
+                FETCH cr_crapban_bb INTO rw_crapban_bb;
+                -- Se não encontrou banco 
+                IF cr_crapban_bb%FOUND THEN
+                  -- Banco do Brasil        
+                  UPDATE crapban ban
+                     SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
+                        ,ban.flgoppag = 1
+                   WHERE ban.nrispbif = pr_tab_situa_if(vr_idx).nrispbif
+                     AND ban.cdbccxlt = 1;             
+                END IF;
+                -- Fecha cursor
+                CLOSE cr_crapban_bb;
+              -- Se for inoperante
+              ELSIF pr_tab_situa_if(vr_idx).cdsitope = 5 THEN               
+                -- Banco do Brasil
+                UPDATE crapban ban
+                   SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 0 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
+                      ,ban.flgoppag = 0
+                 WHERE ban.nrispbif = pr_tab_situa_if(vr_idx).nrispbif
+                   AND ban.cdbccxlt = 1;             
+              END IF;
+            ELSE
+              -- Verifica se situação atuel é operante
+              IF pr_tab_situa_if(vr_idx).cdsitope = 4 THEN
+                -- Verificar se é operante no ispb
+                OPEN cr_crapban(pr_nrispbif => pr_tab_situa_if(vr_idx).nrispbif);
+                FETCH cr_crapban INTO rw_crapban;
+                -- Se não encontrou banco 
+                IF cr_crapban%FOUND THEN
+                  UPDATE crapban ban
+                     SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
+                        ,ban.flgoppag = 1
+                   WHERE ban.nrispbif = pr_tab_situa_if(vr_idx).nrispbif;             
+                END IF;
+                -- Fecha cursor
+                CLOSE cr_crapban;
+              -- Se for inoperante
+              ELSIF pr_tab_situa_if(vr_idx).cdsitope = 5 THEN               
+                UPDATE crapban ban
+                   SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 0 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
+                      ,ban.flgoppag = 0
+                 WHERE ban.nrispbif = pr_tab_situa_if(vr_idx).nrispbif;
+              END IF;
+            END IF;    
+          END IF;        
+        END LOOP;
+      END IF;  
+      
+      -- Execução OK
+      pr_des_erro := 'OK';
+      -- Efetuar commit
+      COMMIT;
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Houve erro, retornar NOK
+        pr_des_erro := 'NOK';
+        -- Grava erro em log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                   pr_nmarqlog     => vr_nmarqlog,
+                                   pr_ind_tipo_log => 1, -- Normal
+                                   pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR - HH24:MI:SS')||' - ' ||
+                                                      pr_cdprogra || ' - PAG0101            --> ' ||
+                                                      'Arquivo: ' || pr_nmarqxml || 
+                                                      '. Codigo Erro: Atualizacao abortada -> ' || SQLERRM);
+
+        ROLLBACK;
+    END;
+  END pc_proc_pag0101_tb;
+  
+  PROCEDURE pc_proc_pag0101(pr_cdprogra IN  VARCHAR2 -- Código do programa
+                           ,pr_nmarqxml IN  VARCHAR2 -- Nome do arquivo xml
+                           ,pr_nmarqlog IN  VARCHAR2 -- Nome do arquivo de log
+													 ,pr_clobxml  IN  CLOB     -- CLOB com os dados das IF
+													 ,pr_des_erro OUT VARCHAR2) IS -- Retorno OK/NOK
+    BEGIN																						 
+    ------------------------------------------------------------------------------
+    --
+    --  Programa : pc_proc_pag0101             Antigo: b1wgen0046.p/proc_pag0101
+    --  Sistema  : Cred
+    --  Sigla    : SSPB0001
+    --  Autor    : Lucas Reinert
+    --  Data     : Agosto/2016.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para integrar mensagens PAG0101
+		--
+    ------------------------------------------------------------------------------	
+		DECLARE	
+		  -- Tabela de memória para alimentar os registros
+      vr_tab_situa_if typ_tab_situacao_if;
+      
+      vr_nmarqlog VARCHAR2(1000) := gene0002.fn_busca_entrada(pr_postext => 6
+																														 ,pr_dstext => pr_nmarqlog
+																														 ,pr_delimitador => '/');
+      
 			-- Cursor para destrinchar o xml
 		  CURSOR cr_situacao_if IS
 				SELECT extractvalue(column_value, '/dados/nrispbif') nrispbif
@@ -5506,101 +5685,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     BEGIN         
       -- Percorre IFs
       FOR rw_situacao_if IN cr_situacao_if LOOP
-          -- Se for uma das duas situações
-				IF rw_situacao_if.cdsitope IN(4,5) THEN
-            -- Quando for BB precisamos filtrar por Código do banco e número do ISPB
-					IF rw_situacao_if.nrispbif = 0 THEN			
-              -- Verifica se situação atuel é operante
-						IF rw_situacao_if.cdsitope = 4 THEN
-                -- Verificar se é operante no ispb
-							OPEN cr_crapban_bb(pr_nrispbif => rw_situacao_if.nrispbif);
-                FETCH cr_crapban_bb INTO rw_crapban_bb;
-                -- Se não encontrou banco 
-                IF cr_crapban_bb%FOUND THEN
-                  -- Banco do Brasil        
-                  UPDATE crapban ban
-                     SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-                        ,ban.flgoppag = 1
-								 WHERE ban.nrispbif = rw_situacao_if.nrispbif
-                     AND ban.cdbccxlt = 1;             
-                END IF;
-                -- Fecha cursor
-                CLOSE cr_crapban_bb;
-              -- Se for inoperante
-						ELSIF rw_situacao_if.cdsitope = 5 THEN							 
-                -- Banco do Brasil
-                UPDATE crapban ban
-                   SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 0 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-                      ,ban.flgoppag = 0
-							 WHERE ban.nrispbif = rw_situacao_if.nrispbif
-                   AND ban.cdbccxlt = 1;             
-              END IF;
-            ELSE
-              -- Verifica se situação atuel é operante
-						IF rw_situacao_if.cdsitope = 4 THEN
-                -- Verificar se é operante no ispb
-							OPEN cr_crapban(pr_nrispbif => rw_situacao_if.nrispbif);
-                FETCH cr_crapban INTO rw_crapban;
-                -- Se não encontrou banco 
-                IF cr_crapban%FOUND THEN
-                  UPDATE crapban ban
-                     SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-                        ,ban.flgoppag = 1
-								 WHERE ban.nrispbif = rw_situacao_if.nrispbif;						 
-                END IF;
-                -- Fecha cursor
-                CLOSE cr_crapban;
-              -- Se for inoperante
-						ELSIF rw_situacao_if.cdsitope = 5 THEN							 
-                UPDATE crapban ban
-                   SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 0 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-                      ,ban.flgoppag = 0
-							 WHERE ban.nrispbif = rw_situacao_if.nrispbif;
-              END IF;
-            END IF;    
-					-- Se não atualizou nenhum registro
-/*					IF SQL%ROWCOUNT = 0 THEN
-						vr_lista_ispb := vr_lista_ispb || 'ISPB: ' || 
-						                 to_char(rw_situacao_if.nrispbif, '00000000') || '<br/>';
-					END IF;*/
-          END IF;        
+        -- Criar registro 
+        vr_tab_situa_if(vr_tab_situa_if.count()+1).nrispbif := rw_situacao_if.nrispbif;
+        vr_tab_situa_if(vr_tab_situa_if.count()).cdsitope := rw_situacao_if.cdsitope;		 
         END LOOP;
       
-/*		BEGIN
-			IF trim(vr_lista_ispb) IS NOT NULL THEN
-				vr_dsdemail := 'Não foi possível atualizar a situação operacional da IF na camara' ||
-											' PAG: Instituição Financeira não encontrada ou não operante no STR.<br/><br/>' ||
-											vr_lista_ispb;
+      -- Acionar rotina que recebe a pltable
+      pc_proc_pag0101_tb(pr_cdprogra     => pr_cdprogra -- Código do programa
+                        ,pr_nmarqxml     => pr_nmarqxml -- Nome do arquivo xml
+                        ,pr_nmarqlog     => pr_nmarqlog -- Nome do arquivo de log
+                        ,pr_tab_situa_if => vr_tab_situa_if -- Tab com os dados das IF
+                        ,pr_des_erro     => pr_des_erro); -- Retorno OK/NOK
       
-				-- Envia email para o spb
-				gene0003.pc_solicita_email(pr_cdcooper        => 3
-																	,pr_cdprogra        => pr_cdprogra
-																	,pr_des_destino     => 'spb@cecred.coop.br'
-																	,pr_des_assunto     => 'PAG0101 - Erro na atualização da situação operacional da IF'
-																	,pr_des_corpo       => vr_dsdemail
-																	,pr_des_anexo       => ''
-																	,pr_flg_log_batch   => 'N' --> Incluir inf. no log
-																	,pr_des_erro        => vr_dscritic);
-				--Se ocorreu erro
-				IF trim(vr_dscritic) IS NOT NULL THEN
-					--Levantar Excecao
-					RAISE vr_exc_erro;
-				END IF;
-			END IF;
-    EXCEPTION
-			WHEN vr_exc_erro THEN
-        -- Grava erro em log
-        btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                   pr_nmarqlog     => vr_nmarqlog,
-                                   pr_ind_tipo_log => 1, -- Normal
-                                   pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR - HH24:MI:SS')||' - ' ||
-                                                      pr_cdprogra || ' - PAG0101            --> ' ||
-                                                      'Arquivo: ' || pr_nmarqxml || 
-																											'. Codigo Erro: Erro ao enviar email ' || vr_dscritic);
-    END;
-	*/		
-		-- Execução OK
-		pr_des_erro := 'OK';
 		  -- Efetuar commit
 		  COMMIT;
 		EXCEPTION
