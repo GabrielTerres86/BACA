@@ -386,20 +386,17 @@ function formataTabelaTeds() {
     //ordemInicial = [[0,0]];	
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '95px';
-    arrayLargura[1] = '95px';
-    arrayLargura[2] = '95px';
-    arrayLargura[3] = '40px';
-    arrayLargura[4] = '40px';
-    arrayLargura[5] = '95px';
-    arrayLargura[6] = '95px';
-    arrayLargura[7] = '95px';
-    arrayLargura[8] = '95px';
-    arrayLargura[9] = '95px';
+    arrayLargura[0] = '210px';
+    arrayLargura[1] = '120px';
+    arrayLargura[2] = '60px';
+    arrayLargura[3] = '65px';
+    arrayLargura[4] = '45px';
+    arrayLargura[5] = '90px';
+    arrayLargura[6] = '50px';
 
     var arrayAlinha = new Array();
-    arrayAlinha[0] = 'right';
-    arrayAlinha[1] = 'right';
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'center';
     arrayAlinha[2] = 'center';
     arrayAlinha[3] = 'center';
     arrayAlinha[4] = 'center';
@@ -409,14 +406,13 @@ function formataTabelaTeds() {
     var metodoTabela = '';
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 
-
     /********************
 	 FORMATA COMPLEMENTO	
 	*********************/
     // complemento linha 1
     var linha1 = $('ul.complemento', '#linha1').css({ 'margin-left': '1px', 'width': '99.5%' });
 
-    $('li:eq(0)', linha1).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
+    $('li:eq(0)', linha1).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
     $('li:eq(1)', linha1).addClass('txtNormal').css({ 'width': '48%' });
     $('li:eq(2)', linha1).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
     $('li:eq(3)', linha1).addClass('txtNormal');
@@ -424,7 +420,7 @@ function formataTabelaTeds() {
     // complemento linha 2
     var linha2 = $('ul.complemento', '#linha2').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
 
-    $('li:eq(0)', linha2).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
+    $('li:eq(0)', linha2).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
     $('li:eq(1)', linha2).addClass('txtNormal').css({ 'width': '48%' });
     $('li:eq(2)', linha2).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
     $('li:eq(3)', linha2).addClass('txtNormal');
@@ -432,7 +428,7 @@ function formataTabelaTeds() {
     // complemento linha 3
     var linha3 = $('ul.complemento', '#linha3').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
 
-    $('li:eq(0)', linha3).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
+    $('li:eq(0)', linha3).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
     $('li:eq(1)', linha3).addClass('txtNormal').css({ 'width': '48%' });
     $('li:eq(2)', linha3).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
     $('li:eq(3)', linha3).addClass('txtNormal');
@@ -440,7 +436,7 @@ function formataTabelaTeds() {
     // complemento linha 4
     var linha4 = $('ul.complemento', '#linha4').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
 
-    $('li:eq(0)', linha4).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
+    $('li:eq(0)', linha4).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
     $('li:eq(1)', linha4).addClass('txtNormal').css({ 'width': '48%' });
     $('li:eq(2)', linha4).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
     $('li:eq(3)', linha4).addClass('txtNormal');
@@ -448,15 +444,10 @@ function formataTabelaTeds() {
     // complemento linha 5
     var linha5 = $('ul.complemento', '#linha5').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
 
-    $('li:eq(0)', linha5).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
+    $('li:eq(0)', linha5).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
     $('li:eq(1)', linha5).addClass('txtNormal').css({ 'width': '48%' });
     $('li:eq(2)', linha5).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
     $('li:eq(3)', linha5).addClass('txtNormal');
-
-
-    /********************
-	  EVENTO COMPLEMENTO	
-	*********************/
 
     // seleciona o registro que é clicado
     $('table > tbody > tr', divRegistro).die("click").live("click", function () {
@@ -464,11 +455,11 @@ function formataTabelaTeds() {
     });
 
     // verifica o log do registro com duplo click na linha correspondente
-    $('table > tbody > tr', divRegistro).die("dblclick").live("dblclick", function () {
-        buscaConsulta('log');
-    });
+    //$('table > tbody > tr', divRegistro).die("dblclick").live("dblclick", function () {
+    //    buscaConsulta('log');
+    //});
 
-    $('table > tbody > tr:eq(0)', divRegistro).click();
+    //$('table > tbody > tr:eq(0)', divRegistro).click();
 
     return false;
 }
@@ -542,5 +533,22 @@ function controlaPesquisaCartorio() {
     }
     
     mostraPesquisaCartorio('dscartor', frmOpcao);
+    return false;
+}
+
+function selecionaTabela(tr) {
+    registro = tr;
+
+    $('#dscartorio', '.complemento').html($('#nmcartorio', tr).val());
+    $('#nmremetente', '.complemento').html($('#nmremetente', tr).val());
+    $('#cpfcnpj', '.complemento').html($('#cnpj_cpf', tr).val());
+    $('#cdbanpag', '.complemento').html($('#banco', tr).val() + '/' + $('#agencia', tr).val());
+    $('#nrconta', '.complemento').html($('#conta', tr).val());
+    $('#vlted', '.complemento').html($('#valor', tr).val());
+    $('#dtrecebimento', '.complemento').html($('#dtrecebimento', tr).val());
+    $('#dsstatus', '.complemento').html($('#status', tr).val());
+    $('#cdcidade', '.complemento').html($('#cidade', tr).val());
+    $('#cdestado', '.complemento').html($('#estado', tr).val());
+
     return false;
 }

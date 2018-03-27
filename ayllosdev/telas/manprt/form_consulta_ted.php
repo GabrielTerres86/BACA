@@ -12,52 +12,137 @@
 		<table>
 			<thead>
 				<tr>
-					<th><? echo utf8ToHtml('Cart&oacuterio'); ?></th>
-					<th><? echo utf8ToHtml('Nome do remetente');  ?></th>
+					<th><? echo utf8ToHtml('Nome remet.');  ?></th>
 					<th><? echo utf8ToHtml('CPF/CNPJ');  ?></th>
 					<th><? echo utf8ToHtml('Banco');  ?></th>
+					<th><? echo utf8ToHtml('Ag&ecircncia');  ?></th>
 					<th><? echo utf8ToHtml('Conta');  ?></th>
-					<th><? echo utf8ToHtml('Data recebimento');  ?></th>
+					<th><? echo utf8ToHtml('Dt. receb.');  ?></th>
                     <th><? echo utf8ToHtml('Valor');  ?></th>
-                    <th><? echo utf8ToHtml('Cidade');  ?></th>
-                    <th><? echo utf8ToHtml('UF');  ?></th>
-                    <th><? echo utf8ToHtml('Status');  ?></th>
 				</tr>
 			</thead>
 			<tbody>
 				<? foreach( $registro as $r ) { ?>
 					<tr>
-						<td><span><? echo getByTagName($r->tags,'dscartor') ?></span>
-							      <? echo getByTagName($r->tags,'dscartor') ?>
+						
+						<td><span><? echo getByTagName($r->tags,'nmremetente') ?></span>
+							      <? echo getByTagName($r->tags,'nmremetente') ?>
+								  <input type="hidden" id="nmcartorioflgcbdda" name="nmcartorio" value="<? echo getByTagName($r->tags,'nmcartorio') ?>" />
+								  <input type="hidden" id="nmremetente" name="nmremetente" value="<? echo getByTagName($r->tags,'nmremetente') ?>" />
+								  <input type="hidden" id="cnpj_cpf" name="cnpj_cpf" value="<? echo getByTagName($r->tags,'cnpj_cpf') ?>" />
+								  <input type="hidden" id="banco" name="banco" value="<? echo getByTagName($r->tags,'banco') ?>" />
+								  <input type="hidden" id="agencia" name="agencia" value="<? echo getByTagName($r->tags,'agencia') ?>" />
+								  <input type="hidden" id="conta" name="conta" value="<? echo getByTagName($r->tags,'conta') ?>" />
+								  <input type="hidden" id="dtrecebimento" name="dtrecebimento" value="<? echo getByTagName($r->tags,'dtrecebimento') ?>" />
+								  <input type="hidden" id="valor" name="valor" value="<? echo getByTagName($r->tags,'valor') ?>" />
+								  <input type="hidden" id="estado" name="estado" value="<? echo getByTagName($r->tags,'estado') ?>" />
+								  <input type="hidden" id="cidade" name="cidade" value="<? echo getByTagName($r->tags,'cidade') ?>" />
+								  <input type="hidden" id="status" name="status" value="<? echo getByTagName($r->tags,'status') ?>" />
 						</td>
-						<td><span><? echo getByTagName($r->tags,'nmremet') ?></span>
-							      <? echo getByTagName($r->tags,'nmremet') ?>
+                        <td><span><? echo getByTagName($r->tags,'cnpj_cpf') ?></span>
+							      <? echo getByTagName($r->tags,'cnpj_cpf') ?>
 						</td>
-                        <td><span><? echo getByTagName($r->tags,'nrdocmto') ?></span>
-							      <? echo getByTagName($r->tags,'nrdocmto') ?>
+                        <td><span><? echo getByTagName($r->tags,'banco') ?></span>
+							      <? echo getByTagName($r->tags,'banco') ?>
 						</td>
-                        <td><span><? echo getByTagName($r->tags,'nrdconta') ?></span>
-							      <? echo getByTagName($r->tags,'nrdconta') ?>
+						<td><span><? echo getByTagName($r->tags,'agencia') ?></span>
+							      <? echo getByTagName($r->tags,'agencia') ?>
 						</td>
-						<td><span><? echo dataParaTimestamp(getByTagName($r->tags,'dtrecebi')) ?></span>
-							      <? echo getByTagName($r->tags,'dtrecebi') ?>
+						<td><span><? echo getByTagName($r->tags,'conta') ?></span>
+							      <? echo getByTagName($r->tags,'conta') ?>
 						</td>
-						<td><span><? echo converteFloat(getByTagName($r->tags,'vldpagto'),'MOEDA')  ?></span>
-							      <? echo formataMoeda(getByTagName($r->tags,'vldpagto')) ?>
+						<td><span><? echo getByTagName($r->tags,'dtrecebimento') ?></span>
+							      <? echo getByTagName($r->tags,'dtrecebimento') ?>
 						</td>
-                        <td><span><? echo getByTagName($r->tags,'dscidade') ?></span>
-							      <? echo getByTagName($r->tags,'dscidade') ?>
+						<td><span><? echo getByTagName($r->tags,'valor') ?></span>
+							      <? echo getByTagName($r->tags,'valor') ?>
 						</td>
-                        <td><span><? echo getByTagName($r->tags,'dsestado') ?></span>
-							      <? echo getByTagName($r->tags,'dsestado') ?>
-						</td>
-                        <td><span><? echo getByTagName($r->tags,'indconci') ?></span>
-							      <? echo getByTagName($r->tags,'indconci') ?>
-						</td>
+						
 					</tr>
 			<? } ?>	
 			</tbody>
 		</table>
+	</div>
+	<div id="divPesquisaRodape" class="divPesquisaRodape">
+		<table>	
+			<tr>
+				<td>
+					<?
+						
+						//
+						if (isset($qtregist) and $qtregist == 0) $nriniseq = 0;
+						
+						// Se a paginação não está na primeira, exibe botão voltar
+						if ($nriniseq > 1) { 
+							?> <a class='paginacaoAnt'><<< Anterior</a> <? 
+						} else {
+							?> &nbsp; <?
+						}
+					?>
+				</td>
+				<td>
+					<?
+						if (isset($nriniseq)) { 
+							?> Exibindo <? echo $nriniseq; ?> at&eacute; <? if (($nriniseq + $nrregist) > $qtregist) { echo $qtregist; } else { echo ($nriniseq + $nrregist - 1); } ?> de <? echo $qtregist; ?><?
+						}
+					?>
+				</td>
+				<td>
+					<?
+						// Se a paginação não está na &uacute;ltima página, exibe botão proximo
+						if ($qtregist > ($nriniseq + $nrregist - 1)) {
+							?> <a class='paginacaoProx'>Pr&oacute;ximo >>></a> <?
+						} else {
+							?> &nbsp; <?
+						}
+					?>			
+				</td>
+			</tr>
+		</table>
+	</div>
+	<div id="linha1">
+	<ul class="complemento">
+	<li><? echo utf8ToHtml('Cart&oacuterio:'); ?></li>
+	<li id="dscartorio"></li>
+	<li><? echo utf8ToHtml('Valor da Ted:'); ?></li>
+	<li id="vlted"></li>
+	</ul>
+	</div>
+
+	<div id="linha2">
+	<ul class="complemento">
+	<li><? echo utf8ToHtml('Nome do remetente:'); ?></li>
+	<li id="nmremetente"></li>
+	<li><? echo utf8ToHtml('Cpf/Cnpj:'); ?></li>
+	<li id="cpfcnpj"></li>
+	</ul>
+	</div>	
+	
+	<div id="linha3">
+	<ul class="complemento">
+	<li><? echo utf8ToHtml('Banco/Ag&ecircncia:'); ?></li>
+	<li id="cdbanpag"></li>
+	<li><? echo utf8ToHtml('Conta:'); ?></li>
+	<li id="nrconta"></li>
+	</ul>
+	</div>	
+
+	<div id="linha4">
+	<ul class="complemento">
+	<li><? echo utf8ToHtml('Data:'); ?></li>
+	<li id="dtrecebimento"></li>
+	<li><? echo utf8ToHtml('Status:'); ?></li>
+	<li id="dsstatus"></li>
+	</ul>
+	</div>	
+
+	<div id="linha5">
+	<ul class="complemento">
+	<li><? echo utf8ToHtml('Cidade:'); ?></li>
+	<li id="cdcidade"></li>
+	<li><? echo utf8ToHtml('Estado:'); ?></li>
+	<li id="cdestado"></li>
+	</ul>
 	</div>
 </form>
 
@@ -85,5 +170,5 @@
 	});	
 	
 	$('#divRegistros','#divTela').formataTabela();
-	
+	$('#divPesquisaRodape','#divTela').formataRodapePesquisa();
 </script>
