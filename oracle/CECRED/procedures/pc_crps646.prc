@@ -1,10 +1,9 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-         pc_crps646 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                    ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
-                    ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
-                    ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
-                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                    ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps646 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+                                              ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
+                                              ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
+                                              ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
+                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                              ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
     /* .............................................................................
 
@@ -12,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Carlos Henrique Weinhold - CECRED
-       Data    : JULHO/2013
+       Data    : JULHO/2013                               Ultima atualizacao: 19/02/2018
 
    Dados referentes ao programa:
 
@@ -27,7 +26,13 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
               16/12/2013 - Conversao Progress => PL/SQL (Andrino - RKAM).
 
-
+              19/02/2018 - Melhora da query principal da tabela cob
+                         - Ajustando nome do módulo logado
+                         - No caso de erro de programa gravar tabela especifica de log 
+                         - Ajuste mensagem de erro para inicio e fim de programa
+                         - Inclusão log nas exceptions
+                         - Não será forçada a utilização do índice
+                           (Belli - Envolti - Chamado 769624)
 
 ............................................................................ */
 
@@ -41,7 +46,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
-      vr_exc_fimprg EXCEPTION;
+      -- Excluida rotina condição de execeção vr_exc_fimprg - Chamado 769624 - 19/02/2018 
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
 
@@ -68,6 +73,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
+      -- Melhora da query principal da tabela cob - Chamado 769624 - 19/02/2018
       -- Busca os titulos a receber
       CURSOR cr_crapcob (pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
         SELECT crapcop.nmrescop
@@ -83,7 +89,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
                crapceb,
                crapcco,
                crapcop
-         WHERE crapcop.cdcooper <> 3
+         WHERE crapcop.cdcooper IN 
+                         ( SELECT t.cdcooper FROM crapcop t 
+                           WHERE  t.flgativo = 1 
+                           AND    t.cdcooper <> 3 )
            AND crapcco.cdcooper = crapcop.cdcooper
            AND crapcco.cddbanco = 085
            AND crapcco.flgregis = 1
@@ -100,7 +109,34 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       ------------------------------- VARIAVEIS -------------------------------
 
-      --------------------------- SUBROTINAS INTERNAS --------------------------
+      --------------------------- SUBROTINAS INTERNAS -------------------------- 
+
+    -- Inclusao do log padrão - Chamado 769624 - 19/02/2018
+    -- Controla Controla log em banco de dados
+    PROCEDURE pc_controla_log_programa(pr_dstiplog      IN VARCHAR2, -- Tipo de Log
+                                       pr_tpocorrencia  IN NUMBER,   -- Tipo de ocorrencia
+                                       pr_dscritic      IN VARCHAR2, -- Descrição do Log
+                                       pr_cdcritic      IN NUMBER,   -- Codigo da crítica
+                                       pr_cdcriticidade IN VARCHAR2 DEFAULT 0)
+    IS
+      vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+    BEGIN         
+      --> Controlar geração de log de execução dos jobs                                
+      CECRED.pc_log_programa(pr_dstiplog      => pr_dstiplog, 
+                             pr_cdprograma    => vr_cdprogra, 
+                             pr_cdcooper      => pr_cdcooper, 
+                             pr_tpexecucao    => 1, --1-Batch
+                             pr_tpocorrencia  => pr_tpocorrencia,
+                             pr_cdcriticidade => pr_cdcriticidade,
+                             pr_dsmensagem    => pr_dscritic,
+                             pr_cdmensagem    => pr_cdcritic,
+                             pr_idprglog      => vr_idprglog);
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log  
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+    END pc_controla_log_programa;
+    
 	    --Procedure que escreve linha no arquivo CLOB
 	    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
       BEGIN
@@ -114,7 +150,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       -- Incluir nome do módulo logado
       GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
-                                ,pr_action => null);
+                                ,pr_action => null);                                      
+
+      --Programa iniciado - Chamado 769624 - 19/02/2018
+      pc_controla_log_programa('I', NULL, NULL, 0, NULL);
+
       -- Verifica se a cooperativa esta cadastrada
       OPEN cr_crapcop;
       FETCH cr_crapcop
@@ -184,7 +224,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
           -- Atualiza variavel informando que tem informacoes para gerar o arquivo
           vr_flgdados := TRUE;
         END IF;
-
+        
         -- Insere os detalhes
         pc_escreve_xml('<detalhe>'||
                         '<cdagenci>'||rw_crapcob.cdagenci||'</cdagenci>'  ||
@@ -210,6 +250,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       ddda0001.pc_titulos_a_pagar(pr_dtvcnini => rw_crapdat.dtmvtolt,
                                   pr_tt_pagar => vr_tt_pagar);
+                                  
+      -- Retorna nome do módulo logado - Chamado 769624 - 19/02/2018
+      GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
+                                ,pr_action => null);  
 
       -- Se existir registros
       vr_index := vr_tt_pagar.first;
@@ -282,6 +326,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
         END IF;
+        -- Retorna nome do módulo logado - Chamado 769624 - 19/02/2018
+        GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
+                                  ,pr_action => null);  
       END IF;
 
       -- Liberando a memória alocada pro CLOB
@@ -296,29 +343,14 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                ,pr_infimsol => pr_infimsol
                                ,pr_stprogra => pr_stprogra);
 
+      --Programa finalizado - Chamado 769624 - 19/02/2018
+      pc_controla_log_programa('F', NULL, NULL, 0, NULL);
+
       -- Salvar informações atualizadas
       COMMIT;
 
     EXCEPTION
-      WHEN vr_exc_fimprg THEN
-        -- Se foi retornado apenas código
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || vr_dscritic );
-        -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-        btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdprogra => vr_cdprogra
-                                 ,pr_infimsol => pr_infimsol
-                                 ,pr_stprogra => pr_stprogra);
-        -- Efetuar commit
-        COMMIT;
+      -- Excluida rotina condição de execeção vr_exc_fimprg - Chamado 769624 - 19/02/2018      
       WHEN vr_exc_saida THEN
         -- Se foi retornado apenas código
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
@@ -328,16 +360,28 @@ CREATE OR REPLACE PROCEDURE CECRED.
         -- Devolvemos código e critica encontradas das variaveis locais
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
+
+        --Grava erro na tabela de logs
+        pc_controla_log_programa('O', 1, pr_dscritic, pr_cdcritic, 1);
+
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - Chamado 769624 - 19/02/2018 
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Efetuar retorno do erro não tratado
-        pr_cdcritic := 0;
-        pr_dscritic := sqlerrm;
+        -- Ajuste mensagem de erro - Chamado 769624 - 19/02/2018
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ', crps646 erro:' ||sqlerrm; 
+
+
+        --Grava erro na tabela de logs
+        pc_controla_log_programa('O', 2, pr_dscritic, pr_cdcritic, 2);
+
         -- Efetuar rollback
         ROLLBACK;
     END;
 
   END pc_crps646;
 /
-
