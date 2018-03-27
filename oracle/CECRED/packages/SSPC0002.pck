@@ -744,7 +744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       FOR rw_exc_neg_2 IN cr_exc_neg_2 LOOP
         -- Se for a primeira vez, deve-se colocar o texto padrao
         IF NOT vr_excecao THEN
-          pr_dstexto_dias :=  pr_dstexto_dias || '*_*Exceto o(s) estado(s) do ';
+          pr_dstexto_dias :=  pr_dstexto_dias || ' - Exceto o(s) estado(s) do ';
           vr_excecao := TRUE;
         ELSE
           pr_dstexto_dias :=  pr_dstexto_dias || '; ';
