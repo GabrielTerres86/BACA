@@ -12,6 +12,7 @@
 						    para dar foco ao retornar uma consulta de tela - (Evandro - RKAM)
                27/07/2016 - Corrigi o uso da variavel $glbvars. SD 479874 (Carlos R.)
 			   22/02/2018 - Alteracoes referentes ao uso do Ctrl+C Ctrl+V no CPF/CNPJ do cooperado (Lucas Ranghetti #851205)
+			   26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
 	
   ************************************************************************************/
 ?>
@@ -19,6 +20,8 @@
   <input type="hidden" name="hdnCooper" id="hdnCooper" value="<?php echo ( isset($glbvars["cdcooper"]) ) ? $glbvars["cdcooper"] : 0; ?>" />
 	<input type="hidden" name="hdnServSM" id="hdnServSM" value="<?php echo($GEDServidor); ?>" />
 	<input type="hidden" name="hdnFlgdig" id="hdnFlgdig" />
+  <input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+  <input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
   <label for="nrdconta">Conta/dv:</label>
   <input name="nrdconta" type="text" class="FirstInput" tabindex="1000" id="nrdconta" />
   <label for="nrdctitg">Conta/ITG:</label>

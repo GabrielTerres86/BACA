@@ -50,6 +50,8 @@
  *
  *                12/09/2017 - Tratamento para não permitir o prosseguimento da rotina caso ocorra erro de digito 
  *                             para a referencia no caso de sicredi sim (Lucas Ranghetti #751239)
+ *
+ *                26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
  */
 
 // Definição de algumas variáveis globais 
@@ -77,7 +79,12 @@ function controlaOperacao( novaOp ) {
 
 	operacao = ( typeof novaOp != 'undefined' ) ? novaOp : operacao;	
 	
-	
+	// Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCabAutori").val() == 1) {
+        $("#nrdconta","#frmCabAutori").val($("#crm_nrdconta","#frmCabAutori").val());
+		nrdconta = $("#crm_nrdconta","#frmCabAutori").val();
+		obtemCabecalho();
+    }
 	var mensagem = '';
 	var cdhistor = normalizaNumero($('#cdhistor','#frmAutori').val());
     var cdrefere = $('#cdrefere','#frmAutori').val();

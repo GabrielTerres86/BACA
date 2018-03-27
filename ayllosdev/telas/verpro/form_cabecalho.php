@@ -20,10 +20,15 @@
 					05/07/2016 - Inclusão protocolo 16, 17, 18, 19 (PRJ338 - Lucas Lunelli)
 					
 					23/03/2017 - Inclusão protocolo 20. (PRJ321 - Reinert)
+
+                    26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
+
  *********************************************************************************************/
 ?>
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;" style="display:none" >
 
+    <input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+    <input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
     <label for="nrdconta">Conta:</label>
     <input type="text" id="nrdconta" name="nrdconta" value="<? echo $nrdconta; ?>" />
     <a style="margin-top:5px;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
