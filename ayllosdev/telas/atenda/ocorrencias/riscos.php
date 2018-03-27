@@ -132,7 +132,6 @@
 				<? 
 				foreach ($listaRiscos as $risco) {
 				?>
-
 					<tr>
 						<td><? echo aplicaMascara(getByTagName($risco->tags, 'cpf_cnpj')); ?></td>
 						<td><? echo formataContaDV(getByTagName($risco->tags, 'numero_conta')); ?></td>
@@ -147,10 +146,9 @@
 						<td><? echo getByTagName($risco->tags, 'risco_cpf'); ?></td>
 						<td><? echo getByTagName($risco->tags, 'risco_grupo'); ?></td>
 						<td><? echo getByTagName($risco->tags, 'risco_final'); ?></td>
-					</tr>
-
-				<?php
-				}
+					</tr>					
+				<?
+					}
 				?>
 			</tbody>
 		</table>
