@@ -29,6 +29,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
     vr_inrisco_cpf      NUMBER(2) := NULL;
     vr_inrisco_grupo    NUMBER(2) := NULL;
     vr_inrisco_final    NUMBER(2) := NULL;
+    vr_inrisco_refin    NUMBER(2) := NULL;
 
     vr_valor_arrasto    NUMBER;
 
@@ -86,10 +87,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                   WHEN ass.dsnivris = 'HH' THEN 10
                ELSE NULL END innivris_cta
            , 2 innivris
+           , CASE WHEN ass.inrisctl = 'A'  THEN 2
+                  WHEN ass.inrisctl = 'B'  THEN 3
+                  WHEN ass.inrisctl = 'C'  THEN 4
+                  WHEN ass.inrisctl = 'D'  THEN 5
+                  WHEN ass.inrisctl = 'E'  THEN 6
+                  WHEN ass.inrisctl = 'F'  THEN 7
+                  WHEN ass.inrisctl = 'G'  THEN 8
+                  WHEN ass.inrisctl = 'H'  THEN 9
+                  WHEN ass.inrisctl = 'HH' THEN 10
+               ELSE NULL END innivris_ctl
         FROM crapass ass
            , crapgrp grp
        WHERE ass.cdcooper = pr_cdcooper
-         AND ass.dtdemiss IS NULL
+         --AND ass.dtdemiss IS NULL ???
          AND ass.cdcooper = grp.cdcooper(+)
          AND ass.nrdconta = grp.nrctasoc(+)
          AND ass.nrcpfcgc = grp.nrcpfcgc(+)
@@ -109,10 +120,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
            , ris.nrdgrupo
            , ris.dtrefere
            , ris.dtdrisco
+           , ris.cdorigem
+           , ris.inddocto
            , ris.vldivida
            , ris.qtdiaatr
            , ris.innivris
            , ris.innivori
+           , NULL /*epr.inrisco_refin*/ inrisco_refin
            , CASE WHEN ass.dsnivris = 'A'  THEN 2
                   WHEN ass.dsnivris = 'B'  THEN 3
                   WHEN ass.dsnivris = 'C'  THEN 4
@@ -123,6 +137,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                   WHEN ass.dsnivris = 'H'  THEN 9
                   WHEN ass.dsnivris = 'HH' THEN 10
                ELSE NULL END innivris_cta
+           , CASE WHEN ass.inrisctl = 'A'  THEN 2
+                  WHEN ass.inrisctl = 'B'  THEN 3
+                  WHEN ass.inrisctl = 'C'  THEN 4
+                  WHEN ass.inrisctl = 'D'  THEN 5
+                  WHEN ass.inrisctl = 'E'  THEN 6
+                  WHEN ass.inrisctl = 'F'  THEN 7
+                  WHEN ass.inrisctl = 'G'  THEN 8
+                  WHEN ass.inrisctl = 'H'  THEN 9
+                  WHEN ass.inrisctl = 'HH' THEN 10
+               ELSE NULL END innivris_ctl                 
            , CASE WHEN wpr.dsnivori = 'A'  THEN 2
                   WHEN wpr.dsnivori = 'B'  THEN 3
                   WHEN wpr.dsnivori = 'C'  THEN 4
@@ -133,16 +157,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                   WHEN wpr.dsnivori = 'H'  THEN 9
                   WHEN wpr.dsnivori = 'HH' THEN 10
                ELSE 2 END innivori_ctr
+           , CASE WHEN wpr.dsnivris = 'A'  THEN 2
+                  WHEN wpr.dsnivris = 'B'  THEN 3
+                  WHEN wpr.dsnivris = 'C'  THEN 4
+                  WHEN wpr.dsnivris = 'D'  THEN 5
+                  WHEN wpr.dsnivris = 'E'  THEN 6
+                  WHEN wpr.dsnivris = 'F'  THEN 7
+                  WHEN wpr.dsnivris = 'G'  THEN 8
+                  WHEN wpr.dsnivris = 'H'  THEN 9
+                  WHEN wpr.dsnivris = 'HH' THEN 10
+               ELSE 2 END innivris_ctr                
         FROM crapris ris
            , crapass ass
            , crawepr wpr
+           , crapepr epr
        WHERE ris.cdcooper = ass.cdcooper
          AND ris.nrdconta = ass.nrdconta
          AND ris.cdcooper = wpr.cdcooper
          AND ris.nrdconta = wpr.nrdconta
          AND ris.nrctremp = wpr.nrctremp
-         AND ris.cdmodali IN(299,499) -- Empréstimos
-         AND ris.inddocto = 1
+         AND ris.cdcooper = epr.cdcooper
+         AND ris.nrdconta = epr.nrdconta
+         AND ris.nrctremp = epr.nrctremp         
+         AND ris.cdmodali IN(299,499) -- Empréstimos         
+        -- AND ris.inddocto = 1
          AND ris.cdorigem = 3
          AND ris.cdcooper = pr_cdcooper
          AND ris.dtrefere = rw_dat.dtmvtoan;
@@ -157,6 +195,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
            , ris.nrdgrupo
            , ris.dtrefere
            , ris.dtdrisco
+           , ris.cdorigem
+           , ris.inddocto           
            , ris.qtdiaatr
            , ris.innivris
            , ris.innivori
@@ -170,12 +210,29 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                   WHEN ass.dsnivris = 'H'  THEN 9
                   WHEN ass.dsnivris = 'HH' THEN 10
                ELSE NULL END innivris_cta
+           , CASE WHEN ass.inrisctl = 'A'  THEN 2
+                  WHEN ass.inrisctl = 'B'  THEN 3
+                  WHEN ass.inrisctl = 'C'  THEN 4
+                  WHEN ass.inrisctl = 'D'  THEN 5
+                  WHEN ass.inrisctl = 'E'  THEN 6
+                  WHEN ass.inrisctl = 'F'  THEN 7
+                  WHEN ass.inrisctl = 'G'  THEN 8
+                  WHEN ass.inrisctl = 'H'  THEN 9
+                  WHEN ass.inrisctl = 'HH' THEN 10
+               ELSE NULL END innivris_ctl                 
         FROM crapris ris
            , crapass ass
        WHERE ris.cdcooper = ass.cdcooper
          AND ris.nrdconta = ass.nrdconta
-         AND ris.cdmodali IN(101,201,1901) -- Limite/ ADP
-         AND ris.inddocto = 1
+         AND ((ris.cdmodali IN(101,201) AND ris.inddocto = 1) 
+              OR (ris.cdmodali = 1901 AND ris.inddocto = 3     -- ADP/Limite
+                  AND NOT EXISTS (SELECT 1
+                                    FROM crapris 
+                                   WHERE cdcooper = pr_cdcooper
+                                     AND dtrefere = rw_dat.dtmvtoan
+                                     AND nrdconta = ris.nrdconta
+                                     AND nrctremp = ris.nrctremp
+                                     AND cdmodali IN(101,201))))
          AND ris.cdcooper = pr_cdcooper
          AND ris.dtrefere = rw_dat.dtmvtoan;
 
@@ -186,23 +243,26 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
            , nrdconta
            , nrctremp
            , cdmodali
+           , cdorigem
+           , inddocto           
            , nrdgrupo
            , dtrefere
            , min(dtdrisco) dtdrisco
-           , cdorigem
            , qtdiaatr
            , innivris           
            , innivris_cta
+           , innivris_ctl
       FROM (           
       SELECT DISTINCT ris.cdcooper
            , ris.nrcpfcgc
            , ris.nrdconta
            , bdt.nrctrlim nrctremp
            , ris.cdmodali
+           , ris.cdorigem
+           , ris.inddocto           
            , ris.nrdgrupo
            , ris.dtrefere
            , max(ris.dtdrisco) dtdrisco
-           , ris.cdorigem
            , MAX(ris.qtdiaatr) qtdiaatr
            , ris.innivris           
            , CASE WHEN ass.dsnivris = 'A'  THEN 2
@@ -215,6 +275,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                   WHEN ass.dsnivris = 'H'  THEN 9
                   WHEN ass.dsnivris = 'HH' THEN 10
                ELSE NULL END innivris_cta
+           , CASE WHEN ass.inrisctl = 'A'  THEN 2
+                  WHEN ass.inrisctl = 'B'  THEN 3
+                  WHEN ass.inrisctl = 'C'  THEN 4
+                  WHEN ass.inrisctl = 'D'  THEN 5
+                  WHEN ass.inrisctl = 'E'  THEN 6
+                  WHEN ass.inrisctl = 'F'  THEN 7
+                  WHEN ass.inrisctl = 'G'  THEN 8
+                  WHEN ass.inrisctl = 'H'  THEN 9
+                  WHEN ass.inrisctl = 'HH' THEN 10
+               ELSE NULL END innivris_ctl                 
         FROM crapris ris
            , crapass ass
            , crapbdt bdt -- Desconto títulos
@@ -223,7 +293,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
          AND ris.cdcooper = bdt.cdcooper
          AND ris.nrdconta = bdt.nrdconta               
          AND ris.nrctremp = bdt.nrborder
-         AND ris.inddocto = 1
+         --AND ris.inddocto = 1
          AND ris.cdmodali = 301 -- Desconto títulos
          AND ris.vldivida > vr_valor_arrasto -- Materialidade(Arrasto)
          AND ris.cdcooper = pr_cdcooper
@@ -233,9 +303,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
            , ris.nrdconta
            , bdt.nrctrlim
            , ris.cdmodali
+           , ris.cdorigem
+           , ris.inddocto           
            , ris.nrdgrupo
            , ris.dtrefere
-           , ris.cdorigem
            , ris.innivris
            , CASE WHEN ass.dsnivris = 'A'  THEN 2
                   WHEN ass.dsnivris = 'B'  THEN 3
@@ -247,16 +318,27 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                   WHEN ass.dsnivris = 'H'  THEN 9
                   WHEN ass.dsnivris = 'HH' THEN 10
                ELSE NULL END
+           , CASE WHEN ass.inrisctl = 'A'  THEN 2
+                  WHEN ass.inrisctl = 'B'  THEN 3
+                  WHEN ass.inrisctl = 'C'  THEN 4
+                  WHEN ass.inrisctl = 'D'  THEN 5
+                  WHEN ass.inrisctl = 'E'  THEN 6
+                  WHEN ass.inrisctl = 'F'  THEN 7
+                  WHEN ass.inrisctl = 'G'  THEN 8
+                  WHEN ass.inrisctl = 'H'  THEN 9
+                  WHEN ass.inrisctl = 'HH' THEN 10
+               ELSE NULL END
     UNION
       SELECT DISTINCT ris.cdcooper
            , ris.nrcpfcgc
            , ris.nrdconta
            , bdc.nrctrlim nrctremp
            , ris.cdmodali
+           , ris.cdorigem
+           , ris.inddocto           
            , ris.nrdgrupo
            , ris.dtrefere
            , max(ris.dtdrisco) dtdrisco
-           , ris.cdorigem
            , MAX(ris.qtdiaatr) qtdiaatr
            , ris.innivris
            , CASE WHEN ass.dsnivris = 'A'  THEN 2
@@ -269,6 +351,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                   WHEN ass.dsnivris = 'H'  THEN 9
                   WHEN ass.dsnivris = 'HH' THEN 10
                ELSE NULL END innivris_cta
+           , CASE WHEN ass.inrisctl = 'A'  THEN 2
+                  WHEN ass.inrisctl = 'B'  THEN 3
+                  WHEN ass.inrisctl = 'C'  THEN 4
+                  WHEN ass.inrisctl = 'D'  THEN 5
+                  WHEN ass.inrisctl = 'E'  THEN 6
+                  WHEN ass.inrisctl = 'F'  THEN 7
+                  WHEN ass.inrisctl = 'G'  THEN 8
+                  WHEN ass.inrisctl = 'H'  THEN 9
+                  WHEN ass.inrisctl = 'HH' THEN 10
+               ELSE NULL END innivris_ctl                 
         FROM crapris ris
            , crapass ass
            , crapbdc bdc -- Desconto cheques
@@ -277,7 +369,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
          AND ris.cdcooper = bdc.cdcooper
          AND ris.nrdconta = bdc.nrdconta         
          AND ris.nrctremp = bdc.nrborder
-         AND ris.inddocto = 1
+         --AND ris.inddocto = 1
          AND ris.cdmodali = 302 -- Desconto cheques
          AND ris.vldivida > vr_valor_arrasto -- Materialidade(Arrasto)
          AND ris.cdcooper = pr_cdcooper
@@ -287,9 +379,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
            , ris.nrdconta
            , bdc.nrctrlim
            , ris.cdmodali
+           , ris.cdorigem
+           , ris.inddocto           
+           , ris.cdorigem
+           , ris.inddocto           
            , ris.nrdgrupo
            , ris.dtrefere
-           , ris.cdorigem
            , ris.innivris
            , CASE WHEN ass.dsnivris = 'A'  THEN 2
                   WHEN ass.dsnivris = 'B'  THEN 3
@@ -300,18 +395,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                   WHEN ass.dsnivris = 'G'  THEN 8
                   WHEN ass.dsnivris = 'H'  THEN 9
                   WHEN ass.dsnivris = 'HH' THEN 10
+               ELSE NULL END
+           , CASE WHEN ass.inrisctl = 'A'  THEN 2
+                  WHEN ass.inrisctl = 'B'  THEN 3
+                  WHEN ass.inrisctl = 'C'  THEN 4
+                  WHEN ass.inrisctl = 'D'  THEN 5
+                  WHEN ass.inrisctl = 'E'  THEN 6
+                  WHEN ass.inrisctl = 'F'  THEN 7
+                  WHEN ass.inrisctl = 'G'  THEN 8
+                  WHEN ass.inrisctl = 'H'  THEN 9
+                  WHEN ass.inrisctl = 'HH' THEN 10
                ELSE NULL END)
     GROUP BY cdcooper
            , nrcpfcgc
            , nrdconta
            , nrctremp
            , cdmodali
+           , cdorigem
+           , inddocto           
            , nrdgrupo
            , dtrefere
-           , cdorigem
            , qtdiaatr
            , innivris
-           , innivris_cta;
+           , innivris_cta
+           , innivris_ctl;
 
     -- Cursor contaX
     CURSOR cr_contaX(pr_cdcooper IN crapass.cdcooper%TYPE) IS
@@ -320,7 +427,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
            , risX.nrdconta
            , risX.nrdgrupo
            , MAX(risX.qtdiaatr) qtdiaatr
-           , MAX(innivris_cta) innivris_cta           
+           , MAX(innivris_cta) innivris_cta   
+           , MAX(innivris_ctl) innivris_ctl
               -- Emprestimos
         FROM (SELECT ris.cdcooper
                    , ris.nrcpfcgc
@@ -340,6 +448,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                           WHEN ass.dsnivris = 'H'  THEN 9
                           WHEN ass.dsnivris = 'HH' THEN 10
                       ELSE NULL END) innivris_cta
+                   , CASE WHEN ass.inrisctl = 'A'  THEN 2
+                         WHEN ass.inrisctl = 'B'  THEN 3
+                         WHEN ass.inrisctl = 'C'  THEN 4
+                         WHEN ass.inrisctl = 'D'  THEN 5
+                         WHEN ass.inrisctl = 'E'  THEN 6
+                         WHEN ass.inrisctl = 'F'  THEN 7
+                         WHEN ass.inrisctl = 'G'  THEN 8
+                         WHEN ass.inrisctl = 'H'  THEN 9
+                         WHEN ass.inrisctl = 'HH' THEN 10
+                      ELSE NULL END innivris_ctl
                 FROM crapris ris
                    , crapass ass
                    , crawepr wpr
@@ -349,7 +467,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                  AND ris.nrdconta = wpr.nrdconta
                  AND ris.nrctremp = wpr.nrctremp
                  AND ris.cdmodali IN(299,499)
-                 AND ris.inddocto = 1
+                 --AND ris.inddocto = 1
                  AND ris.cdorigem = 3
                  AND ris.cdcooper = pr_cdcooper
                  AND ris.dtrefere = rw_dat.dtmvtoan
@@ -364,6 +482,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                             , cdorigem
                             , MAX(qtdiaatr) qtdiaatr
                             , MAX(innivris_cta) innivris_cta
+                            , MAX(innivris_ctl) innivris_ctl
                        FROM ( SELECT DISTINCT ris.cdcooper
                                             , ris.nrcpfcgc
                                             , ris.nrdconta
@@ -382,6 +501,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                                     WHEN ass.dsnivris = 'H'  THEN 9
                                                     WHEN ass.dsnivris = 'HH' THEN 10
                                                 ELSE NULL END) innivris_cta
+                                            , CASE WHEN ass.inrisctl = 'A'  THEN 2
+                                                  WHEN ass.inrisctl = 'B'  THEN 3
+                                                  WHEN ass.inrisctl = 'C'  THEN 4
+                                                  WHEN ass.inrisctl = 'D'  THEN 5
+                                                  WHEN ass.inrisctl = 'E'  THEN 6
+                                                  WHEN ass.inrisctl = 'F'  THEN 7
+                                                  WHEN ass.inrisctl = 'G'  THEN 8
+                                                  WHEN ass.inrisctl = 'H'  THEN 9
+                                                  WHEN ass.inrisctl = 'HH' THEN 10
+                                               ELSE NULL END innivris_ctl                                                  
                                          FROM crapris ris
                                             , crapass ass
                                             , crapbdt bdt -- Desconto títulos
@@ -390,7 +519,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                           AND ris.cdcooper = bdt.cdcooper
                                           AND ris.nrdconta = bdt.nrdconta               
                                           AND ris.nrctremp = bdt.nrborder
-                                          AND ris.inddocto = 1
+                                          --AND ris.inddocto = 1
                                           AND ris.cdmodali = 301 -- Desconto títulos
                                           AND ris.vldivida > vr_valor_arrasto -- Materialidade(Arrasto)
                                           AND ris.cdcooper = pr_cdcooper
@@ -414,6 +543,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                                              WHEN ass.dsnivris = 'H'  THEN 9
                                                              WHEN ass.dsnivris = 'HH' THEN 10
                                                          ELSE NULL END) innivris_cta
+                                            , CASE WHEN ass.inrisctl = 'A'  THEN 2
+                                                  WHEN ass.inrisctl = 'B'  THEN 3
+                                                  WHEN ass.inrisctl = 'C'  THEN 4
+                                                  WHEN ass.inrisctl = 'D'  THEN 5
+                                                  WHEN ass.inrisctl = 'E'  THEN 6
+                                                  WHEN ass.inrisctl = 'F'  THEN 7
+                                                  WHEN ass.inrisctl = 'G'  THEN 8
+                                                  WHEN ass.inrisctl = 'H'  THEN 9
+                                                  WHEN ass.inrisctl = 'HH' THEN 10
+                                               ELSE NULL END innivris_ctl                                                           
                                          FROM crapris ris
                                             , crapass ass
                                             , crapbdc bdc -- Desconto cheques
@@ -422,7 +561,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                           AND ris.cdcooper = bdc.cdcooper
                                           AND ris.nrdconta = bdc.nrdconta         
                                           AND ris.nrctremp = bdc.nrborder
-                                          AND ris.inddocto = 1
+                                          --AND ris.inddocto = 1
                                           AND ris.cdmodali = 302 -- Desconto cheques
                                           AND ris.vldivida > vr_valor_arrasto -- Materialidade(Arrasto)
                                           AND ris.cdcooper = pr_cdcooper
@@ -436,12 +575,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                             , cdorigem
                                           ) risX
        -- Somentes as contasX que não possuem Limite/ ADP
-       WHERE NOT EXISTS (SELECT 1 
+       WHERE NOT EXISTS (SELECT 1
                            FROM crapris r
                           WHERE r.cdcooper = risX.cdcooper
                             AND r.nrdconta = risX.nrdconta
                             AND r.dtrefere = rw_dat.dtmvtoan
-                            AND r.cdmodali IN (201,101))
+                            AND r.cdmodali IN (201,101,1901))
     GROUP BY risX.cdcooper
            , risX.nrcpfcgc
            , risX.nrdconta
@@ -585,8 +724,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
         -- Efetua limpeza dos registros com referência superior a 5 dias
         DELETE
           FROM tbrisco_central_ocr
-         WHERE dtrefere <= rw_dat.dtdelreg
-           AND dtrefere <> rw_dat.dtmvtoan
+         WHERE (dtrefere <= rw_dat.dtdelreg OR dtrefere = rw_dat.dtmvtoan)
            AND cdcooper = pr_cdcooper;
          --
        EXCEPTION
@@ -616,6 +754,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
         vr_inrisco_cpf      := NULL;
         vr_inrisco_grupo    := NULL;
         vr_inrisco_final    := NULL;
+        vr_inrisco_refin    := NULL;
 
         BEGIN
           FOR rw_risco_emp IN cr_risco_emp(pr_cdcooper) LOOP
@@ -623,6 +762,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
             -- Se o valor da dívida é maior que a Materialidade(Arrasto)
             IF rw_risco_emp.vldivida > vr_valor_arrasto THEN
               -- Processa as variáveis de Riscos a serem inseridos
+              vr_inrisco_inclusao := rw_risco_emp.innivori_ctr;
+              --
               vr_inrisco_rating := fn_busca_rating(rw_risco_emp.cdcooper
                                                   ,rw_risco_emp.nrdconta
                                                   ,rw_risco_emp.nrctremp
@@ -635,28 +776,29 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                                             ,rw_risco_emp.nrdconta
                                                             ,rw_dat.dtmvtoan);
               --
+              -- Só existirá melhora se o nível risco estiver menor que o nível risco inclusão
+              vr_inrisco_melhora  := (CASE WHEN rw_risco_emp.innivris_ctr < vr_inrisco_inclusao THEN
+                                       rw_risco_emp.innivris_ctr
+                                     ELSE NULL END);
+              --              
+              vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating,2)
+                                              ,vr_inrisco_atraso
+                                              ,(CASE WHEN rw_risco_emp.innivris_ctr <> rw_risco_emp.innivori_ctr
+                                                 AND rw_risco_emp.innivris_ctr = 2 THEN
+                                                   rw_risco_emp.innivris_ctr
+                                                ELSE rw_risco_emp.innivori_ctr END)
+                                               ,nvl(vr_inrisco_agravado, 2));
+              --              
+              --vr_inrisco_cpf      := rw_risco_emp.innivris; --.innivris_cta;
+              vr_inrisco_cpf      := rw_risco_emp.innivris_ctl;
+              --              
               vr_inrisco_grupo    := fn_busca_grupo_economico(rw_risco_emp.cdcooper
                                                              ,rw_risco_emp.nrdconta
                                                              ,rw_risco_emp.nrcpfcgc
                                                              ,rw_risco_emp.nrdgrupo);
               --
-              vr_inrisco_inclusao := rw_risco_emp.innivori_ctr;
-              --
-              vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating,2)
-                                              ,vr_inrisco_atraso
-                                              ,(CASE WHEN rw_risco_emp.innivris_cta <> rw_risco_emp.innivori_ctr
-                                                 AND rw_risco_emp.innivris_cta = 2 THEN
-                                                   rw_risco_emp.innivris_cta
-                                                ELSE rw_risco_emp.innivori_ctr END)
-                                               ,nvl(vr_inrisco_agravado, 2));
-              --
-              vr_inrisco_cpf      := rw_risco_emp.innivris; --.innivris_cta;
-              --
-              -- Só existirá melhora se o nível risco estiver menos que o nível risco inclusão
-              vr_inrisco_melhora  := (CASE WHEN rw_risco_emp.innivris < vr_inrisco_inclusao THEN
-                                       rw_risco_emp.innivris
-                                     ELSE NULL END);
-              --
+              vr_inrisco_refin    := rw_risco_emp.inrisco_refin;
+              
               vr_inrisco_final    := greatest(nvl(rw_risco_emp.innivris,2)
                                              ,nvl(vr_inrisco_cpf,2)
                                              ,nvl(vr_inrisco_grupo,2));
@@ -666,6 +808,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , nrdconta
                                            , nrctremp
                                            , cdmodali
+--                                           , cdorigem
+--                                           , inddocto
                                            , nrdgrupo
                                            , dtrefere
                                            , dtdrisco
@@ -677,12 +821,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , inrisco_operacao
                                            , inrisco_cpf
                                            , inrisco_grupo
-                                           , inrisco_final)
+                                           , inrisco_final
+                                           /*, inrisco_refin*/)
                                     VALUES ( rw_risco_emp.cdcooper
                                            , rw_risco_emp.nrcpfcgc
                                            , rw_risco_emp.nrdconta
                                            , rw_risco_emp.nrctremp
                                            , rw_risco_emp.cdmodali
+--                                           , rw_risco_emp.cdorigem
+--                                           , rw_risco_emp.inddocto
                                            , rw_risco_emp.nrdgrupo
                                            , rw_risco_emp.dtrefere
                                            , rw_risco_emp.dtdrisco
@@ -694,7 +841,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , vr_inrisco_operacao
                                            , vr_inrisco_cpf
                                            , vr_inrisco_grupo
-                                           , vr_inrisco_final);
+                                           , vr_inrisco_final
+                                           /*, vr_inrisco_refin*/);
             --
             END IF;
           END LOOP;
@@ -758,16 +906,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            ,vr_inrisco_atraso
                                            ,nvl(vr_inrisco_agravado, 2));
             --
-            vr_inrisco_cpf      := rw_riscoAL.Innivris; --.innivris_cta;
+            --vr_inrisco_cpf      := rw_riscoAL.Innivris; --.innivris_cta;
+            vr_inrisco_cpf      := rw_riscoAL.innivris_ctl;
             --
             vr_inrisco_grupo    := fn_busca_grupo_economico(rw_riscoAL.cdcooper
                                                            ,rw_riscoAL.nrdconta
                                                            ,rw_riscoAL.nrcpfcgc
                                                            ,rw_riscoAL.nrdgrupo);
             --
-              vr_inrisco_final    := greatest(nvl(rw_riscoAL.innivris,2)
-                                             ,nvl(vr_inrisco_cpf,2)
-                                             ,nvl(vr_inrisco_grupo,2));
+            vr_inrisco_final    := greatest(nvl(rw_riscoAL.innivris,2)
+                                           ,nvl(vr_inrisco_cpf,2)
+                                           ,nvl(vr_inrisco_grupo,2));
             --                                 
 
             INSERT INTO tbrisco_central_ocr( cdcooper
@@ -775,6 +924,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , nrdconta
                                            , nrctremp
                                            , cdmodali
+--                                           , cdorigem
+--                                           , inddocto                                                                                      
                                            , nrdgrupo
                                            , dtrefere
                                            , dtdrisco
@@ -792,6 +943,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , rw_riscoAL.nrdconta
                                            , rw_riscoAL.nrctremp
                                            , rw_riscoAL.cdmodali
+--                                           , rw_riscoAL.cdorigem
+--                                           , rw_riscoAL.inddocto
                                            , rw_riscoAL.nrdgrupo
                                            , rw_riscoAL.dtrefere
                                            , rw_riscoAL.dtdrisco
@@ -865,7 +1018,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                             ,vr_inrisco_atraso
                                             ,nvl(vr_inrisco_agravado, 2));
             --
-            vr_inrisco_cpf      := rw_riscoLD.innivris;
+            --vr_inrisco_cpf      := rw_riscoLD.Innivris;
+            vr_inrisco_cpf      := rw_riscoLD.innivris_ctl;
             --
             vr_inrisco_grupo    := fn_busca_grupo_economico(rw_riscoLD.cdcooper
                                                            ,rw_riscoLD.nrdconta
@@ -882,6 +1036,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , nrdconta
                                            , nrctremp
                                            , cdmodali
+--                                           , cdorigem
+--                                           , inddocto
                                            , nrdgrupo
                                            , dtrefere
                                            , dtdrisco
@@ -899,6 +1055,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , rw_riscoLD.nrdconta
                                            , rw_riscoLD.nrctremp
                                            , rw_riscoLD.cdmodali
+--                                           , rw_riscoLD.cdorigem
+--                                           , rw_riscoLD.inddocto
                                            , rw_riscoLD.nrdgrupo
                                            , rw_riscoLD.dtrefere
                                            , rw_riscoLD.dtdrisco
@@ -960,7 +1118,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                                          ,rw_contaX.nrcpfcgc
                                                          ,rw_contaX.nrdgrupo);
           --
-          vr_inrisco_cpf      := nvl(trim(rw_contaX.innivris_cta), 2);
+          vr_inrisco_cpf      := nvl(trim(rw_contaX.innivris_ctl), 2);
           --
           vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating, 2)
                                              ,vr_inrisco_inclusao
@@ -975,8 +1133,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                          , nrdconta
                                          , nrctremp
                                          , cdmodali
+--                                         , cdorigem
+--                                         , inddocto                                         
                                          , nrdgrupo
-                                         , dtrefere
+                                         , dtrefere                                         
                                          , dtdrisco
                                          , inrisco_inclusao
                                          , inrisco_rating
@@ -992,8 +1152,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                          , rw_contaX.nrdconta
                                          , 0 --nrctremp
                                          , 999 --cdcodali
+--                                         , NULL
+--                                         , NULL
                                          , rw_contaX.nrdgrupo
-                                         , rw_dat.dtmvtolt
+                                         , rw_dat.dtmvtoan
                                          , NULL --dtdrisco
                                          , vr_inrisco_inclusao
                                          , vr_inrisco_rating
@@ -1040,7 +1202,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                                         ,rw_semrisco.nrdconta
                                                         ,rw_dat.dtmvtoan);
           --
-          vr_inrisco_cpf      := nvl(trim(rw_semrisco.innivris_cta), 2);
+          vr_inrisco_cpf      := nvl(trim(rw_semrisco.innivris_ctl), 2);
           --
           vr_inrisco_grupo    := fn_busca_grupo_economico(rw_semrisco.cdcooper
                                                          ,rw_semrisco.nrdconta
@@ -1060,6 +1222,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                          , nrdconta
                                          , nrctremp
                                          , cdmodali
+--                                         , cdorigem
+--                                         , inddocto
                                          , nrdgrupo
                                          , dtrefere
                                          , dtdrisco
@@ -1077,8 +1241,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                          , rw_semrisco.nrdconta
                                          , 0 --nrctremp
                                          , 0 --cdcodali
+--                                         , NULL
+--                                         , NULL
                                          , rw_semrisco.nrdgrupo
-                                         , rw_dat.dtmvtolt
+                                         , rw_dat.dtmvtoan
                                          , NULL --dtdrisco
                                          , vr_inrisco_inclusao
                                          , vr_inrisco_rating
@@ -1149,6 +1315,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
         -- Verifica erro no DELETE
         IF vr_cdcritic = 0 THEN
           RAISE vr_exc_saida;
+        ELSE
+          COMMIT;
         END IF;
 
       -- Insere infomações de EMPRÉSTIMOS
