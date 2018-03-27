@@ -7509,7 +7509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         */
           --
           UPDATE craptab
-             SET dstextab = lpad(to_number(dstextab) + 1, 6, '0') || ' ' || to_char(pr_dtmvtolt, 'DDMMYYYY')
+             SET dstextab = lpad(to_number(substr(dstextab,1,6)) + 1, 6, '0') || ' ' || to_char(pr_dtmvtolt, 'DDMMYYYY')
            WHERE nmsistem = 'CRED'
              AND tptabela = 'GENERI'
              AND cdempres = pr_cdconven

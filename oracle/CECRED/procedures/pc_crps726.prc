@@ -160,10 +160,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps726(pr_cdcooper IN crapcop.cdcooper%TY
     --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
     pc_controla_log_batch(pr_dstiplog => 'I');
     
-    
     vr_dtarquiv := gene0005.fn_valida_dia_util( pr_cdcooper => 3, 
-                                                pr_dtmvtolt => trunc(SYSDATE,'MM'), --> será o primeiro dia do mês
-                                                pr_tipo     => 'A'); 
+                                                pr_dtmvtolt => last_day(add_months(SYSDATE,-1)), --> ultimo dia util do mês anterior
+                                                pr_tipo     => 'A');
     
     vr_dtarquiv_ddmmyy  := to_char(vr_dtarquiv, 'DDMMRR');
     vr_dtarquiv_yymmdd  := to_char(vr_dtarquiv, 'RRMMDD');
@@ -275,7 +274,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps726(pr_cdcooper IN crapcop.cdcooper%TY
         -- Busca do diretório onde ficará o arquivo
         vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
                                              pr_cdcooper => rw_crapcop.cdcooper,
-                                             pr_nmsubdir => '/arq');
+                                             pr_nmsubdir => '/contab');
         
         gene0002.pc_solicita_relato_arquivo(pr_cdcooper  => rw_crapcop.cdcooper, 
                                             pr_cdprogra  => 'CRPS726', 
@@ -414,7 +413,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps726(pr_cdcooper IN crapcop.cdcooper%TY
           -- Busca do diretório onde ficará o arquivo
           vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
                                                pr_cdcooper => rw_crapcop.cdcooper,
-                                               pr_nmsubdir => '/arq');
+                                               pr_nmsubdir => '/contab');
           
           gene0002.pc_solicita_relato_arquivo(pr_cdcooper  => rw_crapcop.cdcooper, 
                                               pr_cdprogra  => 'CRPS726', 
