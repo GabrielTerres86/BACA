@@ -2225,14 +2225,6 @@ PROCEDURE valida-valor-limite:
              RETURN "NOK".
          END.
         
-        IF  crapope.cddsenha <> par_senha THEN
-         DO:
-             ASSIGN par_des_erro = "Senha inválida."
-                    par_dscritic = "Senha inválida.".
-             RETURN "NOK".
-         END.
-
-        
         /* Nivel 2-Coordenador / 3-Gerente */        
         IF crapope.nvoperad < 2 THEN
            DO:
@@ -2241,9 +2233,41 @@ PROCEDURE valida-valor-limite:
                RETURN "NOK".
            END.
            
-           ASSIGN par_inssenha = 1.
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Efetuar a chamada da rotina Oracle */ 
+        RUN STORED-PROCEDURE pc_valida_senha_AD
+            aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
+                                                INPUT par_cdoperad,         /*Operador   */
+                                                INPUT par_senha,          /*Nr.da Senha*/
+                                                OUTPUT 0,               /*Cod. critica */
+                                                OUTPUT "").             /*Desc. critica*/
+
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_valida_senha_AD
+               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+        HIDE MESSAGE NO-PAUSE.
+
+        /* Busca possíveis erros */ 
+        ASSIGN par_des_erro = ""
+               par_dscritic = ""
+               par_des_erro = pc_valida_senha_AD.pr_dscritic 
+                             WHEN pc_valida_senha_AD.pr_dscritic <> ?
+               par_dscritic = pc_valida_senha_AD.pr_dscritic 
+                             WHEN pc_valida_senha_AD.pr_dscritic <> ?.
+                              
+        /* Retorna erro */
+        IF  par_dscritic <> "" THEN
+          DO:
+              RETURN "NOK".
+          END.
            
-        END. /* aux_valorlimite */
+        ASSIGN par_inssenha = 1.
+           
+      END. /* aux_valorlimite */
       
     RETURN "OK".
 END PROCEDURE.
