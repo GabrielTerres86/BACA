@@ -381,8 +381,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
            , ris.cdmodali
            , ris.cdorigem
            , ris.inddocto           
-           , ris.cdorigem
-           , ris.inddocto           
            , ris.nrdgrupo
            , ris.dtrefere
            , ris.innivris
@@ -808,8 +806,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , nrdconta
                                            , nrctremp
                                            , cdmodali
---                                           , cdorigem
---                                           , inddocto
+                                           , cdorigem
+                                           , inddocto
                                            , nrdgrupo
                                            , dtrefere
                                            , dtdrisco
@@ -822,14 +820,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , inrisco_cpf
                                            , inrisco_grupo
                                            , inrisco_final
-                                           /*, inrisco_refin*/)
+                                           , inrisco_refin)
                                     VALUES ( rw_risco_emp.cdcooper
                                            , rw_risco_emp.nrcpfcgc
                                            , rw_risco_emp.nrdconta
                                            , rw_risco_emp.nrctremp
                                            , rw_risco_emp.cdmodali
---                                           , rw_risco_emp.cdorigem
---                                           , rw_risco_emp.inddocto
+                                           , rw_risco_emp.cdorigem
+                                           , rw_risco_emp.inddocto
                                            , rw_risco_emp.nrdgrupo
                                            , rw_risco_emp.dtrefere
                                            , rw_risco_emp.dtdrisco
@@ -842,7 +840,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , vr_inrisco_cpf
                                            , vr_inrisco_grupo
                                            , vr_inrisco_final
-                                           /*, vr_inrisco_refin*/);
+                                           , vr_inrisco_refin);
             --
             END IF;
           END LOOP;
@@ -924,8 +922,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , nrdconta
                                            , nrctremp
                                            , cdmodali
---                                           , cdorigem
---                                           , inddocto                                                                                      
+                                           , cdorigem
+                                           , inddocto                                                                                      
                                            , nrdgrupo
                                            , dtrefere
                                            , dtdrisco
@@ -943,8 +941,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , rw_riscoAL.nrdconta
                                            , rw_riscoAL.nrctremp
                                            , rw_riscoAL.cdmodali
---                                           , rw_riscoAL.cdorigem
---                                           , rw_riscoAL.inddocto
+                                           , rw_riscoAL.cdorigem
+                                           , rw_riscoAL.inddocto
                                            , rw_riscoAL.nrdgrupo
                                            , rw_riscoAL.dtrefere
                                            , rw_riscoAL.dtdrisco
@@ -1036,8 +1034,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , nrdconta
                                            , nrctremp
                                            , cdmodali
---                                           , cdorigem
---                                           , inddocto
+                                           , cdorigem
+                                           , inddocto
                                            , nrdgrupo
                                            , dtrefere
                                            , dtdrisco
@@ -1055,8 +1053,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                            , rw_riscoLD.nrdconta
                                            , rw_riscoLD.nrctremp
                                            , rw_riscoLD.cdmodali
---                                           , rw_riscoLD.cdorigem
---                                           , rw_riscoLD.inddocto
+                                           , rw_riscoLD.cdorigem
+                                           , rw_riscoLD.inddocto
                                            , rw_riscoLD.nrdgrupo
                                            , rw_riscoLD.dtrefere
                                            , rw_riscoLD.dtdrisco
@@ -1133,8 +1131,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                          , nrdconta
                                          , nrctremp
                                          , cdmodali
---                                         , cdorigem
---                                         , inddocto                                         
+                                         , cdorigem
+                                         , inddocto                                         
                                          , nrdgrupo
                                          , dtrefere                                         
                                          , dtdrisco
@@ -1152,8 +1150,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                          , rw_contaX.nrdconta
                                          , 0 --nrctremp
                                          , 999 --cdcodali
---                                         , NULL
---                                         , NULL
+                                         , NULL
+                                         , NULL
                                          , rw_contaX.nrdgrupo
                                          , rw_dat.dtmvtoan
                                          , NULL --dtdrisco
@@ -1222,8 +1220,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                          , nrdconta
                                          , nrctremp
                                          , cdmodali
---                                         , cdorigem
---                                         , inddocto
+                                         , cdorigem
+                                         , inddocto
                                          , nrdgrupo
                                          , dtrefere
                                          , dtdrisco
@@ -1241,8 +1239,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.
                                          , rw_semrisco.nrdconta
                                          , 0 --nrctremp
                                          , 0 --cdcodali
---                                         , NULL
---                                         , NULL
+                                         , NULL
+                                         , NULL
                                          , rw_semrisco.nrdgrupo
                                          , rw_dat.dtmvtoan
                                          , NULL --dtdrisco
