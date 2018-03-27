@@ -5983,6 +5983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
+
     ----------------------> CURSORES <----------------------
 
     -- PASSO 1: OBTENÇÃO DOS REGISTROS SUJEITOS À ANÁLISE --
@@ -6045,7 +6046,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     and    ret.nrdconta = cob.nrdconta 
     and    ret.nrcnvcob = cob.nrcnvcob 
     and    ret.nrdocmto = cob.nrdocmto
-    and    ret.cdocorre = 23; -- Remetidos ao Cartório    
+    and    ret.cdocorre = 23; -- Remetidos ao Cartório
     rw_qt_remessa_cartorio cr_qt_remessa_cartorio%rowtype;
 
     -- [PAGADORES] - Obter Qtd. de Títulos Protestados do Sacado (Pagador) para o Cedente em questão
@@ -6078,7 +6079,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     and    ret.nrdocmto = cob.nrdocmto
     and    ret.cdocorre = 9 -- Protestados
     --
-    and    ret.cdmotivo = 14;
+    and    ret.cdmotivo = 14;    
     rw_qt_protestados cr_qt_protestados%rowtype;
     
     -- [PAGADORES] - Obter Qtd. de Títulos Não Pagos pelo Sacado (Pagador) em questão
@@ -6186,7 +6187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                cob.nrdconta = tdb.nrdconta and
                                cob.nrcnvcob = tdb.nrcnvcob and
                                cob.nrdocmto = tdb.nrdocmto
-    where  tdb.vltitulo   < cdnae.vlmaximo
+    where  tdb.vltitulo   > cdnae.vlmaximo
     and    cdnae.vlmaximo > 0
     and    cob.flgregis   = 1
     and    ass.cdcooper   = pr_cdcooper
@@ -6207,17 +6208,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                and    crapcob.flgregis = 1
                and    crapcob.incobran = 0
                and    crapcob.dtdpagto is null
-               and    crapcob.nrdconta in (select 
-                      nrdconta
-                    from 
-                      crapcob 
-                    where 
-                          cdcooper = pr_cdcooper
-                      and nrinssac = rw_crapsab.nrinssac
-                    group by nrdconta)
+               and    crapcob.nrdconta in (select nrdconta
+                                             from crapcob 
+                                            where cdcooper = pr_cdcooper
+                                              and nrinssac = rw_crapsab.nrinssac)
                group  by nrdconta,
                          crapcob.nrinssac
-               order  by crapcob.nrdconta
              )
          
         group  by nrdconta,
@@ -6240,38 +6236,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     rw_concentracao_excecao cr_concentracao_excecao%rowtype;
 
 
-    -- [PAGADORES] - Verificar se Cooperado Possui Títulos Descontados na Conta do Pagador	 
+    -- [PAGADORES] - Verificar se Cooperado Possui Títulos Descontados na Conta do Pagador
     cursor cr_coop_tit_conta_pag is
-    select count(1)
+    select count(1) tem_tit_conta_pag
     from   crapcob cob_pag
-           inner join craptdb tdb on tdb.cdcooper = cob_pag.cdcooper and
-                                     tdb.cdbandoc = cob_pag.cdbandoc and
-                                     tdb.nrdctabb = cob_pag.nrdctabb and
-                                     tdb.nrdconta = cob_pag.nrdconta and
-                                     tdb.nrcnvcob = cob_pag.nrcnvcob and
-                                     tdb.nrdocmto = cob_pag.nrdocmto
-    where  cob_pag.nrdconta = rw_crapsab.nrdconta
-      and  cob_pag.cdcooper = pr_cdcooper
-      and  tdb.dtresgat is null and tdb.dtlibbdt is not null -- Titulos Descontados
-      
-      and  cob_pag.nrinssac in
-               (select cob_rem.nrinssac
-                  from crapcob cob_rem
-                       inner join craptdb tdb on tdb.cdcooper = cob_rem.cdcooper and
-                                                 tdb.cdbandoc = cob_rem.cdbandoc and
-                                                 tdb.nrdctabb = cob_rem.nrdctabb and
-                                                 tdb.nrdconta = cob_rem.nrdconta and
-                                                 tdb.nrcnvcob = cob_rem.nrcnvcob and
-                                                 tdb.nrdocmto = cob_rem.nrdocmto
-                  WHERE 
-                     cob_pag.cdcooper = pr_cdcooper                            
-                     and   cob_rem.nrinssac = cob_pag.nrinssac
-                     and   cob_rem.nrdconta in 
-                               (select nrdconta
-                                  from crapass rem
-                                 where rem.nrcpfcgc = cob_pag.nrinssac
-                                   and rem.cdcooper = pr_cdcooper)
-               );
+          ,craptdb tdb 
+    where  cob_pag.cdcooper = pr_cdcooper
+      and  cob_pag.nrdconta = rw_crapsab.nrdconta
+      and  tdb.dtresgat is null and tdb.dtlibbdt is not null -- titulos descontados
+      and  tdb.cdcooper = cob_pag.cdcooper 
+      and  tdb.cdbandoc = cob_pag.cdbandoc 
+      and  tdb.nrdctabb = cob_pag.nrdctabb 
+      and  tdb.nrdconta = cob_pag.nrdconta 
+      and  tdb.nrcnvcob = cob_pag.nrcnvcob 
+      and  tdb.nrdocmto = cob_pag.nrdocmto
+      --
+      and  exists -- cob_pag.nrinssac in
+             (select  1
+                from  crapcob cob_rem
+                     ,craptdb tdb
+                where cob_pag.cdcooper = pr_cdcooper
+                  and cob_pag.nrinssac = rw_crapsab.nrinssac
+                  and cob_rem.nrinssac = cob_pag.nrinssac
+                  and tdb.cdcooper     = cob_rem.cdcooper 
+                  and tdb.cdbandoc     = cob_rem.cdbandoc 
+                  and tdb.nrdctabb     = cob_rem.nrdctabb 
+                  and tdb.nrdconta     = cob_rem.nrdconta 
+                  and tdb.nrcnvcob     = cob_rem.nrcnvcob 
+                  and tdb.nrdocmto     = cob_rem.nrdocmto                     
+                  and cob_rem.nrdconta in 
+                         (select nrdconta
+                            from crapass rem
+                           where rem.nrcpfcgc     = cob_pag.nrinssac
+                             and rem.cdcooper     = pr_cdcooper
+                             and cob_pag.nrinssac = rw_crapsab.nrinssac)
+             );            
     rw_coop_tit_conta_pag cr_coop_tit_conta_pag%rowtype;                                                                   
 
 
@@ -6300,40 +6299,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                                          ) IS
 
     BEGIN
-       
-      if nvl(vr_inpossui_criticas, 0) > 0 then                                                        
-         insert into tbdsct_analise_pagador
-                (cdcooper
-                ,nrdconta
-                ,nrinssac
-                ,dtanalise
-                ,hranalise
-                ,qtremessa_cartorio
-                ,qttit_protestados
-                ,qttit_naopagos
-                ,pemin_liquidez_qt
-                ,pemin_liquidez_vl
-                ,peconcentr_maxtit
-                ,inemitente_conjsoc
-                ,inpossui_titdesc
-                ,invalormax_cnae
-                ,inpossui_criticas)
-         values (pr_cdcooper
-                ,pr_nrdconta
-                ,pr_nrinssac
-                ,SYSDATE
-                ,to_char(SYSDATE,'sssss')
-                ,vr_tab_analise_pagador(1).qtremessa_cartorio
-                ,vr_tab_analise_pagador(1).qttit_protestados
-                ,vr_tab_analise_pagador(1).qttit_naopagos
-                ,vr_tab_analise_pagador(1).pemin_liquidez_qt
-                ,vr_tab_analise_pagador(1).pemin_liquidez_vl
-                ,vr_tab_analise_pagador(1).peconcentr_maxtit
-                ,vr_tab_analise_pagador(1).inemitente_conjsoc
-                ,vr_tab_analise_pagador(1).inpossui_titdesc
-                ,vr_tab_analise_pagador(1).invalormax_cnae
-                ,vr_inpossui_criticas);
-      end if;                          
+                                                    
+       insert into tbdsct_analise_pagador
+              (cdcooper
+              ,nrdconta
+              ,nrinssac
+              ,dtanalise
+              ,hranalise
+              ,qtremessa_cartorio
+              ,qttit_protestados
+              ,qttit_naopagos
+              ,pemin_liquidez_qt
+              ,pemin_liquidez_vl
+              ,peconcentr_maxtit
+              ,inemitente_conjsoc
+              ,inpossui_titdesc
+              ,invalormax_cnae
+              ,inpossui_criticas)
+       values (pr_cdcooper
+              ,pr_nrdconta
+              ,pr_nrinssac
+              ,SYSDATE
+              ,to_char(SYSDATE,'sssss')
+              ,vr_tab_analise_pagador(1).qtremessa_cartorio
+              ,vr_tab_analise_pagador(1).qttit_protestados
+              ,vr_tab_analise_pagador(1).qttit_naopagos
+              ,vr_tab_analise_pagador(1).pemin_liquidez_qt
+              ,vr_tab_analise_pagador(1).pemin_liquidez_vl
+              ,vr_tab_analise_pagador(1).peconcentr_maxtit
+              ,vr_tab_analise_pagador(1).inemitente_conjsoc
+              ,vr_tab_analise_pagador(1).inpossui_titdesc
+              ,vr_tab_analise_pagador(1).invalormax_cnae
+              ,vr_inpossui_criticas);
+
 
     EXCEPTION
       WHEN DUP_VAL_ON_INDEX THEN
@@ -6422,7 +6420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
          open  cr_qt_nao_pagos;
          fetch cr_qt_nao_pagos into rw_qt_nao_pagos;
          close cr_qt_nao_pagos;
-         
+
          if  rw_qt_nao_pagos.qt_tit_nao_pagos > vr_tab_dados_dsctit(1).qtnaopag then
              vr_tab_analise_pagador(1).qttit_naopagos := rw_qt_nao_pagos.qt_tit_nao_pagos;
              vr_inpossui_criticas := 1;
@@ -6477,7 +6475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
          close cr_concentracao;
 
          if  rw_concentracao.pe_conc > vr_concentracao_maxima then
-             vr_tab_analise_pagador(1).peconcentr_maxtit := rw_concentracao.pe_conc;
+             vr_tab_analise_pagador(1).peconcentr_maxtit := rw_concentracao.pe_conc;           
              vr_inpossui_criticas := 1;
          end if;
 
@@ -6496,23 +6494,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
          end if;
          close cr_socio;
 
-         if  vr_tab_dados_dsctit(1).flemipar = 1 and (vr_conjuge = 1 or vr_socio = 1) then
+         if  vr_tab_dados_dsctit(1).flemipar = 1 and ( nvl(vr_conjuge, 0) > 0 or nvl(vr_socio, 0) > 0 ) then
              vr_tab_analise_pagador(1).inemitente_conjsoc := 1;
              vr_inpossui_criticas := 1;
          end if;
 
          --  INPOSSUI_TITDESC   : Cooperado possui Títulos Descontados na Conta deste Pagador  (0 = Não / 1 = Sim). (Ref. TAB052: flpdctcp)
-         open  cr_coop_tit_conta_pag;
-         fetch cr_coop_tit_conta_pag into rw_coop_tit_conta_pag;
-         if    cr_coop_tit_conta_pag%found then
-               vr_coop_tit_conta_pag := 1;
-         end if;
-         close cr_coop_tit_conta_pag;      
-   
-         if  vr_tab_dados_dsctit(1).flpdctcp = 1 and vr_coop_tit_conta_pag = 1 then
-             vr_tab_analise_pagador(1).inpossui_titdesc := 1;
-             vr_inpossui_criticas := 1;
-         end if;
+         if vr_tab_dados_dsctit(1).flpdctcp = 1 then 
+           open  cr_coop_tit_conta_pag;
+           fetch cr_coop_tit_conta_pag into rw_coop_tit_conta_pag;
+           if    cr_coop_tit_conta_pag%found then
+                 vr_coop_tit_conta_pag := rw_coop_tit_conta_pag.tem_tit_conta_pag;
+           end if;
+           close cr_coop_tit_conta_pag;      
+           
+           if  nvl(vr_coop_tit_conta_pag, 0) > 0 then
+               vr_tab_analise_pagador(1).inpossui_titdesc := 1;
+               vr_inpossui_criticas := 1;
+           end if;
+
+         end if;  
 
          --  INVALORMAX_CNAE    : Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat)
          if  vr_tab_dados_dsctit(1).vlmxprat = 1 then
