@@ -317,7 +317,7 @@ function formataAssociado() {
     cNmprimtl.css({'width': '472px'});
 
     // conta
-    cNrdconta.unbind('keydown').bind('keydown', function(e) {
+    cNrdconta.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -404,7 +404,7 @@ function formataCabecalho() {
 
 
     // 
-    cCddopcao.unbind('keydown').bind('keydown', function(e) {
+    cCddopcao.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -495,7 +495,7 @@ function formataOpcaoC() {
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 
     // conta
-    cNrdconta.unbind('keydown').bind('keydown', function(e) {
+    cNrdconta.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -523,7 +523,7 @@ function formataOpcaoC() {
     });
 
     // cpf/cnpj 
-    cNrcpfcgc.unbind('keydown').bind('keydown', function(e) {
+    cNrcpfcgc.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -542,7 +542,7 @@ function formataOpcaoC() {
 
     });
 
-    cTpcobran.unbind('keydown').bind('keydown', function(e) {
+    cTpcobran.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -554,7 +554,7 @@ function formataOpcaoC() {
         }
     });
 
-    cFlresgat.unbind('keydown').bind('keydown', function(e) {
+    cFlresgat.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -677,14 +677,14 @@ function formataOpcaoF() {
 
     });
 
-    cDtvencto.unbind('keydown').bind('keydown', function(e) {
+    cDtvencto.unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             btnOK2.click();
             return false;
         }
     });
 
-    cTpcobran.unbind('keydown').bind('keydown', function(e) {
+    cTpcobran.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -697,7 +697,7 @@ function formataOpcaoF() {
     });
     
     // conta
-    cNrdconta.unbind('keydown').bind('keydown', function(e) {
+    cNrdconta.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -725,7 +725,7 @@ function formataOpcaoF() {
     });
 
     // cpf/cnpj 
-    cNrcpfcgc.unbind('keydown').bind('keydown', function(e) {
+    cNrcpfcgc.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -796,7 +796,7 @@ function formataOpcaoT() {
     cTodosOpcao.desabilitaCampo();
 
     // Situacao 
-    cTpdepesq.unbind('keydown').bind('keydown', function(e) {
+    cTpdepesq.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -810,7 +810,7 @@ function formataOpcaoT() {
     });
 
     // boleto   
-    cNrdocmto.unbind('keydown').bind('keydown', function(e) {
+    cNrdocmto.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -824,7 +824,7 @@ function formataOpcaoT() {
     });
 
     // valor    
-    cVltitulo.unbind('keydown').bind('keydown', function(e) {
+    cVltitulo.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -836,7 +836,7 @@ function formataOpcaoT() {
         }
     });
 
-    cTpcobran.unbind('keydown').bind('keydown', function(e) {
+    cTpcobran.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -848,7 +848,7 @@ function formataOpcaoT() {
     });
 
     // conta
-    cNrdconta.unbind('keydown').bind('keydown', function(e) {
+    cNrdconta.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -870,7 +870,7 @@ function formataOpcaoT() {
     });
 
     // cpf/cnpj 
-    cNrcpfcgc.unbind('keydown').bind('keydown', function(e) {
+    cNrcpfcgc.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -1085,7 +1085,7 @@ function formataOpcaoS() {
     btnOK3 = $('#btnOk3', '#' + frmOpcao);
     cTodosOpcao.desabilitaCampo();
     
-    cTpcobran.unbind('keydown').bind('keydown', function(e) {
+    cTpcobran.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -1109,7 +1109,7 @@ function formataOpcaoS() {
         return false;
     });
 
-    cDtvencto.unbind('keydown').bind('keydown', function(e) {
+    cDtvencto.unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 13) {
             btnOK3.click();
             return false;
@@ -1144,7 +1144,7 @@ function formataOpcaoL() {
     cTodosOpcao.habilitaCampo();
 
     // de
-    cDtvencto.unbind('keydown').bind('keydown', function(e) {
+    cDtvencto.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -1158,7 +1158,7 @@ function formataOpcaoL() {
     });
 
     // PA
-    cCdagenci.unbind('keydown').bind('keydown', function(e) {
+    cCdagenci.unbind('keypress').bind('keypress', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
@@ -1305,9 +1305,9 @@ function btnContinuar() {
 
     if(cddopcao == 'C'){
         if ((!cNrdconta.hasClass('campoTelaSemBorda'))) {
-            cNrdconta.keydown();
+            cNrdconta.keypress();
         } else if ((!cNrcpfcgc.hasClass('campoTelaSemBorda'))) {
-            cNrcpfcgc.keydown();
+            cNrcpfcgc.keypress();
         } else if ((!cTpcobran.hasClass('campoTelaSemBorda'))) {
             cNrdconta.desabilitaCampo();
             controlaOperacao('CT', nriniseq, nrregist);
@@ -1317,7 +1317,7 @@ function btnContinuar() {
         }
     } else if (cddopcao == 'F'){
         if((!cNrdconta.hasClass('campoTelaSemBorda'))) {
-            cNrdconta.keydown();
+            cNrdconta.keypress();
         }
         else if((!cTpcobran.hasClass('campoTelaSemBorda'))){
             cTpcobran.desabilitaCampo();
@@ -1338,7 +1338,7 @@ function btnContinuar() {
         trocaBotao('');
     } else if (cddopcao == 'T'){
         if((!cNrdconta.hasClass('campoTelaSemBorda'))) {
-            cNrdconta.keydown();
+            cNrdconta.keypress();
         } else if((!cTpdepesq.hasClass('campoTelaSemBorda'))) {
             hideMsgAguardo();
             $('#' + frmOpcao +' .tipo_cobranca').show();
