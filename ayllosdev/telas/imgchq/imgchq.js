@@ -14,6 +14,7 @@
  *                           - Passado 'cdcooper' para cobra_tarifa.php. (Guilherme/SUPERO)
  *                01/12/2016 - Incorporacao Transulcred - Novo campo CDAGECHQ quando SR (Guilherme/SUPERO)
  *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ *                26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
  * --------------
  */
 
@@ -126,6 +127,11 @@ function mostraCamposChq() {
     $('#divImagem').html("");
     $('#divImagem').css({ 'display': 'none' });
 
+	// Seta os valores caso tenha vindo do CRM
+	if ($("#crm_inacesso","#frmConsultaImagem").val() == 1) {
+		$("#contachq","#frmConsultaImagem").val($("#crm_nrdconta","#frmConsultaImagem").val());
+	}
+
     if ($('#tiporeme', '#frmConsultaImagem').val() == "N") {
         $('#divDadosChq').css({ 'display': 'block' });
 
@@ -167,10 +173,6 @@ function mostraCamposChq() {
 
             cDtcompen.focus();
 
-            // Seta os valores caso tenha vindo do CRM
-            if ($("#crm_inacesso","#frmConsultaImagem").val() == 1) {
-                $("#contachq","#frmConsultaImagem").val($("#crm_nrdconta","#frmConsultaImagem").val());
-            }
         } else {
             $('#divDadosChq').css({ 'display': 'none' });
 

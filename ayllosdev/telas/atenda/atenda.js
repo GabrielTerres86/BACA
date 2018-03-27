@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: atenda.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Agosto/2007                  Última Alteração: 22/02/2018 ***//
+//*** Data : Agosto/2007                  Última Alteração: 26/03/2018 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela ATENDA                 ***//
 //***                                                                  ***//	 
@@ -83,6 +83,8 @@
                    21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
 				  
 				  22/02/2018 - Alteracoes referentes ao uso do Ctrl+C Ctrl+V no CPF/CNPJ do cooperado (Lucas Ranghetti #851205)
+
+                  26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
 				   
 ***************************************************************************/
 
@@ -187,6 +189,12 @@ $(document).ready(function () {
         $("#nrdconta", "#frmCabAtenda").focus();
     }
 
+	// Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCabAtenda").val() == 1) {
+        $("#nrdconta","#frmCabAtenda").val($("#crm_nrdconta","#frmCabAtenda").val());
+		obtemCabecalho();
+    }	
+	
     hideMsgAguardo();
 });
 
