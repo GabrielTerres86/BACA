@@ -35,7 +35,7 @@
     
    Programa: b1wgen0155.p                  
    Autora  : Guilherme / SUPERO
-   Data    : 23/04/2013                        Ultima atualizacao: 05/12/2014
+   Data    : 23/04/2013                        Ultima atualizacao: 14/03/2018
 
    Dados referentes ao programa:
 
@@ -95,6 +95,8 @@
                             ou maior para ler todos os bloqueios.
                             (Jorge/Gielow) - SD 310965                
                             
+			   14/03/2018 - Adicionado parametro que faltava na chamada da procedure
+							consulta-bloqueio-jud. (Kelvin)
 ..............................................................................*/
  
 { sistema/generico/includes/b1wgen0155tt.i }
@@ -1626,9 +1628,9 @@ PROCEDURE retorna-sld-conta-invt:
 	/* Calcular o ultimo dia do mes */
 	ASSIGN aux_dtcalcul = ((DATE(MONTH(par_dtmvtolt),28,YEAR(par_dtmvtolt)) + 4) -
 							DAY(DATE(MONTH(par_dtmvtolt),28,YEAR(par_dtmvtolt)) + 4)).
-
+	
 	ASSIGN ret_vlresblq = 0.
-
+	
 	FIND FIRST crapsli WHERE crapsli.cdcooper = par_cdcooper AND 
 							 crapsli.nrdconta = par_nrdconta AND 
 							 crapsli.dtrefere = aux_dtcalcul
@@ -1822,6 +1824,7 @@ PROCEDURE imprime_bloqueio_jud:
                      SKIP(1).
 
     RUN consulta-bloqueio-jud (INPUT par_cdcooper,
+                               INPUT "C",
                                INPUT "C",
                                INPUT par_nrctacpf, /*nroconta/nrcpfcgc*/
                                INPUT par_nroficio,
