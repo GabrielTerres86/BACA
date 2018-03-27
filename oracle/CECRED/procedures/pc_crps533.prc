@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 09/02/2018
+   Data    : Dezembro/2009                   Ultima atualizacao: 27/03/2018
 
    Dados referentes ao programa:
 
@@ -302,6 +302,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 			   09/02/2018 - Adicionado coluna cdagenci no relatorio 526 - Chamado 771338 - Mateus Zimmermann (Mouts)
                             
                14/02/2018 - SD813179 - Verificar se existe devolucao alinea 70 igual a alinea 21 - Demetrius (Mouts)
+
+			   27/03/2018 - Ajuste no programa para escrever a crítica corretamente. 
+							(Andrey Formigari - Mouts #856928)
                             
 ............................................................................. */
 
@@ -5256,21 +5259,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         -- Caso esteja dentro da lista abaixo
                         IF vr_cdcritic IN (9,97,108,109,320,811) THEN
                           -- Monta a mensagem
-                          vr_desdados := '50' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') ||
+                          vr_desdados := vr_desdados || '50' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') ||
                                          ',1773,1455,' || TO_CHAR(rw_craprej.vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
                                          ',5210,"' || GENE0007.fn_caract_acento(UPPER(LTRIM(vr_dscritic,lpad(vr_cdcritic,3,0) || ' - '))) || 
                                          ' CHEQUE ' || GENE0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z') || 
                                          ' COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_craprej.nrdconta) ||
                                          ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
-                          -- Adiciona a linha ao arquivo de criticas
-                          dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);
                         END IF;
                       END IF;
                     END IF;
                     
                     IF vr_cdcritic = 96 THEN
                       -- Monta a mensagem
-                      vr_desdados := '50' || 
+                      vr_desdados := vr_desdados || '50' || 
                                      TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || 
                                      TO_CHAR(rw_crapdat.dtmvtopr,'DDMMRR') || --Entra no próximo dia útil
                                      ',4958,1413,' ||               
@@ -5279,12 +5280,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ' DEVOLUCAO DO CHEQUE COM CONTRA-ORDEM ' || GENE0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z') || 
                                      ' DO COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_craprej.nrdconta) ||
                                      ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
-                      -- Adiciona a linha ao arquivo de criticas
-                      dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);
-                      
                     ELSIF vr_cdcritic = 950 THEN
                       -- Monta a mensagem
-                      vr_desdados := '50' || 
+                      vr_desdados := vr_desdados || '50' || 
                                      TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || 
                                      TO_CHAR(rw_crapdat.dtmvtopr,'DDMMRR') || --Entra no próximo dia útil
                                      ',4958,1413,' ||               
@@ -5293,11 +5291,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ' DEVOLUCAO DO CHEQUE CUSTODIADO/DESCONTADO EM OUTRA IF' || GENE0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z') || 
                                      ' DO COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_craprej.nrdconta) ||
                                      ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
-                      -- Adiciona a linha ao arquivo de criticas
-                      dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);                      
                     ELSIF vr_cdcritic = 414 THEN
                       -- Monta a mensagem
-                      vr_desdados := '50' || 
+                      vr_desdados := vr_desdados || '50' || 
                                      TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || 
                                      TO_CHAR(rw_crapdat.dtmvtopr,'DDMMRR') || --Entra no próximo dia útil
                                      ',4958,1413,' ||               
@@ -5306,12 +5302,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ' CHEQUE DEVOLVIDO PELO SISTEMA ' || GENE0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z') || 
                                      ' DO COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_craprej.nrdconta) ||
                                      ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
-                      -- Adiciona a linha ao arquivo de criticas
-                      dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);                      
-
                     ELSIF vr_cdcritic = 439 THEN
                       -- Monta a mensagem
-                      vr_desdados := '50' || 
+                      vr_desdados := vr_desdados || '50' || 
                                      TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || 
                                      TO_CHAR(rw_crapdat.dtmvtopr,'DDMMRR') || --Entra no próximo dia útil
                                      ',4958,1413,' ||               
@@ -5320,8 +5313,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ' DEVOLUÇÃO DO CHEQUE C.ORDEM - APR.INDEVIDA ' || GENE0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z') || 
                                      ' DO COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_craprej.nrdconta) ||
                                      ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
-                      -- Adiciona a linha ao arquivo de criticas
-                      dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);					                      
                     END IF;
 
 
@@ -5421,6 +5412,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                   END IF; --rw_craprej.nrdconta < 999999999
 
                 END LOOP; --cr_craprej
+
+				-- Adiciona a linha ao arquivo de criticas
+				IF vr_desdados IS NOT NULL THEN
+                    dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);
+                END IF;
 
                 --Processar a tabela de criticas de fim de relatorio
                 IF vr_tab_critica.count > 0 THEN

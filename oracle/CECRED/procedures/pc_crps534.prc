@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009.                  Ultima atualizacao: 05/01/2018
+   Data    : Dezembro/2009.                  Ultima atualizacao: 27/03/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
@@ -140,7 +140,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 			   23/01/2018 - A Incorporação Transulcred, feita em 02/12/2016 por Guilherme - SUPERO 
 							foi sobrescrita. O código foi recuperado nesta versão para que as DOCs 
 							incorporadas da Transulcred voltem a ser executadas. 
-							(Gabriel - Mouts - Chamado 765829)                              
+							(Gabriel - Mouts - Chamado 765829)   
+							
+			   27/03/2018 - Ajuste no programa para escrever a crítica corretamente. 
+							(Andrey Formigari - Mouts #856928)
   ............................................................................ */
 
 
@@ -276,7 +279,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
   vr_tplotmov        NUMBER := 1;
   vr_cdcmpori        crapddc.cdcmpori%TYPE;
   vr_nrdconta_incorp crapass.nrdconta%TYPE;
-  --
+  vr_desdados     VARCHAR2(4000);
   vr_tpdsdocs     VARCHAR2(1);
   vr_dsrelcpf     VARCHAR2(20);
   vr_dsdrowid     VARCHAR2(50);
@@ -3115,9 +3118,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
           -- Caso esteja dentro da lista abaixo
           IF vr_cdcritic IN (9,64,301) THEN
-            pc_escreve_clob(vr_clobcri,'50' || TO_CHAR(vr_dtmvtolt,'DDMMRR') || ',' || TO_CHAR(vr_dtmvtolt,'DDMMRR') ||
+            vr_desdados := vr_desdados || '50' || TO_CHAR(vr_dtmvtolt,'DDMMRR') || ',' || TO_CHAR(vr_dtmvtolt,'DDMMRR') ||
                                        ',1455,4894,' || TO_CHAR(rw_craprej.vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
-                                       ',157,"DOC NAO INTEGRADO NA CONTA DO COOPERADO DEVIDO INCONSISTENCIA DE DADOS (CONFORME CRITICA RELATORIO 527)"' || chr(10));
+                                       ',157,"DOC NAO INTEGRADO NA CONTA DO COOPERADO DEVIDO INCONSISTENCIA DE DADOS (CONFORME CRITICA RELATORIO 527)"' || chr(10);
           END IF;
 
         END IF;
@@ -3219,6 +3222,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
     -- Fecha a tag geral
     pc_escreve_clob(vr_clobxml,chr(10)||'</crps527>');
+
+	-- escreve as criticas
+	pc_escreve_clob(vr_clobcri, vr_desdados);
 
     -- Verifica a flag de rejeitado
     IF vr_flgrejei THEN
