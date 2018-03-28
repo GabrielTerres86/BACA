@@ -243,6 +243,9 @@
                            cessao da fatura de cartao de credito (Anderson).
 
               11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
+
+              27/03/2018 - Alterado as procedures criticas_rating_fis e criticas_rating_jur para considerar a tabela
+                           de proposta de limite de desconto de titulos crawlim na geração da critica 484 (Paulo Penteado GFT)
 .............................................................................*/
   
   
@@ -6559,6 +6562,38 @@ PROCEDURE criticas_rating_fis:
                              ASSIGN aux_flgcescr = TRUE.
                       END.                   
              END.
+        ELSE
+             DO:
+                  /* Para limite desconto de titulo */
+                  IF   par_tpctrrat = 3   THEN
+                       DO:
+                           FIND crawlim WHERE crawlim.cdcooper = par_cdcooper   AND
+                                              crawlim.nrdconta = par_nrdconta   AND
+                                              crawlim.tpctrlim = par_tpctrrat   AND
+                                              crawlim.nrctrlim = par_nrctrrat 
+                                              NO-LOCK NO-ERROR.
+                     
+                           IF   NOT AVAILABLE crawlim   THEN
+                                DO:
+                                    FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                                       craplim.nrdconta = par_nrdconta   AND
+                                                       craplim.tpctrlim = par_tpctrrat   AND
+                                                       craplim.nrctrlim = par_nrctrrat   
+                                                       NO-LOCK NO-ERROR.
+                     
+                                    IF   NOT AVAILABLE craplim   THEN
+                                    DO:
+                                         aux_nrsequen = aux_nrsequen + 1.
+              
+                                         RUN gera_erro (INPUT par_cdcooper,
+                                                        INPUT par_cdagenci,
+                                                        INPUT par_nrdcaixa,
+                                                        INPUT aux_nrsequen,
+                                                        INPUT 484,
+                                                        INPUT-OUTPUT aux_dscritic).
+                                         END.
+                                END.
+                       END.
         ELSE     /* Demais operacoes */
              DO:
                  FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
@@ -6579,6 +6614,7 @@ PROCEDURE criticas_rating_fis:
                                          INPUT-OUTPUT aux_dscritic).
          END.
              END.
+    END.
     END.
 
 	  /* Nao validaremos os itens a seguir em caso de cessao de credito */
@@ -6775,7 +6811,18 @@ PROCEDURE criticas_rating_jur:
                       END.                   
              END.
         ELSE
-             DO:                       /* Descontos / Limite rotativo */   
+             DO:
+                  /* Para limite desconto de titulo */
+                  IF   par_tpctrrat = 3   THEN
+                       DO:
+                           FIND crawlim WHERE crawlim.cdcooper = par_cdcooper   AND
+                                              crawlim.nrdconta = par_nrdconta   AND
+                                              crawlim.tpctrlim = par_tpctrrat   AND
+                                              crawlim.nrctrlim = par_nrctrrat 
+                                              NO-LOCK NO-ERROR.
+                     
+                           IF   NOT AVAILABLE crawlim   THEN
+                                DO:
                  FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
                                     craplim.nrdconta = par_nrdconta   AND
                                     craplim.tpctrlim = par_tpctrrat   AND
@@ -6793,6 +6840,28 @@ PROCEDURE criticas_rating_jur:
                                          INPUT 484,
                                          INPUT-OUTPUT aux_dscritic).
                       END.                    
+                                END.
+                       END.
+                  ELSE     /* Demais operacoes */
+                       DO:
+                           FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                              craplim.nrdconta = par_nrdconta   AND
+                                              craplim.tpctrlim = par_tpctrrat   AND
+                                              craplim.nrctrlim = par_nrctrrat   
+                                              NO-LOCK NO-ERROR.
+                     
+                           IF   NOT AVAILABLE craplim   THEN
+                                DO:
+                                    aux_nrsequen = aux_nrsequen + 1.
+              
+                                    RUN gera_erro (INPUT par_cdcooper,
+                                                   INPUT par_cdagenci,
+                                                   INPUT par_nrdcaixa,
+                                                   INPUT aux_nrsequen,
+                                                   INPUT 484,
+                                                   INPUT-OUTPUT aux_dscritic).
+                                END.
+                       END.
              END.
     END.
 
