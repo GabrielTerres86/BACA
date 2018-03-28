@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Adriano
-       Data    : Marco/2013                      Ultima atualizacao: 26/01/2018
+       Data    : Marco/2013                      Ultima atualizacao: 26/03/2018
 
        Dados referentes ao programa:
 
@@ -39,7 +39,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                                 (Jaison/James)
 
                    26/01/2018 - Arrasto do Grupo Economico para CPFs/CNPJs do grupo (Guilherme/AMcom)
-
+                   
+                   26/03/2018 - #inc0011132 Forçado o índice CRAPRIS3 na rotina pc_validar_data_risco, 
+                                cursor cr_crapris (Carlos) 
     ............................................................................ */
 
     DECLARE
@@ -504,7 +506,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
         -- Busca de todos os riscos
         CURSOR cr_crapris (pr_dtrefant IN crapris.dtrefere%TYPE) IS
-          SELECT ris.cdcooper
+          SELECT /*+ INDEX (ris CRAPRIS##CRAPRIS3) */
+                 ris.cdcooper
                , ris.nrdconta
                , ris.nrctremp
                , ris.innivris   risco_atual
@@ -513,19 +516,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                , r_ant.dtdrisco dtdrisco_anterior
                , ris.rowid
             FROM crapris ris
-               , (SELECT *  -- Busca risco anterior
+               , (SELECT /*+ INDEX (r CRAPRIS##CRAPRIS3) */ * -- Busca risco anterior
                     FROM crapris r
-                   WHERE r.dtrefere = pr_dtrefant
-                     AND r.cdcooper = pr_cdcooper) r_ant
-           WHERE ris.dtrefere   = vr_dtrefere
-             AND ris.cdcooper   = pr_cdcooper
+                   WHERE r.cdcooper = pr_cdcooper
+                     AND r.dtrefere = pr_dtrefant) r_ant
+           WHERE ris.cdcooper   = pr_cdcooper
+             AND ris.dtrefere   = vr_dtrefere
              AND r_ant.cdcooper = ris.cdcooper
              AND r_ant.nrdconta = ris.nrdconta
              AND r_ant.nrctremp = ris.nrctremp
              AND r_ant.cdmodali = ris.cdmodali
              AND r_ant.cdorigem = ris.cdorigem
              -- Quando o nível de risco for o mesmo e a data ainda estiver divergente
-             AND (r_ant.innivris = ris.innivris AND r_ant.dtdrisco <> ris.dtdrisco)  ;
+             AND (r_ant.innivris = ris.innivris AND r_ant.dtdrisco <> ris.dtdrisco);
 
     BEGIN
 
