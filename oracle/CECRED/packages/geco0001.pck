@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
   --  Sistema  : Rotinas genericas focando nas funcionalidades de grupos econômicos
   --  Sigla    : GECO
   --  Autor    : Petter Rafael - Supero Tecnologia
-  --  Data     : Setembro/2012.                   Ultima atualizacao: 03/2018
+  --  Data     : Setembro/2012.                   Ultima atualizacao: --/--/----
   --
   -- Dados referentes ao programa:
   --
@@ -13,9 +13,6 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
   -- Objetivo  : Agrupar rotinas referentes as funcionalidades e administração dos grupos economicos.
   --
   -- Alteracões
-	--            Alteração nos cursores da pc_forma_grupo_economico para considerar contas 
-  --            em prejuízo mesmo que elas tenham a data de eliminação (DTELIMIN) preenchida.
-	--            Reginaldo (AMcom) - Mar/2018
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -127,7 +124,7 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
                                  ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2);                 --> Descricao da critica
 
-END GECO0001;
+END geco0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
   /* PL Table para dados dos associados */
@@ -599,8 +596,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
    Objetivo  : Controla formação de grupo economico
 
    Alteracoes: 13/09/2013 - Conversão Progress >> Oracle (PLSQL) (Petter - Supero)
-	             14/03/2018 - Ajuste para considear contas em prejuízo com data de 
-							              eliminação preenchida. (Reginaldo - AMcom)
 
   ............................................................................. */
   BEGIN
@@ -677,18 +672,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                               AND epr.inprejuz = 1
                               AND epr.vlsdprej > 0
                        ),0),1,NULL,cp.dtelimin) dtelimin
-              ,NVL((SELECT max(inprejuz)
+        FROM crapepa ca, crapass cp
+        WHERE ca.cdcooper = pr_cdcooper
+          AND ca.persocio >= pr_persocio
+          AND ca.cdcooper = cp.cdcooper
+          AND ca.nrdconta = cp.nrdconta
+          AND ((SELECT max(inprejuz)
                       FROM crapepr epr
                      WHERE epr.cdcooper = cp.cdcooper
                        AND epr.nrdconta = cp.nrdconta
                        AND epr.inprejuz = 1
                        AND epr.vlsdprej > 0
-                   ),0) tem_prejuizo
-        FROM crapepa ca, crapass cp
-        WHERE ca.cdcooper = pr_cdcooper
-          AND ca.persocio >= pr_persocio
-          AND ca.cdcooper = cp.cdcooper
-          AND ca.nrdconta = cp.nrdconta;
+                   ) = 1 OR cp.dtelimin IS NULL);
 
       /* Buscar dados de associados */
       CURSOR cr_crapass(pr_cdcooper IN crapepa.cdcooper%TYPE) IS  --> Código da cooperativa
@@ -704,14 +699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                               AND epr.inprejuz = 1
                               AND epr.vlsdprej > 0
                        ),0),1,NULL,cs.dtelimin) dtelimin
-              ,NVL((SELECT max(inprejuz)
-                      FROM crapepr epr
-                     WHERE epr.cdcooper = cs.cdcooper
-                       AND epr.nrdconta = cs.nrdconta
-                       AND epr.inprejuz = 1
-                       AND epr.vlsdprej > 0
-                   ),0) tem_prejuizo
-        FROM crapass cs
+         FROM crapass cs
         WHERE cs.cdcooper = pr_cdcooper;
 
       /* Buscar dados de pessoas jurídicas */
@@ -803,20 +791,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                               AND epr.inprejuz = 1
                               AND epr.vlsdprej > 0
                       ),0),1,NULL,cp.dtelimin) dtelimin
-              ,NVL((SELECT max(inprejuz)
-                     FROM crapepr epr
-                    WHERE epr.cdcooper = cp.cdcooper
-                      AND epr.nrdconta = cp.nrdconta
-                      AND epr.inprejuz = 1
-                      AND epr.vlsdprej > 0
-                   ),0) tem_prejuizo
         FROM crapavt ct, crapass cp
         WHERE ct.cdcooper = pr_cdcooper
           AND ct.tpctrato = 6
           AND ct.persocio >= pr_persocio
           AND ct.flgdepec = 1
           AND cp.cdcooper = ct.cdcooper
-          AND cp.nrdconta = ct.nrdconta;
+          AND cp.nrdconta = ct.nrdconta
+          AND ((SELECT max(inprejuz)
+                      FROM crapepr epr
+                     WHERE epr.cdcooper = cp.cdcooper
+                       AND epr.nrdconta = cp.nrdconta
+                       AND epr.inprejuz = 1
+                       AND epr.vlsdprej > 0
+                   ) = 1 OR cp.dtelimin IS NULL);
+
     BEGIN
       -- Limpar variáveis
       pr_cdcritic := 0;
@@ -1767,7 +1756,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         END IF;
 
         -- Sumarizar valores
-        IF vr_opt_innivris > 0 AND vr_opt_innivris < 10 AND vr_innivris < vr_opt_innivris THEN
+        IF vr_opt_innivris > 0 AND vr_opt_innivris <= 10 AND vr_innivris < vr_opt_innivris THEN
           vr_innivris := vr_opt_innivris;
         END IF;
       END LOOP;
@@ -1776,7 +1765,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       dbms_sql.close_cursor(vr_cursor);
 
       -- Grupo nao pode estar em prejuizo, sendo assim é trocado para ir em risco H
-      IF vr_innivris = 0 THEN
+      IF vr_innivris = 0 OR vr_innivris = 10 THEN
         pr_dsdrisco := 'H';
         vr_innivris := 9;
       ELSE
@@ -1788,11 +1777,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
       -- Leitura de todos do grupo para atualizar o risco do grupo
       BEGIN
-      UPDATE crapgrp cp
-      SET cp.dsdrisgp = pr_dsdrisco
-         ,cp.innivrge = vr_innivris
-      WHERE cp.cdcooper = pr_cdcooper
-        AND cp.nrdgrupo = pr_nrdgrupo;
+        UPDATE crapgrp cp
+        SET cp.dsdrisgp = pr_dsdrisco
+           ,cp.innivrge = vr_innivris
+        WHERE cp.cdcooper = pr_cdcooper
+          AND cp.nrdgrupo = pr_nrdgrupo;
       EXCEPTION
         WHEN OTHERS THEN
           pr_des_erro := 'Erro ao atualiar grupo. Erro: ' || SQLERRM;
@@ -2065,7 +2054,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           AND cn.insitctr = 'P';
 
     BEGIN
-      -- Verifica conta de associado
       IF pr_nrctasoc <> 0 THEN
         -- Consultar saldo utilizado
         gene0005.pc_saldo_utiliza(pr_cdcooper    => pr_cdcooper
