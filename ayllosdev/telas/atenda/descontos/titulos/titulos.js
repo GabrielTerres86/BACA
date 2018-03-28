@@ -29,7 +29,7 @@
  * 013: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364).
  * 014: [13/03/2018] Leonardo Oliveira (GFT): Novos métodos 'acessaValorLimite', 'formataValorLimite', 'renovaValorLimite' e 'converteNumero'.
  * 015: [16/03/2018] Leonardo Oliveira (GFT): Alteração dos métodos 'acessaValorLimite', 'formataValorLimite' e 'renovaValorLimite' para mostrar dialogo de confirmação e condirerar alteração de linha
- * 016: [22/03/2018] Leonardo Oliveira (GFT): Ajustes no fluxo de renovação do limite de desconto de titulos, validação das linhas de credito bloqueadas
+ * 016: [28/03/2018] Andre Avila (GFT): Criação do método carregaLimitesTitulosPropostas e carregaDadosAlteraLimiteDscTitPropostas.
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -245,6 +245,63 @@ function mostraImprimirBordero(){
     return false;
 }
 
+
+
+
+// LIMITES DE DESCONTO DE TITULOS
+function carregaLimitesTitulosPropostas() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando Propostas de limites de desconto de t&iacute;tulos ...");
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_propostas.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao2").html(response);
+        }
+    });
+
+    return false;
+}
+
+
+// Carregar os dados para consulta de propostas de limite de desconto de títulos
+function carregaDadosAlteraLimiteDscTitPropostas() {
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando dados da Proposta de limites de desconto de t&iacute;tulos ...");
+    
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({        
+        type: "POST", 
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_alterar_propostas.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrctrlim: nrcontrato,
+            redirect: "html_ajax"
+        },      
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            $("#divOpcoesDaOpcao3").html(response);
+            controlaLupas(nrdconta);
+        }               
+    });     
+}
+
+
 // Função para verificar se deve ser enviado e-mail ao PAC Sede
 function verificaEnvioEmail(idimpres,limorbor) {
     showConfirmacao("Efetuar envio de e-mail para Sede?","Confirma&ccedil;&atilde;o - Ayllos","gerarImpressao(" + idimpres + "," + limorbor + ",'yes');","gerarImpressao(" + idimpres + "," + limorbor + ",'no');","sim.gif","nao.gif");
@@ -339,6 +396,7 @@ function liberaAnalisaBorderoDscTit(opcao, idconfir, idconfi2, idconfi3, idconfi
 function carregaLimitesTitulos() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando limites de desconto de t&iacute;tulos ...");
+
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
@@ -496,6 +554,7 @@ function excluirLimiteDscTit() {
 function carregaDadosConsultaLimiteDscTit() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados de desconto de t&iacute;tulos ...");
+    
     // Carrega conteúdo da opção através de ajax
     $.ajax({        
         type: "POST", 
@@ -1639,8 +1698,13 @@ function abreProtocoloAcionamento(dsprotocolo) {
     });
 }
 
+
 // renovação
-function renovarLimiteTitulo() {
+function acessaValorLimite(flgvalida) {
+
+    if(!flgvalida){
+        flgvalida = 0;
+    }
     showMsgAguardo('Aguarde, carregando ...');
 
     var vllimite = $('#vllimite','#frmTitulos').val();
@@ -1649,23 +1713,12 @@ function renovarLimiteTitulo() {
     var cddlinha = $('#cddlinha','#frmTitulos').val();
     var dsdlinha = $('#dsdlinha','#frmTitulos').val();
 
-    fluxoRenovacaoLimite(0, vllimite, nrctrlim, flgstlcr, cddlinha, dsdlinha);
-}
-
-function fluxoRenovacaoLimite(flgvalida, vllimite, nrctrlim, flgstlcr, cddlinha, dsdlinha){
-    if(!flgvalida){
-        flgvalida = 0;
-    }
-    var callback = "fluxoRenovacaoLimite(1, '"+vllimite+"', '"+nrctrlim+"', '"+flgstlcr+"', '"+cddlinha+"', '"+dsdlinha+"');";
-
     if(flgvalida == 0 && flgstlcr == 1){
        showConfirmacao(
         "Deseja renovar o Limite de desconto de título atual?",
         "Confirma&ccedil;&atilde;o - Ayllos",
-        callback,
-        "voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS'); carregaTitulos(); hideMsgAguardo();",
-        "sim.gif",
-        "nao.gif");
+        "acessaValorLimite(1);",
+        "hideMsgAguardo();","sim.gif","nao.gif");
         return false; 
     }
     
@@ -1674,10 +1727,9 @@ function fluxoRenovacaoLimite(flgvalida, vllimite, nrctrlim, flgstlcr, cddlinha,
             "inform",
             "Linha de crédito bloqueada, para realizar a operação altere para uma linha liberada ou efetue o desbloqueio da linha",
             "Alerta - Ayllos",
-            callback);
+            "acessaValorLimite(1);");
         return false;
     }
-
 
     //mostrat rotina valor limite
     exibeRotina($('#divUsoGenerico'));
@@ -1688,8 +1740,8 @@ function fluxoRenovacaoLimite(flgvalida, vllimite, nrctrlim, flgstlcr, cddlinha,
         data: {
             vllimite: vllimite,
             nrctrlim: nrctrlim,
-            flgstlcr: flgstlcr,
             cddlinha: cddlinha,
+            flgstlcr: flgstlcr,
             dsdlinha: dsdlinha,
             redirect: 'html_ajax'
         },
@@ -1698,17 +1750,17 @@ function fluxoRenovacaoLimite(flgvalida, vllimite, nrctrlim, flgstlcr, cddlinha,
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
-
+            //$('#divUsoGenerico').html(response);
             $("#divOpcoesDaOpcao2").html(response);
-
+            //layoutPadrao();
             formataValorLimite();
             $('#vllimite','#frmReLimite').desabilitaCampo();
             hideMsgAguardo();
+           // bloqueiaFundo($('#divUsoGenerico'));
         }
     });
 
-    return false;
-
+    return false;   
 }
 
 function formataValorLimite() {
@@ -1729,15 +1781,12 @@ function formataValorLimite() {
 
         Ldsdlinha.css({'width': '60px'}).addClass('rotulo');
         Cdsdlinha.css({'width': '180px'}).addClass('descricao');
-        Ccddlinha.desabilitaCampo();
         Cdsdlinha.desabilitaCampo();
-                 
 
         //pesquisa
         var campoAnterior = '';
         var qtReg, filtrosPesq, filtrosDesc, colunas;
-        fncOnClose = 'fecharPesquisa();';
-
+      
         $('a', '#frmReLimite').ponteiroMouse();
         $('a', '#frmReLimite').each( function(i) {
         
@@ -1746,29 +1795,56 @@ function formataValorLimite() {
             }
                     
             $(this).click( function() {
+                if ( $(this).prev().hasClass('campoTelaSemBorda') ) {
+                    return false;
+                } else {                        
+                    campoAnterior = $(this).prev().attr('name');
 
-                campoAnterior = $(this).prev().attr('name');
-
-                if ( campoAnterior == 'cddlinha' ) {
-
-                    filtrosPesq =   'Código;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|;flgstlcr;;;;N|Tipo;tpdescto;;;3;N';
-                    colunas =       'Código;cddlinha;15%;right|Descrição;dsdlinha;60%;left|Status;flgstlcr;25%;center;';//|Tipo;tpdescto;;;;N
-
-                    mostraPesquisa('zoom0001',
-                        'BUSCALINHASTIT', 
+                    if ( campoAnterior == 'cddlinha' ) {
+                        filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + '|;flgstlcr;;;1;N';
+                        colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
+                        fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
+                        mostraPesquisa('zoom0001',
+                        'BUSCALINHAS', 
                         'Linhas de Crédito',
                         '20', 
                         filtrosPesq,
                         colunas,
                         divRotina,
                         fncOnClose);
+                    }
                 }
-              
             });
         });
 
+        Cdsdlinha.unbind('change').bind('change', function() {
+            filtrosDesc = 'tpdlinha|' + inpessoa + ';flgstlcr|1;nriniseq|1;nrregist|30';
+            buscaDescricao(
+                'zoom0001',
+                'BUSCALINHAS',
+                'Linhas de Crédito',
+                $(this).attr('name'),'dsdlinha',$(this).val(),
+                'dsdlinha',
+                filtrosDesc,
+                'frmNovoLimite');
+            return false;
+        }).next().unbind('click').bind('click', function () {
+            filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + '|;flgstlcr;;;1;N';
+            colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
+            fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
+            mostraPesquisa('zoom0001',
+                'BUSCALINHAS', 
+                'Linhas de Crédito',
+                '20', 
+                filtrosPesq,
+                colunas,
+                divRotina,
+                fncOnClose);
+            return false;
+        });
+
     }
-        
+    
     if(Lvllimite.length && Cvllimite.length){
         Lvllimite.css({'width': '60px'}).addClass('rotulo');
         Cvllimite.css({'width': '100px'});
@@ -1783,23 +1859,19 @@ function formataValorLimite() {
             }
         });
     }
+    $('#btRenovar').unbind('click').bind('click', function(){
+        renovaValorLimite();
+        return false;
+    });
 
     return false;
 }
 
-function fecharPesquisa(){
-    var vllimite = $('#vllimite','#frmReLimite').val();
-    var nrctrlim = $('#nrctrlim','#frmReLimite').val();
-    var flgstlcr = $('#flgstlcr','#frmReLimite').val().toLowerCase()  == "Bloqueado".toLowerCase()?0:1;
-    var cddlinha = $('#cddlinha','#frmReLimite').val();
-    var dsdlinha = $('#dsdlinha','#frmReLimite').val();
-    var dsdlinha = $('#dsdlinha','#frmReLimite').val();
-   
-    fluxoRenovacaoLimite(0, vllimite, nrctrlim, flgstlcr, cddlinha, dsdlinha);   
-}
 
 function renovaValorLimite() {
+
     showMsgAguardo('Aguarde, efetuando renovacao...');
+
     var vllimite = converteNumero($('#vllimite','#frmReLimite').val());
     var nrctrlim = $('#nrctrlim','#frmReLimite').val();
     var cddlinha = $('#cddlinha','#frmReLimite').val();
