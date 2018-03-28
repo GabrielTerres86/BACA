@@ -1,27 +1,27 @@
 <?
 /*
  * FONTE        : novo_limite.php
- * CRIAÇÃO      : David (CECRED)
- * DATA CRIAÇÃO : Março/2008
- * OBJETIVO     : Mostrar opção Novo Limite da rotina de Limite de Crédito da tela ATENDA   
+ * CRIAÃ‡ÃƒO      : David (CECRED)
+ * DATA CRIAÃ‡ÃƒO : MarÃ§o/2008
+ * OBJETIVO     : Mostrar opÃ§Ã£o Novo Limite da rotina de Limite de CrÃ©dito da tela ATENDA   
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÃ‡Ã•ES   :
  * --------------
- * 000: [15/07/2009] Guilherme       (CECRED) : Título para as telas
- * 000: [13/04/2010] David           (CECRED) : Adaptação para novo RATING
+ * 000: [15/07/2009] Guilherme       (CECRED) : TÃ­tulo para as telas
+ * 000: [13/04/2010] David           (CECRED) : AdaptaÃ§Ã£o para novo RATING
  * 000: [16/09/2010] David           (CECRED) : Ajuste para enviar impressoes via email para o PAC Sede
- * 000: [27/10/2010] David           (CECRED) : Tratamento para projeto de linhas de crédito
- * 001: [27/04/2011] Rodolpho Telmo     (DB1) : Adaptação formulário genérico avalistas e endereço
+ * 000: [27/10/2010] David           (CECRED) : Tratamento para projeto de linhas de crÃ©dito
+ * 001: [27/04/2011] Rodolpho Telmo     (DB1) : AdaptaÃ§Ã£o formulÃ¡rio genÃ©rico avalistas e endereÃ§o
  * 002: [23/09/2011] Guilherme       (CECRED) : Adaptar para Rating Singulares
  * 003: [09/07/2012] Jorge           (CECRED) : Retirado campo "redirect"
  * 004: [28/08/2012] Lucas R         (CECRED) : Alimentado variavel flgProposta
- * 005: [23/11/2012] Adriano		 (CECRED) : Alterado a função onClick do botao btSalvar na 
+ * 005: [23/11/2012] Adriano		 (CECRED) : Alterado a funÃ§Ã£o onClick do botao btSalvar na 
 											    divDadosAvalistas de validarAvalistas para buscaGrupoEconomico.
  * 006: [06/04/2015] Jonata            (RKAM) :	Consultas automatizadas.							
  * 007: [01/06/2015] Lucas Reinert	 (CECRED) : Alterado para apresentar mensagem de confirmacao de proposta para
  *	   											menores nao emancipados. (Reinert)
- * 008: [15/03/2018] Diego Simas	 (AMcom)  : Alterado para exibir tratativas quando o limite de crédito foi 
- *                                              cancelado de forma automática pelo Ayllos.  
+ * 008: [15/03/2018] Diego Simas	 (AMcom)  : Alterado para exibir tratativas quando o limite de crÃ©dito foi 
+ *                                              cancelado de forma automÃ¡tica pelo Ayllos.  
  */	  
 ?>
 
@@ -38,7 +38,7 @@
 		exibirErro('error',$msgError,'Alerta - Ayllos','');	
 	}	
 	
-	// Verifica se o número da conta foi informado
+	// Verifica se o nÃºmero da conta foi informado
 	if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
 
 	$nrdconta = $_POST["nrdconta"];
@@ -46,11 +46,11 @@
 	$flpropos = $_POST["flpropos"];
 	$inconfir = (isset($_POST["inconfir"])) ? $_POST["inconfir"] : 1;	
 
-	// Verifica se o número da conta é um inteiro válido
+	// Verifica se o nÃºmero da conta Ã© um inteiro vÃ¡lido
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','');
 	
 	
-	// Monta o xml de requisição
+	// Monta o xml de requisiÃ§Ã£o
 	$xmlGetLimite  = "";
 	$xmlGetLimite .= "<Root>";
 	$xmlGetLimite .= "	<Cabecalho>";
@@ -78,7 +78,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjLimite = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjLimite->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','');
 		
 	$qtMensagens = count($xmlObjLimite->roottag->tags[1]->tags);	
@@ -96,7 +96,7 @@
 	$limite = $xmlObjLimite->roottag->tags[0]->tags[0]->tags;
 
 	if($cddopcao == 'N'){
-		//Verifica se pode ser incluído novo limite
+		//Verifica se pode ser incluÃ­do novo limite
 		$xml  = "";
 		$xml .= "<Root>";
 		$xml .= "  <Dados>";
@@ -111,24 +111,34 @@
 		$param = $xmlObjeto->roottag->tags[0]->tags[0];
 
 		$autnovlim = getByTagName($param->tags,'autoriza');	
+		$saldo = getByTagName($param->tags,'saldo');	
 		
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
 		}	
 
 		if($autnovlim == 1){
-			// MENSAGEM DE INADIMPLÊNCIA
-			echo '<script type="text/javascript">';
-			echo 'hideMsgAguardo();';
-			echo 'showError("inform","Limite de Crédito cancelado por motivo de inadimplência, não é possível realizar a operação!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
-			echo '</script>';
-			$travaCamposLimite = 'S';
-			// PEDE SENHA COORDENADOR
-			echo '<script type="text/javascript">';
-			echo 'bloqueiaFundo(divRotina);';
-			echo 'hideMsgAguardo();';
-			echo 'pedeSenhaCoordenador(2,"continuaLimite();","");';
-			echo '</script>';
+			if($saldo > 0){
+				// MENSAGEM DE INADIMPLÃŠNCIA
+				$travaCamposLimite = 'S';
+				echo '<script type="text/javascript">';
+				echo 'hideMsgAguardo();';
+				echo 'showError("inform","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, n&atilde;o &eacute; poss&iacute;vel realizar a opera&ccedil;&atilde;o!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+				echo '</script>';				
+			}else{			
+				$travaCamposLimite = 'S';
+				// MENSAGEM DE INADIMPLÃŠNCIA
+				echo '<script type="text/javascript">';
+				echo 'hideMsgAguardo();';
+				echo 'showError("inform","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, &eacute; necess&aacute;rio senha do coordenador!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+				echo '</script>';				
+				// PEDE SENHA COORDENADOR
+				echo '<script type="text/javascript">';
+				echo 'bloqueiaFundo(divRotina);';
+				echo 'hideMsgAguardo();';
+				echo 'pedeSenhaCoordenador(2,"continuaLimite();","");';
+				echo '</script>';	
+			}
 		}	
 	}		
 
@@ -149,7 +159,7 @@
 	// Verifica se existe uma proposta cadastrada
 	$flgProposta = (intval($nrctrlim) > 0 && doubleval($vllimite) > 0) ? true : false;
 	
-	// Procura indíce da opção "@"
+	// Procura indÃ­ce da opÃ§Ã£o "@"
 	$idPrincipal = array_search("@",$glbvars["opcoesTela"]);
 	
 	if ($idPrincipal === false) {
@@ -158,10 +168,10 @@
 
 	$fncPrincipal = "acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idPrincipal.",'".$glbvars["opcoesTela"][$idPrincipal]."');";	
 
-	// Procura indíce da opção "I"
+	// Procura indÃ­ce da opÃ§Ã£o "I"
 	$idImpressao = array_search("I",$glbvars["opcoesTela"]);
 	
-	// Se o índice da opção "I" foi encontrado 
+	// Se o Ã­ndice da opÃ§Ã£o "I" foi encontrado 
 	if (!($idImpressao === false)) {
 		$fncImpressao = "acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idImpressao.",'".$glbvars["opcoesTela"][$idImpressao]."');";
 	} else {
@@ -177,7 +187,7 @@
 	
 ?>
 
-<!-- Criando variáveis em javascprit -->
+<!-- Criando variÃ¡veis em javascprit -->
 <script type="text/javascript">
 	var metodoBlock     = "blockBackground(parseInt($('#divRotina').css('z-index')))";		
 	var metodoCancel    = "lcrShowHideDiv('divDadosObservacoes','divDadosRating');";
@@ -249,7 +259,7 @@
 			
 			</form>			
 			<?
-				// Variável que indica se é uma operação para cadastrar nova proposta ou consulta - Utiliza na include rating_busca_dados.php
+				// VariÃ¡vel que indica se Ã© uma operaÃ§Ã£o para cadastrar nova proposta ou consulta - Utiliza na include rating_busca_dados.php
 				$cdOperacao = ($cddopcao == 'N') ? 'I' : 'C';	
 				$operacao   = ($flgProposta) ? 'A_PROT_CRED' : 'I_PROT_CRED' ;
 				$inprodut   = 3; // Limite de Credito
