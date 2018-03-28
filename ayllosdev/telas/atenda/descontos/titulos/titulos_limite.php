@@ -24,8 +24,10 @@
 
 				 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 
+				 28/03/2018 - Alteração nos botões para as novas funcionalidades da tela (Andre Avila GFT).
+
 	************************************************************************/
-	
+	 
 	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
@@ -71,7 +73,7 @@
 	$xmlGetLimites .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xmlGetLimites .= "	</Dados>";
 	$xmlGetLimites .= "</Root>";
-		
+
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlGetLimites);
 	
@@ -116,49 +118,43 @@
 ?>
 
 
-<div id="divLimites">
+<div id="divContratos">
 	<div class="divRegistros">
 		<table>
 			<thead>
 				<tr>
-					<th>Proposta</th>
-					<th>Ini.Vig&ecirc;n.</th>
+					<th>Data Efetiva&ccedil;&atilde;o</th>
+					<th>In&iacute;cio Vig&acirc;ncia</th>
 					<th>Contrato</th>
 					<th>Limite</th>
-					<th>Vig</th>
-					<th>LD</th>
+					<th>Dias de Vig&acirc;ncia</th>
+					<th>Linha de Desconto</th>
 					<th >Situa&ccedil;&atilde;o do Limite</th>
-					<th>Situa&ccedil;&atilde;o da An&aacute;lise</th>
-					<th>Decis&atilde;o</th>
 				</tr>			
 			</thead>
 			<tbody>
+				
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
 						
 
 						$mtdClick = "selecionaLimiteTitulos('".($i + 1)."', '".$qtLimites."', '".($limites[$i]->tags[3]->cdata)."', '".($limites[$i]->tags[7]->cdata)."', '".($limites[$i]->tags[8]->cdata)."', '".($limites[$i]->tags[9]->cdata)."', '".($limites[$i]->tags[2]->cdata)."');";
-									
 				?>
+
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
+
 						<td><? echo getByTagName($limites[$i]->tags,"DTPROPOS"); ?></td>
-						
+
 						<td><? echo $limites[$i]->tags[1]->cdata; ?></td>
 						
 						<td><span><? echo $limites[$i]->tags[3]->cdata; ?></span>
 							<? echo formataNumericos('zzz.zzz.zzz',$limites[$i]->tags[3]->cdata,'.'); ?></td>
-						
+
 						<td><span><? echo $limites[$i]->tags[2]->cdata; ?></span>
 							<? echo number_format(str_replace(",",".",$limites[$i]->tags[2]->cdata),2,",","."); ?></td>
-						
 						<td><? echo $limites[$i]->tags[4]->cdata; ?></td>
-						
 						<td><? echo $limites[$i]->tags[5]->cdata; ?></td>
-						
-						<td><? echo $limites[$i]->tags[7]->cdata; ?></td>
-						
-						<td><? echo $limites[$i]->tags[8]->cdata; ?></td>
-
 						<td><? echo $limites[$i]->tags[9]->cdata; ?></td>
+				
 												
 					</tr>
 				<?} // Fim do for ?>			
@@ -177,16 +173,10 @@
 
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
 	<input type="button" class="botao gft" value="Voltar"  onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
-	<input type="button" class="botao gft" value="Alterar"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispA.'" onClick="return false;"'; } else { echo 'style="'.$dispA.'" onClick="carregaDadosAlteraLimiteDscTit();return false;"'; } ?> />
-	<input type="button" class="botao gft" value="Cancelar"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispX.'" onClick="return false;"'; } else { echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o limite de desconto de t&iacute;tulos?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?>  />
+	<input type="button" class="botao gft" value="Cancelar"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispX.'" onClick="return false;"'; } else { echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o Contrato?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?>  />
 	<input type="button" class="botao gft" value="Consultar"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="carregaDadosConsultaLimiteDscTit();return false;"'; } ?> />
-	<input type="button" class="botao gft" value="Excluir"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="showConfirmacao(\'Deseja excluir o limite de desconto de t&iacute;tulos?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> />
-	<input type="button" class="botao gft" value="Incluir" id="btnIncluirLimite" name="btnIncluirLimite" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscTit(1);return false;"'; } ?> />
-	<input type="button" class="botao gft" value="Analisar"  id="btnAnalisarLimite" name="btnAnalisarLimite" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="confirmaEnvioAnalise();"'; } ?>/>
 	<input type="button" class="botao gft" value="Imprimir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> />
-	<input type="button" class="botao gft" value="Detalhes Proposta"  id="btnDetalhesProposta" name="btnDetalhesProposta" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="carregaDadosDetalhesProposta();return false;"'; } ?>/>
-	<input type="button" class="botao gft" value="Confirmar Novo Limite"  id="btnConfirmarNovoLimite" name="btnConfirmarNovoLimite" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="confirmaNovoLimite();"'; } ?>/>
-	<input type="button" class="botao gft" value="Negar"  id="btnAceitarRejeicao" name="btnAceitarRejeicao" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="aceitarRejeicao();"'; } ?>/>	
+	<input type="button" class="botao gft" value="Detalhes da Proposta"  id="btnDetalhesProposta" name="btnConfirmarNovoLimite" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="efetuarNovoLimite();"'; } ?>/>
 </div>
 
 <script type="text/javascript">
@@ -195,7 +185,7 @@ dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 // Muda o título da tela
 $("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - LIMITE");
 
-formataLayout('divLimites');
+formataLayout('divContratos');
 
 // Esconde mensagem de aguardo
 hideMsgAguardo();
@@ -210,5 +200,12 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 		
 	}
 
+/////////////////////////////colocar este no arquivo de tratamento de layout do módulo descontos.js/////////////////////////////////////
+var Inputs = $('#btnDetalhesProposta');
+Inputs.css({'color':'gray'});
+Inputs.css({'cursor':'default'});
+Inputs.css({'pointer-events':'none'});
+
+/////////////////////////////colocar este no arquivo de tratamento de layout do módulo descontos.js/////////////////////////////////////
 
 </script>
