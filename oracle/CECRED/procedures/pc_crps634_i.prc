@@ -249,6 +249,7 @@ BEGIN
       vr_dtmvtopr := rw_crapdat.dtmvtopr;
       -- Atribuir o indicador de processo
       vr_inproces := rw_crapdat.inproces;
+      vr_inproces := 3;
     end if;
     close btch0001.cr_crapdat;      
     
