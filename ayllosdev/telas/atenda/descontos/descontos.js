@@ -475,6 +475,7 @@ function formataLayout(nomeForm){
 		});
 	
 		ajustarCentralizacao();
+
 			
 	}else if( nomeForm == 'divLimites' ){
 				
@@ -518,11 +519,6 @@ function formataLayout(nomeForm){
 		});
 	
 		ajustarCentralizacao();
-
-
-
-
-
 
 		
 	}else if(  nomeForm == 'frmDadosLimiteDscChq' || nomeForm == 'frmDadosLimiteDscTit'){
