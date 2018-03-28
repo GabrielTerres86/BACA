@@ -225,7 +225,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
   --  Sigla    : GENE
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 24/11/2017
+  --  Data     : Maio/2013.                   Ultima atualizacao: 28/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -261,7 +261,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --                          (Lucas Ranghetti #717352)   
   --
   --             24/11/2017 - Correção na consulta de bloqueios judiciais pc_retorna_valor_blqjud, para somar todas 
-  --                          as ocorrencias e retornar o valor correto. SD 800517 (Carlos Rafael Tanholi)               
+  --                          as ocorrencias e retornar o valor correto. SD 800517 (Carlos Rafael Tanholi)
+  --
+  --             28/03/2018 - #inc0011243 Na rotina pc_saldo_utiliza, alimentado o retorno da crítica para conta 
+  --                          não encontrada por nrdconta ou nrcpfcgc (Carlos)
   ---------------------------------------------------------------------------------------------------------------
   
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
@@ -1087,6 +1090,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
        IF vr_tab_conta.count = 0 THEN
          -- Gerar critica 9
          vr_cdcritic := 9;
+         vr_des_erro := 'Conta (' || pr_nrdconta || ') ou CPF/CGC (' || pr_nrcpfcgc || ') nao foram encontrados.';
          RAISE vr_exc_erro;
        END IF;
 
