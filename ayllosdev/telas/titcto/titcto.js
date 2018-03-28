@@ -1260,6 +1260,7 @@ function btnVoltar() {
         } 
         else {
             $('#' + frmOpcao +' .saldo_contabil').hide();
+            trocaBotao('Prosseguir');
             cTpcobran.habilitaCampo().focus();
         } 
      } else if (cddopcao == 'T'){
@@ -1305,8 +1306,10 @@ function btnContinuar() {
 
     if(cddopcao == 'C'){
         if ((!cNrdconta.hasClass('campoTelaSemBorda'))) {
+            hideMsgAguardo();
             cNrdconta.keypress();
         } else if ((!cNrcpfcgc.hasClass('campoTelaSemBorda'))) {
+            hideMsgAguardo();
             cNrcpfcgc.keypress();
         } else if ((!cTpcobran.hasClass('campoTelaSemBorda'))) {
             cNrdconta.desabilitaCampo();
