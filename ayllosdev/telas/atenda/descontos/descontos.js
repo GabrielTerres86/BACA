@@ -34,6 +34,8 @@
              07/03/2018 - Formatação do novo campo 'Data Renovação' para o formulário de titulos (Leonardo Oliveira - GFT)
 
              13/03/2018 - Formatação do botão Renovação para  o formulário de titulos. (Leonardo Oliveira - GFT)
+
+             28/03/2018 - Formatação dos layouts dos formulários de Contratos e Propostas. (Andre Avila - GFT)
 			 
 ************************************************************************/
 
@@ -274,7 +276,7 @@ function formataLayout(nomeForm){
 				
 	}else if ( nomeForm == 'divBorderos' ){
 	
-		$('#'+nomeForm).css('width','950px');
+		$('#'+nomeForm).css('width','785px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -284,25 +286,24 @@ function formataLayout(nomeForm){
 		var ordemInicial = new Array();
 				
 		var arrayLargura = new Array();
-		arrayLargura[0] = '85px';
+		arrayLargura[0] = '65px';
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '55px';
-		arrayLargura[4] = '80px';
-		arrayLargura[5] = '130px';
-		arrayLargura[6] = '130px';
-		arrayLargura[7] = '100px';
-		arrayLargura[8] = '15px';
+		arrayLargura[4] = '100px';
+		arrayLargura[5] = '55px';
+		arrayLargura[6] = '100px';
+		arrayLargura[7] = '90px';
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'right';
 		arrayAlinha[2] = 'right';
-		arrayAlinha[3] = 'center';
+		arrayAlinha[3] = 'right';
 		arrayAlinha[4] = 'right';
-		arrayAlinha[5] = 'center';
-		arrayAlinha[6] = 'center';
-		arrayAlinha[7] = 'center';
+		arrayAlinha[5] = 'right';
+		arrayAlinha[6] = 'right';
+		arrayAlinha[7] = 'left';
 		arrayAlinha[8] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
@@ -384,8 +385,99 @@ function formataLayout(nomeForm){
 		Ctxdiaria.desabilitaCampo();
 		Cdsopelib.desabilitaCampo();
 		Ctxjurmor.desabilitaCampo();
+
+
+/*Add else if para propostas*/
+}	else if( nomeForm == 'divPropostas' ){
+
 			
-	}else if( nomeForm == 'divLimites' ){
+		$('#'+nomeForm).css('width','800px');
+	
+		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+		var tabela      = $('table', divRegistro );	
+						
+		divRegistro.css('height','135px');
+		
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+
+		arrayLargura[0] = '80px';
+		arrayLargura[1] = '60px';
+		arrayLargura[2] = '60px';
+		arrayLargura[3] = '60px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '120px';
+		arrayLargura[6] = '120px';
+		arrayLargura[7] = '120px';
+				
+		var arrayAlinha = new Array();
+		
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'right';
+		arrayAlinha[3] = 'right';
+		arrayAlinha[4] = 'center';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+		arrayAlinha[7] = 'center';
+						
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+	
+		ajustarCentralizacao();
+
+
+/*Add else if para contratos*/
+}	else if( nomeForm == 'divContratos' ){
+
+		$('#'+nomeForm).css('width','800px');
+	
+		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+		var tabela      = $('table', divRegistro );
+						
+		divRegistro.css('height','135px');
+		
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+
+
+		arrayLargura[0] = '80px';
+		arrayLargura[1] = '60px';
+		arrayLargura[2] = '60px';
+		arrayLargura[3] = '60px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '120px';
+		arrayLargura[6] = '120px';
+				
+		var arrayAlinha = new Array();
+		
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'right';
+		arrayAlinha[3] = 'right';
+		arrayAlinha[4] = 'center';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+						
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+	
+		ajustarCentralizacao();
+
+		
+	} else if( nomeForm == 'divLimites' ){
 				
 		$('#'+nomeForm).css('width','800px');
 	
@@ -671,7 +763,7 @@ function formataLayout(nomeForm){
 
 		$('#btnrenovacao').unbind('click').bind('click', function(){
 			if (Cperrenov.val() != 1) {return false}
-			renovarLimiteTitulo();
+			acessaValorLimite();
 			return false;			
 		});
 
