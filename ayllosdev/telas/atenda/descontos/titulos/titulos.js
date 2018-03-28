@@ -1835,3 +1835,60 @@ function renovaValorLimite() {
 function converteNumero (numero){
   return numero.replace('.','').replace(',','.');
 }
+
+
+
+
+function mostrarBorderoResumo() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_resumo.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao4").html(response);
+        }
+    });
+    
+    return false;
+}
+
+function mostrarDetalhesPagador() {
+    showMsgAguardo("Aguarde, carregando dados do pagador ...");
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_detalhe.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao5").html(response);
+        }
+    });
+    
+    return false;
+}
+
+
+function selecionaTituloResumo(idBoleto, nmdsacad){
+    console.log("[ID Boleto] - " + idBoleto);
+    console.log("[Nome Sacado] - " + nmdsacad);
+}

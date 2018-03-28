@@ -1119,6 +1119,102 @@ function formataLayout(nomeForm){
 
 		tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		ajustarCentralizacao();			
+	}else if ( nomeForm == 'divResumoBordero' ){
+	
+		$('#'+nomeForm).css('width','940px');
+
+
+		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
+		camposFiltros.desabilitaCampo();
+		var divRegistrosTitulos 			= $('div.divRegistrosTitulos','#'+nomeForm);		
+		var divRegistrosTitulosSelecionados = $('div.divRegistrosTitulosSelecionados','#'+nomeForm);		
+		var tabelaTitulos      				= $('table', divRegistrosTitulos );
+		var tabelaTitulosSelecionados   	= $('table', divRegistrosTitulosSelecionados );
+
+
+
+
+
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+		arrayLargura[0] = '100px';
+		arrayLargura[1] = '100px';
+		arrayLargura[2] = '250px';
+		arrayLargura[3] = '100px';
+		arrayLargura[4] = '';
+		arrayLargura[5] = '80px';
+		arrayLargura[6] = '70px';
+
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'center';
+		arrayAlinha[4] = 'right';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+						
+	    $('#' + nomeForm).css({'margin-top': '5px'});
+	    divRegistrosTitulos.css({'height': '210px', 'padding-bottom': '2px'});
+	    divRegistrosTitulosSelecionados.css({'height': '210px', 'padding-bottom': '2px'});
+
+		tabelaTitulos.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		tabelaTitulosSelecionados.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+
+
+		layoutPadrao();
+		ajustarCentralizacao();
+	
+	}else if ( nomeForm == 'divDetalheBordero' ){
+	
+		$('#'+nomeForm).css('width','940px');
+
+
+		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
+		camposFiltros.desabilitaCampo();
+		var divRegistrosTitulos 			= $('div.divRegistrosTitulos','#'+nomeForm);		
+		var divRegistrosTitulosSelecionados = $('div.divRegistrosTitulosSelecionados','#'+nomeForm);		
+		var tabelaTitulos      				= $('table', divRegistrosTitulos );
+		var tabelaTitulosSelecionados   	= $('table', divRegistrosTitulosSelecionados );
+		
+		var cNmdsacad = $("#nmdsacad", "#"+nomeForm);
+		cNmdsacad.css({'width': '450px'});
+	
+
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+		arrayLargura[0] = '100px';
+		
+
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'left';
+		
+						
+	    $('#' + nomeForm).css({'margin-top': '5px'});
+	    divRegistrosTitulos.css({'height': '210px', 'padding-bottom': '2px'});
+	    divRegistrosTitulosSelecionados.css({'height': '210px', 'padding-bottom': '2px'});
+
+		tabelaTitulos.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		tabelaTitulosSelecionados.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+
+
+		layoutPadrao();
+		ajustarCentralizacao();
+	
 	}
 	
 	return false;
