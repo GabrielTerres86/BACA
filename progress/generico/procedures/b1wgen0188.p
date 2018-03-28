@@ -1639,8 +1639,6 @@ PROCEDURE grava_dados_conta PRIVATE:
                 aux_vliofadi = 0
                 aux_flgimune = 0
                 par_vltottar = 0
-                par_vltariof = 0
-                par_vltariof = DECI(pc_calcula_iof_epr.pr_valoriof) WHEN pc_calcula_iof_epr.pr_valoriof <> ?
                 aux_vliofpri = DECI(pc_calcula_iof_epr.pr_vliofpri) WHEN pc_calcula_iof_epr.pr_vliofpri <> ?
                 aux_vliofadi = DECI(pc_calcula_iof_epr.pr_vliofadi) WHEN pc_calcula_iof_epr.pr_vliofadi <> ?
                 aux_dscritic = pc_calcula_iof_epr.pr_dscritic WHEN pc_calcula_iof_epr.pr_dscritic <> ?
@@ -1650,9 +1648,8 @@ PROCEDURE grava_dados_conta PRIVATE:
            UNDO TRANS_1, LEAVE TRANS_1.
 
         /* Caso for imune, nao podemos cobrar IOF */
-        IF (par_vltariof) > 0 THEN
+        IF (aux_vliofpri + aux_vliofadi) > 0 THEN
            DO:
-           
                DO WHILE TRUE:
         
                   FIND craplot 
@@ -1787,45 +1784,6 @@ PROCEDURE grava_dados_conta PRIVATE:
                       crapcot.vlbsiepr = 
                               crapcot.vlbsiepr + par_vlemprst.
 
-           END.
-           
-           ELSE DO:
-           
-              /* Projeto 410 - Gera lancamento de IOF complementar na TBGEN_IOF_LANCAMENTO - Jean (Mout´S) */
-             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-             RUN STORED-PROCEDURE pc_insere_iof
-             aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
-                                                 ,INPUT par_nrdconta     /* Número da conta referente ao empréstimo */
-                                                 ,INPUT par_dtmvtolt     /* data de movimento */
-                                                 ,INPUT 1                /* tipo de produto - 1 - Emprestimo */
-                                                 ,INPUT par_nrctremp     /* Número do contrato de empréstimo */
-                                                 ,INPUT ?                /* lancamento automatico */
-                                                 ,INPUT ?  /* data de movimento LCM*/
-                                                 ,INPUT 0  /* codigo da agencia  */
-                                                 ,INPUT 0  /* Codigo caixa*/
-                                                 ,INPUT 0  /* numero do lote */
-                                                 ,INPUT 0  /* sequencia do lote */
-                                                 ,INPUT aux_vliofpri     /* iof principal */
-                                                 ,INPUT aux_vliofadi     /* iof adicional */
-                                                 ,INPUT 0                /* iof complementar */
-                                                 ,INPUT aux_flgimune     /* flag IMUNE*/
-                                                 ,OUTPUT 0               /* codigo da critica */
-                                                 ,OUTPUT "").            /* Critica */
-       
-             /* Fechar o procedimento para buscarmos o resultado */ 
-             CLOSE STORED-PROC pc_insere_iof
-
-             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-             /* Se retornou erro */
-             ASSIGN aux_dscritic = ""
-                    aux_dscritic = pc_insere_iof.pr_dscritic WHEN pc_insere_iof.pr_dscritic <> ?.
-              
-             IF aux_dscritic <> "" THEN
-                RETURN "NOK".
-           
-           
            END. /* END IF aux_vltxaiof > 0 THEN */
 
         ASSIGN aux_flgtrans = TRUE.
