@@ -1650,7 +1650,7 @@ PROCEDURE grava_dados_conta PRIVATE:
            UNDO TRANS_1, LEAVE TRANS_1.
 
         /* Caso for imune, nao podemos cobrar IOF */
-        IF (par_vltariof) > 0 THEN
+        IF (par_vltariof) > 0 AND aux_flgimune = 0 THEN
            DO:
            
                DO WHILE TRUE:
@@ -1684,6 +1684,13 @@ PROCEDURE grava_dados_conta PRIVATE:
                   LEAVE.
         
                END.  /*  Fim do DO WHILE TRUE  */
+               
+               /* Condicao para verificar se eh Financiamento */
+               IF craplcr.dsoperac = 'FINANCIAMENTO' THEN
+                  ASSIGN aux_cdhistor = 2309.
+               ELSE
+                  ASSIGN aux_cdhistor = 2308.
+                  
         
                CREATE craplcm.
                ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
@@ -1694,7 +1701,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                       craplcm.nrdctabb = par_nrdconta
                       craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
                       craplcm.nrdocmto = par_nrctremp
-                      craplcm.cdhistor = 322
+                      craplcm.cdhistor = aux_cdhistor
                       craplcm.nrseqdig = craplot.nrseqdig + 1
                       craplcm.cdpesqbb = 
                                  STRING(par_vlemprst,"zzz,zzz,zz9.99") + 
