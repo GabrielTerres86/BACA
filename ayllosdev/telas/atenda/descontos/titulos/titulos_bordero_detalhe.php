@@ -23,24 +23,26 @@
 	require_once("../../../../class/xmlfile.php");
 	
 	setVarSession("nmrotina","DSC TITS - BORDERO");
-
-	// Carrega permissões do operador
-	// include("../../../../includes/carrega_permissoes.php");	
-	
-	// setVarSession("opcoesTela",$opcoesTela);
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrdconta"])) {
+	if (!isset($_POST["idtitulo"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
-	$nrdconta = $_POST["nrdconta"];
+	$idtitulo = $_POST["idtitulo"];
 
-	// Verifica se o número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) {
-		exibeErro("Conta/dv inv&aacute;lida.");
-	}
-	
+	$xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <nrdconta>".$idtitulo."</nrdconta>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    // FAZER O INSERT CRAPRDR e CRAPACA
+    $xmlResult = mensageria($xml,"XXXX","XXXX", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
+
+	$titulos   = $xmlObj->roottag->tags[0]->tags;
+	$qtTitulos = count($titulos);
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
@@ -80,7 +82,7 @@
 							<label >Quantidade:</label>
 						</td>
 						<td style="vertical-align: bottom; ">
-							<label >Dt. Ocorrencia</label>
+							<label >Data da Ocorr&ecirc;ncia</label>
 						</td>											
 					</tr>
 

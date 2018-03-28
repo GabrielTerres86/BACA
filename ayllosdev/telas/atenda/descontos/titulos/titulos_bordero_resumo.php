@@ -194,7 +194,7 @@
 
 
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
-	<input type="button" class="botao" value="Voltar"  onClick="carregaBorderosTitulos(); voltaDiv(3,2,4,'DESCONTO DE TÍTULOS - BORDERÔS');return false; " />
+	<input type="button" class="botao" value="Voltar"  onClick="voltaDiv(4,3,5,'DESCONTO DE T&Iacute;TULOS - BORDEROS');return false; " />
 	<input type="button" class="botao" value="Remover T&iacute;tulo" onClick="alert('Em desenvolvimento');return false;"/>
 	<input type="button" class="botao" value="Ver Detalhes" onClick="mostrarDetalhesPagador();return false;"/>
 

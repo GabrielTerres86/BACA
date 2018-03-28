@@ -1867,12 +1867,14 @@ function mostrarBorderoResumo() {
 function mostrarDetalhesPagador() {
     showMsgAguardo("Aguarde, carregando dados do pagador ...");
 
+    var idtitulo = "";
+
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_detalhe.php",
         dataType: "html",
         data: {
-            nrdconta: nrdconta,
+            idtitulo: idtitulo,
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1888,7 +1890,7 @@ function mostrarDetalhesPagador() {
 }
 
 
-function selecionaTituloResumo(idBoleto, nmdsacad){
-    console.log("[ID Boleto] - " + idBoleto);
+function selecionaTituloResumo(idtitulo, nmdsacad){
+    console.log("[ID Boleto] - " + idtitulo);
     console.log("[Nome Sacado] - " + nmdsacad);
 }
