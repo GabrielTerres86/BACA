@@ -50,7 +50,7 @@
 
 <div id="divBotoes" style="width:550px" >
 	
-	<a href="#" class="botao" id="btVoltar"   		 onClick="carregaLimitesTitulos(); return false;">Voltar </a>
+	<a href="#" class="botao" id="btVoltar"   		 onClick="carregaLimitesTitulosPropostas(); return false;">Voltar </a>
 	<a href="#" class="botao" id="btCompleta" 		 onClick="verificaEnvioEmail(1,1);return false;">Completa</a>
 	<a href="#" class="botao" id="btContrato" 		 onClick="verificaEnvioEmail(2,1);return false;">Contrato</a>
 	<a href="#" class="botao" id="btCet"      		 onClick="verificaEnvioEmail(9,1);return false;">CET     </a>
