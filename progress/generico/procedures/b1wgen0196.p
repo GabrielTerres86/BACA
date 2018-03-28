@@ -774,8 +774,11 @@ END PROCEDURE. /* END grava_dados */
            RUN sistema/generico/procedures/b1wgen0153.p 
                PERSISTENT SET h-b1wgen0153.
 
-        FIND crapepr WHERE crapepr.cdcooper = par_cdcooper AND crapepr.nrdconta = par_nrdconta AND crapepr.nrctremp = par_nrctremp NO-LOCK.
-        IF NOT AVAIL crapepr THEN DO:
+        FIND crawepr WHERE crawepr.cdcooper = par_cdcooper AND 
+                           crawepr.nrdconta = par_nrdconta AND 
+                           crawepr.nrctremp = par_nrctremp 
+                           NO-LOCK.
+        IF NOT AVAIL crawepr THEN DO:
           MESSAGE "Nao encontrado registro na crapepr".
           UNDO TRANS_1, LEAVE TRANS_1.
         END.
@@ -802,8 +805,8 @@ END PROCEDURE. /* END grava_dados */
                                                                      deve terminar com | */
                                                 ,INPUT "IOF"         /* Nome do programa chamador */
                                                 ,INPUT "N"           /* Envia e-mail S/N, se N interrompe o processo em caso de erro */
-                                                ,INPUT crapepr.tpemprst  /* tipo de emprestimo */
-                                                ,INPUT crapepr.idfiniof  /* financia iof */
+                                                ,INPUT crawepr.tpemprst  /* tipo de emprestimo */
+                                                ,INPUT crawepr.idfiniof  /* financia iof */
                                                 ,OUTPUT 0 /* Valor da tarifa calculada */
                                                 ,OUTPUT 0 /* Valor da tarifa especial calculada */
                                                 ,OUTPUT 0 /* Valor da tarifa garantia calculada */
@@ -926,14 +929,11 @@ END PROCEDURE. /* END grava_dados */
         END. /* IF aux_vltrfgar > 0 */
 
         IF VALID-HANDLE(h-b1wgen0153)  THEN
-           DELETE PROCEDURE h-b1wgen0153.        
-    
+           DELETE PROCEDURE h-b1wgen0153.
     
         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND crapass.nrdconta = par_nrdconta NO-LOCK.
-        FIND crapjur WHERE crapjur.cdcooper = par_cdcooper AND crapjur.nrdconta = par_nrdconta NO-LOCK.
     
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-    
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
     
         /* Efetuar a chamada a rotina Oracle */ 
         RUN STORED-PROCEDURE pc_calcula_iof_epr
@@ -943,16 +943,16 @@ END PROCEDURE. /* END grava_dados */
                                                 ,INPUT par_dtmvtolt
                                                 ,INPUT crapass.inpessoa
                                                 ,INPUT par_cdlcremp
-                                                ,INPUT crapepr.qtpreemp
-                                                ,INPUT crapepr.vlpreemp
+                                                ,INPUT crawepr.qtpreemp
+                                                ,INPUT crawepr.vlpreemp
                                                 ,INPUT par_vlemprst
-                                                ,INPUT crapepr.dtdpagto
-                                                ,INPUT crapepr.dtmvtolt
-                                                ,INPUT crapepr.tpemprst
+                                                ,INPUT crawepr.dtdpagto
+                                                ,INPUT crawepr.dtmvtolt
+                                                ,INPUT crawepr.tpemprst
                                                 ,INPUT ?
                                                 ,INPUT 0
                                                 ,INPUT ""
-                                                ,INPUT crapepr.idfiniof
+                                                ,INPUT crawepr.idfiniof
                                                 ,INPUT ""
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
@@ -981,7 +981,7 @@ END PROCEDURE. /* END grava_dados */
 
 
         /* Caso for imune, nao podemos cobrar IOF */
-        IF (aux_vliofpri + aux_vliofadi) > 0 THEN
+        IF (aux_vliofpri + aux_vliofadi) > 0 AND aux_flgimune = 0 THEN
            DO:
                DO WHILE TRUE:
         

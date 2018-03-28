@@ -22,7 +22,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 13/06/2017
+    Data      : Julho/2014                Ultima Atualizacao: 26/03/2018
     
     Dados referentes ao programa:
 
@@ -103,7 +103,9 @@
                              o numero do contrato - Jean (Mout´S)
                 21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                              grava-proposta-completa. PRJ402 - Integracao CDC
-                             (Reinert)						                  
+                             (Reinert)	
+                             
+                26/03/2018 - Ajuste no lancamento do IOF para lancar com o historico correto. (James)
                 
 ..............................................................................*/
 
@@ -1648,7 +1650,7 @@ PROCEDURE grava_dados_conta PRIVATE:
            UNDO TRANS_1, LEAVE TRANS_1.
 
         /* Caso for imune, nao podemos cobrar IOF */
-        IF (aux_vliofpri + aux_vliofadi) > 0 THEN
+        IF (aux_vliofpri + aux_vliofadi) > 0 AND aux_flgimune = 0 THEN
            DO:
                DO WHILE TRUE:
         
@@ -1680,7 +1682,13 @@ PROCEDURE grava_dados_conta PRIVATE:
           
                   LEAVE.
         
-               END.  /*  Fim do DO WHILE TRUE  */
+               END.  /*  Fim do DO WHILE TRUE  */               
+               
+               /* Condicao para verificar se eh Financiamento */
+               IF craplcr.dsoperac = 'FINANCIAMENTO' THEN
+                  ASSIGN aux_cdhistor = 2309.
+               ELSE
+                  ASSIGN aux_cdhistor = 2308.
         
                CREATE craplcm.
                ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
@@ -1691,22 +1699,19 @@ PROCEDURE grava_dados_conta PRIVATE:
                       craplcm.nrdctabb = par_nrdconta
                       craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
                       craplcm.nrdocmto = par_nrctremp
-                      craplcm.cdhistor = 322
+                      craplcm.cdhistor = aux_cdhistor
                       craplcm.nrseqdig = craplot.nrseqdig + 1
-                      craplcm.cdpesqbb = 
-                                 STRING(par_vlemprst,"zzz,zzz,zz9.99") + 
-                                 STRING(par_vlemprst,"zzz,zzz,zz9.99") +
-                                 STRING(0,"zzz,zzz,zz9.99")
-                      craplcm.vllanmto = par_vltariof
+                      craplcm.cdpesqbb = STRING(par_vlemprst,"zzz,zzz,zz9.99") + 
+                                         STRING(par_vlemprst,"zzz,zzz,zz9.99") +
+                                         STRING(0,"zzz,zzz,zz9.99")
+                      craplcm.vllanmto = aux_vliofpri + aux_vliofadi
                       craplcm.cdcooper = par_cdcooper
-					  craplcm.cdcoptfn = par_cdcoptfn
-			          craplcm.cdagetfn = par_cdagetfn
-			          craplcm.nrterfin = par_nrterfin
-					  craplcm.cdorigem = par_idorigem
-                      craplot.vlinfodb = 
-                                 craplot.vlinfodb + craplcm.vllanmto
-                      craplot.vlcompdb = 
-                                 craplot.vlcompdb + craplcm.vllanmto
+                      craplcm.cdcoptfn = par_cdcoptfn
+                      craplcm.cdagetfn = par_cdagetfn
+                      craplcm.nrterfin = par_nrterfin
+                      craplcm.cdorigem = par_idorigem
+                      craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
+                      craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto
                       craplot.qtinfoln = craplot.qtinfoln + 1
                       craplot.qtcompln = craplot.qtcompln + 1
                       craplot.nrseqdig = craplot.nrseqdig + 1.
