@@ -288,6 +288,9 @@
                              (Diogo - MoutS - Projeto 410 - RF 43 a 46)             
 
 		       18/11/2017 - Inclusao dos lotes refernte a devolucao de capital (Jonata - RKAM P364).
+
+          28/03/2018 - Alterado a procedure lista_avalistas para ler a tabela de proposta de limite de desconto 
+                      de titulos CRAWLIM para pegar os avalista caso ainda não exista o contrato CRAPLIM (Paulo Penteado GFT)
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -886,6 +889,9 @@ PROCEDURE lista_avalistas:
     DEF VAR aux_stsnrcal AS LOGICAL                                 NO-UNDO.
     DEF VAR avt_inpessoa AS INTEGER                                 NO-UNDO.
 
+    DEF VAR aux_nrctaav1 AS INTE                                    NO-UNDO.
+    DEF VAR aux_nrctaav2 AS INTE                                    NO-UNDO.
+
     IF  par_tpctrato = 8  OR /* DSC TIT */
         par_tpctrato = 2  OR /* DSC CHQ */
         par_tpctrato = 3  THEN /* LIM CRED */
@@ -906,27 +912,41 @@ PROCEDURE lista_avalistas:
 
         IF  NOT AVAIL craplim  THEN
         DO:
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Registro de limite nao encontrado." +
-                                  STRING(par_cdcooper) +
-                STRING(par_nrdconta) +
-                STRING(par_nrctrato) +
-                STRING(par_tpctrato).
-            
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
+            FIND crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                               crawlim.nrdconta = par_nrdconta AND
+                               crawlim.nrctrlim = par_nrctrato AND
+                               crawlim.tpctrlim = aux_tpctrato NO-LOCK NO-ERROR.
 
-            RETURN "NOK".
+            IF  NOT AVAIL crawlim  THEN
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Registro de limite ou de proposta nao encontrado." +
+                                      STRING(par_cdcooper) +
+                    STRING(par_nrdconta) +
+                    STRING(par_nrctrato) +
+                    STRING(par_tpctrato).
+                
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+                RETURN "NOK".
+            END.
+            ELSE
+                ASSIGN aux_nrctaav1 = crawlim.nrctaav1
+                       aux_nrctaav2 = crawlim.nrctaav2.
         END.
+        ELSE
+            ASSIGN aux_nrctaav1 = craplim.nrctaav1
+                   aux_nrctaav2 = craplim.nrctaav2.
         
-        IF  craplim.nrctaav1 > 0  THEN
+        IF  aux_nrctaav1 > 0  THEN
             DO:
                 FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                                   crapass.nrdconta = craplim.nrctaav1 
+                                   crapass.nrdconta = aux_nrctaav1 
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapass THEN
@@ -1154,10 +1174,10 @@ PROCEDURE lista_avalistas:
         ASSIGN aux_cdgraupr = 0
 		       aux_nrcpfcgc = 0.
 
-        IF  craplim.nrctaav2 > 0  THEN
+        IF  aux_nrctaav2 > 0  THEN
             DO:
                 FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                                   crapass.nrdconta = craplim.nrctaav2 
+                                   crapass.nrdconta = aux_nrctaav2 
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapass THEN

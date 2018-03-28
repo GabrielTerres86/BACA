@@ -1456,6 +1456,12 @@ BEGIN
                    continue;
              end   if;
              close cr_crapcyb;
+             
+             /* Calculo da Liquidez:
+                Valor Total descontado pago com atraso de até x dias e não pagos, 
+                dividido pelo Valor Total Descontado com vencimento dentro do período,
+                vezes 100 = percentual de liquidez.
+               (Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente) */
 
              --    Valor Total Descontado com vencimento dentro do período
              open  cr_craptdb_desc(pr_nrdconta     => rw_craplim_crapass.nrdconta
@@ -1476,7 +1482,7 @@ BEGIN
                  fetch cr_craptdb_npag into rw_craptdb_npag;
                  close cr_craptdb_npag;
             
-                 vr_liquidez := 100 - (rw_craptdb_desc.vltitulo / rw_craptdb_npag.vltitulo * 100);
+                 vr_liquidez := (rw_craptdb_npag.vltitulo / rw_craptdb_desc.vltitulo) * 100;
              end if;
             
              --  Verifica se o cooperado possui liquidez no produto de desconto maior ou igual ao percentual cadastrado 
