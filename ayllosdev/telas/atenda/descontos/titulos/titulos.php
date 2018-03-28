@@ -26,7 +26,7 @@
 				 28/03/2018 - Novos botões Contratos e Propostas. (Andre Avila - GFT)
 
 	***************************************************************************/
-	
+	 
 	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	

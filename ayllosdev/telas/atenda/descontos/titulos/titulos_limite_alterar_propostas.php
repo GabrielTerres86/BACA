@@ -26,7 +26,7 @@
 
 	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();	
-		
+	 	
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	

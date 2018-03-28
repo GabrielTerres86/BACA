@@ -19,7 +19,7 @@
 	require_once('../../../../includes/funcoes.php');		
 	require_once('../../../../includes/controla_secao.php');
 	require_once('../../../../class/xmlfile.php');		
-	isPostMethod();	
+	isPostMethod();	 
 	
 	// Verifica se os parâmetros necessários foram informados
 	$params = array('nrdconta','nrctaav1','nmdaval1','nrcpfav1','cpfcjav1','ende1av1',

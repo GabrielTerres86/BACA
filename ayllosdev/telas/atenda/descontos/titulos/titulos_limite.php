@@ -27,7 +27,7 @@
 				 28/03/2018 - Alteração nos botões para as novas funcionalidades da tela (Andre Avila GFT).
 
 	************************************************************************/
-	
+	 
 	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	

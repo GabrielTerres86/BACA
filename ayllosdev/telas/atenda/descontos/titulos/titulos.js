@@ -20,7 +20,7 @@
  * 007: [20/08/2015] Kelvin    (CECRED) : Ajuste feito para não inserir caracters 
  *                                        especiais na observação, conforme solicitado
  *                                        no chamado 315453.
- *
+ * 
  * 008: [17/12/2015] Lunelli   (CECRED) : Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
  * 009: [27/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
  * 010: [18/11/2016] Jaison/James (CECRED) : Reinicializa glb_codigoOperadorLiberacao somente quando pede a senha do coordenador.
