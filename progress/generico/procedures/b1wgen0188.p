@@ -22,7 +22,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 26/03/2018
+    Data      : Julho/2014                Ultima Atualizacao: 13/06/2017
     
     Dados referentes ao programa:
 
@@ -104,8 +104,6 @@
                 21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                              grava-proposta-completa. PRJ402 - Integracao CDC
                              (Reinert)						                  
-                
-                26/03/2018 - Ajuste no lancamento do IOF para lancar com o historico correto. (James)
                 
 ..............................................................................*/
 
@@ -1641,6 +1639,8 @@ PROCEDURE grava_dados_conta PRIVATE:
                 aux_vliofadi = 0
                 aux_flgimune = 0
                 par_vltottar = 0
+                par_vltariof = 0
+                par_vltariof = DECI(pc_calcula_iof_epr.pr_valoriof) WHEN pc_calcula_iof_epr.pr_valoriof <> ?
                 aux_vliofpri = DECI(pc_calcula_iof_epr.pr_vliofpri) WHEN pc_calcula_iof_epr.pr_vliofpri <> ?
                 aux_vliofadi = DECI(pc_calcula_iof_epr.pr_vliofadi) WHEN pc_calcula_iof_epr.pr_vliofadi <> ?
                 aux_dscritic = pc_calcula_iof_epr.pr_dscritic WHEN pc_calcula_iof_epr.pr_dscritic <> ?
@@ -1650,8 +1650,9 @@ PROCEDURE grava_dados_conta PRIVATE:
            UNDO TRANS_1, LEAVE TRANS_1.
 
         /* Caso for imune, nao podemos cobrar IOF */
-        IF (aux_vliofpri + aux_vliofadi) > 0 AND aux_flgimune = 0 THEN
+        IF (par_vltariof) > 0 THEN
            DO:
+           
                DO WHILE TRUE:
         
                   FIND craplot 
@@ -1684,12 +1685,6 @@ PROCEDURE grava_dados_conta PRIVATE:
         
                END.  /*  Fim do DO WHILE TRUE  */
         
-               /* Condicao para verificar se eh Financiamento */
-               IF craplcr.dsoperac = 'FINANCIAMENTO' THEN
-                  ASSIGN aux_cdhistor = 2309.
-               ELSE
-                  ASSIGN aux_cdhistor = 2308.
-        
                CREATE craplcm.
                ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
                       craplcm.cdagenci = craplot.cdagenci
@@ -1699,19 +1694,22 @@ PROCEDURE grava_dados_conta PRIVATE:
                       craplcm.nrdctabb = par_nrdconta
                       craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
                       craplcm.nrdocmto = par_nrctremp
-                      craplcm.cdhistor = aux_cdhistor
+                      craplcm.cdhistor = 322
                       craplcm.nrseqdig = craplot.nrseqdig + 1
-                      craplcm.cdpesqbb = STRING(par_vlemprst,"zzz,zzz,zz9.99") + 
+                      craplcm.cdpesqbb = 
+                                 STRING(par_vlemprst,"zzz,zzz,zz9.99") + 
                                  STRING(par_vlemprst,"zzz,zzz,zz9.99") +
                                  STRING(0,"zzz,zzz,zz9.99")
-                      craplcm.vllanmto = aux_vliofpri + aux_vliofadi
+                      craplcm.vllanmto = par_vltariof
                       craplcm.cdcooper = par_cdcooper
 					  craplcm.cdcoptfn = par_cdcoptfn
 			          craplcm.cdagetfn = par_cdagetfn
 			          craplcm.nrterfin = par_nrterfin
 					  craplcm.cdorigem = par_idorigem
-                      craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
-                      craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto
+                      craplot.vlinfodb = 
+                                 craplot.vlinfodb + craplcm.vllanmto
+                      craplot.vlcompdb = 
+                                 craplot.vlcompdb + craplcm.vllanmto
                       craplot.qtinfoln = craplot.qtinfoln + 1
                       craplot.qtcompln = craplot.qtcompln + 1
                       craplot.nrseqdig = craplot.nrseqdig + 1.
@@ -1789,6 +1787,45 @@ PROCEDURE grava_dados_conta PRIVATE:
                       crapcot.vlbsiepr = 
                               crapcot.vlbsiepr + par_vlemprst.
 
+           END.
+           
+           ELSE DO:
+           
+              /* Projeto 410 - Gera lancamento de IOF complementar na TBGEN_IOF_LANCAMENTO - Jean (Mout´S) */
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+             RUN STORED-PROCEDURE pc_insere_iof
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
+                                                 ,INPUT par_nrdconta     /* Número da conta referente ao empréstimo */
+                                                 ,INPUT par_dtmvtolt     /* data de movimento */
+                                                 ,INPUT 1                /* tipo de produto - 1 - Emprestimo */
+                                                 ,INPUT par_nrctremp     /* Número do contrato de empréstimo */
+                                                 ,INPUT ?                /* lancamento automatico */
+                                                 ,INPUT ?  /* data de movimento LCM*/
+                                                 ,INPUT 0  /* codigo da agencia  */
+                                                 ,INPUT 0  /* Codigo caixa*/
+                                                 ,INPUT 0  /* numero do lote */
+                                                 ,INPUT 0  /* sequencia do lote */
+                                                 ,INPUT aux_vliofpri     /* iof principal */
+                                                 ,INPUT aux_vliofadi     /* iof adicional */
+                                                 ,INPUT 0                /* iof complementar */
+                                                 ,INPUT aux_flgimune     /* flag IMUNE*/
+                                                 ,OUTPUT 0               /* codigo da critica */
+                                                 ,OUTPUT "").            /* Critica */
+       
+             /* Fechar o procedimento para buscarmos o resultado */ 
+             CLOSE STORED-PROC pc_insere_iof
+
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+             /* Se retornou erro */
+             ASSIGN aux_dscritic = ""
+                    aux_dscritic = pc_insere_iof.pr_dscritic WHEN pc_insere_iof.pr_dscritic <> ?.
+              
+             IF aux_dscritic <> "" THEN
+                RETURN "NOK".
+           
+           
            END. /* END IF aux_vltxaiof > 0 THEN */
 
         ASSIGN aux_flgtrans = TRUE.
