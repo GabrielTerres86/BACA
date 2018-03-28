@@ -979,7 +979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                        AND epr.nrdconta = cp.nrdconta
                        AND epr.inprejuz = 1
                        AND epr.vlsdprej > 0
-                   ) = 1 OR (cp.dtelimin IS NULL OR cp.dtdemiss IS NULL));
+                   ) = 1 OR (cp.dtelimin IS NULL AND cp.dtdemiss IS NULL));
 
     BEGIN
 
