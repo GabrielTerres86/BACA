@@ -23,6 +23,8 @@
 
 				 16/03/2018 - Novos campos flgstlcr e cddlinha, ambos do tipo hidden. (Leonardo Oliveira - GFT)
 
+				 28/03/2018 - Novos botões Contratos e Propostas. (Andre Avila - GFT)
+
 	***************************************************************************/
 	
 	session_start();
@@ -83,7 +85,8 @@
 	} 
 	
 	$dados = $xmlObjDscTit->roottag->tags[0]->tags[0]->tags;
-		
+
+	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -167,7 +170,19 @@
 	id="btnlimite"
 	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
 	else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> >
-		Limite
+		Contratos
+	</a>
+
+	<a
+	href="#"
+	class="botao" 
+	type="image" 
+	name="btnpropostas" 
+	id="btnpropostas"
+
+	<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:block;" onClick="carregaLimitesTitulosPropostas() return false;"'; } 
+	else { echo 'onClick="carregaLimitesTitulosPropostas();return false;"'; } ?> >
+		Propostas
 	</a>
 
 	<a 
