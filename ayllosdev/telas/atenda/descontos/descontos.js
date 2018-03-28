@@ -42,6 +42,25 @@
 // Carrega biblioteca javascript referente ao RATING
 $.getScript(UrlSite + 'includes/rating/rating.js');
 
+/*Largura e alinhamento das tabelas da inclusao do bordero*/
+var arrayLarguraInclusaoBordero = new Array();
+arrayLarguraInclusaoBordero[0] = '70px';
+arrayLarguraInclusaoBordero[1] = '70px';
+arrayLarguraInclusaoBordero[2] = '370px';
+arrayLarguraInclusaoBordero[3] = '80px';
+arrayLarguraInclusaoBordero[4] = '100px';
+arrayLarguraInclusaoBordero[5] = '70px';
+arrayLarguraInclusaoBordero[6] = '70px';
+
+var arrayAlinhaInclusaoBordero = new Array();
+arrayAlinhaInclusaoBordero[0] = 'center';
+arrayAlinhaInclusaoBordero[1] = 'right';
+arrayAlinhaInclusaoBordero[2] = 'left';
+arrayAlinhaInclusaoBordero[3] = 'right';
+arrayAlinhaInclusaoBordero[4] = 'right';
+arrayAlinhaInclusaoBordero[5] = 'right';
+arrayAlinhaInclusaoBordero[6] = 'center';
+				
 // Função para voltar para o div anterior conforme parâmetros
 function voltaDiv(esconder,mostrar,qtdade,titulo,rotina,novotam,novalar) {	
 
@@ -314,6 +333,121 @@ function formataLayout(nomeForm){
 			}
 		});
 		
+		ajustarCentralizacao();
+	
+	}else if ( nomeForm == 'divIncluirBordero' ){
+	
+		$('#'+nomeForm).css('width','940px');
+		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
+		camposFiltros.desabilitaCampo();
+		var divRegistrosTitulos 			= $('div.divRegistrosTitulos','#'+nomeForm);		
+		var divRegistrosTitulosSelecionados = $('div.divRegistrosTitulosSelecionados','#'+nomeForm);		
+		var tabelaTitulos      				= $('table', divRegistrosTitulos );
+		var tabelaTitulosSelecionados   	= $('table', divRegistrosTitulosSelecionados );
+						
+		
+
+		var rNrctrlim = $("label[for='nrctrlim']");
+		var rVldescon = $("label[for='vldescon']");
+		var rVldispon = $("label[for='vldispon']");
+		var rNrinssac = $("label[for='nrinssac']");
+	    var rNmdsacad = $("label[for='nmdsacad']");
+	    var rDtvencto = $("label[for='dtvencto']");
+	    var rVltitulo = $("label[for='vltitulo']");
+	    var rNrnosnum = $("label[for='nrnosnum']");
+
+		rNrctrlim.css({'width': '115px'}).addClass('rotulo');
+		rVldescon.css({'width': '135px'}).addClass('rotulo-linha');
+		rVldispon.css({'width': '150px'}).addClass('rotulo-linha');
+		rNrinssac.css({'width': '115px'}).addClass('rotulo');
+		rNmdsacad.css({'width': '114px'}).addClass('rotulo-linha');
+		rDtvencto.css({'width': '115px'}).addClass('rotulo');
+		rVltitulo.css({'width': '133px'}).addClass('rotulo-linha');
+		rNrnosnum.css({'width': '110px'}).addClass('rotulo-linha');
+
+		var cNrdconta = $("#nrdconta", "#"+nomeForm);
+		var cNrctrlim = $("#nrctrlim", "#"+nomeForm);
+		var cVldescon = $("#vldescon", "#"+nomeForm);
+		var cVldispon = $("#vldispon", "#"+nomeForm);
+		var cNrinssac = $("#nrinssac", "#"+nomeForm);
+		var cNmdsacad = $("#nmdsacad", "#"+nomeForm);
+		var cDtvencto = $("#dtvencto", "#"+nomeForm);
+		var cVltitulo = $("#vltitulo", "#"+nomeForm);
+		var cNrnosnum = $("#nrnosnum", "#"+nomeForm);
+
+
+		cNrctrlim.css({'width': '115px'}).addClass('inteiro');
+		cVldescon.css({'width': '110px'}).addClass('monetario');
+		cVldispon.css({'width': '110px'}).addClass('monetario');
+		cNrinssac.css({'width': '115px'}).addClass('inteiro').attr('maxlength', '14').habilitaCampo();
+		cNmdsacad.css({'width': '250px'});
+		cDtvencto.css({'width': '115px'}).addClass('data').habilitaCampo();
+		cVltitulo.css({'width': '110px'}).addClass('monetario').habilitaCampo();
+		cNrnosnum.css({'width': '70px'}).addClass('inteiro').habilitaCampo();
+
+
+		var ordemInicial = new Array();
+				
+						
+	    $('#' + nomeForm).css({'margin-top': '5px'});
+	    divRegistrosTitulos.css({'height': '210px', 'padding-bottom': '2px'});
+	    divRegistrosTitulosSelecionados.css({'height': '210px', 'padding-bottom': '2px'});
+
+		tabelaTitulos.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
+		tabelaTitulosSelecionados.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+
+
+	    btLupaPagador = $('#btLupaPagador','#'+nomeForm);
+	    btLupaPagador.css('cursor', 'pointer').unbind('click').bind('click', function () {
+	        if ((cNrinssac.hasClass('campoTelaSemBorda'))) return false;
+	        mostraPesquisaPagador(cNrdconta.val(),nomeForm);
+	        return false;
+	     });
+
+	    cNrinssac.unbind('keypress').unbind('change').bind('change keypress', function(e) {
+	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
+	        if ((e.keyCode == 9 || e.keyCode == 13 || e.type ==='change')) {
+	            if(cNrinssac.val()!=''){
+	                buscaPagador(cNrdconta.val(),cNrinssac.val(),nomeForm);
+	            }
+	            else{
+	            	cNmdsacad.val('');
+	            }
+	            return false;
+	        }
+	    });
+
+	    cDtvencto.unbind('keypress').bind('keypress', function(e) {
+	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
+	        if ((e.keyCode == 9 || e.keyCode == 13)) {
+	            cVltitulo.focus();
+	            return false;
+	        }
+	    });
+
+	    cVltitulo.unbind('keypress').bind('keypress', function(e) {
+	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
+	        if ((e.keyCode == 9 || e.keyCode == 13)) {
+	            cNrnosnum.focus();
+	            return false;
+	        }
+	    });
+
+	    cNrnosnum.unbind('keypress').bind('keypress', function(e) {
+	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
+	        if ((e.keyCode == 9 || e.keyCode == 13)) {
+	            buscarTitulosBordero();
+	            return false;
+	        }
+	    });
+
+		layoutPadrao();
 		ajustarCentralizacao();
 	
 	}else if( nomeForm == 'frmBordero' ){

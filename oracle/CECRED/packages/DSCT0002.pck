@@ -6193,7 +6193,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     and    ass.nrdconta   = rw_crapsab.nrdconta;
     rw_cnae cr_cnae%rowtype;
 
-    -- [PAGADORES] - Obter Percentual de Concentração de Títulos por Pagador	 
+    -- [PAGADORES] - Obter Percentual de Concentração de Títulos por Pagador   
     cursor cr_concentracao is
     select * from (
         select nrdconta,
@@ -6240,7 +6240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     rw_concentracao_excecao cr_concentracao_excecao%rowtype;
 
 
-    -- [PAGADORES] - Verificar se Cooperado Possui Títulos Descontados na Conta do Pagador	 
+    -- [PAGADORES] - Verificar se Cooperado Possui Títulos Descontados na Conta do Pagador   
     cursor cr_coop_tit_conta_pag is
     select count(1)
     from   crapcob cob_pag

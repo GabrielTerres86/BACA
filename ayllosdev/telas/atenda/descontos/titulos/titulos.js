@@ -129,6 +129,53 @@ function selecionaBorderoTitulos(id, qtBorderos, bordero, contrato) {
     return false;
 }
 
+/*Mostra lupa de pagadores*/
+function mostraPesquisaPagador(nrdconta,nomeForm){
+    procedure = 'COBR_PESQUISA_PAGADORES';
+    titulo = 'Pagador';
+    qtReg = '30';
+    filtros = ';nrinssac;;N;;N;;|Nome do Pagador;nmdsacad;280;S;;S;;|Conta;nrdconta;;N;' + normalizaNumero(nrdconta) + ';N;;';
+    colunas = 'CPF/CNPJ;nrinssac;30%;center|Nome;nmdsacad;80%;left;|;nrdconta;;;;N';
+    mostraPesquisa('COBRAN', procedure, titulo, qtReg, filtros, colunas, nomeForm, '$("#dtvencto","#'+nomeForm+'").focus();bloqueiaFundo(divRotina);');
+    // $('#formPesquisa').css('display', 'none');
+    return false;
+}
+
+/*Busca pagador da conta*/
+function buscaPagador(nrdconta,nrinssac,nomeForm) {
+    showMsgAguardo('Aguarde, buscando dados da Conta...');  
+    
+    nrdconta = normalizaNumero(nrdconta);
+    nrinssac = normalizaNumero(nrinssac);
+            
+    $.ajax({        
+        type    : 'POST',
+        dataType: 'html',
+        url     : UrlSite + 'telas/atenda/descontos/manter_rotina.php', 
+        data    : { 
+                    operacao: 'BUSCAR_PAGADOR',
+                    nrdconta: nrdconta,   
+                    nrinssac: nrinssac,   
+                    frmOpcao: nomeForm,
+                    redirect: 'script_ajax'
+
+                },
+        error   : function(objAjax,responseError,objExcept) {
+                    hideMsgAguardo();
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nrinssac\',\''+nomeForm+'\').focus();');
+                },
+        success : function(response) { 
+                    hideMsgAguardo();
+                    bloqueiaFundo(divRotina);
+                    eval(response);
+                }
+    }); 
+}
+
+function controlaOpcao(){
+    $("#dtvencto").focus();
+}
+
 // OPÇÕES CONSULTA/EXCLUSÃO/IMPRIMIR/LIBERAÇÃO/ANÁLISE
 // Mostrar dados do bordero para fazer
 function mostraDadosBorderoDscTit(opcaomostra) {
@@ -157,6 +204,133 @@ function mostraDadosBorderoDscTit(opcaomostra) {
     return false;
 }
 
+// Mostrar dados do bordero para fazer
+function mostrarBorderoIncluir() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_incluir.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao3").html(response);
+        }
+    });
+    return false;
+}
+// FUNCAO PARA INCLUIR O TITULO NO BORDERO (MANDA DA TABELA DE FILTRO PARA A DE SELECIONADOS)
+function incluiTituloBordero(td){
+    var selecionados = $(".divRegistrosTitulosSelecionados table","#divIncluirBordero");
+    var registros = $(".divRegistrosTitulos table","#divIncluirBordero");
+    var td = $(td);
+    var tr = td.parent();
+    var id = tr.attr("id");
+    if (selecionados.find("#"+id).length>0){
+        showError("error", "T&iacute;tulo j&aacute; incluso na lista de selecionados.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+    }
+    else{
+        td.removeClass('corSelecao');
+        td.attr("onclick","");
+        td.unbind('click').bind('click',function(){
+            removeTituloBordero(td);
+        });
+        td.find("button").text("Remover");
+        tr.unbind("click");
+
+        selecionados.append(tr).zebraTabela();
+        selecionados.trigger("update");
+        registros.trigger("update");
+        selecionados.find('> tbody > tr').each(function (i) {
+            $(this).unbind('click').bind('click', function () {
+                selecionados.zebraTabela(i);
+            });
+        });
+        registros.find('> tbody > tr').each(function (i) {
+            $(this).unbind('click').bind('click', function () {
+                registros.zebraTabela(i);
+            });
+        });
+
+        if (typeof arrayLarguraInclusaoBordero != 'undefined') {
+            for (var i in arrayLarguraInclusaoBordero) {
+                $('td:eq(' + i + ')', selecionados).css('width', arrayLarguraInclusaoBordero[i]);
+                $('td:eq(' + i + ')', registros).css('width', arrayLarguraInclusaoBordero[i]);
+            }       
+        }   
+    }
+}
+//Busca os titulos do bordero
+function buscarTitulosBordero() {
+    showMsgAguardo('Aguarde, buscando dados da Conta...');  
+    var nomeForm = "formPesquisaTitulos";
+    var nrdconta = normalizaNumero($("#nrdconta","#"+nomeForm).val());
+    var nrctrlim = normalizaNumero($("#nrctrlim","#"+nomeForm).val());
+    var nrinssac = normalizaNumero($("#nrinssac","#"+nomeForm).val());
+    var dtvencto = $("#dtvencto","#"+nomeForm).val();
+    var vltitulo = $("#vltitulo","#"+nomeForm).val();
+    var nrnosnum = normalizaNumero($("#nrnosnum","#"+nomeForm).val());
+
+    $.ajax({        
+        type    : 'POST',
+        dataType: 'html',
+        url     : UrlSite + 'telas/atenda/descontos/manter_rotina.php', 
+        data    : { 
+                    operacao: 'BUSCAR_TITULOS_BORDERO',
+                    nrdconta: nrdconta,
+                    nrctrlim: nrctrlim,
+                    nrinssac: nrinssac,
+                    dtvencto: dtvencto,
+                    vltitulo: vltitulo,
+                    nrnosnum: nrnosnum,
+                    frmOpcao: nomeForm,
+                    redirect: 'script_ajax'
+
+                },
+        error   : function(objAjax,responseError,objExcept) {
+                    hideMsgAguardo();
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nrinssac\',\''+nomeForm+'\').focus();');
+                },
+        success : function(response) { 
+                    hideMsgAguardo();
+                    var registros = $(".divRegistrosTitulos","#divIncluirBordero");
+                    registros.parent().find("table").remove();                   //remove o cabecalho para poder regerar o formatatabela
+                    registros.html(response);
+                    var table = registros.find(">table");
+                    var ordemInicial = new Array();
+                    table.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
+                    bloqueiaFundo(divRotina);
+                }
+    }); 
+}
+
+// FUNCAO QUE REMOVE OS TITULOS DO BORDERO
+function removeTituloBordero(td){
+    var selecionados = $(".divRegistrosTitulosSelecionados table","#divIncluirBordero");
+    td.parent().remove();
+    selecionados.zebraTabela();
+    selecionados.trigger("update");
+    if (typeof arrayLarguraInclusaoBordero != 'undefined') {
+        for (var i in arrayLarguraInclusaoBordero) {
+            $('td:eq(' + i + ')', registros).css('width', arrayLarguraInclusaoBordero[i]);
+        }       
+    }   
+    selecionados.find('> tbody > tr').each(function (i) {
+        $(this).unbind('click').bind('click', function () {
+            selecionados.zebraTabela(i);
+        });
+    });
+
+}
 // OPÇÃO CONSULTAR
 // Mostrar títulos do bordero
 function carregaTitulosBorderoDscTit() { 
