@@ -20,7 +20,7 @@
  * 007: [20/08/2015] Kelvin    (CECRED) : Ajuste feito para não inserir caracters 
  *                                        especiais na observação, conforme solicitado
  *                                        no chamado 315453.
- *
+ * 
  * 008: [17/12/2015] Lunelli   (CECRED) : Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
  * 009: [27/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
  * 010: [18/11/2016] Jaison/James (CECRED) : Reinicializa glb_codigoOperadorLiberacao somente quando pede a senha do coordenador.
@@ -30,6 +30,7 @@
  * 014: [13/03/2018] Leonardo Oliveira (GFT): Novos métodos 'acessaValorLimite', 'formataValorLimite', 'renovaValorLimite' e 'converteNumero'.
  * 015: [16/03/2018] Leonardo Oliveira (GFT): Alteração dos métodos 'acessaValorLimite', 'formataValorLimite' e 'renovaValorLimite' para mostrar dialogo de confirmação e condirerar alteração de linha
  * 016: [22/03/2018] Leonardo Oliveira (GFT): Ajustes no fluxo de renovação do limite de desconto de titulos, validação das linhas de credito bloqueadas
+ * 017: [28/03/2018] Andre Avila (GFT): Criação do método carregaLimitesTitulosPropostas e carregaDadosAlteraLimiteDscTitPropostas.
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -129,6 +130,53 @@ function selecionaBorderoTitulos(id, qtBorderos, bordero, contrato) {
     return false;
 }
 
+/*Mostra lupa de pagadores*/
+function mostraPesquisaPagador(nrdconta,nomeForm){
+    procedure = 'COBR_PESQUISA_PAGADORES';
+    titulo = 'Pagador';
+    qtReg = '30';
+    filtros = ';nrinssac;;N;;N;;|Nome do Pagador;nmdsacad;280;S;;S;;|Conta;nrdconta;;N;' + normalizaNumero(nrdconta) + ';N;;';
+    colunas = 'CPF/CNPJ;nrinssac;30%;center|Nome;nmdsacad;80%;left;|;nrdconta;;;;N';
+    mostraPesquisa('COBRAN', procedure, titulo, qtReg, filtros, colunas, nomeForm, '$("#dtvencto","#'+nomeForm+'").focus();bloqueiaFundo(divRotina);');
+    // $('#formPesquisa').css('display', 'none');
+    return false;
+}
+
+/*Busca pagador da conta*/
+function buscaPagador(nrdconta,nrinssac,nomeForm) {
+    showMsgAguardo('Aguarde, buscando dados da Conta...');  
+    
+    nrdconta = normalizaNumero(nrdconta);
+    nrinssac = normalizaNumero(nrinssac);
+            
+    $.ajax({        
+        type    : 'POST',
+        dataType: 'html',
+        url     : UrlSite + 'telas/atenda/descontos/manter_rotina.php', 
+        data    : { 
+                    operacao: 'BUSCAR_PAGADOR',
+                    nrdconta: nrdconta,   
+                    nrinssac: nrinssac,   
+                    frmOpcao: nomeForm,
+                    redirect: 'script_ajax'
+
+                },
+        error   : function(objAjax,responseError,objExcept) {
+                    hideMsgAguardo();
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nrinssac\',\''+nomeForm+'\').focus();');
+                },
+        success : function(response) { 
+                    hideMsgAguardo();
+                    bloqueiaFundo(divRotina);
+                    eval(response);
+                }
+    }); 
+}
+
+function controlaOpcao(){
+    $("#dtvencto").focus();
+}
+
 // OPÇÕES CONSULTA/EXCLUSÃO/IMPRIMIR/LIBERAÇÃO/ANÁLISE
 // Mostrar dados do bordero para fazer
 function mostraDadosBorderoDscTit(opcaomostra) {
@@ -157,6 +205,133 @@ function mostraDadosBorderoDscTit(opcaomostra) {
     return false;
 }
 
+// Mostrar dados do bordero para fazer
+function mostrarBorderoIncluir() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_incluir.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao3").html(response);
+        }
+    });
+    return false;
+}
+// FUNCAO PARA INCLUIR O TITULO NO BORDERO (MANDA DA TABELA DE FILTRO PARA A DE SELECIONADOS)
+function incluiTituloBordero(td){
+    var selecionados = $(".divRegistrosTitulosSelecionados table","#divIncluirBordero");
+    var registros = $(".divRegistrosTitulos table","#divIncluirBordero");
+    var td = $(td);
+    var tr = td.parent();
+    var id = tr.attr("id");
+    if (selecionados.find("#"+id).length>0){
+        showError("error", "T&iacute;tulo j&aacute; incluso na lista de selecionados.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+    }
+    else{
+        td.removeClass('corSelecao');
+        td.attr("onclick","");
+        td.unbind('click').bind('click',function(){
+            removeTituloBordero(td);
+        });
+        td.find("button").text("Remover");
+        tr.unbind("click");
+
+        selecionados.append(tr).zebraTabela();
+        selecionados.trigger("update");
+        registros.trigger("update");
+        selecionados.find('> tbody > tr').each(function (i) {
+            $(this).unbind('click').bind('click', function () {
+                selecionados.zebraTabela(i);
+            });
+        });
+        registros.find('> tbody > tr').each(function (i) {
+            $(this).unbind('click').bind('click', function () {
+                registros.zebraTabela(i);
+            });
+        });
+
+        if (typeof arrayLarguraInclusaoBordero != 'undefined') {
+            for (var i in arrayLarguraInclusaoBordero) {
+                $('td:eq(' + i + ')', selecionados).css('width', arrayLarguraInclusaoBordero[i]);
+                $('td:eq(' + i + ')', registros).css('width', arrayLarguraInclusaoBordero[i]);
+            }       
+        }   
+    }
+}
+//Busca os titulos do bordero
+function buscarTitulosBordero() {
+    showMsgAguardo('Aguarde, buscando dados da Conta...');  
+    var nomeForm = "formPesquisaTitulos";
+    var nrdconta = normalizaNumero($("#nrdconta","#"+nomeForm).val());
+    var nrctrlim = normalizaNumero($("#nrctrlim","#"+nomeForm).val());
+    var nrinssac = normalizaNumero($("#nrinssac","#"+nomeForm).val());
+    var dtvencto = $("#dtvencto","#"+nomeForm).val();
+    var vltitulo = $("#vltitulo","#"+nomeForm).val();
+    var nrnosnum = normalizaNumero($("#nrnosnum","#"+nomeForm).val());
+
+    $.ajax({        
+        type    : 'POST',
+        dataType: 'html',
+        url     : UrlSite + 'telas/atenda/descontos/manter_rotina.php', 
+        data    : { 
+                    operacao: 'BUSCAR_TITULOS_BORDERO',
+                    nrdconta: nrdconta,
+                    nrctrlim: nrctrlim,
+                    nrinssac: nrinssac,
+                    dtvencto: dtvencto,
+                    vltitulo: vltitulo,
+                    nrnosnum: nrnosnum,
+                    frmOpcao: nomeForm,
+                    redirect: 'script_ajax'
+
+                },
+        error   : function(objAjax,responseError,objExcept) {
+                    hideMsgAguardo();
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nrinssac\',\''+nomeForm+'\').focus();');
+                },
+        success : function(response) { 
+                    hideMsgAguardo();
+                    var registros = $(".divRegistrosTitulos","#divIncluirBordero");
+                    registros.parent().find("table").remove();                   //remove o cabecalho para poder regerar o formatatabela
+                    registros.html(response);
+                    var table = registros.find(">table");
+                    var ordemInicial = new Array();
+                    table.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
+                    bloqueiaFundo(divRotina);
+                }
+    }); 
+}
+
+// FUNCAO QUE REMOVE OS TITULOS DO BORDERO
+function removeTituloBordero(td){
+    var selecionados = $(".divRegistrosTitulosSelecionados table","#divIncluirBordero");
+    td.parent().remove();
+    selecionados.zebraTabela();
+    selecionados.trigger("update");
+    if (typeof arrayLarguraInclusaoBordero != 'undefined') {
+        for (var i in arrayLarguraInclusaoBordero) {
+            $('td:eq(' + i + ')', registros).css('width', arrayLarguraInclusaoBordero[i]);
+        }       
+    }   
+    selecionados.find('> tbody > tr').each(function (i) {
+        $(this).unbind('click').bind('click', function () {
+            selecionados.zebraTabela(i);
+        });
+    });
+
+}
 // OPÇÃO CONSULTAR
 // Mostrar títulos do bordero
 function carregaTitulosBorderoDscTit() { 
@@ -244,6 +419,63 @@ function mostraImprimirBordero(){
     });
     return false;
 }
+
+
+
+
+// LIMITES DE DESCONTO DE TITULOS
+function carregaLimitesTitulosPropostas() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando Propostas de limites de desconto de t&iacute;tulos ...");
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_propostas.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao2").html(response);
+        }
+    });
+
+    return false;
+}
+
+
+// Carregar os dados para consulta de propostas de limite de desconto de títulos
+function carregaDadosAlteraLimiteDscTitPropostas() {
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando dados da Proposta de limites de desconto de t&iacute;tulos ...");
+    
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({        
+        type: "POST", 
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_alterar_propostas.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrctrlim: nrcontrato,
+            redirect: "html_ajax"
+        },      
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            $("#divOpcoesDaOpcao3").html(response);
+            controlaLupas(nrdconta);
+        }               
+    });     
+}
+
 
 // Função para verificar se deve ser enviado e-mail ao PAC Sede
 function verificaEnvioEmail(idimpres,limorbor) {
@@ -338,7 +570,8 @@ function liberaAnalisaBorderoDscTit(opcao, idconfir, idconfi2, idconfi3, idconfi
 // Mostrar o <div> com os limites de desconto de títulos
 function carregaLimitesTitulos() {
     // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, carregando limites de desconto de t&iacute;tulos ...");
+    showMsgAguardo("Aguarde, carregando Contratos de limites de desconto de t&iacute;tulos ...");
+
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
@@ -496,6 +729,7 @@ function excluirLimiteDscTit() {
 function carregaDadosConsultaLimiteDscTit() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados de desconto de t&iacute;tulos ...");
+    
     // Carrega conteúdo da opção através de ajax
     $.ajax({        
         type: "POST", 
@@ -1639,8 +1873,13 @@ function abreProtocoloAcionamento(dsprotocolo) {
     });
 }
 
+
 // renovação
-function renovarLimiteTitulo() {
+function acessaValorLimite(flgvalida) {
+
+    if(!flgvalida){
+        flgvalida = 0;
+    }
     showMsgAguardo('Aguarde, carregando ...');
 
     var vllimite = $('#vllimite','#frmTitulos').val();
@@ -1649,23 +1888,12 @@ function renovarLimiteTitulo() {
     var cddlinha = $('#cddlinha','#frmTitulos').val();
     var dsdlinha = $('#dsdlinha','#frmTitulos').val();
 
-    fluxoRenovacaoLimite(0, vllimite, nrctrlim, flgstlcr, cddlinha, dsdlinha);
-}
-
-function fluxoRenovacaoLimite(flgvalida, vllimite, nrctrlim, flgstlcr, cddlinha, dsdlinha){
-    if(!flgvalida){
-        flgvalida = 0;
-    }
-    var callback = "fluxoRenovacaoLimite(1, '"+vllimite+"', '"+nrctrlim+"', '"+flgstlcr+"', '"+cddlinha+"', '"+dsdlinha+"');";
-
     if(flgvalida == 0 && flgstlcr == 1){
        showConfirmacao(
         "Deseja renovar o Limite de desconto de título atual?",
         "Confirma&ccedil;&atilde;o - Ayllos",
-        callback,
-        "voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS'); carregaTitulos(); hideMsgAguardo();",
-        "sim.gif",
-        "nao.gif");
+        "acessaValorLimite(1);",
+        "hideMsgAguardo();","sim.gif","nao.gif");
         return false; 
     }
     
@@ -1674,10 +1902,9 @@ function fluxoRenovacaoLimite(flgvalida, vllimite, nrctrlim, flgstlcr, cddlinha,
             "inform",
             "Linha de crédito bloqueada, para realizar a operação altere para uma linha liberada ou efetue o desbloqueio da linha",
             "Alerta - Ayllos",
-            callback);
+            "acessaValorLimite(1);");
         return false;
     }
-
 
     //mostrat rotina valor limite
     exibeRotina($('#divUsoGenerico'));
@@ -1688,8 +1915,8 @@ function fluxoRenovacaoLimite(flgvalida, vllimite, nrctrlim, flgstlcr, cddlinha,
         data: {
             vllimite: vllimite,
             nrctrlim: nrctrlim,
-            flgstlcr: flgstlcr,
             cddlinha: cddlinha,
+            flgstlcr: flgstlcr,
             dsdlinha: dsdlinha,
             redirect: 'html_ajax'
         },
@@ -1698,17 +1925,17 @@ function fluxoRenovacaoLimite(flgvalida, vllimite, nrctrlim, flgstlcr, cddlinha,
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
-
+            //$('#divUsoGenerico').html(response);
             $("#divOpcoesDaOpcao2").html(response);
-
+            //layoutPadrao();
             formataValorLimite();
             $('#vllimite','#frmReLimite').desabilitaCampo();
             hideMsgAguardo();
+           // bloqueiaFundo($('#divUsoGenerico'));
         }
     });
 
-    return false;
-
+    return false;   
 }
 
 function formataValorLimite() {
@@ -1729,15 +1956,12 @@ function formataValorLimite() {
 
         Ldsdlinha.css({'width': '60px'}).addClass('rotulo');
         Cdsdlinha.css({'width': '180px'}).addClass('descricao');
-        Ccddlinha.desabilitaCampo();
         Cdsdlinha.desabilitaCampo();
-                 
 
         //pesquisa
         var campoAnterior = '';
         var qtReg, filtrosPesq, filtrosDesc, colunas;
-        fncOnClose = 'fecharPesquisa();';
-
+      
         $('a', '#frmReLimite').ponteiroMouse();
         $('a', '#frmReLimite').each( function(i) {
         
@@ -1746,29 +1970,56 @@ function formataValorLimite() {
             }
                     
             $(this).click( function() {
+                if ( $(this).prev().hasClass('campoTelaSemBorda') ) {
+                    return false;
+                } else {                        
+                    campoAnterior = $(this).prev().attr('name');
 
-                campoAnterior = $(this).prev().attr('name');
-
-                if ( campoAnterior == 'cddlinha' ) {
-
-                    filtrosPesq =   'Código;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|;flgstlcr;;;;N|Tipo;tpdescto;;;3;N';
-                    colunas =       'Código;cddlinha;15%;right|Descrição;dsdlinha;60%;left|Status;flgstlcr;25%;center;';//|Tipo;tpdescto;;;;N
-
-                    mostraPesquisa('zoom0001',
-                        'BUSCALINHASTIT', 
+                    if ( campoAnterior == 'cddlinha' ) {
+                        filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + '|;flgstlcr;;;1;N';
+                        colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
+                        fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
+                        mostraPesquisa('zoom0001',
+                        'BUSCALINHAS', 
                         'Linhas de Crédito',
                         '20', 
                         filtrosPesq,
                         colunas,
                         divRotina,
                         fncOnClose);
+                    }
                 }
-              
             });
         });
 
+        Cdsdlinha.unbind('change').bind('change', function() {
+            filtrosDesc = 'tpdlinha|' + inpessoa + ';flgstlcr|1;nriniseq|1;nrregist|30';
+            buscaDescricao(
+                'zoom0001',
+                'BUSCALINHAS',
+                'Linhas de Crédito',
+                $(this).attr('name'),'dsdlinha',$(this).val(),
+                'dsdlinha',
+                filtrosDesc,
+                'frmNovoLimite');
+            return false;
+        }).next().unbind('click').bind('click', function () {
+            filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + '|;flgstlcr;;;1;N';
+            colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
+            fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
+            mostraPesquisa('zoom0001',
+                'BUSCALINHAS', 
+                'Linhas de Crédito',
+                '20', 
+                filtrosPesq,
+                colunas,
+                divRotina,
+                fncOnClose);
+            return false;
+        });
+
     }
-        
+    
     if(Lvllimite.length && Cvllimite.length){
         Lvllimite.css({'width': '60px'}).addClass('rotulo');
         Cvllimite.css({'width': '100px'});
@@ -1783,23 +2034,19 @@ function formataValorLimite() {
             }
         });
     }
+    $('#btRenovar').unbind('click').bind('click', function(){
+        renovaValorLimite();
+        return false;
+    });
 
     return false;
 }
 
-function fecharPesquisa(){
-    var vllimite = $('#vllimite','#frmReLimite').val();
-    var nrctrlim = $('#nrctrlim','#frmReLimite').val();
-    var flgstlcr = $('#flgstlcr','#frmReLimite').val().toLowerCase()  == "Bloqueado".toLowerCase()?0:1;
-    var cddlinha = $('#cddlinha','#frmReLimite').val();
-    var dsdlinha = $('#dsdlinha','#frmReLimite').val();
-    var dsdlinha = $('#dsdlinha','#frmReLimite').val();
-   
-    fluxoRenovacaoLimite(0, vllimite, nrctrlim, flgstlcr, cddlinha, dsdlinha);   
-}
 
 function renovaValorLimite() {
+
     showMsgAguardo('Aguarde, efetuando renovacao...');
+
     var vllimite = converteNumero($('#vllimite','#frmReLimite').val());
     var nrctrlim = $('#nrctrlim','#frmReLimite').val();
     var cddlinha = $('#cddlinha','#frmReLimite').val();
@@ -1834,4 +2081,61 @@ function renovaValorLimite() {
 
 function converteNumero (numero){
   return numero.replace('.','').replace(',','.');
+}
+
+
+function mostrarBorderoResumo() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_resumo.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao4").html(response);
+        }
+    });
+    
+    return false;
+}
+
+function mostrarDetalhesPagador() {
+    showMsgAguardo("Aguarde, carregando dados do pagador ...");
+
+    var idtitulo = "";
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_detalhe.php",
+        dataType: "html",
+        data: {
+            idtitulo: idtitulo,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao5").html(response);
+        }
+    });
+    
+    return false;
+}
+
+
+function selecionaTituloResumo(idtitulo, nmdsacad){
+    console.log("[ID Boleto] - " + idtitulo);
+    console.log("[Nome Sacado] - " + nmdsacad);
 }
