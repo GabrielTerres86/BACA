@@ -5147,7 +5147,7 @@ PROCEDURE transf_contrato_prejuizo.
            RETURN "NOK".
        END.
             
-       /* Verificacao de contrato de acordo */  
+       /* Verificacao de contrato de acordo
       
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -5199,6 +5199,7 @@ PROCEDURE transf_contrato_prejuizo.
            RETURN "NOK".
              
        END.
+       */
           
        /* Fim verificacao contrato acordo */     
        FOR LAST crapris FIELDS(innivris dtdrisco)
