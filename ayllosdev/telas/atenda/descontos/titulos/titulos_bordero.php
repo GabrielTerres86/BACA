@@ -140,6 +140,7 @@
 
 <?php
 	$dispN = (!in_array("N",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispC = (!in_array("I",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispC = (!in_array("C",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
@@ -155,21 +156,20 @@
 		<input type="button" class="botao" value="Voltar" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;"/>
 	
 	<?}?>
-	<input type="button" class="botao" value="Incluir" onClick="alert('Implementação em desenvolvimento.');return false;" />
-
+	<input type="button" class="botao" value="Incluir" onClick="mostrarBorderoIncluir();return false;" style="<?php echo $dispI;?>"  />
 	<input type="button" class="botao" value="Consultar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscTit(\'C\');return false;"'; } ?> />
 
 	<input type="button" class="botao" value="Alterar"  onClick="alert('Implementação em desenvolvimento.');return false;" />
 
 	<input type="button" class="botao" value="Analisar" onClick="alert('Implementação em desenvolvimento.');return false;" />
-	
+		
 	<input type="button" class="botao" value="Excluir"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscTit(\'E\');return false;"'; } ?> />
 	<input type="button" class="botao" value="Imprimir" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
 	<input type="button" class="botao" value="Liberar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostraDadosBorderoDscTit(\'L\');return false;"'; } ?> />
-
-
-	<input type="button" class="botao" value="Rejeitar" onClick="alert('Implementação em desenvolvimento.');return false;"/>
+		
 	
+	<input type="button" class="botao" value="Rejeitar" onClick="alert('Implementação em desenvolvimento.');return false;"/>
+		
 </div>
 
 <script type="text/javascript">

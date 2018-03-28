@@ -2083,8 +2083,6 @@ function converteNumero (numero){
 }
 
 
-
-
 function mostrarBorderoResumo() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
