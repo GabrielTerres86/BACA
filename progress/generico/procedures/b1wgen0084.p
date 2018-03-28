@@ -5213,10 +5213,10 @@ PROCEDURE transf_contrato_prejuizo.
                             
        IF AVAIL(crapris) THEN
        DO:
-           /* Precisa estar 181 dias com risco em H */
+           /* Precisa estar 180 dias com risco em H */
            ASSIGN aux_qtdiaris = par_dtmvtolt - crapris.dtdrisco.
            
-           IF crapris.innivris = 9 AND aux_qtdiaris >= 181 THEN
+           IF crapris.innivris = 9 AND aux_qtdiaris > 179 THEN
            DO:
                FOR FIRST crapepr
                    WHERE crapepr.cdcooper = par_cdcooper
