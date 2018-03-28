@@ -384,6 +384,97 @@ function formataLayout(nomeForm){
 		Ctxdiaria.desabilitaCampo();
 		Cdsopelib.desabilitaCampo();
 		Ctxjurmor.desabilitaCampo();
+
+
+
+/*Add else if para propostas*/
+}	else if( nomeForm == 'divPropostas' ){
+
+			
+		$('#'+nomeForm).css('width','800px');
+	
+		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+		var tabela      = $('table', divRegistro );	
+						
+		divRegistro.css('height','135px');
+		
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+
+		arrayLargura[0] = '80px';
+		arrayLargura[1] = '60px';
+		arrayLargura[2] = '60px';
+		arrayLargura[3] = '60px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '120px';
+		arrayLargura[6] = '120px';
+		arrayLargura[7] = '120px';
+				
+		var arrayAlinha = new Array();
+		
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'right';
+		arrayAlinha[3] = 'right';
+		arrayAlinha[4] = 'center';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+		arrayAlinha[7] = 'center';
+						
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+	
+		ajustarCentralizacao();
+
+
+/*Add else if para contratos*/
+}	else if( nomeForm == 'divContratos' ){
+
+		$('#'+nomeForm).css('width','800px');
+	
+		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+		var tabela      = $('table', divRegistro );
+						
+		divRegistro.css('height','135px');
+		
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+
+
+		arrayLargura[0] = '80px';
+		arrayLargura[1] = '60px';
+		arrayLargura[2] = '60px';
+		arrayLargura[3] = '60px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '120px';
+		arrayLargura[6] = '120px';
+				
+		var arrayAlinha = new Array();
+		
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'right';
+		arrayAlinha[3] = 'right';
+		arrayAlinha[4] = 'center';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+						
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+	
+		ajustarCentralizacao();
 			
 	}else if( nomeForm == 'divLimites' ){
 				
@@ -427,6 +518,12 @@ function formataLayout(nomeForm){
 		});
 	
 		ajustarCentralizacao();
+
+
+
+
+
+
 		
 	}else if(  nomeForm == 'frmDadosLimiteDscChq' || nomeForm == 'frmDadosLimiteDscTit'){
 	
