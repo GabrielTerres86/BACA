@@ -569,7 +569,7 @@ function liberaAnalisaBorderoDscTit(opcao, idconfir, idconfi2, idconfi3, idconfi
 // Mostrar o <div> com os limites de desconto de títulos
 function carregaLimitesTitulos() {
     // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, carregando limites de desconto de t&iacute;tulos ...");
+    showMsgAguardo("Aguarde, carregando Contratos de limites de desconto de t&iacute;tulos ...");
 
     // Carrega conteúdo da opção através de ajax
     $.ajax({
