@@ -38,7 +38,7 @@
              28/03/2018 - Formatação dos layouts dos formulários de Contratos e Propostas. (Andre Avila - GFT)
 			 
 ************************************************************************/
- 
+
 // Carrega biblioteca javascript referente ao RATING
 $.getScript(UrlSite + 'includes/rating/rating.js');
 
