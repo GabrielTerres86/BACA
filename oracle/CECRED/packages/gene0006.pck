@@ -278,6 +278,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
                                           ,pr_nrdconta IN crapopi.nrdconta%TYPE  --> Conta
                                           ,pr_dsprotoc IN crappro.dsprotoc%TYPE  --> Protocolo
                                           ,pr_cdorigem IN NUMBER
+										  ,pr_flgativo IN crappro.flgativo%TYPE default 1 --> (0 - Inativos, 1 - Ativos, 2 - Todos)
                                           ,pr_protocolo OUT typ_tab_protocolo    --> PL Table de registros
                                           ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código do erro
                                           ,pr_dscritic OUT crapcri.dscritic%TYPE);
@@ -2113,6 +2114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                                           ,pr_nrdconta IN crapopi.nrdconta%TYPE  --> Conta
                                           ,pr_dsprotoc IN crappro.dsprotoc%TYPE  --> Protocolo
                                           ,pr_cdorigem IN NUMBER
+										  ,pr_flgativo IN crappro.flgativo%TYPE default 1 --> (0 - Inativos, 1 - Ativos, 2 - Todos)
                                           ,pr_protocolo OUT typ_tab_protocolo    --> PL Table de registros
                                           ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código do erro
                                           ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descrição do erro    
@@ -2152,7 +2154,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
 
       -- Buscar dados dos protocolos
       CURSOR cr_crappro(pr_cdcooper IN crappro.cdcooper%TYPE
-                       ,pr_dsprotoc IN crappro.dsprotoc%TYPE) IS
+                       ,pr_dsprotoc IN crappro.dsprotoc%TYPE
+                       ,pr_flgativo IN crappro.flgativo%TYPE) IS
       SELECT pro.dsprotoc
             ,pro.cdtippro
             ,pro.nrcpfope
@@ -2172,7 +2175,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         FROM crappro pro
         WHERE pro.cdcooper = pr_cdcooper
           AND upper(pro.dsprotoc) = upper(pr_dsprotoc)
-          AND pro.flgativo = 1; --Ativo
+          AND pro.flgativo = decode(pr_flgativo,2,pro.flgativo,pr_flgativo); /* 2 - Todos */
       rw_crappro cr_crappro%ROWTYPE;
       
       -- Busca dados de operação
@@ -2225,7 +2228,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       
       -- Busca o protocolo
       OPEN cr_crappro(pr_cdcooper => pr_cdcooper
-                     ,pr_dsprotoc => pr_dsprotoc);
+                     ,pr_dsprotoc => pr_dsprotoc
+                     ,pr_flgativo => pr_flgativo);
                        
         FETCH cr_crappro INTO rw_crappro;
         

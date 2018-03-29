@@ -418,6 +418,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     
    END;
 
+   -- Função para retornar a descrição do tipo de protocolo - permite a ocorrencia de acento para o novo IB
+   -- Complementar sempre que necessario.
+   FUNCTION fn_busca_dstippro(pr_reg_protocolo IN gene0006.typ_reg_protocolo) RETURN VARCHAR2 IS
+   BEGIN
+     DECLARE
+       vr_dstippro varchar(1000);     
+     BEGIN   
+       vr_dstippro := pr_reg_protocolo.dsinform##1;
+       CASE
+         WHEN pr_reg_protocolo.cdtippro = 1 THEN
+           vr_dstippro := 'Transferência';
+         ELSE
+           vr_dstippro := pr_reg_protocolo.dsinform##1;
+       END CASE;
+       RETURN vr_dstippro;
+     EXCEPTION        
+        WHEN OTHERS THEN  
+  				RETURN pr_reg_protocolo.dsinform##1;       
+     END;
+   END;
+
   -- Todos
     PROCEDURE pc_lista_comprovantes(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
                                  ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
@@ -550,7 +571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                '<Comprovante>'||
                                   '<nrdocmto>' || vr_prot_fltr(vr_ind).nrdocmto                                                               || '</nrdocmto>' ||
                                   '<cdtippro>' || vr_prot_fltr(vr_ind).cdtippro                                                             	|| '</cdtippro>' ||
-                                  '<dstippro>' || vr_prot_fltr(vr_ind).dsinform##1                                                           	|| '</dstippro>' ||																																		
+                                  '<dstippro>' || fn_busca_dstippro(vr_prot_fltr(vr_ind))                                                     	|| '</dstippro>' ||																																		
                                   '<dttransa>' || to_char(vr_prot_fltr(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
                                   '<vldocmto>' || to_char(vr_prot_fltr(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
                                   '<dsdescri>' || fn_descricao(vr_prot_fltr(vr_ind),pr_cdtipmod) || '</dsdescri>');     
@@ -700,7 +721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                ,pr_texto_novo     => 
                                '<dados>'||
 								 	 						    '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
-								 								  '<dstippro>' || to_char(vr_protocolo(vr_ind).dsinform##1)                                                                          || '</dstippro>' ||
+								 								  '<dstippro>' || fn_busca_dstippro(vr_protocolo(vr_ind))                                                                          || '</dstippro>' ||
 								 							    '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 								 							    '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
@@ -793,6 +814,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_dscritic crapcri.dscritic%TYPE;
       vr_info_sac typ_reg_info_sac;     
       vr_des_erro  VARCHAR2(4000);           
+      vr_cdbccxlt crapban.cdbccxlt%TYPE;
+    
+      FUNCTION fn_retorna_ispb(pr_cdbccxlt IN crapban.cdbccxlt%TYPE) RETURN NUMBER IS
+      BEGIN
+        DECLARE          
+          CURSOR cr_crapban(pr_cdbccxlt crapban.cdbccxlt%TYPE) IS
+            SELECT ban.nrispbif
+              FROM crapban ban
+             WHERE ban.cdbccxlt = pr_cdbccxlt;
+          rw_crapban cr_crapban%ROWTYPE;
+        BEGIN
+          OPEN cr_crapban(pr_cdbccxlt => pr_cdbccxlt);
+           FETCH cr_crapban INTO rw_crapban;          
+          CLOSE cr_crapban;
+          RETURN nvl(rw_crapban.nrispbif,0);
+        EXCEPTION
+          WHEN OTHERS THEN
+            RETURN 0;
+        END;
+      END fn_retorna_ispb;
     
     BEGIN
       
@@ -840,6 +881,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       FOR vr_ind IN 1..vr_protocolo.count LOOP
       
+        /* Busca codigo do banco */
+        BEGIN
+          vr_cdbccxlt := TO_NUMBER(TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#'),1,3)));
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdbccxlt := 0;
+        END;
+
         gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
@@ -856,13 +905,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                             || '</dsprotoc>' ||                                  
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                             || '</nrseqaut>' ||                                  
-                                  '<cdbandst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#'),1,3)) || '</cdbandst>' ||
+                                  '<cdbandst>' || lpad(vr_cdbccxlt,3,'0')                                                   || '</cdbandst>' ||
                                   '<dsbandst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#'),7))   || '</dsbandst>' ||                                                                   
-                                  '<nrispbif>' || TRIM(REPLACE(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##2, '#'),'.','')) || '</nrispbif>' ||
+                                  '<nrispbif>' || fn_retorna_ispb(vr_cdbccxlt)                                              || '</nrispbif>' ||
                                   '<cdagedst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2, '#'),1,4)) || '</cdagedst>' ||
                                   '<dsagedst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2, '#'),8))   || '</dsagedst>' ||                                                                    
                                   '<dsctadst>' || TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##2, '#')) || '</dsctadst>' ||
-                                  '<dstitdst>' || TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##2, '#')) || '</dstitdst>' ||
+                                  '<dstitdst>' || TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##3, '#')) || '</dstitdst>' ||
                                   '<dscpfdst>' || TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')) || '</dscpfdst>' ||
                                   '<dsfinali>' || TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')) || '</dsfinali>' ||
                                   '<dsidenti>' || TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')) || '</dsidenti>' ||
@@ -932,6 +981,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfope e nrcpfpre, Prj. 285 (Jean Michel).
 
+                 26/03/2018 - Adicao do numero sequencial nas tags de clausula (Anderson P285).
+
      ..................................................................................*/  
     
     DECLARE
@@ -948,6 +999,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_dsaplica crapcpc.nmprodut%TYPE;
       vr_nmdindex VARCHAR2(100);
     
+      FUNCTION fn_retorna_clausulas(vr_dsaplica IN VARCHAR2) RETURN VARCHAR2 IS
+      BEGIN
+        DECLARE
+          vr_idx PLS_INTEGER := 0;
+          TYPE typ_tab_dsclausula IS TABLE of VARCHAR2(10000) INDEX BY PLS_INTEGER;
+          vr_tab_dsclausula typ_tab_dsclausula;
+          vr_xml VARCHAR2(32726) := '';
+          
+          FUNCTION fn_get_idx RETURN PLS_INTEGER IS
+          BEGIN
+            vr_idx := vr_idx + 1;
+            RETURN vr_idx;
+          END;                        
+          
+        BEGIN
+          vr_tab_dsclausula(fn_get_idx()) := 'ATO COOPERATIVO CONFORME ART. 79 DA LEI 5764/71';
+          vr_tab_dsclausula(fn_get_idx()) := 'INTRANSFERIVEL';
+          vr_tab_dsclausula(fn_get_idx()) := 'DEPOSITOS EM CHEQUES SOMENTE TERAO VALIDADE APOS SUA LIQUIDACAO';
+          vr_tab_dsclausula(fn_get_idx()) := 'SAQUES ANTERIORES A CARENCIA, ADMITIDOS A CRITERIO DA COOPERATIVA IMPLICAM EM PERDA DO RENDIMENTO SOBRE O VALOR SACADO';          
+          IF vr_dsaplica = 'RDCPOS' THEN
+            vr_tab_dsclausula(fn_get_idx()) := 'O RENDIMENTO SERA CALCULADO COM BASE NO CDI* DIARIO, CONSIDERANDO OS DIAS UTEIS DO PERIODO APLICADO E A TAXA CONTRATADA';
+            vr_tab_dsclausula(fn_get_idx()) := 'OS VALORES RESGATADOS APOS A CARENCIA E ANTES DO VENCIMENTO, ADMITIDOS A CRITERIO DA COOPERATIVA, SERAO REMUNERADOS NA FORMA DO ITEM ANTERIOR, POREM, TOMANDO COMO BASE PARA CALCULO A TAXA MINIMA';
+            vr_tab_dsclausula(fn_get_idx()) := 'SAQUES ANTES DO VENCIMENTO DEVERAO SER COMUNICADOS COM ANTECEDENCIA';
+            vr_tab_dsclausula(fn_get_idx()) := 'CASO OCORRA O RESGATE DA APLICACAO ANTES DO PRAZO DE VENCIMENTO ACIMA ACORDADO, A ALIQUOTA DO IRRF SEGUIRA A TABELA REGRESSIVA DE RENDA FIXA VIGENTE';
+          END if;
+          
+          FOR vr_idx IN 1..vr_tab_dsclausula.count LOOP
+            vr_xml := vr_xml || 
+                     '<clausula>'||
+                        '<nrsequen>'|| vr_idx || '</nrsequen>' ||
+                        '<dsclausu>'|| vr_tab_dsclausula(vr_idx)|| '</dsclausu>' ||
+                     '</clausula>';
+          END LOOP;
+          
+          RETURN vr_xml;
+        EXCEPTION
+          WHEN OTHERS THEN
+            RETURN '<clausula><nrsequen>0</nrsequen><dsclausu>NAO FOI POSSIVEL MONTAR AS CLAUSULAS - ENTRE EM CONTATO COM A COOPERATIVA</dsclausu></clausula>';
+        END;
+      END fn_retorna_clausulas;
+
     BEGIN
     
       pr_dsretorn := 'NOK';
@@ -972,6 +1064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                             ,pr_nrdconta => pr_nrdconta
                                             ,pr_dsprotoc => pr_dsprotoc
                                             ,pr_cdorigem => pr_cdorigem
+                                            ,pr_flgativo => 2 /* todos */
                                             ,pr_protocolo => vr_protocolo
                                             ,pr_cdcritic => vr_cdcritic
                                             ,pr_dscritic => vr_dscritic);
@@ -1018,7 +1111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                ,pr_texto_novo     => 
                                '<dados>'||
 																  '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
-																  '<dstippro>' || to_char(vr_protocolo(vr_ind).dsinform##1)                                                                          || '</dstippro>' ||
+																  '<dstippro>' || fn_busca_dstippro(vr_protocolo(vr_ind))                                                                            || '</dstippro>' ||
 																  '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 																  '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
 																  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
@@ -1044,21 +1137,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nmextcop>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(vr_idxvenct + 3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmextcop>' ||
                                   '<nrcnpjco>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(vr_idxvenct + 4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrcnpjco>' ||
                                   '<dtextens>' || TRIM(gene0002.fn_busca_entrada(vr_idxvenct + 5, vr_protocolo(vr_ind).dsinform##3,'#'))                                          || '</dtextens>' ||                                  
-                                  '<clausula>' ||
-                                      '<dsclausu>ATO COOPERATIVO CONFORME ART. 79 DA LEI 5764/71</dsclausu>'                                                                                                                                                    ||
-                                      '<dsclausu>INTRANSFERIVEL</dsclausu>'                                                                                                                                                                                     ||
-                                      '<dsclausu>DEPOSITOS EM CHEQUES SOMENTE TERAO VALIDADE APOS SUA LIQUIDACAO</dsclausu>'                                                                                                                                    ||
-                                      '<dsclausu>SAQUES ANTERIORES A CARENCIA, ADMITIDOS A CRITERIO DA COOPERATIVA IMPLICAM EM PERDA DO RENDIMENTO SOBRE O VALOR SACADO</dsclausu>'                                                                             ||
-                                      (CASE WHEN vr_dsaplica = 'RDCPOS' THEN
-                                      '<dsclausu>O RENDIMENTO SERA CALCULADO COM BASE NO CDI* DIARIO, CONSIDERANDO OS DIAS UTEIS DO PERIODO APLICADO E A TAXA CONTRATADA</dsclausu>'                                                                            ||
-                                      '<dsclausu>OS VALORES RESGATADOS APOS A CARENCIA E ANTES DO VENCIMENTO, ADMITIDOS A CRITERIO DA COOPERATIVA, SERAO REMUNERADOS NA FORMA DO ITEM ANTERIOR, POREM, TOMANDO COMO BASE PARA CALCULO A TAXA MINIMA</dsclausu>' ||
-                                      '<dsclausu>SAQUES ANTES DO VENCIMENTO DEVERAO SER COMUNICADOS COM ANTECEDENCIA</dsclausu>'                                                                                                                                ||
-                                      '<dsclausu>CASO A TAXA CONTRATADA, DEDUZIDO O IRRF, SEJA MENOR QUE A TAXA DA POUPANCA, SERA GARANTIDO O RENDIMENTO DA POUPANCA</dsclausu>'                                                                                ||
-                                      '<dsclausu>CASO OCORRA O RESGATE DA APLICACAO ANTES DO PRAZO DE VENCIMENTO ACIMA ACORDADO, A ALIQUOTA DO IRRF SEGUIRA A TABELA REGRESSIVA DE RENDA FIXA VIGENTE</dsclausu>'                                               
-                                      ELSE
-                                      ''
-                                      END) ||   
-                                  '</clausula>' ||
+                                  '<clausulas>' ||
+                                      fn_retorna_clausulas(vr_dsaplica) ||                                      
+                                  '</clausulas>' ||
                                   '<infosac>'   ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                       '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
@@ -1158,6 +1239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                             ,pr_nrdconta => pr_nrdconta
                                             ,pr_dsprotoc => pr_dsprotoc
                                             ,pr_cdorigem => pr_cdorigem
+                                            ,pr_flgativo => 2 /* todos */
                                             ,pr_protocolo => vr_protocolo
                                             ,pr_cdcritic => vr_cdcritic
                                             ,pr_dscritic => vr_dscritic);
