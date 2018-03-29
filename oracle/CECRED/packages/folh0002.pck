@@ -6009,12 +6009,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
              -- Se o pagamento tiver recebido a carga de algum comprovante.
              IF cr_val_comprov%FOUND THEN
                 vr_tab_pagamento(vr_idx_pagto).imgcompr := 'comprov_salario.png';
-                vr_tab_pagamento(vr_idx_pagto).hintcomp := 'Comprovante salárial enviado!';
-                vr_tab_pagamento(vr_idx_pagto).dscomprv := 'Comprovante salárial enviado.';
+                vr_tab_pagamento(vr_idx_pagto).hintcomp := 'Comprovante salarial enviado!';
+                vr_tab_pagamento(vr_idx_pagto).dscomprv := 'Comprovante salarial enviado.';
              ELSE
                 vr_tab_pagamento(vr_idx_pagto).imgcompr := '';
                 vr_tab_pagamento(vr_idx_pagto).hintcomp := '';
-                vr_tab_pagamento(vr_idx_pagto).dscomprv := 'Comprovante salárial não enviado.';
+                vr_tab_pagamento(vr_idx_pagto).dscomprv := 'Comprovante salarial não enviado.';
              END IF;
           CLOSE cr_val_comprov;
 

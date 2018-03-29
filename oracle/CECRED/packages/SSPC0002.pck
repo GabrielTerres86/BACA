@@ -763,7 +763,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       FOR rw_exc_neg_2 IN cr_exc_neg_2 LOOP
         -- Se for a primeira vez, deve-se colocar o texto padrao
         IF NOT vr_excecao THEN
-          pr_dstexto_dias :=  pr_dstexto_dias || '*_*Exceto o(s) estado(s) do ';
+          pr_dstexto_dias :=  pr_dstexto_dias || ' - Exceto o(s) estado(s) do ';
           vr_excecao := TRUE;
         ELSE
           pr_dstexto_dias :=  pr_dstexto_dias || '; ';
@@ -1184,7 +1184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       vr_nom_direto  VARCHAR2(200);   --> Diretório para gravação do arquivo
       vr_dsjasper    VARCHAR2(100);   --> nome do jasper a ser usado
       vr_nmarqim     VARCHAR2(50);    --> nome do arquivo PDF
-	    vr_xml_recipro VARCHAR2(32767); --> informações da reciprocidade
+			vr_xml_recipro VARCHAR2(32767); --> informações da reciprocidade
       vr_qrcode      VARCHAR2(32767); --> QR Code enviado para o XML
       vr_cdtipdoc    VARCHAR2(32767); --> Tipo do documento a ser usado no QR Code
     
@@ -1258,7 +1258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
           -- Finalizamos a tag
           vr_xml_recipro := vr_xml_recipro ||'</reciprocidade>'||chr(10);
         END IF;
-	  END IF;
+			END IF;
       
       -- Definir o TIPO DE DOCUMENTO de acordo com o layout.
       -- OBS.: Verificar os códigos de cancelamento. Por enquanto está igual adesão.
@@ -1275,7 +1275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
           vr_cdtipdoc := 115; -- PJ
         END IF;
       END IF;
-      
+
       vr_qrcode := rw_crapceb.cdcooper || '_' || 
                    rw_crapceb.cdagenci || '_' ||
                    TRIM(gene0002.fn_mask_conta(rw_crapceb.nrdconta)) || '_' || 

@@ -239,7 +239,7 @@ create or replace package cecred.PAGA0002 is
            ,vlrrecbr NUMBER
            ,vlrperce NUMBER
            ,idlancto NUMBER(15)
-					 ,dscritic VARCHAR2(100)
+					 ,dscritic craplau.dscritic%TYPE
            ,gps_cddpagto NUMBER
            ,gps_dscompet VARCHAR2(7)
            ,gps_cdidenti NUMBER
@@ -692,7 +692,7 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                       /* parametros de saida */
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_dscritic OUT VARCHAR2);           --> Descricao critica
-                                      
+  
   /* Realizar a apuração diária dos lançamentos dos históricos de pagamento de empréstimos */
   PROCEDURE pc_apura_lcm_his_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
                                        ,pr_dtrefere IN DATE   );             -- Data de referencia para processamento
@@ -2095,7 +2095,7 @@ create or replace package body cecred.PAGA0002 is
       IF cr_craphec%FOUND THEN 
         -- Fechar cursor
         CLOSE cr_craphec;    
-        IF pr_cdtiptra IN(1,5) THEN
+        IF pr_cdtiptra IN(1,5) THEN          
           -- Pegar os minutos em múltiplos de 5, arredondando para baixo (ex.: 21:04 -> 21:00)
           vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'hh24') || ':' ||
                         to_char(trunc(to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'mi') / 5) * 5, 'fm00');
@@ -2453,7 +2453,7 @@ create or replace package body cecred.PAGA0002 is
     vr_nrcpfcgc  INTEGER := 0;
     vr_nmprimtl  VARCHAR2(500);
     vr_flcartma  INTEGER(1) := 0;
-    
+
     CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT a.inpessoa
@@ -2478,7 +2478,7 @@ create or replace package body cecred.PAGA0002 is
            ' para '||DECODE(NVL(pr_idagenda,0),1,NULL,'agendamento de ')||'pagamento'
     INTO vr_dstransa
     FROM dual;
-    
+
     -- Buscar tipo de pessoa da conta
     OPEN cr_crapass (pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta);
@@ -2496,7 +2496,7 @@ create or replace package body cecred.PAGA0002 is
     vr_lindigi5 := pr_lindigi5;
     vr_cdbarras := pr_cdbarras;
     vr_dtmvtopg := pr_dtmvtopg;
-    
+
     IF NVL(pr_vlapagar,0) > 0 THEN
 		   vr_vlapagar := pr_vlapagar;
   	ELSE
@@ -8617,7 +8617,7 @@ create or replace package body cecred.PAGA0002 is
     --  
     --              06/03/2018 - Ajuste de filtros para não buscar GPS se não for epecificado 
     --                           P285. (Ricardo Linhares)
-    --  
+    --
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -8681,6 +8681,8 @@ create or replace package body cecred.PAGA0002 is
           ,lau.dslindig
           ,lau.idlancto
           ,lau.nrseqagp
+          ,lau.cdcritic
+          ,lau.dscritic
           ,lau.progress_recid
       FROM craplau lau
     WHERE (pr_cdtiptra IS NULL OR lau.cdtiptra IN(SELECT regexp_substr(pr_cdtiptra, '[^;]+', 1, LEVEL)
@@ -8892,6 +8894,7 @@ create or replace package body cecred.PAGA0002 is
     vr_vlrperce tbpagto_agend_darf_das.vlpercentual%TYPE := 0;
     vr_idlstdom NUMBER := 0;
     vr_prorowid craplau.progress_recid%TYPE := NULL;
+    vr_dscrilau craplau.dscritic%TYPE;
 
     -- GPS
     vr_gps_cddpagto craplgp.cddpagto%TYPE; -- 03 - Código de pagamento
@@ -9246,8 +9249,8 @@ create or replace package body cecred.PAGA0002 is
         
         -- Se for GPS
         IF rw_craplau.nrseqagp > 0 THEN
-        
-          vr_dstiptra := 'GPS';
+
+		  vr_dstiptra := 'GPS';
                   
           OPEN cr_gps(pr_cdcooper => rw_craplau.cdcooper
                      ,pr_nrdconta => rw_craplau.nrdconta
@@ -9281,7 +9284,14 @@ create or replace package body cecred.PAGA0002 is
           
         END IF;
         
-        
+        vr_dscrilau := '';
+        IF rw_craplau.insitlau = 4 THEN 
+           IF NVL(rw_craplau.cdcritic,0) <> 0 THEN
+             vr_dscrilau := GENE0001.fn_busca_critica(pr_cdcritic => rw_craplau.cdcritic);
+           ELSE
+             vr_dscrilau := NVL(rw_craplau.dscritic,'');
+           END IF;
+        END IF;
 
         vr_cdindice := vr_tab_dados_agendamento.COUNT() + 1;
 
@@ -9326,7 +9336,7 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).vlrrecbr := vr_vlrrecbr;
         vr_tab_dados_agendamento(vr_cdindice).vlrperce := vr_vlrperce;
         vr_tab_dados_agendamento(vr_cdindice).idlancto := rw_craplau.idlancto;
-		vr_tab_dados_agendamento(vr_cdindice).dscritic := ''; -- Alimentar DSCRITIC - P.285 Novo InternetBanking
+		    vr_tab_dados_agendamento(vr_cdindice).dscritic := vr_dscrilau;
         -- GPS
         vr_tab_dados_agendamento(vr_cdindice).gps_cddpagto := vr_gps_cddpagto;
         vr_tab_dados_agendamento(vr_cdindice).gps_dscompet := vr_gps_dscompet;
@@ -10165,7 +10175,7 @@ create or replace package body cecred.PAGA0002 is
       -- Gravar a solictação do e-mail para envio posterior
       COMMIT;
   END pc_apura_lcm_his_emprestimo;
-
+  
 
 END PAGA0002;
 /
