@@ -745,7 +745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Petter
-   Data    : Setembro/2013.                        Ultima atualizacao: 14/03/2018
+   Data    : Setembro/2013.                        Ultima atualizacao: 28/03/2018
 
    Dados referentes ao programa:
 
@@ -764,6 +764,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
 	             14/03/2018 - Ajuste para considear contas em prejuízo com data de 
 							              eliminação preenchida. (Reginaldo - AMcom)
+
+							 28/03/2018 - Ajuste nos cursores para manter o DTELIMIN e o prejuízo.
+							             (Reginaldo - AMcom)
   ............................................................................. */
   BEGIN
     DECLARE
@@ -841,18 +844,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                               AND epr.inprejuz = 1
                               AND epr.vlsdprej > 0
                        ),0),1,NULL,cp.dtelimin) dtelimin
-              ,NVL((SELECT max(inprejuz)
+
+        FROM crapepa ca, crapass cp
+        WHERE ca.cdcooper = pr_cdcooper
+          AND ca.persocio >= pr_persocio
+          AND ca.cdcooper = cp.cdcooper
+          AND ca.nrdconta = cp.nrdconta
+          AND ((SELECT max(inprejuz)
                       FROM crapepr epr
                      WHERE epr.cdcooper = cp.cdcooper
                        AND epr.nrdconta = cp.nrdconta
                        AND epr.inprejuz = 1
                        AND epr.vlsdprej > 0
-                   ),0) tem_prejuizo
-        FROM crapepa ca, crapass cp
-        WHERE ca.cdcooper = pr_cdcooper
-          AND ca.persocio >= pr_persocio
-          AND ca.cdcooper = cp.cdcooper
-          AND ca.nrdconta = cp.nrdconta;
+                   ) = 1 OR cp.dtelimin IS NULL);
 
       /* Buscar dados de associados */
       CURSOR cr_crapass(pr_cdcooper IN crapepa.cdcooper%TYPE) IS  --> Código da cooperativa
@@ -868,13 +872,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                               AND epr.inprejuz = 1
                               AND epr.vlsdprej > 0
                        ),0),1,NULL,cs.dtelimin) dtelimin
-              ,NVL((SELECT max(inprejuz)
-                      FROM crapepr epr
-                     WHERE epr.cdcooper = cs.cdcooper
-                       AND epr.nrdconta = cs.nrdconta
-                       AND epr.inprejuz = 1
-                       AND epr.vlsdprej > 0
-                   ),0) tem_prejuizo
+
         FROM crapass cs
         WHERE cs.cdcooper = pr_cdcooper;
 
@@ -967,13 +965,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                               AND epr.inprejuz = 1
                               AND epr.vlsdprej > 0
                       ),0),1,NULL,cp.dtelimin) dtelimin
-              ,NVL((SELECT max(inprejuz)
-                     FROM crapepr epr
-                    WHERE epr.cdcooper = cp.cdcooper
-                      AND epr.nrdconta = cp.nrdconta
-                      AND epr.inprejuz = 1
-                      AND epr.vlsdprej > 0
-                   ),0) tem_prejuizo
+
         FROM crapavt ct, crapass cp
         WHERE ct.cdcooper = pr_cdcooper
           AND ct.tpctrato = 6
@@ -981,7 +973,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           AND ct.flgdepec = 1
           AND cp.cdcooper = ct.cdcooper
           AND cp.nrdconta = ct.nrdconta
-          AND cp.dtdemiss IS NULL;
+          AND ((SELECT max(inprejuz)
+                      FROM crapepr epr
+                     WHERE epr.cdcooper = cp.cdcooper
+                       AND epr.nrdconta = cp.nrdconta
+                       AND epr.inprejuz = 1
+                       AND epr.vlsdprej > 0
+                   ) = 1 OR (cp.dtelimin IS NULL AND cp.dtdemiss IS NULL));
           
     BEGIN
 
@@ -1873,7 +1871,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Petter
-   Data    : Setembro/2013.                        Ultima atualizacao:
+   Data    : Setembro/2013.                        Ultima atualizacao: 28/03/2018
 
    Dados referentes ao programa:
 
@@ -1893,6 +1891,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                             sendo assim sempre cai na consulta por nrctasoc
                           - Retirada a leitura dos campos "Quebra" e "ContraQuebra", que não são utilizados
                            (Ana - Envolti - Chamado 813390 / 813391)
+
+			   28/03/2018 - Ajuste para considerar o risco HH para as contas com prejuízo.
+							(Reginaldo - AMcom)
   ............................................................................. */
   BEGIN
     DECLARE
@@ -2094,14 +2095,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         END IF;
 
         -- Sumarizar valores
-        IF vr_opt_innivris > 0 AND vr_opt_innivris < 10 AND vr_innivris < vr_opt_innivris THEN
+        IF vr_opt_innivris > 0 AND vr_opt_innivris <= 10 AND vr_innivris < vr_opt_innivris THEN
           vr_innivris := vr_opt_innivris;
         END IF;
 
       END LOOP;
 
       -- Grupo nao pode estar em prejuizo, sendo assim é trocado para ir em risco H
-      IF vr_innivris = 0 THEN
+      IF vr_innivris = 0 OR vr_innivris = 10 THEN
         pr_dsdrisco := 'H';
         vr_innivris := 9;
       ELSE
