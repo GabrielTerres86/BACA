@@ -26,6 +26,7 @@
 						<option value='4' <? if ($inprodut == '4') { ?> selected <? } ?> > Desconto de cheque         </option>
 						<option value='5' <? if ($inprodut == '5') { ?> selected <? } ?> > Desconto de t&iacute;tulos </option>
 						<option value='6' <? if ($inprodut == '6') { ?> selected <? } ?> > Cadastro Conta </option>
+						<option value='7' <? if ($inprodut == '7') { ?> selected <? } ?> > Border&ocirc; de T&iacute;tulos </option>
 					</select>
 				</td>
 				<td>
