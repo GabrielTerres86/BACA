@@ -43,7 +43,10 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
   --                          para atualizar tabela craprpf e craprsc (restricoes de crédito) (Alexandre-Mouts)
   --
   --             27/02/2018 - Adicionado o procedimento pc_retorna_conaut_est_limdesct (Paulo Penteado (GFT))
-
+  --
+  --             23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
+  --                          Referentes a proposta. (Lindon Carlos Pecile - GFT)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
 -- Atualiza as tabelas de controle com as informacoes finais
@@ -104,7 +107,7 @@ PROCEDURE pc_tela_conaut_crapmbr(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
--- Rotina geral de insert, update, select e delete da tela CONAUT da opção de parametrizaçao de modalidades
+-- Rotina geral de insert, update, select e delete da tela CONAUT da opção de parametrização de modalidades
 PROCEDURE pc_tela_conaut_crappcb(pr_cddopcao IN VARCHAR2              --> Tipo de acao que sera executada (A - Alteracao / C - Consulta / E - Exclur / I - Inclur)
                                 ,pr_cdcooper IN crappcb.cdcooper%TYPE --> Codigo da cooperativa
                                 ,pr_inprodut IN crappcb.inprodut%TYPE --> Indicador de tipo de produto
@@ -568,6 +571,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --
   --             20/12/2017 - Ajuste de desempenho na procedure pc_consulta_adimistrador onde adicionei a chave
   --                          correta no cursor principal, conforme solicitado no chamado 808164. (Kelvin)            
+  --  
+  --             23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
+  --                          Referentes a proposta. (Lindon Carlos Pecile - GFT)
+
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
@@ -7529,7 +7536,7 @@ PROCEDURE pc_obrigacao_consulta(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Codig
       END IF;
       CLOSE cr_craplcr;
 			
-			-- Somente retornar a obrigação caso a esteira não for efetuar a consulta
+      -- Somente retornar a obrigação caso a esteira nao for efetuar a consulta
       este0001.pc_obrigacao_analise_automatic(pr_cdcooper => pr_cdcooper
                                              ,pr_inpessoa => pr_inpessoa
                                              ,pr_cdfinemp => pr_cdfinemp
@@ -10624,16 +10631,16 @@ DECLARE
    vr_exc_saida     exception;
 			
 			-- Cursor sobre os dados de emprestimo
-			cursor cr_craplim is
+      cursor cr_crawlim is
 			select lim.cdopeste
 			  				,lim.nrconbir
-			from   craplim lim
+      from   crawlim lim
 			where  lim.cdcooper = pr_cdcooper
 			and    lim.nrdconta = pr_nrdconta
 			and    lim.nrctrlim = pr_nrctrlim
 			and    lim.tpctrlim = pr_tpctrlim
 			and    lim.dsprotoc is not null;
-			rw_craplim cr_craplim%rowtype;
+      rw_crawlim cr_crawlim%rowtype;
 			
 			-- Busca os dados do operador
 			cursor cr_crapope(pr_cdoperad in varchar2) is
@@ -10664,16 +10671,16 @@ BEGIN
 			close btch0001.cr_crapdat;
 
    -- Buscar as informações da Proposta
-   open  cr_craplim;
-   fetch cr_craplim into rw_craplim;
-   if    cr_craplim%notfound then
+   open  cr_crawlim;
+   fetch cr_crawlim into rw_crawlim;
+   if    cr_crawlim%notfound then
 				     vr_cdcritic := 0;
          vr_dscritic := 'Emprestimo inexistente. Favor verificar! Coop: '||pr_cdcooper
                         || ' Cta: '||gene0002.fn_mask_conta(pr_nrdconta)||' Ctr: '||gene0002.fn_mask_contrato(pr_nrctrlim);
-         close cr_craplim;
+         close cr_crawlim;
 	        raise vr_exc_erro;
    end   if;
-   close cr_craplim;
+   close cr_crawlim;
       
    -- Busca a maior data de consulta no SCR
    open  cr_crapopf_max;
@@ -10681,11 +10688,11 @@ BEGIN
    close cr_crapopf_max;
       
 			-- Busca os dados do operador
-			open  cr_crapope(rw_craplim.cdopeste);
+      open  cr_crapope(rw_crawlim.cdopeste);
 			fetch cr_crapope into rw_crapope;
 			if    cr_crapope%notfound then
 				     vr_cdcritic := 0;
-				     vr_dscritic := 'Operador '||rw_craplim.cdopeste|| ' inexistente. Favor verificar!';
+             vr_dscritic := 'Operador '||rw_crawlim.cdopeste|| ' inexistente. Favor verificar!';
 				     close cr_crapope;
 				     raise vr_exc_erro;
 			end   if;
@@ -10712,7 +10719,7 @@ BEGIN
              ,0
              ,1
              ,lpad(pr_nrdconta,10,'0')||'-'||lpad(pr_nrctrlim,10,'0')||'-'||1
-             ,rw_craplim.cdopeste
+             ,rw_crawlim.cdopeste
              ,rw_crapope.cdpactra);
 			exception
 				  when others then
@@ -10723,7 +10730,7 @@ BEGIN
 			
    -- Atualiza o codigo da consulta na tabela de emprestimo
 			begin
-      update craplim lim
+      update crawlim lim
       set    nrconbir = vr_nrconbir
       where  lim.cdcooper = pr_cdcooper
 					 and    lim.nrdconta = pr_nrdconta
@@ -10814,7 +10821,7 @@ BEGIN
                            ,pr_dscritic => vr_dscritic);
    
    if  nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null then
-       vr_dscritic_padrao := 'Houve erro no acesso ao biro (SPC/Serasa/SCR), consulta nao realizada!';
+       vr_dscritic_padrão := 'Houve erro no acesso ao biro (SPC/Serasa/SCR), consulta nao realizada!';
        raise vr_exc_erro;
    end if;
      
