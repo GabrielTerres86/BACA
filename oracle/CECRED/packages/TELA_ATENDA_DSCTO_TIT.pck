@@ -80,7 +80,6 @@ type typ_reg_dados_proposta is record
      ,dtinsexc       craplim.dtinsexc%type
      ,dtrefatu       craplim.dtrefatu%type
      ,insitblq       craplim.insitblq%type
-     ,idcobope       craplim.idcobope%type
      ,insitest       craplim.insitest%type
      ,dtenvest       craplim.dtenvest%type
      ,hrenvest       craplim.hrenvest%type
@@ -97,7 +96,6 @@ type typ_reg_dados_proposta is record
      ,cdopeapr       craplim.cdopeapr%type
      ,hraprova       craplim.hraprova%type
      ,dtmanute       craplim.dtmanute%type
-     ,idcobefe       craplim.idcobefe%type
      ,dtenvmot       craplim.dtenvmot%type
      ,hrenvmot       craplim.hrenvmot%type
      ,dsnivris       craplim.dsnivris%type
