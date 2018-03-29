@@ -376,7 +376,7 @@
 		if ( $GLOBALS['cdtipcta'] == '' ) exibirErro('error','Tipo de conta deve ser selecionado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdtipcta\',\'frmContaCorrente\')',false); 
 		
 		// Categoria
-		if ( $GLOBALS['inpessoa'] == 1 && $GLOBALS['cdcatego'] == '') exibirErro('error','Categoria deve ser informada.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdcatego\',\'frmContaCorrente\')',false); 
+		if ( $GLOBALS['inpessoa'] == 1 && ($GLOBALS['cdcatego'] == '' || $GLOBALS['cdcatego'] == 0)) exibirErro('error','Categoria deve ser informada.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdcatego\',\'frmContaCorrente\')',false); 
 		
 		// Banco emi. cheque
 		if ( ($GLOBALS['cdbcochq'] == '') ) exibirErro('error','Banco emissão do cheque deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdbcochq\',\'frmContaCorrente\')',false);

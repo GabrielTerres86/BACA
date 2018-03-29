@@ -3694,8 +3694,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --                           registro deve ser igonardo. Será exibido somente no cursor cr_crapret
   --                           (SD793999 e SD795994 - AJFink)
   -- 
-  --              20/02/2018 - Alterada validação cdtipcta IN (1,2,...) para modalidade = 1.
-  --                           PRJ366 (Lombardi).
+  --              20/02/2018 - Alterada validação cdtipcta IN (1,2,...) para verificacao se permite
+  --                           o produto 38 (Folhas de Cheque). PRJ366 (Lombardi).
   -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
@@ -3711,13 +3711,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,crapass.cdagenci
               ,crapass.cdtipcta
               ,crapass.cdsitdct
-              ,tpcta.cdmodalidade_tipo cdmodali
         FROM crapass crapass
-            ,tbcc_tipo_conta tpcta
         WHERE crapass.cdcooper = pr_cdcooper
-        AND   crapass.nrdconta = pr_nrdconta
-        AND   tpcta.inpessoa   = crapass.inpessoa
-        AND   tpcta.cdtipo_conta = crapass.cdtipcta;
+        AND   crapass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;  
       --Selecionar Saldos da Conta
       CURSOR cr_crapsld (pr_cdcooper IN crapsld.cdcooper%TYPE
@@ -4343,6 +4339,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_dtiniper01 DATE;
       vr_dtfimper01 DATE;
       vr_dscedent VARCHAR(300);
+      vr_possuipr VARCHAR2(1);
       --Variaveis para uso na craptab
       vr_dstextab    craptab.dstextab%TYPE;
       vr_lshistor    craptab.dstextab%TYPE;
@@ -4458,8 +4455,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;  
         --Fechar Cursor
         CLOSE cr_crapsld;
+        
+        CADA0006.pc_permite_produto_tipo(pr_cdprodut => 38
+                                        ,pr_cdtipcta => rw_crapass.cdtipcta
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_inpessoa => rw_crapass.inpessoa
+                                        ,pr_possuipr => vr_possuipr
+                                        ,pr_cdcritic => vr_cdcritic
+                                        ,pr_dscritic => vr_dscritic);
+        
+        IF vr_cdcritic > 0 AND vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao Saida com Sucesso
+          RAISE vr_exc_erro;
+        END IF;
+        
         /*  Nao calcula programados para quem movimenta com talao de cheques  */
-        IF rw_crapass.cdmodali = 1 AND rw_crapass.cdsitdct = 1 THEN
+        IF vr_possuipr = 'S' AND rw_crapass.cdsitdct = 1 THEN
           --Sem Lancamentos futuros
           pr_tab_totais_futuros(1).vllautom:= 0;
           --Levantar Excecao Saida com Sucesso

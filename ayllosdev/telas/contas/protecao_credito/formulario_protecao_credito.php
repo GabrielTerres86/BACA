@@ -46,6 +46,7 @@
     <input type="hidden" id="dtdscore" value="<? echo getByTagName($registro,'dtdscore')  ?>">
     <input type="hidden" id="dsdscore" value="<? echo getByTagName($registro,'dsdscore')  ?>">
 	<input type="hidden" id="idastcjt" value="<? echo getByTagName($registro,'idastcjt')  ?>">
+	<input type="hidden" id="cdcatego" value="<? echo getByTagName($registro,'cdcatego')  ?>">
 	<input type="hidden" id="nrconbir" value="<? echo $nrconbir;  ?>">
 	<input type="hidden" id="nrseqdet" value="<? echo $nrseqdet;  ?>">
 	<input type="hidden" id="cdbircon" value="<? echo $cdbircon;  ?>">
