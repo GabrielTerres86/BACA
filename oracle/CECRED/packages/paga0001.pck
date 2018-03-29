@@ -5893,6 +5893,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
            BEGIN
              UPDATE craplau SET craplau.insitlau = 4 /** NAO EFETIVADO **/
                                ,craplau.dtdebito = craplau.dtmvtopg
+                               ,craplau.cdcritic = nvl(vr_cdcritic,0)
+                               ,craplau.dscritic = vr_dscritic
              WHERE craplau.ROWID = rw_craplau.ROWID;
            EXCEPTION
              WHEN OTHERS THEN
@@ -11844,6 +11846,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
            BEGIN
              UPDATE craplau SET craplau.insitlau = 4 /** NAO EFETIVADO **/
                                ,craplau.dtdebito = craplau.dtmvtopg
+                               ,craplau.cdcritic = nvl(vr_cdcritic,0)
+                               ,craplau.dscritic = vr_dscritic                               
              WHERE craplau.ROWID = rw_craplau.ROWID;
            EXCEPTION
              WHEN OTHERS THEN
@@ -23190,6 +23194,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
          BEGIN
            UPDATE craplau SET craplau.insitlau = 4 /** NAO EFETIVADO **/
                              ,craplau.dtdebito = craplau.dtmvtopg
+                             ,craplau.cdcritic = nvl(vr_cdcritic,0)
+                             ,craplau.dscritic = vr_dscritic
            WHERE craplau.ROWID = rw_craplau.ROWID;
          EXCEPTION
            WHEN OTHERS THEN

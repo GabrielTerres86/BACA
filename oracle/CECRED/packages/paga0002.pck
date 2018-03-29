@@ -238,6 +238,7 @@ create or replace package cecred.PAGA0002 is
            ,vlrrecbr NUMBER
            ,vlrperce NUMBER
            ,idlancto NUMBER(15)
+					 ,dscritic craplau.dscritic%TYPE
            ,gps_cddpagto NUMBER
            ,gps_dscompet VARCHAR2(7)
            ,gps_cdidenti NUMBER
@@ -8626,6 +8627,9 @@ create or replace package body cecred.PAGA0002 is
           ,lau.dslindig
           ,lau.idlancto
           ,lau.nrseqagp
+          ,lau.cdcritic
+          ,lau.dscritic
+          ,lau.progress_recid
       FROM craplau lau
     WHERE (lau.cdcooper = pr_cdcooper
       AND  lau.nrdconta = pr_nrdconta
@@ -8828,6 +8832,9 @@ create or replace package body cecred.PAGA0002 is
     vr_vlrtotal tbpagto_agend_darf_das.vlprincipal%TYPE := 0;
     vr_vlrrecbr tbpagto_agend_darf_das.vlreceita_bruta%TYPE := 0;
     vr_vlrperce tbpagto_agend_darf_das.vlpercentual%TYPE := 0;
+    vr_idlstdom NUMBER := 0;
+    vr_prorowid craplau.progress_recid%TYPE := NULL;
+    vr_dscrilau craplau.dscritic%TYPE;
 
     -- GPS
     vr_gps_cddpagto craplgp.cddpagto%TYPE; -- 03 - Código de pagamento
@@ -9196,8 +9203,15 @@ create or replace package body cecred.PAGA0002 is
           vr_gps_vlrjuros := 0;
           
         END IF;
-        
-        
+
+        vr_dscrilau := '';
+        IF rw_craplau.insitlau = 4 THEN 
+           IF NVL(rw_craplau.cdcritic,0) <> 0 THEN
+             vr_dscrilau := GENE0001.fn_busca_critica(pr_cdcritic => rw_craplau.cdcritic);
+           ELSE
+             vr_dscrilau := NVL(rw_craplau.dscritic,'');
+           END IF;
+        END IF;
 
         vr_cdindice := vr_tab_dados_agendamento.COUNT() + 1;
 
@@ -9240,6 +9254,7 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).vlrrecbr := vr_vlrrecbr;
         vr_tab_dados_agendamento(vr_cdindice).vlrperce := vr_vlrperce;
         vr_tab_dados_agendamento(vr_cdindice).idlancto := rw_craplau.idlancto;
+		    vr_tab_dados_agendamento(vr_cdindice).dscritic := vr_dscrilau;
         -- GPS
         vr_tab_dados_agendamento(vr_cdindice).gps_cddpagto := vr_gps_cddpagto;
         vr_tab_dados_agendamento(vr_cdindice).gps_dscompet := vr_gps_dscompet;
