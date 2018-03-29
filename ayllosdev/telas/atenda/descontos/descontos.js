@@ -58,7 +58,7 @@ arrayAlinhaInclusaoBordero[1] = 'right';
 arrayAlinhaInclusaoBordero[2] = 'left';
 arrayAlinhaInclusaoBordero[3] = 'right';
 arrayAlinhaInclusaoBordero[4] = 'right';
-arrayAlinhaInclusaoBordero[5] = 'right';
+arrayAlinhaInclusaoBordero[5] = 'center';
 arrayAlinhaInclusaoBordero[6] = 'center';
 				
 // Função para voltar para o div anterior conforme parâmetros
@@ -1349,44 +1349,15 @@ function formataLayout(nomeForm){
 	
 		$('#'+nomeForm).css('width','940px');
 
-
 		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
 		camposFiltros.desabilitaCampo();
-		var divRegistrosTitulos 			= $('div.divRegistrosTitulos','#'+nomeForm);		
-		var divRegistrosTitulosSelecionados = $('div.divRegistrosTitulosSelecionados','#'+nomeForm);		
-		var tabelaTitulos      				= $('table', divRegistrosTitulos );
-		var tabelaTitulosSelecionados   	= $('table', divRegistrosTitulosSelecionados );
-
-
-
-
+		var table = $('#divTitulos table','#'+nomeForm);		
 
 		var ordemInicial = new Array();
-				
-		var arrayLargura = new Array();
-		arrayLargura[0] = '100px';
-		arrayLargura[1] = '100px';
-		arrayLargura[2] = '250px';
-		arrayLargura[3] = '100px';
-		arrayLargura[4] = '';
-		arrayLargura[5] = '80px';
-		arrayLargura[6] = '70px';
-
-		var arrayAlinha = new Array();
-		arrayAlinha[0] = 'center';
-		arrayAlinha[1] = 'center';
-		arrayAlinha[2] = 'center';
-		arrayAlinha[3] = 'center';
-		arrayAlinha[4] = 'right';
-		arrayAlinha[5] = 'center';
-		arrayAlinha[6] = 'center';
 						
 	    $('#' + nomeForm).css({'margin-top': '5px'});
-	    divRegistrosTitulos.css({'height': '210px', 'padding-bottom': '2px'});
-	    divRegistrosTitulosSelecionados.css({'height': '210px', 'padding-bottom': '2px'});
+    	table.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
 
-		tabelaTitulos.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
-		tabelaTitulosSelecionados.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
 		$('tbody > tr',tabela).each( function() {
 			if ( $(this).hasClass('corSelecao') ) {

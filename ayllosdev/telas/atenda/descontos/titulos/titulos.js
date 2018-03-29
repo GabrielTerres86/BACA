@@ -321,7 +321,7 @@ function removeTituloBordero(td){
     selecionados.trigger("update");
     if (typeof arrayLarguraInclusaoBordero != 'undefined') {
         for (var i in arrayLarguraInclusaoBordero) {
-            $('td:eq(' + i + ')', registros).css('width', arrayLarguraInclusaoBordero[i]);
+            $('td:eq(' + i + ')', selecionados).css('width', arrayLarguraInclusaoBordero[i]);
         }       
     }   
     selecionados.find('> tbody > tr').each(function (i) {
@@ -2084,26 +2084,34 @@ function converteNumero (numero){
 
 
 function mostrarBorderoResumo() {
-    // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+    var divSelecionados = $(".divRegistrosTitulosSelecionados table","#divIncluirBordero");
+    var selecionados = $("input[name*='selecionados'",divSelecionados);
+    if(selecionados.length>0){
+        // Mostra mensagem de aguardo
+        showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
 
-    // Carrega conteúdo da opção através de ajax
-    $.ajax({
-        type: "POST",
-        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_resumo.php",
-        dataType: "html",
-        data: {
-            nrdconta: nrdconta,
-            redirect: "html_ajax"
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function (response) {
-            $("#divOpcoesDaOpcao4").html(response);
-        }
-    });
+        // Carrega conteúdo da opção através de ajax
+        $.ajax({
+            type: "POST",
+            url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_resumo.php",
+            dataType: "html",
+            data: {
+                nrdconta: nrdconta,
+                selecionados: selecionados.map(function(){return $(this).val();}).get(),
+                redirect: "html_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function (response) {
+                $("#divOpcoesDaOpcao4").html(response);
+            }
+        });
+    }
+    else{
+        showError("error", "Adicione pelo menos um t&iacute;tulo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+    }
     
     return false;
 }

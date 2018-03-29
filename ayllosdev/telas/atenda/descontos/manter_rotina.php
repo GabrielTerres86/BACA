@@ -262,8 +262,8 @@
 							<tbody>
 					";
 	    	foreach($dados->tags AS $t){
-	    		$html .= "<tr id='titulo_".getByTagName($t->tags,'nrdocmto')."_".getByTagName($t->tags,'nrcnvcob')."'>";
-	    		$html .=	"<td>".getByTagName($t->tags,'nrcnvcob')."</td>";
+	    		$html .= "<tr id='titulo_".getByTagName($t->tags,'nrnosnum')."'>";
+	    		$html .=	"<td><input type='hidden' name='selecionados' value='".getByTagName($t->tags,'nrnosnum')."'/>".getByTagName($t->tags,'nrcnvcob')."</td>";
 	    		$html .=	"<td>".getByTagName($t->tags,'nrdocmto')."</td>";
 	    		$html .=	"<td>".getByTagName($t->tags,'nrinssac').' - '.getByTagName($t->tags,'nmdsacad')."</td>";
 	    		$html .=	"<td>".getByTagName($t->tags,'dtvencto')."</td>";

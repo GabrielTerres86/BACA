@@ -36,48 +36,60 @@
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
+		exit;
 	}
-	
+	$selecionados = isset($_POST["selecionados"]) ? $_POST["selecionados"] : array();
+	if(count($selecionados)==0){
+		exibeErro("Selecione ao menos um t&iacute;tulo");
+		exit;
+	}
+	$selecionados = implode($selecionados,",");
 
 	// INICIO - INCLUIR PHP QUE FAZ A CHAMADA PARA O IBRATAM (REPLACE)
 	//
 	
+	// $xml = "<Root>";
+ //    $xml .= " <Dados>";
+ //    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+ //    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+ //    $xml .= " </Dados>";
+ //    $xml .= "</Root>";
+
+ //    // FAZER O INSERT CRAPRDR e CRAPACA
+ //    $xmlResult = mensageria($xml,"XXXX","XXXX", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+ //    $xmlObj = getObjectXML($xmlResult);
+
+	// $titulos   = $xmlObj->roottag->tags[0]->tags;
+	// $qtTitulos = count($titulos);
+	
+	// LISTA TODOS OS TITULOS SELECIONADOS COM AS CRITICAS E RETORNO DA IBRATAN
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
     // FAZER O INSERT CRAPRDR e CRAPACA
-    $xmlResult = mensageria($xml,"XXXX","XXXX", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","LISTAR_TITULOS_RESUMO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
 
-	$titulos   = $xmlObj->roottag->tags[0]->tags;
-	$qtTitulos = count($titulos);
-	
-    // Se ocorrer um erro, mostra mensagem
-    /*
-	if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';           
-	}
-	else{
-		if($xmlObj->roottag->tags[0]){
-			echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
-		} else{
-			echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
-		}	
-	}
-	*/
+	$dados = $xmlObj->roottag->tags[0];
+    $qtTitulos = $xmlObj->roottag->tags[0]->attributes['QTREGIST'];
 
-	//
-	//
-	// FIM - INCLUIR PHP QUE FAZ A CHAMADA PARA O IBRATAM (REPLACE)
+    // Se ocorrer um erro, mostra mensagem
+    
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
+		echo "<script>";
+       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
+		echo "</script>";
+		exit;
+	}
 
 	
 ?>
 
 <div id="divResumoBordero">
-	
 
 	<form id="formPesquisaTitulos" class="formulario">
 		<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo $nrdconta; ?>" />
@@ -101,88 +113,29 @@
 						<tbody>
 							<?
 								$mtdClick = "selecionaTituloResumo('1', 'Gomercindo Lopes');";
-							?>	
-							<tr id="trTitulo1>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
-										
-								<td>XXXXXXXXXXX</td>
-								<td>NNNNNNNNNN</td>
-								<td>Gomercindo Lopes</td>
-								<td>xx/xx/xxxx</td>
-								<td>R$ xxxxx,xx</td>
-								<td>ATIVO</td>
-								<td>SIM</td>
-							</tr>
-
-							<?
-								$mtdClick = "selecionaTituloResumo('2', 'Juca Santos');";
-							?>
-							<tr id="trTitulo2>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
-								<td>XXXXXXXXXXX</td>
-								<td>NNNNNNNNNN</td>
-								<td>Juca Santos</td>
-								<td>xx/xx/xxxx</td>
-								<td>R$ xxxxx,xx</td>
-								<td>ATIVO</td>
-								<td>NAO</td>
-							</tr>
-							<tr id="trTitulo3>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
-								<td>XXXXXXXXXXX</td>
-								<td>NNNNNNNNNN</td>
-								<td>Maria Loudes</td>
-								<td>xx/xx/xxxx</td>
-								<td>R$ xxxxx,xx</td>
-								<td>ATIVO</td>
-								<td>SIM</td>
-							</tr>
-							<tr id="trTitulo4>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
-								<td>XXXXXXXXXXX</td>
-								<td>NNNNNNNNNN</td>
-								<td>Roberval Lima</td>
-								<td>xx/xx/xxxx</td>
-								<td>R$ xxxxx,xx</td>
-								<td>ATIVO</td>
-								<td>SIM</td>
-							</tr>
-
-
-
-
-							<?  for ($i = 0; $i < $qtLimites; $i++) {
-									
-									$mtdClick = "selecionaTituloResumo('".($i + 1)."', '".$qtTitulos."', '".($titulos[$i]->tags[3]->cdata)."', '".($titulos[$i]->tags[7]->cdata)."', '".($titulos[$i]->tags[8]->cdata)."', '".($titulos[$i]->tags[9]->cdata)."', '".($titulos[$i]->tags[2]->cdata)."');";
-												
-							?>
-								<tr id="trTitulo<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
-									<td><span><? echo getByTagName($titulos[$i]->tags,"DTPROPOS"); ?></span>
-									<? echo getByTagName($titulos[$i]->tags,"DTPROPOS"); ?></td>
-									
-									<td><span><? echo $titulos[$i]->tags[1]->cdata; ?></span>
-									<? echo $titulos[$i]->tags[1]->cdata; ?></td>
-									
-									<td><span><? echo $titulos[$i]->tags[3]->cdata; ?></span>
-										<? echo formataNumericos('zzz.zzz.zzz',$titulos[$i]->tags[3]->cdata,'.'); ?></td>
-									
-									<td><span><? echo $titulos[$i]->tags[2]->cdata; ?></span>
-										<? echo number_format(str_replace(",",".",$titulos[$i]->tags[2]->cdata),2,",","."); ?></td>
-									
-									<td><span><? echo $titulos[$i]->tags[4]->cdata; ?></span>
-									<? echo $titulos[$i]->tags[4]->cdata; ?></td>
-									
-									<td><span><? echo $titulos[$i]->tags[5]->cdata; ?></span>
-									<? echo $titulos[$i]->tags[5]->cdata; ?></td>
-									
-									<td><span><? echo $titulos[$i]->tags[7]->cdata; ?></span>
-									<? echo $titulos[$i]->tags[7]->cdata; ?></td>
-									
-									<td><span><? echo $titulos[$i]->tags[8]->cdata; ?></span>
-									<? echo $titulos[$i]->tags[8]->cdata; ?></td>
-
-									<td><span><? echo $titulos[$i]->tags[9]->cdata; ?></span>
-									<? echo $titulos[$i]->tags[9]->cdata; ?></td>
-															
-								</tr>
-							<?} // Fim do for ?>	
-									
+						    	foreach($dados->tags AS $t){ ?>
+						    		<tr id='titulo_<? echo getByTagName($t->tags,'nrnosnum');?>'>
+						    			<td><input type='hidden' name='selecionados' value='<? echo getByTagName($t->tags,'nrnosnum');?>'/><? echo getByTagName($t->tags,'nrcnvcob');?></td>
+						    			<td><? echo getByTagName($t->tags,'nrdocmto');?></td>
+						    			<td><? echo getByTagName($t->tags,'nrinssac').' - '.getByTagName($t->tags,'nmdsacad');?></td>
+						    			<td><? echo getByTagName($t->tags,'dtvencto');?></td>
+						    			<td><? echo formataMoeda(getByTagName($t->tags,'vltitulo'));?></td>
+						    			<?
+							    			$sit = getByTagName($t->tags,'dssituac');
+								    		if ($sit=="S") { ?>
+									    		<td><img src='../../imagens/icones/sit_ok.png'/></td>
+								    		<? }
+								    		elseif ($sit=="N") { ?>
+									    		<td><img src='../../imagens/icones/sit_err.png'/></td>
+								    		<? }
+								    		else{ ?>
+									    		<td></td>
+								    		<? }
+								    	?>
+						    			<td ><? echo getByTagName($t->tags,'sitibrat');?></td>
+						    		</tr>
+						    	<? }
+					    	?>
 						</tbody>
 					</table>
 				</div>
@@ -212,5 +165,9 @@
 	// Bloqueia conteúdo que está átras do div da rotina
 	blockBackground(parseInt($("#divRotina").css("z-index")));
 
+    var registros = $(".divTitulos","#divResumoBordero");
+    var table = registros.find(">table");
+    var ordemInicial = new Array();
+    table.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
 
 </script>
