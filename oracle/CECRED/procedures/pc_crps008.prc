@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                     Ultima atualizacao: 21/11/2017
+   Data    : Janeiro/92.                     Ultima atualizacao: 19/03/2018
 
    Dados referentes ao programa:
 
@@ -147,6 +147,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                             (Lucas Ranghetti/Thiago Rodrigues)
                             
                21/11/2017 - Adequar a cobranca de IOF para a nova legislacao. (James)   
+
+               19/01/2018 - Corrigido cálculo de saldo bloqueado (Luis Fernando-Gft)                                 
 
                19/03/2018 - Consistencia para considerar dias úteis ou corridos na atualização do saldo - Daniel(AMcom)			   			                                     
      ............................................................................. */
@@ -522,8 +524,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
        vr_dtfimfis  DATE;
 
        vr_dtrisclq_aux DATE;
-	   vr_dtcorte_prm  DATE;
-
        vr_qtddsdev_aux  NUMBER:= 0;
 
        --Variaveis do ipmf
@@ -591,6 +591,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
        vr_vliofpri NUMBER := 0; --> valor do IOF principal
        vr_vliofadi NUMBER := 0; --> valor do IOF adicional
        vr_vliofcpl NUMBER := 0; --> valor do IOF complementar
+       vr_flgimune PLS_INTEGER;
        vr_vltaxa_iof_principal NUMBER := 0;
        vr_natjurid crapjur.natjurid%TYPE;
        vr_tpregtrb crapjur.tpregtrb%TYPE;
@@ -1184,7 +1185,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
              --vlsddisp = valor do saldo disponivel
              --vllimcre = valor do limite de credito do associado
              vr_tot_vlsldant:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdchsl,0) +
-                               Nvl(rw_crapsld.ass_vllimcre,0);
+                               Nvl(rw_crapsld.vlsdbloq,0) + Nvl(rw_crapsld.vlsdblpr,0) +
+                               Nvl(rw_crapsld.vlsdblfp,0) + Nvl(rw_crapsld.ass_vllimcre,0);
 
              --Zerar Numero sequencial tabela
              vr_nrseqneg:= 0;
@@ -1735,23 +1737,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
   								 RAISE vr_exc_saida;
   							 END;
                 
-				--
-                -- Regra para cálculo de dias úteis ou dias corridos - Daniel(AMcom)
-                vr_dtrisclq_aux := nvl(rw_crapsld.dtrisclq, rw_crapdat.dtmvtolt);
-                --
-                BEGIN
-                  -- Buscar data parametro de referencia para calculo de juros
-                  vr_dtcorte_prm := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
-                                                                      ,pr_nmsistem => 'CRED'
-                                                                      ,pr_cdacesso => 'DT_CORTE_REGCRE')
-                                                                      ,'DD/MM/RRRR');
-      
- 	  	          EXCEPTION
-                  WHEN OTHERS THEN
-                    vr_dtcorte_prm := rw_crapdat.dtmvtolt;
-                END;               
-                --
-                IF vr_dtrisclq_aux <= vr_dtcorte_prm THEN 
+				 --
+                 vr_dtrisclq_aux := nvl(rw_crapsld.dtrisclq, rw_crapdat.dtmvtolt);
+                 --
+                 IF vr_dtrisclq_aux <= '01/02/2018' THEN -- Daniel(AMcom)
                    -- Considerar dias úteis -- Regra atual
                    -- Incrementar quantidade dias devedor
                    rw_crapsld.qtddsdev := Nvl(rw_crapsld.qtddsdev,0) + 1;
@@ -1874,8 +1863,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
            --Salario liquido mes anterior recebe salario liquido
            rw_crapsld.vltsalan:= Nvl(rw_crapsld.vltsallq,0);
            --saldo final do mes anterior recebe valor disponivel + bloqueado + salario liquido + bloqueado praca + bloqueado fora praca
-           rw_crapsld.vlsdmesa:= Nvl(rw_crapsld.vlsddisp,0) + 
-                                 Nvl(rw_crapsld.vlsdchsl,0);
+           rw_crapsld.vlsdmesa:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdbloq,0) +
+                                 Nvl(rw_crapsld.vlsdchsl,0) + Nvl(rw_crapsld.vlsdblpr,0) +
+                                 Nvl(rw_crapsld.vlsdblfp,0);
            --Data referencia extrato recebe o ultimo dia do mes
            rw_crapsld.dtrefext:= vr_dtultdia;         /* Para uso do sist. CASH  */
            --Referencia do saldo para extrato recebe a data referencia saldo anterior
@@ -2267,6 +2257,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                                             ,pr_vliofadi   => vr_vliofadi
                                             ,pr_vliofcpl   => vr_vliofcpl
                                             ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
+                                            ,pr_flgimune   => vr_flgimune
                                             ,pr_dscritic   => vr_dscritic);
                  
                -- Condicao para verificar se houve critica                             
@@ -2275,7 +2266,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                END IF;
                
                --Atualizar valor do iof no mes na tabela de saldo
-               rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(NVL(vr_vliofadi,0),2) + ROUND(NVL(vr_vliofpri,0),2);
+               IF vr_flgimune = 0 THEN
+                 rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(NVL(vr_vliofadi,0),2) + ROUND(NVL(vr_vliofpri,0),2);
+               ELSE
+                 rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0);
+               END IF;
              END IF;
              
            END IF;
