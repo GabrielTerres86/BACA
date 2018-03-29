@@ -7,6 +7,7 @@
  * 
  * --------------
  * ALTERAÇÕES   : 13/10/2015 - Projeto Reformulacao Cadastral (Tiago Castro - RKAM). 
+ 				  29/03/2018 - Ajustes para inclusão de novo produto. (Alex Sandro - GFT)
  * --------------
  */  
 ?>
@@ -26,6 +27,7 @@
 						<option value='4'> Desconto de cheque         </option>
 						<option value='5'> Desconto de t&iacute;tulos </option>
 						<option value='6'> Cadastro Conta </option>
+						<option value='7'> Border&ocirc; de T&iacute;tulos </option>
 					</select>
 				</td>
 				<td width="2px"> </td>
