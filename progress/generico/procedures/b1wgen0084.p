@@ -27,7 +27,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 23/02/2018
+    Data    : Fevereiro/2011               ultima Atualizacao: 26/03/2018
 
     Dados referentes ao programa:
 
@@ -288,6 +288,8 @@
               28/12/2017 - Buscar da central de risco do dia anterior inves do fechamento do mes anterior. (Oscar)
               
               29/12/2017 - Ajuste para desfazer prejuizo retirar agencia do loop. (Oscar)
+                           
+              26/03/2018 - Corrigir os erros do IOF. (James)
                            
 ............................................................................. */
 
@@ -3808,7 +3810,7 @@ PROCEDURE grava_efetivacao_proposta:
            /* Se retornou erro */
            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
               DO:
-                  MESSAGE "(1) Erro ao inserir lancamento de IOF.".
+                  /*MESSAGE "(1) Erro ao inserir lancamento de IOF.".*/
                   ASSIGN aux_dscritic = "Erro ao inserir lancamento de IOF.".
                   UNDO EFETIVACAO , LEAVE EFETIVACAO.
            END.
@@ -3852,7 +3854,7 @@ PROCEDURE grava_efetivacao_proposta:
              /* Se retornou erro */
              IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
                          DO:
-                    MESSAGE "(2) Erro ao inserir lancamento de IOF.".
+                    /*MESSAGE "(2) Erro ao inserir lancamento de IOF.".*/
                     ASSIGN aux_dscritic = "Erro ao inserir lancamento de IOF.".
                     UNDO EFETIVACAO , LEAVE EFETIVACAO.
                   END.
@@ -4115,7 +4117,7 @@ PROCEDURE grava_efetivacao_proposta:
               /* Gravar operador que efetivou a proposta */
               crapepr.cdopeefe = par_cdoperad
               crapepr.cdbccxlt = 100
-              crapepr.nrdolote = aux_nrdolote
+              crapepr.nrdolote = aux_nrdolote_cred
               crapepr.nrdconta = par_nrdconta
               /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
               crapepr.cdopeori = par_cdoperad
@@ -4641,29 +4643,7 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
 
         END. /* crapepr.tpemprst = 2 */
 
-    FOR EACH craplem WHERE craplem.cdcooper = par_cdcooper     AND
-                           craplem.nrdconta = par_nrdconta     AND
-                           craplem.nrctremp = par_nrctremp     NO-LOCK:
-
-        IF   NOT CAN-DO("1036,1059,2013,2014,2304,2305,2306,2307,2308,2309,2310,2326,2327,2535,2536,2537,2538,2591,2592,2593,2594,2597,2598,2599,2600,2601,2602,2603,2604,2605,2606",STRING(craplem.cdhistor)) THEN
-             DO:
-                 ASSIGN aux_cdcritic = 368
-                        aux_dscritic = "".
-
-                 RUN gera_erro (INPUT par_cdcooper,
-                                INPUT par_cdagenci,
-                                INPUT par_nrdcaixa,
-                                INPUT 1,
-                                INPUT aux_cdcritic,
-                                INPUT-OUTPUT aux_dscritic).
-
-                 RETURN "NOK".
-
-             END.
-
-    END.
-
-    FIND   FIRST craplem NO-LOCK WHERE
+    FIND FIRST craplem NO-LOCK WHERE
                  craplem.cdcooper = crapepr.cdcooper AND
                  craplem.dtmvtolt = crapepr.dtmvtolt AND
                  craplem.cdagenci = crapepr.cdagenci AND
@@ -5167,7 +5147,7 @@ PROCEDURE transf_contrato_prejuizo.
            RETURN "NOK".
        END.
             
-       /* Verificacao de contrato de acordo */  
+       /* Verificacao de contrato de acordo
       
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -5219,6 +5199,7 @@ PROCEDURE transf_contrato_prejuizo.
            RETURN "NOK".
              
        END.
+       */
           
        /* Fim verificacao contrato acordo */     
        FOR LAST crapris FIELDS(innivris dtdrisco)
@@ -5232,10 +5213,10 @@ PROCEDURE transf_contrato_prejuizo.
                             
        IF AVAIL(crapris) THEN
        DO:
-           /* Precisa estar 181 dias com risco em H */
+           /* Precisa estar 180 dias com risco em H */
            ASSIGN aux_qtdiaris = par_dtmvtolt - crapris.dtdrisco.
            
-           IF crapris.innivris = 9 AND aux_qtdiaris >= 181 THEN
+           IF crapris.innivris = 9 AND aux_qtdiaris > 179 THEN
            DO:
                FOR FIRST crapepr
                    WHERE crapepr.cdcooper = par_cdcooper

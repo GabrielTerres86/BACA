@@ -162,6 +162,10 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --			             Alterado pc_natureza_operacao para demais parâmetros. 
   --						 (Diego Simas - AMcom) 
   --
+  --            28/03/2018 - Alterar conversao de char para number, ao inves de usar o to_number, 
+  --                         vai utilizar funcao generica da gene0002. Essa funcao ja le os parametros 
+  --                         de formatacao numerica do banco de dados e converte adequadamente, evitando 
+  --                         problemas ao executar a rati0001 por job. Heitor (Mouts)
   ---------------------------------------------------------------------------------------------------------------
   -- Tipo de Tabela para dados provisao CL
   TYPE typ_tab_dsdrisco IS TABLE OF VARCHAR2(5) INDEX BY PLS_INTEGER;
@@ -3985,14 +3989,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                     ,pr_cdacesso => 'PROVISAOCL'
                                     ,pr_tpregist => null) LOOP
           -- Carregar na tabela
-          vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
+          vr_contador := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_cl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
-          vr_tab_provisao_cl(vr_contador).percentu := to_number(SUBSTR(rw_craptab.dstextab,1,6));
-          vr_tab_provisao_cl(vr_contador).notadefi := to_number(SUBSTR(rw_craptab.dstextab,27,6));
-          vr_tab_provisao_cl(vr_contador).notatefi := to_number(SUBSTR(rw_craptab.dstextab,34,6));
+          vr_tab_provisao_cl(vr_contador).percentu := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,1,6));
+          vr_tab_provisao_cl(vr_contador).notadefi := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,27,6));
+          vr_tab_provisao_cl(vr_contador).notatefi := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,34,6));
           vr_tab_provisao_cl(vr_contador).parecefi := SUBSTR(rw_craptab.dstextab,41,15);
-          vr_tab_provisao_cl(vr_contador).notadeju := to_number(SUBSTR(rw_craptab.dstextab,56,6));
-          vr_tab_provisao_cl(vr_contador).notateju := to_number(SUBSTR(rw_craptab.dstextab,62,6));
+          vr_tab_provisao_cl(vr_contador).notadeju := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,56,6));
+          vr_tab_provisao_cl(vr_contador).notateju := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,62,6));
           vr_tab_provisao_cl(vr_contador).pareceju := SUBSTR(rw_craptab.dstextab,70,15);
 		  
 		  IF vr_tab_provisao_cl(vr_contador).dsdrisco = 'A' THEN
@@ -4016,14 +4020,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                     ,pr_cdacesso => 'PROVISAOTL'
                                     ,pr_tpregist => null) LOOP
           -- Carregar na tabela
-          vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
+          vr_contador := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_tl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
-          vr_tab_provisao_tl(vr_contador).percentu := to_number(SUBSTR(rw_craptab.dstextab,1,6));
-          vr_tab_provisao_tl(vr_contador).notadefi := to_number(SUBSTR(rw_craptab.dstextab,27,6));
-          vr_tab_provisao_tl(vr_contador).notatefi := to_number(SUBSTR(rw_craptab.dstextab,34,6));
+          vr_tab_provisao_tl(vr_contador).percentu := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,1,6));
+          vr_tab_provisao_tl(vr_contador).notadefi := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,27,6));
+          vr_tab_provisao_tl(vr_contador).notatefi := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,34,6));
           vr_tab_provisao_tl(vr_contador).parecefi := SUBSTR(rw_craptab.dstextab,41,15);
-          vr_tab_provisao_tl(vr_contador).notadeju := to_number(SUBSTR(rw_craptab.dstextab,56,6));
-          vr_tab_provisao_tl(vr_contador).notateju := to_number(SUBSTR(rw_craptab.dstextab,62,6));
+          vr_tab_provisao_tl(vr_contador).notadeju := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,56,6));
+          vr_tab_provisao_tl(vr_contador).notateju := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,62,6));
           vr_tab_provisao_tl(vr_contador).pareceju := SUBSTR(rw_craptab.dstextab,70,15);
 		  
 		  IF vr_tab_provisao_tl(vr_contador).dsdrisco = 'A' THEN
