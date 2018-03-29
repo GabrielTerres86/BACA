@@ -16,7 +16,23 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0191 is
   --
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_recebe_cursos_aprovados(pr_dscritic OUT VARCHAR2); --> Retorno de crítica
-  
+
+  -- Objetivo: Reprocessar a integração com o Konviva a qualquer momento via tela de parâmetros do Progrid
+  PROCEDURE pc_reproc_cur_aprov(pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
+                               ,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK 
+                               
+  -- Objetivo: Retornar a data da última integração com sucesso com o Konviva
+  PROCEDURE pc_data_ultima_integracao(pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                     ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
+                                     ,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK
+                                     
 END WPGD0191;
 /
 CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
@@ -62,6 +78,13 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --
   --              09/08/2017 - #677251 Corrigido o nome do job p jbpgd_rec_cursos_aprovados e formatação de data na
   --                           rotina pc_busca_conteudo_campo para dd/mm/rrrr, usada nas tags DTINIEVT e DTFIMEVT (Carlos)
+  --              27/02/2018 - Chamado 851807 - Tratar as situações de XML vazio para enviar e-mail informando o usuário (Márcio Mouts)
+  --              08/03/2018 - Chamado 861524 - Tratar para quando ocorrer erro, mandar o e-mail para o usuário
+  --                                            mas não abortar o JOB com erro - Pois cria alerta no monitoramento. 
+  --              28/03/2018 - REQ0010657 - Tratamento para quando não vir CPF do Konviva. (Wagner/Sustentação)
+  --                                      - Tratamento para considerarmos somente o limite permitido no nome da pessoa que realizou o curso.		   
+  --                           REQ0010659 - Nova procedure para permitir o reprocesso da integração com o Konviva.(Wagner/Sustentação)
+  --                                      - E-mail de notificação de execução de reprocesso.
   -------------------------------------------------------------------------------------------------------------------
 
  -- Rotina para buscar o conteudo do campo com base no xml enviado
@@ -112,6 +135,131 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       pr_dscritic := 'Erro ao buscar campo '||pr_nrcampo||'. '||SQLERRM;
   END;
  
+ -- Extrair um CPF/CNPJ do LOGIN vindo do Konviva.
+ -- Somente usado em caso do campo CPF/CNPJ não vir preenchido no XML.
+ FUNCTION fun_extrai_cpfcnpj_login(pr_nomlogin IN VARCHAR2) RETURN VARCHAR2 IS
+   vr_string_aux VARCHAR2(1000) := NULL; 
+ BEGIN
+   IF INSTR(pr_nomlogin,'-') > 0 THEN
+     vr_string_aux := SUBSTR(pr_nomlogin,INSTR(pr_nomlogin,'-')+1);
+   END IF;
+     
+   RETURN vr_string_aux; 
+ EXCEPTION 
+   WHEN OTHERS THEN
+     RETURN NULL;   
+ END fun_extrai_cpfcnpj_login;
+ 
+ -- Objetivo: Reprocessar a integração com o Konviva a qualquer momento via tela de parâmetros do Progrid
+ PROCEDURE pc_reproc_cur_aprov(pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                              ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                              ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
+                              ,pr_des_erro OUT VARCHAR2) IS          --> Saida OK/NOK 
+
+   vr_dsbloco_anonimo VARCHAR2(4000);
+   vr_jobname         VARCHAR2(1000) := 'JBPGD_'||to_char(SYSDATE,'YYYYMMDD')||'_';
+   vr_exc_erro        EXCEPTION;
+   vr_nrtempo_job     TIMESTAMP := SYSTIMESTAMP+(1/24/60)*1; -- agenda o job para daqui a 1 minuto
+ BEGIN
+
+   -- Cria o bloco PLSQL que irá executar o reprocesso.
+   vr_dsbloco_anonimo := '
+      DECLARE
+        vr_dscritic VARCHAR2(4000);
+      BEGIN
+        progrid.wpgd0191.pc_recebe_cursos_aprovados (pr_dscritic => vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          raise_application_error(-20001, vr_dscritic);
+        END IF;
+      END;';
+  
+   -- Faz o agendamento do JOB com AUTO-DROP após a execução.
+   GENE0001.pc_submit_job(pr_cdcooper  => 3                    --> Código da cooperativa
+                         ,pr_cdprogra  => 'WPGD0191'           --> Código do programa
+                         ,pr_dsplsql   => vr_dsbloco_anonimo   --> Bloco PLSQL a executar
+                         ,pr_dthrexe   => vr_nrtempo_job       --> Executar nesta hora
+                         ,pr_interva   => NULL                 --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                         ,pr_jobname   => vr_jobname           --> Nome randomico criado
+                         ,pr_des_erro  => pr_dscritic);
+   -- Testar saida com erro
+   IF pr_dscritic IS NOT NULL THEN
+     -- Levantar exceçao
+     RAISE vr_exc_erro;
+   END IF;  
+   
+   --Retorno padrao para que a requisicao ajax do javascript nao interprete como erro
+   pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><dados></dados></Root>');
+                                   
+ EXCEPTION
+   WHEN vr_exc_erro THEN
+     cecred.pc_internal_exception;
+
+     pr_dscritic := 'Erro em WPGD0191.pc_reproc_cur_aprov(1). Descrição: '||pr_dscritic;
+
+     -- Carregar XML padrão para variável de retorno não utilizada.
+     -- Existe para satisfazer exigência da interface.
+     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+   WHEN OTHERS THEN
+     cecred.pc_internal_exception;
+     pr_dscritic := 'Erro em WPGD0191.pc_reproc_cur_aprov(2). Descrição: '||SQLERRM;
+     
+     -- Carregar XML padrão para variável de retorno não utilizada.
+     -- Existe para satisfazer exigência da interface.
+     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+     
+ END pc_reproc_cur_aprov;     
+ 
+ -- Objetivo: Retornar a data da última integração com sucesso com o Konviva
+ PROCEDURE pc_data_ultima_integracao(pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
+                                    ,pr_des_erro OUT VARCHAR2) IS          --> Saida OK/NOK 
+ 
+   CURSOR cr_ultima_integra IS
+     SELECT to_char(to_date(dsvlrprm,'YYYY-MM-DD'),'DD/MM/YYYY') dtultint
+       FROM crapprm
+      WHERE nmsistem = 'CRED'
+        AND cdcooper = 0
+        AND cdacesso = 'EAD_DATA_JOB';   
+   rw_ultima_integra cr_ultima_integra%ROWTYPE;
+   
+   vr_dtultint VARCHAR2(50);
+
+ BEGIN
+ 
+   OPEN cr_ultima_integra;
+     FETCH cr_ultima_integra
+       INTO rw_ultima_integra;
+   CLOSE cr_ultima_integra;  
+      
+   IF rw_ultima_integra.dtultint IS NOT NULL THEN
+     vr_dtultint := rw_ultima_integra.dtultint;
+   ELSE
+     vr_dtultint := 'Não localizado.';  
+   END IF;
+   
+   pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><dtultint>' || vr_dtultint || '</dtultint></Root>');
+     
+ EXCEPTION 
+   WHEN OTHERS THEN
+     cecred.pc_internal_exception;
+     
+     pr_dscritic := 'Erro em WPGD0191.pc_data_ultima_integracao. Descrição: '|| SQLERRM;
+
+     -- Carregar XML padrão para variável de retorno não utilizada.
+     -- Existe para satisfazer exigência da interface.
+     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> <Root></Root>');
+
+ END pc_data_ultima_integracao;
+    
  PROCEDURE pc_recebe_cursos_aprovados(pr_dscritic OUT VARCHAR2) IS --> Retorno de crítica
    
   -- Buscar a informação da GNAPETP - Eixo Temático
@@ -355,6 +503,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
     vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'WPGD0191';
     vr_nomdojob  CONSTANT VARCHAR2(50)          := 'jbpgd_rec_cursos_aprovados';
     vr_flgerlog  BOOLEAN := FALSE; 
+    vr_dsendereco_email VARCHAR2(500)           := 'educacao@progrid.coop.br';
+    vr_dsassunto_email  VARCHAR2(500)           := 'LOG: EaD - Sistema de Relacionamento';
     
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
@@ -555,7 +705,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
               vr_nrseqtem,
               1,
               nvl(vr_dscursos,' '),
-              nvl(vr_numhoras,' ')
+              substr(nvl(vr_numhoras,' '),1,10)
             );
               
             EXCEPTION
@@ -695,7 +845,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
               vr_nrseqtem,
               1,
               nvl(vr_dscursos,' '),
-              nvl(vr_numhoras,' ')
+              substr(nvl(vr_numhoras,' '),1,10)
             );
                 
            EXCEPTION
@@ -1004,6 +1154,13 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
            vr_numeroconta:= 0;
         END IF;
         
+        -- Tratamento especial para evitar casos em que o CPF/CNPJ veio vazio, 
+        -- porém iremos extrair do LOGIN, que sempre virá preenchido.
+        IF TRIM(vr_nrdcpf) IS NULL AND vr_nomlogin IS NOT NULL THEN
+          vr_nrdcpf := fun_extrai_cpfcnpj_login(vr_nomlogin);
+        END IF;          
+        -- Fim do tratamento
+        
         -- Busca as informações da TBEAD_INSCRICAO_PARTICIPANTE
 --        OPEN  cr_tbeadip(pr_nomlogin => vr_nomlogin);  --Melhoria 399
 --        FETCH cr_tbeadip INTO rw_tbeadip; --Melhoria 399
@@ -1051,8 +1208,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
                 vr_cdcritic := 0; 
                 vr_dscritic := 'Conta não encontrada ' 
                                ||vr_contador_login||':' 
-                               ||'\r\nLogin: '||vr_nomlogin; 
-            
+                               ||'\r\nLogin: '||vr_nomlogin;             
                 RAISE vr_exc_saida;
               WHEN OTHERS THEN
                 vr_cdcritic := 0; 
@@ -1414,8 +1570,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
               vr_cdagenci,
               vr_numeroconta, --              rw_tbeadip.nrdconta, --Melhoria 399
               9,
-              vr_nomeusuario, --substr(rw_tbeadip.nmparticip,1,50), --Melhoria 399
-              vr_dseml, --substr(rw_tbeadip.dsemail_particip,1,50), --Melhoria 399
+              substr(vr_nomeusuario,1,50),
+              substr(vr_dseml,1,50),
               vr_dtconins,
               vr_dtconins,
               2,
@@ -1425,7 +1581,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
               vr_cdagenci,
               vr_nrseqdig,
               NVL(rw_crapadp_segdig.nrseqdig, 0),
-              rtrim(ltrim(vr_endereco||' '||vr_numlog||' '||vr_complog||' '||vr_ceplog||' '||vr_bairro||' '||vr_cidade||' '||vr_estado ||' '||vr_pais ||' Tipo de Cooperado: '||vr_tipocooperado)), -- Melhoria 399
+              substr(rtrim(ltrim(vr_endereco||' '||vr_numlog||' '||vr_complog||' '||vr_ceplog||' '||vr_bairro||' '||vr_cidade||' '||vr_estado ||' '||vr_pais ||' Tipo de Cooperado: '||vr_tipocooperado)),1,4000), -- Melhoria 399
               vr_nrdddtfc, -- Melhoria 399
               vr_nrtelefo, -- Melhoria 399
               vr_nrdcpf,   -- Melhoria 399
@@ -1497,6 +1653,29 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       -- INSERE DADOS NAS TABELAS
       COMMIT;
       
+      -- Enviar e-mail em caso de execução de reprocessos durante o dia.
+      -- Iremos notificar a área caso a integração finalizar entre às 07:00 horas da manhã até meia noite.
+      IF to_number(to_char(SYSDATE,'HH24')) BETWEEN 7 AND 23 THEN
+        -- Corpo do e-mail para enviar para a área avisando do sucesso na execução da integração.
+        pr_dscritic:= 'A integração com a plataforma Konviva finalizou com sucesso!'||chr(10)||
+                      'Processo finalizou às '||to_char(SYSDATE,'dd/mm/yyyy hh24:mi:ss')||'.';
+        
+        -- Comando para enviar e-mail a OQS
+        GENE0003.pc_solicita_email(pr_cdcooper        => 1 --> Cooperativa conectada
+                                  ,pr_cdprogra        => vr_cdprogra --> Programa conectado
+                                  ,pr_des_destino     => vr_dsendereco_email --> Um ou mais detinatários separados por ';' ou ','
+                                  ,pr_des_assunto     => vr_dsassunto_email||' - Reprocesso' --> Assunto do e-mail
+                                  ,pr_des_corpo       => pr_dscritic --> Corpo (conteudo) do e-mail
+                                  ,pr_des_anexo       => vr_caminho_xml || vr_arquivo_xml --> Um ou mais anexos separados por ';' ou ','
+                                  ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                  ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
+                                  ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                  ,pr_des_erro        => vr_dscritic);      
+        --> manter tabela de email                  
+        pr_dscritic:= ''; -- Chamado 861524
+        COMMIT;      
+      END IF;        
+      
       -- Fim do programa
       pc_controla_log_batch('F');
 
@@ -1513,22 +1692,25 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         -- RETORNA DADOS NAS TABELAS
         ROLLBACK;
         
-        IF UPPER(vr_dscritic) <> 'RETORNO DO XML VAZIO' THEN
-
+        IF UPPER(TRIM(vr_dscritic)) = 'RETORNO DO XML VAZIO' THEN
           -- Comando para enviar e-mail a OQS
-          GENE0003.pc_solicita_email(pr_cdcooper        => 1 --> Cooperativa conectada
-                                    ,pr_cdprogra        => 'WPGD0191' --> Programa conectado
-                                    ,pr_des_destino     => 'educacao@progrid.coop.br' --> Um ou mais detinatários separados por ';' ou ','
-                                    ,pr_des_assunto     => 'Log EaD - Sistema de Relacionamento' --> Assunto do e-mail
-                                    ,pr_des_corpo       => pr_dscritic --> Corpo (conteudo) do e-mail
-                                    ,pr_des_anexo       => vr_caminho_xml || vr_arquivo_xml --> Um ou mais anexos separados por ';' ou ','
-                                    ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
-                                    ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
-                                    ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
-                                    ,pr_des_erro        => vr_dscritic);
+          pr_dscritic:= 'O arquivo gerado na integração do SGE com a plataforma Konviva se encontra vazio, possíveis causas: 1) Nenhum aluno concluiu um curso ou 2) Existem inconsistências de dados na plataforma do Konviva que estão impedindo a geração do arquivo.';
         END IF;
 
+        -- Comando para enviar e-mail a OQS
+        GENE0003.pc_solicita_email(pr_cdcooper        => 1 --> Cooperativa conectada
+                                  ,pr_cdprogra        => vr_cdprogra --> Programa conectado
+                                  ,pr_des_destino     => vr_dsendereco_email --> Um ou mais detinatários separados por ';' ou ','
+                                  ,pr_des_assunto     => vr_dsassunto_email --> Assunto do e-mail
+                                  ,pr_des_corpo       => pr_dscritic --> Corpo (conteudo) do e-mail
+                                  ,pr_des_anexo       => vr_caminho_xml || vr_arquivo_xml --> Um ou mais anexos separados por ';' ou ','
+                                  ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                  ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
+                                  ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                  ,pr_des_erro        => vr_dscritic);
+        
         --> manter tabela de email                  
+        pr_dscritic:= ''; -- Chamado 861524
         COMMIT;
       WHEN OTHERS THEN
 
@@ -1543,20 +1725,24 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         -- Logar erro no programa
         pc_controla_log_batch('E', pr_dscritic);
         
-        IF UPPER(TRIM(vr_dscritic)) <> 'RETORNO DO XML VAZIO' THEN
-          -- Comando para enviar e-mail a OQS
-          GENE0003.pc_solicita_email(pr_cdcooper        => 1 --> Cooperativa conectada
-                                    ,pr_cdprogra        => 'WPGD0191' --> Programa conectado
-                                    ,pr_des_destino     => 'educacao@progrid.coop.br' --> Um ou mais detinatários separados por ';' ou ','
-                                    ,pr_des_assunto     => 'LOG: EaD - Sistema de Relacionamento' --> Assunto do e-mail
-                                    ,pr_des_corpo       => pr_dscritic --> Corpo (conteudo) do e-mail
-                                    ,pr_des_anexo       => vr_caminho_xml || vr_arquivo_xml --> Um ou mais anexos separados por ';' ou ','
-                                    ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
-                                    ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
-                                    ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
-                                    ,pr_des_erro        => vr_dscritic);
+        IF UPPER(TRIM(vr_dscritic)) = 'RETORNO DO XML VAZIO' THEN
+          pr_dscritic:= 'O arquivo gerado na integração do SGE com a plataforma Konviva se encontra vazio, possíveis causas: 1) Nenhum aluno concluiu um curso ou 2) Existem inconsistências de dados na plataforma do Konviva que estão impedindo a geração do arquivo.';
         END IF;
+        
+        -- Comando para enviar e-mail a OQS
+        GENE0003.pc_solicita_email(pr_cdcooper        => 1 --> Cooperativa conectada
+                                  ,pr_cdprogra        => vr_cdprogra --> Programa conectado
+                                  ,pr_des_destino     => vr_dsendereco_email --> Um ou mais detinatários separados por ';' ou ','
+                                  ,pr_des_assunto     => vr_dsassunto_email --> Assunto do e-mail
+                                  ,pr_des_corpo       => pr_dscritic --> Corpo (conteudo) do e-mail
+                                  ,pr_des_anexo       => vr_caminho_xml || vr_arquivo_xml --> Um ou mais anexos separados por ';' ou ','
+                                  ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                  ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
+                                  ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                  ,pr_des_erro        => vr_dscritic);
+
         --> manter tabela de email                  
+        pr_dscritic:= ''; -- Chamado 861524
         COMMIT;
     END;
  
