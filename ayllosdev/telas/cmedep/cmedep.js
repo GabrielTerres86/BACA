@@ -8,6 +8,7 @@
  * 28/06/2012 - Jorge        (CECRED) : Ajuste de esquema de impressao em  funcao imprimirDados()
  * 19/07/2012 - Jorge        (CECRED) : Ajustes para informar nrdconta no cabeçalho.
  * 19/12/2017 - Antonio R. Jr (mouts) : Remover validacao numero da conta.
+ * 08/03/2018 - Antonio R. Jr (mouts) : Ajustado o tamanho do campo nrdocmento para aceitar valores com 10 digitos.
  * --------------
  */
 
@@ -483,24 +484,24 @@ function formataCabecalho() {
 
     rOpcao.css('width', '42px');
     rData.addClass('rotulo-linha').css('width', '50px');
-    rPac.addClass('rotulo-linha').css('width', '60px');;
-    rBcoCxa.addClass('rotulo-linha').css('width', '90px');;
-    rLote.addClass('rotulo-linha').css('width', '50px');;
+    rPac.addClass('rotulo-linha').css('width', '70px');
+    rBcoCxa.addClass('rotulo-linha').css('width', '90px');
+    rLote.addClass('rotulo-linha').css('width', '50px');
     rDocmto.addClass('rotulo-linha').css('width', '128px');
-    rCabCnt.addClass('rotulo-linha').css('width', '55px');;
+    rCabCnt.addClass('rotulo-linha').css('width', '55px');
 
     cOpcao.css('width', '33px');
     cData.addClass('campo data').css('width', '65px');
     cPac.addClass('campo inteiro').css('width', '30px');
     cBcoCxa.addClass('campo inteiro').css('width', '30px');
     cLote.addClass('campo inteiro').css('width', '50px');
-    cDocmto.addClass('campo inteiro').css('width', '70px');
+    cDocmto.addClass('campo inteiro').css('width', '80px');
     cCabCnt.addClass('campo inteiro').css('width', '70px');
 
     cPac.setMask("INTEGER", "zz9", "");
     cLote.setMask("INTEGER", "zzz.zz9", ".");
     cBcoCxa.setMask("INTEGER", "zz9", "");
-    cDocmto.setMask("INTEGER", "zz.zzz.zz9", ".");
+    cDocmto.setMask("INTEGER", "z.zzz.zzz.zz9", ".");
     cCabCnt.setMask("INTEGER", "zzzz.zz9.9", ".");
 
     cOpcao.habilitaCampo().focus();

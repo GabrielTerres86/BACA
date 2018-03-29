@@ -58,7 +58,8 @@
                
                28/11/2017 - Alteracoes melhoria 458 - Antonio R Junior - Mouts
 
-			   20/02/2018 - Alterado valor do tamanho do campo NRDOCMTO de 10 para 11 caracteres - Antonio R. Junior (mouts) - chamado 851313
+			   20/02/2018 - Alterado valor do tamanho do campo NRDOCMTO de 10 para 13 caracteres
+                            adicionado o format para o campo tel_nrdocmto- Antonio R. Junior (mouts) - chamado 851313
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -69,7 +70,7 @@ DEF        VAR tel_dtmvtolt AS DATE    FORMAT "99/99/9999"           NO-UNDO.
 DEF        VAR tel_nrdconta AS INT     FORMAT "zzzz,zzz,9"           NO-UNDO.
 DEF        VAR tel_cdagenci AS INT     FORMAT "zz9"                  NO-UNDO.
 DEF        VAR tel_nrdolote AS INT     FORMAT "zzz,zz9"              NO-UNDO.
-DEF        VAR tel_nrdocmto LIKE crapcme.nrdocmto                    NO-UNDO.
+DEF        VAR tel_nrdocmto LIKE crapcme.nrdocmto FORMAT "z,zzz,zzz,zz9" NO-UNDO.
 DEF        VAR tel_tpdocmto AS INT     FORMAT "z9"                   NO-UNDO.
 DEF        VAR tel_cddopcao AS LOGICAL FORMAT "S/N"                  NO-UNDO.
 DEF        VAR tel_cdcooper AS CHAR    FORMAT "x(12)" VIEW-AS COMBO-BOX   
@@ -187,7 +188,7 @@ FORM tel_cdagenci AT 3 LABEL "PA" AUTO-RETURN
                         VALIDATE(tel_nrdolote > 0,
                                 "058 - Numero do lote errado.")
 
-     tel_nrdocmto AT 59 LABEL "Docmto" 
+     tel_nrdocmto AT 58 LABEL "Docmto"  
                         HELP "Informe o numero do documento do deposito."
                         VALIDATE(tel_nrdocmto <> 0,
                                  "375 - O campo deve ser preenchido.")
@@ -234,7 +235,7 @@ FORM SKIP
      tt-transacoes-especie.nrdolote  AT  4 FORMAT "zzz,zz9"
      tt-transacoes-especie.nrdconta  AT 11 FORMAT "x(10)"
      tt-transacoes-especie.nmprimtl  AT 22 FORMAT "x(26)" 
-     tt-transacoes-especie.nrdocmto  AT 49 FORMAT "x(11)"
+     tt-transacoes-especie.nrdocmto  AT 49 FORMAT "x(13)"
      tt-transacoes-especie.tpoperac  AT 66 FORMAT "x(09)"
      SKIP
      tt-transacoes-especie.vllanmto  AT 21 FORMAT "x(14)"

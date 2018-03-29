@@ -8,7 +8,8 @@
 
    Objetivo  : BO de Comunicacao XML VS BO - Tela TRAESP.
 
-   Alteracoes: 
+   Alteracoes: 08/03/2018 - Alterado tipo do parametro docmto de INT para DECIMAL
+                            Chamado 851313 (Antonio R JR)
 ............................................................................ */
 
 DEF VAR aux_cdcooper AS INTE NO-UNDO.
@@ -19,7 +20,7 @@ DEF VAR aux_nrdconta AS INTE NO-UNDO.
 DEF VAR aux_dttransa AS DATE NO-UNDO.
 DEF VAR aux_cdbccxlt AS INTE NO-UNDO.
 DEF VAR aux_nrdolote AS INTE NO-UNDO.
-DEF VAR aux_nrdocmto AS INTE NO-UNDO.
+DEF VAR aux_nrdocmto AS DECIMAL NO-UNDO.
 DEF VAR aux_nmrescop AS CHAR NO-UNDO.
 DEF VAR aux_cdopecxa AS INTE NO-UNDO.
 DEF VAR aux_tpdocmto AS INTE NO-UNDO.
@@ -66,7 +67,7 @@ PROCEDURE valores_entrada:
             WHEN "nrdocmto"  THEN aux_nrdocmto =  INTE(tt-param.valorCampo).
             WHEN "nmrescop"  THEN aux_nmrescop =  tt-param.valorCampo.
             WHEN "cdopecxa"  THEN aux_cdopecxa =  INTE(tt-param.valorCampo).
-            WHEN "tpdocmto"  THEN aux_tpdocmto =  INTE(tt-param.valorCampo).
+            WHEN "tpdocmto"  THEN aux_tpdocmto =  DECIMAL(tt-param.valorCampo).
             WHEN "nrseqaut"  THEN aux_nrseqaut =  INTE(tt-param.valorCampo).
             WHEN "nrdctabb"  THEN aux_nrdctabb =  INTE(tt-param.valorCampo).
             WHEN "tpoperac"  THEN aux_tpoperac =  INTE(tt-param.valorCampo).

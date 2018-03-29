@@ -26,6 +26,9 @@
                              critica 90 (Carlos)
                 
                 04/12/2017 - Melhoria 458 ajustes de procs - Antonio R. JR (Mouts)
+
+				 08/03/2018 - Alterado tipo do parametro docmto de INT para DECIMAL
+                             Chamado 851313 (Antonio R JR)
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0104tt.i } 
@@ -53,7 +56,7 @@ PROCEDURE busca_dados:
     DEFINE INPUT  PARAMETER par_cdbccxlt AS INTE               NO-UNDO.
     DEFINE INPUT  PARAMETER par_cdopecxa AS CHAR               NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrdolote AS INTE               NO-UNDO.
-    DEFINE INPUT  PARAMETER par_nrdocmto AS INTE               NO-UNDO.
+    DEFINE INPUT  PARAMETER par_nrdocmto AS DECIMAL            NO-UNDO.
     DEFINE INPUT  PARAMETER par_tpdocmto AS INTE               NO-UNDO.
     DEFINE INPUT  PARAMETER par_cddopcao AS CHAR               NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrdconta AS INTE               NO-UNDO.
@@ -724,7 +727,7 @@ PROCEDURE inclui_altera_dados:
     DEFINE INPUT  PARAMETER par_cdopecxa AS CHAR               NO-UNDO.
     DEFINE INPUT  PARAMETER par_cdbccxlt AS INTE               NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrdolote AS INTE               NO-UNDO.
-    DEFINE INPUT  PARAMETER par_nrdocmto AS INTE               NO-UNDO.
+    DEFINE INPUT  PARAMETER par_nrdocmto AS DECIMAL            NO-UNDO.
     DEFINE INPUT  PARAMETER par_tpdocmto AS INTE               NO-UNDO.
     DEFINE INPUT  PARAMETER par_cddopcao AS CHAR               NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgimpri AS LOGI               NO-UNDO.
@@ -1125,7 +1128,7 @@ PROCEDURE imprimir_dados:
     DEFINE VARIABLE aux_nrdcaixa AS INTE                       NO-UNDO.
     DEFINE VARIABLE aux_nrdolote AS INTE                       NO-UNDO.
     DEFINE VARIABLE aux_nrautdoc AS INTE                       NO-UNDO.
-    DEFINE VARIABLE aux_nrdocmto AS INTE                       NO-UNDO.
+    DEFINE VARIABLE aux_nrdocmto AS DECIMAL                    NO-UNDO.
     DEFINE VARIABLE aux_flgdelcm AS LOGI                       NO-UNDO.
     DEFINE VARIABLE aux_data_inf AS INTE                       NO-UNDO.
     DEFINE VARIABLE aux_flgtrans AS LOGI                       NO-UNDO.

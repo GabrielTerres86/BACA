@@ -26,7 +26,7 @@
 				
 				19/02/2018 - Ajustado mascara zz,zzz,zz9 para z,zzz,zzz,zz9 no campo NRDOCMTO 
                              alterado o tipo do parametro par_nrdocmto para DECIMAL da procedure 
-                             consulta-controle-movimentacao- Antonio R. Junior (mouts) - chamado 851313
+                             consulta-controle-movimentacao- Antonio R. Junior (mouts) - chamado 851313 
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
