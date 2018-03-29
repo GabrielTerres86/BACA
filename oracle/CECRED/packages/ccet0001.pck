@@ -1851,7 +1851,6 @@ create or replace package body cecred.CCET0001 is
       vr_vltarbem NUMBER := 0;                -- Valor tarifa bem
       vr_cdhistor NUMBER := 0;                -- Historico
       vr_cdusolcr NUMBER := 0;                -- Uso linha de credito
-      vr_vlfinanc NUMBER := 0;
       vr_cdfvlcop crapfco.cdfvlcop%TYPE;
 
       vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE;
@@ -1859,6 +1858,7 @@ create or replace package body cecred.CCET0001 is
       vr_dscooper VARCHAR2(70);               -- Descrição da cooperativa
       vr_dscatbem VARCHAR2(400);
       vr_dsctrliq VARCHAR2(400) := '';
+      vr_vltotal_emprst   crapepr.vlemprst%TYPE := 0;      
       
       -- Variavel exceção
       vr_exc_erro EXCEPTION;      
@@ -2235,52 +2235,17 @@ create or replace package body cecred.CCET0001 is
           CLOSE cr_crappep_vldivida;          
         END IF;  
             
-        -- Busca quantidade de dias da carencia
-        EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_dados.idcarenc
-                                           ,pr_qtddias    => vr_qtdias_carencia
-                                           ,pr_cdcritic   => vr_cdcritic
-                                           ,pr_dscritic   => vr_dscritic);
-        -- Se retornou erro
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-        
-        IF rw_dados.idfiniof > 0 THEN
-           vr_vlfinanc := (pr_vlemprst + nvl(vr_vlrdoiof,0) + nvl(vr_vlrtarif ,0));
-        ELSE
-          vr_vlfinanc := pr_vlemprst;
-        END IF;
-
-        -- Chama o calculo da parcela
-        EMPR0011.pc_busca_prest_principal_pos(pr_cdcooper        => pr_cdcooper
-                                             ,pr_dtefetiv        => rw_dados.dtmvtolt
-                                             ,pr_dtcalcul        => (CASE WHEN rw_dados.dtmvtolt IS NULL THEN pr_dtmvtolt ELSE rw_dados.dtmvtolt END)
-                                             ,pr_cdlcremp        => pr_cdlcremp
-                                             ,pr_dtcarenc        => rw_dados.dtcarenc
-                                             ,pr_dtdpagto        => pr_dtdpagto
-                                             ,pr_qtpreemp        => pr_qtpreemp
-                                             ,pr_vlemprst        => vr_vlfinanc
-                                             ,pr_qtdias_carencia => vr_qtdias_carencia
-                                             ,pr_vlpreemp        => vr_vlpreemp
-                                             ,pr_vljurcor        => vr_vljurcor
-                                             ,pr_cdcritic        => vr_cdcritic
-                                             ,pr_dscritic        => vr_dscritic);
-        -- Se retornou erro
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-            
       ELSE
       
       -- Valor total da divida
-        vr_vltotdiv := round(nvl(pr_qtpreemp,0) * nvl(vr_vlpreemp,0),2);
+        vr_vltotdiv := round(nvl(pr_qtpreemp,0) * nvl(pr_vlpreemp,0),2);
       END IF;
       -- Porcentagem  do valor total
       vr_txjuremp := 100;
       
       -- Busca juros do cet
       CCET0001.pc_juros_cet(pr_nro_parcelas   => pr_qtpreemp
-                           ,pr_vlr_prestacao  => vr_vlpreemp
+                           ,pr_vlr_prestacao  => pr_vlpreemp
                            ,pr_vlr_financiado => vr_vlemprst
                            ,pr_data_contrato  => pr_dtlibera
                            ,pr_primeiro_vcto  => pr_dtdpagto
@@ -2293,6 +2258,13 @@ create or replace package body cecred.CCET0001 is
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;        
       END IF;       
+      
+      -- valor total emprestado
+      IF rw_dados.idfiniof = 1 THEN
+        vr_vltotal_emprst := nvl(pr_vlemprst,0) + nvl(vr_vlrdoiof,0) + nvl(vr_vlrtarif,0);
+      ELSE
+        vr_vltotal_emprst := nvl(pr_vlemprst,0);
+      END IF;  
       
       -- Inicializar o CLOB
       dbms_lob.createtemporary(vr_des_xml, TRUE, dbms_lob.CALL);
@@ -2307,101 +2279,6 @@ create or replace package body cecred.CCET0001 is
         pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><cet>');
       END IF;
                 
-      OPEN cr_crapepr(pr_cdcooper => pr_cdcooper 
-                     ,pr_nrdconta => pr_nrdconta
-                     ,pr_nrctremp => pr_nrctremp);
-        
-      IF cr_crapepr%FOUND THEN 
-        --Se achou contrato na crapepr, está efetivado, dessa forma, guarda o cálculo e sempre mostra ele no relatório
-	  -- projeto 410 - SM1 -- Se CET já impresso, busca informações já gravadas
-	  OPEN cr_tbepr_calculo_cet;
-	  FETCH cr_tbepr_calculo_cet into rw_tbepr_calculo_cet;
-        IF cr_tbepr_calculo_cet%FOUND THEN
-	     --pr_dtlibera := rw_tbepr_calculo_cet.dtlibera;
-		 vr_dtvencto := rw_tbepr_calculo_cet.dtvencto;
-		 vr_txmensal := rw_tbepr_calculo_cet.txmensal;
-		 vr_txdjuros := rw_tbepr_calculo_cet.txdjuros;
-		 vr_vlemprst := rw_tbepr_calculo_cet.vlliquid;
-		 vr_vlrdoiof := rw_tbepr_calculo_cet.vlrdoiof;
-		 vr_txjuriof := rw_tbepr_calculo_cet.txjuriof;
-		 vr_vlrtarif := rw_tbepr_calculo_cet.vlrtarif;
-		 vr_txjurtar := rw_tbepr_calculo_cet.txjurtar;
-		 vr_vlrdsegu := rw_tbepr_calculo_cet.vlrdsegu;
-		 vr_txjurseg := rw_tbepr_calculo_cet.txjurseg;
-		 --pr_vlemprst := rw_tbepr_calculo_cet.vlemprst;
-		 vr_txjuremp := rw_tbepr_calculo_cet.txjuremp;
-		 vr_txanocet := rw_tbepr_calculo_cet.txanocet;
-		 vr_txmescet := rw_tbepr_calculo_cet.txmescet;
-		 vr_dsdprazo := rw_tbepr_calculo_cet.dsdprazo;
-		 --pr_vlpreemp := rw_tbepr_calculo_cet.vlparemp;
-		 vr_vltotdiv := rw_tbepr_calculo_cet.vltotemp;
-		 --pr_dtdpagto := rw_tbepr_calculo_cet.dtpripag;
-        ELSE
-            BEGIN
-               INSERT INTO tbepr_calculo_cet
-			(cdcooper, 
-				nrdconta, 
-				nrctremp, 
-				nmoperac, 
-				dtlibera, 
-				dtvencto, 
-				txmensal, 
-				txdjuros, 
-				vlliquid, 
-				vlrdoiof, 
-				txjuriof, 
-				vlrtarif, 
-				txjurtar, 
-				vlrdsegu, 
-				txjurseg, 
-				vlemprst, 
-				txjuremp, 
-				txanocet, 
-				txmescet, 
-				txjurlim, 
-				dtmvtolt, 
-				dsdprazo, 
-				vlparemp, 
-				vltotemp, 
-				dtpripag
-                        ) VALUES
-			(pr_cdcooper
-			,pr_nrdconta
-			,pr_nrctremp
-			,vr_nmoperac
-			,pr_dtlibera
-			,vr_dtvencto
-			,vr_txmensal
-			,vr_txdjuros
-			,vr_vlemprst
-			,vr_vlrdoiof
-			,vr_txjuriof
-			,vr_vlrtarif
-			,vr_txjurtar
-			,vr_vlrdsegu
-			,vr_txjurseg
-			,pr_vlemprst
-			,vr_txjuremp
-			,vr_txanocet
-			,vr_txmescet
-			,vr_txjurlim
-			,pr_dtmvtolt
-			,vr_dsdprazo
-			,vr_vlpreemp
-			,vr_vltotdiv
-			,pr_dtdpagto
-			);
-              EXCEPTION
-             WHEN OTHERS THEN
-		    vr_dscritic := 'Erro no INSERT tbepr_calculo_cet';
-		    RAISE vr_exc_erro; 
-             END;
-        END IF;
-	  CLOSE cr_tbepr_calculo_cet;
-        
-      END IF;
-      CLOSE cr_crapepr;	  
-	    
       -- informacoes para impressao
       pc_escreve_xml('<cdcooper>' || pr_cdcooper || '</cdcooper>' ||
                      '<nrdconta>' || gene0002.fn_mask_conta(pr_nrdconta) || '</nrdconta>' ||
@@ -2418,14 +2295,14 @@ create or replace package body cecred.CCET0001 is
                      '<txjurtar>' || to_char(nvl(vr_txjurtar,0),'990D00') || '</txjurtar>' ||
                      '<vlrdsegu>' || to_char(nvl(vr_vlrdsegu,0),'999G999G990D00') || '</vlrdsegu>' ||
                      '<txjurseg>' || to_char(nvl(vr_txjurseg,0),'990D00') || '</txjurseg>' ||
-                     '<vlemprst>' || to_char(nvl(pr_vlemprst,0),'999G999G990D00') || '</vlemprst>' ||
+                     '<vlemprst>' || to_char(nvl(vr_vltotal_emprst,0),'999G999G990D00') || '</vlemprst>' ||
                      '<txjuremp>' || to_char(nvl(vr_txjuremp,0),'990D00') || '</txjuremp>' ||
                      '<txanocet>' || to_char(nvl(vr_txanocet,0),'fm990D00') || '</txanocet>' ||
                      '<txmescet>' || to_char(nvl(vr_txmescet,0),'fm990D00') || '</txmescet>' ||
                      '<txjurlim>' || to_char(nvl(vr_txjurlim,0),'990D00') || '</txjurlim>' ||
                      '<dtmvtolt>' || to_char(pr_dtmvtolt,'dd/mm/rrrr') || '</dtmvtolt>'||
                      '<dsdprazo>' || to_char(trim(vr_dsdprazo)) || '</dsdprazo>' ||
-                     '<vlparemp>' || to_char(nvl(vr_vlpreemp,0),'fm999G990D00') || '</vlparemp>' ||
+                     '<vlparemp>' || to_char(nvl(pr_vlpreemp,0),'fm999G990D00') || '</vlparemp>' ||
                      '<vltotemp>' || to_char(nvl(vr_vltotdiv,0),'fm999G999G990D00') || '</vltotemp>' ||
                      '<dtpripag>' || to_char(pr_dtdpagto,'dd/mm/rrrr') || '</dtpripag>' ||
                      '<dscooper>' || vr_dscooper || '</dscooper>');
