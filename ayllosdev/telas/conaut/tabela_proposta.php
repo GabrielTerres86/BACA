@@ -7,6 +7,7 @@
  *
  * --------------
  * ALTERAÇÕES   : 13/10/2015 - Projeto Reformulacao Cadastral (Tiago Castro - RKAM). 
+ 				  29/03/2018 - Ajustes para inclusão de novo produto. (Alex Sandro - GFT)
  * --------------
  */
  ?>
@@ -55,6 +56,7 @@
 							case 4: { $dsprodut = "Des. de Cheque"; break; }
 							case 5: { $dsprodut = "Des. de T&iacute;tulos"; break; }
 							case 6: { $dsprodut = "Cadastro Conta"; break; }
+							case 7: { $dsprodut = "Border&ocirc; de T&iacute;tulos"; break; } 
 						}
 						
 						$inpessoa =  getByTagName($proposta->tags,'inpessoa');
