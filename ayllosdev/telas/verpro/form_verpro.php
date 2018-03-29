@@ -453,7 +453,7 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
                             <?php } ?>
                             
                             <label for="vltotfat"><? echo utf8ToHtml('Valor Total:') ?></label>
-                            <input name="vltotfat" id="vltotfat" type="text" value="<? echo formataMoeda($vltotfat); ?>" />
+                            <input name="vltotfat" id="vltotfat" type="text" value="<? echo $vltotfat; ?>" />
                             
                             <label for="dsidepag"><? echo utf8ToHtml('Descrição do Pagto.:') ?></label>
                             <input name="dsidepag" id="dsidepag" type="text" value="<? echo $dsidepag; ?>" />
@@ -482,7 +482,7 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
                             <input name="nrdocmto_dae" id="nrdocmto_dae" type="text" value="<? echo $nrdocmto_dae; ?>" />
                             
                             <label for="vltotfat"><? echo utf8ToHtml('Valor Total:') ?></label>
-                            <input name="vltotfat" id="vltotfat" type="text" value="<? echo formataMoeda($vltotfat); ?>" />
+                            <input name="vltotfat" id="vltotfat" type="text" value="<? echo $vltotfat; ?>" />
                             
                             <label for="dsidepag"><? echo utf8ToHtml('Descrição do Pagto.:') ?></label>
                             <input name="dsidepag" id="dsidepag" type="text" value="<? echo $dsidepag; ?>" />

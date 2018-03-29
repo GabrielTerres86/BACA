@@ -203,6 +203,13 @@ function LiberaCampos(tipo) {
             // Ocultar block
             $('#divInsert').css({'display':'none'});   
             cCdempcon.focus();
+            
+            if (cTparrecd.val() == 2 && cCddopcao.val() == 'I' ){
+                
+                cCdempcon.val(cCdempcon_I.val());
+                cCdsegmto.val(cCdsegmto_I.val());
+                cNmrescon.val(cNmrescon_I.val());
+            }
            
         }
         
@@ -725,6 +732,14 @@ function confirmaOpe() {
         if (cCdsegmto.val() == ""){
             showError("error","Segmento deve ser informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdsegmto.focus();");        
             return false;
+        }
+        
+        // Se for Bancoob
+        if (cTparrecd.val() == 2){
+            if (cNrlayout.val() == ""){
+                showError("error","Layout Febraban deve ser informado.","Alerta - Ayllos","blockBackground(); unblockBackground(); cNrlayout.focus();");        
+                return false;
+            }
         }
         
     }

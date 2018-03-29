@@ -61,7 +61,7 @@
 						<input type="hidden" id="nrdolote" name="nrdolote" value="<? echo getByTagName($result->tags,'nrdolote') ?>" />	
 						<input type="hidden" id="cdagenci" name="cdagenci" value="<? echo getByTagName($result->tags,'cdagenci') ?>" />	
 						<input type="hidden" id="cdbccxlt" name="cdbccxlt" value="<? echo getByTagName($result->tags,'cdbandst') ?>" />
-						<input type="hidden" id="dtdpagto" name="dtdpagto" value="<? echo $dtdpagto?>" />	
+						<input type="hidden" id="dtdpagto" name="dtdpagto" value="<? echo getByTagName($result->tags,'dtdpagto') ?>" />	
 						<input type="hidden" id="cdhiscxa" name="cdhiscxa" value="<? echo $cdhiscxa ?>" />
 						
 						<input type="hidden" id="dtapurac" name="dtapurac" value="<? echo getByTagName($result->tags,'dtapurac') ?>" />

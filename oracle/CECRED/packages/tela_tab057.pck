@@ -1148,6 +1148,17 @@ create or replace package body cecred.tela_tab057 is
     --  Alteracoes: 
     -- .............................................................................
     --
+    
+    -- Busca dos dados da cooperativa central
+    CURSOR cr_crapcop_central (pr_cdcooper INTEGER) IS
+      SELECT cop.cdcooper
+            ,cop.nmrescop
+            ,cop.cdagebcb 
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;     
+    rw_crapcop_central cr_crapcop_central%ROWTYPE;   
+
+
     -- Lista as arrecadações
     CURSOR cr_gncontr(pr_cdcooper gncontr.cdcooper%TYPE -- Código da Cooperativa
                      ,pr_cdempres gncontr.cdconven%TYPE -- Código da Empresa
@@ -1156,6 +1167,7 @@ create or replace package body cecred.tela_tab057 is
                      ) IS
       SELECT cop.nmrescop
             ,cop.cdagectl
+            ,cop.cdagebcb
             ,ctr.cdconven
             ,ctr.dtmvtolt
             ,ctr.qtdoctos
@@ -1215,6 +1227,7 @@ create or replace package body cecred.tela_tab057 is
     vr_tab_reg    gene0002.typ_split;
     vr_tab_campos gene0002.typ_split;
     vr_nrseqret   VARCHAR2(100);
+    vr_flgexist   BOOLEAN;
     vr_des_reto   VARCHAR2(100);
     vr_tab_erro   gene0001.typ_tab_erro;
     
@@ -1261,6 +1274,16 @@ create or replace package body cecred.tela_tab057 is
       RAISE vr_exc_saida;
     END IF;
     
+    -- Busca dos dados da cooperativa central
+    OPEN cr_crapcop_central (pr_cdcooper => 3);
+    FETCH cr_crapcop_central INTO rw_crapcop_central;
+    IF cr_crapcop_central%NOTFOUND THEN
+      CLOSE cr_crapcop_central;
+      vr_dscritic := 'Cooperativa central nao encontrada.';
+      RAISE vr_exc_saida;
+    ELSE
+      CLOSE cr_crapcop_central;
+    END IF;
     
     -- Busca a data do sistema
     OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
@@ -1286,17 +1309,18 @@ create or replace package body cecred.tela_tab057 is
     
     --> Montar nome do arquivo de retorno
     /*
-    9999 – código da agência de arrecadação + “-” - Fixo + “RT” – Fixo 
+    9999 – código da agência  cdagebcb + “-” - Fixo + “RT” – Fixo 
         +  9999999999 – código do convênio 
         + AAAAMMDD – Data da geração do arquivo + NSA – número sequencial único do arquivo com 3 dígitos  + “.RET” 
     
     */
     
-    vr_nmarqret := to_char(rw_gncontr.cdagectl,'fm0000') ||
+    vr_nmarqret := to_char(rw_gncontr.cdagebcb,'fm0000')       ||
                    '-RT' ||
                    to_char(rw_gncontr.cdconven,'fm0000000000') ||  
                    to_char(rw_gncontr.dtmvtolt,'RRRRMMDD') ||
                    substr(LPAD(rw_gncontr.nrsequen,10,0),-3)   ||
+                   '.'||rw_crapcop_central.nmrescop            ||
                    '.RET';
     
     -- Inicializar o CLOB
@@ -1307,12 +1331,12 @@ create or replace package body cecred.tela_tab057 is
     -- Inicilizar as informações do XML
     vr_texto_completo := NULL;
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
-    
+    vr_flgexist := FALSE;
     --> Buscar registro de inconsistencia
     FOR rw_tbincons IN cr_tbincons ( pr_cdcooper => pr_cdcoptel,
                                      pr_dtmvtolt => rw_gncontr.dtmvtolt,
                                      pr_nmarqret => vr_nmarqret) LOOP
-                                    
+      vr_flgexist := TRUE;                              
       vr_nrseqret := NULL;
       vr_tab_reg := gene0002.fn_quebra_string(rw_tbincons.dsregistro_referencia,'<br>');
       
@@ -1338,6 +1362,11 @@ create or replace package body cecred.tela_tab057 is
                       </arquivos>');                                 
                                      
     END LOOP;
+    
+    IF vr_flgexist = FALSE THEN
+      vr_dscritic := 'Ocorrências para o arquivo '||vr_nmarqret|| ' não econtrada, consulta na tela CONINC.';
+      RAISE vr_exc_saida;    
+    END IF;
     
     -- Finalizar o agrupador do relatório
     pc_escreve_xml('</raiz>',TRUE);      

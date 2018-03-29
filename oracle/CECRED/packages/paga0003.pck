@@ -1221,7 +1221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       
       vr_dsinfor3 := vr_dsinfor3 || '#Valor Total: '       || TO_CHAR(pr_vlrtotal,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.');
       vr_dsinfor3 := vr_dsinfor3 || '#Descrição do Pagamento: ' || pr_dsidepag;
-      vr_dsinfor3 := vr_dsinfor3 || '#Data do Pagamento: ' || pr_dtmvtolt;
+      vr_dsinfor3 := vr_dsinfor3 || '#Data do Pagamento: ' || TO_CHAR(pr_dtmvtolt,'DD/MM/YYYY');
       vr_dsinfor3 := vr_dsinfor3 || '#Horario do Pagamento: ' || to_char(to_date(pr_hrautent,'SSSSS'),'HH24:MI:SS');
       vr_dsinfor3 := vr_dsinfor3 || '#Canal de Recebimento: ' || pr_idorigem;
     
@@ -1249,7 +1249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
             
       vr_dsinfor3 := vr_dsinfor3 || '#Valor Total: '       || TO_CHAR(pr_vlrtotal,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.');
       vr_dsinfor3 := vr_dsinfor3 || '#Descrição do Pagamento: ' || pr_dsidepag;
-      vr_dsinfor3 := vr_dsinfor3 || '#Data do Pagamento: ' || pr_dtmvtolt;
+      vr_dsinfor3 := vr_dsinfor3 || '#Data do Pagamento: ' || to_char(pr_dtmvtolt,'DD/MM/YYYY');
       vr_dsinfor3 := vr_dsinfor3 || '#Horario do Pagamento: ' || to_char(to_date(pr_hrautent,'SSSSS'),'HH24:MI:SS');
       vr_dsinfor3 := vr_dsinfor3 || '#Canal de Recebimento: ' || pr_idorigem;
     
@@ -7593,6 +7593,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ,pr_dscritic OUT VARCHAR2
                                ) IS
         --
+        vr_dsautdoc   VARCHAR2(50);
+        
       BEGIN
         -- Código do registro
         pr_detalhe := 'G';
@@ -7614,12 +7616,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         pr_detalhe := pr_detalhe || RPAD(pr_cdagebcb, 8, ' ');
         -- Forma de arrecadação
         pr_detalhe := pr_detalhe || '2';
+        
         -- Número de autenticação caixa ou código de transação
-        pr_detalhe := pr_detalhe || RPAD(pr_nrautdoc, 23, ' ');
-        -- Forma de Pagamento
-        pr_detalhe := pr_detalhe || '1';
-        -- Reservado para o futuro
-        pr_detalhe := pr_detalhe || RPAD(' ', 9, ' ');
+        vr_dsautdoc := to_char(pr_cdagebcb,'fm0000') ||
+                       --> quando liberar pagamento BANCOOB no TAA e CX.Online, deverá gravar PA do terminal e número do terminal
+                       '00'     || --> Fixo "00"
+                       '0000'   || --> Terminal fixo "0000"
+                        to_char(pr_nrautdoc,'fm000000');
+                        
+        pr_detalhe := pr_detalhe || lpad(vr_dsautdoc,16,'0');
+        -- Valor Desconto
+        pr_detalhe := pr_detalhe ||RPAD('0', 8, '0');
+        -- Valor Multa/Juros
+        pr_detalhe := pr_detalhe || RPAD('0', 9, '0');
         --
       EXCEPTION
         WHEN OTHERS THEN

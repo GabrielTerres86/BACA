@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 01/08/2016
+   Data    : Marco/2001                      Ultima atualizacao: 28/03/2018
 
    Dados referentes ao programa:
 
@@ -64,7 +64,11 @@
                              valor do pagamento for superior ao limite cadastrado 
                              na CADCOP / CADPAC
                             (Diogo - MoutS)
-                           
+                           					
+              28/03/2018 - Ajuste para permitir arrecadar 
+                           convenio Bancoob (tparrecd = 2).
+                           PRJ406 - FGTS(Odirlei-AMcom)
+
    ......................................................................... */
 
 /*--------------------------------------------------------------------------*/
@@ -426,7 +430,9 @@ PROCEDURE retorna-valores-fatura.
          crapcon.cdempcon = INTE(SUBSTR(p-codigo-barras,16,4)) AND
          crapcon.cdsegmto = INTE(SUBSTR(p-codigo-barras,2,1))  NO-ERROR.
          
-    IF  AVAIL crapcon THEN
+    IF  AVAIL crapcon AND 
+         /* E nao for arrecadacao bancoob */
+        crapcon.tparrecd <> 2 THEN
         DO:
             ASSIGN i-cod-erro  = 0           
                    c-desc-erro = "Empresa Conveniada - Utilize opcao 14".

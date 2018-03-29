@@ -356,6 +356,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
            AND his.cdhistor = pr_cdhistor;
       rw_craphis cr_craphis%ROWTYPE;
       
+      -- Validar convenio Cecred
+      CURSOR cr_gnconve ( pr_cdcooper gnconve.cdcooper%TYPE,
+                          pr_cdhistor gnconve.cdhiscxa%TYPE) IS
+        SELECT con.cdconven 
+          FROM gnconve con
+         WHERE con.cdcooper = pr_cdcooper
+           AND con.cdhiscxa = pr_cdhistor;
+      rw_gnconve cr_gnconve%ROWTYPE;
+      
       ----------->>> VARIAVEIS <<<--------
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -462,6 +471,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
         RAISE vr_exc_erro;
       END IF;
       CLOSE cr_craphis;
+      
+      --> Validar se permite arrecadacao Cecred
+      IF pr_cddopcao IN ('I','A') AND 
+         pr_tparrecd = 3 THEN
+         
+        -- Validar convenio Cecred
+        OPEN cr_gnconve ( pr_cdcooper => vr_cdcooper,
+                          pr_cdhistor => pr_cdhistor);
+        FETCH cr_gnconve INTO rw_gnconve;
+        IF cr_gnconve%NOTFOUND THEN
+          CLOSE cr_gnconve;
+          vr_dscritic := 'Operação não permitida. Histórico para débito de convênio CECRED não parametrizado na tela GT0001.';
+          RAISE vr_exc_erro;
+          
+        ELSE
+          CLOSE cr_gnconve;
+        END IF;
+      
+      END IF;
+      
                        
       IF pr_cddopcao = 'A' THEN
         IF vr_fcrapcon = FALSE THEN

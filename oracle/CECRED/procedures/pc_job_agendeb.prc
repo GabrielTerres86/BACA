@@ -446,7 +446,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
             END IF;
               
           --> Senao encontrou o job deve criar  
-          ELSE
+          ELSIF rw_craphec.flgativo = 1 THEN
             CLOSE cr_job;    
             -- Faz a chamada ao programa paralelo atraves de JOB
             gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper     --> Código da cooperativa
@@ -462,6 +462,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
               RAISE vr_exc_email;              
             END IF;
                     
+          ELSE
+            CLOSE cr_job;
           END IF; 
       END LOOP;  
     ELSE

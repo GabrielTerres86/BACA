@@ -8671,7 +8671,7 @@ BEGIN
                        trim(vr_dtmvtolt_yymmdd)||','||
                        trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
                        trim(to_char(rw_craphis2.nrctatrd,'fm0000'))||','||
-                       trim(to_char(rw_craphis2.nrctacrd))||','||
+                       trim(to_char(rw_craphis2.nrctatrc))||','||
                        trim(to_char(vr_vltardes, '99999999999990.00'))||','||
                        trim(to_char(rw_craphis2.cdhstctb))||','||
                        '"('||trim(to_char(rw_craphis2.cdhistor,'0000'))||

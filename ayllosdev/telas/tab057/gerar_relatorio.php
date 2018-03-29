@@ -49,7 +49,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 
 // Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 $nmarqpdf = $xmlObj->roottag->tags[0]->tags[0]->cdata;
-echo "Odirlei: " + $nmarqpdf;
+
 // Chama função para mostrar PDF do impresso gerado no browser
 visualizaPDF($nmarqpdf);
 

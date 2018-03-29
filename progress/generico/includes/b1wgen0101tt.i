@@ -76,7 +76,8 @@ DEF TEMP-TABLE tt-dados-pesqti NO-UNDO
     FIELD dslindig AS CHAR
     FIELD dsnomfon LIKE craplft.dsnomfon
     FIELD nmresage LIKE crapage.nmresage
-    FIELD nmarrecd AS CHAR. /* Agente Arrecadador*/
+    FIELD nmarrecd AS CHAR  /* Agente Arrecadador*/
+    FIELD dtdpagto AS DATE.
 
 
 DEF TEMP-TABLE tt-historicos NO-UNDO

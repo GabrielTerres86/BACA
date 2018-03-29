@@ -636,12 +636,28 @@ PROCEDURE estorna_protocolo:
          IF   NOT AVAILABLE crappro   THEN
               RETURN "NOK".
               
-         ASSIGN par_dsprotoc     = crappro.dsprotoc
-                                                    
-                crappro.dsprotoc = crappro.dsprotoc                  + " " +
-                                   "*** ESTORNADO ("                 +
-                                   STRING(par_dtmvtolt,"99/99/9999") + " - " +
-                                   STRING(TIME,"HH:MM:SS")           + ")".
+                         
+         ASSIGN par_dsprotoc     = crappro.dsprotoc.
+             
+         IF par_cdtippro = 23 OR    /* DAE */
+            par_cdtippro = 24 THEN  /* FGTS */
+           DO:
+             /* Padrao diferente pois para FGTS e DAE utiliza modelo MD5
+                Gerando protocolo maior, e fazendo que estoure o campo 
+                ao concatenar texto. PRJ406 - FGTS*/
+             ASSIGN crappro.dsprotoc = crappro.dsprotoc                  + " " +
+                                     "**ESTORNADO("                 +
+                                     STRING(par_dtmvtolt,"99/99/99") + "-" +
+                                     STRING(TIME,"HH:MM:SS")         + ")".
+           END. 
+         ELSE
+         DO:
+           ASSIGN crappro.dsprotoc = crappro.dsprotoc                  + " " +
+                                     "*** ESTORNADO ("                 +
+                                     STRING(par_dtmvtolt,"99/99/9999") + " - " +
+                                     STRING(TIME,"HH:MM:SS")           + ")".
+         END.                                    
+
 
       END.
 

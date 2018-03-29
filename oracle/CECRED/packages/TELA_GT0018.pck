@@ -718,7 +718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
                   ,tpdias_repasse    = pr_dsdianor       
                   ,nrdias_float      = nvl(pr_nrrenorm,0)
                   ,nrdias_tolerancia = nvl(pr_nrtolera,0)
-                  ,dtencemp          = to_date(pr_dtcancel,'DD/MM/RRRR')
+                  ,dtencemp          = to_date(TRIM(pr_dtcancel),'DD/MM/RRRR')
                   ,nrlayout          = pr_nrlayout
                   ,vltarifa_caixa    = nvl(to_number(pr_vltarcxa, 'FM9999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ,0)
                   ,vltarifa_debaut   = nvl(to_number(pr_vltardeb, 'FM9999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ,0)
@@ -806,10 +806,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
           END IF;
           
           --> data de cancelamento
-          IF nvl(to_date(pr_dtcancel,'DD/MM/RRRR'),SYSDATE+999) <> nvl(rw_arrecad.dtencemp,SYSDATE+999) THEN
+          IF nvl(to_date(trim(pr_dtcancel),'DD/MM/RRRR'),SYSDATE+999) <> nvl(rw_arrecad.dtencemp,SYSDATE+999) THEN
             pr_gera_log_gt0018 (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' --> Data de cancelamento de ' ||to_date(rw_arrecad.dtencemp,'DD/MM/RRR') ||
+                                                 ' --> Data de cancelamento de ' ||to_date(rw_arrecad.dtencemp,'DD/MM/RRRR') ||
                                                  ' para '|| pr_dtcancel);
           END IF;
           

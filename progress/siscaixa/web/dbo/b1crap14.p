@@ -615,6 +615,13 @@ PROCEDURE retorna-valores-fatura.
         DO:
             ASSIGN i-cod-erro  = 0.
                    c-desc-erro = 'Convenio nao disponivel para esse meio de arrecadacao.'.
+                   
+            RUN cria-erro (INPUT p-cooper,
+                                    INPUT p-cod-agencia,
+                                    INPUT aux_nrdcaixa,
+                                    INPUT i-cod-erro,
+                                    INPUT c-desc-erro,
+                                    INPUT YES).       
             RETURN "NOK".
         END.
 

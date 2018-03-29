@@ -360,7 +360,9 @@ PROCEDURE consulta_faturas:
                        tt-dados-pesqti.vlpercen = craplft.vlpercen
                        tt-dados-pesqti.vlrtotal = (craplft.vllanmto + craplft.vlrmulta + craplft.vlrjuros)
                        tt-dados-pesqti.tpcptdoc = craplft.tpcptdoc
-                       tt-dados-pesqti.dsnomfon = craplft.dsnomfon.
+                       tt-dados-pesqti.dsnomfon = craplft.dsnomfon
+                       tt-dados-pesqti.dtdpagto = craplft.dtmvtolt
+                       .
 
                 IF  tt-dados-pesqti.tpcptdoc = 1 THEN
                     DO:
@@ -405,16 +407,14 @@ PROCEDURE consulta_faturas:
                                    crapcon.cdsegmto = craplft.cdsegmto
                                    NO-LOCK NO-ERROR.
                 
-                IF crapcon.tparrecd = 2 THEN
-                DO:
-                  ASSIGN tt-dados-pesqti.nmempres = crapcon.nmextcon.
-                END.  
-                ELSE IF crapcon.tparrecd = 3 THEN /* Convenios CECRED */ 
-                DO:
-                    FIND FIRST gnconve WHERE gnconve.cdhiscxa = craplft.cdhistor NO-LOCK NO-ERROR.
-                    ASSIGN tt-dados-pesqti.nmempres = gnconve.nmempres.
-                END.
-                ELSE /* Convenios SICREDI */
+                /* Agente arrecadador */
+                IF craplft.cdhistor = 2515 THEN /* Bancoob*/
+                  DO:
+                    ASSIGN tt-dados-pesqti.nmempres = crapcon.nmextcon.
+                  END.  
+                
+                /* Convenios SICREDI */
+                ELSE IF craplft.cdhistor = 1154 THEN 
                 DO: 
                     
                     IF craplft.tpfatura <> 2 OR 
@@ -446,6 +446,11 @@ PROCEDURE consulta_faturas:
                 
                     ASSIGN tt-dados-pesqti.nmempres = crapscn.dsnomcnv.
                 END.
+                ELSE /* Convenios CECRED */ 
+                  DO:
+                      FIND FIRST gnconve WHERE gnconve.cdhiscxa = craplft.cdhistor NO-LOCK NO-ERROR.
+                      ASSIGN tt-dados-pesqti.nmempres = gnconve.nmempres.
+                  END.
 
                 FIND crapban WHERE crapban.cdbccxlt = craplft.cdbccxlt 
                                    NO-LOCK NO-ERROR.
@@ -796,7 +801,7 @@ PROCEDURE grava-dados-fatura:
                                     craptab.tptabela = 'GENERI'      AND
                                     craptab.cdempres = 0             AND
                                     craptab.cdacesso = 'HRPGBANCOOB' AND
-                                    craptab.tpregist = par_cdagenci
+                                    craptab.tpregist = craplft.cdagenci
                                     NO-LOCK NO-ERROR.
           
            IF TIME < INT(ENTRY(1, craptab.dstextab, " ")) OR /* hora inicial */
@@ -806,12 +811,6 @@ PROCEDURE grava-dados-fatura:
 
            IF (aux_dscritic <> "") THEN
              DO:
-               RUN gera_erro (INPUT par_cdcooper,
-                              INPUT par_cdagenci,
-                              INPUT par_nrdcaixa,
-                              INPUT 1,            /** Sequencia **/
-                              INPUT 0,
-                              INPUT-OUTPUT aux_dscritic).
                
                UNDO TRANS_FAT, LEAVE TRANS_FAT.
              END.

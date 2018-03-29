@@ -4295,6 +4295,7 @@ PROCEDURE estorna_convenio:
     DEF VAR aux_nrdrecid                  AS RECID                   NO-UNDO.
     DEF VAR aux_cdagenci                  AS INT                     NO-UNDO.
     DEF VAR aux_nrdcaixa                  AS INT                     NO-UNDO.
+    DEF VAR aux_tpfatura                  AS INT                     NO-UNDO.
 
     DEF VAR h_b1crap00                    AS HANDLE                  NO-UNDO.
     DEF VAR h_b1crap15                    AS HANDLE                  NO-UNDO.
@@ -4342,6 +4343,11 @@ PROCEDURE estorna_convenio:
              RETURN "NOK".
          END.
          
+    
+    FIND FIRST crapdat 
+         WHERE crapdat.cdcooper = crapcop.cdcooper
+            NO-LOCK NO-ERROR.
+    
     DO  TRANSACTION ON ERROR UNDO, RETURN "NOK":
     
         RUN dbo/b1crap15.p PERSISTENT SET h_b1crap15.
@@ -4381,6 +4387,21 @@ PROCEDURE estorna_convenio:
                          UNDO, RETURN "NOK".
                      END.
 
+                 ASSIGN aux_tpfatura = 0.
+                 /* Buscar fatura que será estornada */   
+                 FIND FIRST craplft
+                       WHERE craplft.cdcooper = par_cdcooper
+                         AND craplft.nrdconta = par_nrdconta
+                         AND craplft.dtmvtolt = crapdat.dtmvtocd
+                         AND craplft.cdagenci = aux_cdagenci                         
+                         AND craplft.cdbccxlt = 11          
+                         AND craplft.nrdolote = 15900 /* Lote - 15000 + nrdcaixa --- 900 --- FATURAS ---*/
+                         AND craplft.cdseqfat = par_cdseqfat.                 
+                 IF  AVAILABLE craplft THEN
+                 DO:
+                   ASSIGN aux_tpfatura = craplft.tpfatura.
+                 END.
+                 
                  RUN estorna-faturas IN h_b1crap15(INPUT  crapcop.nmrescop,
                                                    INPUT  "996",
                                                    INPUT  aux_cdagenci,
@@ -4432,6 +4453,7 @@ PROCEDURE estorna_convenio:
                           UNDO, RETURN "NOK".
                       END.
              END.
+
 
         /* Busca a autenticacao do estorno da fatura */
         FIND crabaut WHERE RECID(crabaut) = aux_nrdrecid NO-LOCK NO-ERROR.
@@ -4508,7 +4530,10 @@ PROCEDURE estorna_convenio:
                                           INPUT  crabaut.dtmvtolt,
                                           INPUT  par_nrdconta,
                                                  /** Tipo - Pagamento TAA **/
-                                          INPUT  IF  par_idorigem = 4  THEN 6 
+                                          INPUT  IF aux_tpfatura = 3      THEN 24 /* FGTS */
+                                                 ELSE IF aux_tpfatura = 4 THEN 23 /* DAE */
+                                                 ELSE IF par_idorigem = 4 THEN 6 
+                                                 
                                                  ELSE 2, /** Tipo - Pagamento INTERNET **/
                                           INPUT  crabaut.nrdocmto,
                                           INPUT  par_cdoperad,

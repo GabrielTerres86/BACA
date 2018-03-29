@@ -7323,7 +7323,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       IF rw_crapcop.flgofatr = 1 THEN
       
         --> Convenio Cecred
-			  IF  rw_crapcon.tparrecd = 0 THEN					
+			  IF  rw_crapcon.tparrecd = 3 THEN					
           OPEN cr_gnconve(pr_cdhistor => rw_crapcon.cdhistor);
           FETCH cr_gnconve INTO rw_gnconve;
 					vr_flgachou := cr_gnconve%FOUND;					

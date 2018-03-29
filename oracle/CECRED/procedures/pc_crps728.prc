@@ -196,7 +196,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
     FOR rw_crapcop IN cr_crapcop LOOP
         
       BEGIN
-      
+        -->>>>> Caso alterado nome do arquivo de retorno, necessario alterar package tela_tab057 <<<<--
         vr_nmarquiv := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||to_char(vr_dtproces,'RRRRMMDD')||'%'||rw_crapcop_central.nmrescop||'%';
         
         --> Buscar arquivos 
@@ -223,12 +223,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
           --> ler arquivos localizados             
           FOR idx IN vr_tab_arquiv.first..vr_tab_arquiv.last LOOP
             BEGIN
-          
+              /*
               vr_cdconven := SUBSTR(vr_tab_arquiv(idx),8,10);
               vr_nrsequen := SUBSTR(vr_tab_arquiv(idx),26,INSTR(vr_tab_arquiv(idx),'.')-26);
+              */
               vr_dtarquiv := to_date(SUBSTR(vr_tab_arquiv(idx),18,8),'RRRRMMDD');
-              
-             /* -- Buscar controle
+              /*
+              -- Buscar controle
               OPEN cr_gncontr( pr_cdcooper => rw_crapcop.cdcooper
                               ,pr_cdconven => vr_cdconven
                               ,pr_dtmvtolt => vr_dtarquiv
@@ -280,6 +281,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                   IF vr_tab_linhas(i)('$LAYOUT$').texto = 'H' THEN 
                   
                     BEGIN
+                     
+                      rw_gncontr:= NULL;
+                      vr_cdconven := vr_tab_linhas(i)('CDCONVENIO').texto;                                    
+                    
                       IF vr_tab_linhas(i)('DTPROCES').data <> vr_dtarquiv THEN
                         vr_dscritic := 'Data de processamento do arquivo não confere';                       
                         RAISE vr_exc_prox;
@@ -445,7 +450,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                 pc_move_arq(pr_nmarquiv => vr_tab_arquiv(idx),
                             pr_dsdirori => vr_dsdircon||'/recebe',
                             pr_dsdirdes => vr_dsdircon||'/recebidos');
-              
+                --> Garantir  alterações realizadas no processo
+                COMMIT;
               
             END;
           END LOOP; -- Fim Arq
