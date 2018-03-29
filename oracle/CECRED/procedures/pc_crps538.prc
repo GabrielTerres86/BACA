@@ -5694,6 +5694,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                                ,pr_cdcritic    => vr_cdcritic         --Codigo Critica
                                                ,pr_dscritic    => vr_dscritic         --Descricao Critica
                                                ,pr_tab_erro    => vr_tab_erro2);      --Tabela erros
+
+               IF TRIM(vr_dscritic) IS NOT NULL THEN
+                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                   ,pr_ind_tipo_log => 2 -- Erro tratato
+                                   ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || vr_cdprogra || ' --> Erro DSCRITIC na DSTC0001: '||vr_dscritic
+                                                       || 'Conta:'||vr_tab_descontar(vr_index_desc).nrdconta);
+               END IF;
+
                --Se ocorreu erro
                IF vr_tab_erro2.Count > 0 THEN
                  FOR idx IN vr_tab_erro2.FIRST..vr_tab_erro2.LAST LOOP
@@ -5706,7 +5716,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                      ,pr_ind_tipo_log => 2 -- Erro tratato
                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                         || vr_cdprogra || ' --> Erro retorno na DSTC0001: '||vr_tab_erro2(idx).dscritic);
+                                                         || vr_cdprogra || ' --> Erro retorno na DSCT0001: '||vr_tab_erro2(idx).dscritic
+                                                         || 'Conta:'||vr_tab_descontar(vr_index_desc).nrdconta);
 
                  END LOOP;
                END IF;
