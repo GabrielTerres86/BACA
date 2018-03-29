@@ -84,6 +84,7 @@ PROCEDURE pc_exclui_debitador_prioridades(pr_nrprioridade IN TBGEN_DEBITADOR_PAR
                                         , pr_des_erro OUT VARCHAR2);
  
 PROCEDURE pc_altera_debitador_prioridades(pr_nrprioridade IN TBGEN_DEBITADOR_PARAM.nrprioridade%TYPE -->Identificador unico da prioridade do processamento
+                                        , pr_cdprocesso   IN TBGEN_DEBITADOR_PARAM.cdprocesso%TYPE -->Identificador unico do código do processo
                                         , pr_xmllog   IN VARCHAR2                           --> XML com informações de LOG
                                         , pr_cdcritic OUT PLS_INTEGER                       --> Código da crítica
                                         , pr_dscritic OUT VARCHAR2                          --> Descrição da crítica
@@ -1341,6 +1342,7 @@ END pc_exclui_debitador_prioridades;
 
  
 PROCEDURE pc_altera_debitador_prioridades(pr_nrprioridade IN TBGEN_DEBITADOR_PARAM.nrprioridade%TYPE -->Identificador unico da prioridade do processamento
+                                        , pr_cdprocesso   IN TBGEN_DEBITADOR_PARAM.cdprocesso%TYPE -->Identificador unico do código do processo
                                         , pr_xmllog   IN VARCHAR2                           --> XML com informações de LOG
                                         , pr_cdcritic OUT PLS_INTEGER                       --> Código da crítica
                                         , pr_dscritic OUT VARCHAR2                          --> Descrição da crítica
@@ -1387,17 +1389,18 @@ DECLARE
     vr_idorigem VARCHAR2(100);
     
     vr_dhprocessamento_ant VARCHAR2(10);  --> Valor anterior do campo para o histórico
+    vr_nrprioridade_ant NUMBER(3);  --> Valor anterior do campo para o histórico
     
     -- Dados das prioridades (processos)
     CURSOR cr_dados_prioridades IS
-    SELECT p.cdprocesso 
-         , p.dsprocesso        
-         , p.indeb_sem_saldo   
-         , p.indeb_parcial     
-         , p.qtdias_repescagem 
+    SELECT --p.cdprocesso 
+         --, p.dsprocesso        
+         --, p.indeb_sem_saldo   
+         --, p.indeb_parcial     
+         --, p.qtdias_repescagem 
            p.nrprioridade
     FROM CECRED.TBGEN_DEBITADOR_PARAM p
-    where p.nrprioridade = pr_nrprioridade;  
+    where p.cdprocesso = pr_cdprocesso;  
     rw_dados_prioridades cr_dados_prioridades%ROWTYPE;  
      
    BEGIN
@@ -1423,14 +1426,14 @@ DECLARE
       -- Criar cabeçalho do XML de retorno
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'Root',
+                             pr_tag_pai  => 'Prioridades',
                              pr_posicao  => 0,
                              pr_tag_nova => 'Prioridades',
                              pr_tag_cont => NULL,
                              pr_des_erro => vr_dscritic);
                               
       OPEN cr_dados_prioridades;
-      FETCH cr_dados_prioridades INTO vr_dhprocessamento_ant;
+      FETCH cr_dados_prioridades INTO vr_nrprioridade_ant;
       
       IF cr_dados_prioridades%NOTFOUND THEN
         CLOSE cr_dados_prioridades;
@@ -1443,12 +1446,12 @@ DECLARE
       -- Altera o horário na tabela
       UPDATE TBGEN_DEBITADOR_HORARIO_PROC 
          SET nrprioridade = pr_nrprioridade
-       WHERE pr_nrprioridade = vr_dhprocessamento_ant;
+       WHERE cdprocesso = pr_cdprocesso;
         
         pc_grava_historico(pr_cdoperador => vr_cdoperad
-                         , pr_dscampo_alterado => 'dhprocessamento'
-                         , pr_dsvalor_anterior => vr_dhprocessamento_ant
-                         , pr_dsvalor_novo => pr_dhprocessamento
+                         , pr_dscampo_alterado => 'nrprioridade'
+                         , pr_dsvalor_anterior => vr_nrprioridade_ant
+                         , pr_dsvalor_novo => pr_nrprioridade
                          , pr_cdprocesso => NULL
                          , pr_tpoperacao => 2
                          , pr_tporigem => 2
@@ -1854,7 +1857,8 @@ DECLARE
     SELECT h.cdprocesso
          , h.idhora_processamento
     FROM CECRED.TBGEN_DEBITADOR_HORARIO_PROC h
-    ORDER BY h.idhora_processamento;  
+    where h.cdprocesso = pr_cdprocesso
+     and  h.idhora_processamento = pr_idhora_processamento
     rw_dados_horarios_proc cr_dados_horarios_proc%ROWTYPE;	
 		
 		 
@@ -1881,7 +1885,7 @@ DECLARE
 			-- Criar cabeçalho do XML de retorno
 			pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-															pr_tag_pai  => 'Root',
+															pr_tag_pai  => 'Horarios Proc',
 															pr_posicao  => 0,
 															pr_tag_nova => 'Horarios Proc',
 															pr_tag_cont => NULL,
