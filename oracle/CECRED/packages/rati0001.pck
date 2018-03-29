@@ -7164,6 +7164,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     rw_craplcr4 cr_craplcr%ROWTYPE;
     rw_craplim5 cr_craplim%ROWTYPE;
     rw_crapfin  cr_crapfin%ROWTYPE;
+    rw_crawlim5 cr_craplim%ROWTYPE;
     
   BEGIN
 
@@ -7239,8 +7240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     CLOSE cr_crapcot;
 
     /* Nao efetuar validacoes quando for calcular soh a nota cooperado */
-    IF pr_tpctrrat <> 0 AND
-       pr_nrctrrat <> 0 THEN
+    IF pr_tpctrrat <> 0 AND pr_nrctrrat <> 0 THEN
       /* Para emprestimos */
       IF pr_tpctrrat = 90 THEN
         --ler informações do emprestimo
@@ -7298,7 +7298,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
           END IF;
 
           CLOSE cr_craplcr;
-          
           -- Ler Cadastro de Finalidades
           OPEN cr_crapfin(pr_cdcooper => pr_cdcooper,
                           pr_cdfinemp => rw_crawepr7.cdfinemp);
@@ -7312,16 +7311,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     END IF;
         CLOSE cr_crawepr;
-
-      ELSE /* Demais operacoes */
+      ELSIF pr_tpctrrat = 3 THEN  
+        -- Propostas e contratos
+        -- Ler Proposta de Limite de credito
+        OPEN cr_crawlim(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_tpctrato => pr_tpctrrat
+                       ,pr_nrctrato => pr_nrctrrat);
+        FETCH cr_crawlim INTO rw_crawlim5;
+        -- se não localizou na tabela de proposta passa a procurar na tabela de contratos
+        IF cr_crawlim%NOTFOUND THEN
         -- Ler Contratos de Limite de credito
         OPEN cr_craplim(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_tpctrato => pr_tpctrrat
                        ,pr_nrctrato => pr_nrctrrat);
         FETCH cr_craplim INTO rw_craplim5;
-
-        -- se não localizou
+            -- se não localizou o contrato gera a critica para contrato
         IF cr_craplim%NOTFOUND THEN
       vr_dscritic := null;
           vr_cdcritic := 484; /* Contrato nao encontrado. */
@@ -7338,9 +7344,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         END IF;
 
         CLOSE cr_craplim;
-
+          END IF;
+         END IF;
+         CLOSE cr_craplim;
       END IF; -- Fim pr_tpctrrat = 90
-    END IF;
+
 
     /* Nao validaremos os itens a seguir em caso de cessao de credito */
     IF vr_flgcescr THEN
