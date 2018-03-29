@@ -5,6 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_GAROPC IS
                           ,pr_nrdconta     IN crapadt.nrdconta%TYPE --> Numero da conta
                           ,pr_tpctrato     IN crapadt.tpctrato%TYPE --> Tipo do contrato
                           ,pr_codlinha     IN INTEGER --> Codigo da linha
+													,pr_cdfinemp     IN INTEGER --> Código da finalidade
                           ,pr_vlropera     IN NUMBER --> Valor da operacao
                           ,pr_dsctrliq     IN VARCHAR2 --> Lista de contratos a liquidar separados por ";"
                           ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
@@ -76,6 +77,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
                           ,pr_nrdconta     IN crapadt.nrdconta%TYPE --> Numero da conta
                           ,pr_tpctrato     IN crapadt.tpctrato%TYPE --> Tipo do contrato
                           ,pr_codlinha     IN INTEGER --> Codigo da linha
+													,pr_cdfinemp     IN INTEGER --> Código da finalidade
                           ,pr_vlropera     IN NUMBER --> Valor da operacao
                           ,pr_dsctrliq     IN VARCHAR2 --> Lista de contratos a liquidar separados por ";"
                           ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
@@ -111,7 +113,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
           FROM craplcr
          WHERE craplcr.cdcooper = pr_cdcooper
            AND craplcr.cdlcremp = pr_cdlcremp;
-
+			
+			-- Verificar se finalidade é de CDC
+			CURSOR cr_crapfin(pr_cdcooper IN craplcr.cdcooper%TYPE
+											 ,pr_cdfinemp IN crapfin.cdfinemp%TYPE) IS
+			  SELECT 1
+				  FROM crapfin fin
+				 WHERE fin.cdcooper = pr_cdcooper
+				   AND fin.cdfinemp = pr_cdfinemp
+					 AND (upper(fin.dsfinemp) LIKE '%CDC%' OR upper(fin.dsfinemp) LIKE '%C DC%');
+			rw_crapfin cr_crapfin%ROWTYPE;
+			
       -- Seleciona dados da Linha de Credito Rotativo
       CURSOR cr_craplrt(pr_cdcooper IN craplrt.cdcooper%TYPE
                        ,pr_cddlinha IN craplrt.cddlinha%TYPE) IS
@@ -177,6 +189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
            AND crapope.cdoperad = pr_cdoperad;
       rw_crapope cr_crapope%ROWTYPE;
 
+
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
@@ -216,6 +229,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
       vr_dtdesbloq               DATE;
       vr_cdoperador_desbloq      VARCHAR2(10);
       vr_vldesbloq               NUMBER;
+			vr_flgfincdc               NUMBER := 0;
 
     BEGIN
       -- Incluir nome do modulo logado
@@ -295,7 +309,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
           vr_dscritic := 'Problema na checagem da Linha de Crédito, favor preencher uma linha correta!';
           RAISE vr_exc_erro;
         END IF;
+				
+				-- Verificar se finalidade é de CDC
+				OPEN cr_crapfin(pr_cdcooper => vr_cdcooper
+                       ,pr_cdfinemp => pr_cdfinemp);
+        FETCH cr_crapfin INTO rw_crapfin;
 
+        -- Se encontrou
+        IF cr_crapfin%FOUND THEN
+					-- Encontrou finalidade de CDC
+					vr_flgfincdc := 1;
+				END IF;
+				CLOSE cr_crapfin;
       -- Se for Cheque Especial
       ELSIF pr_tpctrato = 1 THEN
         -- Seleciona dados da Linha de Credito Rotativo
@@ -385,7 +410,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
         vr_cdoperador_desbloq   := rw_cobertura.cdoperador_desbloq;
         vr_dtdesbloq            := rw_cobertura.dtdesbloq;
         vr_vldesbloq            := NVL(rw_cobertura.vldesbloq,0);
-        vr_permingr             := rw_cobertura.perminimo;
+				IF pr_tipaber = 'C' OR rw_linha.tpctrato <> 4 THEN
+           vr_permingr := rw_cobertura.perminimo;
+				END IF;
         
         -- Se for Consulta
         IF pr_tipaber = 'C' THEN
@@ -602,6 +629,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
                             ,pr_tag_nova => 'nmctater'
                             ,pr_tag_cont => (CASE WHEN vr_nrconta_terceiro > 0 THEN vr_nmprimtl_terceiro ELSE '' END)
                             ,pr_des_erro => vr_dscritic);
+														
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'flgfincdc'
+                            ,pr_tag_cont => nvl(vr_flgfincdc,0)
+                            ,pr_des_erro => vr_dscritic);														
+
     EXCEPTION
       WHEN vr_exc_erro THEN
         IF vr_cdcritic <> 0 THEN
@@ -802,16 +837,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
               ,tco.nrconta_terceiro    
               ,tco.inaplicacao_terceiro
               ,tco.inpoupanca_terceiro 
+							,tco.nrcontrato
           FROM tbgar_cobertura_operacao tco
          WHERE tco.idcobertura = pr_idcobert;
       rw_cobertura cr_cobertura%ROWTYPE;
-
+						
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
 
       -- Tratamento de erros
       vr_exc_erro EXCEPTION;
+			vr_exc_null EXCEPTION;
 
       -- Variaveis de log
       vr_cdcooper INTEGER;
@@ -826,6 +863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
       vr_blnachou BOOLEAN;
       vr_blupdate BOOLEAN := FALSE;
       vr_idcobert tbgar_cobertura_operacao.idcobertura%TYPE;
+			vr_nrdconta_aux crapass.nrdconta%TYPE;
 
     BEGIN
       -- Incluir nome do modulo logado
@@ -867,6 +905,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
          NVL(pr_inaplter,0) = 1 OR
          NVL(pr_inpouter,0) = 1) THEN
          vr_dscritic := 'Não será permitido utilizar Aplicação ou Poupança Programada com valor de cobertura de garantia igual a 0!';
+         RAISE vr_exc_erro;
+      END IF;
+
+      -- Se o percentual for maior que zero e não foi selecionado aplicacao ou poupanca programada
+      IF pr_permingr > 0 AND 
+        (NVL(pr_inaplpro,0) = 0 AND
+         NVL(pr_inpoupro,0) = 0 AND
+         NVL(pr_inaplter,0) = 0 AND
+         NVL(pr_inpouter,0) = 0) THEN
+         vr_dscritic := 'Não é permitido informar um percentual mínimo de cobertura sem vincular uma aplicação/poupança!';
          RAISE vr_exc_erro;
       END IF;
 
@@ -923,6 +971,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
             END IF;
           END IF;
         END IF;
+      END IF;
+
+      -- Se o percentual for igual a zero e não foi selecionado aplicacao ou poupanca programada
+      IF pr_permingr = 0 AND 
+				 vr_blupdate = FALSE AND
+        (NVL(pr_inaplpro,0) = 0 AND
+         NVL(pr_inpoupro,0) = 0 AND
+         NVL(pr_inaplter,0) = 0 AND
+         NVL(pr_inpouter,0) = 0) THEN
+				-- Não criaremos nem atualizaremos o registro de cobertura, apenas retornamos o valor zerado
+				-- Criar cabecalho do XML
+				pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+															,pr_tag_pai  => 'Root'
+															,pr_posicao  => 0
+															,pr_tag_nova => 'Dados'
+															,pr_tag_cont => NULL
+															,pr_des_erro => vr_dscritic);
+
+				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+															,pr_tag_pai  => 'Dados'
+															,pr_posicao  => 0
+															,pr_tag_nova => 'idcobert'
+															,pr_tag_cont => 0
+															,pr_des_erro => vr_dscritic);				 
+         RAISE vr_exc_null;
       END IF;
 
       -- Grava os dados
@@ -996,6 +1071,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
                             ,pr_tag_cont => vr_idcobert
                             ,pr_des_erro => vr_dscritic);
     EXCEPTION
+			WHEN vr_exc_null THEN
+        NULL;
       WHEN vr_exc_erro THEN
         IF vr_cdcritic <> 0 THEN
           vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);

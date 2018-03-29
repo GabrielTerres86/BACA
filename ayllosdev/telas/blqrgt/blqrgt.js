@@ -333,18 +333,18 @@ function formataBloqueiosCobertura() {
 
   var arrayLargura = new Array();
   arrayLargura[0] = '80px';
-  arrayLargura[1] = '80px';
+  arrayLargura[1] = '70px';
   arrayLargura[2] = '70px';
-  arrayLargura[3] = '130px';
-  arrayLargura[4] = '100px';
+  arrayLargura[3] = '115px';
+  arrayLargura[4] = '105px';
  
   var arrayAlinha = new Array();
   arrayAlinha[0] = 'center';
   arrayAlinha[1] = 'right';
   arrayAlinha[2] = 'center';
-  arrayAlinha[3] = 'right';
+  arrayAlinha[3] = 'center';
   arrayAlinha[4] = 'right';
-  arrayAlinha[5] = 'center';
+  arrayAlinha[5] = 'right';
   
   tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
   

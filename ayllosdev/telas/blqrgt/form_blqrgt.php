@@ -58,6 +58,7 @@
 				<th>Tipo</th>
 				<th>Conta</th>
 				<th>Contrato</th>
+				<th>Cobertura</th>
 				<th>Saldo Dev/Limite</th>
 				<th>Bloqueado</th>
 			<? if ($cddopcao == 'L') { ?>
@@ -74,6 +75,7 @@
 				</td>
 				<td align="center"><? echo getByTagName($registro->tags,'nrdconta') ?></td>
 				<td align="center"><? echo getByTagName($registro->tags,'nrcontrato') ?></td>
+				<td align="center"><? echo getByTagName($registro->tags,'dstipapl') ?></td>
 				<td align="center"><? echo getByTagName($registro->tags,'vlopera') ?></td>
 				<td align="center"><? echo getByTagName($registro->tags,'valbloque') ?></td>
 				<? if ($cddopcao == 'L') { ?>

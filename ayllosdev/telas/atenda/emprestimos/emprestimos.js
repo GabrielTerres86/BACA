@@ -9334,6 +9334,7 @@ function abrirTelaGAROPC(operacao) {
             idcobert     : idcobert,
             dsctrliq     : dsctrliq,
             codlinha     : arrayProposta['cdlcremp'],
+            cdfinemp     : arrayProposta['cdfinemp'],
             vlropera     : arrayProposta['vlemprst'],
             divanterior  : 'divRotina',
             ret_nomcampo : 'idcobope',

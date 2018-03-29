@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
+CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
@@ -32,7 +32,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
 									
 END ESTE0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 AS
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
@@ -3911,7 +3911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             ,lcr.cdlcremp
             ,lcr.dslcremp
             ,wpr.tpemprst
-            ,decode(wpr.tpemprst,1,'PP','TR') tpproduto
+            ,decode(wpr.tpemprst,1,'PP',2,'POS','TR') tpproduto
             ,lcr.tpctrato
             -- Indica que am linha de credito eh CDC ou C DC
             ,DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
@@ -3928,6 +3928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
              ,ass.inpessoa
              ,DECODE(wpr.flgpagto,0,'CONTA','FOLHA') despagto
              ,lcr.txminima
+             ,wpr.idcobope
              ,wpr.dtdpagto
              ,wpr.dtlibera
              ,wpr.dtcarenc
@@ -4142,6 +4143,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 				 AND prp.tpctrato = 90;
 		rw_crapprp cr_crapprp%ROWTYPE;
    
+    --> Busca o percentual da cobertura de garantia    
+    CURSOR cr_tabgar_cobertura(pr_idcob tbgar_cobertura_operacao.idcobertura%TYPE) IS
+		  SELECT cob.perminimo 
+        FROM tbgar_cobertura_operacao cob 
+       WHERE cob.idcobertura = pr_idcob;       
+		rw_tabgar_cobertura cr_tabgar_cobertura%ROWTYPE;
+   
     CURSOR cr_crapepr (pr_cdcooper IN crapepr.cdcooper%TYPE
                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
                       ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
@@ -4194,10 +4202,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_vliofpri      NUMBER;
     vr_vliofadi      NUMBER;
     vr_flgimune      PLS_INTEGER;
+    vr_vlcobert      NUMBER;
     vr_tab_split     gene0002.typ_split;
     vr_dsliquid      VARCHAR2(1000);
     vr_sum_vlpreemp  crapepr.vlpreemp%TYPE := 0;
     vr_vlpreemp      crapepr.vlpreemp%TYPE;
+    vr_percenminimo  tbgar_cobertura_operacao.perminimo%TYPE;
       
   BEGIN
   
@@ -4372,17 +4382,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
     IF rw_crawepr.idcobope > 0 THEN
       -- Busca valor de cobertura da operação
-      vr_vlcobert := BLOQ0001.fn_valor_bloqueio_garantia(pr_idcobert => rw_crawepr.idcobope);
+      vr_vlcobert := BLOQ0001.fn_valor_bloqueio_garantia_in(pr_idcobert => rw_crawepr.idcobope);
+                               
       -- Se houver valor em cobertura
       IF vr_vlcobert > 0 THEN
+         -- Busca o percentual minimo de cobertura
+         OPEN cr_tabgar_cobertura(rw_crawepr.idcobope);
+			   FETCH cr_tabgar_cobertura INTO vr_percenminimo;
+			   CLOSE cr_tabgar_cobertura;
+         
+        -- idenpendente da linha e se o percentual minimo de cobertura é maior que 100%        
+        IF vr_percenminimo > 100 THEN
         -- Indicar que encontrou
         vr_flgbens := TRUE;
         -- Enviar valor bloqueado de Cobertura
         vr_obj_generic2 := json();
-        vr_obj_generic2.put('categoriaBem', 'APLICACAO FINANCEIRA');
+           vr_obj_generic2.put('categoriaBem', 'APLICACAO FINANCEIRA'); --GARANTIA APLICACAO FINANCEIRA ACIMA 100%
         vr_obj_generic2.put('valorGarantia', ESTE0001.fn_decimal_ibra(vr_vlcobert));
         -- Adicionar Bem na lista
         vr_lst_generic2.append(vr_obj_generic2.to_json_value());
+        ELSE
+          -- se nao for linha especifica           
+          -- se percentual mininmo for igual a 100% considera GARANTIA APLICACAO FINANCEIRA ATE 100
+          IF (rw_crawepr.tpctrato <> 4 AND vr_percenminimo = 100) OR (rw_crawepr.tpctrato = 4 AND vr_percenminimo <= 100) THEN            
+            -- Indicar que encontrou
+            vr_flgbens := TRUE;
+            -- Enviar valor bloqueado de Cobertura
+            vr_obj_generic2 := json();
+            vr_obj_generic2.put('categoriaBem', 'APLICACAO FINANCEIRA'); --GARANTIA APLICACAO FINANCEIRA ATE 100%
+            vr_obj_generic2.put('valorGarantia', ESTE0001.fn_decimal_ibra(vr_vlcobert));
+            -- Adicionar Bem na lista
+            vr_lst_generic2.append(vr_obj_generic2.to_json_value());
+          END IF;          
+          -- se percentual for menor que 100%, segue regra padrão do sistema
+        END IF;
       END IF;
     END IF;
     

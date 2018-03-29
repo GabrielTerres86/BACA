@@ -2244,7 +2244,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass     cr_crapass%ROWTYPE;
     rw_crapass_gar cr_crapass%ROWTYPE;
-    
+		
+    --> Buscar qualificações do cooperado
+    CURSOR cr_crapass_quali (pr_cdcooper crapass.cdcooper%TYPE,
+                             pr_nrdconta crapass.nrdconta%TYPE )IS
+      SELECT ass.nrcpfcgc,
+             ass.nmprimtl,
+             ass.cdagenci,
+             ass.inpessoa,
+             ass.nrdconta,
+             ass.nrdocptl,
+             ass.idorgexp,
+             ass.tpdocptl,
+             ass.cdufdptl,
+             ass.cdnacion,
+             enc.dsendere,
+             enc.nrendere,
+             enc.nmbairro,
+             enc.nmcidade,
+             enc.cdufende,
+             enc.nrcepend
+        FROM crapass ass
+            ,crapenc enc
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta
+         AND enc.cdcooper = ass.cdcooper
+         AND enc.nrdconta = ass.nrdconta
+         AND enc.idseqttl = 1
+         AND enc.tpendass = DECODE(ass.inpessoa,1,10,9); -- 9 - comercial / 10 - residencial
+    rw_crapass_quali cr_crapass_quali%ROWTYPE;
+		
+    --> Busca a Nacionalidade
+    CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
+      SELECT crapnac.dsnacion
+        FROM crapnac
+       WHERE crapnac.cdnacion = pr_cdnacion;
+    rw_crapnac cr_crapnac%ROWTYPE;
+
+    --> Cursor para buscar estado civil da pessoa fisica, jurida nao tem
+    CURSOR cr_gnetcvl(pr_cdcooper crapttl.cdcooper%TYPE
+                     ,pr_nrdconta crapttl.nrdconta%TYPE) IS
+      SELECT gnetcvl.rsestcvl,
+             crapttl.dsproftl
+       FROM  crapttl,
+             gnetcvl
+       WHERE crapttl.cdcooper = pr_cdcooper
+         AND crapttl.nrdconta = pr_nrdconta
+         AND crapttl.idseqttl = 1 -- Primeiro Titular
+         AND gnetcvl.cdestcvl = crapttl.cdestcvl;
+    rw_gnetcvl cr_gnetcvl%ROWTYPE;
+		    
     --> buscar operador
     CURSOR cr_crapope IS
       SELECT ope.cdoperad
@@ -2351,6 +2400,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     vr_tab_clausulas   typ_tab_clausula;
     vr_tab_aval        DSCT0002.typ_tab_dados_avais;
     
+		vr_nrdconta_quali crapass.nrdconta%TYPE;
+		vr_dsqualifica    VARCHAR2(1000);
+		
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
     vr_txtcompl  VARCHAR2(32600);
@@ -2613,6 +2665,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
 
     ELSIF pr_cdaditiv = 9 THEN
 
+      --> Atribuir conta de qualificação
+			vr_nrdconta_quali := pr_nrdconta;
+
       --> Dados da cobertura
       OPEN cr_cobertura(pr_idcobert => vr_idcobert);
       FETCH cr_cobertura INTO rw_cobertura;
@@ -2624,7 +2679,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                         pr_nrdconta => rw_cobertura.nrconta_terceiro);
         FETCH cr_crapass INTO rw_crapass_gar;
         CLOSE cr_crapass;
+	      --> Atribuir conta de qualificação
+			  vr_nrdconta_quali := rw_cobertura.nrconta_terceiro;
       END IF;
+			
+			-- Buscar qualificação do cooperado
+			OPEN cr_crapass_quali(pr_cdcooper => pr_cdcooper
+			                     ,pr_nrdconta => vr_nrdconta_quali);
+			FETCH cr_crapass_quali INTO rw_crapass_quali;
+			CLOSE cr_crapass_quali;
+			
+			-- Verifica se o documento eh um CPF ou CNPJ
+			IF rw_crapass_quali.inpessoa = 1 THEN
+				-- Busca estado civil e profissao
+				OPEN  cr_gnetcvl(pr_cdcooper => pr_cdcooper,
+												 pr_nrdconta => vr_nrdconta_quali); 
+				FETCH cr_gnetcvl INTO rw_gnetcvl;
+				CLOSE cr_gnetcvl;
+
+				-- Busca a Nacionalidade
+				OPEN  cr_crapnac(pr_cdnacion => rw_crapass_quali.cdnacion);
+				FETCH cr_crapnac INTO rw_crapnac;
+				CLOSE cr_crapnac;
+
+				vr_dsqualifica := trim(gene0002.fn_mask_conta(rw_crapass_quali.nrdconta)) || ', de titularidade de ' || rw_crapass_quali.nmprimtl
+				                 || (CASE WHEN TRIM(rw_crapnac.dsnacion) IS NOT NULL THEN ', nacionalidade ' || LOWER(rw_crapnac.dsnacion) ELSE '' END)
+												 || (CASE WHEN TRIM(rw_gnetcvl.dsproftl) IS NOT NULL THEN ', ' || LOWER(rw_gnetcvl.dsproftl) ELSE '' END)
+												 || (CASE WHEN TRIM(rw_gnetcvl.rsestcvl) IS NOT NULL THEN ', ' || LOWER(rw_gnetcvl.rsestcvl) ELSE '' END)
+												 || ', inscrito(a) no CPF sob nº ' || gene0002.fn_mask_cpf_cnpj(rw_crapass_quali.nrcpfcgc,rw_crapass_quali.inpessoa)
+												 || ', portador(a) do RG n° ' || rw_crapass_quali.nrdocptl 
+												 || ', residente e domiciliado(a) na ' || rw_crapass_quali.dsendere 
+												 || ', n° '|| rw_crapass_quali.nrendere || ', bairro ' || rw_crapass_quali.nmbairro
+												 || ', da cidade de ' || rw_crapass_quali.nmcidade || '/' || rw_crapass_quali.cdufende
+												 || ', CEP '|| gene0002.fn_mask(rw_crapass_quali.nrcepend,'99.999-999');
+			ELSE
+				vr_dsqualifica := trim(gene0002.fn_mask_conta(rw_crapass_quali.nrdconta)) || ', de titularidade de ' || rw_crapass_quali.nmprimtl
+				                 || ', inscrita no CNPJ sob n° '|| gene0002.fn_mask_cpf_cnpj(rw_crapass_quali.nrcpfcgc,rw_crapass_quali.inpessoa)
+												 || ' com sede na ' || rw_crapass_quali.dsendere || ', n° ' || rw_crapass_quali.nrendere
+												 || ', bairro ' || rw_crapass_quali.nmbairro || ', da cidade de ' || rw_crapass_quali.nmcidade || '/' || rw_crapass_quali.cdufende
+												 || ', CEP ' || gene0002.fn_mask(rw_crapass_quali.nrcepend,'99.999-999');
+			END IF;
+			
 
       vr_modrelat := pr_tpctrato || vr_modrelat;
 
@@ -2643,7 +2738,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                      '<perminimo>'  || TO_CHAR(rw_cobertura.perminimo,'FM999G999G999G990D00')  || '</perminimo>' ||
                      '<nminterv>'   || rw_crapass_gar.nmprimtl    ||'</nminterv>'  ||
                      '<cpfinterv>'  || GENE0002.fn_mask_cpf_cnpj(rw_crapass_gar.nrcpfcgc,rw_crapass_gar.inpessoa) || '</cpfinterv>' ||
-                     '<qtdiatraso>' || rw_cobertura.qtdias_atraso_permitido || '</qtdiatraso>');
+                     '<qtdiatraso>' || rw_cobertura.qtdias_atraso_permitido || '</qtdiatraso>' ||
+										 '<dsqualific>' || vr_dsqualifica || '</dsqualific>');
 
       CASE pr_tpctrato
         --> LIM CRED
@@ -2851,7 +2947,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     ELSE
       vr_dsjasper := 'crrl724_aditiv_declaracao.jasper';
     END IF;
-    
+gene0002.pc_clob_para_arquivo(pr_clob => vr_des_xml, pr_caminho => '/usr/cooph5/sistemah5/equipe/reinert/xml', pr_arquivo => 'crrl724.xml',  pr_des_erro => vr_dscritic);
     --> Solicita geracao do PDF
     gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
                                , pr_cdprogra  => pr_cdprogra

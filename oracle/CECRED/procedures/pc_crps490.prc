@@ -545,9 +545,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
         vr_xmlb := vr_xmlb || '<nrramfon>' || vr_nrramfon || '</nrramfon>';
         gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);
         --> Incluir tags valor de bloqueio
-        vr_xmlb := vr_xmlb || '<vlblqjud>' || vr_vlblqjud || '</vlblqjud>';
+        vr_xmlb := vr_xmlb || '<vlblqjud>' || nvl(vr_vlblqjud,0) || '</vlblqjud>';
         gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);
-        vr_xmlb := vr_xmlb || '<vlblqapl>' || vr_vlblqapl || '</vlblqapl>';
+        vr_xmlb := vr_xmlb || '<vlblqapl>' || nvl(vr_vlblqapl,0) || '</vlblqapl>';
         gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);        
         --> Fechar tag regs
         vr_xmlb := vr_xmlb || '</reg>';

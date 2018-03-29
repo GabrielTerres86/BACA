@@ -87,7 +87,8 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                   nrcpfcjg VARCHAR2(100),
                   dsdoccjg VARCHAR2(100),
                   cpfavali VARCHAR2(100),
-                  dsendava VARCHAR2(1000)
+                  dsendava VARCHAR2(1000),
+									nrdconta crapass.nrdconta%TYPE
        );
   TYPE typ_tab_avais_ctr IS TABLE OF typ_rec_avais_ctr
        INDEX BY PLS_INTEGER;
@@ -249,6 +250,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   --             03/10/2017 - Imprimir conta quando o avalista for cooperado
   --                          Junior (Mouts) - Chamado 767055
   --
+  --             14/11/2017 - Incluido retorno do operador na proc pc_ultimas_alteracoes 
+  --                          para a nova coluna ultimas alterações do limite de credito
+  --                          Chamado 791852 (Mateus Z - Mouts)
+  --  
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_tela_cadlim_consultar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa
                                     ,pr_flgdepop IN INTEGER               --> Flag para verificar o departamento do operador
@@ -1068,6 +1073,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   PROCEDURE pc_carrega_dados_avais (pr_cdcooper          IN crapcop.cdcooper%TYPE, --> Cooperativa do avalista
                                     pr_nrdconta          IN crapass.nrdconta%TYPE, --> Numero da conta do avalista
                                     pr_nrctrlim          IN craplim.nrctrlim%TYPE, --> Numero do contrato de limite
+																		pr_nrvrsctr          IN INTEGER,               --> Versão do relatório
                                     pr_tab_avais_ctr IN OUT typ_tab_avais_ctr,     --> Retorna dados dos avalistas
                                     pr_cdcritic         OUT PLS_INTEGER,           --> Código da crítica
                                     pr_dscritic         OUT VARCHAR2) IS           --> Descrição da crít
@@ -1200,6 +1206,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_idxavais       PLS_INTEGER;
     vr_tab_avais_ctr  typ_tab_avais_ctr;
     
+		vr_stsnrcal       BOOLEAN;
+		vr_inpessoa       INTEGER;
+    
      
   BEGIN
     
@@ -1220,14 +1229,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       FETCH cr_crapass INTO rw_crapass;
       IF cr_crapass%FOUND THEN 
         CLOSE cr_crapass;
+				vr_tab_avais_ctr(vr_idxavais).nrdconta := rw_craplin_ava.nrdconta;
         vr_tab_avais_ctr(vr_idxavais).nmdavali := rw_crapass.nmprimtl;
         vr_tab_avais_ctr(vr_idxavais).dsdocava := rw_crapass.tpdocptl ||': '|| rw_crapass.nrdocptl;
         
         IF rw_crapass.inpessoa = 1 THEN
         
+				  IF pr_nrvrsctr = 1 THEN
           vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc, 
                                                                                         pr_inpessoa => rw_crapass.inpessoa )
 																						||' '||gene0002.fn_mask_conta(rw_crapass.nrdconta);
+          ELSE
+						vr_tab_avais_ctr(vr_idxavais).cpfavali := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc, 
+																																								pr_inpessoa => rw_crapass.inpessoa );	
+					END IF;
           
           --> Buscar conjuge do cooperado
           OPEN cr_crapcje ( pr_cdcooper => pr_cdcooper,
@@ -1244,10 +1259,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
               IF cr_crapttl%FOUND THEN
                 CLOSE cr_crapttl;
                 vr_tab_avais_ctr(vr_idxavais).nmconjug := rw_crapttl.nmextttl;
+				        IF pr_nrvrsctr = 1 THEN
                 vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapttl.nrcpfcgc, 
                                                                                               pr_inpessoa => 1 );                       
+								ELSE
+                   vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapttl.nrcpfcgc, 
+                                                                                       pr_inpessoa => 1 );                       									
+								END IF;
                 vr_tab_avais_ctr(vr_idxavais).dsdoccjg := rw_crapttl.tpdocttl ||': '|| rw_crapttl.nrdocttl;
-                
                 
               ELSE
                 CLOSE cr_crapttl;              
@@ -1255,26 +1274,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
             
             ELSE
               vr_tab_avais_ctr(vr_idxavais).nmconjug := rw_crapcje.nmconjug;
+			        IF pr_nrvrsctr = 1 THEN							
               vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapcje.nrcpfcjg, 
                                                                                             pr_inpessoa => 1 );                       
+							ELSE
+								vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapcje.nrcpfcjg, 
+																																										pr_inpessoa => 1 );                       
+              END IF;								
               vr_tab_avais_ctr(vr_idxavais).dsdoccjg := rw_crapcje.tpdoccje ||': '|| rw_crapcje.nrdoccje;          
             END IF;
             
           ELSE
             CLOSE cr_crapcje;
+            IF pr_nrvrsctr = 1 THEN
             vr_tab_avais_ctr(vr_idxavais).nmconjug := lpad('_',40,'_');
             vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: ' || lpad('_',35,'_');
             vr_tab_avais_ctr(vr_idxavais).dsdoccjg := 'CI: '  || lpad('_',36,'_');
-            
+            END IF;
           END IF;
           
         ELSE
+				  IF pr_nrvrsctr = 1 THEN					
           vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CNPJ: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc, 
                                                                                          pr_inpessoa => rw_crapass.inpessoa )||' '||gene0002.fn_mask_conta(rw_crapass.nrdconta);
-                  
           vr_tab_avais_ctr(vr_idxavais).nmconjug := lpad('_',40,'_');
           vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: ' || lpad('_',35,'_');
           vr_tab_avais_ctr(vr_idxavais).dsdoccjg := 'CI: '  || lpad('_',36,'_');
+          ELSE
+						vr_tab_avais_ctr(vr_idxavais).cpfavali := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc, 
+																																							  pr_inpessoa => rw_crapass.inpessoa );						
+					END IF;
           
         END IF; --> Fim IF rw_crapass.inpessoa = 1
         
@@ -1295,6 +1324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         
       ELSE
         CLOSE cr_crapass;
+			  IF pr_nrvrsctr = 1 THEN					
         vr_tab_avais_ctr(vr_idxavais).nmdavali := '*** NAO CADASTRADO ***';
         vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CPF: '|| lpad('_',35,'_');
         vr_tab_avais_ctr(vr_idxavais).dsdocava := 'CI: ' || lpad('_',36,'_');
@@ -1302,7 +1332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: '|| lpad('_',35,'_');
         vr_tab_avais_ctr(vr_idxavais).dsdoccjg := 'CI: ' || lpad('_',36,'_');
         vr_tab_avais_ctr(vr_idxavais).dsendava := lpad('_',40,'_');
-        
+        END IF;        
         
       END IF; 
     END LOOP;
@@ -1314,8 +1344,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
       vr_idxavais := vr_tab_avais_ctr.count() + 1; 
 	  vr_tab_avais_ctr(vr_idxavais).nmdavali := rw_crapavt.nmdavali;
+			
+		  IF pr_nrvrsctr = 1 THEN								
       vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcgc, 
                                                                                     pr_inpessoa => 1 )||' '||gene0002.fn_mask_conta(rw_crapass.nrdconta);                       
+      ELSE
+				-- Buscar inpessoa
+				gene0005.pc_valida_cpf_cnpj(rw_crapavt.nrcpfcgc
+																	 ,vr_stsnrcal
+																	 ,vr_inpessoa);				
+				vr_tab_avais_ctr(vr_idxavais).cpfavali := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcgc, 
+																																						pr_inpessoa => vr_inpessoa );
+			END IF;
+			
       vr_tab_avais_ctr(vr_idxavais).dsdocava := rw_crapavt.tpdocava ||': '|| rw_crapavt.nrdocava;  
       IF rw_crapavt.nrendere > 0 THEN
       
@@ -1324,9 +1365,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                                   rw_crapavt.nmcidade || '/'  || rw_crapavt.cdufresd || '.';
       END IF;
       
+		  IF pr_nrvrsctr = 1 THEN								      
       vr_tab_avais_ctr(vr_idxavais).nmconjug := nvl(TRIM(rw_crapavt.nmconjug),lpad('_',40,'_'));
       vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: '|| nvl(TRIM(gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcjg, 
                                                                                              pr_inpessoa => 1 )),lpad('_',35,'_'));            
+      ELSE
+        vr_tab_avais_ctr(vr_idxavais).nmconjug := TRIM(rw_crapavt.nmconjug);
+				vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := TRIM(gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcjg, 
+																																								 pr_inpessoa => 1 ));
+	    END IF;
+			
       IF TRIM(rw_crapavt.tpdoccjg) IS NOT NULL AND 
          TRIM(rw_crapavt.nrdoccjg) IS NOT NULL THEN
         vr_tab_avais_ctr(vr_idxavais).dsdoccjg := rw_crapavt.tpdoccjg ||': '|| rw_crapavt.nrdoccjg;
@@ -1430,6 +1478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              lim.nrctrlim,
              lim.dtrenova,
              lim.dtinivig,
+						 lim.dtpropos,
              lim.qtdiavig,
              lim.dtfimvig,
              lim.dsencfin##1,
@@ -1542,6 +1591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_dsendass        VARCHAR2(1000);
     vr_cdorgexp        tbgen_orgao_expedidor.cdorgao_expedidor%TYPE;
     vr_nmorgexp        tbgen_orgao_expedidor.nmorgao_expedidor%TYPE;
+		vr_nrvrsctr        NUMBER;
     
   BEGIN
   
@@ -1739,6 +1789,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_tab_dados_ctr(vr_idxctr).nrcpfcgc := vr_tab_dados_ctr(vr_idxctr).nrcpfcgc ||
                                             gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc,
                                                                       pr_inpessoa => rw_crapass.inpessoa);
+	  -- Se ainda for contrato antigo
+		IF nvl(rw_craplim.dtinivig, rw_craplim.dtpropos) < TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+																														                            ,pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN
+      vr_nrvrsctr := 1; -- Atribui versão 1
+		ELSE
+			vr_nrvrsctr := 2; -- Atribui versão 2
+		END IF;
     
     IF rw_crapass.inpessoa > 1 THEN
       --Listar representantes/socios
@@ -1823,6 +1880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     pc_carrega_dados_avais (pr_cdcooper      => pr_cdcooper,         --> Cooperativa do avalista
                             pr_nrdconta      => pr_nrdconta,         --> Numero da conta do avalista
                             pr_nrctrlim      => pr_nrctrlim,         --> Numero do contrato de limite de credito
+														pr_nrvrsctr      => vr_nrvrsctr,         --> Versão do contrato
                             pr_tab_avais_ctr => vr_tab_avais_ctr,    --> Retorna dados dos avalistas
                             pr_cdcritic      => vr_cdcritic,         --> Código da crítica
                             pr_dscritic      => vr_dscritic);        --> Descrição da crítica  
@@ -2516,7 +2574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     CURSOR cr_craplim(pr_nrdconta craplim.nrdconta%TYPE
                      ,pr_cdcooper craplim.cdcooper%TYPE
                      ,pr_nrctrlim craplim.nrctrlim%TYPE) IS
-    SELECT lim.dtinivig -- Data da contratação
+    SELECT to_char(lim.dtpropos, 'DD/MM/RRRR') dtpropos -- Data da contratação
           ,lim.vllimite -- sobre xx
           ,lim.qtdiavig
           ,lim.dsencfin##1 -- Encargos financeiros
@@ -2525,11 +2583,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
           ,(SELECT nmcidade || ' - ' || cdufdcop FROM crapcop cop WHERE cop.cdcooper = pr_cdcooper AND rownum = 1) nmcidade -- Lugar do Pagamento (cidade local do PA) 
           ,cob.perminimo -- Valor(es) da aplicação(ões) financeira(s) bloqueada(a): x%  do limite de crédito concedido
           ,cob.qtdias_atraso_permitido -- Carência para resgate automático da(s) aplicação(ões) financeira(s) bloqueada(s): X dias, contados do excesso do uso do limite pelo COOPERADO*/
+					,cob.idcobertura
+					,cob.inresgate_automatico
       FROM craplim lim,
            tbgar_cobertura_operacao cob
-     WHERE lim.nrdconta = cob.nrdconta
-       AND lim.cdcooper = cob.cdcooper
-       AND lim.nrctrlim = cob.nrcontrato
+     WHERE lim.nrdconta = cob.nrdconta(+)
+       AND lim.cdcooper = cob.cdcooper(+)
+       AND lim.nrctrlim = cob.nrcontrato(+)
        AND lim.nrdconta = pr_nrdconta  -- numero da conta
        AND lim.cdcooper = pr_cdcooper  -- codigo da cooperativa
        AND lim.nrctrlim = pr_nrctrlim; -- numero do contrato
@@ -2599,7 +2659,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_nrcpfcgc        VARCHAR2(50) := '';
 
     vr_contaval        INTEGER := 0;
-		vr_ind_interv      INTEGER := 0;
 
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
@@ -2608,7 +2667,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     --> CET
     vr_desxml_CET      CLOB;
     vr_nmarqimp_CET    varchar2(60);
-    
+		vr_ind_interv      INTEGER := 0;
+
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Subrotina para escrever texto na variável CLOB do XML
     PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
@@ -2789,7 +2849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
     pc_escreve_xml('<contrato>'||   
                       '<nrctrlim>'  || TRIM(pr_nrctrlim)                                     || '</nrctrlim>'  ||
-                      '<dtinivig>'  || TRIM(rw_craplim.dtinivig)                             || '</dtinivig>'  ||
+                      '<dtinivig>'  || TRIM(rw_craplim.dtpropos)                             || '</dtinivig>'  ||
                       '<qtdiavig>'  || TRIM(rw_craplim.qtdiavig)                             || '</qtdiavig>'  ||
                       '<vllimite>'  || TRIM(TO_CHAR(rw_craplim.vllimite,'fm999G999G999D00')) || '</vllimite>'  ||
                       '<dsencfin1>' || TRIM(rw_craplim.dsencfin##1)                          || '</dsencfin1>' ||
@@ -2799,6 +2859,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                       '<dscetano>'  || TRIM(vr_dscetano)                                     || '</dscetano>'  ||
                       '<perminimo>' || rw_craplim.perminimo                                  || '</perminimo>' ||
                       '<qtdias_atraso_permitido>' || rw_craplim.qtdias_atraso_permitido      || '</qtdias_atraso_permitido>' ||
+                      '<inresauto>' || nvl(rw_craplim.inresgate_automatico,0)      || '</inresauto>' ||											
+											'<inaddcob>'  || (CASE WHEN nvl(rw_craplim.idcobertura,0) > 0 THEN '1' ELSE '0' END) ||'</inaddcob>' ||
                    '</contrato>');
 
     --> Listar avalistas
@@ -2811,6 +2873,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                          '<nmdavali>'|| pr_tab_avais_ctr(idx).nmdavali ||'</nmdavali>'||
                          '<cpfavali>'|| pr_tab_avais_ctr(idx).cpfavali ||'</cpfavali>'||
                          '<dsendava>'|| pr_tab_avais_ctr(idx).dsendava ||'</dsendava>'|| 
+                         '<nrctaava>'|| trim(gene0002.fn_mask_conta(nvl(pr_tab_avais_ctr(idx).nrdconta,0))) ||'</nrctaava>'|| 												 
+												 '<nrcpfcjg>'|| pr_tab_avais_ctr(idx).nrcpfcjg ||'</nrcpfcjg>'|| 
+												 '<nmconjug>'|| pr_tab_avais_ctr(idx).nmconjug ||'</nmconjug>'|| 
                        '</avalista'|| vr_contaval ||'>');
       END LOOP;
     END IF;                     
@@ -2860,10 +2925,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         END IF;
 
       END IF;   
-      -- Possui interveninente
+			-- Indicador de interveniente
 			vr_ind_interv := 1;
-            
-      pc_escreve_xml('<nrdconta_interv>'|| trim(gene0002.fn_mask_conta(rw_crapass.nrdconta)) || '</nrdconta_interv>' ||
+      pc_escreve_xml('<nrdconta_interv>'|| trim(gene0002.fn_mask_conta(nvl(rw_crapass.nrdconta,0))) || '</nrdconta_interv>' ||
 			               '<nminterv>'|| rw_crapass.nmprimtl || '</nminterv>' ||
                      '<nrcpfcgc>'|| gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc
 										                                         ,rw_crapass.inpessoa) || '</nrcpfcgc>' ||
@@ -2875,8 +2939,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                      '<cdufende>'|| rw_crapenc.cdufende || '</cdufende>' ||
                      '<nrcepend>'|| gene0002.fn_mask_cep(rw_crapenc.nrcepend) || '</nrcepend>');
     END LOOP;
-    pc_escreve_xml('<vr_ind_interv>'|| vr_ind_interv ||'</vr_ind_interv>' ||
-		               '</interveniente>'); 
+    pc_escreve_xml('</interveniente>'||
+		               '<ind_interv>' || vr_ind_interv ||'</ind_interv>'); 
     --> Fim interveniente/Garantidor
 
     IF pr_idimpres = 1  THEN --> Completa 
@@ -3177,6 +3241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_tab_repres_ctr typ_tab_repres_ctr;
     vr_tab_avais_ctr  typ_tab_avais_ctr;    
     
+    vr_nrvrsctr        INTEGER; 
   BEGIN    
       
     --> Buscar dados para impressao do contrato de limite de credito
@@ -3214,8 +3279,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       RAISE vr_exc_erro;
     END IF;   
     
+	  -- Se ainda for contrato antigo
     IF vr_tab_dados_ctr(vr_idxctr).dtinivig < TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                                                ,pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN
+      vr_nrvrsctr := 1; -- Atribui versão 1
+		ELSE
+			vr_nrvrsctr := 2; -- Atribui versão 2
+		END IF;		   
+    
+    IF vr_nrvrsctr = 1 THEN
 
       pc_impres_contrato_limite_v1(pr_cdcooper       => pr_cdcooper       --> Código da Cooperativa
                                   ,pr_cdagecxa       => pr_cdagecxa       --> Código da agencia
@@ -4032,12 +4104,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                when 4 then 'TRANSFERENCIA C/C'
                                else 'DIFERENTE' end dsmotivo
              , null dhalteracao
+			 , o.nmoperad
           from craplim c
+             , crapope o
          where c.cdcooper = pr_cdcooper
            and c.nrdconta = pr_nrdconta
            and c.tpctrlim = 1            
            and c.insitlim = 3            
            and c.nrctrlim <> 0
+		   and o.cdcooper = c.cdcooper
+		   and o.cdoperad = c.cdoperad
         union
         select t.cdcooper
              , t.nrctrlim
@@ -4047,6 +4123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              , 'MAJORACAO' dssitlli
              , ('Limite - '||t.dsvalor_anterior||' --> '||t.dsvalor_novo) dsmotivo
              , t.dhalteracao
+			 , 'SUPER-USUARIO' nmoperad
           from craplim x
              , tblimcre_historico t
          where x.cdcooper = t.cdcooper
@@ -4067,6 +4144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              , 'RENOVACAO' dssitlli
              , ('Renovacao '||' - '||to_char(t.dhalteracao,'DD/MM/RRRR')) dsmotivo
              , t.dhalteracao
+			 , 'SUPER-USUARIO' nmoperad
           from craplim x
              , tblimcre_historico t
          where x.cdcooper = t.cdcooper
@@ -4087,12 +4165,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              , 'LIMITE ATIVO' dssitlli
              , (' ') dsmotivo
              , null dhalteracao
+			 , o.nmoperad
           from craplim x
+             , crapope o
          where x.cdcooper = pr_cdcooper
            and x.nrdconta = pr_nrdconta
            and x.tpctrlim = 1
            and x.nrctrlim <> 0
-           and x.insitlim = 2) x
+           and x.insitlim = 2
+		   and o.cdcooper = x.cdcooper
+           and o.cdoperad = x.cdoperad) x
         order
            by dtfimvig desc, dhalteracao desc;
       vr_cdcritic      crapcri.cdcritic%TYPE;
@@ -4133,6 +4215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vllimite', pr_tag_cont => r_ultimas_alteracoes.vllimite, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dssitlli', pr_tag_cont => r_ultimas_alteracoes.dssitlli, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsmotivo', pr_tag_cont => r_ultimas_alteracoes.dsmotivo, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmoperad', pr_tag_cont => r_ultimas_alteracoes.nmoperad, pr_des_erro => vr_dscritic);
         vr_contador := vr_contador + 1;
       end loop;
     exception

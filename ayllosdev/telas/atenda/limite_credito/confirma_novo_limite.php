@@ -80,34 +80,35 @@
 		$tpctrrat = 1;
 		include("../../../includes/rating/rating_busca_dados_singulares.php");
 	} else {
-	
-		// Monta o xml dinâmico de acordo com a operação 
-		$xml  = '';
-		$xml .= '<Root>';
-		$xml .= '	<Dados>';
-		$xml .= '       <nmdatela>ATENDA</nmdatela>';
-		$xml .= '       <idcobert>'.$idcobope.'</idcobert>';
-		$xml .= '	</Dados>';
-		$xml .= '</Root>';
+		if ($idcobope > 0){
+			// Monta o xml dinâmico de acordo com a operação 
+			$xml  = '';
+			$xml .= '<Root>';
+			$xml .= '	<Dados>';
+			$xml .= '       <nmdatela>ATENDA</nmdatela>';
+			$xml .= '       <idcobert>'.$idcobope.'</idcobert>';
+			$xml .= '	</Dados>';
+			$xml .= '</Root>';
 
-		$xmlResult = mensageria($xml, "BLOQ0001", "REVALIDA_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-		$xmlObjeto = getObjectXML($xmlResult);
+			$xmlResult = mensageria($xml, "BLOQ0001", "REVALIDA_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+			$xmlObjeto = getObjectXML($xmlResult);
 
-		//----------------------------------------------------------------------------------------------------------------------------------	
-		// Controle de Erros
-		//----------------------------------------------------------------------------------------------------------------------------------
-		if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
-			// Procura indíce da opção "N"
-			$idAlteraLim = array_search("N",$glbvars["opcoesTela"]);
+			//----------------------------------------------------------------------------------------------------------------------------------	
+			// Controle de Erros
+			//----------------------------------------------------------------------------------------------------------------------------------
+			if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
+				// Procura indíce da opção "N"
+				$idAlteraLim = array_search("N",$glbvars["opcoesTela"]);
 			
-			if ($idAlteraLim == false) {
-				$idAlteraLim = 1;
+				if ($idAlteraLim == false) {
+					$idAlteraLim = 1;
+				}
+			
+				echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar o limite proposto?', 'Confirma&ccedil;&atilde;o - Ayllos', 'acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idAlteraLim.",\'".$glbvars["opcoesTela"][$idAlteraLim]."\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
+				exit();
 			}
-			
-			echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar o limite proposto?', 'Confirma&ccedil;&atilde;o - Ayllos', 'acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idAlteraLim.",\'".$glbvars["opcoesTela"][$idAlteraLim]."\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
-			exit();
 		}
-			
+
 		// Monta o xml de requisição
 		$xmlSetLimite  = "";
 		$xmlSetLimite .= "<Root>";

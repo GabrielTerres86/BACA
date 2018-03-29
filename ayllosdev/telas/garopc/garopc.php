@@ -24,6 +24,7 @@
     $gar_codlinha = (isset($_POST['codlinha']))     ? $_POST['codlinha']     : 0;
     $gar_vlropera = (isset($_POST['vlropera']))     ? $_POST['vlropera']     : 0;
     $gar_dsctrliq = (isset($_POST['dsctrliq']))     ? $_POST['dsctrliq']     : '';
+	$gar_cdfinemp = (isset($_POST['cdfinemp']))     ? $_POST['cdfinemp']     : 0;
     $ret_nomcampo = (isset($_POST['ret_nomcampo'])) ? $_POST['ret_nomcampo'] : '';
     $ret_nomformu = (isset($_POST['ret_nomformu'])) ? $_POST['ret_nomformu'] : '';
     $ret_execfunc = (isset($_POST['ret_execfunc'])) ? $_POST['ret_execfunc'] : '';
@@ -39,6 +40,7 @@
     $xml .= "	   <nrdconta>".$gar_nrdconta."</nrdconta>";	
     $xml .= "	   <tpctrato>".$gar_tpctrato."</tpctrato>";
     $xml .= "	   <codlinha>".$gar_codlinha."</codlinha>";
+    $xml .= "	   <cdfinemp>".$gar_cdfinemp."</cdfinemp>";
     $xml .= "	   <vlropera>".converteFloat($gar_vlropera)."</vlropera>";
     $xml .= "	   <dsctrliq>".$gar_dsctrliq."</dsctrliq>";
     $xml .= "   </Dados>";
@@ -73,6 +75,11 @@
     $gar_vlpouter = getByTagName($registros->tags,'VLPOUTER');
     $gar_nrctater = getByTagName($registros->tags,'NRCTATER');
     $gar_nmctater = getByTagName($registros->tags,'NMCTATER');
+	$gar_flfincdc = getByTagName($registros->tags,'FLGFINCDC');
+	
+	if ($gar_flfincdc == 1){
+		$gar_tipaber = 'C';
+	}
 ?>
 <script type="text/javascript" src="../../telas/garopc/garopc.js"></script>
 
@@ -211,6 +218,9 @@
                                                 // Se veio da ADITIV em modo Consulta
                                                 if ($gar_nmdatela == 'ADITIV' && $gar_tipaber == 'C') {
                                                     ?><a href="#" class="botao" id="btImprimir" onClick="Gera_Impressao(); return false;">Imprimir</a><?php
+                                                } elseif ($gar_tipaber == 'C') {
+													?><a href="#" class="botao" id="btConfirmar" onClick="fechaRotina($('#divUsoGAROPC')); eval('<?php echo $ret_execfunc ?>');">Continuar</a><?php
+													
                                                 } else {
                                                     ?><a href="#" class="botao" id="btConfirmar" onClick="gravarGAROPC('<?php echo $ret_nomcampo; ?>','<?php echo $ret_nomformu; ?>','<?php echo $ret_execfunc; ?>', 'bloqueiaFundo($(\'#divUsoGAROPC\'))');">Continuar</a><?php
                                                 }

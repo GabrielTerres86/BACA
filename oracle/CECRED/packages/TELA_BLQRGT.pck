@@ -126,6 +126,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
               ,ope.tpcontrato
               ,ope.nrcontrato
               ,ope.perminimo
+							,ope.inaplicacao_propria
+							,ope.inaplicacao_terceiro
+							,ope.inpoupanca_propria
+							,ope.inpoupanca_terceiro
           FROM tbgar_cobertura_operacao ope
          WHERE ope.cdcooper = pr_cdcooper
            AND ope.insituacao = 1 /* Bloqueadas */
@@ -167,10 +171,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
       vr_valopera_atualizada NUMBER := 0;
       vr_vltotpre            NUMBER(25,2) := 0;
       vr_qtprecal            NUMBER(10) := 0;
-    
+      vr_dstipapl            VARCHAR2(50);
+			
     BEGIN
       
-      GENE0001.pc_informa_acesso(pr_module => 'LDESCO' 
+      GENE0001.pc_informa_acesso(pr_module => 'TELA_BLQRGT' 
                                 ,pr_action => null);  
     
       pr_des_erro := 'OK';
@@ -300,6 +305,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
             vr_tpcontrato := 'Emp.Fin.';
           END IF;
           
+					IF (rw_cobertura.inaplicacao_propria = 1 OR rw_cobertura.inaplicacao_terceiro = 1) AND
+						 (rw_cobertura.inpoupanca_propria  = 1 OR rw_cobertura.inpoupanca_terceiro  = 1) THEN
+						vr_dstipapl := 'Aplicação/Poupança';
+					ELSIF (rw_cobertura.inaplicacao_propria = 1 OR rw_cobertura.inaplicacao_terceiro = 1) THEN
+						vr_dstipapl := 'Aplicação';
+					ELSIF (rw_cobertura.inpoupanca_propria  = 1 OR rw_cobertura.inpoupanca_terceiro  = 1) THEN
+						vr_dstipapl := 'Poupança';
+					ELSE
+						vr_dstipapl := 'Não encontrado';
+					END IF;
+					
           -- Registros
           pr_retxml := XMLTYPE.appendChildXML(pr_retxml
                                               ,'/Root/bloq_cobert'
@@ -307,6 +323,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
                                                      ||'  <tpcontrato>'  || vr_tpcontrato            || '</tpcontrato>'
                                                      ||'  <nrdconta>'    || rw_cobertura.nrdconta    || '</nrdconta>'
                                                      ||'  <nrcontrato>'  || rw_cobertura.nrcontrato  || '</nrcontrato>'
+																										 ||'  <dstipapl>'    || vr_dstipapl  || '</dstipapl>'
                                                      ||'  <vlopera>'     || to_char(vr_valopera,'fm999g999g990d00') || '</vlopera>'
                                                      ||'  <valbloque>'   || to_char(vr_valbloque,'fm999g999g990d00') || '</valbloque>'
                                                      ||'  <idcobertura>' || rw_cobertura.idcobertura || '</idcobertura>'
@@ -389,10 +406,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
       vr_cdagenci VARCHAR2(100);
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
-      
+			
+			-- Variáveis para tratamento de log
+			vr_nrdrowid ROWID;
+			
+			-- Buscar dados da cobertura
+			CURSOR cr_tbgar_cobertura_operacao(pr_idcobertura IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
+        SELECT gar.nrdconta
+				      ,decode(gar.tpcontrato, 1, 'Limite Crédito', 
+							                        2, 'Desconto Cheques', 
+																			3, 'Desconto Titulos', 
+																			90, 'Emprestimos/Financiamentos', 
+																			'Nao encontrado') tpcontrato
+							,gar.nrcontrato
+				  FROM tbgar_cobertura_operacao gar
+				 WHERE gar.idcobertura = pr_idcobertura;
+			rw_tbgar_cobertura_operacao cr_tbgar_cobertura_operacao%ROWTYPE;
     BEGIN
       
-      GENE0001.pc_informa_acesso(pr_module => 'LDESCO' 
+      GENE0001.pc_informa_acesso(pr_module => 'TELA_BLQRGT' 
                                 ,pr_action => null);  
     
       pr_des_erro := 'OK';
@@ -424,7 +456,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
+			
+			-- Buscar conta da cobertura
+			OPEN cr_tbgar_cobertura_operacao(pr_idcobertura);
+			FETCH cr_tbgar_cobertura_operacao INTO rw_tbgar_cobertura_operacao;
       
+			IF cr_tbgar_cobertura_operacao%FOUND THEN
+				-- Gerar log
+				gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+														,pr_cdoperad => vr_cdoperad
+														,pr_dscritic => ' '
+														,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+														,pr_dstransa => 'Desbloqueio do valor de cobertura de garantia.'
+														,pr_dttransa => TRUNC(SYSDATE)
+														,pr_flgtrans => 1
+														,pr_hrtransa => gene0002.fn_busca_time
+														,pr_idseqttl => 1
+														,pr_nmdatela => vr_nmdatela
+														,pr_nrdconta => rw_tbgar_cobertura_operacao.nrdconta
+														,pr_nrdrowid => vr_nrdrowid);
+																
+				-- Tipo do contrato
+				GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+																 ,pr_nmdcampo => 'Tipo do contrato'
+																 ,pr_dsdadant => ' '
+																 ,pr_dsdadatu => rw_tbgar_cobertura_operacao.tpcontrato);
+														
+				-- Nr. do contrato
+				GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+																 ,pr_nmdcampo => 'Nr. do contrato'
+																 ,pr_dsdadant => ' '
+																 ,pr_dsdadatu => trim(gene0002.fn_mask_contrato(rw_tbgar_cobertura_operacao.nrcontrato)));
+				
+				-- Operador que efetuou a liberação
+				GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+																 ,pr_nmdcampo => 'Operador liberacao'
+																 ,pr_dsdadant => ' '
+																 ,pr_dsdadatu => pr_cdopelib);
+																 
+				-- Valor do desbloqueio
+				GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+																 ,pr_nmdcampo => 'Valor desbloqueio'
+																 ,pr_dsdadant => ' '
+																 ,pr_dsdadatu => to_char(pr_vldesblo, 'fm999g999g999g990d00'));
+			
+      END IF;			
+			-- Fechar cursor
+			CLOSE cr_tbgar_cobertura_operacao;
+			
     EXCEPTION
       WHEN vr_exc_saida THEN
       

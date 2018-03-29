@@ -54,25 +54,27 @@
 	$nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : 0;
 	$cddopera = (isset($_POST['cddopera'])) ? $_POST['cddopera'] : 0;
 	$idcobope = (isset($_POST['idcobope'])) ? $_POST['idcobope'] : 0;
-	
-	// Monta o xml dinâmico de acordo com a operação 
-	$xml  = '';
-	$xml .= '<Root>';
-	$xml .= '	<Dados>';
-	$xml .= '       <nmdatela>ATENDA</nmdatela>';
-	$xml .= '       <idcobert>'.$idcobope.'</idcobert>';
-	$xml .= '	</Dados>';
-	$xml .= '</Root>';
 
-	$xmlResult = mensageria($xml, "BLOQ0001", "REVALIDA_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObjeto = getObjectXML($xmlResult);
+	if ($idcobope > 0){
+		// Monta o xml dinâmico de acordo com a operação 
+		$xml  = '';
+		$xml .= '<Root>';
+		$xml .= '	<Dados>';
+		$xml .= '       <nmdatela>ATENDA</nmdatela>';
+		$xml .= '       <idcobert>'.$idcobope.'</idcobert>';
+		$xml .= '	</Dados>';
+		$xml .= '</Root>';
 
-	//----------------------------------------------------------------------------------------------------------------------------------	
-	// Controle de Erros
-	//----------------------------------------------------------------------------------------------------------------------------------
-	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {		
-		echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar o limite proposto?', 'Confirma&ccedil;&atilde;o - Ayllos', 'mostraTelaAltera();', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
-		exit();
+		$xmlResult = mensageria($xml, "BLOQ0001", "REVALIDA_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjeto = getObjectXML($xmlResult);
+
+		//----------------------------------------------------------------------------------------------------------------------------------	
+		// Controle de Erros
+		//----------------------------------------------------------------------------------------------------------------------------------
+		if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {		
+			echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar o limite proposto?', 'Confirma&ccedil;&atilde;o - Ayllos', 'mostraTelaAltera();', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
+			exit();
+		}
 	}
 	
     $xmlRenovaLimite  = "";

@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.BLOQ0001 AS
 
     Programa: sistema/generico/procedures/b1wgen0148.p
     Autor   : Lucas Lunelli
-    Data    : Janeiro/2013                Ultima Atualizacao: 14/05/2014.
+    Data    : Janeiro/2013                Ultima Atualizacao: 08/03/2018.
      
     Dados referentes ao programa:
    
@@ -18,9 +18,15 @@ CREATE OR REPLACE PACKAGE CECRED.BLOQ0001 AS
 
                 20/10/2014 - Implementado novo parametro pr_inprodut na procedure
                              pc_busca_blqrgt (Jean Michel)
+                             
+                08/03/2018 - Adicionado a nova function fn_valor_bloqueio_garantia_in 
+                             para buscar o valor de cobertura mesmo não estando bloqueada
+                             (Lucas Skroch - Supero)
   .............................................................................*/
   
   FUNCTION fn_valor_bloqueio_garantia (pr_idcobert IN NUMBER) RETURN NUMBER;
+  
+  FUNCTION fn_valor_bloqueio_garantia_in (pr_idcobert IN NUMBER) RETURN NUMBER;
   
   PROCEDURE pc_busca_blqrgt(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
                            ,pr_cdagenci IN crapage.cdagenci%TYPE --> Código da agência
@@ -174,7 +180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
 
     Programa: sistema/generico/procedures/b1wgen0148.p
     Autor   : Lucas Lunelli
-    Data    : Janeiro/2013                Ultima Atualizacao: 20/10/2014.
+    Data    : Janeiro/2013                Ultima Atualizacao: 08/03/2018.
      
     Dados referentes ao programa:
    
@@ -188,6 +194,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
 
                 20/10/2014 - Implementado novo parametro pr_inprodut na procedure
                              pc_busca_blqrgt (Jean Michel)
+                             
+                08/03/2018 - Adicionado a nova function fn_valor_bloqueio_garantia_in 
+                             para buscar o valor de cobertura mesmo não estando bloqueada 
+                             (Lucas Skroch - Supero)
   .............................................................................*/
   
   /* Retornar valor do bloqueio para a cobertura da operação repassada. */
@@ -237,6 +247,134 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           FROM tbgar_cobertura_operacao
          WHERE idcobertura = pr_idcobert
            AND insituacao = 1; -- Bloqueado
+       rw_cobertura cr_cobertura%ROWTYPE;
+       
+       CURSOR cr_crawepr(pr_cdcooper IN crapepr.cdcooper%TYPE
+                        ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                        ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+        SELECT wpr.vlemprst
+          FROM crawepr wpr
+         WHERE wpr.cdcooper = pr_cdcooper
+           AND wpr.nrdconta = pr_nrdconta
+           AND wpr.nrctremp = pr_nrctremp;
+      rw_crawepr cr_crawepr%ROWTYPE;
+      
+      CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE
+                       ,pr_nrdconta IN craplim.nrdconta%TYPE
+                       ,pr_nrctrlim IN craplim.nrctrlim%TYPE
+                       ,pr_tpctrlim IN craplim.tpctrlim%TYPE) IS
+        SELECT lim.vllimite
+          FROM craplim lim
+         WHERE lim.cdcooper = pr_cdcooper
+           AND lim.nrdconta = pr_nrdconta
+           AND lim.nrctrlim = pr_nrctrlim
+           AND lim.tpctrlim = pr_tpctrlim;
+      rw_craplim cr_craplim%ROWTYPE;
+      
+       
+    BEGIN
+      
+      OPEN cr_cobertura;
+      FETCH cr_cobertura INTO rw_cobertura;
+      IF cr_cobertura%FOUND THEN
+        vr_cdcooper             := rw_cobertura.cdcooper;
+        vr_nrdconta             := rw_cobertura.nrdconta;
+        vr_tpcontrato           := rw_cobertura.tpcontrato;
+        vr_nrcontrato           := rw_cobertura.nrcontrato;
+        vr_perminimo            := rw_cobertura.perminimo;
+        vr_inaplicacao_propria  := rw_cobertura.inaplicacao_propria;
+        vr_inpoupanca_propria   := rw_cobertura.inpoupanca_propria;
+        vr_inaplicacao_terceiro := rw_cobertura.inaplicacao_terceiro;
+        vr_inpoupanca_terceiro  := rw_cobertura.inpoupanca_terceiro;
+        vr_vldesbloq            := rw_cobertura.vldesbloq;
+      END IF;
+      
+      IF vr_inaplicacao_propria + vr_inpoupanca_propria + vr_inaplicacao_terceiro + vr_inpoupanca_terceiro > 0 THEN
+        -- Buscar as informações da operação conforme o tipo do contrato
+        IF vr_tpcontrato = 90 THEN
+          -- Buscar empréstimo
+          OPEN cr_crawepr(pr_cdcooper => vr_cdcooper
+                         ,pr_nrdconta => vr_nrdconta
+                         ,pr_nrctremp => vr_nrcontrato);
+          FETCH cr_crawepr INTO rw_crawepr;
+          
+          vr_valopera := rw_crawepr.vlemprst;
+          
+        ELSE
+          -- Buscar limite
+          OPEN cr_craplim(pr_cdcooper => vr_cdcooper
+                         ,pr_nrdconta => vr_nrdconta
+                         ,pr_nrctrlim => vr_nrcontrato
+                         ,pr_tpctrlim => vr_tpcontrato);
+          FETCH cr_craplim INTO rw_craplim;
+          
+          vr_valopera := rw_craplim.vllimite;
+        END IF;
+        -- Calcular o valor necessário para cobertura do empréstimo ou do limite
+        vr_vlcobert := vr_valopera * (vr_perminimo / 100);
+
+        -- Descontar possíveis valores de Desbloqueio
+        vr_vlcobert := vr_vlcobert - NVL(vr_vldesbloq,0);
+      END IF;
+      
+      IF vr_vlcobert > 0 THEN
+        RETURN(vr_vlcobert);
+      ELSE
+        RETURN(vr_vlcobert);
+      END IF;
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        RETURN 0;
+    END;
+  END;
+  
+   /* Retornar valor do bloqueio para a cobertura da operação repassada mesmo não estando ativa para o motor. */
+  FUNCTION fn_valor_bloqueio_garantia_in (pr_idcobert IN NUMBER) RETURN NUMBER IS
+  /* ..........................................................................
+
+   Programa: fn_valor_bloqueio_garantia_in
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Lucas Skroch
+   Data    : Abril/2018                            Ultima alteracao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Quando for Chamado
+   Objetivo  : Retornar o valor total do bloqueio para a cobertura da operação repassada mesmo não estando ativa para o MOTOR.
+
+   Alteracoes: 
+
+  ............................................................................. */
+  BEGIN
+    DECLARE
+      vr_cdcooper NUMBER := 0;
+      vr_nrdconta NUMBER := 0;
+      vr_tpcontrato NUMBER := 0;
+      vr_nrcontrato NUMBER := 0;
+      vr_perminimo NUMBER := 0;
+      vr_vldesbloq NUMBER := 0;
+      vr_inaplicacao_propria NUMBER := 0;
+      vr_inpoupanca_propria NUMBER := 0;
+      vr_inaplicacao_terceiro NUMBER := 0;
+      vr_inpoupanca_terceiro NUMBER := 0;
+      vr_valopera NUMBER := 0;
+      vr_vlcobert NUMBER := 0;
+      
+      CURSOR cr_cobertura IS
+        SELECT cdcooper
+              ,nrdconta
+              ,tpcontrato
+              ,nrcontrato
+              ,perminimo
+              ,inaplicacao_propria
+              ,inpoupanca_propria
+              ,inaplicacao_terceiro
+              ,inpoupanca_terceiro
+              ,vldesbloq
+          FROM tbgar_cobertura_operacao
+         WHERE idcobertura = pr_idcobert;
        rw_cobertura cr_cobertura%ROWTYPE;
        
        CURSOR cr_crawepr(pr_cdcooper IN crapepr.cdcooper%TYPE
@@ -1721,8 +1859,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
                                       ,pr_saldo_rdca => vr_saldo_rdca --> Tipo de tabela com o saldo RDCA
                                       ,pr_des_reto => vr_des_reto --> OK ou NOK
                                       ,pr_tab_erro => vr_tab_erro); --> Tabela com erros
+        
       -- Verifica se deu erro
       IF vr_des_reto = 'NOK' THEN
+            
         -- Tenta buscar o erro no vetor de erro
         IF vr_tab_erro.COUNT > 0 THEN
           pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
@@ -1804,6 +1944,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           pr_dscritic := 'Erro ao verificar saldo de Poupança da Conta Terceira: '
           || vr_dscritic;
         END IF;
+          
       END IF;
       
       vr_index_dados_rpp:= vr_tab_dados_rpp.FIRST;
@@ -2383,6 +2524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
       --Verificar se a data existe
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+           
       -- Se não encontrar
       IF BTCH0001.cr_crapdat%NOTFOUND THEN
         -- Montar mensagem de critica
@@ -2596,9 +2738,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         vr_cdcritic:= 1;
         CLOSE BTCH0001.cr_crapdat;
         RAISE vr_exc_erro;
+            
       ELSE
         -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
+             
       END IF;
       
       -- Se já recebemos o Saldo das Aplicações
@@ -3028,8 +3172,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
                      '<root><Dados>');
       
       BEGIN
-        pc_escreve_xml( '<vlblqapl>'|| vr_vlblqapl ||'</vlblqapl>'||
-                        '<vlblqpou>'|| vr_vlblqpou ||'</vlblqpou>');   
+        pc_escreve_xml( '<vlblqapl>'|| nvl(vr_vlblqapl,0) ||'</vlblqapl>'||
+                        '<vlblqpou>'|| nvl(vr_vlblqpou,0) ||'</vlblqpou>');   
       EXCEPTION
         WHEN OTHERS THEN
         vr_dscritic := 'Erro ao montar tabela de retorno'||
