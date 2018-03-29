@@ -24,7 +24,9 @@
                 
                 04/12/2017 - Melhoria 458 adicionado informacao do CPF a tela Traesp, Antonio R. Junior (mouts)  
 				
-				19/02/2018 - Ajustado mascara zz,zzz,zz9 para zzz,zzz,zz9 no campo NRDOCMTO - Antonio R. Junior (mouts) - chamado 851313
+				19/02/2018 - Ajustado mascara zz,zzz,zz9 para z,zzz,zzz,zz9 no campo NRDOCMTO 
+                             alterado o tipo do parametro par_nrdocmto para DECIMAL da procedure 
+                             consulta-controle-movimentacao- Antonio R. Junior (mouts) - chamado 851313
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -101,7 +103,7 @@ PROCEDURE consulta-transacoes-especie:
                    tt-transacoes-especie.vllanmto = 
                     STRING(crapcme.vllanmto, "zzz,zzz,zz9.99")
                    tt-transacoes-especie.nrdocmto = 
-                                    STRING(crapcme.nrdocmto, "zzz,zzz,zz9")
+                                    STRING(crapcme.nrdocmto, "z,zzz,zzz,zz9")
                    tt-transacoes-especie.dtmvtolt = crapcme.dtmvtolt
                    tt-transacoes-especie.tpoperac = aux_tpoperac
                    tt-transacoes-especie.sisbacen = crapcme.sisbacen.
@@ -236,7 +238,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                                tt-transacoes-especie.nmprimtl = crapass.nmprimtl
                                                                 WHEN AVAIL crapass
                                tt-transacoes-especie.nrdocmto = 
-                                            STRING(craplcm.nrdocmto, "zzz,zzz,zz9")
+                                            STRING(craplcm.nrdocmto, "z,zzz,zzz,zz9")
                                tt-transacoes-especie.tpoperac = aux_tpoperac
                                tt-transacoes-especie.vllanmto = 
                                          STRING(craplcm.vllanmto, "zzz,zzz,zz9.99")
@@ -318,7 +320,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                                tt-transacoes-especie.nmprimtl = crapass.nmprimtl
                                                                 WHEN AVAIL crapass
                                tt-transacoes-especie.nrdocmto = 
-                                            STRING(craptvl.nrdocmto, "zzz,zzz,zz9")
+                                            STRING(craptvl.nrdocmto, "z,zzz,zzz,zz9")
                                tt-transacoes-especie.tpoperac = aux_tpoperac
                                tt-transacoes-especie.vllanmto = 
                                          STRING(craptvl.vldocrcb, "zzz,zzz,zz9.99")
@@ -393,7 +395,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                               tt-transacoes-especie.nrdolote = craplft.nrdolote
                               tt-transacoes-especie.nrdconta = STRING(craplft.nrdconta, "zzzz,zzz,9")
                               tt-transacoes-especie.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
-                              tt-transacoes-especie.nrdocmto = STRING(craplft.nrseqdig, "zzz,zzz,zz9")
+                              tt-transacoes-especie.nrdocmto = STRING(craplft.nrseqdig, "z,zzz,zzz,zz9")
                               tt-transacoes-especie.tpoperac = aux_tpoperac
                               tt-transacoes-especie.vllanmto = STRING(craplft.vllanmto, "zzz,zzz,zz9.99")
                               tt-transacoes-especie.dtmvtolt = craplft.dtmvtolt.
@@ -443,7 +445,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                             tt-transacoes-especie.nrdolote = craptit.nrdolote
                             tt-transacoes-especie.nrdconta = STRING(craptit.nrdconta, "zzzz,zzz,9")
                             tt-transacoes-especie.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
-                            tt-transacoes-especie.nrdocmto = STRING(craptit.nrseqdig, "zzz,zzz,zz9")
+                            tt-transacoes-especie.nrdocmto = STRING(craptit.nrseqdig, "z,zzz,zzz,zz9")
                             tt-transacoes-especie.tpoperac = aux_tpoperac
                             tt-transacoes-especie.vllanmto = STRING(craptit.vldpagto, "zzz,zzz,zz9.99")
                             tt-transacoes-especie.dtmvtolt = craptit.dtmvtolt.
@@ -492,7 +494,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                                          STRING(craplcx.cdagenci, "999")
                        tt-transacoes-especie.nrdolote = aux_nrdolote
                        tt-transacoes-especie.nrdocmto = 
-                                         STRING(craplcx.nrdocmto, "zzz,zzz,zz9")
+                                         STRING(craplcx.nrdocmto, "z,zzz,zzz,zz9")
                        tt-transacoes-especie.tpoperac = aux_tpoperac
                        tt-transacoes-especie.vllanmto = 
                                          STRING(craplcx.vldocmto, "zzz,zzz,zz9.99")
@@ -531,7 +533,7 @@ PROCEDURE consulta-controle-movimentacao:
     DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
     DEF INPUT PARAM par_cdbccxlt AS INTE NO-UNDO.
     DEF INPUT PARAM par_nrdolote AS INTE NO-UNDO.
-    DEF INPUT PARAM par_nrdocmto AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrdocmto AS DECIMAL NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-transacoes-especie.
@@ -607,7 +609,7 @@ PROCEDURE consulta-controle-movimentacao:
            tt-transacoes-especie.vllanmto = 
                                      STRING(crapcme.vllanmto, "zzz,zzz,zz9.99")
            tt-transacoes-especie.nrdocmto = 
-                                        STRING(crapcme.nrdocmto, "zzz,zzz,zz9")
+                                        STRING(crapcme.nrdocmto, "z,zzz,zzz,zz9")
            tt-transacoes-especie.dtmvtolt = crapcme.dtmvtolt
            tt-transacoes-especie.tpoperac = aux_tpoperac
            tt-transacoes-especie.sisbacen = crapcme.sisbacen
@@ -631,7 +633,7 @@ PROCEDURE reimprime-controle-movimentacao:
     DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
     DEF INPUT PARAM par_cdbccxlt AS INTE NO-UNDO.
     DEF INPUT PARAM par_nrdolote AS INTE NO-UNDO.
-    DEF INPUT PARAM par_nrdocmto AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrdocmto AS DECIMAL NO-UNDO.
     DEF INPUT PARAM par_tpdocmto AS INTE NO-UNDO.
     DEF INPUT PARAM par_nrseqaut AS INTE NO-UNDO.
     DEF INPUT PARAM par_nrdctabb AS INTE NO-UNDO.
