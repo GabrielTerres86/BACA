@@ -51,7 +51,7 @@
 
 <div id="divBotoes" style="padding-bottom:10px">
 	<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
-	<a href="#" class="botao" onclick="btnContinuar(); return false;" ><? echo utf8ToHtml('Avançar'); ?></a>
+	<a href="#" class="botao" onclick="btnContinuar(); return false;" ><? echo utf8ToHtml('Avan&ccedilar'); ?></a>
 </div>
 
 

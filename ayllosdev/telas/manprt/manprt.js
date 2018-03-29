@@ -58,9 +58,7 @@ function estadoInicial() {
     removeOpacidade('divTela');
 }
 
-
-// controla
-function controlaOperacao(nriniseq, nrregist) {
+function realizaoConsultaTed(nriniseq, nrregist) {
     var numregis = nrregist;
     var iniseque = nriniseq;
     var inidtpro = $('#inidtpro', '#' + frmOpcao).val();
@@ -80,6 +78,66 @@ function controlaOperacao(nriniseq, nrregist) {
         type: 'POST',
         dataType: 'html',
         url: UrlSite + 'telas/manprt/obtem_consulta_ted.php',
+        data:
+				{   
+                    inidtpro: inidtpro,
+                    fimdtpro: fimdtpro,
+                    inivlpro: inivlpro,
+                    fimvlpro: fimvlpro,
+                    indconci: indconci,
+                    dscartor: dscartor,
+				    nrregist: nrregist,
+				    nriniseq: nriniseq,
+				    redirect: 'script_ajax'
+				},
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possÃ­vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    $('#divTela').html(response);
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            } else {
+                try {
+                    eval(response);
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            }
+        }
+    });
+
+    return false;
+}
+
+function realizaoConsultaConciliacao(nriniseq, nrregist) {
+    var numregis = nrregist;
+    var iniseque = nriniseq;
+    var inidtpro = $('#inidtpro', '#' + frmOpcao).val();
+    var fimdtpro = $('#fimdtpro', '#' + frmOpcao).val();
+    var inivlpro = normalizaNumero($('#inivlpro', '#' + frmOpcao).val());
+    var fimvlpro = normalizaNumero($('#fimvlpro', '#' + frmOpcao).val());
+    var indconci = $('#indconci', '#' + frmOpcao).val();
+    var dscartor = $('#dscartor', '#' + frmOpcao).val();
+	
+    cTodosOpcao.removeClass('campoErro');
+
+    var mensagem = 'Aguarde, buscando dados ...';
+    showMsgAguardo(mensagem);
+
+    // Carrega dados da conta atraves de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/manprt/obtem_consulta_conciliacao.php',
         data:
 				{   
                     inidtpro: inidtpro,
@@ -200,6 +258,8 @@ function buscaOpcao() {
                 formataOpcaoT();
             } else if (cddopcao == 'R') {
                 formataOpcaoR();
+            } else if (cddopcao == 'C') {
+                formataOpcaoC();
             }
 
 			if (flgimped){
@@ -305,6 +365,54 @@ function formataOpcaoR() {
     return false;
 }
 
+function formataOpcaoC() {
+
+    highlightObjFocus($('#frmOpcao'));
+
+    $('#divFiltro').css({ 'border': '1px solid #777', 'padding': '10px', 'min-height': '50px' });
+
+    rInidtpro = $('label[for="inidtpro"]', '#' + frmOpcao);
+    rFimdtpro = $('label[for="fimdtpro"]', '#' + frmOpcao);
+    rInivlpro = $('label[for="inivlpro"]', '#' + frmOpcao);
+    rFimvlpro = $('label[for="fimvlpro"]', '#' + frmOpcao);
+    rNmrescop = $('label[for="nmrescop"]', '#' + frmOpcao);
+    rNrdconta = $('label[for="nrdconta"]', '#' + frmOpcao);
+    rCduflogr = $('label[for="cduflogr"]', '#' + frmOpcao);
+    rDscartor = $('label[for="dscartor"]', '#' + frmOpcao);
+    
+    rInidtpro.css({ 'width': '68px' }).addClass('rotulo');
+    rFimdtpro.css({ 'width': '85px' }).addClass('rotulo-linha');
+    rInivlpro.css({ 'width': '80px', 'margin-left':'50px' }).addClass('rotulo-linha');
+    rFimvlpro.css({ 'width': '80px' }).addClass('rotulo-linha');
+    rNmrescop.css({ 'width': '35px' }).addClass('rotulo-linha');
+    rNrdconta.css({ 'width': '63px' }).addClass('rotulo-linha');
+    rCduflogr.css({ 'margin-left':'43px' }).addClass('rotulo-linha');
+    rDscartor.css({ 'width': '120px', 'margin-left':'50px' }).addClass('rotulo-linha');
+        
+    cInidtpro = $('#inidtpro', '#' + frmOpcao);
+    cFimdtpro = $('#fimdtpro', '#' + frmOpcao);
+    cInivlpro = $('#inivlpro', '#' + frmOpcao);
+    cFimvlpro = $('#fimvlpro', '#' + frmOpcao);
+    cNmrescop = $('#nmrescop', '#' + frmOpcao);
+    cNrdconta = $('#nrdconta', '#' + frmOpcao);
+    cCduflogr = $('#cduflogr', '#' + frmOpcao);
+    cDscartor = $('#dscartor', '#' + frmOpcao);
+    
+    cInidtpro.css({ 'width': '75px' }).addClass('data');
+    cInidtpro.removeClass('campo');
+    cFimdtpro.css({ 'width': '75px' }).addClass('data');
+    cFimdtpro.removeClass('campo');
+    cInivlpro.css({ 'width': '50px' }).addClass('inteiro');
+    cFimvlpro.css({ 'width': '50px' }).addClass('inteiro');
+    cNmrescop.css({'width': '105px'}); 
+    cNrdconta.addClass('conta pesquisa').css({'width': '80px'});
+    cCduflogr.css('width', '25px').attr('maxlength', '2');
+    cDscartor.css({ 'width': '130px' });
+
+    layoutPadrao();
+    return false;
+}
+
 // botoes
 function btnVoltar() {
 
@@ -329,9 +437,16 @@ function btnContinuar() {
         }
         
         controlaLayout();
-        controlaOperacao(nriniseq, nrregist);
+        realizaoConsultaTed(nriniseq, nrregist);
     } else if (cddopcao == 'R') {
         controlaLayout();
+    } else if (cddopcao == 'C') {
+        if (!hasValidPeriod() || !hasValidRange()) {
+            return false;
+        }
+        
+        controlaLayout();
+        realizaoConsultaConciliacao(nriniseq, nrregist);
     }
 
     return false;
@@ -365,6 +480,13 @@ function controlaOpcao() {
         $('#divBotoes:eq(0)', '#divTela').remove();
         formataTabelaTeds();
         formataOpcaoT();
+        controlaLayout();
+        $('input, select', '#' + frmOpcao).desabilitaCampo();
+        $('#btVoltar', '#divBotoes').focus();
+    } else if (cddopcao == 'C') {
+        $('#divBotoes:eq(0)', '#divTela').remove();
+        formataTabelaConciliacoes();
+        formataOpcaoC();
         controlaLayout();
         $('input, select', '#' + frmOpcao).desabilitaCampo();
         $('#btVoltar', '#divBotoes').focus();
@@ -448,6 +570,105 @@ function formataTabelaTeds() {
     $('li:eq(1)', linha5).addClass('txtNormal').css({ 'width': '48%' });
     $('li:eq(2)', linha5).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
     $('li:eq(3)', linha5).addClass('txtNormal');
+
+    // seleciona o registro que é clicado
+    $('table > tbody > tr', divRegistro).die("click").live("click", function () {
+        selecionaTabela($(this));
+    });
+
+    // verifica o log do registro com duplo click na linha correspondente
+    //$('table > tbody > tr', divRegistro).die("dblclick").live("dblclick", function () {
+    //    buscaConsulta('log');
+    //});
+
+    //$('table > tbody > tr:eq(0)', divRegistro).click();
+
+    return false;
+}
+
+function formataTabelaConciliacoes() {
+
+    var divRegistro = $('div.divRegistros', '#' + frmTabela);
+    var tabela = $('table', divRegistro);
+    var linha = $('table > tbody > tr', divRegistro);
+
+    $('#' + frmTabela).css({ 'margin-top': '10px' });
+    divRegistro.css({ 'border': '1px solid #777', 'height': '130px'  });
+
+    var ordemInicial = new Array();
+    //ordemInicial = [[0,0]];	
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '210px';
+    arrayLargura[1] = '60px';
+    arrayLargura[2] = '50px';
+    arrayLargura[3] = '65px';
+    arrayLargura[4] = '45px';
+    arrayLargura[5] = '70px';
+    arrayLargura[6] = '70px';
+    arrayLargura[7] = '60px';
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'center';
+    arrayAlinha[2] = 'center';
+    arrayAlinha[3] = 'center';
+    arrayAlinha[4] = 'center';
+    arrayAlinha[5] = 'right';
+
+
+    var metodoTabela = '';
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
+
+    /********************
+	 FORMATA COMPLEMENTO	
+	*********************/
+    // complemento linha 1
+    var linha1 = $('ul.complemento', '#linha1').css({ 'margin-left': '1px', 'width': '99.5%' });
+
+    $('li:eq(0)', linha1).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
+    $('li:eq(1)', linha1).addClass('txtNormal').css({ 'width': '48%' });
+    $('li:eq(2)', linha1).addClass('txtNormalBold').css({ 'width': '15%', 'text-align': 'right' });
+    $('li:eq(3)', linha1).addClass('txtNormal');
+
+    // complemento linha 2
+    var linha2 = $('ul.complemento', '#linha2').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
+
+    $('li:eq(0)', linha2).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
+    $('li:eq(1)', linha2).addClass('txtNormal').css({ 'width': '48%' });
+    $('li:eq(2)', linha2).addClass('txtNormalBold').css({ 'width': '15%', 'text-align': 'right' });
+    $('li:eq(3)', linha2).addClass('txtNormal');
+
+    // complemento linha 3
+    var linha3 = $('ul.complemento', '#linha3').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
+
+    $('li:eq(0)', linha3).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
+    $('li:eq(1)', linha3).addClass('txtNormal').css({ 'width': '48%' });
+    $('li:eq(2)', linha3).addClass('txtNormalBold').css({ 'width': '15%', 'text-align': 'right' });
+    $('li:eq(3)', linha3).addClass('txtNormal');
+
+    // complemento linha 4
+    var linha4 = $('ul.complemento', '#linha4').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
+
+    $('li:eq(0)', linha4).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
+    $('li:eq(1)', linha4).addClass('txtNormal').css({ 'width': '48%' });
+    $('li:eq(2)', linha4).addClass('txtNormalBold').css({ 'width': '15%', 'text-align': 'right' });
+    $('li:eq(3)', linha4).addClass('txtNormal');
+
+    // complemento linha 5
+    var linha5 = $('ul.complemento', '#linha5').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
+
+    $('li:eq(0)', linha5).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
+    $('li:eq(1)', linha5).addClass('txtNormal').css({ 'width': '48%' });
+    $('li:eq(2)', linha5).addClass('txtNormalBold').css({ 'width': '15%', 'text-align': 'right' });
+    $('li:eq(3)', linha5).addClass('txtNormal');
+
+    var linha6 = $('ul.complemento', '#linha6').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
+
+    $('li:eq(0)', linha6).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
+    $('li:eq(1)', linha6).addClass('txtNormal').css({ 'width': '48%' });
+    $('li:eq(2)', linha6).addClass('txtNormalBold').css({ 'width': '15%', 'text-align': 'right' });
+    $('li:eq(3)', linha6).addClass('txtNormal');
 
     // seleciona o registro que é clicado
     $('table > tbody > tr', divRegistro).die("click").live("click", function () {
