@@ -2,7 +2,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0004 is
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0004
-      Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
+      Sistema  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : ESTE
       Autor    : Paulo Penteado (GFT) 
       Data     : Fevereio/2018.                   Ultima atualizacao: 16/02/2018
@@ -10,19 +10,22 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0004 is
       Dados referentes ao programa:
 
       Frequencia: -----
-      Objetivo  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN - Motor de Credito
+      Objetivo  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN - Motor de Credito
 
-      Alteracoes: 18/02/2018 Criação (Paulo Penteado (GFT))
+      Alteracoes: 18/02/2018 Criaçao (Paulo Penteado (GFT))
+
+                  23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
+                  Referentes a proposta. (Lindon Carlos Pecile - GFT)
 
   ---------------------------------------------------------------------------------------------------------------*/
   --> Rotina responsavel por montar o objeto json para analise de limite de desconto de títulos
   PROCEDURE pc_gera_json_analise_lim(pr_cdcooper   in crapass.cdcooper%type
                                     ,pr_cdagenci   in crapass.cdagenci%type
                                     ,pr_nrdconta   in crapass.nrdconta%type
-                                    ,pr_nrctrlim   in craplim.nrctrlim%type
-                                    ,pr_tpctrlim   in craplim.tpctrlim%type
-                                    ,pr_nrctaav1   in craplim.nrctaav1%type
-                                    ,pr_nrctaav2   in craplim.nrctaav2%type
+                                    ,pr_nrctrlim   in crawlim.nrctrlim%type
+                                    ,pr_tpctrlim   in crawlim.tpctrlim%type
+                                    ,pr_nrctaav1   in crawlim.nrctaav1%type
+                                    ,pr_nrctaav2   in crawlim.nrctaav2%type
                                     ---- OUT ----
                                     ,pr_dsjsonan  out nocopy json             --> Retorno do clob em modelo json com os dados para analise
                                     ,pr_cdcritic  out number                  --> Codigo da critica
@@ -34,9 +37,9 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0004 is
                                  ,pr_cdagenci in crapage.cdagenci%type
                                  ,pr_cdoperad in crapope.cdoperad%type
                                  ,pr_nrdconta in crawepr.nrdconta%type
-                                 ,pr_nrctrlim in craplim.nrctrlim%type
-                                 ,pr_tpctrlim in craplim.tpctrlim%type
-                                 ,pr_nmarquiv in varchar2               --> Diretorio e nome do arquivo pdf da proposta de emprestimo
+                                 ,pr_nrctrlim in crawlim.nrctrlim%type
+                                 ,pr_tpctrlim in crawlim.tpctrlim%type
+                                 ,pr_nmarquiv in varchar2                --> Diretorio e nome do arquivo pdf da proposta de emprestimo
                                  ---- OUT ----
                                  ,pr_proposta out json                   --> Retorno do clob em modelo json da proposta de emprestimo
                                  ,pr_cdcritic out number                 --> Codigo da critica
@@ -46,7 +49,22 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0004 is
 END ESTE0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
+  /* ---------------------------------------------------------------------------------------------------------------
 
+      Programa : ESTE0004
+      Sistema  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
+      Sigla    : CADA
+      Autor    : Paulo Penteado (Gft)
+      Data     : Março/2018.                   Ultima atualizacao: 23/03/2018
+      
+      Dados referentes ao programa:
+      Frequencia: Sempre que solicitado
+      Objetivo  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
+
+      Alteracoes: 23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
+                  Referentes a proposta. (Lindon Carlos Pecile - GFT)
+  
+  ---------------------------------------------------------------------------------------------------------------*/
     
 PROCEDURE pc_gera_json_pessoa_ass(pr_cdcooper in crapass.cdcooper%type
                                  ,pr_nrdconta in crapass.nrdconta%type
@@ -59,10 +77,10 @@ PROCEDURE pc_gera_json_pessoa_ass(pr_cdcooper in crapass.cdcooper%type
                                  ,pr_dscritic out varchar2) is
 BEGIN
    /*..........................................................................
-     Objetivo  : Rotina responsavel por buscar todas as informações cadastrais
+     Objetivo  : Rotina responsavel por buscar todas as informaçoes cadastrais
      ..........................................................................*/
 DECLARE
-   -- Variáveis para exceções
+   -- Variáveis para exceçoes
    vr_cdcritic pls_integer;
    vr_dscritic varchar2(4000);
    vr_exc_saida exception;
@@ -232,7 +250,7 @@ DECLARE
    and    ass.nrdconta = pr_nrdconta;
    rw_crapass cr_crapass%rowtype;
        
-   --     Buscar informações do primeiro titular 
+   --     Buscar informaçoes do primeiro titular 
    cursor cr_crapttl is
    select ttl.nmextttl
          ,ttl.dtcnscpf
@@ -335,7 +353,7 @@ DECLARE
         and nrdconta = pr_nrdconta;
    vr_flglibera_pre_aprv tbepr_param_conta.flglibera_pre_aprv%type := 0;
     
-   -- Data Ultima Revisão Cadastral
+   -- Data Ultima Revisao Cadastral
    cursor cr_revisa is
      select max(crapalt.dtaltera)
        from crapalt
@@ -361,14 +379,14 @@ DECLARE
         and nrdconta = pr_nrdconta;
    vr_qtdepend number;
        
-   -- Buscar descrição
+   -- Buscar descriçao
    cursor cr_nature(pr_natjurid in crapjur.natjurid%type) is
      select gncdntj.dsnatjur
        from gncdntj
       where gncdntj.cdnatjur = pr_natjurid;
    vr_dsnatjur gncdntj.dsnatjur%type;
   
-  -- Buscar descrição
+  -- Buscar descriçao
 cursor cr_ramatv(pr_cdseteco in gnrativ.cdseteco%type
                 ,pr_cdrmativ in gnrativ.cdrmativ%type) is
  select gnrativ.nmrmativ
@@ -377,14 +395,14 @@ cursor cr_ramatv(pr_cdseteco in gnrativ.cdseteco%type
    and gnrativ.cdrmativ = pr_cdrmativ;    
 vr_dsramatv gnrativ.nmrmativ%type;
   
-   -- Buscar descrição
+   -- Buscar descriçao
    cursor cr_cnae(pr_cdclcnae in crapass.cdclcnae%type) is
      select dscnae
        from tbgen_cnae
       where cdcnae = pr_cdclcnae;
    vr_dscnae tbgen_cnae.dscnae%type;
     
-   -- Buscar informações de faturamento 
+   -- Buscar informaçoes de faturamento 
    cursor cr_crapjfn is
      select jfn.perfatcl
            ,'01' || to_char(jfn.mesftbru##1, 'fm00') || to_char(jfn.anoftbru##1, 'fm0000') dtfatme1
@@ -416,7 +434,7 @@ vr_dsramatv gnrativ.nmrmativ%type;
         and jfn.nrdconta = pr_nrdconta;
    rw_crapjfn cr_crapjfn%rowtype;
     
-   -- Buscar ultimas operações de Crédito Liquidadas      
+   -- Buscar ultimas operaçoes de Crédito Liquidadas      
    cursor cr_crapepr is
      select epr.nrctremp
            ,epr.vlemprst
@@ -440,7 +458,7 @@ vr_dsramatv gnrativ.nmrmativ%type;
         and fin.cdfinemp = epr.cdfinemp
       order by epr.dtultpag desc;
     
-   -- Busca data da Liquidação        
+   -- Busca data da Liquidaçao        
    cursor cr_dtliquid(pr_nrctremp in crapepr.nrctremp%type) is
      select max(lem.dtmvtolt)
        from craplem lem
@@ -521,6 +539,7 @@ vr_dsramatv gnrativ.nmrmativ%type;
    rw_crawepr_outras cr_crawepr_outras%rowtype;
       
    -- Buscar Contrato Limite Crédito
+   /*
    cursor cr_craplim_chqesp is
      select lim.dtinivig
            ,lim.vllimite
@@ -529,15 +548,25 @@ vr_dsramatv gnrativ.nmrmativ%type;
         and lim.nrdconta = pr_nrdconta
         and lim.insitlim = 2; -- Ativo
    rw_craplim_chqesp cr_craplim_chqesp%rowtype;
-    
-   -- Buscar ultimas ocorrências de Cheques Devolvidos
+   */ 
+   -- Buscar Proposta Limite Crédito
+   cursor cr_crawlim_chqesp is
+     select lim.dtinivig
+           ,lim.vllimite
+       from crawlim lim
+      where lim.cdcooper = pr_cdcooper
+        and lim.nrdconta = pr_nrdconta
+        and lim.insitlim = 2; -- Ativo
+   rw_crawlim_chqesp cr_crawlim_chqesp%rowtype;
+
+   -- Buscar ultimas ocorrencias de Cheques Devolvidos
    cursor cr_crapneg_cheq(pr_qtmeschq     in integer
                       ,pr_qtmeschqal11 in integer
            ,pr_qtmeschqal12 in integer) is
      select dtiniest
            ,vlestour
            ,cdobserv
-    ,rownum
+           ,rownum
        from crapneg
       where crapneg.cdcooper = pr_cdcooper
         and crapneg.cdhisest = 1 /* Dev Cheques */
@@ -576,7 +605,7 @@ vr_dsramatv gnrativ.nmrmativ%type;
         and dtfimatr is null;
    rw_crapatr cr_crapatr%rowtype;
     
-   -- Buscar as informações do Arquivo SCR
+   -- Buscar as informaçoes do Arquivo SCR
    cursor cr_crapopf is
      select qtopesfn
            ,qtifssfn
@@ -663,7 +692,7 @@ vr_dsramatv gnrativ.nmrmativ%type;
         and segnov.indsituacao in('A','R','E')
         and segnov.nrapolice > 0;
     
-   -- Verificar se há bloqueio de aplicações na conta
+   -- Verificar se há bloqueio de aplicaçoes na conta
    cursor cr_crapblj is
      select sum(vlbloque)
        from crapblj
@@ -672,7 +701,9 @@ vr_dsramatv gnrativ.nmrmativ%type;
         and cdmodali = 2
         and dtblqfim is null;
    vr_vlbloque crapblj.vlbloque%type;
-   -- Verificar se há bloqueio de aplicações na conta
+
+  
+  -- Verificar se há bloqueio de aplicaçoes na conta
    cursor cr_crapblj_pp is
      select sum(vlbloque)
        from crapblj
@@ -682,7 +713,7 @@ vr_dsramatv gnrativ.nmrmativ%type;
         and dtblqfim is null;
    vr_vlbloque_pp crapblj.vlbloque%type;
     
-   -- Buscar contrato de desconto cheques
+  -- Buscar contrato de desconto cheques
    cursor cr_craplim_chq is
      select dtinivig
            ,vllimite
@@ -693,7 +724,8 @@ vr_dsramatv gnrativ.nmrmativ%type;
         and craplim.insitlim = 2; /* ATIVO */
    rw_craplim_chq cr_craplim_chq%rowtype;
     
-   -- Buscar borderôs ativos
+
+  -- Buscar borderôs ativos
    cursor cr_crapcdb(pr_dtmvtolt in crapdat.dtmvtolt%type) is
      select sum(vlcheque) vlcheque
        from crapcdb
@@ -713,7 +745,7 @@ vr_dsramatv gnrativ.nmrmativ%type;
         and craplim.tpctrlim = 3
         and craplim.insitlim = 2; /* ATIVO */
    rw_craplim_tit cr_craplim_tit%rowtype;
-    
+   
    -- Buscar borderôs ativos
    cursor cr_craptdb(pr_dtmvtolt in crapdat.dtmvtolt%type) is
      select sum(vltitulo) vltitulo
@@ -773,7 +805,7 @@ vr_dsramatv gnrativ.nmrmativ%type;
       where cdcooper = pr_cdcooper
         and nrdconta = pr_nrdconta
         and nrctremp = pr_nrctremp
-        and cdhistor not in (99, 98, 443) -- Remover liberação, juros e Multa
+        and cdhistor not in (99, 98, 443) -- Remover liberaçao, juros e Multa
         and dtmvtolt >= add_months(pr_dtmvtolt, -pr_qthisemp) -- Nos ultimos XX meses
         and vlpreemp > 0;
 vr_vlpclpag number(25,10);
@@ -800,7 +832,7 @@ vr_vltotbem number;
         and crapsda.dtmvtolt >= pr_dtiniest         
        order by crapsda.dtmvtolt desc;
       
-   -- Cursor para verificar se o cooperado teve linha de credito no periodo
+   -- Cursor para verificar se o cooperado teve contrato de linha de credito no periodo
    cursor cr_craplim (pr_cdcooper craplim.cdcooper%type,
                       pr_nrdconta craplim.nrdconta%type,
                       pr_dtiniest craplim.dtinivig%type) is
@@ -812,11 +844,24 @@ vr_vltotbem number;
         and nvl(lim.dtfimvig,pr_dtiniest) >= pr_dtiniest;
    rw_craplim cr_craplim%rowtype;
    
+   -- Cursor para verificar se o cooperado teve proposta linha de credito no periodo
+   
+   cursor cr_crawlim (pr_cdcooper crawlim.cdcooper%type,
+                      pr_nrdconta crawlim.nrdconta%type,
+                      pr_dtiniest crawlim.dtinivig%type) is
+     select 1 
+       from crawlim lim
+      where lim.cdcooper = pr_cdcooper
+        and lim.nrdconta = pr_nrdconta
+        and lim.insitlim in (2,3)
+        and nvl(lim.dtfimvig,pr_dtiniest) >= pr_dtiniest;
+   --rw_crawlim cr_crawlim%rowtype;
+
     BEGIN
       --Verificar se a data existe
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-      -- Se não encontrar
+      -- Se nao encontrar
       IF BTCH0001.cr_crapdat%NOTFOUND THEN
         -- Montar mensagem de critica
         vr_cdcritic:= 1;
@@ -827,12 +872,12 @@ vr_vltotbem number;
         CLOSE BTCH0001.cr_crapdat;
       END IF; 
   
-      -- Buscar informações cadastrais da conta
+      -- Buscar informaçoes cadastrais da conta
       OPEN cr_crapass;
       FETCH cr_crapass
         INTO rw_crapass;
     
-      -- Se não encontrar registro
+      -- Se nao encontrar registro
       IF cr_crapass%NOTFOUND THEN
         CLOSE cr_crapass;
         -- Sair acusando critica 9
@@ -849,7 +894,7 @@ vr_vltotbem number;
                                               ,pr_cdempres => 11
                                               ,pr_cdacesso => 'TAXATABELA'
                                               ,pr_tpregist => 0);
-      -- Se a primeira posição do campo
+      -- Se a primeira posiçao do campo
       -- dstextab for diferente de zero
       vr_inusatab:= SUBSTR(vr_dstextab,1,1) != '0'; 
       
@@ -865,10 +910,10 @@ vr_vltotbem number;
                                     ,pr_rw_crapdat => rw_crapdat      --> Vetor com dados de parametro (CRAPDAT)
                                     ,pr_nrctremp   => 0               --> Numero contrato emprestimo
                                     ,pr_cdprogra   => 'B1WGEN0001'    --> Programa conectado
-                                    ,pr_inusatab   => vr_inusatab     --> Indicador de utilizacão da tabela
+                                    ,pr_inusatab   => vr_inusatab     --> Indicador de utilizacao da tabela
                                     ,pr_flgerlog   => 'N'             --> Gerar log S/N
                                     ,pr_vlsdeved   => vr_vlendivi     --> Saldo devedor calculado
-                                    ,pr_vltotpre   => vr_vltotpre     --> Valor total das prestacães
+                                    ,pr_vltotpre   => vr_vltotpre     --> Valor total das prestacaes
                                     ,pr_qtprecal   => vr_qtprecal     --> Parcelas calculadas
                                     ,pr_des_reto   => vr_des_reto     --> Retorno OK / NOK
                                     ,pr_tab_erro   => vr_tab_erro);   --> Tabela com possives erros
@@ -997,7 +1042,7 @@ vr_vltotbem number;
         vr_obj_generico.put('endereco', vr_obj_generic2);
       END IF;
     
-      -- Montar informações Adicionais
+      -- Montar informaçoes Adicionais
       vr_obj_generic2 := json();
     
       -- Caixa Postal
@@ -1012,7 +1057,7 @@ vr_vltotbem number;
       -- Agencia
       vr_obj_generic2.put('agenci', rw_crapass.cdagenci);
     
-    -- Data Admissão Coop
+    -- Data Admissao Coop
    vr_obj_generic2.put('dataAdmissaoCoop', este0002.fn_data_ibra_motor(NVL(rw_crapass.dtmvtolt,rw_crapass.dtadmiss)));
    
       -- Matricula
@@ -1022,7 +1067,7 @@ vr_vltotbem number;
       vr_obj_generic2.put('tipoConta'
                          ,rw_crapass.cdtipcta);
     
-      -- Situação da Conta
+      -- Situaçao da Conta
       vr_obj_generic2.put('situacaoConta'
                          ,rw_crapass.cdsitdct);
     
@@ -1038,7 +1083,7 @@ vr_vltotbem number;
                            ,rw_crapenc.incasprp);
       END IF;
       
-      -- Valor do Imovel (Somente quando não for alugado)
+      -- Valor do Imovel (Somente quando nao for alugado)
       IF rw_crapenc.vlalugue > 0 AND rw_crapenc.incasprp NOT IN (0, 3) THEN
         vr_obj_generic2.put('valorImovel',este0001.fn_decimal_ibra(rw_crapenc.vlalugue));
         vr_obj_generic2.put('valorAluguel',este0001.fn_decimal_ibra(0));
@@ -1059,13 +1104,13 @@ vr_vltotbem number;
    -- Se o titular possui bens
    vr_obj_generic2.put('valorTotalBens', este0001.fn_decimal_ibra(vr_vltotbem));
    
-      -- Data de Inicio de Residência
+      -- Data de Inicio de Residencia
       IF rw_crapenc.dtinires IS NOT NULL THEN
         vr_obj_generic2.put('inicioResidImovel'
                            ,este0002.fn_data_ibra_motor(rw_crapenc.dtinires));
       END IF;
     
-      -- Data de demissão na Cooperativa
+      -- Data de demissao na Cooperativa
       IF rw_crapass.dtelimin IS NOT NULL THEN
         vr_obj_generic2.put('dataDemissao'
                            ,este0002.fn_data_ibra_motor(rw_crapass.dtelimin));
@@ -1077,7 +1122,7 @@ vr_vltotbem number;
               ,este0002.fn_data_ibra_motor(rw_crapass.dtcnsspc));
    END IF;
       
-   -- Data da inclusão no SPC pela cooperativa
+   -- Data da inclusao no SPC pela cooperativa
    IF rw_crapass.dtdsdspc IS NOT NULL THEN
         vr_obj_generic2.put('dataInclusaoSPCpelaCoop'
                            ,este0002.fn_data_ibra_motor(rw_crapass.dtdsdspc));
@@ -1154,7 +1199,7 @@ vr_vltotbem number;
       vr_obj_generic2.put('liberaPreAprovad', (nvl(vr_flglibera_pre_aprv,0)=1));
       vr_obj_generic2.put('limitePreAprovado', este0001.fn_decimal_ibra(nvl(vr_vllimdis,0)));
 
-      -- Data Ultima Revisão Cadastral      
+      -- Data Ultima Revisao Cadastral      
       OPEN cr_revisa;
       FETCH cr_revisa
         INTO vr_dtaltera;
@@ -1176,7 +1221,7 @@ vr_vltotbem number;
       vr_obj_generic2.put('estaDCTROR'
                          ,(NVL(rw_crapass.cdsitdtl,0) = 2));
           
-      -- Buscar as informações do Arquivo SCR   
+      -- Buscar as informaçoes do Arquivo SCR   
       OPEN cr_crapopf;
       FETCH cr_crapopf
         INTO rw_crapopf;
@@ -1190,7 +1235,7 @@ vr_vltotbem number;
           INTO rw_crapvop;
         CLOSE cr_crapvop;    
           
-        -- Enfim, enviar as informações ao JSON
+        -- Enfim, enviar as informaçoes ao JSON
         vr_obj_generic2.put('conscrOpSFN'
                            ,este0001.fn_decimal_ibra(rw_crapvop.vlopesfn));
         vr_obj_generic2.put('conscrOpVenc'
@@ -1204,7 +1249,7 @@ vr_vltotbem number;
       ELSE         
         CLOSE cr_crapopf;
         
-        -- Enfim, enviar as informações ao JSON
+        -- Enfim, enviar as informaçoes ao JSON
         vr_obj_generic2.put('conscrOpSFN'
                            ,este0001.fn_decimal_ibra(0));
         vr_obj_generic2.put('conscrOpVenc'
@@ -1228,7 +1273,7 @@ vr_vltotbem number;
       vr_obj_generic2.put('somaOperacoesAndamento',este0001.fn_decimal_ibra(nvl(rw_crawepr_outras.vlsdeved,0)));
       vr_obj_generic2.put('somaPrestacoesAndamento',este0001.fn_decimal_ibra(nvl(rw_crawepr_outras.vlpreemp,0)));
       
-      -- Soma das Operações em Andamento
+      -- Soma das Operaçoes em Andamento
       vr_obj_generic2.put('somaOperacoes',este0001.fn_decimal_ibra(nvl(vr_vlendivi,0)));
       vr_obj_generic2.put('somaPrestacoes',este0001.fn_decimal_ibra(nvl(vr_vltotpre,0)));
       
@@ -1251,10 +1296,10 @@ vr_vltotbem number;
           vr_obj_generic2.put('naturalidadeDescricao', rw_crapttl.dsnatura);
         END IF;
       
-        -- Habilitação Menor
+        -- Habilitaçao Menor
         vr_obj_generic2.put('reponsabiLegal',rw_crapttl.inhabmen);
       
-        -- Data Emancipação
+        -- Data Emancipaçao
         IF rw_crapttl.dthabmen IS NOT NULL THEN
           vr_obj_generic2.put('dataEmancipa'
                              ,este0002.fn_data_ibra_motor(rw_crapttl.dthabmen));
@@ -1279,7 +1324,7 @@ vr_vltotbem number;
                              ,este0002.fn_data_ibra_motor(rw_crapttl.dtcnscpf));
         END IF;
       
-        -- Situação CPF
+        -- Situaçao CPF
         vr_obj_generic2.put('situacaoCPF'
                            ,rw_crapttl.cdsitcpf);
       
@@ -1298,13 +1343,13 @@ vr_vltotbem number;
                
         END IF;
       
-        -- Natureza Ocupação
+        -- Natureza Ocupaçao
         IF rw_crapttl.cdnatopc <> 0 THEN
           vr_obj_generic2.put('naturezaOcupacao'
                              ,rw_crapttl.cdnatopc);
         END IF;
       
-        -- Ocupação
+        -- Ocupaçao
         IF rw_crapttl.cdocpttl <> 0 THEN
           vr_obj_generic2.put('ocupacaoCodigo'
                              ,rw_crapttl.cdocpttl);
@@ -1330,7 +1375,7 @@ vr_vltotbem number;
                              ,rw_crapttl.cdturnos);
         END IF;
       
-        -- Data Admissão
+        -- Data Admissao
         IF rw_crapttl.dtadmemp IS NOT NULL THEN
           vr_obj_generic2.put('dataAdmissao'
                              ,este0002.fn_data_ibra_motor(rw_crapttl.dtadmemp));
@@ -1377,7 +1422,7 @@ vr_vltotbem number;
                              ,este0002.fn_data_ibra_motor(rw_crapass.dtcnscpf));
         END IF;
       
-        -- Situação CNPJ
+        -- Situaçao CNPJ
         vr_obj_generic2.put('situacaoCNPJ'
                            ,rw_crapass.cdsitcpf);
       
@@ -1388,7 +1433,7 @@ vr_vltotbem number;
       
         -- Natureza Juridica
         IF rw_crapjur.natjurid <> 0 THEN
-          -- Buscar descrição          
+          -- Buscar descriçao          
           OPEN cr_nature(rw_crapjur.natjurid);
           FETCH cr_nature
             INTO vr_dsnatjur;
@@ -1408,7 +1453,7 @@ vr_vltotbem number;
       
         -- Ramo Atividade
         IF rw_crapjur.cdseteco <> 0 AND rw_crapjur.cdrmativ <> 0 THEN
-          -- Buscar descrição          
+          -- Buscar descriçao          
           OPEN cr_ramatv(rw_crapjur.cdseteco
                    ,rw_crapjur.cdrmativ);
           FETCH cr_ramatv
@@ -1425,7 +1470,7 @@ vr_vltotbem number;
         -- Setor Economico
         IF rw_crapjur.cdseteco <> 0 THEN
         
-          -- Buscar descrição
+          -- Buscar descriçao
           vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                    ,pr_nmsistem => 'CRED'
                                                    ,pr_tptabela => 'GENERI'
@@ -1484,19 +1529,19 @@ vr_vltotbem number;
           vr_obj_generic2.put('numeroRegistroEmpresa', rw_crapjur.nrregemp);
         END IF;
       
-        -- Data Inscrição Municipal
+        -- Data Inscriçao Municipal
         IF rw_crapjur.dtinsnum IS NOT NULL THEN
           vr_obj_generic2.put('dataInscricMunicipal'
                              ,este0002.fn_data_ibra_motor(rw_crapjur.dtinsnum));
         END IF;
       
-        -- Numero Inscrição Municipal
+        -- Numero Inscriçao Municipal
         IF rw_crapjur.nrinsmun <> 0 THEN
           vr_obj_generic2.put('numeroInscricMunicipal'
                              ,rw_crapjur.nrinsmun);
         END IF;
       
-        -- Numero Inscrição Estadual
+        -- Numero Inscriçao Estadual
         IF rw_crapjur.nrinsest <> 0 THEN
           vr_obj_generic2.put('numeroInscricEstadual', rw_crapjur.nrinsest);
         END IF;
@@ -1512,7 +1557,7 @@ vr_vltotbem number;
       
         -- CNAE
         IF rw_crapass.cdclcnae <> 0 THEN
-          -- Buscar descrição          
+          -- Buscar descriçao          
           OPEN cr_cnae(rw_crapass.cdclcnae);
           FETCH cr_cnae
             INTO vr_dscnae;
@@ -1524,7 +1569,7 @@ vr_vltotbem number;
                              ,vr_dscnae);               
         END IF;
       
-        -- Buscar informações do Faturamento
+        -- Buscar informaçoes do Faturamento
         OPEN cr_crapjfn;
         FETCH cr_crapjfn
           INTO rw_crapjfn;
@@ -1607,7 +1652,7 @@ vr_vltotbem number;
       /* Inicializar */  
       vr_qqdiacheq := 0;
     
-      /* Obter as informaões de estouro do cooperado */
+      /* Obter as informaoes de estouro do cooperado */
       RISC0001.pc_lista_estouros( pr_cdcooper      => pr_cdcooper     --> Codigo Cooperativa
                                  ,pr_cdoperad      => '1'             --> Operador conectado
                                  ,pr_nrdconta      => pr_nrdconta     --> Numero da Conta
@@ -1615,7 +1660,7 @@ vr_vltotbem number;
                                  ,pr_idseqttl      => 1               --> Sequencial do Titular
                                  ,pr_nmdatela      => 'RATI0001'      --> Nome da tela
                                  ,pr_dtmvtolt      => rw_crapdat.dtmvtolt --> Data do movimento
-                                 ,pr_tab_estouros  => vr_tab_estouros --> Informações de estouro na conta
+                                 ,pr_tab_estouros  => vr_tab_estouros --> Informaçoes de estouro na conta
                                  ,pr_dscritic      => vr_dscritic);   --> Retorno de erro
 
       -- verificar se retornou critica
@@ -1630,7 +1675,7 @@ vr_vltotbem number;
       IF vr_tab_estouros.count > 0 THEN
         FOR I IN vr_tab_estouros.FIRST..vr_tab_estouros.LAST LOOP
           IF vr_tab_estouros(I).dtiniest >= vr_dtiniest AND vr_tab_estouros(I).cdhisest  = 'Estouro' THEN
-            -- Para cada registro de Estouro, criar objeto para a operação e enviar suas informações 
+            -- Para cada registro de Estouro, criar objeto para a operaçao e enviar suas informaçoes 
             vr_obj_generic3 := json();        
             
             vr_obj_generic3.put('quantDiaEstouro', vr_tab_estouros(I).qtdiaest);
@@ -1639,7 +1684,7 @@ vr_vltotbem number;
             vr_obj_generic3.put('valorEstouro'
                                ,este0001.fn_decimal_ibra(vr_tab_estouros(I).vlestour));
                                
-            -- Adicionar Operação na lista
+            -- Adicionar Operaçao na lista
             vr_lst_generic3.append(vr_obj_generic3.to_json_value());  
             
 
@@ -1647,19 +1692,18 @@ vr_vltotbem number;
         END LOOP;
       END IF;
       
-      -- Adicionar o array Estouros no objeto informações adicionais
-   vr_obj_generic2.put('estouro', vr_lst_generic3);  
-      
-      
+      -- Adicionar o array Estouros no objeto informaçoes adicionais
+      vr_obj_generic2.put('estouro', vr_lst_generic3);  
       
       -- Verificar se cooperado possui contrato de
       -- limite de credito no periodo
       OPEN cr_craplim( pr_cdcooper => pr_cdcooper,
                        pr_nrdconta => pr_nrdconta,
                        pr_dtiniest => vr_dtiniest);
-      FETCH cr_craplim INTO rw_craplim;
+      FETCH cr_craplim INTO rw_craplim;      
       
-      -- se não possuir contrato de limite de credito, não precisa
+      
+      -- se nao possuir contrato de limite de credito, nao precisa
       -- verificar a sda
       IF cr_craplim%NOTFOUND THEN                 
         CLOSE cr_craplim;
@@ -1685,6 +1729,39 @@ vr_vltotbem number;
         END LOOP;
       END IF; -- FIM IF cr_craplim%NOTFOUND 
 
+
+
+      -- se nao possuir proposta de limite de credito, nao precisa
+      -- verificar a sda
+      IF cr_crawlim%NOTFOUND THEN                 
+        CLOSE cr_crawlim;
+      ELSE
+        CLOSE cr_crawlim;                  
+        -- Varrer tabela de saldo do dia
+        FOR rw_crapsda IN cr_crapsda ( pr_cdcooper => pr_cdcooper,
+                                       pr_nrdconta => pr_nrdconta,
+                                       pr_dtiniest => vr_dtiniest) LOOP
+
+          -- se o saldo for negativo e o maior que o limite de credito
+          IF rw_crapsda.vlsddisp < 0  AND
+             rw_crapsda.vlsddisp >= (rw_crapsda.vllimcre*-1) THEN
+            vr_qtdiaat2 := nvl(vr_qtdiaat2,0) + 1;
+          ELSE
+            -- armazenar maior data
+            IF nvl(vr_qtdiaat2,0) > nvl(vr_qqdiacheq,0) THEN
+              vr_qqdiacheq := nvl(vr_qtdiaat2,0);
+            END IF;
+            vr_qtdiaat2 := 0;
+          END IF;
+
+        END LOOP;
+      END IF; -- FIM IF cr_crawlim%NOTFOUND 
+
+      
+      
+      
+      
+
       IF vr_qqdiacheq = 0  THEN
         vr_qqdiacheq := vr_qtdiaat2;
       END IF;
@@ -1693,21 +1770,21 @@ vr_vltotbem number;
         vr_qqdiacheq := vr_qtdiaat2;
       END IF;
     
-      -- Enviar informações de Cheque Especial 
+      -- Enviar informaçoes de Cheque Especial 
       vr_obj_generic2.put('quantDiasChequeEspecial', NVL(vr_qqdiacheq,0));
       
       -- Buscar Contrato Limite Crédito    
-      OPEN cr_craplim_chqesp;
-      FETCH cr_craplim_chqesp
-        INTO rw_craplim_chqesp;
-      CLOSE cr_craplim_chqesp;
+      OPEN cr_crawlim_chqesp;
+      FETCH cr_crawlim_chqesp
+        INTO rw_crawlim_chqesp;
+      CLOSE cr_crawlim_chqesp;
     
-      -- Enviar as informações do limite de crédito (somente se houver limite de crédito)
-      IF rw_craplim_chqesp.vllimite > 0 THEN
+      -- Enviar as informaçoes do limite de crédito (somente se houver limite de crédito)
+      IF rw_crawlim_chqesp.vllimite > 0 THEN
         vr_obj_generic2.put('dataContratoLimiteCred'
-                           ,este0002.fn_data_ibra_motor(rw_craplim_chqesp.dtinivig));
+                           ,este0002.fn_data_ibra_motor(rw_crawlim_chqesp.dtinivig));
         vr_obj_generic2.put('limiteCredito'
-                           ,este0001.fn_decimal_ibra(rw_craplim_chqesp.vllimite));
+                           ,este0001.fn_decimal_ibra(rw_crawlim_chqesp.vllimite));
       
         -- Enviar saldo utilizado do limite de crédito
         if  vr_tab_sald.count > 0 then
@@ -1715,7 +1792,7 @@ vr_vltotbem number;
                 -- Se temos adiantamento a depositante 
                 IF  vr_vladtdep < 0 THEN
                     -- Estamos usando todo o limite
-                    vr_obj_generic2.put('saldoUtilizLimiteCredito',este0001.fn_decimal_ibra(rw_craplim_chqesp.vllimite));
+                    vr_obj_generic2.put('saldoUtilizLimiteCredito',este0001.fn_decimal_ibra(rw_crawlim_chqesp.vllimite));
                 ELSE
                     -- O Saldo negativo é o valor utilizado 
                     vr_obj_generic2.put('saldoUtilizLimiteCredito',este0001.fn_decimal_ibra(vr_tab_sald(0).vlsddisp));
@@ -1744,7 +1821,7 @@ vr_vltotbem number;
                                 ,pr_cdcritic        => vr_cdcritic
                                 ,pr_dscritic        => vr_dscritic);
     
-      -- Testar erros e se não houver, enviar os Saldos Médios
+      -- Testar erros e se nao houver, enviar os Saldos Médios
       IF vr_tab_comp_medias.count > 0 THEN 
         vr_obj_generic2.put('saldoMedioAtual'
                            ,este0001.fn_decimal_ibra(vr_tab_comp_medias(vr_tab_comp_medias.first).vltsddis));
@@ -1761,7 +1838,7 @@ vr_vltotbem number;
                            ,este0001.fn_decimal_ibra(0));
       END IF;
       
-      -- Acionar rotina de ocorrências na conta 
+      -- Acionar rotina de ocorrencias na conta 
       cada0004.pc_lista_ocorren(pr_cdcooper    => pr_cdcooper
                                ,pr_cdagenci    => 1
                                ,pr_nrdcaixa    => 1
@@ -1835,7 +1912,7 @@ vr_vltotbem number;
       -- Enviar flag se tem DebAutomático
       vr_obj_generic2.put('temDebaut', vr_temdebaut);
     
-      -- Buscar informações e Saldos das Aplicações 
+      -- Buscar informaçoes e Saldos das Aplicaçoes 
       apli0002.pc_obtem_dados_aplicacoes(pr_cdcooper       => pr_cdcooper --Codigo Cooperativa
                                         ,pr_cdagenci       => 1 --Codigo Agencia
                                         ,pr_nrdcaixa       => 1 --Numero do Caixa
@@ -1883,28 +1960,28 @@ vr_vltotbem number;
                                         ,pr_idorigem => 5 --> AYLLOS WEB 
                                         ,pr_nrdconta => pr_nrdconta --> Número da Conta
                                         ,pr_idseqttl => 1 --> Titular da Conta
-                                        ,pr_nraplica => 0 --> Número da Aplicação / Parâmetro Opcional
+                                        ,pr_nraplica => 0 --> Número da Aplicaçao / Parâmetro Opcional
                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data de Movimento
                                         ,pr_cdprodut => 0 --> Código do Produto -–> Parâmetro Opcional
                                         ,pr_idblqrgt => 1 --> Identificador de Bloqueio de Resgate  
-                                        ,pr_idgerlog => 0 --> Identificador de Log (0 – Não / 1 – Sim)
-                                        ,pr_vlsldtot => vr_vlsldtot --> Saldo Total da Aplicação
+                                        ,pr_idgerlog => 0 --> Identificador de Log (0 – Nao / 1 – Sim)
+                                        ,pr_vlsldtot => vr_vlsldtot --> Saldo Total da Aplicaçao
                                         ,pr_vlsldrgt => vr_vlsldrgt --> Saldo Total para Resgate
                                         ,pr_cdcritic => vr_cdcritic --> Código da crítica
-                                        ,pr_dscritic => vr_dscritic); --> Descrição da crítica
+                                        ,pr_dscritic => vr_dscritic); --> Descriçao da crítica
       IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
     
       vr_vlsldapl := vr_vlsldapl + vr_vlsldrgt;
     
-      -- Verificar se há bloqueio de aplicações na conta      
+      -- Verificar se há bloqueio de aplicaçoes na conta      
       OPEN cr_crapblj;
       FETCH cr_crapblj
         INTO vr_vlbloque;
       CLOSE cr_crapblj;
     
-      -- Enviar informações das aplicações para o JSON
+      -- Enviar informaçoes das aplicaçoes para o JSON
       vr_obj_generic2.put('temAplicacao'
                          ,(nvl(vr_vlsldapl,0) > 0));
       vr_obj_generic2.put('temAplicacaoBloqueada'
@@ -1927,7 +2004,7 @@ vr_vltotbem number;
                                                      ,pr_tpregist => 0));
                                                                                  
     
-      -- Buscar informações e Saldos das Poupanças Programadas
+      -- Buscar informaçoes e Saldos das Poupanças Programadas
       apli0001.pc_consulta_poupanca(pr_cdcooper      => pr_cdcooper --> Cooperativa 
                                    ,pr_cdagenci      => 1 --> Codigo da Agencia
                                    ,pr_nrdcaixa      => 1 --> Numero do caixa 
@@ -1962,13 +2039,13 @@ vr_vltotbem number;
         RAISE vr_exc_saida;
       END IF;
     
-      -- Verificar se há bloqueio de aplicações na conta          
+      -- Verificar se há bloqueio de aplicaçoes na conta          
       OPEN cr_crapblj_pp;
       FETCH cr_crapblj_pp
         INTO vr_vlbloque_pp;
       CLOSE cr_crapblj_pp;
     
-      -- Enviar informações das aplicações para o JSON
+      -- Enviar informaçoes das aplicaçoes para o JSON
       vr_obj_generic2.put('temPoupProgram'
                          ,(nvl(vr_vlsldppr,0) > 0));
       vr_obj_generic2.put('temPoupProgamBloqueada'
@@ -1994,7 +2071,7 @@ vr_vltotbem number;
                                ,pr_flgzerar => 'N' --> Nao zerar limite
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data da cooperativa
                                 ------ OUT ------
-                               ,pr_flgativo    => vr_flgativo --> Retorna situação 1-ativo 2-inativo
+                               ,pr_flgativo    => vr_flgativo --> Retorna situaçao 1-ativo 2-inativo
                                ,pr_nrctrhcj    => vr_nrctrhcj --> Retorna numero do contrato
                                ,pr_flgliber    => vr_flgliber --> Retorna se esta liberado 1-sim 2-nao
                                ,pr_vltotccr    => vr_vltotccr --> retorna total de limite do cartao 
@@ -2002,7 +2079,7 @@ vr_vltotbem number;
                                ,pr_des_reto    => vr_des_reto --> OK ou NOK
                                ,pr_tab_erro    => vr_tab_erro);
     
-      -- Se houve retorno não Ok
+      -- Se houve retorno nao Ok
       IF vr_des_reto = 'NOK' THEN
         -- Retornar a mensagem de erro
         vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
@@ -2026,6 +2103,13 @@ vr_vltotbem number;
                          ,(vr_flgativo > 0));
       vr_obj_generic2.put('limiteCartaoCredit'
                          ,este0001.fn_decimal_ibra(vr_vltotccr));
+
+      -- Buscar proposta de desconto cheques     
+      OPEN cr_crawlim_chqesp;
+      FETCH cr_crawlim_chqesp
+        INTO rw_crawlim_chqesp;
+      CLOSE cr_crawlim_chqesp;
+      -- Buscar borderôs ativos
     
       -- Buscar contrato de desconto cheques     
       OPEN cr_craplim_chq;
@@ -2038,7 +2122,7 @@ vr_vltotbem number;
         INTO rw_crapcdb;
       CLOSE cr_crapcdb;
     
-      -- Enviar informações do contrato de Cheque
+      -- Enviar informaçoes do contrato de Cheque
       vr_obj_generic2.put('dataContrDescCheq'
                          ,este0002.fn_data_ibra_motor(rw_craplim_chq.dtinivig));
       vr_obj_generic2.put('limiteDescCheq'
@@ -2050,15 +2134,15 @@ vr_vltotbem number;
       OPEN cr_craplim_tit;
       FETCH cr_craplim_tit
         INTO rw_craplim_tit;
-      CLOSE cr_craplim_tit;
-    
+      CLOSE cr_craplim_tit;      
+      
       -- Buscar borderôs ativos
       OPEN cr_craptdb(rw_crapdat.dtmvtolt);
       FETCH cr_craptdb
         INTO rw_craptdb;
       CLOSE cr_craptdb;
     
-      -- Enviar informações do contrato de Cheque
+      -- Enviar informaçoes do contrato de Cheque
       vr_obj_generic2.put('dataContrDescTitul'
                          ,este0002.fn_data_ibra_motor(rw_craplim_tit.dtinivig));
       vr_obj_generic2.put('limiteDescTitul'
@@ -2066,7 +2150,7 @@ vr_vltotbem number;
       vr_obj_generic2.put('saldoUtilizDescTitul'
                          ,este0001.fn_decimal_ibra(nvl(rw_craptdb.vltitulo,0)));
         
-      -- Então chamaremos a rotina para busca do endividamento total 
+      -- Entao chamaremos a rotina para busca do endividamento total 
       gene0005.pc_saldo_utiliza(pr_cdcooper    => pr_cdcooper
                                ,pr_tpdecons    => 3
                                ,pr_cdagenci    => 1
@@ -2111,10 +2195,10 @@ vr_vltotbem number;
                                      ,pr_idseqttl           => 1
                                      ,pr_dtcalcul           => rw_crapdat.dtmvtolt
                                      ,pr_flgerlog           => 'N'
-                                     ,pr_vldscchq           => rw_craplim_chq.vllimite -- Valor Limite Cheques
-                                     ,pr_vlutlchq           => rw_crapcdb.vlcheque -- Valor utilizado Cheques
-                                     ,pr_vldctitu           => rw_craplim_tit.vllimite -- Valor Limite Titulos
-                                     ,pr_vlutitit           => rw_craptdb.vltitulo -- Valor utilizado Titulos
+                                     ,pr_vldscchq           => rw_craplim_chq.vllimite  -- Valor Limite Cheques
+                                     ,pr_vlutlchq           => rw_crapcdb.vlcheque      -- Valor utilizado Cheques
+                                     ,pr_vldctitu           => rw_craplim_tit.vllimite  -- Valor Limite Titulos
+                                     ,pr_vlutitit           => rw_craptdb.vltitulo      -- Valor utilizado Titulos
                                      ,pr_tab_co_responsavel => vr_tab_co_responsavel
                                      ,pr_dscritic           => vr_dscritic
                                      ,pr_cdcritic           => vr_cdcritic);
@@ -2150,7 +2234,7 @@ vr_vltotbem number;
         vr_ind_coresp := vr_tab_co_responsavel.next(vr_ind_coresp);
       END LOOP;
     
-      -- Enfim, enviar as informações para o JSON (Neste ponto voltamos a trazer código PLSQL)
+      -- Enfim, enviar as informaçoes para o JSON (Neste ponto voltamos a trazer código PLSQL)
       vr_obj_generic2.put('coopAvalista',(vr_tot_vlsdeved > 0));
       vr_obj_generic2.put('valorCoopAvalista',este0001.fn_decimal_ibra(vr_tot_vlsdeved));
       vr_obj_generic2.put('coopAvalistaAtraso',(vr_tot_qtprecal > 0));
@@ -2164,7 +2248,7 @@ vr_vltotbem number;
                         ,pr_cdempres => 11
                         ,pr_cdacesso => 'TAXATABELA'
                         ,pr_tpregist => 0);
-   -- Se a primeira posição do campo
+   -- Se a primeira posiçao do campo
    -- dstextab for diferente de zero
    vr_inusatab:= SUBSTR(vr_dstextab,1,1) != '0';             
     
@@ -2186,7 +2270,7 @@ vr_vltotbem number;
     
       -- Buscar todos os contratos do Cooperado
       empr0001.pc_obtem_dados_empresti(pr_cdcooper       => pr_cdcooper --> Cooperativa conectada
-                                      ,pr_cdagenci       => 1 --> Código da agência
+                                      ,pr_cdagenci       => 1 --> Código da agencia
                                       ,pr_nrdcaixa       => 1 --> Número do caixa
                                       ,pr_cdoperad       => '1' --> Código do operador
                                       ,pr_nmdatela       => 'EXTEMP' --> Nome datela conectada
@@ -2197,7 +2281,7 @@ vr_vltotbem number;
                                       ,pr_dtcalcul       => NULL --> Data solicitada do calculo
                                       ,pr_nrctremp       => 0 --> Número contrato empréstimo
                                       ,pr_cdprogra       => 'ATENDA' --> Programa conectado
-                                      ,pr_inusatab       => vr_inusatab --> Indicador de utilização da tabela de juros
+                                      ,pr_inusatab       => vr_inusatab --> Indicador de utilizaçao da tabela de juros
                                       ,pr_flgerlog       => 'N' --> Gerar log S/N
                                       ,pr_flgcondc       => FALSE --> Mostrar emprestimos liq. s/ prejuizo
                                       ,pr_nmprimtl       => rw_crapass.nmprimtl --> Nome Primeiro Titular
@@ -2262,7 +2346,7 @@ vr_vltotbem number;
                                       ,pr_des_erro   => vr_dscritic);
           --Se ocorreu erro
           IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
-            --Levantar Exceção
+            --Levantar Exceçao
             RAISE vr_exc_saida;
           END IF;
         
@@ -2321,11 +2405,11 @@ vr_vltotbem number;
                                .vlpreemp);
         
           -- Descontar da quantidade paga a quantidade em atraso, pq mesmo tendo pago 
-          -- proporcionalmente o valor total da parcela, se teve multa no mês significa
+          -- proporcionalmente o valor total da parcela, se teve multa no mes significa
           -- que foi pago após o vencimento
           vr_qtpclpag := vr_qtpclpag - vr_qtpclatr;
         
-          -- Garantir que não fique negativo, portanto se for negativo trará zero.
+          -- Garantir que nao fique negativo, portanto se for negativo trará zero.
           vr_qtpclpag := greatest(0, vr_qtpclpag);
         
         END IF;
@@ -2344,7 +2428,7 @@ vr_vltotbem number;
         INTO vr_nratrmai;
       CLOSE cr_crapris;      
       
-      -- Enviar informações do atraso e parcelas calculadas para o JSON
+      -- Enviar informaçoes do atraso e parcelas calculadas para o JSON
       vr_obj_generic2.put('valorAtrasoEmprest',este0001.fn_decimal_ibra(vr_vltotatr));
       vr_obj_generic2.put('quantDiasMaiorAtrasoEmprest', vr_nratrmai);
       
@@ -2353,17 +2437,17 @@ vr_vltotbem number;
       vr_obj_generic2.put('quantParcelAtraso', vr_qtpclven);
       vr_obj_generic2.put('quantDiasAtrasoEmprest', vr_maior_nratrmai);
     
-      -- Data de Vigência Procuração
+      -- Data de Vigencia Procuraçao
       IF pr_dtvigpro IS NOT NULL THEN 
         vr_obj_generic2.put('dataVigenciaProcuracao' ,este0002.fn_data_ibra_motor(pr_dtvigpro));
       END IF;  
 
-      -- Data de Admissão Procuração
+      -- Data de Admissao Procuraçao
       IF pr_dtadmsoc IS NOT NULL THEN 
         vr_obj_generic2.put('dataAdmissaoProcuracao' ,este0002.fn_data_ibra_motor(pr_dtadmsoc));
       END IF;  
       
-      -- Percentual Procuração
+      -- Percentual Procuraçao
       IF pr_persocio IS NOT NULL THEN 
         vr_obj_generic2.put('valorPercentualProcuracao' ,Este0001.fn_Decimal_Ibra(pr_persocio));
       END IF;
@@ -2375,19 +2459,19 @@ vr_vltotbem number;
       -- Efetuar laço para trazer todos os registros 
       FOR rw_crapseg IN cr_crapseg LOOP
             
-        -- Criar objeto para a operação e enviar suas informações 
+        -- Criar objeto para a operaçao e enviar suas informaçoes 
         vr_obj_generic3 := json();
         vr_obj_generic3.put('tipoSeguro', rw_crapseg.dstipo);
         vr_obj_generic3.put('valorApoliceSeguro'
                            ,este0001.fn_decimal_ibra(rw_crapseg.vlpremio));
         vr_obj_generic3.put('tipoPagtoSeguro ', 'Debito Automático');
       
-        -- Adicionar Operação na lista
+        -- Adicionar Operaçao na lista
         vr_lst_generic3.append(vr_obj_generic3.to_json_value());
       
       END LOOP; -- Final da leitura os seguros
     
-      -- Adicionar o array seguro no objeto informações adicionais
+      -- Adicionar o array seguro no objeto informaçoes adicionais
       vr_obj_generic2.put('seguro', vr_lst_generic3);
    
       -- Montar objeto para CheqDevol
@@ -2403,7 +2487,7 @@ vr_vltotbem number;
                                   ,vr_qtmeschqal11
                    ,vr_qtmeschqal12) LOOP
       
-        -- Criar objeto para a operação e enviar suas informações 
+        -- Criar objeto para a operaçao e enviar suas informaçoes 
         vr_obj_generic3 := json();
         vr_obj_generic3.put('dataCheqDevol'
                            ,este0002.fn_data_ibra_motor(rw_negchq.dtiniest));
@@ -2411,19 +2495,19 @@ vr_vltotbem number;
                            ,este0001.fn_decimal_ibra(rw_negchq.vlestour));
         vr_obj_generic3.put('alineaCheqDevol', rw_negchq.cdobserv);
       
-        -- Adicionar Operação na lista
+        -- Adicionar Operaçao na lista
         vr_lst_generic3.append(vr_obj_generic3.to_json_value());
       
-      END LOOP; -- Final da leitura das operações
+      END LOOP; -- Final da leitura das operaçoes
     
-      -- Adicionar o array CheqDevol no objeto informações adicionais
+      -- Adicionar o array CheqDevol no objeto informaçoes adicionais
       vr_obj_generic2.put('cheqDevol', vr_lst_generic3);
       
       -- Montar objeto para OpCred
       vr_lst_generic3 := json_list();
   
-      -- Lógica para retorno das ultimas operações de Crédito Liquidadas
-      -- Primeiramente buscamos a quantidade de operações a serem enviadas 
+      -- Lógica para retorno das ultimas operaçoes de Crédito Liquidadas
+      -- Primeiramente buscamos a quantidade de operaçoes a serem enviadas 
       vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                ,pr_nmsistem => 'CRED'
                                                ,pr_tptabela => 'USUARI'
@@ -2440,12 +2524,12 @@ vr_vltotbem number;
       -- Efetuar laço para trazer todos os registros 
       FOR rw_crapepr IN cr_crapepr LOOP
       
-        -- Verificar a quantidade de registros já lidos, pois não poderá passer da quantidade parametrizada
+        -- Verificar a quantidade de registros já lidos, pois nao poderá passer da quantidade parametrizada
         IF vr_qtdopliq < cr_crapepr%rowcount THEN
           EXIT;
         END IF;
       
-        -- Busca data da Liquidação              
+        -- Busca data da Liquidaçao              
         OPEN cr_dtliquid(rw_crapepr.nrctremp);
         FETCH cr_dtliquid
           INTO vr_dtliquid;
@@ -2468,7 +2552,7 @@ vr_vltotbem number;
         END IF;
         CLOSE cr_eprliquid;
         
-        -- Criar objeto para a operação e enviar suas informações 
+        -- Criar objeto para a operaçao e enviar suas informaçoes 
         vr_obj_generic3 := json();
         vr_obj_generic3.put('contratOpCred'
                            ,gene0002.fn_mask_contrato(rw_crapepr.nrctremp));
@@ -2490,12 +2574,12 @@ vr_vltotbem number;
                            ,(nvl(vr_qtdiaatr,0) > 0));
         vr_obj_generic3.put('propostasLiquidOpCred', vr_flliquid);
       
-        -- Adicionar Operação na lista
+        -- Adicionar Operaçao na lista
         vr_lst_generic3.append(vr_obj_generic3.to_json_value());
       
-      END LOOP; -- Final da leitura das operações
+      END LOOP; -- Final da leitura das operaçoes
     
-      -- Adicionar o array OpCred no objeto informações adicionais
+      -- Adicionar o array OpCred no objeto informaçoes adicionais
       vr_obj_generic2.put('opCred', vr_lst_generic3);
       
       -- Somente para Pessoa Fisica
@@ -2504,144 +2588,144 @@ vr_vltotbem number;
         -- Montar objeto para faturamentos
         vr_lst_generic3 := json_list();
       
-        -- Criar objeto para mês 01
+        -- Criar objeto para mes 01
         if rw_crapjfn.dtfatme1 <> '01000000' then
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme1,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##1));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;
 
         if rw_crapjfn.dtfatme2 <> '01000000' then
-          -- Criar objeto para mês 02
+          -- Criar objeto para mes 02
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme2,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##2));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;
         
         if rw_crapjfn.dtfatme3 <> '01000000' then        
-          -- Criar objeto para mês 03
+          -- Criar objeto para mes 03
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme3,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##3));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;
         
         if rw_crapjfn.dtfatme4 <> '01000000' then
-          -- Criar objeto para mês 04
+          -- Criar objeto para mes 04
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme4,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##4));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;
         
         if rw_crapjfn.dtfatme5 <> '01000000' then
-          -- Criar objeto para mês 05
+          -- Criar objeto para mes 05
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme5,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##5));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;
         
         if rw_crapjfn.dtfatme6 <> '01000000' then
-          -- Criar objeto para mês 06
+          -- Criar objeto para mes 06
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme6,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##6));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;        
         
         if rw_crapjfn.dtfatme7 <> '01000000' then
-          -- Criar objeto para mês 07
+          -- Criar objeto para mes 07
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme7,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##7));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;
         
         if rw_crapjfn.dtfatme8 <> '01000000' then
-          -- Criar objeto para mês 08
+          -- Criar objeto para mes 08
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme8,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##8));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;
         
         if rw_crapjfn.dtfatme9 <> '01000000' then
-          -- Criar objeto para mês 09
+          -- Criar objeto para mes 09
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme9,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##9));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;
         
         if rw_crapjfn.dtfatme10 <> '01000000' then        
-          -- Criar objeto para mês 10
+          -- Criar objeto para mes 10
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme10,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##10));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;
         
         if rw_crapjfn.dtfatme11 <> '01000000' then
-          -- Criar objeto para mês 11
+          -- Criar objeto para mes 11
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme11,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##11));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;
         
         if rw_crapjfn.dtfatme12 <> '01000000' then
-          -- Criar objeto para mês 12
+          -- Criar objeto para mes 12
           vr_obj_generic3 := json();
           vr_obj_generic3.put('dataFaturamentoMes'
                              ,este0002.fn_data_ibra_motor(to_date(rw_crapjfn.dtfatme12,'ddmmrrrr')));
           vr_obj_generic3.put('valorFaturamentoMes'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##12));
-          -- Adicionar Mês na lista
+          -- Adicionar Mes na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
         end if;  
       
-        -- Adicionar o array de faturamentos no objeto informações adicionais
+        -- Adicionar o array de faturamentos no objeto informaçoes adicionais
         vr_obj_generic2.put('faturamentoMes', vr_lst_generic3);
       
    END IF;
    
-      -- Enviar informações adicionais ao JSON 
+      -- Enviar informaçoes adicionais ao JSON 
       vr_obj_generico.put('informacoesAdicionais', vr_obj_generic2);
 
       -- Ao final copiamos o json montado ao retornado
@@ -2681,10 +2765,10 @@ vr_vltotbem number;
   PROCEDURE pc_gera_json_analise_lim(pr_cdcooper   IN crapass.cdcooper%TYPE   --> Codigo da cooperativa
                                     ,pr_cdagenci   IN crapass.cdagenci%type
                                     ,pr_nrdconta   IN crapass.nrdconta%type
-                                    ,pr_nrctrlim   IN craplim.nrctrlim%type
-                                    ,pr_tpctrlim   IN craplim.tpctrlim%type
-                                    ,pr_nrctaav1   IN craplim.nrctaav1%type
-                                    ,pr_nrctaav2   IN craplim.nrctaav2%type
+                                    ,pr_nrctrlim   IN crawlim.nrctrlim%type
+                                    ,pr_tpctrlim   IN crawlim.tpctrlim%type
+                                    ,pr_nrctaav1   IN crawlim.nrctaav1%type
+                                    ,pr_nrctaav2   IN crawlim.nrctaav2%type
                                     ---- OUT ----
                                     ,pr_dsjsonan  OUT NOCOPY json             --> Retorno do clob em modelo json com os dados para analise
                                     ,pr_cdcritic  OUT NUMBER                  --> Codigo da critica
@@ -2703,7 +2787,7 @@ vr_vltotbem number;
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
-      Alteração : 
+      Alteraçao : 
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -2712,7 +2796,7 @@ vr_vltotbem number;
     select rbi.qtdiarpv
     from   craprbi rbi
           ,crapass ass
-          ,craplim lim
+          ,crawlim lim
     where  rbi.cdcooper = pr_cdcooper
     and    rbi.inpessoa = ass.inpessoa
     and    rbi.inprodut = 5
@@ -2728,7 +2812,7 @@ vr_vltotbem number;
   CURSOR cr_crapope IS
     select ope.cdpactra
     from   crapope ope
-          ,craplim lim
+          ,crawlim lim
     where  ope.cdcooper = pr_cdcooper
     and    upper(ope.cdoperad) = upper(lim.cdoperad)
     and    lim.cdcooper = pr_cdcooper
@@ -2744,9 +2828,9 @@ vr_vltotbem number;
   rw_crapopf cr_crapopf%ROWTYPE;
   
   --> Buscar dados do limite
-  CURSOR cr_craplim IS
+  CURSOR cr_crawlim IS
     select 'LIMITE DESCONTO TITULO' dsoperac
-          ,0 flgreneg -- renegociacao: Indicação de Operação de Renegociação 
+          ,0 flgreneg -- renegociacao: Indicaçao de Operaçao de Renegociaçao 
           ,lim.vllimite
           ,0 vlpreemp
           ,0 qtpreemp
@@ -2771,7 +2855,7 @@ vr_vltotbem number;
           ,lim.cddlinha
     from   crapldc ldc
           ,crapass ass
-          ,craplim lim
+          ,crawlim lim
     where  ldc.cdcooper = lim.cdcooper
     and    ldc.cddlinha = lim.cddlinha
     and    ldc.tpdescto = lim.tpctrlim
@@ -2781,7 +2865,7 @@ vr_vltotbem number;
     and    lim.nrdconta = pr_nrdconta
     and    lim.nrctrlim = pr_nrctrlim
     and    lim.tpctrlim = pr_tpctrlim;
-    rw_craplim cr_craplim%rowtype;
+    rw_crawlim cr_crawlim%rowtype;
     
     -- Buscar os dados do associado
     CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%type,
@@ -2892,7 +2976,7 @@ vr_vltotbem number;
          AND crapcrl.cdnacion = crapnac.cdnacion(+)
          AND crapcrl.idorgexp = org.idorgao_expedidor(+);
     
-    -- Declarar cursor de participações societárias
+    -- Declarar cursor de participaçoes societárias
     CURSOR cr_crapepa (pr_cdcooper crapass.cdcooper%type,
                        pr_nrdconta crapass.nrdconta%TYPE) IS
       SELECT cdcooper, 
@@ -2918,14 +3002,14 @@ vr_vltotbem number;
        WHERE cdcooper = pr_cdcooper 
          AND nrdconta = pr_nrdconta;
     
-    -- Buscar descrição
+    -- Buscar descriçao
     CURSOR cr_nature (pr_natjurid gncdntj.cdnatjur%TYPE) IS
       SELECT gncdntj.dsnatjur
         FROM gncdntj
        WHERE gncdntj.cdnatjur = pr_natjurid;
     rw_nature cr_nature%ROWTYPE; 
     
-    -- Buscar descrição
+    -- Buscar descriçao
     CURSOR cr_gnrativ ( pr_cdseteco gnrativ.cdseteco%TYPE,
                         pr_cdrmativ gnrativ.cdrmativ%TYPE)IS
       SELECT gnrativ.nmrmativ
@@ -3037,7 +3121,7 @@ vr_vltotbem number;
     --Verificar se a data existe
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-    -- Se não encontrar
+    -- Se nao encontrar
     IF BTCH0001.cr_crapdat%NOTFOUND THEN
       -- Montar mensagem de critica
       vr_cdcritic:= 1;
@@ -3059,7 +3143,7 @@ vr_vltotbem number;
      -- Buscar a coluna e multiplicar por 24 para chegarmos na quantidade de horas de reaproveitamento
      vr_qtdiarpv := rw_craprbi.qtdiarpv * 24;
     ELSE
-     -- Se não encontrar consideramos 168 horas (7 dias)
+     -- Se nao encontrar consideramos 168 horas (7 dias)
      vr_qtdiarpv := 168;
     END IF;
     CLOSE cr_craprbi;
@@ -3089,16 +3173,16 @@ vr_vltotbem number;
     vr_obj_analise.put('configuracoes', vr_obj_generico);                  
                   
     --> Buscar dados da proposta de emprestimo
-    OPEN cr_craplim;
-    FETCH cr_craplim INTO rw_craplim;
+    OPEN cr_crawlim;
+    FETCH cr_crawlim INTO rw_crawlim;
     
     -- Caso nao encontrar abortar proceso
-    IF cr_craplim%NOTFOUND THEN
-      CLOSE cr_craplim;
+    IF cr_crawlim%NOTFOUND THEN
+      CLOSE cr_crawlim;
       vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
       RAISE vr_exc_erro;
     END IF;
-    CLOSE cr_craplim;
+    CLOSE cr_crawlim;
     
     --> indicadoresCliente
     vr_obj_generico := json();
@@ -3109,42 +3193,42 @@ vr_vltotbem number;
     vr_obj_generico.put('segmentoCodigo' ,3); 
     vr_obj_generico.put('segmentoDescricao' ,'Limite Desct Titulo');     
 
-    vr_obj_generico.put('linhaCreditoCodigo'    ,rw_craplim.cdlcremp);
-    vr_obj_generico.put('linhaCreditoDescricao' ,rw_craplim.dslcremp);
-    vr_obj_generico.put('finalidadeCodigo'      ,rw_craplim.cdfinemp);       
-    vr_obj_generico.put('finalidadeDescricao'   ,rw_craplim.dsfinemp);                
+    vr_obj_generico.put('linhaCreditoCodigo'    ,rw_crawlim.cdlcremp);
+    vr_obj_generico.put('linhaCreditoDescricao' ,rw_crawlim.dslcremp);
+    vr_obj_generico.put('finalidadeCodigo'      ,rw_crawlim.cdfinemp);       
+    vr_obj_generico.put('finalidadeDescricao'   ,rw_crawlim.dsfinemp);                
 
-    vr_obj_generico.put('tipoProduto'           ,rw_craplim.tpproduto);
+    vr_obj_generico.put('tipoProduto'           ,rw_crawlim.tpproduto);
     
     /* Paulo Penteado (GFT): 02/03/2018 - Por hora iremos considerar as tags 
-       tipoGarantiaCodigo e tipoGarantiaDescricao como sendo 1 e 'LIMITE DESC TITUL0' até a liberação 
-       a alteração 404 ser liberada. Pois na 404 será criado o campo crapldc.tpctrato */
-    vr_obj_generico.put('tipoGarantiaCodigo'    ,rw_craplim.tpctrato );
-    --> Buscar descrição do tipo de garantia
+       tipoGarantiaCodigo e tipoGarantiaDescricao como sendo 1 e 'LIMITE DESC TITUL0' até a liberaçao 
+       a alteraçao 404 ser liberada. Pois na 404 será criado o campo crapldc.tpctrato */
+    vr_obj_generico.put('tipoGarantiaCodigo'    ,rw_crawlim.tpctrato );
+    --> Buscar descriçao do tipo de garantia
     vr_dstpgara  := 'LIMITE DESC TITUL0';
                     /*tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper,
                                                pr_nmsistem => 'CRED',
                                                pr_tptabela => 'GENERI', 
                                                pr_cdempres => 0, 
                                                pr_cdacesso => 'CTRATOEMPR', 
-                                               pr_tpregist => rw_craplim.tpctrato);*/
+                                               pr_tpregist => rw_crawlim.tpctrato);*/
     vr_obj_generico.put('tipoGarantiaDescricao'    ,TRIM(vr_dstpgara) );
 
-    vr_obj_generico.put('debitoEm'    ,rw_craplim.despagto );
-    vr_obj_generico.put('liquidacao'  ,rw_craplim.dsliquid!='0,0,0,0,0,0,0,0,0,0');
+    vr_obj_generico.put('debitoEm'    ,rw_crawlim.despagto );
+    vr_obj_generico.put('liquidacao'  ,rw_crawlim.dsliquid!='0,0,0,0,0,0,0,0,0,0');
 
-    vr_obj_generico.put('valorTaxaMensal', ESTE0001.fn_decimal_ibra(rw_craplim.txmensal));
+    vr_obj_generico.put('valorTaxaMensal', ESTE0001.fn_decimal_ibra(rw_crawlim.txmensal));
 
-    vr_obj_generico.put('valorEmprest'  , ESTE0001.fn_decimal_ibra(rw_craplim.vllimite));
-    vr_obj_generico.put('quantParcela'  , rw_craplim.qtpreemp);
-    vr_obj_generico.put('primeiroVencto', este0002.fn_data_ibra_motor(rw_craplim.dtfimvig));
-    vr_obj_generico.put('valorParcela'  , ESTE0001.fn_decimal_ibra(rw_craplim.vlpreemp));
+    vr_obj_generico.put('valorEmprest'  , ESTE0001.fn_decimal_ibra(rw_crawlim.vllimite));
+    vr_obj_generico.put('quantParcela'  , rw_crawlim.qtpreemp);
+    vr_obj_generico.put('primeiroVencto', este0002.fn_data_ibra_motor(rw_crawlim.dtfimvig));
+    vr_obj_generico.put('valorParcela'  , ESTE0001.fn_decimal_ibra(rw_crawlim.vlpreemp));
 
-    vr_obj_generico.put('renegociacao', nvl(rw_craplim.flgreneg,0) = 1);
+    vr_obj_generico.put('renegociacao', nvl(rw_crawlim.flgreneg,0) = 1);
 
-    vr_obj_generico.put('qualificaOperacaoCodigo',rw_craplim.idquapro );
+    vr_obj_generico.put('qualificaOperacaoCodigo',rw_crawlim.idquapro );
 
-    CASE rw_craplim.idquapro
+    CASE rw_crawlim.idquapro
       WHEN 1 THEN vr_dsquapro := 'Operacao normal';
       WHEN 2 THEN vr_dsquapro := 'Renovacao de credito';
       WHEN 3 THEN vr_dsquapro := 'Renegociacao de credito';
@@ -3154,11 +3238,11 @@ vr_vltotbem number;
 
     vr_obj_generico.put('qualificaOperacaoDescricao'    ,vr_dsquapro );
          
-    IF rw_craplim.inpessoa = 1 THEN 
+    IF rw_crawlim.inpessoa = 1 THEN 
       -- Verificar se a conta é de colaborador do sistema Cecred
       vr_cddcargo := NULL;
       OPEN cr_tbcolab(pr_cdcooper => pr_cdcooper
-                     ,pr_nrcpfcgc => rw_craplim.nrcpfcgc);
+                     ,pr_nrcpfcgc => rw_crawlim.nrcpfcgc);
       FETCH cr_tbcolab INTO vr_cddcargo;
       IF cr_tbcolab%FOUND THEN 
         vr_flgcolab := TRUE;
@@ -3181,7 +3265,7 @@ vr_vltotbem number;
 
       -- Indicar que encontrou
       vr_flgbens := TRUE;
-      -- Para cada registro de Bem, criar objeto para a operação e enviar suas informações 
+      -- Para cada registro de Bem, criar objeto para a operaçao e enviar suas informaçoes 
       vr_lst_generic2 := json_list();
       vr_obj_generic2 := json();
       vr_obj_generic2.put('categoriaBem',     rw_crapbpr.dscatbem);
@@ -3205,7 +3289,7 @@ vr_vltotbem number;
        INTO vr_vldcotas;
       CLOSE cr_crapcot;
       -- Se valor das cotas é superior ao da proposta
-      IF NVL(vr_vldcotas,0) > rw_craplim.vllimite THEN 
+      IF NVL(vr_vldcotas,0) > rw_crawlim.vllimite THEN 
         -- Adicionar as cotas  
         vr_lst_generic2 := json_list();
         vr_obj_generic2 := json();
@@ -3220,14 +3304,14 @@ vr_vltotbem number;
       END IF;
     END IF;  
     
-    vr_obj_generico.put('operacao', rw_craplim.dsoperac); 
+    vr_obj_generico.put('operacao', rw_crawlim.dsoperac); 
     
     -- Buscar IOF
     vr_valoriof := 0;
     vr_obj_generico.put('IOFValor', este0001.fn_decimal_ibra(nvl(vr_valoriof,0)));
 
-    IF rw_craplim.dsliquid <> '0,0,0,0,0,0,0,0,0,0' THEN
-      vr_tab_split := gene0002.fn_quebra_string(rw_craplim.dsliquid, ',');
+    IF rw_crawlim.dsliquid <> '0,0,0,0,0,0,0,0,0,0' THEN
+      vr_tab_split := gene0002.fn_quebra_string(rw_crawlim.dsliquid, ',');
       
       vr_dsliquid := vr_tab_split.FIRST;
           
@@ -3291,7 +3375,7 @@ vr_vltotbem number;
                        pr_nrdconta => pr_nrdconta);
       FETCH cr_crapcje INTO rw_crapcje;
      
-      -- Se não encontrar 
+      -- Se nao encontrar 
       IF cr_crapcje%NOTFOUND THEN
         -- apenas fechamos o cursor
         CLOSE cr_crapcje;
@@ -3360,7 +3444,7 @@ vr_vltotbem number;
             vr_obj_conjuge.put ('profissao', vr_obj_generico);
           END IF;     
           
-          -- Montar informações Adicionais
+          -- Montar informaçoes Adicionais
           vr_obj_generico := json();
           -- Escolaridade
           IF rw_crapcje.grescola <> 0 THEN 
@@ -3373,11 +3457,11 @@ vr_vltotbem number;
             vr_obj_generico.put('cursoSuperiorDescricao'
                                ,este0002.fn_des_cdfrmttl(rw_crapcje.cdfrmttl));
           END IF;
-          -- Natureza Ocupação
+          -- Natureza Ocupaçao
           IF rw_crapcje.cdnatopc <> 0 THEN 
             vr_obj_generico.put('naturezaOcupacao', rw_crapcje.cdnatopc);
           END IF;
-          -- Ocupação
+          -- Ocupaçao
           IF rw_crapcje.cdocpcje <> 0 THEN 
             vr_obj_generico.put('ocupacaoCodigo'
                                ,rw_crapcje.cdocpcje);
@@ -3396,7 +3480,7 @@ vr_vltotbem number;
           IF rw_crapcje.cdturnos <> 0 THEN 
             vr_obj_generico.put('turno', rw_crapcje.cdturnos);
           END IF;
-          -- Data Admissão
+          -- Data Admissao
           IF rw_crapcje.dtadmemp IS NOT NULL THEN 
             vr_obj_generico.put('dataAdmissao', este0002.fn_data_ibra_motor(rw_crapcje.dtadmemp));
           END IF;
@@ -3408,7 +3492,7 @@ vr_vltotbem number;
           IF rw_crapcje.nrdocnpj <> 0 THEN 
             vr_obj_generico.put('codCNPJEmpresa', rw_crapcje.nrdocnpj);
           END IF;
-          -- Enviar informações adicionais ao JSON Conjuge
+          -- Enviar informaçoes adicionais ao JSON Conjuge
           vr_obj_conjuge.put('informacoesAdicionais' ,vr_obj_generico);        
               
           -- Ao final adicionamos o json montado ao principal
@@ -3425,13 +3509,13 @@ vr_vltotbem number;
                                     ,pr_nrdconta  => pr_nrdconta         -- Conta/dv
                                     ,pr_inpessoa  => rw_crapass.inpessoa -- Indicativo de pessoa
                                     ,pr_cdusolcr  => 1                   -- Codigo de uso da linha de credito
-                                    ,pr_cdlcremp  => rw_craplim.cddlinha -- Linha de credio
+                                    ,pr_cdlcremp  => rw_crawlim.cddlinha -- Linha de credio
                                     ,pr_tpctrlim  => pr_tpctrlim         --> Tipo da operacao (1-Chq Esp./ 2-Desc Chq./ 3-Desc Tit)
                                     ,pr_nrctrlim  => pr_nrctrlim         -- Contrato
-                                    ,pr_dtinivig  => nvl(rw_craplim.dtinivig,rw_crapdat.dtmvtolt) -- Data liberacao
-                                    ,pr_qtdiavig  => rw_craplim.qtdiavig -- Dias de vigencia
-                                    ,pr_vlemprst  => rw_craplim.vllimite -- Valor emprestado
-                                    ,pr_txmensal  => rw_craplim.txmensal -- Taxa mensal
+                                    ,pr_dtinivig  => nvl(rw_crawlim.dtinivig,rw_crapdat.dtmvtolt) -- Data liberacao
+                                    ,pr_qtdiavig  => rw_crawlim.qtdiavig -- Dias de vigencia
+                                    ,pr_vlemprst  => rw_crawlim.vllimite -- Valor emprestado
+                                    ,pr_txmensal  => rw_crawlim.txmensal -- Taxa mensal
                                     ,pr_txcetano  => vr_txcetano         -- Taxa cet ano
                                     ,pr_txcetmes  => vr_txcetmes         -- Taxa cet mes
                                     ,pr_cdcritic  => vr_cdcritic
@@ -3612,7 +3696,7 @@ vr_vltotbem number;
              vr_obj_responsav.put('endereco', vr_obj_generico);
            END IF;     
         
-           -- Montar informações Adicionais
+           -- Montar informaçoes Adicionais
            vr_obj_generico := json();
            
            -- Nome Pai
@@ -3632,7 +3716,7 @@ vr_vltotbem number;
              vr_obj_generico.put('caixaPostal', rw_crapcrl.nrcxpost);
            END IF;
      
-           -- Enviar informações adicionais ao JSON Responsavel Leval
+           -- Enviar informaçoes adicionais ao JSON Responsavel Leval
            vr_obj_responsav.put('informacoesAdicionais' ,vr_obj_generico);     
 
            -- Adicionar o responsavel montato na lista de responsaveis
@@ -3709,15 +3793,15 @@ vr_vltotbem number;
         vr_obj_analise.put('socios' ,vr_lst_generico); 
       END IF;
        
-      --> Busca das participações societárias
+      --> Busca das participaçoes societárias
       
-      -- Inicializar lista de Participações Societárias
+      -- Inicializar lista de Participaçoes Societárias
       vr_lst_generico := json_list();
       
-      --> Efetuar laço para retornar todos os registros disponíveis de participações:
+      --> Efetuar laço para retornar todos os registros disponíveis de participaçoes:
       FOR rw_crapepa IN cr_crapepa( pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta)  LOOP
-        -- Setar flag para indicar que há participações
+        -- Setar flag para indicar que há participaçoes
         vr_flpartic := true;
         -- Se socio for associado
         IF rw_crapepa.nrctasoc > 0 THEN 
@@ -3738,7 +3822,7 @@ vr_vltotbem number;
           vr_lst_generico.append(vr_obj_particip.to_json_value());
 
         ELSE
-          -- Enviaremos os dados básicos encontrados na tabela de Participações    
+          -- Enviaremos os dados básicos encontrados na tabela de Participaçoes    
           vr_obj_particip.put('documento'      ,este0002.fn_mask_cpf_cnpj(rw_crapepa.nrdocsoc,2));
           vr_obj_particip.put('tipoPessoa'     ,'JURIDICA');
           vr_obj_particip.put('razaoSocial'    ,rw_crapepa.nmprimtl);
@@ -3747,7 +3831,7 @@ vr_vltotbem number;
             vr_obj_particip.put('dataFundacao' ,este0002.fn_data_ibra_motor(rw_crapepa.dtiniatv));
           END IF;
           
-          -- Montar informações Adicionais
+          -- Montar informaçoes Adicionais
           vr_obj_generico := json();
 
           -- Conta
@@ -3760,7 +3844,7 @@ vr_vltotbem number;
           
           -- Natureza Juridica
           IF rw_crapepa.natjurid <> 0 THEN 
-            --> Buscar descrição
+            --> Buscar descriçao
             OPEN cr_nature(pr_natjurid => rw_crapepa.natjurid);
             FETCH cr_nature INTO rw_nature;
             CLOSE cr_nature;
@@ -3788,7 +3872,7 @@ vr_vltotbem number;
           -- Setor Economico
           IF rw_crapepa.cdseteco <> 0 THEN 
           
-            -- Buscar descrição
+            -- Buscar descriçao
             vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                      ,pr_nmsistem => 'CRED'
                                                      ,pr_tptabela => 'GENERI'
@@ -3804,35 +3888,35 @@ vr_vltotbem number;
             vr_obj_generico.put('setorEconomico', rw_crapepa.cdseteco ||'-'|| vr_nmseteco);
           END IF;
 
-          -- Numero Inscrição Estadual
+          -- Numero Inscriçao Estadual
           IF rw_crapepa.nrinsest <> 0 THEN   
             vr_obj_generico.put('numeroInscricEstadual', rw_crapepa.nrinsest);
           END IF;
           
-          -- Data de Vigência Procuração
+          -- Data de Vigencia Procuraçao
           vr_obj_generico.put('dataVigenciaProcuracao' ,este0002.fn_data_ibra_motor(to_date('31/12/9999','dd/mm/rrrr')));
           
-          -- Data de Admissão Procuração
+          -- Data de Admissao Procuraçao
           IF rw_crapepa.dtadmiss IS NOT NULL THEN 
             vr_obj_generico.put('dataAdmissaoProcuracao' ,este0002.fn_data_ibra_motor(rw_crapepa.dtadmiss));
           END IF;  
            
-          -- Percentual Procuração
+          -- Percentual Procuraçao
           IF rw_crapepa.persocio IS NOT NULL THEN 
             vr_obj_generico.put('valorPercentualProcuracao' ,Este0001.fn_Decimal_Ibra(rw_crapepa.persocio));
           END IF;
          
-          -- Enviar informações adicionais ao JSON Responsavel Leval
+          -- Enviar informaçoes adicionais ao JSON Responsavel Leval
           vr_obj_particip.put('informacoesAdicionais' ,vr_obj_generico);    
 
-          -- Adicionar o responsavel montado na lista de participações
+          -- Adicionar o responsavel montado na lista de participaçoes
           vr_lst_generico.append(vr_obj_particip.to_json_value());          
           
         END IF;  
         
       END LOOP; --> fim crapepa
       
-      -- Enviar novo objeto de participações para dentro do objeto principal (Se houve encontro) 
+      -- Enviar novo objeto de participaçoes para dentro do objeto principal (Se houve encontro) 
       IF vr_flpartic = true THEN      
         vr_obj_analise.put('participacoesSocietarias' ,vr_lst_generico);
       END IF;
@@ -3924,8 +4008,8 @@ vr_vltotbem number;
                                  ,pr_cdagenci in crapage.cdagenci%type
                                  ,pr_cdoperad in crapope.cdoperad%type
                                  ,pr_nrdconta in crawepr.nrdconta%type
-                                 ,pr_nrctrlim in craplim.nrctrlim%type
-                                 ,pr_tpctrlim in craplim.tpctrlim%type
+                                 ,pr_nrctrlim in crawlim.nrctrlim%type
+                                 ,pr_tpctrlim in crawlim.tpctrlim%type
                                  ,pr_nmarquiv in varchar2               --> Diretorio e nome do arquivo pdf da proposta de emprestimo
                                  ---- OUT ----
                                  ,pr_proposta out json                   --> Retorno do clob em modelo json da proposta de emprestimo
@@ -3950,9 +4034,8 @@ vr_vltotbem number;
   and    ass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%rowtype;
 
-
   -->    Buscar dados da proposta de emprestimo
-  cursor cr_craplim is  
+  cursor cr_crawlim is  
   select lim.nrctrlim
         ,lim.cdagenci
         ,lim.vllimite
@@ -3964,7 +4047,7 @@ vr_vltotbem number;
         ,ldc.dsdlinha dslcremp
         ,/*ldc.*/1 tpctrato
         ,1 cdfinemp -- finalidadeCodigo: Codigo Finalidade da Proposta de Empréstimo
-        ,'AQUISICAO DE TERRENO' dsfinemp -- finalidadeDescricao: Descricao Finalidade da Proposta de Empréstimo Paulo Penteado (GFT)teste pois parece que não aceita nulo 
+        ,'AQUISICAO DE TERRENO' dsfinemp -- finalidadeDescricao: Descricao Finalidade da Proposta de Empréstimo Paulo Penteado (GFT)teste pois parece que nao aceita nulo 
         ,lim.cdoperad
         ,ope.nmoperad
         ,0 instatus
@@ -3973,7 +4056,7 @@ vr_vltotbem number;
         ,upper(lim.cdopeapr) cdopeapr
         ,'0,0,0,0,0,0,0,0,0,0' dsliquid
         ,decode(lim.tpctrlim,1,'PP','TR') tpproduto
-  from   craplim lim
+  from   crawlim lim
         ,crapldc ldc
         ,crapope ope
   where  ldc.cdcooper = lim.cdcooper
@@ -3985,7 +4068,7 @@ vr_vltotbem number;
   and    lim.nrdconta = pr_nrdconta
   and    lim.nrctrlim = pr_nrctrlim
   and    lim.tpctrlim = pr_tpctrlim;
-  rw_craplim cr_craplim%rowtype;
+  rw_crawlim cr_crawlim%rowtype;
 
   -->    Selecionar os associados da cooperativa por CPF/CGC
   cursor cr_crapass_cpfcgc(pr_nrcpfcgc crapass.nrcpfcgc%type) is
@@ -4015,7 +4098,7 @@ vr_vltotbem number;
                     and    w.nrctremp = p.nrctremp);
   rw_crawepr_pend cr_crawepr_pend%rowtype;
 
-  -->    Selecionar o saldo disponivel do pre-aprovado da conta em questão  da carga ativa
+  -->    Selecionar o saldo disponivel do pre-aprovado da conta em questao  da carga ativa
   cursor cr_crapcpa is
   select cpa.vllimdis
         ,cpa.vlcalpre
@@ -4112,14 +4195,14 @@ vr_vltotbem number;
      close cr_crapass;
 
      --> Buscar dados da proposta de emprestimo
-     open  cr_craplim;
-     fetch cr_craplim into rw_craplim;
-     if    cr_craplim%notfound then
-           close cr_craplim;
+     open  cr_crawlim;
+     fetch cr_crawlim into rw_crawlim;
+     if    cr_crawlim%notfound then
+           close cr_crawlim;
            vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
            raise vr_exc_erro;
      end   if;
-     close cr_craplim;
+     close cr_crawlim;
 
      --> Criar objeto json para agencia da proposta
      vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
@@ -4146,36 +4229,36 @@ vr_vltotbem number;
          vr_obj_proposta.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,14,'0'));
      end if;
     
-     vr_obj_proposta.put('numero'             , rw_craplim.nrctrlim);
-     vr_obj_proposta.put('valor'              , rw_craplim.vllimite);
-     vr_obj_proposta.put('parcelaQuantidade'  , rw_craplim.qtpreemp);
-     vr_obj_proposta.put('parcelaPrimeiroVencimento', este0001.fn_data_ibra(rw_craplim.dtvencto));
-     vr_obj_proposta.put('parcelaValor'       , rw_craplim.vlpreemp);
+     vr_obj_proposta.put('numero'             , rw_crawlim.nrctrlim);
+     vr_obj_proposta.put('valor'              , rw_crawlim.vllimite);
+     vr_obj_proposta.put('parcelaQuantidade'  , rw_crawlim.qtpreemp);
+     vr_obj_proposta.put('parcelaPrimeiroVencimento', este0001.fn_data_ibra(rw_crawlim.dtvencto));
+     vr_obj_proposta.put('parcelaValor'       , rw_crawlim.vlpreemp);
 
      --> Data e hora da inclusao da proposta
      vr_data_aux := to_date(to_char(rw_crapass.dtmvtolt,'DD/MM/RRRR') ||' '||
-                            to_char(to_date(rw_craplim.hrinclus,'SSSSS'),'HH24:MI:SS'),
+                            to_char(to_date(rw_crawlim.hrinclus,'SSSSS'),'HH24:MI:SS'),
                            'DD/MM/RRRR HH24:MI:SS');
      vr_obj_proposta.put('dataHora'           , este0001.fn_datatempo_ibra(vr_data_aux));
 
      vr_obj_proposta.put('produtoCreditoSegmentoCodigo' ,3); 
      vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'Limite Desct Titulo');   
 
-     vr_obj_proposta.put('linhaCreditoCodigo'    ,rw_craplim.cdlcremp);
-     vr_obj_proposta.put('linhaCreditoDescricao' ,rw_craplim.dslcremp);
-     vr_obj_proposta.put('finalidadeCodigo'      ,rw_craplim.cdfinemp);       
-     vr_obj_proposta.put('finalidadeDescricao'   ,rw_craplim.dsfinemp);      
+     vr_obj_proposta.put('linhaCreditoCodigo'    ,rw_crawlim.cdlcremp);
+     vr_obj_proposta.put('linhaCreditoDescricao' ,rw_crawlim.dslcremp);
+     vr_obj_proposta.put('finalidadeCodigo'      ,rw_crawlim.cdfinemp);       
+     vr_obj_proposta.put('finalidadeDescricao'   ,rw_crawlim.dsfinemp);      
 
-     vr_obj_proposta.put('tipoProduto'           ,rw_craplim.tpproduto);
-     vr_obj_proposta.put('tipoGarantiaCodigo'    ,rw_craplim.tpctrato );
+     vr_obj_proposta.put('tipoProduto'           ,rw_crawlim.tpproduto);
+     vr_obj_proposta.put('tipoGarantiaCodigo'    ,rw_crawlim.tpctrato );
 
-     --> Buscar descição do tipo de garantia
+     --> Buscar desciçao do tipo de garantia
      vr_dstpgara  := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                ,pr_nmsistem => 'CRED'
                                                ,pr_tptabela => 'GENERI'
                                                ,pr_cdempres => 0
                                                ,pr_cdacesso => 'CTRATOEMPR'
-                                               ,pr_tpregist => rw_craplim.tpctrato);
+                                               ,pr_tpregist => rw_crawlim.tpctrato);
      vr_obj_proposta.put('tipoGarantiaDescricao'    ,trim(vr_dstpgara) );
 
      --    Buscar dados do operador
@@ -4193,8 +4276,8 @@ vr_vltotbem number;
 
      --  Vazio se for CDC
      --IF  rw_crawepr.inlcrcdc = 0 THEN
-     --    /* Se estiver zerado é pq não houve Parecer de Credito - ou seja - oriundo do Motor de Crédito */
-     --    IF  NVL(rw_craplim.instatus, 0) = 0 THEN
+     --    /* Se estiver zerado é pq nao houve Parecer de Credito - ou seja - oriundo do Motor de Crédito */
+     --    IF  NVL(rw_crawlim.instatus, 0) = 0 THEN
      --        /* Se reprovado no Motor */
      --        IF  rw_crawepr.cdopeapr = 'MOTOR' AND rw_crawepr.insitapr = 2 THEN
      --            /*Fixo 3-Nao Conceder*/
@@ -4212,7 +4295,7 @@ vr_vltotbem number;
      --END IF;
 
 
-     --if  rw_craplim.inlcrcdc = 0 then
+     --if  rw_crawlim.inlcrcdc = 0 then
          -- Verificar se usa tabela juros
          vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                   ,pr_nmsistem => 'CRED'
@@ -4220,20 +4303,20 @@ vr_vltotbem number;
                                                   ,pr_cdempres => 11
                                                   ,pr_cdacesso => 'TAXATABELA'
                                                   ,pr_tpregist => 0);
-         -- Se a primeira posição do campo dstextab for diferente de zero
+         -- Se a primeira posiçao do campo dstextab for diferente de zero
          vr_inusatab := substr(vr_dstextab,1,1) != '0';
 
          -- Busca endividamento do cooperado
          rati0001.pc_calcula_endividamento(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
-                                          ,pr_cdagenci   => pr_cdagenci     --> Código da agência
+                                          ,pr_cdagenci   => pr_cdagenci     --> Código da agencia
                                           ,pr_nrdcaixa   => 0               --> Número do caixa
                                           ,pr_cdoperad   => pr_cdoperad     --> Código do operador
                                           ,pr_rw_crapdat => rw_crapdat      --> Vetor com dados de parâmetro (CRAPDAT)
                                           ,pr_nrdconta   => pr_nrdconta     --> Conta do associado
-                                          ,pr_dsliquid   => rw_craplim.dsliquid --> Lista de contratos a liquidar
+                                          ,pr_dsliquid   => rw_crawlim.dsliquid --> Lista de contratos a liquidar
                                           ,pr_idseqttl   => 1               --> Sequencia de titularidade da conta
                                           ,pr_idorigem   => 1 /*AYLLOS*/    --> Indicador da origem da chamada
-                                          ,pr_inusatab   => vr_inusatab     --> Indicador de utilização da tabela de juros
+                                          ,pr_inusatab   => vr_inusatab     --> Indicador de utilizaçao da tabela de juros
                                           ,pr_tpdecons   => 3               --> Tipo da consulta 3 - Considerar a data atual
                                           ,pr_vlutiliz   => vr_vlutiliz     --> Valor da dívida
                                           ,pr_cdcritic   => vr_cdcritic     --> Critica encontrada no processo
@@ -4254,7 +4337,7 @@ vr_vltotbem number;
 
              vr_vlprapne := nvl(rw_crawepr_pend.vlemprst, 0) + vr_vlprapne;
 
-             --> Selecionar o saldo disponivel do pre-aprovado da conta em questão  da carga ativa
+             --> Selecionar o saldo disponivel do pre-aprovado da conta em questao  da carga ativa
              if  rw_crapass_cpfcgc.flgcrdpa = 1 then
                  rw_crapcpa := null;
                  open  cr_crapcpa;
@@ -4278,7 +4361,7 @@ vr_vltotbem number;
          -- Copiar parâmetro
          vr_nmarquiv := pr_nmarquiv;
 
-         --  Caso não tenhamos recebido o PDF
+         --  Caso nao tenhamos recebido o PDF
          if  vr_nmarquiv is null then
              -- Gerar ID aleatório
              vr_dsiduser := dbms_random.string('A', 27);
@@ -4312,7 +4395,7 @@ vr_vltotbem number;
                                                  ,pr_cdcooper => pr_cdcooper
                                                  ,pr_nmsubdir => '/rl');
              
-             --  Se o arquivo não existir, Remover o conteudo do nome do arquivo para não enviar
+             --  Se o arquivo nao existir, Remover o conteudo do nome do arquivo para nao enviar
              if  not gene0001.fn_exis_arquivo(vr_dsdirarq || '/' || vr_nmarquiv) then
                  vr_nmarquiv := null;
              end if;
@@ -4405,7 +4488,7 @@ vr_vltotbem number;
      --    vr_obj_proposta.put('endividamentoContaValor'     ,'');
      --end if;
 
-     vr_obj_proposta.put('contratoNumero'     ,rw_craplim.nrctrlim);
+     vr_obj_proposta.put('contratoNumero'     ,rw_crawlim.nrctrlim);
 
      -- Verificar se a conta é de colaborador do sistema Cecred
      vr_cddcargo := null;
@@ -4419,7 +4502,7 @@ vr_vltotbem number;
      close cr_tbcolab;
 
      -- Enviar tag indicando se é colaborador
-     vr_obj_proposta.put('cooperadoColaborador',vr_flgcolab); 
+     vr_obj_proposta.put('cooperadoColaborador',vr_flgcolab);
 
      --  Enviar o cargo somente se colaborador
      if  vr_flgcolab then
@@ -4427,10 +4510,10 @@ vr_vltotbem number;
      end if;
 
      -- Enviar nivel de risco no momento da criacao
-     vr_obj_proposta.put('classificacaoRisco',rw_craplim.dsnivris);
+     vr_obj_proposta.put('classificacaoRisco',rw_crawlim.dsnivris);
 
-     -- Enviar flag se a proposta é de renogociação
-     vr_obj_proposta.put('renegociacao',(rw_craplim.dsliquid != '0,0,0,0,0,0,0,0,0,0'));
+     -- Enviar flag se a proposta é de renogociaçao
+     vr_obj_proposta.put('renegociacao',(rw_crawlim.dsliquid != '0,0,0,0,0,0,0,0,0,0'));
 
      --  BUscar faturamento se pessoa Juridica
      if  rw_crapass.inpessoa = 2 then
@@ -4455,7 +4538,7 @@ vr_vltotbem number;
 
      when others then
           pr_cdcritic := 0;
-          pr_dscritic := 'Não foi possivel montar objeto proposta: '||sqlerrm;
+          pr_dscritic := 'Nao foi possivel montar objeto proposta: '||sqlerrm;
 
 END pc_gera_json_proposta;
   
