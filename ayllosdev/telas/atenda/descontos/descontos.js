@@ -454,7 +454,6 @@ function formataLayout(nomeForm){
 		arrayLargura[3] = '60px';
 		arrayLargura[4] = '60px';
 		arrayLargura[5] = '120px';
-		arrayLargura[6] = '120px';
 				
 		var arrayAlinha = new Array();
 		
@@ -497,7 +496,6 @@ function formataLayout(nomeForm){
 		arrayLargura[5] = '25px';
 		arrayLargura[6] = '120px';
 		arrayLargura[7] = '120px';
-		arrayLargura[8] = '120px';
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
