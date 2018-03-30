@@ -2119,7 +2119,8 @@ function mostrarBorderoResumo() {
 function mostrarDetalhesPagador() {
     showMsgAguardo("Aguarde, carregando dados do pagador ...");
 
-    var idtitulo = "";
+    var idtitulo = $('#nrnosnum_aux').val();
+    var nmdsacad = $('#nmdsacad_aux').val();
 
     $.ajax({
         type: "POST",
@@ -2127,6 +2128,7 @@ function mostrarDetalhesPagador() {
         dataType: "html",
         data: {
             idtitulo: idtitulo,
+            nmdsacad: nmdsacad,
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -2138,11 +2140,12 @@ function mostrarDetalhesPagador() {
         }
     });
     
+    
     return false;
 }
 
 
 function selecionaTituloResumo(idtitulo, nmdsacad){
-    console.log("[ID Boleto] - " + idtitulo);
-    console.log("[Nome Sacado] - " + nmdsacad);
+    $('#nrnosnum_aux').val(idtitulo);
+    $('#nmdsacad_aux').val(nmdsacad);
 }

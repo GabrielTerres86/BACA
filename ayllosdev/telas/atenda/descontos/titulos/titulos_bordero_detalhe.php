@@ -29,20 +29,26 @@
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
-	$idtitulo = $_POST["idtitulo"];
+	$nrnosnum = $_POST["idtitulo"];
+	$nmdsacad = $_POST["nmdsacad"];
 
 	$xml = "<Root>";
     $xml .= " <Dados>";
-    $xml .= "   <nrdconta>".$idtitulo."</nrdconta>";
+    $xml .= "   <nrnosnum>".$nrnosnum."</nrnosnum>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
     // FAZER O INSERT CRAPRDR e CRAPACA
-    $xmlResult = mensageria($xml,"XXXX","XXXX", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","LISTAR_DETALHE_TITULO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
 
-	$titulos   = $xmlObj->roottag->tags[0]->tags;
-	$qtTitulos = count($titulos);
+   
+	$biro = $xmlObj->roottag->tags[0]->tags;
+
+	$detalhe = $xmlObj->roottag->tags[0]->tags[1];
+
+	$critica = $xmlObj->roottag->tags[0]->tags[2]->tags;
+	$qtCriticas = count($critica);
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
@@ -87,24 +93,24 @@
 					</tr>
 
 					<tr>
-						<td style="align-text: center;">SPC</td>
-						<td style="align-text: center;">Nada Consta</td>
-						<td style="align-text: center;">Nada Consta</td>
-						<td style="align-text: center;">Nada Consta</td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[0]->cdata ?></td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[1]->cdata ?></td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[2]->cdata ?></td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[3]->cdata ?></td>
 					</tr>
 
 					<tr>
-						<td style="align-text: center; ">SERASA</td>
-						<td style="align-text: center;">Nada Consta</td>
-						<td style="align-text: center;">Nada Consta</td>
-						<td style="align-text: center;">Nada Consta</td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[4]->cdata ?></td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[5]->cdata ?></td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[6]->cdata ?></td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[7]->cdata ?></td>
 					</tr>
 
 					<tr>
-						<td style="align-text: center; ">BOA BISTA</td>
-						<td style="align-text: center;">Nada Consta</td>
-						<td style="align-text: center;">Nada Consta</td>
-						<td style="align-text: center;">Nada Consta</td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[8]->cdata ?></td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[9]->cdata ?></td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[10]->cdata ?></td>
+						<td style="align-text: center;"><? echo $biro[0]->tags[11]->cdata ?></td>
 					</tr>
 				</table>
 				<br><br>
@@ -125,9 +131,9 @@
 					</tr>
 
 					<tr>	
-						<td style="vertical-align: bottom;">80%</td>	
-						<td style="vertical-align: bottom;">90%</td>
-						<td style="vertical-align: bottom;">90%</td>									
+						<td style="vertical-align: bottom;"><? echo $biro[1]->tags[0]->cdata ?></td>	
+						<td style="vertical-align: bottom;"><? echo $biro[1]->tags[1]->cdata ?></td>
+						<td style="vertical-align: bottom;"><? echo $biro[1]->tags[2]->cdata ?></td>									
 					</tr>
 				</table>
 
@@ -147,9 +153,12 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr>
-								<td style="text-align: left;">Descri&ccedil;&atilde;o da critica retornada pelo sistema</td>
-							</tr>
+							<?  for ($i = 0; $i < $qtCriticas; $i++) { 	?>
+								<tr>
+									<td style="text-align: left;"><? echo $critica[$i]->cdata ?></td>
+								</tr>
+
+							<?} // Fim do for ?>	
 						</tbody>
 					</table>
 				</div>

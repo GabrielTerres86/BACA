@@ -45,22 +45,6 @@
 	}
 	$selecionados = implode($selecionados,",");
 
-	// INICIO - INCLUIR PHP QUE FAZ A CHAMADA PARA O IBRATAM (REPLACE)
-	//
-	
-	// $xml = "<Root>";
- //    $xml .= " <Dados>";
- //    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
- //    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
- //    $xml .= " </Dados>";
- //    $xml .= "</Root>";
-
- //    // FAZER O INSERT CRAPRDR e CRAPACA
- //    $xmlResult = mensageria($xml,"XXXX","XXXX", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
- //    $xmlObj = getObjectXML($xmlResult);
-
-	// $titulos   = $xmlObj->roottag->tags[0]->tags;
-	// $qtTitulos = count($titulos);
 	
 	// LISTA TODOS OS TITULOS SELECIONADOS COM AS CRITICAS E RETORNO DA IBRATAN
 	$xml = "<Root>";
@@ -89,9 +73,13 @@
 	
 ?>
 
+<input type="hidden" id="nrnosnum_aux" name="nrnosnum_aux"/>
+<input type="hidden" id="nmdsacad_aux" name="nmdsacad_aux"/>
+
 <div id="divResumoBordero">
 
 	<form id="formPesquisaTitulos" class="formulario">
+		<input type="hidden" id="nrinssac" name="nrinssac" value="<? echo $nrinssac; ?>" />
 		<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo $nrdconta; ?>" />
 		
 		<div id="divTitulos" class="formulario">
@@ -112,9 +100,12 @@
 						</thead>
 						<tbody>
 							<?
-								$mtdClick = "selecionaTituloResumo('1', 'Gomercindo Lopes');";
-						    	foreach($dados->tags AS $t){ ?>
-						    		<tr id='titulo_<? echo getByTagName($t->tags,'nrnosnum');?>'>
+								
+						    	foreach($dados->tags AS $t){ 
+						    		$mtdClick = "selecionaTituloResumo('". getByTagName($t->tags,'nrnosnum') ."', '". getByTagName($t->tags,'nmdsacad') ."' );";
+						    ?>
+
+						    		<tr id='titulo_<? echo getByTagName($t->tags,'nrnosnum');?>' onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						    			<td><input type='hidden' name='selecionados' value='<? echo getByTagName($t->tags,'nrnosnum');?>'/><? echo getByTagName($t->tags,'nrcnvcob');?></td>
 						    			<td><? echo getByTagName($t->tags,'nrdocmto');?></td>
 						    			<td><? echo getByTagName($t->tags,'nrinssac').' - '.getByTagName($t->tags,'nmdsacad');?></td>
