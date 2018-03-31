@@ -158,7 +158,8 @@ type typ_tab_dados_proposta is table of typ_reg_dados_proposta index by pls_inte
 TYPE typ_reg_dados_biro IS RECORD(
       dsnegati        VARCHAR2(225),
       qtnegati        integer,
-      vlnegati        number
+      vlnegati        number,
+      dtultneg        date
     );
   
 TYPE typ_tab_dados_biro IS TABLE OF typ_reg_dados_biro INDEX BY BINARY_INTEGER;
@@ -408,7 +409,8 @@ PROCEDURE pc_insere_bordero(pr_tpctrlim           in craplim.tpctrlim%type   -->
 PROCEDURE pc_detalhes_tit_bordero(pr_cdcooper       in crapcop.cdcooper%type   --> Cooperativa conectada
                              ,pr_nrdconta           in crapass.nrdconta%type   --> Conta do associado
                              ,pr_nrnosnum           in VARCHAR2                --> Lista de 'nosso numero' a ser pesquisado
-                             ,pr_qtregist           out integer                --> Qtde total de registros
+                             ,pr_nrinssac           out crapsab.nrinssac%TYPE   --> Inscrição do sacado
+                             ,pr_nmdsacad           out crapsab.nmdsacad%TYPE   --> Nome do Sacado
                              ,pr_tab_dados_biro     out  typ_tab_dados_biro    --> Tabela de retorno biro
                              ,pr_tab_dados_detalhe  out  typ_tab_dados_detalhe --> Tabela de retorno detalhe
                              ,pr_tab_dados_critica  out  typ_tab_dados_critica --> Tabela de retorno critica
@@ -3691,8 +3693,7 @@ END pc_solicita_biro_bordero;
                 dtinsori,
                 cdopcolb,
                 cdopcoan,
-                dtrefatu,
-                vltaxiof
+                dtrefatu
                 )
                 VALUES(vr_nrborder,
                 rw_craplim.nrctrlim,
@@ -3716,7 +3717,6 @@ END pc_solicita_biro_bordero;
                 sysdate,
                 vr_cdoperad,
                 vr_cdagenci,
-                null,
                 null
                 );
                 
@@ -3805,7 +3805,8 @@ END pc_solicita_biro_bordero;
   PROCEDURE pc_detalhes_tit_bordero(pr_cdcooper       in crapcop.cdcooper%type   --> Cooperativa conectada
                                ,pr_nrdconta           in crapass.nrdconta%type   --> Conta do associado
                                ,pr_nrnosnum           in VARCHAR2                --> Lista de 'nosso numero' a ser pesquisado
-                               ,pr_qtregist           out integer                --> Qtde total de registros
+                               ,pr_nrinssac           out crapsab.nrinssac%TYPE   --> Inscrição do sacado
+                               ,pr_nmdsacad           out crapsab.nmdsacad%TYPE   --> Nome do Sacado
                                ,pr_tab_dados_biro     out  typ_tab_dados_biro    --> Tabela de retorno biro
                                ,pr_tab_dados_detalhe  out  typ_tab_dados_detalhe --> Tabela de retorno detalhe
                                ,pr_tab_dados_critica  out  typ_tab_dados_critica --> Tabela de retorno critica
@@ -3852,6 +3853,14 @@ END pc_solicita_biro_bordero;
     vr_nrconbir            craprpf.nrconbir%TYPE;
     vr_nrseqdet            craprpf.nrseqdet%TYPE;
     ----------------> CURSORES <----------------
+    -- Pagador
+    cursor cr_crapsab is
+    SELECT *
+    from crapsab
+    where cdcooper = pr_cdcooper
+    AND nrinssac = vr_nrinssac
+    AND nrdconta = pr_nrdconta;
+    rw_crapsab cr_crapsab%rowtype;
     
     -- Titulos (Boletos de Cobrança)
     cursor cr_crapcob is 
@@ -3864,6 +3873,7 @@ END pc_solicita_biro_bordero;
     where  cob.cdcooper = pr_cdcooper -- Cooperativa
     and    cob.nrdconta = pr_nrdconta -- Conta
     and    cob.nrnosnum = pr_nrnosnum -- "Nosso Número"
+    and    cob.incobran=0
     ;
     --
     rw_crapcob cr_crapcob%rowtype;  
@@ -3882,15 +3892,7 @@ END pc_solicita_biro_bordero;
                and    crapcob.flgregis = 1
                and    crapcob.incobran = 0
                and    crapcob.dtdpagto is null
-               and    crapcob.nrdconta in (select 
-                      nrdconta
-                    from 
-                      crapcob 
-                    where 
-                          cdcooper = pr_cdcooper
-                      and nrinssac = vr_nrinssac
-                      and nrdconta = pr_nrdconta
-                    group by nrdconta)
+               and    crapcob.nrdconta = pr_nrdconta
                group  by nrdconta,
                          crapcob.nrinssac
                order  by crapcob.nrdconta
@@ -4066,7 +4068,7 @@ END pc_solicita_biro_bordero;
                    AND craprpf.innegati = 3
                 UNION ALL
                 SELECT 4,
-                       'A&ccedil;&atilde;o Judicial' dsnegati,
+                       'Ação Judicial' dsnegati,
                        MAX(craprpf.qtnegati),
                        MAX(craprpf.vlnegati),
                        MAX(craprpf.dtultneg)
@@ -4076,7 +4078,7 @@ END pc_solicita_biro_bordero;
                    AND craprpf.innegati = 4
                 UNION ALL
                 SELECT 5,
-                       'Participa&ccedil;&atilde;o fal&ecirc;ncia' dsnegati,
+                       'Participação falência' dsnegati,
                        MAX(craprpf.qtnegati),
                        MAX(craprpf.vlnegati),
                        MAX(craprpf.dtultneg)
@@ -4110,9 +4112,13 @@ END pc_solicita_biro_bordero;
   BEGIN 
       open cr_crapcob;
       fetch cr_crapcob into rw_crapcob;
-         
       vr_nrinssac := rw_crapcob.nrinssac;
-
+      
+      open cr_crapsab;
+      fetch cr_crapsab into rw_crapsab;
+      pr_nrinssac:=rw_crapsab.nrinssac;
+      pr_nmdsacad:=rw_crapsab.nmdsacad;
+      
       --> DETALHES (BORDERO)
       open cr_crapcbd;
       fetch cr_crapcbd into rw_crapcbd;
@@ -4121,9 +4127,11 @@ END pc_solicita_biro_bordero;
         open cr_craprpf (pr_nrconbir=>rw_crapcbd.nrconbir,pr_nrseqdet=>rw_crapcbd.nrseqdet);
         LOOP
             fetch cr_craprpf into rw_craprpf;
+               EXIT WHEN cr_craprpf%NOTFOUND;
                pr_tab_dados_biro(vr_idtabtitulo).dsnegati := rw_craprpf.dsnegati;
                pr_tab_dados_biro(vr_idtabtitulo).qtnegati := rw_craprpf.qtnegati;
                pr_tab_dados_biro(vr_idtabtitulo).vlnegati := rw_craprpf.vlnegati;
+               pr_tab_dados_biro(vr_idtabtitulo).dtultneg := rw_craprpf.dtultneg;
                vr_idtabtitulo := vr_idtabtitulo + 1;
         END LOOP;      
       END IF; 
@@ -4183,37 +4191,43 @@ END pc_solicita_biro_bordero;
 
         -- qtremessa_cartorio	-> Crítica: Qtd Remessa em Cartório acima do permitido. (Ref. TAB052: qtremcrt).
         if rw_analise_pagador.qtremessa_cartorio > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd Remessa em Cartório acima do permitido: '||rw_analise_pagador.qtremessa_cartorio; 
+           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd Remessa em Cartório acima do permitido'; 
+           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd Remessa em Cartório acima do permitido: '||rw_analise_pagador.qtremessa_cartorio; 
            vr_idtabcritica:=vr_idtabcritica+1;
         end if;
               
         -- qttit_protestados -> Crítica: Qtd de Títulos Protestados acima do permitido. (Ref. TAB052: qttitprt).
         if rw_analise_pagador.qttit_protestados > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd de Títulos Protestados acima do permitido: '||rw_analise_pagador.qttit_protestados; 
+           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd de Títulos Protestados acima do permitido'; 
+           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd de Títulos Protestados acima do permitido: '||rw_analise_pagador.qttit_protestados; 
            vr_idtabcritica:=vr_idtabcritica+1;
         end if;
               
         -- qttit_naopagos	-> Crítica: Qtd de Títulos Não Pagos pelo Pagador acima do permitido. (Ref. TAB052: qtnaopag).
         if rw_analise_pagador.qttit_naopagos > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd de Títulos Não Pagos pelo Pagador acima do permitido: '||rw_analise_pagador.qttit_naopagos;
+           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd de Títulos Não Pagos pelo Pagador acima do permitido';
+           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd de Títulos Não Pagos pelo Pagador acima do permitido: '||rw_analise_pagador.qttit_naopagos;
            vr_idtabcritica:=vr_idtabcritica+1;
         end if;
               
         -- pemin_liquidez_qt ->	Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos).  (Ref. TAB052: qttliqcp).
         if rw_analise_pagador.pemin_liquidez_qt > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos): '||rw_analise_pagador.pemin_liquidez_qt;
+           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos)';
+           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos): '||rw_analise_pagador.pemin_liquidez_qt;
            vr_idtabcritica:=vr_idtabcritica+1;
         end if;
               
         -- pemin_liquidez_vl ->	Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos).  (Ref. TAB052: vltliqcp).
         if rw_analise_pagador.pemin_liquidez_vl > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos): '||rw_analise_pagador.pemin_liquidez_vl;
+           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos)';
+           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos): '||rw_analise_pagador.pemin_liquidez_vl;
            vr_idtabcritica:=vr_idtabcritica+1;
         end if;
              
         -- peconcentr_maxtit ->	Crítica: Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip).
         if rw_analise_pagador.peconcentr_maxtit > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Concentração Máxima Permitida de Títulos excedida: '||rw_analise_pagador.peconcentr_maxtit;
+           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Concentração Máxima Permitida de Títulos excedida';
+           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Concentração Máxima Permitida de Títulos excedida: '||rw_analise_pagador.peconcentr_maxtit;
            vr_idtabcritica:=vr_idtabcritica+1;
         end if;
               
@@ -4256,12 +4270,13 @@ END pc_solicita_biro_bordero;
     vr_tab_dados_biro         typ_tab_dados_biro;
     vr_tab_dados_detalhe      typ_tab_dados_detalhe;
     vr_tab_dados_critica      typ_tab_dados_critica;
+    vr_nrinssac          crapsab.nrinssac%TYPE;
+    vr_nmdsacad          crapsab.nmdsacad%TYPE;
 
     /* tratamento de erro */
     vr_exc_erro exception;
       
     vr_tab_erro         gene0001.typ_tab_erro;
-    vr_qtregist         number;
     vr_des_reto varchar2(3);
         
     -- variaveis de entrada vindas no xml
@@ -4290,7 +4305,7 @@ END pc_solicita_biro_bordero;
    -- variaveis para verificar criticas e situacao
    vr_ibratan integer;
    vr_situacao char(1);
-   vr_nrinssac crapcob.nrinssac%TYPE;
+
        
       procedure pc_escreve_xml( pr_des_dados in varchar2
                               , pr_fecha_xml in boolean default false
@@ -4319,7 +4334,8 @@ END pc_solicita_biro_bordero;
                        ,pr_nrdconta          --> número da conta
                        ,pr_nrnosnum          --> lista de 'nosso numero' a ser pesquisado
                        --------> out <--------
-                       ,vr_qtregist          --> quantidade de registros encontrados
+                       ,vr_nrinssac          --> Inscricao do sacado
+                       ,vr_nmdsacad          --> Nome do sacado
                        ,vr_tab_dados_biro    -->  retorno do biro
                        ,vr_tab_dados_detalhe -->  retorno dos detalhes
                        ,vr_tab_dados_critica --> retorno das criticas
@@ -4335,8 +4351,13 @@ END pc_solicita_biro_bordero;
       vr_texto_completo := null;
           
       pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
-                     '<root><dados qtregist="' || vr_qtregist ||'" >');
+                     '<root><dados  >');
                          
+      pc_escreve_xml('<pagador>'||
+                         '<nrinssac>'||vr_nrinssac||'</nrinssac>'||
+                         '<nmdsacad>'||vr_nmdsacad||'</nmdsacad>'||
+                    '</pagador>');
+      
      -- ler os registros de biro e incluir no xml
       vr_index_biro := vr_tab_dados_biro.first;
       
@@ -4344,8 +4365,9 @@ END pc_solicita_biro_bordero;
       while vr_index_biro is not null loop  
           pc_escreve_xml('<craprpf>' || 
                           '<dsnegati>' || vr_tab_dados_biro(vr_index_biro).dsnegati || '</dsnegati>' ||
-                          '<dsnegati>' || vr_tab_dados_biro(vr_index_biro).qtnegati || '</dsnegati>' ||
-                          '<dsnegati>' || vr_tab_dados_biro(vr_index_biro).vlnegati || '</dsnegati>' ||
+                          '<qtnegati>' || vr_tab_dados_biro(vr_index_biro).qtnegati || '</qtnegati>' ||
+                          '<vlnegati>' || vr_tab_dados_biro(vr_index_biro).vlnegati || '</vlnegati>' ||
+                          '<dtultneg>' || to_char(vr_tab_dados_biro(vr_index_biro).dtultneg,'DD/MM/RRRR') || '</dtultneg>' ||
                         '</craprpf>'
                   );
           /* buscar proximo */
@@ -4365,15 +4387,13 @@ END pc_solicita_biro_bordero;
           
       -- ler os registros de detalhe e incluir no xml
       vr_index_critica := vr_tab_dados_critica.first;
+      pc_escreve_xml('<critica>');
       while vr_index_critica is not null loop
-            pc_escreve_xml('<critica>'||
-                              '<dsc_critica>' || vr_tab_dados_critica(vr_index_critica).dsc_critica || '</dsc_critica>' ||
-                           '</critica>'
-            );
+            pc_escreve_xml( '<dsc_critica>' || vr_tab_dados_critica(vr_index_critica).dsc_critica || '</dsc_critica>');
             /* buscar proximo */
             vr_index_critica := vr_tab_dados_critica.next(vr_index_critica);
       end loop;
-          
+      pc_escreve_xml('</critica>');
           
       pc_escreve_xml ('</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);
