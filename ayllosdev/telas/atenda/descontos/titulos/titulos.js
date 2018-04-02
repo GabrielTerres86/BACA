@@ -20,7 +20,7 @@
  * 007: [20/08/2015] Kelvin    (CECRED) : Ajuste feito para não inserir caracters 
  *                                        especiais na observação, conforme solicitado
  *                                        no chamado 315453.
- * 
+ *
  * 008: [17/12/2015] Lunelli   (CECRED) : Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
  * 009: [27/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
  * 010: [18/11/2016] Jaison/James (CECRED) : Reinicializa glb_codigoOperadorLiberacao somente quando pede a senha do coordenador.
@@ -29,8 +29,10 @@
  * 013: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364).
  * 014: [13/03/2018] Leonardo Oliveira (GFT): Novos métodos 'acessaValorLimite', 'formataValorLimite', 'renovaValorLimite' e 'converteNumero'.
  * 015: [16/03/2018] Leonardo Oliveira (GFT): Alteração dos métodos 'acessaValorLimite', 'formataValorLimite' e 'renovaValorLimite' para mostrar dialogo de confirmação e condirerar alteração de linha
- * 016: [28/03/2018] Andre Avila (GFT): Criação do método carregaLimitesTitulosPropostas e carregaDadosAlteraLimiteDscTitPropostas.
- */
+ * 016: [22/03/2018] Leonardo Oliveira (GFT): Ajustes no fluxo de renovação do limite de desconto de titulos, validação das linhas de credito bloqueadas
+ * 017: [28/03/2018] Andre Avila (GFT): Criação do método carregaLimitesTitulosPropostas e carregaDadosAlteraLimiteDscTitPropostas. 
+ * 018: [02/04/2018] Leonardo Oliveira (GFT): Criação dos metodos para mostrar detalhes do titulo do borderô 'selecionarTituloDeBordero' 'visualizarTituloDeBordero' 
+*/
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
 var nrcontrato = ""; // Variável para armazenar número do contrato de descto selecionado
@@ -2182,6 +2184,7 @@ function removerTituloResumo(){
     else{
         showError("error","Selecione um t&iacute;tulo para remover","Alerta - Ayllos","");
     }
+    return false;
 }
 
 function confirmarInclusao(){
@@ -2215,5 +2218,53 @@ function confirmarInclusao(){
         showError("error", "Adicione pelo menos um t&iacute;tulo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
     }
     
+    return false;
+}
+
+function selecionarTituloDeBordero(id, qtd, pr_nossonum) {
+    var cor = "";
+
+    nossonum = pr_nossonum
+    // Formata cor da linha da tabela que lista os borderos de descto titulos
+    for (var i = 1; i <= qtd; i++) {
+        if (cor == "#F4F3F0") {
+            cor = "#FFFFFF";
+        } else {
+            cor = "#F4F3F0";
+        }
+
+        // Formata cor da linha
+        $("#trTitBordero" + i).css("background-color", cor);
+
+        if (i == id) {
+            // Atribui cor de destaque para bordero selecionado
+            $("#trTitBordero" + id).css("background-color", "#FFB9AB");
+        }
+    }
+    return false;
+}
+
+function visualizarTituloDeBordero() {
+
+    showMsgAguardo("Aguarde, carregando dados do pagador ...");
+    var nrdconta = $("#nrdconta","#divTitulosBorderos").val();
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_visualizar_titulo.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrnosnum: nossonum,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao5").html(response);
+        }
+    });
     return false;
 }
