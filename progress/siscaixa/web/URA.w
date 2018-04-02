@@ -7,7 +7,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Janeiro/2006.                    Ultima atualizacao: 29/11/2017
+   Data    : Janeiro/2006.                    Ultima atualizacao: 12/03/2018
       
    Dados referentes ao programa:
 
@@ -75,6 +75,10 @@
                
                29/11/2017 - Inclusao do valor de bloqueio em garantia. 
                             PRJ404 - Garantia.(Odirlei-AMcom)        
+               12/03/2018 - #856961 Correção das imagens das cooperativas na
+                            rotina p_imprime_cabec, incluindo a Altovale, 
+                            retirando as inativas e atualizando os novos 
+                            nomes (Acredicoop e Acentra) (Carlos)  
                             
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
@@ -417,15 +421,10 @@ PROCEDURE p_imprime_cabec:
 
    IF   aux_cdcooper = 1   THEN
         aux_dsdlinha = "@@imagem /dg/som/viacredi.bmp,16,0".
-   ELSE
-   IF   aux_cdcooper = 2   THEN                             
-        aux_dsdlinha = "@@imagem /dg/som/creditextil.bmp,16,0".
-   ELSE
-   IF   aux_cdcooper = 4   THEN                
-        aux_dsdlinha = "@@imagem /dg/som/concredi.bmp,16,0".
+        aux_dsdlinha = "@@imagem /dg/som/acredicoop.bmp,16,0".
    ELSE                       
    IF   aux_cdcooper = 5   THEN 
-        aux_dsdlinha = "@@imagem /dg/som/cecrisacred.bmp,16,0".
+        aux_dsdlinha = "@@imagem /dg/som/acentra.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 6   THEN
         aux_dsdlinha = "@@imagem /dg/som/credifiesc.bmp,16,0".
@@ -453,8 +452,9 @@ PROCEDURE p_imprime_cabec:
    ELSE
    IF   aux_cdcooper = 14  THEN
         aux_dsdlinha = "@@imagem /dg/som/rodocredito.bmp,16,0".
-  
-     
+   ELSE
+   IF   aux_cdcooper = 16  THEN
+        aux_dsdlinha = "@@imagem /dg/som/altovale.bmp,16,0".
      
    /* Configura 66 linhas por página */
    {&OUT} CHR(27) + CHR(67) + CHR(66) '"' aux_dsdlinha '"\n'.
