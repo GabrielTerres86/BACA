@@ -99,7 +99,7 @@
 						<tr>
 							<td style="align-text: center;"><? echo getByTagName($t->tags,'dsnegati');  ?></td>
 							<?php if(getByTagName($t->tags,'qtnegati')>0) { ?>
-								<td style="align-text: center;"><? echo getByTagName($t->tags,'vlnegati'); ?></td>
+								<td style="align-text: center;"><? echo formataMoeda(getByTagName($t->tags,'vlnegati')); ?></td>
 								<td style="align-text: center;"><? echo getByTagName($t->tags,'qtnegati'); ?></td>
 								<td style="align-text: center;"><? echo getByTagName($t->tags,'dtultneg'); ?></td>
 							<?php }
