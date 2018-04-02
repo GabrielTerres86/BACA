@@ -2755,12 +2755,8 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
            ,lim.insitest
            ,lim.insitapr
            ,case lim.insitlim when 1 then 'EM ESTUDO'
-                              when 2 then 'ATIVO'
-                              when 3 then 'CANCELADO'
-                              when 4 then 'VIGENTE'
-                              when 5 then 'APROVADO'
-                              when 6 then 'NAO APROVADO'
-                              when 7 then 'REJEITADO'
+                              when 2 then 'EFETIVADA'
+                              when 3 then 'CANCELADA'
                               else        'DIFERENTE'
             end dssitlim
            ,case lim.insitest when 0 then 'NAO ENVIADO'
