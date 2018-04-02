@@ -197,6 +197,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --             02/10/2017 - Tratamento no update da tabela CRAPCYC para tratamento da origem 2. (Heitor - Mouts) - Chamado 760624.
   --
   --             13/03/2018 - Chamado 806202 - ALterado update CRAPCYC para não atualizar motivos 2 e 7.
+  --
+  --             02/04/2018 - Gravar usuario cyber quando efetuado pagamento da primeira parcela. Chamado 868775 (Heitor - Mouts)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -2591,6 +2594,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                             WHEN 7 THEN 7
                             ELSE 1 END
                , dtaltera = BTCH0001.rw_crapdat.dtmvtolt
+			   , cdoperad = 'cyber'
            WHERE cdcooper = rw_acordo_contrato.cdcooper
              AND cdorigem = DECODE(rw_acordo_contrato.cdorigem,2,3,rw_acordo_contrato.cdorigem)
              AND nrdconta = rw_acordo_contrato.nrdconta

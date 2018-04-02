@@ -121,6 +121,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --                          (Adriano - SD 804308).
   --
   --             13/03/2018 - Chamado 806202 - ALterado update CRAPCYC para não atualizar motivos 2 e 7.
+  -- 
+  --             02/04/2018 - Gravar usuario cyber no cancelamento de acordo. Chamado 868775 (Heitor - Mouts)
+  -- 
   ---------------------------------------------------------------------------
   -- Formato de retorno para numerico no xml
   vr_formtnum   VARCHAR2(30) := '99999999999990D00';
@@ -1827,7 +1830,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                         WHEN 2 THEN 2
                         WHEN 7 THEN 7
                         ELSE 0 END,
-             crapcyc.dtaltera = rw_crapdat.dtmvtolt
+             crapcyc.dtaltera = rw_crapdat.dtmvtolt,
+			 crapcyc.cdoperad = 'cyber'
          WHERE EXISTS(SELECT 1
                         FROM tbrecup_acordo_contrato
                         JOIN tbrecup_acordo
