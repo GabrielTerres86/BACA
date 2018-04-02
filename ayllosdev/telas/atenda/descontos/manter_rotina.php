@@ -29,7 +29,11 @@
 	$insitapr = (isset($_POST['insitapr'])) ? $_POST['insitapr'] : '' ;
 	$vllimite = (isset($_POST['vllimite'])) ? $_POST['vllimite'] : 0 ;
 	$cddopera = (isset($_POST['cddopera'])) ? $_POST['cddopera'] : 0 ;
-
+	$nrinssac = (isset($_POST['nrinssac'])) ? $_POST['nrinssac'] : '' ;
+	$vltitulo = (isset($_POST['vltitulo'])) ? $_POST['vltitulo'] : '' ;
+	$dtvencto = (isset($_POST['dtvencto'])) ? $_POST['dtvencto'] : '' ;
+	$nrnosnum = (isset($_POST['nrnosnum'])) ? $_POST['nrnosnum'] : '' ;
+	$form 	  = (isset($_POST['frmOpcao'])) ? $_POST['frmOpcao'] : '' ;
 
 	if ($operacao == 'ENVIAR_ANALISE' ) {
 		
@@ -181,7 +185,147 @@
 			} // OK
 		}// != ERROR
 		
-	}//ACEITAR_REJEICAO_LIMITE
+	}
+	else if ($operacao == 'BUSCAR_PAGADOR'){
+		if (!validaInteiro($nrdconta) || $nrdconta == 0) exibirErro('error','Informe o número da conta.','Alerta - Ayllos','$(\'#nrdconta\', \'#'.$form.'\').focus()',false);
+		if (!validaInteiro($nrinssac) || $nrinssac == 0) exibirErro('error','Informe o número do CPF/CNPJ.','Alerta - Ayllos','$(\'#nrinssac\', \'#'.$form.'\').focus()',false);
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "	<Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrinssac>".$nrinssac."</nrinssac>";
+		$xml .= "	</Dados>";
+		$xml .= "</Root>";
+		$xmlResult = mensageria($xml, "COBRAN", "COBR_OBTER_PAGADOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjeto 	= getObjectXML($xmlResult);		
+
+		// Se ocorrer um erro, mostra mensagem
+		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
+			$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;			
+			exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#nmdsacad\', \'#'.$form.'\').val(\'\');$(\'#nrinssac\', \'#'.$form.'\').val(\'\').focus()',false);
+		} 
+			
+		$nmdsacad	= getByTagname($xmlObjeto->roottag->tags[0]->tags,'nmdsacad');
+		$vlpercen	= getByTagname($xmlObjeto->roottag->tags[0]->tags,'vlpercen');
+
+		echo "$('#nmdsacad', '#$form').val('$nmdsacad');";
+		echo "$('#vlpercen', '#$form').val('$vlpercen');";
+		echo "controlaOpcao();";
+
+	}else if ($operacao =='BUSCAR_TITULOS_BORDERO'){
+
+		$xml = "<Root>";
+	    $xml .= " <Dados>";
+	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	    $xml .= "	<nrinssac>".$nrinssac."</nrinssac>";
+	    $xml .= "	<vltitulo>".converteFloat($vltitulo)."</vltitulo>";
+	    $xml .= "	<dtvencto>".$dtvencto."</dtvencto>";
+	    $xml .= "	<nrnosnum>".$nrnosnum."</nrnosnum>";
+	    $xml .= "	<nrctrlim>".$nrctrlim."</nrctrlim>";
+		$xml .= "	<insitlim>2</insitlim>";
+		$xml .= "	<tpctrlim>3</tpctrlim>";
+	    $xml .= " </Dados>";
+	    $xml .= "</Root>";
+
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","BUSCAR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlObj = getObjectXML($xmlResult);
+
+
+	    // Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){
+			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			if ($msgErro == "") {
+				$msgErro = $xmlObj->roottag->tags[0]->cdata;
+			}
+			echo '<script>';
+			exibeErro(htmlentities($msgErro));
+			echo '</script>';
+			exit;
+		}
+
+    	$dados = $xmlObj->roottag->tags[0];
+        $qtregist = $xmlObj->roottag->tags[0]->attributes['QTREGIST'];
+    	if($qtregist>0){
+	    	$html = "<table class='tituloRegistros'>";
+			$html .= 	"<thead>
+								<tr>
+									<th>Conv&ecirc;nio</th>
+									<th>Boleto n&ordm;</th>
+									<th>Pagador</th>
+									<th>Vencimento</th>
+									<th>Valor</th>
+									<th>Situa&ccedil;&atilde;o</th>
+									<th>Selecionar</th>
+								</tr>
+							</thead>
+							<tbody>
+					";
+	    	foreach($dados->tags AS $t){
+	    		$html .= "<tr id='titulo_".getByTagName($t->tags,'nrnosnum')."'>";
+	    		$html .=	"<td><input type='hidden' name='selecionados' value='".getByTagName($t->tags,'nrnosnum')."'/>".getByTagName($t->tags,'nrcnvcob')."</td>";
+	    		$html .=	"<td>".getByTagName($t->tags,'nrdocmto')."</td>";
+	    		$html .=	"<td>".getByTagName($t->tags,'nrinssac').' - '.getByTagName($t->tags,'nmdsacad')."</td>";
+	    		$html .=	"<td>".getByTagName($t->tags,'dtvencto')."</td>";
+	    		$html .=	"<td><span>".converteFloat(getByTagName($t->tags,'vltitulo'))."</span>".formataMoeda(getByTagName($t->tags,'vltitulo'))."</td>";
+	    		$sit = getByTagName($t->tags,'dssituac');
+	    		if ($sit=="N") {
+		    		$html .=	"<td><img src='../../imagens/icones/sit_ok.png'/></td>";
+	    		}
+	    		elseif ($sit=="S") {
+		    		$html .=	"<td><img src='../../imagens/icones/sit_er.png'/></td>";
+	    		}
+	    		else{
+		    		$html .=	"<td></td>";
+	    		}
+	    		$html .=	"<td class='botaoSelecionar' onclick='incluiTituloBordero(this);'><button type='button' class='botao'>Incluir</button></td>";
+	    		$html .= "</tr>";
+	    	}
+	    	$html .= "</tbody>
+	    			</table>";
+	    	echo $html;
+	    }
+	    else{
+			echo '<script>';
+			exibeErro("N&atilde;o foi encontrado nenhum t&iacute;tulo utilizando esses filtros.");
+			echo '</script>';
+	    }
+    	exit();
+	} else if($operacao =='INSERIR_BORDERO'){
+		$selecionados = isset($_POST["selecionados"]) ? $_POST["selecionados"] : array();
+		if(count($selecionados)==0){
+			exibeErro("Selecione ao menos um t&iacute;tulo");
+			exit;
+		}
+		$selecionados = implode($selecionados,",");
+
+		// LISTA TODOS OS TITULOS SELECIONADOS COM AS CRITICAS E RETORNO DA IBRATAN
+		$xml = "<Root>";
+	    $xml .= " <Dados>";
+	    $xml .= "   <tpctrlim>3</tpctrlim>";
+	    $xml .= "   <insitlim>2</insitlim>";
+	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
+	    $xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	    $xml .= " </Dados>";
+	    $xml .= "</Root>";
+
+
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","INSERIR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlObj = getObjectXML($xmlResult);
+
+	    // Se ocorrer um erro, mostra mensagem
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
+	       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","mostrarBorderoResumo();hideMsgAguardo();bloqueiaFundo(divRotina);");';
+			exit;
+		}
+
+    	$dados = $xmlObj->roottag->tags[0];
+
+			
+	    echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
+			
+	}
 
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -189,7 +333,6 @@
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
-
 
 	function exibeErroNew($msgErro,$nmdcampo) {
 	    echo 'hideMsgAguardo();';

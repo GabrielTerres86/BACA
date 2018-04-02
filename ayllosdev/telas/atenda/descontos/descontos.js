@@ -34,12 +34,33 @@
              07/03/2018 - Formatação do novo campo 'Data Renovação' para o formulário de titulos (Leonardo Oliveira - GFT)
 
              13/03/2018 - Formatação do botão Renovação para  o formulário de titulos. (Leonardo Oliveira - GFT)
+
+             28/03/2018 - Formatação dos layouts dos formulários de Contratos e Propostas. (Andre Avila - GFT)
 			 
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
 $.getScript(UrlSite + 'includes/rating/rating.js');
 
+/*Largura e alinhamento das tabelas da inclusao do bordero*/
+var arrayLarguraInclusaoBordero = new Array();
+arrayLarguraInclusaoBordero[0] = '70px';
+arrayLarguraInclusaoBordero[1] = '70px';
+arrayLarguraInclusaoBordero[2] = '370px';
+arrayLarguraInclusaoBordero[3] = '80px';
+arrayLarguraInclusaoBordero[4] = '100px';
+arrayLarguraInclusaoBordero[5] = '70px';
+arrayLarguraInclusaoBordero[6] = '70px';
+
+var arrayAlinhaInclusaoBordero = new Array();
+arrayAlinhaInclusaoBordero[0] = 'center';
+arrayAlinhaInclusaoBordero[1] = 'right';
+arrayAlinhaInclusaoBordero[2] = 'left';
+arrayAlinhaInclusaoBordero[3] = 'right';
+arrayAlinhaInclusaoBordero[4] = 'right';
+arrayAlinhaInclusaoBordero[5] = 'center';
+arrayAlinhaInclusaoBordero[6] = 'center';
+				
 // Função para voltar para o div anterior conforme parâmetros
 function voltaDiv(esconder,mostrar,qtdade,titulo,rotina,novotam,novalar) {	
 
@@ -274,7 +295,7 @@ function formataLayout(nomeForm){
 				
 	}else if ( nomeForm == 'divBorderos' ){
 	
-		$('#'+nomeForm).css('width','950px');
+		$('#'+nomeForm).css('width','785px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -284,25 +305,24 @@ function formataLayout(nomeForm){
 		var ordemInicial = new Array();
 				
 		var arrayLargura = new Array();
-		arrayLargura[0] = '85px';
+		arrayLargura[0] = '65px';
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '55px';
-		arrayLargura[4] = '80px';
-		arrayLargura[5] = '130px';
-		arrayLargura[6] = '130px';
-		arrayLargura[7] = '100px';
-		arrayLargura[8] = '15px';
+		arrayLargura[4] = '100px';
+		arrayLargura[5] = '55px';
+		arrayLargura[6] = '100px';
+		arrayLargura[7] = '90px';
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'right';
 		arrayAlinha[2] = 'right';
-		arrayAlinha[3] = 'center';
+		arrayAlinha[3] = 'right';
 		arrayAlinha[4] = 'right';
-		arrayAlinha[5] = 'center';
-		arrayAlinha[6] = 'center';
-		arrayAlinha[7] = 'center';
+		arrayAlinha[5] = 'right';
+		arrayAlinha[6] = 'right';
+		arrayAlinha[7] = 'left';
 		arrayAlinha[8] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
@@ -313,6 +333,121 @@ function formataLayout(nomeForm){
 			}
 		});
 		
+		ajustarCentralizacao();
+	
+	}else if ( nomeForm == 'divIncluirBordero' ){
+	
+		$('#'+nomeForm).css('width','940px');
+		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
+		camposFiltros.desabilitaCampo();
+		var divRegistrosTitulos 			= $('div.divRegistrosTitulos','#'+nomeForm);		
+		var divRegistrosTitulosSelecionados = $('div.divRegistrosTitulosSelecionados','#'+nomeForm);		
+		var tabelaTitulos      				= $('table', divRegistrosTitulos );
+		var tabelaTitulosSelecionados   	= $('table', divRegistrosTitulosSelecionados );
+						
+		
+
+		var rNrctrlim = $("label[for='nrctrlim']");
+		var rVldescon = $("label[for='vldescon']");
+		var rVldispon = $("label[for='vldispon']");
+		var rNrinssac = $("label[for='nrinssac']");
+	    var rNmdsacad = $("label[for='nmdsacad']");
+	    var rDtvencto = $("label[for='dtvencto']");
+	    var rVltitulo = $("label[for='vltitulo']");
+	    var rNrnosnum = $("label[for='nrnosnum']");
+
+		rNrctrlim.css({'width': '115px'}).addClass('rotulo');
+		rVldescon.css({'width': '135px'}).addClass('rotulo-linha');
+		rVldispon.css({'width': '150px'}).addClass('rotulo-linha');
+		rNrinssac.css({'width': '115px'}).addClass('rotulo');
+		rNmdsacad.css({'width': '114px'}).addClass('rotulo-linha');
+		rDtvencto.css({'width': '115px'}).addClass('rotulo');
+		rVltitulo.css({'width': '133px'}).addClass('rotulo-linha');
+		rNrnosnum.css({'width': '110px'}).addClass('rotulo-linha');
+
+		var cNrdconta = $("#nrdconta", "#"+nomeForm);
+		var cNrctrlim = $("#nrctrlim", "#"+nomeForm);
+		var cVldescon = $("#vldescon", "#"+nomeForm);
+		var cVldispon = $("#vldispon", "#"+nomeForm);
+		var cNrinssac = $("#nrinssac", "#"+nomeForm);
+		var cNmdsacad = $("#nmdsacad", "#"+nomeForm);
+		var cDtvencto = $("#dtvencto", "#"+nomeForm);
+		var cVltitulo = $("#vltitulo", "#"+nomeForm);
+		var cNrnosnum = $("#nrnosnum", "#"+nomeForm);
+
+
+		cNrctrlim.css({'width': '115px'}).addClass('inteiro');
+		cVldescon.css({'width': '110px'}).addClass('monetario');
+		cVldispon.css({'width': '110px'}).addClass('monetario');
+		cNrinssac.css({'width': '115px'}).addClass('inteiro').attr('maxlength', '14').habilitaCampo();
+		cNmdsacad.css({'width': '250px'});
+		cDtvencto.css({'width': '115px'}).addClass('data').habilitaCampo();
+		cVltitulo.css({'width': '110px'}).addClass('monetario').habilitaCampo();
+		cNrnosnum.css({'width': '70px'}).addClass('inteiro').habilitaCampo();
+
+
+		var ordemInicial = new Array();
+				
+						
+	    $('#' + nomeForm).css({'margin-top': '5px'});
+	    divRegistrosTitulos.css({'height': '210px', 'padding-bottom': '2px'});
+	    divRegistrosTitulosSelecionados.css({'height': '210px', 'padding-bottom': '2px'});
+
+		tabelaTitulos.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
+		tabelaTitulosSelecionados.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+
+
+	    btLupaPagador = $('#btLupaPagador','#'+nomeForm);
+	    btLupaPagador.css('cursor', 'pointer').unbind('click').bind('click', function () {
+	        if ((cNrinssac.hasClass('campoTelaSemBorda'))) return false;
+	        mostraPesquisaPagador(cNrdconta.val(),nomeForm);
+	        return false;
+	     });
+
+	    cNrinssac.unbind('keypress').unbind('change').bind('change keypress', function(e) {
+	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
+	        if ((e.keyCode == 9 || e.keyCode == 13 || e.type ==='change')) {
+	            if(cNrinssac.val()!=''){
+	                buscaPagador(cNrdconta.val(),cNrinssac.val(),nomeForm);
+	            }
+	            else{
+	            	cNmdsacad.val('');
+	            }
+	            return false;
+	        }
+	    });
+
+	    cDtvencto.unbind('keypress').bind('keypress', function(e) {
+	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
+	        if ((e.keyCode == 9 || e.keyCode == 13)) {
+	            cVltitulo.focus();
+	            return false;
+	        }
+	    });
+
+	    cVltitulo.unbind('keypress').bind('keypress', function(e) {
+	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
+	        if ((e.keyCode == 9 || e.keyCode == 13)) {
+	            cNrnosnum.focus();
+	            return false;
+	        }
+	    });
+
+	    cNrnosnum.unbind('keypress').bind('keypress', function(e) {
+	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
+	        if ((e.keyCode == 9 || e.keyCode == 13)) {
+	            buscarTitulosBordero();
+	            return false;
+	        }
+	    });
+
+		layoutPadrao();
 		ajustarCentralizacao();
 	
 	}else if( nomeForm == 'frmBordero' ){
@@ -386,7 +521,6 @@ function formataLayout(nomeForm){
 		Ctxjurmor.desabilitaCampo();
 
 
-
 /*Add else if para propostas*/
 }	else if( nomeForm == 'divPropostas' ){
 
@@ -454,6 +588,7 @@ function formataLayout(nomeForm){
 		arrayLargura[3] = '60px';
 		arrayLargura[4] = '60px';
 		arrayLargura[5] = '120px';
+		arrayLargura[5] = '120px';
 				
 		var arrayAlinha = new Array();
 		
@@ -475,8 +610,8 @@ function formataLayout(nomeForm){
 	
 		ajustarCentralizacao();
 
-			
-	}else if( nomeForm == 'divLimites' ){
+		
+	} else if( nomeForm == 'divLimites' ){
 				
 		$('#'+nomeForm).css('width','800px');
 	
@@ -496,6 +631,7 @@ function formataLayout(nomeForm){
 		arrayLargura[5] = '25px';
 		arrayLargura[6] = '120px';
 		arrayLargura[7] = '120px';
+		arrayLargura[8] = '120px';
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
@@ -517,7 +653,6 @@ function formataLayout(nomeForm){
 		});
 	
 		ajustarCentralizacao();
-
 		
 	}else if(  nomeForm == 'frmDadosLimiteDscChq' || nomeForm == 'frmDadosLimiteDscTit'){
 	
@@ -762,7 +897,7 @@ function formataLayout(nomeForm){
 
 		$('#btnrenovacao').unbind('click').bind('click', function(){
 			if (Cperrenov.val() != 1) {return false}
-			renovarLimiteTitulo();
+			acessaValorLimite();
 			return false;			
 		});
 
@@ -1210,6 +1345,73 @@ function formataLayout(nomeForm){
 
 		tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		ajustarCentralizacao();			
+	}else if ( nomeForm == 'divResumoBordero' ){
+	
+		$('#'+nomeForm).css('width','940px');
+
+		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
+		camposFiltros.desabilitaCampo();
+		var table = $('#divTitulos table','#'+nomeForm);		
+
+		var ordemInicial = new Array();
+						
+	    $('#' + nomeForm).css({'margin-top': '5px'});
+    	table.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
+
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+
+
+		layoutPadrao();
+		ajustarCentralizacao();
+	
+	}else if ( nomeForm == 'divDetalheBordero' ){
+	
+		$('#'+nomeForm).css('width','940px');
+
+
+		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
+		camposFiltros.desabilitaCampo();
+		var divRegistrosTitulos 			= $('div.divRegistrosTitulos','#'+nomeForm);		
+		var divRegistrosTitulosSelecionados = $('div.divRegistrosTitulosSelecionados','#'+nomeForm);		
+		var tabelaTitulos      				= $('table', divRegistrosTitulos );
+		var tabelaTitulosSelecionados   	= $('table', divRegistrosTitulosSelecionados );
+		
+		var cNmdsacad = $("#nmdsacad", "#"+nomeForm);
+		cNmdsacad.css({'width': '450px'});
+	
+
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+		arrayLargura[0] = '100px';
+		
+
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'left';
+		
+						
+	    $('#' + nomeForm).css({'margin-top': '5px'});
+	    divRegistrosTitulos.css({'height': '210px', 'padding-bottom': '2px'});
+	    divRegistrosTitulosSelecionados.css({'height': '210px', 'padding-bottom': '2px'});
+
+		tabelaTitulos.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		tabelaTitulosSelecionados.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+
+
+		layoutPadrao();
+		ajustarCentralizacao();
+	
 	}
 	
 	return false;
