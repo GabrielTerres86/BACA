@@ -950,7 +950,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
         vr_nro_lote:= 11000 + pr_nro_caixa;
         vr_flg_vertexto:= FALSE;
 
-        if not paga0001.fn_processo_ligeir then 
+        if not paga0001.fn_exec_paralelo then 
           --Selecionar informacoes do lote ou cria-lo caso nao exista
           pc_insere_lote (pr_cdcooper => rw_crabcop.cdcooper,
                           pr_dtmvtolt => rw_crapdat.dtmvtocd,
@@ -983,11 +983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
           rw_craplot_ori.nrdolote := vr_nro_lote;
           rw_craplot_ori.cdoperad := pr_cod_operador;
                
-          rw_craplot_ori.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => rw_crabcop.cdcooper
-                                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                                   ,pr_cdagenci => pr_cod_agencia
-                                                                   ,pr_cdbccxlt => 11
-                                                                   ,pr_nrdolote => vr_nro_lote); 
+          rw_craplot_ori.nrseqdig := paga0001.fn_seq_parale_craplcm; 
         end if;                                             
         -- se encontrou erro ao buscar lote, abortar programa
         IF vr_dscritic IS NOT NULL THEN
@@ -1178,7 +1174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
         
         -- Selecionar informacoes do lote ou cria-lo caso nao exista
         -- Necessario para incrementar nrseqdig
-        if not paga0001.fn_processo_ligeir then
+        if not paga0001.fn_exec_paralelo then
           pc_insere_lote (pr_cdcooper => rw_crabcop.cdcooper,
                           pr_dtmvtolt => rw_crapdat.dtmvtocd,
                           pr_cdagenci => pr_cod_agencia,
@@ -1212,11 +1208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
            rw_craplot_dst.tplotmov := 1;
            rw_craplot_dst.cdhistor := 0;
            
-           rw_craplot_dst.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => rw_crabcop.cdcooper
-                                                                    ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                                    ,pr_cdagenci => pr_cod_agencia
-                                                                    ,pr_cdbccxlt => 11
-                                                                    ,pr_nrdolote => vr_nro_lote); 
+           rw_craplot_dst.nrseqdig := paga0001.fn_seq_parale_craplcm; 
          end if;
                         
         -- se encontrou erro ao buscar lote, abortar programa
@@ -1447,7 +1439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
         --Fechar Cursor
         CLOSE cr_crapbcx;
     
-        if not paga0001.fn_processo_ligeir then
+        if not paga0001.fn_exec_paralelo then
           /*** Informacao da cooperativa de origem ***/
           --Selecionar informacoes do lote ou cria-lo caso nao exista
           pc_insere_lote (pr_cdcooper => rw_crapcop.cdcooper,
@@ -1480,11 +1472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
           rw_craplot_ori.tplotmov := 1;
           rw_craplot_ori.cdhistor := 0;
           
-          rw_craplot_ori.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => rw_crapcop.cdcooper
-                                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                                   ,pr_cdagenci => pr_cod_agencia
-                                                                   ,pr_cdbccxlt => 11
-                                                   	               ,pr_nrdolote => vr_nro_lote); 
+          rw_craplot_ori.nrseqdig := paga0001.fn_seq_parale_craplcm; 
         END IF;                
         -- se encontrou erro ao buscar lote, abortar programa
         IF vr_dscritic IS NOT NULL THEN
@@ -1831,7 +1819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
         /***** Conta de destino *****/
         --Selecionar informacoes do lote ou cria-lo caso nao exista
-        if not PAGA0001.fn_processo_ligeir then
+        if not PAGA0001.fn_exec_paralelo then
           pc_insere_lote (pr_cdcooper => rw_crabcop.cdcooper,
                           pr_dtmvtolt => rw_crapdat.dtmvtocd,
                           pr_cdagenci => pr_cod_agencia,
@@ -1865,11 +1853,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
            rw_craplot_dst.tplotmov := 1;
            rw_craplot_dst.cdhistor := 0;
            
-           rw_craplot_dst.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => rw_crabcop.cdcooper
-                                                                    ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                                    ,pr_cdagenci => pr_cod_agencia
-                                                                    ,pr_cdbccxlt => 100
-                                                                    ,pr_nrdolote => 10120);                 
+           rw_craplot_dst.nrseqdig := PAGA0001.fn_seq_parale_craplcm;                 
         END IF;                
         -- se encontrou erro ao buscar lote, abortar programa
         IF vr_dscritic IS NOT NULL THEN
@@ -2346,7 +2330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
       END;
       
       -------> ATUALIZAR LOTES <--------- 
-      IF not PAGA0001.fn_processo_ligeir then 
+      IF not PAGA0001.fn_exec_paralelo then 
         IF cxon0020.fn_verifica_lote_uso(pr_rowid => rw_craplot_ori.rowid) = 1 THEN
           vr_dscritic:= 'Registro de lote '||rw_craplot_ori.nrdolote||' em uso. Tente novamente.';  
           -- Desfaz as alterações
@@ -2374,7 +2358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
         END;
       END IF;  
       -------> Atualizar lotes
-      IF not PAGA0001.fn_processo_ligeir then 
+      IF not PAGA0001.fn_exec_paralelo then 
         IF cxon0020.fn_verifica_lote_uso(pr_rowid => rw_craplot_dst.rowid) = 1 THEN
           vr_dscritic:= 'Registro de lote '||rw_craplot_dst.nrdolote||' em uso. Tente novamente.';  
           -- Desfaz as alterações

@@ -2153,12 +2153,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
       END IF;
 
       /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
-       PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       PAGA0001., que é chamada na rotina PC_CRPS509. Tem por finalidade definir
        se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
        da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
        a agencia do cooperado*/
        
-      if not paga0001.fn_processo_ligeir then
+      if not paga0001.fn_exec_paralelo then
         -- Controlar criação de lote, com pragma
         pc_insere_lote (pr_cdcooper => rw_crapcop.cdcooper,
                         pr_dtmvtolt => rw_crapdat.dtmvtocd,
@@ -2476,12 +2476,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
         IF NOT vr_flgdesct  AND NOT vr_flgregst THEN
           
           /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
-           PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+           PAGA0001., que é chamada na rotina PC_CRPS509. Tem por finalidade definir
            se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
            da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
            a agencia do cooperado*/
            
-          if not paga0001.fn_processo_ligeir then
+          if not paga0001.fn_exec_paralelo then
             -- Controlar criação de lote, com pragma
             pc_insere_lote (pr_cdcooper => rw_crapcop.cdcooper,
                             pr_dtmvtolt => rw_crapdat.dtmvtocd,
@@ -2823,9 +2823,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
 
           
           /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
-          PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+          PAGA0001., que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
           deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
-          if not paga0001.fn_processo_ligeir then
+          if not paga0001.fn_exec_paralelo then
             --Atualizar lote da lcm por ultimo, a fim de diminuir tempo de lock
             BEGIN
               UPDATE craplot SET craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
@@ -3523,9 +3523,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
    
       
       /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
-      PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+      PAGA0001., que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
       deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
-      if not paga0001.fn_processo_ligeir then
+      if not paga0001.fn_exec_paralelo then
         -- Apenas atualizar o lote se não for pagamento pela INTERNET
         -- pagamentos pela Internet, atualizacao do lote será na paga0001.pc_paga_titulo
         IF pr_cod_agencia <> 90 THEN
@@ -9184,12 +9184,12 @@ END pc_gera_titulos_iptu_prog;
       END IF;
       
       /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
-       PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       PAGA0001., que é chamada na rotina PC_CRPS509. Tem por finalidade definir
        se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
        da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
        a agencia do cooperado*/
        
-      if not paga0001.fn_processo_ligeir then
+      if not paga0001.fn_exec_paralelo then
         -- Controlar criação de lote, com pragma
         pc_insere_lote (pr_cdcooper => rw_crapcop.cdcooper,
                         pr_dtmvtolt => rw_crapdat.dtmvtocd,
@@ -9561,10 +9561,10 @@ END pc_gera_titulos_iptu_prog;
       END;
       
      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
-      PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+      PAGA0001., que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
       deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
 
-      if not PAGA0001.fn_processo_ligeir then
+      if not PAGA0001.fn_exec_paralelo then
          -- Apenas atualizar o lote se não for pagamento pela INTERNET
          -- pagamentos pela Internet, atualizacao do lote será na paga0001.pc_paga_convenio
         IF pr_cod_agencia <> 90 THEN
