@@ -971,6 +971,8 @@ END PROCEDURE. /* END grava_dados */
                 aux_vliofadi = 0
                 aux_flgimune = 0
                 par_vltottar = 0
+                par_vltariof = 0
+                par_vltariof = DECI(pc_calcula_iof_epr.pr_valoriof) WHEN pc_calcula_iof_epr.pr_valoriof <> ?
                 aux_vliofpri = DECI(pc_calcula_iof_epr.pr_vliofpri) WHEN pc_calcula_iof_epr.pr_vliofpri <> ?
                 aux_vliofadi = DECI(pc_calcula_iof_epr.pr_vliofadi) WHEN pc_calcula_iof_epr.pr_vliofadi <> ?
                 aux_dscritic = pc_calcula_iof_epr.pr_dscritic WHEN pc_calcula_iof_epr.pr_dscritic <> ?
@@ -981,7 +983,7 @@ END PROCEDURE. /* END grava_dados */
 
 
         /* Caso for imune, nao podemos cobrar IOF */
-        IF (aux_vliofpri + aux_vliofadi) > 0 AND aux_flgimune = 0 THEN
+        IF par_vltariof > 0 AND aux_flgimune = 0 THEN
            DO:
                DO WHILE TRUE:
         
@@ -1039,7 +1041,7 @@ END PROCEDURE. /* END grava_dados */
                                  STRING(par_vlemprst,"zzz,zzz,zz9.99") + 
                                  STRING(par_vlemprst,"zzz,zzz,zz9.99") +
                                  STRING(0,"zzz,zzz,zz9.99")
-                      craplcm.vllanmto = (aux_vliofpri + aux_vliofadi) /* par_vltariof */
+                      craplcm.vllanmto = par_vltariof
                       craplcm.cdcooper = par_cdcooper
 					            craplcm.cdcoptfn = par_cdcoptfn
 			                craplcm.cdagetfn = par_cdagetfn
