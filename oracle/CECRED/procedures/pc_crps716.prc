@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana - AMcom
-     Data    : Março/2017                     Ultima atualizacao: 27/03/2017
+     Data    : Março/2017                     Ultima atualizacao: 02/04/2018
 
      Dados referentes ao programa:
 
@@ -15,6 +15,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
      Alteracoes: 27/07/2017 - Adicionado geração do arquivo log para conferencia pela area
                               de negocio. Adicionado envio de e-mail quando problemas forem
                               encontrados (Anderson).
+                              
+                              
+                 02/04/2018 - INC0011837 Inclusão do parâmetro cdcooper na chamada da rotina 
+                              pc_controla_log_batch da exception vr_exc_saida (Carlos)
 
   ............................................................................ */
 
@@ -89,7 +93,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
   vr_qtdiaatr     INTEGER;  
   vr_nrcartao     NUMBER;
   vr_dtdatual     DATE;
-  vr_flgemail     BOOLEAN;
 
   --------------------------- SUBROTINAS INTERNAS --------------------------
 
@@ -468,23 +471,24 @@ BEGIN
 
 EXCEPTION
   WHEN vr_exc_saida THEN
-    -- Se foi retornado apenas código
-    IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-      -- Buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    END IF;
 
-    pc_controla_log_batch('E', vr_dscritic);
-    
+    -- Buscar a descrição
+    vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+    pc_controla_log_batch(pr_cdcooper, 'E', vr_dscritic);
+
     -- Efetuar rollback
     ROLLBACK;
   WHEN OTHERS THEN
+    
+    CECRED.pc_internal_exception(pr_cdcooper);
+    
     -- Efetuar retorno do erro não tratado
     vr_dscritic := sqlerrm;
 
     -- Envio centralizado de log de erro
     vr_flgerlog := TRUE;
-    pc_controla_log_batch('E', vr_dscritic);
+    pc_controla_log_batch(pr_cdcooper, 'E', vr_dscritic);
     -- Efetuar rollback
     ROLLBACK;
 
