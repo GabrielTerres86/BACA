@@ -172,7 +172,7 @@
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
 	<input type="button" class="botao" value="Voltar"  onClick="carregaBorderosTitulos(); voltaDiv(3,2,4,'DESCONTO DE TÍTULOS - BORDERÔS');return false; " />
 	<input type="button" class="botao" value="Continuar" onClick="mostrarBorderoResumo();return false;"/>
-
+</div>
 <script type="text/javascript">
 	dscShowHideDiv("divOpcoesDaOpcao3","divOpcoesDaOpcao1;divOpcoesDaOpcao2");
 

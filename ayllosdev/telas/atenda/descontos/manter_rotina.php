@@ -267,13 +267,13 @@
 	    		$html .=	"<td>".getByTagName($t->tags,'nrdocmto')."</td>";
 	    		$html .=	"<td>".getByTagName($t->tags,'nrinssac').' - '.getByTagName($t->tags,'nmdsacad')."</td>";
 	    		$html .=	"<td>".getByTagName($t->tags,'dtvencto')."</td>";
-	    		$html .=	"<td>".formataMoeda(getByTagName($t->tags,'vltitulo'))."</td>";
+	    		$html .=	"<td><span>".converteFloat(getByTagName($t->tags,'vltitulo'))."</span>".formataMoeda(getByTagName($t->tags,'vltitulo'))."</td>";
 	    		$sit = getByTagName($t->tags,'dssituac');
-	    		if ($sit=="S") {
+	    		if ($sit=="N") {
 		    		$html .=	"<td><img src='../../imagens/icones/sit_ok.png'/></td>";
 	    		}
-	    		elseif ($sit=="N") {
-		    		$html .=	"<td><img src='../../imagens/icones/sit_err.png'/></td>";
+	    		elseif ($sit=="S") {
+		    		$html .=	"<td><img src='../../imagens/icones/sit_er.png'/></td>";
 	    		}
 	    		else{
 		    		$html .=	"<td></td>";
@@ -291,6 +291,40 @@
 			echo '</script>';
 	    }
     	exit();
+	} else if($operacao =='INSERIR_BORDERO'){
+		$selecionados = isset($_POST["selecionados"]) ? $_POST["selecionados"] : array();
+		if(count($selecionados)==0){
+			exibeErro("Selecione ao menos um t&iacute;tulo");
+			exit;
+		}
+		$selecionados = implode($selecionados,",");
+
+		// LISTA TODOS OS TITULOS SELECIONADOS COM AS CRITICAS E RETORNO DA IBRATAN
+		$xml = "<Root>";
+	    $xml .= " <Dados>";
+	    $xml .= "   <tpctrlim>3</tpctrlim>";
+	    $xml .= "   <insitlim>2</insitlim>";
+	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
+	    $xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	    $xml .= " </Dados>";
+	    $xml .= "</Root>";
+
+
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","INSERIR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlObj = getObjectXML($xmlResult);
+
+	    // Se ocorrer um erro, mostra mensagem
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
+	       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","mostrarBorderoResumo();hideMsgAguardo();bloqueiaFundo(divRotina);");';
+			exit;
+		}
+
+    	$dados = $xmlObj->roottag->tags[0];
+
+			
+	    echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
+			
 	}
 
 	// Função para exibir erros na tela através de javascript

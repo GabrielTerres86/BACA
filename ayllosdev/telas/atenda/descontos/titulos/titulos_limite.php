@@ -194,9 +194,9 @@
 	<input type="button" class="botao gft" value="Incluir" id="btnIncluirLimite" name="btnIncluirLimite" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscTit(1);return false;"'; } ?> />
 -->
 
-<!--
+
 	<input type="button" class="botao gft" value="Analisar"  id="btnAnalisarLimite" name="btnAnalisarLimite" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="confirmaEnvioAnalise();"'; } ?>/>
--->	
+
 
 	<input type="button" class="botao gft" value="Detalhes da Proposta"  id="btnDetalhesProposta" name="btnConfirmarNovoLimite" <?php if ($qtLimites == 0) { echo 'style="cursor: default;" onClick="return false;"'; } else { echo 'onClick="efetuarNovoLimite();"'; } ?>/>
 <!--

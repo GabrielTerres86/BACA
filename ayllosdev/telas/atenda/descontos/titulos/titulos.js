@@ -74,6 +74,9 @@ var valor_limite = 0; // Variável para armazenar  o valor do limite atualmente 
 // ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
 
+
+//Para inclusao de borderos
+var tituloSelecionadoResumo = null;
 // BORDERÔS DE DESCONTO DE TÍTULOS
 // Mostrar o <div> com os borderos de desconto de títulos
 function carregaBorderosTitulos() {
@@ -2117,35 +2120,100 @@ function mostrarBorderoResumo() {
 }
 
 function mostrarDetalhesPagador() {
+    if(tituloSelecionadoResumo){
     showMsgAguardo("Aguarde, carregando dados do pagador ...");
 
-    var idtitulo = $('#nrnosnum_aux').val();
-    var nmdsacad = $('#nmdsacad_aux').val();
-
-    $.ajax({
-        type: "POST",
-        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_detalhe.php",
-        dataType: "html",
-        data: {
-            idtitulo: idtitulo,
-            nmdsacad: nmdsacad,
-            redirect: "html_ajax"
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function (response) {
-            $("#divOpcoesDaOpcao5").html(response);
-        }
-    });
-    
-    
+        var nrdconta = $("#nrdconta","#divResumoBordero").val();
+        $.ajax({
+            type: "POST",
+            url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_detalhe.php",
+            dataType: "html",
+            data: {
+                nrdconta:nrdconta,
+                nrnosnum:tituloSelecionadoResumo,
+                redirect: "html_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function (response) {
+                $("#divOpcoesDaOpcao5").html(response);
+            }
+        });
+    }
+    else{
+        showError("error","Selecione um t&iacute;tulo para ver os detalhes","Alerta - Ayllos","");
+    }
     return false;
 }
 
 
-function selecionaTituloResumo(idtitulo, nmdsacad){
-    $('#nrnosnum_aux').val(idtitulo);
-    $('#nmdsacad_aux').val(nmdsacad);
+function selecionaTituloResumo(nrnosnum){
+    tituloSelecionadoResumo = nrnosnum;
+}
+
+function removerTituloResumo(){
+    if(tituloSelecionadoResumo){
+        /*Remove da tela de Resumo*/
+        var selecionados = $(".divRegistrosTitulos table","#divResumoBordero");
+        var id = 'titulo_'+tituloSelecionadoResumo;
+        var tr = $("#"+id,"#divResumoBordero");
+        tr.remove();
+        selecionados.zebraTabela();
+        selecionados.trigger("update");
+        if (typeof arrayLarguraInclusaoBordero != 'undefined') {
+            for (var i in arrayLarguraInclusaoBordero) {
+                $('td:eq(' + i + ')', selecionados).css('width', arrayLarguraInclusaoBordero[i]);
+            }       
+        }   
+        selecionados.find('> tbody > tr').each(function (i) {
+            $(this).unbind('click').bind('click', function () {
+                selecionados.zebraTabela(i);
+            });
+        });
+        /*Remove da tela de Selecao*/
+        var td = $(".divRegistrosTitulosSelecionados #"+id+" td:first-child","#divIncluirBordero");
+        if(td.length>0){
+            removeTituloBordero(td);
+        }
+        bloqueiaFundo(divRotina);
+    }
+    else{
+        showError("error","Selecione um t&iacute;tulo para remover","Alerta - Ayllos","");
+    }
+}
+
+function confirmarInclusao(){
+    var divSelecionados = $(".divRegistrosTitulos table","#divResumoBordero");
+    var selecionados = $("input[name*='selecionados'",divSelecionados);
+    if(selecionados.length>0){
+        // Mostra mensagem de aguardo
+        showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+        // Carrega conteúdo da opção através de ajax
+        $.ajax({
+            type: "POST",
+            url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+            dataType: "html",
+            data: {
+                nrdconta: nrdconta,
+                operacao: 'INSERIR_BORDERO',
+                selecionados: selecionados.map(function(){return $(this).val();}).get(),
+                redirect: "html_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function (response) {
+                eval(response);
+            }
+        });
+    }
+    else{
+        showError("error", "Adicione pelo menos um t&iacute;tulo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+    }
+    
+    return false;
 }

@@ -25,15 +25,21 @@
 	setVarSession("nmrotina","DSC TITS - BORDERO");
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["idtitulo"])) {
+	if (!isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
-	$nrnosnum = $_POST["idtitulo"];
-	$nmdsacad = $_POST["nmdsacad"];
+	// Verifica se o número da conta foi informado
+	if (!isset($_POST["nrnosnum"])) {
+		exibeErro("Par&acirc;metros incorretos.");
+	}	
+
+	$nrnosnum = $_POST["nrnosnum"];
+	$nrdconta = $_POST["nrdconta"];
 
 	$xml = "<Root>";
     $xml .= " <Dados>";
+    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
     $xml .= "   <nrnosnum>".$nrnosnum."</nrnosnum>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
@@ -43,13 +49,11 @@
     $xmlObj = getObjectXML($xmlResult);
 
    
-	$biro = $xmlObj->roottag->tags[0]->tags;
-
-	$detalhe = $xmlObj->roottag->tags[0]->tags[1];
-
-	$critica = $xmlObj->roottag->tags[0]->tags[2]->tags;
-	$qtCriticas = count($critica);
-	
+	$dados = $xmlObj->roottag->tags[0];
+	$pagador = $dados->tags[0];
+	$biros = $dados->tags[1];
+	$detalhe = $dados->tags[2];
+	$critica = $dados->tags[3];
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -63,7 +67,6 @@
 
 <div id="divDetalheBordero">
 	
-
 	<form id="formPesquisaTitulos" class="formulario">
 		<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo $nrdconta; ?>" />
 		<div id="divFiltros">
@@ -72,7 +75,7 @@
 
 				
 			    <label for="nmdsacad">Nome Pagador</label>
-			    <input type="text" id="nmdsacad" name="nmdsacad" value="<?php echo $nmdsacad ?>" />
+			    <input type="text" id="nmdsacad" name="nmdsacad" value="<?php echo getByTagName($pagador->tags,'nmdsacad'); ?>" />
 
 			    <table id="tblDetalhe1" style="padding-left:0px;width:100%">
 				
@@ -91,27 +94,31 @@
 							<label >Data da Ocorr&ecirc;ncia</label>
 						</td>											
 					</tr>
+					<?php if(count($biros->tags)>0){ ?>
+						<?php foreach($biros->tags AS $t) {?>
+						<tr>
+							<td style="align-text: center;"><? echo getByTagName($t->tags,'dsnegati');  ?></td>
+							<?php if(getByTagName($t->tags,'qtnegati')>0) { ?>
+								<td style="align-text: center;"><? echo getByTagName($t->tags,'vlnegati'); ?></td>
+								<td style="align-text: center;"><? echo getByTagName($t->tags,'qtnegati'); ?></td>
+								<td style="align-text: center;"><? echo getByTagName($t->tags,'dtultneg'); ?></td>
+							<?php }
+							else { ?>
+								<td>Nada Consta</td>
+								<td>Nada Consta</td>
+								<td>Nada Consta</td>
+					 		<? } ?>
+						</tr>
+				    	<?php } 
+				    	} else{ ?>
+						<tr>
+								<td>Nada Consta</td>
+								<td>Nada Consta</td>
+								<td>Nada Consta</td>
+								<td>Nada Consta</td>
+						</tr>
+			    	<?php } ?>
 
-					<tr>
-						<td style="align-text: center;"><? echo $biro[0]->tags[0]->cdata ?></td>
-						<td style="align-text: center;"><? echo $biro[0]->tags[1]->cdata ?></td>
-						<td style="align-text: center;"><? echo $biro[0]->tags[2]->cdata ?></td>
-						<td style="align-text: center;"><? echo $biro[0]->tags[3]->cdata ?></td>
-					</tr>
-
-					<tr>
-						<td style="align-text: center;"><? echo $biro[0]->tags[4]->cdata ?></td>
-						<td style="align-text: center;"><? echo $biro[0]->tags[5]->cdata ?></td>
-						<td style="align-text: center;"><? echo $biro[0]->tags[6]->cdata ?></td>
-						<td style="align-text: center;"><? echo $biro[0]->tags[7]->cdata ?></td>
-					</tr>
-
-					<tr>
-						<td style="align-text: center;"><? echo $biro[0]->tags[8]->cdata ?></td>
-						<td style="align-text: center;"><? echo $biro[0]->tags[9]->cdata ?></td>
-						<td style="align-text: center;"><? echo $biro[0]->tags[10]->cdata ?></td>
-						<td style="align-text: center;"><? echo $biro[0]->tags[11]->cdata ?></td>
-					</tr>
 				</table>
 				<br><br>
 		
@@ -129,11 +136,10 @@
 							<label >% Liquidez Geral</label>
 						</td>									
 					</tr>
-
-					<tr>	
-						<td style="vertical-align: bottom;"><? echo $biro[1]->tags[0]->cdata ?></td>	
-						<td style="vertical-align: bottom;"><? echo $biro[1]->tags[1]->cdata ?></td>
-						<td style="vertical-align: bottom;"><? echo $biro[1]->tags[2]->cdata ?></td>									
+					<tr>
+						<td style="vertical-align: bottom;"><? echo formataMoeda(getByTagName($detalhe->tags,'concpaga'));?></td>
+						<td style="vertical-align: bottom;"><? echo formataMoeda(getByTagName($detalhe->tags,'liqpagcd'));?></td>
+						<td style="vertical-align: bottom;"><? echo formataMoeda(getByTagName($detalhe->tags,'liqgeral'));?></td>
 					</tr>
 				</table>
 
@@ -153,12 +159,11 @@
 							</tr>
 						</thead>
 						<tbody>
-							<?  for ($i = 0; $i < $qtCriticas; $i++) { 	?>
+							<?php foreach($critica->tags AS $c) { ?>
 								<tr>
-									<td style="text-align: left;"><? echo $critica[$i]->cdata ?></td>
+									<td style="text-align: left;"><? echo $c->cdata;?></td>
 								</tr>
-
-							<?} // Fim do for ?>	
+							<?} // Fim do foreach ?>	
 						</tbody>
 					</table>
 				</div>
