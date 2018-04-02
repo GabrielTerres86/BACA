@@ -397,10 +397,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
       CURSOR cr_ult_tipo_conta (pr_inpessoa     IN tbcc_tipo_conta.inpessoa%TYPE
                                ,pr_cdtipo_conta IN tbcc_tipo_conta.cdtipo_conta%TYPE) IS
         SELECT cta.cdtipo_conta
+              ,cta.idindividual
+              ,cta.idconjunta_solidaria
+              ,cta.idconjunta_nao_solidaria
           FROM tbcc_tipo_conta cta
          WHERE cta.inpessoa = pr_inpessoa
            AND cta.cdtipo_conta = pr_cdtipo_conta;
       rw_ult_tipo_conta cr_ult_tipo_conta%ROWTYPE;
+      
+      -- Busca tipo de conta
+      CURSOR cr_crapass (pr_cdcatego IN crapass.cdcatego%TYPE
+                        ,pr_cdtipcta IN crapass.cdtipcta%TYPE
+                        ,pr_inpessoa IN crapass.inpessoa%TYPE) IS
+        SELECT 1
+          FROM crapass ass
+         WHERE ass.cdcatego = pr_cdcatego
+           AND ass.cdtipcta = pr_cdtipcta
+           AND ass.inpessoa = pr_inpessoa
+           AND rownum = 1;
+      rw_crapass cr_crapass%ROWTYPE;
       
     BEGIN
       
@@ -447,6 +462,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
       END IF;
       
       CLOSE cr_ult_tipo_conta;
+      
+      IF rw_ult_tipo_conta.idindividual = 1 AND
+         pr_individual = 0 THEN
+        OPEN cr_crapass (pr_cdcatego => 1
+                        ,pr_cdtipcta => pr_cdtipo_conta
+                        ,pr_inpessoa => pr_inpessoa);
+        FETCH cr_crapass INTO rw_crapass;
+        IF cr_crapass%FOUND THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Não é permitido desmarcar a opção Individual, pois há contas nesta categoria.';
+          RAISE vr_exc_saida;
+        END IF;
+        CLOSE cr_crapass;
+      END IF;
+      
+      IF rw_ult_tipo_conta.idconjunta_solidaria = 1 AND
+         pr_conjunta_solidaria = 0 THEN
+        OPEN cr_crapass (pr_cdcatego => 2
+                        ,pr_cdtipcta => pr_cdtipo_conta
+                        ,pr_inpessoa => pr_inpessoa);
+        FETCH cr_crapass INTO rw_crapass;
+        IF cr_crapass%FOUND THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Não é permitido desmarcar a opção Conjunta, pois há contas nesta categoria.';
+          --vr_dscritic := 'Não é permitido desmarcar a opção Conjunta Solidária, pois há contas nesta categoria.';
+          RAISE vr_exc_saida;
+        END IF;
+        CLOSE cr_crapass;
+      END IF;
+      
+      IF rw_ult_tipo_conta.idconjunta_nao_solidaria = 1 AND
+         pr_conjunta_nao_solidaria = 0 THEN
+        OPEN cr_crapass (pr_cdcatego => 3
+                        ,pr_cdtipcta => pr_cdtipo_conta
+                        ,pr_inpessoa => pr_inpessoa);
+        FETCH cr_crapass INTO rw_crapass;
+        IF cr_crapass%FOUND THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Não é permitido desmarcar a opção Conjunta Não Solidária, pois há contas nesta categoria.';
+          RAISE vr_exc_saida;
+        END IF;
+        CLOSE cr_crapass;
+      END IF;
       
       BEGIN
         UPDATE tbcc_tipo_conta cta
