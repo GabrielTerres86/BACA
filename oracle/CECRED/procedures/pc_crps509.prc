@@ -166,14 +166,45 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
        end fn_existem_jobs;
        
        procedure pc_resetar_sequencia is
-         v_seq number;
+         v_seq           number;
+         vr_dsvlrprm     crapprm.dsvlrprm%type;
+         vr_dsvlrprmnum  number;
+         v_decremento    number;
        begin
-       
+         -- busca o valor parametrizado para o inicialização da sequence
+         gene0001.pc_param_sistema(pr_nmsistem  => 'CRED',
+                                   pr_cdcooper  => pr_cdcooper,
+                                   pr_cdacesso  => 'CRAPLOT_509_SEQ',
+                                   pr_dsvlrprm  => vr_dsvlrprm); 
+         IF vr_dsvlrprm is null THEN
+            vr_dscritic := 'Parâmetro CRAPLOT_509_SEQ não cadastrado.';
+            raise vr_exc_saida; 
+         END IF; 
+         vr_dsvlrprmnum:= to_number(vr_dsvlrprm);
+         -- verifica a póxima sequencia
          EXECUTE IMMEDIATE 'SELECT cecred.craplot_509_seq.NEXTVAL FROM DUAL' INTO v_seq;
-         EXECUTE IMMEDIATE 'ALTER SEQUENCE cecred.craplot_509_seq INCREMENT BY -' || v_seq || ' MINVALUE 0';
-         EXECUTE IMMEDIATE 'SELECT cecred.craplot_509_seq.NEXTVAL FROM DUAL' INTO v_seq;
-         EXECUTE IMMEDIATE 'ALTER SEQUENCE cecred.craplot_509_seq INCREMENT BY 1 MINVALUE 0';
-         
+         -- verifica se é a primeira execução da sequencia após a criação da sequence
+         IF v_seq < vr_dsvlrprmnum THEN
+            -- atualiza o increment by para o valor do parametro
+            EXECUTE IMMEDIATE 'ALTER SEQUENCE craplot_509_seq INCREMENT BY ' || vr_dsvlrprmnum;
+            -- atualiza o valor atual da sequence para o valor do parâmetro
+            EXECUTE IMMEDIATE 'SELECT cecred.craplot_509_seq.NEXTVAL FROM DUAL' INTO v_seq;
+            -- volta o increment by para 1 
+            EXECUTE IMMEDIATE 'ALTER SEQUENCE craplot_509_seq INCREMENT BY 1';
+         ELSIF v_seq > vr_dsvlrprmnum then -- verifica se o valor atual é maior que o parâmetro
+            -- calcula o valor do decremento
+            v_decremento := v_seq - vr_dsvlrprmnum;
+            -- atualiza o increment by negativo para voltar reiniciar a sequence com o valor do parametro             
+            EXECUTE IMMEDIATE 'ALTER SEQUENCE craplot_509_seq INCREMENT BY -' || v_decremento;
+            -- atualiza a sequence
+            EXECUTE IMMEDIATE 'SELECT craplot_509_seq.NEXTVAL FROM DUAL' INTO v_seq; 
+            -- atualiza o increment by para 1 e o minvalue para o valor do parâmetro
+            EXECUTE IMMEDIATE 'ALTER SEQUENCE craplot_509_seq INCREMENT BY  1 minvalue '||vr_dsvlrprmnum ;
+         END IF;
+       exception
+          when others then
+             vr_dscritic := 'Erro pc_resetar_sequencia :'||sqlerrm;
+             raise vr_exc_saida; 
        end pc_resetar_sequencia;
        
          
@@ -709,12 +740,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
          --Validar o codigo da cooperativa que foi parametrizado.
          pc_validar_cooperativa;     
 
-         --Este delete eh colocado aqui tbem pois a rotina pode ter sido interrompida.
-         pc_limpa_tabela_wrk(pr_CDAGENCI    => cd_todas_agencias
-                            ,pr_tipo_delete => 'INDEX');
-                            
-         pc_limpa_tabela_wrk(pr_CDAGENCI    => cd_todas_agencias
-                            ,pr_tipo_delete => 'LOTE'); 
+
+         vr_qterro := 0;
+         vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                       pr_cdprogra    => vr_cdprogra,
+                                                       pr_dtmvtolt    => vr_dtmvtolt,
+                                                       pr_tpagrupador => 1,
+                                                       pr_nrexecucao  => 1);
+         --Limpa a tabela WRK somente quando não houver jobs com erro no inicio da execução.
+         if  vr_qterro = 0 then
+             --Este delete eh colocado aqui tbem pois a rotina pode ter sido interrompida.
+             pc_limpa_tabela_wrk(pr_CDAGENCI    => cd_todas_agencias
+                                ,pr_tipo_delete => 'INDEX');
+                                
+             pc_limpa_tabela_wrk(pr_CDAGENCI    => cd_todas_agencias
+                                ,pr_tipo_delete => 'LOTE'); 
+         end if;
                             
          /* Procedimento para verificar/controlar a execução da DEBNET e DEBSIC */
          SICR0001.pc_controle_exec_deb (pr_cdcooper  => pr_cdcooper         --> Código da coopertiva
@@ -860,6 +901,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
            END IF;
            --Nao existe o paralelismo, vai executar de forma serial.
            vr_tpexecucao := 1;
+           
+           --Buscar O FLAG vr_flsgproc
+           pc_buscar_qtde_processos;
+           
            --Efetuar Debitos
            vr_dslog:= '[BATCH-NOP] INICIO pc_efetua_debitos sem paralelismo. Agencia: ['||pr_cdagenci||']'||
                       ' vr_tpexecucao: ['||vr_tpexecucao||']'||
@@ -990,7 +1035,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
            end if;
            
            --Efetuar Debitos
-           vr_dslog:= '[JOB] INICIO pc_efetua_debitos_ligeir. Agencia: ['||pr_cdagenci||']'||
+           vr_dslog:= '[JOB] INICIO pc_efetua_debitos_paralelo. Agencia: ['||pr_cdagenci||']'||
                       ' vr_tpexecucao: ['||vr_tpexecucao||']'||
                       ' INPROCES: ['||rw_crapdat.inproces||']'||
                       ' vr_flsgproc: ['||vr_flsgproc_char||']'||
@@ -1006,7 +1051,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                            pr_dsmensagem   => vr_dslog,
                            PR_IDPRGLOG     => vr_idlog_ini); 
                                       
-           PAGA0001.pc_efetua_debitos_ligeir(pr_cdcooper    => pr_cdcooper         --Cooperativa
+           PAGA0001.pc_efetua_debitos_paralelo(pr_cdcooper    => pr_cdcooper         --Cooperativa
                                             ,pr_tab_agendto => vr_tab_agendto      --tabela de agendamento
                                             ,pr_cdprogra    => vr_cdprogra         --Codigo programa
                                             ,pr_dtmvtopg    => vr_dtmvtopg         --Data Pagamento
@@ -1014,8 +1059,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                                             ,pr_flsgproc    => vr_flsgproc         --Flag segundo processamento
                                             ,pr_cdcritic    => vr_cdcritic         --Codigo da Critica
                                             ,pr_dscritic    => vr_dscritic);       --Descricao da critica;
-         
-           vr_dslog := '[JOB] FIM pc_efetua_debitos_ligeir. Agencia: ['||pr_cdagenci||']'||
+        
+           
+           vr_dslog := '[JOB] FIM pc_efetua_debitos_paralelo. Agencia: ['||pr_cdagenci||']'||
                        ' vr_tpexecucao: ['||vr_tpexecucao||']'||
                        ' INPROCES: ['||rw_crapdat.inproces||']'||
                        ' Qtde Registros: ['||vr_tab_agendto.COUNT()||']'||
@@ -1169,17 +1215,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                             ,pr_tipo_delete => 'LOTE');
          
          pc_limpa_pl_table;
-         
-         
-         if vr_qtdjobs > 0 then 
-           --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
-           pc_log_programa(pr_dstiplog   => 'F',    
-                           pr_cdprograma => vr_cdprogra,           
-                           pr_cdcooper   => pr_cdcooper, 
-                           pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                           pr_idprglog   => vr_idlog_ini,
-                           pr_flgsucesso => 1);                 
-         end if;
+
+         --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
+         pc_log_programa(pr_dstiplog   => 'F',    
+                         pr_cdprograma => vr_cdprogra,           
+                         pr_cdcooper   => pr_cdcooper, 
+                         pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                         pr_idprglog   => vr_idlog_ini,
+                         pr_flgsucesso => 1);                 
        
        else
          --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
@@ -1232,14 +1275,31 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
          COMMIT;
          --Importantisso. Nunca  tirar esta condicao e o seu conteudo.
          --Deve-se encerrar o processo paralelo qdo houver algum  erro,  senao fica em loop eterno.
-         if pr_idparale <> 0 then                
-           -- Encerrar o job do processamento paralelo dessa agência
-           gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                       ,pr_des_erro => vr_dscritic);
-        
-           commit;
-         end if;
+         if pr_idparale <> 0 then 
+            -- Grava LOG de Erro
+            pc_log_programa(PR_DSTIPLOG           => 'E',
+                            PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_tpocorrencia       => 2,
+                            pr_dsmensagem         => 'vr_exc_saida - pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                     'pr_dscritic:'||pr_dscritic,
+                            PR_IDPRGLOG           => vr_idlog_ini);  
+
+            --Grava data fim para o JOB na tabela de LOG 
+            pc_log_programa(pr_dstiplog   => 'F',    
+                            pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                            pr_cdcooper   => pr_cdcooper, 
+                            pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_idprglog   => vr_idlog_ini,
+                            pr_flgsucesso => 0);  
+                              
+            -- Encerrar o job do processamento paralelo dessa agência
+            gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                        ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                        ,pr_des_erro => vr_dscritic);
+          end if;
+          COMMIT;
        WHEN vr_exc_saida THEN
          -- Se foi retornado apenas código
          IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
@@ -1253,51 +1313,39 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
          ROLLBACK;
          --Importantisso. Nunca  tirar esta condicao e o seu conteudo.
          --Deve-se encerrar o processo paralelo qdo houver algum  erro,  senao fica em loop eterno.
-         if pr_idparale <> 0 then                
-           -- Encerrar o job do processamento paralelo dessa agência
-           gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                       ,pr_des_erro => vr_dscritic);
-        
-           commit;
-         end if;
-         
-         --Zerar tabela de memoria auxiliar
-         
-         if pr_CDAGENCI = 0 then
-           --Quando o erro ocorrer na rotina principal, limpar todas as agencias.
-           pc_limpa_tabela_wrk(pr_CDAGENCI    => cd_todas_agencias
-                              ,pr_tipo_delete => 'INDEX');
-            
-           pc_limpa_tabela_wrk(pr_CDAGENCI    => cd_todas_agencias
-                              ,pr_tipo_delete => 'LOTE');                               
-           
-         else
-           --Quando o erro ocorrer na agencia especifica, limpar somente esta agencia.
-           pc_limpa_tabela_wrk(pr_CDAGENCI    => pr_CDAGENCI
-                              ,pr_tipo_delete => 'INDEX');
-           
-           pc_limpa_tabela_wrk(pr_CDAGENCI    => pr_CDAGENCI
-                              ,pr_tipo_delete => 'LOTE');                               
-           
-         end if;
-         
-         pc_limpa_pl_table;
-         
-
-         COMMIT;
-         vr_dslog := 'EXCEPTION = vr_exc_saida.'||
+         if pr_idparale <> 0 then 
+            -- Grava LOG de Erro
+            vr_dslog := 'EXCEPTION - vr_exc_saida.'||
                      ' pr_cdcritic:'||pr_cdcritic||
                      ' pr_dscritic:'||pr_dscritic||
-                     ' Procedure: ['||vr_nm_procedure||']';
-                                                  
-         pc_log_programa(PR_DSTIPLOG           => 'E',
-                         PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
-                         pr_cdcooper           => pr_cdcooper,
-                         pr_tpexecucao         => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                         pr_tpocorrencia       => 2,
-                         pr_dsmensagem         => vr_dslog,
-                         PR_IDPRGLOG           => vr_idlog_ini);
+                     ' Procedure: ['||vr_nm_procedure||']';            
+            pc_log_programa(PR_DSTIPLOG           => 'E',
+                            PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_tpocorrencia       => 2,
+                            pr_dsmensagem         => vr_dslog,
+                            PR_IDPRGLOG           => vr_idlog_ini);  
+
+            --Grava data fim para o JOB na tabela de LOG 
+            pc_log_programa(pr_dstiplog   => 'F',    
+                            pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                            pr_cdcooper   => pr_cdcooper, 
+                            pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_idprglog   => vr_idlog_ini,
+                            pr_flgsucesso => 0);  
+                              
+            -- Encerrar o job do processamento paralelo dessa agência
+            gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                        ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                        ,pr_des_erro => vr_dscritic);
+            COMMIT;
+          end if;
+         
+             
+         pc_limpa_pl_table;
+         
+         COMMIT;
 
        WHEN OTHERS THEN
          -- Efetuar retorno do erro não tratado
@@ -1305,50 +1353,37 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
          pr_dscritic := 'Erro na procedure pc_crps509. '||sqlerrm;
          -- Efetuar rollback
          ROLLBACK;
-         --Zerar tabela de memoria auxiliar
-         if pr_CDAGENCI = 0 then
-           --Quando o erro ocorrer na rotina principal, limpar todas as agencias.
-           pc_limpa_tabela_wrk(pr_CDAGENCI    => cd_todas_agencias
-                              ,pr_tipo_delete => 'INDEX');
-            
-           pc_limpa_tabela_wrk(pr_CDAGENCI    => cd_todas_agencias
-                              ,pr_tipo_delete => 'LOTE');                               
-           
-         else
-         
-           --Quando o erro ocorrer na agencia especifica, limpar somente esta agencia.
-           pc_limpa_tabela_wrk(pr_CDAGENCI    => pr_CDAGENCI
-                              ,pr_tipo_delete => 'INDEX');
-           
-           pc_limpa_tabela_wrk(pr_CDAGENCI    => pr_CDAGENCI
-                              ,pr_tipo_delete => 'LOTE');                               
-           
-         end if;                             
+                        
  
         pc_limpa_pl_table;
 
-         vr_dslog := 'EXCEPTION = OTHERS. '||
-                     'pr_cdcritic:'||pr_cdcritic||CHR(13)||
-                     'pr_dscritic:'||pr_dscritic||
-                     'Procedure: ['||vr_nm_procedure||']';
-         
-         pc_log_programa(PR_DSTIPLOG           => 'E',
-                         PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
-                         pr_cdcooper           => pr_cdcooper,
-                         pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                         pr_tpocorrencia       => 2,
-                         pr_dsmensagem         => vr_dslog,
-                         PR_IDPRGLOG           => vr_idlog_ini);
-         --Importantisso. Nunca  tirar esta condicao e o seu conteudo.
-         --Deve-se encerrar o processo paralelo qdo houver algum  erro,  senao fica em loop eterno.
-         if pr_idparale <> 0 then                
-           -- Encerrar o job do processamento paralelo dessa agência
-           gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                       ,pr_des_erro => vr_dscritic);
-        
-        
-         end if;
+         if pr_idparale <> 0 then 
+            -- Grava LOG de Erro
+            vr_dslog := 'EXCEPTION OTHERS -'||
+                     ' pr_cdcritic:'||pr_cdcritic||
+                     ' pr_dscritic:'||pr_dscritic||
+                     ' Procedure: ['||vr_nm_procedure||']';            
+            pc_log_programa(PR_DSTIPLOG           => 'E',
+                            PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                            pr_cdcooper           => pr_cdcooper,
+                            pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_tpocorrencia       => 2,
+                            pr_dsmensagem         => vr_dslog,
+                            PR_IDPRGLOG           => vr_idlog_ini);  
+
+            --Grava data fim para o JOB na tabela de LOG 
+            pc_log_programa(pr_dstiplog   => 'F',    
+                            pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                            pr_cdcooper   => pr_cdcooper, 
+                            pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_idprglog   => vr_idlog_ini,
+                            pr_flgsucesso => 0);  
+                              
+            -- Encerrar o job do processamento paralelo dessa agência
+            gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                        ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                        ,pr_des_erro => vr_dscritic);
+          end if;
 
          COMMIT;
      END;
