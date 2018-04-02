@@ -1,4 +1,4 @@
-PROCEDURE/******************************************************************************
+/******************************************************************************
                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +---------------------------------+-----------------------------------------+
@@ -462,11 +462,11 @@ PROCEDURE/**********************************************************************
                             (Tiago/Rodrigo Melhoria 116).
 
                16/05/2016 - Ajustado rotina efetua_resgate_tit_bordero para gerar
-			                tarifa de resgate na data de resgate e não na data na qual
-				  		   foi criado o bordero de desconto de titulo.
-						   PRJ318 - Nova plataforma de cobrança (Odirlei-AMcom)
+                      tarifa de resgate na data de resgate e não na data na qual
+                 foi criado o bordero de desconto de titulo.
+               PRJ318 - Nova plataforma de cobrança (Odirlei-AMcom)
 
-			   28/04/2016 - Adicionado verificacao para tratar isencao de cobranca
+         28/04/2016 - Adicionado verificacao para tratar isencao de cobranca
                             de tarifa na procedure efetua_liber_anali_bordero. 
                             (Reinert)
                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
@@ -480,8 +480,8 @@ PROCEDURE/**********************************************************************
 
                25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
 
-			   09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
-					       (Adriano - SD 603451).
+         09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
+                 (Adriano - SD 603451).
 
                12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
 
@@ -489,8 +489,8 @@ PROCEDURE/**********************************************************************
                             (Tiago/Ademir #678289)
                             
                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-			 		       (Adriano - P339).
+                      crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+                 (Adriano - P339).
 
                29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
 
@@ -506,6 +506,22 @@ PROCEDURE/**********************************************************************
 
                25/10/2017 - Projeto 410 - Ajustado cálculo do IOF na baixa do título
                             (James)
+
+               07/03/2018 - Preenchimento do campo 'dtrenova' na procedure busca_dados_dsctit (Leonardo Oliveira - GFT)
+
+               13/03/2018 - Preenchimento do campo 'perrenov' na procedure busca_dados_dsctit  (Leonardo Oliveira - GFT)
+
+               14/03/2018 - Removido o conteúdo "(CONTINGENCIA)" das situações 3-Aprovada e 6-Rejeitada do campo insitapr da 
+                            procedure busca_limites (Paulo Penteado - GFT)
+
+               16/03/2018 - Preenchimento dos campos  'flgstlcr' e 'cddlinha' na procedure busca_dados_dsctit (Leonardo Oliveira - GFT)
+               
+               16/03/2018 - Filtrar as operações de desconto que foram inclusas no sistema e não tiverem a liberação/efetivação dentro de até 120 dias corridos em 'busca_borderos' (Leonardo Oliveira - GFT)
+
+               23/03/2018 - Alterada as rotinas efetua_inclusao_limite e efetua_alteracao_limite para substituir a utilização da tabela de contrato CRAPLIM para
+                            a tabela de proposta CRAWLIM.
+                            Criado a procedure busca_dados_proposta para preencher a tt-dsctit_dados_limite com os dados da proposta, ela é chamada na procedure 
+                            busca_dados_limite_altera (Paulo Penteado GFT)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -558,16 +574,6 @@ PROCEDURE busca_total_descontos:
     DEF OUTPUT PARAM TABLE FOR tt-tot_descontos.
 
     EMPTY TEMP-TABLE tt-tot_descontos.
-
-
-
-
-    MESSAGE " CONTA: " + par_nrinfcad.
-                         PAUSE 1.
-                         HIDE MESSAGE NO-PAUSE.
-
-
-
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
@@ -1029,25 +1035,25 @@ PROCEDURE efetua_liber_anali_bordero:
 
         END.    
     
-	RUN valida_titulos_bordero(INPUT par_cdcooper,
-							   INPUT par_cdagenci,
-							   INPUT par_nrdcaixa,
-							   INPUT par_cdoperad,
-							   INPUT par_dtmvtolt,
-							   INPUT par_idorigem,
-							   INPUT par_nrdconta,
-							   INPUT par_nrborder,
-							   INPUT 1, /*tpvalida*/
-							   INPUT TABLE tt-titulos,
-							   OUTPUT TABLE tt-erro).
+  RUN valida_titulos_bordero(INPUT par_cdcooper,
+                 INPUT par_cdagenci,
+                 INPUT par_nrdcaixa,
+                 INPUT par_cdoperad,
+                 INPUT par_dtmvtolt,
+                 INPUT par_idorigem,
+                 INPUT par_nrdconta,
+                 INPUT par_nrborder,
+                 INPUT 1, /*tpvalida*/
+                 INPUT TABLE tt-titulos,
+                 OUTPUT TABLE tt-erro).
 
     IF RETURN-VALUE <> "OK" THEN
-	   DO:
-	      FIND FIRST tt-erro NO-LOCK NO-ERROR.
+     DO:
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-		  IF NOT AVAIL tt-erro THEN
-		     DO:
-		        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
+      IF NOT AVAIL tt-erro THEN
+         DO:
+            ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
             
                 RUN gera_erro (INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -2978,7 +2984,7 @@ PROCEDURE busca_limites:
                                            "APROVADO MANUAL"
                                          ELSE
                                          IF craplim.insitapr=3 THEN 
-                                           "APROVADO (CONTINGENCIA)"
+                                           "APROVADA"
                                          ELSE
                                          IF craplim.insitapr=4 THEN 
                                            "REJEITADO MANUAL"
@@ -2987,7 +2993,7 @@ PROCEDURE busca_limites:
                                            "REJEITADO AUTOMATICAMENTE"
                                          ELSE
                                          IF craplim.insitapr=6 THEN 
-                                           "REJEITADO (CONTINGENCIA)"
+                                           "REJEITADO"
                                          ELSE
                                          IF craplim.insitapr=7 THEN 
                                            "NAO ANALISADO"
@@ -3232,20 +3238,20 @@ PROCEDURE busca_dados_limite_altera:
        END.
 
 
-    RUN busca_dados_limite (INPUT par_cdcooper,
-                            INPUT par_cdagenci, 
-                            INPUT par_nrdcaixa,
-                            INPUT par_cdoperad,
-                            INPUT par_dtmvtolt,
-                            INPUT par_idorigem,
-                            INPUT par_nrdconta,
-                            INPUT par_idseqttl,  
-                            INPUT par_nmdatela,
-                            INPUT par_nrctrlim,
-                            INPUT "A",
-                            OUTPUT TABLE tt-erro,
-                            OUTPUT TABLE tt-dsctit_dados_limite,
-                            OUTPUT TABLE tt-dados_dsctit).
+    RUN busca_dados_proposta (INPUT par_cdcooper,
+                              INPUT par_cdagenci, 
+                              INPUT par_nrdcaixa,
+                              INPUT par_cdoperad,
+                              INPUT par_dtmvtolt,
+                              INPUT par_idorigem,
+                              INPUT par_nrdconta,
+                              INPUT par_idseqttl,  
+                              INPUT par_nmdatela,
+                              INPUT par_nrctrlim,
+                              INPUT "A",
+                              OUTPUT TABLE tt-erro,
+                              OUTPUT TABLE tt-dsctit_dados_limite,
+                              OUTPUT TABLE tt-dados_dsctit).
     
     IF  RETURN-VALUE = "NOK"  THEN
         RETURN "NOK".
@@ -3377,20 +3383,20 @@ PROCEDURE busca_dados_limite_incluir:
     END.
 
     RUN lista-linhas-desc-tit (INPUT par_cdcooper,
-							   INPUT par_cdagenci, 
-							   INPUT par_nrdcaixa, 
-							   INPUT par_cdoperad,
-							   INPUT par_dtmvtolt,
-							   INPUT par_nrdconta,
-							   INPUT 0,
-							   INPUT 999,
-							   INPUT 0,
-							  OUTPUT aux_nriniseq,
-							  OUTPUT TABLE tt-linhas_desc).
+                 INPUT par_cdagenci, 
+                 INPUT par_nrdcaixa, 
+                 INPUT par_cdoperad,
+                 INPUT par_dtmvtolt,
+                 INPUT par_nrdconta,
+                 INPUT 0,
+                 INPUT 999,
+                 INPUT 0,
+                OUTPUT aux_nriniseq,
+                OUTPUT TABLE tt-linhas_desc).
 
     IF  RETURN-VALUE = "NOK" THEN
-	    DO:
-		   ASSIGN aux_cdcritic = 0
+      DO:
+       ASSIGN aux_cdcritic = 0
                   aux_dscritic = "Habilite o produto Cobranca para incluir um limite.".
 
        RUN gera_erro (INPUT par_cdcooper,
@@ -3462,9 +3468,9 @@ PROCEDURE busca_dados_limite_incluir:
 
         END.
     
-		/*Se tem cnae verificar se e um cnae restrito*/
-		IF  crapass.cdclcnae > 0 THEN
-			DO:
+    /*Se tem cnae verificar se e um cnae restrito*/
+    IF  crapass.cdclcnae > 0 THEN
+      DO:
 
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -3481,14 +3487,14 @@ PROCEDURE busca_dados_limite_incluir:
                 ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
                                             WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
 
-				IF  aux_flgrestrito = 1 THEN
-					DO:
-    						CREATE tt-msg-confirma.
-							ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
-								   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+        IF  aux_flgrestrito = 1 THEN
+          DO:
+                CREATE tt-msg-confirma.
+              ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
+                   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
         END.
     
-			END.
+      END.
 
         /* rotina para buscar o crapttl.inhabmen */
     FIND FIRST crapttl WHERE crapttl.cdcooper = par_cdcooper   AND
@@ -3873,6 +3879,259 @@ PROCEDURE busca_dados_limite:
            tt-dsctit_dados_limite.nrpatlvr = craplim.nrpatlvr
            tt-dsctit_dados_limite.vltotsfn = craplim.vltotsfn
            tt-dsctit_dados_limite.nrperger = craplim.nrperger
+           /* Faturamento unico cliente - Pessoa Juridica */
+           tt-dsctit_dados_limite.perfatcl = crapjfn.perfatcl
+                                             WHEN AVAILABLE crapjfn.
+    
+    RETURN "OK".
+
+END PROCEDURE.
+
+/**********************************************************************************/
+/*      Buscar dados de uma determinada proposta de limite de desconto de titulos */
+/**********************************************************************************/
+PROCEDURE busca_dados_proposta:
+
+    DEF INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
+    DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_nrctrlim AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cddopcao AS CHAR                    NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_limite.
+    DEF OUTPUT PARAM TABLE FOR tt-dados_dsctit.
+
+    DEF VAR aux_cdtipdoc AS INTEGER                         NO-UNDO.
+
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-dsctit_dados_limite.
+    EMPTY TEMP-TABLE tt-dados_dsctit.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0.
+    
+    DEF VAR h-b1wgen9999 AS HANDLE NO-UNDO.
+
+    FIND FIRST crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                             crawlim.nrdconta = par_nrdconta AND
+                             crawlim.tpctrlim = 3            AND
+                             crawlim.nrctrlim = par_nrctrlim NO-LOCK NO-ERROR.
+         
+    IF  NOT AVAILABLE crawlim   THEN 
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Registro de proposta não encontrado.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.
+ 
+    IF  par_cddopcao = "X"  THEN        
+        DO:
+            IF  crawlim.insitlim <> 1   THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "A proposta DEVE estar EM ESTUDO.".
+                          
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,            /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                                  
+                    RETURN "NOK".
+               END.
+        END.
+    ELSE
+    IF  par_cddopcao = "A"  THEN
+        DO:
+            IF  ((crawlim.insitlim = 2) or (crawlim.insitlim = 3))   THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "Não é permitido alterar uma proposta com a situação EFETIVADA ou CANCELADA".
+                          
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,            /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                                  
+                    RETURN "NOK".                    
+                END.
+        END.
+    ELSE
+    IF  par_cddopcao = "E"  THEN
+        DO:
+            IF  crawlim.insitlim <> 1   THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "A proposta DEVE estar em ESTUDO.".
+                          
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,            /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                                  
+                    RETURN "NOK".
+                END.
+        END.
+
+    FIND crapprp WHERE crapprp.cdcooper = par_cdcooper       AND
+                       crapprp.nrdconta = crawlim.nrdconta   AND
+                       crapprp.nrctrato = crawlim.nrctrlim   AND
+                       crapprp.tpctrato = 3 
+                       NO-LOCK NO-ERROR.    
+                   
+    IF  NOT AVAILABLE crapprp   THEN                                   
+        DO:
+            ASSIGN aux_cdcritic = 0.
+                   aux_dscritic = "Regisro de proposta de desconto de titulo" +
+                                  " não encontrada.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".            
+        END.    
+    
+    FIND crapldc WHERE crapldc.cdcooper = par_cdcooper       AND
+                       crapldc.cddlinha = crawlim.cddlinha   AND
+                       crapldc.tpdescto = 3 
+                       NO-LOCK NO-ERROR.
+
+    IF  NOT AVAILABLE crapldc  THEN 
+        DO:
+            ASSIGN aux_cdcritic = 0.
+                   aux_dscritic = "Regisro de linha " +
+                                  "de desconto não encontrada.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".
+        END.
+
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */ 
+
+    RUN busca_parametros_dsctit (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT par_cdoperad,
+                                 INPUT par_dtmvtolt,
+                                 INPUT par_idorigem,
+                                 INPUT FALSE,
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
+                                 OUTPUT TABLE tt-erro,
+                                 OUTPUT TABLE tt-dados_dsctit,
+                                 OUTPUT TABLE tt-dados_cecred_dsctit).
+
+    IF  RETURN-VALUE = "NOK" THEN
+        RETURN "NOK".
+
+    FIND FIRST tt-dados_dsctit NO-LOCK NO-ERROR.
+
+    FIND crapjfn WHERE crapjfn.cdcooper = par_cdcooper AND
+                       crapjfn.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+        
+    FIND craptab WHERE craptab.cdcooper = par_cdcooper  AND         
+               craptab.nmsistem = "CRED"        AND         
+               craptab.tptabela = "GENERI"      AND         
+               craptab.cdempres = 00            AND         
+               craptab.cdacesso = "DIGITALIZA"  AND
+               craptab.tpregist = 3 
+               NO-LOCK NO-ERROR.
+
+    IF  NOT AVAIL craptab THEN
+        DO:
+            ASSIGN aux_dscritic = 'Falta registro na Tabela "DIGITALIZA". '.
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                    
+            RETURN "NOK".
+        END. 
+
+    ASSIGN aux_cdtipdoc = INTE(ENTRY(3,craptab.dstextab,";")).
+
+    CREATE tt-dsctit_dados_limite.  
+    ASSIGN tt-dsctit_dados_limite.txdmulta = tt-dados_dsctit.pcdmulta
+           tt-dsctit_dados_limite.codlinha = crapldc.cddlinha
+           tt-dsctit_dados_limite.dsdlinha = crapldc.dsdlinha
+           tt-dsctit_dados_limite.txjurmor = crapldc.txjurmor 
+           tt-dsctit_dados_limite.dsramati = crapprp.dsramati
+           tt-dsctit_dados_limite.vlmedtit = crapprp.vlmedchq
+           tt-dsctit_dados_limite.vlfatura = crapprp.vlfatura
+           tt-dsctit_dados_limite.vloutras = crapprp.vloutras
+           tt-dsctit_dados_limite.vlsalari = crapprp.vlsalari
+           tt-dsctit_dados_limite.vlsalcon = crapprp.vlsalcon
+           tt-dsctit_dados_limite.dsdbens1 = SUBSTRING(crapprp.dsdebens,01,060)
+           tt-dsctit_dados_limite.dsdbens2 = SUBSTRING(crapprp.dsdebens,61,120)
+           tt-dsctit_dados_limite.dsobserv = crapprp.dsobserv[1]
+           tt-dsctit_dados_limite.insitlim = crawlim.insitlim
+           tt-dsctit_dados_limite.nrctrlim = crawlim.nrctrlim
+           tt-dsctit_dados_limite.vllimite = crawlim.vllimite
+           tt-dsctit_dados_limite.qtdiavig = crawlim.qtdiavig
+           tt-dsctit_dados_limite.cddlinha = crawlim.cddlinha
+           tt-dsctit_dados_limite.dtcancel = crawlim.dtcancel
+           tt-dsctit_dados_limite.nrctaav1 = crawlim.nrctaav1
+           tt-dsctit_dados_limite.nrctaav2 = crawlim.nrctaav2
+           tt-dsctit_dados_limite.flgdigit = crawlim.flgdigit
+           tt-dsctit_dados_limite.cdtipdoc = aux_cdtipdoc
+           /* ------------------- Rating -----------------*/
+           tt-dsctit_dados_limite.nrgarope = crawlim.nrgarope
+           tt-dsctit_dados_limite.nrinfcad = crawlim.nrinfcad
+           tt-dsctit_dados_limite.nrliquid = crawlim.nrliquid
+           tt-dsctit_dados_limite.nrpatlvr = crawlim.nrpatlvr
+           tt-dsctit_dados_limite.vltotsfn = crawlim.vltotsfn
+           tt-dsctit_dados_limite.nrperger = crawlim.nrperger
            /* Faturamento unico cliente - Pessoa Juridica */
            tt-dsctit_dados_limite.perfatcl = crapjfn.perfatcl
                                              WHEN AVAILABLE crapjfn.
@@ -4472,9 +4731,9 @@ PROCEDURE valida_proposta_dados:
 
 END PROCEDURE.
 
-/*****************************************************************************/
-/*       Efetuar a inclusao de uma novo limite de desconto de titulos        */
-/*****************************************************************************/
+/*************************************************************************************/
+/*       Efetuar a inclusao de uma nova proposta de limite de desconto de titulos    */
+/*************************************************************************************/
 PROCEDURE efetua_inclusao_limite:
 
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
@@ -4557,45 +4816,13 @@ PROCEDURE efetua_inclusao_limite:
     DEF VAR aux_lscontas AS CHAR    NO-UNDO.
     DEF VAR aux_flgderro AS LOGI    NO-UNDO.
     DEF VAR aux_nrctrlim AS INTE    NO-UNDO.
-    DEF VAR aux_nrseqcar AS INTE	NO-UNDO.
-    DEF VAR aux_mensagens AS CHAR    NO-UNDO.    
+    DEF VAR aux_nrseqcar AS INTE    NO-UNDO.
+    DEF VAR aux_mensagens AS CHAR   NO-UNDO.    
     
-    
-
-
-
-
-
-
-
-
-    MESSAGE " CONTA: " + par_nrdconta.
-                         PAUSE 1.
-                         HIDE MESSAGE NO-PAUSE.
-
-
-
-    UNIX SILENT VALUE(      "echo " + STRING(par_nrgarope,"Verificação das variáveis: ") +
-                            " Operador: " + par_nrinfcad + 
-                            " Hst: "      + STRING(par_nrpatlvr) +
-                            " Conta: "    + TRIM(STRING(par_vltotsfn, "zz,zzz,zzz,z")) + 
-                            " >> log/landpv.log").
-    
-
-
-
-
-
-
-    ASSIGN glb_cdcritic = 0
-           glb_dscritic = "".
-    NEXT.
-
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
-
 
     IF  par_flgerlog  THEN
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -4693,7 +4920,7 @@ PROCEDURE efetua_inclusao_limite:
         DO WHILE TRUE:
           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-          /* Busca a proxima sequencia do campo crapldt.nrsequen */
+          /* Busca a proxima sequencia do campo craplim.nrctrlim */
           RUN STORED-PROCEDURE pc_sequence_progress
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLIM"
                                               ,INPUT "NRCTRLIM"
@@ -4713,12 +4940,12 @@ PROCEDURE efetua_inclusao_limite:
                             
           
           
-          FIND FIRST craplim 
-               WHERE craplim.cdcooper = par_cdcooper
-                 AND craplim.tpctrlim = 3
-                 AND craplim.nrctrlim = aux_nrctrlim
+          FIND FIRST crawlim 
+               WHERE crawlim.cdcooper = par_cdcooper
+                 AND crawlim.tpctrlim = 3
+                 AND crawlim.nrctrlim = aux_nrctrlim
                  NO-LOCK NO-ERROR.
-          IF NOT AVAILABLE craplim THEN       
+          IF NOT AVAILABLE crawlim THEN       
           DO:
             LEAVE.
           END.
@@ -4798,16 +5025,16 @@ PROCEDURE efetua_inclusao_limite:
             UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
         END.
 
-        FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
-                                 craplim.nrdconta = par_nrdconta AND
-                                 craplim.tpctrlim = 3            AND
-                                 craplim.nrctrlim = par_nrctrlim 
+        FIND FIRST crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                                 crawlim.nrdconta = par_nrdconta AND
+                                 crawlim.tpctrlim = 3            AND
+                                 crawlim.nrctrlim = par_nrctrlim 
                                  NO-LOCK NO-ERROR.
          
-        IF  AVAILABLE craplim   THEN 
+        IF  AVAILABLE crawlim   THEN 
             DO:
                 ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Registro de contrato ja existe.".
+                       aux_dscritic = "Registro de proposta de limite de desconto de titulos ja existente.".
 
                 RUN gera_erro (INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -4882,95 +5109,88 @@ PROCEDURE efetua_inclusao_limite:
                 UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
             END.
         
-
-
-
-
-        CREATE craplim.
-        ASSIGN craplim.nrdconta    = par_nrdconta
-               craplim.tpctrlim    = 3 /* Desconto de titulo */
-               craplim.nrctrlim    = par_nrctrlim
+        CREATE crawlim.
+        ASSIGN crawlim.nrdconta    = par_nrdconta
+               crawlim.tpctrlim    = 3 /* Limite de Desconto de titulo */
+               crawlim.nrctrlim    = par_nrctrlim
 
                /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
-               craplim.cdopeori = par_cdoperad
-               craplim.cdageori = par_cdagenci
-               craplim.dtinsori = TODAY
+               crawlim.cdopeori = par_cdoperad
+               crawlim.cdageori = par_cdagenci
+               crawlim.dtinsori = TODAY
                /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
 
-               craplim.dtpropos    = par_dtmvtolt
-               craplim.insitlim    = 1
-               craplim.cddlinha    = par_cddlinha
-               craplim.qtdiavig    = par_qtdiavig
-               craplim.cdoperad    = par_cdoperad
-               craplim.cdmotcan    = 0
-               craplim.vllimite    = par_vllimite
-               craplim.inbaslim    = IF par_vllimite > 
+               crawlim.dtpropos    = par_dtmvtolt
+               crawlim.insitlim    = 1
+               crawlim.cddlinha    = par_cddlinha
+               crawlim.qtdiavig    = par_qtdiavig
+               crawlim.cdoperad    = par_cdoperad
+               crawlim.cdmotcan    = 0
+               crawlim.vllimite    = par_vllimite
+               crawlim.inbaslim    = IF par_vllimite > 
                                         tt-saldo-cotas.vlsldcap THEN
                                         2
                                      ELSE  
                                         1
-               craplim.flgimpnp    = TRUE
-               craplim.nrctaav1    = par_nrctaav1
-               craplim.nrctaav2    = par_nrctaav2
+               crawlim.flgimpnp    = TRUE
+               crawlim.nrctaav1    = par_nrctaav1
+               crawlim.nrctaav2    = par_nrctaav2
 
-               craplim.qtrenctr    = tt-dados_dsctit.qtrenova
+               crawlim.qtrenctr    = tt-dados_dsctit.qtrenova
 
-               craplim.dsendav1[1] = IF  par_nrctaav1 <> 0  THEN
+               crawlim.dsendav1[1] = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende1av1) + " " +
                                          STRING(par_nrender1)
-               craplim.dsendav1[2] = IF  par_nrctaav1 <> 0  THEN
+               crawlim.dsendav1[2] = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende2av1) + " - " + 
                                          CAPS(par_nmcidav1) + " - " +
                                          STRING(par_nrcepav1,"99999,999") +
                                          " - " + CAPS(par_cdufava1)
-               craplim.dsendav2[1] = IF  par_nrctaav2 <> 0  THEN
+               crawlim.dsendav2[1] = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende1av2) + " " +
                                          STRING(par_nrender2)
-               craplim.dsendav2[2] = IF  par_nrctaav2 <> 0  THEN
+               crawlim.dsendav2[2] = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende2av2) + " - " + 
                                          CAPS(par_nmcidav2) + " - " +
                                          STRING(par_nrcepav2,"99999,999") +
                                          " - " + CAPS(par_cdufava2)
-               craplim.nmdaval1    = IF  par_nrctaav1 <> 0  THEN
+               crawlim.nmdaval1    = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_nmdaval1)
-               craplim.nmdaval2    = IF  par_nrctaav2 <> 0  THEN
+               crawlim.nmdaval2    = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE    
                                          CAPS(par_nmdaval2)
-               craplim.dscpfav1    = IF  par_nrctaav1 <> 0  THEN
+               crawlim.dscpfav1    = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          par_dsdocav1
-               craplim.dscpfav2    = IF  par_nrctaav2 <> 0  THEN
+               crawlim.dscpfav2    = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          par_dsdocav2
-               craplim.nmcjgav1    = CAPS(par_nmdcjav1)
-               craplim.nmcjgav2    = CAPS(par_nmdcjav2)
-               craplim.dscfcav1    = CAPS(par_doccjav1)
-               craplim.dscfcav2    = CAPS(par_doccjav2)
-               craplim.nrgarope    = par_nrgarope
-               craplim.nrinfcad    = par_nrinfcad
-               craplim.nrliquid    = par_nrliquid
-               craplim.nrpatlvr    = par_nrpatlvr
-               craplim.nrperger    = par_nrperger
-               craplim.vltotsfn    = par_vltotsfn
-               craplim.cdcooper    = par_cdcooper.
+               crawlim.nmcjgav1    = CAPS(par_nmdcjav1)
+               crawlim.nmcjgav2    = CAPS(par_nmdcjav2)
+               crawlim.dscfcav1    = CAPS(par_doccjav1)
+               crawlim.dscfcav2    = CAPS(par_doccjav2)
+               crawlim.nrgarope    = par_nrgarope
+               crawlim.nrinfcad    = par_nrinfcad
+               crawlim.nrliquid    = par_nrliquid
+               crawlim.nrpatlvr    = par_nrpatlvr
+               crawlim.nrperger    = par_nrperger
+               crawlim.vltotsfn    = par_vltotsfn
+               crawlim.cdcooper    = par_cdcooper.
         
-        VALIDATE craplim.
-
-
-
+        VALIDATE crawlim.
 
         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                            crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
@@ -5023,7 +5243,7 @@ PROCEDURE efetua_inclusao_limite:
         FIND FIRST crapprp WHERE crapprp.cdcooper = par_cdcooper     AND
                                  crapprp.nrdconta = par_nrdconta     AND
                                  crapprp.tpctrato = 3                AND
-                                 crapprp.nrctrato = craplim.nrctrlim
+                                 crapprp.nrctrato = crawlim.nrctrlim
                                  NO-LOCK NO-ERROR.
 
         IF  AVAILABLE crapprp  THEN
@@ -5046,7 +5266,7 @@ PROCEDURE efetua_inclusao_limite:
         CREATE crapprp.
         ASSIGN crapprp.nrdconta = par_nrdconta
                crapprp.nrctrato = par_nrctrlim
-               crapprp.tpctrato = 3 /* Dscto Titulo */
+               crapprp.tpctrato = 3 /* Limite de Dscto Titulo */
                crapprp.dsramati = CAPS(par_dsramati)
                crapprp.vlmedchq = par_vlmedtit
                crapprp.vlfatura = par_vlfatura
@@ -5062,7 +5282,7 @@ PROCEDURE efetua_inclusao_limite:
                crapprp.dtmvtolt    = par_dtmvtolt.
         VALIDATE crapprp.                   
         
-        /* Verificar se a conta pertence ao grupo economico novo */	
+        /* Verificar se a conta pertence ao grupo economico novo */ 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
         RUN STORED-PROCEDURE pc_obtem_mensagem_grp_econ_prg
@@ -5233,25 +5453,25 @@ PROCEDURE efetua_alteracao_limite:
     DEF VAR aux_contador AS INTE    NO-UNDO.
     DEF VAR aux_flgderro AS LOGI    NO-UNDO.
     
-    DEF VAR old_dtpropos LIKE craplim.dtpropos.
-    DEF VAR old_cddlinha LIKE craplim.cddlinha.
-    DEF VAR old_cdoperad LIKE craplim.cdoperad.
-    DEF VAR old_vllimite LIKE craplim.vllimite.
-    DEF VAR old_inbaslim LIKE craplim.inbaslim.
-    DEF VAR old_nrctaav1 LIKE craplim.nrctaav1.
-    DEF VAR old_nrctaav2 LIKE craplim.nrctaav2.
+    DEF VAR old_dtpropos LIKE crawlim.dtpropos.
+    DEF VAR old_cddlinha LIKE crawlim.cddlinha.
+    DEF VAR old_cdoperad LIKE crawlim.cdoperad.
+    DEF VAR old_vllimite LIKE crawlim.vllimite.
+    DEF VAR old_inbaslim LIKE crawlim.inbaslim.
+    DEF VAR old_nrctaav1 LIKE crawlim.nrctaav1.
+    DEF VAR old_nrctaav2 LIKE crawlim.nrctaav2.
     DEF VAR old_ende1av1 AS CHAR    NO-UNDO.
     DEF VAR old_ende2av1 AS CHAR    NO-UNDO.
     DEF VAR old_ende1av2 AS CHAR    NO-UNDO.
     DEF VAR old_ende2av2 AS CHAR    NO-UNDO.
-    DEF VAR old_nmdaval1 LIKE craplim.nmdaval1.
-    DEF VAR old_nmdaval2 LIKE craplim.nmdaval2.
-    DEF VAR old_dscpfav1 LIKE craplim.dscpfav1.
-    DEF VAR old_dscpfav2 LIKE craplim.dscpfav2.
-    DEF VAR old_nmdcjav1 LIKE craplim.nmcjgav1.
-    DEF VAR old_nmcjgav2 LIKE craplim.nmcjgav2.
-    DEF VAR old_dscfcav1 LIKE craplim.dscfcav1.
-    DEF VAR old_dscfcav2 LIKE craplim.dscfcav2.
+    DEF VAR old_nmdaval1 LIKE crawlim.nmdaval1.
+    DEF VAR old_nmdaval2 LIKE crawlim.nmdaval2.
+    DEF VAR old_dscpfav1 LIKE crawlim.dscpfav1.
+    DEF VAR old_dscpfav2 LIKE crawlim.dscpfav2.
+    DEF VAR old_nmdcjav1 LIKE crawlim.nmcjgav1.
+    DEF VAR old_nmcjgav2 LIKE crawlim.nmcjgav2.
+    DEF VAR old_dscfcav1 LIKE crawlim.dscfcav1.
+    DEF VAR old_dscfcav2 LIKE crawlim.dscfcav2.
     DEF VAR old_dsramati LIKE crapprp.dsramati.
     DEF VAR old_vlmedchq LIKE crapprp.vlmedchq.
     DEF VAR old_vlfatura LIKE crapprp.vlfatura.
@@ -5262,12 +5482,12 @@ PROCEDURE efetua_alteracao_limite:
     DEF VAR old_dsdeben2 LIKE crapprp.dsdebens.
     DEF VAR old_dsobser1 LIKE crapprp.dsobserv[1].
     /**----------- OLD - RATING -----------**/    
-    DEF VAR old_nrgarope LIKE craplim.nrgarope.
-    DEF VAR old_nrinfcad LIKE craplim.nrinfcad.
-    DEF VAR old_nrliquid LIKE craplim.nrliquid.
-    DEF VAR old_nrpatlvr LIKE craplim.nrpatlvr.
-    DEF VAR old_nrperger LIKE craplim.nrperger.
-    DEF VAR old_vltotsfn LIKE craplim.vltotsfn.
+    DEF VAR old_nrgarope LIKE crawlim.nrgarope.
+    DEF VAR old_nrinfcad LIKE crawlim.nrinfcad.
+    DEF VAR old_nrliquid LIKE crawlim.nrliquid.
+    DEF VAR old_nrpatlvr LIKE crawlim.nrpatlvr.
+    DEF VAR old_nrperger LIKE crawlim.nrperger.
+    DEF VAR old_vltotsfn LIKE crawlim.vltotsfn.
     DEF VAR old_perfatcl LIKE crapjfn.perfatcl.    
     
     EMPTY TEMP-TABLE tt-erro.
@@ -5277,8 +5497,8 @@ PROCEDURE efetua_alteracao_limite:
 
     IF  par_flgerlog  THEN
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-               aux_dstransa = "Alterar dados do limite " + STRING(par_nrctrlim) +
-                              " de desconto de titulos.".
+               aux_dstransa = "Alterar dados da proposta " + STRING(par_nrctrlim) +
+                              " do limite de desconto de titulos.".
     
                    
     RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT SET h-b1wgen9999.
@@ -5379,23 +5599,23 @@ PROCEDURE efetua_alteracao_limite:
         DELETE PROCEDURE h-b1wgen9999.
         
         DO  aux_contador = 1 TO 10:
-            FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
-                                     craplim.nrdconta = par_nrdconta AND
-                                     craplim.tpctrlim = 3            AND
-                                     craplim.nrctrlim = par_nrctrlim 
+            FIND FIRST crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                                     crawlim.nrdconta = par_nrdconta AND
+                                     crawlim.tpctrlim = 3            AND
+                                     crawlim.nrctrlim = par_nrctrlim 
                                      EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
          
-            IF  NOT AVAILABLE craplim   THEN 
-                IF   LOCKED craplim   THEN
+            IF  NOT AVAILABLE crawlim   THEN 
+                IF   LOCKED crawlim   THEN
                      DO:
-                        aux_dscritic = "Registro de limite sendo" +
+                        aux_dscritic = "Registro da proposta de limite de desconto de titulos sendo" +
                                        " alterado. Tente Novamente.".
                         PAUSE 1 NO-MESSAGE.
                         NEXT.
                      END.
                 ELSE
                      DO:            
-                         ASSIGN aux_dscritic = "Registro de limites nao " +
+                         ASSIGN aux_dscritic = "Registro da proposta de limite de desconto de titulos nao " +
                                                "encontrado.".
                          LEAVE.
                      END.
@@ -5531,107 +5751,107 @@ PROCEDURE efetua_alteracao_limite:
                 LEAVE.
              END. /* Fim do DO TO */
             
-        ASSIGN old_dtpropos     = craplim.dtpropos
-               craplim.dtpropos = par_dtmvtolt
-               craplim.insitlim = 1
-               old_cddlinha     = craplim.cddlinha
-               craplim.cddlinha = par_cddlinha
-               old_cdoperad     = craplim.cdoperad
-               craplim.cdoperad = par_cdoperad
-               craplim.cdmotcan = 0
-               old_vllimite     = craplim.vllimite
-               craplim.vllimite = par_vllimite
-               old_inbaslim     = craplim.inbaslim
-               craplim.inbaslim = IF  par_vllimite > 
+        ASSIGN old_dtpropos     = crawlim.dtpropos
+               crawlim.dtpropos = par_dtmvtolt
+               crawlim.insitlim = 1
+               old_cddlinha     = crawlim.cddlinha
+               crawlim.cddlinha = par_cddlinha
+               old_cdoperad     = crawlim.cdoperad
+               crawlim.cdoperad = par_cdoperad
+               crawlim.cdmotcan = 0
+               old_vllimite     = crawlim.vllimite
+               crawlim.vllimite = par_vllimite
+               old_inbaslim     = crawlim.inbaslim
+               crawlim.inbaslim = IF  par_vllimite > 
                                       tt-saldo-cotas.vlsldcap  THEN 2
                                   ELSE 1
-               craplim.flgimpnp = TRUE
-               old_nrctaav1     = craplim.nrctaav1
-               craplim.nrctaav1 = par_nrctaav1
-               old_nrctaav2     = craplim.nrctaav2
-               craplim.nrctaav2 = par_nrctaav2
-               old_ende1av1     = craplim.dsendav1[1]
-               craplim.dsendav1[1] = IF  par_nrctaav1 <> 0  THEN
+               crawlim.flgimpnp = TRUE
+               old_nrctaav1     = crawlim.nrctaav1
+               crawlim.nrctaav1 = par_nrctaav1
+               old_nrctaav2     = crawlim.nrctaav2
+               crawlim.nrctaav2 = par_nrctaav2
+               old_ende1av1     = crawlim.dsendav1[1]
+               crawlim.dsendav1[1] = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE 
                                          CAPS(par_ende1av1) + " " +
                                          STRING(par_nrender1)
-               old_ende2av1        = craplim.dsendav1[2]
-               craplim.dsendav1[2] = IF  par_nrctaav1 <> 0  THEN
+               old_ende2av1        = crawlim.dsendav1[2]
+               crawlim.dsendav1[2] = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende2av1) + " - " + 
                                          CAPS(par_nmcidav1) + " - " +
                                          STRING(par_nrcepav1,"99999,999") +
                                          " - " + CAPS(par_cdufava1)
-               old_ende1av2 = craplim.dsendav2[1]
-               craplim.dsendav2[1] = IF  par_nrctaav2 <> 0  THEN
+               old_ende1av2 = crawlim.dsendav2[1]
+               crawlim.dsendav2[1] = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende1av2) + " " +
                                          STRING(par_nrender2)
-               old_ende2av2        = craplim.dsendav2[2]
-               craplim.dsendav2[2] = IF  par_nrctaav2 <> 0  THEN
+               old_ende2av2        = crawlim.dsendav2[2]
+               crawlim.dsendav2[2] = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende2av2) + " - " + 
                                          CAPS(par_nmcidav2) + " - " +
                                          STRING(par_nrcepav2,"99999,999") +
                                          " - " + CAPS(par_cdufava2)
-               old_nmdaval1        = craplim.nmdaval1
-               craplim.nmdaval1    = IF  par_nrctaav1 <> 0  THEN
+               old_nmdaval1        = crawlim.nmdaval1
+               crawlim.nmdaval1    = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          par_nmdaval1
-               old_nmdaval2        = craplim.nmdaval2
-               craplim.nmdaval2    = IF  par_nrctaav2 <> 0  THEN
+               old_nmdaval2        = crawlim.nmdaval2
+               crawlim.nmdaval2    = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE    
                                          par_nmdaval2
-               old_dscpfav1        = craplim.dscpfav1
-               craplim.dscpfav1    = IF  par_nrctaav1 <> 0  THEN
+               old_dscpfav1        = crawlim.dscpfav1
+               crawlim.dscpfav1    = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          par_dsdocav1
-               old_dscpfav2        = craplim.dscpfav2
-               craplim.dscpfav2    = IF  par_nrctaav2 <> 0  THEN
+               old_dscpfav2        = crawlim.dscpfav2
+               crawlim.dscpfav2    = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          par_dsdocav2
-               old_nmdcjav1        = craplim.nmcjgav1
-               craplim.nmcjgav1    = par_nmdcjav1
-               old_nmcjgav2        = craplim.nmcjgav2
-               craplim.nmcjgav2    = par_nmdcjav2
-               old_dscfcav1        = craplim.dscfcav1
-               craplim.dscfcav1    = par_doccjav1
-               old_dscfcav2        = craplim.dscfcav2
-               craplim.dscfcav2    = par_doccjav2
-               old_nrgarope        = craplim.nrgarope
-               craplim.nrgarope    = par_nrgarope
-               old_nrinfcad        = craplim.nrinfcad
-               craplim.nrinfcad    = par_nrinfcad
-               old_nrliquid        = craplim.nrliquid
-               craplim.nrliquid    = par_nrliquid
-               old_nrpatlvr        = craplim.nrpatlvr
-               craplim.nrpatlvr    = par_nrpatlvr
-               old_nrperger        = craplim.nrperger
-               craplim.nrperger    = par_nrperger
-               old_vltotsfn        = craplim.vltotsfn
-               craplim.vltotsfn    = par_vltotsfn
-               craplim.insitest    = 0
-               craplim.dtenvest    = ?
-               craplim.hrenvest    = 0
-               craplim.cdopeste    = ""
-               craplim.insitapr    = 0
-               craplim.dtaprova    = ?
-               craplim.hraprova    = 0
-               craplim.cdopeapr    = "".                                
+               old_nmdcjav1        = crawlim.nmcjgav1
+               crawlim.nmcjgav1    = par_nmdcjav1
+               old_nmcjgav2        = crawlim.nmcjgav2
+               crawlim.nmcjgav2    = par_nmdcjav2
+               old_dscfcav1        = crawlim.dscfcav1
+               crawlim.dscfcav1    = par_doccjav1
+               old_dscfcav2        = crawlim.dscfcav2
+               crawlim.dscfcav2    = par_doccjav2
+               old_nrgarope        = crawlim.nrgarope
+               crawlim.nrgarope    = par_nrgarope
+               old_nrinfcad        = crawlim.nrinfcad
+               crawlim.nrinfcad    = par_nrinfcad
+               old_nrliquid        = crawlim.nrliquid
+               crawlim.nrliquid    = par_nrliquid
+               old_nrpatlvr        = crawlim.nrpatlvr
+               crawlim.nrpatlvr    = par_nrpatlvr
+               old_nrperger        = crawlim.nrperger
+               crawlim.nrperger    = par_nrperger
+               old_vltotsfn        = crawlim.vltotsfn
+               crawlim.vltotsfn    = par_vltotsfn
+               crawlim.insitest    = 0
+               crawlim.dtenvest    = ?
+               crawlim.hrenvest    = 0
+               crawlim.cdopeste    = ""
+               crawlim.insitapr    = 0
+               crawlim.dtaprova    = ?
+               crawlim.hraprova    = 0
+               crawlim.cdopeapr    = "".                                
         DO aux_contador = 1 TO 10:
         
             FIND FIRST crapprp WHERE crapprp.cdcooper = par_cdcooper     AND
                                      crapprp.nrdconta = par_nrdconta     AND
                                      crapprp.tpctrato = 3                AND
-                                     crapprp.nrctrato = craplim.nrctrlim
+                                     crapprp.nrctrato = crawlim.nrctrlim
                                      EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
             IF  NOT AVAILABLE crapprp  THEN
@@ -5693,7 +5913,7 @@ PROCEDURE efetua_alteracao_limite:
                crapprp.dsobserv[2] = ""
                crapprp.dsobserv[3] = "".
         
-        FIND CURRENT craplim NO-LOCK NO-ERROR.
+        FIND CURRENT crawlim NO-LOCK NO-ERROR.
         FIND CURRENT crapprp NO-LOCK NO-ERROR.
 
         IF  AVAILABLE crapjfn  THEN
@@ -5731,157 +5951,157 @@ PROCEDURE efetua_alteracao_limite:
                                 INPUT par_nrdconta,
                                OUTPUT aux_nrdrowid).
 
-            IF  old_dtpropos <> craplim.dtpropos  THEN
+            IF  old_dtpropos <> crawlim.dtpropos  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "data proposta",
                                         INPUT old_dtpropos,
-                                        INPUT craplim.dtpropos).
+                                        INPUT crawlim.dtpropos).
                                         
-            IF  old_cddlinha <> craplim.cddlinha  THEN
+            IF  old_cddlinha <> crawlim.cddlinha  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "linha de credito",
                                         INPUT old_cddlinha,
-                                        INPUT craplim.cddlinha).
+                                        INPUT crawlim.cddlinha).
                                         
-            IF  old_cdoperad <> craplim.cdoperad  THEN
+            IF  old_cdoperad <> crawlim.cdoperad  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "operador",
                                         INPUT old_cdoperad,
-                                        INPUT craplim.cdoperad).
+                                        INPUT crawlim.cdoperad).
                                         
-            IF  old_vllimite <> craplim.vllimite  THEN
+            IF  old_vllimite <> crawlim.vllimite  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "valor limite",
                                         INPUT STRING(old_vllimite,
                                                      "z,zzz,zz9.99"),
-                                        INPUT STRING(craplim.vllimite,
+                                        INPUT STRING(crawlim.vllimite,
                                                      "z,zzz,zz9.99")).
                                         
-            IF  old_inbaslim <> craplim.inbaslim  THEN
+            IF  old_inbaslim <> crawlim.inbaslim  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "base limite",
                                         INPUT old_inbaslim,
-                                        INPUT craplim.inbaslim).
+                                        INPUT crawlim.inbaslim).
                                         
-            IF  old_nrctaav1 <> craplim.nrctaav1  THEN
+            IF  old_nrctaav1 <> crawlim.nrctaav1  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "conta aval 1",
                                         INPUT old_nrctaav1,
                                         INPUT par_nrctaav1).
                                         
-            IF  old_nrctaav2 <> craplim.nrctaav2  THEN
+            IF  old_nrctaav2 <> crawlim.nrctaav2  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "conta aval 2",
                                         INPUT old_nrctaav2,
                                         INPUT par_nrctaav2).    
                                         
-            IF  old_ende1av1 <> craplim.dsendav1[1]  THEN
+            IF  old_ende1av1 <> crawlim.dsendav1[1]  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "endereco 1 aval 1",
                                         INPUT old_ende1av1,
-                                        INPUT craplim.dsendav1[1]).
+                                        INPUT crawlim.dsendav1[1]).
                                         
-            IF  old_ende2av1 <> craplim.dsendav1[2]  THEN
+            IF  old_ende2av1 <> crawlim.dsendav1[2]  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "endereco 2 aval 1",
                                         INPUT old_ende2av1,
-                                        INPUT craplim.dsendav1[2]).
+                                        INPUT crawlim.dsendav1[2]).
                                         
-            IF  old_ende1av2 <> craplim.dsendav2[1]  THEN
+            IF  old_ende1av2 <> crawlim.dsendav2[1]  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "endereco 1 aval 2",
                                         INPUT old_ende1av2,
-                                        INPUT craplim.dsendav2[1]).
+                                        INPUT crawlim.dsendav2[1]).
                                         
-            IF  old_ende2av2 <> craplim.dsendav2[2]  THEN
+            IF  old_ende2av2 <> crawlim.dsendav2[2]  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "endereco 2 aval 2",
                                         INPUT old_ende2av2,
-                                        INPUT craplim.dsendav2[2]).
+                                        INPUT crawlim.dsendav2[2]).
                                         
-            IF  old_nmdaval1 <> craplim.nmdaval1  THEN
+            IF  old_nmdaval1 <> crawlim.nmdaval1  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "nome aval 1",
                                         INPUT old_nmdaval1,
-                                        INPUT craplim.nmdaval1).
+                                        INPUT crawlim.nmdaval1).
                                         
-            IF  old_nmdaval2 <> craplim.nmdaval2  THEN
+            IF  old_nmdaval2 <> crawlim.nmdaval2  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "nome aval 2",
                                         INPUT old_nmdaval2,
-                                        INPUT craplim.nmdaval2).
+                                        INPUT crawlim.nmdaval2).
                                         
-            IF  old_dscpfav1 <> craplim.dscpfav1  THEN
+            IF  old_dscpfav1 <> crawlim.dscpfav1  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "cpf aval 1",
                                         INPUT old_dscpfav1,
-                                        INPUT craplim.dscpfav1).
+                                        INPUT crawlim.dscpfav1).
                                         
-            IF  old_dscpfav2 <> craplim.dscpfav2  THEN
+            IF  old_dscpfav2 <> crawlim.dscpfav2  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "cpf aval 2",
                                         INPUT old_dscpfav2,
-                                        INPUT craplim.dscpfav2).
+                                        INPUT crawlim.dscpfav2).
                                         
-            IF  old_nmdcjav1 <> craplim.nmcjgav1  THEN
+            IF  old_nmdcjav1 <> crawlim.nmcjgav1  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "nome conjuge aval 1",
                                         INPUT old_nmdcjav1,
-                                        INPUT craplim.nmcjgav1).
+                                        INPUT crawlim.nmcjgav1).
                                         
-            IF  old_nmcjgav2 <> craplim.nmcjgav2  THEN
+            IF  old_nmcjgav2 <> crawlim.nmcjgav2  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "nome conjuge aval 2",
                                         INPUT old_nmcjgav2,
-                                        INPUT craplim.nmcjgav2).
+                                        INPUT crawlim.nmcjgav2).
                                         
-            IF  old_dscfcav1 <> craplim.dscfcav1  THEN
+            IF  old_dscfcav1 <> crawlim.dscfcav1  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "cpf conjuge aval 1",
                                         INPUT old_dscfcav1,
-                                        INPUT craplim.dscfcav1).
+                                        INPUT crawlim.dscfcav1).
                                  
-            IF  old_dscfcav2 <> craplim.dscfcav2  THEN
+            IF  old_dscfcav2 <> crawlim.dscfcav2  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "cpf conjuge aval 2",
                                         INPUT old_dscfcav1,
-                                        INPUT craplim.dscfcav1).
+                                        INPUT crawlim.dscfcav1).
             
-            IF   old_nrinfcad <> craplim.nrinfcad   THEN
+            IF   old_nrinfcad <> crawlim.nrinfcad   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "informacoes cadastrais",
                                          INPUT old_nrinfcad,
-                                         INPUT craplim.nrinfcad).
+                                         INPUT crawlim.nrinfcad).
                     
-            IF   old_nrliquid <> craplim.nrliquid   THEN
+            IF   old_nrliquid <> crawlim.nrliquid   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "liquidez das garantias",
                                          INPUT old_nrliquid,
-                                         INPUT craplim.nrliquid).
+                                         INPUT crawlim.nrliquid).
                
-            IF   old_nrpatlvr <> craplim.nrpatlvr   THEN
+            IF   old_nrpatlvr <> crawlim.nrpatlvr   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "patrimonio pessoal livre",
                                          INPUT old_nrpatlvr,
-                                         INPUT craplim.nrpatlvr).
+                                         INPUT crawlim.nrpatlvr).
                               
-            IF   old_nrperger <> craplim.nrperger   THEN
+            IF   old_nrperger <> crawlim.nrperger   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "percepcao geral (empresa)",
                                          INPUT old_nrperger,
-                                         INPUT craplim.nrperger).
+                                         INPUT crawlim.nrperger).
             
-            IF   old_vltotsfn <> craplim.vltotsfn   THEN
+            IF   old_vltotsfn <> crawlim.vltotsfn   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "valor total SFN",
                                          INPUT old_vltotsfn,
-                                         INPUT craplim.vltotsfn).   
+                                         INPUT crawlim.vltotsfn).   
             
-            IF   old_nrgarope <> craplim.nrgarope   THEN
+            IF   old_nrgarope <> crawlim.nrgarope   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "garantia",
                                          INPUT old_nrgarope,
-                                         INPUT craplim.nrgarope).
+                                         INPUT crawlim.nrgarope).
             
             IF   AVAILABLE crapjfn                  AND 
                  old_perfatcl <> crapjfn.perfatcl   THEN
@@ -6040,11 +6260,11 @@ PROCEDURE efetua_cancelamento_limite:
         
         ASSIGN craplim.insitlim = 3
                craplim.dtcancel = par_dtmvtolt
-			   /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+         /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                craplim.cdopeexc = par_cdoperad
                craplim.cdageexc = par_cdagenci
                craplim.dtinsexc = TODAY
-			   /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+         /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                craplim.cdopecan = par_cdoperad.
 
         RUN sistema/generico/procedures/b1wgen0043.p 
@@ -6386,6 +6606,11 @@ PROCEDURE busca_borderos:
         IF  crapbdt.dtlibbdt <> ?  THEN
             IF (crapbdt.dtlibbdt < par_dtmvtolt - 90) AND
                 crapbdt.insitbdt = 4                  THEN  
+                NEXT.
+
+     IF crapbdt.dtmvtolt <> ?  THEN
+            IF (crapbdt.dtmvtolt <= par_dtmvtolt - 120) AND
+               (crapbdt.insitbdt = 1 OR crapbdt.insitbdt = 2) THEN
                 NEXT.
 
         ASSIGN aux_qttottit = 0
@@ -6877,6 +7102,8 @@ PROCEDURE busca_dados_dsctit:
     DEF OUTPUT PARAM TABLE FOR tt-desconto_titulos.
     
     DEF VAR h-b1wgen0001 AS HANDLE NO-UNDO.
+    DEF VAR aux_perrenov AS INTEGER                         NO-UNDO.
+    DEF VAR aux_difdays AS INTEGER                          NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-desconto_titulos.
@@ -6940,7 +7167,10 @@ PROCEDURE busca_dados_dsctit:
                     tt-desconto_titulos.vlutiliz = 0
                     tt-desconto_titulos.qtutiliz = 0
                     tt-desconto_titulos.cddopcao = 2
-                    tt-desconto_titulos.dtrenova = ?.
+                    tt-desconto_titulos.dtrenova = ?
+                    tt-desconto_titulos.perrenov = 0
+                    tt-desconto_titulos.cddlinha = 0
+                    tt-desconto_titulos.flgstlcr = ?.
                     
              FOR EACH craptdb WHERE (craptdb.cdcooper = par_cdcooper AND
                                      craptdb.nrdconta = par_nrdconta AND
@@ -6983,15 +7213,24 @@ PROCEDURE busca_dados_dsctit:
              ELSE
                   tt-desconto_titulos.dsdlinha = STRING(crapldc.cddlinha) 
                                                  + " - " + crapldc.dsdlinha.
-                 
+                  tt-desconto_titulos.cddlinha = crapldc.cddlinha.
+                  tt-desconto_titulos.flgstlcr = crapldc.flgstlcr.
+                                                 
+             aux_difdays = craplim.dtfimvig - par_dtmvtolt.
+             IF aux_difdays > 15 OR aux_difdays < -60  THEN
+                  aux_perrenov = 0.
+             ELSE
+                  aux_perrenov = 1.
+             
              ASSIGN tt-desconto_titulos.nrctrlim = craplim.nrctrlim
                     tt-desconto_titulos.dtinivig = craplim.dtinivig
                     tt-desconto_titulos.qtdiavig = craplim.qtdiavig
                     tt-desconto_titulos.vllimite = craplim.vllimite
                     tt-desconto_titulos.qtrenova = craplim.qtrenova
                     tt-desconto_titulos.cddopcao = 1
-                    tt-desconto_titulos.dtrenova = craplim.dtrenova.
-                    
+                    tt-desconto_titulos.dtrenova = craplim.dtrenova
+                    tt-desconto_titulos.perrenov = aux_perrenov.
+
              FOR EACH craptdb WHERE (craptdb.cdcooper = par_cdcooper AND
                                      craptdb.nrdconta = par_nrdconta AND
                                      craptdb.insittit =  4)
@@ -7064,10 +7303,6 @@ PROCEDURE busca_parametros_dsctit:
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
-  
-
-
-
     IF par_inpessoa = 1 THEN /* Pessoa Física */
     DO:
     IF par_tpcobran = TRUE THEN /* Cobrança com Regisro */
@@ -7085,9 +7320,6 @@ PROCEDURE busca_parametros_dsctit:
         aux_cdacesso = "LIMDESCTITPJ".
     END.    
     END.
-
-
-
 
     FIND craptab WHERE craptab.cdcooper = par_cdcooper    AND
                        craptab.nmsistem = "CRED"          AND
@@ -7139,6 +7371,7 @@ PROCEDURE busca_parametros_dsctit:
                   tt-dados_cecred_dsctit.pcnaopag = DECI(ENTRY(36,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.qtnaopag = INTE(ENTRY(37,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.qtprotes = INTE(ENTRY(38,craptab.dstextab,";")).
+              
         END.
     ELSE
         DO:
@@ -8659,22 +8892,6 @@ PROCEDURE efetua_inclusao_bordero:
     DEF VAR aux_flgtrans AS LOGI NO-UNDO.
 
 
-
-
-    MESSAGE " CONTA: " + par_nrdconta.
-                         PAUSE 1.
-                         HIDE MESSAGE NO-PAUSE.
-
-
-
-    UNIX SILENT VALUE(      "echo " + STRING(par_nrgarope,"Verificação das variáveis: ") +
-                            " Operador: " + par_nrinfcad + 
-                            " Hst: "      + STRING(par_nrpatlvr) +
-                            " Conta: "    + TRIM(STRING(par_vltotsfn, "zz,zzz,zzz,z")) + 
-                            " >> log/landpv.log").
-
-   
-
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_nrborder = 0
@@ -8696,26 +8913,26 @@ PROCEDURE efetua_inclusao_bordero:
 
             RETURN "NOK".
         END.
-		
-	RUN valida_titulos_bordero(INPUT par_cdcooper,
-							   INPUT par_cdagenci,
-							   INPUT par_nrdcaixa,
-							   INPUT par_cdoperad,
-							   INPUT par_dtmvtolt,
-							   INPUT par_idorigem,
-							   INPUT par_nrdconta,
-							   INPUT 0, /*nrborder*/
-							   INPUT 2, /*tpvalida*/
-							   INPUT TABLE tt-titulos,
-							   OUTPUT TABLE tt-erro).
+    
+  RUN valida_titulos_bordero(INPUT par_cdcooper,
+                 INPUT par_cdagenci,
+                 INPUT par_nrdcaixa,
+                 INPUT par_cdoperad,
+                 INPUT par_dtmvtolt,
+                 INPUT par_idorigem,
+                 INPUT par_nrdconta,
+                 INPUT 0, /*nrborder*/
+                 INPUT 2, /*tpvalida*/
+                 INPUT TABLE tt-titulos,
+                 OUTPUT TABLE tt-erro).
 
     IF RETURN-VALUE <> "OK" THEN
-	   DO:
-	      FIND FIRST tt-erro NO-LOCK NO-ERROR.
+     DO:
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-		  IF NOT AVAIL tt-erro THEN
-		     DO:
-		        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
+      IF NOT AVAIL tt-erro THEN
+         DO:
+            ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
             
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -17446,8 +17663,8 @@ PROCEDURE valida_titulos_bordero:
     DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
     DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
-	DEF INPUT PARAM par_nrborder AS INTE				    NO-UNDO.
-	DEF INPUT PARAM par_tpvalida AS INTE                    NO-UNDO.
+  DEF INPUT PARAM par_nrborder AS INTE            NO-UNDO.
+  DEF INPUT PARAM par_tpvalida AS INTE                    NO-UNDO.
     
     DEF INPUT PARAM TABLE FOR tt-titulos.
          
@@ -17456,136 +17673,133 @@ PROCEDURE valida_titulos_bordero:
     DEF VAR aux_contador AS INTE NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI NO-UNDO.
 
-	DEF BUFFER b-craptdb FOR craptdb.
+  DEF BUFFER b-craptdb FOR craptdb.
 
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_contador = 0
-		   aux_flgtrans = TRUE
-		   aux_cdcritic = 0
+       aux_flgtrans = TRUE
+       aux_cdcritic = 0
            aux_dscritic = "".
 
     IF par_tpvalida = 1 THEN
-	   DO:
-	     FOR EACH craptdb WHERE craptdb.cdcooper = par_cdcooper AND
-								craptdb.nrborder = par_nrborder 
-								NO-LOCK:
+     DO:
+       FOR EACH craptdb WHERE craptdb.cdcooper = par_cdcooper AND
+                craptdb.nrborder = par_nrborder 
+                NO-LOCK:
 
-	       /* Se este titulo ja esta em um bordero e ele estiver pago, 
-			  a ser pago(liberado no bordero ou nao) */ 
-		   FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
-			 					      b-craptdb.cdbandoc = craptdb.cdbandoc  AND
-								      b-craptdb.nrdctabb = craptdb.nrdctabb  AND
-					 			      b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
-								      b-craptdb.nrdconta = craptdb.nrdconta  AND
-								      b-craptdb.nrborder <> craptdb.nrborder AND
-								      b-craptdb.nrdocmto = craptdb.nrdocmto  AND
-								      b-craptdb.insittit = 0 
-								      NO-LOCK NO-ERROR.
-								                    
-		   IF NOT AVAIL b-craptdb THEN									      
-		      FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
-										 b-craptdb.cdbandoc = craptdb.cdbandoc  AND
-										 b-craptdb.nrdctabb = craptdb.nrdctabb  AND
-										 b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
-										 b-craptdb.nrdconta = craptdb.nrdconta  AND
-										 b-craptdb.nrborder <> craptdb.nrborder AND
-										 b-craptdb.nrdocmto = craptdb.nrdocmto  AND
-										 b-craptdb.insittit = 2
-										 NO-LOCK NO-ERROR.
+         /* Se este titulo ja esta em um bordero e ele estiver pago, 
+        a ser pago(liberado no bordero ou nao) */ 
+       FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
+                      b-craptdb.cdbandoc = craptdb.cdbandoc  AND
+                      b-craptdb.nrdctabb = craptdb.nrdctabb  AND
+                      b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
+                      b-craptdb.nrdconta = craptdb.nrdconta  AND
+                      b-craptdb.nrborder <> craptdb.nrborder AND
+                      b-craptdb.nrdocmto = craptdb.nrdocmto  AND
+                      b-craptdb.insittit = 0 
+                      NO-LOCK NO-ERROR.
+                                    
+       IF NOT AVAIL b-craptdb THEN                        
+          FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
+                     b-craptdb.cdbandoc = craptdb.cdbandoc  AND
+                     b-craptdb.nrdctabb = craptdb.nrdctabb  AND
+                     b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
+                     b-craptdb.nrdconta = craptdb.nrdconta  AND
+                     b-craptdb.nrborder <> craptdb.nrborder AND
+                     b-craptdb.nrdocmto = craptdb.nrdocmto  AND
+                     b-craptdb.insittit = 2
+                     NO-LOCK NO-ERROR.
 
            IF NOT AVAIL b-craptdb THEN
-		      FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
-				   						 b-craptdb.cdbandoc = craptdb.cdbandoc  AND
-										 b-craptdb.nrdctabb = craptdb.nrdctabb  AND
-										 b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
-										 b-craptdb.nrdconta = craptdb.nrdconta  AND
-										 b-craptdb.nrborder <> craptdb.nrborder AND
-										 b-craptdb.nrdocmto = craptdb.nrdocmto  AND
-										 b-craptdb.insittit = 4
-										 NO-LOCK NO-ERROR.
+          FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
+                       b-craptdb.cdbandoc = craptdb.cdbandoc  AND
+                     b-craptdb.nrdctabb = craptdb.nrdctabb  AND
+                     b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
+                     b-craptdb.nrdconta = craptdb.nrdconta  AND
+                     b-craptdb.nrborder <> craptdb.nrborder AND
+                     b-craptdb.nrdocmto = craptdb.nrdocmto  AND
+                     b-craptdb.insittit = 4
+                     NO-LOCK NO-ERROR.
 
-		   IF AVAIL b-craptdb THEN
-		      DO:
-			     ASSIGN aux_contador = aux_contador + 1
-			 	    	aux_dscritic = "Titulo " + string(b-craptdb.nrdocmto) + " ja incluso no bordero " + 
-									   string(b-craptdb.nrborder) + "."
-					    aux_flgtrans = FALSE.
+       IF AVAIL b-craptdb THEN
+          DO:
+           ASSIGN aux_contador = aux_contador + 1
+              aux_dscritic = "Titulo " + string(b-craptdb.nrdocmto) + " ja incluso no bordero " + 
+                     string(b-craptdb.nrborder) + "."
+              aux_flgtrans = FALSE.
 
-			     RUN gera_erro (INPUT par_cdcooper,
-				 			    INPUT par_cdagenci,
-							    INPUT par_nrdcaixa,
-							    INPUT aux_contador,      /** Sequencia **/
-							    INPUT aux_cdcritic,
-							    INPUT-OUTPUT aux_dscritic). 
+           RUN gera_erro (INPUT par_cdcooper,
+                  INPUT par_cdagenci,
+                  INPUT par_nrdcaixa,
+                  INPUT aux_contador,      /** Sequencia **/
+                  INPUT aux_cdcritic,
+                  INPUT-OUTPUT aux_dscritic). 
 
-		      END.
+          END.
 
-		 END.
+     END.
 
-	  END.
-	ELSE
-	  DO:
-	     FOR EACH tt-titulos WHERE tt-titulos.flgstats = 1 NO-LOCK:
+    END.
+  ELSE
+    DO:
+       FOR EACH tt-titulos WHERE tt-titulos.flgstats = 1 NO-LOCK:
             
-		   /* Se este titulo ja esta em um bordero e ele estiver pago, 
-			  a ser pago(liberado no bordero ou nao) */ 
-		   FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
-							        craptdb.cdbandoc = tt-titulos.cdbandoc AND
-							        craptdb.nrdctabb = tt-titulos.nrdctabb AND
-							        craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
-							        craptdb.nrdconta = par_nrdconta        AND
-							        craptdb.nrdocmto = tt-titulos.nrdocmto AND
-							        craptdb.insittit = 0
-							        NO-LOCK NO-ERROR.
-			
-		   IF NOT AVAIL craptdb THEN				                            
-		      FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
-				 			           craptdb.cdbandoc = tt-titulos.cdbandoc AND
-							           craptdb.nrdctabb = tt-titulos.nrdctabb AND
-							           craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
-							           craptdb.nrdconta = par_nrdconta        AND
-							           craptdb.nrdocmto = tt-titulos.nrdocmto AND
-							           craptdb.insittit = 2
-							           NO-LOCK NO-ERROR.
+       /* Se este titulo ja esta em um bordero e ele estiver pago, 
+        a ser pago(liberado no bordero ou nao) */ 
+       FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
+                      craptdb.cdbandoc = tt-titulos.cdbandoc AND
+                      craptdb.nrdctabb = tt-titulos.nrdctabb AND
+                      craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
+                      craptdb.nrdconta = par_nrdconta        AND
+                      craptdb.nrdocmto = tt-titulos.nrdocmto AND
+                      craptdb.insittit = 0
+                      NO-LOCK NO-ERROR.
+      
+       IF NOT AVAIL craptdb THEN                                    
+          FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
+                         craptdb.cdbandoc = tt-titulos.cdbandoc AND
+                         craptdb.nrdctabb = tt-titulos.nrdctabb AND
+                         craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
+                         craptdb.nrdconta = par_nrdconta        AND
+                         craptdb.nrdocmto = tt-titulos.nrdocmto AND
+                         craptdb.insittit = 2
+                         NO-LOCK NO-ERROR.
 
            IF NOT AVAIL craptdb THEN
-		      FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
-				  			           craptdb.cdbandoc = tt-titulos.cdbandoc AND
-							           craptdb.nrdctabb = tt-titulos.nrdctabb AND
-							           craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
-							           craptdb.nrdconta = par_nrdconta        AND
-							           craptdb.nrdocmto = tt-titulos.nrdocmto AND
-							           craptdb.insittit = 4
-							           NO-LOCK NO-ERROR.
+          FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
+                           craptdb.cdbandoc = tt-titulos.cdbandoc AND
+                         craptdb.nrdctabb = tt-titulos.nrdctabb AND
+                         craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
+                         craptdb.nrdconta = par_nrdconta        AND
+                         craptdb.nrdocmto = tt-titulos.nrdocmto AND
+                         craptdb.insittit = 4
+                         NO-LOCK NO-ERROR.
 
           IF AVAIL craptdb THEN
-		     DO:
-			    ASSIGN aux_contador = aux_contador + 1
-			           aux_dscritic = "Titulo " + string(craptdb.nrdocmto) + " ja incluso no bordero " + 
-					  			      string(craptdb.nrborder) + "."
-					   aux_flgtrans = FALSE.
+         DO:
+          ASSIGN aux_contador = aux_contador + 1
+                 aux_dscritic = "Titulo " + string(craptdb.nrdocmto) + " ja incluso no bordero " + 
+                        string(craptdb.nrborder) + "."
+             aux_flgtrans = FALSE.
 
-			    RUN gera_erro (INPUT par_cdcooper,
-							   INPUT par_cdagenci,
-							   INPUT par_nrdcaixa,
-							   INPUT aux_contador,      /** Sequencia **/
-							   INPUT aux_cdcritic,
-							   INPUT-OUTPUT aux_dscritic). 
+          RUN gera_erro (INPUT par_cdcooper,
+                 INPUT par_cdagenci,
+                 INPUT par_nrdcaixa,
+                 INPUT aux_contador,      /** Sequencia **/
+                 INPUT aux_cdcritic,
+                 INPUT-OUTPUT aux_dscritic). 
 
     END.
 
-		END. /* Final do FOR EACH */
+    END. /* Final do FOR EACH */
 
-	  END.
+    END.
     
-	IF aux_flgtrans = FALSE THEN
-	   RETURN "NOK".
+  IF aux_flgtrans = FALSE THEN
+     RETURN "NOK".
 
     RETURN "OK".
 END PROCEDURE.
 
 /* .......................................................................... */
-
-
-
