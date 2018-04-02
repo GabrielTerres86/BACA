@@ -33,6 +33,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --
   --    13/03/2018 - Inclusão da Procedure "pc_efetua_analise_pagador", referente à rotina (JOB)
   --                 de validação diária dos Pagadores (Borderô). (Gustavo Sene - GFT)
+  --
+  --    02/04/2018 - Exposição da procedure 'pc_busca_titulos_bordero' na interface da package
   --------------------------------------------------------------------------------------------------------------
 
   -- Registro para armazenar parametros para desconto de titulo
@@ -493,6 +495,17 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                         ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
                                         ,pr_dscritic          OUT VARCHAR2             --> Descrição da crítica
                                         );
+
+  --> Buscar titulos de um determinado bordero a partir da craptdb
+  PROCEDURE pc_busca_titulos_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                                     ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                     --------> OUT <--------
+                                     ,pr_tab_tit_bordero        OUT typ_tab_tit_bordero --> retorna titulos do bordero
+                                     ,pr_tab_tit_bordero_restri OUT typ_tab_bordero_restri --> retorna restrições do titulos do bordero
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2);          --> Descrição da crítica
+                                      
 
 
 END  DSCT0002;
