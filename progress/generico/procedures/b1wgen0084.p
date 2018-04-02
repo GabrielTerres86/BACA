@@ -27,7 +27,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 26/03/2018
+    Data    : Fevereiro/2011               ultima Atualizacao: 02/04/2018
 
     Dados referentes ao programa:
 
@@ -290,6 +290,8 @@
               29/12/2017 - Ajuste para desfazer prejuizo retirar agencia do loop. (Oscar)
                            
               26/03/2018 - Corrigir os erros do IOF. (James)
+
+			  02/04/2018 - Corrigir para não apresentar no extrato de empréstimo histórico do IOF zerado. (James)
                            
 ............................................................................. */
 
