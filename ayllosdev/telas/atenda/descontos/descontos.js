@@ -37,6 +37,8 @@
 
              28/03/2018 - Formatação dos layouts dos formulários de Contratos e Propostas. (Andre Avila - GFT)
 			 
+			 02/04/2018 - Formatação da tela para listar borderôs. (Leonardo Oliveira - GFT)	
+
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -899,7 +901,6 @@ function formataLayout(nomeForm){
 			return false;			
 		});
 
-
 	}else if ( nomeForm == 'divRestricoes' ){
 	
 		$('#'+nomeForm).css('width','690px');
@@ -1089,8 +1090,8 @@ function formataLayout(nomeForm){
 			// Se é a tecla TAB ou ENTER, 
 			if (e.keyCode == 9 || e.keyCode == 13 ) {
 				cDtdcaptu.focus();
-	return false;
-}
+				return false;
+		}
 		});
 		cDtdcaptu.unbind('keydown').bind('keydown', function(e) {
 			// Se é a tecla TAB ou ENTER, 
@@ -1343,6 +1344,51 @@ function formataLayout(nomeForm){
 
 		tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		ajustarCentralizacao();			
+	
+	}else if ( nomeForm == 'divTitulosBorderos' ){
+
+		$('#'+nomeForm).css('width','950px');
+
+		var divcr = $('#divcr','#'+nomeForm);		
+		var tabela      = $('table', divcr );
+
+		divcr.css('height','235px');
+
+		var ordemInicial = new Array();
+				
+
+		var arrayLargura = new Array();
+		arrayLargura[0] = '60px';//Vencto
+		arrayLargura[1] = '150px';//130 Nosso Número
+		arrayLargura[2] = '80px';//Valor
+		arrayLargura[3] = '80px';//Valor Líquido
+		arrayLargura[4] = '30px';//Prz
+		arrayLargura[5] = '250px';//Pagador
+		arrayLargura[6] = '110px';// CPF/CNPJ
+		arrayLargura[7] = '80px';//130 //Situação 50 30
+		arrayLargura[8] = '80px';//Saldo Devedor
+				
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'center';// Vencto
+		arrayAlinha[1] = 'center';//Nosso número
+		arrayAlinha[2] = 'right';//Valor
+		arrayAlinha[3] = 'right';//Valor Lóquido
+		arrayAlinha[4] = 'right';//Prz
+		arrayAlinha[5] = 'left';//Pagador
+		arrayAlinha[6] = 'right';// CPF/CNPJ
+		arrayAlinha[7] = 'center';//Situação
+		arrayAlinha[8] = 'right';//Saldo Devedor
+						
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+		
+		ajustarCentralizacao();
+	
 	}else if ( nomeForm == 'divResumoBordero' ){
 	
 		$('#'+nomeForm).css('width','940px');
