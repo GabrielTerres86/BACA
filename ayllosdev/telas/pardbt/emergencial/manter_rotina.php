@@ -1,0 +1,117 @@
+<?php
+
+	/*************************************************************************
+	  Fonte: manter_rotina.php                                               
+	  Autor: Reginaldo (AMcom)                                                  
+	  Data : Março/2018                      Última Alteração: 		   
+	                                                                   
+	  Objetivo  : Executar ações da tela de parametrização do DEBITADOR 
+                  ÚNICO    
+	                                                                 
+	  Alterações:                                                     
+	***********************************************************************/
+
+	session_start();	
+	
+	// Includes para controle da session, variрveis globais de controle, e biblioteca de funушes	
+	require_once("../../../includes/config.php");
+	require_once("../../../includes/funcoes.php");	
+	require_once("../../../includes/controla_secao.php");
+	// Classe para leitura do xml de retorno
+	require_once("../../../class/xmlfile.php");
+
+	// Verifica se tela foi chamada pelo mжtodo POST
+	isPostMethod();	
+
+    $processos = $_POST['processos'];
+    $operacao = $_POST['operacao'];
+
+	if ($operacao == 'EXECUTAR_EMERGENCIAL') {
+		if (empty($processos)) {
+			exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()', false);
+		}
+
+		$xml = "<Root>";
+		$xml .= "  <Dados>";			
+		$xml .= "    <processos>" . $processos . "</processos>";
+		$xml .= "  </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "DEBITADOR_UNICO", "DEBITADOR_EM_EXECUTAR", 
+								$glbvars["cdcooper"], 
+								$glbvars["cdagenci"], 
+								$glbvars["nrdcaixa"], 
+								$glbvars["idorigem"], 
+								$glbvars["cdoperad"], 
+								"</Root>");
+
+		$xmlObject = getObjectXML($xmlResult);
+	
+		// Se ocorrer um erro, mostra mensagem
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {	
+			$msgErro  = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;			
+			exibirErro('error', utf8_encode($msgErro), 'Alerta - Ayllos', '', false);
+		}
+
+        exibirErro('inform', 'Execu&ccedil;&atilde;o emergencial processada.', 'Alerta - Ayllos','estadoInicialCab();', false);
+	}
+	elseif ($operacao == 'ALTERAR_HORARIO') {
+		if (empty($dhprocessamento) || empty($idhora_processamento)) {
+			exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '', false);
+		}
+
+		$xml = "<Root>";
+		$xml .= "  <Dados>";
+        $xml .= "    <idhora_processamento>" . $idhora_processamento . "</idhora_processamento>";			
+		$xml .= "    <dhprocessamento>" . $dhprocessamento . "</dhprocessamento>";
+		$xml .= "  </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "DEBITADOR_UNICO", "DEBITADOR_HR_ALTERAR", 
+								$glbvars["cdcooper"], 
+								$glbvars["cdagenci"], 
+								$glbvars["nrdcaixa"], 
+								$glbvars["idorigem"], 
+								$glbvars["cdoperad"], 
+								"</Root>");
+
+		$xmlObject = getObjectXML($xmlResult);
+	
+		// Se ocorrer um erro, mostra mensagem
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {	
+			$msgErro  = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;			
+			exibirErro('error', utf8_encode($msgErro), 'Alerta - Ayllos', '', false);
+		}
+
+        exibirErro('inform', 'Hor&aacute;rio alterado.', 'Alerta - Ayllos','trocaBotao(\'\'); carregaDetalhamentoHorarios();', false);
+	}
+    elseif ($operacao == 'EXCLUIR_HORARIO') {
+		if (empty($idhora_processamento)) {
+			exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '', false);
+		}
+
+		$xml = "<Root>";
+		$xml .= "  <Dados>";
+        $xml .= "    <idhora_processamento>" . $idhora_processamento . "</idhora_processamento>";			
+		$xml .= "  </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "DEBITADOR_UNICO", "DEBITADOR_HR_EXCLUIR", 
+								$glbvars["cdcooper"], 
+								$glbvars["cdagenci"], 
+								$glbvars["nrdcaixa"], 
+								$glbvars["idorigem"], 
+								$glbvars["cdoperad"], 
+								"</Root>");
+
+		$xmlObject = getObjectXML($xmlResult);
+	
+		// Se ocorrer um erro, mostra mensagem
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {	
+			$msgErro  = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;			
+			exibirErro('error', utf8_encode($msgErro), 'Alerta - Ayllos', '', false);
+		}
+
+        exibirErro('inform', 'Hor&aacute;rio exclu&iacute;do.', 'Alerta - Ayllos','carregaDetalhamentoHorarios();', false);
+	}
+	
