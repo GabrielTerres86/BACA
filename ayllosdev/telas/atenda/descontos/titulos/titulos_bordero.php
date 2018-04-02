@@ -91,7 +91,7 @@
 	
 ?>
 
-<div id="divBorderos">
+<div id="divBorderosTitulos">
 	<div class="divRegistros">
 		<table>
 			<thead>
@@ -178,7 +178,7 @@ dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 // Muda o título da tela
 $("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - BORDER&Ocirc;S");
 
-formataLayout('divBorderos');
+formataLayout('divBorderosTitulos');
 
 // Esconde mensagem de aguardo
 hideMsgAguardo();
