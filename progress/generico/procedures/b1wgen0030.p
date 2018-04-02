@@ -3927,7 +3927,7 @@ PROCEDURE busca_dados_proposta:
     IF  NOT AVAILABLE crawlim   THEN 
         DO:
             ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Registro de proposta nao encontrado.".
+                   aux_dscritic = "Registro de proposta não encontrado.".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -3961,7 +3961,7 @@ PROCEDURE busca_dados_proposta:
             IF  ((crawlim.insitlim = 2) or (crawlim.insitlim = 3))   THEN
                 DO:
                     ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Nao e permitido alterar uma proposta com a situacao EFETIVADA ou CANCELADA".
+                           aux_dscritic = "Não é permitido alterar uma proposta com a situação EFETIVADA ou CANCELADA".
                           
                     RUN gera_erro (INPUT par_cdcooper,
                                    INPUT par_cdagenci,
@@ -4002,7 +4002,7 @@ PROCEDURE busca_dados_proposta:
         DO:
             ASSIGN aux_cdcritic = 0.
                    aux_dscritic = "Regisro de proposta de desconto de titulo" +
-                                  " nao encontrada.".
+                                  " não encontrada.".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -4023,7 +4023,7 @@ PROCEDURE busca_dados_proposta:
         DO:
             ASSIGN aux_cdcritic = 0.
                    aux_dscritic = "Regisro de linha " +
-                                  "de desconto nao encontrada.".
+                                  "de desconto não encontrada.".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -17803,6 +17803,3 @@ PROCEDURE valida_titulos_bordero:
 END PROCEDURE.
 
 /* .......................................................................... */
-
-
-
