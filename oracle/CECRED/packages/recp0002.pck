@@ -1825,11 +1825,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     BEGIN
       -- Desmarcar o contrato como CIN
       UPDATE crapcyc
-         SET crapcyc.flgehvip = 0,
-             cdmotcin = CASE cdmotcin
-                        WHEN 2 THEN 2
-                        WHEN 7 THEN 7
-                        ELSE 0 END,
+         SET flgehvip = decode(cdmotcin,2,flgehvip,7,flgehvip,flvipant),
+             cdmotcin = decode(cdmotcin,2,cdmotcin,7,cdmotcin,cdmotant),
              crapcyc.dtaltera = rw_crapdat.dtmvtolt,
 			 crapcyc.cdoperad = 'cyber'
          WHERE EXISTS(SELECT 1
