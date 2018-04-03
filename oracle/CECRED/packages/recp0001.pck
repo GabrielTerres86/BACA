@@ -3096,7 +3096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
          END IF;
       ELSE
         pr_cdcritic := 0;
-        pr_dscritic := 'Acordo nao esta Ativo. Motivo CIN sera alterado para: '||rw_crapcyc.cdmotcin;               
+        pr_dscritic := 'Sera mantido motivo salvo antes da Determinacao Judicial. Motivo CIN sera alterado para: '||rw_crapcyc.cdmotcin;
       END IF;
     ELSIF  rw_crapcyc.flgehvip = 0 THEN 
       IF vr_cdsituacao = 1 THEN
