@@ -272,7 +272,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  16/05/2017 - Acionamento da criação do Risco para Cartões Credito BB (Andrei-Mouts)
 
-                 13/03/2018 - Inclusão de controle de paralelismo por Agencia (PA) quando solicitado.
+                 03/04/2018 - Inclusão de controle de paralelismo por Agencia (PA) quando solicitado.
                             - Visando performance, Roda somente no processo Noturno (Mario-AMcom)
                  - Funcinalidade:
                    - 1. Sem paralelismo: - a quantidade de JOBS para a cdcooper deve ser 0;
@@ -934,6 +934,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_qtdjobs       number;
       -- Quantidade de PA's com erro
       vr_tot_paerr     number;
+      vr_qterro        number;
       -- Job name dos processos criados
       --vr_jobname       varchar2(30);
 
@@ -947,13 +948,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       -- Agências por cooperativa com clientes
       cursor cr_crapass_age (pr_cdcooper in crapass.cdcooper%type,
                              pr_dtmvtolt in crapdat.dtmvtolt%type,
+                             pr_qterro   in number,
                              pr_cdprogra in tbgen_batch_controle.cdprogra%type) is
         SELECT distinct cdagenci
         FROM crapass crapass
         WHERE crapass.cdcooper = pr_cdcooper
         --
-        and (pr_flgresta = 0 or      -- Processamento Normal
-            (pr_flgresta = 1         -- Reprocessamento
+        and (pr_qterro  = 0 or      -- Processamento Normal
+            (pr_qterro >= 1         -- Reprocessamento
                           and exists (select 1
                                         from tbgen_batch_controle
                                        where tbgen_batch_controle.cdcooper    = pr_cdcooper
@@ -2875,13 +2877,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       -- Controla Controla log
       PROCEDURE pc_controla_log_batch(pr_idtiplog     IN NUMBER       -- Tipo de Log
                                      ,pr_dscritic     IN VARCHAR2) IS -- Descrição do Log
-        vr_dstiplog VARCHAR2 (10);
+        vr_dstiplog VARCHAR2 (15);
       BEGIN
         -- Descrição do tipo de log
         IF pr_idtiplog = 2 THEN
           vr_dstiplog := 'ERRO: ';
         ELSE
-          vr_dstiplog := 'ALERTA: ';
+          vr_dstiplog := 'PROCESSANDO: ';
         END IF;
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
@@ -3483,8 +3485,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       --Executar Calculo Contas Associados  ***************
       PROCEDURE pc_atribui_risco_associado (pr_des_erro  OUT VARCHAR2) IS
       
-      BEGIN
-      
+      BEGIN      
       -- Busca dos associados unindo com seu saldo na conta
       FOR rw_crapass IN cr_crapass LOOP
         BEGIN
@@ -5202,10 +5203,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
         --Gerar o ID para o paralelismo
         vr_idparale := gene0001.fn_gera_ID_paralelo;
+        
+       -- Verifica se algum job paralelo executou com erro
+        vr_qterro := 0;
+        vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                      pr_cdprogra    => pr_cdprogra,
+                                                      pr_dtmvtolt    => pr_rw_crapdat.dtmvtolt,
+                                                      pr_tpagrupador => 1,
+                                                      pr_nrexecucao  => 1);          
                                                   
         -- Retorna as agências, com poupança programada
         for rw_crapass_age in cr_crapass_age (pr_cdcooper
                                              ,pr_rw_crapdat.dtmvtolt
+                                             ,vr_qterro
                                              ,pr_cdprogra) loop
                                           
           -- Montar o prefixo do código do programa para o jobname
@@ -5441,7 +5451,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                 ,pr_des_erro  => vr_des_erro);
         END IF;  
 
-pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
+        pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
      
         -- Inicialização do XML para o relatorio 349
         dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
@@ -5488,7 +5498,7 @@ pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
         -- Efetuar Commit de informações pendentes de gravação
         COMMIT;
 
- pc_controla_log_batch(1, '17 Empréstimos acima 60: '||pr_cdagenci);
+        pc_controla_log_batch(1, '17 Empréstimos acima 60: '||pr_cdagenci);
       
         -- Calculo dos juros para empréstimos acima 60 dias
         pc_calcula_juros_emp_60dias(pr_dtrefere => vr_dtrefere
@@ -5498,7 +5508,7 @@ pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
           RAISE vr_exc_erro;
         END IF;
 
- pc_controla_log_batch(1, '18 FIM: '||pr_cdagenci);
+        pc_controla_log_batch(1, '18 FIM: '||pr_cdagenci);
 
         -- Efetuar Commit de informações pendentes de gravação
         COMMIT;
@@ -5549,9 +5559,48 @@ pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
         pr_dscritic := 'Erro na rotina PC_CRPS310_I. Detalhes: '||vr_des_erro;
 
       WHEN OTHERS THEN
+
+        -- Retornar o erro não tratado
+        pc_controla_log_batch(1, 'Erro não tratado: '||pr_cdagenci||' - '||sqlerrm);
+        
+        -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
+        if pr_rw_crapdat.inproces > 2
+        and pr_cdagenci > 0
+        and vr_qtdjobs  > 0  then    
+          -- Processo JOB           
+
+          rollback;
+
+          pc_controla_log_batch(1, 'Erro: '||pr_cdagenci||' - '||vr_des_erro);
+
+          -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+          pc_log_programa(PR_DSTIPLOG           => 'E',
+                          PR_CDPROGRAMA         => pr_cdprogra||'_'||pr_cdagenci,
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => 2,  -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_tpocorrencia       => 2,
+                          pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                   'pr_dscritic:'||pr_dscritic,
+                          PR_IDPRGLOG           => vr_idlog_ini_par);  
+  
+          --Grava data fim para o JOB na tabela de LOG 
+          pc_log_programa(pr_dstiplog   => 'F',    
+                          pr_cdprograma => pr_cdprogra||'_'||pr_cdagenci,           
+                          pr_cdcooper   => pr_cdcooper, 
+                          pr_tpexecucao => 2,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_idprglog   => vr_idlog_ini_par,
+                          pr_flgsucesso => 0);  
+  
+          -- Encerrar o job do processamento paralelo dessa agência
+          gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                      ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                      ,pr_des_erro => pr_dscritic);  
+        END IF;
+    
         -- Retornar o erro não tratado
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro não tratado na rotina PC_CRPS310_I. Detalhes: '||sqlerrm;
+        pr_dscritic := 'Erro não tratado na rotina PC_CRPS310_I. Detalhes: '||sqlerrm;      
+        
     END;
   END PC_CRPS310_I;
 /
