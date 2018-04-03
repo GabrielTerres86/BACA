@@ -139,7 +139,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
 								Vlmxassi    NUMBER,   -- Valor Máximo Dispensa Assinatura
 								Vlmxassi_c  NUMBER    -- Valor Máximo Dispensa Assinatura
 								);
-
+                  
   TYPE typ_tab_lim_desconto IS TABLE OF typ_rec_lim_desconto
        INDEX BY PLS_INTEGER;
 			 
@@ -725,7 +725,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
                                ,pr_cdcritic => vr_cdcritic    --> Código da crítica
                                ,pr_dscritic => vr_dscritic);  --> Descrição da crítica                
-
+    
     -- Se retornou alguma crítica
     IF TRIM(vr_dscritic) IS NOT NULL OR 
       nvl(vr_cdcritic,0) > 0 THEN
@@ -1316,7 +1316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		vr_inpessoa        NUMBER;
     vr_dtjurtab        DATE;
     vr_vlliquid        NUMBER;
-    
+
   BEGIN
     -- Limpa a PLTABLE
     pr_tab_chq_bordero.DELETE;
@@ -1378,12 +1378,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
               vr_rel_nmcheque := rw_crapjur.nmtalttl;
               vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc =>rw_crapass_2.nrcpfcgc,
                                                            pr_inpessoa => 2);
-      ELSE
+            ELSE
               vr_rel_dscpfcgc := 'NAO CADASTRADO';
               vr_rel_nmcheque := 'NAO CADASTRADO';
             END IF;
           END IF;
-      END IF;
+        END IF;
       ELSE
         -- Buscar cadastro de emitentes de cheques
         OPEN cr_crapcec(pr_cdcooper => pr_cdcooper,
@@ -1463,7 +1463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                    ,pr_vlliquid => vr_vlliquid         --> Retorna valor liquidacao do cheque													 
                                    ,pr_cdcritic => vr_cdcritic         --> Cód. da crítica
                                    ,pr_dscritic => vr_dscritic);       --> Descrição da crítica
-
+         
         IF nvl(vr_cdcritic,0) > 0 OR
            TRIM(vr_dscritic) IS NOT NULL THEN 
           RAISE vr_exc_erro; 
@@ -1890,7 +1890,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          AND crapbdc.nrborder = pr_nrborder;
          
     rw_crapbdc cr_crapbdc%ROWTYPE;
-
+    
     -- Linha de Desconto
     CURSOR cr_crapldc (pr_cddlinha IN crapldc.cddlinha%TYPE) IS
       SELECT cddlinha
@@ -2370,6 +2370,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
 
           
+          TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 3                              --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
+                                       ,pr_tpoperacao => 1                                  --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso)
+                                       ,pr_cdcooper   => pr_cdcooper                        --> Código da cooperativa
+                                       ,pr_nrdconta   => pr_nrdconta                        --> Número da conta
+                                       ,pr_inpessoa   => rw_craplim.inpessoa                --> Tipo de Pessoa
+                                       ,pr_natjurid   => vr_natjurid                        --> Natureza Juridica
+                                       ,pr_tpregtrb   => vr_tpregtrb                        --> Tipo de Regime Tributario
+                                       ,pr_dtmvtolt   => pr_dtmvtolt                        --> Data do movimento para busca na tabela de IOF
+                                       ,pr_qtdiaiof   => vr_qtdiaiof                        --> Qde dias em atraso (cálculo IOF atraso)
+                                       ,pr_vloperacao => vr_tab_chq_bordero(idx).vlliquid   --> Valor total da operação (pode ser negativo também)
+                                       ,pr_vltotalope => vr_vltotoperacao      --> Valor total da operação (total do borderô)
+                                       ,pr_vliofpri   => vr_vliofpri                        --> Retorno do valor do IOF principal
+                                       ,pr_vliofadi   => vr_vliofadi                        --> Retorno do valor do IOF adicional
+                                       ,pr_vliofcpl   => vr_vliofcpl                        --> Retorno do valor do IOF complementar
+                                       ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
+                                       ,pr_dscritic   => vr_dscritic
+                                       ,pr_flgimune   => vr_flgimune);                                   
+        IF vr_flgimune <= 0 THEN
+      vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+        END IF;
         -- Seta os totais
         vr_qttotchq := NVL(vr_qttotchq,0) + 1;
         vr_vltotchq := NVL(vr_vltotchq,0) + vr_tab_chq_bordero(idx).vlcheque;
@@ -2409,10 +2429,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                     -- Se NAO existir na PLTABLE
                     IF NOT vr_tab_restri_apr_coo.EXISTS(vr_tab_bordero_restri(idx2).dsrestri) THEN
                       vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
+                    END IF;
+                  END IF;
                 END IF;
-            END IF;
-        END IF;
-      END LOOP;
+              END LOOP;
             END IF;
           END IF;
           pc_escreve_xml(        '</restricoes>');
@@ -7338,7 +7358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                              
                 26/07/2017 - Criada verificação de cheques com data de liberacao fora do limite.
                              PRJ300-Desconto de cheque(Lombardi) 
-                             
+
                 27/07/2017 - Ajuste para verificar custódia também para cheques que não são 
                              da cooperativa. PRJ300-Desconto de cheque(Lombardi)
 
@@ -7363,10 +7383,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_nrdocmto         NUMBER;
   vr_vlborder         NUMBER;
 	vr_nrseqdig         NUMBER;
-  vr_dtiniiof         DATE;
-	vr_dtfimiof         DATE;
-  vr_txccdiof         NUMBER;
-	vr_flgimune         BOOLEAN;
+  --vr_dtiniiof         DATE;
+	--vr_dtfimiof         DATE;
+  --vr_txccdiof         NUMBER;
+	vr_flgimune         PLS_INTEGER;
 	vr_dsreturn         VARCHAR2(10);
   vr_tab_erro         gene0001.typ_tab_erro;
 	vr_cdpactra         NUMBER;
@@ -7724,7 +7744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       vr_dscritic := 'Registro de parametros de desconto de cheques nao encontrado.';
       RAISE vr_exc_erro;    
     END IF;
-    
+
     -- Percorrer todos os cheques do bordero
     vr_vltotoperacao := 0;
     FOR rw_crapcdb IN cr_crapcdb(pr_cdcooper => pr_cdcooper
@@ -7821,8 +7841,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						
 		-- Iterar sobre os cheques aprovados						
 		FOR vr_idx_cheque IN vr_tab_cheques.first..vr_tab_cheques.last LOOP
-			
-  
+      --Valor total da operação do borderô (usado para cálculo do IOF)
+      vr_vltotoperacao := NVL(vr_vltotoperacao,0) + NVL(vr_tab_cheques(vr_idx_cheque).vlliquid,0);      
+    END LOOP;
+    OPEN cr_crapjur(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapjur INTO rw_crapjur;
+    IF cr_crapjur%FOUND THEN
+       vr_natjurid := rw_crapjur.natjurid;
+       vr_tpregtrb := rw_crapjur.tpregtrb;
+		END IF;
+    CLOSE cr_crapjur;
+		-- Iterar sobre os cheques aprovados						
+		FOR vr_idx_cheque IN vr_tab_cheques.first..vr_tab_cheques.last LOOP
+    -- Novo IOF
+      vr_qtdiaiof := vr_tab_cheques(vr_idx_cheque).dtlibera - rw_crapdat.dtmvtolt;
+      TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 3                     --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
+                                   ,pr_tpoperacao => 1                     --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso)
+                                   ,pr_cdcooper   => pr_cdcooper           --> Código da cooperativa
+                                   ,pr_nrdconta   => pr_nrdconta           --> Número da conta
+                                   ,pr_inpessoa   => rw_crapass.inpessoa   --> Tipo de Pessoa
+                                   ,pr_natjurid   => vr_natjurid           --> Natureza Juridica
+                                   ,pr_tpregtrb   => vr_tpregtrb           --> Tipo de Regime Tributario
+                                   ,pr_dtmvtolt   => rw_crapdat.dtmvtolt   --> Data do movimento para busca na tabela de IOF
+                                   ,pr_qtdiaiof   => vr_qtdiaiof           --> Qde dias em atraso (cálculo IOF atraso)
+                                   ,pr_vloperacao => vr_tab_cheques(vr_idx_cheque).vlliquid --> Valor total da operação (pode ser negativo também)
+                                   ,pr_vltotalope => vr_vltotoperacao      --> Valor total da operação (total do borderô)
+                                   ,pr_vliofpri   => vr_vliofpri           --> Retorno do valor do IOF principal
+                                   ,pr_vliofadi   => vr_vliofadi           --> Retorno do valor do IOF adicional
+                                   ,pr_vliofcpl   => vr_vliofcpl           --> Retorno do valor do IOF complementar
+                                   ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
+                                   ,pr_dscritic   => vr_dscritic
+                                   ,pr_flgimune   => vr_flgimune);                                   
+      
+      vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+      --Soma os totais de IOF para lançamento na tabela de IOF
+      vr_vltotiofpri := NVL(vr_vltotiofpri,0) + NVL(vr_vliofpri,0);
+      vr_vltotiofadi := NVL(vr_vltotiofadi,0) + NVL(vr_vliofadi,0);
+      vr_vltotiofcpl := NVL(vr_vltotiofcpl,0) + NVL(vr_vliofcpl,0);
 			-- Buscar custódia
 			OPEN cr_crapcst(pr_cdcooper => pr_cdcooper
 			               ,pr_nrdconta => pr_nrdconta
@@ -7937,6 +7993,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						-- Levantar exceção
 						RAISE vr_exc_erro;
 				END;
+        BEGIN
+            TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper              --> Codigo da Cooperativa 
+                                  ,pr_nrdconta      => pr_nrdconta          --> Numero da Conta Corrente
+                                  ,pr_dtmvtolt      => rw_crapdat.dtmvtolt  --> Data de Movimento
+                                  ,pr_tpproduto     => 3                    --> Tipo de Produto
+                                  ,pr_nrcontrato    => pr_nrborder          --> Numero do Contrato
+                                  ,pr_idlautom      => vr_idlancto          --> Chave: Id dos Lancamentos Futuros
+                                  ,pr_dtmvtolt_lcm  => NULL                 --> Chave: Data de Movimento Lancamento
+                                  ,pr_cdagenci_lcm  => NULL                 --> Chave: Agencia do Lancamento
+                                  ,pr_cdbccxlt_lcm  => NULL                 --> Chave: Caixa do Lancamento
+                                  ,pr_nrdolote_lcm  => NULL                 --> Chave: Lote do Lancamento
+                                  ,pr_nrseqdig_lcm  => NULL                 --> Chave: Sequencia do Lancamento
+                                  ,pr_vliofpri      => vr_vltotiofpri       --> Valor do IOF Principal
+                                  ,pr_vliofadi      => vr_vltotiofadi       --> Valor do IOF Adicional
+                                  ,pr_vliofcpl      => vr_vltotiofcpl       --> Valor do IOF Complementar
+                                  ,pr_cdcritic      => vr_cdcritic          --> Código da Crítica
+                                  ,pr_dscritic      => vr_dscritic
+                                  ,pr_flgimune      => vr_flgimune);
+        EXCEPTION
+					WHEN OTHERS THEN      
+						-- Gerar crítica
+						vr_cdcritic := 0;
+						vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
+						-- Levantar exceção
+						RAISE vr_exc_erro;
+				END;
 				
 				BEGIN
 					-- Atualizar lançamento automático de custodia
@@ -7988,16 +8070,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       
 
              
-      IF rw_crapass.inpessoa = 1 THEN
-         -- IOF Operacacao PF
-         vr_periofop := vr_qtdiaiof * 0.0082;
-      ELSE
-         -- IOF Operacacao PJ
-         vr_periofop := vr_qtdiaiof * 0.0041;
-      END IF;   
 
 
-      
+             
 
 
       
@@ -8186,40 +8261,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			END;
 		END IF;
 		
-		-- Busca taxa de IOF
-		GENE0005.pc_busca_iof(pr_cdcooper => pr_cdcooper
-		                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-												 ,pr_dtiniiof => vr_dtiniiof
-												 ,pr_dtfimiof => vr_dtfimiof
-												 ,pr_txccdiof => vr_txccdiof
-												 ,pr_cdcritic => vr_cdcritic
-												 ,pr_dscritic => vr_dscritic);
+
 												 
-		-- Se retornou alguma crítica ao buscar IOF
-		IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-			RAISE vr_exc_erro;
-		END IF;
-    -- Verificar se possui imunidade tributária		
-		IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
-		                                   ,pr_nrdconta => pr_nrdconta
-																			 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-																			 ,pr_flgrvvlr => TRUE
-																			 ,pr_cdinsenc => 3
-																			 ,pr_vlinsenc => ROUND((vr_vlborder * vr_txccdiof), 2)
-																			 ,pr_flgimune => vr_flgimune
-																			 ,pr_dsreturn => vr_dsreturn
-																			 ,pr_tab_erro => vr_tab_erro);
-		-- Se retornou algum erro
-    IF vr_tab_erro.count > 0 AND vr_dsreturn = 'NOK' THEN
-			-- Atribuir críticas
-			vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
-			vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;			
-			-- Levantar exceção
-			RAISE vr_exc_erro;
-		END IF;
+												 
 		
 		-- Se for imune de tributação
-		IF vr_flgimune = FALSE THEN
+		IF vr_vltotiof > 0 THEN
+
+       --Se for imune, somente efetua o lancamento na tabela de IOF
+       IF vr_flgimune > 0 THEN
+         BEGIN
+            TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper           --> Codigo da Cooperativa 
+                              ,pr_nrdconta      => pr_nrdconta           --> Numero da Conta Corrente
+                              ,pr_dtmvtolt      => rw_crapdat.dtmvtolt   --> Data de Movimento
+                              ,pr_tpproduto     => 3                     --> Tipo de Produto
+                              ,pr_nrcontrato    => pr_nrborder           --> Numero do Contrato
+                              ,pr_idlautom      => NULL                  --> Chave: Id dos Lancamentos Futuros
+                              ,pr_dtmvtolt_lcm  => NULL                  --> Chave: Data de Movimento Lancamento
+                              ,pr_cdagenci_lcm  => NULL                  --> Chave: Agencia do Lancamento
+                              ,pr_cdbccxlt_lcm  => NULL                  --> Chave: Caixa do Lancamento
+                              ,pr_nrdolote_lcm  => NULL                  --> Chave: Lote do Lancamento
+                              ,pr_nrseqdig_lcm  => NULL                  --> Chave: Sequencia do Lancamento
+                              ,pr_vliofpri      => vr_vltotiofpri        --> Valor do IOF Principal
+                              ,pr_vliofadi      => vr_vltotiofadi        --> Valor do IOF Adicional
+                              ,pr_vliofcpl      => vr_vltotiofcpl        --> Valor do IOF Complementar
+                              ,pr_cdcritic      => vr_cdcritic           --> Código da Crítica
+                              ,pr_dscritic      => vr_dscritic
+                              ,pr_flgimune      => vr_flgimune);
+            EXCEPTION
+              WHEN OTHERS THEN      
+                -- Gerar crítica
+                vr_cdcritic := 0;
+                vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
+                -- Levantar exceção
+                RAISE vr_exc_erro;
+          END;
+       ELSE
+          --Lanca na LCM e na tabela de IOF  
 			-- Buscar PA do operador
 			OPEN cr_crapope(pr_cdcooper => pr_cdcooper
 			               ,pr_cdoperad => pr_cdoperad);
@@ -8303,6 +8381,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 													 ,pr_cdcooper)
 					RETURNING vllanmto INTO vr_vllanmto;
 				EXCEPTION
+					WHEN OTHERS THEN      
+						-- Gerar crítica
+						vr_cdcritic := 0;
+						vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
+						-- Levantar exceção
+						RAISE vr_exc_erro;
+			END;			
+      BEGIN
+        TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper           --> Codigo da Cooperativa 
+                          ,pr_nrdconta      => pr_nrdconta           --> Numero da Conta Corrente
+                          ,pr_dtmvtolt      => rw_crapdat.dtmvtolt   --> Data de Movimento
+                          ,pr_tpproduto     => 3                     --> Tipo de Produto
+                          ,pr_nrcontrato    => pr_nrborder           --> Numero do Contrato
+                          ,pr_idlautom      => NULL                  --> Chave: Id dos Lancamentos Futuros
+                          ,pr_dtmvtolt_lcm  => rw_crapdat.dtmvtolt   --> Chave: Data de Movimento Lancamento
+                          ,pr_cdagenci_lcm  => 1                     --> Chave: Agencia do Lancamento
+                          ,pr_cdbccxlt_lcm  => 100                   --> Chave: Caixa do Lancamento
+                          ,pr_nrdolote_lcm  => (19000 + vr_cdpactra) --> Chave: Lote do Lancamento
+                          ,pr_nrseqdig_lcm  => (vr_nrseqdig + 1)    --> Chave: Sequencia do Lancamento
+                          ,pr_vliofpri      => vr_vltotiofpri       --> Valor do IOF Principal
+                          ,pr_vliofadi      => vr_vltotiofadi       --> Valor do IOF Adicional
+                          ,pr_vliofcpl      => vr_vltotiofcpl       --> Valor do IOF Complementar
+                          ,pr_cdcritic      => vr_cdcritic          --> Código da Crítica
+                            ,pr_dscritic      => vr_dscritic
+                            ,pr_flgimune      => vr_flgimune);
+        EXCEPTION
 					WHEN OTHERS THEN      
 						-- Gerar crítica
 						vr_cdcritic := 0;
