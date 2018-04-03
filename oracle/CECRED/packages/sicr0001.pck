@@ -1795,7 +1795,7 @@ create or replace package body cecred.SICR0001 is
                                           pr_cdrefere      => rw_crapatr.cdrefere,
                                           pr_cdhistor      => rw_crapatr.cdhistor,
                                           pr_tpdnotif      => 1 --> Apenas MSG IBank
-                                         ,pr_flfechar_lote => 1 -- Fechar
+                                         ,pr_flfechar_lote => 0 -- Fechar
                                          ,pr_idlote_sms    => vr_nrdolote_sms);
               END IF;
             
@@ -1885,7 +1885,7 @@ create or replace package body cecred.SICR0001 is
                                       ,pr_vlrmaxdb  => rw_crapatr.vlrmaxdb
                                       ,pr_cdrefere  => rw_crapatr.cdrefere
                                       ,pr_cdhistor  => rw_crapatr.cdhistor
-                                      ,pr_flfechar_lote => 1 -- Fechar
+                                      ,pr_flfechar_lote => 0 -- Fechar
                                       ,pr_idlote_sms   => vr_nrdolote_sms);
 
             BEGIN
@@ -2254,6 +2254,12 @@ create or replace package body cecred.SICR0001 is
         END IF;
       
       END LOOP;
+
+	  IF nvl(vr_nrdolote_sms,0) <> 0  THEN
+        ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_nrdolote_sms
+                                    ,pr_dscritic    => vr_dscritic);
+        vr_nrdolote_sms := NULL;
+      END IF;
     
     EXCEPTION
       WHEN vr_exc_saida THEN
