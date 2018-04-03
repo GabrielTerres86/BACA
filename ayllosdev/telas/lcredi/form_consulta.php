@@ -3,7 +3,7 @@
 
   Fonte: form_consulta.php
   Autor: Andrei - RKAM
-  Data : Julho/2016                       Última Alteração: 27/03/2017
+  Data : Julho/2016                       Última Alteração: 10/10/2017
 
   Objetivo  : Mostrar o form com as informaões da linha de crédito.
 
@@ -15,6 +15,9 @@
 
               27/03/2017 - Inclusao dos campos Produto e Indexador. Ajuste na
                            label de Taxa variavel. (Jaison/James - PRJ298)
+
+ 			  10/10/2017 - Inclusao do campos % Mínimo Garantia e adicionado 
+						   opção 4 no campo Modelo. (Lombardi - PRJ404)
 
  * ********************************************************************* */
 
@@ -74,12 +77,16 @@
 			<option value="1" <?php if (getByTagName($linha->tags,'tpctrato') == 1) { ?> selected <?php } ?> >Empr&eacute;stimo</option>
 			<option value="2" <?php if (getByTagName($linha->tags,'tpctrato') == 2) { ?> selected <?php } ?> >Aliena&ccedil;&atilde;o fiduciaria</option>
 			<option value="3" <?php if (getByTagName($linha->tags,'tpctrato') == 3) { ?> selected <?php } ?> >Hipoteca</option>
+			<option value="4" <?php if (getByTagName($linha->tags,'tpctrato') == 4) { ?> selected <?php } ?> >Aplica&ccedil;&atilde;o</option>
 		</select>
 						
 		<br />
 
 		<label for="nrdevias"><? echo utf8ToHtml("Quantidade de vias:"); ?></label>
 		<input  type="text" id="nrdevias" name="nrdevias"value="<?echo getByTagName($linha->tags,'nrdevias'); ?>" > 
+		
+		<label for="permingr"><? echo utf8ToHtml("% M&iacute;nimo Garantia:"); ?></label>
+		<input  type="text" id="permingr" name="permingr"value="<?echo getByTagName($linha->tags,'permingr') ? getByTagName($linha->tags,'permingr') : '0,00'; ?>" > 
 		
 		<br />
 
@@ -98,7 +105,11 @@
 		<br />
 		
 		<label for="cdusolcr"><? echo utf8ToHtml("C&oacute;digo de uso:"); ?></label>
-		<select  id="cdusolcr" name="cdusolcr" val_cdusolcr="<?php echo getByTagName($linha->tags,'cdusolcr'); ?>"></select>
+		<select  id="cdusolcr" name="cdusolcr" value="<?echo getByTagName($linha->tags,'cdusolcr'); ?>">
+			<option value="0" <?php if (getByTagName($linha->tags,'cdusolcr') == 0) { ?> selected <?php } ?> >Normal</option>
+			<option value="1" <?php if (getByTagName($linha->tags,'cdusolcr') == 1) { ?> selected <?php } ?> >Micro Cr&eacute;dito</option>
+			<option value="2" <?php if (getByTagName($linha->tags,'cdusolcr') == 2) { ?> selected <?php } ?> >Epr/Boletos</option>
+		</select>
 
 		<label for="flgtarif"><? echo utf8ToHtml("Tarifa normal:"); ?></label>
 		<select  id="flgtarif" name="flgtarif" value="<?echo getByTagName($linha->tags,'flgtarif'); ?>">

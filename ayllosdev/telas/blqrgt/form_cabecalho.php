@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 28/10/2014 - Alteracao de leitura de produtos de aplicacao (Jean Michel).
 	*				 29/07/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
  *                11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ *				  16/11/2017 - Tela remodelada para o projeto 404 (Lombardi).
  * --------------
  */
 	require_once('../../includes/config.php');
@@ -48,9 +49,8 @@
 			<td> 	
 				<label for="cddopcao"><? echo utf8ToHtml('Opção:') ?></label>
 				<select id="cddopcao" name="cddopcao" style="width: 477px;">
-					<option value="C"> C - Consultar aplica&ccedil;&atilde;o </option> 
-					<option value="B"> B - Bloquear op&ccedil;&atilde;o de resgate de aplicacao </option>
-					<option value="L"> L - Liberar aplica&ccedil;&atilde;o para resgate </option>
+					<option value="C"> C - Consultar Bloqueio Aplica&ccedil;&atilde;o ou Cobertura para Resgate </option> 
+					<option value="L"> L - Liberar Bloqueio Aplica&ccedil;&atilde;o ou Cobertura para resgate </option>
 				</select>
 				
 				<a href="#" class="botao" id="btnOK" name="btnOK" onClick="LiberaCampos(); return false;" style = "text-align:right;">OK</a>
@@ -63,29 +63,7 @@
 				<input type="text" id="nrdconta" name="nrdconta" value="<? echo $nrdconta == 0 ? '' : $nrdconta ?>" alt="Informe o numero da conta do cooperado." />
 				<a style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisaConta();return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
 				<input name="nmprimtl" id="nmprimtl" type="text" />				
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<label for="tpaplica">Tp.Apl.:</label>
-				<select id="tpaplica" name="tpaplica" style="width: 79px;">
-					<?php 
-						foreach($nmaplicas as $nmaplica){
-				
-							$cdprodut = $nmaplica->tags[0]->cdata;
-							$nmprodut = $nmaplica->tags[1]->cdata;
-							$tpprodut = $nmaplica->tags[2]->cdata;
-						
-					?>
-						<option value="<?php echo $cdprodut.",".$tpprodut.",".$nmprodut; ?>"><?php echo $nmprodut; ?></option>
-					<?php 
-						}
-					?>			
-				</select>
-				
-				<label for="nraplica">Nr.Apl.:</label>
-				<input type="text" id="nraplica" name="nraplica" />
-				<a style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisaNrApl();return false;"><img id="NrAplic" name = "NrAplic" src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
+				<a href="#" class="botao" id="btSalvar"  onClick="btnContinuar(); return false;">Continuar</a>
 			</td>
 		</tr>
 	</table>

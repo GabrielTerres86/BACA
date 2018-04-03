@@ -1,18 +1,20 @@
-CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
+CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 04/05/2017
+      Data     : Maio/2017.                   Ultima atualizacao: 23/11/2017
 
       Dados referentes ao programa:
 
       Frequencia: -----
       Objetivo  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN - Motor de Credito
 
-      Alteracoes: 12/12/2017 - Projeto 410 - inclusão do IOF sobre atraso - (JEan - MOut´S)
+      Alteracoes: 23/11/2017 - Alterações para o projeto 404. (Lombardi)
+                  
+                  12/12/2017 - Projeto 410 - inclusão do IOF sobre atraso - (JEan - MOut´S)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1006,7 +1008,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_qtdiaat2 INTEGER := 0;
       vr_idcarga  tbepr_carga_pre_aprv.idcarga%TYPE;
       vr_maior_nratrmai NUMBER(25,10);
-      
+      vr_vlblqapl NUMBER(18,2);
+      vr_vlblqpou NUMBER(18,2);
+      vr_vlbloque NUMBER(18,2);
+      vr_vlresblq NUMBER(18,2);
+      vr_vlsldppr_aux NUMBER(18,2);
+      vr_vlsldapl_aux NUMBER(18,2);
+      vr_vlbloque_pp crapblj.vlbloque%TYPE;
       --vr_vet_nrctrliq            RATI0001.typ_vet_nrctrliq := RATI0001.typ_vet_nrctrliq(0,0,0,0,0,0,0,0,0,0);
       			
 			--PlTables auxiliares
@@ -1547,25 +1555,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
            AND segnov.nrdconta = pr_nrdconta
            AND segnov.indsituacao in('A','R','E')
            AND segnov.nrapolice > 0;
-    
-      -- Verificar se há bloqueio de aplicações na conta
-      CURSOR cr_crapblj IS
-        SELECT SUM(vlbloque)
-          FROM crapblj
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta
-           AND cdmodali = 2
-           AND dtblqfim IS NULL;
-      vr_vlbloque crapblj.vlbloque%TYPE;
-      -- Verificar se há bloqueio de aplicações na conta
-      CURSOR cr_crapblj_pp IS
-        SELECT SUM(vlbloque)
-          FROM crapblj
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta
-           AND cdmodali > 2
-           AND dtblqfim IS NULL;
-      vr_vlbloque_pp crapblj.vlbloque%TYPE;
     
       -- Buscar contrato de desconto cheques
       CURSOR cr_craplim_chq IS
@@ -2809,35 +2798,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
       vr_vlsldapl := vr_vlsldapl + vr_vlsldrgt;
     
-      -- Verificar se há bloqueio de aplicações na conta      
-      OPEN cr_crapblj;
-      FETCH cr_crapblj
-        INTO vr_vlbloque;
-      CLOSE cr_crapblj;
-    
-      -- Enviar informações das aplicações para o JSON
-      vr_obj_generic2.put('temAplicacao'
-                         ,(nvl(vr_vlsldapl,0) > 0));
-      vr_obj_generic2.put('temAplicacaoBloqueada'
-                         ,(nvl(vr_vlbloque,0) > 0));
-      vr_obj_generic2.put('saldoDisponAplicacao'
-                         ,este0001.fn_decimal_ibra(GREATEST(0
-                                                  ,nvl(vr_vlsldapl,0) -
-                                                   nvl(vr_vlbloque,0)
-																									)));
-      vr_obj_generic2.put('saldoTotalAplicacao'
-                         ,este0001.fn_decimal_ibra(vr_vlsldapl));
-    
-      -- Selecionar informacoes % IR para o calculo da APLI0001.pc_calc_saldo_rpp
-      vr_percenir:= GENE0002.fn_char_para_number
-                          (TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                                     ,pr_nmsistem => 'CRED'
-                                                     ,pr_tptabela => 'CONFIG'
-                                                     ,pr_cdempres => 0
-                                                     ,pr_cdacesso => 'PERCIRAPLI'
-                                                     ,pr_tpregist => 0));
-                                                                                 
-    
       -- Buscar informações e Saldos das Poupanças Programadas
       apli0001.pc_consulta_poupanca(pr_cdcooper      => pr_cdcooper --> Cooperativa 
                                    ,pr_cdagenci      => 1 --> Codigo da Agencia
@@ -2873,24 +2833,80 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         RAISE vr_exc_saida;
       END IF;
     
-      -- Verificar se há bloqueio de aplicações na conta          
-      OPEN cr_crapblj_pp;
-      FETCH cr_crapblj_pp
-        INTO vr_vlbloque_pp;
-      CLOSE cr_crapblj_pp;
+      -- Busca Saldo Bloqueado Judicial para Aplicações
+      gene0005.pc_retorna_valor_blqjud(pr_cdcooper => pr_cdcooper --> Cooperativa
+                                      ,pr_nrdconta => pr_nrdconta --> Conta
+                                      ,pr_nrcpfcgc => 0 --> Fixo - CPF/CGC
+                                      ,pr_cdtipmov => 0 --> Fixo - Tipo do movimento
+                                      ,pr_cdmodali => 2 --> Modalidade Aplicação
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data atual
+                                      ,pr_vlbloque => vr_vlbloque --> Valor bloqueado
+                                      ,pr_vlresblq => vr_vlresblq --> Valor que falta bloquear
+                                      ,pr_dscritic => vr_dscritic); --> Erros encontrados no processo
+      --Se retornou erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Busca Saldo Bloqueado Judicial para Poupanças
+      gene0005.pc_retorna_valor_blqjud(pr_cdcooper => pr_cdcooper --> Cooperativa
+                                      ,pr_nrdconta => pr_nrdconta --> Conta
+                                      ,pr_nrcpfcgc => 0 --> Fixo - CPF/CGC
+                                      ,pr_cdtipmov => 0 --> Fixo - Tipo do movimento
+                                      ,pr_cdmodali => 3 --> Modalidade Poupança
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data atual
+                                      ,pr_vlbloque => vr_vlbloque_pp --> Valor bloqueado
+                                      ,pr_vlresblq => vr_vlresblq --> Valor que falta bloquear
+                                      ,pr_dscritic => vr_dscritic); --> Erros encontrados no processo
+      
+      --Se retornou erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Busca Bloqueio de Cobertura de Operação (Garantia)
+      BLOQ0001.pc_calc_bloqueio_garantia(pr_cdcooper => pr_cdcooper
+                                        ,pr_nrdconta => pr_nrdconta
+                                        ,pr_vlbloque_aplica => vr_vlblqapl
+                                        ,pr_vlbloque_poupa => vr_vlblqpou
+                                        ,PR_DSCRITIC => VR_DSCRITIC);
+      
+      -- Se retornou critica
+      IF vr_dscritic IS NOT NULL THEN
+        -- Retornar com a critica
+        vr_dscritic := 'Erro ao verificar bloqueios de garantia Conta ' || rw_crapass.nrdconta || '-->' || vr_dscritic;
+        RAISE vr_exc_saida;
+      END IF;
+      
+      vr_vlsldppr_aux := vr_vlsldppr;
+      vr_vlsldapl_aux := vr_vlsldapl;
+      
+      vr_vlsldppr_aux := GREATEST(0, nvl(vr_vlsldppr_aux,0) - nvl(vr_vlbloque_pp,0));
+      vr_vlsldapl_aux := GREATEST(0, nvl(vr_vlsldapl_aux,0) - nvl(vr_vlbloque,0));
+      
+      vr_vlsldppr_aux := GREATEST(NVL(vr_vlsldppr_aux,0) - NVL(vr_vlblqpou,0),0);
+      vr_vlsldapl_aux := GREATEST(NVL(vr_vlsldapl_aux,0) - NVL(vr_vlblqapl,0),0);
     
       -- Enviar informações das aplicações para o JSON
-      vr_obj_generic2.put('temPoupProgram'
-                         ,(nvl(vr_vlsldppr,0) > 0));
-      vr_obj_generic2.put('temPoupProgamBloqueada'
-                         ,(nvl(vr_vlbloque_pp,0) > 0));
-      vr_obj_generic2.put('saldoDisponPoupProgram'
-                         ,este0001.fn_decimal_ibra(GREATEST(0
-                                                  ,nvl(vr_vlsldppr,0) -
-                                                   nvl(vr_vlbloque_pp,0)
-																									)));
-      vr_obj_generic2.put('saldoTotalPoupProgram'
-                         ,este0001.fn_decimal_ibra(nvl(vr_vlsldppr,0)));
+      vr_obj_generic2.put('temPoupProgram',(nvl(vr_vlsldppr,0) > 0));
+      vr_obj_generic2.put('temPoupProgamBloqueada',(vr_vlsldppr_aux <> vr_vlsldppr));
+      vr_obj_generic2.put('saldoDisponPoupProgram',este0001.fn_decimal_ibra(vr_vlsldppr_aux));
+      vr_obj_generic2.put('saldoTotalPoupProgram',este0001.fn_decimal_ibra(nvl(vr_vlsldppr,0)));
+      
+      -- Enviar informações das aplicações para o JSON
+      vr_obj_generic2.put('temAplicacao', (nvl(vr_vlsldapl,0) > 0));
+      vr_obj_generic2.put('temAplicacaoBloqueada', (vr_vlsldapl_aux <> vr_vlsldapl));
+      vr_obj_generic2.put('saldoDisponAplicacao', este0001.fn_decimal_ibra(vr_vlsldapl_aux));
+      vr_obj_generic2.put('saldoTotalAplicacao', este0001.fn_decimal_ibra(vr_vlsldapl));
+    
+      -- Selecionar informacoes % IR para o calculo da APLI0001.pc_calc_saldo_rpp
+      vr_percenir:= GENE0002.fn_char_para_number
+                          (TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                     ,pr_nmsistem => 'CRED'
+                                                     ,pr_tptabela => 'CONFIG'
+                                                     ,pr_cdempres => 0
+                                                     ,pr_cdacesso => 'PERCIRAPLI'
+                                                     ,pr_tpregist => 0));
     
       --> Procedure para listar cartoes do cooperado                    
       cada0004.pc_lista_cartoes(pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
@@ -3827,7 +3843,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(AMcom)
-      Data     : Maio/2017.                   Ultima atualizacao: 19/10/2017
+      Data     : Maio/2017.                   Ultima atualizacao: 23/11/2017
     
       Dados referentes ao programa:
     
@@ -3835,6 +3851,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
       Alteração : 19/10/2017 - Enviar um novo campo "valorPrestLiquidacao". (Lombardi)
+        
+                  23/11/2017 - Alterações para o projeto 404. (Lombardi)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -3884,7 +3902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             ,lcr.cdlcremp
             ,lcr.dslcremp
             ,wpr.tpemprst
-            ,decode(wpr.tpemprst,1,'PP','TR') tpproduto
+            ,decode(wpr.tpemprst,1,'PP',2,'POS','TR') tpproduto
             ,lcr.tpctrato
             -- Indica que am linha de credito eh CDC ou C DC
             ,DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
@@ -3901,6 +3919,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
              ,ass.inpessoa
              ,DECODE(wpr.flgpagto,0,'CONTA','FOLHA') despagto
              ,lcr.txminima
+             ,wpr.idcobope
              ,wpr.dtdpagto
              ,wpr.dtlibera
              ,wpr.dtcarenc
@@ -4115,6 +4134,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 				 AND prp.tpctrato = 90;
 		rw_crapprp cr_crapprp%ROWTYPE;
    
+    --> Busca o percentual da cobertura de garantia    
+    CURSOR cr_tabgar_cobertura(pr_idcob tbgar_cobertura_operacao.idcobertura%TYPE) IS
+		  SELECT cob.perminimo 
+        FROM tbgar_cobertura_operacao cob 
+       WHERE cob.idcobertura = pr_idcob;       
+		rw_tabgar_cobertura cr_tabgar_cobertura%ROWTYPE;
+   
     CURSOR cr_crapepr (pr_cdcooper IN crapepr.cdcooper%TYPE
                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
                       ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
@@ -4167,10 +4193,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_vliofpri      NUMBER;
     vr_vliofadi      NUMBER;
     vr_flgimune      PLS_INTEGER;
+    vr_vlcobert      NUMBER;
     vr_tab_split     gene0002.typ_split;
     vr_dsliquid      VARCHAR2(1000);
     vr_sum_vlpreemp  crapepr.vlpreemp%TYPE := 0;
     vr_vlpreemp      crapepr.vlpreemp%TYPE;
+    vr_percenminimo  tbgar_cobertura_operacao.perminimo%TYPE;
       
   BEGIN
   
@@ -4343,6 +4371,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
   
     END LOOP; -- Final da leitura dos Bens
 
+    IF rw_crawepr.idcobope > 0 THEN
+      -- Busca valor de cobertura da operação
+      vr_vlcobert := BLOQ0001.fn_valor_bloqueio_garantia_in(pr_idcobert => rw_crawepr.idcobope);
+                               
+      -- Se houver valor em cobertura
+      IF vr_vlcobert > 0 THEN
+         -- Busca o percentual minimo de cobertura
+         OPEN cr_tabgar_cobertura(rw_crawepr.idcobope);
+			   FETCH cr_tabgar_cobertura INTO vr_percenminimo;
+			   CLOSE cr_tabgar_cobertura;
+         
+        -- idenpendente da linha e se o percentual minimo de cobertura é maior que 100%        
+        IF vr_percenminimo > 100 THEN
+        -- Indicar que encontrou
+        vr_flgbens := TRUE;
+        -- Enviar valor bloqueado de Cobertura
+        vr_obj_generic2 := json();
+           vr_obj_generic2.put('categoriaBem', 'APLICACAO FINANCEIRA'); --GARANTIA APLICACAO FINANCEIRA ACIMA 100%
+        vr_obj_generic2.put('valorGarantia', ESTE0001.fn_decimal_ibra(vr_vlcobert));
+        -- Adicionar Bem na lista
+        vr_lst_generic2.append(vr_obj_generic2.to_json_value());
+        ELSE
+          -- se nao for linha especifica           
+          -- se percentual mininmo for igual a 100% considera GARANTIA APLICACAO FINANCEIRA ATE 100
+          IF (rw_crawepr.tpctrato <> 4 AND vr_percenminimo = 100) OR (rw_crawepr.tpctrato = 4 AND vr_percenminimo <= 100) THEN            
+            -- Indicar que encontrou
+            vr_flgbens := TRUE;
+            -- Enviar valor bloqueado de Cobertura
+            vr_obj_generic2 := json();
+            vr_obj_generic2.put('categoriaBem', 'APLICACAO FINANCEIRA'); --GARANTIA APLICACAO FINANCEIRA ATE 100%
+            vr_obj_generic2.put('valorGarantia', ESTE0001.fn_decimal_ibra(vr_vlcobert));
+            -- Adicionar Bem na lista
+            vr_lst_generic2.append(vr_obj_generic2.to_json_value());
+          END IF;          
+          -- se percentual for menor que 100%, segue regra padrão do sistema
+        END IF;
+      END IF;
+    END IF;
+    
     -- Adicionar o array bemEmGarantia
     IF vr_flgbens THEN
       vr_obj_generico.put('bemEmGarantia', vr_lst_generic2);
@@ -5076,6 +5143,1150 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       pr_dscritic := vr_dscritic;
 
   END pc_gera_json_analise;
+  
+  PROCEDURE pc_gera_json_limite ( pr_cdcooper   IN crapass.cdcooper%TYPE   --> Codigo da cooperativa
+                                 ,pr_cdagenci   IN crapass.cdagenci%TYPE   --> Codigo da cooperativa
+                                 ,pr_nrdconta   IN crapass.nrdconta%TYPE   --> Codigo da cooperativa
+                                 ,pr_nrctrlim   IN crapepr.nrctremp%TYPE   --> Codigo da cooperativa
+                                 ,pr_tpctrlim   IN craplim.tpctrlim%TYPE
+                                 ,pr_nrctaav1   IN crapepr.nrctaav1%TYPE   --> Codigo da cooperativa
+                                 ,pr_nrctaav2   IN crapepr.nrctaav2%TYPE   --> Codigo da cooperativa
+                                  ---- OUT ----
+                                 ,pr_dsjsonan  OUT NOCOPY json             --> Retorno do clob em modelo json com os dados para analise
+                                 ,pr_cdcritic  OUT NUMBER                  --> Codigo da critica
+                                 ,pr_dscritic  OUT VARCHAR2) IS            --> Descricao da critica
+  /* ..........................................................................
+    
+      Programa : pc_gera_json_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(AMcom)
+      Data     : Maio/2017.                   Ultima atualizacao: 09/05/2017
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel por montar o objeto json para analise.
+    
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+	  -- Buscar quantidade de dias de reaproveitamento   		
+		CURSOR cr_craprbi IS
+		  SELECT rbi.qtdiarpv
+			  FROM craprbi rbi
+				    ,crapass ass
+						,craplim lim
+			 WHERE ass.cdcooper = pr_cdcooper
+				 AND ass.nrdconta = pr_nrdconta
+				 AND lim.cdcooper = pr_cdcooper
+				 AND lim.nrdconta = pr_nrdconta
+				 AND lim.nrctrlim = pr_nrctrlim
+				 AND lim.tpctrlim = pr_tpctrlim
+				 AND rbi.cdcooper = pr_cdcooper
+			   AND rbi.inpessoa = ass.inpessoa
+				 AND rbi.inprodut = decode(lim.tpctrlim, 3, 5, 2, 4, 3);
+		rw_craprbi cr_craprbi%ROWTYPE;
+		
+		-- Buscar PA do operador de envio da proposta
+		CURSOR cr_crapope IS
+		  SELECT ope.cdpactra
+			  FROM crapope ope
+				    ,craplim lim
+			 WHERE lim.cdcooper = pr_cdcooper
+			   AND lim.nrdconta = pr_nrdconta
+				 AND lim.nrctrlim = pr_nrctrlim
+			   AND ope.cdcooper = pr_cdcooper
+			   AND upper(ope.cdoperad) = upper(lim.cdoperad);
+		vr_cdpactra crapope.cdpactra%TYPE;
+		
+		-- Buscar última data de consulta ao bacen
+		CURSOR cr_crapopf IS
+	    SELECT max(opf.dtrefere) dtrefere
+        FROM crapopf opf;
+		rw_crapopf cr_crapopf%ROWTYPE;
+		
+    --> Buscar dados da proposta
+    CURSOR cr_craplim IS
+      SELECT lim.vllimite
+            ,ldc.cddlinha
+            ,ldc.dsdlinha
+            ,ldc.tpctrato
+            ,lim.inconcje
+            ,lim.idquapro
+            ,ass.nrcpfcgc
+            ,ass.inpessoa
+            ,ldc.txmensal
+        FROM craplim lim
+            ,crapldc ldc     
+            ,crapass ass
+       WHERE lim.cdcooper = ldc.cdcooper
+         AND lim.cddlinha = ldc.cddlinha
+         AND lim.cdcooper = ass.cdcooper
+         AND lim.nrdconta = ass.nrdconta
+         AND lim.cdcooper = pr_cdcooper
+         AND lim.nrdconta = pr_nrdconta
+         AND lim.nrctrlim = pr_nrctrlim
+         AND lim.tpctrlim = pr_tpctrlim;
+    rw_craplim cr_craplim%ROWTYPE;
+    
+    -- Buscar os dados do associado
+    CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%type,
+                      pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT ass.inpessoa
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    -- Buscar dados titular
+    CURSOR cr_crapttl(pr_cdcooper crapass.cdcooper%type,
+                      pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT ttl.dtnasttl
+            ,ttl.inhabmen
+        FROM crapttl ttl
+       WHERE ttl.cdcooper = pr_cdcooper
+         AND ttl.nrdconta = pr_nrdconta
+         AND ttl.idseqttl = 1;                      
+    rw_crapttl cr_crapttl%rowtype;
+    
+    -- Buscar avalistas terceiros
+    CURSOR cr_crapavt(pr_cdcooper crapass.cdcooper%TYPE,
+                      pr_nrdconta crapass.nrdconta%TYPE,
+                      pr_nrctremp crapavt.nrctremp%TYPE,
+                      pr_tpctrato crapavt.tpctrato%TYPE,
+                      pr_dsproftl crapavt.dsproftl%TYPE) IS
+      SELECT crapavt.* --> necessario ser todos os campos pois envia como parametro
+        FROM crapavt
+       WHERE crapavt.cdcooper = pr_cdcooper
+         AND crapavt.nrdconta = pr_nrdconta
+         AND crapavt.nrctremp = pr_nrctremp
+         AND crapavt.tpctrato = pr_tpctrato
+         AND (   pr_dsproftl IS NULL 
+               OR ( pr_dsproftl = 'SOCIO' AND dsproftl IN('SOCIO/PROPRIETARIO'
+                                                         ,'SOCIO ADMINISTRADOR'
+                                                         ,'DIRETOR/ADMINISTRADOR'
+                                                         ,'SINDICO'
+                                                         ,'ADMINISTRADOR'))
+               OR ( pr_dsproftl = 'PROCURADOR' AND dsproftl LIKE UPPER('%PROCURADOR%'))
+              );
+    rw_crapavt cr_crapavt%ROWTYPE;
+    
+    --> Buscar cadastro do Conjuge:
+    CURSOR cr_crapcje (pr_cdcooper crapass.cdcooper%type,
+                       pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT crapcje.nrctacje
+            ,crapcje.nmconjug
+            ,crapcje.nrcpfcjg
+            ,crapcje.dtnasccj
+            ,crapcje.tpdoccje
+            ,crapcje.nrdoccje
+            ,crapcje.grescola
+            ,crapcje.cdfrmttl
+            ,crapcje.cdnatopc
+            ,crapcje.cdocpcje
+            ,crapcje.tpcttrab
+            ,crapcje.dsproftl
+            ,crapcje.cdnvlcgo
+            ,crapcje.nrfonemp
+            ,crapcje.nrramemp
+            ,crapcje.cdturnos
+            ,crapcje.dtadmemp
+            ,crapcje.vlsalari
+            ,crapcje.nrdocnpj
+            ,crapcje.cdufdcje
+       FROM crapcje
+      WHERE crapcje.cdcooper = pr_cdcooper
+        AND crapcje.nrdconta = pr_nrdconta
+        AND crapcje.idseqttl = 1;
+    rw_crapcje cr_crapcje%ROWTYPE;
+    
+    --> Buscar representante legal
+    CURSOR cr_crapcrl (pr_cdcooper crapass.cdcooper%type,
+                       pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT crapcrl.cdcooper
+            ,crapcrl.nrctamen
+            ,crapcrl.idseqmen
+            ,crapcrl.nrdconta
+            ,crapcrl.nrcpfcgc
+            ,crapcrl.nmrespon
+            ,org.cdorgao_expedidor dsorgemi
+            ,crapcrl.cdufiden
+            ,crapcrl.dtemiden
+            ,crapcrl.dtnascin
+            ,crapcrl.cddosexo
+            ,crapcrl.cdestciv
+            ,crapnac.dsnacion
+            ,crapcrl.dsnatura
+            ,crapcrl.cdcepres
+            ,crapcrl.dsendres
+            ,crapcrl.nrendres
+            ,crapcrl.dscomres
+            ,crapcrl.dsbaires
+            ,crapcrl.nrcxpost
+            ,crapcrl.dscidres
+            ,crapcrl.dsdufres
+            ,crapcrl.nmpairsp
+            ,crapcrl.nmmaersp
+            ,crapcrl.tpdeiden
+            ,crapcrl.nridenti
+            ,crapcrl.cdrlcrsp
+        FROM crapcrl,
+             crapnac,
+             tbgen_orgao_expedidor org
+       WHERE crapcrl.cdcooper = pr_cdcooper
+         AND crapcrl.nrctamen = pr_nrdconta
+         AND crapcrl.cdnacion = crapnac.cdnacion(+)
+         AND crapcrl.idorgexp = org.idorgao_expedidor(+);
+    
+    -- Declarar cursor de participações societárias
+    CURSOR cr_crapepa (pr_cdcooper crapass.cdcooper%type,
+                       pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT cdcooper, 
+             nrdconta, 
+             nrdocsoc, 
+             nrctasoc, 
+             nmfansia, 
+             nrinsest, 
+             natjurid, 
+             dtiniatv, 
+             qtfilial, 
+             qtfuncio, 
+             dsendweb, 
+             cdseteco, 
+             cdmodali, 
+             cdrmativ, 
+             vledvmto, 
+             dtadmiss, 
+             dtmvtolt, 
+             persocio, 
+             nmprimtl
+        FROM crapepa 
+       WHERE cdcooper = pr_cdcooper 
+         AND nrdconta = pr_nrdconta;
+    
+    -- Buscar descrição
+    CURSOR cr_nature (pr_natjurid gncdntj.cdnatjur%TYPE) IS
+      SELECT gncdntj.dsnatjur
+        FROM gncdntj
+       WHERE gncdntj.cdnatjur = pr_natjurid;
+    rw_nature cr_nature%ROWTYPE; 
+    
+    -- Buscar descrição
+    CURSOR cr_gnrativ ( pr_cdseteco gnrativ.cdseteco%TYPE,
+                        pr_cdrmativ gnrativ.cdrmativ%TYPE)IS
+      SELECT gnrativ.nmrmativ
+        FROM gnrativ
+       WHERE gnrativ.cdseteco = pr_cdseteco
+         AND gnrativ.cdrmativ = pr_cdrmativ;    
+    rw_gnrativ cr_gnrativ%ROWTYPE;
+    
+    
+    -- Buscar os bens em garanita na Proposta
+    CURSOR cr_crapbpr (pr_cdcooper crapass.cdcooper%type,
+                       pr_nrdconta crapass.nrdconta%TYPE,
+                       pr_nrctremp crawepr.nrctremp%TYPE ) IS       
+      SELECT crapbpr.dscatbem
+            ,crapbpr.vlmerbem
+            ,greatest(crapbpr.nranobem,crapbpr.nrmodbem) nranobem
+            ,crapbpr.nrcpfbem
+        FROM crapbpr 
+       WHERE crapbpr.cdcooper = pr_cdcooper
+         AND crapbpr.nrdconta = pr_nrdconta
+         AND crapbpr.nrctrpro = pr_nrctremp   
+         AND crapbpr.tpctrpro = 90
+         AND trim(crapbpr.dscatbem) is not NULL;
+    
+    -- Buscar Saldo de Cotas
+    CURSOR cr_crapcot(pr_cdcooper crapass.cdcooper%type,
+                      pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT vldcotas
+        FROM crapcot
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta;
+    vr_vldcotas crapcot.vldcotas%TYPE;
+    
+    --> Buscar se a conta é de Colaborador Cecred
+    CURSOR cr_tbcolab(pr_cdcooper crapcop.cdcooper%TYPE
+                     ,pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS 
+                     
+      SELECT substr(lpad(col.cddcargo_vetor,7,'0'),5,3) cddcargo
+        FROM tbcadast_colaborador col       
+       WHERE col.cdcooper = pr_cdcooper
+         AND col.nrcpfcgc = pr_nrcpfcgc
+         AND col.flgativo = 'A';         
+				 
+    CURSOR cr_crapprp IS
+		  SELECT prp.flgdocje
+			  FROM crapprp prp
+			 WHERE prp.cdcooper = pr_cdcooper
+			   AND prp.nrdconta = pr_nrdconta
+				 AND prp.nrctrato = pr_nrctrlim
+				 AND prp.tpctrato = pr_tpctrlim;
+		rw_crapprp cr_crapprp%ROWTYPE;
+   
+    --Tipo de registro do tipo data
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+     
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic NUMBER;
+    vr_dscritic VARCHAR2(500);
+    vr_exc_erro EXCEPTION;
+
+    -- Objeto json    
+    vr_obj_analise   json      := json();
+    vr_obj_conjuge   json      := json();
+    vr_obj_avalista  json      := json();
+    vr_obj_responsav json      := json();
+    vr_obj_socio     json      := json();
+    vr_obj_particip  json      := json();
+    vr_obj_procurad  json      := json();
+    vr_obj_generico  json      := json();
+    vr_obj_generic2  json      := json();
+    vr_lst_generico  json_list := json_list();
+    vr_lst_generic2  json_list := json_list();
+    
+    vr_flavalis      BOOLEAN := FALSE;
+    vr_flrespvl      BOOLEAN := FALSE;
+    vr_flsocios      BOOLEAN := FALSE;
+    vr_flpartic      BOOLEAN := FALSE;
+    vr_flprocura     BOOLEAN := FALSE;
+    vr_flgbens       BOOLEAN := FALSE;
+    vr_nrdeanos      INTEGER;
+    vr_nrdmeses      INTEGER;
+    vr_dsdidade      VARCHAR2(100);
+    vr_dstextab      craptab.dstextab%TYPE;
+    vr_nmseteco      craptab.dstextab%TYPE;
+    vr_dstpgara      craptab.dstextab%TYPE;
+    vr_dsquapro      VARCHAR2(100);
+    vr_flgcolab      BOOLEAN;
+    vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
+		vr_qtdiarpv      INTEGER;
+      
+  BEGIN
+  
+    --Verificar se a data existe
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Montar mensagem de critica
+      vr_cdcritic:= 1;
+      CLOSE BTCH0001.cr_crapdat;
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;  
+  
+    vr_obj_analise.put('proposta', gene0002.fn_mask_contrato(pr_nrctrlim));
+                      
+	  -- Buscar quantidade de dias de reaproveitamento             
+    OPEN cr_craprbi;
+		FETCH cr_craprbi INTO rw_craprbi;
+		
+		-- Se encontrou
+		IF cr_craprbi%FOUND THEN
+			-- Buscar a coluna e multiplicar por 24 para chegarmos na quantidade de horas de reaproveitamento
+			vr_qtdiarpv := rw_craprbi.qtdiarpv * 24;
+		ELSE
+			-- Se não encontrar consideramos 168 horas (7 dias)
+			vr_qtdiarpv := 168;
+		END IF;
+    CLOSE cr_craprbi;
+		
+		-- Buscar PA do operador
+		OPEN cr_crapope;
+		FETCH cr_crapope INTO vr_cdpactra;
+    CLOSE cr_crapope;
+		
+		OPEN cr_crapopf;
+		FETCH cr_crapopf INTO rw_crapopf;
+    IF cr_crapopf%NOTFOUND THEN
+      CLOSE cr_crapopf;
+      vr_dscritic := 'Data Base Bacen-SCR nao encontrada!';
+      RAISE vr_exc_erro;
+    ELSE
+    CLOSE cr_crapopf;
+    END IF;
+		
+		-- Montar os atributos de 'configuracoes'
+		vr_obj_generico := json();
+		vr_obj_generico.put('centroCusto', vr_cdpactra);
+    vr_obj_generico.put('dataBaseBacen', to_char(rw_crapopf.dtrefere,'RRRRMM'));
+		vr_obj_generico.put('horasReaproveitamento', vr_qtdiarpv);
+		
+    -- Adicionar o array configuracoes
+    vr_obj_analise.put('configuracoes', vr_obj_generico);																	 
+																	 
+    --> Buscar dados da proposta de emprestimo
+    OPEN cr_craplim;
+    FETCH cr_craplim INTO rw_craplim;
+    
+    -- Caso nao encontrar abortar proceso
+    IF cr_craplim%NOTFOUND THEN
+      CLOSE cr_craplim;
+      vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_craplim;
+    
+    --> indicadoresCliente
+    vr_obj_generico := json();
+    
+    vr_obj_generico.put('cooperativa', pr_cdcooper); 
+    vr_obj_generico.put('agenci', pr_cdagenci);
+
+
+    vr_obj_generico.put('segmentoCodigo' ,2); -- Emprestimos/Financiamento  -- ????????
+    vr_obj_generico.put('segmentoDescricao' ,'Limite Desconto Titulo');   
+    vr_obj_generico.put('linhaCreditoCodigo'    ,rw_craplim.cddlinha); -- ????????
+    vr_obj_generico.put('linhaCreditoDescricao' ,rw_craplim.dsdlinha); -- ????????
+    vr_obj_generico.put('finalidadeCodigo'      ,0); -- ????????      
+    vr_obj_generico.put('finalidadeDescricao'   ,' '); -- ????????               
+
+    
+    vr_obj_generico.put('tipoProduto'           ,0); -- ????????
+    vr_obj_generico.put('tipoGarantiaCodigo'    ,0 ); -- ????????
+/*    
+    --> Buscar descrição do tipo de garantia
+    vr_dstpgara  := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper,
+                                               pr_nmsistem => 'CRED',
+                                               pr_tptabela => 'GENERI', 
+                                               pr_cdempres => 0, 
+                                               pr_cdacesso => 'CTRATOEMPR', 
+                                               pr_tpregist => rw_crawepr.tpctrato);    
+                                              
+    vr_obj_generico.put('tipoGarantiaDescricao'    ,TRIM(vr_dstpgara) );
+*/
+    vr_obj_generico.put('debitoEm'    ,'C' ); -- ????????
+    vr_obj_generico.put('liquidacao'  ,'false'); -- ????????
+
+    vr_obj_generico.put('valorTaxaMensal', ESTE0001.fn_decimal_ibra(rw_craplim.txmensal));
+
+    vr_obj_generico.put('valorEmprest'  , ESTE0001.fn_decimal_ibra(rw_craplim.vllimite));
+ --   vr_obj_generico.put('quantParcela'  , rw_crawepr.qtpreemp);
+ --   vr_obj_generico.put('primeiroVencto', fn_Data_ibra_motor(rw_crawepr.dtvencto));
+ --   vr_obj_generico.put('valorParcela'  , ESTE0001.fn_decimal_ibra(rw_crawepr.vlpreemp));
+
+    vr_obj_generico.put('renegociacao', 'flase');
+
+    vr_obj_generico.put('qualificaOperacaoCodigo',rw_craplim.idquapro );
+
+    CASE rw_craplim.idquapro
+      WHEN 1 THEN vr_dsquapro := 'Operacao normal';
+      WHEN 2 THEN vr_dsquapro := 'Renovacao de credito';
+      WHEN 3 THEN vr_dsquapro := 'Renegociacao de credito';
+      WHEN 4 THEN vr_dsquapro := 'Composicao da divida';
+      ELSE vr_dsquapro := ' ';
+    END CASE;
+
+    vr_obj_generico.put('qualificaOperacaoDescricao'    ,vr_dsquapro );
+         
+    IF rw_craplim.inpessoa = 1 THEN 
+      -- Verificar se a conta é de colaborador do sistema Cecred
+      vr_cddcargo := NULL;
+      OPEN cr_tbcolab(pr_cdcooper => pr_cdcooper
+                     ,pr_nrcpfcgc => rw_craplim.nrcpfcgc);
+      FETCH cr_tbcolab INTO vr_cddcargo;
+      IF cr_tbcolab%FOUND THEN 
+        vr_flgcolab := TRUE;
+      ELSE
+        vr_flgcolab := FALSE;
+      END IF;
+      CLOSE cr_tbcolab; 
+              
+      vr_obj_generico.put('cooperadoColaborador',vr_flgcolab);
+			
+			OPEN cr_crapprp;
+			FETCH cr_crapprp INTO rw_crapprp;
+			CLOSE cr_crapprp;
+      vr_obj_generico.put('conjugeCoResponv',nvl(rw_crapprp.flgdocje,0)=1);
+
+    END IF;
+    
+    -- Efetuar laço para trazer todos os registros 
+    FOR rw_crapbpr IN cr_crapbpr(pr_cdcooper => pr_cdcooper,
+                                 pr_nrdconta => pr_nrdconta,
+                                 pr_nrctremp => pr_nrctrlim )  LOOP 
+
+      -- Indicar que encontrou
+      vr_flgbens := TRUE;
+      -- Para cada registro de Bem, criar objeto para a operação e enviar suas informações 
+			vr_lst_generic2 := json_list();
+      vr_obj_generic2 := json();
+      vr_obj_generic2.put('categoriaBem',     rw_crapbpr.dscatbem);
+      vr_obj_generic2.put('anoGarantia',      rw_crapbpr.nranobem);
+      vr_obj_generic2.put('valorGarantia',    ESTE0001.fn_decimal_ibra(rw_crapbpr.vlmerbem));
+      vr_obj_generic2.put('bemInterveniente', rw_crapbpr.nrcpfbem <> 0);
+
+      -- Adicionar Bem na lista
+      vr_lst_generic2.append(vr_obj_generic2.to_json_value());
+  
+    END LOOP; -- Final da leitura dos Bens
+
+    -- Adicionar o array bemEmGarantia
+    IF vr_flgbens THEN
+      vr_obj_generico.put('bemEmGarantia', vr_lst_generic2);
+    ELSE
+      -- Verificar se o valor das Cotas é Superior ao da Proposta
+      OPEN cr_crapcot(pr_cdcooper
+                     ,pr_nrdconta);
+      FETCH cr_crapcot
+       INTO vr_vldcotas;
+      CLOSE cr_crapcot;
+      -- Se valor das cotas é superior ao da proposta
+      IF NVL(vr_vldcotas,0) > rw_craplim.vllimite THEN 
+        -- Adicionar as cotas  
+        vr_lst_generic2 := json_list();
+        vr_obj_generic2 := json();
+        vr_obj_generic2.put('categoriaBem','COTAS CAPITAL');
+        vr_obj_generic2.put('anoGarantia',0);
+        vr_obj_generic2.put('valorGarantia',ESTE0001.fn_decimal_ibra(vr_vldcotas));
+        vr_obj_generic2.put('bemInterveniente',false);
+        -- Adicionar Bem na lista
+        vr_lst_generic2.append(vr_obj_generic2.to_json_value());
+        -- Adicionar as cotas como garantia
+        vr_obj_generico.put('bemEmGarantia', vr_lst_generic2);
+      END IF;
+    END IF;  
+
+    vr_obj_generico.put('operacao', 'DESCONTO'); -- ???????? 
+    vr_obj_analise.put('indicadoresCliente', vr_obj_generico);         
+    
+    pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_nrctremp => pr_nrctrlim
+                           ,pr_flprepon => true
+                           ,pr_dsjsonan => vr_obj_generico
+                           ,pr_cdcritic => vr_cdcritic 
+                           ,pr_dscritic => vr_dscritic);
+                           
+     -- Testar possíveis erros na rotina:
+     IF nvl(vr_cdcritic,0) <> 0 OR 
+        trim(vr_dscritic) IS NOT NULL THEN 
+       RAISE vr_exc_erro;
+     END IF;    
+       
+    -- Adicionar o JSON montado do Proponente no objeto principal
+    vr_obj_analise.put('proponente',vr_obj_generico);
+    
+    rw_crapass := NULL;
+    --> Buscar dados do associado
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    
+    -- Caso nao encontrar abortar proceso
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      vr_cdcritic := 9;
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crapass;
+    
+    --> Para Pessoa Fisica iremos buscar seu Conjuge
+    IF rw_crapass.inpessoa = 1 THEN 
+    
+      --> Buscar cadastro do Conjuge
+      rw_crapcje := NULL;
+      OPEN cr_crapcje( pr_cdcooper => pr_cdcooper,
+                       pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapcje INTO rw_crapcje;
+     
+      -- Se não encontrar 
+      IF cr_crapcje%NOTFOUND THEN
+        -- apenas fechamos o cursor
+        CLOSE cr_crapcje;
+      ELSE   
+        -- Fechar o cursor e enviar 
+        CLOSE cr_crapcje;
+        --> Se Conjuge for associado:
+        IF rw_crapcje.nrctacje <> 0 THEN 
+
+          -- Passaremos a conta para montagem dos dados:
+          pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => rw_crapcje.nrctacje
+                                 ,pr_nrctremp => pr_nrctrlim
+                                 ,pr_vlsalari => rw_crapcje.vlsalari
+                                 ,pr_dsjsonan => vr_obj_conjuge
+                                 ,pr_cdcritic => vr_cdcritic 
+                                 ,pr_dscritic => vr_dscritic);
+
+          -- Testar possíveis erros na rotina:
+          IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN 
+            RAISE vr_exc_erro;
+          END IF; 
+            
+          -- Adicionar o JSON montado do Proponente no objeto principal
+          vr_obj_analise.put('conjuge',vr_obj_conjuge);
+
+        ELSE
+          -- Enviaremos os dados básicos encontrados na tabela de conjugue
+          vr_obj_conjuge.put('documento'      ,fn_mask_cpf_cnpj(rw_crapcje.nrcpfcjg,1));
+          vr_obj_conjuge.put('tipoPessoa'     ,'FISICA');
+          vr_obj_conjuge.put('nome'           ,rw_crapcje.nmconjug);
+          
+          vr_obj_conjuge.put('dataNascimento' ,fn_Data_ibra_motor(rw_crapcje.dtnasccj));
+          
+          -- Se o Documento for RG
+          IF rw_crapcje.tpdoccje = 'CI' THEN
+            vr_obj_conjuge.put('rg', rw_crapcje.nrdoccje);
+            vr_obj_conjuge.put('ufRg', rw_crapcje.cdufdcje);
+          END IF;
+          
+          -- Montar objeto Telefone para Telefone Comercial      
+          IF rw_crapcje.nrfonemp <> ' ' THEN 
+            vr_lst_generic2 := json_list();
+            -- Criar objeto só para este telefone
+            vr_obj_generico := json();
+            vr_obj_generico.put('especie', 'COMERCIAL');
+            IF SUBSTR(rw_crapcje.nrfonemp,1,1) < 8 THEN 
+              vr_obj_generico.put('tipo', 'FIXO');
+            ELSE
+              vr_obj_generico.put('tipo', 'MOVEL');
+            END IF;
+            
+            vr_obj_generico.put('numero', fn_somente_numeros_telefone(rw_crapcje.nrfonemp));
+            -- Adicionar telefone na lista
+            vr_lst_generic2.append(vr_obj_generico.to_json_value());
+            -- Adicionar o array telefone no objeto Conjuge
+            vr_obj_conjuge.put('telefones', vr_lst_generic2);
+              
+          END IF;     
+
+          -- Montar objeto profissao       
+          IF rw_crapcje.dsproftl <> ' ' THEN 
+            vr_obj_generico := json();
+            vr_obj_generico.put('titulo'   , rw_crapcje.dsproftl);
+            vr_obj_conjuge.put ('profissao', vr_obj_generico);
+          END IF;     
+          
+          -- Montar informações Adicionais
+          vr_obj_generico := json();
+          -- Escolaridade
+          IF rw_crapcje.grescola <> 0 THEN 
+            vr_obj_generico.put('escolaridade', rw_crapcje.grescola);
+          END IF;
+          -- Curso Superior
+          IF rw_crapcje.cdfrmttl <> 0 THEN 
+            vr_obj_generico.put('cursoSuperiorCodigo'
+                               ,rw_crapcje.cdfrmttl);
+            vr_obj_generico.put('cursoSuperiorDescricao'
+                               ,fn_des_cdfrmttl(rw_crapcje.cdfrmttl));
+          END IF;
+          -- Natureza Ocupação
+          IF rw_crapcje.cdnatopc <> 0 THEN 
+            vr_obj_generico.put('naturezaOcupacao', rw_crapcje.cdnatopc);
+          END IF;
+          -- Ocupação
+          IF rw_crapcje.cdocpcje <> 0 THEN 
+            vr_obj_generico.put('ocupacaoCodigo'
+                               ,rw_crapcje.cdocpcje);
+            vr_obj_generico.put('ocupacaoDescricao'
+                               ,fn_des_cdocupa(rw_crapcje.cdocpcje));
+          END IF;
+          -- Tipo Contrato de Trabalho
+          IF rw_crapcje.tpcttrab <> 0 THEN 
+            vr_obj_generico.put('tipoContratoTrabalho', rw_crapcje.tpcttrab);
+          END IF;
+          -- Nivel Cargo
+          IF rw_crapcje.cdnvlcgo <> 0 THEN 
+            vr_obj_generico.put('nivelCargo', rw_crapcje.cdnvlcgo);
+          END IF;
+          -- Turno
+          IF rw_crapcje.cdturnos <> 0 THEN 
+            vr_obj_generico.put('turno', rw_crapcje.cdturnos);
+          END IF;
+          -- Data Admissão
+          IF rw_crapcje.dtadmemp IS NOT NULL THEN 
+            vr_obj_generico.put('dataAdmissao', fn_Data_ibra_motor(rw_crapcje.dtadmemp));
+          END IF;
+          -- Salario
+          IF rw_crapcje.vlsalari <> 0 THEN 
+            vr_obj_generico.put('valorSalario', ESTE0001.fn_decimal_ibra(rw_crapcje.vlsalari));
+          END IF;
+          -- CNPJ Empresa
+          IF rw_crapcje.nrdocnpj <> 0 THEN 
+            vr_obj_generico.put('codCNPJEmpresa', rw_crapcje.nrdocnpj);
+          END IF;
+          -- Enviar informações adicionais ao JSON Conjuge
+          vr_obj_conjuge.put('informacoesAdicionais' ,vr_obj_generico);        
+              
+          -- Ao final adicionamos o json montado ao principal
+          vr_obj_analise.put('conjuge' ,vr_obj_conjuge);        
+        END IF; 
+        
+      END IF;  
+      
+    END IF;
+    
+    --> BUSCAR AVALISTAS INTERNOS E EXTERNOS: 
+    -- Inicializar lista de Avalistas
+    vr_lst_generico := json_list();
+ 
+    -- Enviar avalista 01 em novo json só para avalistas
+    IF nvl(pr_nrctaav1,0) <> 0 THEN
+      -- Setar flag para indicar que há avalista
+      vr_flavalis := true;
+      
+      pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => pr_nrctaav1
+                             ,pr_nrctremp => pr_nrctrlim
+                             ,pr_dsjsonan => vr_obj_avalista
+                             ,pr_cdcritic => vr_cdcritic 
+                             ,pr_dscritic => vr_dscritic);
+
+      -- Testar possíveis erros na rotina:
+      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN 
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Adicionar o avalista montato na lista de avalistas
+      vr_lst_generico.append(vr_obj_avalista.to_json_value());
+
+    END IF;
+    
+    -- Enviar avalista 02 em novo json só para avalistas
+    IF nvl(pr_nrctaav2,0) <> 0 THEN
+      -- Setar flag para indicar que há avalista
+      vr_flavalis := true;
+      
+      pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => pr_nrctaav2
+                             ,pr_nrctremp => pr_nrctrlim
+                             ,pr_dsjsonan => vr_obj_avalista
+                             ,pr_cdcritic => vr_cdcritic 
+                             ,pr_dscritic => vr_dscritic);
+
+      -- Testar possíveis erros na rotina:
+      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN 
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Adicionar o avalista montato na lista de avalistas
+      vr_lst_generico.append(vr_obj_avalista.to_json_value());
+
+    END IF;
+    
+    --> Efetuar laço para retornar todos os registros disponíveis:
+    FOR rw_crapavt IN cr_crapavt( pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta 
+                                 ,pr_nrctremp => pr_nrctrlim
+                                 ,pr_tpctrato => 8 -- Desconto de Cheque
+                                 ,pr_dsproftl => null) LOOP
+                                 
+      -- Setar flag para indicar que há avalista
+      vr_flavalis := true;
+      -- Enviaremos os dados básicos encontrados na tabela de avalistas terceiros 
+      pc_gera_json_pessoa_avt(pr_rw_crapavt => rw_crapavt
+                             ,pr_dsjsonavt  => vr_obj_avalista
+                             ,pr_cdcritic   => vr_cdcritic 
+                             ,pr_dscritic   => vr_dscritic);
+      -- Testar possíveis erros na rotina:
+      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN 
+        RAISE vr_exc_erro;
+      END IF; 
+      
+      -- Adicionar o avalista montato na lista de avalistas
+      vr_lst_generico.append(vr_obj_avalista.to_json_value());
+      
+      
+    END LOOP; --> crapavt                             
+    
+    -- Enviar novo objeto de avalistas para dentro do objeto principal (Se houve encontro) 
+    IF vr_flavalis = true THEN
+      vr_obj_analise.put('avalistas' , vr_lst_generico);
+    END IF; 
+  
+    --> Para pessoa física verificaremos necessidade de envio dos responsáveis legais:
+    IF rw_crapass.inpessoa = 1 THEN 
+      
+       -- Buscar dados titular
+       OPEN cr_crapttl(pr_cdcooper,pr_nrdconta);
+       FETCH cr_crapttl
+        INTO rw_crapttl;
+       CLOSE cr_crapttl; 
+         
+       -- Inicializar idade
+       vr_nrdeanos := 18;    
+       -- Se menor de idade 
+       IF rw_crapttl.inhabmen = 0  THEN 
+         -- Verifica a idade
+         cada0001.pc_busca_idade(pr_dtnasctl => rw_crapttl.dtnasttl
+                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                ,pr_nrdeanos => vr_nrdeanos
+                                ,pr_nrdmeses => vr_nrdmeses
+                                ,pr_dsdidade => vr_dsdidade
+                                ,pr_des_erro => vr_dscritic);
+
+         -- Verficia se ocorreram erros
+         IF vr_dscritic IS NOT NULL THEN
+           vr_nrdeanos := 18;
+         END IF;
+       END IF;
+    
+      -- Se menor de idade ou incapaz
+      IF vr_nrdeanos < 18 OR rw_crapttl.inhabmen = 2 THEN
+      
+        -- Inicializar lista de Representantes
+        vr_lst_generico := json_list();
+        
+        --> Efetuar laço para retornar todos os registros disponíveis
+        FOR rw_crapcrl IN cr_crapcrl ( pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta ) LOOP
+          -- Setar flag para indicar que há responsaveis
+          vr_flrespvl := true;
+          
+          --> Se Responsável for associado
+          IF rw_crapcrl.nrdconta <> 0 THEN 
+            -- Passaremos a conta para montagem dos dados:
+            pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => rw_crapcrl.nrdconta
+                                   ,pr_nrctremp => pr_nrctrlim
+                                   ,pr_dsjsonan => vr_obj_responsav
+                                   ,pr_cdcritic => vr_cdcritic 
+                                   ,pr_dscritic => vr_dscritic); 
+            -- Testar possíveis erros na rotina:
+            IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN 
+              RAISE vr_exc_erro;
+            END IF;
+            
+            -- Adicionar o avalista montato na lista de avalistas
+            vr_lst_generico.append(vr_obj_responsav.to_json_value());
+
+         ELSE
+           -- Enviaremos os dados básicos encontrados na tabela de responsável legal
+           vr_obj_responsav.put('documento'      , fn_mask_cpf_cnpj(rw_crapcrl.nrcpfcgc,1));
+           vr_obj_responsav.put('tipoPessoa'     ,'FISICA');
+           vr_obj_responsav.put('nome'           ,rw_crapcrl.nmrespon);
+           IF rw_crapcrl.cddosexo = 1 THEN
+             vr_obj_responsav.put('sexo','MASCULINO');
+           ELSE
+             vr_obj_responsav.put('sexo','FEMININO');
+           END IF;
+           
+           IF rw_crapcrl.dtnascin IS NOT NULL THEN 
+             vr_obj_responsav.put('dataNascimento' ,fn_Data_ibra_motor(rw_crapcrl.dtnascin));
+           END IF;
+           
+           IF rw_crapcrl.nmmaersp IS NOT NULL THEN 
+             vr_obj_responsav.put('nomeMae' ,rw_crapcrl.nmmaersp);
+           END IF;
+           
+           vr_obj_responsav.put('nacionalidade'  ,rw_crapcrl.dsnacion);
+
+           -- Se o Documento for RG
+           IF rw_crapcrl.tpdeiden = 'CI' THEN
+             vr_obj_responsav.put('rg', rw_crapcrl.nridenti);
+             vr_obj_responsav.put('ufRg', rw_crapcrl.cdufiden);
+           END IF; 
+
+           -- Montar objeto Endereco
+           IF rw_crapcrl.dsendres <> ' ' THEN 
+             vr_obj_generico := json();
+     
+             vr_obj_generico.put('logradouro'  , rw_crapcrl.dsendres);
+             vr_obj_generico.put('numero'      , rw_crapcrl.nrendres);
+             vr_obj_generico.put('complemento' , rw_crapcrl.dscomres);
+             vr_obj_generico.put('bairro'      , rw_crapcrl.dsbaires);
+             vr_obj_generico.put('cidade'      , rw_crapcrl.dscidres);
+             vr_obj_generico.put('uf'          , rw_crapcrl.dsdufres);
+             vr_obj_generico.put('cep'         , rw_crapcrl.cdcepres);
+
+             vr_obj_responsav.put('endereco', vr_obj_generico);
+           END IF;     
+        
+           -- Montar informações Adicionais
+           vr_obj_generico := json();
+           
+           -- Nome Pai
+           IF rw_crapcrl.nmpairsp <> ' ' THEN 
+             vr_obj_generico.put('nomePai', rw_crapcrl.nmpairsp);
+           END IF;
+           -- Estado Civil
+           IF rw_crapcrl.cdestciv <> 0 THEN 
+             vr_obj_generico.put('estadoCivil', rw_crapcrl.cdestciv);
+           END IF;
+           -- Naturalidade
+           IF rw_crapcrl.dsnatura <> ' ' THEN 
+             vr_obj_generico.put('naturalidade', rw_crapcrl.dsnatura);
+           END IF;
+           -- Caixa Postal
+           IF rw_crapcrl. nrcxpost <> 0 THEN 
+             vr_obj_generico.put('caixaPostal', rw_crapcrl.nrcxpost);
+           END IF;
+     
+           -- Enviar informações adicionais ao JSON Responsavel Leval
+           vr_obj_responsav.put('informacoesAdicionais' ,vr_obj_generico);     
+
+           -- Adicionar o responsavel montato na lista de responsaveis
+           vr_lst_generico.append(vr_obj_responsav.to_json_value());
+         END IF;
+          
+          
+        END LOOP; --> crapcrl  
+        
+        -- Enviar novo objeto de responsaveis para dentro do objeto principal
+        -- (Somente se encontramos)
+        IF vr_flrespvl THEN 
+          vr_obj_analise.put('representantesLegais' ,vr_lst_generico);    
+        END IF;
+                
+      END IF;
+    END IF; -- INPESSOA
+    
+    --> Para pessoa Jurídica buscaremos os sócios da Empresa:
+    IF rw_crapass.inpessoa = 2 THEN
+    
+      -- Inicializar lista de Representantes
+      vr_lst_generico := json_list();
+    
+      --> Efetuar laço para retornar todos os registros disponíveis:
+      FOR rw_crapavt IN cr_crapavt( pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta 
+                                   ,pr_nrctremp => 0
+                                   ,pr_tpctrato => 6
+                                   ,pr_dsproftl => 'SOCIO') LOOP 
+    
+        -- Setar flag para indicar que há sócio
+        vr_flsocios := true;
+        -- Se socio for associado
+        IF rw_crapavt.nrdctato > 0 THEN 
+          -- Passaremos a conta para montagem dos dados:
+          pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => rw_crapavt.nrdctato
+                                 ,pr_nrctremp => pr_nrctrlim
+                                 ,pr_dsjsonan => vr_obj_socio
+                                 ,pr_persocio => rw_crapavt.persocio
+                                 ,pr_dtadmsoc => rw_crapavt.dtadmsoc
+                                 ,pr_dtvigpro => rw_crapavt.dtvalida
+                                 ,pr_cdcritic => vr_cdcritic 
+                                 ,pr_dscritic => vr_dscritic);
+          -- Testar possíveis erros na rotina:
+          IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN 
+            RAISE vr_exc_erro;
+          END IF;  
+          
+          -- Adicionar o responsavel montato na lista de socios
+          vr_lst_generico.append(vr_obj_socio.to_json_value());
+
+        ELSE
+          -- Enviaremos os dados básicos encontrados na tabela de socios
+          pc_gera_json_pessoa_avt(pr_rw_crapavt => rw_crapavt
+                                 ,pr_dsjsonavt  => vr_obj_socio
+                                 ,pr_cdcritic   => vr_cdcritic 
+                                 ,pr_dscritic   => vr_dscritic);
+          -- Testar possíveis er ros na rotina:
+          IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN 
+            RAISE vr_exc_erro;
+          END IF; 
+          -- Adicionar o responsavel montato na lista de socios
+          vr_lst_generico.append(vr_obj_socio.to_json_value());
+
+        END IF;
+      
+      
+      END LOOP; --Fim crapavt
+      
+      -- Enviar novo objeto de socios para dentro do objeto principal (Se houve encontro) 
+      IF vr_flsocios = true THEN      
+        vr_obj_analise.put('socios' ,vr_lst_generico); 
+      END IF;
+       
+      --> Busca das participações societárias
+      
+      -- Inicializar lista de Participações Societárias
+      vr_lst_generico := json_list();
+      
+      --> Efetuar laço para retornar todos os registros disponíveis de participações:
+      FOR rw_crapepa IN cr_crapepa( pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta)  LOOP
+        -- Setar flag para indicar que há participações
+        vr_flpartic := true;
+        -- Se socio for associado
+        IF rw_crapepa.nrctasoc > 0 THEN 
+          -- Passaremos a conta para montagem dos dados:
+          pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => rw_crapepa.nrctasoc
+                                 ,pr_nrctremp => pr_nrctrlim
+                                 ,pr_persocio => rw_crapepa.persocio
+                                 ,pr_dtadmsoc => rw_crapepa.dtadmiss
+                                 ,pr_dtvigpro => to_date('31/12/9999','dd/mm/rrrr')
+                                 ,pr_dsjsonan => vr_obj_particip
+                                 ,pr_cdcritic => vr_cdcritic 
+                                 ,pr_dscritic => vr_dscritic); 
+          -- Testar possíveis erros na rotina:
+          IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN 
+            RAISE vr_exc_erro;
+          END IF;  
+          -- Adicionar o responsavel montato na lista de socios
+          vr_lst_generico.append(vr_obj_particip.to_json_value());
+
+        ELSE
+          -- Enviaremos os dados básicos encontrados na tabela de Participações    
+          vr_obj_particip.put('documento'      ,fn_mask_cpf_cnpj(rw_crapepa.nrdocsoc,2));
+          vr_obj_particip.put('tipoPessoa'     ,'JURIDICA');
+          vr_obj_particip.put('razaoSocial'    ,rw_crapepa.nmprimtl);
+          
+          IF rw_crapepa.dtiniatv IS NOT NULL THEN 
+            vr_obj_particip.put('dataFundacao' ,fn_Data_ibra_motor(rw_crapepa.dtiniatv));
+          END IF;
+          
+          -- Montar informações Adicionais
+          vr_obj_generico := json();
+
+          -- Conta
+          vr_obj_generico.put('conta', to_number(substr(rw_crapepa.nrdconta,1,length(rw_crapepa.nrdconta)-1)));
+          vr_obj_generico.put('contaDV', to_number(substr(rw_crapepa.nrdconta,-1)));
+          
+          IF INSTR(rw_crapepa.dsendweb,'@') > 0 THEN
+            vr_obj_generico.put('email', rw_crapepa.dsendweb);
+          END IF;
+          
+          -- Natureza Juridica
+          IF rw_crapepa.natjurid <> 0 THEN 
+            --> Buscar descrição
+            OPEN cr_nature(pr_natjurid => rw_crapepa.natjurid);
+            FETCH cr_nature INTO rw_nature;
+            CLOSE cr_nature;
+
+            vr_obj_generico.put('naturezaJuridica', rw_crapepa.natjurid||'-'||rw_nature.dsnatjur);
+          END IF;
+          
+          -- Quantidade Filiais
+          vr_obj_generico.put('quantFiliais', rw_crapepa.qtfilial);
+
+          -- Quantidade Funcionários
+          vr_obj_generico.put('quantFuncionarios', rw_crapepa.qtfuncio);
+        
+          -- Ramo Atividade
+          IF rw_crapepa.cdseteco <> 0 AND rw_crapepa.cdrmativ <> 0 THEN 
+              
+            OPEN cr_gnrativ (pr_cdseteco => rw_crapepa.cdseteco, 
+                             pr_cdrmativ => rw_crapepa.cdrmativ );
+            FETCH cr_gnrativ INTO rw_gnrativ;
+            CLOSE cr_gnrativ;
+            
+            vr_obj_generico.put('ramoAtividade', rw_crapepa.cdrmativ ||'-'||rw_gnrativ.nmrmativ);
+          END IF;
+          
+          -- Setor Economico
+          IF rw_crapepa.cdseteco <> 0 THEN 
+          
+            -- Buscar descrição
+            vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                     ,pr_nmsistem => 'CRED'
+                                                     ,pr_tptabela => 'GENERI'
+                                                     ,pr_cdempres => 0
+                                                     ,pr_cdacesso => 'SETORECONO'
+                                                     ,pr_tpregist => rw_crapepa.cdseteco);
+            -- Se Encontrou
+            IF TRIM(vr_dstextab) IS NOT NULL THEN
+              vr_nmseteco := vr_dstextab;
+            ELSE
+              vr_nmseteco := 'Nao Cadastrado';
+            END IF;
+            vr_obj_generico.put('setorEconomico', rw_crapepa.cdseteco ||'-'|| vr_nmseteco);
+          END IF;
+
+          -- Numero Inscrição Estadual
+          IF rw_crapepa.nrinsest <> 0 THEN   
+            vr_obj_generico.put('numeroInscricEstadual', rw_crapepa.nrinsest);
+          END IF;
+          
+          -- Data de Vigência Procuração
+          vr_obj_generico.put('dataVigenciaProcuracao' ,fn_Data_ibra_motor(to_date('31/12/9999','dd/mm/rrrr')));
+          
+          -- Data de Admissão Procuração
+          IF rw_crapepa.dtadmiss IS NOT NULL THEN 
+            vr_obj_generico.put('dataAdmissaoProcuracao' ,fn_Data_ibra_motor(rw_crapepa.dtadmiss));
+          END IF;  
+           
+          -- Percentual Procuração
+          IF rw_crapepa.persocio IS NOT NULL THEN 
+            vr_obj_generico.put('valorPercentualProcuracao' ,Este0001.fn_Decimal_Ibra(rw_crapepa.persocio));
+          END IF;
+         
+          -- Enviar informações adicionais ao JSON Responsavel Leval
+          vr_obj_particip.put('informacoesAdicionais' ,vr_obj_generico);    
+
+          -- Adicionar o responsavel montado na lista de participações
+          vr_lst_generico.append(vr_obj_particip.to_json_value());          
+          
+        END IF;  
+        
+      END LOOP; --> fim crapepa
+      
+      -- Enviar novo objeto de participações para dentro do objeto principal (Se houve encontro) 
+      IF vr_flpartic = true THEN      
+        vr_obj_analise.put('participacoesSocietarias' ,vr_lst_generico);
+      END IF;
+      
+    END IF; --> INPESSOA 2   
+    
+    --> Busca dos procuradores:
+    -- Inicializar lista de Representantes
+    vr_lst_generico := json_list();
+
+    -->Efetuar laço para retornar todos os registros disponíveis de Procuradores:
+    FOR rw_crapavt IN cr_crapavt(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_nrctremp => 0
+                                ,pr_tpctrato => 6
+                                ,pr_dsproftl => 'PROCURADOR') LOOP
+      -- Setar flag para indicar que há sócio
+      vr_flprocura := true;
+      -- Se socio for associado
+      IF rw_crapavt.nrdctato > 0 THEN 
+        -- Passaremos a conta para montagem dos dados:
+        pc_gera_json_pessoa_ass ( pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => rw_crapavt.nrdctato
+                                 ,pr_nrctremp => pr_nrctrlim
+                                 ,pr_dsjsonan => vr_obj_procurad
+                                 ,pr_cdcritic => vr_cdcritic 
+                                 ,pr_dscritic => vr_dscritic); 
+        -- Testar possíveis erros na rotina:
+        IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN 
+          RAISE vr_exc_erro;
+        END IF;  
+
+        -- Adicionar o responsavel montato na lista de responsaveis
+        vr_lst_generico.append(vr_obj_procurad.to_json_value());
+
+      ELSE
+        -- Enviaremos os dados básicos encontrados na tabela de procuradores
+        pc_gera_json_pessoa_avt(pr_rw_crapavt => rw_crapavt
+                               ,pr_dsjsonavt  => vr_obj_procurad
+                               ,pr_cdcritic   => vr_cdcritic 
+                               ,pr_dscritic   => vr_dscritic);
+        -- Testar possíveis erros na rotina:
+        IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN 
+          RAISE vr_exc_erro;
+        END IF;        
+        -- Adicionar o responsavel montato na lista de responsaveis
+        vr_lst_generico.append(vr_obj_procurad.to_json_value());
+      END IF;
+    END LOOP;
+
+    -- Enviar novo objeto de procuradores para dentro do objeto principal (Se houve encontro) 
+    IF vr_flprocura = true THEN
+      vr_obj_analise.put('procuradores' ,vr_lst_generico);    
+    END IF;
+    
+    pr_dsjsonan := vr_obj_analise;
+    
+  EXCEPTION
+    WHEN vr_exc_erro  THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN 
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na montagem dos dados para análise automática da proposta: '||sqlerrm;
+  END pc_gera_json_limite;
     
   
 END ESTE0002;

@@ -30,8 +30,11 @@ BEGIN
               
               31/10/2017 - #778578 Não logar críticas 1033 (Carlos)
               
+              07/12/2017 - Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)
+
               13/12/2017 - Melhorar performance da rotina filtrando corretamente
                            os acordos, conforme chamado 807093. (Kelvin).
+
     ............................................................................. */
 
   DECLARE
@@ -85,6 +88,7 @@ BEGIN
            , crappep.rowid
            , crawepr.dtlibera
            , crawepr.tpemprst
+           , crawepr.idcobope
         FROM crawepr
            , crapass
            , crappep
@@ -208,6 +212,7 @@ BEGIN
     --Variaveis Locais
     vr_vlapagar NUMBER;
     vr_vlsomato NUMBER;
+    vr_vlresgat NUMBER;
     vr_vljurmes NUMBER;
     vr_dtultdia DATE;
     vr_dtcalcul DATE;
@@ -219,6 +224,8 @@ BEGIN
     vr_mesrefju INTEGER;
     vr_anorefju INTEGER;
     vr_flgpripr BOOLEAN;
+    vr_dstransa VARCHAR2(1000);
+    vr_qtdiaatr NUMBER;
 
     vr_cdindice VARCHAR2(30) := ''; -- Indice da tabela de acordos
     --Variaveis de Indices
@@ -406,12 +413,15 @@ BEGIN
 
          vr_tab_crawepr.DELETE;
 
+         vr_vlresgat := 0;
+
          if rw_crappep.dtlibera is not null then
            vr_index_crawepr := lpad(rw_crappep.cdcooper,10,'0')||
                                lpad(rw_crappep.nrdconta,10,'0')||
                                lpad(rw_crappep.nrctremp,10,'0');
            vr_tab_crawepr(vr_index_crawepr).dtlibera:= rw_crappep.dtlibera;
            vr_tab_crawepr(vr_index_crawepr).tpemprst:= rw_crappep.tpemprst;
+           vr_tab_crawepr(vr_index_crawepr).idcobope:= rw_crappep.idcobope;
          end if;
 
       --Selecionar Informacoes Emprestimo
@@ -475,7 +485,7 @@ BEGIN
                                              ,pr_cdagenci => pr_cdagenci                   --> Codigo Agencia
                                              ,pr_nrdcaixa => 0                             --> Codigo Caixa
                                              ,pr_cdoperad => vr_cdoperad                   --> Operador
-                                             ,pr_nmdatela => pr_nmdatela                   --> Nome da Tela
+                                             ,pr_nmdatela => vr_cdprogra                   --> Nome da Tela
                                              ,pr_idorigem => 7 /*Batch*/                   --> Identificador origem
                                              ,pr_nrdconta => rw_crappep.nrdconta           --> Numero da Conta
                                              ,pr_nrctremp => rw_crappep.nrctremp           --> Numero Contrato
@@ -486,6 +496,7 @@ BEGIN
                                              ,pr_vlapagar => vr_vlapagar                   --> Valor Pagar
                                              ,pr_tab_crawepr => vr_tab_crawepr             --> Tabela com Contas e Contratos
                                              ,pr_vlsomato => vr_vlsomato                   --> Soma Total
+                                             ,pr_vlresgat => vr_vlresgat                   --> Soma
                                              ,pr_tab_erro => vr_tab_erro                   --> tabela Erros
                                              ,pr_des_reto => vr_des_erro                   --> Indicador OK/NOK
                                              ,pr_tab_msg_confirma => vr_tab_msg_confirma); --> Tabela Confirmacao
@@ -524,6 +535,14 @@ BEGIN
                                 pr_dsdadant => to_char(nvl(vr_vlsomato_tmp,0),'fm999G999G990D00'),
                                 pr_dsdadatu => to_char(vr_vlsomato,'fm999G999G990D00'));
 
+      -- Se possuir valor de resgate
+      IF NVL(vr_vlresgat,0) > 0 THEN
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid,
+                                  pr_nmdcampo => 'Resgate para Cobertura',
+                                  pr_dsdadant => NULL,
+                                  pr_dsdadatu => to_char(vr_vlresgat,'fm999G999G990D00'));
+      END IF;
+
       vr_vlsomato_tmp := vr_vlsomato;
       /* Atribuir se operacao esta em dia ou atraso */
          vr_flgemdia:= rw_crappep.dtvencto > rw_crapdat.dtmvtoan;
@@ -552,7 +571,7 @@ BEGIN
           END;
 
           --Verificar Pagamento
-           pc_verifica_pagamento (pr_vlsomato => vr_vlsomato           --> Soma Total
+           pc_verifica_pagamento (pr_vlsomato => nvl(vr_vlsomato,0) + nvl(vr_vlresgat,0) --> Soma Total + Soma Resgate
                                  ,pr_inliquid => rw_crappep.inliquid   --> Indicador Liquidacao
                                  ,pr_flgpagpa => vr_flgpagpa           --> Pagamento OK
                                  ,pr_des_reto => vr_des_erro);         --> Indicador Erro OK/NOK
@@ -703,17 +722,33 @@ BEGIN
             CONTINUE;
           END IF;
 
+          IF nvl(vr_vlresgat,0) = 0 THEN
+            -- Log sem resgate
+            vr_dstransa := 'Efetiva parcela normal, contrato: '
+                        || rw_crappep.nrctremp 
+                        || '  Saldo em ' 
+                        || rw_crapdat.dtmvtoan || ': ' 
+                        || to_char(nvl(vr_vlsomato, 0),'fm999G999G990D00') 
+                        || '  A Pagar: ' 
+                        || nvl(vr_vlapagar, 0);
+          ELSE
+            -- LOG com resgate
+            vr_dstransa := 'Efetiva parcela normal, contrato: ' 
+                        || rw_crappep.nrctremp 
+                        || '  Saldo em ' 
+                        || rw_crapdat.dtmvtoan || ': ' 
+                        || to_char(nvl(vr_vlsomato, 0),'fm999G999G990D00') 
+                        || ' Resgate necessário de: ' 
+                        || to_char(nvl(vr_vlresgat, 0),'fm999G999G990D00') 
+                        || '  A Pagar: ' 
+                        || nvl(vr_vlapagar, 0);
+          END IF;
+
           gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => 1
                               ,pr_dsorigem => 'AYLLOS'
                               ,pr_dscritic => null
-                              ,pr_dstransa => 'Efetiva parcela normal, contrato: ' ||
-                                              rw_crappep.nrctremp ||
-                                              '  Saldo em ' ||
-                                              rw_crapdat.dtmvtoan || ': ' ||
-                                              to_char(nvl(vr_vlsomato, 0),'fm999G999G990D00') ||
-                                              '  A Pagar: ' ||
-                                              nvl(vr_vlapagar, 0)
+                              ,pr_dstransa => vr_dstransa
                               ,pr_dttransa => trunc(sysdate)
                               ,pr_flgtrans => 1
                               ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
@@ -726,6 +761,36 @@ BEGIN
            IF nvl(vr_vlsomato,0) > nvl(vr_vlapagar,0) THEN
             --Soma total recebe valor a pagar
              vr_vlsomato:= vr_vlapagar;
+          END IF;
+
+          -- Se possuir valor de resgate
+          IF NVL(vr_vlresgat,0) > 0 THEN
+
+            -- Acionar rotina de calculo de dias em atraso
+            vr_qtdiaatr := EMPR0001.fn_busca_dias_atraso_epr(pr_cdcooper => pr_cdcooper
+                                                            ,pr_nrdconta => rw_crappep.nrdconta
+                                                            ,pr_nrctremp => rw_crappep.nrctremp
+                                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                            ,pr_dtmvtoan => rw_crapdat.dtmvtoan);
+
+            -- Acionaremos rotina para solicitar o resgate afim de cobrir os valores negativos
+            BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => rw_crappep.idcobope
+                                                 ,pr_flgerlog => 1
+                                                 ,pr_cdoperad => '1'
+                                                 ,pr_idorigem => 5
+                                                 ,pr_cdprogra => pr_nmdatela
+                                                 ,pr_qtdiaatr => vr_qtdiaatr
+                                                 ,pr_vlresgat => vr_vlresgat
+                                                 ,pr_dscritic => vr_dscritic);
+            -- Em caso de erro
+            IF TRIM(vr_dscritic) IS NOT NULL THEN
+              --Sair do programa
+              RAISE vr_exc_saida;
+            ELSE
+              -- Incrementar ao saldo o total resgatado
+              vr_vlsomato := vr_vlsomato + vr_vlresgat; 
+            END IF;
+
           END IF;
 
           --Efetivar Pagamento Normal da Parcela
@@ -785,6 +850,7 @@ BEGIN
           /* 3º se existir boleto de contrato em aberto, nao debitar */
           IF nvl(rw_cde.nrdocmto,0) > 0 THEN
             vr_vlsomato := 0;
+            vr_vlresgat := 0;
           ELSE
             /* 4º cursor para verificar se existe boleto pago pendente de processamento, nao debitar */
                 OPEN cr_ret( pr_cdcooper => rw_crappep.cdcooper
@@ -797,6 +863,7 @@ BEGIN
             /* 6º se existir boleto de contrato pago pendente de processamento, nao debitar */
                 IF nvl(rw_ret.nrdocmto,0) > 0 THEN
               vr_vlsomato := 0;
+              vr_vlresgat := 0;
             END IF;
 
           END IF;
@@ -809,10 +876,11 @@ BEGIN
 
         IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
           vr_vlsomato := 0;
+          vr_vlresgat := 0;
         END IF;
 
 
-        IF vr_vlsomato <= 0 THEN
+        IF (vr_vlsomato + nvl(vr_vlresgat,0)) <= 0 THEN
           /* Sem nada para pagar */
           gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => 1
@@ -904,14 +972,27 @@ BEGIN
                vr_vlsomato:= nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0);
           END IF;
 
+          IF nvl(vr_vlresgat,0) = 0 THEN
+            -- Log sem resgate
+            vr_dstransa := 'Efetiva parcela atraso, contrato: ' ||rw_crappep.nrctremp
+                        || '  Saldo em ' ||rw_crapdat.dtmvtoan || ': ' 
+                        || to_char(nvl(vr_vlsomato, 0),'fm999G999G990D00')||'  A Pagar: ' 
+                        || to_char(nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0),'fm999G999G990D00');
+          ELSE
+            -- LOG com resgate
+            vr_dstransa := 'Efetiva parcela atraso, contrato: ' ||rw_crappep.nrctremp
+                        || '  Saldo em ' ||rw_crapdat.dtmvtoan || ': ' 
+                        || to_char(nvl(vr_vlsomato, 0),'fm999G999G990D00')
+                        || ' Resgate necessário de: ' 
+                        || to_char(nvl(vr_vlresgat, 0),'fm999G999G990D00') || '  A Pagar: ' 
+                        || to_char(nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0),'fm999G999G990D00');
+          END IF;
+
         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                             ,pr_cdoperad => 1
                             ,pr_dsorigem => 'AYLLOS'
                             ,pr_dscritic => null
-                            ,pr_dstransa => 'Efetiva parcela atraso, contrato: ' ||rw_crappep.nrctremp||
-                                            '  Saldo em ' ||rw_crapdat.dtmvtoan || ': ' ||
-                                            to_char(nvl(vr_vlsomato, 0),'fm999G999G990D00')||'  A Pagar: ' ||
-                                            to_char(nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0),'fm999G999G990D00')
+                              ,pr_dstransa => vr_dstransa
                             ,pr_dttransa => trunc(sysdate)
                             ,pr_flgtrans => 1
                             ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
@@ -924,6 +1005,45 @@ BEGIN
                                   pr_nmdcampo => 'Saldo',
                                   pr_dsdadant => to_char(nvl(vr_vlsomato_tmp,0),'fm999G999G990D00'),
                                   pr_dsdadatu => to_char(vr_vlsomato,'fm999G999G990D00'));
+
+          -- Se possuir valor de resgate
+          IF NVL(vr_vlresgat,0) > 0 THEN
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid,
+                                      pr_nmdcampo => 'Resgate:',
+                                      pr_dsdadant => null,
+                                      pr_dsdadatu => to_char(vr_vlresgat,'fm999G999G990D00'));
+          END IF;
+
+        END IF;
+
+        -- Se possuir valor de resgate
+        IF nvl(vr_vlresgat,0) > 0 THEN
+
+          -- Acionar rotina de calculo de dias em atraso
+          vr_qtdiaatr := EMPR0001.fn_busca_dias_atraso_epr(pr_cdcooper => pr_cdcooper
+                                                          ,pr_nrdconta => rw_crappep.nrdconta
+                                                          ,pr_nrctremp => rw_crappep.nrctremp
+                                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                          ,pr_dtmvtoan => rw_crapdat.dtmvtoan);
+
+          -- Acionaremos rotina para solicitar o resgate afim de cobrir os valores negativos
+          BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => rw_crappep.idcobope
+                                               ,pr_flgerlog => 1
+                                               ,pr_cdoperad => '1'
+                                               ,pr_idorigem => 5
+                                               ,pr_cdprogra => pr_nmdatela
+                                               ,pr_qtdiaatr => vr_qtdiaatr
+                                               ,pr_vlresgat => vr_vlresgat
+                                               ,pr_dscritic => vr_dscritic);
+          -- Em caso de erro
+          IF TRIM(vr_dscritic) IS NOT NULL THEN
+            --Sair do programa
+            RAISE vr_exc_saida;
+          ELSE
+            -- Incrementar ao saldo o total resgatado
+            vr_vlsomato := vr_vlsomato + vr_vlresgat; 
+          END IF;
+
         END IF;
 
         --Efetivar Pagamento da Parcela Atrasada

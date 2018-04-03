@@ -3,7 +3,7 @@
 	/***************************************************************************
 	 Fonte: principal.php                                             
 	 Autor: David                                                     
-	 Data : Março/2010                   Última Alteração: 01/12/2017
+	 Data : Março/2010                   Última Alteração: 29/01/2018
 	                                                                  
 	 Objetivo  : Mostrar opcao Principal da rotina de Poupanças da    
 	             tela ATENDA                                          
@@ -17,7 +17,12 @@
 	             30/09/2015 - Ajuste para inclusão das novas telas "Produtos"
 						     (Gabriel - Rkam -> Projeto 217).	
 
+                 27/11/2017 - Inclusao do valor de bloqueio em garantia.
+                              PRJ404 - Garantia Empr.(Odirlei-AMcom) 
+						  
 				 01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+						  
+                 29/01/2018 - Ajuste no layout dos campos de valor de bloqueio.
 						  
 	***************************************************************************/
 	
@@ -135,6 +140,28 @@
 		exibeErro($xmlObjBlqJud->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
+    $xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "  <nrdconta>".$nrdconta."</nrdconta>";    
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    $xmlResult = mensageria($xml, "BLOQ0001", "CALC_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
+
+    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        if ($msgErro == "") {
+            $msgErro = $xmlObj->roottag->tags[0]->cdata;
+        }
+
+        exibeErro($msgErro);
+        exit();
+    }
+
+    $registros = $xmlObj->roottag->tags[0]->tags;
+    $vlblqpou  = getByTagName($registros, 'vlblqpou');	
+    
 ?>
 <?/**/?>
 <div id="divPoupancasPrincipal">
@@ -188,9 +215,15 @@
 		</table>
 	</div>
 	
-	<ul class="complemento">
-		<li id="VlBloq" class="txtNormalBold" align="left" >Valor Bloq. Judicial:</li>
-		<li id="VlBloq"><? echo number_format(str_replace(",",".", $vlbloque),2,",","."); ?></li>
+	<ul class="complemento" align="left">
+		<div style="float: left; text-align: left; width: 50%;">
+			<label class="txtNormalBold">Valor Bloq. Judicial:</label>
+			<label><? echo number_format(str_replace(",",".", $vlbloque),2,",","."); ?></label>
+		</div>
+		<div style="float: right; text-align: right; width: 50%;">
+			<label class="txtNormalBold">Valor Bloq. Garantia:</label>
+			<label><? echo number_format(str_replace(",",".", $vlblqpou),2,",","."); ?></label>
+		</div>
 	</ul>
 	
 	<div id="divBotoes">

@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps459(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes     
-   Data    : Novembro/2005                     Ultima atualizacao: 25/08/2015
+   Data    : Novembro/2005                     Ultima atualizacao: 25/10/2017
 
    Dados referentes ao programa:
 
@@ -37,6 +37,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps459(pr_cdcooper IN crapcop.cdcooper%TY
                             tari0001.pc_cria_lan_auto_tarifa, projeto de 
                             Tarifas-218(Jean Michel)
                             
+               25/10/2017 - Inclusao de regra para aditivos de
+                            emprestimo/financiamento ou aplicacao de terceiro.
+                            (Jaison/Marcos Martini - PRJ404)
+
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -58,6 +62,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps459(pr_cdcooper IN crapcop.cdcooper%TY
     SELECT adt.nrdconta
           ,adt.nrctremp
           ,adt.cdaditiv
+          ,adt.tpctrato
           ,ROW_NUMBER () OVER (PARTITION BY adt.nrdconta ORDER BY adt.nrdconta) nrseq
           ,COUNT(1) OVER (PARTITION BY adt.nrdconta ORDER BY adt.nrdconta) qtreg
      FROM crapadt adt
@@ -77,6 +82,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps459(pr_cdcooper IN crapcop.cdcooper%TY
      WHERE crapass.cdcooper = pr_cdcooper
        AND crapass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;  
+
+  -- Buscar configuracao da garantia de limite
+  CURSOR cr_gar_wpr(pr_cdcooper IN crawepr.cdcooper%TYPE
+                   ,pr_nrdconta IN crawepr.nrdconta%TYPE
+                   ,pr_nrctremp IN crawepr.nrctremp%TYPE) IS
+    SELECT gar.nrconta_terceiro
+      FROM tbgar_cobertura_operacao gar
+          ,crawepr wpr
+    WHERE wpr.idcobope = gar.idcobertura
+      AND wpr.cdcooper = pr_cdcooper
+      AND wpr.nrdconta = pr_nrdconta
+      AND wpr.nrctremp = pr_nrctremp;
+
+  -- Buscar configuracao da garantia de emprestimo/financiamento
+  CURSOR cr_gar_lim(pr_cdcooper IN craplim.cdcooper%TYPE
+                   ,pr_nrdconta IN craplim.nrdconta%TYPE
+                   ,pr_nrctrlim IN craplim.nrctrlim%TYPE
+                   ,pr_tpctrlim IN craplim.tpctrlim%TYPE) IS
+    SELECT gar.nrconta_terceiro
+      FROM tbgar_cobertura_operacao gar
+          ,craplim lim
+    WHERE lim.idcobope = gar.idcobertura
+      AND lim.cdcooper = pr_cdcooper
+      AND lim.nrdconta = pr_nrdconta
+      AND lim.nrctrlim = pr_nrctrlim
+      AND lim.tpctrlim = pr_tpctrlim;
 
   ------------------------------- VARIAVEIS -------------------------------
   -- Código do programa
@@ -102,6 +133,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps459(pr_cdcooper IN crapcop.cdcooper%TY
   vr_vltarifa crapfco.vltarifa%TYPE;
   vr_cdbattar VARCHAR2(100);
   vr_valor    NUMBER  := 0;
+  vr_nrconta_terceiro tbgar_cobertura_operacao.nrconta_terceiro%TYPE;
 
   -- Listas utilizadas para carga de tarifas
   vr_lstarifa VARCHAR2(2000);
@@ -182,7 +214,9 @@ BEGIN
                  'SUBSTVEIPF;SUBSTVEIPJ;' || -- Aditivo efetuuando substituicao de veiculo             
                  'GARANVEIPF;GARANVEIPJ;' || -- Inclusao interveniente garantidor de veiculo           
                  'SUBROCNPPF;SUBROCNPPJ;' || -- Sub-rogacao c/ nota promissoria                        
-                 'SUBROSNPPF;SUBROSNPPJ';    -- Sub-rogacao s/ nota promissoria                        
+                 'SUBROSNPPF;SUBROSNPPJ;' || -- Sub-rogacao s/ nota promissoria
+                 'APLICVINPF;APLICVINPJ;' || -- Aditivo de Garantia aplicacao vinculada de emprestimo
+                 'APLICTERPF;APLICTERPJ';    -- Aditivo de Garantia aplicacao vinculada terceiro
 
   -- 1 - Pessoa Fisica    2 - Pessoa Juridica 
   vr_lspessoa := '1;2;' ||
@@ -192,6 +226,8 @@ BEGIN
                  '1;2;' ||
                  '1;2;' ||
                  '1;2;' || 
+                 '1;2;' ||
+                 '1;2;' ||
                  '1;2;';  
     
   vr_lsaditiv := '1;1;' || -- 1 - Aditivo de alteracao da data de debito               
@@ -201,10 +237,12 @@ BEGIN
                  '5;5;' || -- 5 - Aditivo efetuuando substituicao de veiculo           
                  '6;6;' || -- 6 - Inclusao interveniente garantidor de veiculo         
                  '7;7;' || -- 7 - Sub-rogacao c/ nota promissoria                      
-                 '8;8';    -- 8 - Sub-rogacao s/ nota promissoria     
+                 '8;8;' || -- 8 - Sub-rogacao s/ nota promissoria
+                 '9;9;' || -- 2 - Aditivo de aplicacao vinculada de emprestimo
+                 '10;10';  -- 3 - Aditivo de aplicacao vinculada terceiro
                   
   -- Popula a PL/TABLE de tarifas
-  FOR ind IN 1..16 LOOP
+  FOR ind IN 1..20 LOOP
      
     -- Inicializa as variaveis
     vr_cdhistor := 0;      
@@ -303,6 +341,38 @@ BEGIN
     
     --Fechar Cursor
     CLOSE cr_crapass;
+    
+    -- Se for aditivo de emprestimo ou aplicacao de terceiro
+    IF rw_crapadt.cdaditiv = 9 THEN
+
+      -- Inicializa
+      vr_nrconta_terceiro := 0;
+
+      -- Se for Emprestimo/Financiamento
+      IF rw_crapadt.tpctrato = 90 THEN
+        -- Buscar configuracao da garantia por Emprestimo/Financiamento
+        OPEN cr_gar_wpr(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => rw_crapadt.nrdconta
+                       ,pr_nrctremp => rw_crapadt.nrctremp);
+        FETCH cr_gar_wpr INTO vr_nrconta_terceiro;
+        CLOSE cr_gar_wpr;
+      ELSE
+        -- Buscar configuracao da garantia por limite
+        OPEN cr_gar_lim(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => rw_crapadt.nrdconta
+                       ,pr_nrctrlim => rw_crapadt.nrctremp
+                       ,pr_tpctrlim => rw_crapadt.tpctrato);
+        FETCH cr_gar_lim INTO vr_nrconta_terceiro;
+        CLOSE cr_gar_lim;
+      END IF;
+
+      -- Se garantia vinculada for de conta terceiro
+      IF NVL(vr_nrconta_terceiro,0) <> 0 THEN
+        -- Mudamos o tipo aditivo apenas para buscar tarifa correta
+        rw_crapadt.cdaditiv := 10;
+      END IF;
+
+    END IF;
     
     -- Monta indice da PL/TABLE
     vr_indice_tarifa := LPAD(rw_crapass.inpessoa,5,'0') ||
@@ -438,4 +508,3 @@ EXCEPTION
     ROLLBACK;
 END pc_crps459;
 /
-

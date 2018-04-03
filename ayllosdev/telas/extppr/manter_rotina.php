@@ -6,6 +6,8 @@
  * OBJETIVO     : Rotina para manter as operações da tela EXTPPR
  * --------------
  * ALTERAÇÕES   : 05/06/2013 - Incluir b1wgen0155 e tratamento para listar cVlbloque (Lucas R.)
+ *
+ *                27/11/2017 - Inclusao do valor de bloqueio em garantia. PRJ404 - Garantia Empr.(Odirlei-AMcom)  
  * -------------- 
  */
 ?> 
@@ -117,6 +119,28 @@
 		exibeErro($xmlObjBlqJud->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
 	
+    $xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "  <nrdconta>".$nrdconta."</nrdconta>";    
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    $xmlResult = mensageria($xml, "BLOQ0001", "CALC_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
+
+    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        if ($msgErro == "") {
+            $msgErro = $xmlObj->roottag->tags[0]->cdata;
+        }
+
+        exibeErro($msgErro);
+        exit();
+    }
+
+    $registros = $xmlObj->roottag->tags[0]->tags;
+    $vlblqpou  = getByTagName($registros, 'vlblqpou');	
+	
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Retorno
 	//----------------------------------------------------------------------------------------------------------------------------------
@@ -128,6 +152,7 @@
 		echo "cDtvctopp.val('".getByTagName($registro,'dtvctopp')."');";
 		echo "cDddebito.val('".getByTagName($registro,'dddebito')."');";
 		echo "cVlbloque.val('".formataMoeda($vlbloque)."');";
+        echo "cVlblqpou.val('".formataMoeda($vlblqpou)."');";
 		echo "cVlrdcapp.val('".formataMoeda(getByTagName($registro,'vlrdcapp'))."');";
 		echo "controlaLayout();";
 	} else if ( $operacao == 'BL' ) {

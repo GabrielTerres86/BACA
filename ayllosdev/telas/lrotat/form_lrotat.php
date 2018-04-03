@@ -6,10 +6,12 @@
 	 * OBJETIVO     : Formulario de informações.
 	 * --------------
 	 * ALTERAÇÕES   : 12/07/2016 - Ajustes para finzaliZação da conversáo 
-                                   (Andrei - RKAM)
-
-					  02/08/2016 - Ajuste para alimentar corretamente o campo tipo de limite
-								   (Adriano).
+     *                             (Andrei - RKAM)
+	 *
+	 *				  02/08/2016 - Ajuste para alimentar corretamente o campo tipo de limite
+	 *							   (Adriano).
+	 *
+	 *				  10/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia. (Lombardi - PRJ404)
 	 * --------------
 	 */	
 
@@ -87,6 +89,19 @@
 			<!-- Direita -->
 			<label for="txmensal"><? echo utf8ToHtml("Taxa Mensal (%):"); ?></label>
 			<input  type="text" id="txmensal" name="txmensal"value="<?echo getByTagName($linhas->tags,'txmensal'); ?>" > 
+
+			<br />
+			
+			<label for="tpctrato"><? echo utf8ToHtml("Modelo:"); ?></label>
+			<select  id="tpctrato" name="tpctrato" value="<?echo getByTagName($linhas->tags,'tpctrato'); ?>">
+				<option value="1" <?php if (getByTagName($linhas->tags,'tpctrato') == 1) { ?> selected <?php } ?> >Geral</option>
+				<option value="4" <?php if (getByTagName($linhas->tags,'tpctrato') == 4) { ?> selected <?php } ?> >Aplica&ccedil;&atilde;o</option>
+			</select>
+			
+			<br />
+			
+			<label for="permingr"><? echo utf8ToHtml("% M&iacute;nimo Garantia:"); ?></label>
+			<input  type="text" id="permingr" name="permingr"value="<?echo getByTagName($linhas->tags,'permingr') ? getByTagName($linhas->tags,'permingr') : '0,00'; ?>" > 
 
 			<br />
 

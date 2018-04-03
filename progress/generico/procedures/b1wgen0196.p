@@ -13,12 +13,15 @@
                22/06/2017 - Ajuste para calcular o risco da operacao de acordo
                             com a quantidade de dias em atraso. (Anderson)
 
+               15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
+
 	           12/10/2017 - Projeto 410 - passar como parametro da calcula_iof o
 			                numero do contrato (Jean - Mout´s)
 
                21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                             grava-proposta-completa. PRJ402 - Integracao CDC
                             (Reinert)						                  
+							  
                24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
 
  ..............................................................................*/
@@ -620,11 +623,11 @@ PROCEDURE grava_dados:
                         INPUT aux_flgerlog,              /* par_flgerlog LOGI */
                         INPUT aux_dsjusren,              /* par_dsjusren CHAR */
                         INPUT par_dtmvtolt,              /* par_dtlibera DATE */
+                        INPUT 0, /* idcobope */
                         /* INPUT 0,                         cdcoploj */
                         /* INPUT 0,                         nrcntloj */
                         INPUT 0,						 /* idfiniof */
 						INPUT "",                        /* dscatbem */
-     
                        OUTPUT TABLE tt-erro,
                        OUTPUT TABLE tt-msg-confirma,
                        OUTPUT aux_recidepr,

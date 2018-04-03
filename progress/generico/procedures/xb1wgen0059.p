@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0059.p
     Autor   : Jose Luis
-    Data    : Marco/2010                   Ultima atualizacao: 15/07/2017
+    Data    : Marco/2010                   Ultima atualizacao: 31/10/2017
 
     Objetivo  : BO de Comunicacao XML x BO Generica de Buscas (b1wgen0059.p)
 
@@ -70,6 +70,9 @@
                              (Jaison/James - PRJ298)
 
 				15/07/2017 - Nova procedure. busca-crapass para listar os associados. (Mauro).
+
+                31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
+
 .............................................................................*/
 
                                                                              
@@ -203,6 +206,7 @@ DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
 DEF VAR aux_nmprimtl AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdrelacionamento AS INTE                                   NO-UNDO.
 DEF VAR aux_dsrelacionamento AS CHAR                                   NO-UNDO.
+DEF VAR aux_tpctrato AS INTE                                           NO-UNDO.
 DEF VAR aux_tpprodut AS INTE INIT ?                                    NO-UNDO.
 
 { sistema/generico/includes/var_internet.i }
@@ -360,6 +364,7 @@ PROCEDURE valores_entrada:
             WHEN "nmprimtl" THEN aux_nmprimtl = tt-param.valorCampo.            
             WHEN "cdrelacionamento" THEN aux_cdrelacionamento = INTE(tt-param.valorCampo).
             WHEN "dsrelacionamento" THEN aux_dsrelacionamento = tt-param.valorCampo.
+            WHEN "tpctrato" THEN aux_tpctrato = INT(tt-param.valorCampo).
             WHEN "tpprodut" THEN aux_tpprodut = INT(tt-param.valorCampo).
                 
         END CASE.
@@ -2016,6 +2021,7 @@ PROCEDURE busca_aditivos:
         ( INPUT aux_cdcooper,
           INPUT aux_nrdconta,
           INPUT aux_nrctremp,
+          INPUT aux_tpctrato,
           INPUT aux_nrregist, 
           INPUT aux_nriniseq, 
          OUTPUT aux_qtregist, 

@@ -14,6 +14,8 @@
 	//***			   10/03/2015 - Inclusao de condicao para confirmacao  ***//
 	//***							de resgate. (Jean Michel)			   ***//
 	//***                                                                  ***//
+    //***             18/12/2017 - P404 - Inclusão de Garantia de Cobertura das***//
+    //***                          Operações de Crédito (Augusto / Marcos (Supero))***//
 	//************************************************************************//
 	
 	session_start();
@@ -47,6 +49,7 @@
 	//$dadosPrc = str_replace(".",",",str_replace(",","",$_POST["dadosPrc"]));
 	$dadosPrc = $_POST["dadosPrc"];
 	$formargt = $_POST["formargt"];
+    $tdTotSel = $_POST["tdTotSel"];
 	
 	if($cdoperad == ""){
 		$cdoperad = $glbvars["cdoperad"];
@@ -71,6 +74,46 @@
 	if ($flmensag <> "yes" && $flmensag <> "no") {
 		exibeErro("Identificador de resgate inv&aacute;lido.");
 	}
+	
+  // --------
+  
+  //nrdconta,nraplica,idseqttl,cdprogra,dtmvtolt,vlresgat,flgerlog,innivblq,vlsldinv
+
+  // Monta o xml de requisição
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "	<Dados>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "		<nraplica>0</nraplica>";
+	$xml .= "		<idseqttl>1</idseqttl>";
+    $xml .= "		<cdprogra>ATENDA</cdprogra>";
+	$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xml .= "		<vlresgat>".str_replace(",",".",$tdTotSel)."</vlresgat>";
+	$xml .= "		<flgerlog>1</flgerlog>";
+	$xml .= "		<innivblq>0</innivblq>";
+    $xml .= "		<vlsldinv>0</vlsldinv>";
+	$xml .= "	</Dados>";
+	$xml .= "</Root>";
+		
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xml, "ATENDA", "VALID_RESG_APLICA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+  	
+	// Cria objeto para classe de tratamento de XML
+	$xmlObj = getObjectXML($xmlResult);
+  
+	// Se ocorrer um erro, mostra crítica
+	if(strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){	
+		$msgErro = $xmlObj->roottag->tags[0]->cdata;
+		
+		if($msgErro == null || $msgErro == ''){
+			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		}
+		
+		exibeErro($msgErro);			
+		exit();
+	}  
+  
+  // ---------
 	
 	// Monta o xml de requisição
 	$xmlResgate  = "";

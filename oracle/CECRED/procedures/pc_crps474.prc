@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Gabriel
-  Data    : Fevereiro/2012.                    Ultima atualizacao: 23/06/2017
+  Data    : Fevereiro/2012.                    Ultima atualizacao: 21/12/2017
 
   Dados referentes ao programa:
 
@@ -119,6 +119,8 @@ BEGIN
               11/04/2017 - Logar início e fim do job apenas com pr_cdagenci = 0 (não paralelo) (Carlos)
 
               23/06/2017 - #674963 Não logar críticas 995 (Carlos)
+
+              21/12/2017 - Recuperacao do valor de resgate. (Jaison/Marcos Martini - PRJ404)
 
     ............................................................................. */
 
@@ -302,6 +304,7 @@ BEGIN
     --Variaveis Locais
     vr_vlapagar NUMBER;
     vr_vlsomato NUMBER;
+    vr_vlresgat NUMBER;
     vr_vljurmes NUMBER;
     vr_dtultdia DATE;
     vr_dtcalcul DATE;
@@ -809,6 +812,7 @@ BEGIN
                                              ,pr_vlapagar => vr_vlapagar                   --> Valor Pagar
                                              ,pr_tab_crawepr => vr_tab_crawepr             --> Tabela com Contas e Contratos
                                              ,pr_vlsomato => vr_vlsomato                   --> Soma Total
+                                             ,pr_vlresgat => vr_vlresgat                   --> Soma
                                              ,pr_tab_erro => vr_tab_erro                   --> tabela Erros
                                              ,pr_des_reto => vr_des_erro                   --> Indicador OK/NOK
                                              ,pr_tab_msg_confirma => vr_tab_msg_confirma); --> Tabela Confirmacao

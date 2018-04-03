@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 15/01/2013
  * OBJETIVO     : Mostrar tela BLQRGT
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 16/11/2017 - Tela remodelada para o projeto 404 (Lombardi).
  *				  
  * --------------
  */
@@ -34,7 +34,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="blqrgt.js"></script>
+		<script type="text/javascript" src="blqrgt.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -86,14 +86,12 @@
 																		
 																		<div id="divRotina"></div>
 																		<div id="divUsoGenerico"></div>
-																		
 																		<div id="divTela">
 																			<? include('form_cabecalho.php'); ?>
+																			<div id="divBloqueios"></div>
 																			<div id="divBotoes" style="margin-top:5px; margin-bottom :10px;display:none">
 																				<a href="#" class="botao" id="btVoltar"  onclick="btnVoltar(); return false;">Voltar</a>
-																				<a href="#" class="botao" id="btSalvar"  onClick="btnContinuar(); return false;">Continuar</a>
 																			</div>
-																		
 																		</div>
 																	</td>
 																</tr>

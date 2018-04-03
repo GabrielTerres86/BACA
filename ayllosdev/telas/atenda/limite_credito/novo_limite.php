@@ -1,4 +1,4 @@
-<?php
+<?
 /*
  * FONTE        : novo_limite.php
  * CRIAÇÃO      : David (CECRED)
@@ -15,11 +15,17 @@
  * 002: [23/09/2011] Guilherme       (CECRED) : Adaptar para Rating Singulares
  * 003: [09/07/2012] Jorge           (CECRED) : Retirado campo "redirect"
  * 004: [28/08/2012] Lucas R         (CECRED) : Alimentado variavel flgProposta
- * 005: [23/11/2012] Adriano		 (CECRED) : Alterado a função onClick do botao btSalvar na divDadosAvalistas de validarAvalistas para buscaGrupoEconomico.
+ * 005: [23/11/2012] Adriano		 (CECRED) : Alterado a função onClick do botao btSalvar na 
+											    divDadosAvalistas de validarAvalistas para buscaGrupoEconomico.
  * 006: [06/04/2015] Jonata            (RKAM) :	Consultas automatizadas.							
- * 007: [01/06/2015] Lucas Reinert	 (CECRED) : Alterado para apresentar mensagem de confirmacao de proposta para menores nao emancipados.
+*  007: [01/06/2015] Lucas Reinert	 (CECRED) : Alterado para apresentar mensagem de confirmacao de proposta para
+*												menores nao emancipados. (Reinert)
  * 008: [25/07/2016] Carlos R.		 (CECRED) : Corrigi a forma de recuperacao de dados do XML de retorno. SD 479874.
+* 009: [05/12/2017] Lombardi         (CECRED) : Gravação do campo idcobope. Projeto 404
  */	  
+?>
+
+<?
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -106,6 +112,7 @@
 	$nrcpfcjg = getByTagName($limite,"nrcpfcjg");
 	$nrctacje = getByTagName($limite,"nrctacje");
 	$dtconbir = getByTagName($limite,"dtconbir");
+	$idcobope = getByTagName($limite,"idcobope");
     
 	// Verifica se existe uma proposta cadastrada
 	$flgProposta = (intval($nrctrlim) > 0 && doubleval($vllimite) > 0) ? true : false;
@@ -129,7 +136,7 @@
 		$fncImpressao = "acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idPrincipal.",'".$glbvars["opcoesTela"][$idPrincipal]."');";
 	}
 
-	$voltaAvalista  = "lcrShowHideDiv('divDadosRating','divDadosAvalistas');return false"; 
+	$voltaAvalista  = "$('#frmNovoLimite').css('width', 515);lcrShowHideDiv('divDadosRating','divDadosAvalistas');return false"; 
 	$metodoAvanca   = "validaDadosRating();";
 
 	if ($cddopcao != 'N') { // Consulta
@@ -142,18 +149,22 @@
 <script type="text/javascript">
 	var metodoBlock     = "blockBackground(parseInt($('#divRotina').css('z-index')))";		
 	var metodoCancel    = "lcrShowHideDiv('divDadosObservacoes','divDadosRating');";
-	var metodoContinue  = "<?php echo $metodoContinue; ?>";
-	var metodoAvanca	= "<?php echo $metodoAvanca; ?>";
-	var metodoSucesso   = "<?php echo $fncImpressao; ?>";
-	    flgProposta		= "<?php echo $flgProposta;  ?>";
-	var nrgarope        = "<?php echo $nrgarope;  ?>";
-	var nrinfcad        = "<?php echo $nrinfcad;  ?>";		
-	var nrliquid        = "<?php echo $nrliquid;  ?>";
-	var nrpatlvr        = "<?php echo $nrpatlvr;  ?>";
-	var nrperger        = "<?php echo $nrperger;  ?>";	
-	var nrcpfcjg        = "<?php echo $nrcpfcjg;  ?>";
-	var nrctacje        = "<?php echo $nrctacje;  ?>";
-	dtconbir            = "<?php echo $dtconbir;  ?>";
+	var metodoContinue  = "<? echo $metodoContinue; ?>";
+	var metodoAvanca	= "<? echo $metodoAvanca; ?>";
+	var metodoSucesso   = "<? echo $fncImpressao; ?>";
+	var flgProposta		= "<? echo $flgProposta;  ?>";
+		
+		
+	var nrgarope        = "<? echo $nrgarope;  ?>";
+	var nrinfcad        = "<? echo $nrinfcad;  ?>";		
+	var nrliquid        = "<? echo $nrliquid;  ?>";
+	var nrpatlvr        = "<? echo $nrpatlvr;  ?>";
+	var nrperger        = "<? echo $nrperger;  ?>";	
+	
+	var nrcpfcjg        = "<? echo $nrcpfcjg;  ?>";
+	var nrctacje        = "<? echo $nrctacje;  ?>";
+	
+	dtconbir            = "<? echo $dtconbir;  ?>";
 		
 	if(flgProposta){
 		changeAbaPropLabel("Alterar Limite");
@@ -161,9 +172,9 @@
 		changeAbaPropLabel("Novo Limite");
 	}
 		
-	<?php if ($cddopcao != 'N') { ?>
+	<? if ($cddopcao != 'N') { ?>
 		$("input, textarea","#frmNovoLimite").desabilitaCampo();
-	<?php } ?>
+	<?} ?>
 			
 </script>
 
@@ -173,43 +184,44 @@
 			<form action="" name="frmNovoLimite" id="frmNovoLimite" method="post" class="formulario condensado" onSubmit="return false;" >
 			
 			<div id="divDadosLimite">
-				<?php include('form_limite_credito.php') ?>
+				<? include('form_limite_credito.php') ?>
 			</div>
 			
 			
 			<div id="divDadosRenda">
-				<?php include('form_dados_renda.php') ?>
+				<? include('form_dados_renda.php') ?>
 			</div>
+      
+      <div id="divUsoGAROPC"></div>
+  
+      <div id="divFormGAROPC"></div>      
 			
 			<div id="divDadosObservacoes">
-				<?php include('form_observacoes.php') ?>
+				<? include('form_observacoes.php') ?>
 			</div>
 			
 			<div id="divDadosAvalistas">
-			    <?php include('../../../includes/avalistas/form_avalista.php'); ?>
+			    <? include('../../../includes/avalistas/form_avalista.php'); ?>
 				<div id="divBotoes">
 					<input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="<? echo $voltaAvalista; ?>">
 					
-					<!-- Se for novo limite ou alteracao -->
-					<?php if ($cddopcao == 'N') {  ?>
+					<? if ($cddopcao == 'N') { // Se for novo limite ou alteracao  ?>
 						<input type="image" id="btCancelar" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="<? echo $fncPrincipal; ?>return false;">	
-						<!-- Alteracao -->
-						<?php if ($flgProposta) { ?>
+						<? if ($flgProposta) { // Alteracao ?>
  							<input type="image" id="btContinuar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('A_PROTECAO_AVAL');return false;">	
-						<!-- Inclusao -->
-						<?php } else { ?>			  
+						<? } else {			   // Inclusao ?>			  
 							<input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick="buscaGrupoEconomico();return false;">	
-						<?php } ?>
-					<!-- Consulta -->	
-					<?php } else { ?>
+						<? } ?>
+						
+					<? } else { // Consulta ?>
 						<input type="image" id="btContinuar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_PROTECAO_AVAL'); return false;">
-					<?php } ?>
+					<? } ?>
 				
 				</div>				
 			</div>
 			
 			</form>			
-			<?php
+			<?
 				// Variável que indica se é uma operação para cadastrar nova proposta ou consulta - Utiliza na include rating_busca_dados.php
 				$cdOperacao = ($cddopcao == 'N') ? 'I' : 'C';	
 				$operacao   = ($flgProposta) ? 'A_PROT_CRED' : 'I_PROT_CRED' ;
@@ -218,7 +230,8 @@
 				include('../../../includes/rating/rating_busca_dados.php');
 			?>
 			
-			<form action="<?php echo $UrlSite; ?>telas/atenda/limite_credito/imprimir_dados.php" name="frmImprimir" id="frmImprimir" method="post">
+			
+			<form action="<? echo $UrlSite; ?>telas/atenda/limite_credito/imprimir_dados.php" name="frmImprimir" id="frmImprimir" method="post">
 				<input type="hidden" name="nrdconta" id="nrdconta" value="">
 				<input type="hidden" name="nrctrlim" id="nrctrlim" value="">			
 				<input type="hidden" name="idimpres" id="idimpres" value="">
@@ -227,16 +240,41 @@
 				<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">		
 			</form>		
 			
+      <div id="divBotoesGAROPC">
+        <input type="image" id="btnVoltarGAROPC" name="btnVoltarGAROPC" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
+        <input type="image" id="btnContinuarGAROPC" name="btnContinuarGAROPC" src="<? echo $UrlImagens; ?>botoes/continuar.gif" />
+      </div>
+			
 		</td>
 	</tr>			
 </table>
-<script type="text/javascript">
+
+<script>
+
+		
 	$("#divDadosRenda").css("display","none");
+  $("#divFormGAROPC").css("display","none");
+  $("#divBotoesGAROPC").css("display", "none");
 	$("#divDadosObservacoes").css("display","none");
 	$("#divDadosAvalistas").css("display","none");
 
 	$("#tdTitDivDadosLimite").html("DADOS DO " + strTitRotinaUC);
 	$("#divDadosLimite").css("display","block");
+
+  $("#btnVoltarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
+    $("#divUsoGAROPC").empty();
+    $("#divFormGAROPC").empty();
+    $("#frmNovoLimite").css("width", 515);
+    $("#divDadosRenda").css("display", "block");
+    $("#divFormGAROPC").css("display", "none");
+    $("#divBotoesGAROPC").css("display", "none");
+		return false;
+	});
+  
+  $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
+    gravarGAROPC('idcobert','frmNovoLimite','$("#divDadosObservacoes").css("display", "block");$("#divFormGAROPC").css("display", "none");$("#divBotoesGAROPC").css("display", "none");$("#frmNovoLimite").css("width", 515);bloqueiaFundo($("#divDadosObservacoes"));');
+    return false;
+	});
 
 	// Se for inclusao/alteracao, habilitar avalista
 	habilitaAvalista(<? echo ($cddopcao == 'N') ?>);
@@ -245,5 +283,6 @@
 
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);
+	
 </script>												
 

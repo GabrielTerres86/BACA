@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 30/09/2011
  * OBJETIVO     : Capturar dados para tela ADITIV
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 01/11/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
  * -------------- 
  */ 
 ?>
@@ -25,6 +25,7 @@
 	$nraditiv 			= (isset($_POST['nraditiv'])) ? $_POST['nraditiv'] : 0  ;
 	$dtmvtolx 			= (isset($_POST['dtmvtolx'])) ? $_POST['dtmvtolx'] : '' ;
 	$cdaditiv 			= (isset($_POST['cdaditiv'])) ? $_POST['cdaditiv'] : 0  ;
+	$tpctrato           = (isset($_POST['tpctrato'])) ? $_POST['tpctrato'] : 0  ;
 	$nriniseq 			= (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0  ;
 	$nrregist 			= (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0  ;
 
@@ -58,6 +59,7 @@
 	$xml .= '		<dtmvtolx>'.$dtmvtolx.'</dtmvtolx>';	
 	$xml .= '		<nraditiv>'.$nraditiv.'</nraditiv>';	
 	$xml .= '		<cdaditiv>'.$cdaditiv.'</cdaditiv>';	
+	$xml .= '		<tpctrato>'.$tpctrato.'</tpctrato>';
 	$xml .= '		<nriniseq>'.$nriniseq.'</nriniseq>';	
 	$xml .= '		<nrregist>'.$nrregist.'</nrregist>';	
 	$xml .= "  </Dados>";

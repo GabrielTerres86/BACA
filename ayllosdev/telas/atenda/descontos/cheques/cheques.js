@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Março/2009
  * OBJETIVO     : Biblioteca de funções da subrotina de Descontos de cheques
  * --------------
- * ALTERAÇÕES   : 21/07/2017
+ * ALTERAÇÕES   : 11/12/2017
  * --------------
  * 000: [14/06/2010] David     (CECRED) : Adaptação para RATING
  * 000: [21/09/2010] David	   (CECRED) : Ajuste para enviar impressoes via email para o PAC Sede
@@ -33,7 +33,8 @@
  * 017: [31/05/2017] Odirlei   (AMcom)  : Ajuste para verificar se possui cheque custodiado no dia de hoje. - PRJ300 - Desconto de cheque 
  * 018: [26/06/2017] Jonata     (RKAM)  : Ajuste para rotina ser chamada através da tela ATENDA > Produtos - P364. 
  * 019: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque  
- * 018: [06/02/2018] Mateus Z  (Mouts)  : Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia.
+ * 020: [11/12/2017] Augusto / Marcos (Supero) : P404 - Inclusão de Garantia de Cobertura das Operações de Crédito
+ * 021: [06/02/2018] Mateus Z  (Mouts)  : Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia.
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -46,6 +47,7 @@ var flresghj = 0;    // Variável para armazenar se deseja resgatar os cheques c
 var situacao_limite = ""; // Variável para armazenar a situação do limite atualmente selecionado
 var cd_situacao_lim = 0; // Variável para armazenar o código da situação do limite atualmente selecionado
 var valor_limite = 0; // Variável para armazenar o valor limite do limite atualmente selecionado
+var idcobope = 0; // Variável para armazenar o id da cobertura da garantia da operação
 var idLinhaB   = 0;  // Variável para armazanar o id da linha que contém o bordero selecionado
 var idLinhaL   = 0;  // Variável para armazanar o id da linha que contém o limite selecionado
 var dtrating   = 0;  // Data rating (é calculada e alimentada no cheques_limite_incluir.php)
@@ -172,6 +174,59 @@ function mostraDadosBorderoDscChq(opcaomostra) {
 			$("#divOpcoesDaOpcao3").html(response);
 		}
 	});
+}
+
+function abrirTelaGAROPC(cddopcao) {
+
+    showMsgAguardo('Aguarde, carregando ...');
+
+    var idcobert = normalizaNumero($('#idcobert','#'+nomeForm).val());
+    var codlinha = normalizaNumero($('#cddlinha','#'+nomeForm).val());
+    var vlropera = $('#vllimite','#'+nomeForm).val();
+    
+    var nrctrlim = '';
+    // Se estamos consultando e está em estudo ou se iremos incluir ou se iremos alterar o limite enviaremos o codigo do contrato ativo
+    if ( (cddopcao == 'C' && cd_situacao_lim == 1) || cddopcao == 'I' || cddopcao == 'A') {
+      nrctrlim = normalizaNumero($('#nrcontratoativo').val());
+    }
+    
+    // Se estivermos alterando, porém não houver cobertura é por que estamos alterando algo antigo (devemos criar um novo para estes casos)
+    if (cddopcao == 'A' && idcobert == '') {
+      cddopcao = 'I';
+    }
+  
+
+    // Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/garopc.php',
+        data: {
+            tipaber      : cddopcao,
+            idcobert     : idcobert,
+            nrdconta     : nrdconta,
+            tpctrato     : 2,
+            dsctrliq     : nrctrlim,
+            codlinha     : codlinha,
+            vlropera     : vlropera
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
+            $('#divUsoGAROPC').html(response).hide();
+            // Iremos incluir o conteúdo do form da div oculta dentro da div principal de descontos
+            $("#frmGAROPC", "#divUsoGAROPC").appendTo('#divFormGAROPC');
+            // Iremos remover os botões originais da GAROPC e usar os proprios da tela
+            $("#divBotoes","#frmGAROPC").detach();
+            dscShowHideDiv("divFormGAROPC;divBotoesGAROPC","divDscChq_Limite;divBotoesLimite");
+            bloqueiaFundo($('#divFormGAROPC'));
+            $("#frmDadosLimiteDscChq").css("width", 540);
+        }
+    });
 }
 
 // OPÇÃO CONSULTAR
@@ -412,7 +467,7 @@ function carregaLimitesCheques() {
 }
 
 // Função para seleção do limite
-function selecionaLimiteCheques(id,qtLimites,limite,dssitlim,insitlim,vllimite) {
+function selecionaLimiteCheques(id,qtLimites,limite,dssitlim,insitlim,vllimite,mIdcobope) {
 	var cor = "";
 
 	// Formata cor da linha da tabela que lista os limites de descto cheques
@@ -436,6 +491,7 @@ function selecionaLimiteCheques(id,qtLimites,limite,dssitlim,insitlim,vllimite) 
 			situacao_limite = dssitlim;
 			cd_situacao_lim = insitlim;
 			valor_limite = vllimite;
+			idcobope = mIdcobope;
 		}
 	}
 }
@@ -809,6 +865,7 @@ function gravaLimiteDscChq(cddopcao) {
 			nrender2: normalizaNumero($("#nrender2","#frmDadosLimiteDscChq").val()),
 			complen2: $("#complen2","#frmDadosLimiteDscChq").val(),
 			nrcxaps2: normalizaNumero($("#nrcxaps2","#frmDadosLimiteDscChq").val()),
+            idcobope: normalizaNumero($("#idcobert","#frmDadosLimiteDscChq").val()),
 
 			// Variáveis globais alimentadas na função validaDadosRating em rating.js
 			nrgarope: nrgarope,
@@ -1345,6 +1402,7 @@ function confirmaNovoLimite(cddopera) {
 			vllimite: valor_limite,
 			nrctrlim: nrcontrato,
 			cddopera: cddopera,
+			idcobope: idcobope,
 			redirect: "script_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {

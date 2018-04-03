@@ -43,7 +43,8 @@
  * 032: [23/06/2017] Inclusao dos campos do produto Pos-Fixado. (Jaison/James - PRJ298)
  * 032: [05/10/2017] - Diogo            (MoutS): Adicionado campo vliofcpl no formulário (Projeto 410 - RF 23)
  * 033: [11/10/2017] - Heitor          (Mouts): Liberacao da melhoria 442
- * 034: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 034: [13/12/2017] Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)	 
+ * 035: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  */
 ?>
 
@@ -381,6 +382,7 @@
 			arrayProposta['cdtpempr'] = '<? echo getByTagName($proposta,'cdtpempr'); ?>';
 			arrayProposta['dstpempr'] = '<? echo retiraCharEsp(getByTagName($proposta,'dstpempr')); ?>';
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
+            arrayProposta['idcobope'] = '<? echo getByTagName($proposta,'idcobope'); ?>';
 
             // Se for Pos-Fixado
             if (arrayProposta['tpemprst'] == 2) {

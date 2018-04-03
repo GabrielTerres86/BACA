@@ -12,8 +12,9 @@
  * 003: [17/06/2014] Trocado posicao dos campos "Linha Credito" por "Finalidade". (Reinert)
  * 004: [11/05/2017] Troca de posicao da Linha de Credito e Finalidade. (Jaison/James - PRJ298)
  * 004: [11/10/2017] Liberacao melhoria 442 (Heitor - Mouts)
- * 005: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
- * 006: [24/01/2018] Alteração para exibição do campo DSNIVORI como risco de inclusão (Reginaldo - AMcom)
+ * 005: [13/12/2017] Alteracao da chamada da operacao C_DADOS_AVAL para C_GAROPC. (Jaison/Marcos Martini - PRJ404)
+ * 006: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 007: [24/01/2018] Alteração para exibição do campo DSNIVORI como risco de inclusão (Reginaldo - AMcom)
  */	
  ?>
 
@@ -159,6 +160,6 @@
 <div id="divBotoes">
 	<? if (($operacao == 'C_NOVA_PROP') || ($operacao == 'C_NOVA_PROP_V') ) { ?>
 		<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"   onClick="controlaOperacao('TC'); return false;" />
-		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_DADOS_AVAL'); return false;" />
+		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_GAROPC'); return false;" />
 	<? } ?>
 </div>

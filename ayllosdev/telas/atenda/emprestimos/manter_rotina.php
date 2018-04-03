@@ -31,9 +31,10 @@
  * 021: [05/04/2017] Cadastro dos campos Carencia. (Jaison/James - PRJ298)
  * 021: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
  * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
- * 023: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
- * 024: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
- * 025: [24/01/2018] Processamento do campo DSNIVORI (risco original da proposta) (Reginaldo - AMcom)
+ * 023: [12/05/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
+ * 024: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 025: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 026: [24/01/2018] Processamento do campo DSNIVORI (risco original da proposta) (Reginaldo - AMcom)
  */
 ?>
 
@@ -156,6 +157,7 @@
 	$flgconsu = (isset($_POST['flgconsu'])) ? $_POST['flgconsu'] : '' ;
 	$resposta = (isset($_POST['resposta'])) ? $_POST['resposta'] : '' ;
 	$blqpreap = (isset($_POST['blqpreap'])) ? $_POST['blqpreap'] : '' ;
+    $idcobope = (isset($_POST['idcobope'])) ? $_POST['idcobope'] : '' ;
     $idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : '' ;
     $dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '' ;
 	$vlfinanc = (isset($_POST['vlfinanc'])) ? $_POST['vlfinanc'] : '' ;
@@ -474,6 +476,7 @@
 		$xml .= '		<dsjusren>'.$dsjusren.'</dsjusren>';
 	}
 	$xml .= '		<dtlibera>'.$dtlibera.'</dtlibera>';
+    $xml .= '		<idcobope>'.$idcobope.'</idcobope>';
 	$xml .= '		<idfiniof>'.$idfiniof.'</idfiniof>';
     $xml .= '		<dscatbem>'.$dscatbem.'</dscatbem>';	
 	$xml .= '		<cdcoploj>0</cdcoploj>';

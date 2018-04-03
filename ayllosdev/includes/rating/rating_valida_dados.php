@@ -14,6 +14,11 @@
 	//**                                                                   ***//
 	//***             26/06/2015 - Ajuste para validar quando consulta ao  ***//
     //**               	           conjuge (Gabriel-RKAM).                 ***//
+    //***																   ***//
+    //***             18/12/2017 - P404 - Inclusão de Garantia de Cobertura***//
+    //***                          das Operações de Crédito                ***//
+    //***                          (Augusto / Marcos (Supero))             ***//
+    //***																   ***//
 	//************************************************************************//
 	
 	session_start();
@@ -165,6 +170,7 @@
 	}
 	else if ($operacao == 'A_COMITE_APROV' && $inprodut == 3 )  { // Alteracao na tela de consultas automatizadas
 		echo '$("#frmOrgaos").remove();';	
+		echo '$("#frmNovoLimite").css("width", 530);';
 		echo '$("#divDadosAvalistas").css("display","block");';
 		echo 'hideMsgAguardo();';
 		echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';	

@@ -12,6 +12,8 @@
 							  
 				 08/12/2014 - Chamda da procedure via OCI (Jean Michel).
 	                                        					        
+                 18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+	                                        					        
 	*********************************************************************************/
 		
 	session_start();
@@ -38,6 +40,11 @@
 	$dadosPrc = $_POST["dadosPrc"];
 	$camposPc2 = $_POST["camposPc2"];
 	$dadosPrc2 = $_POST["dadosPrc2"];
+  
+    // Verifica se a data de resgate é válida
+	if (!validaData($dtresgat)) {
+		exibeErro("Data do resgate inv&aacute;lida.");
+	}
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 

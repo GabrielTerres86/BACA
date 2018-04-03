@@ -37,6 +37,9 @@
 							  
 			     01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
 		    
+				 27/11/2017 - Inclusao do valor de bloqueio em garantia.
+                              PRJ404 - Garantia(Odirlei-AMcom)              
+		    
 	************************************************************************/
 	
 	session_start();
@@ -99,6 +102,7 @@
 		exibeErro($msgErro);		
 	} 
 	
+	//$aplicacoes   = $xmlObjAplicacoes->roottag->tags[0]->tags;	
 	$aplicacoes   = $xmlObjAplicacoes->roottag->tags;	
 	$qtAplicacoes = count($aplicacoes);
 	
@@ -169,6 +173,30 @@
 		exibeErro($xmlObjBlqJud->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 	
 	
+    
+	$xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "  <nrdconta>".$nrdconta."</nrdconta>";    
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    $xmlResult = mensageria($xml, "BLOQ0001", "CALC_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
+
+    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        if ($msgErro == "") {
+            $msgErro = $xmlObj->roottag->tags[0]->cdata;
+        }
+
+        exibeErro($msgErro);
+        exit();
+    }
+
+    $registros = $xmlObj->roottag->tags[0]->tags;
+    $vlblqapl  = getByTagName($registros, 'vlblqapl');   
+    
+    
 	include('principal_tabela.php');
 	include('principal_dados.php');
 	include('principal_resgate.php');

@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Março/2009
  * OBJETIVO     : Biblioteca de funções da subrotina de Descontos de Títulos
  * --------------
- * ALTERAÇÕES   : 22/11/2016
+ * ALTERAÇÕES   : 11/12/2017
  * --------------
  * 000: [08/06/2010] David     (CECRED) : Adaptação para RATING
  * 000: [22/09/2010] David	   (CECRED) : Ajuste para enviar impressoes via email para o PAC Sede
@@ -27,11 +27,13 @@
  * 011: [22/11/2016] Jaison/James (CECRED) : Zerar glb_codigoOperadorLiberacao antes da cdopcolb.
  * 012: [09/03/2017] Adriano    (CECRED): Ajuste devido ao tratamento para validar titulos já inclusos em outro borderô - SD 603451.
  * 013: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364).
+ * 014: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero)) 
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
 var nrcontrato = ""; // Variável para armazenar número do contrato de descto selecionado
 var nrbordero = ""; // Variável para armazenar número do bordero de descto selecionado
+var cd_situacao_lim = 0; // Variável para armazenar o código da situação do limite atualmente selecionado
 var situacao_limite = ""; // Variável para armazenar a situação do limite atualmente selecionado
 var idLinhaB   = 0;  // Variável para armazanar o id da linha que contém o bordero selecionado
 var idLinhaL   = 0;  // Variável para armazanar o id da linha que contém o limite selecionado
@@ -340,7 +342,7 @@ function carregaLimitesTitulos() {
 }
 
 // Função para seleção do limite
-function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim) {
+function selecionaLimiteTitulos(id,qtLimites,limite,insitlim,dssitlim) {
 	var cor = "";
 	
 	// Formata cor da linha da tabela que lista os limites de descto titulos
@@ -360,6 +362,7 @@ function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim) {
 			// Armazena número do limite selecionado
 			nrcontrato = limite;
 			idLinhaL = id;
+            cd_situacao_lim = insitlim;
 			situacao_limite = dssitlim;
 		}
 	}
@@ -732,6 +735,7 @@ function gravaLimiteDscTit(cddopcao) {
 			nrender2: normalizaNumero($("#nrender2","#frmDadosLimiteDscTit").val()),
 			complen2: $("#complen2","#frmDadosLimiteDscTit").val(),
 			nrcxaps2: normalizaNumero($("#nrcxaps2","#frmDadosLimiteDscTit").val()),
+            idcobope: normalizaNumero($('#idcobert', '#frmDadosLimiteDscTit').val()),
 			
 			// Variáveis globais alimentadas na função validaDadosRating em rating.js 
 			nrgarope: nrgarope,
@@ -1046,6 +1050,58 @@ function buscaGrupoEconomico() {
 	
 	return false;
 	
+}
+
+function abrirTelaGAROPC(cddopcao) {
+
+    showMsgAguardo('Aguarde, carregando ...');
+
+    var idcobert = normalizaNumero($('#idcobert','#'+nomeForm).val());
+    var codlinha = normalizaNumero($('#cddlinha','#'+nomeForm).val());
+    var vlropera = $('#vllimite','#'+nomeForm).val();
+    
+    var nrctrlim = '';
+    // Se estamos consultando e está em estudo ou se iremos incluir ou se iremos alterar o limite enviaremos o codigo do contrato ativo
+    if ( (cddopcao == 'C' && cd_situacao_lim == 1) || cddopcao == 'I' || cddopcao == 'A') {
+      nrctrlim = normalizaNumero($('#nrcontratoativo').val());
+    }
+  
+    // Se estivermos alterando, porém não houver cobertura é por que estamos alterando algo antigo (devemos criar um novo para estes casos)
+    if (cddopcao == 'A' && idcobert == '') {
+      cddopcao = 'I';
+    }
+
+    // Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/garopc.php',
+        data: {
+            tipaber      : cddopcao,
+            idcobert     : idcobert,
+            nrdconta     : nrdconta,
+            tpctrato     : 3,
+            dsctrliq     : nrctrlim,
+            codlinha     : codlinha,
+            vlropera     : vlropera
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
+            $('#divUsoGAROPC').html(response).hide();
+            // Iremos incluir o conteúdo do form da div oculta dentro da div principal de descontos
+            $("#frmGAROPC", "#divUsoGAROPC").appendTo('#divFormGAROPC');
+            // Iremos remover os botões originais da GAROPC e usar os proprios da tela
+            $("#divBotoes","#frmGAROPC").detach();
+            dscShowHideDiv("divFormGAROPC;divBotoesGAROPC","divDscTit_Limite;divBotoesLimite");
+            bloqueiaFundo($('#divFormGAROPC'));
+            $("#frmDadosLimiteDscTit").css("width", 540);
+        }
+    });
 }
 
 function calcEndividRiscoGrupo(nrdgrupo) {

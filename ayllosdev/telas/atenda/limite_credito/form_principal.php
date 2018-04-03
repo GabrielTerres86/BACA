@@ -9,6 +9,7 @@
  *                10/10/2016 - Remover verificacao de digitalizaco para o botao de consultar imagem (Lucas Ranghetti #510032)
  *                15/12/2016 - Alterado tag do botão consultar imagem href para Onclick adaptando-se a função controlaFoco() (Evandro Guaranha-Mout's TI #562864)
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ *				  06/03/2018 - Adicionado campo idcobope. (PRJ404 Reinert)
  *
  */	
 ?>
@@ -17,7 +18,7 @@
 	<input type="hidden" name="dsobserv" id="dsobserv" value="<?php echo $dsobserv ?>">
 
 	<div id="divDadosPrincipal">
-		
+		<input id="idcobope" name="idcobope" type="hidden" value="<?php echo $idcobope; ?>" />
 		<label for="vllimite"><? echo utf8ToHtml('Valor do Limite:') ?></label>	
 		<input id="vllimite" name="vllimite" type="text" value="<?php echo number_format(str_replace(",",".",$vllimite),2,",",".")."  ".$dslimcre; ?>" />	
 

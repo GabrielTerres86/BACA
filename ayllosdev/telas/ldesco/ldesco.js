@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 17/11/2015
  * OBJETIVO     : Biblioteca de funções da tela LDESCO
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 11/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia. (Lombardi - PRJ404)
  * --------------
  */
 
@@ -59,17 +59,21 @@ function formataCabecalho(){
 	rTaxaMora = $('label[for="taxamora"]','#frmLdesco');
 	rTaxaDiaria = $('label[for="taxadiaria"]','#frmLdesco');
 	rTaxaMensal = $('label[for="taxamensal"]','#frmLdesco');
+	rTpctrato = $('label[for="tpctrato"]','#frmLdesco');
 
 	rTaxaMora.addClass('rotulo').css({'width':'114px'});
 	rTaxaDiaria.addClass('rotulo').css({'width':'114px'});
 	rTaxaMensal.addClass('rotulo').css({'width':'114px'});
+	rTpctrato.addClass('rotulo').css({'width':'114px'});
 
 	rQtVias = $('label[for="qtvias"]','#frmLdesco');
 	rTarifa = $('label[for="tarifa"]','#frmLdesco');
+	rPermingr = $('label[for="permingr"]','#frmLdesco');
 	rSituacao = $('label[for="situacao"]','#frmLdesco');
 
 	rQtVias.css({'width':'175px'});
 	rTarifa.css({'width':'175px'});
+	rPermingr.addClass('rotulo-linha').css({'width':'175px'});
 	rSituacao.css({'width':'150px'});
 
     rSSituacao = $('#situacao');
@@ -104,7 +108,7 @@ function formataCabecalho(){
     });
 
      $('input,select', '#frmLdesco').unbind('keypress').bind("keypress", function (e) {
-        if (e.keyCode == 13) {
+        if (e.keyCode == 13 || e.which == 9) {
             var allInputs = $("input,select");
             for (var i = 0; i < allInputs.length; i++) {
                 if (allInputs[i] == this) {
@@ -120,9 +124,47 @@ function formataCabecalho(){
 
     $('#tarifa', '#frmLdesco').unbind('keypress').bind('keypress', function(e) {
         if (e.which == 13 || e.which == 9) {
+			if (rSCdOpcao.val() == 'I') {
+				$('#tpctrato', '#frmLdesco').focus();
+			} else {
+				if ($('#tpctrato', '#frmLdesco').val() == 4) {
+					$('#permingr', '#frmLdesco').focus();
+				} else {
             e.preventDefault();
 			$('#btSalvar','#divBotoesFiltroLdesco').click();
+				}
+			}
 			return false;
+        }
+    });
+	
+    $('#tpctrato', '#frmLdesco').unbind('keypress').bind('keypress', function(e) {
+        if (e.which == 13 || e.which == 9) {
+			if ($('#tpctrato', '#frmLdesco').val() == 4) {
+				$('#permingr', '#frmLdesco').focus();
+			} else {
+				e.preventDefault();
+				$('#btSalvar','#divBotoesFiltroLdesco').click();
+			}
+			return false;
+        }
+    });
+	
+    $('#permingr', '#frmLdesco').unbind('keypress').bind('keypress', function(e) {
+        if (e.which == 13 || e.which == 9) {
+			e.preventDefault();
+			$('#btSalvar','#divBotoesFiltroLdesco').click();
+			return false;
+        }
+    });
+
+	//Define ação para o campo tpctrato
+	$('#tpctrato', '#frmLdesco').unbind('change').bind('change', function () {
+
+		if ($(this).val() == 4) {
+			$("#permingr", "#frmLdesco").val('100,00').habilitaCampo();
+		} else {
+			$("#permingr", "#frmLdesco").val('0,00').desabilitaCampo();
         }
     });
 
@@ -222,11 +264,11 @@ function formataFiltro() {
 
     $("#taxamora", "#frmLdesco").addClass('porcento_7').attr('maxlength', '10').css({ 'text-align': 'right' });
     $("#taxamensal", "#frmLdesco").addClass('porcento_7').attr('maxlength', '10').css({ 'text-align': 'right' });
+	$("#tpctrato", "#frmLdesco").css({'width':'137px'});
+    $("#permingr", "#frmLdesco").css({ 'text-align': 'right' }).setMask('DECIMAL','zz9,99','.','');
     $("#qtvias", "#frmLdesco").addClass('inteiro').attr('maxlength', '1');
     $("#taxadiaria", "#frmLdesco").addClass('inteiro');
     $("#tarifa", "#frmLdesco").addClass('inteiro').attr('maxlength', '1');
-
-
 
     $('#frmFiltro').css('display', 'block');
     $('#divBotoesFiltro').css('display', 'block');
@@ -464,6 +506,8 @@ function alteraLinhaDescontoDo() {
     var qtvias = normalizaNumero($('#qtvias', '#frmLdesco').val());
     var taxamensal = normalizaNumero($('#taxamensal', '#frmLdesco').val());
     var tarifa = normalizaNumero($('#tarifa', '#frmLdesco').val());
+    var tpctrato = $('#tpctrato', '#frmLdesco').val();
+    var permingr = normalizaNumero($('#permingr', '#frmLdesco').val());
 
     $('input,select', '#frmFiltro').removeClass('campoErro');
 
@@ -482,6 +526,8 @@ function alteraLinhaDescontoDo() {
             qtvias: qtvias,
             taxamensal: taxamensal,
             tarifa: tarifa,
+			tpctrato : tpctrato,
+			permingr : permingr,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {

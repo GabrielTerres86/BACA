@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 20/10/2017
+   Data    : Marco/2009                     Última atualizacao: 11/12/2017
    
    Dados referentes ao programa:
 
@@ -291,6 +291,8 @@
            20/10/2017 - Projeto 410 - Ajustado cálculo do IOF na liberação do borderô
                             (Diogo - MoutS)
 					                
+           11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+                                                        
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1967,6 +1969,7 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE INPUT  PARAMETER par_perfatcl AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrperger AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgerlog AS LOGICAL     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_idcobope AS INTEGER     NO-UNDO.
     
     DEFINE OUTPUT PARAMETER par_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
@@ -2072,6 +2075,7 @@ PROCEDURE efetua_inclusao_limite:
 
             RETURN "NOK".
         END.
+
 
     TRANS_INCLUI:    
     DO  TRANSACTION ON ERROR UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI:
@@ -2382,7 +2386,9 @@ PROCEDURE efetua_inclusao_limite:
                craplim.nmcjgav2    = CAPS(par_nmdcjav2)
                craplim.dscfcav1    = CAPS(par_doccjav1)
                craplim.dscfcav2    = CAPS(par_doccjav2)
-               craplim.cdcooper    = par_cdcooper.
+               craplim.cdcooper    = par_cdcooper
+               craplim.idcobope    = par_idcobope
+               craplim.idcobefe    = par_idcobope.
         VALIDATE craplim.
 
         FIND FIRST crapprp WHERE crapprp.cdcooper = par_cdcooper     AND
@@ -2478,6 +2484,36 @@ PROCEDURE efetua_inclusao_limite:
                CREATE tt-msg-confirma.
                ASSIGN tt-msg-confirma.inconfir = 1
                       tt-msg-confirma.dsmensag = aux_mensagens.
+           END.
+
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0
+                                              ,INPUT par_idcobope
+                                              ,INPUT par_nrctrlim
+                                              ,"").
+
+        CLOSE STORED-PROC pc_vincula_cobertura_operacao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_dscritic  = ""
+               aux_dscritic  = pc_vincula_cobertura_operacao.pr_dscritic 
+               WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
+                        
+        IF aux_dscritic <> "" THEN
+           DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,            /** Sequencia **/
+                              INPUT 0,
+                              INPUT-OUTPUT aux_dscritic).
+
+                ASSIGN aux_flgderro = TRUE.                
+                UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
            END.
 
     END. /* Final da TRANSACAO */
@@ -2579,7 +2615,8 @@ PROCEDURE busca_limites:
                                                  "NAO"
                                        ELSE
                                             "NAO"
-              tt-limite_chq.insitlim = craplim.insitlim.
+              tt-limite_chq.insitlim = craplim.insitlim
+              tt-limite_chq.idcobope = craplim.idcobope.
 
 
     END.  /*  Fim da leitura do craplim  */
@@ -3038,7 +3075,8 @@ PROCEDURE busca_dados_limite:
            tt-dscchq_dados_limite.cdtipdoc = aux_cdtipdoc
            tt-dscchq_dados_limite.dtinivig = craplim.dtinivig
            tt-dscchq_dados_limite.txcetano = aux_txcetano
-           tt-dscchq_dados_limite.txcetmes = aux_txcetmes.
+           tt-dscchq_dados_limite.txcetmes = aux_txcetmes
+           tt-dscchq_dados_limite.idcobope = craplim.idcobope.
     
     IF  par_flgerlog  THEN
         DO:
@@ -3260,6 +3298,37 @@ PROCEDURE efetua_exclusao_limite:
              END.
         END.
 
+        /* Desfaz a vinculaçao da garantia com a proposta */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT craplim.idcobope
+                                              ,INPUT 0
+                                              ,INPUT 0
+                                              ,"").
+
+        CLOSE STORED-PROC pc_vincula_cobertura_operacao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_dscritic  = ""
+               aux_dscritic  = pc_vincula_cobertura_operacao.pr_dscritic
+                WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
+                        
+        IF aux_dscritic <> "" THEN
+           DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,            /** Sequencia **/
+                              INPUT 0,
+                              INPUT-OUTPUT aux_dscritic).
+
+                ASSIGN aux_flgderro = TRUE.                
+                UNDO TRANS_EXCLUSAO, LEAVE TRANS_EXCLUSAO.
+           END.  
+
         DELETE craplim.
         DELETE crapprp.
            
@@ -3408,6 +3477,41 @@ PROCEDURE efetua_cancelamento_limite:
                craplim.dtinsexc = TODAY
                /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                craplim.cdopecan = par_cdoperad.
+
+               
+         /* Efetuar o desbloqueio de possíveis coberturas vinculadas ao mesmo */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT "ATENDA"
+                                              ,INPUT craplim.idcobope
+                                              ,INPUT "D"
+                                              ,INPUT par_cdoperad
+                                              ,INPUT ""
+                                              ,INPUT 0
+                                              ,INPUT "S"
+                                              ,"").
+
+        CLOSE STORED-PROC pc_bloq_desbloq_cob_operacao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_dscritic  = ""
+               aux_dscritic  = pc_bloq_desbloq_cob_operacao.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?.
+                        
+        IF aux_dscritic <> "" THEN
+           DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,            /** Sequencia **/
+                              INPUT 0,
+                              INPUT-OUTPUT aux_dscritic).
+
+                UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
+           END.
+
 
         RUN sistema/generico/procedures/b1wgen0043.p 
             PERSISTENT SET h-b1wgen0043.
@@ -4178,6 +4282,7 @@ PROCEDURE efetua_alteracao_limite:
     DEFINE INPUT  PARAMETER par_perfatcl AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrperger AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgerlog AS LOGICAL     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_idcobope AS INTEGER     NO-UNDO.
     
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     
@@ -4582,7 +4687,9 @@ PROCEDURE efetua_alteracao_limite:
                craplim.nmcjgav1    = par_nmdcjav1
                craplim.nmcjgav2    = par_nmdcjav2
                craplim.dscfcav1    = par_doccjav1
-               craplim.dscfcav2    = par_doccjav2.
+               craplim.dscfcav2    = par_doccjav2
+               craplim.idcobope    = par_idcobope
+               craplim.idcobefe    = par_idcobope.
 
         DO aux_contador = 1 TO 10:
         
@@ -4648,6 +4755,38 @@ PROCEDURE efetua_alteracao_limite:
                crapprp.dsobserv[1] = CAPS(par_dsobserv)
                crapprp.dsobserv[2] = ""
                crapprp.dsobserv[3] = "".
+        
+
+        /* Verificar se a conta pertence ao grupo economico novo */        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0
+                                              ,INPUT par_idcobope
+                                              ,INPUT craplim.nrctrlim
+                                              ,"").
+
+        CLOSE STORED-PROC pc_vincula_cobertura_operacao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_dscritic  = ""
+               aux_dscritic  = pc_vincula_cobertura_operacao.pr_dscritic 
+               WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
+                        
+        IF aux_dscritic <> "" THEN
+           DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,            /** Sequencia **/
+                              INPUT 0,
+                              INPUT-OUTPUT aux_dscritic).
+
+                ASSIGN aux_flgderro = TRUE.                
+                UNDO TRANS_ALTERA, LEAVE TRANS_ALTERA.
+           END.  
         
         FIND CURRENT craplim NO-LOCK.
         RELEASE craplim.
@@ -13546,6 +13685,34 @@ PROCEDURE altera-numero-proposta-limite:
 
         /* Novo numero de contrato */
         ASSIGN crapprp.nrctrato = par_nrctrlim.
+   
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_vincula_cobertura_operacao 
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0
+                                              ,INPUT craplim.idcobope
+                                              ,INPUT par_nrctrlim
+                                              ,"").
+
+        CLOSE STORED-PROC pc_vincula_cobertura_operacao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_dscritic  = ""
+               aux_dscritic  = pc_vincula_cobertura_operacao.pr_dscritic
+               WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
+        IF aux_dscritic <> "" THEN
+           DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,            /** Sequencia **/
+                              INPUT 0,
+                              INPUT-OUTPUT aux_dscritic).
+
+                UNDO, LEAVE.
+           END.
 
         LEAVE.
 

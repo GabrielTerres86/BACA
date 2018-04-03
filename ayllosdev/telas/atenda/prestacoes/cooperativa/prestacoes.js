@@ -53,8 +53,9 @@
 					 (Adriano - P339).
  * 042: [05/10/2017] Adicionado campo vliofcpl no formulário (Diogo - MoutS - Projeto 410 - RF 23)
  * 043: [11/10/2017] Liberacao da melhoria 442 (Heitor - Mouts)
- * 044: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
- * 045: [24/01/2018] Incluído tratamento para o nível de risco original (Reginaldo - AMcom)
+ * 044: [13/12/2017] Passagem do idcobope e acionamento da GAROPC. (Jaison/Marcos Martini - PRJ404)
+ * 045: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 046: [24/01/2018] Incluído tratamento para o nível de risco original (Reginaldo - AMcom)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -199,7 +200,7 @@ function controlaOperacao(operacao) {
 		nrctremp = '';
 	}
 
-	if ( in_array(operacao,['TC','IMP', 'C_PAG_PREST', 'C_PAG_PREST_POS', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA', 'ALT_QUALIFICA', 'CON_QUALIFICA'] ) ) {
+	if ( in_array(operacao,['TC','IMP', 'C_PAG_PREST', 'C_PAG_PREST_POS', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA', 'C_PAG_PREST_PREJU'], 'ALT_QUALIFICA', 'CON_QUALIFICA']) ) {
 
 		$('table > tbody > tr', 'div.divRegistros').each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
@@ -457,6 +458,14 @@ function controlaOperacao(operacao) {
 			mensagem = 'Efetuando Liquidação do Contrato...';
 			cddopcao = 'P'; /* Daniel */
 			break;	
+		case 'C_GAROPC' :
+            if (normalizaNumero(arrayProposta['idcobope']) > 0) {
+                abrirTelaGAROPC();
+            } else {
+                controlaOperacao('C_DADOS_AVAL');
+            }
+            return false;
+			break;
 			
 		default   :
 			cddopcao = 'C';
@@ -517,6 +526,7 @@ function controlaOperacao(operacao) {
 			cddopcao: cddopcao,	
 			inprodut : 1,
 			nrdocmto : nrctremp,
+			cdlcremp : cdlcremp,
 			redirect: 'html_ajax'
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -581,6 +591,7 @@ function controlaLayout(operacao) {
 		arrayLargura[5] = '97px';
 		arrayLargura[6] = '38px';
 		arrayLargura[7] = '85px';
+		arrayLargura[8] = '97px';
 
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
@@ -2433,6 +2444,7 @@ function limpaDivGenerica(){
 function mostraExtrato( operacao ) {
 
 	showMsgAguardo('Aguarde, abrindo extrato...');
+	exibeRotina($('#divUsoGenerico'));
 
 	tpemprst = arrayRegistros['tpemprst'];
 
@@ -3863,4 +3875,48 @@ function cancelaLiquidacao(){
 	showError('inform','Contrato n&atilde;o Liquidado!','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 	return false;
 	
+}
+
+function abrirTelaGAROPC() {
+
+    showMsgAguardo('Aguarde, carregando ...');
+
+    exibeRotina($('#divUsoGAROPC'));
+    $('#divRotina').css({'display':'none'});
+
+    // Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/garopc.php',
+        data: {
+            nmdatela     : 'PRESTACOES',
+            tipaber      : 'C',
+            nrdconta     : nrdconta,
+            tpctrato     : 90,
+            idcobert     : arrayProposta['idcobope'],
+            dsctrliq     : 0,
+            codlinha     : arrayProposta['cdlcremp'],
+            vlropera     : number_format(converteMoedaFloat(arrayProposta['vlemprst']),2,',','.'),
+            divanterior  : 'divRotina',
+            ret_nomcampo : '',
+            ret_nomformu : '',
+            ret_execfunc : '$(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});' + 
+						   'bloqueiaFundo($(\\\'#divRotina\\\'));' + 
+						   'controlaOperacao(\\\'C_DADOS_AVAL\\\');',
+            ret_voltfunc : 'controlaOperacao(\'C_INICIO\');',
+            ret_errofunc : '$(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});' +
+                           'bloqueiaFundo($(\\\'#divRotina\\\'));',
+			redirect     : 'html_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+			hideMsgAguardo();
+            $('#divUsoGAROPC').html(response);
+            bloqueiaFundo($('#divUsoGAROPC'));
+        }
+    });
 }

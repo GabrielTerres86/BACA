@@ -23,6 +23,10 @@
 
 *******************************************************************************/
 
+
+
+
+
 /*............................................................................
 
     Programa: sistema/generico/procedures/b1wgen0084.p
@@ -281,19 +285,22 @@
 
               28/07/2017 - Ajuste na procedure valida_dados_efetivacao_proposta para nao validar
                            o capital minimo para as cessoes de credito (Anderson).
-
+                           
+              14/12/2017 - Bloqueio/Desbloqueio de Aplicacoes vinculadas ao Efetivar/Desfazer Efetivacao.
+                           (Jaison/Marcos Martini - PRJ404)
+                           
               27/12/2017 - Ajuste transferencia para prejuizo permitir transferir a partir 180 dias 
                            para prejuizo. (Oscar)
-
+                           
               28/12/2017 - Buscar da central de risco do dia anterior inves do fechamento do mes anterior. (Oscar)
               
               29/12/2017 - Ajuste para desfazer prejuizo retirar agencia do loop. (Oscar)
-                    
+                           
 			  16/03/2018 - Ajuste para ignorar validacao alerta_fraude quando for cessao de credito (crps714).
                            Chamado 858710 (Mateus Z / Mouts). 
 					       
               26/03/2018 - Corrigir os erros do IOF. (James)
-
+                           
 			  02/04/2018 - Corrigir para não apresentar no extrato de empréstimo histórico do IOF zerado. (James)
 
                            
@@ -2057,6 +2064,7 @@ PROCEDURE busca_dados_efetivacao_proposta:
            tt-efetiv-epr.avalist1 = " "
            tt-efetiv-epr.avalist2 = " "
            tt-efetiv-epr.dtdpagto = crawepr.dtdpagto
+           tt-efetiv-epr.idcobope = crawepr.idcobope
            tt-efetiv-epr.idfiniof = crawepr.idfiniof.
 
     FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper     AND
@@ -2553,7 +2561,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
         
               RETURN "NOK".
         END.
-        
+     
    FOR FIRST crapfin FIELDS(tpfinali)
         WHERE crapfin.cdcooper = par_cdcooper AND
               crapfin.cdfinemp = crawepr.cdfinemp
@@ -3296,12 +3304,15 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR h-b1wgen0110 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0171 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0188 AS HANDLE                                    NO-UNDO.
+  
     DEF VAR aux_dscatbem AS CHAR                                      NO-UNDO.
     DEF VAR aux_dsctrliq AS CHAR                                      NO-UNDO.
     DEF VAR i            AS INTE                                      NO-UNDO.
     DEF VAR aux_vltrfgar AS DECI                                      NO-UNDO.    
     DEF VAR aux_vltarifa AS DECI                                      NO-UNDO.
     DEF VAR aux_vltaxiof AS DECI                                      NO-UNDO.    
+
+    DEF BUFFER b-crawepr FOR crawepr.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -3696,7 +3707,7 @@ PROCEDURE grava_efetivacao_proposta:
          DO:
             FIND crapfin WHERE crapfin.cdcooper = crawepr.cdcooper
                            AND crapfin.cdfinemp = crawepr.cdfinemp NO-LOCK NO-ERROR NO-WAIT.
-
+         
             IF AVAILABLE crapfin THEN
               ASSIGN aux_tpfinali = crapfin.tpfinali.                
          
@@ -4180,7 +4191,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.vliofcpl = aux_vltotiofcpl
               /*crapepr.vliofepr = aux_vltotiofpri*/
 			  crapepr.idfiniof = crawepr.idfiniof.
-
+				
 			  if crawepr.idfiniof > 0 then
 			  do:
 			     assign crapepr.vlsdeved = crawepr.vlemprst + aux_vltotiof + aux_vltarifa.
@@ -4219,6 +4230,78 @@ PROCEDURE grava_efetivacao_proposta:
             END.
        ELSE
          VALIDATE crapepr.
+
+       IF  crawepr.idcobope > 0  THEN
+           DO:
+        
+              /* Efetuar o bloqueio de possiveis coberturas vinculadas ao mesmo */
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT "ATENDA"
+                                                    ,INPUT crawepr.idcobope
+                                                    ,INPUT "B"
+                                                    ,INPUT par_cdoperad
+                                                    ,INPUT ""
+                                                    ,INPUT 0
+                                                    ,INPUT "S"
+                                                    ,"").
+
+              CLOSE STORED-PROC pc_bloq_desbloq_cob_operacao
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_dscritic  = ""
+                     aux_dscritic  = pc_bloq_desbloq_cob_operacao.pr_dscritic 
+                                     WHEN pc_bloq_desbloq_cob_operacao.pr_dscritic <> ?.
+
+              IF aux_dscritic <> "" THEN
+                 UNDO EFETIVACAO , LEAVE EFETIVACAO.
+
+              DO i = 1 TO 10:
+
+                 IF  crawepr.nrctrliq[i] > 0  THEN
+                     DO:
+
+                        FOR FIRST b-crawepr FIELDS(idcobope)
+                                            WHERE b-crawepr.cdcooper = par_cdcooper   AND
+                                                  b-crawepr.nrdconta = par_nrdconta   AND
+                                                  b-crawepr.nrctremp = crawepr.nrctrliq[i] NO-LOCK:
+                           IF  b-crawepr.idcobope > 0  THEN
+                               DO:
+                                  /* Efetuar o desbloqueio de possiveis coberturas vinculadas ao mesmo */
+                                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                                  RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
+                                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "ATENDA"
+                                                                        ,INPUT b-crawepr.idcobope
+                                                                        ,INPUT "D"
+                                                                        ,INPUT par_cdoperad
+                                                                        ,INPUT ""
+                                                                        ,INPUT 0
+                                                                        ,INPUT "S"
+                                                                        ,"").
+
+                                  CLOSE STORED-PROC pc_bloq_desbloq_cob_operacao
+                                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                                  ASSIGN aux_dscritic  = ""
+                                         aux_dscritic  = pc_bloq_desbloq_cob_operacao.pr_dscritic 
+                                                         WHEN pc_bloq_desbloq_cob_operacao.pr_dscritic <> ?.
+
+                                  IF aux_dscritic <> "" THEN
+                                     UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                               END.
+                        END. /* FOR FIRST b-crawepr */
+
+                     END. /* crawepr.nrctrliq[i] > 0 */
+
+              END. /** Fim do DO ... TO **/
+
+           END. /* crawepr.idcobope > 0 */
 
        RUN sistema/generico/procedures/b1wgen0043.p PERSISTENT SET h-b1wgen0043.
 
@@ -4394,9 +4477,9 @@ PROCEDURE grava_efetivacao_proposta:
                                             "o cadastro restritivo.".
                    UNDO EFETIVACAO, LEAVE EFETIVACAO.
 
-                END.
+                 END.
 
-          END.
+       END.
 
        IF aux_cdcritic <> 0   THEN
           UNDO EFETIVACAO , LEAVE EFETIVACAO.
@@ -4645,18 +4728,18 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
                                            crawepr.nrctrliq[8]  > 0   OR
                                            crawepr.nrctrliq[9]  > 0   OR
                                            crawepr.nrctrliq[10] > 0)) THEN
-             DO:
+               DO:
                    ASSIGN aux_cdcritic = 0
                           aux_dscritic = "Nao e possivel desfazer a efetivacao. Efetue a liquidacao do contrato.".
 
-                 RUN gera_erro (INPUT par_cdcooper,
-                                INPUT par_cdagenci,
-                                INPUT par_nrdcaixa,
-                                INPUT 1,
-                                INPUT aux_cdcritic,
-                                INPUT-OUTPUT aux_dscritic).
+                   RUN gera_erro (INPUT par_cdcooper,
+                                  INPUT par_cdagenci,
+                                  INPUT par_nrdcaixa,
+                                  INPUT 1,
+                                  INPUT aux_cdcritic,
+                                  INPUT-OUTPUT aux_dscritic).
 
-                 RETURN "NOK".
+                   RETURN "NOK".
 
                END. /* NOT CAN-FIND */
 
@@ -4757,6 +4840,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
     DEF VAR aux_vltotctr          AS DECI                           NO-UNDO.
     DEF VAR aux_vltotjur          AS DECI                           NO-UNDO.
     DEF VAR aux_nrseqdig          AS INTE                           NO-UNDO.
+    DEF VAR i                     AS INTE                           NO-UNDO.
 
     DEF VAR aux_flgtrans          AS LOGI                           NO-UNDO.
     DEF VAR aux_idcarga           AS INTE                           NO-UNDO.
@@ -4766,6 +4850,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
     DEF VAR h-b1craplot           AS HANDLE                         NO-UNDO.
     DEF VAR h-b1wgen0188          AS HANDLE                         NO-UNDO.
 
+    DEF BUFFER b-crawepr FOR crawepr.
 
     IF   par_flgerlog THEN
          ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -5059,6 +5144,91 @@ PROCEDURE desfaz_efetivacao_emprestimo.
 
         IF   RETURN-VALUE <> "OK" THEN
              UNDO, RETURN "NOK".
+
+        /* Busca dados da proposta */
+        FOR FIRST crawepr FIELDS(crawepr.nrctrliq[1] crawepr.nrctrliq[2]
+                                 crawepr.nrctrliq[3] crawepr.nrctrliq[4]
+                                 crawepr.nrctrliq[5] crawepr.nrctrliq[6]
+                                 crawepr.nrctrliq[7] crawepr.nrctrliq[8]
+                                 crawepr.nrctrliq[9] crawepr.nrctrliq[10]
+                                 idcobope)
+                          WHERE crawepr.cdcooper = par_cdcooper   AND
+                                crawepr.nrdconta = par_nrdconta   AND
+                                crawepr.nrctremp = par_nrctremp   NO-LOCK:
+
+           IF  crawepr.idcobope > 0  THEN
+               DO:
+            
+                  /* Efetuar o desbloqueio de possiveis coberturas vinculadas ao mesmo */
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                  RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "ATENDA"
+                                                        ,INPUT crawepr.idcobope
+                                                        ,INPUT "D"
+                                                        ,INPUT par_cdoperad
+                                                        ,INPUT ""
+                                                        ,INPUT 0
+                                                        ,INPUT "S"
+                                                        ,"").
+
+                  CLOSE STORED-PROC pc_bloq_desbloq_cob_operacao
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                  ASSIGN aux_dscritic  = ""
+                         aux_dscritic  = pc_bloq_desbloq_cob_operacao.pr_dscritic 
+                                         WHEN pc_bloq_desbloq_cob_operacao.pr_dscritic <> ?.
+
+                  IF aux_dscritic <> "" THEN
+                     UNDO Desfaz , LEAVE Desfaz.
+
+                  DO i = 1 TO 10:
+
+                     IF  crawepr.nrctrliq[i] > 0  THEN
+                         DO:
+
+                            FOR FIRST b-crawepr FIELDS(idcobope)
+                                                WHERE b-crawepr.cdcooper = par_cdcooper   AND
+                                                      b-crawepr.nrdconta = par_nrdconta   AND
+                                                      b-crawepr.nrctremp = crawepr.nrctrliq[i] NO-LOCK:
+                               IF  b-crawepr.idcobope > 0  THEN
+                                   DO:
+                                      /* Efetuar o bloqueio de possiveis coberturas vinculadas ao mesmo */
+                                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                                      RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
+                                        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "ATENDA"
+                                                                            ,INPUT b-crawepr.idcobope
+                                                                            ,INPUT "B"
+                                                                            ,INPUT par_cdoperad
+                                                                            ,INPUT ""
+                                                                            ,INPUT 0
+                                                                            ,INPUT "S"
+                                                                            ,"").
+
+                                      CLOSE STORED-PROC pc_bloq_desbloq_cob_operacao
+                                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                                      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                                      ASSIGN aux_dscritic  = ""
+                                             aux_dscritic  = pc_bloq_desbloq_cob_operacao.pr_dscritic 
+                                                             WHEN pc_bloq_desbloq_cob_operacao.pr_dscritic <> ?.
+
+                                      IF aux_dscritic <> "" THEN
+                                         UNDO Desfaz , LEAVE Desfaz.
+                                   END.
+                            END. /* FOR FIRST b-crawepr */
+
+                         END. /* crawepr.nrctrliq[i] > 0 */
+
+                  END. /** Fim do DO ... TO **/
+
+               END. /* crawepr.idcobope > 0 */
+
+        END. /* FOR FIRST crawepr */
 
         DELETE crapepr.
 

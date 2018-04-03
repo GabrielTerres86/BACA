@@ -131,6 +131,8 @@
               21/09/2017 - Projeto 410 - Incluir campo Indicador de 
                             financiamento do IOF (Diogo - Mouts)
 
+              15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
+
 			  21/02/2018 - Novo parametro na chamada da proc_qualif_operacao
                            (Diego/AMcom)
 
@@ -379,6 +381,7 @@ DEF VAR aux_flgsenha AS INTE                                           NO-UNDO.
 DEF VAR aux_dsmensag AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_inobriga AS CHAR                                           NO-UNDO.
+DEF VAR aux_idcobope AS INTE                                           NO-UNDO.
 DEF VAR aux_idfiniof AS INTE                                           NO-UNDO.
 DEF VAR aux_vliofepr LIKE crapepr.vliofepr                             NO-UNDO.
 DEF VAR aux_vlrtarif AS DECI                                           NO-UNDO.
@@ -619,7 +622,7 @@ PROCEDURE valores_entrada:
             WHEN "uflicenc" THEN aux_uflicenc = tt-param.valorCampo.      
             WHEN "dstipbem" THEN aux_dstipbem = tt-param.valorCampo.
             WHEN "cdmodali" THEN aux_cdmodali = tt-param.valorCampo.
-
+			WHEN "idcobope" THEN aux_idcobope = INTE(tt-param.valorCampo).
             WHEN "idfiniof" THEN aux_idfiniof = INTE(tt-param.valorCampo).
             WHEN "vliofepr" THEN aux_vliofepr = DECI(tt-param.valorCampo).
             WHEN "vlrtarif" THEN aux_vlrtarif = DECI(tt-param.valorCampo).
@@ -1635,6 +1638,7 @@ PROCEDURE grava-proposta-completa:
                                 INPUT TRUE,
                                 INPUT aux_dsjusren,
                                 INPUT aux_dtlibera,
+                                INPUT aux_idcobope,
                                 INPUT aux_idfiniof,
                                 INPUT aux_dscatbem,
                                 OUTPUT TABLE tt-erro,                          

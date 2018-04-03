@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0084tt.i                  
     Autor   : Irlan
-    Data    : Fevereiro/2010                     Ultima atualizacao: 01/03/2012
+    Data    : Fevereiro/2010                     Ultima atualizacao: 06/03/2018
 
    Dados referentes ao programa:
 
@@ -11,6 +11,8 @@
    Alteracoes: 01/03/2012 - Passar as temp-table da BO b1wgen0084a para esta
                             includes (Gabriel). 
                             
+               06/03/2018 - Adicionado campo idcobope na temp-table tt-efetiv-epr.
+                            (PRJ 404)
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-parcelas-epr    NO-UNDO
@@ -50,7 +52,8 @@ DEF TEMP-TABLE tt-efetiv-epr       NO-UNDO
     FIELD avalist1 AS CHAR
     FIELD avalist2 AS CHAR
     FIELD altdtpgt AS LOGICAL
-    FIELD idfiniof AS INTE.
+    FIELD idfiniof AS INTE
+    FIELD idcobope LIKE crawepr.idcobope.
 
 DEF TEMP-TABLE tt-msg-aval        NO-UNDO
     FIELD cdavalis AS INTE

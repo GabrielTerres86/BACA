@@ -13,6 +13,7 @@
  * 001: [18/11/2014] Jaison: Inclusao do parametro nrcpfope.
          17/06/2016 - M181 - Alterar o CDAGENCI para          
                       passar o CDPACTRA (Rafael Maciel - RKAM) 
+ * 002: [05/03/2018] Reinert: Incluido validacao de bloqueio de garantia de emprestimo.
  */
 ?>
  
@@ -32,9 +33,34 @@
 	$dsobscmt = (isset($_POST['dsobscmt'])) ? $_POST['dsobscmt'] : '';
 	$dtdpagto = (isset($_POST['dtdpagto'])) ? $_POST['dtdpagto'] : '';
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
+	$idcobope = (isset($_POST['idcobope'])) ? $_POST['idcobope'] : '';
+					
+	if ($idcobope > 0){
+				
+	// Monta o xml dinâmico de acordo com a operação 
+	$xml  = '';
+	$xml .= '<Root>';
+	$xml .= '	<Dados>';
+	$xml .= '       <nmdatela>ATENDA</nmdatela>';
+	$xml .= '       <idcobert>'.$idcobope.'</idcobert>';
+	$xml .= '	</Dados>';
+	$xml .= '</Root>';
+
+	$xmlResult = mensageria($xml, "BLOQ0001", "REVALIDA_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	//----------------------------------------------------------------------------------------------------------------------------------	
+	// Controle de Erros
+	//----------------------------------------------------------------------------------------------------------------------------------
+	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
+		echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar a proposta?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaOperacao(\'A_NOVA_PROP\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
+		exit();
+	}
+
+	}
 					
 	// Monta o xml de requisi��o
-	$xml .= "<Root>";
+	$xml  = "<Root>";
 	$xml .= "	<Cabecalho>";
 	$xml .= "		<Bo>b1wgen0084.p</Bo>";
 	$xml .= "		<Proc>grava_efetivacao_proposta</Proc>";
