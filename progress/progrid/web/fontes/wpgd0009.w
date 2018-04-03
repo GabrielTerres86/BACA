@@ -236,9 +236,8 @@ DEFINE VARIABLE h-b1wpgd0009          AS HANDLE              NO-UNDO.
 /*** Temp Tables ***/
 DEFINE TEMP-TABLE cratidp             LIKE crapidp.
 
-DEFINE VARIABLE vetorpac              AS CHAR                NO-UNDO.
-DEFINE VARIABLE vetorevento           AS CHAR                NO-UNDO.
 DEFINE VARIABLE vetorinscri           AS CHAR                NO-UNDO.
+DEFINE VARIABLE vetorpac              AS CHAR                NO-UNDO.
 DEFINE VARIABLE aux_dadoseve          AS CHAR                NO-UNDO.
 DEFINE VARIABLE vetorNome             AS CHAR                NO-UNDO.
 
@@ -883,8 +882,7 @@ PROCEDURE CriaListaEventos:
                              craptab.tpregist = 0
                              NO-LOCK NO-ERROR.
     /* Lucas R. */
-    ASSIGN vetorevento = "".
-    RUN RodaJavaScript("var mevento=new Array();"). 
+    RUN RodaJavaScript("var mevento = new Array();"). 
                           
     /* PROGRID */
     FOR EACH  crapeap WHERE (crapeap.idevento = INT(ab_unmap.aux_idevento)   AND
@@ -1099,32 +1097,28 @@ PROCEDURE CriaListaEventos:
 						END.
 				END.
              
-       ASSIGN vetorevento = "~{cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                            "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                            "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                            "nmevento:'" +  STRING(aux_nmevento)     + "'," + 
-                            "idstaeve:'" +  STRING(aux_idstaeve)     + "'," +
-                            "flgcompr:'" +  STRING(aux_flgcompr)     + "'," +
-                            "prfreque:'" +  STRING(aux_prfreque)     + "'," +
-                            "flgrest:'"  +  STRING(aux_flgrest)      + "'," +
-                            "qtmaxtur:'" +  STRING(aux_qtmaxtur)     + "'," +
-                            "nrinscri:'" +  STRING(aux_nrinscri)     + "'," +
-                            "nrconfir:'" +  STRING(aux_nrconfir)     + "'," +
-                            "nrcompar:'" +  STRING(aux_nrcompar)     + "'," +
-                            "nrfaltan:'" +  STRING(aux_nrfaltan)     + "'," +
-                            "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'," +
-                            "idademin:'" +  STRING(aux_idademin)     + "'," +
-                            "tppartic:'" +  STRING(aux_tppartic)     + "'," +
-                            "dtfineve:'" + (IF  crapadp.dtfineve = ? THEN "" ELSE STRING(crapadp.dtfineve)) + "'," +    
-                            /* facilitar validacao no javascript, enviar
-                            S se ja finalizou o evento */                                         
-                            "dsfineve:'" + (IF  crapadp.dtfineve <= TODAY THEN "N" ELSE "S" )               + "'," +                                          
-                            "dtmvtolt:'" +  STRING(TODAY)            + "'," + 
-                            "fechamen:'" +  STRING(aux_fechamen)     +  "'"  + "~}".				
-						
-           RUN RodaJavaScript("mevento.push("  + vetorevento + ");").    
+				RUN RodaJavaScript("mevento.push(~{cdagenci:'" +  STRING(crapeap.cdagenci) 	 
+																				+ "',cdcooper:'" +  STRING(crapeap.cdcooper) 
+																				+ "',cdevento:'" +  STRING(crapeap.cdevento) 
+																				+ "',nmevento:'" +  STRING(aux_nmevento)     
+																				+ "',idstaeve:'" +  STRING(aux_idstaeve)     
+																				+ "',flgcompr:'" +  STRING(aux_flgcompr)     
+																				+ "',prfreque:'" +  STRING(aux_prfreque)     
+																				+ "',flgrest:'"  +  STRING(aux_flgrest)      
+																				+ "',qtmaxtur:'" +  STRING(aux_qtmaxtur)     
+																				+ "',nrinscri:'" +  STRING(aux_nrinscri)     
+																				+ "',nrconfir:'" +  STRING(aux_nrconfir)     
+																				+ "',nrcompar:'" +  STRING(aux_nrcompar)     
+																				+ "',nrfaltan:'" +  STRING(aux_nrfaltan)     
+																				+ "',nrseqeve:'" +  STRING(aux_nrseqeve)     
+																				+ "',idademin:'" +  STRING(aux_idademin)     
+																				+ "',tppartic:'" +  STRING(aux_tppartic)     
+																				+ "',dtfineve:'" + (IF crapadp.dtfineve = ? THEN "" ELSE STRING(crapadp.dtfineve)) 
+																				+ "',dsfineve:'" + (IF crapadp.dtfineve <= TODAY THEN "N" ELSE "S" ) /* facilitar validacao no javascript, enviar S se ja finalizou o evento */
+																				+ "',dtmvtolt:'" +  STRING(TODAY)            
+																				+	"',fechamen:'" +  STRING(aux_fechamen) + "'~});").    
 
-           ASSIGN vetorevento = "".
+           
     END.
     
 END PROCEDURE.
@@ -1190,6 +1184,7 @@ PROCEDURE CriaListaInscritos:
                                         ,INPUT DECIMAL(ab_unmap.aux_dtanoage) /* Ano Agenda                 */
                                         ,INPUT DECIMAL(ab_unmap.aux_idevento) /* ID do Evento               */
                                         ,INPUT DECIMAL(ab_unmap.aux_nriniseq) /* Registro Inicial           */
+										,INPUT 0							  /* Ficha de Presença 			*/
                                        ,OUTPUT 0                              /* Quantidade de registros    */ 
                                        ,OUTPUT ?                              /* XML com informaçoes de LOG */
                                        ,OUTPUT 0                              /* Código da crítica          */
@@ -1414,6 +1409,8 @@ PROCEDURE CriaListaPac :
 ------------------------------------------------------------------------------*/
     DEFINE VARIABLE aux_nmresag2 AS CHAR NO-UNDO.
 
+		RUN RodaJavaScript("var mpac = new Array();").
+		
     /*  Progrid */
     IF ab_unmap.aux_idevento = "1" THEN
        DO: 
@@ -1428,10 +1425,11 @@ PROCEDURE CriaListaPac :
                                      crapage.cdagenci = INT(ab_unmap.cdageins)
                                      NO-LOCK NO-ERROR.
 
-                  IF   AVAILABLE crapage   THEN
-                       vetorpac = "~{" + "cdcooper:"   + "'" + TRIM(STRING(crapage.cdcooper))
-                                       + "',cdagenci:" + "'" + TRIM(STRING(crapage.cdagenci))
-                                       + "',nmresage:" + "'" + crapage.nmresage + "'~}".
+                  IF AVAILABLE crapage THEN
+										RUN RodaJavaScript("mpac.push(~{cdcooper:'" + TRIM(STRING(crapage.cdcooper))
+																							 + "',cdagenci:'" + TRIM(STRING(crapage.cdagenci))
+																							 + "',nmresage:'" + crapage.nmresage + "'~});").
+										
               END.
        END.
     ELSE
@@ -1450,14 +1448,15 @@ PROCEDURE CriaListaPac :
                                      NO-LOCK NO-ERROR.
 
                   IF AVAILABLE crapage THEN
-									 vetorpac = "~{cdcooper:"   + "'" + TRIM(STRING(crapage.cdcooper))
-															+ "',cdagenci:" + "'" + TRIM(STRING(crapage.cdagenci))
-															+ "',nmresage:" + "'" + crapage.nmresage + "'~}".
+										RUN RodaJavaScript("mpac.push(~{cdcooper:'" + TRIM(STRING(crapage.cdcooper))
+																							 + "',cdagenci:'" + TRIM(STRING(crapage.cdagenci))
+																							 + "',nmresage:'" + crapage.nmresage + "'~});").
+																							 
              END.
        END.
-
-    RUN RodaJavaScript("var mpac=new Array();mpac=[" + vetorpac + "]"). 
-
+	
+	RUN RodaJavaScript("mpac.push(" + vetorpac + ");").
+	
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -1768,7 +1767,7 @@ PROCEDURE local-assign-record :
                       FOR FIRST crapass FIELDS(inpessoa) WHERE crapass.cdcooper = INT(ab_unmap.aux_cdcooper)
                                                            AND crapass.nrdconta = aux_nrdconta NO-LOCK. END.                    
                     END.
-                    /*message "Inclusao: " + string(INPUT crapidp.flgdispe).*/
+                    
                     CREATE cratidp.
                     ASSIGN cratidp.cdagenci = tmp_cdagenci
                            cratidp.cdageins = INT(ab_unmap.cdageins)
@@ -1842,7 +1841,6 @@ PROCEDURE local-assign-record :
                     /*    CREATE cratidp.
                      BUFFER-COPY crapidp TO cratidp. */
      
-										/*message "Alteracao: " + string(INPUT crapidp.flgdispe).*/
                      ASSIGN 
                          cratidp.cdgraupr = IF INT(ab_unmap.aux_cdgraupr) = 0 THEN 9
                                                             ELSE INT(ab_unmap.aux_cdgraupr)
@@ -1915,11 +1913,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE NomeCooperado w-html 
 PROCEDURE NomeCooperado :
-/*-----------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
------------------------------------------------------------------------------*/
+
     DEFINE BUFFER bf1-crapidp FOR crapidp.
 
     DEF VAR aux_nmtitular  AS CHAR NO-UNDO.
@@ -2176,24 +2170,17 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE NomeCooperado w-html 
 PROCEDURE BuscarCooperadoCPFCGC:
-  
-  DEF VAR vetCoopCpfCgc AS CHAR NO-UNDO INIT "".
-  
-  ASSIGN vetCoopCpfCgc = "".
-    
+
+	RUN RodaJavaScript("var vetCoopCpfCgc = new Array();"). 
+
   FOR EACH crapass 
      WHERE crapass.cdcooper = INT(ab_unmap.aux_cdcooper)
        AND crapass.nrcpfcgc = DEC(ab_unmap.aux_nrcpfcgc_fil)
        AND crapass.dtdemiss = ?
        NO-LOCK:
-      
-      IF vetCoopCpfCgc <> "" THEN 
-         ASSIGN vetCoopCpfCgc = vetCoopCpfCgc + ",".
-         
-      ASSIGN vetCoopCpfCgc =  vetCoopCpfCgc 
-                          + "~{" + "  nrdconta:" + "'" + STRING(crapass.nrdconta)
-                                 + "',nmprimtl:" + "'" + crapass.nmprimtl
-                          + "'~}".         
+
+      RUN RodaJavaScript("vetCoopCpfCgc.push(~{nrdconta:'" + STRING(crapass.nrdconta)
+																					+ "',nmprimtl:'" + crapass.nmprimtl + "'~});"). 
   END.     
   
   /* Titulares */
@@ -2208,13 +2195,8 @@ PROCEDURE BuscarCooperadoCPFCGC:
        AND crapass.dtdemiss = ?
        NO-LOCK:
       
-      IF vetCoopCpfCgc <> "" THEN 
-         ASSIGN vetCoopCpfCgc = vetCoopCpfCgc + ",".
-         
-      ASSIGN vetCoopCpfCgc =  vetCoopCpfCgc 
-                          + "~{" + "  nrdconta:" + "'" + STRING(crapttl.nrdconta)
-                                 + "',nmprimtl:" + "'" + crapass.nmprimtl
-                          + "'~}".         
+      RUN RodaJavaScript("vetCoopCpfCgc.push(~{nrdconta:'" + STRING(crapttl.nrdconta)
+																					+ "',nmprimtl:'" + crapass.nmprimtl + "'~});"). 
   END. 
   
   /* Avalistas */
@@ -2229,18 +2211,11 @@ PROCEDURE BuscarCooperadoCPFCGC:
        AND crapass.dtdemiss = ?
        NO-LOCK:
       
-      IF vetCoopCpfCgc <> "" THEN 
-         ASSIGN vetCoopCpfCgc = vetCoopCpfCgc + ",".
-         
-      ASSIGN vetCoopCpfCgc =  vetCoopCpfCgc 
-                          + "~{" + "  nrdconta:" + "'" + STRING(crapavt.nrdconta)
-                                 + "',nmprimtl:" + "'" + crapass.nmprimtl
-                          + "'~}".         
-        
+      RUN RodaJavaScript("vetCoopCpfCgc.push(~{nrdconta:'" + STRING(crapavt.nrdconta)
+																					+ "',nmprimtl:'" + crapass.nmprimtl + "'~});").
+      
     END. /* FIM FOR EACH CRAPAVT PESSOA JURIDICA */
-    	
-  RUN RodaJavaScript("var vetCoopCpfCgc=new Array();vetCoopCpfCgc=["  + vetCoopCpfCgc + "]"). 
-   
+     
 END PROCEDURE.
 
 
