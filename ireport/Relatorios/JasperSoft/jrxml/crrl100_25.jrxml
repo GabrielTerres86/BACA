@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-03-13T16:58:28 -->
+<!-- 2018-04-03T09:58:10 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_25" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="17"/>
 	<property name="ireport.y" value="6265"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl100_26"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl100_pos"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -166,6 +166,21 @@
 	<field name="cob_nminterv" class="java.lang.String">
 		<fieldDescription><![CDATA[cob_nminterv]]></fieldDescription>
 	</field>
+	<field name="cob_interven" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_interven]]></fieldDescription>
+	</field>
+	<field name="cob_nrcpfint" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_nrcpfint]]></fieldDescription>
+	</field>
+	<field name="nrcpfcgc" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfcgc]]></fieldDescription>
+	</field>
+	<field name="nrcpfcjg" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfcjg]]></fieldDescription>
+	</field>
+	<field name="nmconjug" class="java.lang.String">
+		<fieldDescription><![CDATA[nmconjug]]></fieldDescription>
+	</field>
 	<variable name="vr_nrtopico" class="java.lang.Integer">
 		<variableExpression><![CDATA[$F{cob_inaddcob}.intValue() > 0 ?  $V{vr_nrtopico} + 1 : $V{vr_nrtopico}]]></variableExpression>
 		<initialValueExpression><![CDATA[0]]></initialValueExpression>
@@ -307,7 +322,7 @@
 					<textElement textAlignment="Justified" markup="html">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["<b>3.1.</b> " + $F{terceiro_01} + ($F{terceiro_02} != null ? "<br><br><b>3.2.</b> " + $F{terceiro_02} : "")]]></textFieldExpression>
+					<textFieldExpression><![CDATA[($F{terceiro_01} != null ? "<b>3.1.</b> " + $F{terceiro_01} + ($F{terceiro_02} != null ? "<br><br><b>3.2.</b> " + $F{terceiro_02} : "")  : "") + ($F{cob_interven} != null ? ($F{terceiro_01} != null  && $F{terceiro_02} != null ? "<br><br><b>3.3.</b> "  : ($F{terceiro_01} != null ? "<br><br><b>3.2.</b> " : "<b>3.1.</b> ")) + $F{cob_interven}: "")]]></textFieldExpression>
 				</textField>
 			</frame>
 			<frame>
@@ -1153,7 +1168,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b><u>6. Pagamento</b></u> – O(A) <b>Emitente/Cooperado(a)</b> deverá pagar à <b>Credora/Cooperativa</b> o saldo devedor, representado pelo valor total da parcela constante no item " + (3 + $F{ind_add_item}) + "."+ (9 + $V{vr_nrtopico}) + ", na quantidade e data de vencimento stipulados nesta Cédula, sendo que o referido valor encontra acrescido dos juros remuneratórios pós-fixados, capitalizados mensalmente à taxa estipulada no item " + (3 + $F{ind_add_item}) + "."+ (7 + $V{vr_nrtopico}) + " e subitens. Além dos encargos previstos serão devidas eventuais taxas de serviços inerentes a esta Cédula, na forma do estabelecido nas normas regulamentares da <b>Credora/Cooperativa</b>."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b><u>6. Pagamento</b></u> – O(A) <b>Emitente/Cooperado(a)</b> deverá pagar à <b>Credora/Cooperativa</b> o saldo devedor, representado pelo valor total da parcela constante no item " + (3 + $F{ind_add_item}) + "."+ (9 + $V{vr_nrtopico}) + ", na quantidade e data de vencimento estipulados nesta Cédula, sendo que o referido valor encontra acrescido dos juros remuneratórios pós-fixados, capitalizados mensalmente à taxa estipulada no item " + (3 + $F{ind_add_item}) + "."+ (7 + $V{vr_nrtopico}) + " e subitens. Além dos encargos previstos serão devidas eventuais taxas de serviços inerentes a esta Cédula, na forma do estabelecido nas normas regulamentares da <b>Credora/Cooperativa</b>."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="12" width="466" height="11" uuid="85bb59a0-7970-4288-a8ea-45bae667ccd0">
@@ -1649,33 +1664,17 @@
 				<textFieldExpression><![CDATA["<b><u>" + (19 + $F{ind_add_item}) + ". Solução amigável de conflitos</u></b> – Para a solução amigável de eventuais conflitos relacionados a esta cédula, o Emitente/Cooperado(a) poderá dirigir seu pedido ou reclamação ao Posto de Atendimento responsável pela sua conta. " + $F{amigavel}]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="63">
+		<band height="70">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<line>
-				<reportElement positionType="Float" x="7" y="33" width="218" height="1" uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af"/>
-			</line>
-			<staticText>
-				<reportElement positionType="Float" x="7" y="35" width="218" height="11" uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01"/>
-				<textElement>
-					<font fontName="Courier New" size="8" isBold="true" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[Emitente/Cooperado(a)]]></text>
-			</staticText>
-			<textField>
-				<reportElement positionType="Float" x="7" y="47" width="218" height="11" uuid="4932df38-5b4e-4064-8af0-69642ec8f3fe">
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				<reportElement positionType="Float" x="253" y="33" width="218" height="1" uuid="6bb961f9-6bce-4879-afd3-44aada7471b1">
+					<printWhenExpression><![CDATA[$F{nminterven}.length()>0]]></printWhenExpression>
 				</reportElement>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{nmemitente}]]></textFieldExpression>
-			</textField>
-			<line>
-				<reportElement positionType="Float" x="253" y="33" width="218" height="1" uuid="6bb961f9-6bce-4879-afd3-44aada7471b1"/>
 			</line>
 			<staticText>
-				<reportElement positionType="Float" x="253" y="35" width="218" height="11" uuid="c8e88256-a4fb-4987-861b-14b633752a1d"/>
+				<reportElement positionType="Float" x="253" y="35" width="218" height="11" uuid="c8e88256-a4fb-4987-861b-14b633752a1d">
+					<printWhenExpression><![CDATA[$F{nminterven}.length()>0]]></printWhenExpression>
+				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" isBold="true" pdfFontName="Courier"/>
 				</textElement>
@@ -1685,35 +1684,53 @@
 				<reportElement positionType="Float" x="253" y="47" width="218" height="11" uuid="eca86d94-eac6-44ec-8675-3fa133569029">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{nminterven}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nminterven}]]></textFieldExpression>
 			</textField>
+			<line>
+				<reportElement positionType="Float" x="7" y="33" width="218" height="1" uuid="783dc53c-4c2e-4aa6-b3f1-ecac81ce5710"/>
+			</line>
+			<staticText>
+				<reportElement positionType="Float" x="7" y="35" width="218" height="11" uuid="e7ea6e69-fe1c-4859-844b-5b24f57d2191"/>
+				<textElement>
+					<font fontName="Courier New" size="8" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Emitente/Cooperado(a)]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="7" y="58" width="218" height="10" isRemoveLineWhenBlank="true" uuid="481a8a19-29a5-4819-99ad-1d14642b262d"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["CPF/CNPJ: " + $F{nrcpfcgc}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="7" y="47" width="218" height="11" uuid="c2407e28-65c1-4d22-a0e0-8df23e969a5d">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Nome: " + $F{nmemitente}]]></textFieldExpression>
+			</textField>
 		</band>
 		<band height="70" splitType="Prevent">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 			<line>
-				<reportElement positionType="Float" x="7" y="33" width="218" height="1" isRemoveLineWhenBlank="true" uuid="b081a59d-0913-4701-ab8a-3267b3c4cee8">
+				<reportElement positionType="Float" x="7" y="33" width="218" height="1" isRemoveLineWhenBlank="true" uuid="d2760d12-a9c8-4ebf-86ff-2e9722ced727">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 			</line>
-			<staticText>
-				<reportElement positionType="Float" x="7" y="35" width="218" height="11" uuid="9ba80769-c1f1-4fb0-b059-d059b4d2e493">
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
-				</reportElement>
-				<textElement>
-					<font fontName="Courier New" size="8" isBold="true" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[Terceiro Garantidor]]></text>
-			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement positionType="Float" x="7" y="47" width="218" height="10" isRemoveLineWhenBlank="true" uuid="cf82b5a5-29a7-4566-8953-9fc02addd805">
+				<reportElement positionType="Float" x="7" y="47" width="218" height="10" isRemoveLineWhenBlank="true" uuid="323e6e42-fa6c-423d-bbd9-e8c49dffbbb8">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
@@ -1724,32 +1741,22 @@
 				<textFieldExpression><![CDATA["Nome: " + $F{nmaval01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement positionType="Float" x="7" y="58" width="218" height="10" isRemoveLineWhenBlank="true" uuid="734457d8-1069-4def-9a05-4dfc6011093f">
+				<reportElement positionType="Float" x="7" y="58" width="218" height="10" isRemoveLineWhenBlank="true" uuid="b97bf109-8cc3-4407-a85d-cf50d300481d">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["CPF: " + $F{cpfava01}]]></textFieldExpression>
+				<textFieldExpression><![CDATA["CPF/CNPJ: " + $F{cpfava01}]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement positionType="Float" x="255" y="33" width="218" height="1" isRemoveLineWhenBlank="true" uuid="ae8e5a02-231f-412f-91a8-066f25450468">
+				<reportElement positionType="Float" x="255" y="33" width="218" height="1" isRemoveLineWhenBlank="true" uuid="98979bcb-6197-4731-8895-2faa8e964cf4">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 			</line>
-			<staticText>
-				<reportElement positionType="Float" x="255" y="35" width="218" height="11" uuid="e5e30dbd-3296-44e8-bc80-fd56a71dd0b2">
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
-				</reportElement>
-				<textElement>
-					<font fontName="Courier New" size="8" isBold="true" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[Cônjuge Terceiro Garantidor]]></text>
-			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement positionType="Float" x="255" y="47" width="218" height="11" isRemoveLineWhenBlank="true" uuid="705f313d-2df1-499c-a301-31d58d68c7a9">
+				<reportElement positionType="Float" x="255" y="47" width="218" height="11" isRemoveLineWhenBlank="true" uuid="8a43a43c-d802-4fb0-9107-10be1337eb19">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
@@ -1758,41 +1765,55 @@
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{nmcjg01}]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Nome: " + $F{nmcjg01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement positionType="Float" x="255" y="58" width="218" height="11" isRemoveLineWhenBlank="true" uuid="5be73c62-3207-46c2-a778-0eaf215801b3">
+				<reportElement positionType="Float" x="255" y="58" width="218" height="11" isRemoveLineWhenBlank="true" uuid="5b58a4ce-ffd1-4c7a-974c-be1f4bd7d5cd">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{cpfcjg01}]]></textFieldExpression>
+				<textFieldExpression><![CDATA["CPF: " + $F{cpfcjg01}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="7" y="35" width="218" height="10" isRemoveLineWhenBlank="true" uuid="36340798-32a8-4831-9efa-183822e85dd8">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>" + ($F{cob_inaddcob} > 0 ? "Devedor Solidário" : "Terceiro Garantidor") + "</b>"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="255" y="35" width="218" height="10" isRemoveLineWhenBlank="true" uuid="ba015e80-0167-473a-91c8-b77def3f0029">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>Cônjuge " + ($F{cob_inaddcob} > 0 ? "Devedor Solidário" : "Terceiro Garantidor") + "</b>"]]></textFieldExpression>
 			</textField>
 		</band>
 		<band height="70" splitType="Prevent">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
 			<line>
-				<reportElement positionType="Float" x="7" y="33" width="218" height="1" isRemoveLineWhenBlank="true" uuid="37fb2849-916f-4291-b644-4de44e8c83ce">
+				<reportElement positionType="Float" x="7" y="33" width="218" height="1" isRemoveLineWhenBlank="true" uuid="5dacbf57-7bad-4c07-b3cd-4e8b574f87ae">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
 				</reportElement>
 			</line>
-			<staticText>
-				<reportElement positionType="Float" x="7" y="35" width="218" height="11" uuid="353c325d-8730-4516-9a60-6349ac0e1bcd">
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
-				</reportElement>
-				<textElement>
-					<font fontName="Courier New" size="8" isBold="true" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[Terceiro Garantidor]]></text>
-			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement positionType="Float" x="7" y="47" width="218" height="10" isRemoveLineWhenBlank="true" uuid="11e92417-a002-4a7c-a2d3-69c7f3ee6c05">
+				<reportElement positionType="Float" x="7" y="47" width="218" height="10" isRemoveLineWhenBlank="true" uuid="3b88c984-62f4-47b9-b337-329894a6d437">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
@@ -1803,26 +1824,16 @@
 				<textFieldExpression><![CDATA["Nome: " + $F{nmaval02}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement positionType="Float" x="7" y="58" width="218" height="10" isRemoveLineWhenBlank="true" uuid="59ffe88f-4a03-486a-a499-526cb1aa65cc">
+				<reportElement positionType="Float" x="7" y="58" width="218" height="10" isRemoveLineWhenBlank="true" uuid="d0e71026-08f6-4e97-9ba6-af835b921c61">
 					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["CPF: " + $F{cpfava02}]]></textFieldExpression>
+				<textFieldExpression><![CDATA["CPF/CNPJ: " + $F{cpfava02}]]></textFieldExpression>
 			</textField>
-			<staticText>
-				<reportElement positionType="Float" x="255" y="35" width="218" height="11" uuid="24858e55-fa1b-4515-8983-2cd9bc223c32">
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
-				</reportElement>
-				<textElement>
-					<font fontName="Courier New" size="8" isBold="true" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[Cônjuge Terceiro Garantidor]]></text>
-			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement positionType="Float" x="255" y="47" width="218" height="11" isRemoveLineWhenBlank="true" uuid="4af5782d-1db1-4377-b4e8-a4e6a09da863">
+				<reportElement positionType="Float" x="255" y="47" width="218" height="11" isRemoveLineWhenBlank="true" uuid="dfa2b07c-183a-4b6a-ad4f-d03e1f3fbb63">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
@@ -1831,24 +1842,89 @@
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{nmcjg02}]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Nome: " + $F{nmcjg02}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement positionType="Float" x="255" y="58" width="218" height="11" isRemoveLineWhenBlank="true" uuid="69902f38-e7e4-4cb3-b1d6-b2d60a71ee34">
+				<reportElement positionType="Float" x="255" y="58" width="218" height="11" isRemoveLineWhenBlank="true" uuid="9f943115-91c6-42e9-8b40-d0afc80e9764">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{cpfcjg02}]]></textFieldExpression>
+				<textFieldExpression><![CDATA["CPF: " + $F{cpfcjg02}]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement positionType="Float" x="255" y="33" width="218" height="1" isRemoveLineWhenBlank="true" uuid="60633a8d-06ad-4cdd-8777-5c53b1ad3874">
+				<reportElement positionType="Float" x="255" y="33" width="218" height="1" isRemoveLineWhenBlank="true" uuid="ae220c79-49d7-49e7-90b5-9dc23b18faaf">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
 				</reportElement>
 			</line>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="7" y="35" width="218" height="10" isRemoveLineWhenBlank="true" uuid="645843d0-3152-47d9-9fb5-864465720b15">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>" + ($F{cob_inaddcob} > 0 ? "Devedor Solidário" : "Terceiro Garantidor") + "</b>"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="255" y="35" width="218" height="10" isRemoveLineWhenBlank="true" uuid="27ebd7ac-4f65-407f-982a-b4f32e608779">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="html">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>Cônjuge " + ($F{cob_inaddcob} > 0 ? "Devedor Solidário" : "Terceiro Garantidor") + "</b>"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="70">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{cob_nminterv}.length()>0]]></printWhenExpression>
+			<line>
+				<reportElement positionType="Float" x="7" y="33" width="218" height="1" isRemoveLineWhenBlank="true" uuid="e82bf230-99ec-418d-8586-5da5bf20b572">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{cob_nminterv}.length()>0]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<staticText>
+				<reportElement positionType="Float" x="7" y="35" width="218" height="11" uuid="301cba6b-352e-4e6d-a40f-7b15e628cc8f">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{cob_nminterv}.length()>0]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Interveniente Garantidor]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="7" y="47" width="218" height="10" isRemoveLineWhenBlank="true" uuid="c541d99b-1bc2-45aa-bacc-64854a0126b2">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{cob_nminterv}.length()>0]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Nome: " + $F{cob_nminterv}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="7" y="58" width="218" height="10" isRemoveLineWhenBlank="true" uuid="53507e8f-a1d4-40f5-bfd9-edbc9b6280c5">
+					<printWhenExpression><![CDATA[$F{cob_nminterv}.length()>0]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["CPF/CNPJ: " + $F{cob_nrcpfint}]]></textFieldExpression>
+			</textField>
 		</band>
 		<band height="200" splitType="Prevent">
 			<frame>

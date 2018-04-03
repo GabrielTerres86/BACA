@@ -3817,8 +3817,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 					vr_rel_dscpfav1 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
 																											 pr_inpessoa => vr_inpessoa_av);
           ELSE
+						IF pr_nrvrsctr = 2 THEN
+							-- Buscar inpessoa
+							gene0005.pc_valida_cpf_cnpj(vr_tab_dados_avais(vr_idxavais).nrcpfcgc
+																				 ,vr_stsnrcal
+																				 ,vr_inpessoa_av);
+							vr_rel_dscpfav1 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
+																												   pr_inpessoa => vr_inpessoa_av );
+																			 
+						ELSE
             vr_rel_dscpfav1 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
                                                                      pr_inpessoa => 1 );
+          END IF;
           END IF;
         ELSIF vr_tab_dados_avais(vr_idxavais).nrdocava IS NULL THEN
           vr_rel_dscpfav1 := vr_tab_dados_avais(vr_idxavais).nrdocava;
@@ -3834,8 +3844,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 					vr_rel_dscfcav1 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
 																											 pr_inpessoa => 1 );
           ELSE
+						IF pr_nrvrsctr = 2 THEN
+							vr_rel_dscfcav1 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
+																													 pr_inpessoa => 1 );																			 
+						ELSE
             vr_rel_dscfcav1 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
                                                                      pr_inpessoa => 1 );
+          END IF;
           END IF;
         ELSIF vr_tab_dados_avais(vr_idxavais).nrdoccjg IS NULL THEN
           vr_rel_dscfcav1 := vr_tab_dados_avais(vr_idxavais).nrdoccjg;
@@ -3913,8 +3928,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 					vr_rel_dscpfav2 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
 																											 pr_inpessoa => vr_inpessoa_av);
           ELSE
+						IF pr_nrvrsctr = 2 THEN						
+							-- Buscar inpessoa
+							gene0005.pc_valida_cpf_cnpj(vr_tab_dados_avais(vr_idxavais).nrcpfcgc
+																				 ,vr_stsnrcal
+																				 ,vr_inpessoa_av);
+							vr_rel_dscpfav2 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
+																													 pr_inpessoa => vr_inpessoa_av );							
+						ELSE
             vr_rel_dscpfav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
                                                                      pr_inpessoa => 1 );
+          END IF;
           END IF;
         ELSIF vr_tab_dados_avais(vr_idxavais).nrdocava IS NULL THEN
           vr_rel_dscpfav2 := vr_tab_dados_avais(vr_idxavais).nrdocava;
@@ -3930,8 +3954,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
             vr_rel_dscfcav2 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
                                                          pr_inpessoa => 1 );
           ELSE
+					  IF pr_nrvrsctr = 2 THEN
+							vr_rel_dscfcav2 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
+																							             pr_inpessoa => 1 );
+	
+						ELSE
             vr_rel_dscfcav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
                                                                      pr_inpessoa => 1 );
+					  END IF;
           END IF;
           
         ELSIF vr_tab_dados_avais(vr_idxavais).nrdoccjg IS NULL THEN

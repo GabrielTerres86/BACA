@@ -2723,11 +2723,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
 
       vr_modrelat := pr_tpctrato || vr_modrelat;
 
-      -- Quando for desconto de titulo so tem um modelo
-      IF pr_tpctrato = 3 THEN
-        vr_modrelat := '3_1';
-      END IF;
-
       pc_escreve_xml('<modrelat>'   || vr_modrelat             || '</modrelat>' ||
                      '<tpctrato>'   || pr_tpctrato             || '</tpctrato>' ||
                      '<dscpfcgc>'   || vr_rel_nrcpfcgc         || '</dscpfcgc>' ||
