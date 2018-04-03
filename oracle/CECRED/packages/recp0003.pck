@@ -1218,10 +1218,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    BEGIN
                      UPDATE crapcyc 
                         SET flgehvip = 0
-                          , cdmotcin = CASE cdmotcin
-                                       WHEN 2 THEN 2
-                                       WHEN 7 THEN 7
-                                       ELSE 0 END
+                          , cdmotcin = 0
                           , dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt
                       WHERE cdcooper = rw_crapcyb.cdcooper
                         AND cdorigem = DECODE(rw_crapcyb.cdorigem,2,3,rw_crapcyb.cdorigem)
