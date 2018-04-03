@@ -3882,13 +3882,13 @@ END pc_gera_titulos_iptu_prog;
           pr_critica_data:= FALSE;
         END IF;
       ELSE
-        
+
         vr_dtvencto := npcb0001.fn_titulo_vencimento_pagamento(pr_cdcooper => pr_cod_cooper
                                                               ,pr_dtvencto => pr_dt_vencto);
 
         -- se a data de agendamento é maior que o prazo de vencimento
         -- então a data é criticada pois o título estará vencido
-              pr_critica_data:= FALSE;
+        pr_critica_data:= FALSE;
         if trunc(pr_dt_agendamento) > trunc(vr_dtvencto) then
           pr_critica_data:= TRUE;
         end if;
