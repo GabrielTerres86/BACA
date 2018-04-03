@@ -70,7 +70,7 @@
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "MSG" ) {
 		$msgErro    = $xmlObjeto->roottag->tags[0]->cdata;
 		$msgErro    = $msgErro . "Lan&ccedil;amentos alterados com sucesso.";
-		exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+		echo 'showError("inform","'.$msgErro.'","Notifica&ccedil;&atilde;o - Ayllos","estadoInicial();");';
 	} else {
 		echo 'showError("inform","Lan&ccedil;amentos alterados com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","estadoInicial();");';		
 	}
