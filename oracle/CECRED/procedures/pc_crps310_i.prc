@@ -282,6 +282,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
          15/02/2018 - Nova rotina para Arrasto por CPF/CNPJ (Guilherme/AMcom)
 
          20/02/2018 - Incluída procedure pc_busca_dias_acelerados, que retorna os dias da faixa inicial do contrato anterior para composição dos dias de atraso. - Daniel(AMcom)
+         
+         29/03/2018 - Incluída gravação do risco acelerado(INRISCO_REFIN) - Daniel(AMcom)
   ............................................................................ */
 
     DECLARE
@@ -1045,7 +1047,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- Somente contrato 3 - Renegociação
           --                  4 - Composição de Dívida
           --                  5 - Cessão de Cartão
-          AND epr.idquaprc IN (3, 4, 5)
+          AND epr.idquaprc IN (3, 4)
           AND epr.cdcooper = pr_cdcooper  -- Cooper   1
           AND epr.nrdconta = pr_nrdconta  -- Conta    80280161
           AND epr.nrctremp = pr_nrctremp; -- Contrato 1000844
@@ -1078,12 +1080,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                         ,pr_inrisco_refin IN NUMBER) IS --> Risco Acelerado
       --
       BEGIN
-/*        UPDATE CRAPEPR
+        UPDATE CRAPEPR
            SET INRISCO_REFIN = pr_inrisco_refin
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
-           AND nrctremp = pr_nrctremp;*/
-        NULL;
+           AND nrctremp = pr_nrctremp;
       EXCEPTION
         WHEN OTHERS THEN
           -- Ignorar qualquer problema
@@ -1889,9 +1890,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             vr_aux_nivel := 9;
         END CASE;
 
-    -- Gravar o risco acelerado - Daniel(AMcom)
-    if vr_qtdiaacl > 0 then
-      pc_grava_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
+        -- Gravar o risco acelerado - Daniel(AMcom)
+        if vr_qtdiaacl > 0 then
+          pc_grava_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
                                   ,pr_nrdconta => pr_rw_crapepr.nrdconta --> Conta
                                   ,pr_nrctremp => pr_rw_crapepr.nrctremp --> Contrato
                                   ,pr_inrisco_refin => vr_aux_nivel);    --> Risco Acelerado
@@ -2617,9 +2618,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           vr_dias      := 0;
         END IF;
 
-    -- Gravar o risco acelerado - Daniel(AMcom)
-    if vr_qtdiaacl > 0 then
-      pc_grava_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
+        -- Gravar o risco acelerado - Daniel(AMcom)
+        if vr_qtdiaacl > 0 then
+          pc_grava_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
                                   ,pr_nrdconta => pr_rw_crapepr.nrdconta --> Conta
                                   ,pr_nrctremp => pr_rw_crapepr.nrctremp --> Contrato
                                   ,pr_inrisco_refin => vr_aux_nivel);    --> Risco Acelerado
@@ -3267,9 +3268,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           vr_dias      := 0;
         END IF;
 
-    -- Gravar o risco acelerado - Daniel(AMcom)
-    if vr_qtdiaacl > 0 then
-      pc_grava_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
+        -- Gravar o risco acelerado - Daniel(AMcom)
+        if vr_qtdiaacl > 0 then
+          pc_grava_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
                                   ,pr_nrdconta => pr_rw_crapepr.nrdconta --> Conta
                                   ,pr_nrctremp => pr_rw_crapepr.nrctremp --> Contrato
                                   ,pr_inrisco_refin => vr_aux_nivel);    --> Risco Acelerado
@@ -3620,7 +3621,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   , r.dtdrisco DESC;--> Retornar o ultimo gravado
         rw_crapris_last cr_crapris_last%ROWTYPE;
 
-        -- Comentado cursor original cr_crapris_last Daniel(AMcom)
+        -- Comentado cursor original cr_crapris_last
           /*SELECT dtrefere
                 ,innivris
                 ,dtdrisco
@@ -3747,7 +3748,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             END IF;
 
             -- Regra para carga de data para o cursor
-            -- Se for rotina mensal - Daniel(AMcom)
+            -- Se for rotina mensal 
             IF to_char(pr_rw_crapdat.dtmvtoan, 'MM') <> to_char(pr_rw_crapdat.dtmvtolt, 'MM') THEN
               -- Utilizar o final do mês como data
               vr_dtrefere_aux := pr_rw_crapdat.dtultdma;
@@ -3761,7 +3762,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                 ,pr_nrctremp => rw_crapris.nrctremp
                                 ,pr_cdmodali => rw_crapris.cdmodali
                                 ,pr_cdorigem => rw_crapris.cdorigem
-                                ,pr_dtrefere => vr_dtrefere_aux); --Daniel(AMcom)
+                                ,pr_dtrefere => vr_dtrefere_aux); 
                                 --,pr_dtrefere => vr_datautil);
             FETCH cr_crapris_last
              INTO rw_crapris_last;
@@ -3888,7 +3889,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- Atualizar a data com a data do mais elevado
           --vr_dtdrisco_upd := vr_dtdrisco;
           -- Efetuar atualização do risco em processo cfme os valores encontrados acima
-
 
           /*************************/
           -- Regra para carga de data para o cursor
@@ -6395,4 +6395,4 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         pr_dscritic := 'Erro não tratado na rotina PC_CRPS310_I. Detalhes: '||sqlerrm;
     END;
   END PC_CRPS310_I;
-/
+  /
