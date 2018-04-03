@@ -2942,7 +2942,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     ELSE
       vr_dsjasper := 'crrl724_aditiv_declaracao.jasper';
     END IF;
-gene0002.pc_clob_para_arquivo(pr_clob => vr_des_xml, pr_caminho => '/usr/cooph5/sistemah5/equipe/reinert/xml', pr_arquivo => 'crrl724.xml',  pr_des_erro => vr_dscritic);
+
     --> Solicita geracao do PDF
     gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
                                , pr_cdprogra  => pr_cdprogra
