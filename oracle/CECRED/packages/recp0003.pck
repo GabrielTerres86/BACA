@@ -13,12 +13,12 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0003 IS
   -- Objetivo  : Agrupar rotinas genericas refente a importacao de arquivos referente a acordos de emprestimos
   --
   -- Alteracoes:
-  -- 
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Retorna valor bloqueado em acordos
   PROCEDURE pc_import_arq_acordo_job;
-                                    
+
 END RECP0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
@@ -46,7 +46,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --             03/05/2017 - Salvar registros por arquivo e desfazer acoes se aconteceu erro numa linha. (Jaison/James)
 
                  21/09/2017 - #756229 Setando pr_flgemail true nas rotinas pc_imp_arq_acordo_cancel e pc_imp_arq_acordo_quitado
-                  quando ocorrer erro nos comandos de extração de zip, listagem dos arquivos extraídos e conversão 
+                  quando ocorrer erro nos comandos de extração de zip, listagem dos arquivos extraídos e conversão
                   txt para unix para que os responsáveis pelo negócio sejam avisados por e-mail (Carlos)
 
                  27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
@@ -88,7 +88,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         vr_index    INTEGER;
         vr_cdcritic INTEGER;
         vr_dscritic VARCHAR2(4000);
-        
+
         vr_listadir VARCHAR2(2000);
         vr_nmarqsem VARCHAR2(100);
         -- Tabela arquivos
@@ -98,12 +98,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
         vr_typ_saida VARCHAR2(10);
         vr_comando   VARCHAR2(4000);
-        
+
       BEGIN
-        
+
         vr_cdcritic := 0;
         vr_dscritic := '';
-        
+
         -- Vamos ler todos os arquivos .txt extraido do arquivo .zip do dia
         gene0001.pc_lista_arquivos(pr_path     => pr_caminho
                                   ,pr_pesq     => pr_pesq || '.txt'
@@ -123,7 +123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
         -- Converte todos os arquivos para formato Unix
         vr_index:= vr_tab_arqtmp.FIRST;
-   
+
         WHILE vr_index IS NOT NULL LOOP
          -- Retirar a extensao do nome do arquivo
          vr_nmarqsem:= substr(vr_tab_arqtmp(vr_index),1,instr(vr_tab_arqtmp(vr_index),'.')-1);
@@ -162,13 +162,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
          -- Proximo registro
          vr_index:= vr_tab_arqtmp.NEXT(vr_index);
-             
+
        END LOOP;
 
      EXCEPTION
        WHEN vr_exc_saida THEN
          pr_cdcritic := vr_cdcritic;
-         
+
          IF pr_cdcritic > 0 THEN
            pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
          ELSE
@@ -180,12 +180,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
          pr_dscritic:= 'Erro ao converter arquivo para Dos no RECP0003.pc_converte_arquivo_txt_unix '||SQLERRM;
      END;
    END pc_converte_arquivo_txt_unix;
-  
+
   -- Importa arquivo referente a acordos cancelados
   PROCEDURE pc_imp_arq_acordo_cancel(pr_flgemail OUT BOOLEAN
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
-    
+
       -- Variaveis de Erros
       vr_cdcritic crapcri.cdcritic%TYPE := 0;
       vr_dscritic crapcri.dscritic%TYPE := '';
@@ -227,7 +227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
     BEGIN
 
-      pr_flgemail := FALSE; 
+      pr_flgemail := FALSE;
 
       -- Busca do diretorio micros da cooperativa
       vr_endarqui:= gene0001.fn_diretorio(pr_tpdireto => 'M' -- /micros/coop
@@ -242,7 +242,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                 ,pr_listarq  => vr_listadir
                                 ,pr_des_erro => vr_dscritic);
 
-      
+
       -- Se ocorrer erro ao recuperar lista de arquivos registra no log
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         -- Log de erro de execucao
@@ -256,7 +256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
       -- Buscar Primeiro arquivo da temp table
       vr_nrindice:= vr_tab_arqzip.FIRST;
-      
+
       -- Processar os arquivos lidos
       WHILE vr_nrindice IS NOT NULL LOOP
         -- Nome Arquivo zip
@@ -315,7 +315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                               ,pr_dspasswd => NULL
                               ,pr_flsilent => 'S'
                               ,pr_des_erro => vr_dscritic);
-      	
+
         --Se ocorreu erro
         IF vr_dscritic IS NOT NULL THEN
           -- Log de erro de execucao
@@ -393,7 +393,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                     ,pr_dscritic => 'Erro ao abrir arquivo: ' || vr_nmarqtxt);
 
                -- Fechar o arquivo
-               GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;  
+               GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
 
                -- Buscar proximo arquivo
                vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
@@ -418,7 +418,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                      -- Fim do arquivo
                      EXIT;
                  END;
-                 
+
                  IF SUBSTR(vr_setlinha,1,1) = 'H' AND vr_nrlinha = 1 THEN
                    CONTINUE;
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'H' AND vr_nrlinha > 1 THEN
@@ -433,12 +433,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    -- Fim do arquivo
                    EXIT;
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'T' THEN
-                   CONTINUE;                                          
+                   CONTINUE;
                  END IF;
-                 
+
                  vr_nracordo := TO_NUMBER(SUBSTR(vr_setlinha,29,13));
                  vr_dtcancel := TRUNC(SYSDATE);
-                 
+
                  OPEN cr_tbacordo(pr_nracordo => vr_nracordo);
                  FETCH cr_tbacordo INTO rw_tbacordo;
                  IF cr_tbacordo%NOTFOUND THEN
@@ -447,13 +447,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                  ELSE
                    CLOSE cr_tbacordo;
                  END IF;
-                 
+
                   -- Acordo Quitado e Cancelado
                  IF rw_tbacordo.cdsituacao IN(2,3) THEN
                    CONTINUE;
-                 END IF;              
-                 
-                 -- Procedure responsavel para cancelar o acordo    
+                 END IF;
+
+                 -- Procedure responsavel para cancelar o acordo
                  RECP0002.pc_cancelar_acordo(pr_nracordo => vr_nracordo
                                             ,pr_dtcancel => vr_dtcancel
                                             ,pr_cdcritic => vr_cdcritic
@@ -464,8 +464,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    -- Log de erro de execucao
                    pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                         ,pr_dstiplog => 'E'
-                                        ,pr_dscritic => 'Acordo: ' || vr_nracordo || 
-                                                        '. Critica: ' || vr_dscritic || 
+                                        ,pr_dscritic => 'Acordo: ' || vr_nracordo ||
+                                                        '. Critica: ' || vr_dscritic ||
                                                         '. Detalhe: '||vr_dsdetcri);
                    pr_flgemail := TRUE;
                    ROLLBACK; -- Desfaz acoes
@@ -485,21 +485,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
              END IF;
              --Buscar proximo arquivo
              vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
-             
+
            END LOOP;
-           
+
         END IF;
-        
+
         -- Renomear os arquivos .zip que foram processados
         vr_comando:= 'mv '||vr_endarqui||'/'||vr_nmtmparq||'.zip '||
                     vr_endarqui||'/'||vr_nmtmparq||'_processado.pro 1> /dev/null';
-        
+
         -- Executar o comando no unix
         GENE0001.pc_OScommand(pr_typ_comando => 'S'
                              ,pr_des_comando => vr_comando
                              ,pr_typ_saida   => vr_typ_saida
                              ,pr_des_saida   => vr_dscritic);
-        
+
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando;
@@ -517,7 +517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                              ,pr_des_comando => vr_comando
                              ,pr_typ_saida   => vr_typ_saida
                              ,pr_des_saida   => vr_dscritic);
-        
+
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando || '. Erro: ' || vr_dscritic;
@@ -525,13 +525,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic);
-        END IF;                
+        END IF;
 
         -- Envio centralizado de log de erro
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
                                    pr_ind_tipo_log => 2, -- Erro tratato
                                    pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
-                                                   'ARQUIVO INTEGRADO: ' || vr_nmarqzip); 
+                                                   'ARQUIVO INTEGRADO: ' || vr_nmarqzip);
 
         -- Proximo registro
         vr_nrindice:= vr_tab_arqzip.NEXT(vr_nrindice);
@@ -555,7 +555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   PROCEDURE pc_imp_arq_acordo_quitado(pr_flgemail OUT BOOLEAN
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                      ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
-    
+
       -- Variaveis de Erros
       vr_cdcritic crapcri.cdcritic%TYPE := 0;
       vr_dscritic crapcri.dscritic%TYPE := '';
@@ -607,11 +607,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           FROM tbrecup_acordo acordo,
                tbrecup_acordo_contrato acordoctr,
                crapcyb cyb
-         WHERE acordo.nracordo = acordoctr.nracordo      
+         WHERE acordo.nracordo = acordoctr.nracordo
            AND cyb.cdcooper = acordo.cdcooper
            AND cyb.nrdconta = acordo.nrdconta
            AND cyb.nrctremp = acordoctr.nrctremp
-           AND cyb.cdorigem = acordoctr.cdorigem          
+           AND cyb.cdorigem = acordoctr.cdorigem
            AND acordoctr.nracordo = pr_nracordo
       ORDER BY cyb.cdorigem;
       rw_crapcyb cr_crapcyb%ROWTYPE;
@@ -627,7 +627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
-     
+
       -- Consulta cooperativas
       CURSOR cr_crapcop IS
         SELECT cop.cdcooper
@@ -643,7 +643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
               ,aco.nracordo
          FROM tbrecup_acordo aco
         WHERE aco.nracordo = pr_nracordo;
-      rw_nracordo cr_nracordo%ROWTYPE;  
+      rw_nracordo cr_nracordo%ROWTYPE;
 
       -- Consulta valor bloqueado pelo acordo
       CURSOR cr_crapepr(pr_cdcooper crapepr.cdcooper%TYPE
@@ -676,15 +676,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         WHERE epr.cdcooper = pr_cdcooper
           AND epr.nrdconta = pr_nrdconta
           AND epr.nrctremp = pr_nrctremp;
-      rw_crapepr cr_crapepr%ROWTYPE;      
+      rw_crapepr cr_crapepr%ROWTYPE;
 
       -- Cursor genérico de data
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
       TYPE typ_tab_crapdat IS
       TABLE OF btch0001.cr_crapdat%ROWTYPE
-		  INDEX BY BINARY_INTEGER;
-            
+      INDEX BY BINARY_INTEGER;
+
       -- Tabela de Saldos
       vr_tab_saldos EXTR0001.typ_tab_saldos;
       vr_tab_crapdat typ_tab_crapdat;
@@ -695,16 +695,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
       FOR rw_crapcop IN cr_crapcop LOOP
         OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
-        
+
         FETCH btch0001.cr_crapdat INTO rw_crapdat;
-        
+
         vr_tab_crapdat(rw_crapcop.cdcooper) := rw_crapdat;
 
         CLOSE btch0001.cr_crapdat;
 
       END LOOP;
-  
-      pr_flgemail := FALSE; 
+
+      pr_flgemail := FALSE;
 
       -- Busca do diretorio micros da cooperativa
       vr_endarqui:= gene0001.fn_diretorio(pr_tpdireto => 'M' -- /micros/coop
@@ -718,7 +718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                 ,pr_pesq     => vr_nmtmpzip
                                 ,pr_listarq  => vr_listadir
                                 ,pr_des_erro => vr_dscritic);
-      
+
       -- Se ocorrer erro ao recuperar lista de arquivos registra no log
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         -- Log de erro de execucao
@@ -732,7 +732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
       -- Buscar Primeiro arquivo da temp table
       vr_nrindice:= vr_tab_arqzip.FIRST;
-      
+
       -- Processar os arquivos lidos
       WHILE vr_nrindice IS NOT NULL LOOP
         -- Nome Arquivo zip
@@ -791,7 +791,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                               ,pr_dspasswd => NULL
                               ,pr_flsilent => 'S'
                               ,pr_des_erro => vr_dscritic);
-      	
+
         --Se ocorreu erro
         IF vr_dscritic IS NOT NULL THEN
           -- Log de erro de execucao
@@ -867,7 +867,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                     ,pr_dstiplog => 'E'
                                     ,pr_dscritic => 'Erro ao abrir arquivo: ' || vr_nmarqtxt);
-                                         
+
                -- Verificar se o arquivo está aberto
                IF utl_file.IS_OPEN(vr_input_file) THEN
                  -- Fechar o arquivo
@@ -897,7 +897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                      --Fim do arquivo
                      EXIT;
                  END;
-                 
+
                  IF SUBSTR(vr_setlinha,1,1) = 'H' AND vr_nrlinha = 1 THEN
                    CONTINUE;
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'H' AND vr_nrlinha > 1 THEN
@@ -911,7 +911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    ROLLBACK;
                    EXIT LEITURA_TXT;
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'T' THEN
-                   CONTINUE;                                          
+                   CONTINUE;
                  END IF;
 
                  vr_vllancam := 0;
@@ -919,19 +919,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                  vr_dtquitac := TRUNC(SYSDATE);
 
                  FOR rw_crapcyb IN cr_crapcyb(pr_nracordo => vr_nracordo) LOOP
-                   
+
                    OPEN cr_crapass(pr_cdcooper => rw_crapcyb.cdcooper
                                   ,pr_nrdconta => rw_crapcyb.nrdconta);
 
                    FETCH cr_crapass INTO rw_crapass;
-                     
+
                    CLOSE cr_crapass;
-  
+
                    -- Estouro de Conta
-                   IF rw_crapcyb.cdorigem IN (1) THEN 
+                   IF rw_crapcyb.cdorigem IN (1) THEN
                      --Limpar tabela saldos
                      vr_tab_saldos.DELETE;
-                    
+
                      -- Saldo  disponivel
                      vr_vlsddisp := 0;
 
@@ -970,7 +970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                      -- Armazenar valor para ser lancado no final como ajuste contabil
                      -- Somente deverá conter o valor para zerar o estouro de conta.
-                     IF vr_vlsddisp < 0 THEN        
+                     IF vr_vlsddisp < 0 THEN
                        RECP0001.pc_pagar_contrato_conta(pr_cdcooper => rw_crapcyb.cdcooper
                                                        ,pr_nrdconta => rw_crapcyb.nrdconta
                                                        ,pr_cdagenci => rw_crapass.cdagenci
@@ -982,7 +982,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                        ,pr_vltotpag => vr_vltotpag
                                                        ,pr_cdcritic => vr_cdcritic
                                                        ,pr_dscritic => vr_dscritic);
-                                                       
+
                        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
 
                          IF NVL(vr_cdcritic,0) > 0 THEN
@@ -997,12 +997,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          EXIT LEITURA_TXT;
                        END IF;
 
-                       vr_vllancam := NVL(vr_vllancam,0) + NVL(ABS(vr_vltotpag),0); 
-                       
+                       vr_vllancam := NVL(vr_vllancam,0) + NVL(ABS(vr_vltotpag),0);
+
                      END IF;
 
                    ELSIF rw_crapcyb.cdorigem IN (2,3) THEN
-                     
+
                      OPEN cr_crapepr(pr_cdcooper => rw_crapcyb.cdcooper
                                     ,pr_nrdconta => rw_crapcyb.nrdconta
                                     ,pr_nrctremp => rw_crapcyb.nrctremp);
@@ -1011,7 +1011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                      IF cr_crapepr%NOTFOUND THEN
                        CLOSE cr_crapepr;
-                       
+
                        -- Erro
                        vr_dscritic := 'Contrato Num. ' || GENE0002.fn_mask_contrato(rw_crapcyb.nrctremp) ||
                                       ' nao encontrado. Conta: ' || GENE0002.fn_mask_conta(rw_crapcyb.nrdconta) ||
@@ -1030,7 +1030,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                      -- Verificar se o contrato já está LIQUIDADO   OU
                      -- Se o contrato de PREJUIZO já foi TOTALMENTE PAGO
-                     IF (rw_crapepr.inliquid = 1 AND rw_crapepr.inprejuz = 0) OR 
+                     IF (rw_crapepr.inliquid = 1 AND rw_crapepr.inprejuz = 0) OR
                         (rw_crapepr.inprejuz = 1 AND rw_crapepr.vlsdprej <= 0) THEN
                        -- Proximo Contrato
                        CONTINUE;
@@ -1038,33 +1038,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                      -- Condicao para verificar se o contrato de emprestimo é de prejuizo
                      IF rw_crapepr.inprejuz = 1 THEN
-                        
+
                        -- Realizar a chamada da rotina para pagamento de prejuizo
-                       RECP0001.pc_pagar_emprestimo_prejuizo(pr_cdcooper => rw_crapepr.cdcooper         
-                                                            ,pr_nrdconta => rw_crapepr.nrdconta         
-                                                            ,pr_cdagenci => rw_crapass.cdagenci         
+                       RECP0001.pc_pagar_emprestimo_prejuizo(pr_cdcooper => rw_crapepr.cdcooper
+                                                            ,pr_nrdconta => rw_crapepr.nrdconta
+                                                            ,pr_cdagenci => rw_crapass.cdagenci
                                                             ,pr_crapdat  => vr_tab_crapdat(rw_crapepr.cdcooper)
-                                                            ,pr_nrctremp => rw_crapepr.nrctremp 
+                                                            ,pr_nrctremp => rw_crapepr.nrctremp
                                                             ,pr_tpemprst => rw_crapepr.tpemprst
-                                                            ,pr_vlprejuz => rw_crapepr.vlprejuz 
+                                                            ,pr_vlprejuz => rw_crapepr.vlprejuz
                                                             ,pr_vlsdprej => rw_crapepr.vlsdprej
-                                                            ,pr_vlsprjat => rw_crapepr.vlsprjat 
-                                                            ,pr_vlpreemp => rw_crapepr.vlpreemp 
+                                                            ,pr_vlsprjat => rw_crapepr.vlsprjat
+                                                            ,pr_vlpreemp => rw_crapepr.vlpreemp
                                                             ,pr_vlttmupr => rw_crapepr.vlttmupr
-                                                            ,pr_vlpgmupr => rw_crapepr.vlpgmupr 
-                                                            ,pr_vlttjmpr => rw_crapepr.vlttjmpr 
+                                                            ,pr_vlpgmupr => rw_crapepr.vlpgmupr
+                                                            ,pr_vlttjmpr => rw_crapepr.vlttjmpr
                                                             ,pr_vlpgjmpr => rw_crapepr.vlpgjmpr
-                                                            ,pr_nracordo => rw_crapcyb.nracordo 
+                                                            ,pr_nracordo => rw_crapcyb.nracordo
                                                             ,pr_nrparcel => 0
                                                             ,pr_cdoperad => vr_cdoperad
                                                             ,pr_vlparcel => 0
                                                             ,pr_nmtelant => vr_nmdatela
                                                             ,pr_inliqaco => 'S'           -- Indicador informando que é para liquidar o contrato de emprestimo
                                                             ,pr_vliofcpl => rw_crapepr.vliofcpl
-                                                            ,pr_vltotpag => vr_vltotpag -- Retorno do total pago       
+                                                            ,pr_vltotpag => vr_vltotpag -- Retorno do total pago
                                                             ,pr_cdcritic => vr_cdcritic
                                                             ,pr_dscritic => vr_dscritic);
-                       
+
                        -- Se retornar erro da rotina
                        IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
 
@@ -1080,12 +1080,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          ROLLBACK; -- Desfaz acoes
                          EXIT LEITURA_TXT;
                        END IF;
-                        
+
                        -- Não deve mais gerar lancamento 2181 para pagamento prejuizo.
-                       -- vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);   
+                       -- vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
                      -- Folha de Pagamento
-                     ELSIF rw_crapepr.flgpagto = 1 THEN 
-                       
+                     ELSIF rw_crapepr.flgpagto = 1 THEN
+
                        -- Realizar a chamada da rotina para pagamento de prejuizo
                        RECP0001.pc_pagar_emprestimo_folha(pr_cdcooper => rw_crapepr.cdcooper
                                                          ,pr_nrdconta => rw_crapepr.nrdconta
@@ -1109,7 +1109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                          ,pr_vltotpag => vr_vltotpag
                                                          ,pr_cdcritic => vr_cdcritic
                                                          ,pr_dscritic => vr_dscritic);
-                       
+
                        -- Se retornar erro da rotina
                        IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
 
@@ -1125,11 +1125,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          ROLLBACK; -- Desfaz acoes
                          EXIT LEITURA_TXT;
                        END IF;
-                       
-                       vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0); 
+
+                       vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
                       -- Emprestimo TR
                       ELSIF rw_crapepr.tpemprst = 0 THEN
-                        
+
                         -- Pagar empréstimo TR
                         RECP0001.pc_pagar_emprestimo_tr(pr_cdcooper => rw_crapepr.cdcooper
                                                        ,pr_nrdconta => rw_crapepr.nrdconta
@@ -1154,7 +1154,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                        ,pr_vltotpag => vr_vltotpag
                                                        ,pr_cdcritic => vr_cdcritic
                                                        ,pr_dscritic => vr_dscritic);
-                         
+
                         -- Se retornar erro da rotina
                         IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
 
@@ -1170,14 +1170,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                           ROLLBACK; -- Desfaz acoes
                           EXIT LEITURA_TXT;
                         END IF;
-                       
-                        vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0); 
+
+                        vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
                       -- Emprestimo PP
                       ELSIF rw_crapepr.tpemprst = 1 THEN
                         -- Pagar empréstimo PP
                         RECP0001.pc_pagar_emprestimo_pp(pr_cdcooper => rw_crapepr.cdcooper
-                                                       ,pr_nrdconta => rw_crapepr.nrdconta         
-                                                       ,pr_cdagenci => rw_crapass.cdagenci         
+                                                       ,pr_nrdconta => rw_crapepr.nrdconta
+                                                       ,pr_cdagenci => rw_crapass.cdagenci
                                                        ,pr_crapdat  => vr_tab_crapdat(rw_crapepr.cdcooper)
                                                        ,pr_nrctremp => rw_crapcyb.nrctremp
                                                        ,pr_nracordo => rw_crapcyb.nracordo
@@ -1185,15 +1185,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                        ,pr_vlsdeved => rw_crapepr.vlsdeved
                                                        ,pr_vlsdevat => rw_crapepr.vlsdevat
                                                        ,pr_vlparcel => 0
-                                                       ,pr_idorigem => 7 
+                                                       ,pr_idorigem => 7
                                                        ,pr_nmtelant => vr_nmdatela
                                                        ,pr_cdoperad => vr_cdoperad
                                                        ,pr_inliqaco => 'S'
                                                        ,pr_idvlrmin => vr_idvlrmin
-                                                       ,pr_vltotpag => vr_vltotpag         
-                                                       ,pr_cdcritic => vr_cdcritic         
-                                                       ,pr_dscritic => vr_dscritic);       
-                        
+                                                       ,pr_vltotpag => vr_vltotpag
+                                                       ,pr_cdcritic => vr_cdcritic
+                                                       ,pr_dscritic => vr_dscritic);
+
                         -- Se retornar erro da rotina
                         IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
 
@@ -1209,20 +1209,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                           ROLLBACK; -- Desfaz acoes
                           EXIT LEITURA_TXT;
                         END IF;
-                       
+
                         vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
                       END IF;
-                      
+
                     END IF;
 
                    BEGIN
-                     UPDATE crapcyc 
-                        SET flgehvip = 0
-                          , cdmotcin = CASE cdmotcin
-                                       WHEN 2 THEN 2
-                                       WHEN 7 THEN 7
-                                       ELSE 0 END
-                          , dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt
+                     UPDATE crapcyc
+                        SET flgehvip = decode(cdmotcin,2,flgehvip,7,flgehvip,flvipant),
+                            cdmotcin = decode(cdmotcin,2,cdmotcin,7,cdmotcin,cdmotant),
+                            dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt,
+                            cdoperad = 'cyber'
                       WHERE cdcooper = rw_crapcyb.cdcooper
                         AND cdorigem = DECODE(rw_crapcyb.cdorigem,2,3,rw_crapcyb.cdorigem)
                         AND nrdconta = rw_crapcyb.nrdconta
@@ -1241,7 +1239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    END;
 
                  END LOOP;
-                 
+
                  OPEN cr_nracordo(pr_nracordo => vr_nracordo);
 
                  FETCH cr_nracordo INTO rw_nracordo;
@@ -1249,14 +1247,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                  CLOSE cr_nracordo;
 
                  OPEN cr_crapass(pr_cdcooper => rw_nracordo.cdcooper
-                                ,pr_nrdconta => rw_nracordo.nrdconta);   
+                                ,pr_nrdconta => rw_nracordo.nrdconta);
 
-                 FETCH cr_crapass INTO rw_crapass;               
+                 FETCH cr_crapass INTO rw_crapass;
 
                  CLOSE cr_crapass;
 
                  IF rw_nracordo.vlbloqueado > 0 THEN
-                                      
+
                     EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_crapass.cdcooper                          --> Cooperativa conectada
                                                   ,pr_dtmvtolt => vr_tab_crapdat(rw_crapass.cdcooper).dtmvtolt --> Movimento atual
                                                   ,pr_cdagenci => rw_crapass.cdagenci                          --> Código da agência
@@ -1282,7 +1280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                         vr_cdcritic := 0;
                         vr_dscritic := 'Erro ao criar o lancamento de desbloqueio de acordo';
                       END IF;
-                      
+
                       -- Log de erro de execucao
                       pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                            ,pr_dstiplog => 'E'
@@ -1297,12 +1295,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                  -- Verificar se sera necessario efetuar o lancamento de ajuste
                  IF vr_vllancam - rw_nracordo.vlbloqueado > 0 THEN
-                 
-                   /* Se ainda houver saldo devedor nas operações vinculadas ao acordo, 
+
+                   /* Se ainda houver saldo devedor nas operações vinculadas ao acordo,
                       o sistema Ayllos deverá efetuar o abatimento do saldo devedor das operações
                       vinculadas ao acordo cujo ainda existem saldo(s) devedor(es), de forma automatica.
                       Para este procedimento, utilizar o histórico: 2181 */
-                 
+
                    EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_crapass.cdcooper                          --> Cooperativa conectada
                                                  ,pr_dtmvtolt => vr_tab_crapdat(rw_crapass.cdcooper).dtmvtolt --> Movimento atual
                                                  ,pr_cdagenci => rw_crapass.cdagenci                          --> Código da agência
@@ -1354,14 +1352,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                           ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
                      pr_flgemail := TRUE;
                      ROLLBACK; -- Desfaz acoes
-                     EXIT LEITURA_TXT;                                          
-                 END;   
-                  
+                     EXIT LEITURA_TXT;
+                 END;
+
                END IF; --Arquivo aberto
              END LOOP;
-             
+
              COMMIT; -- Salva os dados por arquivo
-             
+
              -- Verificar se o arquivo está aberto
              IF utl_file.IS_OPEN(vr_input_file) THEN
                -- Fechar o arquivo
@@ -1373,17 +1371,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
            END LOOP;
 
         END IF;
-        
+
         -- Renomear os arquivos .zip que foram processados
         vr_comando:= 'mv '||vr_endarqui||'/'||vr_nmtmparq||'.zip '||
                     vr_endarqui||'/'||vr_nmtmparq||'_processado.pro 1> /dev/null';
-        
+
         -- Executar o comando no unix
         GENE0001.pc_OScommand(pr_typ_comando => 'S'
                              ,pr_des_comando => vr_comando
                              ,pr_typ_saida   => vr_typ_saida
                              ,pr_des_saida   => vr_dscritic);
-        
+
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando;
@@ -1402,7 +1400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                              ,pr_des_comando => vr_comando
                              ,pr_typ_saida   => vr_typ_saida
                              ,pr_des_saida   => vr_dscritic);
-        
+
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_comando || '. Erro: ' || vr_dscritic;
@@ -1411,19 +1409,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic);
           CONTINUE;
-        END IF;                
+        END IF;
 
         -- Envio centralizado de log de erro
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
                                    pr_ind_tipo_log => 2, -- Erro tratato
                                    pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' --> ' ||
-                                                      'ARQUIVO INTEGRADO: ' || vr_nmarqzip); 
+                                                      'ARQUIVO INTEGRADO: ' || vr_nmarqzip);
 
         -- Proximo registro
         vr_nrindice:= vr_tab_arqzip.NEXT(vr_nrindice);
 
       END LOOP;
-      
+
   EXCEPTION
     WHEN OTHERS THEN
       pr_cdcritic := 0;
@@ -1435,7 +1433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                            ,pr_dscritic => pr_dscritic);
 
       ROLLBACK;
-  END pc_imp_arq_acordo_quitado; 
+  END pc_imp_arq_acordo_quitado;
 
   PROCEDURE pc_import_arq_acordo_job IS
 
@@ -1444,29 +1442,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
     vr_dscritic crapcri.dscritic%TYPE;
     vr_flgemail_cancelado BOOLEAN := FALSE;
     vr_flgemail_quitado BOOLEAN := FALSE;
-    vr_dscemail VARCHAR2(4000) := '';     
+    vr_dscemail VARCHAR2(4000) := '';
   BEGIN
     -- Buscar o CRAPDAT da cooperativa
-    OPEN BTCH0001.cr_crapdat(3); 
+    OPEN BTCH0001.cr_crapdat(3);
     FETCH BTCH0001.cr_crapdat INTO BTCH0001.rw_crapdat;
     -- Se não encontrar registro na CRAPDAT
     IF BTCH0001.cr_crapdat%NOTFOUND THEN
       -- Fechar o cursor
-      CLOSE BTCH0001.cr_crapdat;    
+      CLOSE BTCH0001.cr_crapdat;
       RETURN;
-    END IF;        
+    END IF;
     -- Fechar o cursor
     CLOSE BTCH0001.cr_crapdat;
-  
+
     -- Condicao para verificar se o processo noturno está rodando
     IF BTCH0001.rw_crapdat.inproces >= 2 THEN
       RETURN;
-    END IF;  
-  
+    END IF;
+
       -- Log de inicio de execucao
       pc_controla_log_batch(pr_cdcooper => 3
                            ,pr_dstiplog => 'I');
-            
+
       -- Importacao de arquivo de acordos cancelados
       pc_imp_arq_acordo_cancel(pr_flgemail => vr_flgemail_cancelado
                               ,pr_cdcritic => vr_cdcritic
@@ -1484,7 +1482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       ELSIF vr_flgemail_quitado THEN
         vr_dscemail := 'Houve erro de importação no arquivo referente a acordos quitados.';
       END IF;
-           
+
       IF vr_dscemail IS NOT NULL THEN
         -- Envia email aos responsaveis pela importacao do arquivo CB117
         GENE0003.pc_solicita_email(pr_cdcooper        => 3
@@ -1512,7 +1510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                            ,pr_dstiplog => 'F');
 
       COMMIT;
-     
+
   EXCEPTION
     WHEN OTHERS THEN
       -- Log de erro de execucao
@@ -1521,6 +1519,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                ,pr_dscritic => SQLERRM);
       ROLLBACK;
   END pc_import_arq_acordo_job;
-  
+
 END RECP0003;
 /
