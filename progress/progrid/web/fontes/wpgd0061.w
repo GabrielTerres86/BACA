@@ -2,6 +2,12 @@
   Alterações: 28/07/2017 - Criaçao da tela, Prj. 322. (Jean Michel)													
 	          15/02/2018 - PJ 322 - SM 7 - (Mateus) Se só exitir um titular na conta, trazer o mesmo como default
               Permitir ordenação por comentários
+			  
+ 			  03/04/2018 - Incidente INC0011750:
+			               Ajuste nas telas de "Inscrições" do Progrid e do Assembleias.
+                           Motivo: O sistema estava puxando de forma errada a conta da última 
+				 		   inscrição efetuada. (Wagner/Sustenção).
+			  
 ............................................................................................................*/
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -2901,7 +2907,7 @@ PROCEDURE process-web-request :
       
       /* limpar variavel para nao apresentar critica ao carregar tela */  
       ab_unmap.aux_cdagenci = "".
-      IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
+      IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in" AND opcao <> "i" AND opcao <> "carcop") THEN
          RUN displayFields.
  
       RUN enableFields.
