@@ -1482,7 +1482,7 @@ BEGIN
 																		   || 'da cidade de ' || vr_tab_aval(vr_ind_aval).nmcidade || '/' || vr_tab_aval(vr_ind_aval).cdufresd || ', '
 																		   || 'CEP ' || gene0002.fn_mask_cep(vr_tab_aval(vr_ind_aval).nrcepend)
 																		   || (CASE WHEN vr_tab_aval(vr_ind_aval).nrctaava > 0 THEN ', titular da conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_tab_aval(vr_ind_aval).nrctaava)) ELSE '' END)
-																		   || (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de AVALISTA' ELSE '' END)
+																							|| (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de DEVEDOR SOLIDÁRIO' ELSE '' END)
 																		   || '.</terceiro_0' || vr_ind_aval || '>';
 						ELSE
 							vr_tab_avl(vr_ind_aval).descricao := '<terceiro_0' || vr_ind_aval || '>'
@@ -1492,7 +1492,7 @@ BEGIN
 																			   || 'bairro ' || vr_tab_aval(vr_ind_aval).dsendcmp || ', da cidade de ' || vr_tab_aval(vr_ind_aval).nmcidade || '/' || vr_tab_aval(vr_ind_aval).cdufresd || ', '
 																			   || 'CEP ' || gene0002.fn_mask_cep(vr_tab_aval(vr_ind_aval).nrcepend) 
 																			   || (CASE WHEN vr_tab_aval(vr_ind_aval).nrctaava > 0 THEN ', conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_tab_aval(vr_ind_aval).nrctaava)) ELSE '' END)
-																			   || (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de AVALISTA' ELSE '' END)
+																								|| (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de DEVEDOR SOLIDÁRIO' ELSE '' END)
 																			   || '.</terceiro_0' || vr_ind_aval || '>';
 						END IF;
 
@@ -2491,7 +2491,7 @@ BEGIN
                                             || 'da cidade de ' || vr_tab_aval(vr_ind_aval).nmcidade || '/' || vr_tab_aval(vr_ind_aval).cdufresd || ', '
                                             || 'CEP ' || gene0002.fn_mask_cep(vr_tab_aval(vr_ind_aval).nrcepend)
                                             || (CASE WHEN vr_tab_aval(vr_ind_aval).nrctaava > 0 THEN ', titular da conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_tab_aval(vr_ind_aval).nrctaava)) ELSE '' END)
-											|| (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de AVALISTA' ELSE '' END)
+																						|| (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de DEVEDOR SOLIDÁRIO' ELSE '' END)
                                               || '.</terceiro_0' || vr_ind_aval || '>';
           ELSE
             vr_tab_avl(vr_ind_aval).descricao := '<terceiro_0' || vr_ind_aval || '>'
@@ -2501,7 +2501,7 @@ BEGIN
                                               || 'bairro ' || vr_tab_aval(vr_ind_aval).dsendcmp || ', da cidade de ' || vr_tab_aval(vr_ind_aval).nmcidade || '/' || vr_tab_aval(vr_ind_aval).cdufresd || ', '
                                               || 'CEP ' || gene0002.fn_mask_cep(vr_tab_aval(vr_ind_aval).nrcepend) 
                                               || (CASE WHEN vr_tab_aval(vr_ind_aval).nrctaava > 0 THEN ', conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_tab_aval(vr_ind_aval).nrctaava)) ELSE '' END)
-											  || (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de AVALISTA' ELSE '' END)
+																							|| (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de DEVEDOR SOLIDÁRIO' ELSE '' END)
                                               || '.</terceiro_0' || vr_ind_aval || '>';
           END IF;
 
@@ -3109,7 +3109,7 @@ BEGIN
 							 -- Busca os dados do endereco residencial do associado
 							 OPEN  cr_crapenc(pr_cdcooper => pr_cdcooper
 							                 ,pr_nrdconta => rw_cobertura.nrconta_terceiro
-															 ,pr_inpessoa => rw_crawepr.inpessoa);
+															 ,pr_inpessoa => rw_crapass.inpessoa);
 							 FETCH cr_crapenc INTO rw_crapenc;
 							 -- Se nao encontrar o endereco finaliza o programa
 							 IF cr_crapenc%NOTFOUND THEN

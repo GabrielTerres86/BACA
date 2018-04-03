@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-09-16T08:57:39 -->
+<!-- 2018-04-02T18:21:17 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.5"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="3877"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="CRRL100_10"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl_100_pre"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -214,6 +214,43 @@
 	<field name="dsqrcode" class="java.lang.String">
 		<fieldDescription><![CDATA[dsqrcode]]></fieldDescription>
 	</field>
+	<field name="cob_qtdiatraso" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_qtdiatraso]]></fieldDescription>
+	</field>
+	<field name="cob_perminimo" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_perminimo]]></fieldDescription>
+	</field>
+	<field name="cob_nrctater" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_nrctater]]></fieldDescription>
+	</field>
+	<field name="cob_inaddcob" class="java.lang.Integer">
+		<fieldDescription><![CDATA[cob_inaddcob]]></fieldDescription>
+	</field>
+	<field name="cob_inresaut" class="java.lang.Integer">
+		<fieldDescription><![CDATA[cob_inresaut]]></fieldDescription>
+	</field>
+	<field name="cob_nminterv" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_nminterv]]></fieldDescription>
+	</field>
+	<field name="ind_add_item" class="java.lang.Integer">
+		<fieldDescription><![CDATA[ind_add_item]]></fieldDescription>
+	</field>
+	<field name="cob_interven" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_interven]]></fieldDescription>
+	</field>
+	<field name="terceiro_01" class="java.lang.String">
+		<fieldDescription><![CDATA[terceiro_01]]></fieldDescription>
+	</field>
+	<field name="terceiro_02" class="java.lang.String">
+		<fieldDescription><![CDATA[terceiro_02]]></fieldDescription>
+	</field>
+	<field name="cob_nrcpfint" class="java.lang.String">
+		<fieldDescription><![CDATA[cob_nrcpfint]]></fieldDescription>
+	</field>
+	<variable name="vr_nrtopico" class="java.lang.Integer">
+		<variableExpression><![CDATA[$F{cob_inaddcob}.intValue() > 0 ?  $V{vr_nrtopico} + 1 : $V{vr_nrtopico}]]></variableExpression>
+		<initialValueExpression><![CDATA[0]]></initialValueExpression>
+	</variable>
 	<background>
 		<band height="850" splitType="Stretch">
 			<staticText>
@@ -231,9 +268,10 @@
 		<band height="60"/>
 	</pageHeader>
 	<detail>
-		<band height="762" splitType="Stretch">
+		<band height="804">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<frame>
-				<reportElement positionType="Float" x="5" y="426" width="467" height="44" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
+				<reportElement positionType="Float" x="5" y="374" width="467" height="13" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -243,7 +281,7 @@
 				</box>
 			</frame>
 			<frame>
-				<reportElement x="5" y="368" width="467" height="13" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
+				<reportElement positionType="Float" x="5" y="341" width="467" height="33" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -253,7 +291,7 @@
 				</box>
 			</frame>
 			<frame>
-				<reportElement x="5" y="335" width="467" height="33" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
+				<reportElement positionType="Float" x="5" y="308" width="467" height="33" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -263,7 +301,7 @@
 				</box>
 			</frame>
 			<frame>
-				<reportElement x="5" y="302" width="467" height="33" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
+				<reportElement positionType="Float" x="5" y="264" width="467" height="44" uuid="f63321ed-10bc-4be8-8140-9d61b5c0b047"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -273,7 +311,7 @@
 				</box>
 			</frame>
 			<frame>
-				<reportElement x="5" y="258" width="467" height="44" uuid="f63321ed-10bc-4be8-8140-9d61b5c0b047"/>
+				<reportElement positionType="Float" x="5" y="231" width="467" height="33" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -283,7 +321,7 @@
 				</box>
 			</frame>
 			<frame>
-				<reportElement x="5" y="225" width="467" height="33" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
+				<reportElement positionType="Float" x="5" y="198" width="467" height="33" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -293,7 +331,7 @@
 				</box>
 			</frame>
 			<frame>
-				<reportElement x="5" y="192" width="467" height="33" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
+				<reportElement positionType="Float" x="5" y="165" width="467" height="33" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -303,7 +341,7 @@
 				</box>
 			</frame>
 			<frame>
-				<reportElement x="5" y="159" width="467" height="33" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5"/>
+				<reportElement positionType="Float" x="5" y="117" width="467" height="48" uuid="f63321ed-10bc-4be8-8140-9d61b5c0b047"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -313,7 +351,9 @@
 				</box>
 			</frame>
 			<frame>
-				<reportElement x="5" y="111" width="467" height="48" uuid="f63321ed-10bc-4be8-8140-9d61b5c0b047"/>
+				<reportElement x="5" y="11" width="467" height="73" uuid="f63321ed-10bc-4be8-8140-9d61b5c0b047">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -321,26 +361,6 @@
 					<bottomPen lineWidth="1.0"/>
 					<rightPen lineWidth="1.0"/>
 				</box>
-			</frame>
-			<frame>
-				<reportElement x="5" y="37" width="467" height="73" uuid="f63321ed-10bc-4be8-8140-9d61b5c0b047"/>
-				<box>
-					<pen lineWidth="1.0"/>
-					<topPen lineWidth="1.0"/>
-					<leftPen lineWidth="1.0"/>
-					<bottomPen lineWidth="1.0"/>
-					<rightPen lineWidth="1.0"/>
-				</box>
-				<textField>
-					<reportElement x="7" y="10" width="340" height="55" uuid="40865f62-f1af-4e63-a20c-a57df3bb3f18">
-						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-					</reportElement>
-					<textElement textAlignment="Justified">
-						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$F{campo_01}]]></textFieldExpression>
-				</textField>
 				<line direction="BottomUp">
 					<reportElement positionType="FixRelativeToBottom" x="359" y="0" width="1" height="73" uuid="647ca1a4-9e1c-4a45-bc6e-01cacac1ee42">
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -358,9 +378,312 @@
 						<jr:codeExpression><![CDATA[$F{dsqrcode}]]></jr:codeExpression>
 					</jr:QRCode>
 				</componentElement>
+				<staticText>
+					<reportElement x="3" y="1" width="244" height="11" uuid="05468206-7cac-4aac-83da-385d81f55427">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[1. EMITENTE/COOPERADO(A)
+]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="3" y="12" width="347" height="48" uuid="99f51a0b-b974-45b8-9249-c669a1c4ce1c">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nmemitente} + ", " + $F{campo_01}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<textField>
+				<reportElement positionType="Float" x="8" y="153" width="17" height="11" uuid="dd8bfeac-76b0-4b64-818d-fe1a89d5375f"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{pa}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="55" y="153" width="83" height="11" uuid="2f86e584-dce8-4ae8-ab54-4f714e1bd0b0"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{conta}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement positionType="Float" x="8" y="142" width="17" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[PA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement positionType="Float" x="55" y="142" width="83" height="11" uuid="f36178d0-1c48-4d8d-8fb0-671b80651a4c"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Conta]]></text>
+			</staticText>
+			<line direction="BottomUp">
+				<reportElement positionType="Float" x="144" y="142" width="1" height="23" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
+			</line>
+			<textField>
+				<reportElement positionType="Float" x="147" y="153" width="94" height="11" uuid="424b5a99-faab-4513-93fb-4f3c7d9e2583"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtmvtolt}]]></textFieldExpression>
+			</textField>
+			<line direction="BottomUp">
+				<reportElement positionType="Float" x="47" y="142" width="1" height="23" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
+			</line>
+			<line direction="BottomUp">
+				<reportElement positionType="Float" x="253" y="142" width="1" height="23" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
+			</line>
+			<textField>
+				<reportElement positionType="Float" x="258" y="153" width="170" height="11" uuid="672561be-7681-4128-b182-49a978387fd1"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlemprst}]]></textFieldExpression>
+			</textField>
+			<line direction="BottomUp">
+				<reportElement positionType="Float" x="129" y="180" width="1" height="18" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
+			</line>
+			<line direction="BottomUp">
+				<reportElement positionType="Float" x="252" y="180" width="1" height="18" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
+			</line>
+			<textField>
+				<reportElement positionType="Float" x="8" y="186" width="100" height="11" uuid="e29f3300-33a4-4560-9309-838b4e8b83f2"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{txminima}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="133" y="187" width="100" height="11" uuid="d2e9570a-b807-4a9b-b464-4ef5b0dcdaa2"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{prjurano}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="257" y="187" width="100" height="11" uuid="f817861d-1971-4bf4-9e33-84d7db332429"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsperiod}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="8" y="215" width="421" height="11" uuid="823bfe81-15f8-406b-8660-588130be801a"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dslcremp}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="8" y="248" width="100" height="11" uuid="ea422b2d-12c8-428b-83bd-3f57da7467be"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtpreemp}]]></textFieldExpression>
+			</textField>
+			<line direction="BottomUp">
+				<reportElement positionType="Float" x="139" y="231" width="1" height="77" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
+			</line>
+			<line direction="BottomUp">
+				<reportElement positionType="Float" x="274" y="231" width="1" height="77" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
+			</line>
+			<textField>
+				<reportElement positionType="Float" x="142" y="248" width="100" height="11" uuid="ed30c2f4-5a37-4e30-a04e-e4a8c78a07db"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlpreemp}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="278" y="248" width="100" height="11" uuid="90f9f53f-46b4-4b3d-aae0-b9b0b4018c5f"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{diavenct}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="8" y="296" width="100" height="11" uuid="170b07a5-7cb4-400e-8e77-854fa20b62f0"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtvencto}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="142" y="296" width="100" height="11" uuid="42d73971-f282-4396-8e28-4fa81b5b016b"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ultvenct}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="278" y="296" width="128" height="11" uuid="f1fb2631-951d-40b6-9e3d-8023e2242362"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{perjurmo}]]></textFieldExpression>
+			</textField>
+			<line direction="BottomUp">
+				<reportElement positionType="Float" x="189" y="308" width="1" height="33" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
+			</line>
+			<textField>
+				<reportElement positionType="Float" x="6" y="320" width="183" height="20" uuid="24848055-83d4-4948-96bd-5562497fcd86"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{prdmulta}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="190" y="320" width="282" height="20" uuid="7613f778-1f6a-4290-8a56-8aa6b97720ca"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qttolatr}]]></textFieldExpression>
+			</textField>
+			<line direction="BottomUp">
+				<reportElement positionType="Float" x="189" y="341" width="1" height="33" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
+			</line>
+			<textField>
+				<reportElement positionType="Float" x="193" y="363" width="171" height="11" uuid="afe902e7-550f-481d-a279-c40baa834f3c"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{destino}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="8" y="363" width="179" height="11" uuid="52ce190e-d428-49d0-bff2-eec0431ab306"/>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{origem}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement positionType="Float" x="5" y="619" width="466" height="30" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Estas são as condições gerais da Cédula de Crédito Bancário, por meio da qual será concedido Empréstimo, solicitado e contratado pelo Emitente, aplicáveis durante todo o período da contratação.]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="3" y="0" width="469" height="11" uuid="2954cd5b-5985-476d-9a7f-59a7a4978ba4">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" markup="none">
+					<font fontName="Courier New" size="7" isBold="true" isItalic="false" pdfFontName="Courier-Bold"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{titulo}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="5" y="563" width="466" height="57" uuid="2d50e9d6-12c5-4263-86d8-425de8da1eaf"/>
+				<textElement textAlignment="Justified">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{campo_02}]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement positionType="Float" x="4" y="387" width="467" height="45" uuid="36ec6feb-fb37-4e16-b3f1-4730a66c9c4f"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//bens/bem")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl100_19.jasper"]]></subreportExpression>
+			</subreport>
+			<staticText>
+				<reportElement positionType="Float" x="5" y="648" width="466" height="37" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[<u>2. Financiamento</u> - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, tendo como origem recursos de fontes de Depósitos Interfinanceiros de Repasses – DIM, com pagamento em parcelas, na quantidade e valor contratados pelo Emitente, pelo que o Emitente, na pretensão de contratar operação de microcrédito e na forma da legislação em vigor, declara expressamente que:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement positionType="Float" x="5" y="684" width="466" height="37" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[a) No caso de realizar operações de microcrédito na forma do art. 2, inciso I, letra c, da Resolução nº 4.000/2011, do Banco Central do Brasil, não possui outras operações desta espécie em curso, bem como não detém saldo médio mensal em conta depósito que, em conjunto com as demais aplicações, superem a R$ 3.000,00 (três mil reais).]]></text>
+			</staticText>
+			<staticText>
+				<reportElement positionType="Float" x="5" y="720" width="466" height="46" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[b) No caso de realizar operações de microcrédito na forma do art.2, inciso III, da Resolução nº 4.000/2011, do Banco Central do Brasil, não possui outras operações desta espécie em curso, bem como o somatório da operação de microcrédito pretendida e o saldo de suas outras operações de crédito em curso, excetuadas as operações de crédito habitacional, não ultrapassa R$ 40.000,00 (quarenta mil reais).]]></text>
+			</staticText>
+			<frame>
+				<reportElement positionType="Float" x="5" y="433" width="467" height="44" isRemoveLineWhenBlank="true" uuid="ba65d952-d6c1-490a-a8c9-54fc9b537418">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{cob_inaddcob} > 0]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textField>
+					<reportElement x="4" y="20" width="461" height="22" uuid="b452b20f-c934-4ab0-bc70-05348bde6c9a">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Justified">
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{cob_perminimo} + "% (por cento) do saldo devedor da operação de crédito concedida, vinculado à conta corrente n° " + ($F{cob_nrctater} != "0"  ? $F{cob_nrctater} : $F{conta}.trim()) + ", de titularidade de " + ($F{cob_nrctater} != "0" ? $F{cob_nminterv} : $F{nmemitente}) + "."]]></textFieldExpression>
+				</textField>
+				<textField pattern="">
+					<reportElement positionType="Float" x="4" y="2" width="430" height="20" uuid="e906ed63-5c0e-44cd-8d9f-1af069c72176">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".16. Descrição da garantia - Valor(es) da(s) aplicação(ões) financeira(s)/poupança bloqueada(s):"]]></textFieldExpression>
+				</textField>
 			</frame>
 			<frame>
-				<reportElement x="5" y="15" width="467" height="22" uuid="ace5cee9-6c43-4614-aa51-9692cdb737f5">
+				<reportElement positionType="Float" x="5" y="477" width="467" height="33" isRemoveLineWhenBlank="true" uuid="2d568d49-f6fc-4e10-b413-89f4143931d6">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{cob_inaddcob} > 0 && $F{cob_inresaut} > 0]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textField>
+					<reportElement x="4" y="19" width="459" height="11" uuid="105b8f82-1016-4e30-ad2a-c638483e5e08">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{cob_qtdiatraso} + " dias, contados do vencimento da parcela não paga pelo Cooperado."]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement positionType="Float" x="4" y="2" width="461" height="11" uuid="ad283968-4dce-42ab-a82b-65c48ccc1b36">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".16.1. Carência para resgate automático da(s) aplicação(ões) financeira(s) bloqueada(s):"]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement positionType="Float" x="5" y="510" width="467" height="44" uuid="28545938-8d39-461d-81b6-ed6366ebe328">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
 				<box>
@@ -370,445 +693,306 @@
 					<bottomPen lineWidth="1.0"/>
 					<rightPen lineWidth="1.0"/>
 				</box>
-				<staticText>
-					<reportElement x="7" y="0" width="100" height="11" uuid="cd54bc61-5ffe-4df3-8bf8-a86fdd8264c5">
-						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-					</reportElement>
-					<textElement>
-						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-					</textElement>
-					<text><![CDATA[Nome do Emitente]]></text>
-				</staticText>
 				<textField>
-					<reportElement x="7" y="11" width="455" height="11" uuid="4d1a0478-91dd-473c-8d28-da63fa9ef24c">
-						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					</reportElement>
+					<reportElement x="4" y="27" width="187" height="11" uuid="07f79d6f-b78b-457d-ba16-81c22c1c25fb"/>
 					<textElement>
-						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+						<font fontName="Courier New" size="9" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{nmemitente}]]></textFieldExpression>
+					<textFieldExpression><![CDATA[$F{percetop}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement positionType="Float" x="4" y="2" width="237" height="22" uuid="8f0bb679-2c9d-47dc-8f42-75c606198dad"/>
+					<textElement>
+						<font fontName="Courier New" size="9" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".17. Custo Efetivo Total (CET) da Operação\nAo ano"]]></textFieldExpression>
 				</textField>
 			</frame>
-			<textField>
-				<reportElement x="8" y="147" width="17" height="11" uuid="dd8bfeac-76b0-4b64-818d-fe1a89d5375f"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{pa}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="55" y="147" width="83" height="11" uuid="2f86e584-dce8-4ae8-ab54-4f714e1bd0b0"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{conta}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="8" y="136" width="17" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[PA]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="55" y="136" width="83" height="11" uuid="f36178d0-1c48-4d8d-8fb0-671b80651a4c"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[Conta]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="8" y="112" width="168" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1. Dados desta Cédula de Crédito]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="8" y="124" width="114" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.1. Conta Corrente]]></text>
-			</staticText>
-			<line direction="BottomUp">
-				<reportElement x="144" y="136" width="1" height="23" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
-			</line>
-			<staticText>
-				<reportElement x="147" y="123" width="111" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.2. Data de emissão]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="147" y="147" width="94" height="11" uuid="424b5a99-faab-4513-93fb-4f3c7d9e2583"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{dtmvtolt}]]></textFieldExpression>
-			</textField>
-			<line direction="BottomUp">
-				<reportElement x="47" y="136" width="1" height="23" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
-			</line>
-			<staticText>
-				<reportElement x="258" y="123" width="159" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.3. Valor financiado]]></text>
-			</staticText>
-			<line direction="BottomUp">
-				<reportElement x="253" y="136" width="1" height="23" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
-			</line>
-			<textField>
-				<reportElement x="258" y="147" width="170" height="11" uuid="672561be-7681-4128-b182-49a978387fd1"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{vlemprst}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="8" y="160" width="236" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.4. Taxa de juros remuneratórios]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="8" y="170" width="114" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.4.1. Ao mês]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="133" y="171" width="111" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.4.2. Ao ano]]></text>
-			</staticText>
-			<line direction="BottomUp">
-				<reportElement x="129" y="174" width="1" height="18" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
-			</line>
-			<line direction="BottomUp">
-				<reportElement x="252" y="174" width="1" height="18" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
-			</line>
-			<staticText>
-				<reportElement x="257" y="171" width="215" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.4.3. Periodicidade da capitalização]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="8" y="180" width="100" height="11" uuid="e29f3300-33a4-4560-9309-838b4e8b83f2"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{txminima}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="133" y="181" width="100" height="11" uuid="d2e9570a-b807-4a9b-b464-4ef5b0dcdaa2"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{prjurano}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="257" y="181" width="100" height="11" uuid="f817861d-1971-4bf4-9e33-84d7db332429"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{dsperiod}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="8" y="195" width="244" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.5. Linha de crédito]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="8" y="209" width="421" height="11" uuid="823bfe81-15f8-406b-8660-588130be801a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{dslcremp}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="8" y="228" width="130" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.6. Quantidade de parcelas]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="8" y="242" width="100" height="11" uuid="ea422b2d-12c8-428b-83bd-3f57da7467be"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{qtpreemp}]]></textFieldExpression>
-			</textField>
-			<line direction="BottomUp">
-				<reportElement x="139" y="225" width="1" height="77" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
-			</line>
-			<staticText>
-				<reportElement x="142" y="229" width="131" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.7. Valor de cada parcela]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="276" y="229" width="194" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.8. Vencimento das parcelas - todo dia:]]></text>
-			</staticText>
-			<line direction="BottomUp">
-				<reportElement x="274" y="225" width="1" height="77" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
-			</line>
-			<textField>
-				<reportElement x="142" y="242" width="100" height="11" uuid="ed30c2f4-5a37-4e30-a04e-e4a8c78a07db"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{vlpreemp}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="278" y="242" width="100" height="11" uuid="90f9f53f-46b4-4b3d-aae0-b9b0b4018c5f"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{diavenct}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="8" y="259" width="131" height="31" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.9. Data de vencimento da primeira parcela]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="8" y="290" width="100" height="11" uuid="170b07a5-7cb4-400e-8e77-854fa20b62f0"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{dtvencto}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="142" y="259" width="130" height="21" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.10. Data de vencimento da última parcela]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="142" y="290" width="100" height="11" uuid="42d73971-f282-4396-8e28-4fa81b5b016b"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{ultvenct}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="278" y="259" width="185" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.11. Taxa de juros moratórios]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="278" y="290" width="128" height="11" uuid="f1fb2631-951d-40b6-9e3d-8023e2242362"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{perjurmo}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="8" y="303" width="99" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.12. Multa]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="190" y="303" width="276" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.13. Tolerância dos juros moratórios e da multa]]></text>
-			</staticText>
-			<line direction="BottomUp">
-				<reportElement x="189" y="302" width="1" height="33" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
-			</line>
-			<textField>
-				<reportElement x="6" y="314" width="183" height="20" uuid="24848055-83d4-4948-96bd-5562497fcd86"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{prdmulta}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="190" y="314" width="282" height="20" uuid="7613f778-1f6a-4290-8a56-8aa6b97720ca"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{qttolatr}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="8" y="338" width="168" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.14. Local de emissão]]></text>
-			</staticText>
-			<line direction="BottomUp">
-				<reportElement x="189" y="335" width="1" height="33" uuid="c853f462-92a6-4516-8309-23ae5641bff5"/>
-			</line>
-			<staticText>
-				<reportElement x="193" y="338" width="224" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.15. Local de pagamento]]></text>
-			</staticText>
-			<staticText>
-				<reportElement positionType="Float" x="8" y="428" width="155" height="22" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[1.17. Custo Efetivo Total (CET) Ao ano]]></text>
-			</staticText>
-			<textField>
-				<reportElement positionType="Float" x="8" y="455" width="187" height="11" uuid="217056d3-0e65-4955-9090-c0f83a66c1af"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{percetop}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="193" y="357" width="171" height="11" uuid="afe902e7-550f-481d-a279-c40baa834f3c"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{destino}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="8" y="357" width="179" height="11" uuid="52ce190e-d428-49d0-bff2-eec0431ab306"/>
-				<textElement>
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{origem}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement positionType="Float" x="5" y="534" width="466" height="30" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[Estas são as condições gerais da Cédula de Crédito Bancário, por meio da qual será concedido Empréstimo, solicitado e contratado pelo Emitente, aplicáveis durante todo o período da contratação.]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="3" y="4" width="469" height="11" uuid="2954cd5b-5985-476d-9a7f-59a7a4978ba4">
+			<frame>
+				<reportElement positionType="Float" x="5" y="84" width="467" height="33" isRemoveLineWhenBlank="true" uuid="05233716-68f4-4773-9a8a-d94acdfe57ca">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{ind_add_item} > 0]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<staticText>
+					<reportElement x="3" y="3" width="170" height="11" uuid="73d5fa47-39aa-4128-a48d-c1d6df2d333d"/>
+					<textElement>
+						<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[2. TERCEIRO(S) GARANTIDOR(ES)]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement positionType="Float" x="3" y="16" width="461" height="11" uuid="bfc4ac06-25f7-4303-bc95-f5b8ffcb2efe">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Justified" markup="html">
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[($F{terceiro_01} != null ? "2.1. " + $F{terceiro_01} + ($F{terceiro_02} != null ? "<br><br>2.2. " + $F{terceiro_02} : "")  : "") + ($F{cob_interven} != null ? ($F{terceiro_01} != null  && $F{terceiro_02} != null ? "<br><br>2.3. "  : ($F{terceiro_01} != null ? "<br><br>2.2. " : "2.1. ")) + $F{cob_interven}: "")]]></textFieldExpression>
+				</textField>
+			</frame>
+			<textField pattern="">
+				<reportElement positionType="Float" x="8" y="118" width="244" height="11" uuid="78614ff2-959e-4985-b1f4-894d357f6567">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
-				<textElement textAlignment="Center" markup="none">
-					<font fontName="Courier New" size="7" isBold="true" isItalic="false" pdfFontName="Courier-Bold"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{titulo}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="8" y="370" width="421" height="11" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<text><![CDATA[1.16. Descrição e localização do (s) veículo(s) alienado (s) fiduciariamente: ]]></text>
-			</staticText>
-			<textField>
-				<reportElement positionType="Float" x="5" y="478" width="466" height="57" uuid="2d50e9d6-12c5-4263-86d8-425de8da1eaf"/>
-				<textElement textAlignment="Justified">
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ". DADOS DESTA CÉDULA DE CRÉDITO"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="8" y="130" width="114" height="11" uuid="12c1b82f-729d-4918-b309-ff154b6cc1f0">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{campo_02}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".1. Conta corrente"]]></textFieldExpression>
 			</textField>
-			<subreport>
-				<reportElement x="4" y="381" width="467" height="45" uuid="36ec6feb-fb37-4e16-b3f1-4730a66c9c4f"/>
-				<subreportParameter name="PR_SQSOLICI"/>
-				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//bens/bem")]]></dataSourceExpression>
-				<subreportExpression><![CDATA["crrl100_19.jasper"]]></subreportExpression>
-			</subreport>
-			<staticText>
-				<reportElement positionType="Float" x="5" y="563" width="466" height="37" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+			<textField pattern="">
+				<reportElement positionType="Float" x="147" y="129" width="111" height="11" uuid="b0c14ced-89f0-49e1-ba81-03aff8dbe613">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<text><![CDATA[<u>2. Financiamento</u> - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, tendo como origem recursos de fontes de Depósitos Interfinanceiros de Repasses – DIM, com pagamento em parcelas, na quantidade e valor contratados pelo Emitente, pelo que o Emitente, na pretensão de contratar operação de microcrédito e na forma da legislação em vigor, declara expressamente que:]]></text>
-			</staticText>
-			<staticText>
-				<reportElement positionType="Float" x="5" y="599" width="466" height="37" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".2. Data de emissão"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="258" y="129" width="203" height="11" uuid="075df068-439a-40aa-90ea-5e5ef8c7866e">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<text><![CDATA[a) No caso de realizar operações de microcrédito na forma do art. 2, inciso I, letra c, da Resolução nº 4.000/2011, do Banco Central do Brasil, não possui outras operações desta espécie em curso, bem como não detém saldo médio mensal em conta depósito que, em conjunto com as demais aplicações, superem a R$ 3.000,00 (três mil reais).]]></text>
-			</staticText>
-			<staticText>
-				<reportElement positionType="Float" x="5" y="635" width="466" height="46" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".3. Valor financiado"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="8" y="166" width="236" height="11" uuid="1411a246-2cf4-4352-b393-52a4019d9538">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<text><![CDATA[b) No caso de realizar operações de microcrédito na forma do art.2, inciso III, da Resolução nº 4.000/2011, do Banco Central do Brasil, não possui outras operações desta espécie em curso, bem como o somatório da operação de microcrédito pretendida e o saldo de suas outras operações de crédito em curso, excetuadas as operações de crédito habitacional, não ultrapassa R$ 40.000,00 (quarenta mil reais).]]></text>
-			</staticText>
-			<staticText>
-				<reportElement positionType="Float" x="5" y="680" width="466" height="37" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".4. Taxa de juros remuneratórios"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="8" y="176" width="114" height="11" uuid="f825a0e0-eeba-48c8-a19c-5cf397c72878">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<text><![CDATA[<u>3. Valor Contratado</u> - A Cooperativa entregará ao Emitente o valor indicado nas condições específicas da contratação mediante crédito na conta corrente indicada no subitem 1.1, que o mesmo, na qualidade de associado, mantém junto à Cooperativa, ou diretamente ao fornecedor do(s) bem(ns), nos casos em que o crédito destinar-se a aquisição deste(s).]]></text>
-			</staticText>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".4.1. Ao mês"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="133" y="176" width="119" height="11" uuid="2215b494-8837-4fd4-a60e-d0ce5b5cedf7">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".4.2. Ao ano"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="257" y="177" width="215" height="11" uuid="c5454cb7-54aa-43c0-9377-48400e031622">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".4.3. Peridiocidade da capitalização"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="8" y="201" width="244" height="11" uuid="2089e0e9-bc82-481e-a3e8-44a9944bb937">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".5. Linha de crédito"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="8" y="234" width="130" height="11" uuid="2a506090-88a8-46a1-aa74-172580204224">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".6. Quantidade de parcelas"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="142" y="235" width="131" height="11" uuid="e8c6d48b-864a-433b-88d0-97736c6989fa">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".7. Valor de cada parcela"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="278" y="235" width="194" height="11" uuid="da434059-73b1-400b-b653-21d9861d7de2">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".8. Vencimento das parcelas - todo dia"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="8" y="266" width="132" height="31" uuid="35f9ea65-09cb-4531-86b1-7ad4c52f02f3">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".9. Data de vencimento da primeira parcela"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="142" y="266" width="130" height="21" uuid="0e76be20-0990-4b73-9c4f-cad3f4dc3a54">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".10. Data de vencimento da última parcela"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="278" y="266" width="185" height="11" uuid="5965fee2-4d45-4e6d-970c-502872052757">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".11. Taxa de juros moratórios"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="8" y="309" width="99" height="11" uuid="29157f78-41fe-484b-a37a-6a1716d486de">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".12. Multa"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="190" y="309" width="276" height="11" uuid="614c9432-03a0-4ec9-9ee4-252ab87e49d0">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".13. Tolerância dos juros moratórios e da multa"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="8" y="344" width="168" height="11" uuid="007b59dc-9eff-4e92-b62a-ee5cdf9e589c">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".14. Local de emissão"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="193" y="344" width="224" height="11" uuid="0855e41c-36a4-4dbc-8c7d-7e48e29be003">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".15. Local de pagamento"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement positionType="Float" x="8" y="376" width="421" height="11" uuid="849095c5-9f3a-4131-87ae-d0713dce41c7">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(2 + $F{ind_add_item}) + ".16. Descrição e localização do (s) veículo(s) alienado (s) fiduciariamente: "]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="5" y="765" width="466" height="37" uuid="4fe33a49-92a2-4d2f-85ca-831bf163731d">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<u>3. Valor Contratado</u> - A Cooperativa entregará ao Emitente o valor indicado nas condições específicas da contratação mediante crédito na conta corrente indicada no subitem " + (2 + $F{ind_add_item}) + ".1, que o mesmo, na qualidade de associado, mantém junto à Cooperativa, ou diretamente ao fornecedor do(s) bem(ns), nos casos em que o crédito destinar-se a aquisição deste(s)."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="330">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{cob_inresaut}== 0]]></printWhenExpression>
 			<staticText>
-				<reportElement positionType="Float" x="5" y="716" width="466" height="46" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<reportElement x="5" y="0" width="466" height="46" uuid="4c27c9bf-2487-488f-953f-706bda79496f">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
 				<text><![CDATA[<u>4. Pagamento</u> - O Emitente deverá pagar à Cooperativa o valor contratado, acrescido de juros remuneratórios, capitalizados mensalmente, à taxa, quantidade de parcelas, valores e data de vencimento estipulados nesta cédula.  Além dos encargos previstos serão devidas comissões e taxas de serviços inerentes ao contrato, na forma do estabelecido nas normas regulamentares da Cooperativa.]]></text>
 			</staticText>
-		</band>
-		<band height="371">
 			<staticText>
-				<reportElement positionType="Float" x="6" y="-1" width="466" height="46" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[A cada mês, na data indicada no subitem 1.8, ocorrerá o débito na conta corrente do Emitente, do valor correspondente à parcela.<br>
-a) O valor de cada parcela foi calculado com base na Tabela Price, sistema de amortização de dívida, em que o percentual de principal e o percentual de juros de cada parcela variam no decorrer do tempo, de modo a manter-se constante o valor de cada parcela.]]></text>
-			</staticText>
-			<staticText>
-				<reportElement positionType="Float" x="5" y="89" width="466" height="56" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[d) Em caso de atraso no pagamento via débito em conta e com a finalidade de evitar o acúmulo de encargos de atraso, a Cooperativa verificará diariamente a existência de saldos e, a partir do momento em que a conta do Emitente apresentar saldo disponível, realizará o débito, total ou parcial, do valor do saldo devedor da parcela, acrescido dos encargos moratórios conforme item "Atraso no Pagamento e Multa", até o limite do saldo disponível em conta e o limite de crédito, se contratado.]]></text>
-			</staticText>
-			<staticText>
-				<reportElement positionType="Float" x="5" y="44" width="466" height="46" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[b) Sempre que o dia do vencimento da parcela não ocorrer em dia útil, será prorrogado para o dia útil seguinte.<br>
-c) Na data do pagamento da parcela, a conta indicada para pagamento deverá manter saldo disponível suficiente para suportar o débito, sendo que a insuficiência de saldo configurará atraso no pagamento.]]></text>
-			</staticText>
-			<staticText>
-				<reportElement positionType="Float" x="5" y="144" width="466" height="37" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[e) Caso a conta não apresente saldo disponível, a Cooperativa poderá realizar o débito em outras contas de titularidade do Emitente, ou utilizará o produto de eventual resgate de suas aplicações financeiras, inclusive poupança, para as quais o Emitente não tenha contratado resgate automático, para liquidação, total ou parcial, do saldo devedor desta cédula.]]></text>
-			</staticText>
-			<staticText>
-				<reportElement positionType="Float" x="6" y="180" width="466" height="55" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<reportElement positionType="Float" x="6" y="227" width="466" height="55" uuid="e1a68f1b-b6a6-46b3-9d7d-bae8c0b2926a"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
@@ -816,15 +1000,96 @@ c) Na data do pagamento da parcela, a conta indicada para pagamento deverá mant
 e.2) Qualquer aplicação futura que o Emitente venha a fazer na Cooperativa integrará a autorização prevista neste item, sempre que essa aplicação não estiver sujeita a resgate automático.]]></text>
 			</staticText>
 			<staticText>
-				<reportElement positionType="Float" x="6" y="234" width="466" height="46" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<reportElement positionType="Float" x="5" y="191" width="466" height="37" uuid="52594ae0-0a0a-40d4-9521-c615c898c316"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<text><![CDATA[f) Caso não seja verificado o pagamento na data do vencimento, o Emitente estará em atraso e a Cooperativa poderá comunicar o fato à SERASA, ao SPC e a qualquer outro órgão encarregado de cadastrar atraso de pagamento e descumprimento de obrigação contratual.<br>
-g) O Emitente pagará também o Imposto sobre Operações Financeiras (IOF) conforme legislação em vigor, cujo montante será debitado da conta corrente indicada no item 1.1.]]></text>
+				<text><![CDATA[e) Caso a conta não apresente saldo disponível, a Cooperativa poderá realizar o débito em outras contas de titularidade do Emitente, ou utilizará o produto de eventual resgate de suas aplicações financeiras, inclusive poupança, para as quais o Emitente não tenha contratado resgate automático, para liquidação, total ou parcial, do saldo devedor desta cédula.]]></text>
 			</staticText>
 			<staticText>
-				<reportElement positionType="Float" x="6" y="279" width="466" height="28" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<reportElement positionType="Float" x="5" y="91" width="466" height="46" uuid="5833e647-74d6-4339-9ddc-aa3e08889082"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[b) Sempre que o dia do vencimento da parcela não ocorrer em dia útil, será prorrogado para o dia útil seguinte.<br>
+c) Na data do pagamento da parcela, a conta indicada para pagamento deverá manter saldo disponível suficiente para suportar o débito, sendo que a insuficiência de saldo configurará atraso no pagamento.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement positionType="Float" x="5" y="136" width="466" height="56" uuid="8df6f4c1-1421-4af4-9c05-971c43b4d5c8"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[d) Em caso de atraso no pagamento via débito em conta e com a finalidade de evitar o acúmulo de encargos de atraso, a Cooperativa verificará diariamente a existência de saldos e, a partir do momento em que a conta do Emitente apresentar saldo disponível, realizará o débito, total ou parcial, do valor do saldo devedor da parcela, acrescido dos encargos moratórios conforme item "Atraso no Pagamento e Multa", até o limite do saldo disponível em conta e o limite de crédito, se contratado.]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="5" y="46" width="466" height="46" uuid="81ebb5e6-d67d-405e-9121-72357dc6be6e">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["A cada mês, na data indicada no subitem " + (2 + $F{ind_add_item}) + ".8, ocorrerá o débito na conta corrente do Emitente, do valor correspondente à parcela.\na) O valor de cada parcela foi calculado com base na Tabela Price, sistema de amortização de dívida, em que o percentual de principal e o percentual de juros de cada parcela variam no decorrer do tempo, de modo a manter-se constante o valor de cada parcela."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="6" y="281" width="466" height="46" uuid="e4fe1b0b-2ee1-49e9-ab8c-485b10970922">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["f) Caso não seja verificado o pagamento na data do vencimento, o Emitente estará em atraso e a Cooperativa poderá comunicar o fato à SERASA, ao SPC e a qualquer outro órgão encarregado de cadastrar atraso de pagamento e descumprimento de obrigação contratual.\ng) O Emitente pagará também o Imposto sobre Operações Financeiras (IOF) conforme legislação em vigor, cujo montante será debitado da conta corrente indicada no item " + (2 + $F{ind_add_item}) + ".1."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="363">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{cob_inresaut}> 0]]></printWhenExpression>
+			<textField>
+				<reportElement x="6" y="0" width="466" height="363" uuid="6160e6ac-5bff-4bee-8f88-50a4098c6ed3">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<u> 4. Pagamento</u> - O Emitente deverá pagar a Cooperativa o valor contratado, acrescido de juros remuneratórios, capitalizados mensalmente, à taxa, quantidade de parcelas, valores e data de vencimento estipulados nesta cédula. Além dos encargos previstos serão devidas eventuais taxas de serviços inerentes a esta Cédula, na forma do estabelecido nas normas regulamentares da Credora/Cooperativa.\na) A cada mês, na data indicada no subitem " + (2 + $F{ind_add_item}) + ".8, ocorrerá o débito na conta corrente do Emitente, do valor correspondente à parcela, acrescida dos valores de IOF, tarifas e demais despesas previstas nesta Cédula.\nb) O valor de cada parcela foi calculado com base na Tabela Price, sistema de amortização de dívida, em que o percentual de principal e o percentual de juros de cada parcela variam no decorrer do tempo, de modo a manter-se constante o valor de cada parcela.\nc) Sempre que o dia do vencimento da parcela não ocorrer em dia útil, será prorrogado para o dia útil seguinte.d) Na data do pagamento da parcela, o Cooperado(a) obriga-se a manter, na conta indicada para pagamento, saldo disponível e suficiente para suportar os débitos ora autorizados, sendo que a insuficiência de saldo configurará atraso no pagamento e incidência dos encargos moratórios.\ne) Na hipótese de não haver saldo suficiente na conta corrente para quitar todas as despesas referidas nesta cláusula, a Credora/Cooperativa realizará o resgate automático da(s) aplicação(ões) financeira(s) bloqueada(s) e dada(s) em garantia pelo Emitente/Cooperado(a) nesta cédula.\ne.1) A Credora/Cooperativa poderá, a seu critério, conceder ao Cooperado prazo de carência para resgate automático da(s) aplicação(ões) financeira(s) dada(s) em garantia nesta cédula, na hipótese prevista no item " + (2 + $F{ind_add_item}) + ".6 acima. O prazo de carência, se houver, será descrito no item " + (2 + $F{ind_add_item}) + ".6.1 das Condições Específicas desta Cédula. Durante tal prazo, a Credora/Cooperativa continuará realizando tentativas de débito nos moldes descritos na cláusula abaixo.\ne.2) No intuito de evitar o acúmulo de encargos em caso de não pagamento da parcela via débito em conta e durante o prazo de carência concedido antes do resgate automático do valor de aplicação(ões) financeira(s), a Credora/Cooperativa verificará diariamente a existência de saldos e, a partir do momento em que a conta do(a) Cooperado(a) apresentar saldo disponível, independentemente do valor, realizará o débito, total ou parcial, do valor do saldo devedor da parcela, acrescido dos encargos moratórios conforme item \"Atraso no Pagamento e Multa\", até o limite disponível na conta, inclusive, utilizando do limite de crédito, se contratado.\ne.3) Restando infrutíferas as tentativas acima para pagamento da parcela em atraso, a Credora/Cooperativa poderá utilizar o valor correspondente às outras aplicações financeiras, inclusive poupança programada, para liquidação, total ou parcial, do saldo devedor desta Cédula, nos termos do item 11 das Condições Gerais desta contratação, sem qualquer necessidade de comunicação prévia e, ainda, poderá realizar o débito dos respectivos valores em qualquer outra conta de titularidade do(a) Cooperado(a).\nf) Caso não seja verificado o pagamento na data do vencimento, o Emitente estará em atraso e a Cooperativa poderá comunicar o fato à SERASA, ao SPC e a qualquer outro órgão encarregado de cadastrar atraso de pagamento e descumprimento de obrigação contratual."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="46">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} != "0"]]></printWhenExpression>
+			<staticText>
+				<reportElement x="6" y="0" width="466" height="46" uuid="739d89b3-8255-476e-a298-8e9e9d38ff6b"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[g) A Cooperativa poderá, a seu critério, disponibilizar ao Emitente e ao(s) Devedores Solidários a possibilidade do pagamento das parcelas vencidas e não pagas via boleto bancário. Nesta hipótese, o referido título será emitido pelo Posto de Atendimento mediante solicitação do(s) Emitente e/ou do(s) Devedores Solidários, ou diretamente via conta online disponível no site da Cooperativa.]]></text>
+			</staticText>
+		</band>
+		<band height="38">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{cob_inresaut} > 0 && $F{cob_nrctater} == "0"]]></printWhenExpression>
+			<staticText>
+				<reportElement x="6" y="0" width="466" height="38" uuid="175a9330-aec0-4c5a-9a25-c1ff904e109b">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[g) A Cooperativa poderá, a seu critério, disponibilizar ao Emitente a possibilidade do pagamento das parcelas vencidas e não pagas via boleto bancário. Nesta hipótese, o referido título será emitido pelo Posto de Atendimento mediante solicitação do(s) Emitente, ou diretamente via conta online disponível no site da Cooperativa.]]></text>
+			</staticText>
+		</band>
+		<band height="95">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<staticText>
+				<reportElement positionType="Float" x="6" y="0" width="466" height="28" uuid="7df34f7a-3198-4cb7-9807-408b5180a88e"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
@@ -832,7 +1097,7 @@ g) O Emitente pagará também o Imposto sobre Operações Financeiras (IOF) conf
 a) Não cumprir com qualquer das suas obrigações previstas neste contrato;]]></text>
 			</staticText>
 			<staticText>
-				<reportElement positionType="Float" x="6" y="306" width="466" height="38" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<reportElement positionType="Float" x="6" y="27" width="466" height="38" uuid="27230887-e93b-4e55-9c2b-1d0f97a41353"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
@@ -840,7 +1105,7 @@ a) Não cumprir com qualquer das suas obrigações previstas neste contrato;]]><
 c) Não comprovar dentro do prazo contratual o competente registro da alienação nos órgãos competentes;]]></text>
 			</staticText>
 			<staticText>
-				<reportElement positionType="Float" x="6" y="343" width="466" height="28" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<reportElement positionType="Float" x="6" y="64" width="466" height="28" uuid="9dabe2b0-2d21-45f7-8783-f2c5fac17a0a"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
@@ -860,20 +1125,6 @@ g) Descumprir qualquer das disposições constantes na Política de Responsabili
 			</staticText>
 		</band>
 		<band height="363">
-			<staticText>
-				<reportElement positionType="Float" x="6" y="-1" width="466" height="37" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[<u>6. Atraso no Pagamento e Multa</u> – Caso ocorra atraso no pagamento ou vencimento antecipado, serão devidos os juros remuneratórios do período, acrescidos de juros moratórios, desde o atraso, e multa moratória nos percentuais informados nos subitens 1.11 e 1.12, incidentes sobre o valor em atraso.]]></text>
-			</staticText>
-			<staticText>
-				<reportElement positionType="Float" x="6" y="35" width="466" height="37" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[a) Para fins de cobrança dos juros moratórios e da multa, fica estabelecido o prazo de tolerância previsto no item 1.13, contados da data do vencimento da parcela não paga. Decorrido o prazo indicado, incidirão sobre o encargo mensal vencido, juros moratórios e multa, retroativos a data de vencimento da parcela, sem prejuízo dos demais encargos contratualmente previstos.]]></text>
-			</staticText>
 			<staticText>
 				<reportElement positionType="Float" x="6" y="71" width="466" height="46" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
 				<textElement textAlignment="Justified" markup="html">
@@ -904,33 +1155,72 @@ g) Descumprir qualquer das disposições constantes na Política de Responsabili
 				<text><![CDATA[b) Na hipótese de liquidação total ou parcial da operação de crédito contratada, a amortização do saldo devedor ocorrerá sucessivamente, à critério do Emitente, em ordem decrescente ou crescente. Na primeira possibilitará a diminuição do prazo de pagamento do empréstimo e a redução proporcional dos juros pactuados nesta Cédula aos dias da antecipação, enquanto a segunda, possibilitará apenas a redução proporcional dos juros pactuados nesta Cédula aos dias da antecipação.]]></text>
 			</staticText>
 			<staticText>
-				<reportElement positionType="Float" x="6" y="233" width="466" height="55" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
-				</textElement>
-				<text><![CDATA[<u>8. Custo Efetivo Total (CET)</u> - O Emitente declara ter ciência dos encargos e despesas incluídos na operação que integram o CET, expresso na forma de taxa percentual anual indicada no item 1.17 e item 4.1 da planilha demonstrativa de cálculo, recebida no momento da contratação. A Cooperativa informou ao Emitente o CET na data da contratação, à taxa indicada nas condições específicas da contratação. Sempre que necessário, poderá o Emitente solicitar novo cálculo/extrato do CET do empréstimo.]]></text>
-			</staticText>
-			<staticText>
 				<reportElement positionType="Float" x="6" y="287" width="466" height="29" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
 				<text><![CDATA[<u>9. Garantia</u> - Para garantir o pagamento de qualquer valor relacionado a esta cédula e para evitar o acúmulo de encargos, são constituídas, em favor da Cooperativa, isolada e cumulativamente, as seguintes garantias:]]></text>
 			</staticText>
-			<staticText>
-				<reportElement positionType="Float" x="6" y="316" width="466" height="29" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+			<textField>
+				<reportElement x="6" y="-1" width="466" height="37" uuid="68cbed74-e6fe-4bfa-a203-b0772a234976">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<text><![CDATA[9.1. - Nos termos do Decreto-Lei 911/1969, a alienação fiduciária do (s) veículo (s) descrito (s) e caracterizado (s) no item 1.16 desta cédula, que o Emitente declara estar (em) livre (s) de qualquer ônus.]]></text>
-			</staticText>
-			<staticText>
-				<reportElement positionType="Float" x="6" y="344" width="466" height="19" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				<textFieldExpression><![CDATA["<u>6. Atraso no Pagamento e Multa</u> – Caso ocorra atraso no pagamento ou vencimento antecipado, serão devidos os juros remuneratórios do período, acrescidos de juros moratórios, desde o atraso, e multa moratória nos percentuais informados nos subitens " + (2 + $F{ind_add_item}) + ".11 e " + (2 + $F{ind_add_item}) + ".12, incidentes sobre o valor em atraso."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="6" y="35" width="466" height="37" uuid="bbb651c9-2e1e-4204-8805-e8d40bfc020f">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<text><![CDATA[a) O bem identificado no item 1.16 deverá ser registrado em nome do depositário, seja este o Emitente, Interveniente Garantidor ou Devedor Solidário.]]></text>
-			</staticText>
+				<textFieldExpression><![CDATA["a) Para fins de cobrança dos juros moratórios e da multa, fica estabelecido o prazo de tolerância previsto no item " + (2 + $F{ind_add_item}) + ".13, contados da data do vencimento da parcela não paga. Decorrido o prazo indicado, incidirão sobre o encargo mensal vencido, juros moratórios e multa, retroativos a data de vencimento da parcela, sem prejuízo dos demais encargos contratualmente previstos."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="6" y="233" width="466" height="55" uuid="457b645e-bd7e-4954-a90b-3274a9f8d2bb">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<u>8. Custo Efetivo Total (CET)</u> - O Emitente declara ter ciência dos encargos e despesas incluídos na operação que integram o CET, expresso na forma de taxa percentual anual indicada no item " + (2 + $F{ind_add_item}) + ".17 e item 4.1 da planilha demonstrativa de cálculo, recebida no momento da contratação. A Cooperativa informou ao Emitente o CET na data da contratação, à taxa indicada nas condições específicas da contratação. Sempre que necessário, poderá o Emitente solicitar novo cálculo/extrato do CET do empréstimo."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="6" y="316" width="466" height="29" uuid="4f8b189b-4b1f-4221-ae7f-7d3a3c948c72">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["9.1. - Nos termos do Decreto-Lei 911/1969, a alienação fiduciária do (s) veículo (s) descrito (s) e caracterizado (s) no item " + (2 + $F{ind_add_item}) + ".16 desta cédula, que o Emitente declara estar (em) livre (s) de qualquer ônus."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="6" y="344" width="466" height="19" uuid="496e149c-bf08-4d19-9b27-6c5f557ad9a0">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["a) O bem identificado no item " + (2 + $F{ind_add_item}) + ".16 deverá ser registrado em nome do depositário, seja este o Emitente, Interveniente Garantidor ou Devedor Solidário."]]></textFieldExpression>
+			</textField>
 		</band>
 		<band height="764">
 			<elementGroup>
@@ -1481,6 +1771,51 @@ Endereço:
 				</textElement>
 				<text><![CDATA[Telefone:]]></text>
 			</staticText>
+		</band>
+		<band height="82">
+			<printWhenExpression><![CDATA[$F{cob_nrctater} != "0"]]></printWhenExpression>
+			<staticText>
+				<reportElement x="7" y="27" width="198" height="11" isRemoveLineWhenBlank="true" uuid="39662d72-3120-4393-ad27-9fdb3b18d47a">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{cob_nrctater} != "0"]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Interveniente Garantidor:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="7" y="51" width="13" height="11" isRemoveLineWhenBlank="true" uuid="f113c799-4750-4fd7-a5a7-6e09b3f14aa9">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{cob_nrctater} != "0"]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="9" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[1)]]></text>
+			</staticText>
+			<line>
+				<reportElement x="20" y="61" width="211" height="1" isRemoveLineWhenBlank="true" uuid="dc4d8121-b5e4-431e-a275-ff9d750bdeb9">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{cob_nrctater} != "0"]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<textField isBlankWhenNull="true">
+				<reportElement x="7" y="62" width="224" height="20" isRemoveLineWhenBlank="true" uuid="7b21ba6d-e62c-4eb1-8303-0c6f30cb6c80">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{cob_nrctater} != "0"]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Nome: " + $F{cob_nminterv} + "\nCPF/CNPJ: " + $F{cob_nrcpfint}]]></textFieldExpression>
+			</textField>
 		</band>
 		<band height="209" splitType="Prevent">
 			<frame>

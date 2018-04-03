@@ -2115,7 +2115,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                END IF;
 
                -- Calculo da data de vencimento
-               vr_dtvencto := rw_crapdat.dtmvtocd + rw_craprda.qtdiaapl;
+               rw_craprda.qtdiaapl := rw_craprda.dtvencto - rw_craprda.dtmvtolt;
+               vr_dtvencto := rw_craprda.dtvencto + rw_craprda.qtdiaapl;
                vr_dtvencto := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                          ,pr_dtmvtolt => vr_dtvencto
                                                          ,pr_tipo => 'P');

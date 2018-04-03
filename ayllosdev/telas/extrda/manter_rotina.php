@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 02/08/2011 
  * OBJETIVO     : Rotina para manter as operações da tela EXTRDA
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 27/11/2017 - Inclusao do valor de bloqueio em garantia. PRJ404 - Garantia Empr.(Odirlei-AMcom)  
  * -------------- 
  */
 ?> 
@@ -105,6 +105,61 @@
 	$aplicacao = $xmlObjeto->roottag->tags[1]->tags;
 	preencheArray( $aplicacao,$dados );
 	echo "montarTabela( 0, 30 );";
+    
+    
+    // Monta o xml de requisição
+	$xmlJud  = "";
+	$xmlJud .= "<Root>";
+	$xmlJud .= "	<Cabecalho>";
+	$xmlJud .= "		<Bo>b1wgen0155.p</Bo>";
+	$xmlJud .= "		<Proc>retorna-valor-blqjud</Proc>";
+	$xmlJud .= "	</Cabecalho>";
+	$xmlJud .= "	<Dados>";
+	$xmlJud .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xmlJud .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xmlJud .= "		<nrcpfcgc>0</nrcpfcgc>";
+	$xmlJud .= "		<cdtipmov>0</cdtipmov>";
+	$xmlJud .= "		<cdmodali>2</cdmodali>";
+	$xmlJud .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xmlJud .= "	</Dados>";
+	$xmlJud .= "</Root>";
+	
+		// Executa script para envio do XML
+	$xmlResult = getDataXML($xmlJud);
+	
+	// Cria objeto para classe de tratamento de XML
+	$xmlObjBlqJud = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObjBlqJud->roottag->tags[0]->name) == "ERRO") {
+		exibeErro($xmlObjBlqJud->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	}
+    
+    $xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "  <nrdconta>".$nrdconta."</nrdconta>";    
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    $xmlResult = mensageria($xml, "BLOQ0001", "CALC_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
+
+    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        if ($msgErro == "") {
+            $msgErro = $xmlObj->roottag->tags[0]->cdata;
+        }
+
+        exibeErro($msgErro);
+        exit();
+    }
+
+    $registros = $xmlObj->roottag->tags[0]->tags;
+    $vlblqapl  = getByTagName($registros, 'vlblqapl');	
+    
+    echo "cVlbloque.val('".formataMoeda($vlbloque)."');";
+    echo "cVlblqapl.val('".formataMoeda($vlblqapl)."');";
+    
 
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Preenche o array
