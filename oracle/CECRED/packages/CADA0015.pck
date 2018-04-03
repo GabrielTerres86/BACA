@@ -5553,7 +5553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
           -- Se for um cadastro novo, deve-se enviar para o CRM
           IF nvl(rw_pessoa_atlz.dschave,' ') = 'S' THEN
-            pc_envia_cooperado_crm(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+            pc_envia_cooperado_crm(pr_nrcpfcgc => rw_crapttl.nrcpfcgc);
           END IF;
 
 				WHEN 'CRAPENC' THEN
