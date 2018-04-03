@@ -584,9 +584,10 @@ PROCEDURE Busca_Historico:
                                 ELSE
                                     0. 
 
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         IF craphis.cdgrphis > 0 THEN
             DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
                 /* Procedure para buscar as informacoes da CPMF da cooperativa */
                 RUN STORED-PROCEDURE pc_descricao_grupo_historico
                     aux_handproc = PROC-HANDLE NO-ERROR
