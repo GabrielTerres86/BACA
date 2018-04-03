@@ -2610,7 +2610,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       FOR rw_acordo_contrato IN cr_acordo_contrato LOOP
         BEGIN
           UPDATE crapcyc 
-             SET flgehvip = 1
+             SET flvipant = flgehvip
+               , cdmotant = decode(cdmotcin,2,cdmotant,7,cdmotant,cdmotcin)
+               , flgehvip = 1
                , cdmotcin = decode(cdmotcin,2,cdmotcin,7,cdmotcin,1)
                , dtaltera = BTCH0001.rw_crapdat.dtmvtolt
 			   , cdoperad = 'cyber'
@@ -3093,10 +3095,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
             pr_dscritic := 'Acordo Ativo. Motivo CIN sera alterado para: 1 ';  
          END IF;
       ELSE
-         IF pr_flgehvip = 1 THEN
-            pr_cdcritic := 0;
-            pr_dscritic := 'Acordo nao esta Ativo. Motivo CIN sera alterado para: '||rw_crapcyc.cdmotcin;               
-         END IF;
+        pr_cdcritic := 0;
+        pr_dscritic := 'Acordo nao esta Ativo. Motivo CIN sera alterado para: '||rw_crapcyc.cdmotcin;               
       END IF;
     ELSIF  rw_crapcyc.flgehvip = 0 THEN 
       IF vr_cdsituacao = 1 THEN
