@@ -2370,7 +2370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
     Sistema  : Procedure para realizar deposito de cheques entre cooperativas
     Sigla    : CRED
     Autor    : Andre Santos - SUPERO
-    Data     : Junho/2014.                   Ultima atualizacao: 26/04/2017
+    Data     : Junho/2014.                   Ultima atualizacao: 03/04/2018
   
    Dados referentes ao programa:
   
@@ -2382,6 +2382,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 	           26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 						   (Adriano - P339).
+               
+               03/04/2018 - Substituido historico 1523 por 2658 - COMPE SESSAO UNICA (Diego).
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -3709,7 +3711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                      ,pr_nro_conta
                      ,TO_NUMBER(vr_c_docto)
                      ,pr_typ_tab_chq(vr_index).vlcompel
-                   ,1523  /* DEP.CHQ.INTER */
+                   ,2658  /* DEP.CHQ.INTER */
                      ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
                      ,pr_nro_conta
                      ,vr_p_ult_sequencia
@@ -3811,7 +3813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                  ,cdcooper)
               VALUES (pr_nro_conta
                      ,pr_typ_tab_chq(vr_index).dtlibcom
-                   ,1523 -- DEP.CHQ.INTER
+                   ,2658 -- DEP.CHQ.INTER
                      ,TO_NUMBER(vr_c_docto)
                      ,rw_dat_cop.dtmvtolt
                      ,1
@@ -4647,7 +4649,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --  Sistema  : Procedure para realizar deposito de cheques entre cooperativas
   --  Sigla    : CRED
   --  Autor    : Andre Santos - SUPERO
-  --  Data     : Junho/2014.                   Ultima atualizacao: 26/04/2017
+  --  Data     : Junho/2014.                   Ultima atualizacao: 03/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -4657,6 +4659,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   -- Alteracoes: 26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                  crapass, crapttl, crapjur 
 							 (Adriano - P339).
+               
+                 03/04/2018 - Substituido historico 1523 por 2658 - COMPE SESSAO UNICA (Diego).
+                 
   ---------------------------------------------------------------------------------------------------------------*/
   
   --Tipo de tabela para vetor literal
@@ -6029,7 +6034,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                      ,vr_nro_conta
                      ,TO_NUMBER(vr_c_docto)
                      ,pr_typ_tab_chq(vr_index).vlcompel
-                   ,1523  /** DEP.CHQ.INTER **/
+                   ,2658  /** DEP.CHQ.INTER **/
                      ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
                      ,vr_nro_conta
                      ,vr_p_ult_sequencia
@@ -6127,7 +6132,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                  ,cdcooper)
               VALUES (vr_nro_conta
                      ,pr_typ_tab_chq(vr_index).dtlibcom
-                   ,1523 -- DEP.CHQ.INTER
+                   ,2658 -- DEP.CHQ.INTER
                      ,TO_NUMBER(vr_c_docto)
                      ,rw_dat_cop.dtmvtolt
                      ,1
@@ -7143,7 +7148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --  Sistema  : Procedure para realizar deposito de cheques entre cooperativas
   --  Sigla    : CRED
   --  Autor    : Andre Santos - SUPERO
-  --  Data     : Junho/2014.                   Ultima atualizacao: 26/04/2017
+  --  Data     : Junho/2014.                   Ultima atualizacao: 03/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -7153,6 +7158,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   -- Alteracoes: 26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
  			                  crapass, crapttl, crapjur 
 							  (Adriano - P339).
+                
+                03/04/2018 - Substituido historico 1523 por 2658 - COMPE SESSAO UNICA (Diego).
+                
   ---------------------------------------------------------------------------------------------------------------*/
   
   --Tipo de tabela para vetor literal
@@ -8549,7 +8557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                      ,pr_nro_conta
                      ,TO_NUMBER(vr_c_docto)
                      ,pr_typ_tab_chq(vr_index).vlcompel
-                   ,1523  /** DEP.CHQ.INTER **/
+                   ,2658  /** DEP.CHQ.INTER **/
                      ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
                      ,pr_nro_conta
                      ,vr_p_ult_sequencia
@@ -8647,7 +8655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                  ,cdcooper)
               VALUES (pr_nro_conta
                      ,pr_typ_tab_chq(vr_index).dtlibcom
-                   ,1523 -- DEP.CHQ.INTER
+                   ,2658 -- DEP.CHQ.INTER
                      ,TO_NUMBER(vr_c_docto)
                      ,rw_dat_cop.dtmvtolt
                      ,1

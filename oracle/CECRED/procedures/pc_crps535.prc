@@ -11,7 +11,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/SUPERO
-   Data    : Dezembro/2009                   Ultima atualizacao: 07/04/2017
+   Data    : Dezembro/2009                   Ultima atualizacao: 03/04/2018
 
    Dados referentes ao programa:
 
@@ -131,6 +131,9 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                21/06/2017 - Remoção do processamento do arquivo de cheque VLB(DVN) e tratado novo 
                             arquivo de devolução em contingência(DCG). Ajuste nos historicos.
                             PRJ367 - Compe Sessao Unica (Lombardi)
+                            
+               03/04/2018 - Tratamento historicos COMPE SESSAO UNICA (Diego).
+               
 ............................................................................. */
 
   -- Cursor genérico de calendário
@@ -1239,11 +1242,12 @@ BEGIN
             IF rw_crapdpb.dtliblan <= rw_crapdat.dtmvtolt THEN
               vr_cdhistor := 351; --CH.DEV.CUST.
             ELSE
-              -- 2433-DEPOSITO BLOQ / 1523-DEP. INTERCOOP
-              IF rw_crapdpb.cdhistor = 2433 THEN 
-                vr_cdhistor := 24;
-              ELSIF rw_crapdpb.cdhistor = 1523 THEN
-                vr_cdhistor := 27;
+              IF rw_crapdpb.cdhistor = 3 OR rw_crapdpb.cdhistor = 1526 OR  --DEP.CHQ.PR. / 1526 - DEP. INTERCOOP.
+                 rw_crapdpb.cdhistor = 2433 THEN -- DEPOSITO BLOQ - COMPE SESSAO UNICA
+                 vr_cdhistor := 24;
+              ELSIF rw_crapdpb.cdhistor = 4 OR rw_crapdpb.cdhistor = 1523 OR --DEP.CHQ.FPR. / 1523 - DEP.INTERCOOP.
+                    rw_crapdpb.cdhistor = 2658 THEN -- DEPOSITO BLOQ - COMPE SESSAO UNICA
+                    vr_cdhistor := 27;
               ELSIF rw_crapdpb.cdhistor IN (357,881) THEN --DEP.BLOQ.CUST
                 vr_cdhistor := 657; --CH.DEV.CUST.
               ELSE
