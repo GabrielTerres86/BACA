@@ -1,12 +1,11 @@
 <? 
 /*!
- * FONTE        : busca_dados.php
- * CRIAÇÃO      : Daniel Zimmermann         
- * DATA CRIAÇÃO : 26/02/2013 
- * OBJETIVO     : Rotina para buscar grupo na tela CADGRU
+ * FONTE        : busca_dados_hist.php
+ * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)
+ * DATA CRIAÇÃO : março/2018 
+ * OBJETIVO     : Rotina para buscar históricos das operações de parametrização do Debitador Único
  * --------------
- * ALTERAÇÕES   : 05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
- *                             departamento como parametros e passar o o código (Renato Darosci)
+ * ALTERAÇÕES   : 
  * -------------- 
  */
 
@@ -78,6 +77,7 @@
         $valor_anterior = getByTagName($historico->tags,'dsvalor_anterior');
         $valor_novo = getByTagName($historico->tags,'dsvalor_novo');
         $cdprocesso = getByTagName($historico->tags,'cdprocesso');
+        $dsprocesso = getByTagName($historico->tags,'dsprocesso');
 
         $nomesCampos = array(
             'idhora_processamento' => 'Cód. Horário',
@@ -95,21 +95,21 @@
             $parametros .= $valor_novo;
 
             if (!empty($cdprocesso)) {
-                $parametros .= ' (' . $cdprocesso . ')';
+                $parametros .= ' <div style="display: inline;" title="' . $dsprocesso . '"> (' . $cdprocesso . ')</div>';
             }
         }
         else if ($tpoperacao == '2') {
             $parametros .= ' de ' . ($valor_anterior != '' ? $valor_anterior : 'NULL') . ' para ' . ($valor_novo != '' ? $valor_novo : 'NULL');
 
             if (!empty($cdprocesso)) {
-                $parametros .= ' (' . $cdprocesso . ')';
+                $parametros .= ' <div style="display: inline;" title="' . $dsprocesso . '"> (' . $cdprocesso . ')</div>';
             }
         }
         else if ($tpoperacao == '3') {
             $parametros .= $valor_anterior;
 
             if (!empty($cdprocesso)) {
-                $parametros .= ' (' . $cdprocesso . ')';
+                $parametros .= ' <div style="display: inline;" title="' . $dsprocesso . '"> (' . $cdprocesso . ')</div>';
             }
         }
         else if ($tpoperacao == '4') {
@@ -122,7 +122,8 @@
 		echo	"<td style=\"text-align: center;\">" . getByTagName($historico->tags,'dhoperacao') . "</td>";
         echo	"<td title=\"" . getByTagName($historico->tags,'nmoperad') . "\">" . $operador  . "</td>";
         echo	"<td>" . mb_strtoupper(getByTagName($historico->tags,'tipooperacao')) . "</td>";
-        echo	"<td>" . $parametros . "</td>";
+        echo	"<td ";
+        echo ">" . $parametros . "</td>";
 		echo "</tr>";
 	} 	
 

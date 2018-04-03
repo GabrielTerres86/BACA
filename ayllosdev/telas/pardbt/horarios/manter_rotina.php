@@ -2,11 +2,11 @@
 
 	/*************************************************************************
 	  Fonte: manter_rotina.php                                               
-	  Autor: Reginaldo (AMcom)                                                  
+	  Autor: Reginaldo Rubens da Silva(AMcom)                                                  
 	  Data : Março/2018                      Última Alteração: 		   
 	                                                                   
 	  Objetivo  : Executar ações da tela de parametrização do DEBITADOR 
-                  ÚNICO    
+                  ÚNICO (Cadastro de Horários)
 	                                                                 
 	  Alterações:                                                     
 	***********************************************************************/

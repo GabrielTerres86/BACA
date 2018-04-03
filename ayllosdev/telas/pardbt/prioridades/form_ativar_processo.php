@@ -1,9 +1,11 @@
 <?
 /*!
- * FONTE        : form_detalhe.php
- * CRIAÇÃO      : Reginaldo (AMcom)         
- * DATA CRIAÇÃO : 27/03/2018
- * OBJETIVO     : Formulário para inclusão/alteração de horários
+ * FONTE        : form_ativar_processo.php
+ * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         
+ * DATA CRIAÇÃO : Março/2018
+ * OBJETIVO     : Formulário para inclusão de horários de execução do programa
+ *                (tela ALTERAR do cadastro de prioridades da parametrização 
+ *                do Debitador Único)
  * --------------
  * ALTERAÇÕES   : 
  * --------------

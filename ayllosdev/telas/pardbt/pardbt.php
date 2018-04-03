@@ -1,13 +1,12 @@
 <?php
 /*!
- * FONTE        : hrcomp.php 
- * CRIAÇÃO      : Tiago Machado         
- * DATA CRIAÇÃO : 24/02/2014
- * OBJETIVO     : Mostrar tela HRCOMP.
+ * FONTE        : pardbt.php 
+ * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         
+ * DATA CRIAÇÃO : Março/2018
+ * OBJETIVO     : Mostrar tela PARDBT (Parametrização do Debitador Único).
  * --------------
- * ALTERAÇÕES   : 21/09/2016 - Incluir tratamento para poder alterar a cooperativa cecred e 
- * --------------              escolher o programa "DEVOLUCAO DOC" - Melhoria 316 
- *                             (Lucas Ranghetti #525623)
+ * ALTERAÇÕES   : 
+ * --------------              
  */
 	
 	session_start();

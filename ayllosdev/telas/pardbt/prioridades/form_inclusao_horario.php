@@ -1,9 +1,11 @@
 <?php
 /*
- * FONTE        : form_inclusao_contrato.php
- * CRIAí”ŒO       : Leticia Terres (AMcom)
- * DATA CRIAí”ŒO : 17/01/2018
- * OBJETIVO     : Mostra a tela para inclusao de contrato
+ * FONTE        : form_inclusao_horario.php
+ * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)
+ * DATA CRIAÇÃO : 17/01/2018
+ * OBJETIVO     : Mostra a tela para inclusao de um novo horário para execução do programa
+ *                na tela ALTERAR do cadastro de prioridades da parametrização do
+ *                Debitador Único
  */	  
 	
 	session_start();
@@ -16,7 +18,7 @@
 		
 	$cdprocesso = $_POST['cdprocesso'];		
 
-    // Monta o xml de requisi??o
+    // Monta o xml de requisição
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= " <cdprocesso>" . $cdprocesso . "</cdprocesso>";
@@ -41,7 +43,7 @@
 	$horarios = $xmlObjeto->roottag->tags[0]->tags;
 
     if (count($horarios) == 0) {
-        exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.<br>N&atilde;o h&aacute; hor&aacute;rios para serem adicionados.', 'Alerta - Ayllos', 'unblockBackground()', false);
+        exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.<br>N&atilde;o h&aacute; hor&aacute;rios para serem adicionados.', 'Alerta - Ayllos', 'unblockBackground();', false);
     }
 ?>
 	<table id="tdImp"cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -106,7 +108,7 @@
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();	
 
-	// Bloqueia conte?Âºdo que est?Â¡ ?Â¡tras do div da rotina
+	// Bloqueia conteúdo que está Atrás do div da rotina
 	blockBackground(parseInt($("#divRotina").css("z-index")));
 
 	$('#idhora_processamento', '#frmDet').focus();

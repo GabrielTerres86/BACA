@@ -1,7 +1,7 @@
 <? 
 /*!
  * FONTE        : carrega_processos.php
- * CRIAÇÃO      : Reginaldo Rubens da Silva       
+ * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)      
  * DATA CRIAÇÃO : Março/2018
  * OBJETIVO     : Rotina para carregar processos que podem ser selecionados na 
  *                execução emergenial do Debitador Único

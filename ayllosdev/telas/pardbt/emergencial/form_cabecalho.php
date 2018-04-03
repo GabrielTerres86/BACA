@@ -2,8 +2,9 @@
 /*!
  * FONTE        : form_cabecalho.php
  * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         
- * DATA CRIAÇÃO : 21/03/2018
- * OBJETIVO     : Cabecalho para a tela PARDBT
+ * DATA CRIAÇÃO : Março/2018
+ * OBJETIVO     : Cabecalho para a tela PARDBT (Parametrização do Debirador Único 
+ *                - Execução Emergencial de Processos)
  * --------------
  * ALTERAÇÕES   : 
  * --------------

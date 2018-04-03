@@ -1,17 +1,12 @@
 <? 
 /*!
- * FONTE        : manter_rotina.php
- * CRIAÇÃO      : Tiago Machado Flor         
- * DATA CRIAÇÃO : 11/10/2016 
- * OBJETIVO     : Rotina para verificar o acesso as opcao da tela HRCOMP
+ * FONTE        : acesso_opcao.php
+ * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         
+ * DATA CRIAÇÃO : Março/2018 
+ * OBJETIVO     : Rotina para verificar o acesso as opcao da tela PARDBT (Parametrização do Debitador Único)
  * --------------
- * ALTERAÇÕES   : 11/10/2016 - Acesso da tela HRCOMP em todas cooperativas SD381526 (Tiago/Elton)
- *
- *                05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
- *                             departamento como parametros e passar o o código (Renato Darosci)
+ * ALTERAÇÕES   : 
  * -------------- 
- *                
- *   
  */
 
     session_start();

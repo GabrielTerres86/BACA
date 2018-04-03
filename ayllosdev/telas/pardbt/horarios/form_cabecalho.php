@@ -2,8 +2,9 @@
 /*!
  * FONTE        : form_cabecalho.php
  * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         
- * DATA CRIAÇÃO : 21/03/2018
- * OBJETIVO     : Cabecalho para a tela PARDBT
+ * DATA CRIAÇÃO : Março/2018
+ * OBJETIVO     : Cabecalho para a tela PARDBT (Parametrização do Debitador Único 
+ *                - Cadastro de Horários)
  * --------------
  * ALTERAÇÕES   : 
  * --------------
@@ -19,7 +20,6 @@
 				<select id="cddopcao" name="cddopcao" style="width: 460px;">
 					<option value="C"> C - Consultar  </option> 
 					<option value="I"> I - Incluir  </option>
-					<option value="A"> A - Alterar  </option>
 					<option value="E"> E - Excluir  </option>
                     <option value="H"> H - Histórico  </option>
 				</select>

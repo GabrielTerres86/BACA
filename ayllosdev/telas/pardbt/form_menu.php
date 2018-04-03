@@ -2,8 +2,8 @@
 /*!
  * FONTE        : form_menu.php
  * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         
- * DATA CRIAÇÃO : 21/03/2018
- * OBJETIVO     : Menu de parâmetros para a tela PARDBT
+ * DATA CRIAÇÃO : março/2018
+ * OBJETIVO     : Menu de parâmetros para a tela PARDBT (Parametrização do Debitador Único)
  * --------------
  * ALTERAÇÕES   : 
  * --------------

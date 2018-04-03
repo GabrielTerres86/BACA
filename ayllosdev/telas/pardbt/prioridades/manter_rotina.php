@@ -2,11 +2,11 @@
 
 	/*************************************************************************
 	  Fonte: manter_rotina.php                                               
-	  Autor: Reginaldo (AMcom)                                                  
+	  Autor: Reginaldo Rubens da Silva (AMcom)                                                  
 	  Data : Março/2018                      Última Alteração: 		   
 	                                                                   
 	  Objetivo  : Executar ações da tela de parametrização do DEBITADOR 
-                  ÚNICO    
+                  ÚNICO (Cadastro de Prioridades) 
 	                                                                 
 	  Alterações:                                                     
 	***********************************************************************/
@@ -56,7 +56,6 @@
 			exibirErro('error', utf8_encode($msgErro), 'Alerta - Ayllos', '', false);
 		}
 
-        //exibirErro('inform', 'Prioridade redefinida.', 'Alerta - Ayllos','carregarPrioridadesProcessos();', false);
         echo 'carregarPrioridadesProcessos(' . $nrprioridade . ');';
 	}
 	elseif ($operacao == 'ATIVAR_PROCESSO') {
@@ -146,7 +145,9 @@
 			exibirErro('error', utf8_encode($msgErro), 'Alerta - Ayllos', '', false);
 		}
 
-        exibirErro('inform', 'Hor&aacute;rio de processamento exclu&iacute;do.', 'Alerta - Ayllos','carregarPrioridadesProcessos();', false);
+		$prioridade = getByTagName($xmlObject->roottag->tags[0]->tags, 'nrprioridade');
+
+        exibirErro('inform', 'Hor&aacute;rio de processamento exclu&iacute;do.', 'Alerta - Ayllos','carregarPrioridadesProcessos(' . $prioridade . ');', false);
 	}
     elseif ($operacao == 'INCLUIR_HORARIO_PROC') {
 		if (empty($cdprocesso) || empty($horarios)) {
@@ -176,6 +177,8 @@
 			exibirErro('error', utf8_encode($msgErro), 'Alerta - Ayllos', '', false);
 		}
 
-        exibirErro('inform', 'Hor&aacute;rio adicionado.', 'Alerta - Ayllos',"fechaRotina($('#divUsoGenerico'),$('#divTela')); $('#divUsoGenerico').empty(); carregarPrioridadesProcessos();",false);
+		$prioridade = getByTagName($xmlObject->roottag->tags[0]->tags, 'nrprioridade');
+
+        exibirErro('inform', 'Hor&aacute;rio adicionado.', 'Alerta - Ayllos',"fechaRotina($('#divUsoGenerico'),$('#divTela')); $('#divUsoGenerico').empty(); carregarPrioridadesProcessos(" . $prioridade . ");",false);
 	}
     

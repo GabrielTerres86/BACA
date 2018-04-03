@@ -1,17 +1,12 @@
 /*!
- * FONTE        : hrcomp.js
- * CRIAÇÃO      : Tiago Machado          
- * DATA CRIAÇÃO : 24/02/2014
- * OBJETIVO     : Biblioteca de funções da tela HRCOMP
+ * FONTE        : pardbt.js
+ * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         
+ * DATA CRIAÇÃO : Março/2018
+ * OBJETIVO     : Biblioteca de funções da tela PARDBT (Parametrização do Debitador Único)
  * --------------
- * ALTERAÇÕES   : 25/07/2014 - Retirado tratamento para quando a coop fosse zero (Tiago/Aline)
+ * ALTERAÇÕES   : 
  * --------------
- *                21/09/2016 - Incluir tratamento para poder alterar a cooperativa cecred e 
- *                             escolher o programa "DEVOLUCAO DOC" - Melhoria 316.
- * 							   Também remover trechos do código não utilizados.
- *                             (Lucas Ranghetti #525623)
- * 
- *                11/10/2016 - Acesso da tela HRCOMP em todas cooperativas SD381526 (Tiago/Elton)
+ *                
  */
 
 // Definição de algumas variáveis globais 
@@ -48,9 +43,11 @@ function carregaComponente() {
 	// Desabilita campo opção
 	cTodosCabecalho		= $('input[type="text"],select','#frmCab'); 
 	cTodosCabecalho.desabilitaCampo();
+	$('#btnOK', '#frmCab').removeClass('botao').addClass('botaoDesativado');
 	// Desabilita campo opção
 	cTodosMenu = $('input[type="text"],select', '#' + frmMenu);
 	cTodosMenu.desabilitaCampo();
+	$('#btnOK', '#frmParam').removeClass('botao').addClass('botaoDesativado');
 			
 	$('#divBotoes', '#divTela').css({'display':'block'});
 
@@ -420,6 +417,10 @@ function carregarProcessos() {
 }
 
 function acessoOpcao() {
+	if ($('#btnOK', '#frmCab').hasClass('botaoDesativado')) {
+		return false;
+	}
+
 	showMsgAguardo("Aguarde, liberando aplica&ccedil;&atilde;o...");
 	
 	cddopcao = $("#cddopcao").val();
@@ -824,10 +825,20 @@ function adicionarHorarioProc(cdprocesso) {
 			showError('error', 'N&atilde;o foi poss&iacute;&shy;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function (response) {
-			$('#divUsoGenerico').html(response);
-			layoutPadrao();
-			hideMsgAguardo();
-			bloqueiaFundo($('#divUsoGenerico'));
+			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				$('#divUsoGenerico').html(response);
+				layoutPadrao();
+				hideMsgAguardo();
+				bloqueiaFundo($('#divUsoGenerico'));
+			}
+			else {
+				try {
+					eval(response);
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			}
 		}
 	});
 }
@@ -993,11 +1004,21 @@ function formataHistoricos() {
 	var ordemInicial = new Array();
 	ordemInicial = [[0,0]];	
 	
-	var arrayLargura = ['120px', '100px', '80px', ''];	
+	var arrayLargura = ['120px', '100px', '80px', '483px'];	
 		
 	var arrayAlinha = ['center', 'center', 'center', 'left'];	
 			
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');	
+
+	// Desabilita evento de ordenação das colunas ta tabela
+	$('.tituloRegistros').find('th').each(function (i, elem) {
+		$(elem).attr('class', '').unbind();
+	});
+
+	// Desabilita evento de ordenação das colunas ta tabela
+	$('.divRegistros').find('th').each(function (i, elem) {
+		$(elem).attr('class', '').unbind();
+	});
 }
 
 function processarExclusaoHorario(id) {
@@ -1135,12 +1156,18 @@ function estadoInicialCab() {
 	formataCamposCab();
 
 	cTodosCabecalho.limpaFormulario();
+	$('#btnOK', '#frmCab').removeClass('botaoDesativado').addClass('botao');
+	$('#btnOK', '#frmParam').removeClass('botaoDesativado').addClass('botao');
 
 	trocaBotao('');
 }
 
 function carregaOpcoes()
 {
+	if ($('#btnOK', '#frmParam').hasClass('botaoDesativado')) {
+		return false;
+	}
+	
 	$('#divCabecalho').empty();
 	$('#divCabecalho').hide();
 	

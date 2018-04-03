@@ -1,12 +1,13 @@
 <?php
 /*!
  * FONTE        : busca_dados.php
- * CRIAÇÃO      : Daniel Zimmermann         
+ * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         
  * DATA CRIAÇÃO : 26/02/2013 
- * OBJETIVO     : Rotina para buscar grupo na tela CADGRU
+ * OBJETIVO     : Rotina para buscar dados dos programas com suas prioridades e  horários
+ *                de execução (para a tela CONSULTAR do cadastro de prioridades da Parametrização
+ *                do Debitador Único)
  * --------------
- * ALTERAÇÕES   : 05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
- *                             departamento como parametros e passar o o código (Renato Darosci)
+ * ALTERAÇÕES   : 
  * -------------- 
  */
 

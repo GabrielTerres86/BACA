@@ -1,12 +1,12 @@
 <? 
 /*!
  * FONTE        : busca_dados.php
- * CRIAÇÃO      : Daniel Zimmermann         
- * DATA CRIAÇÃO : 26/02/2013 
- * OBJETIVO     : Rotina para buscar grupo na tela CADGRU
+ * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)
+ * DATA CRIAÇÃO : Março/2018 
+ * OBJETIVO     : Rotina para buscar dados dos horários cadastrados na tela PARDBT 
+ *                (Parametrização do Debitador Único - Cadastro de Horários)
  * --------------
- * ALTERAÇÕES   : 05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
- *                             departamento como parametros e passar o o código (Renato Darosci)
+ * ALTERAÇÕES   : 
  * -------------- 
  */
 
