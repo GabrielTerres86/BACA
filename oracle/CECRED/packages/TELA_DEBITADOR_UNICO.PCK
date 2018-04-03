@@ -333,10 +333,13 @@ DECLARE
                 , 2, 'Cad. Horários'
                 , 3, 'Exec. Emergenc.') tporigem
          , ope.nmoperad
+				 , par.dsprocesso
       FROM tbgen_debitador_historico his
          , crapope ope
+				 , tbgen_debitador_param par
      WHERE ope.cdcooper = vr_cdcooper
        AND ope.cdoperad = his.cdoperador
+			 AND par.cdprocesso(+) = his.cdprocesso
        AND (pr_tporigem = 0 OR his.tporigem = pr_tporigem)
      ORDER BY his.dhoperacao DESC;
     rw_historicos cr_historicos%ROWTYPE;
@@ -433,6 +436,14 @@ BEGIN
                                pr_posicao  => vr_contador,
                                pr_tag_nova => 'cdprocesso',
                                pr_tag_cont => rw_historicos.cdprocesso,
+                               pr_des_erro => pr_dscritic);
+															 
+				-- Descrição do Processo
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Historico',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'dsprocesso',
+                               pr_tag_cont => rw_historicos.dsprocesso,
                                pr_des_erro => pr_dscritic);
 														
 			  -- Tipo de operação (Inclusão, Alteração, Exclusão, Exec. Emergencial)
@@ -2446,13 +2457,13 @@ END pc_busca_debitador_hr_proces;
 
 
 PROCEDURE pc_inclui_debitador_hr_proces( pr_cdprocesso           IN TBGEN_DEBITADOR_HORARIO_PROC.cdprocesso%TYPE           -->Codigo de identificacao do processo
-                                           , pr_idhora_processamento IN TBGEN_DEBITADOR_HORARIO_PROC.idhora_processamento%TYPE -->Identificador do horario do processamento
-                                           , pr_xmllog   IN VARCHAR2                     --> XML com informações de LOG
-                                           , pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
-                                           , pr_dscritic OUT VARCHAR2                    --> Descrição da crítica
-                                           , pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
-                                           , pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
-                                           , pr_des_erro OUT VARCHAR2) IS
+                                       , pr_idhora_processamento IN TBGEN_DEBITADOR_HORARIO_PROC.idhora_processamento%TYPE -->Identificador do horario do processamento
+                                       , pr_xmllog   IN VARCHAR2                     --> XML com informações de LOG
+                                       , pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
+                                       , pr_dscritic OUT VARCHAR2                    --> Descrição da crítica
+                                       , pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
+                                       , pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
+                                       , pr_des_erro OUT VARCHAR2) IS
 
     /* ............................................................................
         Programa: pc_inclui_debitador_horarios_proc
@@ -2471,7 +2482,20 @@ PROCEDURE pc_inclui_debitador_hr_proces( pr_cdprocesso           IN TBGEN_DEBITA
 BEGIN
 
 DECLARE
-
+    ----->>> CURSORES <<<-----
+		
+		-- Busca horário para incluir no histórico
+		CURSOR cr_horario IS
+		SELECT to_char(hor.dhprocessamento, 'HH24:MI') dhprocessamento
+		  FROM tbgen_debitador_horario hor
+	   WHERE hor.idhora_processamento = pr_idhora_processamento;
+		  
+		-- Busca a prioridade do processo para reposicionamento em tela
+		CURSOR cr_prioridade IS
+		SELECT prc.nrprioridade
+		  FROM tbgen_debitador_param prc
+		 WHERE prc.cdprocesso = pr_cdprocesso;
+		
     ----->>> VARIÁVEIS <<<-----
 
     -- Variável de críticas
@@ -2490,6 +2514,9 @@ DECLARE
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
+		
+		vr_dhprocessamento  VARCHAR2(5);  -- Horário para inclusão no histórico
+		vr_nrprioridade     NUMBER(3);    -- Prioridade do processo para reposicionamento em tela
 
    BEGIN
       pr_des_erro := 'OK';
@@ -2519,6 +2546,14 @@ DECLARE
                               pr_tag_nova => 'Dados',
                               pr_tag_cont => NULL,
                               pr_des_erro => vr_dscritic);
+															
+			OPEN cr_horario;
+			FETCH cr_horario INTO vr_dhprocessamento;
+			CLOSE cr_horario;
+			
+			OPEN cr_prioridade;
+			FETCH cr_prioridade INTO vr_nrprioridade;
+			CLOSE cr_prioridade;
 
       -- Insere o novo horário Proc na tabela
       INSERT
@@ -2534,7 +2569,7 @@ DECLARE
         pc_grava_historico(pr_cdoperador => vr_cdoperad
                          , pr_dscampo_alterado => 'idhora_processamento'
                          , pr_dsvalor_anterior => NULL
-                         , pr_dsvalor_novo => pr_idhora_processamento
+                         , pr_dsvalor_novo => vr_dhprocessamento
                          , pr_cdprocesso => pr_cdprocesso
                          , pr_tpoperacao => 1
                          , pr_tporigem => 1
@@ -2566,6 +2601,13 @@ DECLARE
                                pr_posicao  => 0,
                                pr_tag_nova => 'idhora_processamento',
                                pr_tag_cont => pr_idhora_processamento,
+                               pr_des_erro => pr_dscritic);
+															 
+				gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Dados',
+                               pr_posicao  => 0,
+                               pr_tag_nova => 'nrprioridade',
+                               pr_tag_cont => vr_nrprioridade,
                                pr_des_erro => pr_dscritic);
 
    EXCEPTION
@@ -2622,6 +2664,20 @@ PROCEDURE pc_exclui_debitador_hr_proces(pr_cdprocesso           IN TBGEN_DEBITAD
 BEGIN
 
 DECLARE
+    ----->>> CURSORES <<<-----
+		
+    -- Busca horário para incluir no histórico
+		CURSOR cr_horario IS
+		SELECT to_char(hor.dhprocessamento, 'HH24:MI') dhprocessamento
+		  FROM tbgen_debitador_horario hor
+	   WHERE hor.idhora_processamento = pr_idhora_processamento;
+		 
+		-- Busca a prioridade do processo para reposicionamento em tela
+		CURSOR cr_prioridade IS
+		SELECT prc.nrprioridade
+		  FROM tbgen_debitador_param prc
+		 WHERE prc.cdprocesso = pr_cdprocesso;	
+		 
     ----->>> VARIÁVEIS <<<-----
 
 	  -- Variável de críticas
@@ -2641,6 +2697,9 @@ DECLARE
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
+		
+		vr_dhprocessamento VARCHAR2(5);  --> Horário para inclusão no histórico
+		vr_nrprioridade      NUMBER(3);    --> Prioridade do processo para reposicionamento em tela
 
    BEGIN
 			pr_des_erro := 'OK';
@@ -2670,6 +2729,14 @@ DECLARE
 															pr_tag_nova => 'Dados',
 															pr_tag_cont => NULL,
 															pr_des_erro => vr_dscritic);
+															
+			OPEN cr_horario;
+			FETCH cr_horario INTO vr_dhprocessamento;
+			CLOSE cr_horario;
+			
+			OPEN cr_prioridade;
+			FETCH cr_prioridade INTO vr_nrprioridade;
+			CLOSE cr_prioridade;
 
 			-- Exclui o horário na tabela
 			DELETE FROM TBGEN_DEBITADOR_HORARIO_PROC
@@ -2678,7 +2745,7 @@ DECLARE
 
 				pc_grava_historico(pr_cdoperador => vr_cdoperad
                          , pr_dscampo_alterado => 'idhora_processamento'
-												 , pr_dsvalor_anterior => pr_idhora_processamento
+												 , pr_dsvalor_anterior => vr_dhprocessamento
 												 , pr_dsvalor_novo => NULL
 												 , pr_cdprocesso => pr_cdprocesso
 												 , pr_tpoperacao => 3
@@ -2698,6 +2765,15 @@ DECLARE
                                pr_tag_nova => 'excluido',
                                pr_tag_cont => 'S',
                                pr_des_erro => pr_dscritic);
+															 
+				-- Inclui dados no XML de retorno
+				gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Dados',
+                               pr_posicao  => 0,
+                               pr_tag_nova => 'nrprioridade',
+                               pr_tag_cont => vr_nrprioridade,
+                               pr_des_erro => pr_dscritic);
+				
 
 	 EXCEPTION
 		  WHEN vr_exc_historico THEN
