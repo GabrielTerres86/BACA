@@ -32,7 +32,7 @@
 	$nrdocmto = (isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0;
 	$cdbancoc = (isset($_POST['cdbandoc'])) ? $_POST['cdbandoc'] : 0;
 	$dtcatanu = (isset($_POST['dtcatanu'])) ? $_POST['dtcatanu'] : '';
-	echo $glbvars['dtmvtolt'];
+	
 	// Montar o xml de Requisicao
 	$xml  = "";
 	$xml .= "<Root>";

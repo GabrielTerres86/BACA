@@ -773,3 +773,8 @@ function selecionaTabela(tr) {
 
     return false;
 }
+
+function exportarConsultaCSV(){
+    var action = $('#frmExportarCSV').attr('action');
+	carregaImpressaoAyllos("frmExportarCSV", action);
+}

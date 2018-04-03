@@ -14,6 +14,21 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANPRT IS
                             ,pr_nmdcampo      OUT VARCHAR2               -- Nome do Campo
                             ,pr_des_erro      OUT VARCHAR2);
 
+  PROCEDURE pc_exporta_consulta_teds(pr_cdcooper  IN craptab.cdcooper%TYPE         --> Cooperativa
+                                    ,pr_dtinicial     IN VARCHAR2 -- Data inicial de recebimento de ted
+                        	  	    ,pr_dtfinal       IN VARCHAR2 -- Data final de recebimento de ted
+                                    ,pr_vlinicial     IN tbfin_recursos_movimento.vllanmto%TYPE -- Valor inicial de comparação ted
+                                    ,pr_vlfinal       IN tbfin_recursos_movimento.vllanmto%TYPE -- Valor final de comparação ted
+                                    ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE -- Cartorio da ted
+                                    ,pr_nrregist      IN INTEGER                 -- Quantidade de registros
+                                    ,pr_nriniseq      IN INTEGER                 -- Qunatidade inicial
+                                    ,pr_xmllog        IN VARCHAR2                -- XML com informações de LOG
+                                    ,pr_cdcritic      OUT PLS_INTEGER            -- Código da crítica
+                                    ,pr_dscritic      OUT VARCHAR2               -- Descrição da crítica
+                                    ,pr_retxml        IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                    ,pr_nmdcampo      OUT VARCHAR2               -- Nome do Campo
+                                    ,pr_des_erro      OUT VARCHAR2);   
+
 END TELA_MANPRT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
@@ -31,37 +46,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   -- Alteracoes: Adaptado script para contemplar os parametros da tela PARPRT
   --
   ---------------------------------------------------------------------------
-
-  PROCEDURE pc_consulta_teds(pr_dtinicial     IN VARCHAR2 -- Data inicial de recebimento de ted
-                            ,pr_dtfinal       IN VARCHAR2 -- Data final de recebimento de ted
-                            ,pr_vlinicial     IN tbfin_recursos_movimento.vllanmto%TYPE -- Valor inicial de comparação ted
-                            ,pr_vlfinal       IN tbfin_recursos_movimento.vllanmto%TYPE -- Valor final de comparação ted
-                            ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE -- Cartorio da ted                       
-                            ,pr_nrregist      IN INTEGER                 -- Quantidade de registros
-                            ,pr_nriniseq      IN INTEGER                 -- Qunatidade inicial
-                            ,pr_xmllog        IN VARCHAR2                -- XML com informações de LOG
-                            ,pr_cdcritic      OUT PLS_INTEGER            -- Código da crítica
-                            ,pr_dscritic      OUT VARCHAR2               -- Descrição da crítica
-                            ,pr_retxml        IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
-                            ,pr_nmdcampo      OUT VARCHAR2               -- Nome do Campo
-                            ,pr_des_erro      OUT VARCHAR2) IS
-
-  /*---------------------------------------------------------------------------------------------------------------
-
-    Programa : pc_busca_teds                            antiga:
-    Sistema  : Conta-Corrente - Cooperativa de Credito
-    Sigla    : CRED
-    Autor    : Helinton Steffens (Supero)
-    Data     : Março/2018                           Ultima atualizacao:
-
-    Dados referentes ao programa:
-
-    Frequencia: -----
-    Objetivo   : Pesquisa de teds recebidas pelo IEPTB
-
-    Alterações :
-    -------------------------------------------------------------------------------------------------------------*/
-
     CURSOR cr_tbfin_recursos_movimento(pr_dtinicial    IN VARCHAR2
                                      ,pr_dtfinal       IN VARCHAR2
                                      ,pr_vlinicial     IN tbfin_recursos_movimento.vllanmto%TYPE
@@ -94,6 +78,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
      and (ted.nrcnpj_debitada = pr_cartorio or pr_cartorio is null)
     ORDER BY ted.dtmvtolt, ted.nrcnpj_debitada;  
     rw_tbfin_recursos_movimento cr_tbfin_recursos_movimento%ROWTYPE;
+    
+  PROCEDURE pc_consulta_teds(pr_dtinicial     IN VARCHAR2 -- Data inicial de recebimento de ted
+                            ,pr_dtfinal       IN VARCHAR2 -- Data final de recebimento de ted
+                            ,pr_vlinicial     IN tbfin_recursos_movimento.vllanmto%TYPE -- Valor inicial de comparação ted
+                            ,pr_vlfinal       IN tbfin_recursos_movimento.vllanmto%TYPE -- Valor final de comparação ted
+                            ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE -- Cartorio da ted                       
+                            ,pr_nrregist      IN INTEGER                 -- Quantidade de registros
+                            ,pr_nriniseq      IN INTEGER                 -- Qunatidade inicial
+                            ,pr_xmllog        IN VARCHAR2                -- XML com informações de LOG
+                            ,pr_cdcritic      OUT PLS_INTEGER            -- Código da crítica
+                            ,pr_dscritic      OUT VARCHAR2               -- Descrição da crítica
+                            ,pr_retxml        IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                            ,pr_nmdcampo      OUT VARCHAR2               -- Nome do Campo
+                            ,pr_des_erro      OUT VARCHAR2) IS
+
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : pc_busca_teds                            antiga:
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Helinton Steffens (Supero)
+    Data     : Março/2018                           Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: -----
+    Objetivo   : Pesquisa de teds recebidas pelo IEPTB
+
+    Alterações :
+    -------------------------------------------------------------------------------------------------------------*/
 
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -232,5 +246,175 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                                        '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
   END pc_consulta_teds;
+  
+  PROCEDURE pc_exporta_consulta_teds(pr_cdcooper  IN craptab.cdcooper%TYPE         --> Cooperativa
+                                    ,pr_dtinicial     IN VARCHAR2 -- Data inicial de recebimento de ted
+                            	      ,pr_dtfinal       IN VARCHAR2 -- Data final de recebimento de ted
+                                    ,pr_vlinicial     IN tbfin_recursos_movimento.vllanmto%TYPE -- Valor inicial de comparação ted
+                                    ,pr_vlfinal       IN tbfin_recursos_movimento.vllanmto%TYPE -- Valor final de comparação ted
+                                    ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE -- Cartorio da ted                       
+                                    ,pr_nrregist      IN INTEGER                 -- Quantidade de registros
+                                    ,pr_nriniseq      IN INTEGER                 -- Qunatidade inicial
+                                    ,pr_xmllog        IN VARCHAR2                -- XML com informações de LOG
+                                    ,pr_cdcritic      OUT PLS_INTEGER            -- Código da crítica
+                                    ,pr_dscritic      OUT VARCHAR2               -- Descrição da crítica
+                                    ,pr_retxml        IN OUT NOCOPY xmltype      -- Arquivo de retorno do XML
+                                    ,pr_nmdcampo      OUT VARCHAR2               -- Nome do Campo
+                                    ,pr_des_erro      OUT VARCHAR2) IS
+	/* ............................................................................
 
+       Programa: pc_exporta_consulta_teds
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Hélinton Steffens
+       Data    : Abril/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina responsavel por gerar o relatorio de teds a conciliar - Chamada ayllos Web
+
+       Alteracoes: ----
+
+    ............................................................................ */  
+ 
+    -------------->> VARIAVEIS <<----------------
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_dsretorn VARCHAR2(1000);
+    vr_des_reto VARCHAR2(10);
+    vr_typ_saida      VARCHAR2(3);
+    
+    -- Tratamento de erros
+    vr_exc_erro      EXCEPTION;
+    vr_exc_saida     EXCEPTION;
+    vr_tab_erro GENE0001.typ_tab_erro;
+
+    -- Variaveis de log
+    vr_cdoperad      VARCHAR2(100);
+    vr_cdcooper_conectado NUMBER;
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+      
+    -- Variaveis gerais
+    vr_dsxmlrel CLOB;
+    vr_xml_temp VARCHAR2(32726) := '';
+    vr_clob     CLOB;
+    vr_dsdiretorio VARCHAR2(1000);      --> Local onde sera gerado o relatorio
+    vr_nmarquivo   VARCHAR2(1000);      --> Nome do relatorio CSV
+    
+  BEGIN                                                  
+    -- Cria a variavel CLOB
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+    
+    -- Busca o diretorio onde esta os arquivos Sicoob
+    vr_dsdiretorio := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                pr_cdacesso => 'ROOT_DOMICILIO')||'/relatorios';
+    vr_nmarquivo := 'MANPRT_'||to_char(SYSDATE,'HHMISS')||'.csv';
+    -- Criar cabeçalho do CSV
+    GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => 'Cartorio;Remetente;CPF/CNPJ;Banco;Agencia;Conta;Data Rec;Valor;Estado;Cidade;Status'||chr(10));
+    
+    FOR rw_tbfin_recursos_movimento IN cr_tbfin_recursos_movimento(pr_dtinicial => pr_dtinicial
+                                                                  ,pr_dtfinal   => pr_dtfinal
+                                                                  ,pr_vlinicial => pr_vlinicial
+                                                                  ,pr_vlfinal   => pr_vlfinal
+                                                                  ,pr_cartorio  => pr_cartorio) LOOP
+      -- Carrega os dados
+      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => rw_tbfin_recursos_movimento.nome_cartorio      ||';'||
+                                                   rw_tbfin_recursos_movimento.nome_remetente     ||';'||
+                                                   rw_tbfin_recursos_movimento.cnpj_cpf           ||';'||
+                                                   rw_tbfin_recursos_movimento.nome_banco         ||';'||
+                                                   rw_tbfin_recursos_movimento.nome_agencia       ||';'||
+                                                   rw_tbfin_recursos_movimento.conta              ||';'||
+                                                   rw_tbfin_recursos_movimento.data_recebimento   ||';'||
+                                                   rw_tbfin_recursos_movimento.valor              ||';'||
+                                                   rw_tbfin_recursos_movimento.nome_estado        ||';'||
+                                                   rw_tbfin_recursos_movimento.nome_cidade        ||';'||
+                                                   rw_tbfin_recursos_movimento.status        ||chr(10));
+    END LOOP;
+    -- Encerrar o Clob
+    GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => ' '
+                           ,pr_fecha_xml      => TRUE);
+
+    -- Gera o relatorio
+    GENE0002.pc_clob_para_arquivo(pr_clob => vr_clob,
+                                  pr_caminho => vr_dsdiretorio,
+                                  pr_arquivo => vr_nmarquivo,
+                                  pr_des_erro => vr_dscritic);
+    IF vr_dscritic IS NOT NULL THEN
+       RAISE vr_exc_saida;
+    END IF;
+
+    -- copia contrato pdf do diretorio da cooperativa para servidor web
+    GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                               , pr_cdagenci => NULL
+                               , pr_nrdcaixa => NULL
+                               , pr_nmarqpdf => vr_dsdiretorio||'/'||vr_nmarquivo
+                               , pr_des_reto => vr_des_reto
+                               , pr_tab_erro => vr_tab_erro
+                               );
+
+    -- caso apresente erro na operação
+    IF nvl(vr_des_reto,'OK') <> 'OK' THEN
+       IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+          RAISE vr_exc_saida; -- encerra programa
+        END IF;
+     END IF;
+
+     -- Remover relatorio do diretorio padrao da cooperativa
+     gene0001.pc_OScommand(pr_typ_comando => 'S'
+                          ,pr_des_comando => 'rm '||vr_dsdiretorio||'/'||vr_nmarquivo
+                          ,pr_typ_saida   => vr_typ_saida
+                          ,pr_des_saida   => vr_dscritic);
+
+     -- Se retornou erro
+     IF vr_typ_saida = 'ERR' OR vr_dscritic IS NOT null THEN
+        -- Concatena o erro que veio
+        vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+        RAISE vr_exc_saida; -- encerra programa
+     END IF;
+
+     -- Criar XML de retorno para uso na Web
+     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqcsv>' || vr_nmarquivo|| '</nmarqcsv>');
+
+     -- Libera a memoria do CLOB
+     dbms_lob.close(vr_clob);
+     dbms_lob.freetemporary(vr_clob);
+                                        
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela pc_exporta_consulta_teds: ' || SQLERRM;
+      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                                   
+  END pc_exporta_consulta_teds;
+  
 END TELA_MANPRT;

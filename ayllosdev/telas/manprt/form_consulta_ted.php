@@ -152,13 +152,23 @@
 	if ( $qtregist > 0 ) {
 	?>
 		<a href="#" class="botao" onclick="buscaConsulta('log'); return false;">Exportar PDF</a>
-		<a href="#" class="botao" onclick="buscaConsulta('instrucoes'); return false;">Exportar CSV</a>
+		<a href="#" class="botao" onclick="exportarConsultaCSV(); return false;">Exportar CSV</a>
 		<a href="#" class="botao" onclick="buscaExportar(); return false;">Devolver</a>
 		<a href="#" class="botao" onclick="geraCartaAnuencia(); return false;">Extornar</a>
 	<?php
 	}
 	?>
 </div>
+
+<form action="<?php echo $UrlSite;?>telas/manprt/imprimir_consulta_ted_csv.php" method="post" id="frmExportarCSV" name="frmExportarCSV">
+	<input type="hidden" name="inidtpro" id="inidtpro" value="<?php echo $inidtpro; ?>">
+	<input type="hidden" name="fimdtpro" id="fimdtpro" value="<?php echo $fimdtpro; ?>">
+	<input type="hidden" name="inivlpro" id="inivlpro" value="<?php echo $inivlpro; ?>">
+	<input type="hidden" name="fimvlpro" id="fimvlpro" value="<?php echo $fimvlpro; ?>">
+	<input type="hidden" name="dscartor" id="dscartor" value="<?php echo $dscartor; ?>">
+	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+</form>
+
 
 <script type="text/javascript">
 
