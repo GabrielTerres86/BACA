@@ -27,6 +27,9 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
 
                 02/09/2016 - Ajustes na procedure pc_busca_trans_pend, SD 514239 (Jean Michel).
 
+        				11/01/2018 - PJ 454 - SM 1 - Inclusão da procedure de pendência de resgate de cheques 
+                             em custódia(Márcio Mouts)
+                
 ..............................................................................*/
 
   --Tipo de Registro para limites transacoes pendentes
@@ -81,6 +84,15 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
 
    TYPE typ_tab_titulates IS TABLE OF typ_rec_titulares
         INDEX BY PLS_INTEGER;
+        
+-- Início SM 454-1
+  --Tipo de Registro para cheques em custódia pendentes de resgate 
+  TYPE typ_reg_resgate_cst IS
+    RECORD (idcustod crapcst.idcustod%type);
+         
+  --Tipo de tabela de memoria para cheques em custódia pendentes de resgate 
+  TYPE typ_tab_resgate_cst IS TABLE OF typ_reg_resgate_cst INDEX BY PLS_INTEGER;
+-- Fim SM 454 - 1
         
          
   /* Procedure para  identificar se a operação de autoatendimento 
@@ -306,6 +318,32 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE                   --> Codigo de Critica
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE);                 --> Descricao de Critica
 
+  -- Início Projeto 454 - SM 1 
+  -- Procedure de criacao de transacao de resgate de cheque em custódia
+  PROCEDURE pc_cria_trans_pend_resgate_cst(pr_cdcooper    IN tbtransf_trans_pend.cdcooper%TYPE --> Codigo da cooperativa
+                                          ,pr_nrdconta    IN tbtransf_trans_pend.nrdconta%TYPE --> Numero da Conta
+                                          ,pr_idseqttl    IN crapttl.idseqttl%TYPE             --> Número do Titular
+                                          ,pr_nrcpfrep    IN crapopi.nrcpfope%TYPE             --> Numero do cpf do representante legal
+                                          ,pr_nrcpfope    IN crapopi.nrcpfope%TYPE             --> Numero do cpf do operador juridico
+                                          ,pr_cdcoptfn    IN tbgen_trans_pend.cdcoptfn%TYPE    --> Cooperativa do Terminal
+                                          ,pr_cdagetfn    IN tbgen_trans_pend.cdagetfn%TYPE    --> Agencia do Terminal
+                                          ,pr_nrterfin    IN tbgen_trans_pend.nrterfin%TYPE    --> Numero do Terminal Financeiro
+                                          ,pr_idastcjt    IN crapass.idastcjt%TYPE             --> Indicador de Assinatura Conjunta
+                                          ,pr_dscheque    IN VARCHAR2                          --> Lista de CMC7s
+                                          ,pr_xmllog      IN VARCHAR2                          --> XML com informações de LOG
+                                          ,pr_cdcritic    OUT PLS_INTEGER                      --> Código da crítica
+                                          ,pr_dscritic    OUT VARCHAR2                         --> Descrição da crítica
+                                          ,pr_retxml      IN OUT NOCOPY xmltype                --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo    OUT VARCHAR2                         --> Nome do campo com erro
+                                          ,pr_des_erro    OUT VARCHAR2);                       --> Descricao do Erro 
+
+  -- Procedure de verificação de necessidade de assinatura conjunta
+  PROCEDURE pc_verifica_nec_ass_conjunta(pr_cdcooper    IN tbtransf_trans_pend.cdcooper%TYPE --> Codigo da cooperativa
+                                        ,pr_nrdconta    IN tbtransf_trans_pend.nrdconta%TYPE --> Numero da Contaimento     
+                                        ,pr_idastcjt   OUT crapass.idastcjt%TYPE             --> Indicador de Assinatura Conjunta
+                                        ,pr_cdcritic   OUT crapcri.cdcritic%TYPE             --> Codigo de Critica
+                                        ,pr_dscritic   OUT crapcri.dscritic%TYPE);
+  -- Fim Projeto 454 - SM 1 
   -- Procedure de criacao de transacao de aplicacoes
   PROCEDURE pc_cria_trans_pend_aplica(pr_cdagenci  IN crapage.cdagenci%TYPE                        --> Codigo do PA
                                      ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                        --> Numero do Caixa
@@ -477,6 +515,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                                ,pr_cdagenci IN  crapage.cdagenci%TYPE --> Numero PA
                                ,pr_dtmvtolt IN  crapdat.dtmvtolt%TYPE --> Data Movimentacao
                                ,pr_cdorigem IN  INTEGER               --> Id de origem
+                               ,pr_cdtransa IN  tbgen_trans_pend.cdtransacao_pendente%TYPE DEFAULT 0 --> Código da transação pendente
                                ,pr_insittra IN  INTEGER               --> Id de situacao da transacao
                                ,pr_dtiniper IN  DATE                  --> Data Inicio
                                ,pr_dtfimper IN  DATE                  --> Data final
@@ -731,7 +770,14 @@ PROCEDURE pc_corrigi_limite_preposto(pr_cdcooper IN VARCHAR2
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);    
                                                                                               
-                                 
+PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2 
+                                    ,pr_nrdconta IN VARCHAR2 
+                                    ,pr_xmllog   IN  VARCHAR2
+                                    ,pr_cdcritic OUT PLS_INTEGER                       
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);                                         
 END INET0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
@@ -742,7 +788,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos Multiplas Assinaturas PJ
   --  Sigla    : CRED
   --  Autor    : Jorge Hamaguchi / Jean Deschamps
-  --  Data     : Novembro/2015.                   Ultima atualizacao: 12/05/2017
+  --  Data     : Novembro/2015.                   Ultima atualizacao: 03/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -776,6 +822,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --                          16 e 17. PRJ319 - SMS Cobrança (Odirlei-AMcom) 
   --
   --             12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+	--
+	--             03/11/2017 - Ajuste para tratar agendamentos de recarga de celular duplicados. (Reinert)	
+  --
+  --      				11/01/2018 - PJ 454 - SM 1 - Inclusão da procedure de pendência de resgate de cheques (Márcio Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
   
@@ -1879,6 +1929,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --
   --             16/11/2016 - Inclusao do tipo de transacao 16 e 17 --> SMS Cobrança 
   --                          PRJ319-SMS Cobrança (Odirlei-AMcom)
+  --             29/01/2018 - Incluir o tipo de transação 18 - Resgate de cheques
+  --                          SM 454.1 Márcio Mouts  
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -2061,10 +2113,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         AND    crapatr.nrdconta = pr_nrdconta 
         AND    crapatr.cdhistor = pr_cdhistor 
         AND    crapatr.cdrefere = pr_cdrefere
-        AND    crapatr.tpautori <> 0 
-        AND    crapcon.cdcooper = crapatr.cdcooper 
-        AND    crapcon.cdsegmto = crapatr.cdsegmto 
-        AND    crapcon.cdempcon = crapatr.cdempcon 
+        --AND    crapatr.tpautori <> 0 
+        AND    crapcon.cdcooper(+) = crapatr.cdcooper 
+        AND    crapcon.cdsegmto(+) = crapatr.cdsegmto 
+        AND    crapcon.cdempcon(+) = crapatr.cdempcon 
         AND    craplau.cdcooper = crapatr.cdcooper 
         AND    craplau.nrdconta = crapatr.nrdconta 
         AND    craplau.cdhistor = crapatr.cdhistor 
@@ -2081,6 +2133,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 				 WHERE tpend.cdtransacao_pendente = pr_cdtranpe			
 				   AND tpac.cdpacote = tpend.cdpacote;
 			rw_pactar cr_pactar%ROWTYPE;
+
+-- Início SM 454.1      
+      --Tipo Transacao 18 (Resgate de Cheque)
+      CURSOR cr_tbcst_trans_pend_det(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+        SELECT SUM(c.vlcheque) vltotchq
+              ,COUNT(1) qtcheque
+          FROM tbcst_trans_pend_det dscc,
+               crapcst c
+         WHERE dscc.cdtransacao_pendente = pr_cddoitem
+           and dscc.idcustodia = c.idcustod
+         GROUP BY dscc.cdtransacao_pendente;
+      rw_tbcst_trans_pend_det cr_tbcst_trans_pend_det%ROWTYPE;
+-- Fim SM 454.1      
 
       --Variaveis Locais
       vr_idastcjt crapass.idastcjt%TYPE;
@@ -2379,6 +2444,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 																												,pr_nrdconta => pr_nrdconta 
 																												,pr_idseqttl => 0 -- Todos Titulares 
 																												,pr_nrctraar => rw_tbcapt_trans_pend.nrdocto_agendamento 
+                                                        ,pr_cdsitaar => 0
 																												,pr_cdcritic => vr_cdcritic 
 																												,pr_dscritic => vr_dscritic
 																												,pr_tab_agen => vr_tab_agen);                      
@@ -2653,6 +2719,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           pr_dsdmensg := pr_dsdmensg || 'Adesão ao serviço de SMS de Cobrança';
         WHEN pr_tptransa = 17 THEN -- Cancelamento SMS cobrança          
           pr_dsdmensg := pr_dsdmensg || 'Cancelamento de serviço de SMS de Cobrança';  
+-- Início SM 454.1      
+        WHEN pr_tptransa = 18 THEN -- Resgate de cheque em custodia          
+         OPEN cr_tbcst_trans_pend_det (pr_cddoitem => pr_cdtranpe);
+ 			   FETCH cr_tbcst_trans_pend_det INTO rw_tbcst_trans_pend_det;
+			   IF cr_tbcst_trans_pend_det%NOTFOUND THEN
+            --Fechar Cursor
+           CLOSE cr_tbcst_trans_pend_det;      
+            vr_cdcritic:= 0;
+				   vr_dscritic:= 'Registro de Resgate de Cheque em Custódia pendente nao encontrado.';
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          ELSE
+            --Fechar Cursor
+				  CLOSE cr_tbcst_trans_pend_det;
+          END IF;
+          pr_dsdmensg := pr_dsdmensg || 
+			  				  '<b>Borderô de resgate de cheque em custódia</b> no valor total de <b>R$ ' ||
+                              TO_CHAR(rw_tbcst_trans_pend_det.vltotchq,'fm999g999g990d00') || 
+                              '</b> com <b>' || rw_tbcst_trans_pend_det.qtcheque || '</b> cheques.<br>';			
+             
+-- Fim SM 454.1    
         ELSE
           vr_dscritic := 'Tipo de transação invalida.';
           RAISE vr_exc_erro;
@@ -4304,7 +4391,309 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_credito. Erro: '|| SQLERRM; 
       ROLLBACK; 
   END pc_cria_trans_pend_credito;
+  -- Início Projeto 454 - SM 1 
+  -- Procedure de criacao de transacao de resgate de cheque em custódia
+  PROCEDURE pc_cria_trans_pend_resgate_cst(pr_cdcooper    IN tbtransf_trans_pend.cdcooper%TYPE --> Codigo da cooperativa
+                                          ,pr_nrdconta    IN tbtransf_trans_pend.nrdconta%TYPE --> Numero da Conta
+                                          ,pr_idseqttl    IN crapttl.idseqttl%TYPE             --> Número do Titular
+                                          ,pr_nrcpfrep    IN crapopi.nrcpfope%TYPE             --> Numero do cpf do representante legal
+                                          ,pr_nrcpfope    IN crapopi.nrcpfope%TYPE             --> Numero do cpf do operador juridico
+                                          ,pr_cdcoptfn    IN tbgen_trans_pend.cdcoptfn%TYPE    --> Cooperativa do Terminal
+                                          ,pr_cdagetfn    IN tbgen_trans_pend.cdagetfn%TYPE    --> Agencia do Terminal
+                                          ,pr_nrterfin    IN tbgen_trans_pend.nrterfin%TYPE    --> Numero do Terminal Financeiro
+                                          ,pr_idastcjt    IN crapass.idastcjt%TYPE             --> Indicador de Assinatura Conjunta
+                                          ,pr_dscheque    IN VARCHAR2                          --> Lista de CMC7s
+                                          ,pr_xmllog      IN VARCHAR2                          --> XML com informações de LOG
+                                          ,pr_cdcritic    OUT PLS_INTEGER                      --> Código da crítica
+                                          ,pr_dscritic    OUT VARCHAR2                         --> Descrição da crítica
+                                          ,pr_retxml      IN OUT NOCOPY xmltype                --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo    OUT VARCHAR2                         --> Nome do campo com erro
+                                          ,pr_des_erro    OUT VARCHAR2) IS                     --> Descricao do Erro
 
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_cria_trans_pend_resgate_cst
+    --  Sistema  : Procedimentos de criacao de transacao de resgate de cheque em custódia
+    --  Sigla    : CRED
+    --  Autor    : Márcio(Mouts)
+    --  Data     : Janeiro/2018.               Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Procedimentos de criacao de transacao pendente de resgate de cheques
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    
+    -- Variáveis
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic crapcri.dscritic%TYPE := '';
+    vr_exc_erro EXCEPTION;
+    vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
+    vr_dtmvtopg DATE;
+    vr_tab_lsdatagd gene0002.typ_split;
+    vr_idagenda INTEGER := 0;
+    vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
+
+    -- Variaveis locais      
+    vr_cdoperad VARCHAR2(100);
+    vr_cdcooper NUMBER;
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_ret_all_cheques gene0002.typ_split;
+    vr_ret_des_cheques gene0002.typ_split;
+    vr_dsdocmc7 VARCHAR2(4000);
+    
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    
+    -- Busca detalhes da custódia de cheque
+		CURSOR cr_crapcst(pr_cdcooper IN crapcst.cdcooper%TYPE
+		                 ,pr_nrdconta IN crapcst.nrdconta%TYPE
+										 ,pr_dsdocmc7 IN crapcst.dsdocmc7%TYPE) IS
+			SELECT cst.idcustod
+				FROM crapcst cst
+			 WHERE cst.cdcooper = pr_cdcooper
+			   AND cst.nrdconta = pr_nrdconta
+				 AND cst.dsdocmc7 = gene0002.fn_mask(pr_dsdocmc7,'<99999999<9999999999>999999999999:');
+      rw_crapcst cr_crapcst%ROWTYPE;
+    
+  BEGIN
+    
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+                            
+    -- Leitura do calendário da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor pois efetuaremos raise
+      CLOSE btch0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_cdcritic := 1;
+      -- gera excecao
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE btch0001.cr_crapdat;
+    END IF;                            
+    
+    INET0002.pc_cria_transacao_operador(pr_cdagenci    => vr_cdagenci
+                                       ,pr_nrdcaixa    => vr_nrdcaixa
+                                       ,pr_cdoperad    => vr_cdoperad
+                                       ,pr_nmdatela    => vr_nmdatela
+                                       ,pr_idorigem    => vr_idorigem
+                                       ,pr_idseqttl    => pr_idseqttl
+                                       ,pr_cdcooper    => pr_cdcooper
+                                       ,pr_nrdconta    => pr_nrdconta
+                                       ,pr_nrcpfope    => pr_nrcpfope
+                                       ,pr_nrcpfrep    => pr_nrcpfrep
+                                       ,pr_cdcoptfn    => pr_cdcoptfn
+                                       ,pr_cdagetfn    => pr_cdagetfn
+                                       ,pr_nrterfin    => pr_nrterfin
+                                       ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
+                                       ,pr_cdtiptra    => 18 -- Desconto de Cheque
+                                       ,pr_idastcjt    => pr_idastcjt
+                                       ,pr_tab_crapavt => vr_tab_crapavt
+                                       ,pr_cdtranpe    => vr_cdtranpe
+                                       ,pr_dscritic    => vr_dscritic);
+                                         
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    BEGIN
+      INSERT INTO
+        tbcst_trans_pend(
+           cdtransacao_pendente 
+          ,cdcooper              
+          ,nrdconta
+          ,dtmvtolt
+          ,nrcpf_representante)
+        VALUES(
+           vr_cdtranpe
+          ,pr_cdcooper
+          ,pr_nrdconta
+          ,sysdate
+          ,pr_nrcpfrep);
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao incluir registro tbcst_trans_pend. Erro: ' || SQLERRM;
+    END;
+    
+    -- Criando um Array com todos os cheques que vieram como parametro
+    vr_ret_all_cheques := gene0002.fn_quebra_string(pr_dscheque, '|');
+    
+    FOR vr_auxcont IN 1..vr_ret_all_cheques.count LOOP
+
+        -- Pega informações do cheque (CMC7 e inconcil)
+        vr_ret_des_cheques := gene0002.fn_quebra_string( vr_ret_all_cheques(vr_auxcont), '#');     
+				
+				-- Pega CMC7
+				vr_dsdocmc7 := vr_ret_des_cheques(1);
+        
+        -- Buscar remessa de cheque
+        OPEN cr_crapcst(pr_cdcooper => vr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_dsdocmc7 => vr_dsdocmc7);
+        FETCH cr_crapcst INTO rw_crapcst;
+  			
+        -- Se não encontrou
+        IF cr_crapcst%NOTFOUND THEN
+          -- Fecha cursor
+          CLOSE cr_crapcst;
+          -- Data para Deposito invalida
+          vr_cdcritic := 0;
+          vr_dscritic := 'Custódia não encontrada';
+          -- Executa RAISE para sair das validações
+          RAISE vr_exc_erro;				
+        END IF;
+        -- Fecha cursor
+        CLOSE cr_crapcst;
+        
+        BEGIN
+        INSERT INTO
+          tbcst_trans_pend_det(cdtransacao_pendente
+                           ,idcustodia)
+                     VALUES(vr_cdtranpe          
+                           ,rw_crapcst.idcustod);
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao incluir registro tbcst_trans_pend_det. Erro: ' || SQLERRM;
+      END;
+        
+    END LOOP;       
+        
+    pc_cria_aprova_transpend(pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrcpfrep => pr_nrcpfrep
+                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                            ,pr_cdtiptra => 18 -- Resgate de Cheque
+                            ,pr_tab_crapavt => vr_tab_crapavt
+                            ,pr_cdtranpe => vr_cdtranpe
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic);
+
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+       RAISE vr_exc_erro;
+    END IF;
+    
+    COMMIT;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE	
+         pr_dscritic := vr_dscritic;
+      END IF;
+        
+      ROLLBACK;
+
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_resgate_cst. Erro: '|| SQLERRM; 
+      ROLLBACK;  
+  END pc_cria_trans_pend_resgate_cst;
+  
+    -- Procedure de verificação de necessidade de assinatura conjunta
+  PROCEDURE pc_verifica_nec_ass_conjunta(pr_cdcooper    IN tbtransf_trans_pend.cdcooper%TYPE --> Codigo da cooperativa
+                                        ,pr_nrdconta    IN tbtransf_trans_pend.nrdconta%TYPE --> Numero da Contaimento     
+                                        ,pr_idastcjt   OUT crapass.idastcjt%TYPE             --> Indicador de Assinatura Conjunta
+                                        ,pr_cdcritic   OUT crapcri.cdcritic%TYPE             --> Codigo de Critica
+                                        ,pr_dscritic   OUT crapcri.dscritic%TYPE ) IS
+---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_verifica_rep_assinatura
+    --  Sistema  : Procedimentos de verificação de necessidade de assinatura conjunta
+    --  Sigla    : CRED
+    --  Autor    : Márcio(Mouts)
+    --  Data     : Janeiro/2018.               Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Procedimento para verificar se para a conta recebida como parâmetro é
+    --             necessário assinatura conjunta
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    
+    -- Variáveis
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic crapcri.dscritic%TYPE := '';
+    vr_exec_saida EXCEPTION;
+    vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
+    vr_dtmvtopg DATE;
+    vr_tab_lsdatagd gene0002.typ_split;
+    vr_idagenda INTEGER := 0;
+    vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
+
+  BEGIN
+    BEGIN
+      select
+             ca.idastcjt
+      into
+             pr_idastcjt
+      from
+             crapass ca
+      where
+             ca.cdcooper = pr_cdcooper
+         and ca.nrdconta = pr_nrdconta;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Registro do cooperado nao encontrado.';
+        RAISE vr_exec_saida;        
+      WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao selecionar indicador de assinatura conjunta do cooperado. Erro: ' || SQLERRM;        
+          RAISE vr_exec_saida;        
+    END;
+                                               
+  EXCEPTION
+    WHEN vr_exec_saida THEN
+      pr_cdcritic := vr_cdcritic;
+      
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE	
+         pr_dscritic := vr_dscritic;
+      END IF;
+        
+      ROLLBACK;
+
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral na procedure pc_verifica_rep_assinatura. Erro: '|| SQLERRM; 
+      ROLLBACK;  
+  END pc_verifica_nec_ass_conjunta;
+  
+  -- Fim Projeto 454 - SM 1
   -- Procedure de criacao de transacao de aplicacoes
   PROCEDURE pc_cria_trans_pend_aplica(pr_cdagenci  IN crapage.cdagenci%TYPE                        --> Codigo do PA
                                      ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                        --> Numero do Caixa
@@ -5263,7 +5652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos para obter horario limite de aprovacao das transacoes pendentes
   --  Sigla    : CRED
   --  Autor    : Jorge Hamaguchi
-  --  Data     : Dezembro/2015.                   Ultima atualizacao: 
+  --  Data     : Dezembro/2015.                   Ultima atualizacao: 10/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -5285,17 +5674,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --            16 - Contrato SMS Cobrança
   --            17 - Cancelamento de Contrato SMS Cobrança
   --            18 - Desconto de Cheque
+  --            19 - Folha Pagamento (Cooperativa)
   --
-  -- Alteração : 
   --
+  -- Alteração : 10/10/2017 - Adicionar o horario Folha Pagamento (Coop) - 19
+  --                          (Douglas - Chamado 707072)
+  --
+  --
+  --             29/01/2018 - Incluir tratamento para desconto de cheque - SM 454.1 (Márcio - Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
     --Variaveis Locais
     vr_hrlimini INTEGER; --horario inicio
     vr_hrlimfim INTEGER; --horario fim
+    vr_idesthor INTEGER; --indicador estouro horario
     vr_hrlimage VARCHAR2(5); --horario folha agendamento
     vr_hrlimptb VARCHAR2(5); --horario folha portabilidade
     vr_hrlimsol VARCHAR2(5); --horario folha solicitacao Estouro
+    vr_hrlimcop VARCHAR2(5); --horario folha cooperativa
     vr_index_limite INTEGER;
     vr_index_limite_pend INTEGER;
     vr_dstextab craptab.dstextab%TYPE;
@@ -5334,42 +5730,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     WHILE vr_index_limite IS NOT NULL LOOP
       --Criar registro para tabela limite horarios transacoes pendentes
       vr_index_limite_pend:= vr_tab_limite(vr_index_limite).idtpdpag;
-      IF vr_index_limite_pend = 6 THEN --se for Limite de VRBoleto, entao tipodtra = 2 (pagamento)
-        pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 2; 
-      ELSIF vr_index_limite_pend = 11 THEN --se for Limite de Debito Automatico, entao tipodtra = 8
-        pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 8;
-      ELSIF vr_index_limite_pend = 10 THEN --se for DARF/DAS, entao tipodtra = 8
-        pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 11;
+      
+      CASE 
+        WHEN vr_index_limite_pend IN (1,2,3,4) THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra := vr_index_limite_pend; -- Transferência, Pagto Título/Convênio, Cobrança, TED, FGTS, DAE
+        WHEN vr_index_limite_pend = 6  THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 20;  -- VR-Boleto
+        WHEN vr_index_limite_pend = 7  THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 6;  -- Pré-Aprovado
+        WHEN vr_index_limite_pend = 11 THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 8;  -- Débito Automático
+        WHEN vr_index_limite_pend = 15 THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 11; -- DARF/DAS
+        WHEN vr_index_limite_pend IN (20,21) THEN pr_tab_limite_pend(vr_index_limite_pend).tipodtra := 19; -- FGTS, DAE 
       ELSE
         pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= vr_index_limite;          
-      END IF;
+      END CASE;
+      
       pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= vr_tab_limite(vr_index_limite).hrinipag;
       pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_tab_limite(vr_index_limite).hrfimpag;
+
       --Encontrar proximo registro
       vr_index_limite:= vr_tab_limite.NEXT(vr_index_limite);
     END LOOP;
 
-    --Selecionar Horarios Limites Credito Pre-Aprovado
-    vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                            ,pr_nmsistem => 'CRED'
-                                            ,pr_tptabela => 'GENERI'
-                                            ,pr_cdempres => 0
-                                            ,pr_cdacesso => 'HRCTRPREAPROV'
-                                            ,pr_tpregist => pr_cdagenci);
-    --Se nao encontrou
-    IF TRIM(vr_dstextab) IS NULL THEN 
-      vr_cdcritic:= 0;
-      vr_dscritic := 'Tabela (HRCTRPREAPROV) nao cadastrada.';
-      --levantar Excecao
-      RAISE vr_exc_erro;
-    ELSE    
-      --Criar registro para tabela limite horarios
-      vr_index_limite_pend:= 7; --Credito Pre-Aprovado
-      pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 6; --Tipo de transacao  
-      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= GENE0002.fn_converte_time_data(gene0002.fn_busca_entrada(1,vr_dstextab,' '));
-      pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= GENE0002.fn_converte_time_data(gene0002.fn_busca_entrada(2,vr_dstextab,' '));
-    END IF;
-      
     --Selecionar Horarios Limites Aplicacao 
     APLI0002.pc_horario_limite( pr_cdcooper => pr_cdcooper
                                ,pr_cdagenci => pr_cdagenci
@@ -5380,6 +5759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                ,pr_tpvalida => 0 -- Não Valida horario
                                ,pr_hrlimini => vr_hrlimini
                                ,pr_hrlimfim => vr_hrlimfim
+                               ,pr_idesthor => vr_idesthor
                                ,pr_cdcritic => vr_cdcritic
                                ,pr_dscritic => vr_dscritic);
     -- Se ocorreu erro
@@ -5409,20 +5789,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       --Criar registro para tabela limite horarios
       vr_index_limite_pend:= 12; --Folha Pagamento Agenda
       pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
-      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '0';
+      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '00:00';
       pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimage;
         
       --Criar registro para tabela limite horarios
       vr_index_limite_pend:= 13; --Folha Pagamento Portabilidade
       pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
-      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '0';
+      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '00:00';
       pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimptb;
 
       --Criar registro para tabela limite horarios
       vr_index_limite_pend:= 14; --Folha Pagamento Solicitacao Estouro de conta
       pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
-      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '0';
+      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '00:00';
       pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimsol;
+
+      --Criar registro para tabela limite horarios
+      vr_hrlimcop := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => pr_cdcooper
+                                              ,pr_cdacesso => 'FOLHAIB_HOR_LIM_PAG_COOP');
+      vr_index_limite_pend:= 19; --Folha Pagamento Cooperativa
+      pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
+      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '00:00';
+      pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimcop;
 
     END IF;
   EXCEPTION
@@ -5513,7 +5902,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ,pr_cdagenci IN  crapage.cdagenci%TYPE --> Numero PA
                                 ,pr_dtmvtolt IN  crapdat.dtmvtolt%TYPE --> Data Movimentacao
                                 ,pr_cdorigem IN  INTEGER               --> Id de origem
-                                ,pr_insittra IN  INTEGER               --> Id de situacao da transacao
+                                ,pr_cdtransa IN  tbgen_trans_pend.cdtransacao_pendente%TYPE DEFAULT 0 --> Código da transação pendente
+                                ,pr_insittra IN  INTEGER               --> Id de situacao da transacao                                
                                 ,pr_dtiniper IN  DATE                  --> Data Inicio
                                 ,pr_dtfimper IN  DATE                  --> Data final
                                 ,pr_nrregist IN  INTEGER               --> Numero da qtd de registros da pagina
@@ -5621,6 +6011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         
       CURSOR cr_tbgen_trans_pend (pr_cdcooper IN tbgen_trans_pend.cdcooper%TYPE
                                  ,pr_nrdconta IN tbgen_trans_pend.nrdconta%TYPE
+                                 ,pr_cdtransa IN tbgen_trans_pend.cdtransacao_pendente%TYPE
                                  ,pr_dtiniper IN tbgen_trans_pend.dtregistro_transacao%TYPE
                                  ,pr_dtfimper IN tbgen_trans_pend.dtregistro_transacao%TYPE
                                  ,pr_insittra IN tbgen_trans_pend.idsituacao_transacao%TYPE) IS
@@ -5639,7 +6030,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
               ,dados.nrcpf_operador nrcpf_operador
               ,nvl(dados.ord1,0) + nvl(dados.ord2,0) + nvl(dados.ord3,0) + nvl(dados.ord4,0) + 
                nvl(dados.ord5,0) + nvl(dados.ord6,0) + nvl(dados.ord7,0) + nvl(dados.ord8,0) + 
-               nvl(dados.ord9,0) orderby
+               nvl(dados.ord9,0) 
+               -- Início SM 454.1
+               + nvl(dados.ord11,0)
+               -- Fim SM 454.1
+               orderby
           FROM (SELECT gtp.nrdconta nrdconta
                       ,gtp.tptransacao tptransacao
                       ,gtp.cdtransacao_pendente cdtransacao_pendente
@@ -5683,12 +6078,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                       ,(SELECT 1
                           FROM tbdscc_trans_pend dscc
                          WHERE dscc.cdtransacao_pendente = gtp.cdtransacao_pendente) ord10   
+                         -- Início SM 454.1
+                      ,(SELECT 1
+                          FROM tbcst_trans_pend dcst
+                         WHERE dcst.cdtransacao_pendente = gtp.cdtransacao_pendente) ord11  
+                      -- Fim SM 454.1    
                   FROM tbgen_trans_pend gtp
                  WHERE gtp.cdcooper = pr_cdcooper
                    AND gtp.nrdconta = pr_nrdconta
-                   AND gtp.idsituacao_transacao <> 2
+                   AND ((pr_cdtransa <> 0 AND gtp.cdtransacao_pendente = pr_cdtransa) OR 
+                       (pr_cdtransa =  0 AND gtp.idsituacao_transacao <> 2
                    AND ((pr_insittra = 15 AND (gtp.idsituacao_transacao = 1 OR /*Pendente*/ gtp.idsituacao_transacao = 5))
-                                OR (gtp.idsituacao_transacao = DECODE(pr_insittra,0,gtp.idsituacao_transacao,pr_insittra)))
+                                OR (gtp.idsituacao_transacao = DECODE(pr_insittra,0,gtp.idsituacao_transacao,pr_insittra)))))
                  ORDER BY ord1) dados
                 ORDER BY orderby DESC
                         ,dados.tptransacao;                                 
@@ -5703,7 +6104,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ,tbtransf_trans_pend.dtdebito
       FROM   tbtransf_trans_pend 
       WHERE  tbtransf_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbtransf_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbtransf_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));
       rw_tbtransf_trans_pend cr_tbtransf_trans_pend%ROWTYPE;
   	  
       --Tipo Transacao 2 (Pagamento)
@@ -5720,7 +6122,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ,tbpagto_trans_pend.idtitulo_dda
       FROM   tbpagto_trans_pend 
       WHERE  tbpagto_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbpagto_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbpagto_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));        
       rw_tbpagto_trans_pend cr_tbpagto_trans_pend%ROWTYPE;
   	  
       --Tipo Transacao 4 (TED)
@@ -5741,7 +6144,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ,tbspb_trans_pend.nmtitula_favorecido
       FROM   tbspb_trans_pend 
       WHERE  tbspb_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbspb_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbspb_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));
       rw_tbspb_trans_pend cr_tbspb_trans_pend%ROWTYPE;
   	  
       --Tipo Transacao 6 (Credito Pre-Aprovado)
@@ -5791,7 +6195,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ,tbconv_trans_pend.vlmaximo_debito
       FROM   tbconv_trans_pend 
       WHERE  tbconv_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbconv_trans_pend.dtdebito_fatura BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbconv_trans_pend.dtdebito_fatura BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));
       rw_tbconv_trans_pend cr_tbconv_trans_pend%ROWTYPE;
       	  
       --Tipo Transacao 9 (Folha de Pagamento)
@@ -5803,7 +6208,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             ,tbfolha_trans_pend.vltarifa
       FROM   tbfolha_trans_pend 
       WHERE  tbfolha_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbfolha_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbfolha_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));
       rw_tbfolha_trans_pend cr_tbfolha_trans_pend%ROWTYPE;
 
       --Tipo Transacao 10 - Cursor para buscar a transação de adesão de pacote de tarifa pendente
@@ -5823,7 +6229,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       SELECT tbpagto_darf_das_trans_pend.*
       FROM   tbpagto_darf_das_trans_pend
       WHERE  tbpagto_darf_das_trans_pend.cdtransacao_pendente = pr_cddoitem
-        AND  tbpagto_darf_das_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+        AND  ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND tbpagto_darf_das_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper)
+         OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));
       rw_tbpagto_darf_das_trans_pend cr_tbpagto_darf_das_trans_pend%ROWTYPE;
            
       --Tipo Transacao 12 (Desconto de Cheque)
@@ -5836,7 +6243,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     ,tbgen_trans_pend g
                WHERE d.cdtransacao_pendente = pr_cddoitem
                  AND g.cdtransacao_pendente = d.cdtransacao_pendente
-                 AND g.dtmvtolt BETWEEN  pr_dtiniper AND pr_dtfimper
+                 AND ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND g.dtmvtolt BETWEEN  pr_dtiniper AND pr_dtfimper)
+                  OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL))
             GROUP BY g.dtmvtolt) x
            WHERE x.qtcheque > 0;
       rw_tbdscc_trans_pend cr_tbdscc_trans_pend%ROWTYPE;
@@ -6010,6 +6418,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
            AND opi.nrdconta = prc_nrdconta
            AND opi.nrcpfope = prc_nrcpfope
           ;       
+          
+          --Início SM 454.1
+      --Tipo Transacao 18 (Resgate de Cheque em Custódia)
+      CURSOR cr_tbcst_trans_pend_det(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+      SELECT x.*
+        FROM (SELECT SUM(c.vlcheque) vltotchq
+                    ,count(1) qtcheque
+                    ,g.dtmvtolt
+                FROM tbcst_trans_pend_det d
+                    ,tbgen_trans_pend g
+                    ,crapcst c
+               WHERE d.cdtransacao_pendente = pr_cddoitem
+                 AND g.cdtransacao_pendente = d.cdtransacao_pendente
+                 and c.idcustod             = d.idcustodia
+                 AND ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND g.dtmvtolt BETWEEN  pr_dtiniper AND pr_dtfimper)
+                  OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL))
+            GROUP BY g.dtmvtolt) x
+           WHERE x.qtcheque > 0;
+      rw_tbcst_trans_pend_det cr_tbcst_trans_pend_det%ROWTYPE;
+      
+      --Tipo Transacao 18 (Resgate de Cheque em Custódia
+      CURSOR cr_tbcst_cheques(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+      SELECT to_char(c.dtlibera,'DD/MM/RRRR') dtlibera
+            ,to_char(c.dtemissa,'DD/MM/RRRR') dtemissa
+            ,c.cdbanchq
+            ,c.cdagechq
+            ,c.nrctachq
+            ,c.nrcheque
+            ,to_char(c.vlcheque,'fm999g999g990d00') vlcheque
+        FROM tbcst_trans_pend_det d
+            ,crapcst c
+       WHERE cdtransacao_pendente = pr_cddoitem
+         and c.idcustod           = d.idcustodia      
+       ;
+      
+--Fim SM 454.1    
       
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -6019,6 +6463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_exc_erro EXCEPTION;
 
       --Variáveis locais
+      vr_nriniseq INTEGER := 0;
       vr_idastcjt NUMBER := 0;
       vr_nrcpfcgc NUMBER(14) := 0;
       vr_nrcpfgui VARCHAR2(100) := '';
@@ -6063,6 +6508,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       va_existe_operador NUMBER(1);
       va_nrcpfcgc crapsnh.nrcpfcgc%type;
       va_vllimweb crapsnh.vllimweb%type;
+      vr_vllimpgo crapsnh.vllimpgo%type;
+      vr_vllimtrf crapsnh.vllimtrf%type;
+      vr_vllimted crapsnh.vllimted%type;
+      vr_vllimvrb crapsnh.vllimvrb%type;
       
       --Pagamento
       vr_cdcopdes VARCHAR2(100);
@@ -6179,6 +6628,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       
       vr_tab_limite_pend INET0002.typ_tab_limite_pend;
       vr_tab_internet    INET0001.typ_tab_internet;
+      vr_tab_internet_conta INET0001.typ_tab_internet;
       vr_tab_agen        APLI0002.typ_tab_agen; 
       vr_tab_agen_det    APLI0002.typ_tab_agen_det;
       vr_tab_crapavt     CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
@@ -6285,20 +6735,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         
       END IF;
       
-      PAGA0001.pc_atualiza_trans_nao_efetiv(pr_cdcooper => pr_cdcooper
-                                           ,pr_nrdconta => pr_nrdconta
-                                           ,pr_cdagenci => pr_cdagenci
-                                           ,pr_dtmvtolt => pr_dtmvtolt
-                                           ,pr_dstransa => vr_dstransa
-                                           ,pr_cdcritic => vr_cdcritic
-                                           ,pr_dscritic => vr_dscritic);
+      -- Atualiza somente se for pesquisa de todas as transações no período informado
+      IF NVL(pr_cdtransa,0) = 0 AND pr_dtiniper IS NULL AND pr_dtfimper IS NULL AND pr_nrregist = 0 THEN
+        PAGA0001.pc_atualiza_trans_nao_efetiv(pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => pr_nrdconta
+                                             ,pr_cdagenci => pr_cdagenci
+                                             ,pr_dtmvtolt => pr_dtmvtolt
+                                             ,pr_dstransa => vr_dstransa
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);                                                       
                                            
-                                           
-      --Se ocorreu erro
-      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;                                        
+        --Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;                                        
+      END IF;
       
       -------------------------------------------------------------------------------
       ------------------------------  Criacao do XML --------------------------------
@@ -6318,374 +6770,397 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                              ,pr_texto_completo => vr_xml_temp 
                              ,pr_texto_novo     => '<dstransa>'||vr_dstransa||'</dstransa>');
       
-      --Limpar Tabela Memoria de Horarios
-      vr_tab_limite_pend.DELETE;
-      
-      --Buscar Horario Operacao
-      INET0002.pc_horario_trans_pend (pr_cdcooper => pr_cdcooper  --Código Cooperativa
-                                     ,pr_cdagenci => pr_cdagenci  --Agencia do Associado
-                                     ,pr_cdoperad => '996'        --Operador
-                                     ,pr_nrdcaixa => 900          --Nr do caixa
-                                     ,pr_nmdatela => 'INTERNETBANK' --Nome da tela
-                                     ,pr_idorigem => 3            --Id de Origem
-                                     ,pr_tab_limite_pend => vr_tab_limite_pend --Tabelas de retorno de horarios limite
-                                     ,pr_cdcritic => vr_cdcritic    --Código do erro
-                                     ,pr_dscritic => vr_dscritic);  --Descricao do erro
-                                   
-      --Se ocorreu erro
-      IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        --levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-      
-      --Montar Tag Xml de Horarios
-      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                             ,pr_texto_completo => vr_xml_temp 
-                             ,pr_texto_novo     => '<horarios>'); 
-      
-      vr_ind := vr_tab_limite_pend.FIRST;
-      WHILE vr_ind IS NOT NULL LOOP
-         
-         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                                ,pr_texto_completo => vr_xml_temp 
-                                ,pr_texto_novo     => '<horario>'
-                                                   ||   '<idtiphor>'||vr_ind||'</idtiphor>'
-                                                   ||   '<idtiptra>'||nvl(vr_tab_limite_pend(vr_ind).tipodtra,0)||'</idtiptra>'
-                                                   ||   '<hrinipag>'||nvl(vr_tab_limite_pend(vr_ind).hrinipag,' ')||'</hrinipag>'
-                                                   ||   '<hrfimpag>'||nvl(vr_tab_limite_pend(vr_ind).hrfimpag,' ')||'</hrfimpag>'
-                                                   || '</horario>'); 
-         vr_ind := vr_tab_limite_pend.NEXT(vr_ind);
-      END LOOP;
-      
-      --Fecha Tag de Horarios
-      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                             ,pr_texto_completo => vr_xml_temp 
-                             ,pr_texto_novo     => '</horarios>'); 
-      
-      --Limpar Tabela Memoria de Limites
-      vr_tab_internet.DELETE;
-      BEGIN
-        -- Inicializa variavel
-        va_existe_operador := 0;
-        -- Se for assinatura conjunta habilitada
-        IF vr_idastcjt = 1 THEN
-          FOR rw_crapopi2 in cr_crapopi2 (pr_cdcooper
-                                         ,pr_nrdconta
-                                         ,pr_nrcpfope) LOOP
- 
-            va_existe_operador := 1;                        
-          END LOOP;
-          --
-          
-          -- Se for preposto
-          IF va_existe_operador = 0 THEN
+      -- Retornar somente se for pesquisa geral ou específica para consultar parâmetros gerais
+      IF NVL(pr_cdtransa,0) = 0 THEN
+        --Limpar Tabela Memoria de Horarios
+        vr_tab_limite_pend.DELETE;
+        
+        --Buscar Horario Operacao
+        INET0002.pc_horario_trans_pend (pr_cdcooper => pr_cdcooper  --Código Cooperativa
+                                       ,pr_cdagenci => pr_cdagenci  --Agencia do Associado
+                                       ,pr_cdoperad => '996'        --Operador
+                                       ,pr_nrdcaixa => 900          --Nr do caixa
+                                       ,pr_nmdatela => 'INTERNETBANK' --Nome da tela
+                                       ,pr_idorigem => 3            --Id de Origem
+                                       ,pr_tab_limite_pend => vr_tab_limite_pend --Tabelas de retorno de horarios limite
+                                       ,pr_cdcritic => vr_cdcritic    --Código do erro
+                                       ,pr_dscritic => vr_dscritic);  --Descricao do erro
             
-            va_nrcpfcgc := null;
-            va_vllimweb := null;
-            IF pr_nrcpfope IS NULL OR
-               pr_nrcpfope <= 0 THEN
-              FOR rw_crapsnh2 IN cr_crapsnh2(pr_cdcooper,
-                                             pr_nrdconta,
-                                             vr_idseqttl) LOOP
-                va_nrcpfcgc := rw_crapsnh2.nrcpfcgc;
-                va_vllimweb := rw_crapsnh2.vllimweb;
-              END LOOP;     
+        --Se ocorreu erro
+        IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          --levantar Excecao
+          RAISE vr_exc_erro;
             END IF;
-            -- buscar limites preposto
-            INET0001.pc_busca_limites_prepo_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
-                               ,pr_nrdconta     => pr_nrdconta   --Numero da conta
-                                                 ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
-                                                 ,pr_nrcpfope	    => NVL(va_nrcpfcgc,pr_nrcpfope)  --Numero do CPF
-                                                 ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
-                                                 ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
-                                                 ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
-                                                 ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
-                                                 ,pr_dscritic     => vr_dscritic); --Descricao do erro;
-              --Se ocorreu erro
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            END IF;        
+
+        --Montar Tag Xml de Horarios
+        gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '<horarios>');       
+        
+        vr_ind := vr_tab_limite_pend.FIRST;
+        WHILE vr_ind IS NOT NULL LOOP
+           
+           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                                  ,pr_texto_completo => vr_xml_temp 
+                                  ,pr_texto_novo     => '<horario>'
+                                                     ||   '<idtiphor>'||vr_ind||'</idtiphor>'
+                                                     ||   '<idtiptra>'||nvl(vr_tab_limite_pend(vr_ind).tipodtra,0)||'</idtiptra>'
+                                                     ||   '<hrinipag>'||nvl(vr_tab_limite_pend(vr_ind).hrinipag,' ')||'</hrinipag>'
+                                                     ||   '<hrfimpag>'||nvl(vr_tab_limite_pend(vr_ind).hrfimpag,' ')||'</hrfimpag>'
+                                                     || '</horario>'); 
+           vr_ind := vr_tab_limite_pend.NEXT(vr_ind);
+        END LOOP;
+        
+        --Fecha Tag de Horarios
+        gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '</horarios>'); 
+        
+        --Limpar Tabela Memoria de Limites
+        vr_tab_internet.DELETE;
+        vr_tab_internet_conta.DELETE;
+        BEGIN
+          -- Inicializa variavel
+          va_existe_operador := 0;
+          -- Se for assinatura conjunta habilitada
+          IF vr_idastcjt = 1 THEN
+            FOR rw_crapopi2 in cr_crapopi2 (pr_cdcooper
+                                           ,pr_nrdconta
+                                           ,pr_nrcpfope) LOOP
+   
+              va_existe_operador := 1;                        
+            END LOOP;
+            --
             
-          ELSE -- Se for operador
-            -- Buscar limites operador do sistema
-            INET0001.pc_busca_limites_opera_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
-                                                 ,pr_nrdconta     => pr_nrdconta  --Numero da conta
-                                                 ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
-                                                 ,pr_nrcpfope	    => pr_nrcpfope  --Numero do CPF
-                                                 ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
-                                                 ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
-                                                 ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
-                                                 ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
-                                                 ,pr_dscritic     => vr_dscritic); --Descricao do erro;
-                              
-            --Se ocorreu erro
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            END IF;        
-          END IF;
-      ELSE   
-        /* Buscar Limites da internet */
-        INET0001.pc_busca_limites (pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
-                                  ,pr_nrdconta     => pr_nrdconta  --Numero da conta
-                                  ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
-                                  ,pr_flglimdp     => FALSE         --Indicador limite deposito
-                                  ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
-                                  ,pr_flgctrag     => FALSE  --Indicador validacoes
-                                  ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
-                                  ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
-                                  ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
-                                  ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+            -- Se for preposto
+            IF va_existe_operador = 0 THEN
+              
+              va_nrcpfcgc := null;
+              va_vllimweb := null;
+              IF pr_nrcpfope IS NULL OR
+                 pr_nrcpfope <= 0 THEN
+                FOR rw_crapsnh2 IN cr_crapsnh2(pr_cdcooper,
+                                               pr_nrdconta,
+                                               vr_idseqttl) LOOP
+                  va_nrcpfcgc := rw_crapsnh2.nrcpfcgc;
+                  va_vllimweb := rw_crapsnh2.vllimweb;
+                END LOOP;     
+              END IF;
+              -- buscar limites preposto
+              INET0001.pc_busca_limites_prepo_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                 ,pr_nrdconta     => pr_nrdconta   --Numero da conta
+                                                   ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                                   ,pr_nrcpfope	    => NVL(va_nrcpfcgc,pr_nrcpfope)  --Numero do CPF
+                                                   ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
+                                                   ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
+                                                   ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
+                                                   ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                                   ,pr_dscritic     => vr_dscritic); --Descricao do erro;
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-          --Levantar Excecao
+                --Levantar Excecao
           RAISE vr_exc_erro;
-        END IF;  -- Validar se esá habilitado assinatura conjunta                                      
-
-      END IF; 
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao buscar os limites '||SQLERRM;
-        RAISE vr_exc_erro;
-    END;
-      /*--Buscar Limites  
-      INET0001.pc_busca_limites(pr_cdcooper     => pr_cdcooper   --Codigo Cooperativa
-                               ,pr_nrdconta     => pr_dsorigempr_nrdconta   --Numero da conta
-                               ,pr_idseqttl     => vr_idseqttl   --Seq de Titularidade
-                               ,pr_flglimdp     => FALSE         --Indicador limite deposito
-                               ,pr_dtmvtopg     => pr_dtmvtolt   --Data do proximo pagamento
-                               ,pr_flgctrag     => FALSE         --Indicador validacoes
-                               ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)
-                               ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de limites
-                               ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
-                               ,pr_dscritic     => vr_dscritic); --Descricao do erro 
-                                     
-      --Se ocorreu erro
-      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-         --Levantar Excecao
-         RAISE vr_exc_erro;
-      END IF;  */                                                                 
-      
-            --Montar Tag Xml de Limites
-      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                             ,pr_texto_completo => vr_xml_temp 
-                             ,pr_texto_novo     => '<limites>'); 
-      
-      vr_ind := vr_tab_internet.FIRST;
-      WHILE vr_ind IS NOT NULL LOOP
-         
-         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc
-                                ,pr_texto_completo => vr_xml_temp 
-                                ,pr_texto_novo     => '<limite>' 
-                                                   ||   '<idseqttl>'||nvl(vr_tab_internet(vr_ind).idseqttl,0)||'</idseqttl>'
-                                                   ||   '<vllimweb>'||TO_CHAR(nvl(va_vllimweb,nvl(vr_tab_internet(vr_ind).vllimweb,0)),'fm999g999g990d00')||'</vllimweb>'
-                                                   ||   '<vllimpgo>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimpgo,0),'fm999g999g990d00')||'</vllimpgo>'
-                                                   ||   '<vllimtrf>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimtrf,0),'fm999g999g990d00')||'</vllimtrf>'
-                                                   ||   '<vllimted>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimted,0),'fm999g999g990d00')||'</vllimted>'
-                                                   ||   '<vllimvrb>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimvrb,0),'fm999g999g990d00')||'</vllimvrb>'
-                                                   ||   '<vlutlweb>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlutlweb,0),'fm999g999g990d00')||'</vlutlweb>'
-                                                   ||   '<vlutlpgo>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlutlpgo,0),'fm999g999g990d00')||'</vlutlpgo>'
-                                                   ||   '<vlutltrf>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlutltrf,0),'fm999g999g990d00')||'</vlutltrf>'
-                                                   ||   '<vlutlted>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlutlted,0),'fm999g999g990d00')||'</vlutlted>'
-                                                   ||   '<vldspweb>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vldspweb,0),'fm999g999g990d00')||'</vldspweb>'
-                                                   ||   '<vldsppgo>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vldsppgo,0),'fm999g999g990d00')||'</vldsppgo>'
-                                                   ||   '<vldsptrf>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vldsptrf,0),'fm999g999g990d00')||'</vldsptrf>'
-                                                   ||   '<vldspted>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vldspted,0),'fm999g999g990d00')||'</vldspted>'
-                                                   ||   '<vlwebcop>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlwebcop,0),'fm999g999g990d00')||'</vlwebcop>'
-                                                   ||   '<vlpgocop>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlpgocop,0),'fm999g999g990d00')||'</vlpgocop>'
-                                                   ||   '<vltrfcop>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vltrfcop,0),'fm999g999g990d00')||'</vltrfcop>'
-                                                   ||   '<vltedcop>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vltedcop,0),'fm999g999g990d00')||'</vltedcop>'
-                                                   ||   '<vlvrbcop>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vlvrbcop,0),'fm999g999g990d00')||'</vlvrbcop>'
-                                                   || '</limite>'); 
-         vr_ind := vr_tab_internet.NEXT(vr_ind);
-      END LOOP;
-      
-      --Fecha Tag de Horarios
-      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                             ,pr_texto_completo => vr_xml_temp 
-                             ,pr_texto_novo     => '</limites>'); 
+              END IF;        
                              
-      --Limpar Tabela Memoria de Convenios
-      vr_tab_convenios.DELETE;
-      
-      --Buscar Horario Operacao
-      PAGA0002.pc_convenios_aceitos  (pr_cdcooper => pr_cdcooper  --Código Cooperativa
-                                     ,pr_tab_convenios => vr_tab_convenios --Tabelas de retorno de horarios limite
-                                     ,pr_cdcritic => vr_cdcritic    --Código do erro
-                                     ,pr_dscritic => vr_dscritic);  --Descricao do erro
-                                   
-      --Se ocorreu erro
-      IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        --levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-      
-      --Montar Tag Xml de Horarios
-      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                             ,pr_texto_completo => vr_xml_temp 
-                             ,pr_texto_novo     => '<convenios>'); 
-      
-      vr_ind := vr_tab_convenios.FIRST;
-      WHILE vr_ind IS NOT NULL LOOP
-         
-         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                                ,pr_texto_completo => vr_xml_temp 
-                                ,pr_texto_novo     => '<convenio>'
-                                                   ||   '<nmextcon>'||nvl(vr_tab_convenios(vr_ind).nmextcon,' ')||'</nmextcon>'
-                                                   ||   '<nmrescon>'||nvl(vr_tab_convenios(vr_ind).nmrescon,' ')||'</nmrescon>'
-                                                   ||   '<cdempcon>'||nvl(vr_tab_convenios(vr_ind).cdempcon,0)||'</cdempcon>'
-                                                   ||   '<cdsegmto>'||nvl(vr_tab_convenios(vr_ind).cdsegmto,0)||'</cdsegmto>'
-                                                   ||   '<hhoraini>'||nvl(vr_tab_convenios(vr_ind).hhoraini,' ')||'</hhoraini>'
-                                                   ||   '<hhorafim>'||nvl(vr_tab_convenios(vr_ind).hhorafim,' ')||'</hhorafim>'
-                                                   ||   '<hhoracan>'||nvl(vr_tab_convenios(vr_ind).hhoracan,' ')||'</hhoracan>'
-                                                   || '</convenio>'); 
-         vr_ind := vr_tab_convenios.NEXT(vr_ind);
-      END LOOP;
-      
-      --Fecha Tag de Horarios
-      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                             ,pr_texto_completo => vr_xml_temp 
-                             ,pr_texto_novo     => '</convenios>');                       
-      
-      --Montar Tag Xml das transacoes pendentes
-      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                             ,pr_texto_completo => vr_xml_temp 
-                             ,pr_texto_novo     => '<transacoes>');
-      
-      --------------------------------------------------------------------------------------
-      --Buscar transacoes pendentes (pai)
-      --------------------------------------------------------------------------------------
-      --Limpar Tabela Memoria
-      vr_tab_crapavt.DELETE;
-            
-      CADA0001.pc_busca_dados_58(pr_cdcooper => pr_cdcooper
-                                ,pr_cdagenci => pr_cdagenci
-                                ,pr_nrdcaixa => 900
-                                ,pr_cdoperad => '996'
-                                ,pr_nmdatela => 'INTERNETBANK'
-                                ,pr_idorigem => 3
-                                ,pr_nrdconta => pr_nrdconta
-                                ,pr_idseqttl => 0
-                                ,pr_flgerlog => FALSE
-                                ,pr_cddopcao => 'C'
-                                ,pr_nrdctato => 0
-                                ,pr_nrcpfcto => 0
-                                ,pr_nrdrowid => NULL
-                                ,pr_tab_crapavt => vr_tab_crapavt
-                                ,pr_tab_bens => vr_tab_bens
-                                ,pr_tab_erro => vr_tab_erro
-                                ,pr_cdcritic => vr_cdcritic
-                                ,pr_dscritic => vr_dscritic);
+            ELSE -- Se for operador
+              -- Buscar limites operador do sistema
+              INET0001.pc_busca_limites_opera_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                                   ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                                   ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                                   ,pr_nrcpfope	    => pr_nrcpfope  --Numero do CPF
+                                                   ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
+                                                   ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
+                                                   ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
+                                                   ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                                   ,pr_dscritic     => vr_dscritic); --Descricao do erro;
 
-      IF NVL(vr_cdcritic,0) > 0 OR 
-         vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-
-      -- Verifica se existem representantes legais para conta
-      IF vr_tab_crapavt.COUNT() <= 0 THEN
-        vr_dscritic := 'Nao existem responsaveis legais para a conta informada.';
-        RAISE vr_exc_erro;
-      END IF; 
-
-      FOR rw_tbgen_trans_pend IN cr_tbgen_trans_pend (pr_cdcooper => pr_cdcooper
-                                                     ,pr_nrdconta => pr_nrdconta
-                                                     ,pr_dtiniper => pr_dtiniper
-                                                     ,pr_dtfimper => pr_dtfimper
-                                                     ,pr_insittra => pr_insittra) LOOP
-                  
-         --Zerando Variaveis
-         vr_indiacao := 0;   vr_cddbanco := 0;   vr_vlasomar := 0;   vr_vlaplica := 0;   vr_vllanaut := 0;
-         vr_cdcopdes := ' '; vr_nrcondes := ' '; vr_dtdebito := ' '; vr_nmcednte := ' '; vr_nrcodbar := ' ';
-         vr_dslindig := ' '; vr_dtvencto := ' '; vr_vldocmto := ' '; vr_identdda := ' '; vr_labnmage := ' '; 
-         vr_nmextbcc := ' '; vr_dsfindad := ' '; vr_nmbanfav := ' '; vr_nmdoispb := ' '; vr_nmagenci := ' '; 
-         vr_nrctafav := ' '; vr_nomdofav := ' '; vr_cpfcgcfv := ' '; vr_dshistco := ' '; vr_cdidenti := ' '; 
-         vr_dtdodebi := ' '; vr_qtdparce := ' '; vr_vldparce := ' '; vr_dtpriven := ' '; vr_vlpercet := ' '; 
-         vr_vltarifa := ' '; vr_vltaxmen := ' '; vr_vlrdoiof := ' '; vr_vlperiof := ' '; vr_tpopeapl := ' '; 
-         vr_nraplica := ' '; vr_tpagenda := ' '; vr_docagend := ' '; vr_flageuni := ' '; vr_nrdiacre := ' '; 
-         vr_qtdmeses := ' '; vl_dtaplica := ' '; vr_nmdprodu := ' '; vr_carencia := ' '; 
-         vr_dtcarenc := ' '; vr_dtrdavct := ' '; vr_sldresga := ' '; vr_dtresgat := ' '; vr_vlresgat := ' '; 
-         vr_tpresgat := ' '; vr_dtdiacre := ' '; vr_qtdiacar := ' '; vr_dtacrenc := ' '; vr_dtdiaaar := ' ';
-         vr_qtmesaar := ' '; vr_dtagevct := ' '; vr_nmrescon := ' '; vr_iddebaut := ' '; vr_dshistor := ' '; 
-         vr_vlmaxdeb := ' '; vr_dtdebfat := ' '; vr_nrdocfat := ' '; vr_nrqtlnac := ' '; 
-         vr_solestou := ' '; vr_xml_auxi := ' '; vr_dtmvttra := ' '; vr_nmagenda := ' ';
-         vr_tpcaptura := 0; vr_dstipcapt := ''; vr_dsnomfone := ''; vr_dscod_barras := ''; vr_dslinha_digitavel := '';
-         vr_dtapuracao := null; vr_cdtributo := '0'; vr_nrrefere := 0; vr_vlprincipal := 0; vr_vlmulta := 0; vr_vljuros := 0;
-         vr_vlrtotal := 0; vr_vlreceita_bruta := 0; vr_vlpercentual := 0; vr_idagendamento := 0; 
-
-         --Atribuicao de variaveis genericas
-         vr_tptranpe := rw_tbgen_trans_pend.tptransacao;
-         vr_cdtranpe := rw_tbgen_trans_pend.cdtransacao_pendente;
-         vr_dttranpe := TO_CHAR(rw_tbgen_trans_pend.dtregistro_transacao,'DD/MM/RRRR');
-         vr_hrtranpe := TO_CHAR(to_date(rw_tbgen_trans_pend.hrregistro_transacao,'sssss'),'hh24:mi:ss');
-         vr_dsoritra := gene0001.vr_vet_des_origens(rw_tbgen_trans_pend.idorigem_transacao);
-         vr_dtmvttra := TO_CHAR(rw_tbgen_trans_pend.dtmvtolt,'DD/MM/RRRR');
-         vr_idsittra := rw_tbgen_trans_pend.idsituacao_transacao;
-         vr_dssittra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 1 THEN 'Pendente'
-                             WHEN rw_tbgen_trans_pend.idsituacao_transacao = 2 THEN 'Aprovada'
-                             WHEN rw_tbgen_trans_pend.idsituacao_transacao = 3 THEN 'Excluida'
-                             WHEN rw_tbgen_trans_pend.idsituacao_transacao = 4 THEN 'Expirada'
-                             WHEN rw_tbgen_trans_pend.idsituacao_transacao = 5 THEN 'Parcialmente Aprovada'
-                             WHEN rw_tbgen_trans_pend.idsituacao_transacao = 6 THEN 'Reprovada'
-                        END;
-         vr_dtaltera := TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR');
-         vr_dtreptra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 6 THEN TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR') END;
-         vr_dtexctra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 3 THEN TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR') END;
-         vr_dtexptra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 4 THEN TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR') END;
-         vr_dscritra := rw_tbgen_trans_pend.dscritica;
-         vr_dtvalida := TO_CHAR(rw_tbgen_trans_pend.dtcritica,'DD/MM/RRRR');
-         vr_labnmage := CASE WHEN rw_tbgen_trans_pend.nrcpf_operador > 0 THEN 'Operador' ELSE 'Representante' END;
-         
-         IF rw_tbgen_trans_pend.nrcpf_operador > 0 THEN
-            OPEN cr_crapopi (pr_cdcooper => pr_cdcooper
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_nrcpfope => rw_tbgen_trans_pend.nrcpf_operador);
-            FETCH cr_crapopi INTO vr_nmagenda;
-            --Se nao encontrou 
-            IF cr_crapopi%NOTFOUND THEN
-                --Fechar Cursor
-                CLOSE cr_crapopi;
-                vr_nmagenda := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbgen_trans_pend.nrcpf_operador
-                                                        ,pr_inpessoa => 1);
-            ELSE                             
-                --Fechar Cursor
-                CLOSE cr_crapopi;
-                vr_nmagenda := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbgen_trans_pend.nrcpf_operador
-                                                        ,pr_inpessoa => 1) || ' - ' || vr_nmagenda;                
+              --Se ocorreu erro
+              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF;        
             END IF;
-         ELSE -- Consultar Representante
-            vr_ind := vr_tab_crapavt.FIRST;
-            WHILE vr_ind IS NOT NULL LOOP
-              -- Operação realizada por responsável da assinatura conjunta
-              IF vr_tab_crapavt(vr_ind).nrcpfcgc = rw_tbgen_trans_pend.nrcpf_representante THEN
-                vr_nmagenda := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_crapavt(vr_ind).nrcpfcgc
-                                                        ,pr_inpessoa => 1) 
-                               || ' - ' || vr_tab_crapavt(vr_ind).nmdavali;
-                EXIT;
+          -- Comentado pois fará a busca de limites da conta mais abaixo independente se possui assinatura conjunta
+          /*
+        ELSE   
+            -- Buscar Limites da internet 
+          INET0001.pc_busca_limites (pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                    ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                    ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                    ,pr_flglimdp     => FALSE         --Indicador limite deposito
+                                    ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
+                                    ,pr_flgctrag     => FALSE  --Indicador validacoes
+                                    ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
+                                    ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
+                                    ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                    ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+          --Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;  -- Validar se esá habilitado assinatura conjunta                                      
+          */
+        END IF; 
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao buscar os limites '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+        
+        --Buscar Limites  
+        INET0001.pc_busca_limites(pr_cdcooper     => pr_cdcooper   --Codigo Cooperativa
+                                 ,pr_nrdconta     => pr_nrdconta   --Numero da conta
+                                 ,pr_idseqttl     => vr_idseqttl   --Seq de Titularidade
+                                 ,pr_flglimdp     => FALSE         --Indicador limite deposito
+                                 ,pr_dtmvtopg     => pr_dtmvtolt   --Data do proximo pagamento
+                                 ,pr_flgctrag     => FALSE         --Indicador validacoes
+                                 ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)
+                                 ,pr_tab_internet => vr_tab_internet_conta --Tabelas de retorno de limites
+                                 ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                 ,pr_dscritic     => vr_dscritic); --Descricao do erro 
+
+        --Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+           --Levantar Excecao
+           RAISE vr_exc_erro;
+        END IF;                                                                   
+        
+        --Montar Tag Xml de Limites
+        gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '<limites>'); 
+        
+        vr_ind := vr_tab_internet_conta.FIRST;
+        WHILE vr_ind IS NOT NULL LOOP
+           
+           vr_vllimpgo := CASE WHEN vr_tab_internet.COUNT > 0 AND nvl(vr_tab_internet(vr_ind).vllimpgo,0) > 0 THEN nvl(vr_tab_internet(vr_ind).vllimpgo,0) ELSE nvl(vr_tab_internet_conta(vr_ind).vllimpgo,0) END;
+           vr_vllimtrf := CASE WHEN vr_tab_internet.COUNT > 0 AND nvl(vr_tab_internet(vr_ind).vllimtrf,0) > 0 THEN nvl(vr_tab_internet(vr_ind).vllimtrf,0) ELSE nvl(vr_tab_internet_conta(vr_ind).vllimtrf,0) END; 
+           vr_vllimted := CASE WHEN vr_tab_internet.COUNT > 0 AND nvl(vr_tab_internet(vr_ind).vllimted,0) > 0 THEN nvl(vr_tab_internet(vr_ind).vllimted,0) ELSE nvl(vr_tab_internet_conta(vr_ind).vllimted,0) END; 
+           vr_vllimvrb := CASE WHEN vr_tab_internet.COUNT > 0 AND nvl(vr_tab_internet(vr_ind).vllimvrb,0) > 0 THEN nvl(vr_tab_internet(vr_ind).vllimvrb,0) ELSE nvl(vr_tab_internet_conta(vr_ind).vllimvrb,0) END; 
+           
+           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc
+                                  ,pr_texto_completo => vr_xml_temp 
+                                  ,pr_texto_novo     => '<limite>' 
+                                                     ||   '<idseqttl>'||nvl(vr_tab_internet_conta(vr_ind).idseqttl,0)||'</idseqttl>'
+                                                     ||   '<vllimweb>'||TO_CHAR(nvl(va_vllimweb,nvl(vr_tab_internet_conta(vr_ind).vllimweb,0)),'fm999g999g990d00')||'</vllimweb>'
+                                                     ||   '<vllimpgo>'||TO_CHAR(vr_vllimpgo,'fm999g999g990d00')||'</vllimpgo>'
+                                                     ||   '<vllimtrf>'||TO_CHAR(vr_vllimtrf,'fm999g999g990d00')||'</vllimtrf>'
+                                                     ||   '<vllimted>'||TO_CHAR(vr_vllimted,'fm999g999g990d00')||'</vllimted>'
+                                                     ||   '<vllimvrb>'||TO_CHAR(vr_vllimvrb,'fm999g999g990d00')||'</vllimvrb>'
+                                                     ||   '<vlutlweb>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlutlweb,0),'fm999g999g990d00')||'</vlutlweb>'
+                                                     ||   '<vlutlpgo>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlutlpgo,0),'fm999g999g990d00')||'</vlutlpgo>'
+                                                     ||   '<vlutltrf>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlutltrf,0),'fm999g999g990d00')||'</vlutltrf>'
+                                                     ||   '<vlutlted>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlutlted,0),'fm999g999g990d00')||'</vlutlted>'
+                                                     ||   '<vldspweb>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vldspweb,0),'fm999g999g990d00')||'</vldspweb>'
+                                                     ||   '<vldsppgo>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vldsppgo,0),'fm999g999g990d00')||'</vldsppgo>'
+                                                     ||   '<vldsptrf>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vldsptrf,0),'fm999g999g990d00')||'</vldsptrf>'
+                                                     ||   '<vldspted>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vldspted,0),'fm999g999g990d00')||'</vldspted>'
+                                                     ||   '<vlwebcop>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlwebcop,0),'fm999g999g990d00')||'</vlwebcop>'
+                                                     ||   '<vlpgocop>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlpgocop,0),'fm999g999g990d00')||'</vlpgocop>'
+                                                     ||   '<vltrfcop>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vltrfcop,0),'fm999g999g990d00')||'</vltrfcop>'
+                                                     ||   '<vltedcop>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vltedcop,0),'fm999g999g990d00')||'</vltedcop>'
+                                                     ||   '<vlvrbcop>'||TO_CHAR(nvl(vr_tab_internet_conta(vr_ind).vlvrbcop,0),'fm999g999g990d00')||'</vlvrbcop>'
+                                                     || '</limite>'); 
+           vr_ind := vr_tab_internet.NEXT(vr_ind);
+        END LOOP;
+        
+        --Fecha Tag de Horarios
+        gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '</limites>'); 
+                               
+        --Limpar Tabela Memoria de Convenios
+        vr_tab_convenios.DELETE;
+        
+        --Buscar Horario Operacao
+        PAGA0002.pc_convenios_aceitos  (pr_cdcooper => pr_cdcooper  --Código Cooperativa
+                                       ,pr_tab_convenios => vr_tab_convenios --Tabelas de retorno de horarios limite
+                                       ,pr_cdcritic => vr_cdcritic    --Código do erro
+                                       ,pr_dscritic => vr_dscritic);  --Descricao do erro
+                                     
+        --Se ocorreu erro
+        IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          --levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+        
+        --Montar Tag Xml de Horarios
+        gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '<convenios>'); 
+        
+        vr_ind := vr_tab_convenios.FIRST;
+        WHILE vr_ind IS NOT NULL LOOP
+           
+           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                                  ,pr_texto_completo => vr_xml_temp 
+                                  ,pr_texto_novo     => '<convenio>'
+                                                     ||   '<nmextcon>'||nvl(vr_tab_convenios(vr_ind).nmextcon,' ')||'</nmextcon>'
+                                                     ||   '<nmrescon>'||nvl(vr_tab_convenios(vr_ind).nmrescon,' ')||'</nmrescon>'
+                                                     ||   '<cdempcon>'||nvl(vr_tab_convenios(vr_ind).cdempcon,0)||'</cdempcon>'
+                                                     ||   '<cdsegmto>'||nvl(vr_tab_convenios(vr_ind).cdsegmto,0)||'</cdsegmto>'
+                                                     ||   '<hhoraini>'||nvl(vr_tab_convenios(vr_ind).hhoraini,' ')||'</hhoraini>'
+                                                     ||   '<hhorafim>'||nvl(vr_tab_convenios(vr_ind).hhorafim,' ')||'</hhorafim>'
+                                                     ||   '<hhoracan>'||nvl(vr_tab_convenios(vr_ind).hhoracan,' ')||'</hhoracan>'
+                                                     || '</convenio>'); 
+           vr_ind := vr_tab_convenios.NEXT(vr_ind);
+        END LOOP;
+        
+        --Fecha Tag de Horarios
+        gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '</convenios>');   
+      END IF;                          
+                             
+      -- Se for pesquisa geral ou específica para determinada transação
+      IF (pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND pr_nrregist > 0) OR (NVL(pr_cdtransa,0) > 0) THEN      
+        --Montar Tag Xml das transacoes pendentes
+        gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '<transacoes>');
+        --------------------------------------------------------------------------------------
+        --Buscar transacoes pendentes (pai)
+        --------------------------------------------------------------------------------------
+        --Limpar Tabela Memoria
+        vr_tab_crapavt.DELETE;
+
+        CADA0001.pc_busca_dados_58(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdagenci => pr_cdagenci
+                                  ,pr_nrdcaixa => 900
+                                  ,pr_cdoperad => '996'
+                                  ,pr_nmdatela => 'INTERNETBANK'
+                                  ,pr_idorigem => 3
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_idseqttl => 0
+                                  ,pr_flgerlog => FALSE
+                                  ,pr_cddopcao => 'C'
+                                  ,pr_nrdctato => 0
+                                  ,pr_nrcpfcto => 0
+                                  ,pr_nrdrowid => NULL
+                                  ,pr_tab_crapavt => vr_tab_crapavt
+                                  ,pr_tab_bens => vr_tab_bens
+                                  ,pr_tab_erro => vr_tab_erro
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);
+
+        IF NVL(vr_cdcritic,0) > 0 OR 
+           vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
               END IF;
-              vr_ind := vr_tab_crapavt.NEXT(vr_ind);
-            END LOOP;
-         END IF; 
-         
-         IF vr_nmagenda IS NULL THEN
-            vr_nmagenda := CASE WHEN rw_tbgen_trans_pend.nrcpf_operador > 0 THEN 
-                                gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbgen_trans_pend.nrcpf_operador
-                                                         ,pr_inpessoa => 1)
-                           ELSE gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbgen_trans_pend.nrcpf_representante
-                                                         ,pr_inpessoa => 1)
-                           END;
-         END IF;
-         
-         --Controle de operacao (indica 1 que pode alterar)
-         IF rw_tbgen_trans_pend.idsituacao_transacao = 1 OR   --Pendente
-            rw_tbgen_trans_pend.idsituacao_transacao = 5 THEN --Parcialmente Aprovada
-           IF pr_nrcpfope > 0 THEN --Consulta efetuada por operador PJ
-             IF rw_tbgen_trans_pend.idsituacao_transacao = 1     AND
-                rw_tbgen_trans_pend.nrcpf_operador = pr_nrcpfope THEN
-                vr_indiacao := 1;
-             END IF;
+
+        -- Verifica se existem representantes legais para conta
+        IF vr_tab_crapavt.COUNT() <= 0 THEN
+          vr_dscritic := 'Nao existem responsaveis legais para a conta informada.';
+          RAISE vr_exc_erro;
+        END IF; 
+        
+        -- IB Antigo passa o parâmetro com valores pares (Ex.: 0, 10, 20)
+        -- Novo IB está padronizado para iniciar a sequencia com valor 1. 
+        -- Para manter as 2 plataformas funcionais durante o piloto do novo IB é necessário decremetar o valor
+        IF MOD(pr_nriniseq,2) <> 0 THEN
+          vr_nriniseq := pr_nriniseq - 1;
+        ELSE
+          vr_nriniseq := pr_nriniseq;
+        END IF;
+
+        FOR rw_tbgen_trans_pend IN cr_tbgen_trans_pend (pr_cdcooper => pr_cdcooper
+                                                       ,pr_nrdconta => pr_nrdconta
+                                                       ,pr_cdtransa => pr_cdtransa
+                                                       ,pr_dtiniper => pr_dtiniper
+                                                       ,pr_dtfimper => pr_dtfimper
+                                                       ,pr_insittra => pr_insittra) LOOP                                                       
+                          
+           --Zerando Variaveis
+           vr_indiacao := 0;   vr_cddbanco := 0;   vr_vlasomar := 0;   vr_vlaplica := 0;   vr_vllanaut := 0;
+           vr_cdcopdes := ' '; vr_nrcondes := ' '; vr_dtdebito := ' '; vr_nmcednte := ' '; vr_nrcodbar := ' ';
+           vr_dslindig := ' '; vr_dtvencto := ' '; vr_vldocmto := ' '; vr_identdda := ' '; vr_labnmage := ' '; 
+           vr_nmextbcc := ' '; vr_dsfindad := ' '; vr_nmbanfav := ' '; vr_nmdoispb := ' '; vr_nmagenci := ' '; 
+           vr_nrctafav := ' '; vr_nomdofav := ' '; vr_cpfcgcfv := ' '; vr_dshistco := ' '; vr_cdidenti := ' '; 
+           vr_dtdodebi := ' '; vr_qtdparce := ' '; vr_vldparce := ' '; vr_dtpriven := ' '; vr_vlpercet := ' '; 
+           vr_vltarifa := ' '; vr_vltaxmen := ' '; vr_vlrdoiof := ' '; vr_vlperiof := ' '; vr_tpopeapl := ' '; 
+           vr_nraplica := ' '; vr_tpagenda := ' '; vr_docagend := ' '; vr_flageuni := ' '; vr_nrdiacre := ' '; 
+           vr_qtdmeses := ' '; vl_dtaplica := ' '; vr_nmdprodu := ' '; vr_carencia := ' '; 
+           vr_dtcarenc := ' '; vr_dtrdavct := ' '; vr_sldresga := ' '; vr_dtresgat := ' '; vr_vlresgat := ' '; 
+           vr_tpresgat := ' '; vr_dtdiacre := ' '; vr_qtdiacar := ' '; vr_dtacrenc := ' '; vr_dtdiaaar := ' ';
+           vr_qtmesaar := ' '; vr_dtagevct := ' '; vr_nmrescon := ' '; vr_iddebaut := ' '; vr_dshistor := ' '; 
+           vr_vlmaxdeb := ' '; vr_dtdebfat := ' '; vr_nrdocfat := ' '; vr_nrqtlnac := ' '; 
+           vr_solestou := ' '; vr_xml_auxi := ' '; vr_dtmvttra := ' '; vr_nmagenda := ' ';
+           vr_tpcaptura := 0; vr_dstipcapt := ''; vr_dsnomfone := ''; vr_dscod_barras := ''; vr_dslinha_digitavel := '';
+           vr_dtapuracao := null; vr_cdtributo := '0'; vr_nrrefere := 0; vr_vlprincipal := 0; vr_vlmulta := 0; vr_vljuros := 0;
+           vr_vlrtotal := 0; vr_vlreceita_bruta := 0; vr_vlpercentual := 0; vr_idagendamento := 0; 
+
+           --Atribuicao de variaveis genericas
+           vr_tptranpe := rw_tbgen_trans_pend.tptransacao;
+           vr_cdtranpe := rw_tbgen_trans_pend.cdtransacao_pendente;
+           vr_dttranpe := TO_CHAR(rw_tbgen_trans_pend.dtregistro_transacao,'DD/MM/RRRR');
+           vr_hrtranpe := TO_CHAR(to_date(rw_tbgen_trans_pend.hrregistro_transacao,'sssss'),'hh24:mi:ss');
+           vr_dsoritra := gene0001.vr_vet_des_origens(rw_tbgen_trans_pend.idorigem_transacao);
+           vr_dtmvttra := TO_CHAR(rw_tbgen_trans_pend.dtmvtolt,'DD/MM/RRRR');
+           vr_idsittra := rw_tbgen_trans_pend.idsituacao_transacao;
+           vr_dssittra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 1 THEN 'Pendente'
+                               WHEN rw_tbgen_trans_pend.idsituacao_transacao = 2 THEN 'Aprovada'
+                               WHEN rw_tbgen_trans_pend.idsituacao_transacao = 3 THEN 'Excluida'
+                               WHEN rw_tbgen_trans_pend.idsituacao_transacao = 4 THEN 'Expirada'
+                               WHEN rw_tbgen_trans_pend.idsituacao_transacao = 5 THEN 'Parcialmente Aprovada'
+                               WHEN rw_tbgen_trans_pend.idsituacao_transacao = 6 THEN 'Reprovada'
+                          END;
+           vr_dtaltera := TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR');
+           vr_dtreptra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 6 THEN TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR') END;
+           vr_dtexctra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 3 THEN TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR') END;
+           vr_dtexptra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 4 THEN TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR') END;
+           vr_dscritra := rw_tbgen_trans_pend.dscritica;
+           vr_dtvalida := TO_CHAR(rw_tbgen_trans_pend.dtcritica,'DD/MM/RRRR');
+           vr_labnmage := CASE WHEN rw_tbgen_trans_pend.nrcpf_operador > 0 THEN 'Operador' ELSE 'Representante' END;
+                 
+           IF rw_tbgen_trans_pend.nrcpf_operador > 0 THEN
+              OPEN cr_crapopi (pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrcpfope => rw_tbgen_trans_pend.nrcpf_operador);
+              FETCH cr_crapopi INTO vr_nmagenda;
+              --Se nao encontrou 
+              IF cr_crapopi%NOTFOUND THEN
+                  --Fechar Cursor
+                  CLOSE cr_crapopi;
+                  vr_nmagenda := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbgen_trans_pend.nrcpf_operador
+                                                          ,pr_inpessoa => 1);
+              ELSE                             
+                  --Fechar Cursor
+                  CLOSE cr_crapopi;
+                  vr_nmagenda := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbgen_trans_pend.nrcpf_operador
+                                                          ,pr_inpessoa => 1) || ' - ' || vr_nmagenda;                
+              END IF;
+           ELSE -- Consultar Representante
+              vr_ind := vr_tab_crapavt.FIRST;
+              WHILE vr_ind IS NOT NULL LOOP
+                -- Operação realizada por responsável da assinatura conjunta
+                IF vr_tab_crapavt(vr_ind).nrcpfcgc = rw_tbgen_trans_pend.nrcpf_representante THEN
+                  vr_nmagenda := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_crapavt(vr_ind).nrcpfcgc
+                                                          ,pr_inpessoa => 1) 
+                                 || ' - ' || vr_tab_crapavt(vr_ind).nmdavali;
+                  EXIT;
+                END IF;
+                vr_ind := vr_tab_crapavt.NEXT(vr_ind);
+              END LOOP;
+           END IF; 
+                 
+           IF vr_nmagenda IS NULL THEN
+              vr_nmagenda := CASE WHEN rw_tbgen_trans_pend.nrcpf_operador > 0 THEN 
+                                  gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbgen_trans_pend.nrcpf_operador
+                                                           ,pr_inpessoa => 1)
+                             ELSE gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbgen_trans_pend.nrcpf_representante
+                                                           ,pr_inpessoa => 1)
+                             END;
+           END IF;
+                 
+           --Controle de operacao (indica 1 que pode alterar)
+           IF rw_tbgen_trans_pend.idsituacao_transacao = 1 OR   --Pendente
+              rw_tbgen_trans_pend.idsituacao_transacao = 5 THEN --Parcialmente Aprovada
+             IF pr_nrcpfope > 0 THEN --Consulta efetuada por operador PJ
+               IF rw_tbgen_trans_pend.idsituacao_transacao = 1     AND
+                  rw_tbgen_trans_pend.nrcpf_operador = pr_nrcpfope THEN
+                  vr_indiacao := 1;
+               END IF;
            ELSE
                OPEN cr_tbaprova(pr_cdtransa => vr_cdtranpe
                                ,pr_nrcpfope => vr_nrcpfcgc);
@@ -6699,29 +7174,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                CLOSE cr_tbaprova;
            END IF; 
          END IF;         
-         
-         --Case para cada tipo de transacao (filhos)                                           
-         CASE 
-            WHEN vr_tptranpe = 1 OR --Transferencias
-                 vr_tptranpe = 3 OR
-                 vr_tptranpe = 5 THEN
-                 
-                 OPEN cr_tbtransf_trans_pend(pr_cddoitem => vr_cdtranpe);
-                 FETCH cr_tbtransf_trans_pend INTO rw_tbtransf_trans_pend;
-                 IF cr_tbtransf_trans_pend%NOTFOUND THEN
-                    --Fechar Cursor
-                    CLOSE cr_tbtransf_trans_pend;
-                    CONTINUE;
-                 ELSE
-                    --Fechar Cursor
-                    CLOSE cr_tbtransf_trans_pend;
-                    
-                    --Controle de paginacao
-                    vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
-                       CONTINUE;
-                    END IF;
+
+           --Case para cada tipo de transacao (filhos)                                           
+           CASE 
+              WHEN vr_tptranpe = 1 OR --Transferencias
+                   vr_tptranpe = 3 OR
+                   vr_tptranpe = 5 THEN
+                         
+                   OPEN cr_tbtransf_trans_pend(pr_cddoitem => vr_cdtranpe);
+                   FETCH cr_tbtransf_trans_pend INTO rw_tbtransf_trans_pend;
+                   IF cr_tbtransf_trans_pend%NOTFOUND THEN
+                      --Fechar Cursor
+                      CLOSE cr_tbtransf_trans_pend;
+                      CONTINUE;
+                   ELSE
+                      --Fechar Cursor
+                      CLOSE cr_tbtransf_trans_pend;
+                            
+                      --Controle de paginacao
+                      vr_qttotpen := vr_qttotpen + 1;
+                      IF ((vr_qttotpen <= vr_nriniseq) OR
+                         (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                         CONTINUE;
+                 END IF;
 
                  END IF;
                  
@@ -6754,10 +7229,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     --Fechar Cursor
                     CLOSE cr_crapass;
                  END IF;
-                                  
+
                  --Valor a somar
                  vr_vlasomar := rw_tbtransf_trans_pend.vltransferencia;
-                 
+
                  --Variaveis do resumo
                  vr_dsvltran := TO_CHAR(rw_tbtransf_trans_pend.vltransferencia,'fm999g999g990d00'); -- Valor
                  vr_dsdtefet := CASE WHEN rw_tbtransf_trans_pend.idagendamento = 1 THEN 'Nesta Data' ELSE TO_CHAR(rw_tbtransf_trans_pend.dtdebito,'DD/MM/RRRR') END; -- Data Efetivacao
@@ -6784,56 +7259,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                    
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                      IF ((vr_qttotpen <= vr_nriniseq) OR
+                         (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
-                 
-                 --Valor a somar
-                 vr_vlasomar := rw_tbpagto_trans_pend.vlpagamento;
-                 
-                 --Variaveis do resumo
-                 vr_dsvltran := TO_CHAR(rw_tbpagto_trans_pend.vlpagamento,'fm999g999g990d00'); -- Valor
-                 vr_dsdtefet := CASE WHEN rw_tbpagto_trans_pend.idagendamento = 1 THEN 'Nesta Data' ELSE TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR') END; -- Data Efetivacao
-                 vr_dsdescri := rw_tbpagto_trans_pend.dscedente; -- Descricao
-                 vr_dstptran := CASE WHEN rw_tbpagto_trans_pend.tppagamento = 1 THEN 
-                                       'Pagamento de Convênio' 
-                                     WHEN rw_tbpagto_trans_pend.tppagamento = 2 THEN
-                                       'Pagamento de Boletos Diversos'
-                                     ELSE 
-                                        'Pagamento de GPS' END; -- Tipo de Transacao
-                 vr_dsagenda := CASE WHEN rw_tbpagto_trans_pend.idagendamento = 1 THEN 'NÃO' ELSE 'SIM' END; -- Agendamento
-                 
-                 --Variaveis especificas
-                 vr_nmcednte := rw_tbpagto_trans_pend.dscedente;
-                 vr_nrcodbar := rw_tbpagto_trans_pend.dscodigo_barras;
-                 vr_dslindig := rw_tbpagto_trans_pend.dslinha_digitavel;
-                 vr_dtvencto := TO_CHAR(rw_tbpagto_trans_pend.dtvencimento,'DD/MM/RRRR');
-                 vr_vldocmto := TO_CHAR(rw_tbpagto_trans_pend.vldocumento,'fm999g999g990d00');
-                 vr_dtdebito := TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR');
-                 vr_identdda := CASE WHEN rw_tbpagto_trans_pend.idtitulo_dda = 0 THEN 'NÃO' ELSE 'SIM' END;
-                 
-            WHEN vr_tptranpe = 4 THEN --TED
-                 
-                 OPEN cr_tbspb_trans_pend(pr_cddoitem => vr_cdtranpe);
-                 FETCH cr_tbspb_trans_pend INTO rw_tbspb_trans_pend;
-                 IF cr_tbspb_trans_pend%NOTFOUND THEN
-                    --Fechar Cursor
-                    CLOSE cr_tbspb_trans_pend;
-                    CONTINUE;
-                 ELSE
-                    --Fechar Cursor
-                    CLOSE cr_tbspb_trans_pend;
+                         
+                   --Valor a somar
+                   vr_vlasomar := rw_tbpagto_trans_pend.vlpagamento;
+                         
+                   --Variaveis do resumo
+                   vr_dsvltran := TO_CHAR(rw_tbpagto_trans_pend.vlpagamento,'fm999g999g990d00'); -- Valor
+                   vr_dsdtefet := CASE WHEN rw_tbpagto_trans_pend.idagendamento = 1 THEN 'Nesta Data' ELSE TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR') END; -- Data Efetivacao
+                   vr_dsdescri := rw_tbpagto_trans_pend.dscedente; -- Descricao
+                   vr_dstptran := CASE WHEN rw_tbpagto_trans_pend.tppagamento = 1 THEN 
+                                         'Pagamento de Convênio' 
+                                       WHEN rw_tbpagto_trans_pend.tppagamento = 2 THEN
+                                         'Pagamento de Boletos Diversos'
+                                       ELSE 
+                                          'Pagamento de GPS' END; -- Tipo de Transacao
+                   vr_dsagenda := CASE WHEN rw_tbpagto_trans_pend.idagendamento = 1 THEN 'NÃO' ELSE 'SIM' END; -- Agendamento
+                         
+                   --Variaveis especificas
+                   vr_nmcednte := rw_tbpagto_trans_pend.dscedente;
+                   vr_nrcodbar := rw_tbpagto_trans_pend.dscodigo_barras;
+                   vr_dslindig := rw_tbpagto_trans_pend.dslinha_digitavel;
+                   vr_dtvencto := TO_CHAR(rw_tbpagto_trans_pend.dtvencimento,'DD/MM/RRRR');
+                   vr_vldocmto := TO_CHAR(rw_tbpagto_trans_pend.vldocumento,'fm999g999g990d00');
+                   vr_dtdebito := TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR');
+                   vr_identdda := CASE WHEN rw_tbpagto_trans_pend.idtitulo_dda = 0 THEN 'NÃO' ELSE 'SIM' END;
+                         
+              WHEN vr_tptranpe = 4 THEN --TED
+                         
+                   OPEN cr_tbspb_trans_pend(pr_cddoitem => vr_cdtranpe);
+                   FETCH cr_tbspb_trans_pend INTO rw_tbspb_trans_pend;
+                   IF cr_tbspb_trans_pend%NOTFOUND THEN
+                      --Fechar Cursor
+                      CLOSE cr_tbspb_trans_pend;
+                      CONTINUE;
+                   ELSE
+                      --Fechar Cursor
+                      CLOSE cr_tbspb_trans_pend;
 
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
-                 
+                       
                  --Cadastro de Transferencias pela Internet
                  OPEN cr_crapcti( pr_cdcooper => rw_tbspb_trans_pend.cdcooper,
                                   pr_nrdconta => rw_tbspb_trans_pend.nrdconta,
@@ -6933,8 +7408,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -6973,8 +7448,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7018,12 +7493,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                            ,pr_dscritic => vr_dscritic
                                                            ,pr_saldo_rdca => vr_saldo_rdca);                             
                           END IF;    
-                          
-							--Filtro data
-							IF rw_tbgen_trans_pend.dtregistro_transacao NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
-								CONTINUE;                                                               
-							END IF;
-                          
+                                
+                          --Filtro data
+                          IF pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND rw_tbgen_trans_pend.dtregistro_transacao NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+                            CONTINUE;                                                               
+                          END IF;
+                                
                           --Valor a somar
                           vr_vlasomar := vr_vlaplica;
                           
@@ -7106,7 +7581,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             END IF;                    
                           END IF;
 
-                          IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+                          IF pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
                           END IF;
                           
@@ -7120,6 +7595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                           ,pr_nrdconta => pr_nrdconta 
                                                           ,pr_idseqttl => 0 -- Todos Titulares 
                                                           ,pr_nrctraar => rw_tbcapt_trans_pend.nrdocto_agendamento 
+                                                          ,pr_cdsitaar => 0
                                                           ,pr_cdcritic => vr_cdcritic 
                                                           ,pr_dscritic => vr_dscritic
                                                           ,pr_tab_agen => vr_tab_agen);                                                         
@@ -7149,7 +7625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                               EXIT;
                           END LOOP; 
 
-                          IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+                          IF pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
                           END IF;                    
                           
@@ -7203,8 +7679,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                              
                              EXIT;
                           END LOOP;  
-                          
-                          IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+                                
+                          IF pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
                           END IF;   
                           
@@ -7224,8 +7700,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7248,8 +7724,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Valor a somar
                     vr_vlasomar := 0;
-                    
-                    vr_dsvltran := ' '; -- Valor
+                          
+                    vr_dsvltran := '0,00'; -- Valor
                     vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
                     vr_dsdescri := 'DEBITO AUTOMATICO - ' || vr_nmrescon;-- Descricao
                     vr_dstptran := 'Autorização Débito Automático'; -- Tipo de Transacao
@@ -7308,8 +7784,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7342,24 +7818,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
-						
-								 vr_vlasomar := 0;
-								 vr_dsvltran := ' '; -- Valor
-								 vr_dsdtefet := 'Mes atual'; -- Data Efetivacao
-								 vr_dsdescri := 'SERVIÇOS COOPERATIVOS'; -- Descricao
-								 vr_dstptran := 'Adesão de Serviços Cooperativos'; -- Tipo de Transacao
-								 vr_dsagenda := 'NÃO'; -- Agendamento
-								 
-								 vr_vlpacote := to_char(rw_pactar.vlpacote,'fm999g999g990d00');
-								 vr_dspacote := rw_pactar.dspacote;
-								 vr_dtinivig := to_char(rw_pactar.dtinivig, 'dd/mm/rrrr');
-								 vr_dtdiadeb := rw_pactar.dtdiadeb;     
-            
+      						
+                 vr_vlasomar := 0;
+                 vr_dsvltran := '0,00'; -- Valor
+                 vr_dsdtefet := 'Mes atual'; -- Data Efetivacao
+                 vr_dsdescri := 'SERVIÇOS COOPERATIVOS'; -- Descricao
+                 vr_dstptran := 'Adesão de Serviços Cooperativos'; -- Tipo de Transacao
+                 vr_dsagenda := 'NÃO'; -- Agendamento
+      								 
+                 vr_vlpacote := to_char(rw_pactar.vlpacote,'fm999g999g990d00');
+                 vr_dspacote := rw_pactar.dspacote;
+                 vr_dtinivig := to_char(rw_pactar.dtinivig, 'dd/mm/rrrr');
+                 vr_dtdiadeb := rw_pactar.dtdiadeb;     
+                  
             WHEN vr_tptranpe = 11 THEN -- DARF/DAS                 
                OPEN cr_tbpagto_darf_das_trans_pend (pr_cddoitem => vr_cdtranpe);
                FETCH cr_tbpagto_darf_das_trans_pend INTO rw_tbpagto_darf_das_trans_pend;
@@ -7372,8 +7848,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                   CLOSE cr_tbpagto_darf_das_trans_pend;
 				          --Controle de paginação
                   vr_qttotpen := vr_qttotpen + 1;
-                  IF ((vr_qttotpen <= pr_nriniseq) OR
-                    (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                  IF ((vr_qttotpen <= vr_nriniseq) OR
+                    (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                     CONTINUE;
                   END IF;	
                END IF;
@@ -7432,8 +7908,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                         
                 --Controle de paginação
                 vr_qttotpen := vr_qttotpen + 1;
-                IF ((vr_qttotpen <= pr_nriniseq) OR
-                   (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                IF ((vr_qttotpen <= vr_nriniseq) OR
+                   (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                    CONTINUE;
                 END IF;
               END IF;
@@ -7462,8 +7938,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                         
                 --Controle de paginação
                 vr_qttotpen := vr_qttotpen + 1;
-                IF ((vr_qttotpen <= pr_nriniseq) OR
-                   (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                IF ((vr_qttotpen <= vr_nriniseq) OR
+                   (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                    CONTINUE;
                 END IF;
               END IF;
@@ -7488,6 +7964,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
               vr_nmproduto := rw_tbrecarga_trans_pend.nmproduto;
               vr_vlasomar := rw_tbrecarga_trans_pend.vlrecarga;
               
+                 
+               
             --> CONTRATO DE SMS
             WHEN vr_tptranpe IN (16,17) THEN
             
@@ -7506,7 +7984,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
               vr_vlasomar := 0;
                  
               --Variaveis do resumo
-              vr_dsvltran := NULL; -- Valor
+              vr_dsvltran := '0,00'; -- Valor
               vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
               vr_dsdescri := rw_sms_trans_pend.dspacote; -- Descricao
               IF vr_tptranpe IN (16) THEN
@@ -7517,6 +7995,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                 vr_dsdescri := 'Cancelamento SMS de Cobrança - '||rw_sms_trans_pend.dspacote; -- Descricao
               END IF;
               vr_dsagenda := 'NÃO'; -- Agendamento  
+
+              -- Início SM 454.1
+      WHEN vr_tptranpe = 18 THEN --Resgate de cheque em Custódia
+      							
+       OPEN cr_tbcst_trans_pend_det(vr_cdtranpe);
+       FETCH cr_tbcst_trans_pend_det INTO rw_tbcst_trans_pend_det;
+          							 
+       IF cr_tbcst_trans_pend_det%NOTFOUND THEN
+                --Fechar Cursor
+        CLOSE cr_tbcst_trans_pend_det;
+                CONTINUE;
+            ELSE
+                --Fechar Cursor
+        CLOSE cr_tbcst_trans_pend_det;
+                              
+                --Controle de paginação
+                vr_qttotpen := vr_qttotpen + 1;
+                IF ((vr_qttotpen <= vr_nriniseq) OR
+                   (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                   CONTINUE;
+                END IF;
+              END IF;
+                    
+              vr_dsagenda := 'NÃO'; -- Agendamento  
+             vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
+       vr_dsdescri := 'Bordero de Resgate de Cheques em Custódia';
+               vr_dstptran := 'Bordero de Resgate de Cheques em Custódia';
+               vr_dsvltran := to_char(rw_tbcst_trans_pend_det.vltotchq,'fm999g999g990d00');
+       vr_vltotchq := to_char(rw_tbcst_trans_pend_det.vltotchq,'fm999g999g990d00');
+               vr_dtdebito := to_char(rw_tbcst_trans_pend_det.dtmvtolt,'DD/MM/RRRR');
+       vr_qtcheque := rw_tbcst_trans_pend_det.qtcheque;
+       vr_vlasomar := rw_tbcst_trans_pend_det.vltotchq;   
+--Fim SM 454.1  
 
             ELSE
                 vr_dscritic := 'Tipo de transação não encontrado.';
@@ -7545,8 +8056,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                    || '   <data_alteracao_sit>' ||vr_dtaltera||'</data_alteracao_sit>'
                                                    || '   <pode_alterar>'       ||vr_indiacao||'</pode_alterar>'
                                                    || '   <idsituacao_transacao>' ||vr_idsittra||'</idsituacao_transacao>'
+                                                   || '   <data_debito>' || CASE WHEN UPPER(vr_dsdtefet) = 'NESTA DATA' THEN TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR') WHEN UPPER(vr_dsdtefet) = 'MES ATUAL' THEN TO_CHAR(TRUNC(pr_dtmvtolt,'MM'),'DD/MM/RRRR') ELSE vr_dsdtefet END || '</data_debito>'
+                                                   || '   <data_sistema>' || TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR') || '</data_sistema>'
                                                    || '</dados_resumo>');
-         
+
          --Detalhes da Transacao
          vr_xml_auxi := '<dados_detalhe>';
          
@@ -7774,10 +8287,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             || '<dados_campo><label>Data da Recarga</label><valor>'         ||vr_dtrecarga||'</valor></dados_campo>'
             || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_dsagenda ||'</valor></dados_campo>';
             
+         
+                            
          ELSIF vr_tptranpe IN (16,17) THEN --> Contrato de SMS
             vr_xml_auxi := vr_xml_auxi            
             || '<dados_campo><label>Serviço</label><valor>'  || rw_sms_trans_pend.dspacote ||'</valor></dados_campo>'
             || '<dados_campo><label>Início</label><valor>'   || to_char(rw_sms_trans_pend.dtassinatura,'DD/MM/RRRR')      ||'</valor></dados_campo>';
+         
+         -- Início SM 454.1
+         ELSIF vr_tptranpe = 18 THEN -- Resgate de Cheques em Custódia
+            vr_xml_auxi := vr_xml_auxi
+            || '<dados_campo><label>Valor Total</label><valor>'          ||vr_vltotchq||'</valor></dados_campo>'
+            || '<dados_campo><label>Quantidade de Cheques</label><valor>'||vr_qtcheque||'</valor></dados_campo>';
+-- Fim SM 454.1
          END IF;
          
          vr_xml_auxi := vr_xml_auxi || '</dados_detalhe>';
@@ -7817,6 +8339,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                '<vlcheque>' || rw_tbdscc_cheques.vlcheque || '</vlcheque>' ||
                                            '</cheque>';	
          END LOOP;
+         --início SM 454.1         
+         ELSIF  vr_tptranpe = 18 THEN -- Resgate de Cheques em Custódia
+           FOR rw_tbcst_cheques IN cr_tbcst_cheques(vr_cdtranpe) LOOP
+             vr_xml_auxi := vr_xml_auxi || '<cheque>' ||
+                                               '<dtlibera>' || rw_tbcst_cheques.dtlibera || '</dtlibera>' ||
+                                               '<dtemissa>' || rw_tbcst_cheques.dtemissa || '</dtemissa>' ||
+                                               '<cdbanchq>' || rw_tbcst_cheques.cdbanchq || '</cdbanchq>' ||
+                                               '<cdagechq>' || rw_tbcst_cheques.cdagechq || '</cdagechq>' ||
+                                               '<nrctachq>' || rw_tbcst_cheques.nrctachq || '</nrctachq>' ||
+                                               '<nrcheque>' || rw_tbcst_cheques.nrcheque || '</nrcheque>' ||
+                                               '<vlcheque>' || rw_tbcst_cheques.vlcheque || '</vlcheque>' ||
+                                           '</cheque>';	
+           END LOOP;                                           
+--Fim Sm 454.1  
          END IF;
 
          vr_xml_auxi := vr_xml_auxi || '</bordero></transacao>';	
@@ -7825,23 +8361,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                                 ,pr_texto_completo => vr_xml_temp 
                                 ,pr_texto_novo     => vr_xml_auxi);
-                           
-			END LOOP;
-      --Fim loop de transacoes
       
-      --Montar Tag de fechamento das transacoes pendentes
-      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                             ,pr_texto_completo => vr_xml_temp 
-                             ,pr_texto_novo     => '</transacoes>');
-      
-      --Montar Tag Xml de Total
-      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                             ,pr_texto_completo => vr_xml_temp 
-                             ,pr_texto_novo     => '<total>'
-                                                || '  <quantidade>'||vr_qttotpen||'</quantidade>'
-                                                || '  <valortotal>'||TO_CHAR(vr_vltotpen,'fm999g999g990d00')||'</valortotal>'
-                                                || '</total>');
-      
+        END LOOP;
+        --Fim loop de transacoes
+              
+        --Montar Tag de fechamento das transacoes pendentes
+        gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '</transacoes>');
+              
+        --Montar Tag Xml de Total
+        gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '<total>'
+                                                  || '  <quantidade>'||vr_qttotpen||'</quantidade>'
+                                                  || '  <valortotal>'||TO_CHAR(vr_vltotpen,'fm999g999g990d00')||'</valortotal>'
+                                                  || '</total>');
+      END IF;      
       
       -- Encerrar a tag raiz 
       gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
@@ -9374,6 +9910,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 	    vr_tab_crapavt CADA0001.typ_tab_crapavt_58; -- Tabela Avalistas
       vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
 			
+			-- Operação agendada duplicada
+			CURSOR cr_operacao_duplicada(pr_cdcooper IN tbrecarga_operacao.cdcooper%TYPE
+			                            ,pr_nrdconta IN tbrecarga_operacao.nrdconta%TYPE
+																	,pr_dtrecarg IN tbrecarga_operacao.dtrecarga%TYPE
+																	,pr_nrdddtel IN tbrecarga_operacao.nrddd%TYPE
+																	,pr_nrtelefo IN tbrecarga_operacao.nrcelular%TYPE
+																	,pr_vlrecarg IN tbrecarga_operacao.vlrecarga%TYPE) IS
+				SELECT 1
+				  FROM tbrecarga_operacao ope
+				 WHERE ope.cdcooper  = pr_cdcooper
+				   AND ope.nrdconta  = pr_nrdconta
+					 AND ope.dtrecarga = pr_dtrecarg
+					 AND ope.nrddd     = pr_nrdddtel
+					 AND ope.nrcelular = pr_nrtelefo
+					 AND ope.vlrecarga = pr_vlrecarg
+					 AND ope.insit_operacao IN (1,3); -- Agendada / Transação Pendente
+			rw_operacao_duplicada cr_operacao_duplicada%ROWTYPE;				 						
+			
 			-- Subrotinas
 			PROCEDURE pc_cria_operacao_pendente(pr_cdtranpe IN tbrecarga_trans_pend.cdtransacao_pendente%TYPE
 				                                 ,pr_tprecarga IN tbrecarga_trans_pend.tprecarga%TYPE
@@ -9475,6 +10029,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           
 				END LOOP;
 			ELSE
+				 -- Verificar agendamento duplicado
+         OPEN cr_operacao_duplicada(pr_cdcooper => pr_cdcooper
+			                             ,pr_nrdconta => pr_nrdconta
+																	 ,pr_dtrecarg => pr_dtrecarga
+																	 ,pr_nrdddtel => pr_nrdddtel
+																	 ,pr_nrtelefo => pr_nrtelefo
+																	 ,pr_vlrecarg => pr_vlrecarga);
+				 FETCH cr_operacao_duplicada INTO rw_operacao_duplicada;
+				 
+				 -- Se encontrou agendamento já existe
+				 IF cr_operacao_duplicada%FOUND THEN
+					 -- Fechar cursor
+					 CLOSE cr_operacao_duplicada;
+					 -- Gerar crítica
+           vr_cdcritic := 0;
+					 vr_dscritic := '<![CDATA[Você já possui uma transação pendente de aprovação com os mesmos dados informados. </br>'
+											 || '<center>Consulte suas transações pendentes.</center>]]>';
+					-- Levantar exceção
+					RAISE vr_exc_erro;					 
+				 END IF;
+				 -- Fechar cursor
+				 CLOSE cr_operacao_duplicada;
+			
 				 -- Cria transação operador
 				 pc_cria_transacao_operador(pr_cdagenci => pr_cdagenci
 																	 ,pr_nrdcaixa => pr_nrdcaixa
@@ -10954,6 +11531,96 @@ PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2
 
                                         
   END pc_corrigi_limite_preposto;
+  
+PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2 
+                                    ,pr_nrdconta IN VARCHAR2 
+                                    ,pr_xmllog   IN  VARCHAR2
+                                    ,pr_cdcritic OUT PLS_INTEGER                       
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+    --  Programa : pc_busca_resp_assinatura
+    --  Sistema  : Procedure buscar os responsaveis por assinatura
+  --  Sigla    : CRED
+    --  Autor    : Mateus Zimmermann (Mouts)
+    --  Data     : Janeiro/2018.                   Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+    -- Objetivo  : Buscar os responsaveis por assinatura
+  --
+  -- Alteração : 
+  --
+  ---------------------------------------------------------------------------------------------------------------   
+    BEGIN
+		DECLARE
+
+      -- Variaveis de XML 
+      vr_xml_temp VARCHAR2(32767);
+      -- Cursores
+      CURSOR cr_resp_assinatura IS
+        SELECT crapass.nmprimtl
+              ,crapass.nrcpfcgc
+        FROM crapavt,
+             crappod,
+             crapass
+       WHERE crapavt.cdcooper = pr_cdcooper
+         AND crapavt.nrdconta = pr_nrdconta
+         AND crappod.cdcooper = crapavt.cdcooper
+         AND crappod.nrdconta = crapavt.nrdconta 
+         AND crappod.nrcpfpro = crapavt.nrcpfcgc 
+         AND crappod.nrctapro = crapavt.nrdctato
+         AND crappod.cddpoder = 10
+         AND crapass.cdcooper = crapavt.cdcooper
+         AND crapass.nrdconta = crappod.nrctapro;
+      rw_resp_assinatura cr_resp_assinatura%ROWTYPE;
+ 
+      -- Variaveis locais
+      vr_contador INTEGER := 0;
+    
+      -- Variaveis de critica
+      vr_dscritic crapcri.dscritic%TYPE;
+    BEGIN
+      
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'Responsaveis',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
+																					
+    FOR rw_resp_assinatura IN cr_resp_assinatura LOOP
+			
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,
+                               pr_tag_pai => 'Responsaveis',
+                               pr_posicao => 0,
+                               pr_tag_nova => 'inf',
+                               pr_tag_cont => NULL,
+                               pr_des_erro => vr_dscritic); 
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,
+                               pr_tag_pai => 'inf',
+                               pr_posicao => vr_contador, 
+                               pr_tag_nova => 'nmprimtl', 
+                               pr_tag_cont => rw_resp_assinatura.nmprimtl, 
+                               pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,
+                               pr_tag_pai => 'inf',
+                               pr_posicao => vr_contador, 
+                               pr_tag_nova => 'nrcpfcgc', 
+                               pr_tag_cont => rw_resp_assinatura.nrcpfcgc, 
+                               pr_des_erro => vr_dscritic);
+			
+        vr_contador := vr_contador + 1;	
+        
+        END LOOP;
+
+		EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_des_erro := 'Erro geral em pc_busca_resp_assinatura: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em pc_busca_resp_assinatura: ' || SQLERRM;
+    END;
+  END pc_busca_resp_assinatura;
 
 END INET0002;
 /
