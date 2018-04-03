@@ -6,6 +6,7 @@
  * OBJETIVO     : Rotina para alterar as informações da tela CADCYB
  * --------------
  * ALTERAÇÕES   : 01/09/2015 - Adicionado os campos de Assessoria e Motivo CIN (Douglas - Melhoria 12)
+ *                03/04/2018 - Convertido para chamada via Oracle (Chamado 806202)
  * -------------- 
  */
  
@@ -59,6 +60,12 @@
 	$xmlResult = getDataXML($xml);
 	$xmlObjeto = getObjectXML($xmlResult);
 	
+	// Executa script para envio do XML
+    $xmlResult = mensageria($xml, "CADCYB", "ALTERA_DADOS_CADCYB", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+	// Cria objeto para classe de tratamento de XML
+	$xmlObjeto = getObjectXML($xmlResult);
+		
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Controle de Erros
 	//----------------------------------------------------------------------------------------------------------------------------------
@@ -67,6 +74,12 @@
 		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
 	} 
 
-	echo 'showError("inform","Lan&ccedil;amentos alterados com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","estadoInicial();");';		
+	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "MSG" ) {
+		$msgErro    = $xmlObjeto->roottag->tags[0]->cdata;
+		$msgErro    = $msgErro . "Lan&ccedil;amentos alterados com sucesso.";
+		exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+	} else {
+		echo 'showError("inform","Lan&ccedil;amentos alterados com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","estadoInicial();");';		
+	}
 
 ?>

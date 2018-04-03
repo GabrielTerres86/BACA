@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 21/09/2017
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 13/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -45,7 +45,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --
   --             03/05/2017 - Salvar registros por arquivo e desfazer acoes se aconteceu erro numa linha. (Jaison/James)
 
-     21/09/2017 - #756229 Setando pr_flgemail true nas rotinas pc_imp_arq_acordo_cancel e pc_imp_arq_acordo_quitado
+                 21/09/2017 - #756229 Setando pr_flgemail true nas rotinas pc_imp_arq_acordo_cancel e pc_imp_arq_acordo_quitado
                   quando ocorrer erro nos comandos de extração de zip, listagem dos arquivos extraídos e conversão 
                   txt para unix para que os responsáveis pelo negócio sejam avisados por e-mail (Carlos)
 
@@ -53,6 +53,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                  08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
                               na procedure pc_imp_arq_acordo_cancel. (SD#791193 - AJFink)
+
+  --             13/03/2018 - Chamado 806202 - ALterado update CRAPCYC para não atualizar motivos 2 e 7.
 
   ---------------------------------------------------------------------------------------------------------------*/
 

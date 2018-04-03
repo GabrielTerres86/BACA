@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Agosto/2013                         Ultima atualizacao: 06/11/2015
+   Data    : Agosto/2013                         Ultima atualizacao: 13/03/2018
 
    Dados referentes ao programa:
 
@@ -48,11 +48,15 @@
 
 			   13/10/2016 - 533466-Cyber, Atualizar data de manutencao cadastral
 			                ao inserir dados na CADCYB (Gil Furtado - Mouts)
+
+			   13/03/2018 - 806202- Não possibilitar mudança/inserção de CDMOTCIN 2 e 7
+			                se operador não for do depto.Jurídico (Everton Souza - Mouts)
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/b1wgen0170tt.i }
 { sistema/generico/includes/b1wgen0168tt.i }
+{ sistema/generico/includes/var_oracle.i }
 
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i  }
@@ -338,6 +342,27 @@ PROCEDURE grava-dados-crapcyc:
 
         IF  NOT AVAIL crapcyc THEN
             DO:
+
+                 FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
+                                      AND crapope.cdoperad = par_cdoperad
+                                      NO-LOCK NO-ERROR.
+                 IF AVAIL crapope THEN
+				   DO:
+                   IF (crapope.cddepart <> 13) and (aux_cdmotcin = 2 or aux_cdmotcin = 7) then
+                     DO:
+                         ASSIGN aux_cdcritic = 0
+                         aux_dscritic = "Somente operadores do departamento juridico " +
+                                              "podem cadastrar MOTIVO CIN 2 ou 7 !".
+                        RUN gera_erro (INPUT par_cdcooper,        
+                                       INPUT par_cdagenci,
+                                       INPUT 1, /* nrdcaixa  */
+                                       INPUT 1, /* sequencia */
+                                       INPUT aux_cdcritic,        
+                                       INPUT-OUTPUT aux_dscritic).                                            
+                        RETURN "NOK".
+                     END.	
+                   END. 
+
                  /* INICIO - Atualizar os dados da tabela crapcyb (CYBER) */
                  IF NOT VALID-HANDLE(h-b1wgen0168) THEN
                     RUN sistema/generico/procedures/b1wgen0168.p
@@ -604,6 +629,39 @@ PROCEDURE altera-dados-crapcyc:
 			END.
 		ELSE
             DO:
+              FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
+                                   AND crapope.cdoperad = par_cdoperad
+                                    NO-LOCK NO-ERROR.
+              IF AVAIL crapope THEN
+                 DO:
+                   IF (crapope.cddepart <> 13) and (crapcyc.cdmotcin = 2 or crapcyc.cdmotcin = 7) and (crapcyc.cdmotcin <> par_cdmotcin) then
+                     DO:
+                        ASSIGN aux_cdcritic = 0
+                        aux_dscritic = "Somente operadores do departamento juridico " +
+                                       "podem alterar MOTIVO CIN 2 ou 7 cadastrados previamente !".
+                        RUN gera_erro (INPUT par_cdcooper,        
+                                   INPUT par_cdagenci,
+                                   INPUT 1, /* nrdcaixa  */
+                                   INPUT 1, /* sequencia */
+                                   INPUT aux_cdcritic,        
+                                   INPUT-OUTPUT aux_dscritic).                                            
+                        RETURN "NOK".
+                     END.	
+                   IF (crapope.cddepart <> 13) and (par_cdmotcin = 2 or par_cdmotcin = 7) and (crapcyc.cdmotcin <> par_cdmotcin) then
+                     DO:
+                        ASSIGN aux_cdcritic = 0
+			                   aux_dscritic = "Somente operadores do departamento juridico " +
+                                              "podem alterar para MOTIVO CIN 2 e 7 !".
+                        RUN gera_erro (INPUT par_cdcooper,        
+                                   INPUT par_cdagenci,
+                                   INPUT 1, /* nrdcaixa  */
+                                   INPUT 1, /* sequencia */
+                                   INPUT aux_cdcritic,        
+                                   INPUT-OUTPUT aux_dscritic).                                            
+						RETURN "NOK".
+                    END.									
+                END.   
+
 			   ASSIGN crapcyc.flgjudic = par_flgjudic
                       crapcyc.flextjud = par_flextjud
                       crapcyc.flgehvip = par_flgehvip
@@ -757,6 +815,30 @@ PROCEDURE excluir-dados-crapcyc:
 			END.
 		ELSE
             DO:
+
+			  FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
+                                   AND crapope.cdoperad = par_cdoperad
+                                   NO-LOCK NO-ERROR.
+
+              IF AVAIL crapope THEN
+			  DO:
+                IF (crapope.cddepart <> 13) and (crapcyc.cdmotcin = 2 or crapcyc.cdmotcin = 7) then
+                DO:
+				  ASSIGN aux_cdcritic = 0
+			             aux_dscritic = "Somente operadores do departamento juridico " +
+                                        "podem excluir registros com MOTIVO CIN 2 ou 7 !".
+                
+				  RUN gera_erro (INPUT par_cdcooper,        
+                                 INPUT par_cdagenci,
+                                 INPUT 1, /* nrdcaixa  */
+                                 INPUT 1, /* sequencia */
+                                 INPUT aux_cdcritic,        
+                                 INPUT-OUTPUT aux_dscritic).                                            
+
+			      RETURN "NOK".
+   		        END.	
+              END.  
+
 			   DELETE crapcyc.
                ASSIGN aux_flgerlog = TRUE.
                LEAVE.
