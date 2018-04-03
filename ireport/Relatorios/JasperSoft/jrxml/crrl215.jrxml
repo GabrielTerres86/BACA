@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel132" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="NoDataSection" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-04-03T13:27:06 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl215" language="groovy" pageWidth="842" pageHeight="496" orientation="Landscape" whenNoDataType="NoDataSection" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.207882500000003"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -28,7 +31,10 @@
 	<pageHeader>
 		<band height="53">
 			<subreport>
-				<reportElement uuid="5c1035bb-12dc-4801-85ef-08f42a648367" x="1" y="0" width="594" height="32"/>
+				<reportElement x="0" y="0" width="842" height="32" uuid="5c1035bb-12dc-4801-85ef-08f42a648367">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
 				<subreportParameter name="PR_NMDESTIN">
 					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
 				</subreportParameter>
@@ -57,17 +63,17 @@
 					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
 				</subreportParameter>
 				<dataSourceExpression><![CDATA[]]></dataSourceExpression>
-				<subreportExpression><![CDATA["cabrel132.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA["cabrel234.jasper"]]></subreportExpression>
 			</subreport>
 			<staticText>
-				<reportElement uuid="2f566e17-2a88-44d6-b304-bcf5022146bc" x="154" y="32" width="227" height="10"/>
+				<reportElement x="254" y="32" width="227" height="10" uuid="2f566e17-2a88-44d6-b304-bcf5022146bc"/>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="8" isBold="false"/>
 				</textElement>
 				<text><![CDATA[TRANSFERENCIAS DE MESMA TITULARIDADE DO DIA:]]></text>
 			</staticText>
 			<textField>
-				<reportElement uuid="68fb4759-2384-4fca-a5f2-3dad489e8127" x="380" y="32" width="90" height="10"/>
+				<reportElement x="480" y="32" width="90" height="10" uuid="68fb4759-2384-4fca-a5f2-3dad489e8127"/>
 				<textElement>
 					<font fontName="Courier New" size="8" isBold="false"/>
 				</textElement>
@@ -78,12 +84,15 @@
 	<detail>
 		<band height="112" splitType="Stretch">
 			<subreport isUsingCache="false">
-				<reportElement uuid="cbfc45f7-2851-41f8-8da6-3fa4221da4b3" positionType="Float" x="1" y="21" width="594" height="32"/>
+				<reportElement positionType="Float" x="0" y="21" width="842" height="32" uuid="cbfc45f7-2851-41f8-8da6-3fa4221da4b3">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//tipocaixa/caixa")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl215_1.jasper"]]></subreportExpression>
 			</subreport>
 			<subreport isUsingCache="true">
-				<reportElement uuid="cbfc45f7-2851-41f8-8da6-3fa4221da4b3" positionType="Float" x="0" y="69" width="594" height="32"/>
+				<reportElement positionType="Float" x="0" y="69" width="842" height="32" uuid="cbfc45f7-2851-41f8-8da6-3fa4221da4b3"/>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//tipodoc/doc")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl215_2.jasper"]]></subreportExpression>
 			</subreport>
@@ -92,7 +101,7 @@
 	<noData>
 		<band height="113">
 			<staticText>
-				<reportElement uuid="2f566e17-2a88-44d6-b304-bcf5022146bc" x="164" y="21" width="227" height="10"/>
+				<reportElement x="300" y="21" width="260" height="10" uuid="2f566e17-2a88-44d6-b304-bcf5022146bc"/>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="8" isBold="false"/>
 				</textElement>

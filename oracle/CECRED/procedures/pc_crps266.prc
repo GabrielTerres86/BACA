@@ -43,11 +43,13 @@ BEGIN
                             
                18/02/2015 - Conversão Progress >> Oracle PL/SQL (Vanessa).
 
-			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                      crapass, crapttl, crapjur (Adriano - P339).
+               24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                            crapass, crapttl, crapjur (Adriano - P339).
 
-			         24/04/2017 - Substituida validacao "cdtipcta in (1,2..)" pela categoria
+               12/03/2018 - Substituida validacao "cdtipcta in (1,2..)" pela categoria
                             da conta. PRJ366 (Lombardi).
+
+               24/04/2018 - Ajustes para o relatório 215. PRJ366 (Lombardi).
 
 
 ............................................................................. */
@@ -115,15 +117,15 @@ BEGIN
                 ass.nmprimtl,
                 ass.cdcatego,
                 ass.nrcpfcgc,
-				ass.inpessoa,
-                tip.dstipcta 
+                ass.inpessoa,
+                tip.dstipo_conta dstipcta 
            FROM craplcm lcm
                ,crapass ass
-               ,craptip tip
+               ,tbcc_tipo_conta tip
           WHERE  lcm.cdcooper = ass.cdcooper  AND
                  lcm.nrdconta = ass.nrdconta  AND
-                 tip.cdcooper = ass.cdcooper  AND
-                 tip.cdtipcta = ass.cdtipcta  AND                 
+                 ass.inpessoa = tip.inpessoa  AND
+                 ass.cdtipcta = tip.cdtipo_conta  AND                 
                  lcm.cdcooper = pr_cdcooper   AND
                  lcm.dtmvtolt = pr_dtmvtolt   AND 
                  lcm.cdhistor = pr_cdhistor
@@ -141,15 +143,15 @@ BEGIN
                 ass.nmprimtl,
                 ass.cdcatego,
                 ass.nrcpfcgc,
-				ass.inpessoa,
-                tip.dstipcta 
+                ass.inpessoa,
+                tip.dstipo_conta dstipcta 
            FROM craplcm lcm
                ,crapass ass
-               ,craptip tip
+               ,tbcc_tipo_conta tip
           WHERE  lcm.cdcooper = ass.cdcooper  AND
                  lcm.nrdconta = ass.nrdconta  AND
-                 tip.cdcooper = ass.cdcooper  AND
-                 tip.cdtipcta = ass.cdtipcta  AND       
+                 ass.inpessoa = tip.inpessoa  AND
+                 ass.cdtipcta = tip.cdtipo_conta  AND       
                  lcm.cdcooper = pr_cdcooper   AND
                  lcm.dtmvtolt = pr_dtmvtolt   AND 
                  lcm.cdhistor = 303           AND 
@@ -378,7 +380,7 @@ BEGIN
                                  ,pr_dsjasper  => 'crrl215.jasper'                     --> Arquivo de layout do iReport
                                  ,pr_dsparams  => NULL                                 --> Sem parâmetros
                                  ,pr_dsarqsaid => vr_dsdireto||'/crrl215.lst'         --> Arquivo final com o path
-                                 ,pr_qtcoluna  => 132                                  --> 234 colunas
+                                 ,pr_qtcoluna  => 234                                  --> 234 colunas
                                  ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
                                  ,pr_flg_impri => 'S'                                  --> Chamar a impressão (Imprim.p)
                                  ,pr_nmformul  => 'col'                                --> Nome do formulário para impressão
@@ -386,6 +388,7 @@ BEGIN
                                  ,pr_sqcabrel  => 1                                    --> Qual a seq do cabrel
                                  ,pr_cdrelato  => '215'                                --> Código fixo para o relatório (nao busca pelo sqcabrel)
                                  ,pr_dspathcop => vr_dsdireto_rlnsv                    --> Enviar para o rlnsv
+                                 ,pr_nrvergrl  => 1                                    --> Versão geração do relatório
                                  ,pr_des_erro  => vr_dscritic);                        --> Saída com erro
 
       -- Liberando a memória alocada pro CLOB
