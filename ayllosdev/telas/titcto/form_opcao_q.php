@@ -44,10 +44,6 @@ include('form_cabecalho.php');
                 <option value="S" <?php echo $tpcobran == 'S' ? 'selected' : '' ?>>Cobran&ccedil;a S/ Registro</option>
             </select>
         </div>
-        <div class="listar_resgatados">
-            <label for="flresgat">Listar Resgatados</label>
-            <input id="flresgat" name="flresgat" type="checkbox" value="S" class="campo" <?php echo $flresgat=='S' ? 'checked' : ''?>/>
-        </div>
     </fieldset>		
 
 
@@ -66,8 +62,6 @@ include('form_cabecalho.php');
                         <th><?php echo utf8ToHtml('BOLETO'); ?></th>
                         <th><?php echo utf8ToHtml('BORDERO'); ?></th>
                         <th><?php echo utf8ToHtml('VALOR'); ?></th>
-                        <th><?php echo utf8ToHtml('RESGATE'); ?></th>
-                        <th><?php echo utf8ToHtml('OPERADOR'); ?></th>
                         <th><?php echo utf8ToHtml('DESCTDO POR NOME'); ?></th>
                     </tr>
                 </thead>
@@ -98,12 +92,6 @@ include('form_cabecalho.php');
                             <td><span><?php echo getByTagName($r->tags, 'vltitulo'); ?></span>
                                 <?php echo formataMoeda(getByTagName($r->tags, 'vltitulo')); ?>
                             </td>
-                            <td><span><?php echo dataParaTimestamp(getByTagName($r->tags, 'dtresgat')); ?></span>
-                                <?php echo getByTagName($r->tags, 'dtresgat'); ?>
-                            </td>
-                            <td><span><?php echo getByTagName($r->tags, 'dsoperes'); ?></span>
-                                <?php echo getByTagName($r->tags, 'dsoperes'); ?>
-                            </td>
                             <td><span><?php echo getByTagName($r->tags, 'nmprimt'); ?></span>
                                 <?php echo trim(getByTagName($r->tags, 'nmprimt')); ?>
                             </td>
@@ -115,11 +103,6 @@ include('form_cabecalho.php');
     </fieldset>
 
 </form>
-
-<?php 
-    // Forms com os dados para fazer a chamada da geração de PDF    
-    include("impressao_form_c.php");
-?>
 
 <div id="divBotoes" style="padding-bottom:10px">
     <a href="#" class="botao" id="btVoltar" onclick="btnVoltar();return false;">Voltar</a>

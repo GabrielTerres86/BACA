@@ -125,6 +125,27 @@ switch ($operacao) {
 
         $qtregist = $xmlObj->roottag->tags[0]->attributes['QTREGIST'];
         break;
+    case 'BP': 
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "   <tpcobran>".$tpcobran."</tpcobran>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml,"TITCTO","TITCTO_CONSULTA_PAGADOR_REMETENTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getObjectXML($xmlResult);
+
+        if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+            
+           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","unblockBackground();btnVoltar();");';
+           exit;
+
+        }
+
+        $registros = $xmlObj->roottag->tags[0]->tags;
+        $qtregist = $xmlObj->roottag->tags[0]->attributes['QTREGIST'];
+        break;
 }
 
 // Se a data for vazia, pega a data de hj.

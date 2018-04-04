@@ -218,6 +218,28 @@ PROCEDURE pc_gerar_impressao_titcto_c(
                                         ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       );
+                                      
+  PROCEDURE pc_consulta_pagador_remetente (pr_cdcooper    IN crapcop.cdcooper%TYPE, --> Código da Cooperativa
+                                    pr_nrdconta    IN crapass.nrdconta%TYPE, --> Número da Conta
+                                    pr_tpcobran    IN CHAR,                  --> Filtro de tipo de cobranca
+                                    --> out
+                                    pr_qtregist         out integer,         --> Quantidade de registros encontrados
+                                    pr_tab_dados_titcto   out  typ_tab_dados_titcto, --> Tabela de retorno
+                                    pr_cdcritic out number,                         --> codigo da critica
+                                    pr_dscritic out varchar2                        --> descricao da critica.                    
+                                );
+                                
+  PROCEDURE pc_consulta_pag_remetente_web(
+                                        pr_nrdconta in  crapass.nrdconta%type --> conta do associado
+                                        ,pr_tpcobran    IN CHAR                  --> Filtro de tipo de cobranca
+                                        ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                        ,pr_cdcritic out pls_integer           --> codigo da critica
+                                        ,pr_dscritic out varchar2              --> descricao da critica
+                                        ,pr_retxml   in  out nocopy xmltype    --> arquivo de retorno do xml
+                                        ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                        ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                                      );
+                                
 END TELA_TITCTO;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
@@ -231,6 +253,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     Dados referentes ao programa:
 
     Objetivo  : Centralizar rotinas relacionadas a tela Acompanhamento do Desconto de Título
+    
+    ALTERACOES:
+              04/04/2018 - Adicionada rotina para buscar titulos e remetentes de um pagador - Luis Fernando (GFT)
   */
   /* tratamento de erro */
   vr_exc_erro exception;
@@ -2340,6 +2365,232 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
            /* montar descriçao de erro nao tratado */
            pr_dscritic := 'erro nao tratado na tela_titcto.pc_obtem_dados_titcto_web ' ||sqlerrm;
   END pc_gerar_impressao_titcto_l;
+  
+  PROCEDURE pc_consulta_pagador_remetente (pr_cdcooper    IN crapcop.cdcooper%TYPE, --> Código da Cooperativa
+                                    pr_nrdconta    IN crapass.nrdconta%TYPE, --> Número da Conta
+                                    pr_tpcobran    IN CHAR,                  --> Filtro de tipo de cobranca
+                                    --> out
+                                    pr_qtregist         out integer,         --> Quantidade de registros encontrados
+                                    pr_tab_dados_titcto   out  typ_tab_dados_titcto, --> Tabela de retorno
+                                    pr_cdcritic out number,                         --> codigo da critica
+                                    pr_dscritic out varchar2                        --> descricao da critica.                    
+                                ) is
+    
+    ----------------------------------------------------------------------------------
+    --
+    -- Procedure: pc_consulta_pagador_remetente
+    -- Sistema  : CRED
+    -- Sigla    : TELA_TITCTO
+    -- Autor    : Luis Fernando - Company: GFT
+    -- Data     : Criação: 04/04/2018    
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: Sempre que chamado
+    -- Objetivo  : Trazer os titulos onde o cooperado é o pagador
+    ----------------------------------------------------------------------------------
+    
+    vr_idtabtitcto PLS_INTEGER;
+    aux_flregis INTEGER;
+    /*Cursor dos titulos*/
+    CURSOR cr_craptdb IS
+      SELECT 
+           craptdb.dtlibbdt AS dtlibbdt,
+           craptdb.dtvencto AS dtvencto,
+           craptdb.nrborder AS nrborder,
+           craptdb.cdbandoc AS cdbandoc,
+           craptdb.nrcnvcob AS nrcnvcob,
+           craptdb.nrdocmto AS nrdocmto,
+           craptdb.vltitulo AS vltitulo,
+           crapcob.flgregis AS flgregis,
+           craptdb.nrdconta AS nrdconta,
+           crapass.nmprimtl AS nmprimtl
+      FROM 
+           craptdb 
+           INNER JOIN crapcob ON craptdb.cdcooper = crapcob.cdcooper AND
+                                             craptdb.cdbandoc = crapcob.cdbandoc AND
+                                             craptdb.nrdctabb = crapcob.nrdctabb AND
+                                             craptdb.nrcnvcob = crapcob.nrcnvcob AND
+                                             craptdb.nrdconta = crapcob.nrdconta AND
+                                             craptdb.nrdocmto = crapcob.nrdocmto AND
+                                             (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
+           LEFT JOIN crapass ON crapass.nrdconta=craptdb.nrdconta AND crapass.cdcooper = craptdb.cdcooper
+      WHERE 
+           craptdb.nrinssac = (SELECT nrcpfcgc FROM crapass WHERE nrdconta = pr_nrdconta and cdcooper = pr_cdcooper) 
+           AND craptdb.cdcooper = pr_cdcooper
+           AND craptdb.insittit=4 -- apenas titulos liberados
+      ORDER BY crapcob.flgregis DESC, crapcob.cdbandoc DESC, crapcob.nrdconta;
+      
+      rw_craptdb cr_craptdb%ROWTYPE;
+    
+    BEGIN
+      -- Incluir nome do modulo logado
+        GENE0001.pc_informa_acesso(pr_module => 'TELA_TITCTO'
+                              ,pr_action => NULL);
+
+      -- Começa a listagem da tabela
+         pr_qtregist:= 0;
+         IF (pr_tpcobran='S') THEN
+           aux_flregis := 0;
+         ELSE 
+           IF (pr_tpcobran='R') THEN
+              aux_flregis := 1;
+           ELSE
+              aux_flregis := NULL;
+           END IF;
+         END IF;
+         
+         OPEN  cr_craptdb;
+         LOOP
+               FETCH cr_craptdb INTO rw_craptdb;
+               EXIT  WHEN cr_craptdb%NOTFOUND;
+               pr_qtregist := pr_qtregist+1;
+               vr_idtabtitcto := pr_tab_dados_titcto.count + 1;
+               pr_tab_dados_titcto(vr_idtabtitcto).dtlibbdt := rw_craptdb.dtlibbdt;
+               pr_tab_dados_titcto(vr_idtabtitcto).dtvencto := rw_craptdb.dtvencto;
+               pr_tab_dados_titcto(vr_idtabtitcto).nrborder := rw_craptdb.nrborder;
+               pr_tab_dados_titcto(vr_idtabtitcto).cdbandoc := rw_craptdb.cdbandoc;
+               pr_tab_dados_titcto(vr_idtabtitcto).nrcnvcob := rw_craptdb.nrcnvcob;
+               pr_tab_dados_titcto(vr_idtabtitcto).nrdocmto := rw_craptdb.nrdocmto;
+               pr_tab_dados_titcto(vr_idtabtitcto).vltitulo := rw_craptdb.vltitulo;
+               CASE WHEN (rw_craptdb.flgregis = 1  AND rw_craptdb.cdbandoc = 085) THEN
+                         pr_tab_dados_titcto(vr_idtabtitcto).tpcobran := 'Coop. Emite';
+                    WHEN (rw_craptdb.flgregis = 1  AND rw_craptdb.cdbandoc <> 085) THEN 
+                         pr_tab_dados_titcto(vr_idtabtitcto).tpcobran := 'Banco Emite';
+                    WHEN (rw_craptdb.flgregis = 0) THEN 
+                         pr_tab_dados_titcto(vr_idtabtitcto).tpcobran := 'S/registro';
+                    ELSE
+                         pr_tab_dados_titcto(vr_idtabtitcto).tpcobran := ' ';
+               END CASE;
+               pr_tab_dados_titcto(vr_idtabtitcto).nrdconta := rw_craptdb.nrdconta;
+               IF (rw_craptdb.nmprimtl IS NOT NULL) THEN
+                  pr_tab_dados_titcto(vr_idtabtitcto).nmprimt := rw_craptdb.nmprimtl;
+               ELSE
+                 pr_tab_dados_titcto(vr_idtabtitcto).nmprimt := '';
+               END IF;
+         end   loop;
+        
+    EXCEPTION
+      WHEN OTHERS THEN
+           /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro nao tratado na TELA_TITCTO.pc_consulta_pagador_remetente ' ||sqlerrm;
+
+  END pc_consulta_pagador_remetente;
+
+
+  PROCEDURE pc_consulta_pag_remetente_web(
+                                        pr_nrdconta in  crapass.nrdconta%type --> conta do associado
+                                        ,pr_tpcobran    IN CHAR                  --> Filtro de tipo de cobranca
+                                        ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                        ,pr_cdcritic out pls_integer           --> codigo da critica
+                                        ,pr_dscritic out varchar2              --> descricao da critica
+                                        ,pr_retxml   in  out nocopy xmltype    --> arquivo de retorno do xml
+                                        ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                        ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                                      ) is
+    -- variaveis de retorno
+    vr_tab_dados_titcto typ_tab_dados_titcto;
+
+    vr_tab_erro         gene0001.typ_tab_erro;
+    vr_qtregist         number;
+    vr_des_reto varchar2(3);
+    
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
+
+    -- variáveis para armazenar as informaçoes em xml
+    vr_des_xml        clob;
+    vr_texto_completo varchar2(32600);
+    vr_index          PLS_INTEGER;
+
+    procedure pc_escreve_xml( pr_des_dados in varchar2
+                            , pr_fecha_xml in boolean default false
+                            ) is
+    begin
+        gene0002.pc_escreve_xml( vr_des_xml
+                               , vr_texto_completo
+                               , pr_des_dados
+                               , pr_fecha_xml );
+    end;
+
+    begin
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
+
+
+      pc_consulta_pagador_remetente( vr_cdcooper,
+                                        pr_nrdconta,
+                                        pr_tpcobran,
+                                        --> out
+                                        vr_qtregist,
+                                        vr_tab_dados_titcto,
+                                        pr_cdcritic,
+                                        pr_dscritic
+                               );
+
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
+
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados qtregist="' || vr_qtregist ||'" >');
+
+      -- ler os registros de titcto e incluir no xml
+      vr_index := vr_tab_dados_titcto.first;
+      while vr_index is not null loop
+            pc_escreve_xml('<inf>'||
+                             '<dtlibbdt>' || to_char(vr_tab_dados_titcto(vr_index).dtlibbdt,'dd/mm/rrrr') || '</dtlibbdt>' ||
+                             '<dtvencto>' || to_char(vr_tab_dados_titcto(vr_index).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
+                             '<nrborder>' || vr_tab_dados_titcto(vr_index).nrborder || '</nrborder>' ||
+                             '<cdbandoc>' || vr_tab_dados_titcto(vr_index).cdbandoc || '</cdbandoc>' ||
+                             '<nrcnvcob>' || vr_tab_dados_titcto(vr_index).nrcnvcob || '</nrcnvcob>' ||
+                             '<nrdocmto>' || vr_tab_dados_titcto(vr_index).nrdocmto || '</nrdocmto>' ||
+                             '<vltitulo>' || vr_tab_dados_titcto(vr_index).vltitulo || '</vltitulo>' ||
+                             '<cdoperad>' || vr_tab_dados_titcto(vr_index).cdoperad || '</cdoperad>' ||
+                             '<tpcobran>' || vr_tab_dados_titcto(vr_index).tpcobran || '</tpcobran>' ||
+                             '<nrdconta>' || TRIM(gene0002.fn_mask(vr_tab_dados_titcto(vr_index).nrdconta,'zzzz.zzz.z'))   || '</nrdconta>' ||
+                             '<nmprimt>'  || vr_tab_dados_titcto(vr_index).nmprimt  || '</nmprimt>'  ||
+                           '</inf>'
+                          );
+          /* buscar proximo */
+          vr_index := vr_tab_dados_titcto.next(vr_index);
+      end loop;
+      pc_escreve_xml ('</dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+    exception
+      when vr_exc_erro then
+           /*  se foi retornado apenas código */
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           /* variavel de erro recebe erro ocorrido */
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+      when others then
+           /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro nao tratado na tela_titcto.pc_consulta_pagador_remetente_web' ||sqlerrm;
+  END pc_consulta_pag_remetente_web;
   
 END TELA_TITCTO;
 /
