@@ -136,6 +136,13 @@
                
                26/09/2017 - Alteracao da forma de atualizacao automatica do plano de cotas para
 							"Correcao por Valor Fixo". SD 761675 (Carlos Rafael Tanholi)
+               09/10/2017 - Retornar protocolo da ultima alteracao no plano na
+                            procedure obtem-novo-plano (David)
+
+               04/11/2018 - Adicionar validacao para nao permitir cadastrar plano de cotas
+                            se a data do primeiro debito for ?.
+                            Ajustado detalhamento das mensagens de validacao para a data
+                            do primeiro debito.  (Anderson).
 ..............................................................................*/
 
 
@@ -818,6 +825,14 @@ PROCEDURE obtem-novo-plano:
     ASSIGN tt-novo-plano.despagto = aux_despagto
            tt-novo-plano.dtfuturo = aux_dtdpagto.
             
+    FOR LAST crappro WHERE crappro.cdcooper = par_cdcooper AND
+                           crappro.nrdconta = par_nrdconta AND
+                           crappro.cdtippro = 3            AND
+                           crappro.nrdocmto = crappla.nrctrpla NO-LOCK. END.
+                           
+    IF  AVAILABLE crappro  THEN
+        ASSIGN tt-novo-plano.dsprotoc = crappro.dsprotoc.
+            
     RUN proc_gerar_log (INPUT par_cdcooper,
                         INPUT par_cdoperad,
                         INPUT "",
@@ -1004,14 +1019,36 @@ PROCEDURE valida-dados-plano:
             
         /** Validar data de inicio do pagamento **/
         IF  NOT par_flgpagto                  AND /* Plano C/C */ 
-            par_dtdpagto < par_dtmvtolt       OR
-            par_dtdpagto - par_dtmvtolt > 50  OR
-            DAY(par_dtdpagto) > 28            THEN
+            par_dtdpagto = ?                  THEN
             DO:
                 ASSIGN aux_cdcritic = 13
                        aux_dscritic = "".
                 
                 LEAVE.
+            END.
+
+        IF NOT par_flgpagto             AND
+           par_dtdpagto < par_dtmvtolt  THEN
+            DO:
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = "Data de inicio do plano nao pode ser inferior a data atual".
+              LEAVE.
+            END.
+            
+        IF NOT par_flgpagto                 AND
+           par_dtdpagto - par_dtmvtolt > 50 THEN
+            DO:
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = "Data de inicio do plano nao pode ser maior que 50 dias da data atual".
+              LEAVE.
+            END.
+
+        IF NOT par_flgpagto       AND
+           DAY(par_dtdpagto) > 28 THEN
+            DO:
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = "Data de inicio do plano nao pode ser nos dias 29, 30 ou 31".
+              LEAVE.
             END.
 
         /* Verifica se valor informado nao esta abaixo do valor minimo para 
@@ -2334,7 +2371,7 @@ PROCEDURE dados_protocolo:
     ELSE
     DO:
         IF INDEX(STRING(tt-autorizacao.vlcorfix), ",") > 0 THEN
-            ASSIGN aux_vlcorfix = STRING(tt-autorizacao.vlcorfix).
+            ASSIGN aux_vlcorfix = TRIM(STRING(tt-autorizacao.vlcorfix,"zzz,zzz,zz9.99")).
         ELSE
             ASSIGN aux_vlcorfix = STRING(tt-autorizacao.vlcorfix) + ",00".
 
@@ -2349,7 +2386,7 @@ PROCEDURE dados_protocolo:
                           tt-autorizacao.diadebit
 
            par_dsinfor3 = "O associado acima qualificado autoriza a realizacao " +
-                          "do debito mensal em sua conta corrente de deposito a vista," +
+                          "do debito mensal em sua conta corrente de deposito a vista, " +
                           "no valor de R$ " + 
                           TRIM(STRING(tt-autorizacao.vlprepla,
                                       "zzz,zzz,zz9.99")) + " (" +
