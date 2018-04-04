@@ -284,7 +284,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  15/02/2018 - Nova rotina para Arrasto por CPF/CNPJ (Guilherme/AMcom)
 
-                 13/03/2018 - Inclusão de controle de paralelismo por Agencia (PA) quando solicitado.
+                 03/04/2018 - Inclusão de controle de paralelismo por Agencia (PA) quando solicitado.
                             - Visando performance, Roda somente no processo Noturno (Mario-AMcom)
                  - Funcinalidade:
                    - 1. Sem paralelismo: - a quantidade de JOBS para a cdcooper deve ser 0;
@@ -1037,6 +1037,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_qtdjobs       number;
       -- Quantidade de PA's com erro
       vr_tot_paerr     number;
+      vr_qterro        number;
       -- Job name dos processos criados
       --vr_jobname       varchar2(30);
 
@@ -1050,13 +1051,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       -- Agências por cooperativa com clientes
       cursor cr_crapass_age (pr_cdcooper in crapass.cdcooper%type,
                              pr_dtmvtolt in crapdat.dtmvtolt%type,
+                             pr_qterro   in number,
                              pr_cdprogra in tbgen_batch_controle.cdprogra%type) is
         SELECT distinct cdagenci
         FROM crapass crapass
         WHERE crapass.cdcooper = pr_cdcooper
         --
-        and (pr_flgresta = 0 or      -- Processamento Normal
-            (pr_flgresta = 1         -- Reprocessamento
+        and (pr_qterro  = 0 or      -- Processamento Normal
+            (pr_qterro >= 1         -- Reprocessamento
                           and exists (select 1
                                         from tbgen_batch_controle
                                        where tbgen_batch_controle.cdcooper    = pr_cdcooper
@@ -1109,7 +1111,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       BEGIN
         dbms_lob.writeappend(vr_clobxml,length(pr_desdados),pr_desdados);
       END;
-      
+
       -- Funcao para calcular o Juros 60 do produto PP
       FUNCTION fn_calcula_juros_60d_pp(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                       ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE
@@ -2797,12 +2799,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         END IF;
         
         -- Calculo dos Juros em atraso a mais de 60 dias        
-        vr_totjur60 := 0;        
+        vr_totjur60 := 0;
         -- Calcular somente na mensal
         IF vr_qtdiaatr >= 60  THEN  -- Calcular o valor dos juros a mais de 60 dias
-          OPEN cr_craplem_60 (pr_qtdiaatr => vr_qtdiaatr);
-          FETCH cr_craplem_60 INTO vr_totjur60;
-          CLOSE cr_craplem_60;
+            OPEN cr_craplem_60 (pr_qtdiaatr => vr_qtdiaatr);
+            FETCH cr_craplem_60 INTO vr_totjur60;
+            CLOSE cr_craplem_60;
           
           -- Diario
           IF to_char(pr_rw_crapdat.dtmvtolt,'mm') = to_char(pr_rw_crapdat.dtmvtopr,'mm') THEN
@@ -2816,7 +2818,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                                                            ,pr_txjuremp => pr_rw_crapepr.txjuremp
                                                                            ,pr_dtlibera => pr_rw_crapepr.dtlibera
                                                                            ,pr_vlsdeved => nvl(pr_rw_crapepr.vlsdevat,0)),0);
-          END IF;
+          END IF; 
                                                                          
         END IF;
         --END IF;
@@ -3643,13 +3645,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       -- Controla Controla log
       PROCEDURE pc_controla_log_batch(pr_idtiplog     IN NUMBER       -- Tipo de Log
                                      ,pr_dscritic     IN VARCHAR2) IS -- Descrição do Log
-        vr_dstiplog VARCHAR2 (10);
+        vr_dstiplog VARCHAR2 (15);
       BEGIN
         -- Descrição do tipo de log
         IF pr_idtiplog = 2 THEN
           vr_dstiplog := 'ERRO: ';
         ELSE
-          vr_dstiplog := 'ALERTA: ';
+          vr_dstiplog := 'PROCESSANDO: ';
         END IF;
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
@@ -3961,7 +3963,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           OR vr_innivris = -1 THEN
 
             -- Zerar variaveis controle
-            IF rw_crapris.sequencia = 1 THEN
+          IF rw_crapris.sequencia = 1 THEN
               vr_updatass := 1;                        
             END IF;
 
@@ -3979,12 +3981,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               IF vr_tab_contas_risco_soberano(rw_crapris.nrdconta).innivris > vr_innivris THEN
                 vr_innivris := vr_tab_contas_risco_soberano(rw_crapris.nrdconta).innivris;
                   vr_dtdrisco := vr_dtrefere;
-                END IF;
               END IF;
+            END IF;
               -- Usado para controlar a atualização do ASS
               vr_qtdrisco := 1;
                           
-            END IF;
+          END IF;
           END IF;
 
 
@@ -4060,7 +4062,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                                                rw_crapris.qtdiaatr,
                                                                vr_dtdrisco_upd);            
           BEGIN
-              UPDATE crapris
+            UPDATE crapris
                  SET innivori = vr_innivori
                     ,dtdrisco = vr_dtdrisco_upd
                     ,dttrfprj = vr_dttrfprj
@@ -4540,7 +4542,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         WHEN OTHERS THEN
           pr_des_erro := 'pc_efetua_arrasto_cpfcnpj --> Erro não tratado ao processar arrasto CPF/CNPJ. Detalhes: '||sqlerrm;
       END;
-      
+
 
       -- Calculo dos juros para empréstimos acima 60 dias
       PROCEDURE pc_calcula_juros_emp_60dias(pr_dtrefere  IN DATE
@@ -4747,13 +4749,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             pr_tab_contas_risco_soberano(rw_risco.nrdconta).innivris := rw_risco.cdnivel_risco;
           END LOOP;
       END pc_cria_table_risco_soberano;
-    
-      
+
+
       --Executar Calculo Contas Associados  ***************
       PROCEDURE pc_atribui_risco_associado (pr_des_erro  OUT VARCHAR2) IS
       
       BEGIN
-      
       -- Busca dos associados unindo com seu saldo na conta
       FOR rw_crapass IN cr_crapass LOOP
         BEGIN
@@ -5208,11 +5209,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               -- Caso houve erro
               IF vr_des_erro IS NOT NULL THEN
                 RAISE vr_exc_erro;
-              END IF;
-            END IF;
+                END IF;
+          END IF;
 
           END LOOP; -- Fim loop crapepr            
-          
+
           -- Processar riscos de desconto de cheque --
           -- somente se a conta estiver no vetor de contas com informação na tabela
           IF vr_tab_ctabdc.EXISTS(rw_crapass.nrdconta) THEN
@@ -5692,7 +5693,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               END IF; -- Fim tratamento ultimo registro da flag e valor acumulado
             END LOOP; -- Fim das buscas de titulos com e sem cobrança        
           END IF;
-               
+
           -- Contratos de emprestimos com o BNDES
           FOR rw_crapebn IN cr_crapebn (pr_nrdconta => rw_crapass.nrdconta ) LOOP
             -- Para os atrasados ou em prejuízo
@@ -6006,7 +6007,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_tab_crapvri(vr_tab_crapvri.count + 1) := vr_tab_crapvri_temp(vr_index_crapvri_temp);              
                 vr_index_crapvri_temp := vr_tab_crapvri_temp.next(vr_index_crapvri_temp);
               END LOOP;
-              
+                            
               -- Atualizar crapvri
               BEGIN
                 FORALL idx IN 1..vr_tab_crapvri.count SAVE EXCEPTIONS
@@ -6193,7 +6194,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           vr_des_erro := 'Erro ao atualizar CRAPVRI com Merge. ' || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
           RAISE vr_exc_erro;
       END;
-               
+
       EXCEPTION
         WHEN vr_exc_erro THEN
           pr_des_erro := 'Erro pc_atribui_risco_associado. --> Detalhes: '||vr_des_erro ||' '||sqlerrm;
@@ -6484,9 +6485,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         --Gerar o ID para o paralelismo
         vr_idparale := gene0001.fn_gera_ID_paralelo;
                                                   
+       -- Verifica se algum job paralelo executou com erro
+        vr_qterro := 0;
+        vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                      pr_cdprogra    => pr_cdprogra,
+                                                      pr_dtmvtolt    => pr_rw_crapdat.dtmvtolt,
+                                                      pr_tpagrupador => 1,
+                                                      pr_nrexecucao  => 1);          
+                                                  
         -- Retorna as agências, com poupança programada
         for rw_crapass_age in cr_crapass_age (pr_cdcooper
                                              ,pr_rw_crapdat.dtmvtolt
+                                             ,vr_qterro
                                              ,pr_cdprogra) loop
                                           
           -- Montar o prefixo do código do programa para o jobname
@@ -6647,7 +6657,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_tab_crapsld.DELETE;
       vr_tab_bord_cdb.DELETE;
       vr_tab_ctabdc.DELETE;
-                                           
+
       --
       -- Rotina Paralelismo 6 - Executar Processo JOB
       --                      - Finaliza o Paralismo do JOB Arquivo ABBC
@@ -6670,8 +6680,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Incluido controle de Log fim programa - Chamado 714566 - 11/08/2017 
         pc_controla_log_batch(1, '14 Grava crps310_i - '||pr_cdagenci);
 
-      -- Efetuar Commit de informações pendentes de gravação
-      COMMIT;
+        -- Efetuar Commit de informações pendentes de gravação
+        COMMIT;
       end if;  -- Fim Paralelismo 6
 
       -- Rotina Paralelismo 7 - Executar principal ou Não Paralelismo
@@ -6700,41 +6710,41 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
         --Salvar informacoes no banco de dados
         COMMIT; 
-      
-      -- Somente no processo mensal
-      IF to_char(pr_rw_crapdat.dtmvtolt,'mm') != to_char(pr_rw_crapdat.dtmvtopr,'mm') THEN
-        -- Acionar rotina para integração dos contratos oriundos de Cartões Crédito BB
-        vr_dsplsql := 'BEGIN'||chr(13)
-                   || '  risc0002.pc_gera_risco_cartao_vip_proc('||pr_cdcooper
-                                                              ||','''||pr_cdprogra||''''
-                                                              ||','''||to_char(pr_rw_crapdat.dtmvtolt,'dd/mm/rrrr')||''''
-                                                              ||','''||to_char(vr_dtrefere,'dd/mm/rrrr')||''');'||chr(13)
-                   || 'END;';
-        -- Montar o prefixo do código do programa para o jobname
-        vr_jobname := 'crps310_carga_vip_$';
-        -- Faz a chamada ao programa paralelo atraves de JOB
-        gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper  --> Código da cooperativa
-                              ,pr_cdprogra  => pr_cdprogra  --> Código do programa
-                              ,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
-                              ,pr_dthrexe   => SYSTIMESTAMP --> Executar nesta hora
-                              ,pr_interva   => NULL          --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
-                              ,pr_jobname   => vr_jobname   --> Nome randomico criado
-                              ,pr_des_erro  => vr_des_erro);
-      END IF;  
-      
+                                                 
+        -- Somente no processo mensal
+        IF to_char(pr_rw_crapdat.dtmvtolt,'mm') != to_char(pr_rw_crapdat.dtmvtopr,'mm') THEN
+          -- Acionar rotina para integração dos contratos oriundos de Cartões Crédito BB
+          vr_dsplsql := 'BEGIN'||chr(13)
+                     || '  risc0002.pc_gera_risco_cartao_vip_proc('||pr_cdcooper
+                                                                ||','''||pr_cdprogra||''''
+                                                                ||','''||to_char(pr_rw_crapdat.dtmvtolt,'dd/mm/rrrr')||''''
+                                                                ||','''||to_char(vr_dtrefere,'dd/mm/rrrr')||''');'||chr(13)
+                     || 'END;';
+          -- Montar o prefixo do código do programa para o jobname
+          vr_jobname := 'crps310_carga_vip_$';
+          -- Faz a chamada ao programa paralelo atraves de JOB
+          gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper  --> Código da cooperativa
+                                ,pr_cdprogra  => pr_cdprogra  --> Código do programa
+                                ,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
+                                ,pr_dthrexe   => SYSTIMESTAMP --> Executar nesta hora
+                                ,pr_interva   => NULL          --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                                ,pr_jobname   => vr_jobname   --> Nome randomico criado
+                                ,pr_des_erro  => vr_des_erro);
+        END IF;  
+
 pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
      
-      -- Inicialização do XML para o relatorio 349
-      dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
-      dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
-      pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
+        -- Inicialização do XML para o relatorio 349
+        dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
+        dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
+        pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
         
-      -- Chamar rotina de geração do arrasto
-      pc_efetua_arrasto(pr_des_erro => vr_des_erro);
-      -- Se retornou derro
-      IF vr_des_erro IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
+        -- Chamar rotina de geração do arrasto
+        pc_efetua_arrasto(pr_des_erro => vr_des_erro);
+        -- Se retornou derro
+        IF vr_des_erro IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
       
       -- Chamar rotina de geração do arrasto por CPF/CNPJ
       pc_efetua_arrasto_cpfcnpj(pr_des_erro => vr_des_erro);
@@ -6745,53 +6755,53 @@ pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
       
       
 
-      -- Fechar o xml de dados
-      pc_escreve_xml('</raiz>');
-      -- Busca do diretório base da cooperativa para a geração de relatórios
-      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
-                                            ,pr_cdcooper => pr_cdcooper);
+        -- Fechar o xml de dados
+        pc_escreve_xml('</raiz>');
+        -- Busca do diretório base da cooperativa para a geração de relatórios
+        vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+                                              ,pr_cdcooper => pr_cdcooper);
                                             
-      -- Solicitar a geração do relatório crrl349
-      gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
-                                 ,pr_cdprogra  => pr_cdprogra                          --> Programa chamador
-                                 ,pr_dtmvtolt  => pr_rw_crapdat.dtmvtolt               --> Data do movimento atual
-                                 ,pr_dsxml     => vr_clobxml                           --> Arquivo XML de dados
-                                 ,pr_dsxmlnode => '/raiz/preju'                        --> Nó base do XML para leitura dos dados
-                                 ,pr_dsjasper  => 'crrl349.jasper'                     --> Arquivo de layout do iReport
-                                 ,pr_dsparams  => null                                 --> Sem parâmetros
-                                 ,pr_dsarqsaid => vr_nom_direto||'/rl/crrl349.lst'     --> Arquivo final com o path
-                                 ,pr_qtcoluna  => 132                                  --> 132 colunas
-                                 ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
-                                 ,pr_flg_impri => 'S'                                  --> Chamar a impressão (Imprim.p)
-                                 ,pr_nmformul  => '132col'                             --> Nome do formulário para impressão
-                                 ,pr_nrcopias  => 1                                    --> Número de cópias
-                                 ,pr_sqcabrel  => 1                                    --> Qual a seq do cabrel
-                                 ,pr_des_erro  => vr_des_erro);                        --> Saída com erro
-      dbms_lob.close(vr_clobxml);
-      dbms_lob.freetemporary(vr_clobxml);
-      -- Testar se houve erro
-      IF vr_des_erro IS NOT NULL THEN
-        -- Gerar exceção
-        RAISE vr_exc_erro;
-      END IF;
+        -- Solicitar a geração do relatório crrl349
+        gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
+                                   ,pr_cdprogra  => pr_cdprogra                          --> Programa chamador
+                                   ,pr_dtmvtolt  => pr_rw_crapdat.dtmvtolt               --> Data do movimento atual
+                                   ,pr_dsxml     => vr_clobxml                           --> Arquivo XML de dados
+                                   ,pr_dsxmlnode => '/raiz/preju'                        --> Nó base do XML para leitura dos dados
+                                   ,pr_dsjasper  => 'crrl349.jasper'                     --> Arquivo de layout do iReport
+                                   ,pr_dsparams  => null                                 --> Sem parâmetros
+                                   ,pr_dsarqsaid => vr_nom_direto||'/rl/crrl349.lst'     --> Arquivo final com o path
+                                   ,pr_qtcoluna  => 132                                  --> 132 colunas
+                                   ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
+                                   ,pr_flg_impri => 'S'                                  --> Chamar a impressão (Imprim.p)
+                                   ,pr_nmformul  => '132col'                             --> Nome do formulário para impressão
+                                   ,pr_nrcopias  => 1                                    --> Número de cópias
+                                   ,pr_sqcabrel  => 1                                    --> Qual a seq do cabrel
+                                   ,pr_des_erro  => vr_des_erro);                        --> Saída com erro
+        dbms_lob.close(vr_clobxml);
+        dbms_lob.freetemporary(vr_clobxml);
+        -- Testar se houve erro
+        IF vr_des_erro IS NOT NULL THEN
+          -- Gerar exceção
+          RAISE vr_exc_erro;
+        END IF;
 
-      -- Efetuar Commit de informações pendentes de gravação
-      COMMIT;
-      
+        -- Efetuar Commit de informações pendentes de gravação
+        COMMIT;
+
  pc_controla_log_batch(1, '17 Empréstimos acima 60: '||pr_cdagenci);
       
-      -- Calculo dos juros para empréstimos acima 60 dias
-      pc_calcula_juros_emp_60dias(pr_dtrefere => vr_dtrefere
-                                 ,pr_des_erro => vr_des_erro);
-      -- Se retornou derro
-      IF vr_des_erro IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
+        -- Calculo dos juros para empréstimos acima 60 dias
+        pc_calcula_juros_emp_60dias(pr_dtrefere => vr_dtrefere
+                                   ,pr_des_erro => vr_des_erro);
+        -- Se retornou derro
+        IF vr_des_erro IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
 
  pc_controla_log_batch(1, '18 FIM: '||pr_cdagenci);
 
-      -- Efetuar Commit de informações pendentes de gravação
-      COMMIT;
+        -- Efetuar Commit de informações pendentes de gravação
+        COMMIT;
       END IF;  --Fim Paralelismo 7
 
     EXCEPTION
@@ -6839,9 +6849,48 @@ pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
         pr_dscritic := 'Erro na rotina PC_CRPS310_I. Detalhes: '||vr_des_erro;
 
       WHEN OTHERS THEN
+
+        -- Retornar o erro não tratado
+        pc_controla_log_batch(1, 'Erro não tratado: '||pr_cdagenci||' - '||sqlerrm);
+        
+        -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
+        if pr_rw_crapdat.inproces > 2
+        and pr_cdagenci > 0
+        and vr_qtdjobs  > 0  then    
+          -- Processo JOB           
+
+          rollback;
+
+          pc_controla_log_batch(1, 'Erro: '||pr_cdagenci||' - '||vr_des_erro);
+
+          -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+          pc_log_programa(PR_DSTIPLOG           => 'E',
+                          PR_CDPROGRAMA         => pr_cdprogra||'_'||pr_cdagenci,
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => 2,  -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_tpocorrencia       => 2,
+                          pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                   'pr_dscritic:'||pr_dscritic,
+                          PR_IDPRGLOG           => vr_idlog_ini_par);  
+  
+          --Grava data fim para o JOB na tabela de LOG 
+          pc_log_programa(pr_dstiplog   => 'F',    
+                          pr_cdprograma => pr_cdprogra||'_'||pr_cdagenci,           
+                          pr_cdcooper   => pr_cdcooper, 
+                          pr_tpexecucao => 2,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_idprglog   => vr_idlog_ini_par,
+                          pr_flgsucesso => 0);  
+  
+          -- Encerrar o job do processamento paralelo dessa agência
+          gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                      ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                      ,pr_des_erro => pr_dscritic);  
+        END IF;
+    
         -- Retornar o erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := 'Erro não tratado na rotina PC_CRPS310_I. Detalhes: '||sqlerrm;
+        
     END;
   END PC_CRPS310_I;
 /

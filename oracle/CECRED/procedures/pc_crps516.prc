@@ -51,8 +51,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
                  26/08/2013 - Passagem do diretório da cooperativa para 
                               a pc_crps280_i (Marcos-Supero)
 							  
-				 25/06/2014 - Alterado processo de exclusão da crapris e crapvri.
- 				              SoftDesk 137892 (Daniel)	  
+                 25/06/2014 - Alterado processo de exclusão da crapris e crapvri.
+                              SoftDesk 137892 (Daniel)	  
 
                  20/02/2018 - Paralelismo - Projeto Ligeirinho (Fabiano B. Dias - AMcom)											
   ............................................................................. */
@@ -64,8 +64,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
       vr_exc_erro exception;
 			
       -- Paralelismo - Projeto Ligeirinho
-      vpr_stprogra   PLS_INTEGER; --> Saída de termino da execução
-      vpr_infimsol   PLS_INTEGER; --> Saída de termino da solicitação, 
+      vr_stprogra   PLS_INTEGER; --> Saída de termino da execução
+      vr_infimsol   PLS_INTEGER; --> Saída de termino da solicitação, 
 			
       ---------------- Cursores genéricos ----------------
 
@@ -214,8 +214,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
 										,pr_cdagenci  => 0                    --> Código da agência, utilizado no paralelismo
 										,pr_idparale  => 0                    --> Identificador do job executando em paralelo.
 										,pr_flgresta  => 1                    --> Flag padrão para utilização de restart
-										,pr_stprogra  => vpr_stprogra         --> Saída de termino da execução
-										,pr_infimsol  => vpr_infimsol         --> Saída de termino da solicitação,                                               
+										,pr_stprogra  => vr_stprogra         --> Saída de termino da execução
+										,pr_infimsol  => vr_infimsol         --> Saída de termino da solicitação,                                               
 										----
                     ,pr_vltotprv   => vr_vltotprv         --> Total acumulado de provisão
                     ,pr_vltotdiv   => vr_vltotdiv         --> Total acumulado de dívida
