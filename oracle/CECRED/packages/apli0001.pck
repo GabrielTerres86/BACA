@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 04/12/2017
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 29/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -90,6 +90,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --
   -- 04/12/2017 - Remoção do paralelismo nas queries envolvendo as tabelas craptrd e crapmfx nos processos
   --              online - pc_saldo_rdc_pos (Rodrigo)
+  --
+  -- 29/01/2018 - #770327 Na rotina pc_consulta_aplicacoes, inclusão do INTERNETBANK para filtrar os 
+  --              lançamentos no período informado (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -5402,6 +5405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_des_reto         varchar2(10);
     vr_tptaxrda         craptrd.tptaxrda%type;
 
+
     --Variáveis acumulo lote
     vr_vlinfocr         craplot.vlinfocr%type := 0;
     vr_vlcompcr         craplot.vlcompcr%type := 0; 
@@ -5599,7 +5603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       end if;      
 
       -- Para o programa CRPS148, foi realizado o upate no próprio crps, visto que teríamos problemas
-      -- no paralelismo           
+      -- no paralelismo
       if vr_cdprogra = 'CRPS148' then
         begin
 
@@ -5658,7 +5662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         -- Próxima data
         vr_dtcalcul := vr_dtcalcul + 1;
       end loop;  /* Fim do WHILE */
-    end if;      
+    end if;
 
     /*  Arredondamento dos valores calculados  */
     vr_vlsdrdpp := fn_round(vr_vlsdrdpp,2);
@@ -5941,7 +5945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           when others then
             vr_des_erro := 'Erro ao inserir lançamento de poupança programada: '||sqlerrm;
             raise vr_exc_erro;
-        end;  
+        end;
         
         -- Atualiza a capa do lote
         if vr_cdprogra = 'CRPS148' then
@@ -6021,7 +6025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           
         end if;
       end if;
-      --     
+      --
       
       IF vr_cdprogra = 'CRPS148' and
          vr_cdhistor = 151 and
@@ -6243,7 +6247,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           
         end if;
       end if;
-      --        
+      --
       
       IF vr_cdprogra = 'CRPS148' and
          rw_craprpp.vlabcpmf > 0 then
@@ -6351,7 +6355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           end;
         end if;
       end if;
-      --       
+      --
       if vr_cdprogra in ('CRPS147', 'CRPS148') then
         /* Ajuste */
         vr_vlajuste := vr_vlprovis - vr_vllan152;
@@ -6376,7 +6380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_vlcompdb := vr_vlcompdb + nvl(vr_vlajuste_db, 0);  
             vr_qtinfoln := vr_qtinfoln + 1;    
             vr_qtcompln := vr_qtcompln + 1; 
-            
+          
             --Para lote 8384 utilizar sequence da tabela de lote.
             vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;            
             
@@ -12507,7 +12511,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Inicializa o conteudo do registro rw_crapdtc
       rw_crapdtc := NULL;
 
-      IF UPPER(pr_cdprogra) = 'IMPRES'  AND
+      IF (UPPER(pr_cdprogra) = 'IMPRES' OR 
+          UPPER(pr_cdprogra) = 'INTERNETBANK') AND
          pr_dtinicio IS NOT NULL AND
          pr_dtfim    IS NOT NULL THEN
         -- Busca sobre o cadastro dos lancamentos de aplicacoes RDCA.
@@ -12903,6 +12908,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Retorno não OK
       pr_des_reto := 'NOK';
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       -- Retorno não OK
       pr_des_reto := 'NOK';
       -- Gerar erro montado

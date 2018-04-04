@@ -230,6 +230,9 @@
                                            
                 02/03/2018 - Lucas Skroch (Supero TI) - Ajustes nos saldos de cobertura, judicial, total geral e total resgate
 
+    29/01/2018 - #770327 Chamada da rotina pc_lista_aplicacoes_car alterada para 
+                 pc_lista_demons_apli, rotina Gera_Impressao_Aplicacao (Carlos)
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -2392,7 +2395,7 @@ PROCEDURE Gera_Impressao_Aplicacao:
          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
          
          /* Efetuar a chamada a rotina Oracle */ 
-         RUN STORED-PROCEDURE pc_lista_aplicacoes_car
+         RUN STORED-PROCEDURE pc_lista_demons_apli
              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
                                                   INPUT par_cdoperad, /* Código do Operador */
                                                   INPUT par_nmdatela, /* Nome da Tela */
@@ -2407,12 +2410,14 @@ PROCEDURE Gera_Impressao_Aplicacao:
                                                   INPUT par_dtmvtolt, /* Data de Movimento */
                                                   INPUT 5,            /* Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas) */
                                                   INPUT 1,            /* Identificador de Log (0 – Não / 1 – Sim) */                                                                                                                                  
+                                                  INPUT aux_dtiniper,
+                                                  INPUT aux_dtfimper,
                                                  OUTPUT ?,            /* XML com informações de LOG */
                                                  OUTPUT 0,            /* Código da crítica */
                                                  OUTPUT "").          /* Descrição da crítica */
         
          /* Fechar o procedimento para buscarmos o resultado */ 
-         CLOSE STORED-PROC pc_lista_aplicacoes_car
+         CLOSE STORED-PROC pc_lista_demons_apli
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
         
          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
@@ -2420,10 +2425,10 @@ PROCEDURE Gera_Impressao_Aplicacao:
          /* Busca possíveis erros */ 
          ASSIGN aux_cdcritic = 0
                 aux_dscritic = ""
-                aux_cdcritic = pc_lista_aplicacoes_car.pr_cdcritic 
-                               WHEN pc_lista_aplicacoes_car.pr_cdcritic <> ?
-                aux_dscritic = pc_lista_aplicacoes_car.pr_dscritic 
-                               WHEN pc_lista_aplicacoes_car.pr_dscritic <> ?.
+                aux_cdcritic = pc_lista_demons_apli.pr_cdcritic 
+                               WHEN pc_lista_demons_apli.pr_cdcritic <> ?
+                aux_dscritic = pc_lista_demons_apli.pr_dscritic 
+                               WHEN pc_lista_demons_apli.pr_dscritic <> ?.
     
     
          IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
@@ -2439,7 +2444,7 @@ PROCEDURE Gera_Impressao_Aplicacao:
          EMPTY TEMP-TABLE tt-saldo-rdca.
         
          /* Buscar o XML na tabela de retorno da procedure Progress */ 
-         ASSIGN xml_req = pc_lista_aplicacoes_car.pr_clobxmlc. 
+         ASSIGN xml_req = pc_lista_demons_apli.pr_clobxmlc. 
         
          /* Efetuar a leitura do XML*/ 
          SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
@@ -2920,7 +2925,7 @@ PROCEDURE gera_impressao_sintetico:
            aux_vlblqapl_gar = 0
            aux_vlblqpou_gar = 0
            aux_vltot_resgat = 0.
-           
+
     /*** Busca Saldo Bloqueado Judicial ***/
     IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
         RUN sistema/generico/procedures/b1wgen0155.p 
@@ -3055,7 +3060,7 @@ PROCEDURE gera_impressao_sintetico:
 
 			IF aux_vltot_resgat < 0 THEN DO:
 			   aux_vltot_resgat = 0.
-			END.
+        END.
 
             PUT STREAM str_1
                 "SALDO DISPONIVEL PARA RESGATE R$:      "
@@ -3195,7 +3200,7 @@ PROCEDURE gera_impressao_demonstrativo:
            aux_vlblqapl_gar = 0
            aux_vlblqpou_gar = 0
            aux_vltot_resgat = 0.
-           
+
     /*** Busca Saldo Bloqueado Judicial ***/
     IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
         RUN sistema/generico/procedures/b1wgen0155.p 
@@ -3483,7 +3488,7 @@ PROCEDURE gera_impressao_demonstrativo:
 
             IF aux_vltot_resgat < 0 THEN DO:
 			   aux_vltot_resgat = 0.
-			END.
+        END.
 
             PUT STREAM str_1
                 SKIP(1)
