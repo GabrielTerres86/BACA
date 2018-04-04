@@ -22,7 +22,7 @@ require_once("../../includes/carrega_permissoes.php");
 
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">	
+        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">    
         <meta http-equiv="Pragma" content="no-cache">
         <title><? echo $TituloSistema; ?></title>
         <link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
@@ -32,11 +32,11 @@ require_once("../../includes/carrega_permissoes.php");
         <script type="text/javascript" src="../../scripts/mascara.js"></script>
         <script type="text/javascript" src="../../scripts/menu.js"></script>
         <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-        <script type="text/javascript" src="titcto.js?<?=time()?>"></script>
+        <script type="text/javascript" src="titcto.js"></script>
         <script>
             var dtmvtopr = '<?php echo $glbvars['dtmvtopr'] ?>';
             var dtmvtolt = '<?php echo $glbvars['dtmvtolt'] ?>';
-        </script>	
+        </script>   
     </head>
     <body>
         <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -70,7 +70,7 @@ require_once("../../includes/carrega_permissoes.php");
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td id="tdConteudoTela" class="tdConteudoTela" align="center">								
+                                        <td id="tdConteudoTela" class="tdConteudoTela" align="center">                              
                                             <table width="100%" border="0" cellpadding="3" cellspacing="0">
                                                 <tr>
                                                     <td style="border: 1px solid #F4F3F0;">
@@ -94,13 +94,13 @@ require_once("../../includes/carrega_permissoes.php");
                                                                                 </div>
                                                                             </td>
                                                                         </tr>
-                                                                    </table>					
+                                                                    </table>                    
                                                                 </td>
                                                             </tr>
                                                         </table>
                                                     </td>
                                                 </tr>
-                                            </table>																
+                                            </table>                                                                
                                         </td>
                                     </tr>
                                 </table>
