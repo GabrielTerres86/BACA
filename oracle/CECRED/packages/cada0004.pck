@@ -8710,11 +8710,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           e 'FINTRFTEDS' para utilizar a rotina padrao da TABE0001
     --                           (Douglas - Chamado 454248)
     --
-    --              14/11/2016 - Ajustado para ler o cdorigem da gene0001 e não utilizar 
+    --  Alteração : 14/11/2016 - Ajustado para ler o cdorigem da gene0001 e não utilizar 
     --                           ifs no programa(Odirlei-AMcom)  
-
-                    12/12/2017 - Alterar para para varchar2 o campo nrcartao
-                                 (Lucas Ranghetti #810576) 
+	--
+    --  Alteração : 12/12/2017 - Alterar para para varchar2 o campo nrcartao
+    --                           (Lucas Ranghetti #810576)
+	--							 
+	--  Alteração : 03/04/2018 - Alterar para o "Tipo de aprovacao" para "Saque com cartao CECRED"
+    --                           (Andrey Formigari - Mouts #845782)
      ............................................................................*/
 
     -- Cursor para retornar o nome do banco
@@ -8809,7 +8812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
                                  ,pr_nmdcampo => 'Tipo de aprovacao'
                                  ,pr_dsdadant => ' '
-                                 ,pr_dsdadatu => 'Cecred');
+                                 ,pr_dsdadatu => 'Aprovado por senha');
       END IF;
       
       -- Gera o log dos itens para numero do cartao
