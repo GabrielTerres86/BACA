@@ -182,7 +182,9 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0001 AS
                                         ,pr_retxml     IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                         ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
                                         ,pr_des_erro  OUT VARCHAR2);     
-                                                                 
+
+     PROCEDURE pc_controla_exe_job(pr_cdcritic OUT NUMBER,
+                                   pr_dscritic OUT VARCHAR2);
                                      
                                                               
 end PREJ0001;
@@ -6731,7 +6733,8 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
   END pc_dispara_email_lote;   
   --
   
-  PROCEDURE pc_controla_exe_job IS
+  PROCEDURE pc_controla_exe_job(pr_cdcritic OUT NUMBER,
+                                pr_dscritic OUT VARCHAR2) IS
     --
     -- Cursor
     CURSOR cr_crapcop IS
@@ -6755,10 +6758,31 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
     vr_idprglog   tbgen_prglog.idprglog%TYPE;
     vr_exc_erro   EXCEPTION;
     vr_dtmvtolt DATE;
+    vr_flgerlog    BOOLEAN := FALSE;
+    --
+    PROCEDURE pc_controla_log_batch(pr_cdcooper IN NUMBER,
+                                    pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => pr_cdcooper    --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+    END pc_controla_log_batch;     
   
   BEGIN
+    vr_dscritic := NULL;
+
     FOR rw_crapcop IN cr_crapcop LOOP
+      
       vr_cdcooper := rw_crapcop.cdcooper;
+      --
+      pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
+                            pr_dstiplog => 'I',
+                            pr_dscritic => vr_dscritic);                
       --
       gene0004.pc_executa_job( pr_cdcooper => vr_cdcooper   --> Codigo da cooperativa
                               ,pr_fldiautl => 1   --> Flag se deve validar dia util
@@ -6830,8 +6854,12 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
           RAISE vr_exc_erro;  
         END IF;
       END IF;
-
+      --
+      pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
+                            pr_dstiplog => 'F',
+                            pr_dscritic => vr_dscritic);
     END LOOP;
+
   EXCEPTION
     WHEN vr_exc_erro THEN  
       GENE0001.pc_gera_erro(pr_cdcooper => nvl(vr_cdcooper,3)
@@ -6845,9 +6873,13 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
       --vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
       vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
 
+      pr_cdcritic := 0;
+      pr_dscritic := vr_dscritic;      
+
       -- Log de erro de execucao
-      --pc_controla_log_batch(pr_dstiplog => 'E',
-      --                      pr_dscritic => vr_dscritic);
+      pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
+                            pr_dstiplog => 'E',
+                            pr_dscritic => vr_dscritic);
 
       ROLLBACK;
         
@@ -6860,6 +6892,8 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
       -- Erro
       vr_cdcritic:= 0;
       vr_dscritic:= 'Erro na rotina pc_gera_dados_cyber. '||sqlerrm;
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
 
       GENE0001.pc_gera_erro(pr_cdcooper => nvl(vr_cdcooper,3)
                            ,pr_cdagenci => 1
@@ -6872,6 +6906,10 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
       --vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
       vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
 
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
+                            pr_dstiplog => 'E',
+                            pr_dscritic => vr_dscritic);
       ROLLBACK;                             
     
   END pc_controla_exe_job;
