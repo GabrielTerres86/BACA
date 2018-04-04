@@ -210,13 +210,13 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
                     ,pr_dtrefere   => rw_crapdat.dtmvtolt --> Data corrente
                     ,pr_cdprogra   => vr_cdprogra         --> Codigo programa conectado
                     ,pr_dsdircop   => rw_crapcop.dsdircop --> Diretório base da cooperativa
-										----
-										,pr_cdagenci  => 0                    --> Código da agência, utilizado no paralelismo
-										,pr_idparale  => 0                    --> Identificador do job executando em paralelo.
-										,pr_flgresta  => 1                    --> Flag padrão para utilização de restart
-										,pr_stprogra  => vr_stprogra         --> Saída de termino da execução
-										,pr_infimsol  => vr_infimsol         --> Saída de termino da solicitação,                                               
-										----
+                    ----
+                    ,pr_cdagenci  => 0                    --> Código da agência, utilizado no paralelismo
+                    ,pr_idparale  => 0                    --> Identificador do job executando em paralelo.
+                    ,pr_flgresta  => pr_flgresta          --> Flag padrão para utilização de restart
+                    ,pr_stprogra  => vr_stprogra          --> Saída de termino da execução
+                    ,pr_infimsol  => vr_infimsol          --> Saída de termino da solicitação,                                               
+                    ----
                     ,pr_vltotprv   => vr_vltotprv         --> Total acumulado de provisão
                     ,pr_vltotdiv   => vr_vltotdiv         --> Total acumulado de dívida
                     ,pr_cdcritic   => pr_cdcritic         --> Código de erro encontrado
