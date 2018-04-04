@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Belli / Envolti
-   Data    : Agosto/2017.                   Ultima atualizacao: 27/03/2018
+   Data    : Agosto/2017.                   Ultima atualizacao: 24/11/2017
    
    Projeto:  Chamado 714566.
 
@@ -30,9 +30,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
 
    - Incluido controle de inicio e fim de programa - 
      ( Belli - Chamado 801477 - 24/11/2017 )
-
-	 27/03/2018 - Ajuste no programa para escrever a crítica corretamente. 
-							(Andrey Formigari - Mouts #856928)
               
    .............................................................................*/
 
