@@ -5387,6 +5387,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   BEGIN
     DECLARE
 
+      CURSOR cr_crapcti (pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE
+                        ,pr_cddbanco IN craplau.cddbanco%TYPE
+                        ,pr_nrctatrf IN craplau.nrctadst%TYPE
+                        ,pr_cdageban IN craplau.cdageban%TYPE) IS
+      SELECT c.nmtitula
+        FROM crapcti c
+       WHERE c.cdcooper = pr_cdcooper
+         AND c.nrdconta = pr_nrdconta
+         AND c.cddbanco = pr_cddbanco
+         AND c.nrctatrf = pr_nrctatrf
+         AND c.cdageban = pr_cdageban;
+      rw_crapcti cr_crapcti%ROWTYPE;
+
       --Tipo da tabela de saldos
       vr_tab_saldo EXTR0001.typ_tab_saldos;
       --Tipo de tabelas de limites
@@ -5567,6 +5581,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                      nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
             --> Se for a primeira execução da DEBNET/CRPS509 
             IF vr_qtdexec < 3 THEN 
+              --Verificar a conta de destino
+              OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => rw_craplau.nrdconta
+                             ,pr_cddbanco => rw_craplau.cddbanco
+                             ,pr_nrctatrf => rw_craplau.nrctadst
+                             ,pr_cdageban => rw_craplau.cdageban);
+                               
+              FETCH cr_crapcti INTO rw_crapcti;
+
+              vr_nmtldest := '';
+                
+              IF cr_crapcti%FOUND THEN
+                 vr_nmtldest := rw_crapcti.nmtitula;
+              END IF;
+                
+              CLOSE cr_crapcti;
+			  --
               vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
                                    'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
                                    '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
@@ -5660,6 +5691,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
          IF  vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
           /* Se for a primeira execução da DEBNET/CRPS509 */
           IF vr_qtdexec < 3 THEN 
+              --Verificar a conta de destino
+              OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => rw_craplau.nrdconta
+                             ,pr_cddbanco => rw_craplau.cddbanco
+                             ,pr_nrctatrf => rw_craplau.nrctadst
+                             ,pr_cdageban => rw_craplau.cdageban);
+                               
+              FETCH cr_crapcti INTO rw_crapcti;
+
+              vr_nmtldest := '';
+                
+              IF cr_crapcti%FOUND THEN
+                 vr_nmtldest := rw_crapcti.nmtitula;
+              END IF;
+                
+              CLOSE cr_crapcti;
+			  --
             vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
                                    'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
                                    '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
@@ -12657,7 +12705,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       vr_exc_erro EXCEPTION;
       
       vr_qthoras number(15,5); -- SM 454.1
-      
+
+      -- Objetos para armazenar as variáveis da notificação
+      vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+      vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 6;
+      vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 3; 
+      vr_notif_dsdmensg VARCHAR2(32000) := ' '; 
+            
     BEGIN
       --Inicializar retorno erro
       pr_cdcritic:= NULL;
@@ -13079,7 +13133,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                             ,pr_dsdmensg => vr_dsdmensg		-- Descricao da mensagem
                                             ,pr_cdcritic => vr_cdcritic   -- Codigo do erro
                                             ,pr_dscritic => vr_dscritic); -- Descricao do erro
-           
+
+                vr_notif_dsdmensg := vr_dsdmensg;           
                 vr_dsdmensg := 'Atenção, ' || vr_nmprimtl || '!<br><br>' ||
                                'Informamos que a seguinte transação expirou:<br><br>' || 
                                vr_dsdmensg;
@@ -13097,7 +13152,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                           ,pr_cdoperad => 1
                                           ,pr_cdcadmsg => 0
                                           ,pr_dscritic => vr_dscritic);
-                   
+
+                --
+                vr_variaveis_notif('#dsdmensg') := vr_notif_dsdmensg;
+                -- Cria uma notificação
+                noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                            ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_nrdconta => pr_nrdconta
+                                            ,pr_idseqttl => vr_idseqttl
+                                            ,pr_variaveis => vr_variaveis_notif);                 
+                
+                --                    
             END LOOP;
     
           EXCEPTION
@@ -23001,6 +23067,24 @@ end;';
                                                ,pr_cdoperad   => '1'
                                                ,pr_cdcadmsg   => '0'
                                                ,pr_dscritic   => vr_dscritic2);
+
+            --
+            vr_variaveis_notif('#dataagendamento') := to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY');
+            vr_variaveis_notif('#valor') := to_char(rw_craplau.vllanaut,'fm999g999g990d00');
+            vr_variaveis_notif('#bancodestino') := to_char(rw_craplau.cddbanco);
+            vr_variaveis_notif('#agenciadestino') := to_char(rw_craplau.cdageban);
+            vr_variaveis_notif('#contadestino') := GENE0002.fn_mask_conta(rw_craplau.nrctadst);
+            vr_variaveis_notif('#destinatario') := vr_nmtldest;
+            vr_variaveis_notif('#motivo') := 'insuficiência de saldo';
+                
+            -- Cria uma notificação
+            noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
+                                         ,pr_cdmotivo_mensagem => MOTIVO_TED
+                                         ,pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => rw_craplau.nrdconta
+                                         ,pr_variaveis => vr_variaveis_notif);
+
+
 
          END IF;
           
