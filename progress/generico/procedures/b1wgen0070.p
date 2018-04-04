@@ -44,6 +44,14 @@
                       
                  17/01/2017 - Adicionado chamada a procedure de replicacao do 
                               telefone para o CDC. (Reinert Prj 289)                                       
+
+				 05/10/2017 - Incluindo procedure para replicar informacoes do crm. 
+							 (PRJ339 - Kelvin/Andrino).
+							 
+			     22/03/2018 - Ajustado a rotina de alteração de telefone do TAA para 
+				              que quando já exista o telefone informado apenas atualize 
+							  o registro existente assim como o sequencial e não deleta-lo 
+							  e inseri-lo novamente. (SD 854018 - Kelvin)
 .............................................................................*/
 
 
@@ -840,6 +848,7 @@ PROCEDURE gerenciar-telefone:
                                           craptfc.cdseqtfc + 1
                                       ELSE 
                                           1.
+                  END.
 
                 /* Se veio pelo TAA, validar se fone ja existe */
                 IF  par_idorigem = 4 THEN DO:
@@ -886,11 +895,19 @@ PROCEDURE gerenciar-telefone:
                         UNDO TRANS_FONE, LEAVE TRANS_FONE.
 
                     IF  AVAIL craptfc THEN
-                        DELETE craptfc.
+						DO:
+							ASSIGN craptfc.nrdddtfc = par_nrdddtfc
+								   craptfc.nrdramal = par_nrdramal
+								   craptfc.nrtelefo = par_nrtelefo
+								   craptfc.tptelefo = par_tptelefo
+								   craptfc.cdseqtfc = aux_cdseqtfc.
+						END.
 
                 END. /* FIM par_idorigem = 4 */
 
                
+                IF  par_idorigem <> 4 THEN 
+					DO:
                 CREATE craptfc.
                 ASSIGN craptfc.cdcooper = par_cdcooper
                        craptfc.nrdconta = par_nrdconta
@@ -926,6 +943,7 @@ PROCEDURE gerenciar-telefone:
                         { sistema/generico/includes/b1wgenalog.i }
                         { sistema/generico/includes/b1wgenllog.i }
                     END.
+            END.
             END.
         ELSE
             DO: 
