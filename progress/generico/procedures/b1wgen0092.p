@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 07/03/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 23/03/2018
     
    Dados referentes ao programa:
    
@@ -215,6 +215,9 @@
                            
               07/03/2018 - Alterar validacao do digito do samae Pomerode para validar com o modulo 11
                            (Lucas Ranghetti #858121).
+                           
+              23/03/2018 - Validar se empresa do codigo de barras e igual ao cadastrado na base 
+                           (Lucas Ranghetti #856427)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1730,6 +1733,8 @@ PROCEDURE grava-dados:
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
     DEF VAR aux_dtamenor AS DATE                                    NO-UNDO.
     DEF VAR aux_dtmvtolt AS DATE                                    NO-UNDO.
+    DEF VAR aux_emconbar AS INTE                                    NO-UNDO.
+    DEF VAR aux_segmtbar AS CHAR                                    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1941,14 +1946,18 @@ PROCEDURE grava-dados:
                                                        SUBSTR(STRING(par_fatura04,"999999999999"),1,11).
 
                                 ASSIGN  aux_cdempcon  = INT(SUBSTR(aux_vlrcalcu,16,4))
-                                        aux_cdsegmto  = SUBSTR(aux_vlrcalcu,2,1).
+                                        aux_cdsegmto  = SUBSTR(aux_vlrcalcu,2,1)
+                                        aux_emconbar  = aux_cdempcon
+                                        aux_segmtbar  = aux_cdsegmto.
                             END.
                         /* Retirar empresa e semgto do cod de barras */
                         ELSE 
                             DO:
                                 ASSIGN aux_cdempcon   = INT(SUBSTR(par_codbarra,16,4))
                                        aux_cdsegmto   = SUBSTR(par_codbarra,2,1)
-                                       aux_vlrcalcu   = par_codbarra.
+                                       aux_vlrcalcu   = par_codbarra
+                                       aux_emconbar  = aux_cdempcon
+                                       aux_segmtbar  = aux_cdsegmto.
                             END.                    
                     END.
                     
@@ -2097,9 +2106,12 @@ PROCEDURE grava-dados:
                         /* Se for SICREDI... */
                         IF  aux_flgsicre = TRUE THEN
                             DO:
-                                /* Caso a empresa e segmento estejam zerados */
+                                /* Caso a empresa e segmento estejam zerados ou a empresa seja diferente 
+                                   da do codigo de barras */
                                 IF  INT(aux_cdempcon) = 0 OR 
-                                    INT(aux_cdsegmto) = 0 THEN
+                                    INT(aux_cdsegmto) = 0 OR 
+                                    aux_cdempcon <> aux_emconbar OR
+                                    aux_cdsegmto <> aux_segmtbar THEN
                                     DO:
                                         ASSIGN aux_dscritic = "Operacao nao finalizada, tente novamente.".
                                         UNDO Grava, LEAVE Grava.
