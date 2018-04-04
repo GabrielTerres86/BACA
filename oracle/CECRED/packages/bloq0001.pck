@@ -320,7 +320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
       IF vr_vlcobert > 0 THEN
         RETURN(vr_vlcobert);
       ELSE
-        RETURN(vr_vlcobert);
+        RETURN 0;
       END IF;
       
     EXCEPTION
@@ -448,7 +448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
       IF vr_vlcobert > 0 THEN
         RETURN(vr_vlcobert);
       ELSE
-        RETURN(vr_vlcobert);
+        RETURN 0;
       END IF;
       
     EXCEPTION
@@ -2438,11 +2438,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
                        ,pr_nrdconta IN crawepr.nrdconta%TYPE
                        ,pr_nrcontrato IN crawepr.nrctremp%TYPE) IS
         SELECT wpr.vlemprst
+				      ,wpr.cdlcremp
           FROM crawepr wpr
          WHERE wpr.cdcooper = pr_cdcooper
            AND wpr.nrdconta = pr_nrdconta
            AND wpr.nrctremp = pr_nrcontrato;
-      
+			rw_crawepr cr_crawepr%ROWTYPE;
+			
+			-- Buscar tipo do contrato
+			CURSOR cr_craplcr(pr_cdcooper IN craplcr.cdcooper%TYPE
+			                 ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
+				SELECT lcr.tpctrato
+				  FROM craplcr lcr
+				 WHERE lcr.cdcooper = pr_cdcooper
+				   AND lcr.cdlcremp = pr_cdlcremp;
+      rw_craplcr cr_craplcr%ROWTYPE;
+			
       CURSOR cr_craplim(pr_cdcooper   IN craplim.cdcooper%TYPE
                        ,pr_nrdconta   IN craplim.nrdconta%TYPE
                        ,pr_nrcontrato IN craplim.nrctrlim%TYPE
@@ -2499,7 +2510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
       vr_inusatab                        BOOLEAN;
       vr_vltotpre                        NUMBER(25,2) := 0;
       vr_qtprecal                        NUMBER(10) := 0;
-                 
+      vr_flgsdeved                       BOOLEAN := FALSE;                 
     BEGIN      
       
       OPEN cr_cobertura(pr_idcobert);
@@ -2553,14 +2564,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           OPEN cr_crawepr (pr_cdcooper   => vr_cdcooper
                           ,pr_nrdconta   => vr_nrdconta
                           ,pr_nrcontrato => vr_nrcontrato);
-          FETCH cr_crawepr INTO vr_valopera_original;
+          FETCH cr_crawepr INTO rw_crawepr;
           IF cr_crawepr%NOTFOUND THEN
             vr_dscritic := 'Erro ao buscar valor do contrato de empréstimo. ' || SQLERRM;
             RAISE vr_exc_erro;
           END IF;
           
           CLOSE cr_crawepr;
-
+					
+          vr_valopera_original := rw_crawepr.vlemprst;
+					
+          -- Buscar tipo de contrato
+          OPEN cr_craplcr(pr_cdcooper => vr_cdcooper
+					               ,pr_cdlcremp => rw_crawepr.cdlcremp);
+					FETCH cr_craplcr INTO rw_craplcr;
+					
+          IF cr_craplcr%NOTFOUND THEN
+            vr_dscritic := 'Erro ao buscar linha do contrato de empréstimo.';
+            RAISE vr_exc_erro;
+          END IF;
+          
+          CLOSE cr_craplcr;
+					
           vr_valopera_atualizada := 0;
 
           -- Buscar o saldo devedor atualizado do contrato
@@ -2591,6 +2616,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
             vr_tab_erro.DELETE;
             RAISE vr_exc_erro;
           END IF;
+					
+					-- Se tipo de contrato for diferente de aplicação
+					IF rw_craplcr.tpctrato <> 4 THEN
+						-- Se percentual mínimo de cobertura for menor que 100%
+						IF vr_perminimo < 100 THEN
+							-- Se valor do saldo devedor de empréstimo for maior ou igual ao valor de cobertura original do contrato
+							IF vr_valopera_atualizada >= (vr_valopera_original  * (vr_perminimo / 100)) THEN
+								-- Valor da operação continua calculando o valor do bloqueio da garantia pelo valor original do contrato
+								vr_valopera_atualizada := vr_valopera_original;
+							ELSE
+								-- Senão, valor bloqueado deve ser o mesmo que o saldo devedor
+								vr_flgsdeved := TRUE;
+							END IF;
+					  END IF;
+					END IF;
 
         ELSE
           -- Buscar limite
@@ -2612,7 +2652,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         
         -- Calcular o valor necessário para cobertura do empréstimo ou do limite
         vr_vlcobert_original   := vr_valopera_original  * (vr_perminimo / 100);
-        vr_vlcobert_atualizada := (vr_valopera_atualizada  * (vr_perminimo / 100)) - nvl(vr_vldesbloq,0);
+				-- Se valor da cobertura deve ser o saldo devedor
+				IF vr_flgsdeved THEN
+					-- Atribuir o valor da operação sem aplicar o cálculo da cobertura
+					vr_vlcobert_atualizada := vr_valopera_atualizada - nvl(vr_vldesbloq,0);
+				ELSE
+					-- Senão, atribuir o valor da cobertura a partir do cálculo do percentual mínimo da cobertura
+          vr_vlcobert_atualizada := (vr_valopera_atualizada  * (vr_perminimo / 100)) - nvl(vr_vldesbloq,0);
+				END IF;
         
         -- Buscar no cadastro de associados o CPF/CNPJ do garantidor
         OPEN cr_crapass (pr_cdcooper         => vr_cdcooper
