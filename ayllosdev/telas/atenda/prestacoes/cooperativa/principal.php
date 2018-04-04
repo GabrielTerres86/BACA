@@ -955,6 +955,8 @@
 		include('tabela_pagamento.php');
 	}else if (in_array($operacao,array('C_PAG_PREST_POS'))){
 		include('tabela_pagamento_pos.php');
+	}else if (in_array($operacao,array('C_PAG_PREST_PREJU'))){
+		include('tabela_pagamento_prejuizo.php');
 	} else if (in_array($operacao,array('C_MICRO_PERG'))) {
 		include ('questionario.php');
 	} else if (in_array($operacao,array('PORTAB_CRED_C'))) {

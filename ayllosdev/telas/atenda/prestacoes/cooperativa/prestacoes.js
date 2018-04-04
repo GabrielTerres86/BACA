@@ -200,7 +200,7 @@ function controlaOperacao(operacao) {
 		nrctremp = '';
 	}
 
-	if ( in_array(operacao,['TC','IMP', 'C_PAG_PREST', 'C_PAG_PREST_POS', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA', 'C_PAG_PREST_PREJU'], 'ALT_QUALIFICA', 'CON_QUALIFICA']) ) {
+	if ( in_array(operacao,['TC','IMP', 'C_PAG_PREST', 'C_PAG_PREST_POS', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA', 'C_PAG_PREST_PREJU', 'ALT_QUALIFICA', 'CON_QUALIFICA']) ) {
 
 		$('table > tbody > tr', 'div.divRegistros').each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
@@ -387,14 +387,19 @@ function controlaOperacao(operacao) {
 			nrseqrrq = arrayProposta['nrseqrrq'];			
 			mensagem = 'consultando dados ...';	
 			break;	
-		case 'C_PAG_PREST' : 
+		/*case 'C_PAG_PREST' : */
 		case 'C_PAG_PREST_POS' :
 			fechaRotina($('#divUsoGenerico'),$('#divRotina'));
-			if(tpemprst != 1 && tpemprst != 2){
+			//if(tpemprst != 1 && tpemprst != 2){
+            if( tpemprst != 2){
 				showError('error','O produto n&atilde;o possui essa op&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 				return false;
 			}
-			mensagem = 'abrindo pagamento ...';
+            break;
+			/*mensagem = 'abrindo pagamento ...';*/
+		case 'C_PAG_PREST_PREJU':
+			fechaRotina($('#divUsoGenerico'),$('#divRotina'));
+			mensagem = 'abrindo pagamento de prejuizo...';
 			break;
 
 		case 'D_EFETIVA' :
@@ -414,11 +419,11 @@ function controlaOperacao(operacao) {
 			idSocio = 0;
 			break;
 		case 'C_TRANSF_PREJU' :
-			if(tpemprst != 1){
+			/*if(tpemprst != 1){
 				showError('error','O produto n&atilde;o possui essa op&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 				return false;
 			}
-								
+			*/					
 			mensagem = 'Transferindo Contrato para Prejuizo...';
 			cddopcao = 'U';
 			break;	
@@ -658,10 +663,10 @@ function controlaLayout(operacao) {
 		altura   = '270px';
 		largura  = '485px';
 		
-		var rRotulos     = $('label[for="dtprejuz"],label[for="vlprejuz"],label[for="slprjori"],label[for="vlrpagos"],label[for="vlsdprej"],label[for="vlttmupr"],label[for="vlpgmupr"],label[for="vliofcpl"]','#'+nomeForm);
+		var rRotulos     = $('label[for="dtprejuz"],label[for="vlprejuz"],label[for="slprjori"],label[for="vlrpagos"],label[for="vlttmupr"],label[for="vlpgmupr"],label[for="vliofcpl"],label[for="vlsdprej"],label[for="qtdiaatr"],label[for="tpdrisco"]','#'+nomeForm);
 		var cTodos       = $('select,input','#'+nomeForm);
 
-		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlttjmpr"],label[for="vlpgjmpr"],label[for="tpdrisco"]','#'+nomeForm);
+		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlttjmpr"],label[for="vlpgjmpr"],label[for="tpdrisco"],label[for="vlsdprej"]','#'+nomeForm);
 
 		var cTodosMoeda  = $('#vlrabono,#vlprejuz,#vljrmprj,#slprjori,#vljraprj,#vlrpagos,#vlacresc,#vlsdprej,#vlttmupr,#vlpgmupr,#vlttjmpr,#vlpgjmpr,#vliofcpl','#'+nomeForm);
 
@@ -1432,6 +1437,14 @@ function controlaLayout(operacao) {
 		cTodos_2.desabilitaCampo();
 		cTodos_3.desabilitaCampo();
 
+	}else if (in_array(operacao,['C_PAG_PREST_PREJU'])){
+
+		nomeForm = 'frmVlParcPreju';
+		altura   = '210px';
+		largura  = '260px';
+		var cAbono  = $('#vlabono','#'+nomeForm);
+		var cPagto = $('#vlpagto','#'+nomeForm);
+		
 	}else if (in_array(operacao,['C_PAG_PREST'])){
 
 		nomeForm = 'frmVlParc';
@@ -2580,6 +2593,76 @@ function verificarImpAntecip() {
 
 function showMsgAutorizacaoAntecipacao(){
 	showConfirmacao('Deseja imprimir a autorização para antecipação?','Confirma&ccedil;&atilde;o - Ayllos','realizaImpressao(true);','realizaImpressao(false);','sim.gif','nao.gif');
+}
+
+function validaPagamentoPreju(){
+
+	var vlprincipal = retiraMascara($('#vlprincipal', '#frmVlParcPreju').val()) || 0;
+	var vljuros     = retiraMascara($('#vljuros'    , '#frmVlParcPreju').val()) || 0;
+	var vlmulta     = retiraMascara($('#vlmulta'    , '#frmVlParcPreju').val()) || 0;
+	var vlpagto     = retiraMascara($('#vlpagto'    , '#frmVlParcPreju').val()) || 0;
+	var vlabono     = retiraMascara($('#vlabono'    , '#frmVlParcPreju').val()) || 0;
+
+	//Validar para não permitir que todos os campos estejam vazios/zerados
+	if(vlpagto > 0 || vlabono > 0) {
+		if(vlprincipal > 0 || vljuros > 0 || vlmulta > 0){
+	showConfirmacao('Confirma pagamento do prejuízo?','Confirma&ccedil;&atilde;o - Ayllos','pagPrestPreju();','$(\'#btVoltar\').click();','sim.gif','nao.gif');
+		}else{
+			showError('error','Contrato liquidado.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		}
+	} else {
+		showError('error','Atenção! Informe valor de pagamento.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+	}
+}
+
+function pagPrestPreju (){
+	showMsgAguardo('Aguarde, validando prejuizo...');
+
+	var valordopagto = retiraMascara($($('form#frmVlParcPreju').find('input')[3]).val()) || 0;
+	var valordoabono = retiraMascara($($('form#frmVlParcPreju').find('input')[4]).val()) || 0;
+	
+	var vlprincipal = retiraMascara($($('form#frmVlParcPreju').find('input')[0]).val()) || 0;
+	var vljuros = retiraMascara($($('form#frmVlParcPreju').find('input')[1]).val()) || 0;
+	var vlmulta = retiraMascara($($('form#frmVlParcPreju').find('input')[2]).val()) || 0;
+	
+	var totalDivida = (vlprincipal + vljuros + vlmulta) || 0;
+	var totalArredondamento = parseFloat(totalDivida.toFixed(2));
+	var totalPagamento = (valordopagto + valordoabono) || 0;
+	
+	if (valordopagto > totalArredondamento){
+		hideMsgAguardo();
+		showError('error','Pagamento não permitido, valor informado é superior ao saldo devedor do contrato.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		return false;
+	}
+	
+	if (valordoabono > totalDivida){
+		hideMsgAguardo();
+		showError('error','Pagamento não permitido, valor do abono informado é superior ao saldo devedor do contrato.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		return false;
+	}
+	
+	// Carrega conteúdo da opção através do Ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/pagto_prejuizo.php',
+		data: {
+			nrdconta: nrdconta,
+			nrctremp: nrctremp,
+			vldabono: valordoabono,
+			vlpagmto: valordopagto,
+			redirect: 'html_ajax'
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			eval( response );
+			return false;
+		}
+	});
 }
 
 function validaPagamento(){
@@ -3809,9 +3892,13 @@ function direcionaConsulta() {
 function validarLiquidacao(){
 	
 	var liquidia;
+	var inprejui;
+	var linValor;
 
 	$('table > tbody > tr', 'div.divRegistros').each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
+
+			linValor = parseInt($('td:first', $(this)).text().split(' ')[0].trim());
 
 				if (typeof $('#nrctremp', $(this) ).val() != 'undefined'){
 					nrctremp = $('#nrctremp', $(this) ).val();
@@ -3819,13 +3906,28 @@ function validarLiquidacao(){
 				if (typeof $('#liquidia', $(this) ).val() != 'undefined'){
 					liquidia = $('#liquidia', $(this) ).val();
 				}
+			
+			if (typeof $('#inprejuz', $(this) ).val() != 'undefined'){
+				inprejui = $('#inprejuz', $(this) ).val();
+			}
+
 				if (typeof $('#tpemprst', $(this) ).val() != 'undefined'){
 					tpemprst = $('#tpemprst', $(this) ).val();
 				}
-
+		    /*	
+		    if (typeof $('#vlemprst', $(this) ).val() != 'undefined'){
+				vlemprst = $('#vlemprst', $(this) ).val();
+			} */
 			}
 		});
 		if ( nrctremp == '' ) { return false; }
+		
+		if ( vlsdprej == 0 && inprejui == 1) { 
+		
+		// showError('inform','Contrato n&atilde;o possui Saldo Prejuizo!','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		showError('error', 'Contrato n&atilde;o possui Saldo Prejuizo.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		
+		return false; }
 	
 	if (tpemprst == 2) { // Pos-Fixado
 		controlaOperacao('C_PAG_PREST_POS');
@@ -3833,9 +3935,17 @@ function validarLiquidacao(){
 	if ( liquidia == 1 ) {
 		showConfirmacao('Deseja Realizar Liquidação do Contrato?','Confirma&ccedil;&atilde;o - Ayllos','exibeValorLiquidacao();','controlaOperacao(\'C_PAG_PREST\');','sim.gif','nao.gif');
 		return false;
-	} else {
+	} 
+	else {
+		//nova regra
+		//if (linValor == 100 && inprejui == 1) {
+		//controlaOperacao('C_PAG_PREST');
+		//}
+		if (inprejui == 0){
 		controlaOperacao('C_PAG_PREST');
 		}
+		else {
+			controlaOperacao('C_PAG_PREST_PREJU');
 	}
 
 }
@@ -3919,4 +4029,19 @@ function abrirTelaGAROPC() {
             bloqueiaFundo($('#divUsoGAROPC'));
         }
     });
+}
+
+function calcularSaldo(){
+
+	var vlprincipal = retiraMascara($('#vlprincipal', '#frmVlParcPreju').val()) || 0;
+	var vljuros     = retiraMascara($('#vljuros'    , '#frmVlParcPreju').val()) || 0;
+	var vlmulta     = retiraMascara($('#vlmulta'    , '#frmVlParcPreju').val()) || 0;
+	var vlpagto     = retiraMascara($('#vlpagto'    , '#frmVlParcPreju').val()) || 0;
+	var vlabono     = retiraMascara($('#vlabono'    , '#frmVlParcPreju').val()) || 0;
+
+	var vlsaldo = (vlprincipal + vljuros + vlmulta) - (vlpagto + vlabono);
+
+	$('#vlsaldo', '#frmVlParcPreju').val(vlsaldo.toFixed(2).replace(".",","));
+
+	$('#vlsaldo').trigger('blur');
 }
