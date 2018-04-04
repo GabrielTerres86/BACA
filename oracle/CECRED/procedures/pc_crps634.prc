@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps634(pr_cdcooper  IN NUMBER         -->
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CECRED
    Autor   : Adriano
-   Data    : Dezembro/2012                     Ultima atualizacao: 13/12/2017
+   Data    : Dezembro/2012                     Ultima atualizacao: 21/03/2018
 
    Dados referentes ao programa:
 
@@ -29,6 +29,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps634(pr_cdcooper  IN NUMBER         -->
                           - Tratamento erros others - cecred.pc_internal_exception
                           - Nova exception para não gerar log, pois a rotina GECO0001 já gera
                            (Ana - Envolti - Chamado 813390)
+
+               21/03/2018 - Substituição da rotina pc_gera_log_batch pela pc_log_programa
+                            para os códigos 1066 e 1067
+                           (Ana - Envolti - Chamado INC0011087)
 ............................................................................. */
 
   vr_cdprogra          VARCHAR2(10);                   --> Nome do programa
@@ -41,6 +45,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps634(pr_cdcooper  IN NUMBER         -->
   vr_exc_fimprg        EXCEPTION;                      --> Controle de exceção
   rw_crapdat           btch0001.cr_crapdat%rowtype;    --> Dados para fetch de cursor genérico
   vr_dsparam           VARCHAR2(4000);                 --> Parâmetros da rotina para as mensagens
+  vr_idprglog          tbgen_prglog.idprglog%TYPE := 0;      
 
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS   --> Código da cooperativa
@@ -141,18 +146,20 @@ BEGIN
 
   --Inclusao log para acompanhamento de tempo de execução - Chamado 813390
   --Registra o início
-  btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper             
-                            ,pr_ind_tipo_log  => 1 -- Mensagem
-                            ,pr_nmarqlog      => 'proc_batch.log'          
-                            ,pr_dstiplog      => 'O'             
-                            ,pr_cdprograma    => vr_cdprogra                      
-                            ,pr_tpexecucao    => 1 -- Batch                       
-                            ,pr_cdcriticidade => 0                      
-                            ,pr_cdmensagem    => 1066   
-                            ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
-                                                 ||vr_cdprogra||' --> '||gene0001.fn_busca_critica(1066)
-                                                 ||'PC_CRPS634_I '
-                                                 ||rw_crapcop.nmrescop||'. '||vr_dsparam);
+  --Substituicao da rotina pc_gera_log_batch pela pc_log_programa - Chamado INC0011087
+  CECRED.pc_log_programa(pr_dstiplog      => 'O',
+                         pr_cdcooper      => pr_cdcooper,
+                         pr_tpocorrencia  => 1,  --Mensagem
+                         pr_cdprograma    => vr_cdprogra,
+                         pr_tpexecucao    => 1, --Batch
+                         pr_cdcriticidade => 0,
+                         pr_cdmensagem    => 1066, -- Inicio execucao
+                         pr_dsmensagem    => gene0001.fn_busca_critica(1066)
+                                             ||'PC_CRPS634_I '
+                                             ||rw_crapcop.nmrescop||'. '||vr_dsparam,
+                         pr_idprglog      => vr_idprglog,
+                         pr_nmarqlog      => NULL);
+
   -- Incluir include
   PC_CRPS634_I(pr_cdcooper    => pr_cdcooper
               ,pr_cdagenci    => 0
@@ -174,18 +181,19 @@ BEGIN
 
     --Se executou com sucesso, registra o término na tabela de logs
     --Inclusao log para acompanhamento de tempo de execução - Chamado 813390
-    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper             
-                              ,pr_ind_tipo_log  => 1 -- Mensagem
-                              ,pr_nmarqlog      => 'proc_batch.log'          
-                              ,pr_dstiplog      => 'O'             
-                              ,pr_cdprograma    => vr_cdprogra                      
-                              ,pr_tpexecucao    => 1 -- Batch                       
-                              ,pr_cdcriticidade => 0                      
-                              ,pr_cdmensagem    => 1067 
-                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
-                                                   ||vr_cdprogra||' --> '||gene0001.fn_busca_critica(1067)
-                                                   ||'PC_CRPS634_I '
-                                                   ||rw_crapcop.nmrescop||'. '||vr_dsparam);
+    --Substituicao da rotina pc_gera_log_batch pela pc_log_programa - Chamado INC0011087
+    CECRED.pc_log_programa(pr_dstiplog      => 'O',
+                           pr_cdcooper      => pr_cdcooper,
+                           pr_tpocorrencia  => 1,  --Mensagem
+                           pr_cdprograma    => vr_cdprogra,
+                           pr_tpexecucao    => 1, --Batch
+                           pr_cdcriticidade => 0,
+                           pr_cdmensagem    => 1067, --Termino execucao
+                           pr_dsmensagem    => gene0001.fn_busca_critica(1067)
+                                               ||'PC_CRPS634_I '
+                                               ||rw_crapcop.nmrescop||'. '||vr_dsparam,
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => NULL);
   END IF;
   --
 
@@ -284,7 +292,7 @@ EXCEPTION
 
     -- No caso de erro de programa gravar tabela especifica de log - 13/12/2017 - Chamado 813390
     CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
-      
+
     -- Efetuar rollback
     ROLLBACK;
 END PC_CRPS634;
