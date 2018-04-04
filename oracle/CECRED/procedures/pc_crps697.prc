@@ -142,6 +142,10 @@ BEGIN
      WHERE cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
 
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE;
 
     BEGIN
 
@@ -221,7 +225,19 @@ BEGIN
             ELSE -- se nao gerar erro na criacao de avisos
               COMMIT;
             END IF;
+            -- 
+            vr_notif_origem   := 6;
+            vr_notif_motivo   := 4; 
+            vr_variaveis_notif('#dtmvtolt') := TO_CHAR(vr_dtmvtolt, 'RRRR');
+            vr_variaveis_notif('#dtmvtopr') := TO_CHAR(vr_dtmvtopr, 'RRRR');
 
+            -- Cria uma notificação
+            noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                        ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nrdconta => rw_mensal_gps.nrdconta
+                                        ,pr_idseqttl => 1 -- fixo Primeiro titular
+                                        ,pr_variaveis => vr_variaveis_notif);            
           END LOOP;
 
           -- processa Agendamentos pendentes e desativa
@@ -266,12 +282,25 @@ BEGIN
                                  '</br>Salientamos que os novos agendamentos de GPS devem ser realizados com base no reajuste do salário mínimo.' ||
                                  '</br></br>Caso não sejam realizados novos agendamentos, não haverá mais a contribuição para ' ||
                                  'a Previdência Social.';
+                 -- 
+                vr_notif_origem   := 6;
+                vr_notif_motivo   := 5;   
+                vr_variaveis_notif('#cdidenti')  := to_char(rw_count_gps.cdidenti);
+                vr_variaveis_notif('#vlrtotal')  := to_char(rw_count_gps.vlrtotal,'fm999g999g990d00');
+                vr_variaveis_notif('#totagenda') := to_char(rw_count_gps.count);
+                vr_variaveis_notif('#dtmvtolt')  := to_char(add_months(vr_dtmvtolt,12),'RRRR');                                               
               ELSE
                 vr_dsmensagem := 'O Pagamento de GPS para o Identificador: ' || rw_count_gps.cdidenti ||
                                  ' no valor de R$ ' || TO_CHAR(rw_count_gps.vlrtotal,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') ||
                                  ' possui apenas '  || rw_count_gps.count || ' agendamento(s) pendente(s).' ||
                                  '</br></br>Se desejar realizar novos agendamentos, clique em Transações -> Guia Previdência Social -> Agendamentos de GPS.' ||
                                  '</br></br>Caso não sejam realizados novos agendamentos, não haverá mais a contribuição para a Previdência Social.';
+                -- 
+                vr_notif_origem   := 6;
+                vr_notif_motivo   := 6;  
+                vr_variaveis_notif('#cdidenti')  := to_char(rw_count_gps.cdidenti);
+                vr_variaveis_notif('#vlrtotal')  := to_char(rw_count_gps.vlrtotal,'fm999g999g990d00');
+                vr_variaveis_notif('#totagenda') := to_char(rw_count_gps.count);                                                
               END IF;
 
 
@@ -315,7 +344,15 @@ BEGIN
                 END LOOP;
 
               END IF;
-
+              -- ews
+              -- Cria uma notificação
+              noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                          ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                          ,pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => rw_count_gps.nrctapag
+                                          ,pr_idseqttl => 1 -- fixo Primeiro titular
+                                          ,pr_variaveis => vr_variaveis_notif);               
+              --
          END LOOP;
 
       END IF; -- IF ( vr_dtmvtolt <> vr_dtmvtopr )
