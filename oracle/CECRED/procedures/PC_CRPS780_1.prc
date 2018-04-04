@@ -849,7 +849,7 @@ BEGIN
                              (nvl(rw_crapepr.vlttjmpr,0) - nvl(rw_crapepr.vlpgjmpr,0)));
         
         ELSIF vr_vldpagto <= 0 AND vr_vldabono <= 0 THEN
-          vr_dscritic := 'Pagamento não permitido, Saldo de pagamento ou abono menor ou igaul a zero.';
+          vr_dscritic := 'Pagamento não permitido, Saldo de pagamento ou abono menor ou igual a zero.';
           RAISE vr_exc_erro;                  
            
         END IF;
