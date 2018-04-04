@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 23/03/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 26/03/2018
     
    Dados referentes ao programa:
    
@@ -218,6 +218,10 @@
                            
               23/03/2018 - Validar se empresa do codigo de barras e igual ao cadastrado na base 
                            (Lucas Ranghetti #856427)
+                           
+              26/03/2018 - Incluir tratamento no cancelamento e recadastramento, para 
+                           quando nao for o ultimo dia util do ano, grave a data como 
+                           dia atual (Lucas Ranghetti #860768)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -2324,6 +2328,8 @@ PROCEDURE grava-dados:
                                                     OUTPUT aux_dtmvtolt).     
                                 
                             END.
+                        ELSE
+                            ASSIGN aux_dtmvtolt = par_dtmvtolt.
                     END.    
 
                 IF  par_cddopcao = "R" THEN
