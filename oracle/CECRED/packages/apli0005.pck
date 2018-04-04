@@ -37,6 +37,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --                          lugar de gene0007.pc_insere_tag pois a mesma fica lenta para xmls muito grandes (Carlos)
   --
   --             18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+  --             04/01/2018 - Correcao nos campos utilizados para atualizacao da CRAPLOT quando inserida nova aplicacao
+  --                          com debito em Conta Investimento.
+  --                          Heitor (Mouts) - Chamado 821010.
   ---------------------------------------------------------------------------------------------------------------
   
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -1704,11 +1707,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         -- Carregar tabela de memoria de taxas
         -- Selecionar os tipos de registro da tabela generica
         FOR rw_craptab IN cr_craptab_taxas(pr_cdcooper => pr_cdcooper
-                                    ,pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => 0
-                                    ,pr_cdacesso => 'SOMAPLTAXA'
-                                    ,pr_dstextab => 'SIM') LOOP
+                                          ,pr_nmsistem => 'CRED'
+                                          ,pr_tptabela => 'GENERI'
+                                          ,pr_cdempres => 0
+                                          ,pr_cdacesso => 'SOMAPLTAXA'
+                                          ,pr_dstextab => 'SIM') LOOP
           -- Atribuir valor para tabela memoria
           vr_tab_tpregist(rw_craptab.tpregist) := rw_craptab.tpregist;
         END LOOP;
@@ -2455,7 +2458,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       
       -- Consulta dados de produtos
       OPEN cr_crapcpc(pr_cdprodut => pr_cdprodut);
-
       FETCH cr_crapcpc INTO rw_crapcpc;
         
       -- Verifica se encontrou produtos
@@ -2476,9 +2478,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       -- Verifica se produto e pos-fixado e carencia igual a 0
       IF rw_crapcpc.idtippro = 2 AND pr_qtdiacar = 0 THEN
         vr_dscritic := 'Nao e permitido carencia igual a zero para produtos pos-fixado.';
-        RAISE vr_exc_saida;
+        RAISE vr_exc_saida; 
       END IF;
-      
+    
       IF rw_crapcpc.idacumul = 1 THEN
          
         -- Selecionar informacoes % IR para o calculo
@@ -2515,11 +2517,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         -- Carregar tabela de memoria de taxas
         -- Selecionar os tipos de registro da tabela generica
         FOR rw_craptab IN cr_craptab_taxas(pr_cdcooper => pr_cdcooper
-                                    ,pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => 0
-                                    ,pr_cdacesso => 'SOMAPLTAXA'
-                                    ,pr_dstextab => 'SIM') LOOP
+                                          ,pr_nmsistem => 'CRED'
+                                          ,pr_tptabela => 'GENERI'
+                                          ,pr_cdempres => 0
+                                          ,pr_cdacesso => 'SOMAPLTAXA'
+                                          ,pr_dstextab => 'SIM') LOOP
           -- Atribuir valor para tabela memoria
           vr_tab_tpregist(rw_craptab.tpregist) := rw_craptab.tpregist;
         END LOOP;
@@ -3603,11 +3605,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         --Carregar tabela de memoria de taxas
         --Selecionar os tipos de registro da tabela generica
         FOR rw_craptab IN cr_craptab_taxas(pr_cdcooper => pr_cdcooper
-                                    ,pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => 0
-                                    ,pr_cdacesso => 'SOMAPLTAXA'
-                                    ,pr_dstextab => 'SIM') LOOP
+                                          ,pr_nmsistem => 'CRED'
+                                          ,pr_tptabela => 'GENERI'
+                                          ,pr_cdempres => 0
+                                          ,pr_cdacesso => 'SOMAPLTAXA'
+                                          ,pr_dstextab => 'SIM') LOOP
           --Atribuir valor para tabela memoria
           vr_tab_tpregist(rw_craptab.tpregist):= rw_craptab.tpregist;
         END LOOP;
@@ -4052,8 +4054,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,nrseqdig
                ,qtinfoln
                ,qtcompln
-               ,vlinfocr
-               ,vlcompcr)
+               ,vlinfodb
+               ,vlcompdb)
             VALUES(
               pr_cdcooper
              ,rw_crapdat.dtmvtolt
@@ -4096,8 +4098,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               craplot.nrseqdig = rw_craplot.nrseqdig + 1,
               craplot.qtinfoln = rw_craplot.qtinfoln + 1,
               craplot.qtcompln = rw_craplot.qtcompln + 1,
-              craplot.vlinfocr = rw_craplot.vlinfocr + pr_vlaplica,
-              craplot.vlcompcr = rw_craplot.vlcompdb + pr_vlaplica
+              craplot.vlinfodb = rw_craplot.vlinfodb + pr_vlaplica,
+              craplot.vlcompdb = rw_craplot.vlcompdb + pr_vlaplica
             WHERE
               craplot.rowid = rw_craplot.rowid
             RETURNING
@@ -13900,7 +13902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       IF UPPER(pr_cdprogra) LIKE 'CRPS750%' OR UPPER(pr_cdprogra) = 'CRPS001' THEN
         vr_innivbloq := 1; --> Checar somente Bloqueio Judicial
       END IF;
-      
+
     
       -- obter os valores Bloqueados Judicialmente e Garantia
       apli0002.pc_ver_val_bloqueio_aplica(pr_cdcooper => pr_cdcooper

@@ -219,12 +219,12 @@
                 11/07/2016 - M325 - Informe de Rendimentos - Novos parametros
                              para Gera_Impressao (Guilherme/SUPERO)            
                                                       
-				        20/04/2017 - Ajuste para remover a rotina consulta-imposto-renda, 
-				                     pois nao esta mais sendo utilizada
-							              (Adriano - P339).       
-                
+				20/04/2017 - Ajuste para remover a rotina consulta-imposto-renda, 
+				             pois nao esta mais sendo utilizada
+							(Adriano - P339).       
+
                 21/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
-						   
+
                 27/11/2017 - Inclusao do valor de bloqueio em garantia nos relatorios. 
                              PRJ404 - Garantia Empr.(Odirlei-AMcom)  
                                            
@@ -282,7 +282,6 @@ DEF VAR aux_vlresblq AS DECI                                        NO-UNDO.
 DEF VAR aux_vlblqapl_gar AS DECI                                    NO-UNDO.
 DEF VAR aux_vlblqpou_gar AS DECI                                    NO-UNDO.
 DEF VAR aux_vltot_resgat AS DECI                                    NO-UNDO.
-
 
 DEF STREAM str_1.
 
@@ -3051,7 +3050,7 @@ PROCEDURE gera_impressao_sintetico:
                 "VALOR BLOQUEADO COBERTURA GARANTIA R$: "
                 aux_vlblqapl_gar FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"                
                 SKIP.
-			
+
 			aux_vltot_resgat = tot_sldresga - (aux_vlblqjud + aux_vlblqapl_gar).
 
 			IF aux_vltot_resgat < 0 THEN DO:
@@ -3213,7 +3212,7 @@ PROCEDURE gera_impressao_demonstrativo:
     
     IF  VALID-HANDLE(h-b1wgen0155) THEN
         DELETE PROCEDURE h-b1wgen0155.
-        
+
       
     /* PRJ404 - Retornar valor bloqueado de garantia */
     RUN calcula_bloq_garantia (INPUT par_cdcooper,
@@ -3507,7 +3506,7 @@ PROCEDURE gera_impressao_demonstrativo:
                                       "b1wgen0024.".
                 LEAVE.
             END.
-
+        
         RUN envia-arquivo-web IN h-b1wgen0024
             ( INPUT par_cdcooper,
               INPUT 1, /* cdagenci */
@@ -3779,7 +3778,6 @@ PROCEDURE pi_monta_demonstrativo:
             ASSIGN tt-demonstrativo.vlcolu14 = "SALDO"
                    tt-demonstrativo.vlcolu15 = 
                       STRING(tot_sldresga,"zz,zzz,zz9.99").
-
         END.
                     
         /** Processamento dos dados do extrato **/
