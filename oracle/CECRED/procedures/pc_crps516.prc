@@ -213,9 +213,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
 										----
 										,pr_cdagenci  => 0                    --> Código da agência, utilizado no paralelismo
 										,pr_idparale  => 0                    --> Identificador do job executando em paralelo.
-										,pr_flgresta  => 1                    --> Flag padrão para utilização de restart
-										,pr_stprogra  => vr_stprogra         --> Saída de termino da execução
-										,pr_infimsol  => vr_infimsol         --> Saída de termino da solicitação,                                               
+                    ,pr_flgresta  => pr_flgresta          --> Flag padrão para utilização de restart
+                    ,pr_stprogra  => vr_stprogra          --> Saída de termino da execução
+                    ,pr_infimsol  => vr_infimsol          --> Saída de termino da solicitação,                                               
 										----
                     ,pr_vltotprv   => vr_vltotprv         --> Total acumulado de provisão
                     ,pr_vltotdiv   => vr_vltotdiv         --> Total acumulado de dívida
