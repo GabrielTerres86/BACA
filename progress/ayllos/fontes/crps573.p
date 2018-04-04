@@ -122,6 +122,11 @@
                 05/12/2013 - Renomeada procedure verifica_conta_altovale_573
                              para verifica_conta_migracao_573 que despreza
                              as contas migradas (Tiago).
+
+                04/04/2018 - Incluso parametros para agencia (pr_cdagenci) e identificação de paralelo (default 0)
+				             para atender Projeto Ligeirinho.
+
+
                              
 .............................................................................*/
 
@@ -147,7 +152,9 @@ ETIME(TRUE).
 { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
 RUN STORED-PROCEDURE pc_crps573 aux_handproc = PROC-HANDLE
-   (INPUT glb_cdcooper,                                                  
+   (INPUT glb_cdcooper,
+    INPUT glb_cdagenci,
+	INPUT 0,                                                  
     INPUT INT(STRING(glb_flgresta,"1/0")),
     OUTPUT 0,
     OUTPUT 0,
