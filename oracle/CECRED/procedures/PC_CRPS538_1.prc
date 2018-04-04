@@ -525,11 +525,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                -- Caso esteja dentro da lista abaixo
                IF vr_cdcritic IN (9,592,595,965,966,980) THEN
                  -- Monta a mensagem
-                 vr_desdados := vr_desdados || '50' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') ||
+                 vr_desdados := '50' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') ||
                                 ',1455,4894,' || TO_CHAR(vr_typ_craprej_array(vr_index_cratrej).vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
                                 ',5210,"' || GENE0007.fn_caract_acento(UPPER(LTRIM(vr_dscritic,lpad(vr_cdcritic,3,0) || ' - '))) ||
                                 ' COOPERADO C/C ' || GENE0002.fn_mask_conta(vr_typ_craprej_array(vr_index_cratrej).nrdconta) ||
                                 ' (CONFORME CRITICA RELATORIO 605_' || GENE0002.fn_mask(vr_contador - 1,'99') || ')"' || chr(10);
+                 -- Adiciona a linha ao arquivo de criticas
+                 dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);
                END IF;
                               
                -- Variavel não careega então não criada e não utilizada - Chamado 714566 - 11/08/2017
@@ -569,10 +571,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
              vr_dtmvtolt:= rw_crapdat.dtmvtoan;
            ELSE
              vr_dtmvtolt:= rw_crapdat.dtmvtolt;
-           END IF;
-
-		   IF vr_desdados IS NOT NULL THEN
-              dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);
            END IF;
 
            -- Se possuir conteudo de critica no CLOB
