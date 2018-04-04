@@ -667,7 +667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
             -- 9 - Cancelado
                  
             UPDATE tbgen_sms_controle sms
-               SET sms.cdretorno = to_number(vr_tab_string(5)) -- Código do retorno
+               SET sms.cdretorno = to_number(vr_tab_string(6)) -- Código do retorno
              WHERE sms.idlote_sms = rw_lote.idlote_sms
                AND sms.idsms = to_number(vr_tab_string(3));
                 
