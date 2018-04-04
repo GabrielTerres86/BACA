@@ -316,6 +316,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  pelo cr_tbepr_bens_hst que chama a tabela tbepr_bens_hst
                                  (Lucas Ranghetti #734912)
                                  
+                   20/02/2018 - Incluso procedimento para atender ao Projeto Ligeirinho. Foi necessário incluir
+                                procedimento de paralelismo para ganho de performance. - Mauro Amancio (Amcom).                                              
+                                 
 .............................................................................................................................*/
 
     DECLARE
