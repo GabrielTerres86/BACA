@@ -23,6 +23,7 @@ isPostMethod();
         <option value="L" <?php echo $cddopcao == 'L' ? 'selected' : '' ?>>L - Imprimir listagem de lotes de desconto de t&iacute;tulos efetuados no dia.</option>
         <option value="S" <?php echo $cddopcao == 'S' ? 'selected' : '' ?>>S - Pesquisar dados para concilia&ccedil;&atilde;o cont&aacute;bil.</option>
         <option value="T" <?php echo $cddopcao == 'T' ? 'selected' : '' ?>>T - Pesquisar data de libera&ccedil;&atilde;o e loteamento de t&iacute;tulos.</option>
+        <option value="Q" <?php echo $cddopcao == 'Q' ? 'selected' : '' ?>>Q - Consulta quem emitiu cobran&ccedil;as para esse pagador</option>
     </select>
 
     <a href="#" class="botao" id="btnOk1">Ok</a>
