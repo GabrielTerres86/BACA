@@ -1,7 +1,7 @@
 CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
 
   ---------------------------------------------------------------------------------------------------------------
-  --
+  -- 
   --  Programa : EMPR0001
   --  Sistema  : Rotinas gen¿ricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
@@ -43,7 +43,103 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --
   --             24/01/2018 - Adicionada solicitacao de senha de coordenador para utilizacao do saldo bloqueado no pagamento (Luis Fernando - GFT)
   ---------------------------------------------------------------------------------------------------------------
-
+  -- CURSOR para buscar o saldo que será no Extrato PP.
+  -- Usado também an rotina PREJ0001
+  CURSOR cr_craplem_sld(pr_cdcooper IN craplem.cdcooper%TYPE
+                       ,pr_nrdconta IN craplem.nrdconta%TYPE
+                       ,pr_nrctremp IN craplem.nrctremp%TYPE) IS
+      SELECT SUM(DECODE(craplem.cdhistor
+                         ,1044
+                         ,craplem.vllanmto
+                         ,1039
+                         ,craplem.vllanmto
+                         ,1045
+                         ,craplem.vllanmto
+                         ,1046
+                         ,craplem.vllanmto
+                         ,1057
+                         ,craplem.vllanmto
+                         ,1058
+                         ,craplem.vllanmto
+                         ,1043
+                         ,craplem.vllanmto
+                         ,1041
+                         ,craplem.vllanmto
+                         ,1036
+                         ,craplem.vllanmto * -1
+                         ,1059
+                         ,craplem.vllanmto * -1
+                         ,1037
+                         ,craplem.vllanmto * -1
+                         ,1038
+                         ,craplem.vllanmto * -1
+                         ,1716
+                         ,craplem.vllanmto * -1
+                         ,1707
+                         ,craplem.vllanmto * -1
+                         ,1714
+                         ,craplem.vllanmto * -1
+                         ,1705
+                         ,craplem.vllanmto * -1
+                         ,1040
+                         ,craplem.vllanmto * -1
+                         ,1042
+                         ,craplem.vllanmto * -1
+                         ,2013
+                         ,craplem.vllanmto * -1
+                         ,2014
+                         ,craplem.vllanmto * -1
+                         ,2304
+                         ,craplem.vllanmto * -1
+                         ,2305
+                         ,craplem.vllanmto * -1
+                         ,2306
+                         ,craplem.vllanmto * -1
+                         ,2307
+                         ,craplem.vllanmto * -1
+                         ,2535
+                         ,craplem.vllanmto * -1
+                         ,2536
+                         ,craplem.vllanmto * -1
+                         ,2591
+                         ,craplem.vllanmto * -1
+                         ,2592
+                         ,craplem.vllanmto * -1
+                         ,2593
+                         ,craplem.vllanmto * -1
+                         ,2594
+                         ,craplem.vllanmto * -1
+                         ,2597
+                         ,craplem.vllanmto * -1
+                         ,2598
+                         ,craplem.vllanmto * -1
+                         ,2599
+                         ,craplem.vllanmto * -1
+                         ,2600
+                         ,craplem.vllanmto * -1
+                         ,2601
+                         ,craplem.vllanmto * -1
+                         ,2602
+                         ,craplem.vllanmto * -1
+                         ,2603
+                         ,craplem.vllanmto * -1
+                         ,2604
+                         ,craplem.vllanmto * -1
+                         ,2605
+                         ,craplem.vllanmto * -1
+                         ,2606
+                         ,craplem.vllanmto * -1)) saldo
+          FROM craplem
+         WHERE craplem.cdcooper = pr_cdcooper
+           AND craplem.nrdconta = pr_nrdconta
+           AND craplem.nrctremp = pr_nrctremp
+           AND craplem.cdhistor IN
+           (1044, 1039, 1045, 1046, 1057, 1058, 1036, 1059, 
+            1037, 1038, 1716, 1707, 1714, 1705, 1040, 1041, 
+            1042, 1043, 2013, 2014, 1036, 2305, 2304, 2536, 2535,   
+            2306, 2597, 2598, 2307, 2599, 2600, 2601, 2602,
+            2591, 2592, 2593, 2594, 2603, 2604, 2605, 2606);
+   --             
   /* Tipo com as informacoes do registro de emprestimo. Antiga: tt-dados-epr */
   TYPE typ_reg_dados_epr IS RECORD(
      nrdconta crapepr.nrdconta%TYPE
@@ -1437,8 +1533,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- 392 ABAT.CONCEDID
           -- 393 PAGTO AVALIST
           -- 507 EST.TRF.COTAS
+          /*
+            88 - ESTORNO DE PAGAMENTO DE EMPRESTIMO
+            91 - PAGTO EMPRESTIMO C/C
+            92 - PAGTO EMPRESTIMO EM CAIXA
+            93 - PAGTO EMPRESTIMO EM FOLHA
+            94 - DESCONTO E/OU ABONO CONCEDIDO NO EMPRESTIMO
+            95 - PAGTO EMPRESTIMO C/C
+            120 - SOBRAS DE EMPRESTIMOS
+            277 - ESTORNO DE JUROS S/EMPR. E FINANC.
+            349 - EMPRESTIMO TRANSFERIDO PARA PREJUIZO
+            353 - PAGAMENTO DE EMPRESTIMO COM SAQUE DE CAPITAL
+            392 - ABATIMENTO CONCEDIDO NO EMPRESTIMO
+            393 - PAGAMENTO EMPRESTIMO PELO FIADOR/AVALISTA
+            507 - ESTORNO DE TRANSFERENCIA DE COTAS
+            2381 - TRANSFERENCIA EMPRESTIMO PP P/ PREJUIZO
+            2396 - TRANSFERENCIA FINANCIAMENTO PP P/ PREJUIZO
+            2401 - TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO
+
+          */
           IF rw_craplem.cdhistor IN
-             (88, 91, 92, 93, 94, 95, 120, 277, 349, 353, 392, 393, 507) THEN
+             (88, 91, 92, 93, 94, 95, 120, 277, 349, 353, 392, 393, 507, 2381,2396,2401) THEN
             -- Zerar quantidade paga
             vr_qtprepag := 0;
             -- Garantir que não haja divisão por zero
@@ -1471,7 +1586,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- 353 TRANSF. COTAS
           -- 392 ABAT.CONCEDID
           -- 393 PAGTO AVALIST
-          IF rw_craplem.cdhistor IN (91, 92, 94, 277, 349, 353, 392, 393) THEN
+          /*
+           91 - PAGTO EMPRESTIMO C/C
+           92 - PAGTO EMPRESTIMO EM CAIXA
+           94 - DESCONTO E/OU ABONO CONCEDIDO NO EMPRESTIMO
+           277 - ESTORNO DE JUROS S/EMPR. E FINANC.
+           349 - EMPRESTIMO TRANSFERIDO PARA PREJUIZO
+           353 - PAGAMENTO DE EMPRESTIMO COM SAQUE DE CAPITAL
+           392 - ABATIMENTO CONCEDIDO NO EMPRESTIMO
+           393 - PAGAMENTO EMPRESTIMO PELO FIADOR/AVALISTA
+           2381 - TRANSFERENCIA EMPRESTIMO PP P/ PREJUIZO
+           2396 - TRANSFERENCIA FINANCIAMENTO PP P/ PREJUIZO
+           2401 - TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO
+          
+          */
+          IF rw_craplem.cdhistor IN (91, 92, 94, 277, 349, 353, 392, 393,  2381, 2396,2401) THEN
             -- Guardar data do ultimo pagamento
             pr_dtultpag := rw_craplem.dtmvtolt;
             -- Se houver saldo devedor
@@ -4027,6 +4156,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Buscar informações de pagamentos do empréstimos
       --   Enviando uma data para filtrar movimentos posteriores a mesma
       --   -> Pode ser enviado um tipo de histórico para busca a partir dele
+      /*
+       88 - ESTORNO DE PAGAMENTO DE EMPRESTIMO
+       91 - PAGTO EMPRESTIMO C/C
+       92 - PAGTO EMPRESTIMO EM CAIXA
+       93 - PAGTO EMPRESTIMO EM FOLHA
+       94 - DESCONTO E/OU ABONO CONCEDIDO NO EMPRESTIMO
+       95 - PAGTO EMPRESTIMO C/C
+       120 - SOBRAS DE EMPRESTIMOS
+       277 - ESTORNO DE JUROS S/EMPR. E FINANC.
+       349 - EMPRESTIMO TRANSFERIDO PARA PREJUIZO
+       353 - PAGAMENTO DE EMPRESTIMO COM SAQUE DE CAPITAL
+       392 - ABATIMENTO CONCEDIDO NO EMPRESTIMO
+       393 - PAGAMENTO EMPRESTIMO PELO FIADOR/AVALISTA
+       395 - TAXAS/SERVICOS/REGISTROS/HONORARIOS
+       441 - JUROS SOBRE EMPRESTIMOS EM ATRASO
+       443 - MULTA SOBRE EMPRESTIMOS EM ATRASO
+       507 - ESTORNO DE TRANSFERENCIA DE COTAS
+       2381 - TRANSFERENCIA EMPRESTIMO PP P/ PREJUIZO
+       2396 - TRANSFERENCIA FINANCIAMENTO PP P/ PREJUIZO
+       2401 - TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO
+
+      */
       CURSOR cr_craplem(pr_dtmvtolt IN craplem.dtmvtolt%TYPE) IS
         SELECT /*+ INDEX (lem CRAPLEM##CRAPLEM6) */
                to_char(lem.dtmvtolt,'dd') ddlanmto
@@ -4057,7 +4208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            -- 395 SERV./TAXAS
            -- 441 JUROS S/ATRAS
            -- 443 MULTA S/ATRAS
-           AND lem.cdhistor IN(88,91,92,93,94,95,120,277,349,353,392,393,507,395,441,443)
+           AND lem.cdhistor IN(88,91,92,93,94,95,120,277,349,353,392,393,507,395,441,443, 2381, 2396,2401)
       ORDER BY lem.cdcooper
               ,lem.nrdconta
               ,lem.nrctremp
@@ -4296,6 +4447,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             -- 392 ABAT.CONCEDID
             -- 393 PAGTO AVALIST
             -- 507 EST.TRF.COTAS
+            /*
+			        88 - ESTORNO DE PAGAMENTO DE EMPRESTIMO
+              91 - PAGTO EMPRESTIMO C/C
+              92 - PAGTO EMPRESTIMO EM CAIXA
+              93 - PAGTO EMPRESTIMO EM FOLHA
+              94 - DESCONTO E/OU ABONO CONCEDIDO NO EMPRESTIMO
+              95 - PAGTO EMPRESTIMO C/C
+              120 - SOBRAS DE EMPRESTIMOS
+              277 - ESTORNO DE JUROS S/EMPR. E FINANC.
+              349 - EMPRESTIMO TRANSFERIDO PARA PREJUIZO
+              353 - PAGAMENTO DE EMPRESTIMO COM SAQUE DE CAPITAL
+              392 - ABATIMENTO CONCEDIDO NO EMPRESTIMO
+              393 - PAGAMENTO EMPRESTIMO PELO FIADOR/AVALISTA
+              507 - ESTORNO DE TRANSFERENCIA DE COTAS
+              2381 - TRANSFERENCIA EMPRESTIMO PP P/ PREJUIZO
+              2396 - TRANSFERENCIA FINANCIAMENTO PP P/ PREJUIZO
+              2401 - TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO*/
             IF rw_craplem.cdhistor IN
                (88, 91, 92, 93, 94, 95, 120, 277, 349, 353, 392, 393, 507) THEN
               -- Zerar quantidade paga
@@ -4613,6 +4781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Arredondar juros no mês
         vr_vljurmes := ROUND(vr_vljurmes, 2);
         -- Acumular juros calculados
+        vr_vljurmes := 0; -- projeto prejuizo - Melhoria 324 - Jean Calao
         pr_vljuracu := pr_vljuracu + vr_vljurmes;
         -- Incluir no saldo devedor os juros do mês
         pr_vlsdeved := pr_vlsdeved + vr_vljurmes;
@@ -4937,6 +5106,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            WHERE upper(gnsbmod.cdmodali) = upper(pr_cdmodali)
              AND upper(gnsbmod.cdsubmod) = upper(pr_cdsubmod);
         rw_gnsbmod cr_gnsbmod%ROWTYPE;
+      -- nova M324
+      CURSOR cr_craplem1(prc_nrctremp craplem.nrctremp%TYPE) IS
+        SELECT sum(case when c.cdhistor in (382,384,2388,2473,2389,2390,2475) then c.vllanmto else 0 end) 
+               - 
+               sum(case when c.cdhistor in (2392,2474,2393,2394,2476) then c.vllanmto else 0 end) valor_pago
+          FROM craplem c
+         WHERE c.cdcooper = pr_cdcooper
+           AND c.nrdconta = pr_nrdconta
+           AND c.nrctremp = prc_nrctremp
+           AND c.cdhistor in(382, /* Pagamentos */
+                             384, /*PAGAMENTO DE PREJUIZO*/
+                             2388, /* 2388 - PAGAMENTO DE PREJUIZO VALOR PRINCIPAL */
+                             2473, /* 2473 - PAGAMENTO JUROS +60 PREJUIZO */
+                            -- 2389, /* 2389 - PAGAMENTO JUROS PREJUIZO */
+                             2390, /* 2390 - PAGAMENTO MULTA ATRASO PREJUIZO */
+                             2475, /* 2475 - PAGAMENTO JUROS MORA PREJUIZO */
+                             2392, /* 2392 - ESTORNO PAGAMENTO DE PREJUIZO VALOR PRINCIPAL */
+                             2474, /* 2474 - ESTORNO PAGAMENTO JUROS +60 PREJUIZO */
+                             --2393, /* 2393 - ESTORNO PAGAMENTO DE JUROS PREJUIZO */
+                             2394, /* 2394 - ESTORNO PAGAMENTO MULTA ATRASO PREJUIZO */
+                             2476);      
+       /* SELECT sum(case when c.cdhistor in (2386,384) then c.vllanmto else 0 end) 
+               - 
+               sum(case when c.cdhistor in (2387) then c.vllanmto else 0 end) valor_pago
+          FROM craplcm c
+         WHERE c.cdcooper = pr_cdcooper
+           AND c.nrdconta = pr_nrdconta
+           AND to_number(trim(replace(c.cdpesqbb,'.',''))) = prc_nrctremp
+           AND c.cdhistor in(2386,2387,384);*/ 
+      -- nova M324
+      CURSOR cr_craplem2(prc_nrctremp craplem.nrctremp%TYPE) IS
+        SELECT sum(case when c.cdhistor in (383,2391) then c.vllanmto else 0 end) 
+               - 
+               sum(case when c.cdhistor in (2395) then c.vllanmto else 0 end) valor_pago_abono
+          FROM craplem c
+         WHERE c.cdcooper = pr_cdcooper
+           AND c.nrdconta = pr_nrdconta
+           AND c.nrctremp = prc_nrctremp
+           AND c.cdhistor in(383, /*ABONO DE PREJUIZO*/
+                             2391, /*ABONO DE PREJUIZO*/
+                             2395); /*ESTORNO ABONO DE PREJUIZO*/ 
+      -- nova M324
+      CURSOR cr_craplem3(prc_nrctremp craplem.nrctremp%TYPE) IS  
+        SELECT sum(case when c.cdhistor in (382,2388,2473,2389,2391) then c.vllanmto else 0 end) - 
+                  (sum(case when c.cdhistor in (2392,2474,2393,2395) then c.vllanmto else 0 end))sum_sldPrinc
+          FROM craplem c
+         WHERE c.cdcooper = pr_cdcooper
+           AND c.nrdconta = pr_nrdconta
+           AND c.nrctremp = prc_nrctremp
+           AND c.cdhistor in (382,2388,2473,2389,2391, 2392,2474,2393,2395);
+       --           
       -- Temp table para armazenar os avalistas encontrados
       TYPE typ_reg_avalist IS RECORD(
          nrgeneri VARCHAR2(30) --> Pode ser o CPF ou NroConta
@@ -5633,31 +5853,88 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             -- 383 ABONO PREJUIZO
             -- 390 SERV./TAXAS
             -- 391 PAG. PREJUIZO
+            -- 2388 Pagto Prejuizo - Melhoria 324
+            -- 2473 Pagto Juros + 60 - Melhoria 324
+           
+           -- NOVA M324
+            pr_tab_dados_epr(vr_indadepr).vlsdeved := 0;
+
+            -- Valores abono prejuizo
+            FOR r_craplem2 IN cr_craplem2(prc_nrctremp => rw_crapepr.nrctremp) LOOP
+              pr_tab_dados_epr(vr_indadepr).vlrabono := NVL(r_craplem2.valor_pago_abono,0);
+            END LOOP;
+            -- Valores pagos Prejuizo
+            FOR r_craplem1 IN cr_craplem1(prc_nrctremp => rw_crapepr.nrctremp) LOOP
+              pr_tab_dados_epr(vr_indadepr).vlrpagos := nvl(r_craplem1.valor_pago,0) - NVL(pr_tab_dados_epr(vr_indadepr).vlrabono,0) ;
+            END LOOP;            
+            -- Saldo original prejuizo
+            FOR r_craplem3 IN cr_craplem3(prc_nrctremp => rw_crapepr.nrctremp) LOOP
+                
+              pr_tab_dados_epr(vr_indadepr).slprjori := pr_tab_dados_epr(vr_indadepr).slprjori -
+                                                        NVL(r_craplem3.sum_sldPrinc,0);
+            END LOOP;
+                                                       
+            /*
+            382 - PAGAMENTO DE PREJUIZO ORIGINAL TRANSFERIDO
+            383 - ABONO DE PREJUIZO
+            390 - DEBITO DE TAXAS/SERVICOS/CORRECAO/ATUALIZACAO
+            391 - PAG. PREJUIZO (VALORES ACIMA DO PREJ.ORIGINAL)
+            2388 - PAGAMENTO DE PREJUIZO VALOR PRINCIPAL
+            2391 - ABONO DE PREJUIZO
+            2392 - ESTORNO PAGAMENTO DE PREJUIZO VALOR PRINCIPAL
+            2395 - ESTORNO ABONO DE PREJUIZO
+            2473 - PAGAMENTO JUROS +60 PREJUIZO*/
+                                                    
             FOR rw_craplem IN cr_craplem(pr_nrctremp  => rw_crapepr.nrctremp
-                                        ,pr_lsthistor => '391,382,383,390') LOOP
+                                        ,pr_lsthistor => '391,382,383,390,2388,2392,2391,2395,2473') LOOP
               -- Para pagamento de prejuizos 391 e 382
-              IF rw_craplem.cdhistor IN (391, 382) THEN
+              /*IF rw_craplem.cdhistor IN (391, 382,2388,2473) THEN
                 -- Adicionar no campo valor pagos
                 pr_tab_dados_epr(vr_indadepr).vlrpagos := NVL(pr_tab_dados_epr(vr_indadepr)
                                                               .vlrpagos
                                                              ,0) +
                                                           rw_craplem.vllanmto;
               END IF;
+
+              \* Melhoria 324 - se for estorno de pagamento, deduzir do valor pago *\
+              IF rw_craplem.cdhistor IN (2392) THEN
+                -- Adicionar no campo valor pagos
+                pr_tab_dados_epr(vr_indadepr).vlrpagos := NVL(pr_tab_dados_epr(vr_indadepr)
+                                                              .vlrpagos
+                                                             ,0) -
+                                                          rw_craplem.vllanmto;
+              END IF;*/
             
               /* Somente sera mostrado o valor do Saldo Prejuizo Original,
               quando o valor da multa e juros de mora for pago total   */
-              IF ((vr_flpgmujm) AND (rw_craplem.cdhistor IN (382, 383))) THEN
+              /*M324 - comentado campo vr_flpgmujm pois a regra de negocio solicita para recalcular o saldo prejuizo original */ 
+                           --IF (/*(vr_flpgmujm) AND*/ (rw_craplem.cdhistor IN (382, 383, 2388, 2392, 2395))) THEN --RMM - Inclusao do his 2391
                 -- Decrementar no campo saldo prejuizo origem
+/*                if rw_craplem.cdhistor in (382, 383,391,2388, 2391,2473) then
                 pr_tab_dados_epr(vr_indadepr).slprjori := NVL(pr_tab_dados_epr(vr_indadepr)
                                                               .slprjori
                                                              ,0) -
                                                           rw_craplem.vllanmto;
               END IF;
+                if rw_craplem.cdhistor in ( 2392, 2395) then --estorno do pagamento/estorno abono
+                    pr_tab_dados_epr(vr_indadepr).slprjori := NVL(pr_tab_dados_epr(vr_indadepr)
+                                                              .slprjori
+                                                             ,0) +
+                                                          rw_craplem.vllanmto;
+                  
+                end if;*/
+              --END IF;
               -- Somente para o Abono Prejuizo 383
-              IF rw_craplem.cdhistor = 383 THEN
+              /*IF rw_craplem.cdhistor in ( 383, 2391) THEN
                 -- Considerar este como o abono
                 pr_tab_dados_epr(vr_indadepr).vlrabono := rw_craplem.vllanmto;
               END IF;
+              -- M324 - se for estorno do Abono Prejuizo 2395
+              IF rw_craplem.cdhistor = 2395 THEN
+                -- Considerar este como o abono
+                pr_tab_dados_epr(vr_indadepr).vlrabono := pr_tab_dados_epr(vr_indadepr).vlrabono  - rw_craplem.vllanmto;
+              END IF;*/
+              
               -- Somente para Serv.TAxas 390
               IF rw_craplem.cdhistor = 390 THEN
                 -- Adicionar no campo vlr acrescimo
@@ -5670,12 +5947,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           
             /* Como nao tem historico para multa e juros de mora, precisamos
             diminuir do valor total pago da multa e juros de mora      */
-            IF vr_flpgmujm THEN
+            -- RMM
+            /*IF vr_flpgmujm THEN
               pr_tab_dados_epr(vr_indadepr).slprjori := pr_tab_dados_epr(vr_indadepr)
                                                         .slprjori + pr_tab_dados_epr(vr_indadepr)
                                                         .vlpgmupr + pr_tab_dados_epr(vr_indadepr)
                                                         .vlpgjmpr;
-            END IF;
+            END IF;*/
           
             -- Ao final, garantir que o saldo prejuizo original não fique inferior a zero
             IF pr_tab_dados_epr(vr_indadepr).slprjori < 0 THEN
@@ -6729,6 +7007,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,qtpreemp
               ,cdagenci
               ,vlpreemp
+              ,inprejuz
           FROM crapepr
          WHERE cdcooper = pr_cdcooper
                AND nrdconta = pr_nrdconta
@@ -6843,6 +7122,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         pr_qtprecal := pr_qtprecal + nvl(vr_qtprecal_lem,0);
         -- Acumular o saldo devedor calculado
         pr_vlsdeved := pr_vlsdeved + nvl(vr_vlsdeved,0);
+        -- M324
+        IF rw_crapepr.inprejuz > 0 THEN
+          pr_vlsdeved := 0;
+        END IF;
       END LOOP; -- Fim leitura dos empréstimos
     
       -- Se foi solicitado o envio de LOG
@@ -8113,6 +8396,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           vr_cdhistor := 1037;
         END IF;
       
+        -- Melhoria 324 - Se estiver em prejuizo assume histórico 2409 - Jean (MOut´S)
+        if rw_crabepr.inprejuz = 1 then
+            vr_cdhistor := 2409;
+        end if;
+        
         --Dia/Mes/Ano Referencia
         IF rw_crabepr.diarefju <> 0
            AND rw_crabepr.mesrefju <> 0
@@ -9547,13 +9835,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_vllandeb := 0;
       
         /* Contabilizar creditos  */
-        OPEN cr_craplem(pr_cdcooper => pr_cdcooper
+        /*  OPEN cr_craplem(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_nrctremp => pr_nrctremp);
         FETCH cr_craplem
           INTO vr_vlsdeved;
         --Fechar Cursor
-        CLOSE cr_craplem;
+        CLOSE cr_craplem;*/
+        
+        -- M324, buscar do cursor publico, este sera utilizado no
+        -- PREJ0001.  
+        /* Contabilizar creditos  */
+        OPEN cr_craplem_sld(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_nrctremp => pr_nrctremp);
+        FETCH cr_craplem_sld
+          INTO vr_vlsdeved;
+        --Fechar Cursor
+        CLOSE cr_craplem_sld;
       
         --Se o saldo devedor for negativo
         IF nvl(vr_vlsdeved, 0) < 0 THEN

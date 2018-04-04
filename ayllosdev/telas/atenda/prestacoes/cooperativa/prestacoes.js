@@ -3914,6 +3914,10 @@ function validarLiquidacao(){
 				if (typeof $('#tpemprst', $(this) ).val() != 'undefined'){
 					tpemprst = $('#tpemprst', $(this) ).val();
 				}
+            if (typeof $('#vlsdprej', $(this) ).val() != 'undefined'){
+              vlsdprej = $('#vlsdprej', $(this) ).val();
+            }
+				
 		    /*	
 		    if (typeof $('#vlemprst', $(this) ).val() != 'undefined'){
 				vlemprst = $('#vlemprst', $(this) ).val();
@@ -3948,6 +3952,8 @@ function validarLiquidacao(){
 			controlaOperacao('C_PAG_PREST_PREJU');
 	}
 
+	}
+}
 }
 
 function exibeValorLiquidacao(){
