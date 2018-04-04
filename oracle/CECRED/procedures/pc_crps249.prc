@@ -608,6 +608,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                              incluido em pc_grava_crapopc_bulk
                             (Belli - Envolti - Chamado 841064)
                                                       
+			   03/04/2018 - M324 Ajustes para considerar novos históricos de Prejuizo
+                            Rafael Monteiro (Mouts)
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -1485,6 +1487,41 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND craplcm.cdhistor = pr_cdhistor
      GROUP BY cdcooper; 	 
 
+  -- Melhoria 324 - Transferncia para prejuizo   
+  CURSOR cr_craplem2 (pr_cdcooper IN craplcm.cdcooper%TYPE,
+                      pr_dtmvtolt IN craplcm.dtmvtolt%TYPE,
+                      pr_cdhistor IN craplcm.cdhistor%TYPE,
+                      pr_idtipo   in number) IS -- 1-emprestimo; 2-Financiamento
+    SELECT craplem.cdcooper,
+           SUM(vllanmto) vllanmto
+      FROM craplem, crapepr, craplcr
+     WHERE crapepr.cdcooper = craplem.cdcooper
+       and crapepr.nrdconta = craplem.nrdconta
+       and crapepr.nrctremp = craplem.nrctremp
+       and craplcr.cdcooper = crapepr.cdcooper
+       and craplcr.cdlcremp = crapepr.cdlcremp      
+       and craplem.cdcooper = pr_cdcooper
+       AND craplem.dtmvtolt = pr_dtmvtolt
+       AND craplem.cdhistor in (pr_cdhistor)
+       and ((pr_idtipo = 2 and craplcr.dsoperac  = 'FINANCIAMENTO')
+        OR (pr_idtipo = 1 and craplcr.dsoperac <> 'FINANCIAMENTO')
+        OR (pr_idtipo = 0))
+     GROUP BY craplem.cdcooper; 	 
+
+-- Melhoria 324 - Transferncia para prejuizo   
+  CURSOR cr_craplcm_prej (pr_cdcooper IN craplcm.cdcooper%TYPE,
+                          pr_dtmvtolt IN craplcm.dtmvtolt%TYPE,
+                          pr_cdhistor IN craplcm.cdhistor%TYPE) IS 
+    SELECT SUM(nvl(c.vllanmto,0)) vllanmto
+      FROM craplcm c
+     WHERE c.cdcooper = pr_cdcooper
+       AND c.dtmvtolt = pr_dtmvtolt
+       AND c.cdhistor = pr_cdhistor
+       and c.cdbccxlt = 100
+       ;                           
+   
+  vr_vlemprtr               number;
+  vr_vlfinctr               number;
 	-- Buscar operadoras ativas
 	CURSOR cr_operadora (pr_cdcooper IN craplcm.cdcooper%TYPE
 	                    ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
@@ -7210,6 +7247,105 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1732).nrctades_jur := 8442;
         vr_tab_historico(1732).dsrefere_jur := 'FINANCIAMENTO PRE FIXADO TRANSFERIDO PARA PREJUIZO - PESSOA JURIDICA';        
         
+
+        vr_tab_historico(2381).nrctaori_fis := 8447;
+        vr_tab_historico(2381).nrctades_fis := 8442;
+        vr_tab_historico(2381).dsrefere_fis := 'TRANSFERENCIA EMPRESTIMO PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2381).nrctaori_jur := 8448;
+        vr_tab_historico(2381).nrctades_jur := 8442;
+        vr_tab_historico(2381).dsrefere_jur := 'TRANSFERENCIA EMPRESTIMO PP P/ PREJUIZO - PESSOA JURIDICA';
+
+        vr_tab_historico(2396).nrctaori_fis := 8447;
+        vr_tab_historico(2396).nrctades_fis := 8442;
+        vr_tab_historico(2396).dsrefere_fis := 'TRANSFERENCIA FINANCIAMENTO PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2396).nrctaori_jur := 8448;
+        vr_tab_historico(2396).nrctades_jur := 8442;
+        vr_tab_historico(2396).dsrefere_jur := 'TRANSFERENCIA FINANCIAMENTO PP P/ PREJUIZO - PESSOA JURIDICA';
+
+        vr_tab_historico(2401).nrctaori_fis := 8447;
+        vr_tab_historico(2401).nrctades_fis := 8442;
+        vr_tab_historico(2401).dsrefere_fis := 'TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2401).nrctaori_jur := 8448;
+        vr_tab_historico(2401).nrctades_jur := 8442;
+        vr_tab_historico(2401).dsrefere_jur := 'TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO - PESSOA JURIDICA';
+        
+        vr_tab_historico(2382).nrctaori_fis := 7016;
+        vr_tab_historico(2382).nrctades_fis := 7122;
+        vr_tab_historico(2382).dsrefere_fis := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2382).nrctaori_jur := 7017;
+        vr_tab_historico(2382).nrctades_jur := 7122;
+        vr_tab_historico(2382).dsrefere_jur := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA JURIDICA';
+
+        vr_tab_historico(2397).nrctaori_fis := 7028;
+        vr_tab_historico(2397).nrctades_fis := 7135;
+        vr_tab_historico(2397).dsrefere_fis := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2397).nrctaori_jur := 7029;
+        vr_tab_historico(2397).nrctades_jur := 7135;
+        vr_tab_historico(2397).dsrefere_jur := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA JURIDICA';
+
+        vr_tab_historico(2402).nrctaori_fis := 7010;
+        vr_tab_historico(2402).nrctades_fis := 7116;
+        vr_tab_historico(2402).dsrefere_fis := 'REVERSAO JUROS +60 EMPRESTIMO TR P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2402).nrctaori_jur := 7011;
+        vr_tab_historico(2402).nrctades_jur := 7116;
+        vr_tab_historico(2402).dsrefere_jur := 'REVERSAO JUROS +60 EMPRESTIMO TR P/ PREJUIZO - PESSOA JURIDICA';
+
+        vr_tab_historico(2406).nrctaori_fis := 7026;
+        vr_tab_historico(2406).nrctades_fis := 7141;
+        vr_tab_historico(2406).dsrefere_fis := 'REVERSAO JUROS +60 FINANCIAMENTO TR P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2406).nrctaori_jur := 7027;
+        vr_tab_historico(2406).nrctades_jur := 7141;
+        vr_tab_historico(2406).dsrefere_jur := 'REVERSAO JUROS +60 FINANCIAMENTO TR P/ PREJUIZO - PESSOA JURIDICA';
+
+        vr_tab_historico(2383).nrctaori_fis := 8442;
+        vr_tab_historico(2383).nrctades_fis := 8447;
+        vr_tab_historico(2383).dsrefere_fis := 'ESTORNO TRANSFERENCIA EMPRESTIMO PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2383).nrctaori_jur := 8442;
+        vr_tab_historico(2383).nrctades_jur := 8448;
+        vr_tab_historico(2383).dsrefere_jur := 'ESTORNO TRANSFERENCIA EMPRESTIMO PP P/ PREJUIZO - PESSOA JURIDICA';
+
+        vr_tab_historico(2398).nrctaori_fis := 8442;
+        vr_tab_historico(2398).nrctades_fis := 8447;
+        vr_tab_historico(2398).dsrefere_fis := 'ESTORNO TRANSFERENCIA FINANCIAMENTO PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2398).nrctaori_jur := 8442;
+        vr_tab_historico(2398).nrctades_jur := 8448;
+        vr_tab_historico(2398).dsrefere_jur := 'ESTORNO TRANSFERENCIA FINANCIAMENTO PP P/ PREJUIZO - PESSOA JURIDICA';
+        
+        vr_tab_historico(2403).nrctaori_fis := 8442;
+        vr_tab_historico(2403).nrctades_fis := 8447;
+        vr_tab_historico(2403).dsrefere_fis := 'ESTORNO TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2403).nrctaori_jur := 8442;
+        vr_tab_historico(2403).nrctades_jur := 8448;
+        vr_tab_historico(2403).dsrefere_jur := 'ESTORNO TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO - PESSOA JURIDICA';
+        
+        vr_tab_historico(2384).nrctaori_fis := 7122;
+        vr_tab_historico(2384).nrctades_fis := 7016;
+        vr_tab_historico(2384).dsrefere_fis := 'ESTORNO DE REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2384).nrctaori_jur := 7122;
+        vr_tab_historico(2384).nrctades_jur := 7017;
+        vr_tab_historico(2384).dsrefere_jur := 'ESTORNO DE REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA JURIDICA';
+        
+        vr_tab_historico(2399).nrctaori_fis := 7135;
+        vr_tab_historico(2399).nrctades_fis := 8442;
+        vr_tab_historico(2399).dsrefere_fis := 'ESTORNO DE REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2399).nrctaori_jur := 7135;
+        vr_tab_historico(2399).nrctades_jur := 7029;
+        vr_tab_historico(2399).dsrefere_jur := 'ESTORNO DE REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA JURIDICA';
+        
+        vr_tab_historico(2404).nrctaori_fis := 7116;
+        vr_tab_historico(2404).nrctades_fis := 7010;
+        vr_tab_historico(2404).dsrefere_fis := 'ESTORNO DE REVERSAO JUROS +60 TR P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2404).nrctaori_jur := 7116;
+        vr_tab_historico(2404).nrctades_jur := 7011;
+        vr_tab_historico(2404).dsrefere_jur := 'ESTORNO DE REVERSAO JUROS +60 TR P/ PREJUIZO - PESSOA JURIDICA';
+        
+        vr_tab_historico(2407).nrctaori_fis := 7141;
+        vr_tab_historico(2407).nrctades_fis := 7026;
+        vr_tab_historico(2407).dsrefere_fis := 'ESTORNO DE REVERSAO JUROS +60 TR P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2407).nrctaori_jur := 7141;
+        vr_tab_historico(2407).nrctades_jur := 7027;
+        vr_tab_historico(2407).dsrefere_jur := 'ESTORNO DE REVERSAO JUROS +60 TR P/ PREJUIZO - PESSOA JURIDICA';
+        
      END;  
 
   BEGIN
@@ -12313,6 +12449,480 @@ BEGIN
                   TRIM(to_char(vr_vllanmto, '999999990.00'));
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   END LOOP;
+  
+  -- Melhoria 324 - Contas de Compensação - Transferencia para prejuizo - Jean (Mout´S) 10/08/2017
+   -- Transferencia para prejuizo Emprestimos PP
+  vr_cdhistor := 2381;
+  vr_vllanmto := 0;
+  --
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 1) LOOP -- Emprestimo
+                                 
+    vr_vllanmto := rw_craplcm.vllanmto;
+    --
+    
+   END LOOP;
+  
+  vr_cdhistor := 2385;
+  
+  --
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 0) LOOP -- Emprestimo
+                                 
+    vr_vllanmto := vr_vllanmto + rw_craplcm.vllanmto;
+    --
+    
+   END LOOP;
+  
+   if nvl(vr_vllanmto,0) > 0  then 
+      vr_cdestrut := '50';
+      vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '9261,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Transferencia Prejuizo - Emprestimo PP"';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+  
+   end if;
+   --
+   -- ESTORNO TRANSFERENCIA PREJUIZO - Emprestimo PP
+   -- 2383 - EST. PREJUIZO TR
+  vr_cdhistor := 2383;
+  vr_vllanmto := 0;
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 1) LOOP -- Emprestimo
+                                 
+    vr_vllanmto := vr_vllanmto + rw_craplcm.vllanmto;
+  END LOOP;
+  
+  if nvl(vr_vllanmto,0) > 0  then 
+    vr_cdestrut := '50';
+    vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '9261,'||
+                   '3962,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Estorno Transferencia Prejuizo - Emprestimo PP "';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+  
+   END IF;
+
+  -- Transferencia para prejuizo Emprestimo PP  - Juros + 60
+  vr_cdhistor := 2382;
+  vr_vllanmto := 0;
+  --
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 1) LOOP -- Emprestimo
+                                 
+    vr_vllanmto := rw_craplcm.vllanmto;
+    --
+    vr_cdestrut := '50';
+    vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '3866,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Transferencia Prejuizo - Juros + 60 (Emp PP)"';
+    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   END LOOP;
+   --
+   -- ESTORNO TRANSFERENCIA PREJUIZO - Juros + 60 (Emp PP)
+   vr_cdhistor := 2384;
+   vr_vllanmto := 0;
+   --
+   FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                  vr_dtmvtolt,
+                                  vr_cdhistor,
+                                  1) LOOP -- Emprestimo
+                                  
+     vr_vllanmto := rw_craplcm.vllanmto;
+      --
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                    TRIM(vr_dtmvtolt_yymmdd)||','||
+                    TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                    '3866,'||
+                     '3962,'||
+                    TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                    '5210,'||
+                    '"(crps249) Estorno Transferencia Prejuizo - Juros + 60 (Emp PP)"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   END LOOP;   
+   
+  -- Transferencia para prejuizo Emprestimo TR
+  vr_cdhistor := 2401;
+  vr_vllanmto := 0;
+  --
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 0) LOOP -- Emprestimo
+                                 
+    vr_vllanmto := rw_craplcm.vllanmto;
+    --
+  
+   END LOOP;
+  
+  
+  vr_cdhistor := 2405;
+ 
+  --
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 0) LOOP -- Emprestimo
+                                 
+    vr_vllanmto := vr_vllanmto +  rw_craplcm.vllanmto;
+    --
+  
+   END LOOP;
+  
+   if nvl(vr_vllanmto ,0 ) > 0 then
+      vr_cdestrut := '50';
+      vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '9261,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Transferencia Prejuizo - Emprestimo TR"';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   end if; 
+   --
+   -- ESTORNO TRANSFERENCIA PREJUIZO - Emprestimo TR
+   -- 
+   vr_cdhistor := 2403;
+   vr_vllanmto := 0;
+   --
+   FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                  vr_dtmvtolt,
+                                  vr_cdhistor,
+                                  0) LOOP -- Emprestimo
+                                  
+     vr_vllanmto := vr_vllanmto +  rw_craplcm.vllanmto;
+     --
+  
+    END LOOP;
+  
+    if nvl(vr_vllanmto ,0 ) > 0 then
+      vr_cdestrut := '50';
+      vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '9261,'||
+                   '3962,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Estorno Transferencia Prejuizo - Emprestimo TR"';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+    end if;    
+  --
+  -- Transferencia para prejuizo Emprestimo TR - Juros + 60
+  vr_cdhistor := 2402;
+  vr_vllanmto := 0;
+  --
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 0) LOOP -- Emprestimo/Fin TR
+                                 
+    vr_vllanmto := rw_craplcm.vllanmto;
+    --
+  
+   END LOOP;
+ 
+   vr_cdhistor := 2406;
+   --
+   FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                  vr_dtmvtolt,
+                                  vr_cdhistor,
+                                 0) LOOP -- Emprestimo/Fin TR
+                                 
+     vr_vllanmto := vr_vllanmto + rw_craplcm.vllanmto;
+     --
+   
+   END LOOP;
+ 
+  if nvl(vr_vllanmto,0) >0 then
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '3866,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Transferencia Prejuizo - Juros + 60 (TR)"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);  
+  end if;
+  --
+  -- ESTORNO TRANSFERENCIA PREJUIZO - Juros + 60 (TR)
+  vr_cdhistor := 2404;
+  vr_vllanmto := 0;
+  --
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 0) LOOP -- Emprestimo/Fin TR
+                                 
+    vr_vllanmto := rw_craplcm.vllanmto;
+    --
+  
+   END LOOP;
+ 
+   vr_cdhistor := 2407;
+   --
+   FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                  vr_dtmvtolt,
+                                  vr_cdhistor,
+                                 0) LOOP -- Emprestimo/Fin TR
+                                 
+     vr_vllanmto := vr_vllanmto + rw_craplcm.vllanmto;
+     --
+   
+   END LOOP;
+ 
+  if nvl(vr_vllanmto,0) >0 then
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3866,'||
+                   '3962,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Estorno Transferencia Prejuizo - Juros + 60 (TR))"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);  
+  end if;  
+  --
+  
+   -- Transferencia para prejuizo Financiamento PP
+  vr_cdhistor := 2396;
+  vr_vllanmto := 0;
+  --
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 0) LOOP -- Financiamento
+                                 
+    vr_vllanmto := rw_craplcm.vllanmto;
+    --
+  END LOOP;
+  
+  vr_cdhistor := 2400;
+ -- vr_vllanmto := 0;
+  --
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 0) LOOP -- Financiamento
+                                 
+    vr_vllanmto := vr_vllanmto + rw_craplcm.vllanmto;
+    --
+    
+   END LOOP;
+  
+  if nvl(vr_vllanmto ,0 ) > 0 then
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '9261,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Transferencia Prejuizo - Financiamento PP"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   end if;
+  --
+  -- ESTORNO TRANSFERENCIA PREJUIZO - Financiamento PP
+  vr_cdhistor := 2398;
+  vr_vllanmto := 0;
+  --
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 0) LOOP -- Financiamento
+                                 
+    vr_vllanmto := rw_craplcm.vllanmto;
+    --
+  END LOOP;
+ 
+  if nvl(vr_vllanmto ,0 ) > 0 then
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '9261,'||
+                   '3962,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Estorno Transferencia Prejuizo - Financiamento PP"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   end if;  
+    
+  -- Transferencia para prejuizo Emprestimo PP  - Juros + 60
+  vr_cdhistor := 2397;
+  vr_vllanmto := 0;
+  --
+  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 2) LOOP -- Emprestimo
+                                 
+    vr_vllanmto := rw_craplcm.vllanmto;
+    --
+    vr_cdestrut := '50';
+    vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '3866,'||
+                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Transferencia Prejuizo - Juros + 60 (Fin PP)"';
+    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   END LOOP;
+   --
+   -- Estorno Transferencia Prejuizo - Juros + 60 (Fin PP)
+   -- 
+   vr_cdhistor := 2399;
+   vr_vllanmto := 0;
+   --
+   FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 0) LOOP -- Emprestimo
+                                 
+     vr_vllanmto := rw_craplcm.vllanmto;
+     --
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                    TRIM(vr_dtmvtolt_yymmdd)||','||
+                    TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                    '3866,'||
+                    '3962,'||
+                    TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
+                    '5210,'||
+                    '"(crps249) Estorno Transferencia Prejuizo - Juros + 60 (Fin PP)"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   END LOOP;   
+   
+   -- Transferencia para prejuizo Financiamento TR
+  vr_cdhistor := 2408;
+  vr_vllanmto := 0;
+  --
+/*  FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 0) LOOP -- Financiamento*/
+  FOR rw_craplcm_prej IN cr_craplcm_prej (pr_cdcooper,
+                                          vr_dtmvtolt,
+                                          vr_cdhistor) LOOP                                 
+                                 
+    vr_vllanmto := rw_craplcm_prej.vllanmto;
+    --
+    
+  END LOOP;
+  
+  
+  vr_cdhistor := 2412;
+ -- vr_vllanmto := 0;
+  --
+ /* FOR rw_craplcm IN cr_craplem2 (pr_cdcooper,
+                                 vr_dtmvtolt,
+                                 vr_cdhistor,
+                                 0) LOOP -- Financiamento*/
+  FOR rw_craplcm_prej IN cr_craplcm_prej (pr_cdcooper,
+                                          vr_dtmvtolt,
+                                          vr_cdhistor) LOOP                                  
+                                 
+    vr_vllanmto := vr_vllanmto + rw_craplcm_prej.vllanmto;
+    --
+    
+  END LOOP;
+  vr_vllanmto := abs(vr_vllanmto);
+  
+  
+  if nvl(vr_vllanmto,0) > 0 then  
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '9261,'||
+                   TRIM(to_char(abs(vr_vllanmto), '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Transferencia Prejuizo - Conta Corrente"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   end if;
+
+  vr_cdhistor := 2386;
+  vr_vllanmto := 0;
+  --
+  FOR rw_craplcm_prej IN cr_craplcm_prej (pr_cdcooper,
+                                          vr_dtmvtolt,
+                                          vr_cdhistor) LOOP -- Financiamento
+                                 
+    vr_vllanmto := vr_vllanmto + rw_craplcm_prej.vllanmto;
+    --
+    
+   END LOOP;
+  vr_vllanmto := abs(vr_vllanmto);
+  
+  
+  if nvl(vr_vllanmto,0) > 0 then  
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3865,'||
+                   '3962,'||
+                   TRIM(to_char(abs(vr_vllanmto), '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Pagamento Prejuizo"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   end if;
+   --
+   vr_cdhistor := 2387;
+   vr_vllanmto := 0;
+   --
+   FOR rw_craplcm_prej IN cr_craplcm_prej (pr_cdcooper,
+                                           vr_dtmvtolt,
+                                           vr_cdhistor) LOOP -- Financiamento
+                                 
+     vr_vllanmto := vr_vllanmto + rw_craplcm_prej.vllanmto;
+     --
+   END LOOP;
+   vr_vllanmto := abs(vr_vllanmto);
+   IF nvl(vr_vllanmto,0) > 0 THEN
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '3865,'||
+                   TRIM(to_char(abs(vr_vllanmto), '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Estorno de Pagamento Prejuizo"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   END IF;
   
   --  Fim da contabilizacao da COMP. ELETRONICA ...............................
 

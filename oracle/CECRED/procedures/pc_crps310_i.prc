@@ -646,17 +646,35 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            AND ebn.nrdconta = pr_nrdconta
            -- Somente (N)ormal, (A)trasado e (P)rejuizo
            AND ebn.insitctr IN('N','A','P');
-      
+      /* M324 - Historicos de pagamento de prejuizo
+        --
+        382 PAGAMENTO DE PREJUIZO ORIGINAL TRANSFERIDO
+        383 ABONO DE PREJUIZO
+        2388  PAGAMENTO DE PREJUIZO VALOR PRINCIPAL
+        2389  PAGAMENTO JUROS PREJUIZO
+        2390  PAGAMENTO MULTA ATRASO PREJUIZO
+        2392  ESTORNO PAGAMENTO DE PREJUIZO VALOR PRINCIPAL
+        2393  ESTORNO PAGAMENTO DE JUROS PREJUIZO
+        2394  ESTORNO PAGAMENTO MULTA ATRASO PREJUIZO
+        2473  PAGAMENTO JUROS +60 PREJUIZO
+        2474  ESTORNO PAGAMENTO JUROS +60 PREJUIZO
+        2475  PAGAMENTO JUROS MORA PREJUIZO
+        2476  ESTORNO PAGAMENTO JUROS MORA PREJUIZO
+        --
+      */      
+      -- Buscar somatorio prejuizo historico      
       -- Busca dos pagamentos de prejuízo
       CURSOR cr_craplem_prejuz (pr_dtrefere IN craplem.dtmvtolt%type) IS
         SELECT  craplem.nrdconta
                ,craplem.nrctremp
-               ,NVL(SUM(NVL(craplem.vllanmto,0)),0) vllanmto
+           --,NVL(SUM(NVL(craplem.vllanmto,0)),0) vllanmto
+          ,sum(case when craplem.cdhistor in (382,383,2388,2473,2389,2390,2475) then craplem.vllanmto else 0 end) - 
+               sum(case when craplem.cdhistor in (2392,2474,2393,2394,2476) then craplem.vllanmto else 0 end) vllanmto
           FROM craplem craplem
          WHERE craplem.cdcooper = pr_cdcooper
            AND craplem.dtmvtolt <= pr_dtrefere
            -- 382-PAG.PREJ.ORIG E 383-ABONO PREJUIZO
-           AND craplem.cdhistor IN(382,383)
+           AND craplem.cdhistor IN (382,383,2388,2473,2389,2390,2475,2392,2474,2393,2394,2476)
          GROUP BY craplem.nrdconta,craplem.nrctremp;
       TYPE typ_craplem IS TABLE OF cr_craplem_prejuz%ROWTYPE INDEX BY PLS_INTEGER;
       r_craplem typ_craplem;  
@@ -3658,6 +3676,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_dtdrisco_upd crapris.dtdrisco%TYPE; -- Guardar data do risco para update
         vr_cdvencto_upd crapvri.cdvencto%TYPE; -- Código do vencimento para atualização
         vr_updatass     PLS_INTEGER:=1;   -- Controlar se deve atualizar Risco no Associado
+        vr_dttrfprj     DATE; -- Data prevista para prejuizo M324
         
         -- Busca de todas as contas de limite não utilizado
         CURSOR cr_crapris_1901 IS
@@ -3743,6 +3762,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 ,dtdrisco
                 ,inddocto
                 ,vldivida
+                ,qtdiaatr
                 ,rowid
                 ,ROW_NUMBER () OVER (PARTITION BY nrdconta
                                          ORDER BY nrdconta,innivris DESC) sequencia
@@ -4034,10 +4054,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               -- SE SIM, MUDA DATA DO RISCO
               vr_dtdrisco_upd := vr_dtrefere;
             END IF;
+          -- M324
+          vr_dttrfprj := PREJ0001.fn_regra_dtprevisao_prejuizo(pr_cdcooper,
+                                                               vr_innivori,
+                                                               rw_crapris.qtdiaatr,
+                                                               vr_dtdrisco_upd);            
           BEGIN
               UPDATE crapris
                  SET innivori = vr_innivori
                     ,dtdrisco = vr_dtdrisco_upd
+                    ,dttrfprj = vr_dttrfprj
                WHERE rowid = rw_crapris.rowid;
 
             EXCEPTION
@@ -4072,13 +4098,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                vr_des_erro := 'ERRO DE ATUALIZACAO RISCO -1';
               RAISE vr_exc_erro;
             END IF;
-          
+            -- 
+            vr_dttrfprj := PREJ0001.fn_regra_dtprevisao_prejuizo(pr_cdcooper,
+                                                                 vr_innivris_upd,
+                                                                 rw_crapris.qtdiaatr,
+                                                                 vr_dtdrisco_upd);          
           
             UPDATE crapris
                SET innivris = vr_innivris_upd
                   ,inindris = vr_innivris_upd
                   ,innivori = vr_innivori
                   ,dtdrisco = vr_dtdrisco_upd
+                  ,dttrfprj = vr_dttrfprj
              WHERE rowid = rw_crapris.rowid;
           EXCEPTION
             WHEN OTHERS THEN
@@ -4288,6 +4319,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_chave_assris INTEGER;
         vr_maxrisco     INTEGER:=-10;
         vr_maxrisco_tmp INTEGER:=-10;
+        vr_dttrfprj     DATE;
 
 
         -- LISTAR APENAS CPF/CNPJ(RAIZ) COM MAIS DE UMA CONTA (caso contrário, não precisa de arrasto)
@@ -4351,6 +4383,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  ,ris.cdmodali
                  ,ris.nrctremp
                  ,ris.nrseqctr
+                 ,ris.qtdiaatr
                  ,rowid
                  ,ROW_NUMBER () OVER (PARTITION BY ris.nrdconta
                                           ORDER BY ris.nrcpfcgc,ris.nrdconta) SEQ_CTA
@@ -4427,7 +4460,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- PERCORRER TODOS CONTRATOS DA RIS  
             FOR rw_riscos_cpfcnpj IN cr_riscos_cpfcnpj( pr_nrdconta => vr_chave_assris
                                                      ,pr_innivris => vr_maxrisco) LOOP
-
+              -- M324
+              vr_dttrfprj := PREJ0001.fn_regra_dtprevisao_prejuizo(pr_cdcooper,
+                                                                   vr_maxrisco,
+                                                                   rw_riscos_cpfcnpj.qtdiaatr,
+                                                                   vr_dtrefere);
             -- Efetuar atualização da CENTRAL RISCO cfme os valores maior risco
             BEGIN
 
@@ -4435,6 +4472,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  SET innivris = vr_maxrisco
                     ,inindris = vr_maxrisco
                     ,dtdrisco = vr_dtrefere
+                    ,dttrfprj = vr_dttrfprj
                WHERE rowid = rw_riscos_cpfcnpj.rowid;
             EXCEPTION
               WHEN OTHERS THEN

@@ -2955,7 +2955,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              14/10/2015 - Incluir o tratamento de pagamento de avalista 
   --                           que foi esquecido na migração para o Oracle. (Oscar)
   --
-  --              15/08/2017 - Inclusao do campo qtdiacal e historicos do Pos-Fixado. (Jaison/James - PRJ298)
+  --              15/08/2017 - Inclusao do campo qtdiacal e historicos do Pos-Fixado. (Jaison/James - PRJ298) 
+  --
+  --              03/04/2018 - M324 ajuste na configuração de extrato para emprestimo (Rafael Monteiro - Mouts)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       --Tabela de Memoria primeira parcela
@@ -13851,7 +13853,6 @@ END pc_consulta_ir_pj_trim;
         2400 - TRANSFERENCIA EMPRESTIMO SUSPEITA DE FRAUDE
         2401 - TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO
         2405 - TRANSFERENCIA EMP/ FIN TR SUSPEITA DE FRAUDE
-        2408 - SALDO DEVEDOR C/C TRANSFERIDO PARA PREJUIZO
         2412 - TRANSFERENCIA PREJUIZO C/C SUSPEITA DE FRAUDE
 
 		*/
@@ -14407,7 +14408,7 @@ END pc_consulta_ir_pj_trim;
                       vr_vlsaldod:= nvl(vr_vlsaldod,0) + vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
                     END IF;    
                   ELSIF vr_tab_extrato_epr_novo(vr_index_novo).indebcre = 'C' AND
-                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349, 2381, 2396, 2401, 2408, 2405, 2385, 2400, 2412) THEN --<> 349 THEN
+                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349/*, 2381, 2396, 2401, 2408, 2405, 2385, 2400, 2412*/) THEN --<> 349 THEN
                     --Se Possui Saldo
                     IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo THEN
                       --Saldo Devedor
