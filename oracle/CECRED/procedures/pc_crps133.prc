@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Setembro/95                      Ultima atualizacao: 28/05/2015
+   Data    : Setembro/95                      Ultima atualizacao: 31/10/2017
 
    Dados referentes ao programa:
 
@@ -97,6 +97,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
                28/05/2015 - Realizando a retirada dos tratamentos de restart, pois o programa
                             apresentou erros no processo batch. Os códigos foram comentados e 
                             podem ser removidos em futuras alterações do fonte. (Renato - Supero)
+                            
+               31/10/2017 - #755898 Correção de sintaxe de uso de índice no cursor cr_craplcm (Carlos)
 ............................................................................. */
   -- Busca o saldo médio
   cursor cr_craptab is
@@ -216,7 +218,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
   -- Lançamentos em depósitos a vista
   cursor cr_craplcm (pr_dtmvtolt in crapdat.dtmvtolt%type,
                      pr_cdcooper in crapcop.cdcooper%type) is
-    select /*+ index (crap craplcm4)*/
+    select /*+ index (crap craplcm##craplcm4)*/
            crap.nrdconta,
            crap.cdhistor,
            crap.vllanmto
@@ -2431,4 +2433,3 @@ exception
     rollback;
 end pc_crps133;
 /
-

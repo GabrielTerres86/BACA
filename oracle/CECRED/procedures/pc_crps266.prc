@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Julho/99                        Ultima alteracao: 24/04/2017
+   Data    : Julho/99                        Ultima alteracao: 31/10/2017
 
    Dados referentes ao programa:
 
@@ -43,10 +43,12 @@ BEGIN
                             
                18/02/2015 - Conversão Progress >> Oracle PL/SQL (Vanessa).
 
-			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
+               24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                            crapass, crapttl, crapjur 
+                            (Adriano - P339).
 
+               31/10/2017 - #755898 Correção de sintaxe de uso de índice nos cursores 
+                            cr_craplcm e cr_craplcm2 (Carlos)
 
 ............................................................................. */
 
@@ -103,7 +105,7 @@ BEGIN
       CURSOR cr_craplcm(pr_cdcooper IN craptab.cdcooper%TYPE,
                         pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
                         pr_cdhistor IN craplcm.cdhistor%TYPE) IS
-         SELECT /*index (lcm CRAPLCM##CRAPLCM4)*/ 
+         SELECT /*+ index (lcm CRAPLCM##CRAPLCM4)*/ 
                 lcm.cdcooper,
                 ass.cdagenci,
                 lcm.dtmvtolt,
@@ -133,7 +135,7 @@ BEGIN
                          pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
                          pr_nrdocmto IN craplcm.nrdocmto%TYPE,
                          pr_vllanmto IN craplcm.vllanmto%TYPE) IS
-         SELECT /*index (lcm CRAPLCM##CRAPLCM4)*/ 
+         SELECT /*+ index (lcm CRAPLCM##CRAPLCM4)*/ 
                 lcm.cdcooper,
                 lcm.nrdconta,
                 ass.nmprimtl,
@@ -456,4 +458,3 @@ BEGIN
       END;
 END pc_crps266;
 /
-
