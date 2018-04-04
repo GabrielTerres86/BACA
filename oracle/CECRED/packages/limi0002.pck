@@ -105,6 +105,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                               
                  12/03/2018 - Adicionado a procedure pc_renova_limdesctit que centraliza as regras de renovação e 
                               validações das configurações do CADLIM. (Paulo Penteado (GFT))
+                              
+                 04/04/2018 - Comentado a utilização da pc_apaga_estudo_limdesctit. Devido a criação da estrutura 
+                              de proposta do limite de desconto de titulos tabela (crawlim) não vai mais precisar 
+                              desse processo de apagar os titulos em estudo (Paulo Penteado (GFT))
   */
   ---------------------------------------------------------------------------------------------------------------
   
@@ -2129,6 +2133,8 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
           END; 
       END LOOP;
       
+      /* 04/04/2018 Paulo Penteado (GFT): Devido a criação da estrutura de proposta do limite de desconto de 
+         titulos tabela (crawlim) não vai mais precisar desse processo de apagar os titulos em estudo 
       pc_apaga_estudo_limdesctit(pr_cdcooper => vr_cdcooper
                                   ,pr_cdoperad => vr_cdoperad
                                   ,pr_idorigem => vr_idorigem
@@ -2136,7 +2142,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
                                   
       if  vr_dscritic is not null then
           RAISE vr_exc_saida;
-      end if;      
+      end if;*/
       
       ------------------------
       ------------------------ GERACAO DO RELATORIO CRRL492
