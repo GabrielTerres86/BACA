@@ -1643,6 +1643,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                a rotina que efetua o lançamento
                                (Adriano - SD 804308).
 
+				  04/04/2018 - Inclusão de um novo código de crítica 1205, para acordos inexistente.
+				               (Saquetta Chamado 848110).             
+
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1712,7 +1715,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     FETCH cr_tbacordo INTO rw_tbacordo;
     IF cr_tbacordo%NOTFOUND THEN
       CLOSE cr_tbacordo;
-      vr_dscritic := 'Acordo nao encontrado.';
+      vr_cdcritic := 1205; --> Acordo nao encontrado
       RAISE vr_exc_erro; 
     END IF;
     CLOSE cr_tbacordo;
