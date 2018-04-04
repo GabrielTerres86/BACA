@@ -599,7 +599,7 @@ PROCEDURE Busca_Inclusao:
                    LEAVE BuscaI.
                 END.
             /** Ignora conta aplicacao **/
-            IF  aux_cdmodali = 0 THEN 
+            IF  aux_cdmodali = 3 THEN 
                 NEXT.
             
             FIND LAST crapalt WHERE 
@@ -1034,7 +1034,7 @@ PROCEDURE Busca_Alteracao:
                 END.
                 
             /** Ignora conta aplicacao **/
-            IF  aux_cdmodali = 0 THEN
+            IF  aux_cdmodali = 3 THEN
                 NEXT.
             
             FIND LAST crapalt WHERE 
@@ -2498,7 +2498,7 @@ PROCEDURE Grava_Inclusao:
                 END.
                 
             /** Ignora conta aplicacao **/
-            IF aux_cdmodali = 0 THEN
+            IF aux_cdmodali = 3 THEN
                 NEXT.
             
             FIND LAST crapalt WHERE 
@@ -2836,7 +2836,7 @@ PROCEDURE Grava_Alteracao:
                 END.
                 
             /** Ignora conta aplicacao **/
-            IF aux_cdmodali = 0 THEN
+            IF aux_cdmodali = 3 THEN
                 NEXT.
 
             FIND LAST crapalt WHERE 
@@ -3310,7 +3310,7 @@ PROCEDURE Grava_Alteracao:
                    END.
                    
                /** Ignora replicacao para conta aplicacao **/
-               IF  aux_cdmodali <> 0 THEN
+               IF  aux_cdmodali <> 3 THEN
                    DO:
                        /** Atualiza titulares de outras contas onde cpf seja o
                            mesmo do primeiro titular desta conta.         **/
