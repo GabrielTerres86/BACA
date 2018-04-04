@@ -307,8 +307,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   vr_variaveis_notif NOTI0001.typ_variaveis_notif;
   
   /* CONSTANTES */
-  ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 3;
-  MOTIVO_RECARGA_CELULAR     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 7;
+  ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 5;
+  MOTIVO_RECARGA_CELULAR     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 3;
   
   FUNCTION fn_calcula_proximo_repasse(pr_cdcooper IN NUMBER
                                      ,pr_dtrefere IN DATE) RETURN DATE IS
@@ -4686,9 +4686,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           vr_variaveis_notif('#dataagendamento') := to_char(rw_crapdat.dtmvtolt, 'DD/MM/YYYY');
           vr_variaveis_notif('#valor') := to_char(rw_tbrecarga.vlrecarga,'fm999g999d00');
           vr_variaveis_notif('#operadora') := rw_tbrecarga.nmoperadora;
-          vr_variaveis_notif('#numerocelular') := '('||lpad(rw_tbrecarga.nrddd,2,'0')||') '|| gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999');
+          vr_variaveis_notif('#ddd') := '('||lpad(rw_tbrecarga.nrddd,2,'0')||') ';
+          vr_variaveis_notif('#numerocelular') := gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999');
           vr_variaveis_notif('#motivo') := '';
-          
+          vr_variaveis_notif('#datadebito') := to_char(rw_crapdat.dtmvtolt, 'DD/MM/YYYY');
           -- Se for critica de saldo insuficiente
           IF vr_dscritic = 'Não há saldo suficiente para a operação.' THEN
             
@@ -4796,9 +4797,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
             -- Cria uma notificação
             NOTI0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
                                         ,pr_cdmotivo_mensagem => MOTIVO_RECARGA_CELULAR
-                                      --,pr_dhenvio => SYSDATE
                                         ,pr_cdcooper => pr_cdcooper
-                                               ,pr_nrdconta => rw_tbrecarga.nrdconta
+                                        ,pr_nrdconta => rw_tbrecarga.nrdconta
                                         ,pr_variaveis => vr_variaveis_notif);
            END IF;   
           

@@ -961,6 +961,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     -- Variaveis Excecao
     vr_exc_erro EXCEPTION;
 
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 8;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 2;      
+
   BEGIN
 
     -- Busca a quantidade de meses sem uso para cancelamento
@@ -1083,7 +1088,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
               vr_cdcritic := 0;
               RAISE vr_exc_erro;
             END IF;
-
+            -- Cria uma notificação
+            noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                        ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nrdconta => rw_crapemp.nrdconta
+                                        ,pr_idseqttl => 1 -- Primeiro titular
+                                        ,pr_variaveis => vr_variaveis_notif);
+            --
             BEGIN
               -- Atualizar a data do ultimo aviso, para que não ocorram novas mensagens nos próximos 15 dias
               UPDATE crapemp

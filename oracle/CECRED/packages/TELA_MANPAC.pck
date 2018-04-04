@@ -101,13 +101,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPAC AS
   --
   --    Programa: TELA_MANPAC
   --    Autor   : Jean Michel
-  --    Data    : Marco/2016                   Ultima Atualizacao: 
+  --    Data    : Marco/2016                   Ultima Atualizacao: 03/04/2018
   --
   --    Dados referentes ao programa:
   --
   --    Objetivo  : Package ref. a tela MANPAC (Ayllos Web)
   --
-  --    Alteracoes:                              
+  --    Alteracoes: 03/04/2018 - Inserido noti0001.pc_cria_notificacao                            
   --    
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1359,6 +1359,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPAC AS
     vr_dspctnov tbtarif_pacotes.dspacote%TYPE; -- Nome do novo pacote
     vr_dsdmensg VARCHAR2(1000):= '';           -- Texto de email para ser exibido no IB
     vr_qtdmeses_desconto INTEGER := 0;
+   
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 8;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 6; 
+    
   BEGIN
   
     -- Recupera dados de log para consulta posterior
@@ -1675,6 +1681,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPAC AS
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
+          -- 
+          vr_variaveis_notif('#cdpctant') := TO_CHAR(pr_cdpctant);
+          vr_variaveis_notif('#dspctant') := vr_dspctant;
+          vr_variaveis_notif('#cdpctnov') := TO_CHAR(pr_cdpctant);
+          vr_variaveis_notif('#dspctnov') := vr_dspctant;
+          -- Cria uma notificação
+          noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                      ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                      ,pr_cdcooper => vr_cdcooper
+                                      ,pr_nrdconta => rw_tbtarif_contas_pacote.nrdconta
+                                      ,pr_idseqttl => rw_crapsnh.idseqttl 
+                                      ,pr_variaveis => vr_variaveis_notif); 
+          --
 
         END LOOP;      
 

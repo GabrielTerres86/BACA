@@ -427,7 +427,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --
   --  Programa: DSCC0001                        Antiga: generico/procedures/b1wgen0009.p
   --  Autor   : Jaison
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 20/12/2017
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 03/04/2018
   --
   --  Dados referentes ao programa:
   --
@@ -443,7 +443,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                    comando rm está removendo todos os relatórios "crrl519_bordero_*" da cooperativa (Carlos)
                    
       20/12/2017 - Ajuste para considerar a data de liberação do bordero no cursor cr_crapcdb_dsc
-                  (Adriano - SD 791712).                   
+                  (Adriano - SD 791712).           
+				  
+      03/04/2018 - Adicionado noti0001.pc_cria_notificacao       
   --------------------------------------------------------------------------------------------------------------*/
 
   PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
@@ -7416,6 +7418,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   vr_dtprzmin         DATE;   -- Data prazo mínimo
   vr_dtprzmax         DATE;   -- Data prazo máximo
   vr_przmxcmp         NUMBER; -- Data prazo máximo
+
+  -- Objetos para armazenar as variáveis da notificação
+  vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+  vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 8;
+  vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 1; 
   
   -- Buscar Cooperativa
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -8495,7 +8502,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       vr_cdcritic := 0;
       RAISE vr_exc_erro;
     END IF;
-    
+    -- 
+    vr_variaveis_notif('#numbordero') := to_char(pr_nrborder);
+
+    -- Cria uma notificação
+    noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                ,pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_variaveis => vr_variaveis_notif);    
+
     -- Efetua os inserts para apresentacao na tela VERLOG
     gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                         ,pr_cdoperad => pr_cdoperad

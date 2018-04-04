@@ -575,7 +575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --  Sistema  : Procedimentos gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 22/11/2016
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 03/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -592,6 +592,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --
   --              20/02/2018 - Inclusão rotina pc_gera_log
   --                           (Ana - Envolti - Ch 839539)
+  --
+  --              01/04/2018 - Inserido noti0001.pc_cria_notificacao
   ---------------------------------------------------------------------------------------------------------------
     
   --Ch 839539
@@ -8143,7 +8145,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_vltarsms     NUMBER;       
     vr_qtsmsdis     INTEGER;
     vr_qtdsms       INTEGER;
-    
+
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 8;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 4;     
+        
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- procedimento para gerar log da debtar
     PROCEDURE pc_gera_log( pr_cdcooper IN NUMBER DEFAULT 3,
@@ -8252,6 +8259,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                               ,pr_cdoperad => 1
                               ,pr_cdcadmsg => 0
                               ,pr_dscritic => vr_dscritic); 
+
+        -- Cria uma notificação
+        noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                    ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_idseqttl => rw_crapsnh.idseqttl
+                                    ,pr_variaveis => vr_variaveis_notif);        
+        --  
 
       END LOOP;  
     END pc_notifica_cooperado;

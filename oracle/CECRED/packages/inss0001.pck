@@ -1100,7 +1100,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 26/02/2018
+   Data    : 27/08/2013                        Ultima atualizacao: 03/04/2018
 
    Dados referentes ao programa:
 
@@ -1212,6 +1212,8 @@ create or replace package body cecred.INSS0001 as
                       INSS0001.pc_proces_pagto_benef_inss e realizada a consulta da crapdat dentro da rotina para 
                       pegar a data sempre atualizada e começar a realizar o pagamento assim que o processo da 
                       cooperativa terminar. (Carlos)
+
+         03/04/2018 - Inserido noti0001.pc_cria_notificacao 
                       
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -19408,6 +19410,11 @@ create or replace package body cecred.INSS0001 as
     vr_dscritic  VARCHAR2(1000);
     vr_cdcritic  INTEGER;
     vr_exc_saida EXCEPTION;
+
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE;
     
     BEGIN
   	  -- Incluir nome do módulo logado - Chamado 664301
@@ -19427,6 +19434,9 @@ create or replace package body cecred.INSS0001 as
                           'não seja bloqueado. A prova de vida do seu benefício ' ||
                           rw_tbinss_dcb.nrrecben || ' vence dia ' || 
                           to_char(rw_tbinss_dcb.dtvencpv,'DD/MM/YYYY') || '.';
+          -- 
+          vr_notif_origem   := 7;
+          vr_notif_motivo   := 4;
         ELSE
           vr_titulo_msg := 'Renovação Prova de Vida (Vencida)';
           vr_corpo_msg := 'Convocamos você cooperado a comparecer em qualquer ' ||
@@ -19436,6 +19446,9 @@ create or replace package body cecred.INSS0001 as
                           'A prova de vida do benefício ' || rw_tbinss_dcb.nrrecben ||
                           ' venceu dia ' || to_char(rw_tbinss_dcb.dtvencpv,'DD/MM/YYYY') ||
                           ' e seu próximo benefício pode ser bloqueado pelo INSS.';
+          -- 
+          vr_notif_origem   := 7;
+          vr_notif_motivo   := 5;
         END IF;
         GENE0003.pc_gerar_mensagem(pr_cdcooper => rw_tbinss_dcb.cdcooper,
                                    pr_nrdconta => rw_tbinss_dcb.nrdconta,
@@ -19465,6 +19478,17 @@ create or replace package body cecred.INSS0001 as
         ELSE -- se nao gerar erro na criacao de avisos
           COMMIT;
         END IF;
+        --
+        vr_variaveis_notif('#nrrecben') := to_char(rw_tbinss_dcb.nrrecben);
+        vr_variaveis_notif('#dtvencpv') := to_char(rw_tbinss_dcb.dtvencpv,'DD/MM/YYYY');
+
+        -- Cria uma notificação
+        noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                    ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                    ,pr_cdcooper => rw_tbinss_dcb.cdcooper
+                                    ,pr_nrdconta => rw_tbinss_dcb.nrdconta
+                                    ,pr_idseqttl => 1 -- Primeiro titular
+                                    ,pr_variaveis => vr_variaveis_notif);
       END LOOP;
     END LOOP;  
     EXCEPTION
