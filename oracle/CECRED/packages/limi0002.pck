@@ -105,6 +105,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                               
                  12/03/2018 - Adicionado a procedure pc_renova_limdesctit que centraliza as regras de renovação e 
                               validações das configurações do CADLIM. (Paulo Penteado (GFT))
+                              
+                 04/04/2018 - Comentado a utilização da pc_apaga_estudo_limdesctit. Devido a criação da estrutura 
+                              de proposta do limite de desconto de titulos tabela (crawlim) não vai mais precisar 
+                              desse processo de apagar os titulos em estudo (Paulo Penteado (GFT))
   */
   ---------------------------------------------------------------------------------------------------------------
   
@@ -1457,6 +1461,12 @@ BEGIN
              end   if;
              close cr_crapcyb;
 
+             /* Calculo da Liquidez:
+                Valor Total descontado pago com atraso de até x dias e não pagos, 
+                dividido pelo Valor Total Descontado com vencimento dentro do período,
+                vezes 100 = percentual de liquidez.
+               (Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente) */
+
              --    Valor Total Descontado com vencimento dentro do período
              open  cr_craptdb_desc(pr_nrdconta     => rw_craplim_crapass.nrdconta
                                   ,pr_dtmvtolt_de  => rw_crapdat.dtmvtolt - rw_cadlim.qtdialiq
@@ -1476,7 +1486,7 @@ BEGIN
                  fetch cr_craptdb_npag into rw_craptdb_npag;
                  close cr_craptdb_npag;
             
-                 vr_liquidez := 100 - (rw_craptdb_desc.vltitulo / rw_craptdb_npag.vltitulo * 100);
+                 vr_liquidez := (rw_craptdb_npag.vltitulo / rw_craptdb_desc.vltitulo) * 100;
              end if;
             
              --  Verifica se o cooperado possui liquidez no produto de desconto maior ou igual ao percentual cadastrado 
@@ -2123,6 +2133,8 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
           END; 
       END LOOP;
       
+      /* 04/04/2018 Paulo Penteado (GFT): Devido a criação da estrutura de proposta do limite de desconto de 
+         titulos tabela (crawlim) não vai mais precisar desse processo de apagar os titulos em estudo 
       pc_apaga_estudo_limdesctit(pr_cdcooper => vr_cdcooper
                                   ,pr_cdoperad => vr_cdoperad
                                   ,pr_idorigem => vr_idorigem
@@ -2130,7 +2142,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
                                   
       if  vr_dscritic is not null then
           RAISE vr_exc_saida;
-      end if;      
+      end if;*/
       
       ------------------------
       ------------------------ GERACAO DO RELATORIO CRRL492
