@@ -61,6 +61,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                         ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
                                         ,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
                                         ,pr_nmtelant  IN VARCHAR2                     -- Nome da tela 
+                                        ,pr_vliofcpl  IN crapepr.vliofcpl%TYPE        -- Valor do IOF complementar
                                         ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
                                         ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                         ,pr_dscritic OUT VARCHAR2);                   -- Descrição da crítica
@@ -194,6 +195,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --             27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
   --
   --             02/10/2017 - Tratamento no update da tabela CRAPCYC para tratamento da origem 2. (Heitor - Mouts) - Chamado 760624.
+  --             05/04/2018 - Ajuste na rotina pc_pagar_emprestimo_prejuizo para correta realização de lançamento com histórico 384 
+  --                          na CRAPLCM ao pagar todo o valor do prejuízo. Reginaldo (AMcom) / Daniel Zimmermann
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -569,6 +572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                         ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
                                         ,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
                                         ,pr_nmtelant  IN VARCHAR2                     -- Nome da tela 
+                                        ,pr_vliofcpl  IN crapepr.vliofcpl%TYPE        -- Valor do IOF complementar
                                         ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
                                         ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                         ,pr_dscritic OUT VARCHAR2) IS                 -- Descrição da crítica
@@ -846,8 +850,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       -- Verifica se encontrou valor a pagar
       IF vr_vlapagar <= 0 THEN
         -- Caso entrar na condição já foi pago todo o prejuizo do emprestimo
-        RETURN;
+        -- RETURN;
+				NULL;
       END IF;
+			
+			IF vr_vlapagar > 0 THEN
     
       -- ROTINA PARA EFETUAR O LANÇAMENTO
       EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper       -- Codigo Cooperativa
@@ -881,6 +888,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         RAISE vr_exc_erro;
       END IF;
     
+			END IF;
+    
       -- Acumula o valor de pagamento realizado
       pr_vltotpag := NVL(pr_vltotpag,0) + vr_vlapagar;
     
@@ -903,7 +912,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
              , epr.dtliquid = NVL(vr_dtliquid,epr.dtliquid)
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
-           AND epr.nrctremp = pr_nrctremp;
+           AND epr.nrctremp = pr_nrctremp
+           AND epr.dtliquid IS NULL;
       
       EXCEPTION
         WHEN OTHERS THEN
@@ -930,7 +940,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                       ,pr_nrdolote => 650001              --> Numero do Lote
                                       ,pr_nrdconta => pr_nrdconta         --> Número da conta
                                       ,pr_cdhistor => 384                 --> Codigo historico
-                                      ,pr_vllanmto => pr_vltotpag         --> Valor do debito
+                                      ,pr_vllanmto => pr_vltotpag - nvl(pr_vliofcpl,0)        --> Valor do debito
                                       ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
                                       ,pr_nrctremp => 0                   --> Número do contrato de empréstimo
                                       ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
@@ -948,6 +958,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         END IF;
         RAISE vr_exc_erro;
       END IF;  
+         
+      IF NVL(pr_vliofcpl,0) > 0 THEN
+          EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
+                                        ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
+                                        ,pr_cdagenci => pr_cdagenci         --> Código da agência
+                                        ,pr_cdbccxlt => 100                 --> Número do caixa
+                                        ,pr_cdoperad => pr_cdoperad         --> Código do Operador
+                                        ,pr_cdpactra => pr_cdagenci         --> P.A. da transação
+                                        ,pr_nrdolote => 650001              --> Numero do Lote
+                                        ,pr_nrdconta => pr_nrdconta         --> Número da conta
+                                        ,pr_cdhistor => 2313                --> Codigo historico
+                                        ,pr_vllanmto => pr_vliofcpl         --> Valor do debito
+                                        ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
+                                        ,pr_nrctremp => 0                   --> Número do contrato de empréstimo
+                                        ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
+                                        ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
+            
+          -- Se ocorreu erro
+          IF vr_des_reto <> 'OK' THEN
+            -- Se possui algum erro na tabela de erros
+            IF vr_tab_erro.COUNT() > 0 THEN
+              pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              pr_cdcritic := 0;
+              pr_dscritic := 'Erro ao criar o lancamento de IOF na conta corrente.';
+            END IF;
+            RAISE vr_exc_erro;
+          END IF;  
+          
+          -- Insere registro de pagamento de IOF na tbgen_iof_lancamento
+          tiof0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
+                               , pr_nrdconta     => pr_nrdconta
+                               , pr_dtmvtolt     => pr_crapdat.dtmvtolt
+                               , pr_tpproduto    => 1 -- Emprestimo
+                               , pr_nrcontrato   => pr_nrctremp
+                               , pr_idlautom     => null
+                               , pr_dtmvtolt_lcm => pr_crapdat.dtmvtolt
+                               , pr_cdagenci_lcm => pr_cdagenci
+                               , pr_cdbccxlt_lcm => 100
+                               , pr_nrdolote_lcm => 650001
+                               , pr_nrseqdig_lcm => 1
+                               , pr_vliofpri     => 0
+                               , pr_vliofadi     => 0
+                               , pr_vliofcpl     => pr_vliofcpl
+                               , pr_flgimune     => 0
+                               , pr_cdcritic     => vr_cdcritic 
+                               , pr_dscritic     => vr_dscritic);
+          
+          if vr_dscritic is not null then
+             raise vr_exc_erro;
+          end if;
+          
+      END IF;
          
     END IF;    
     
@@ -1001,6 +1065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
              , epr.vlpgmupr = pr_vlttmupr
              , epr.vlpgjmpr = pr_vlttjmpr
              , epr.dtliquid = pr_crapdat.dtmvtolt
+             , epr.vliofcpl = epr.vliofcpl - nvl(pr_vliofcpl,0)
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
            AND epr.nrctremp = pr_nrctremp;
@@ -1656,12 +1721,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                        ,1040
                        ,craplem.vllanmto
                        ,1042
-                       ,craplem.vllanmto))
+                       ,craplem.vllanmto
+                       ,2311
+                       ,craplem.vllanmto * -1
+                       ,2312
+                       ,craplem.vllanmto * -1))
           FROM craplem
          WHERE craplem.cdcooper = pr_cdcooper
            AND craplem.nrdconta = pr_nrdconta
            AND craplem.nrctremp = pr_nrctremp
-           AND craplem.cdhistor IN (1040, 1041, 1042, 1043);
+           AND craplem.cdhistor IN (1040, 1041, 1042, 1043, 2311, 2312);
         
     -- VARIÁVEIS
     vr_tab_pgto_parcel empr0001.typ_tab_pgto_parcel;
@@ -1801,7 +1870,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           -- IRÁ CALCULAR O VALOR DE TODAS AS PARCELAS
           vr_tab_pagto_compe(idx).vlpagpar := NVL(vr_tab_pagto_compe(idx).vlatupar,0) +
                                               NVL(vr_tab_pagto_compe(idx).vlmtapar,0) +
-                                              NVL(vr_tab_pagto_compe(idx).vlmrapar,0);
+                                              NVL(vr_tab_pagto_compe(idx).vlmrapar,0) +
+                                              NVL(vr_tab_pagto_compe(idx).vliofcpl,0) ;
                
         END LOOP;
       END IF;
@@ -1827,7 +1897,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           -- Calcula o valor da parcela
           vr_vlpagpar := NVL(vr_tab_pgto_parcel(idx).vlatupar,0) +
                          NVL(vr_tab_pgto_parcel(idx).vlmtapar,0) +
-                         NVL(vr_tab_pgto_parcel(idx).vlmrapar,0);
+                         NVL(vr_tab_pgto_parcel(idx).vlmrapar,0) +
+                         NVL(vr_tab_pgto_parcel(idx).vliofcpl,0) ;
           
           -- SE ESTIVER EXECUTANDO PELA COMPEFORA DEVE CALCULAR O VALOR DO AJUSTE
           IF pr_nmtelant = 'COMPEFORA' THEN 
@@ -2062,6 +2133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
            , epr.vlttjmpr
            , epr.vlpgjmpr
            , epr.dtultpag
+           , epr.vliofcpl
         FROM crapepr  epr
        WHERE epr.cdcooper = pr_cdcooper
          AND epr.nrdconta = pr_nrdconta
@@ -2132,6 +2204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                   ,pr_cdoperad => pr_cdoperad         
                                   ,pr_vlparcel => vr_vlpagmto
                                   ,pr_nmtelant => pr_nmtelant
+                                  ,pr_vliofcpl => rw_crapepr.vliofcpl
                                   ,pr_vltotpag => pr_vltotpag -- Retorno do total pago       
                                   ,pr_cdcritic => vr_cdcritic         
                                   ,pr_dscritic => vr_dscritic);       
@@ -2329,6 +2402,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     vr_flbloque       BOOLEAN; -- Indica que deve lançar a sobra como valor bloqueado
     vr_flagerro       BOOLEAN; -- Indica que o processamento de pagamento de acordo apresentou crítica
     vr_idvlrmin       NUMBER := 0; -- Indica que houve critica do valor minimo
+    
+    --IOF
+    vr_vliofpri NUMBER;
+    vr_vliofadi NUMBER;
+    vr_vliofcpl NUMBER;
+    vr_vltaxa_iof_principal VARCHAR2(20);
+    vr_qtdiaiof NUMBER;
+    vr_flgimune PLS_INTEGER;
+    vr_dscatbem VARCHAR2(100);
+    vr_cdlcremp NUMBER;
+	  
+   -- Cursor para bens do contrato: 
+    /*Faz o order by dscatbem pois "CASA" e "APARTAMENTO" reduzem as 3 aliquotas de IOF (principal, adicional e complementar) a zero.
+    Já "MOTO" reduz apenas as alíquotas de IOF principal e complementar..
+    Dessa forma, se tiver um bem que seja CASA ou APARTAMENTO, não precisa mais verificar os outros bens..*/
+    CURSOR cr_crapbpr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS      
+      SELECT b.dscatbem, t.cdlcremp
+      FROM crapepr t
+      INNER JOIN crapbpr b ON b.nrdconta = t.nrdconta AND b.cdcooper = t.cdcooper AND b.nrctrpro = t.nrctremp
+      WHERE t.cdcooper = pr_cdcooper
+            AND t.nrdconta = pr_nrdconta
+            AND t.nrctremp = pr_nrctremp
+            AND upper(b.dscatbem) IN ('APARTAMENTO', 'CASA', 'MOTO')
+      ORDER BY upper(b.dscatbem) ASC;
+    rw_crapbpr cr_crapbpr%ROWTYPE;
+
+    CURSOR cr_crapepr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS      
+      SELECT dtdpagto
+      FROM crapepr
+      WHERE cdcooper = pr_cdcooper
+            AND nrdconta = pr_nrdconta
+            AND nrctremp = pr_nrctremp;
+    rw_crapepr cr_crapepr%ROWTYPE;      
     
     -- EXCEPTIONS
     vr_exc_erro       EXCEPTION;
@@ -2627,8 +2737,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         vr_vlparcel := vr_vlparcel - NVL(vr_vltotpag,0);
         -----------------------------------------------------------------------------------------------
         
+        -- Novo cálculo de IOF
+        vr_dscatbem := NULL;
+        vr_cdlcremp := NULL;
+        
+        --Verifica o primeiro bem do contrato para saber se tem isenção de alíquota
+        OPEN cr_crapbpr(pr_cdcooper => rw_acordo_contrato.cdcooper
+                       ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                       ,pr_nrctremp => rw_acordo_contrato.nrctremp);
+        FETCH cr_crapbpr INTO rw_crapbpr;
+        IF cr_crapbpr%FOUND THEN
+          vr_dscatbem := rw_crapbpr.dscatbem;
+          vr_cdlcremp := rw_crapbpr.cdlcremp;
+        END IF;
+        CLOSE cr_crapbpr;
+        
+        --Dias de atraso
+        OPEN cr_crapepr(pr_cdcooper => rw_acordo_contrato.cdcooper
+                       ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                       ,pr_nrctremp => rw_acordo_contrato.nrctremp);
+        FETCH cr_crapepr INTO rw_crapepr;
+        IF cr_crapepr%FOUND THEN
+          vr_qtdiaiof := rw_crapepr.dtdpagto - BTCH0001.rw_crapdat.dtmvtolt;
+        ELSE
+          vr_qtdiaiof := 0;
+        END IF;
+        CLOSE cr_crapepr;
+                              
+        --Calcula o IOF
+        TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => rw_acordo_contrato.cdcooper             --> Código da cooperativa referente ao contrato de empréstimos
+                                          ,pr_nrdconta => rw_acordo_contrato.nrdconta            --> Número da conta referente ao empréstimo
+                                          ,pr_nrctremp => rw_acordo_contrato.nrctremp            --> Número do contrato de empréstimo
+                                          ,pr_vlemprst => vr_vlparcel                            --> Valor do empréstimo para efeito de cálculo
+                                          ,pr_dscatbem => vr_dscatbem                            --> Descrição da categoria do bem, valor default NULO 
+                                          ,pr_cdlcremp => vr_cdlcremp                            --> Linha de crédito do empréstimo
+                                          ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt           --> Data do movimento
+                                          ,pr_qtdiaiof => vr_qtdiaiof                            --> Quantidade de dias em atraso
+                                          ,pr_vliofpri => vr_vliofpri                            --> Valor do IOF principal
+                                          ,pr_vliofadi => vr_vliofadi                            --> Valor do IOF adicional
+                                          ,pr_vliofcpl => vr_vliofcpl                            --> Valor do IOF complementar
+                                          ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal    --> Valor da Taxa do IOF Principal
+                                          ,pr_flgimune => vr_flgimune                            --> Possui imunidade tributária
+                                          ,pr_dscritic => vr_dscritic);                          --> Descrição da crítica
+                                                
+        IF NVL(vr_dscritic, ' ') <> ' ' THEN
+				   RAISE vr_exc_erro;
+			  END IF;
+			  
+			  --Imunidade....
+        IF vr_flgimune > 0 THEN
+          vr_vliofpri := 0;
+          vr_vliofadi := 0;
+          vr_vliofcpl := 0;
+        ELSE
+          vr_vliofcpl := NVL(vr_vliofcpl, 0);
+        END IF;
+        
         -- Somar o valor pago ao montante total de pagamentos
-        pr_vltotpag := NVL(pr_vltotpag,0) + NVL(vr_vltotpag,0);
+        pr_vltotpag := NVL(pr_vltotpag,0) + NVL(vr_vltotpag,0) + vr_vliofcpl;
         -----------------------------------------------------------------------------------------------
       END IF;
         
