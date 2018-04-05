@@ -37,7 +37,9 @@
 
              28/03/2018 - Formatação dos layouts dos formulários de Contratos e Propostas. (Andre Avila - GFT)
 			 
-			 02/04/2018 - Formatação da tela para listar borderôs. (Leonardo Oliveira - GFT)	
+			 02/04/2018 - Formatação da tela para listar borderôs. (Leonardo Oliveira - GFT)
+
+			 04/04/2018 - Ajustes na formatação da tela 'divDetalheBordero'. (Leonardo Oliveira - GFT)
 
 ************************************************************************/
 
@@ -1459,27 +1461,58 @@ function formataLayout(nomeForm){
 	}else if ( nomeForm == 'divDetalheBordero' ){
 	
 		$('#'+nomeForm).css('width','940px');
+		
+		
 
+		//restrições	
+		var divRestricoes 					= $('div.divRestricoes','#'+nomeForm);
+		var tabelaRestricoes	   			= $('table', divRestricoes );
+		
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+		arrayLargura[0] = '24%';
+		arrayLargura[1] = '25%';
+		arrayLargura[2] = '24%';
+		arrayLargura[3] = '25%';
+		
+
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'center';
+
+	    divRestricoes.css({'height': '210px', 'padding-bottom': '1px'});
+
+		tabelaRestricoes.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+
+
+		// campos
+		var cNmdsacad = $("#nmdsacad", "#"+nomeForm);
+		cNmdsacad.css({'width': '450px'});
 
 		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
 		camposFiltros.desabilitaCampo();
+
+		//criticas
 		var divRegistrosTitulos 			= $('div.divRegistrosTitulos','#'+nomeForm);		
 		var divRegistrosTitulosSelecionados = $('div.divRegistrosTitulosSelecionados','#'+nomeForm);		
 		var tabelaTitulos      				= $('table', divRegistrosTitulos );
 		var tabelaTitulosSelecionados   	= $('table', divRegistrosTitulosSelecionados );
-		
-		var cNmdsacad = $("#nmdsacad", "#"+nomeForm);
-		cNmdsacad.css({'width': '450px'});
+
 	
 
 		var ordemInicial = new Array();
 				
 		var arrayLargura = new Array();
-		arrayLargura[0] = '100px';
+		arrayLargura[0] = '48%';
+		arrayLargura[1] = '50%';
 		
 
 		var arrayAlinha = new Array();
-		arrayAlinha[0] = 'left';
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
 		
 						
 	    $('#' + nomeForm).css({'margin-top': '5px'});

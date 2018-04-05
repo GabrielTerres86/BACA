@@ -3,10 +3,12 @@
 	/************************************************************************
 	 Fonte: titulos_bordero_visualizar_titulo.php                                        
 	 Autor: Leonardo Oliveira (GFT)
-	 Data : 02/04/2018                Última Alteração: 
+	 Data : 02/04/2018                Última Alteração: 04/04/2018
 	                                                                  
 	 Objetivo  : Detalhes do título do borderô
 
+	 Alterações: 04/04/2018 - Ajuste nas tabelas de críticas e restrições (Leonardo Oliveira - GFT).
+	
 	************************************************************************/
 	
 	session_start();
@@ -53,7 +55,7 @@
 	$pagador = $dados->tags[0];
 	$biros = $dados->tags[1];
 	$detalhe = $dados->tags[2];
-	$critica = $dados->tags[3];
+	$criticas = $dados->tags[3];
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -69,6 +71,7 @@
 	
 	<form id="formPesquisaTitulos" class="formulario">
 		<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo $nrdconta; ?>" />
+
 		<div id="divFiltros">
 			<fieldset>
 				<legend>Detalhes do Pagador</legend>
@@ -77,49 +80,45 @@
 			    <label for="nmdsacad">Nome Pagador</label>
 			    <input type="text" id="nmdsacad" name="nmdsacad" value="<?php echo getByTagName($pagador->tags,'nmdsacad'); ?>" />
 
-			    <table id="tblDetalhe1" style="padding-left:0px;width:100%">
-				
-					<tr>	
-							
-						<td style="vertical-align: bottom; ">
-							<label>Restritiva:</label>
-						</td>	
-						<td style="vertical-align: bottom; ">
-							<label >Valor:</label>
-						</td>
-						<td style="vertical-align: bottom;">
-							<label >Quantidade:</label>
-						</td>
-						<td style="vertical-align: bottom; ">
-							<label >Data da Ocorr&ecirc;ncia</label>
-						</td>											
-					</tr>
-					<?php if(count($biros->tags)>0){ ?>
-						<?php foreach($biros->tags AS $t) {?>
-						<tr>
-							<td style="align-text: center;"><? echo getByTagName($t->tags,'dsnegati');  ?></td>
-							<?php if(getByTagName($t->tags,'qtnegati')>0) { ?>
-								<td style="align-text: center;"><? echo formataMoeda(getByTagName($t->tags,'vlnegati')); ?></td>
-								<td style="align-text: center;"><? echo getByTagName($t->tags,'qtnegati'); ?></td>
-								<td style="align-text: center;"><? echo getByTagName($t->tags,'dtultneg'); ?></td>
-							<?php }
-							else { ?>
-								<td>Nada Consta</td>
-								<td>Nada Consta</td>
-								<td>Nada Consta</td>
-					 		<? } ?>
-						</tr>
-				    	<?php } 
-				    	} else{ ?>
-						<tr>
-								<td>Nada Consta</td>
-								<td>Nada Consta</td>
-								<td>Nada Consta</td>
-								<td>Nada Consta</td>
-						</tr>
-			    	<?php } ?>
+			    <div class="divRestricoes divRegistros">
+				    <table id="tblDetalhe1" class="tituloRegistros">
+						<thead>
+							<tr>	
+								<th>Restritiva</th>	
+								<th>Valor</th>
+								<th>Quantidade</th>
+								<th>Data da Ocorr&ecirc;ncia</th>											
+							</tr>
+						</thead>
+						<tbody>
+							<?php if(count($biros->tags)>0){ ?>
+								<?php foreach($biros->tags AS $t) {?>
+									<tr>
+										<td><? echo getByTagName($t->tags,'dsnegati');  ?></td>
+										<?php if(getByTagName($t->tags,'qtnegati')>0) { ?>
+											<td><? echo (formataMoeda(getByTagName($t->tags,'vlnegati'))); ?></td>
+											<td><? echo getByTagName($t->tags,'qtnegati'); ?></td>
+											<td><? echo getByTagName($t->tags,'dtultneg'); ?></td>
+											<?php }
+											else { ?>
+												<td>Nada Consta</td>
+												<td>Nada Consta</td>
+												<td>Nada Consta</td>
+								 		<? } ?>
+									</tr>
+						    	<?php } 
+						    	} else{ ?>
+									<tr>
+											<td>Nada Consta</td>
+											<td>Nada Consta</td>
+											<td>Nada Consta</td>
+											<td>Nada Consta</td>
+									</tr>
+					    	<?php } ?>
+				    	</tbody>
+					</table>
+				</div><!-- divRestricoes -->
 
-				</table>
 				<br><br>
 		
 			
@@ -137,9 +136,9 @@
 						</td>									
 					</tr>
 					<tr>
-						<td style="vertical-align: bottom;"><? echo formataMoeda(getByTagName($detalhe->tags,'concpaga'));?></td>
-						<td style="vertical-align: bottom;"><? echo formataMoeda(getByTagName($detalhe->tags,'liqpagcd'));?></td>
-						<td style="vertical-align: bottom;"><? echo formataMoeda(getByTagName($detalhe->tags,'liqgeral'));?></td>
+						<td><? echo formataMoeda(getByTagName($detalhe->tags,'concpaga'));?></td><!--style="vertical-align: bottom;"-->
+						<td><? echo formataMoeda(getByTagName($detalhe->tags,'liqpagcd'));?></td>
+						<td><? echo formataMoeda(getByTagName($detalhe->tags,'liqgeral'));?></td>
 					</tr>
 				</table>
 
@@ -155,22 +154,34 @@
 					<table class="tituloRegistros">
 						<thead>
 							<tr>
-								<th style="text-align: left;">Cr&iacute;tica</th>
+								<th>Cr&iacute;tica</th>
+								<th>Valor</th>
 							</tr>
 						</thead>
 						<tbody>
-							<?php foreach($critica->tags AS $c) { ?>
+							<?php foreach($criticas->tags AS $c) {?>
 								<tr>
-									<td style="text-align: left;"><? echo $c->cdata;?></td>
+									<td><? echo getByTagName($c->tags,'dsc'); ?></td>
+									<td>
+										<?php 
+										 	$varint = getByTagName($c->tags,'int'); 
+										 	if($varint > 0){
+										 		echo $varint;
+										 	} else {
+										 		echo (getByTagName($c->tags,'per') * 100.00).'%';
+										 	}
+										?>
+									</td>
 								</tr>
 							<?} // Fim do foreach ?>	
 						</tbody>
 					</table>
-				</div>
+				</div><!-- divRegistrosTitulosSelecionados -->
 			</fieldset>
-		</div>
+		</div><!-- divCritica -->
+
 	</form>
-</div>
+</div><!-- divDetalheBordero -->
 
 
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
