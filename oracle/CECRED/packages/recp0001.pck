@@ -2365,24 +2365,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     
     -- Buscar todos os contratos que estao amarrados no acordo
     CURSOR cr_acordo_contrato IS
-      SELECT aco.cdcooper
-           , aco.nrdconta
+		  WITH contratos_acordo AS (
+			   SELECT a.cdcooper
+				      , a.nrdconta
+							, c.nrctremp
+							, c.cdorigem
+							, c.indpagar
+				   FROM tbrecup_acordo a
+					    , tbrecup_acordo_contrato c
+				 WHERE a.nracordo = pr_nracordo
+				   AND c.nracordo = a.nracordo			  
+			)
+      SELECT acc.cdcooper
+           , acc.nrdconta
            , acc.cdorigem 
            , acc.nrctremp
         FROM crapass                  ass
            , crapcyb                  cyb
-           , tbrecup_acordo_contrato  acc
-           , tbrecup_acordo           aco
-       WHERE ass.cdcooper = aco.cdcooper
-         AND ass.nrdconta = aco.nrdconta
-         AND cyb.cdcooper = aco.cdcooper
-         AND cyb.nrdconta = aco.nrdconta
-         AND cyb.nrctremp = acc.nrctremp
-         AND cyb.cdorigem = acc.cdorigem          
-         AND acc.nracordo = aco.nracordo
-         AND aco.nracordo = pr_nracordo
+           , contratos_acordo acc
+       WHERE ass.cdcooper = acc.cdcooper
+         AND ass.nrdconta = acc.nrdconta
+         AND cyb.cdcooper(+) = acc.cdcooper
+         AND cyb.nrdconta(+) = acc.nrdconta
+         AND cyb.nrctremp(+) = acc.nrctremp
+         AND cyb.cdorigem(+) = acc.cdorigem          
+				 AND acc.indpagar = 'S'    -- Somente os contratos marcados como 'Pagar' na tela ATACOR (Reginaldo - AMcom)
        ORDER BY acc.cdorigem       -- 1. Efetuar pagamento do estouro de conta corrente
-              , cyb.qtdiaatr DESC  -- 2. Efetuar pagamento do contrato com maior tempo de atraso
+              , nvl(cyb.qtdiaatr,0) DESC  -- 2. Efetuar pagamento do contrato com maior tempo de atraso
               , cyb.vlsdeved DESC  -- 3. Caso haja empate, então, considerar primeiro o contrato com maior saldo devedor
               , cyb.nrctremp ASC;  -- 4. Caso os saldos devedores também sejam iguais, considerar o contrato de menor número
     
