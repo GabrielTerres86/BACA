@@ -300,9 +300,9 @@
                            Chamado 858710 (Mateus Z / Mouts). 
 					       
               26/03/2018 - Corrigir os erros do IOF. (James)
-                           
-			  02/04/2018 - Corrigir para não apresentar no extrato de empréstimo histórico do IOF zerado. (James)
 
+			  02/04/2018 - Corrigir para não apresentar no extrato de empréstimo histórico do IOF zerado. (James)
+                           
                            
 ............................................................................. */
 
@@ -6336,7 +6336,7 @@ PROCEDURE buscar_historico_e_lote_efet_prop:
                      par_cdhistor_tar = 2307
                      par_nrdolote = 600030.
                 
-            IF par_dsoperac = "EMPRESTIMO" THEN
+            ELSE
               ASSIGN par_cdhistor = 2304
                      par_cdhistor_tar = 2306
                      par_nrdolote = 600005.
@@ -6348,8 +6348,7 @@ PROCEDURE buscar_historico_e_lote_efet_prop:
                 ASSIGN par_cdhistor = 2536
                        par_cdhistor_tar = 2307
                        par_nrdolote = 600030.
-                  
-              IF par_dsoperac = "EMPRESTIMO" THEN
+              ELSE
                 ASSIGN par_cdhistor = 2535
                      par_cdhistor_tar = 2306
                        par_nrdolote = 600005.
@@ -6364,7 +6363,6 @@ PROCEDURE buscar_historico_e_lote_efet_prop:
               ASSIGN par_cdhistor = 2309
                      par_nrdolote = 600030.
           ELSE
-            IF par_dsoperac = "EMPRESTIMO" THEN
               ASSIGN par_cdhistor = 2308
                      par_nrdolote = 600005.
           END.
@@ -6374,8 +6372,7 @@ PROCEDURE buscar_historico_e_lote_efet_prop:
               IF par_dsoperac = "FINANCIAMENTO" THEN
                 ASSIGN par_cdhistor = 2538
                        par_nrdolote = 600030.
-                  
-              IF par_dsoperac = "EMPRESTIMO" THEN
+                ELSE
                 ASSIGN par_cdhistor = 2537
                        par_nrdolote = 600005.
             END.

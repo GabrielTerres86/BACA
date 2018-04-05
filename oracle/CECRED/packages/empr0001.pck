@@ -1,7 +1,7 @@
 CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
 
   ---------------------------------------------------------------------------------------------------------------
-  -- 
+  --
   --  Programa : EMPR0001
   --  Sistema  : Rotinas gen¿ricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
@@ -5895,7 +5895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                              ,0) +
                                                           rw_craplem.vllanmto;
               END IF;
-
+            
               \* Melhoria 324 - se for estorno de pagamento, deduzir do valor pago *\
               IF rw_craplem.cdhistor IN (2392) THEN
                 -- Adicionar no campo valor pagos
@@ -8171,6 +8171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       pr_dscritic := NULL;
     
       --Atualizar Lote
+      IF ROUND(pr_vllanmto,2) > 0 THEN
       pc_inclui_altera_lote(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
                            ,pr_dtmvtolt => pr_dtmvtolt --Data Emprestimo
                            ,pr_cdagenci => pr_cdpactra --Codigo Agencia
@@ -8243,6 +8244,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Levantar Excecao
           RAISE vr_exc_erro;
       END;
+      END IF;
+        
     EXCEPTION
       WHEN vr_exc_erro THEN
         --Variavel de erro recebe erro ocorrido
@@ -10028,9 +10031,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- Se houve erro
           IF TRIM(vr_dscritic) IS NOT NULL THEN
             RAISE vr_exc_saida;
-          END IF;
+        END IF;
         END IF; 
-
+      
         --Marcar que a transacao ocorreu
         vr_flgtrans := TRUE;
       EXCEPTION

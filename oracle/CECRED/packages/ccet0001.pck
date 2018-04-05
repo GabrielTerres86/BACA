@@ -2206,10 +2206,14 @@ create or replace package body cecred.CCET0001 is
       vr_vlrtarif := ROUND(nvl(vr_vlrtarif,0),2) + nvl(vr_vlrtares,0) + nvl(vr_vltarbem,0);
        
       -- valor total emprestado
-      vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0);      
+      IF rw_dados.idfiniof = 1 THEN
+        vr_vlemprst := nvl(pr_vlemprst,0);
+      ELSE
+        vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0);
+      END IF;
                                                     
       -- Porcentagem do valor do limite
-      vr_txjurlim := ((nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0)) * 100) / pr_vlemprst;
+      vr_txjurlim := (vr_vlemprst * 100) / pr_vlemprst;
             
       -- Taxa de juros do iof
       vr_txjuriof := (vr_vlrdoiof * 100) / pr_vlemprst;
@@ -2273,7 +2277,7 @@ create or replace package body cecred.CCET0001 is
             
       ELSE
       
-      -- Valor total da divida
+        -- Valor total da divida
         vr_vltotdiv := round(nvl(pr_qtpreemp,0) * nvl(vr_vlpreemp,0),2);
       END IF;
       -- Porcentagem  do valor total
@@ -3004,8 +3008,13 @@ create or replace package body cecred.CCET0001 is
         -- valor total emprestado
         vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrtarif,0);        
       ELSE
-        -- valor total emprestado
-        vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0);
+        IF pr_idfiniof > 0 THEN
+          -- valor total emprestado
+          vr_vlemprst := nvl(pr_vlemprst,0);
+        ELSE
+          vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0);
+        END IF;
+          
       END IF;
       
       vr_data_contrato := nvl(pr_dtlibera,pr_dtmvtolt);                

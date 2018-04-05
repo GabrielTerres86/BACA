@@ -2,7 +2,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0097.p
     Autor   : Gabriel, GATI - Diego
-    Data    : Maio/2011               Ultima Atualizacao: 27/09/2017
+    Data    : Maio/2011               Ultima Atualizacao: 04/04/2018
     
     Dados referentes ao programa:
     
@@ -110,6 +110,8 @@
 
                 12/10/2017 - Projeto 410 - passar como parametro da pc_calcula_iof_epr, 
 				             o numero do contrato (Jean - Mout´s)
+                     
+                04/04/2018 - Corrigir o calculo do CET. (James)     
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -707,7 +709,10 @@ PROCEDURE grava_simulacao:
     IF  RETURN-VALUE = "NOK" THEN
         RETURN "NOK".
 
-    ASSIGN var_vllibera = par_vlemprst - var_vlrtarif - var_vliofepr.
+    IF par_idfiniof = 1 THEN
+       ASSIGN var_vllibera = par_vlemprst.
+    ELSE
+       ASSIGN var_vllibera = par_vlemprst - var_vlrtarif - var_vliofepr.
 
     /* Criacao ou busca do registro de simulacao */
     IF   par_cddopcao = "I"   THEN
