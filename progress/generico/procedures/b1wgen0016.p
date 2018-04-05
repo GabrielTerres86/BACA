@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 21/03/2018
+    Data    : Abril/2006                     Ultima Atualizacao: 05/04/2018
     
     Dados referentes ao programa:
 
@@ -534,6 +534,9 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
                            conforme acontece na b1wgen0092.busca_convenios_codbarras. (Anderson - P285)
                            
               21/03/2018 - Validar corretamente o retorno de critica na paga_titulo (Lucas Ranghetti INC0010520)
+
+              05/04/2018 - Validar horario da DEBSIC ao aprovar agendamento de pagamento/darf-das
+			               nas transacoes pendentes (Lucas Ranghetti INC0011214)
 
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
@@ -5532,6 +5535,62 @@ PROCEDURE aprova_trans_pend:
                                 
                                 RETURN "NOK".
                             END.
+                            
+                        /* Se for agendamento de pagamentos */
+                        IF  tbpagto_trans_pend.idagendamento = 2 THEN
+                            DO:
+                                FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper 
+                                                     AND crapcon.cdsegmto = INT(SUBSTRING(tbpagto_trans_pend.dscodigo_barras,2,1))
+                                                     AND crapcon.cdempcon = INT(SUBSTRING(tbpagto_trans_pend.dscodigo_barras,16,4))
+                                                     NO-LOCK NO-ERROR.
+                                             
+                                IF  AVAILABLE crapcon THEN
+                                    DO:
+                                       /* Validar somente para convenios sicredi */
+                                       IF  crapcon.flgcnvsi = TRUE THEN
+                                           DO:
+                                              /* Verificar horario de inicio da DEBSIC */
+                                              FIND FIRST craphec WHERE craphec.cdcooper = par_cdcooper 
+                                                                   AND craphec.cdprogra = "DEBSIC"
+                                                                   NO-LOCK NO-ERROR.
+                                                                   
+                                              IF  AVAILABLE craphec THEN
+                                                  DO:
+                                                      /*  Aceitar ate o horario de inicio da DEBSIC */
+                                                      IF  TIME >= craphec.hriniexe AND
+                                                          tbpagto_trans_pend.dtdebito = par_dtmvtolt THEN
+                                                          DO:
+                                                             ASSIGN aux_cdcritic = 0
+                                                                    aux_dscritic = "Horario esgotado para pagamentos.".
+                                              
+                                                             RUN gera_erro (INPUT par_cdcooper,
+                                                                            INPUT par_cdagenci,
+                                                                            INPUT par_nrdcaixa,
+                                                                            INPUT 1,            /** Sequencia **/
+                                                                            INPUT aux_cdcritic,
+                                                                            INPUT-OUTPUT aux_dscritic).
+                                                              
+                                                              IF  par_flgerlog THEN
+                                                                  DO:
+                                                                      RUN proc_gerar_log (INPUT par_cdcooper,
+                                                                                          INPUT par_cdoperad,
+                                                                                          INPUT aux_dscritic,
+                                                                                          INPUT aux_dsorigem,
+                                                                                          INPUT aux_dstransa,
+                                                                                          INPUT FALSE,
+                                                                                          INPUT 1,
+                                                                                          INPUT par_nmdatela,
+                                                                                          INPUT par_nrdconta,
+                                                                                         OUTPUT aux_nrdrowid).
+                    END.
+                                                          END.
+                                                         
+                                                      RETURN "NOK".
+                                                  END.
+                                           END.
+                                    END.  
+                            END.
+                                                                      
                     END.
                 ELSE IF tbgen_trans_pend.tptransacao = 6 THEN /* Pré-Aprovado */
                     DO:
@@ -10753,6 +10812,49 @@ PROCEDURE aprova_trans_pend:
                             ASSIGN par_flgaviso = TRUE.
     
                         UNDO TRANSACAO, LEAVE TRANSACAO.
+                      END.
+                               
+                  /* Se for agendamento de DARF-DAS */
+                  IF  tt-tbpagto_darf_das_trans_pend.idagendamento = 2 THEN
+                      DO: 
+                          /* Verificar horario de inicio da DEBSIC */
+                          FIND FIRST craphec WHERE craphec.cdcooper = par_cdcooper 
+                                               AND craphec.cdprogra = "DEBSIC"
+                                               NO-LOCK NO-ERROR.
+                                               
+                          IF  AVAILABLE craphec THEN
+                              DO:
+                                  /*  Aceitar ate o horario de inicio da DEBSIC */
+                                  IF  TIME >= craphec.hriniexe AND 
+                                      tt-tbpagto_darf_das_trans_pend.dtdebito = par_dtmvtolt THEN
+                                      DO:
+                                         ASSIGN aux_cdcritic = 0
+                                                aux_dscritic = "Horario esgotado para pagamentos.".
+                          
+                                         RUN gera_erro (INPUT par_cdcooper,
+                                                        INPUT par_cdagenci,
+                                                        INPUT par_nrdcaixa,
+                                                        INPUT 1,            /** Sequencia **/
+                                                        INPUT aux_cdcritic,
+                                                        INPUT-OUTPUT aux_dscritic).
+                                          
+                                          IF  par_flgerlog THEN
+                                              DO:
+                                                  RUN proc_gerar_log (INPUT par_cdcooper,
+                                                                      INPUT par_cdoperad,
+                                                                      INPUT aux_dscritic,
+                                                                      INPUT aux_dsorigem,
+                                                                      INPUT aux_dstransa,
+                                                                      INPUT FALSE,
+                                                                      INPUT 1,
+                                                                      INPUT par_nmdatela,
+                                                                      INPUT par_nrdconta,
+                                                                     OUTPUT aux_nrdrowid).
+                                              END.
+                                      END.
+                                     
+                                  RETURN "NOK".
+                              END.
                       END.
                                
                     /* Efetivaçao */ 
