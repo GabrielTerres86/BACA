@@ -7883,78 +7883,81 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       pr_dscritic := NULL;
     
       --Atualizar Lote
-      pc_inclui_altera_lote(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
-                           ,pr_dtmvtolt => pr_dtmvtolt --Data Emprestimo
-                           ,pr_cdagenci => pr_cdpactra --Codigo Agencia
-                           ,pr_cdbccxlt => pr_cdbccxlt --Codigo Caixa
-                           ,pr_nrdolote => pr_nrdolote --Numero Lote
-                           ,pr_tplotmov => pr_tplotmov --Tipo movimento
-                           ,pr_cdoperad => pr_cdoperad --Operador
-                           ,pr_cdhistor => pr_cdhistor --Codigo Historico
-                           ,pr_dtmvtopg => pr_dtmvtolt --Data Pagamento Emprestimo
-                           ,pr_vllanmto => pr_vllanmto --Valor Lancamento
-                           ,pr_flgincre => pr_flgincre --Indicador Credito
-                           ,pr_flgcredi => pr_flgcredi --Credito
-                           ,pr_nrseqdig => vr_nrseqdig --Numero Sequencia
-                           ,pr_cdcritic => vr_cdcritic --Codigo Erro
-                           ,pr_dscritic => vr_dscritic); --Descricao Erro
-      --Se ocorreu erro
-      IF vr_cdcritic IS NOT NULL
-         OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-    
-      --Inserir Lancamento
-      BEGIN
-        INSERT INTO craplem
-          (craplem.dtmvtolt
-          ,craplem.cdagenci
-          ,craplem.cdbccxlt
-          ,craplem.nrdolote
-          ,craplem.nrdconta
-          ,craplem.nrdocmto
-          ,craplem.cdhistor
-          ,craplem.nrseqdig
-          ,craplem.nrctremp
-          ,craplem.vllanmto
-          ,craplem.dtpagemp
-          ,craplem.txjurepr
-          ,craplem.vlpreemp
-          ,craplem.nrsequni
-          ,craplem.cdcooper
-          ,craplem.nrparepr
-          ,craplem.nrseqava
-          ,craplem.cdorigem
-          ,craplem.qtdiacal
-          ,craplem.vltaxprd)
-        VALUES
-          (pr_dtmvtolt
-          ,pr_cdpactra
-          ,pr_cdbccxlt
-          ,pr_nrdolote
-          ,pr_nrdconta
-          ,vr_nrseqdig
-          ,pr_cdhistor
-          ,vr_nrseqdig
-          ,pr_nrctremp
-          ,pr_vllanmto
-          ,pr_dtpagemp
-          ,pr_txjurepr
-          ,pr_vlpreemp
-          ,pr_nrsequni
-          ,pr_cdcooper
-          ,pr_nrparepr
-          ,pr_nrseqava
-          ,pr_cdorigem
-          ,pr_qtdiacal
-          ,pr_vltaxprd);
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao inserir na craplem. ' || SQLERRM;
-          --Levantar Excecao
+      IF ROUND(pr_vllanmto,2) > 0 THEN
+        pc_inclui_altera_lote(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
+                             ,pr_dtmvtolt => pr_dtmvtolt --Data Emprestimo
+                             ,pr_cdagenci => pr_cdpactra --Codigo Agencia
+                             ,pr_cdbccxlt => pr_cdbccxlt --Codigo Caixa
+                             ,pr_nrdolote => pr_nrdolote --Numero Lote
+                             ,pr_tplotmov => pr_tplotmov --Tipo movimento
+                             ,pr_cdoperad => pr_cdoperad --Operador
+                             ,pr_cdhistor => pr_cdhistor --Codigo Historico
+                             ,pr_dtmvtopg => pr_dtmvtolt --Data Pagamento Emprestimo
+                             ,pr_vllanmto => pr_vllanmto --Valor Lancamento
+                             ,pr_flgincre => pr_flgincre --Indicador Credito
+                             ,pr_flgcredi => pr_flgcredi --Credito
+                             ,pr_nrseqdig => vr_nrseqdig --Numero Sequencia
+                             ,pr_cdcritic => vr_cdcritic --Codigo Erro
+                             ,pr_dscritic => vr_dscritic); --Descricao Erro
+        --Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL
+           OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
-      END;
+        END IF;
+      
+        --Inserir Lancamento
+        BEGIN
+          INSERT INTO craplem
+            (craplem.dtmvtolt
+            ,craplem.cdagenci
+            ,craplem.cdbccxlt
+            ,craplem.nrdolote
+            ,craplem.nrdconta
+            ,craplem.nrdocmto
+            ,craplem.cdhistor
+            ,craplem.nrseqdig
+            ,craplem.nrctremp
+            ,craplem.vllanmto
+            ,craplem.dtpagemp
+            ,craplem.txjurepr
+            ,craplem.vlpreemp
+            ,craplem.nrsequni
+            ,craplem.cdcooper
+            ,craplem.nrparepr
+            ,craplem.nrseqava
+            ,craplem.cdorigem
+            ,craplem.qtdiacal
+            ,craplem.vltaxprd)
+          VALUES
+            (pr_dtmvtolt
+            ,pr_cdpactra
+            ,pr_cdbccxlt
+            ,pr_nrdolote
+            ,pr_nrdconta
+            ,vr_nrseqdig
+            ,pr_cdhistor
+            ,vr_nrseqdig
+            ,pr_nrctremp
+            ,pr_vllanmto
+            ,pr_dtpagemp
+            ,pr_txjurepr
+            ,pr_vlpreemp
+            ,pr_nrsequni
+            ,pr_cdcooper
+            ,pr_nrparepr
+            ,pr_nrseqava
+            ,pr_cdorigem
+            ,pr_qtdiacal
+            ,pr_vltaxprd);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao inserir na craplem. ' || SQLERRM;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+        END;
+      END IF;
+        
     EXCEPTION
       WHEN vr_exc_erro THEN
         --Variavel de erro recebe erro ocorrido
