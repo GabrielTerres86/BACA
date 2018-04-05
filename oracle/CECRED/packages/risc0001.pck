@@ -520,7 +520,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
            AND ris.dtrefere = par_dtrefere
           -- AND ris.inddocto  = 1 -- Docto 3020
            AND ris.vldivida  > 0
-           AND ris.cdmodali =101;
+           AND ris.cdmodali =101
+		   AND ris.qtdiaatr >=60;
 
     --Retorna os laçamentos de taxas cobradas na situação de conta negativa
     CURSOR cr_conta_juros60 (pr_cdcooper IN craplcm.cdcooper%TYPE,
