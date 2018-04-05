@@ -4713,8 +4713,8 @@ PROCEDURE pc_buscar_tit_bordero_web (
                               '<cdbandoc>' || vr_tab_tit_bordero(vr_index).cdbandoc || '</cdbandoc>' || --FIELD cdbandoc LIKE craptdb.cdbandoc
                               '<nrdconta>' || vr_tab_tit_bordero(vr_index).nrdconta || '</nrdconta>' || --FIELD nrdconta LIKE craptdb.nrdconta
                               '<nrdocmto>' || vr_tab_tit_bordero(vr_index).nrdocmto || '</nrdocmto>' || --FIELD nrdocmto LIKE craptdb.nrdocmto
-                              '<dtvencto>' || vr_tab_tit_bordero(vr_index).dtvencto || '</dtvencto>' || --FIELD dtvencto LIKE craptdb.dtvencto
-                              '<dtlibbdt>' || vr_tab_tit_bordero(vr_index).dtlibbdt || '</dtlibbdt>' || --FIELD dtlibbdt LIKE craptdb.dtlibbdt
+                              '<dtvencto>' || to_char(vr_tab_tit_bordero(vr_index).dtvencto,'dd/mm/rrrr') || '</dtvencto>' || --FIELD dtvencto LIKE craptdb.dtvencto
+                              '<dtlibbdt>' || to_char(vr_tab_tit_bordero(vr_index).dtlibbdt,'dd/mm/rrrr') || '</dtlibbdt>' || --FIELD dtlibbdt LIKE craptdb.dtlibbdt
                               '<nrinssac>' || vr_tab_tit_bordero(vr_index).nrinssac || '</nrinssac>' || --FIELD nrinssac LIKE craptdb.nrinssac
                               '<nrcnvcob>' || vr_tab_tit_bordero(vr_index).nrcnvcob || '</nrcnvcob>' || --FIELD nrcnvcob LIKE craptdb.nrcnvcob
                               '<nrdctabb>' || vr_tab_tit_bordero(vr_index).nrdctabb || '</nrdctabb>' || --FIELD nrdctabb LIKE craptdb.nrdctabb
