@@ -28,7 +28,7 @@
 	$xml2 .= " </Dados>";
 	$xml2 .= "</Root>";
 
-	$procedure2 = "BUSCA_VALORES";
+	$procedure2 = "BUSCA_VALORES_PGTO";
 	
 	$xmlResult2 = mensageria($xml2, "ATENDA", $procedure2, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj2 = getObjectXML($xmlResult2);
