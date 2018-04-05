@@ -3343,6 +3343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND ctr.nrdconta = ass.nrdconta
          AND ctr.cdcooper = pr_cdcooper
          AND ctr.nrdconta = pr_nrdconta
+		 AND ctr.dhcancela IS NULL
       ORDER BY ctr.dhcancela DESC;
     rw_contrato_sms cr_contrato_sms%ROWTYPE;
     
