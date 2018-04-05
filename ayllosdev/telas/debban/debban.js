@@ -216,6 +216,15 @@ function formataConsulta(){
         
     }); 
     
+    //seleciona o registro que tiver foco
+    $('table > tbody > tr', divRegistro).focus( function() {
+        cDscooper.val($(this).find('#dscooper').val());
+        cNrdocmto.val($(this).find('#nrdocmto').val());
+        cDttransa.val($(this).find('#dttransa').val());
+        cHrtransa.val($(this).find('#hrtransa').val());
+        cDslindig.val($(this).find('#dslindig').val());
+    });	
+    
     
     // formata campos Consulta
     

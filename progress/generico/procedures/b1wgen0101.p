@@ -315,7 +315,7 @@ PROCEDURE consulta_faturas:
                            ELSE 
                               TRUE) AND
                           (IF par_nrautdoc <> "" THEN           
-                              craplft.cdbarras = par_nrautdoc    
+                              STRING(craplft.nrautdoc) = par_nrautdoc    
                            ELSE 
                               TRUE)            
                            NO-LOCK BY (craplft.vllanmto + craplft.vlrmulta + craplft.vlrjuros):

@@ -1364,7 +1364,7 @@ create or replace package body cecred.tela_tab057 is
     END LOOP;
     
     IF vr_flgexist = FALSE THEN
-      vr_dscritic := 'Ocorrências para o arquivo '||vr_nmarqret|| ' não econtrada, consulta na tela CONINC.';
+      vr_dscritic := 'Ocorrências para o arquivo '||vr_nmarqret|| ' não econtrada, Verifique critica na tela CONINC.';
       RAISE vr_exc_saida;    
     END IF;
     

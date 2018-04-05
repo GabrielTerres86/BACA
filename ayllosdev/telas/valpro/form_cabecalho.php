@@ -53,7 +53,7 @@
 	<label for="dsprotoc"><? echo utf8ToHtml('Protocolo:') ?></label>
 	<input name="dsprotoc" id="dsprotoc" type="text" alt="Informe o protocolo do comprovante."  autocomplete="off" />
 	
-	<label for="flvalgps"><? echo utf8ToHtml('Valida Informa&ccedil;&atilde;s do GPS, DARF ou DAS? :') ?></label>
+	<label for="flvalgps"><? echo utf8ToHtml('Valida Informa&ccedil;&atilde;s do GPS, DARF, DAS, FGTS ou DAE ? :') ?></label>
 	<select id="flvalgps" name="flvalgps" class="campo" >
 	    <option value="1" ><? echo utf8ToHtml('Sim') ?></option>
 		<option value="0" selected><? echo utf8ToHtml('N&atilde;o') ?></option>		

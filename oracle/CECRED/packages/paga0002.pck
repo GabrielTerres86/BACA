@@ -9324,7 +9324,10 @@ create or replace package body cecred.PAGA0002 is
           vr_nrrefere := rw_tbtribt.nridentificador;
           vr_vlrtotal := rw_craplau.vllanaut;
           vr_dstiptra := (CASE WHEN rw_tbtribt.tppagamento = 3 THEN 'FGTS' WHEN rw_tbtribt.tppagamento = 4 THEN 'DAE' ELSE '' END);        
-        
+          vr_idlstdom := (CASE rw_craplau.cdtiptra 
+                               WHEN 12 THEN 10 
+                               WHEN 13 THEN 11 
+                               ELSE 0 END);
         END IF;
 
         vr_nmoperad := '';

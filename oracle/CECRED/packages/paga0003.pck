@@ -1453,6 +1453,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     END fn_calc_parte;
     
   BEGIN
+      
+    IF TRIM(pr_nrrefere) IS NULL THEN
+      vr_dscritic := 'Identificador não informado.';
+      RAISE vr_exc_erro;
+    END IF; 
+   
     --> Extrair as primeiras 14 pos
     vr_nrrefere := substr(lpad(pr_nrrefere,16,0),1,14);
     
@@ -4532,15 +4538,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                       ,pr_tpdaguia                    -- tppagamento
                       ,pr_cdbarras                    -- dscod_barras
                       ,nvl(vr_dslindig,' ')           -- dslinha_digitavel
-                      ,pr_nrrefere                    -- nridentificacao
+                      ,pr_nrcpfcgc                    -- nridentificacao
                       ,pr_cdtribut                    -- cdtributo
                       ,pr_dtvencto                    -- dtvalidade
                       ,pr_dtapurac                    -- dtcompetencia
-                      ,pr_cdtribut                    -- nrseqgrde
                       ,(CASE 
                           WHEN rw_crapcon.cdempcon IN (0178,0240) THEN SUBSTR(pr_cdbarras, 26,3)
                           ELSE NULL
-                        END)                          -- nridentificador
+                        END)                          -- nrseqgrde            
+                      ,pr_nrrefere                    -- nridentificador 
                       ,vr_dsidepag                    -- dsidenti_pagto
                       );
         EXCEPTION
@@ -5441,7 +5447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                      '<competencia>'     || to_char(vr_dtcompet,'DD/MM/RRRR') ||'</competencia>'    ||
                      '<nrseqgrde>'       || vr_nrsqgrde                       ||'</nrseqgrde>'      ||
                      '<identificador>'   || vr_nrrecolh                       ||'</identificador>'  ||   
-                     '<nrdocumento>'     || vr_nrdocmto                       ||'</nrdocumento>'    ||      
+                     '<nrdocumento>'     || lpad(vr_nrdocmto,17,'0')          ||'</nrdocumento>'    ||      
                      '<vlrtotal>'        || vr_vldocmto                       ||'</vlrtotal>';
                      
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -6036,7 +6042,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                                 pr_dsidepag => pr_dsidepag,
                                                 pr_vlrtotal => pr_vlrtotal,                                    
                                                 pr_dtapurac => pr_dtapurac,
-                                                pr_nrsqgrde => pr_nrrefere,
+                                                pr_nrsqgrde => (CASE 
+                                                                WHEN pr_cdtribut IN (0178,0240) THEN 
+                                                                     SUBSTR(pr_cdbarras, 26,3)
+                                                                   ELSE NULL
+                                                                END),
                                                 pr_nrcpfcgc => pr_nrcpfcgc,
                                                 pr_cdtribut => pr_cdtribut,
                                                 pr_identifi => pr_nrcpfcgc,
@@ -7587,6 +7597,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ,pr_vllanmto IN  craplft.vllanmto%TYPE
                                ,pr_nrseqreg IN  NUMBER
                                ,pr_cdagebcb IN  crapcop.cdagebcb%TYPE
+                               ,pr_cdageaut IN  crapcop.cdagebcb%TYPE
                                ,pr_nrautdoc IN  craplft.nrautdoc%TYPE
                                ,pr_nrrefere IN  craplft.nrrefere%TYPE
                                ,pr_detalhe  OUT VARCHAR2
@@ -7618,7 +7629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         pr_detalhe := pr_detalhe || '2';
         
         -- Número de autenticação caixa ou código de transação
-        vr_dsautdoc := to_char(pr_cdagebcb,'fm0000') ||
+        vr_dsautdoc := to_char(pr_cdageaut,'fm0000') ||
                        --> quando liberar pagamento BANCOOB no TAA e CX.Online, deverá gravar PA do terminal e número do terminal
                        '00'     || --> Fixo "00"
                        '0000'   || --> Terminal fixo "0000"
@@ -7862,10 +7873,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         RAISE vr_exc_erro;
         --
       END IF;
-      -- Escrever o log no arquivo
-      gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
-                                    ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> Iniciada geração dos arquivos de arrecadação do BANCOOB.'   -- Texto para escrita
-                                    );
       
       
       -- Busca dos dados da cooperativa central
@@ -7887,6 +7894,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         --
         FETCH cr_cooper INTO rw_cooper;
         EXIT WHEN cr_cooper%NOTFOUND;
+        
+        
+        -- Escrever o log no arquivo
+        gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
+                                    ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || 
+                                                     ' - pc_gera_arrecadacao_bancoob'||
+                                                     ' - '|| rw_cooper.nmrescop ||
+                                                     ' --> Iniciada geração dos arquivos de arrecadação do BANCOOB.'   -- Texto para escrita
+                                    );
+      
+        
         -- Busca a data do movimento atual
         OPEN cr_dtmvtolt(rw_cooper.cdcooper);
         --
@@ -8097,6 +8115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ,pr_vllanmto => rw_conven.vllanmto -- IN
                                ,pr_nrseqreg => vr_qtregist        -- IN
                                ,pr_cdagebcb => vr_cdagebcb        -- IN
+                               ,pr_cdageaut => rw_cooper.cdagebcb -- IN
                                ,pr_nrautdoc => rw_conven.nrautdoc -- IN
                                ,pr_nrrefere => vr_nrrefere        -- IN
                                ,pr_detalhe  => vr_linha           -- OUT
@@ -8210,14 +8229,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         END IF;
         --
         CLOSE cr_dtmvtolt;
+        
+        -- Escrever o log no arquivo
+        gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
+                                      ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || 
+                                                       ' - pc_gera_arrecadacao_bancoob'||
+                                                       ' - '|| rw_cooper.nmrescop ||
+                                                       ' --> Finalizada geração dos arquivos de arrecadação do BANCOOB.' -- Texto para escrita
+                                      );
         --
       END LOOP;
       --
       CLOSE cr_cooper;
-      -- Escrever o log no arquivo
-      gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_log -- Handle do arquivo aberto
-                                    ,pr_des_text  => to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_gera_arrecadacao_bancoob --> Finalizada geração dos arquivos de arrecadação do BANCOOB.' -- Texto para escrita
-                                    );
+      
       -- Fechar Arquivo log
       BEGIN
         --

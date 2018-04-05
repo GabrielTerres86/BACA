@@ -555,7 +555,7 @@ function obtemConsulta( nriniseq , nrregist ) {
   //PJ406
   var dtipagto = $("#dtipagto","#"+nomeDoForm+"").val();
   var dtfpagto = $("#dtfpagto","#"+nomeDoForm+"").val();
-  var nrdconta = $("#nrdconta","#"+nomeDoForm+"").val();
+  var nrdconta = normalizaNumero($("#nrdconta","#"+nomeDoForm+"").val());
   var nrautdoc = $("#nrautdoc","#"+nomeDoForm+"").val();
 	
 	//Remove a classe de Erro do form

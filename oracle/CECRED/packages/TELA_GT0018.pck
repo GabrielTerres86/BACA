@@ -124,6 +124,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
          WHERE UPPER(scn.cdempres) = UPPER(pr_cdempres);
       rw_crapscn cr_crapscn%ROWTYPE;
       
+      --> Buscar convenios
+      CURSOR cr_crapcon ( pr_cdempcon IN crapcon.cdempcon%TYPE,
+                          pr_cdsegmto IN crapcon.cdsegmto%TYPE,
+                          pr_cdcooper IN crapcon.cdcooper%TYPE) IS
+        SELECT con.nmextcon,
+               con.nmrescon,
+               con.tparrecd
+          FROM crapcon con
+         WHERE con.cdempcon = pr_cdempcon
+           AND con.cdsegmto = pr_cdsegmto
+           AND con.cdcooper = pr_cdcooper;
+      rw_crapcon cr_crapcon%ROWTYPE;
+      
       --> Buscar demais convenios
       CURSOR cr_conv_arrec ( pr_cdempres IN tbconv_arrecadacao.cdempres%TYPE,
                              pr_tparrecd IN tbconv_arrecadacao.tparrecadacao%TYPE,
@@ -309,9 +322,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
             CLOSE cr_conv_arrec_2;
           END IF;
         
+          --> Buscar convenios
+          OPEN cr_crapcon ( pr_cdempcon => pr_cdempcon,
+                            pr_cdsegmto => pr_cdsegmto,
+                            pr_cdcooper => vr_cdcooper);
+          FETCH cr_crapcon INTO rw_crapcon;
+          IF cr_crapcon%NOTFOUND THEN
+            CLOSE cr_crapcon;
+            vr_dscritic := 'Empresa conveniada e Segmento informados não encontrado.';
+            RAISE vr_exc_erro; 
+            
+          ELSE
+            CLOSE cr_crapcon;
+          END IF;
+        
+          IF rw_crapcon.tparrecd <> pr_tparrecd THEN
+            vr_dscritic := 'Empresa conveniada e Segmento habilitado apenas para arrecadação '||
+                           CASE rw_crapcon.tparrecd
+                                WHEN 1 THEN 'Sicredi'
+                                WHEN 2 THEN 'Bancoob'
+                                WHEN 3 THEN 'Cecred'
+                                ELSE 'outros'
+                            END                                    
+                            ||'.';
+            RAISE vr_exc_erro; 
+          END IF;
+
+        
         END IF;
-        
-        
         
         vr_retxml := vr_retxml ||
                     '<dsalerta>' || vr_dsalerta  || '</dsalerta>' ;

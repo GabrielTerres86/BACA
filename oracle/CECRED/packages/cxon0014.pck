@@ -7073,8 +7073,7 @@ END pc_gera_titulos_iptu_prog;
         RAISE vr_exc_erro;
       END IF;
     
-    
-      IF pr_cdempcon IN (0178,0179,0180,0181,0239,0240,0451,0432) AND 
+      IF pr_cdempcon IN (0178,0179,0180,0181,0239,0240,0451) AND 
          pr_cdsegmto = 5 THEN
          
         --> validar data limite de antecipacao 
@@ -8376,11 +8375,17 @@ END pc_gera_titulos_iptu_prog;
         vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan - vr_qtdias_tolera,'YYYYMMDD');
         IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN
           --Criar Erro
+          IF pr_cod_agencia IN (90,91) THEN
+            vr_dsc_erro := 'Não é possível efetuar esta operação pois a fatura está vencida.';
+          ELSE
+            vr_dsc_erro := 'Nao eh possivel efetuar esta operacao pois a fatura esta vencida.';
+          END IF;
+          
           CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
                                ,pr_cdagenci => pr_cod_agencia
                                ,pr_nrdcaixa => vr_nrdcaixa
                                ,pr_cod_erro => 0
-                               ,pr_dsc_erro => 'Nao eh possivel efetuar esta operacao, pois a fatura esta vencida.'
+                               ,pr_dsc_erro => vr_dsc_erro
                                ,pr_flg_erro => TRUE
                                ,pr_cdcritic => vr_cdcritic
                                ,pr_dscritic => vr_dscritic);

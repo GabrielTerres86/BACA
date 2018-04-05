@@ -95,7 +95,7 @@ function formataCabecalho() {
 	rSegproto.css({'width':'5px'}).addClass('rotulo-linha');
 	rVlprotoc.css({'width':'113px'}).addClass('rotulo-linha');
 	rDsprotoc.css({'width':'60px'}).addClass('rotulo');
-	rFlvalgps.css({'width':'260px'}).addClass('rotulo');
+	rFlvalgps.css({'width':'330px'}).addClass('rotulo');
 	
 	// Input
 	cNrdconta = $('#nrdconta', '#'+frmCab);

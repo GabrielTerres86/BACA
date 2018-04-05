@@ -372,6 +372,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
             
           WHEN pr_protocolo.cdtippro = 20 THEN -- Recarga
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##2, '#')) || ' - ' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));
+          WHEN pr_protocolo.cdtippro IN (23,24) THEN -- DAE/FGTS
+            --> buscar texto do campo Descrição do Pagamento
+            vr_dsprotoc := SUBSTR(pr_protocolo.dsinform##3,INSTR(pr_protocolo.dsinform##3,'#Descrição do Pagamento:')+1);
+            vr_dsprotoc := SUBSTR(vr_dsprotoc,1,INSTR(vr_dsprotoc,'#')-1);
+            vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(2, vr_dsprotoc, ':'));
           ELSE
            vr_dsprotoc := pr_protocolo.dsinform##2;            
          END CASE;
@@ -4731,6 +4736,7 @@ END pc_comprovantes_recebidos;
       vr_des_erro    VARCHAR2(4000);
       vr_cdtipdoc    VARCHAR2(100);
       vr_retxml      CLOB;
+      vr_dataaux     DATE;
       
       
       TYPE typ_tab_campos IS TABLE OF VARCHAR2(2000)
@@ -4889,7 +4895,13 @@ END pc_comprovantes_recebidos;
            vr_tab_campos(UPPER('cdempcon')) IN (0178,0240) THEN
           vr_dsdlinha := vr_dsdlinha || '<nrseqgrde>' || vr_tab_campos(UPPER('competencia')) || '</nrseqgrde>';
         ELSE
-          vr_dsdlinha := vr_dsdlinha || '<competencia>' || vr_tab_campos(UPPER('competencia')) || '</competencia>';
+          BEGIN
+            vr_dataaux := to_date('01/'||TRIM(vr_tab_campos(UPPER('competencia'))),'DD/MM/RRRR');
+          EXCEPTION 
+            WHEN OTHERS THEN
+              vr_dataaux := vr_tab_campos(UPPER('competencia'));
+          END;
+          vr_dsdlinha := vr_dsdlinha || '<competencia>' || to_char(vr_dataaux,'DD/MM/RRRR')  || '</competencia>';
         END IF;
       END IF;
       
@@ -4912,9 +4924,19 @@ END pc_comprovantes_recebidos;
                              ,pr_texto_novo     => vr_dsdlinha);
       
       vr_dsdlinha := NULL;      
-      vr_dsdlinha := '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                          || '</dttransa>' ||
-                     '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')          || '</hrautent>' ||
-                     '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                 || '</nrseqaut>' ||
+      --> Deve ser utilizado a data gravada no dsinfom3, para garantir a validacao VALPRO
+      IF vr_tab_campos.exists(UPPER('dttransa')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<dttransa>' || vr_tab_campos(UPPER('dttransa')) || '</dttransa>';
+      END IF;
+      
+      vr_dsdlinha := vr_dsdlinha || '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')    || '</hrautent>';
+      
+      gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha);
+      
+      vr_dsdlinha := NULL;      
+      vr_dsdlinha := '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                 || '</nrseqaut>' ||
                      '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                 || '</dsprotoc>' ||
                      '<infosac>' ||
                          '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
@@ -5177,9 +5199,18 @@ END pc_comprovantes_recebidos;
                              ,pr_texto_novo     => vr_dsdlinha);
       
       vr_dsdlinha := NULL;      
-      vr_dsdlinha := '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                          || '</dttransa>' ||
-                     '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')          || '</hrautent>' ||
-                     '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                 || '</nrseqaut>' ||
+      IF vr_tab_campos.exists(UPPER('dttransa')) THEN
+        vr_dsdlinha := vr_dsdlinha || '<dttransa>' || vr_tab_campos(UPPER('dttransa')) || '</dttransa>';
+      END IF;
+      
+      vr_dsdlinha := vr_dsdlinha || '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')    || '</hrautent>';
+      
+      gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha);
+      
+      vr_dsdlinha := NULL;      
+      vr_dsdlinha := '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                 || '</nrseqaut>' ||
                      '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                 || '</dsprotoc>' ||
                      '<infosac>' ||
                          '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||

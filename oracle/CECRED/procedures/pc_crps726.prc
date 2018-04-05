@@ -1,4 +1,5 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps726(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada                                             
+                                             ,pr_dtdiaatu IN DATE DEFAULT NULL       --> Data atual para geração do arquivo
                                              ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
 
   /*..............................................................................
@@ -30,6 +31,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps726(pr_cdcooper IN crapcop.cdcooper%TY
   
   -- Auxiliares para o processamento 
   vr_dtarquiv     DATE;
+  vr_dtdiaatu     DATE;
   vr_dtarquiv_ddmmyy VARCHAR2(10);
   vr_dtarquiv_yymmdd VARCHAR2(10);
   vr_dsdircop     VARCHAR2(100);
@@ -108,7 +110,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps726(pr_cdcooper IN crapcop.cdcooper%TY
                AND ass.nrdconta (+) = lft.nrdconta          
                AND lft.cdcooper = pr_cdcooper
                AND lft.insitfat = 2
-               AND lft.dtvencto = t.dtfiltro
+               AND lft.dtmvtolt = t.dtfiltro
                AND con.tparrecd = 2
              group BY lft.cdagenci,
                       decode(ass.inpessoa,3,2,ass.inpessoa), 
@@ -160,8 +162,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps726(pr_cdcooper IN crapcop.cdcooper%TY
     --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
     pc_controla_log_batch(pr_dstiplog => 'I');
     
+    vr_dtdiaatu := nvl(pr_dtdiaatu,SYSDATE);
+    
     vr_dtarquiv := gene0005.fn_valida_dia_util( pr_cdcooper => 3, 
-                                                pr_dtmvtolt => last_day(add_months(SYSDATE,-1)), --> ultimo dia util do mês anterior
+                                                pr_dtmvtolt => last_day(add_months(vr_dtdiaatu,-1)), --> ultimo dia util do mês anterior
                                                 pr_tipo     => 'A');
     
     vr_dtarquiv_ddmmyy  := to_char(vr_dtarquiv, 'DDMMRR');

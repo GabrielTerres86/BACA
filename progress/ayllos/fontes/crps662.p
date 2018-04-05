@@ -1291,15 +1291,15 @@ PROCEDURE gera_arq:
 
                RUN gera_log_execucao (INPUT par_nmprgexe,
                                       INPUT "Inicio execucao", 
-                                      INPUT 3,
-                                      INPUT "TODAS").              
+                                      INPUT par_cdcooper,
+                                      INPUT "").              
             
                RUN gera_arrecadacao_bancoob(par_cdcooper).                      
                                             
                RUN gera_log_execucao (INPUT par_nmprgexe,
                                       INPUT "Fim execucao", 
-                                      INPUT 3,
-                                      INPUT "TODAS").               
+                                      INPUT par_cdcooper,
+                                      INPUT "").               
            
           END.
     END CASE.
