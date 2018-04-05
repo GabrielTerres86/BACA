@@ -1644,7 +1644,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                (Adriano - SD 804308).
 
 				  04/04/2018 - Inclusão de um novo código de crítica 1205, para acordos inexistente.
-				               (Saquetta Chamado 848110).             
+                               O quando um acordo não existir no Ayllos e existir no Cyber deverá 
+							   ser cancelado no Cyber. Por este motivo foi gerado o código 1205.
+				               (Saquetta: Chamado 848110).             
 
     ..............................................................................*/                                    
     
@@ -1715,7 +1717,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     FETCH cr_tbacordo INTO rw_tbacordo;
     IF cr_tbacordo%NOTFOUND THEN
       CLOSE cr_tbacordo;
-      vr_cdcritic := 1205; --> Acordo nao encontrado
+	  -- Retornar critica que o acordo não foi encontrado.
+      vr_cdcritic := 1205;
       RAISE vr_exc_erro; 
     END IF;
     CLOSE cr_tbacordo;
