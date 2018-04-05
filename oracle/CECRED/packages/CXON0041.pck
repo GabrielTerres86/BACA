@@ -183,6 +183,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
     
                03/04/2017 - Retirar a soma do nrseqdig do craplot desta rotina pois ja esta
                             sendo efetuado na LOTE0001.pc_insere_lote (Lucas Ranghetti #633737)
+                            
+               14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
+                            da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)                            
     
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1214,7 +1217,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       END IF;
 
       vr_nrdolote := 15000 + pr_nrdcaixa;
-      if not paga0001.fn_processo_ligeir then
+      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+       da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+       a agencia do cooperado*/
+      if not paga0001.fn_exec_paralelo then
         LOTE0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
                                ,pr_dtmvtolt => rw_crapdat.dtmvtocd
                                ,pr_cdagenci => pr_cdagenci
@@ -1254,11 +1262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         rw_craplot.cdoperad := pr_cdoperad;  
         rw_craplot.tplotmov := 13;                   
         rw_craplot.cdhistor := 1154;
-        rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                             ,pr_cdagenci => pr_cdagenci
-                                                             ,pr_cdbccxlt => 11
-                                                             ,pr_nrdolote => vr_nrdolote);  
+        rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm;  
       end if;
       
       
@@ -1346,7 +1350,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                   ,pr_dsnomfon)
         RETURNING progress_recid INTO vr_progress_recid_lft;
       
-      if not paga0001.fn_processo_ligeir then
+     
+      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+      PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+      deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
+      if not paga0001.fn_exec_paralelo then
         UPDATE craplot
            SET craplot.qtcompln = rw_craplot.qtcompln + 1
               ,craplot.qtinfoln = rw_craplot.qtinfoln + 1

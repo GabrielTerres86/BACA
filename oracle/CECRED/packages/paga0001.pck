@@ -466,16 +466,16 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
      FOR UPDATE NOWAIT;
   
   
-  PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE      --Cooperativa
-                                   ,pr_tab_agendto IN OUT NOCOPY typ_tab_agendto --tabela de agendamento
-                                   ,pr_cdprogra    IN crapprg.cdprogra%TYPE      --Codigo programa
-                                   ,pr_dtmvtopg    IN crapdat.dtmvtolt%TYPE      --Data Pagamento
-                                   ,pr_inproces    IN crapdat.inproces%TYPE      --Indicador processo
-                                   ,pr_flsgproc    IN BOOLEAN                    --Flag segundo processamento
-                                   ,pr_cdcritic    OUT INTEGER     --Codigo da Critica
-                                   ,pr_dscritic    OUT VARCHAR2);
+  PROCEDURE pc_efetua_debitos_paralelo(pr_cdcooper    IN crapcop.cdcooper%TYPE      --Cooperativa
+                                      ,pr_tab_agendto IN OUT NOCOPY typ_tab_agendto --tabela de agendamento
+                                      ,pr_cdprogra    IN crapprg.cdprogra%TYPE      --Codigo programa
+                                      ,pr_dtmvtopg    IN crapdat.dtmvtolt%TYPE      --Data Pagamento
+                                      ,pr_inproces    IN crapdat.inproces%TYPE      --Indicador processo
+                                      ,pr_flsgproc    IN BOOLEAN                    --Flag segundo processamento
+                                      ,pr_cdcritic    OUT INTEGER                   --Codigo da Critica
+                                      ,pr_dscritic    OUT VARCHAR2);
                                    
-  function fn_processo_ligeir return boolean;
+  function fn_exec_paralelo return boolean;
   
   procedure pc_insere_lote_wrk(pr_cdcooper IN craplot.cdcooper%TYPE
                               ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
@@ -493,13 +493,12 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                   ,pr_craplot_rowid out typ_tab_tp_cralot_rowid
                                   ,pr_dserro        OUT VARCHAR2);
   
-  procedure pc_atualiz_lote(pr_craplot_rowid in typ_tab_tp_cralot_rowid);
+  procedure pc_atualiz_lote(pr_craplot_rowid in typ_tab_tp_cralot_rowid,
+                            pr_cdcooper      in craplot.cdcooper%type,
+                            pr_sequecia_lote in craplot.nrseqdig%type);
    
-  function fn_seq_parale_craplcm(pr_CDCOOPER in craplcm.CDCOOPER%type, 
-                                 pr_DTMVTOLT in craplcm.DTMVTOLT%type, 
-                                 pr_CDAGENCI in craplcm.CDAGENCI%type, 
-                                 pr_CDBCCXLT in craplcm.CDBCCXLT%type, 
-                                 pr_NRDOLOTE in craplcm.NRDOLOTE%type) RETURN VARCHAR2;                              
+  --Funcao utilizada para controle da sequencia para a tabela craplcm.
+  function fn_seq_parale_craplcm RETURN VARCHAR2;                              
      
   -- Procedimento para inserir ou atualizar a crapmvi e não deixar tabela lockada
   PROCEDURE pc_insere_movimento_internet(pr_cdcooper IN crapmvi.cdcooper%TYPE
@@ -1597,7 +1596,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        
        25/10/2017 - Alterar o armazenamento da pr_dscritic quando encontrar erros
                     para utilizar a vr_dscritic pois no raise utilizamos o vr_dscritic
-                    para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)               
+                    para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)       
+       
+       14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
+                            da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)        
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -2087,14 +2089,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   CODIGO_SEPARADOR_STRING    CONSTANT VARCHAR2(1) := '|';
 
 
-PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE      --Cooperativa
-                                   ,pr_tab_agendto IN OUT NOCOPY typ_tab_agendto --tabela de agendamento
-                                   ,pr_cdprogra    IN crapprg.cdprogra%TYPE      --Codigo programa
-                                   ,pr_dtmvtopg    IN crapdat.dtmvtolt%TYPE      --Data Pagamento
-                                   ,pr_inproces    IN crapdat.inproces%TYPE      --Indicador processo
-                                   ,pr_flsgproc    IN BOOLEAN                    --Flag segundo processamento
-                                   ,pr_cdcritic    OUT INTEGER     --Codigo da Critica
-                                   ,pr_dscritic    OUT VARCHAR2) is
+
+
+PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE      --Cooperativa
+                                     ,pr_tab_agendto IN OUT NOCOPY typ_tab_agendto --tabela de agendamento
+                                     ,pr_cdprogra    IN crapprg.cdprogra%TYPE      --Codigo programa
+                                     ,pr_dtmvtopg    IN crapdat.dtmvtolt%TYPE      --Data Pagamento
+                                     ,pr_inproces    IN crapdat.inproces%TYPE      --Indicador processo
+                                     ,pr_flsgproc    IN BOOLEAN                    --Flag segundo processamento
+                                     ,pr_cdcritic    OUT INTEGER     --Codigo da Critica
+                                     ,pr_dscritic    OUT VARCHAR2) is
   begin
     
     vr_id_proc_paralelo := 'S';
@@ -2107,12 +2111,12 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
                      ,pr_cdcritic     => pr_cdcritic   
                      ,pr_dscritic     => pr_dscritic);   
     
-  end pc_efetua_debitos_ligeir;                              
+  end pc_efetua_debitos_paralelo;                              
 
-  function fn_processo_ligeir return boolean is 
+  function fn_exec_paralelo return boolean is 
   begin
     return vr_id_proc_paralelo = 'S';
-  end fn_processo_ligeir;
+  end fn_exec_paralelo;
   
   procedure pc_insere_lote_wrk(pr_cdcooper IN craplot.cdcooper%TYPE
                               ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
@@ -2214,71 +2218,97 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
                     ' Mvto: '||to_char(rr_craplot.dtmvtolt,'dd/mm/yyyy')||
                     ' Lote: '||rr_craplot.nrdolote||
                     ' ccxlt: '||rr_craplot.cdbccxlt;
-                                              
-      INSERT INTO craplot(craplot.cdcooper
-                         ,craplot.dtmvtolt
-                         ,craplot.cdagenci
-                         ,craplot.cdbccxlt
-                         ,craplot.nrdolote
-                         ,craplot.nrseqdig
-                         ,craplot.tplotmov
-                         ,craplot.cdoperad
-                         ,craplot.cdhistor
-                         ,craplot.nrdcaixa
-                         ,craplot.cdopecxa) VALUES (pr_cdcooper
-                                                   ,rr_craplot.dtmvtolt
-                                                   ,rr_craplot.cdagenci
-                                                   ,rr_craplot.cdbccxlt
-                                                   ,rr_craplot.nrdolote
-                                                   ,1  -- craplot.nrseqdig
-                                                   ,rr_craplot.tplotmov
-                                                   ,rr_craplot.cdoperad
-                                                   ,rr_craplot.cdhistor
-                                                   ,rr_craplot.nrdcaixa
-                                                   ,rr_craplot.cdoperad) RETURNING ROWID INTO vr_rowid;
-        
-       
-                      
-        pr_craplot_rowid(vr_index_craplot_rowid).vr_rowid := vr_rowid;
 
-      end loop rr_craplot;
+      UPDATE craplot
+         SET nrseqdig = nrseqdig 
+       WHERE cdcooper = pr_cdcooper
+         AND dtmvtolt = rr_craplot.dtmvtolt
+         AND cdagenci = rr_craplot.cdagenci
+         AND cdbccxlt = rr_craplot.cdbccxlt
+         AND nrdolote = rr_craplot.nrdolote
+         RETURNING ROWID INTO vr_rowid;
+      
+      IF SQL%ROWCOUNT = 0 THEN
+         INSERT INTO craplot(craplot.cdcooper
+                           ,craplot.dtmvtolt
+                           ,craplot.cdagenci
+                           ,craplot.cdbccxlt
+                           ,craplot.nrdolote
+                           ,craplot.nrseqdig
+                           ,craplot.tplotmov
+                           ,craplot.cdoperad
+                           ,craplot.cdhistor
+                           ,craplot.nrdcaixa
+                           ,craplot.cdopecxa) VALUES (pr_cdcooper
+                                                     ,rr_craplot.dtmvtolt
+                                                     ,rr_craplot.cdagenci
+                                                     ,rr_craplot.cdbccxlt
+                                                     ,rr_craplot.nrdolote
+                                                     ,1  -- craplot.nrseqdig 
+                                                     ,rr_craplot.tplotmov
+                                                     ,rr_craplot.cdoperad
+                                                     ,rr_craplot.cdhistor
+                                                     ,rr_craplot.nrdcaixa
+                                                     ,rr_craplot.cdoperad) RETURNING ROWID INTO vr_rowid;
+             
+      END IF;
+      pr_craplot_rowid(vr_index_craplot_rowid).vr_rowid := vr_rowid;
+    end loop rr_craplot;
   EXCEPTION
     WHEN OTHERS THEN
       pr_dserro :=  'pc_gerar_lote_from_wrk '||vr_dslog ||' Sqlerrm: '||sqlerrm;
         
   end pc_gerar_lote_from_wrk;
   
-  procedure pc_atualiz_lote(pr_craplot_rowid in typ_tab_tp_cralot_rowid) is
+  procedure pc_atualiz_lote(pr_craplot_rowid in typ_tab_tp_cralot_rowid,
+                            pr_cdcooper      in craplot.cdcooper%type,
+                            pr_sequecia_lote in craplot.nrseqdig%type) is
     
-    cursor cr_craplcm(pr_rowid in ROWID) is 
-      select count(1)                 qt_registro
-            ,nvl(SUM(LCM.VLLANMTO),0) VLLANMTO
-      from craplcm lcm
-          ,craplot lot
-      where lot.rowid    = pr_rowid
-        and lot.CDCOOPER = lcm.CDCOOPER
-        and lot.DTMVTOLT = lcm.DTMVTOLT
-        and lot.CDAGENCI = lcm.CDAGENCI
-        and lot.CDBCCXLT = lcm.CDBCCXLT
-        and lot.NRDOLOTE = lcm.NRDOLOTE;
+     cursor cr_craplcm(pr_rowid    in ROWID,
+                       pr_nrseqdig in number) is 
+      select sum(qt_registro) qt_registro,
+             sum(vllanmto)     vllanmto
+        from(select count(1)                 qt_registro
+                    ,nvl(SUM(lcm.vllanmto),0) vllanmto
+              from craplcm lcm
+                  ,craplot lot
+              where lot.rowid    = pr_rowid
+                and lot.CDCOOPER = lcm.CDCOOPER
+                and lot.DTMVTOLT = lcm.DTMVTOLT
+                and lot.CDAGENCI = lcm.CDAGENCI
+                and lot.CDBCCXLT = lcm.CDBCCXLT
+                and lot.NRDOLOTE = lcm.NRDOLOTE
+                and lcm.nrseqdig >= pr_sequecia_lote 
+             union
+             select count(1)                 qt_registro
+                    ,nvl(SUM(lft.vllanmto),0) vllanmto
+              from craplft lft
+                  ,craplot lot
+              where lot.rowid    = pr_rowid
+                and lot.CDCOOPER = lft.CDCOOPER
+                and lot.DTMVTOLT = lft.DTMVTOLT
+                and lot.CDAGENCI = lft.CDAGENCI
+                and lot.CDBCCXLT = lft.CDBCCXLT
+                and lot.NRDOLOTE = lft.NRDOLOTE
+                and lft.nrseqdig >= pr_sequecia_lote);
     
     rr_craplcm cr_craplcm%rowtype; 
-    
+    vr_dsvlrprm     crapprm.dsvlrprm%type;
+    vr_dsvlrprmnum  number;    
   begin
-  
-   
     vr_index_craplot_rowid:= pr_craplot_rowid.FIRST;
     WHILE vr_index_craplot_rowid IS NOT NULL LOOP
 	    
-      open  cr_craplcm(pr_rowid => pr_craplot_rowid(vr_index_craplot_rowid).vr_rowid);
+      open  cr_craplcm(pr_rowid    => pr_craplot_rowid(vr_index_craplot_rowid).vr_rowid,
+                       pr_nrseqdig => pr_sequecia_lote );
       fetch cr_craplcm into rr_craplcm;
     
       update craplot c
-      set c.NRSEQDIG = rr_craplcm.qt_registro
-         ,c.qtcompln = rr_craplcm.qt_registro 
-         ,c.qtinfoln = rr_craplcm.qt_registro 
-         ,c.vlcompdb = rr_craplcm.VLLANMTO    
-         ,c.vlinfodb = rr_craplcm.VLLANMTO
+      set c.nrseqdig = nvl(c.nrseqdig,0) + rr_craplcm.qt_registro
+         ,c.qtcompln = nvl(c.qtcompln,0) + rr_craplcm.qt_registro 
+         ,c.qtinfoln = nvl(c.qtinfoln,0) + rr_craplcm.qt_registro 
+         ,c.vlcompdb = nvl(c.vlcompdb,0) + rr_craplcm.vllanmto    
+         ,c.vlinfodb = nvl(c.vlinfodb,0) + rr_craplcm.vllanmto
       where c.rowid = pr_craplot_rowid(vr_index_craplot_rowid).vr_rowid;
     
       close cr_craplcm;
@@ -2288,28 +2318,10 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
   
   end pc_atualiz_lote;
   
-  function fn_seq_parale_craplcm(pr_CDCOOPER in craplcm.CDCOOPER%type, 
-                                 pr_DTMVTOLT in craplcm.DTMVTOLT%type, 
-                                 pr_CDAGENCI in craplcm.CDAGENCI%type, 
-                                 pr_CDBCCXLT in craplcm.CDBCCXLT%type, 
-                                 pr_NRDOLOTE in craplcm.NRDOLOTE%type) RETURN VARCHAR2 is
-
-    vr_dsdchave varchar2(4000);
+  function fn_seq_parale_craplcm RETURN VARCHAR2 is
   begin
-    
-    --Monta chave para geração do nrseqdig
-    /*
-    vr_dsdchave := pr_cdcooper||';'||
-                   to_char(pr_DTMVTOLT,'dd/mm/rrrr')||';'||
-                   pr_cdagenci||';'||
-                   pr_cdbccxlt||';'||
-                   pr_nrdolote;				   
-				 	   
-    return fn_sequence(pr_nmtabela => 'CRAPLCM',
-                       pr_nmdcampo => 'NRSEQDIG',
-                       pr_dsdchave => vr_dsdchave);					   
-    */
-    RETURN CRAPLOT_SEQ.NEXTVAL;
+
+    RETURN cecred.craplot_509_seq.nextval;
 
   end fn_seq_parale_craplcm;
   
@@ -4563,8 +4575,13 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
 
       --Savepoint para abortar sem alterar
       SAVEPOINT TRANS_UNDO;
+      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+       da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+       a agencia do cooperado*/
 
-      if not fn_processo_ligeir then
+      if not fn_exec_paralelo then
         -- Procedimento para inserir o lote e não deixar tabela lockada
         pc_insere_lote (pr_cdcooper => pr_cdcooper,
                         pr_dtmvtolt => pr_dtmvtocd,
@@ -4598,11 +4615,7 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
         rw_craplot.cdoperad := pr_cdoperad;                   
         rw_craplot.tplotmov := 1;                   
         rw_craplot.cdhistor := 0;
-        rw_craplot.nrseqdig := fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                    ,pr_dtmvtolt => pr_dtmvtocd
-                                                    ,pr_cdagenci => pr_cdagenci
-                                                    ,pr_cdbccxlt => pr_cdbccxlt
-                                                    ,pr_nrdolote => pr_nrdolote);                
+        rw_craplot.nrseqdig := fn_seq_parale_craplcm;                
       
       end if;                        
 
@@ -4822,7 +4835,12 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
       END IF;
 
       -- Procedimento para reservar o nrseqdig
-     if not fn_processo_ligeir then
+     /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+       da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+       a agencia do cooperado*/
+     if not fn_exec_paralelo then
        pc_insere_lote (pr_cdcooper => pr_cdcooper,
                        pr_dtmvtolt => pr_dtmvtocd,
                        pr_cdagenci => pr_cdagenci,
@@ -4855,11 +4873,7 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
         rw_craplot.cdoperad := pr_cdoperad;                                    
         rw_craplot.tplotmov := 1;                   
         rw_craplot.cdhistor := 0;
-        rw_craplot.nrseqdig := fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                    ,pr_dtmvtolt => pr_dtmvtocd
-                                                    ,pr_cdagenci => pr_cdagenci
-                                                    ,pr_cdbccxlt => pr_cdbccxlt
-                                                    ,pr_nrdolote => pr_nrdolote);                        
+        rw_craplot.nrseqdig := fn_seq_parale_craplcm;                        
      end if;
 
       /* INTERNET ou TAA */
@@ -7744,7 +7758,12 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
                     SUBSTR(gene0002.fn_mask(vr_lindigi4,'999999999999'),12,1);
 
       -- Procedimento para inserir o lote e não deixar tabela lockada
-      if not fn_processo_ligeir then
+      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+       da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+       a agencia do cooperado*/
+      if not fn_exec_paralelo then
         pc_insere_lote (pr_cdcooper => rw_crapaut.cdcooper,
                         pr_dtmvtolt => rw_crapaut.dtmvtolt,
                         pr_cdagenci => rw_crapaut.cdagenci,
@@ -7777,11 +7796,7 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
          rw_craplot.cdoperad := '996';                                  
          rw_craplot.tplotmov := 1;                   
          rw_craplot.cdhistor := 0;
-         rw_craplot.nrseqdig := fn_seq_parale_craplcm(pr_cdcooper => rw_crapaut.cdcooper
-                                                     ,pr_dtmvtolt => rw_crapaut.dtmvtolt
-                                                     ,pr_cdagenci => rw_crapaut.cdagenci
-                                                     ,pr_cdbccxlt => 11
-                                                     ,pr_nrdolote => 11900);                                
+         rw_craplot.nrseqdig := fn_seq_parale_craplcm;                                
       end if;                        
 
       -- se encontrou erro ao buscar lote, abortar programa
@@ -8432,8 +8447,10 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
 
       END IF;
       
-      
-      if not paga0001.fn_processo_ligeir then
+      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+       deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
+      if not paga0001.fn_exec_paralelo then
       -- [INÍCIO DO LOCK DA CRAPLOT]
       /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
       FOR i IN 1..100 LOOP
@@ -9366,8 +9383,13 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
       END IF;
       --Fechar Cursor
       CLOSE cr_crapban;
-
-      if not fn_processo_ligeir then 
+      
+      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+       da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+       a agencia do cooperado*/
+      if not fn_exec_paralelo then 
         -- Procedimento para inserir o lote e não deixar tabela lockada
         pc_insere_lote (pr_cdcooper => rw_crapaut.cdcooper,
                         pr_dtmvtolt => rw_crapaut.dtmvtolt,
@@ -9410,11 +9432,7 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
          rw_craplot.cdoperad := '996';                   
          rw_craplot.tplotmov := 1;                   
          rw_craplot.cdhistor := 0;
-         rw_craplot.nrseqdig := fn_seq_parale_craplcm(pr_cdcooper => rw_crapaut.cdcooper
-                                                     ,pr_dtmvtolt => rw_crapaut.dtmvtolt
-                                                     ,pr_cdagenci => rw_crapaut.cdagenci
-                                                     ,pr_cdbccxlt => 11
-                                                     ,pr_nrdolote => 11900); 
+         rw_craplot.nrseqdig := fn_seq_parale_craplcm; 
       end if;
         
       -- guardar valor para atualizar o lote
@@ -10253,7 +10271,10 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
       END IF;
 
       
-      if not fn_processo_ligeir then
+      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+       deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
+      if not fn_exec_paralelo then
         --[INÍCIO DO LOCK DA CRAPLOT]
         /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
         FOR i IN 1..100 LOOP
@@ -10300,10 +10321,15 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
             RAISE vr_exc_erro;
         END;
       end if;
-      -- se for pagemento pela INTERNET deve atualizar o lote referente a
-      -- criação do titulo, estrategia utilizada para diminuir o tempo de lock do lote
+      
       IF vr_cdagenci = 90 THEN --> INTERNET
-        if not fn_processo_ligeir then
+        
+       /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+       deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
+        if not fn_exec_paralelo then
+          -- se for pagemento pela INTERNET deve atualizar o lote referente a
+          -- criação do titulo, estrategia utilizada para diminuir o tempo de lock do lote
           /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
           FOR i IN 1..100 LOOP
             BEGIN
@@ -12397,6 +12423,7 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
 
          END IF;
 
+          
          --Se ocorreu erro atualiza a tabela de agendamento
          IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
            --atualizar informação na temptable que retornará para o programa chamador conforme o index do depara
@@ -21944,7 +21971,12 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
 
           vr_cdbccxlt := rw_craplau.cdbccxlt;
           -- Buscar lote
-          if not fn_processo_ligeir then
+          /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+           PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+           se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+           da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+           a agencia do cooperado*/
+          if not fn_exec_paralelo then
             OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
                             pr_dtmvtolt => pr_dtmvtolt,
                             pr_cdagenci => vr_cdagenci,
@@ -22017,11 +22049,7 @@ PROCEDURE pc_efetua_debitos_ligeir (pr_cdcooper    IN crapcop.cdcooper%TYPE     
              rw_craplot.cdbccxlt := vr_cdbccxlt;                  
              rw_craplot.nrdolote := vr_nrdolote;                   
              rw_craplot.cdoperad := NULL;                                   
-             rw_craplot.nrseqdig := fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                         ,pr_dtmvtolt => pr_dtmvtolt
-                                                         ,pr_cdagenci => vr_cdagenci
-                                                         ,pr_cdbccxlt => vr_cdbccxlt
-                                                         ,pr_nrdolote => vr_nrdolote); 
+             rw_craplot.nrseqdig := fn_seq_parale_craplcm; 
           end if;
           
           LOOP

@@ -455,6 +455,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             
                27/11/2017 - Validar corretamente o horario da debsic em caso de agendamentos
                             e também validar data do pagamento menor que o dia atual (Lucas Ranghetti #775900)
+                            
+               14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
+                            da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -844,8 +847,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         END;
     END IF;
 
-    -- Procedimento para inserir o lote e não deixar tabela lockada
-    if not paga0001.fn_processo_ligeir then
+
+    /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+       da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+       a agencia do cooperado*/
+       
+    if not paga0001.fn_exec_paralelo then
+      -- Procedimento para inserir o lote e não deixar tabela lockada
       pc_insere_lote(pr_cdcooper => pr_cdcooper
                     ,pr_dtmvtolt => pr_dtmvtolt
                     ,pr_cdagenci => pr_cdagenci
@@ -885,11 +895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      pr_craplot.cdoperad := pr_cdoperad; 
      pr_craplot.tplotmov := 30;                   
      pr_craplot.cdhistor := 1414;
-     pr_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                          ,pr_dtmvtolt => pr_dtmvtolt
-                                                          ,pr_cdagenci => pr_cdagenci
-                                                          ,pr_cdbccxlt => 100
-                                                          ,pr_nrdolote => vr_nrdolote);                     
+     pr_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm();                     
    end if;
     --
     INSERT INTO craplgp
@@ -962,9 +968,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     END IF;
 
 
-    -- atualiza os valores da lote
-    if not paga0001.fn_processo_ligeir then
-     
+
+    /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+       deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
+    if not paga0001.fn_exec_paralelo then
+     -- atualiza os valores da lote
      BEGIN
         UPDATE craplot SET craplot.qtcompln = NVL(craplot.qtcompln, 0) + 1
                           ,craplot.qtinfoln = NVL(craplot.qtinfoln, 0) + 1
@@ -3857,9 +3866,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     END;
 
 
+    /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+       da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+       a agencia do cooperado*/
 
-    /*******************************************************************/
-    if not paga0001.fn_processo_ligeir then
+
+    if not paga0001.fn_exec_paralelo then
       -- Buscar os dados do lote
       OPEN  cr_craplot(pr_cdcooper         -- pr_cdcooper
                       ,rw_crapdat.dtmvtocd -- pr_dtmvtolt
@@ -3904,6 +3918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
       -- Fechar o cursor do lote
       CLOSE cr_craplot;
+      rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1; -- projeto ligeirinho
     else
        paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
                                     pr_dtmvtolt => rw_crapdat.dtmvtocd,
@@ -3917,11 +3932,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                     pr_cdbccxpg => null,
                                     pr_nmrotina => 'PC_GPS_AGMTO_NOVO');
                             
-        rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                             ,pr_cdagenci => pr_cdagenci
-                                                             ,pr_cdbccxlt => 100
-                                                             ,pr_nrdolote => vr_nrdolote); 
+        rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm(); 
     end if;
     
     -- Verificar se o registro existe na CRAPLGP
@@ -3951,7 +3962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     CLOSE cr_craplgp;
 
     -- Atualizar o Digito sequencial do lote
-    rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+    --rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1; -- projeto ligeirinho
 
     -- Criar registro de agendamento na tabela CRAPLGP
     BEGIN
@@ -4026,7 +4037,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         RAISE vr_exc_saida;
     END;
 
-    if not paga0001.fn_processo_ligeir then
+    /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+       deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
+    if not paga0001.fn_exec_paralelo then
       -- Atualizar registro da LOTE
       BEGIN
 
