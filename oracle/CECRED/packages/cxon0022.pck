@@ -207,10 +207,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                  23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
                               sobre o campo cdopecxa.(Carlos Rafael Tanholi).
 
-				 26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                  crapass, crapttl, crapjur 
-							 (Adriano - P339).
+				        26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                       crapass, crapttl, crapjur (Adriano - P339).
 
+                14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
+                            da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
