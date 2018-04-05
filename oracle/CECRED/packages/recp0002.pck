@@ -1717,14 +1717,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     FETCH cr_tbacordo INTO rw_tbacordo;
     IF cr_tbacordo%NOTFOUND THEN
       CLOSE cr_tbacordo;
-	  -- Retornar critica que o acordo não foi encontrado.
+      -- Retornar critica que o acordo não foi encontrado.
       vr_cdcritic := 1205;
       RAISE vr_exc_erro; 
     END IF;
     CLOSE cr_tbacordo;
     
     IF rw_tbacordo.cdsituacao = 2 THEN
-       -- Retornar critica que o acordo esta quitado.
+      -- Retornar critica que o acordo esta quitado.
       vr_cdcritic := 986;
       RAISE vr_exc_erro;
     ELSIF rw_tbacordo.cdsituacao = 3 THEN
