@@ -702,53 +702,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       FUNCTION fn_busca_nrseqdig(pr_cdcooper crapcop.cdcooper%TYPE
                                 ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) RETURN NUMBER IS                                
         CURSOR cr_craplcm_seq(pr_cdcooper crapcop.cdcooper%TYPE
-                             ,pr_dtmvtolt crapdat.dtmvtolt%TYPE
-                             ,pr_nrseqdig craplcm.nrseqdig%TYPE
-                             ,pr_paralelo varchar2) IS
+                             ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
           SELECT NVL(MAX(lcm.nrseqdig),0) nrseqdig
             FROM craplcm lcm
            WHERE lcm.cdcooper = pr_cdcooper
              AND lcm.dtmvtolt = pr_dtmvtolt
              AND lcm.cdagenci = 1
              AND lcm.cdbccxlt = 100
-             AND lcm.nrdolote = 10301
-             AND ((pr_paralelo ='S' 
-                 AND lcm.nrseqdig >= pr_nrseqdig)
-              OR (pr_paralelo ='N'
-                 AND lcm.nrseqdig < pr_nrseqdig));-- não considerar lançamentos do paralelismo
-             
+             AND lcm.nrdolote = 10301;
              
         rw_craplcm_seq  cr_craplcm_seq%ROWTYPE; 
-        vr_dsvlrprm     crapprm.dsvlrprm%type;
-        vr_dsvlrprmnum  number;  
-        vr_paralelo     varchar2(1);                         
-      BEGIN
-       -- Projeto Ligeirinho -  paralelismo
-       -- busca a sequencia para as execuções de paralelismo
-       if paga0001.fn_exec_paralelo then
-          vr_paralelo :='S';
-       else
-          vr_paralelo :='N';        
-       end if;
-       gene0001.pc_param_sistema(pr_nmsistem  => 'CRED',
-                                 pr_cdcooper  => pr_cdcooper,
-                                 pr_cdacesso  => 'CRAPLOT_509_SEQ',
-                                 pr_dsvlrprm  => vr_dsvlrprm); 
 
-       vr_dsvlrprmnum:= nvl(to_number(vr_dsvlrprm),800000);  
-      
-        OPEN cr_craplcm_seq(pr_cdcooper => pr_cdcooper
-                           ,pr_dtmvtolt => pr_dtmvtolt
-                           ,pr_nrseqdig => vr_dsvlrprmnum
-                           ,pr_paralelo => vr_paralelo);
-        FETCH cr_craplcm_seq INTO rw_craplcm_seq;
-        
-        IF cr_craplcm_seq%NOTFOUND THEN
-           CLOSE cr_craplcm_seq;
-           RETURN 0;
-        END IF;
-        
-        CLOSE cr_craplcm_seq;
+      BEGIN
+         OPEN cr_craplcm_seq(pr_cdcooper => pr_cdcooper
+                             ,pr_dtmvtolt => pr_dtmvtolt);
+          FETCH cr_craplcm_seq INTO rw_craplcm_seq;
+          
+          IF cr_craplcm_seq%NOTFOUND THEN
+             CLOSE cr_craplcm_seq;
+             RETURN 0;
+          END IF;
+          CLOSE cr_craplcm_seq;
+       
         RETURN rw_craplcm_seq.nrseqdig;
       END;                          
       
@@ -876,8 +851,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                          ,pr_dtmvtolt => pr_dtmvtolt
                                          ,pr_dtmvtoan => pr_dtmvtoan);
                                          
-      vr_nrseqdig := fn_busca_nrseqdig(pr_cdcooper => pr_cdcooper
-                                      ,pr_dtmvtolt => pr_dtmvtolt) + 1;
+       -- Projeto Ligeirinho -  paralelismo
+       -- busca a sequencia para as execuções de paralelismo
+       if paga0001.fn_exec_paralelo then
+          vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
+       else
+          vr_nrseqdig := fn_busca_nrseqdig(pr_cdcooper => pr_cdcooper
+                                          ,pr_dtmvtolt => pr_dtmvtolt) + 1;
+       end if;
                                       
       --Selecionar a data do movimento
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -1077,7 +1058,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             RAISE vr_exc_erro;
         END;
         
+       -- Projeto Ligeirinho -  paralelismo
+       -- busca a sequencia para as execuções de paralelismo
+       if paga0001.fn_exec_paralelo then
+          vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
+       else
         vr_nrseqdig := vr_nrseqdig + 1; --Proxima sequencia
+       end if;
         
         /*#########BUSCAR BDT BORDERO##################################*/
         --Selecionar Bordero de titulos
@@ -1184,8 +1171,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
               RAISE vr_exc_erro;
           END;
-          
-          vr_nrseqdig := vr_nrseqdig + 1; --Proxima sequencia
+          -- Projeto Ligeirinho -  paralelismo
+          -- busca a sequencia para as execuções de paralelismo
+          if paga0001.fn_exec_paralelo then
+             vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
+          else
+             vr_nrseqdig := vr_nrseqdig + 1; --Proxima sequencia
+          end if;
         END IF;
         
         TIOF0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
