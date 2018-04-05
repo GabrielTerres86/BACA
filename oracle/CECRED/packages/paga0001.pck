@@ -493,7 +493,9 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                   ,pr_craplot_rowid out typ_tab_tp_cralot_rowid
                                   ,pr_dserro        OUT VARCHAR2);
   
-  procedure pc_atualiz_lote(pr_craplot_rowid in typ_tab_tp_cralot_rowid);
+  procedure pc_atualiz_lote(pr_craplot_rowid in typ_tab_tp_cralot_rowid,
+                            pr_cdcooper      in craplot.cdcooper%type,
+                            pr_sequecia_lote in craplot.nrseqdig%type);
    
   --Funcao utilizada para controle da sequencia para a tabela craplcm.
   function fn_seq_parale_craplcm RETURN VARCHAR2;                              
@@ -2218,12 +2220,13 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                     ' ccxlt: '||rr_craplot.cdbccxlt;
 
       UPDATE craplot
-         SET nrseqdig =  PAGA0001.fn_seq_parale_craplcm 
+         SET nrseqdig = nrseqdig 
        WHERE cdcooper = pr_cdcooper
          AND dtmvtolt = rr_craplot.dtmvtolt
          AND cdagenci = rr_craplot.cdagenci
          AND cdbccxlt = rr_craplot.cdbccxlt
-         AND nrdolote = rr_craplot.nrdolote;
+         AND nrdolote = rr_craplot.nrdolote
+         RETURNING ROWID INTO vr_rowid;
       
       IF SQL%ROWCOUNT = 0 THEN
          INSERT INTO craplot(craplot.cdcooper
@@ -2248,8 +2251,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                                      ,rr_craplot.nrdcaixa
                                                      ,rr_craplot.cdoperad) RETURNING ROWID INTO vr_rowid;
              
-        pr_craplot_rowid(vr_index_craplot_rowid).vr_rowid := vr_rowid;
       END IF;
+      pr_craplot_rowid(vr_index_craplot_rowid).vr_rowid := vr_rowid;
     end loop rr_craplot;
   EXCEPTION
     WHEN OTHERS THEN
@@ -2257,9 +2260,12 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         
   end pc_gerar_lote_from_wrk;
   
-  procedure pc_atualiz_lote(pr_craplot_rowid in typ_tab_tp_cralot_rowid) is
+  procedure pc_atualiz_lote(pr_craplot_rowid in typ_tab_tp_cralot_rowid,
+                            pr_cdcooper      in craplot.cdcooper%type,
+                            pr_sequecia_lote in craplot.nrseqdig%type) is
     
-     cursor cr_craplcm(pr_rowid in ROWID) is 
+     cursor cr_craplcm(pr_rowid    in ROWID,
+                       pr_nrseqdig in number) is 
       select sum(qt_registro) qt_registro,
              sum(vllanmto)     vllanmto
         from(select count(1)                 qt_registro
@@ -2272,6 +2278,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                 and lot.CDAGENCI = lcm.CDAGENCI
                 and lot.CDBCCXLT = lcm.CDBCCXLT
                 and lot.NRDOLOTE = lcm.NRDOLOTE
+                and lcm.nrseqdig >= pr_sequecia_lote 
              union
              select count(1)                 qt_registro
                     ,nvl(SUM(lft.vllanmto),0) vllanmto
@@ -2282,25 +2289,26 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                 and lot.DTMVTOLT = lft.DTMVTOLT
                 and lot.CDAGENCI = lft.CDAGENCI
                 and lot.CDBCCXLT = lft.CDBCCXLT
-                and lot.NRDOLOTE = lft.NRDOLOTE);
+                and lot.NRDOLOTE = lft.NRDOLOTE
+                and lft.nrseqdig >= pr_sequecia_lote);
     
     rr_craplcm cr_craplcm%rowtype; 
-    
+    vr_dsvlrprm     crapprm.dsvlrprm%type;
+    vr_dsvlrprmnum  number;    
   begin
-  
-   
     vr_index_craplot_rowid:= pr_craplot_rowid.FIRST;
     WHILE vr_index_craplot_rowid IS NOT NULL LOOP
 	    
-      open  cr_craplcm(pr_rowid => pr_craplot_rowid(vr_index_craplot_rowid).vr_rowid);
+      open  cr_craplcm(pr_rowid    => pr_craplot_rowid(vr_index_craplot_rowid).vr_rowid,
+                       pr_nrseqdig => pr_sequecia_lote );
       fetch cr_craplcm into rr_craplcm;
     
       update craplot c
-      set c.NRSEQDIG = rr_craplcm.qt_registro
-         ,c.qtcompln = rr_craplcm.qt_registro 
-         ,c.qtinfoln = rr_craplcm.qt_registro 
-         ,c.vlcompdb = rr_craplcm.VLLANMTO    
-         ,c.vlinfodb = rr_craplcm.VLLANMTO
+      set c.nrseqdig = nvl(c.nrseqdig,0) + rr_craplcm.qt_registro
+         ,c.qtcompln = nvl(c.qtcompln,0) + rr_craplcm.qt_registro 
+         ,c.qtinfoln = nvl(c.qtinfoln,0) + rr_craplcm.qt_registro 
+         ,c.vlcompdb = nvl(c.vlcompdb,0) + rr_craplcm.vllanmto    
+         ,c.vlinfodb = nvl(c.vlinfodb,0) + rr_craplcm.vllanmto
       where c.rowid = pr_craplot_rowid(vr_index_craplot_rowid).vr_rowid;
     
       close cr_craplcm;
@@ -12415,6 +12423,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
          END IF;
 
+          
          --Se ocorreu erro atualiza a tabela de agendamento
          IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
            --atualizar informação na temptable que retornará para o programa chamador conforme o index do depara
