@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Adriano
-       Data    : Marco/2013                      Ultima atualizacao: 26/03/2018
+       Data    : Marco/2013                      Ultima atualizacao: 05/04/2018
 
        Dados referentes ao programa:
 
@@ -40,7 +40,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
                    26/01/2018 - Arrasto do Grupo Economico para CPFs/CNPJs do grupo (Guilherme/AMcom)
                    
-                   26/03/2018 - #inc0011132 Forçado o índice CRAPRIS3 na rotina pc_validar_data_risco, 
+                   05/04/2018 - #inc0011132 Forçado o índice CRAPRIS2 na rotina pc_validar_data_risco, 
                                 cursor cr_crapris (Carlos) 
     ............................................................................ */
 
@@ -506,7 +506,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
         -- Busca de todos os riscos
         CURSOR cr_crapris (pr_dtrefant IN crapris.dtrefere%TYPE) IS
-          SELECT /*+ INDEX (ris CRAPRIS##CRAPRIS3) */
+          SELECT /*+ INDEX (ris CRAPRIS##CRAPRIS2) */
                  ris.cdcooper
                , ris.nrdconta
                , ris.nrctremp
@@ -516,7 +516,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                , r_ant.dtdrisco dtdrisco_anterior
                , ris.rowid
             FROM crapris ris
-               , (SELECT /*+ INDEX (r CRAPRIS##CRAPRIS3) */ * -- Busca risco anterior
+               , (SELECT /*+ INDEX (r CRAPRIS##CRAPRIS2) */ * -- Busca risco anterior
                     FROM crapris r
                    WHERE r.cdcooper = pr_cdcooper
                      AND r.dtrefere = pr_dtrefant) r_ant
