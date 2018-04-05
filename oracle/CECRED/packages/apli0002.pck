@@ -17631,7 +17631,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                        ,pr_cdsitaar IN crapaar.cdsitaar%TYPE) IS --> Situacao 
 
         SELECT aar.*
-              ,DECODE(aar.cdsitaar,1,'Em Andamento',2,'Suspenso',3,'Cancelado',4,'Não Efetivado',5,'Vencido','') dssitaar
+              ,DECODE(aar.cdsitaar,1,'Em Andamento',2,'Suspenso',3,'Cancelado',4,'Não Efetivado',5,'Concluído','') dssitaar
               ,DECODE(aar.flgtipar,0,'Aplicação',1,'Resgate','') dstipaar
           FROM crapaar aar
          WHERE aar.cdcooper = pr_cdcooper
