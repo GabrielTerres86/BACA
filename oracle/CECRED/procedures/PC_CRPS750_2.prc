@@ -778,7 +778,7 @@ BEGIN
                                                  ,pr_flgerlog => 1
                                                  ,pr_cdoperad => '1'
                                                  ,pr_idorigem => 5
-                                                 ,pr_cdprogra => pr_nmdatela
+                                                 ,pr_cdprogra => vr_cdprogra
                                                  ,pr_qtdiaatr => vr_qtdiaatr
                                                  ,pr_vlresgat => vr_vlresgat
                                                  ,pr_dscritic => vr_dscritic);

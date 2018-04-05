@@ -2109,7 +2109,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                  RAISE vr_exc_saida;
                ELSE
                  -- Decrementar do saldo negativo o valor resgatado
-                 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp - vr_vlresgat;
+									 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp + vr_vlresgat;
                  END IF;
 
                END IF;
