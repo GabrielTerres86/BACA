@@ -187,6 +187,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                07/12/2017 - Tratar verifica-digito-num-referencia-darf para validar o 
                             digito verificador corretamente quando passar pela segunda 
                             validacao (Lucas Ranghetti #805724)
+               14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
+                            da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)                            
+    
   ---------------------------------------------------------------------------------------------------------------*/
   
   /* Busca dos dados da cooperativa */
@@ -1226,25 +1229,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       END IF;
 
       vr_nrdolote := 15000 + pr_nrdcaixa;
-      if not paga0001.fn_processo_ligeir then
-      LOTE0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
-                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_cdbccxlt => 11
-                             ,pr_nrdolote => vr_nrdolote
-                             ,pr_cdoperad => pr_cdoperad
-                             ,pr_nrdcaixa => pr_nrdcaixa
-                             ,pr_tplotmov => 13
-                             ,pr_cdhistor => 1154
-                             ,pr_craplot => rw_craplot
-                             ,pr_dscritic => vr_dscritic);
+      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+       PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+       se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+       da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+       a agencia do cooperado*/
+      if not paga0001.fn_exec_paralelo then
+        LOTE0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                               ,pr_cdagenci => pr_cdagenci
+                               ,pr_cdbccxlt => 11
+                               ,pr_nrdolote => vr_nrdolote
+                               ,pr_cdoperad => pr_cdoperad
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_tplotmov => 13
+                               ,pr_cdhistor => 1154
+                               ,pr_craplot => rw_craplot
+                               ,pr_dscritic => vr_dscritic);
 
-      -- Se ocorreu erro
-      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-        -- Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-
+        -- Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          -- Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+      
       else
         paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
                                      pr_dtmvtolt => rw_crapdat.dtmvtocd,
@@ -1266,11 +1274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         rw_craplot.cdoperad := pr_cdoperad;  
         rw_craplot.tplotmov := 13;                   
         rw_craplot.cdhistor := 1154;
-        rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
-                                                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                                                             ,pr_cdagenci => pr_cdagenci
-                                                             ,pr_cdbccxlt => 11
-                                                             ,pr_nrdolote => vr_nrdolote);  
+        rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm;  
       end if;
       
       
@@ -1357,16 +1361,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                   ,1154
                   ,pr_dsnomfon)
         RETURNING progress_recid INTO vr_progress_recid_lft;
-
-      if not paga0001.fn_processo_ligeir then
-      UPDATE craplot
-         SET craplot.qtcompln = rw_craplot.qtcompln + 1
-            ,craplot.qtinfoln = rw_craplot.qtinfoln + 1
-            ,craplot.vlcompcr = rw_craplot.vlcompcr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
-            ,craplot.vlinfocr = rw_craplot.vlinfocr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
-       WHERE craplot.ROWID = rw_craplot.rowid;
+      
+     
+      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+      PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+      deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
+      if not paga0001.fn_exec_paralelo then
+        UPDATE craplot
+           SET craplot.qtcompln = rw_craplot.qtcompln + 1
+              ,craplot.qtinfoln = rw_craplot.qtinfoln + 1
+              ,craplot.vlcompcr = rw_craplot.vlcompcr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
+              ,craplot.vlinfocr = rw_craplot.vlinfocr + (pr_vllanmto + pr_vlrmulta + pr_vlrjuros)
+         WHERE craplot.ROWID = rw_craplot.rowid;
       end if;
-
+      
       CXON0000.pc_grava_autenticacao_internet(pr_cooper => pr_cdcooper
                                              ,pr_nrdconta => pr_nrdconta
                                              ,pr_idseqttl => pr_idseqttl     
