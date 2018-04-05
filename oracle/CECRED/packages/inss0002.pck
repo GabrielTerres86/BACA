@@ -446,7 +446,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
                08/09/2017 - Implementação GPS para Mobile.
 				    		(P 356.2 - Ricardo Linhares)
-                
+                            
                26/10/2017 - Alterado na pc_gps_pagamento a ordem como era usada a tabela bcx pois
                             qdo ele estava lockada dava a impressao pro operador que o pagamento
                             não havia sido concluido qdo na verdade ja tinha sido processado no SICREDI
@@ -867,6 +867,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     END IF;
 
     -- Procedimento para inserir o lote e não deixar tabela lockada
+    if not paga0001.fn_processo_ligeir then
     pc_insere_lote(pr_cdcooper => pr_cdcooper
                   ,pr_dtmvtolt => pr_dtmvtolt
                   ,pr_cdagenci => pr_cdagenci
@@ -886,6 +887,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       RAISE vr_exc_saida;
     END IF;
 
+   else
+     paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
+                                  pr_dtmvtolt => pr_dtmvtolt,
+                                  pr_cdagenci => pr_cdagenci,
+                                  pr_cdbccxlt => 100,
+                                  pr_nrdolote => vr_nrdolote,
+                                  pr_cdoperad => pr_cdoperad,
+                                  pr_nrdcaixa => pr_nrdcaixa,
+                                  pr_tplotmov => 30,
+                                  pr_cdhistor => 1414,
+                                  pr_cdbccxpg => null,
+                                  pr_nmrotina => 'INSS0002.PC_ATUALIZA_PAGAMENTO');
+                            
+     pr_craplot.dtmvtolt := pr_dtmvtolt;                  
+     pr_craplot.cdagenci := pr_cdagenci;                   
+     pr_craplot.cdbccxlt := 100;                  
+     pr_craplot.nrdolote := vr_nrdolote;                   
+     pr_craplot.cdoperad := pr_cdoperad; 
+     pr_craplot.tplotmov := 30;                   
+     pr_craplot.cdhistor := 1414;
+     pr_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
+                                                          ,pr_dtmvtolt => pr_dtmvtolt
+                                                          ,pr_cdagenci => pr_cdagenci
+                                                          ,pr_cdbccxlt => 100
+                                                          ,pr_nrdolote => vr_nrdolote);                     
+   end if;
     --
     INSERT INTO craplgp
                (cdcooper
@@ -958,6 +985,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
 
     -- atualiza os valores da lote
+    if not paga0001.fn_processo_ligeir then
+     
     BEGIN
       UPDATE craplot SET craplot.qtcompln = NVL(craplot.qtcompln, 0) + 1
                         ,craplot.qtinfoln = NVL(craplot.qtinfoln, 0) + 1
@@ -973,6 +1002,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         RAISE vr_exc_saida;
     END;
 
+    end if;
+    
   EXCEPTION
     WHEN vr_exc_saida THEN
       -- Retorno não OK
@@ -3925,7 +3956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
 
     /*******************************************************************/
-
+    if not paga0001.fn_processo_ligeir then
     -- Buscar os dados do lote
     OPEN  cr_craplot(pr_cdcooper         -- pr_cdcooper
                     ,rw_crapdat.dtmvtocd -- pr_dtmvtolt
@@ -3970,6 +4001,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
     -- Fechar o cursor do lote
     CLOSE cr_craplot;
+    else
+       paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
+                                    pr_dtmvtolt => rw_crapdat.dtmvtocd,
+                                    pr_cdagenci => pr_cdagenci,
+                                    pr_cdbccxlt => 100,
+                                    pr_nrdolote => vr_nrdolote,
+                                    pr_cdoperad => pr_cdoperad,
+                                    pr_nrdcaixa => pr_nrdcaixa,
+                                    pr_tplotmov => 30,
+                                    pr_cdhistor => 1414,
+                                    pr_cdbccxpg => null,
+                                    pr_nmrotina => 'PC_GPS_AGMTO_NOVO');
+                            
+        rw_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
+                                                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                                                             ,pr_cdagenci => pr_cdagenci
+                                                             ,pr_cdbccxlt => 100
+                                                             ,pr_nrdolote => vr_nrdolote); 
+    end if;
 
     -- Verificar se o registro existe na CRAPLGP
     OPEN  cr_craplgp(pr_cdcooper            -- pr_cdcooper
@@ -4073,6 +4123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         RAISE vr_exc_saida;
     END;
 
+    if not paga0001.fn_processo_ligeir then
     -- Atualizar registro da LOTE
     BEGIN
 
@@ -4091,7 +4142,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         vr_dsmsglog := 'Erro ao atualizar CRAPLOT! ' ||SQLERRM;
         RAISE vr_exc_saida;
     END;
-
+    END IF;
     -- Criar registro na CRAPLAU
     BEGIN
 
@@ -4648,7 +4699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            AND c.idseqttl = prc_idseqttl
            AND c.tpdsenha = 1 -- INTERNET
            ;        
-   /* Verifica se existe registro na CRAPBCX */
+    /* Verifica se existe registro na CRAPBCX */
     CURSOR cr_existe_bcx(p_cdcooper IN NUMBER
                         ,p_dtmvtolt IN DATE
                         ,p_cdagenci IN NUMBER
@@ -4923,38 +4974,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      IF pr_idorigem = 2 THEN -- Apenas CAIXA ON-LINE
        
        OPEN cr_existe_bcx (pr_cdcooper
-                          ,rw_crapdat.dtmvtocd
-                          ,pr_cdagenci
-                          ,pr_nrdcaixa
-                          ,pr_cdoperad);
-       --Posicionar no proximo registro
-       FETCH cr_existe_bcx INTO rw_existe_bcx;
-       --Se nao encontrar
-       IF cr_existe_bcx%NOTFOUND THEN
-          --Fechar Cursor
-          CLOSE cr_existe_bcx;
-          vr_cdcritic:= 698;
-          pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-          --Levantar Excecao
-          RAISE vr_exc_saida;
+                              ,rw_crapdat.dtmvtocd
+                              ,pr_cdagenci
+                              ,pr_nrdcaixa
+                              ,pr_cdoperad);
+            --Posicionar no proximo registro
+            FETCH cr_existe_bcx INTO rw_existe_bcx;
+            --Se nao encontrar
+            IF cr_existe_bcx%NOTFOUND THEN
+              --Fechar Cursor
+              CLOSE cr_existe_bcx;
+              vr_cdcritic:= 698;
+              pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+              --Levantar Excecao
+              RAISE vr_exc_saida;
        END IF;
-       --Fechar Cursor
-       CLOSE cr_existe_bcx;
+              --Fechar Cursor
+              CLOSE cr_existe_bcx;
 
-       --Atualizar tabela crapbcx
-       BEGIN
+        --Atualizar tabela crapbcx
+        BEGIN
          UPDATE crapbcx SET crapbcx.qtcompln = nvl(crapbcx.qtcompln,0) + 1
          WHERE crapbcx.ROWID = rw_existe_bcx.ROWID;
-       EXCEPTION
+        EXCEPTION
          WHEN Others THEN
            vr_cdcritic := 0;
            pr_dscritic := 'Erro ao atualizar tabela crapbcx. Erro: '||SQLERRM;
            --Levantar Excecao
            RAISE vr_exc_saida;
-       END;     
+        END;        
        
      END IF;
-
+     
      -- Atribui o histórico
      IF TRIM(pr_dshistor) IS NULL THEN
        vr_dshistor := UPPER('GPS - Identificador ') || pr_dsidenti;
@@ -5028,8 +5079,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        -- Retornar valores
        pr_dslitera := vr_literal;
        pr_cdultseq := vr_nrseqaut;
-      END IF;
-       
+     END IF;
+
      IF NVL(pr_nrdconta,0) > 0 THEN
         -- Se for pessoa fisica
         IF rw_crapass.inpessoa = 1 THEN

@@ -181,12 +181,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                             sendo que o correto é as 11h30 e 17h30 (AJFink)
   
                25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                      crapass, crapttl, crapjur 
-				              			(Adriano - P339).
-
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+              
                22/11/2017 - Adicionado regra para não debitar títulos vencidos no primeiro dia util do ano e
                             que venceram no dia útil anterior. (Rafael)
-                            
+
                25/11/2017 - Ajuste para cobrar IOF. (James - P410)
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
@@ -716,7 +716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         IF cr_craplcm_seq%NOTFOUND THEN
            CLOSE cr_craplcm_seq;
            RETURN 0;
-        END IF;        
+        END IF;
         
         CLOSE cr_craplcm_seq;
         RETURN rw_craplcm_seq.nrseqdig;
@@ -869,7 +869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                pr_cdcooper => pr_cdcooper,
                                                pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');      
-
+      
       -- Rotina para achar o ultimo dia útil do ano
       vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;    
       CASE to_char(vr_dtultdia,'d') 
@@ -1495,7 +1495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              ,pr_cdcritic => pr_cdcritic
                              ,pr_dscritic => pr_dscritic
                              ,pr_tab_erro => vr_tab_erro);
-
+                             
         pr_tab_erro := vr_tab_erro;
 
         ROLLBACK;                             
@@ -1625,13 +1625,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => vr_tab_erro);
-
+                             
         FOR idx in vr_tab_erro.FIRST .. vr_tab_erro.LAST LOOP
           vr_cdcritic := vr_tab_erro(idx).cdcritic;
           vr_dscritic := vr_tab_erro(idx).dscritic;
-          -- Log de erro de execucao
-          pc_controla_log_batch(pr_dstiplog => 'E',
-                                pr_dscritic => vr_dscritic);
+        -- Log de erro de execucao
+        pc_controla_log_batch(pr_dstiplog => 'E',
+                              pr_dscritic => vr_dscritic);
         END LOOP;
 
         ROLLBACK;
@@ -1652,9 +1652,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         FOR idx in vr_tab_erro.FIRST .. vr_tab_erro.LAST LOOP
           vr_cdcritic := vr_tab_erro(idx).cdcritic;
           vr_dscritic := vr_tab_erro(idx).dscritic;
-          -- Log de erro de execucao
-          pc_controla_log_batch(pr_dstiplog => 'E',
-                                pr_dscritic => vr_dscritic);
+        -- Log de erro de execucao
+        pc_controla_log_batch(pr_dstiplog => 'E',
+                              pr_dscritic => vr_dscritic);
         END LOOP;
 
         ROLLBACK;                             
@@ -2045,6 +2045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 vr_cdhistor:= 1101;
               END IF;
 
+              if not paga0001.fn_processo_ligeir then  
               /* Leitura do lote */
               OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                               ,pr_dtmvtolt => pr_dtmvtolt
@@ -2104,6 +2105,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               IF cr_craplot%ISOPEN THEN
                 CLOSE cr_craplot;
               END IF;
+              
+              else
+                paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
+                                             pr_dtmvtolt => pr_dtmvtolt,
+                                             pr_cdagenci => 1,
+                                             pr_cdbccxlt => 100,
+                                             pr_nrdolote => 10300,
+                                             pr_cdoperad => pr_cdoperad,
+                                             pr_nrdcaixa => NULL,
+                                             pr_tplotmov => 1,
+                                             pr_cdhistor => vr_cdhistor,
+                                             pr_cdbccxpg => null,
+                                             pr_nmrotina => 'DSCT0001.PC_EFETUA_BAIXA_TITULO');
+                
+                  rw_craplot.dtmvtolt := pr_dtmvtolt;
+                  rw_craplot.cdagenci := 1;
+                  rw_craplot.cdbccxlt := 100;
+                  rw_craplot.nrdolote := 10300;
+                  rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
+                                                                       ,pr_dtmvtolt => pr_dtmvtolt
+                                                                       ,pr_cdagenci => 1
+                                                                       ,pr_cdbccxlt => 100
+                                                                       ,pr_nrdolote => 10300); 
+              end if;  
               --Gravar lancamento
               BEGIN
                 INSERT INTO craplcm
@@ -2144,6 +2169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
                   RAISE vr_exc_erro;
               END;
+              if not paga0001.fn_processo_ligeir then  
               /* Atualiza o lote na craplot */
               BEGIN
                 UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
@@ -2162,6 +2188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               END;
               --Acumular Valor Lancamento
               vr_vllanmto:= nvl(vr_vllanmto,0) + rw_craplcm.vllanmto;
+              END IF;
 
             ELSIF rw_craptdb.vltitulo < pr_tab_titulos(vr_index_titulo).vltitulo THEN
 
@@ -2173,6 +2200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 vr_cdhistor:= 1102;
               END IF;
 
+              if not paga0001.fn_processo_ligeir then  
               /* Leitura do lote */
               OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                               ,pr_dtmvtolt => pr_dtmvtolt
@@ -2232,6 +2260,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               IF cr_craplot%ISOPEN THEN
                 CLOSE cr_craplot;
               END IF;
+              ELSE
+                paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
+                                             pr_dtmvtolt => pr_dtmvtolt,
+                                             pr_cdagenci => 1,
+                                             pr_cdbccxlt => 100,
+                                             pr_nrdolote => 10300,
+                                             pr_cdoperad => pr_cdoperad,
+                                             pr_nrdcaixa => NULL,
+                                             pr_tplotmov => 1,
+                                             pr_cdhistor => vr_cdhistor,
+                                             pr_cdbccxpg => null,
+                                             pr_nmrotina => 'DSCT0001.PC_EFETUA_BAIXA_TITULO');
+                            
+                rw_craplot.dtmvtolt := pr_dtmvtolt;                  
+                rw_craplot.cdagenci := 1;                   
+                rw_craplot.cdbccxlt := 100;                  
+                rw_craplot.nrdolote := 10300;                   
+                rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => rw_crapcop.cdcooper
+                                                                     ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                                                                     ,pr_cdagenci => 1
+                                                                     ,pr_cdbccxlt => 100
+                                                                     ,pr_nrdolote => 10300); 
+              END IF;
+              
               --Gravar lancamento
               BEGIN
                 INSERT INTO craplcm
@@ -2272,6 +2324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
                   RAISE vr_exc_erro;
               END;
+              if not paga0001.fn_processo_ligeir then
               /* Atualiza o lote na craplot */
               BEGIN
                 UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
@@ -2288,6 +2341,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 --Levantar Excecao
                 RAISE vr_exc_erro;
               END;
+                
+              END IF;
               --Acumular Valor Lancamento
               vr_vllanmto:= nvl(vr_vllanmto,0) + rw_craplcm.vllanmto;
             END IF;
@@ -2387,6 +2442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 RAISE vr_exc_erro;
               END IF;
               
+              if not paga0001.fn_processo_ligeir then
               -- Vamos verificar se o valo do IOF complementar é maior que 0
               IF NVL(vr_vliofcpl,0) > 0 AND vr_flgimune <= 0 THEN              
                 /* Leitura do lote */
@@ -2448,7 +2504,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 IF cr_craplot%ISOPEN THEN
                   CLOSE cr_craplot;
                 END IF;
-
+                
+                ELSE
+                  paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
+                                               pr_dtmvtolt => pr_dtmvtolt,
+                                               pr_cdagenci => 1,
+                                               pr_cdbccxlt => 100,
+                                               pr_nrdolote => 10300,
+                                               pr_cdoperad => pr_cdoperad,
+                                               pr_nrdcaixa => NULL,
+                                               pr_tplotmov => 1,
+                                               pr_cdhistor => 2321,
+                                               pr_cdbccxpg => null,
+                                               pr_nmrotina => 'DSCT0001.PC_EFETUA_BAIXA_TITULO');
+                            
+                  rw_craplot.dtmvtolt := pr_dtmvtolt;                  
+                  rw_craplot.cdagenci := 1;                   
+                  rw_craplot.cdbccxlt := 100;                  
+                  rw_craplot.nrdolote := 10300;                                     
+                  rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
+                                                                       ,pr_dtmvtolt => pr_dtmvtolt
+                                                                       ,pr_cdagenci => 1
+                                                                       ,pr_cdbccxlt => 100
+                                                                       ,pr_nrdolote => 10300); 
+                END IF;  
                 -- Grava na tabela de lancamentos
                 BEGIN
                   INSERT INTO craplcm
@@ -2498,6 +2577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                     RAISE vr_exc_erro;
                 END;
 
+                if not paga0001.fn_processo_ligeir then
                 /* Atualiza o lote na craplot */
                 BEGIN
                   UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
@@ -2513,6 +2593,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                     --Levantar Excecao
                     RAISE vr_exc_erro;
                 END;
+                END IF;
 
               END IF;
               
@@ -2555,6 +2636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 RAISE vr_exc_erro;
             END;
           ELSIF pr_indbaixa = 2 THEN
+            if not paga0001.fn_processo_ligeir then
             /* Leitura do lote */
             OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                             ,pr_dtmvtolt => pr_dtmvtolt
@@ -2615,6 +2697,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               CLOSE cr_craplot;
             END IF;
             --Gravar lancamento
+            ELSE
+              paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
+                                           pr_dtmvtolt => pr_dtmvtolt,
+                                           pr_cdagenci => 1,
+                                           pr_cdbccxlt => 100,
+                                           pr_nrdolote => 10300,
+                                           pr_cdoperad => pr_cdoperad,
+                                           pr_nrdcaixa => NULL,
+                                           pr_tplotmov => 1,
+                                           pr_cdhistor => 591,
+                                           pr_cdbccxpg => null,
+                                           pr_nmrotina => 'CXON0014.PC_EFETUA_BAIXA_TITULO');
+                            
+              rw_craplot.dtmvtolt := pr_dtmvtolt;                  
+              rw_craplot.cdagenci := 1;                   
+              rw_craplot.cdbccxlt := 100;                  
+              rw_craplot.nrdolote := 10300;  
+              rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
+                                                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                                                   ,pr_cdagenci => 1
+                                                                   ,pr_cdbccxlt => 100
+                                                                   ,pr_nrdolote => 10300);                                   
+              
+            END IF;
+            
             BEGIN
               INSERT INTO craplcm
                   (craplcm.dtmvtolt
@@ -2654,6 +2761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
                 RAISE vr_exc_erro;
             END;
+            if not paga0001.fn_processo_ligeir then
             /* Atualiza o lote na craplot */
             BEGIN
               UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
@@ -2670,7 +2778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               --Levantar Excecao
               RAISE vr_exc_erro;
             END;
-            
+            END IF;            
             --Atualizar situacao titulo
             BEGIN
               UPDATE craptdb SET craptdb.insittit = 3 /* Baixado s/ pagto */
@@ -2916,6 +3024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           END LOOP;
           --Se valor total juros positivo
           IF vr_vltotjur > 0 THEN
+            if not paga0001.fn_processo_ligeir then
             /* Leitura do lote */
             OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                             ,pr_dtmvtolt => pr_dtmvtolt
@@ -2975,6 +3084,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             IF cr_craplot%ISOPEN THEN
               CLOSE cr_craplot;
             END IF;
+
+            ELSE
+              paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
+                                           pr_dtmvtolt => pr_dtmvtolt,
+                                           pr_cdagenci => 1,
+                                           pr_cdbccxlt => 100,
+                                           pr_nrdolote => 10300,
+                                           pr_cdoperad => pr_cdoperad,
+                                           pr_nrdcaixa => NULL,
+                                           pr_tplotmov => 1,
+                                           pr_cdhistor => 597,
+                                           pr_cdbccxpg => null,
+                                           pr_nmrotina => 'CXON0014.PC_EFETUA_BAIXA_TITULO');
+                            
+              rw_craplot.dtmvtolt := pr_dtmvtolt;                  
+              rw_craplot.cdagenci := 1;                   
+              rw_craplot.cdbccxlt := 100;                  
+              rw_craplot.nrdolote := 10300;  
+              rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(pr_cdcooper => pr_cdcooper
+                                                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                                                   ,pr_cdagenci => 1
+                                                                   ,pr_cdbccxlt => 100
+                                                                   ,pr_nrdolote => 10300); 
+            END IF;
+            
             --Gravar lancamento
             BEGIN
               INSERT INTO craplcm
@@ -3015,6 +3149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
                 RAISE vr_exc_erro;
             END;
+            if not paga0001.fn_processo_ligeir then
             /* Atualiza o lote na craplot */
             BEGIN
               UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
@@ -3031,6 +3166,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               --Levantar Excecao
               RAISE vr_exc_erro;
             END;
+          END IF;
+
           END IF;
 
           /* Verifica se deve liquidar o bordero caso sim Liquida */
