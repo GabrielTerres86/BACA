@@ -1256,7 +1256,7 @@ function buscar_tipos_de_conta (inpessoa) {
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		url: UrlSite + 'telas/cadsoa/buscar_tipos_de_conta.php',
+		url: UrlSite + 'telas/lantar/buscar_tipos_de_conta.php',
 		data: {
 			inpessoa: inpessoa,
 			redirect: 'script_ajax'
