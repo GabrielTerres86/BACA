@@ -202,7 +202,7 @@ function excluirContrato()
 
 function atualizarContrato(checkBox)
 {	
-    var linha = checkBox.closest('tr');
+    var linha = $(checkBox).closest('tr');
 
 	var nrctremp = $('input[name="nrctremp"]', linha).val();
 	var indpagar = $(checkBox).prop('checked') == true ? 'S' : 'N';
