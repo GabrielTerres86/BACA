@@ -21,6 +21,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                 26/03/2018 - Inclusão da Procedure pc_busca_dados_limite e pc_busca_dados_limite_web (Luis Fernando (GFT))
                 26/03/2018 - Inclusão da procedure pc_obtem_dados_proposta_web (Paulo Penteado (GFT))
                 02/04/2018 - Inclusão do record 'typ_rec_tit_bordero' e das procedures 'pc_buscar_tit_bordero' e 'pc_buscar_tit_bordero_web' para listar e buscar detalhes e restrições dos titulos do borderô (Leonardo Oliveira (GFT))
+                04/04/2018 - Ajuste no retorno das críticas na operação 'pc_detalhes_tit_bordero' (Leonardo Oliveira (GFT)) 
   ---------------------------------------------------------------------------------------------------------------------*/
 
   /*Tabela de retorno dos titulos do bordero*/
@@ -198,7 +199,9 @@ TYPE typ_tab_dados_detalhe IS TABLE OF typ_reg_dados_detalhe INDEX BY BINARY_INT
   
 /*Tabela de retorno dos dados obtidos para as criticas*/
 TYPE typ_reg_dados_critica IS RECORD(
-     dsc_critica     VARCHAR2(225)
+     dsc                   VARCHAR2(225),
+     varint               NUMBER(5), -- numero
+     varper               NUMBER(5,2) --percentual
 );
 
 TYPE typ_tab_dados_critica IS TABLE OF typ_reg_dados_critica INDEX BY BINARY_INTEGER;  
@@ -4239,62 +4242,74 @@ END pc_solicita_biro_bordero;
 
         -- qtremessa_cartorio	-> Crítica: Qtd Remessa em Cartório acima do permitido. (Ref. TAB052: qtremcrt).
         if rw_analise_pagador.qtremessa_cartorio > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd Remessa em Cartório acima do permitido'; 
-           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd Remessa em Cartório acima do permitido: '||rw_analise_pagador.qtremessa_cartorio; 
-           vr_idtabcritica:=vr_idtabcritica+1;
+           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Qtd Remessa em Cartório acima do permitido'; 
+           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.qtremessa_cartorio;
+           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
+           vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
         -- qttit_protestados -> Crítica: Qtd de Títulos Protestados acima do permitido. (Ref. TAB052: qttitprt).
         if rw_analise_pagador.qttit_protestados > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd de Títulos Protestados acima do permitido'; 
-           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd de Títulos Protestados acima do permitido: '||rw_analise_pagador.qttit_protestados; 
-           vr_idtabcritica:=vr_idtabcritica+1;
+           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Qtd de Títulos Protestados acima do permitido'; 
+           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.qttit_protestados; 
+           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
+           vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
         -- qttit_naopagos	-> Crítica: Qtd de Títulos Não Pagos pelo Pagador acima do permitido. (Ref. TAB052: qtnaopag).
         if rw_analise_pagador.qttit_naopagos > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd de Títulos Não Pagos pelo Pagador acima do permitido';
-           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Qtd de Títulos Não Pagos pelo Pagador acima do permitido: '||rw_analise_pagador.qttit_naopagos;
-           vr_idtabcritica:=vr_idtabcritica+1;
+           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Qtd de Títulos Não Pagos pelo Pagador acima do permitido';
+           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.qttit_naopagos; 
+           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
+           vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
         -- pemin_liquidez_qt ->	Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos).  (Ref. TAB052: qttliqcp).
-        if rw_analise_pagador.pemin_liquidez_qt > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos)';
-           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos): '||rw_analise_pagador.pemin_liquidez_qt;
-           vr_idtabcritica:=vr_idtabcritica+1;
+        if rw_analise_pagador.pemin_liquidez_qt > 0.0 then
+           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos)';
+           pr_tab_dados_critica(vr_idtabcritica).varper := rw_analise_pagador.pemin_liquidez_qt; 
+           pr_tab_dados_critica(vr_idtabcritica).varint := 0;
+           vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
         -- pemin_liquidez_vl ->	Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos).  (Ref. TAB052: vltliqcp).
-        if rw_analise_pagador.pemin_liquidez_vl > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos)';
-           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos): '||rw_analise_pagador.pemin_liquidez_vl;
-           vr_idtabcritica:=vr_idtabcritica+1;
+        if rw_analise_pagador.pemin_liquidez_vl > 0.0 then
+           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos)';
+           pr_tab_dados_critica(vr_idtabcritica).varper := rw_analise_pagador.pemin_liquidez_vl; 
+           pr_tab_dados_critica(vr_idtabcritica).varint := 0;
+           vr_idtabcritica := vr_idtabcritica + 1;
         end if;
              
         -- peconcentr_maxtit ->	Crítica: Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip).
-        if rw_analise_pagador.peconcentr_maxtit > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Concentração Máxima Permitida de Títulos excedida';
-           --pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Perc. Concentração Máxima Permitida de Títulos excedida: '||rw_analise_pagador.peconcentr_maxtit;
-           vr_idtabcritica:=vr_idtabcritica+1;
+        if rw_analise_pagador.peconcentr_maxtit > 0.0 then
+           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Perc. Concentração Máxima Permitida de Títulos excedida';
+           pr_tab_dados_critica(vr_idtabcritica).varper := rw_analise_pagador.peconcentr_maxtit; 
+           pr_tab_dados_critica(vr_idtabcritica).varint := 0;
+           vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
         -- inemitente_conjsoc	-> Crítica: Emitente é Cônjuge/Sócio do Pagador (0 = Não / 1 = Sim). (Ref. TAB052: flemipar).
         if rw_analise_pagador.inemitente_conjsoc > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Emitente é Cônjuge/Sócio do Pagador.';
-           vr_idtabcritica:=vr_idtabcritica+1;
+           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Emitente é Cônjuge/Sócio do Pagador.';
+           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.inemitente_conjsoc;
+           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
+           vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
         -- inpossui_titdesc	-> Crítica: Cooperado possui Títulos Descontados na Conta deste Pagador  (0 = Não / 1 = Sim). (Ref. TAB052: flpdctcp).
         if rw_analise_pagador.inpossui_titdesc > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Cooperado possui Títulos Descontados na Conta deste Pagador.';
-           vr_idtabcritica:=vr_idtabcritica+1;
+           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Cooperado possui Títulos Descontados na Conta deste Pagador.';
+           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.inpossui_titdesc; 
+           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
+           vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
         -- invalormax_cnae ->	Crítica: Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat).
         if rw_analise_pagador.invalormax_cnae > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc_critica := 'Valor Máximo Permitido por CNAE excedido.';
-           vr_idtabcritica:=vr_idtabcritica+1;
+           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Valor Máximo Permitido por CNAE excedido.';
+           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.invalormax_cnae; 
+           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
+           vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
       end if;  
@@ -4353,6 +4368,9 @@ END pc_solicita_biro_bordero;
    -- variaveis para verificar criticas e situacao
    vr_ibratan integer;
    vr_situacao char(1);
+   
+   -- variabel tab valor critica
+   vr_tag_crit varchar2(1000);        --> desc. erro
 
        
       procedure pc_escreve_xml( pr_des_dados in varchar2
@@ -4435,13 +4453,21 @@ END pc_solicita_biro_bordero;
           
       -- ler os registros de detalhe e incluir no xml
       vr_index_critica := vr_tab_dados_critica.first;
-      pc_escreve_xml('<critica>');
-      while vr_index_critica is not null loop
-            pc_escreve_xml( '<dsc_critica>' || vr_tab_dados_critica(vr_index_critica).dsc_critica || '</dsc_critica>');
+      pc_escreve_xml('<criticas>');
+      
+      WHILE vr_index_critica IS NOT NULL LOOP
+            
+            pc_escreve_xml('<critica>'|| 
+                             '<dsc>' || vr_tab_dados_critica(vr_index_critica).dsc || '</dsc>' ||
+                             '<int>' || vr_tab_dados_critica(vr_index_critica).varint || '</int>' ||
+                             '<per>' || to_char(
+                                     vr_tab_dados_critica(vr_index_critica).varper,
+                                      'FM999G999G999G990D00')|| '</per>' ||
+                             '</critica>');
             /* buscar proximo */
             vr_index_critica := vr_tab_dados_critica.next(vr_index_critica);
       end loop;
-      pc_escreve_xml('</critica>');
+      pc_escreve_xml('</criticas>');
           
       pc_escreve_xml ('</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);

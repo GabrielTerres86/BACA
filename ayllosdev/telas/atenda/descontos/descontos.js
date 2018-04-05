@@ -37,7 +37,9 @@
 
              28/03/2018 - Formatação dos layouts dos formulários de Contratos e Propostas. (Andre Avila - GFT)
 			 
-			 02/04/2018 - Formatação da tela para listar borderôs. (Leonardo Oliveira - GFT)	
+			 02/04/2018 - Formatação da tela para listar borderôs. (Leonardo Oliveira - GFT)
+
+			 04/04/2018 - Ajustes na formatação da tela 'divDetalheBordero'. (Leonardo Oliveira - GFT)
 
 ************************************************************************/
 
@@ -307,24 +309,25 @@ function formataLayout(nomeForm){
 		var ordemInicial = new Array();
 				
 		var arrayLargura = new Array();
-		arrayLargura[0] = '65px';
+		arrayLargura[0] = '60px';
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
-		arrayLargura[3] = '55px';
-		arrayLargura[4] = '100px';
-		arrayLargura[5] = '55px';
-		arrayLargura[6] = '100px';
-		arrayLargura[7] = '90px';
+		arrayLargura[3] = '60px';
+		arrayLargura[4] = '80px';
+		arrayLargura[5] = '60px';
+		arrayLargura[6] = '80px';
+		arrayLargura[7] = '120px';
+		
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
-		arrayAlinha[1] = 'right';
-		arrayAlinha[2] = 'right';
-		arrayAlinha[3] = 'right';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'center';
 		arrayAlinha[4] = 'right';
-		arrayAlinha[5] = 'right';
+		arrayAlinha[5] = 'center';
 		arrayAlinha[6] = 'right';
-		arrayAlinha[7] = 'left';
+		arrayAlinha[7] = 'center';
 		arrayAlinha[8] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
@@ -337,6 +340,50 @@ function formataLayout(nomeForm){
 		
 		ajustarCentralizacao();
 	
+
+	}else if ( nomeForm == 'divBorderosTitulos' ){
+	
+		$('#'+nomeForm).css('width','785px');
+	
+		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+		var tabela      = $('table', divRegistro );
+						
+		divRegistro.css('height','110px');
+		
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+		arrayLargura[0] = '60px';
+		arrayLargura[1] = '60px';
+		arrayLargura[2] = '60px';
+		arrayLargura[3] = '60px';
+		arrayLargura[4] = '80px';
+		arrayLargura[5] = '120px';
+		arrayLargura[6] = '80px';
+		
+				
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'center';
+		arrayAlinha[4] = 'right';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'right';
+		arrayAlinha[7] = 'center';
+						
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+		
+		ajustarCentralizacao();
+
+
+
 	}else if ( nomeForm == 'divIncluirBordero' ){
 	
 		$('#'+nomeForm).css('width','940px');
@@ -628,21 +675,19 @@ function formataLayout(nomeForm){
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '80px';
-		arrayLargura[4] = '30px';
-		arrayLargura[5] = '25px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '60px';
 		arrayLargura[6] = '120px';
-		arrayLargura[7] = '120px';
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'center';
-		arrayAlinha[2] = 'right';
+		arrayAlinha[2] = 'center';
 		arrayAlinha[3] = 'right';
 		arrayAlinha[4] = 'center';
-		arrayAlinha[5] = 'right';
+		arrayAlinha[5] = 'center';
 		arrayAlinha[6] = 'center';
 		arrayAlinha[7] = 'center';
-		arrayAlinha[8] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
@@ -1416,27 +1461,58 @@ function formataLayout(nomeForm){
 	}else if ( nomeForm == 'divDetalheBordero' ){
 	
 		$('#'+nomeForm).css('width','940px');
+		
+		
 
+		//restrições	
+		var divRestricoes 					= $('div.divRestricoes','#'+nomeForm);
+		var tabelaRestricoes	   			= $('table', divRestricoes );
+		
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+		arrayLargura[0] = '24%';
+		arrayLargura[1] = '25%';
+		arrayLargura[2] = '24%';
+		arrayLargura[3] = '25%';
+		
+
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'center';
+
+	    divRestricoes.css({'height': '210px', 'padding-bottom': '1px'});
+
+		tabelaRestricoes.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+
+
+		// campos
+		var cNmdsacad = $("#nmdsacad", "#"+nomeForm);
+		cNmdsacad.css({'width': '450px'});
 
 		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
 		camposFiltros.desabilitaCampo();
+
+		//criticas
 		var divRegistrosTitulos 			= $('div.divRegistrosTitulos','#'+nomeForm);		
 		var divRegistrosTitulosSelecionados = $('div.divRegistrosTitulosSelecionados','#'+nomeForm);		
 		var tabelaTitulos      				= $('table', divRegistrosTitulos );
 		var tabelaTitulosSelecionados   	= $('table', divRegistrosTitulosSelecionados );
-		
-		var cNmdsacad = $("#nmdsacad", "#"+nomeForm);
-		cNmdsacad.css({'width': '450px'});
+
 	
 
 		var ordemInicial = new Array();
 				
 		var arrayLargura = new Array();
-		arrayLargura[0] = '100px';
+		arrayLargura[0] = '48%';
+		arrayLargura[1] = '50%';
 		
 
 		var arrayAlinha = new Array();
-		arrayAlinha[0] = 'left';
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
 		
 						
 	    $('#' + nomeForm).css({'margin-top': '5px'});
