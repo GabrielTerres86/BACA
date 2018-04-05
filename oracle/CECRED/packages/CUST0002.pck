@@ -1750,6 +1750,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
         -- Criando um array com todas as informações do cheque
         vr_ret_cheque := gene0002.fn_quebra_string(vr_ret_all_cheques(vr_auxcont), ';');
 
+		vr_ret_cheque(5) := translate( vr_ret_cheque(5),' .-',' ');
+
         vr_cdcmpchq := to_number(vr_ret_cheque(1));			-- Compe
         vr_cdbanchq := to_number(vr_ret_cheque(2));			-- Banco
         vr_cdagechq := to_number(vr_ret_cheque(3));			-- Agencia
@@ -1807,6 +1809,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
         FOR vr_auxcont IN 1..vr_ret_all_cheques.count LOOP
           -- Criando um array com todas as informações do cheque
           vr_ret_cheque := gene0002.fn_quebra_string(vr_ret_all_cheques(vr_auxcont), ';');
+
+		  vr_ret_cheque(5) := translate( vr_ret_cheque(5),' .-',' ');
 
           vr_cdcmpchq := to_number(vr_ret_cheque(1));			-- Compe
           vr_cdbanchq := to_number(vr_ret_cheque(2));			-- Banco
