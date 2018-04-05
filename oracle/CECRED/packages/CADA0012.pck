@@ -342,7 +342,10 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
                           ,pr_nmbairro  IN VARCHAR2 -- Nome do bairro
                           ,pr_nmcidade  IN VARCHAR2 -- Nome da cidade
                           ,pr_retorno  OUT xmltype -- XML de retorno
-                          ,pr_dscritic OUT VARCHAR2); -- Retorno de Erro
+                          ,pr_dscritic OUT VARCHAR2-- Retorno de Erro
+                          ,pr_linha_inicio_busca in number default  1
+                          ,pr_qtd_registros in number default  10
+                          ); 
 
   -- Rotina para verificar se existe restricoes
   PROCEDURE pc_retorna_restricoes(pr_nrcpfcgc     IN NUMBER -- Numero do CPF / CNPJ da pessoa
@@ -2526,255 +2529,228 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
   END;
 
   -- Rotina para retorno de CEP
-  PROCEDURE pc_retorna_cep(pr_cdcep     IN NUMBER -- Registro de cep
-                          ,pr_nmrua     IN VARCHAR2 -- Nome da rua
-                          ,pr_nmbairro  IN VARCHAR2 -- Nome do bairro
-                          ,pr_nmcidade  IN VARCHAR2 -- Nome da cidade
-                          ,pr_retorno  OUT xmltype -- XML de retorno
-                          ,pr_dscritic OUT VARCHAR2) IS -- Retorno de Erro
-
-		-- Exceções
-		vr_exc_erro EXCEPTION;
+  PROCEDURE pc_retorna_cep(pr_cdcep              IN NUMBER -- Registro de cep
+                          ,
+                           pr_nmrua              IN VARCHAR2 -- Nome da rua
+                          ,
+                           pr_nmbairro           IN VARCHAR2 -- Nome do bairro
+                          ,
+                           pr_nmcidade           IN VARCHAR2 -- Nome da cidade
+                          ,
+                           pr_retorno            OUT xmltype -- XML de retorno
+                          ,
+                           pr_dscritic           OUT VARCHAR2 -- Retorno de Erro
+                          ,
+                           pr_linha_inicio_busca in number default 1,
+                           pr_qtd_registros      in number default 10) IS
+  
+    -- Exceções
+    vr_exc_erro EXCEPTION;
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
-		vr_dscritic crapcri.dscritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
     -- Variaveis gerais
     vr_xml xmltype; -- XML que sera enviado
-
-		-- Buscar endereço pelo código do cep
-		CURSOR cr_cdcep IS
-			SELECT nrceplog
-						,nmextlog
-						,nmreslog
-						,dscmplog
-						,dstiplog
-						,nmextbai
-						,nmresbai
-						,nmextcid
-						,nmrescid
-						,cduflogr
-            ,ROWNUM - 1 seq
-				 FROM crapdne
-				WHERE crapdne.nrceplog = pr_cdcep;
-
-		-- Buscar endereço pela rua, bairo e cidade
-		CURSOR cr_dscep IS
-			SELECT nrceplog
-						,nmextlog
-						,nmreslog
-						,dscmplog
-						,dstiplog
-						,nmextbai
-						,nmresbai
-						,nmextcid
-						,nmrescid
-						,cduflogr
-            ,ROWNUM - 1 seq
-				 FROM crapdne
-				WHERE upper(crapdne.nmextlog) LIKE upper('%'||pr_nmrua||'%')
-					AND upper(crapdne.nmextbai) LIKE upper('%'||pr_nmbairro||'%')
-					AND upper(crapdne.nmextcid) LIKE upper('%'||pr_nmcidade||'%');
-
+  
+    -- Variavel para a geracao do XML
+    vr_clob     CLOB;
+    vr_xml_temp VARCHAR2(32726) := '';
+  
+    -- Buscar endereço pelo código do cep
+    CURSOR cr_cdcep IS
+      select *
+        from (select /*+ FIRST_ROWS(n) */
+               topn.*, ROWNUM rnum
+                from (SELECT nrceplog,
+                             nmextlog,
+                             nmreslog,
+                             dscmplog,
+                             dstiplog,
+                             nmextbai,
+                             nmresbai,
+                             nmextcid,
+                             nmrescid,
+                             cduflogr,
+                             ROWNUM - 1 seq
+                        FROM crapdne
+                       WHERE crapdne.nrceplog = pr_cdcep
+                       order by nrceplog, ROWID) topn
+               where ROWNUM <=
+                     (pr_linha_inicio_busca - 1) + pr_qtd_registros) --linha final
+       where rnum > (pr_linha_inicio_busca - 1); -- linha inicial
+  
+    -- Buscar endereço pela rua, bairo e cidade
+    CURSOR cr_dscep IS
+      select *
+        from (select /*+ FIRST_ROWS(n) */
+               topn.*, ROWNUM rnum
+                from (SELECT nrceplog,
+             nmextlog,
+             nmreslog,
+             dscmplog,
+             dstiplog,
+             nmextbai,
+             nmresbai,
+             nmextcid,
+             nmrescid,
+             cduflogr,
+             ROWNUM - 1 seq
+        FROM crapdne
+       WHERE upper(crapdne.nmextlog) LIKE upper('%' || pr_nmrua || '%')
+         AND upper(crapdne.nmextbai) LIKE upper('%' || pr_nmbairro || '%')
+         AND upper(crapdne.nmextcid) LIKE upper('%' || pr_nmcidade || '%')
+                       order by nrceplog, ROWID) topn
+               where ROWNUM <=
+                     (pr_linha_inicio_busca - 1) + pr_qtd_registros) --linha final
+       where rnum > (pr_linha_inicio_busca - 1); -- linha inicial
+  
   BEGIN
-    -- Cria o cabecalho do xml de envio
-    vr_xml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><CEPs/>');
-
-	  -- Se informou código do CEP
-	  IF pr_cdcep > 0 THEN
-			-- Loop sob os CEPs
-			FOR rw_cdcep IN cr_cdcep LOOP
-				-- Insere o nó principal
-				gene0007.pc_insere_tag(pr_xml      => vr_xml
-															,pr_tag_pai  => 'CEPs'
-															,pr_posicao  => 0
-															,pr_tag_nova => 'CEP'
-															,pr_tag_cont => NULL
-															,pr_des_erro => pr_dscritic);
-
-				-- Insere os detalhes
-				gene0007.pc_insere_tag(pr_xml      => vr_xml
-															,pr_tag_pai  => 'CEP'
-															,pr_posicao  => rw_cdcep.seq
-															,pr_tag_nova => 'nrceplog'
-															,pr_tag_cont => rw_cdcep.nrceplog
-															,pr_des_erro => pr_dscritic);
-
-				gene0007.pc_insere_tag(pr_xml      => vr_xml
-															,pr_tag_pai  => 'CEP'
-															,pr_posicao  => rw_cdcep.seq
-															,pr_tag_nova => 'nmextlog'
-															,pr_tag_cont => rw_cdcep.nmextlog
-															,pr_des_erro => pr_dscritic);
-
-				gene0007.pc_insere_tag(pr_xml      => vr_xml
-															,pr_tag_pai  => 'CEP'
-															,pr_posicao  => rw_cdcep.seq
-															,pr_tag_nova => 'nmreslog'
-															,pr_tag_cont => rw_cdcep.nmreslog
-															,pr_des_erro => pr_dscritic);
-
-				gene0007.pc_insere_tag(pr_xml      => vr_xml
-															,pr_tag_pai  => 'CEP'
-															,pr_posicao  => rw_cdcep.seq
-															,pr_tag_nova => 'dscmplog'
-															,pr_tag_cont => rw_cdcep.dscmplog
-															,pr_des_erro => pr_dscritic);
-
-				gene0007.pc_insere_tag(pr_xml      => vr_xml
-															,pr_tag_pai  => 'CEP'
-															,pr_posicao  => rw_cdcep.seq
-															,pr_tag_nova => 'dstiplog'
-															,pr_tag_cont => rw_cdcep.dstiplog
-															,pr_des_erro => pr_dscritic);
-
-				gene0007.pc_insere_tag(pr_xml      => vr_xml
-															,pr_tag_pai  => 'CEP'
-															,pr_posicao  => rw_cdcep.seq
-															,pr_tag_nova => 'nmextbai'
-															,pr_tag_cont => rw_cdcep.nmextbai
-															,pr_des_erro => pr_dscritic);
-
-				gene0007.pc_insere_tag(pr_xml      => vr_xml
-															,pr_tag_pai  => 'CEP'
-															,pr_posicao  => rw_cdcep.seq
-															,pr_tag_nova => 'nmresbai'
-															,pr_tag_cont => rw_cdcep.nmresbai
-															,pr_des_erro => pr_dscritic);
-
-				gene0007.pc_insere_tag(pr_xml      => vr_xml
-															,pr_tag_pai  => 'CEP'
-															,pr_posicao  => rw_cdcep.seq
-															,pr_tag_nova => 'nmextcid'
-															,pr_tag_cont => rw_cdcep.nmextcid
-															,pr_des_erro => pr_dscritic);
-
-				gene0007.pc_insere_tag(pr_xml      => vr_xml
-															,pr_tag_pai  => 'CEP'
-															,pr_posicao  => rw_cdcep.seq
-															,pr_tag_nova => 'nmrescid'
-															,pr_tag_cont => rw_cdcep.nmrescid
-															,pr_des_erro => pr_dscritic);
-
-				gene0007.pc_insere_tag(pr_xml      => vr_xml
-															,pr_tag_pai  => 'CEP'
-															,pr_posicao  => rw_cdcep.seq
-															,pr_tag_nova => 'cduflogr'
-															,pr_tag_cont => rw_cdcep.cduflogr
-															,pr_des_erro => pr_dscritic);
-
-
-			END LOOP;
-
+  
+    -- Monta documento XML
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+  
+    -- Criar cabeçalho do XML e tag de abertura
+    GENE0002.pc_escreve_xml(pr_xml            => vr_clob,
+                            pr_texto_completo => vr_xml_temp,
+                            pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><CEPs>');
+  
+    -- Se informou código do CEP
+    IF pr_cdcep > 0 THEN
+      -- Loop sob os CEPs
+      FOR rw_cdcep IN cr_cdcep LOOP
+      
+        -- gera o detalhe da relacao
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob,
+                                pr_texto_completo => vr_xml_temp,
+                                pr_texto_novo     => '<CEP>' || chr(13) ||
+                                                     '  <nrceplog>' ||
+                                                     rw_cdcep.nrceplog ||
+                                                     '</nrceplog>' ||
+                                                     chr(13) ||
+                                                     '  <nmextlog>' ||
+                                                     rw_cdcep.nmextlog ||
+                                                     '</nmextlog>' ||
+                                                     chr(13) ||
+                                                     '  <nmreslog>' ||
+                                                     rw_cdcep.nmreslog ||
+                                                     '</nmreslog>' ||
+                                                     chr(13) ||
+                                                     '  <dscmplog>' ||
+                                                     rw_cdcep.dscmplog ||
+                                                     '</dscmplog>' ||
+                                                     chr(13) ||
+                                                     '  <dstiplog>' ||
+                                                     rw_cdcep.dstiplog ||
+                                                     '</dstiplog>' ||
+                                                     chr(13) ||
+                                                     '  <nmextbai>' ||
+                                                     rw_cdcep.nmextbai ||
+                                                     '</nmextbai>' ||
+                                                     chr(13) ||
+                                                     '  <nmresbai>' ||
+                                                     rw_cdcep.nmresbai ||
+                                                     '</nmresbai>' ||
+                                                     chr(13) ||
+                                                     '  <nmextcid>' ||
+                                                     rw_cdcep.nmextcid ||
+                                                     '</nmextcid>' ||
+                                                     chr(13) ||
+                                                     '  <nmrescid>' ||
+                                                     rw_cdcep.nmrescid ||
+                                                     '</nmrescid>' ||
+                                                     chr(13) ||
+                                                     '  <cduflogr>' ||
+                                                     rw_cdcep.cduflogr ||
+                                                     '</cduflogr>' ||
+                                                     chr(13) || '</CEP>' ||
+                                                     chr(13));
+      
+      END LOOP;
+    
     ELSE
-			-- Se preencheu algum dos parametros
-			IF TRIM(pr_nmrua) IS NOT NULL OR
-				 TRIM(pr_nmbairro) IS NOT NULL OR
-				 TRIM(pr_nmcidade) IS NOT NULL THEN
-
-	 			-- Efetuar busca sob os CEPs
-				FOR rw_dscep IN cr_dscep LOOP
-					-- Insere o nó principal
-					gene0007.pc_insere_tag(pr_xml      => vr_xml
-																,pr_tag_pai  => 'CEPs'
-																,pr_posicao  => 0
-																,pr_tag_nova => 'CEP'
-																,pr_tag_cont => NULL
-																,pr_des_erro => pr_dscritic);
-
-					-- Insere os detalhes
-					gene0007.pc_insere_tag(pr_xml      => vr_xml
-																,pr_tag_pai  => 'CEP'
-																,pr_posicao  => rw_dscep.seq
-																,pr_tag_nova => 'nrceplog'
-																,pr_tag_cont => rw_dscep.nrceplog
-																,pr_des_erro => pr_dscritic);
-
-					gene0007.pc_insere_tag(pr_xml      => vr_xml
-																,pr_tag_pai  => 'CEP'
-																,pr_posicao  => rw_dscep.seq
-																,pr_tag_nova => 'nmextlog'
-																,pr_tag_cont => rw_dscep.nmextlog
-																,pr_des_erro => pr_dscritic);
-
-					gene0007.pc_insere_tag(pr_xml      => vr_xml
-																,pr_tag_pai  => 'CEP'
-																,pr_posicao  => rw_dscep.seq
-																,pr_tag_nova => 'nmreslog'
-																,pr_tag_cont => rw_dscep.nmreslog
-																,pr_des_erro => pr_dscritic);
-
-					gene0007.pc_insere_tag(pr_xml      => vr_xml
-																,pr_tag_pai  => 'CEP'
-																,pr_posicao  => rw_dscep.seq
-																,pr_tag_nova => 'dscmplog'
-																,pr_tag_cont => rw_dscep.dscmplog
-																,pr_des_erro => pr_dscritic);
-
-					gene0007.pc_insere_tag(pr_xml      => vr_xml
-																,pr_tag_pai  => 'CEP'
-																,pr_posicao  => rw_dscep.seq
-																,pr_tag_nova => 'dstiplog'
-																,pr_tag_cont => rw_dscep.dstiplog
-																,pr_des_erro => pr_dscritic);
-
-					gene0007.pc_insere_tag(pr_xml      => vr_xml
-																,pr_tag_pai  => 'CEP'
-																,pr_posicao  => rw_dscep.seq
-																,pr_tag_nova => 'nmextbai'
-																,pr_tag_cont => rw_dscep.nmextbai
-																,pr_des_erro => pr_dscritic);
-
-					gene0007.pc_insere_tag(pr_xml      => vr_xml
-																,pr_tag_pai  => 'CEP'
-																,pr_posicao  => rw_dscep.seq
-																,pr_tag_nova => 'nmresbai'
-																,pr_tag_cont => rw_dscep.nmresbai
-																,pr_des_erro => pr_dscritic);
-
-					gene0007.pc_insere_tag(pr_xml      => vr_xml
-																,pr_tag_pai  => 'CEP'
-																,pr_posicao  => rw_dscep.seq
-																,pr_tag_nova => 'nmextcid'
-																,pr_tag_cont => rw_dscep.nmextcid
-																,pr_des_erro => pr_dscritic);
-
-					gene0007.pc_insere_tag(pr_xml      => vr_xml
-																,pr_tag_pai  => 'CEP'
-																,pr_posicao  => rw_dscep.seq
-																,pr_tag_nova => 'nmrescid'
-																,pr_tag_cont => rw_dscep.nmrescid
-																,pr_des_erro => pr_dscritic);
-
-					gene0007.pc_insere_tag(pr_xml      => vr_xml
-																,pr_tag_pai  => 'CEP'
-																,pr_posicao  => rw_dscep.seq
-																,pr_tag_nova => 'cduflogr'
-																,pr_tag_cont => rw_dscep.cduflogr
-																,pr_des_erro => pr_dscritic);
-
-
-				END LOOP;
-
-			ELSE
-				-- Senão gerar crítica
-				vr_cdcritic := 0;
-				vr_dscritic := 'Parâmetros inválidos.';
-				-- Levantar exceção
-				RAISE vr_exc_erro;
-			END IF;
-
-		END IF;
-    pr_retorno := vr_xml;
-
+    
+      -- Se preencheu algum dos parametros
+      IF TRIM(pr_nmrua) IS NOT NULL OR TRIM(pr_nmbairro) IS NOT NULL OR
+         TRIM(pr_nmcidade) IS NOT NULL THEN
+      
+        -- Efetuar busca sob os CEPs
+        FOR rw_dscep IN cr_dscep LOOP
+          -- gera o detalhe da relacao
+          GENE0002.pc_escreve_xml(pr_xml            => vr_clob,
+                                  pr_texto_completo => vr_xml_temp,
+                                  pr_texto_novo     => '<CEP>' || chr(13) ||
+                                                       '  <nrceplog>' ||
+                                                       rw_dscep.nrceplog ||
+                                                       '</nrceplog>' ||
+                                                       chr(13) ||
+                                                       '  <nmextlog>' ||
+                                                       rw_dscep.nmextlog ||
+                                                       '</nmextlog>' ||
+                                                       chr(13) ||
+                                                       '  <nmreslog>' ||
+                                                       rw_dscep.nmreslog ||
+                                                       '</nmreslog>' ||
+                                                       chr(13) ||
+                                                       '  <dscmplog>' ||
+                                                       rw_dscep.dscmplog ||
+                                                       '</dscmplog>' ||
+                                                       chr(13) ||
+                                                       '  <dstiplog>' ||
+                                                       rw_dscep.dstiplog ||
+                                                       '</dstiplog>' ||
+                                                       chr(13) ||
+                                                       '  <nmextbai>' ||
+                                                       rw_dscep.nmextbai ||
+                                                       '</nmextbai>' ||
+                                                       chr(13) ||
+                                                       '  <nmresbai>' ||
+                                                       rw_dscep.nmresbai ||
+                                                       '</nmresbai>' ||
+                                                       chr(13) ||
+                                                       '  <nmextcid>' ||
+                                                       rw_dscep.nmextcid ||
+                                                       '</nmextcid>' ||
+                                                       chr(13) ||
+                                                       '  <nmrescid>' ||
+                                                       rw_dscep.nmrescid ||
+                                                       '</nmrescid>' ||
+                                                       chr(13) ||
+                                                       '  <cduflogr>' ||
+                                                       rw_dscep.cduflogr ||
+                                                       '</cduflogr>' ||
+                                                       chr(13) || '</CEP>' ||
+                                                       chr(13));
+        END LOOP;
+      
+      ELSE
+        -- Senão gerar crítica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Parâmetros inválidos.';
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      END IF;
+    
+    END IF;
+  
+    -- Finaliza o XML
+    GENE0002.pc_escreve_xml(pr_xml            => vr_clob,
+                            pr_texto_completo => vr_xml_temp,
+                            pr_texto_novo     => '</CEPs>',
+                            pr_fecha_xml      => TRUE);
+  
+    -- Converte para XML
+    pr_retorno := xmltype(vr_clob);
+  
   EXCEPTION
-		WHEN vr_exc_erro THEN
-			-- Se crítica possui código
-			IF (vr_cdcritic > 0 AND TRIM(vr_dscritic) IS NULL) THEN
-				-- Buscar código de crítica
-				vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-			END IF;
-			-- Retornar descrição do erro
-			pr_dscritic := vr_dscritic;
+    WHEN vr_exc_erro THEN
+      -- Se crítica possui código
+      IF (vr_cdcritic > 0 AND TRIM(vr_dscritic) IS NULL) THEN
+        -- Buscar código de crítica
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Retornar descrição do erro
+      pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro não tratado na pc_retorna_cep: ' || SQLERRM;
@@ -5395,6 +5371,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                              ,pr_texto_novo     => '</relacoes>'
                              ,pr_fecha_xml => TRUE);
       
+      -- Gera o xml
+      gene0002.pc_clob_para_arquivo(pr_clob => vr_clob,
+                                    pr_caminho => '/microsh/cecred/andrino',
+                                    pr_arquivo => 'relacao.xml',
+                                    pr_des_erro => vr_dscritic);
       -- Converte para XML
       pr_retorno := xmltype(vr_clob);
     END IF;
