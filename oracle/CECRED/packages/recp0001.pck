@@ -2392,7 +2392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 				 AND acc.indpagar = 'S'    -- Somente os contratos marcados como 'Pagar' na tela ATACOR (Reginaldo - AMcom)
        ORDER BY acc.cdorigem       -- 1. Efetuar pagamento do estouro de conta corrente
               , nvl(cyb.qtdiaatr,0) DESC  -- 2. Efetuar pagamento do contrato com maior tempo de atraso
-              , cyb.vlsdeved DESC  -- 3. Caso haja empate, então, considerar primeiro o contrato com maior saldo devedor
+              , nvl(cyb.vlsdeved,0) DESC  -- 3. Caso haja empate, então, considerar primeiro o contrato com maior saldo devedor
               , cyb.nrctremp ASC;  -- 4. Caso os saldos devedores também sejam iguais, considerar o contrato de menor número
     
     -- REGISTROS
