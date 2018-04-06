@@ -3472,8 +3472,6 @@ PROCEDURE gera_impressao_demonstrativo:
 
     END.
 
-    IF  aux_vlblqjud > 0 THEN
-        DO: 
             PUT STREAM str_1
                 SKIP(1)
                 "VALOR BLOQUEADO JUDICIALMENTE R$:      "
