@@ -13,7 +13,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
       Objetivo  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN - Motor de Credito
 
       Alteracoes: 23/11/2017 - Alterações para o projeto 404. (Lombardi)
-                  
+
                   12/12/2017 - Projeto 410 - inclusão do IOF sobre atraso - (JEan - MOut´S)
 
   ---------------------------------------------------------------------------------------------------------------*/
@@ -39,7 +39,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 12/09/2017
+      Data     : Maio/2017.                   Ultima atualizacao: 20/03/2018
 
       Dados referentes ao programa:
 
@@ -53,6 +53,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                Heitor (Mouts) - Chamado 778505
 
                   12/12/2017 - Projeto 410 - Incluir o tratamento para o IOF por atraso - (Jean / MOut´S)
+                  
+                  20/03/2018 - #INC0010628 Não considerar contratos que foram para prejuízo (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -2847,7 +2849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-      
+    
       -- Busca Saldo Bloqueado Judicial para Poupanças
       gene0005.pc_retorna_valor_blqjud(pr_cdcooper => pr_cdcooper --> Cooperativa
                                       ,pr_nrdconta => pr_nrdconta --> Conta
@@ -2892,7 +2894,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_obj_generic2.put('temPoupProgamBloqueada',(vr_vlsldppr_aux <> vr_vlsldppr));
       vr_obj_generic2.put('saldoDisponPoupProgram',este0001.fn_decimal_ibra(vr_vlsldppr_aux));
       vr_obj_generic2.put('saldoTotalPoupProgram',este0001.fn_decimal_ibra(nvl(vr_vlsldppr,0)));
-      
+    
       -- Enviar informações das aplicações para o JSON
       vr_obj_generic2.put('temAplicacao', (nvl(vr_vlsldapl,0) > 0));
       vr_obj_generic2.put('temAplicacaoBloqueada', (vr_vlsldapl_aux <> vr_vlsldapl));
@@ -3172,6 +3174,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- varrer temptable de emprestimos
       vr_idxempr := vr_tab_dados_epr.first;
       WHILE vr_idxempr IS NOT NULL LOOP
+
+        -- Não considerar contratos de empréstimo que foram para prejuízo
+        IF vr_tab_dados_epr(vr_idxempr).inprejuz = 1 THEN
+          vr_idxempr := vr_tab_dados_epr.next(vr_idxempr);
+          continue;
+        END IF;
+      
         -- Para aqueles com saldo devedor
         IF vr_tab_dados_epr(vr_idxempr).vlsdeved > 0 THEN
           -- Chamar calculo de dias em atraso
@@ -3247,8 +3256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             INTO vr_vlpclpag;
           CLOSE cr_craplem_pago;
           -- Quantidade Parcelas paga é Valor Paga nos ultimos 6 meses / Valor da Parcela
-          vr_qtpclpag := ROUND(vr_vlpclpag / vr_tab_dados_epr(vr_idxempr)
-                               .vlpreemp);
+          vr_qtpclpag := ROUND(vr_vlpclpag / vr_tab_dados_epr(vr_idxempr).vlpreemp);
         
           -- Descontar da quantidade paga a quantidade em atraso, pq mesmo tendo pago 
           -- proporcionalmente o valor total da parcela, se teve multa no mês significa
@@ -5143,7 +5151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       pr_dscritic := vr_dscritic;
 
   END pc_gera_json_analise;
-  
+    
   PROCEDURE pc_gera_json_limite ( pr_cdcooper   IN crapass.cdcooper%TYPE   --> Codigo da cooperativa
                                  ,pr_cdagenci   IN crapass.cdagenci%TYPE   --> Codigo da cooperativa
                                  ,pr_nrdconta   IN crapass.nrdconta%TYPE   --> Codigo da cooperativa
