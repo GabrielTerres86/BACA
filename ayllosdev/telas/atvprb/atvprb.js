@@ -1,44 +1,34 @@
 /*!
  * FONTE        : atvprb.js
- * CRIAÇÃO      : Marcel Kohls / AMCom
- * DATA CRIAÇÃO : 19/03/2018
- * OBJETIVO     : Biblioteca de funções da tela ATVPRB
+ * CRIAÃ‡ÃƒO      : Marcel Kohls / AMCom
+ * DATA CRIAÃ‡ÃƒO : 19/03/2018
+ * OBJETIVO     : Biblioteca de funÃ§Ãµes da tela ATVPRB
  */
 
-//Formulários e Tabela
-var frmCab   		= 'frmCab';
-var frmCntCtr		= 'frmCntCtr';
-var frmAtvPrb		= 'frmAtvPrb';
-var frmFiltro		= 'frmFiltro';
-
-var	cddopcao		= 'I';
+var cCddopcao, btnOK, cTodosCabecalho;
+var	cddopcao = 'C';
+var frmCab = 'frmCab';
+var frmCad = 'frmCad';
+var frmFiltro = 'frmFiltro';
+var fsListagem = 'fsListagem';
 
 $(document).ready(function() {
 	estadoInicial();
+
+	$(this).unbind('keyup');
+	$(this).unbind('keydown');
 });
 
-
-// inicio
 function estadoInicial() {
-	$('#divTela').fadeTo(0,0.1);
+	$('#divTela').fadeTo(0, 0.1);
 
 	fechaRotina( $('#divRotina') );
 	$('#divRotina').html('');
 
-	// retira as mensagens
 	hideMsgAguardo();
-
-	// formailzia
 	formataCabecalho();
 
-	// remove o campo prosseguir
-	trocaBotao('Prosseguir');
-
-	// conta contrato
-	$('#'+frmCntCtr, '#divTela').css({'display':'none'});
-	$('#'+frmFiltro, '#divTela').css({'display':'none'});
-	$('#'+frmAtvPrb, '#divTela').css({'display':'none'});
-	$('#divBotoes', '#divTela').css({'display':'none'});
+  $('#'+frmFiltro, '#divTela').css({'display':'none'});
 
 	cTodosCabecalho.limpaFormulario().removeClass('campoErro');
 
@@ -49,14 +39,179 @@ function estadoInicial() {
 	removeOpacidade('divTela');
 }
 
-function manterRotina( operacao ) {
+function formataCabecalho() {
+	// label
+	var rCddopcao = $('label[for="cddopcao"]', '#'+frmCab);
+	rCddopcao.addClass('rotulo').css({'width':'42px'});
+
+	// input
+	cCddopcao = $('#cddopcao', '#'+frmCab);
+	cCddopcao.css({'width':'600px'});
+
+	// outros
+	cTodosCabecalho = $('input[type="text"],select','#'+frmCab);
+	cTodosCabecalho.desabilitaCampo();
+	btnOK			= $('#btnOk', '#'+frmCab);
+
+	if ( $.browser.msie ) {
+		cCddopcao.css({'width':'598px'});
+	}
+
+	// perssiona tecla enter do combo opcoes
+	cCddopcao.unbind('keydown').bind('keydown', function(e) {
+		if (e.keyCode == 13) {
+			btnOK.click();
+			return false;
+		}
+	});
+
+	// Se clicar no botao OK
+	btnOK.unbind('click').bind('click', function() {
+		exibeAreaFiltros();
+	});
+
+	return false;
+}
+
+function exibeAreaFiltros() {
+	cddopcao 	= cCddopcao.val();
+
+	if (cddopcao) {
+		if ( divError.css('display') == 'block' ) { return false; }
+		if ( cCddopcao.hasClass('campoTelaSemBorda')  ) { return false; }
+
+		cCddopcao.desabilitaCampo();
+
+		formataFiltros();
+	} else {
+		showError("error","Selecione uma op&ccedil;&atilde;o antes de continuar");
+	}
+
+	return false;
+}
+
+function formataFiltros() {
+	var rNrctrato = $('label[for="nrctrato"]', '#'+frmFiltro);
+	var rNrdconta = $('label[for="nrdconta"]', '#'+frmFiltro);
+	var rFlmotivo = $('label[for="flmotivo"]', '#'+frmFiltro);
+	var rFldtinic = $('label[for="fldtinic"]', '#'+frmFiltro);
+	var rFldtfina = $('label[for="fldtfina"]', '#'+frmFiltro);
+
+	rNrdconta.addClass('rotulo-linha').css({'width':'90px'});
+	rNrctrato.css({'width':'70px'});
+	rFlmotivo.addClass('rotulo').css({'width':'93px'});
+	rFldtinic.addClass('rotulo').css({'width':'93px'});
+	rFldtfina.css({'width':'337px'});
+
+	// input
+	var cNrctrato = $('#nrctrato', '#'+frmFiltro);
+	var cNrdconta = $('#nrdconta', '#'+frmFiltro);
+	var cFlmotivo = $('#flmotivo', '#'+frmFiltro);
+	var cFldtinic = $('#fldtinic', '#'+frmFiltro);
+	var cFldtfina = $('#fldtfina', '#'+frmFiltro);
+
+	cNrctrato.css({'width':'120px'}).addClass('inteiro').attr('maxlength','14');
+	cNrdconta.css({'width':'120px'}).addClass('conta pesquisa');
+	cFlmotivo.css({'width':'520px'});
+	cFldtinic.css({'width':'90px'}).addClass('data');
+	cFldtfina.css({'width':'90px'}).addClass('data');
+
+	$('#'+frmFiltro, '#divTela').css({'display':'block'});
+
+	cNrctrato.habilitaCampo();
+	cNrdconta.habilitaCampo();
+	cFlmotivo.habilitaCampo();
+	cFldtinic.habilitaCampo();
+	cFldtfina.habilitaCampo();
+
+	cNrdconta.unbind('keydown').bind('keydown', function(e) {
+		if (e.keyCode == 13 || e.keyCode == 9) {
+			validaDigitoConta(frmFiltro);
+		}
+	});
+
+	habilitarCamposFiltro();
+	limparCamposFiltro();
+	layoutPadrao();
+	cNrdconta.focus();
+
+	$("#btnLupaAssociado", "#"+frmFiltro).click(function(){
+		mostraPesquisaAssociado('nrdconta', frmFiltro );
+	});
+
+	return false;
+}
+
+function limparCamposFiltro() {
+	$('#'+frmFiltro+' input[type="text"]').val('');
+	$('#flmotivo').val("0");
+	$('#fldtinic, #fldtfina').val(datahoje);
+	habilitaBotoesFiltro();
+}
+
+function habilitaBotoesFiltro() {
+	$('#'+frmFiltro+' #divBotoesFiltro').css({'display':'block'});
+}
+
+function desabilitaBotoesFiltro() {
+	$('#'+frmFiltro+' #divBotoesFiltro').css({'display':'none'});
+}
+
+function desabilitarCamposFiltro() {
+	var camposFiltro = $('input[type="text"],select','#'+frmFiltro);
+
+	$.each(camposFiltro, function(idx, campo){
+		$(campo).desabilitaCampo();
+	});
+}
+
+function habilitarCamposFiltro() {
+	var camposFiltro = $('input[type="text"],select','#'+frmFiltro);
+
+	$.each(camposFiltro, function(idx, campo){
+		$(campo).habilitaCampo();
+	});
+}
+
+function validaDigitoConta(frmOrigem){
+	var cNroConta = $('#nrdconta', '#'+frmOrigem);
+	var nrdconta = retiraCaracteres(cNroConta.val(), "0123456789", true);
+
+	if (!validaNroConta(nrdconta)) {
+		showError("error","Conta/dv inv&aacute;lida.","Alerta - Ayllos");
+		cNroConta.val('');
+		cNroConta.focus();
+		return false;
+	}
+}
+
+function voltarFiltro() {
+	estadoInicial();
+
+	return false;
+}
+
+function continuarFiltro() {
+	var dados = {
+		operacao: (cddopcao == "C" ? 'Valida_Dados' : "Historico_Dados"),
+		nrdconta: normalizaNumero( $("#"+frmFiltro+" #nrdconta").val() ),
+		nrctrato: normalizaNumero( $("#"+frmFiltro+" #nrctrato").val() ),
+		flmotivo: $("#"+frmFiltro+" #flmotivo").val(),
+		datainic: $("#"+frmFiltro+" #fldtinic").val(),
+		datafina: $("#"+frmFiltro+" #fldtfina").val(),
+		dsobserv: ""
+	};
+
+	manterRotina(dados);
+}
+
+function manterRotina(dados) {
 	hideMsgAguardo();
 
-	var nrdconta = normalizaNumero( cNrdconta.val() );
-	var nrctrato = normalizaNumero( cNrctrato.val() );
-	var mensagem = '';
+	var mensagem = "";
 
-	switch( operacao ) {
+	switch( dados.operacao ) {
+		case 'Historico_Dados':	mensagem = 'Aguarde, listando historico ...';	break;
 		case 'Valida_Dados':	mensagem = 'Aguarde, validando dados ...';	break;
 		case 'Altera_Dados':	mensagem = 'Aguarde, alterando dados ...';	break;
 		case 'Exclui_Dados':	mensagem = 'Aguarde, excluindo registro ...';	break;
@@ -70,11 +225,15 @@ function manterRotina( operacao ) {
 			type  : 'POST',
 			url   : UrlSite + 'telas/atvprb/manter_rotina.php',
 			data: {
-				operacao	: operacao,
-				cddopcao	: cddopcao,
-				nrdconta	: nrdconta,
-				nrctrato	: nrctrato,
-				redirect	: 'script_ajax'
+				cddopcao: cddopcao,
+				operacao: dados.operacao,
+				nrdconta: dados.nrdconta,
+				nrctrato: dados.nrctremp,
+				flmotivo: dados.flmotivo,
+				datainic: dados.datainic,
+				datafina: dados.datafina,
+				dsobserv: dados.dsobserv,
+				redirect: 'script_ajax'
 			},
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
@@ -84,9 +243,8 @@ function manterRotina( operacao ) {
 				try {
 					hideMsgAguardo();
 
-					if (cddopcao == 'H') {
-						$('#fsHistorico #conteudoHistorico').html(response);
-						exibeFrmAtvPrb();
+					if ((dados.operacao == 'Valida_Dados' || dados.operacao == 'Historico_Dados')&& response.indexOf("error") == -1) {
+						carregaListagem(response);
 					} else {
 						eval(response);
 					}
@@ -101,323 +259,251 @@ function manterRotina( operacao ) {
 	return false;
 }
 
-function controlaPesquisas() {
-	//  CONTROLE CONTA/DV
-	var linkConta = $('a:eq(0)','#'+frmCntCtr);
+function carregaListagem(conteudo) {
+	desabilitarCamposFiltro();
+	desabilitaBotoesFiltro();
+	$('#'+fsListagem).css({'display':'block'});
+	$('#'+fsListagem+' #conteudoListagem').html(conteudo);
 
-	if ( linkConta.prev().hasClass('campoTelaSemBorda') ) {
-		linkConta.addClass('lupa').css('cursor','auto').unbind('click').bind('click', function() { return false; });
-	} else {
-		linkConta.css('cursor','pointer').unbind('click').bind('click', function() {
-			mostraPesquisaAssociado('nrdconta', frmCntCtr );
-		});
-	}
-
-	return false;
-}
-
-// formata
-function formataCabecalho() {
-
-	// label
-	rCddopcao = $('label[for="cddopcao"]', '#'+frmCab);
-	rCddopcao.addClass('rotulo').css({'width':'42px'});
-
-	// input
-	cCddopcao = $('#cddopcao', '#'+frmCab);
-	cCddopcao.css({'width':'600px'});
-
-	// outros
-	cTodosCabecalho = $('input[type="text"],select','#'+frmCab);
-	cTodosCabecalho.desabilitaCampo();
-	btnOK1			= $('#btnOk1', '#'+frmCab);
-
-	if ( $.browser.msie ) {
-		cCddopcao.css({'width':'598px'});
-	}
-
-	// perssiona tecla enter do combo opcoes
-	cCddopcao.unbind('keydown').bind('keydown', function(e) {
-		if (e.keyCode == 13) {
-			btnOK1.click();
-			return false;
-		}
-	});
-
-	// Se clicar no botao OK
-	btnOK1.unbind('click').bind('click', function() {
-		if ( divError.css('display') == 'block' ) { return false; }
-		if ( cCddopcao.hasClass('campoTelaSemBorda')  ) { return false; }
-
-		//
-		cCddopcao.desabilitaCampo();
-		cddopcao 	= cCddopcao.val();
-
-		$('input, select', '#'+frmCntCtr).limpaFormulario();
-		formataContaContrato();
-		trocaBotao('Prosseguir');
-		return false;
-	});
-
-	controlaPesquisas();
-	return false;
-}
-
-function formataContaContrato() {
-	highlightObjFocus($('#'+frmCntCtr));
-
-	// label
-	rNrctrato = $('label[for="nrctrato"]', '#'+frmCntCtr);
-	rNrdconta = $('label[for="nrdconta"]', '#'+frmCntCtr);
-	rFlmotivo = $('label[for="flmotivo"]', '#'+frmFiltro);
-	rFldtinic = $('label[for="fldtinic"]', '#'+frmFiltro);
-	rFldtfina = $('label[for="fldtfina"]', '#'+frmFiltro);
-
-	rNrdconta.addClass('rotulo-linha').css({'width':'70px'});
-	rNrctrato.css({'width':'70px'});
-	rFlmotivo.addClass('rotulo-linha').css({'width':'90px'});
-	rFldtinic.addClass('rotulo').css({'width':'93px'});
-	rFldtfina.css({'width':'337px'});
-
-	// input
-	cNrctrato = $('#nrctrato', '#'+frmCntCtr);
-	cNrdconta = $('#nrdconta', '#'+frmCntCtr);
-	cFlmotivo = $('#flmotivo', '#'+frmFiltro);
-	cFldtinic = $('#fldtinic', '#'+frmFiltro);
-	cFldtfina = $('#fldtfina', '#'+frmFiltro);
-
-	cNrctrato.css({'width':'120px'}).addClass('inteiro').attr('maxlength','14');
-	cNrdconta.css({'width':'120px'}).addClass('conta pesquisa');
-	cFlmotivo.css({'width':'520px'});
-	cFldtinic.css({'width':'90px'}).addClass('data');
-	cFldtfina.css({'width':'90px'}).addClass('data');
-
-	$('input', '#frmCntCtr').desabilitaCampo();
-
-	$('#'+frmCntCtr).css({'display':'block'});
-	$('#divBotoes', '#divTela').css({'display':'block'});
-
-	cNrctrato.habilitaCampo();
-	cNrdconta.habilitaCampo();
-	cFlmotivo.habilitaCampo();
-	cFldtinic.habilitaCampo();
-	cFldtfina.habilitaCampo();
-
-	formataAtvPrb();
-
-	layoutPadrao();
-	controlaPesquisas();
-	cNrdconta.focus();
-	return false;
-}
-
-function formataAtvPrb() {
-
-	highlightObjFocus($('#'+frmAtvPrb));
-
-	cTodosAtvPrb = $('input, select', '#'+frmAtvPrb);
-	cTodosAtvPrb.desabilitaCampo();
-
-	adicionaMotivosSistema();
-
-	if (cddopcao == 'H') {
-		$('#'+frmFiltro, '#divTela').css({'display':'block'});
-	} else if (cddopcao !== 'H' && isHabilitado(cNrdconta) == false) {
-		//label			
-		rTpmotivo = $('label[for="tpmotivo"]', '#'+frmAtvPrb);
-		rObservac = $('label[for="observac"]', '#'+frmAtvPrb);
-		rDtinclus = $('label[for="dtinclus"]', '#'+frmAtvPrb);
-		rDtexclus = $('label[for="dtexclus"]', '#'+frmAtvPrb);
-
-		rTpmotivo.addClass('rotulo-linha').css({'width':'90px'});
-		rObservac.css({'width':'88px'});
-		rDtinclus.addClass('rotulo-linha').css({'width':'90px'});
-		rDtexclus.css({'width':'188px'});
-
-		// input
-		cTpmotivo = $('#tpmotivo', '#'+frmAtvPrb);
-		cObservac = $('#observac', '#'+frmAtvPrb);
-		cDtinclus = $('#dtinclus', '#'+frmAtvPrb);
-		cDtexclus = $('#dtexclus', '#'+frmAtvPrb);
-
-		cTpmotivo.css({'width':'240px'});
-		cObservac.css({'width':'220px'});
-		cDtinclus.css({'width':'140px'});
-		cDtexclus.css({'width':'140px'});
-
-		if (cddopcao !== 'C' && cddopcao !== 'E'){
-			cTpmotivo.habilitaCampo();
-			cObservac.habilitaCampo();
-
-			$('#'+frmAtvPrb+' #tpmotivo .mtvSistema').remove();
-		}
-
-		if (cddopcao == 'I') {
-			$('#datasRegistro', '#'+frmAtvPrb).hide();
-		} else {
-			$('#datasRegistro', '#'+frmAtvPrb).show();
-		}
-	}
-
-	controlaPesquisas();
-	return false;
-}
-
-function prosseguirAtvPrb() {
-	if ( in_array(cddopcao, ['C', 'A', 'E', 'I', 'H'])) {
-		if ( isHabilitado(cNrdconta) || isHabilitado(cNrctrato) ) {
-			manterRotina('Valida_Dados');
-		} else {
-			if (cddopcao == 'E') {
-				showConfirmacao('Você tem certeza de que deseja excluir este registro?', 'Excluir - Ayllos', 'manterRotina("Exclui_Dados");', '', 'sim.gif', 'nao.gif');
-			} else if (cddopcao == 'A') {
-				showConfirmacao('Confirmar as alterações deste registro?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina("Altera_Dados");', '', 'sim.gif', 'nao.gif');
-			} else if (cddopcao == 'I') {
-				manterRotina("Inclui_Dados");
-			} else {
-				showError("inform","Opção indefinida.","Notifica&ccedil;&atilde;o - Ayllos","estadoInicial();");
-			}
-		}
-	}
-}
-
-function adicionaMotivosSistema() {
-	$('#'+frmAtvPrb+' #tpmotivo .mtvSistema').remove();
-
-	$('#'+frmAtvPrb+' #tpmotivo').prepend( "<option class='mtvSistema' value='1'>1  - 90 dias atraso</option>"
-										  +"<option class='mtvSistema' value='2'>2  - 90 dias atraso (Reestruturação)</option>"
-										  +"<option class='mtvSistema' value='3'>3  - Opera&ccedil;&otilde;es a partir do risco D sem atraso</option>"
-										  +"<option class='mtvSistema' value='4'>4  - Prejuízo</option>"
-										  +"<option class='mtvSistema' value='5'>5  - Penhora</option>"
-										  +"<option class='mtvSistema' value='6'>6  - Bloqueio terceiros</option>"
-										  +"<option class='mtvSistema' value='7'>7  - Outros juridico</option>" );
-}
-
-function voltarAtvPrb() {
-	if (!isHabilitado(cNrdconta) && !isHabilitado(cNrctrato)) {
-		$('#'+frmAtvPrb+" fieldset").css({'display':'none'});
-		
-		cTodosAtvPrb = $('input, select', '#'+frmCntCtr);
-		cTodosAtvPrb.limpaFormulario();
-
-		cNrctrato.habilitaCampo();
-		cNrdconta.habilitaCampo().focus();
-
-		trocaBotao('Prosseguir');
-	} else {
-		estadoInicial();
-	}
-
-	return false;
-}
-
-// valida
-function validaCampo( valor, campo, frm ) {
-	// conta
-	if ( in_array(campo,['nrdconta','nrctaavl']) && !validaNroConta(valor) ) {
-		showError('error','Dígito errado.','Alerta - Ayllos','$(\'#'+campo+'\',\'#'+frm+'\').focus();');
-		return false;
-
-	// cpf/cnpj
-	} else if ( campo == 'nrctrato' && verificaTipoPessoa(valor) == 0 ) {
-		showError('error','Dígito errado.','Alerta - Ayllos','$(\'#'+campo+'\',\'#'+frm+'\').focus();');
-		return false;
-
-	// identificacao
-	} else if ( campo == 'tpctrdev' && !in_array(valor,[1,2,3]) ) {
-		showError('error','Opcao errada.','Alerta - Ayllos','$(\'#'+campo+'\',\'#'+frm+'\').focus();');
-		return false;
-	}
-
-	return true;
-}
-
-function habilitaConta() {
-	cNrctrato.desabilitaCampo();
-	cNrdconta.habilitaCampo();
-	cNrdconta.focus();
-	controlaPesquisas();
-	return false;
-}
-
-// botoes
-function btnVoltar() {
-	voltarAtvPrb();
-
-	controlaPesquisas();
-	return false;
-}
-
-function btnContinuar() {
-	if ( divError.css('display') == 'block' ) { return false; }
-
-	prosseguirAtvPrb();
-
-	controlaPesquisas();
-	return false;
-}
-
-function trocaBotao( botao ) {
-	$('#divBotoes','#divTela').html('');
-	$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>');
-
-	if ( botao != '') {
-		$('#divBotoes','#divTela').append('&nbsp;<a href="#" class="botao" onclick="btnContinuar(); return false;" >'+botao+'</a>');
-	}
-	return false;
-}
-
-function exibeFrmAtvPrb() {
-	$('input', '#'+frmCntCtr).desabilitaCampo();	
-	$('#'+frmAtvPrb).css({'display':'block'});
-	$('#'+frmAtvPrb+" fieldset").css({'display':'none'});
-	
-	if (cddopcao == 'H') {
-		$('#'+frmAtvPrb+" #fsHistorico").css({'display':'block'});
+	if (cddopcao == 'C') {
+		formataConsulta();
+	} else if (cddopcao == 'H') {
 		formataHistorico();
-		trocaBotao('');
-	} else {
-		$('#'+frmAtvPrb+" #fsDados").css({'display':'block'});
-		
-		formataAtvPrb();
-
-		if (cddopcao == 'E') {
-			trocaBotao('Excluir');
-		} else if (cddopcao !== 'C') {
-			trocaBotao('Salvar');
-		} else {
-			trocaBotao('');
-		}
 	}
 }
 
 function formataHistorico() {
-	var divRegistro = $('div.divRegistros','#divConta');		
-	var tabela      = $('table', divRegistro );
-	var linha       = $('table > tbody > tr', divRegistro );
-			
-	divRegistro.css({'height':'130px'});
-	
+	var dvRegistro = $('div.divRegistros','#divConta');
+	var tabela      = $('table', dvRegistro );
+	var linha       = $('table > tbody > tr', dvRegistro );
+
+	dvRegistro.css({'height':'130px'});
+
 	var ordemInicial = new Array();
-	
+
 	var arrayLargura = new Array();
 	arrayLargura[0] = '60px';
 	arrayLargura[1] = '60px';
 	arrayLargura[2] = '300px';
 	arrayLargura[3] = '98px';
-		
+
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'right';
 	arrayAlinha[1] = 'right';
 	arrayAlinha[3] = 'center';
 	arrayAlinha[4] = 'center';
-	
+
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
 
 	// centraliza a divRotina
 	$('#divRotina').css({'width':'425px'});
 	$('#divConteudo').css({'width':'400px'});
 	$('#divRotina').centralizaRotinaH();
-	
+
 	return false;
+}
+
+function formataConsulta() {
+	var dvRegistro = $('div.divRegistros','#divConta');
+	var tabela      = $('table', dvRegistro );
+	var linha       = $('table > tbody > tr', dvRegistro );
+
+	dvRegistro.css({'height':'130px'});
+
+	var ordemInicial = new Array();
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '60px';
+	arrayLargura[1] = '60px';
+	arrayLargura[2] = '300px';
+	arrayLargura[3] = '98px';
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'right';
+	arrayAlinha[1] = 'right';
+	arrayAlinha[3] = 'center';
+	arrayAlinha[4] = 'center';
+
+	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
+
+	// centraliza a divRotina
+	$('#divRotina').css({'width':'425px'});
+	$('#divConteudo').css({'width':'400px'});
+	$('#divRotina').centralizaRotinaH();
+
+	$('#ckApenasAtivos').change(function() { filtraAtivos(); });
+
+	// click na listagem
+	$(".divRegistros tbody tr").click(function(el){exibeObservacoes(el);});
+
+	//label observacao
+	var rDsobserv = $('label[for="dsobserv"]', '#'+fsListagem);
+	rDsobserv.addClass('rotulo-linha').css({'width':'90px'});
+
+	// input observacao
+	var cDsobserv = $('#dsobserv', '#'+fsListagem);
+	cDsobserv.css({'width':'590px'});
+
+	return false;
+}
+
+function exibeObservacoes(el) {
+	$('#dsobserv', '#'+fsListagem).val($(el.currentTarget).find('td[data-campo="dsobserv"]').html());
+}
+
+function voltarListagem() {
+	$('#'+fsListagem).css({'display':'none'});
+	habilitarCamposFiltro();
+	habilitaBotoesFiltro();
+}
+
+function capturaDadosSelecionado() {
+	var dadosSelecionado = $(".divRegistros tbody .corSelecao td");
+	var retorno = {};
+
+	$.each(dadosSelecionado, function(idx, el){
+		var jsEl = $(el);
+
+		retorno[jsEl.data('campo')] = jsEl.html();
+	});
+
+	return retorno;
+}
+
+function abreAlterar() {
+	var dadosSelecionado = capturaDadosSelecionado();
+
+	if (dadosSelecionado.dtexclus.length > 0) {
+		showError('error','Este registro j&aacute; foi exclu&iacute;do e n&atilde;o pode ser alterado','Alerta - Ayllos');
+	}	else if (dadosSelecionado.nrdconta) {
+		exibeFormCadastro(dadosSelecionado);
+	} else {
+		showError('error','Selecione um registro.','Alerta - Ayllos');
+	}
+}
+
+function perguntaExcluir() {
+	var dadosSelecionado = capturaDadosSelecionado();
+
+	if (dadosSelecionado.nrdconta) {
+		showConfirmacao('Marcar este registro como exclu&iacute;do?', 'Excluir - Ayllos', 'excluirRegistro()', '', 'sim.gif', 'nao.gif');
+	} else {
+		showError('error','Selecione um registro.','Alerta - Ayllos');
+	}
+}
+
+function abreIncluir() {
+	exibeFormCadastro({});
+}
+
+function exibeFormCadastro(dados) {
+    exibeRotina($('#divUsoGenerico'));
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atvprb/form_cadastro.php',
+        data: {
+						nrdconta:	dados.nrdconta,
+						nrctremp: dados.nrctremp,
+						dsobserv: dados.dsobserv,
+						cdmotivo: dados.cdmotivo,
+            redirect: 'html_ajax'
+            },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error','N&atilde;to foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos');
+        },
+        success: function(response) {
+            $('#divUsoGenerico').html(response);
+        }
+    });
+}
+
+function filtraAtivos() {
+	var itensListagem = $(".divRegistros tbody tr");
+	var apenasAtivos = $("#"+fsListagem+" #ckApenasAtivos").prop('checked');
+
+	$.each(itensListagem, function(idx, item) {
+		if ($(item).find('td[data-campo="dtexclus"]').html().length > 0) {
+			$(item).css('visibility', (apenasAtivos ? 'collapse' : 'visible'));
+		}
+	});
+}
+
+function formataCadastro(operacao) {
+	//label
+	var rNrdconta = $('label[for="nrdconta"]', '#'+frmCad);
+	var rNrctrato = $('label[for="nrctremp"]', '#'+frmCad);
+	var rFlmotivo = $('label[for="flmotivo"]', '#'+frmCad);
+	var rDsobserv = $('label[for="dsobserv"]', '#'+frmCad);
+
+	rNrdconta.addClass('rotulo-linha').css({'width':'90px'});
+	rNrctrato.addClass('rotulo-linha').css({'width':'90px'});
+	rFlmotivo.addClass('rotulo').css({'width':'93px'});
+	rDsobserv.addClass('rotulo').css({'width':'93px'});
+
+	// input
+	var cNrdconta = $('#nrdconta', '#'+frmCad);
+	var cNrctrato = $('#nrctremp', '#'+frmCad);
+	var cFlmotivo = $('#flmotivo', '#'+frmCad);
+	var cDsobserv = $('#dsobserv', '#'+frmCad);
+
+	cNrdconta.css({'width':'120px'}).addClass('conta pesquisa');
+	cNrctrato.css({'width':'120px'}).addClass('inteiro').attr('maxlength','14');
+	cFlmotivo.css({'width':'240px'});
+	cDsobserv.css({'width':'240px'});
+
+	if (operacao == "Altera_Dados") {
+		cNrdconta.desabilitaCampo();
+		cNrctrato.desabilitaCampo();
+		cFlmotivo.desabilitaCampo();
+	} else {
+		cNrdconta.habilitaCampo();
+		cNrctrato.habilitaCampo();
+		cFlmotivo.habilitaCampo();
+	}
+
+	cDsobserv.habilitaCampo();
+	layoutPadrao();
+
+	cNrdconta.unbind('keydown').bind('keydown', function(e) {
+		if (e.keyCode == 13 || e.keyCode == 9) {
+			validaDigitoConta(frmCad);
+		}
+	});
+
+	$("#btnLupaAssociado", "#"+frmCad).click(function(){
+		mostraPesquisaAssociado('nrdconta', frmCad);
+	});
+}
+
+function excluirRegistro() {
+	var dadosSelecionado = capturaDadosSelecionado();
+	var dados = {};
+
+	if (dadosSelecionado.nrdconta) {
+			dados = dadosSelecionado;
+
+			dados.operacao = 'Exclui_Dados';
+			dados.flmotivo = dados.cdmotivo;
+
+			manterRotina(dados);
+	}
+}
+
+function salvarCadastro(operacao) {
+	var dados = {};
+
+	dados.operacao = operacao;
+	dados.nrdconta = $("#"+frmCad+" #nrdconta").val();
+	dados.nrctremp = $("#"+frmCad+" #nrctremp").val();
+	dados.flmotivo = $("#"+frmCad+" #flmotivo").val();
+	dados.dsobserv = $("#"+frmCad+" #dsobserv").val();
+
+	if (dados.flmotivo == 65 && dados.dsobserv == "") { // se cod motivo = outros, precisa preencher observacao
+		showError('error','Favor preencher o campo de observa&ccedil;&otilde;es','Alerta - Ayllos');
+	} else {
+		manterRotina(dados);
+	}
 }

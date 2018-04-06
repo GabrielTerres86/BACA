@@ -1,30 +1,31 @@
-<? 
-/*!
+<?
+/*
  * FONTE        : atvprb.php
- * CRIAﾃ?ﾃグ      : Marcel Kohls / AMCom
- * DATA CRIAﾃ?ﾃグ : 20/03/2018
+ * CRIAﾃ�ﾃグ      : Marcel Kohls / AMCom
+ * DATA CRIAﾃ�ﾃグ : 20/03/2018
  * OBJETIVO     : Mostrar tela ATVPRB
  * --------------
  */
-?>
 
-<? 
 	session_start();
 	require_once('../../includes/config.php');
-	require_once('../../includes/funcoes.php');	
+	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
-	
-	require_once("../../includes/carrega_permissoes.php");
 
+	require_once("../../includes/carrega_permissoes.php");
+	setVarSession("opcoesTela",$opcoesTela);
+
+	include ("dpto_permissoes.php");
 ?>
 <script type="text/javascript">
-var cdcooper = "<? echo $glbvars['cdcooper']; ?>";
+	var cdcooper = "<? echo $glbvars['cdcooper']; ?>";
+	var datahoje = "<? echo $glbvars['dtmvtolt']; ?>"
 </script>
 <html>
     <head>
-		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">	
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 		<meta http-equiv="Pragma" content="no-cache">
 		<title><? echo $TituloSistema; ?></title>
 		<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
@@ -44,12 +45,12 @@ var cdcooper = "<? echo $glbvars['cdcooper']; ?>";
 	<tr>
 		<td id="tdConteudo" valign="top">
 			<table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
-				<tr> 
+				<tr>
 					<td width="175" valign="top">
 						<table width="100%" border="0" cellpadding="0" cellspacing="0">
 							<tr>
 								<td id="tdMenu"><?php include("../../includes/menu.php"); ?></td>
-							</tr>  
+							</tr>
 						</table>
 					</td>
 					<td id="tdTela" valign="top">
@@ -68,7 +69,7 @@ var cdcooper = "<? echo $glbvars['cdcooper']; ?>";
 								</td>
 							</tr>
 							<tr>
-								<td id="tdConteudoTela" class="tdConteudoTela" align="center">								
+								<td id="tdConteudoTela" class="tdConteudoTela" align="center">
 									<table width="100%" border="0" cellpadding="3" cellspacing="0">
 										<tr>
 											<td style="border: 1px solid #F4F3F0;">
@@ -78,33 +79,35 @@ var cdcooper = "<? echo $glbvars['cdcooper']; ?>";
 															<table width="680" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
 																<tr>
 																	<td>
-																	
+
 																		<!-- INCLUDE DA TELA DE PESQUISA -->
 																		<? require_once("../../includes/pesquisa/pesquisa.php"); ?>
-																		
+
 																		<!-- INCLUDE DA TELA DE PESQUISA ASSOCIADO -->
 																		<? require_once("../../includes/pesquisa/pesquisa_associados.php"); ?>
-																		
+
 																		<div id="divRotina"></div>
-																		<div id="divUsoGenerico"></div>
-																		
+																		<div id="divUsoGenerico" style="z-index: 101;"></div>
+
 																		<div id="divTela">
 																			<? include('form_cabecalho.php'); ?>
-																			<? include('form_contacontrato.php'); ?>
 																			<? include('form_filtro.php'); ?>
-																			<? include('form_atvprb.php'); ?>
-																			<? include('div_botoes.php'); ?>
+
+																			<fieldset id="fsListagem" style="display:none; padding-top: 15px;">
+																				<div id="conteudoListagem">
+																				</div>
+																			</fieldset>
 																		</div>
-																		
+
 																	</td>
 																</tr>
-															</table>					
+															</table>
 														</td>
 													</tr>
 												</table>
 											</td>
 										</tr>
-									</table>																
+									</table>
 								</td>
 							</tr>
 						</table>
