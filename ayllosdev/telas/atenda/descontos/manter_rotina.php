@@ -121,6 +121,7 @@
 				$msgErro = $xmlObj->roottag->tags[0]->cdata;
 			}
 			exibeErro(htmlentities($msgErro));
+			exit();
 		}
 		
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "MSG") {
@@ -263,7 +264,10 @@
 					";
 	    	foreach($dados->tags AS $t){
 	    		$html .= "<tr id='titulo_".getByTagName($t->tags,'nrnosnum')."'>";
-	    		$html .=	"<td><input type='hidden' name='selecionados' value='".getByTagName($t->tags,'nrnosnum')."'/>".getByTagName($t->tags,'nrcnvcob')."</td>";
+	    		$html .=	"<td>
+	    						<input type='hidden' name='vltituloselecionado' value='".formataMoeda(getByTagName($t->tags,'vltitulo'))."'/>
+	    						<input type='hidden' name='selecionados' value='".getByTagName($t->tags,'nrnosnum')."'/>".getByTagName($t->tags,'nrcnvcob')."
+	    					</td>";
 	    		$html .=	"<td>".getByTagName($t->tags,'nrdocmto')."</td>";
 	    		$html .=	"<td>".getByTagName($t->tags,'nrinssac').' - '.getByTagName($t->tags,'nmdsacad')."</td>";
 	    		$html .=	"<td>".getByTagName($t->tags,'dtvencto')."</td>";
@@ -288,6 +292,8 @@
 	    else{
 			echo '<script>';
 			exibeErro("N&atilde;o foi encontrado nenhum t&iacute;tulo utilizando esses filtros.");
+			echo 'setTimeout(function(){bloqueiaFundo($("#divError"))},1)';
+
 			echo '</script>';
 	    }
     	exit();
@@ -316,7 +322,7 @@
 
 	    // Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-	       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","mostrarBorderoResumo();hideMsgAguardo();bloqueiaFundo(divRotina);");';
+	       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","hideMsgAguardo();bloqueiaFundo(divRotina);");';
 			exit;
 		}
 
@@ -331,7 +337,7 @@
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
-		exit();
+		// exit();
 	}
 
 	function exibeErroNew($msgErro,$nmdcampo) {

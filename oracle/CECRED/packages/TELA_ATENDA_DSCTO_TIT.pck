@@ -79,7 +79,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
         cddlinha 		craplim.cddlinha%TYPE,
         tpctrlim 		craplim.tpctrlim%TYPE,
         vlutiliz    NUMBER,
-        qtutiliz    INTEGER
+        qtutiliz    INTEGER,
+        dtfimvig    craplim.dtfimvig%TYPE,
+        pctolera    INTEGER
         
   );
 
@@ -2554,6 +2556,20 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
        -- Tratamento de erros
        vr_exc_erro exception;
        
+       --TAB
+       pr_tab_dados_dsctit cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052
+       pr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052
+       vr_tipopessoa integer;
+      CURSOR cr_crapass IS
+        SELECT
+          crapass.inpessoa
+        FROM
+          crapass
+        WHERE
+          crapass.nrdconta = pr_nrdconta
+          AND crapass.cdcooper = pr_cdcooper;
+      rw_crapass cr_crapass%rowtype;
+      
       CURSOR cr_craplim IS      
         SELECT 
           craplim.dtpropos,
@@ -2562,7 +2578,8 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
           craplim.vllimite,
           craplim.qtdiavig,
           craplim.cddlinha,
-          craplim.tpctrlim
+          craplim.tpctrlim,
+          craplim.dtfimvig
         FROM 
           craplim
         where 
@@ -2596,6 +2613,13 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
         
         vr_dtmvtolt := to_date(pr_dtmvtolt, 'DD/MM/RRRR');
         
+        OPEN cr_crapass;
+        FETCH cr_crapass INTO rw_crapass;
+        IF (cr_crapass%NOTFOUND) THEN
+          vr_dscritic := 'Cooperado não cadastrado';
+          raise vr_exc_erro;
+        END IF;
+        
         OPEN cr_craplim;
         FETCH cr_craplim INTO rw_craplim;
         IF (cr_craplim%NOTFOUND) THEN
@@ -2613,7 +2637,21 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
            vr_vlutiliz := rw_craptdb.vlutiliz;
            vr_qtutiliz := rw_craptdb.qtutiliz;
         END IF;
-        
+
+      --carregando os dados de prazo limite da TAB052 
+      dsct0002.pc_busca_parametros_dsctit(pr_cdcooper, --pr_cdcooper,
+                                                 null, --Agencia de operação
+                                                 null, --Número do caixa
+                                                 null, --Operador
+                                                 vr_dtmvtolt, -- Data da Movimentação
+                                                 null, --Identificação de origem
+                                                 1, --pr_tpcobran: 1-REGISTRADA / 0-NÃO REGISTRADA
+                                                 rw_crapass.inpessoa, --1-PESSOA FÍSICA / 2-PESSOA JURÍDICA
+                                                 pr_tab_dados_dsctit,
+                                                 pr_tab_cecred_dsctit,
+                                                 vr_cdcritic,
+                                                 vr_dscritic);
+      
         pr_tab_dados_limite(0).dtpropos := rw_craplim.dtpropos;
         pr_tab_dados_limite(0).dtinivig := rw_craplim.dtinivig;
         pr_tab_dados_limite(0).nrctrlim := rw_craplim.nrctrlim;
@@ -2623,6 +2661,8 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
         pr_tab_dados_limite(0).tpctrlim := rw_craplim.tpctrlim;
         pr_tab_dados_limite(0).vlutiliz := vr_vlutiliz;
         pr_tab_dados_limite(0).qtutiliz := vr_qtutiliz;
+        pr_tab_dados_limite(0).dtfimvig := rw_craplim.dtfimvig;
+        pr_tab_dados_limite(0).pctolera := pr_tab_dados_dsctit(1).pctolera;
 
     exception
       when vr_exc_erro then
@@ -2735,6 +2775,8 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
                               '<tpctrlim>' || pr_tab_dados_limite(0).tpctrlim || '</tpctrlim>' ||
                               '<vlutiliz>' || pr_tab_dados_limite(0).vlutiliz || '</vlutiliz>' ||
                               '<qtutiliz>' || pr_tab_dados_limite(0).qtutiliz || '</qtutiliz>' ||
+                              '<dtfimvig>' || to_char(pr_tab_dados_limite(0).dtfimvig,'dd/mm/rrrr') || '</dtfimvig>' ||
+                              '<pctolera>' || pr_tab_dados_limite(0).pctolera || '</pctolera>' ||
                            '</inf>'
                           );
       pc_escreve_xml ('</dados></root>',true);
@@ -3466,6 +3508,12 @@ END pc_solicita_biro_bordero;
     vr_cdagenci varchar2(100);
     vr_nrdcaixa varchar2(100);
     vr_idorigem varchar2(100);
+    
+     --TAB
+     pr_tab_dados_dsctit cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052
+     pr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052
+     vr_tipopessoa integer;
+       
     /*Contrato do limite*/
     CURSOR cr_craplim IS      
       SELECT 
@@ -3501,7 +3549,18 @@ END pc_solicita_biro_bordero;
         AND craplim.insitlim = pr_insitlim
       ;
     rw_craplim cr_craplim%rowtype;
-
+    
+    CURSOR cr_crapass IS
+       SELECT
+          crapass.inpessoa
+       FROM
+          crapass
+       WHERE
+          crapass.nrdconta = pr_nrdconta
+          AND crapass.cdcooper = vr_cdcooper;
+    rw_crapass cr_crapass%rowtype;
+      
+      
     /*Linha de crédito*/
     CURSOR cr_crapldc IS
       SELECT 
@@ -3570,6 +3629,28 @@ END pc_solicita_biro_bordero;
          vr_dscritic := 'A vigência do contrato deve ser maior que a data de movimentação do sistema.';
        raise vr_exc_erro;
      END IF;
+     
+     OPEN cr_crapass;
+     FETCH cr_crapass INTO rw_crapass;
+     IF (cr_crapass%NOTFOUND) THEN
+        vr_dscritic := 'Cooperado não cadastrado';
+        raise vr_exc_erro;
+     END IF;
+
+      --carregando os dados de prazo limite da TAB052 
+     dsct0002.pc_busca_parametros_dsctit(vr_cdcooper, --pr_cdcooper,
+                                                 null, --Agencia de operação
+                                                 null, --Número do caixa
+                                                 null, --Operador
+                                                 vr_dtmvtolt, -- Data da Movimentação
+                                                 null, --Identificação de origem
+                                                 1, --pr_tpcobran: 1-REGISTRADA / 0-NÃO REGISTRADA
+                                                 rw_crapass.inpessoa, --1-PESSOA FÍSICA / 2-PESSOA JURÍDICA
+                                                 pr_tab_dados_dsctit,
+                                                 pr_tab_cecred_dsctit,
+                                                 vr_cdcritic,
+                                                 vr_dscritic);
+     
      /*PREENCHE OS DADOS DAS COBRANCAS PASSADAS POR PARAMETRO*/
      vr_sql := 'select ' ||
                    'cob.cdcooper,'||
@@ -3627,7 +3708,8 @@ END pc_solicita_biro_bordero;
        close cr_tab_cob;
 
     /*VERIFICA SE O VALOR DOS BOLETOS SÃO > QUE O DISPONIVEL NO CONTRATO*/
-      vr_index:= vr_tab_dados_titulos.first;
+      vr_index := vr_tab_dados_titulos.first;
+      vr_vldtit := 0;
       WHILE vr_index IS NOT NULL LOOP
             /*Antes de realizar a inclusão deverá validar se algum título já foi selecionado em algum outro 
             borderô com situação diferente de “não aprovado” ou “prazo expirado”*/
@@ -3643,7 +3725,7 @@ END pc_solicita_biro_bordero;
       END   LOOP;
 
       /*VERIFICAR SE O VALOR TOTAL DOS TITULOS NAO PASSAO O DISPONIVEL DO CONTRATO*/
-      IF (vr_vldtit> (rw_craplim.vllimite-rw_craplim.vlutiliz)) THEN
+      IF (vr_vldtit> ((rw_craplim.vllimite+(rw_craplim.vllimite*pr_tab_dados_dsctit(1).pctolera/100))-rw_craplim.vlutiliz)) THEN
         vr_dscritic := 'O Total de títulos selecionados supera o valor disponível no contrato.';
         raise vr_exc_erro;
       END IF;
@@ -4708,6 +4790,7 @@ PROCEDURE pc_buscar_tit_bordero_web (
                      
       -- ler os registros de titulos e incluir no xml
       vr_index := vr_tab_tit_bordero.first;
+                             
       while vr_index is not null loop    
             pc_escreve_xml('<inf>'||
                               '<cdbandoc>' || vr_tab_tit_bordero(vr_index).cdbandoc || '</cdbandoc>' || --FIELD cdbandoc LIKE craptdb.cdbandoc

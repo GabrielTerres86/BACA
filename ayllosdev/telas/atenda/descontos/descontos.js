@@ -385,7 +385,6 @@ function formataLayout(nomeForm){
 
 
 	}else if ( nomeForm == 'divIncluirBordero' ){
-	
 		$('#'+nomeForm).css('width','940px');
 		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
 		camposFiltros.desabilitaCampo();
@@ -394,45 +393,51 @@ function formataLayout(nomeForm){
 		var tabelaTitulos      				= $('table', divRegistrosTitulos );
 		var tabelaTitulosSelecionados   	= $('table', divRegistrosTitulosSelecionados );
 						
-		
-
 		var rNrctrlim = $("label[for='nrctrlim']");
-		var rVldescon = $("label[for='vldescon']");
+		var rVlutiliz = $("label[for='vlutiliz']");
 		var rVldispon = $("label[for='vldispon']");
 		var rNrinssac = $("label[for='nrinssac']");
 	    var rNmdsacad = $("label[for='nmdsacad']");
 	    var rDtvencto = $("label[for='dtvencto']");
 	    var rVltitulo = $("label[for='vltitulo']");
 	    var rNrnosnum = $("label[for='nrnosnum']");
+	    var rVlseleci = $("label[for='vlseleci']");
+	    var rVlsaldor = $("label[for='vlsaldor']");
 
 		rNrctrlim.css({'width': '115px'}).addClass('rotulo');
-		rVldescon.css({'width': '135px'}).addClass('rotulo-linha');
+		rVlutiliz.css({'width': '180px'}).addClass('rotulo-linha');
 		rVldispon.css({'width': '150px'}).addClass('rotulo-linha');
 		rNrinssac.css({'width': '115px'}).addClass('rotulo');
 		rNmdsacad.css({'width': '114px'}).addClass('rotulo-linha');
 		rDtvencto.css({'width': '115px'}).addClass('rotulo');
 		rVltitulo.css({'width': '133px'}).addClass('rotulo-linha');
 		rNrnosnum.css({'width': '110px'}).addClass('rotulo-linha');
+	    rVlseleci.css({'width': '417px'}).addClass('rotulo');
+	    rVlsaldor.css({'width': '150px'}).addClass('rotulo-linha');
 
 		var cNrdconta = $("#nrdconta", "#"+nomeForm);
 		var cNrctrlim = $("#nrctrlim", "#"+nomeForm);
-		var cVldescon = $("#vldescon", "#"+nomeForm);
+		var cVlutiliz = $("#vlutiliz", "#"+nomeForm);
 		var cVldispon = $("#vldispon", "#"+nomeForm);
 		var cNrinssac = $("#nrinssac", "#"+nomeForm);
 		var cNmdsacad = $("#nmdsacad", "#"+nomeForm);
 		var cDtvencto = $("#dtvencto", "#"+nomeForm);
 		var cVltitulo = $("#vltitulo", "#"+nomeForm);
 		var cNrnosnum = $("#nrnosnum", "#"+nomeForm);
+		var cVlseleci = $("#vlseleci", "#"+nomeForm);
+	    var cVlsaldor = $("#vlsaldor", "#"+nomeForm);
 
 
 		cNrctrlim.css({'width': '115px'}).addClass('inteiro');
-		cVldescon.css({'width': '110px'}).addClass('monetario');
+		cVlutiliz.css({'width': '110px'}).addClass('monetario');
 		cVldispon.css({'width': '110px'}).addClass('monetario');
 		cNrinssac.css({'width': '115px'}).addClass('inteiro').attr('maxlength', '14').habilitaCampo();
 		cNmdsacad.css({'width': '250px'});
 		cDtvencto.css({'width': '115px'}).addClass('data').habilitaCampo();
 		cVltitulo.css({'width': '110px'}).addClass('monetario').habilitaCampo();
 		cNrnosnum.css({'width': '70px'}).addClass('inteiro').habilitaCampo();
+		cVlseleci.css({'width': '110px'}).addClass('monetario');
+		cVlsaldor.css({'width': '110px'}).addClass('monetario');
 
 
 		var ordemInicial = new Array();
