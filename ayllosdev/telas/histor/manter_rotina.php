@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 30/09/2013
  * OBJETIVO     : Rotina para alteração e inclusão cadastral da tela HISTOR
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   :  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
  * -------------- 
  */
 ?> 
@@ -34,6 +34,7 @@
 	$inavisar = (isset($_POST['inavisar'])) ? $_POST['inavisar'] : 0;
 	$inclasse = (isset($_POST['inclasse'])) ? $_POST['inclasse'] : 0;
 	$incremes = (isset($_POST['incremes'])) ? $_POST['incremes'] : 0;
+	$inmonpld = (isset($_POST['inmonpld'])) ? $_POST['inmonpld'] : 0;
 	$indcompl = (isset($_POST['indcompl'])) ? $_POST['indcompl'] : 0;
 	$indebcta = (isset($_POST['indebcta'])) ? $_POST['indebcta'] : 0;
 	$indoipmf = (isset($_POST['indoipmf'])) ? $_POST['indoipmf'] : 0;
@@ -51,6 +52,9 @@
 
 	$ingercre = (isset($_POST['ingercre'])) ? $_POST['ingercre'] : 0;
 	$ingerdeb = (isset($_POST['ingerdeb'])) ? $_POST['ingerdeb'] : 0;
+	
+	$cdgrupo_historico = (isset($_POST['cdgrupo_historico'])) ? $_POST['cdgrupo_historico'] : 0;
+	
 	$flgsenha = (isset($_POST['flgsenha'])) ? $_POST['flgsenha'] : 0;
 	$cdprodut = (isset($_POST['cdprodut'])) ? $_POST['cdprodut'] : 0;
 	$cdagrupa = (isset($_POST['cdagrupa'])) ? $_POST['cdagrupa'] : 0;
@@ -110,6 +114,10 @@
 
     if ($incremes != 0 && $incremes != 1) {
 		exibirErro('error','Indicador para estat&iacute;stica de cr&eacute;dito do m&ecirc;s inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('incremes','frmHistorico');",false);
+	}
+
+	if ($inmonpld != 0 && $inmonpld != 1) {
+		exibirErro('error','Indicador para Monitoramento inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('inmonpld','frmHistorico');",false);
 	}
 
     if ($tpctbccu != 0 && $tpctbccu != 1) {
@@ -175,6 +183,7 @@
 	$xml .= '       <inavisar>'.$inavisar.'</inavisar>';
 	$xml .= '       <inclasse>'.$inclasse.'</inclasse>';
 	$xml .= '       <incremes>'.$incremes.'</incremes>';
+	$xml .= '       <inmonpld>'.$inmonpld.'</inmonpld>';
 	$xml .= '       <indcompl>'.$indcompl.'</indcompl>';
 	$xml .= '       <indebcta>'.$indebcta.'</indebcta>';
 	$xml .= '       <indoipmf>'.$indoipmf.'</indoipmf>';
@@ -192,6 +201,9 @@
 
 	$xml .= '       <ingercre>'.$ingercre.'</ingercre>';
 	$xml .= '       <ingerdeb>'.$ingerdeb.'</ingerdeb>';
+	
+	$xml .= '       <cdgrphis>'.$cdgrupo_historico.'</cdgrphis>';
+	
 	$xml .= '       <flgsenha>'.$flgsenha.'</flgsenha>';
 	$xml .= '       <cdprodut>'.$cdprodut.'</cdprodut>';
 	$xml .= '       <cdagrupa>'.$cdagrupa.'</cdagrupa>';
@@ -208,6 +220,7 @@
 	$xml .= '</Root>';
 	
     // Executa script para envio do XML e cria objeto para classe de tratamento de XML
+
 	$xmlResult = getDataXML($xml);
 	$xmlObjeto = getObjectXML($xmlResult);
 

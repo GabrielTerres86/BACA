@@ -1,27 +1,25 @@
 /***********************************************************************
     Fonte: ocorrencias.js
     Autor: Guilherme
-    Data : Fevereiro/2007                Ãšltima AlteraÃ§Ã£o: 29/10/2012
+    Data : Fevereiro/2007                Última Alteração: 29/10/2012
 
-    Objetivo  : Biblioteca de funÃ§Ãµes da rotina OCORRENCIAS da tela
+    Objetivo  : Biblioteca de funções da rotina OCORRENCIAS da tela
                 ATENDA
 
-    AlteraÃ§Ãµes: 13/07/2011 - Alterado para layout padrÃ£o (Rogerius - DB1).
-
-	            16/09/2011 - Ajuste no tamanho do campo CrÃ©dito LÃ­quido (David).
-
-				29/10/2012 - Ajustes referente a inclusÃ£o da opÃ§Ã£o "Grupo Economico".
+    Alterações: 13/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
+	
+	            16/09/2011 - Ajuste no tamanho do campo Crédito Líquido (David).
+				
+				29/10/2012 - Ajustes referente a inclusão da opção "Grupo Economico". 
 						     Projeto GE (Adriano).
-                01/08/2016 - Adicionado funÃ§Ã£o controlaFoco (Evandro - RKAM).
-
-                29/09/2016 - Ajustes referente a inclusÃ£o da opÃ§Ã£o "Acordos".
+                01/08/2016 - Adicionado função controlaFoco (Evandro - RKAM).     
+                
+                29/09/2016 - Ajustes referente a inclusão da opção "Acordos". 
 						     Projeto 302 (Jean Michel).
 
-				24/01/2018 - Ajustes referentes a inclusÃ£o da opÃ§Ã£o "Riscos".
+				24/01/2018 - Ajustes referentes a inclusão da opção "Riscos".
 					         Reginaldo - AMcom
-			  25/03/2018 - Adicionada coluna de Risco Refinanciamento e carregamento de dados brutos
-										Marcel Kohls - AMCom
-
+							 
  ***********************************************************************/
 
 var contWin = 0;  // Vari&aacute;vel para contagem do n&uacute;mero de janelas abertas para impress&atilde;o de extratos
@@ -46,38 +44,38 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
     } else if (opcao == "5") {	// Op&ccedil;&atilde;o Estouros
 		var msg = "estouros";
 		var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/estouros.php";
-    } else if (opcao == '6') { // OperaÃ§Ã£o Grupo Economico
+    } else if (opcao == '6') { // Operação Grupo Economico
 		var msg  = "grupo economico";
 		var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/grupo_economico.php";
-    } else if (opcao == '7') { // OperaÃ§Ã£o Acordos
+    } else if (opcao == '7') { // Operação Acordos
         var msg = "acordos";
         var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/acordos.php";
-	} else if (opcao == '8') { // OperaÃ§Ã£o Riscos
+	} else if (opcao == '8') { // Operação Riscos
 		var msg = "riscos";
 		var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/riscos.php";
-	}
+    }
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando " + msg + " ...");
-
+	
 	// Atribui cor de destaque para aba da op&ccedil;&atilde;o
 	for (var i = 0; i <= nrOpcoes; i++) {
 		if (id == i) { // Atribui estilos para foco da op&ccedil;&atilde;o
 			$("#linkAba" + id).attr("class","txtBrancoBold");
-			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");
+			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");				
 			$("#imgAbaDir" + id).attr("src",UrlImagens + "background/mnu_sld.gif");
 			$("#imgAbaCen" + id).css("background-color","#969FA9");
-			continue;
+			continue;			
 }
 
 		$("#linkAba" + i).attr("class","txtNormalBold");
-		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");
+		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");			
 		$("#imgAbaDir" + i).attr("src",UrlImagens + "background/mnu_nld.gif");
 		$("#imgAbaCen" + i).css("background-color","#C6C8CA");
 	}
-
-
+	
+	
 	// Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
-	$.ajax({
+	$.ajax({		
 		type: "POST",
 		dataType: "html",
 		url: UrlOperacao,
@@ -93,11 +91,11 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		success: function(response) {
 			$("#divConteudoOpcao").html(response);
 			controlaFoco();
-		}
-	});
+		}				
+	}); 		
 }
 
-//FunÃ§Ã£o para controle de navegaÃ§Ã£o pelas abas
+//Função para controle de navegação pelas abas
 function controlaFoco() {
 	$('#divRotina').each(function () {
 	    $(this).find("#linkAba0").focus();
@@ -149,25 +147,26 @@ function formataPrincipal() {
 	rCampo18.addClass('rotulo-linha').css({'width':'367px'});
 
 	// campos
-	cCampo00 = $('#campo00', '#'+nomeForm);
-	cCampo01 = $('#campo01', '#'+nomeForm);
-	cCampo02 = $('#campo02', '#'+nomeForm);
-	cCampo03 = $('#campo03', '#'+nomeForm);
-	cCampo04 = $('#campo04', '#'+nomeForm);
-	cCampo05 = $('#campo05', '#'+nomeForm);
-	cCampo06 = $('#campo06', '#'+nomeForm);
-	cCampo07 = $('#campo07', '#'+nomeForm);
-	cCampo08 = $('#campo08', '#'+nomeForm);
-	cCampo09 = $('#campo09', '#'+nomeForm);
-	cCampo10 = $('#campo10', '#'+nomeForm);
-	cCampo11 = $('#campo11', '#'+nomeForm);
-	cCampo12 = $('#campo12', '#'+nomeForm);
-	cCampo13 = $('#campo13', '#'+nomeForm);
-	cCampo15 = $('#campo15', '#'+nomeForm);
-	cCampo16 = $('#campo16', '#'+nomeForm);
-	cCampo17 = $('#campo17', '#'+nomeForm);
+	cCampo00 = $('#campo00', '#'+nomeForm);	
+	cCampo01 = $('#campo01', '#'+nomeForm);	
+	cCampo02 = $('#campo02', '#'+nomeForm);	
+	cCampo03 = $('#campo03', '#'+nomeForm);	
+	cCampo04 = $('#campo04', '#'+nomeForm);	
+	cCampo05 = $('#campo05', '#'+nomeForm);	
+	cCampo06 = $('#campo06', '#'+nomeForm);	
+	cCampo07 = $('#campo07', '#'+nomeForm);	
+	cCampo08 = $('#campo08', '#'+nomeForm);	
+	cCampo09 = $('#campo09', '#'+nomeForm);	
+	cCampo10 = $('#campo10', '#'+nomeForm);	
+	cCampo11 = $('#campo11', '#'+nomeForm);	
+	cCampo12 = $('#campo12', '#'+nomeForm);	
+	cCampo13 = $('#campo13', '#'+nomeForm);	
+	cCampo15 = $('#campo15', '#'+nomeForm);	
+	cCampo16 = $('#campo16', '#'+nomeForm);	
+	cCampo17 = $('#campo17', '#'+nomeForm);	
 	cCampo18 = $('#campo18', '#'+nomeForm);
 
+	
 	cCampo00.css({'width':'100px'});
 	cCampo01.css({'width':'70px'});
 	cCampo02.css({'width':'100px'});
@@ -186,30 +185,32 @@ function formataPrincipal() {
 	cCampo16.css({'width':'70px'});
 	cCampo17.css({'width':'90px'});
 	cCampo18.css({'width':'70px'});
-
+	
 	$('input, select', '#'+nomeForm).desabilitaCampo();
-
-	if ( $.browser.msie ) {
+	
+	if ( $.browser.msie ) {	
 		rCampo06.addClass('rotulo-linha').css({'width':'105px'});
 		rCampo10.addClass('rotulo').css({'width':'367px'});
 		rCampo11.addClass('rotulo').css({'width':'367px'});
-	}
 
-	return false;
 }
 
-// FunÃ§Ã£o que formata a tabela contra-ordens
-function formataContraOrdens() {
+	return false;
+	
+}
 
-	var divRegistro = $('div.divRegistros','#divTabContraOrdens');
+// Função que formata a tabela contra-ordens
+function formataContraOrdens() {
+			
+	var divRegistro = $('div.divRegistros','#divTabContraOrdens');		
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
-
+			
 	divRegistro.css({'height':'235px', 'width':'580px'});
-
+	
 	var ordemInicial = new Array();
-
-
+	
+			
 	var arrayLargura = new Array();
 	arrayLargura[0] = '25px';
 	arrayLargura[1] = '30px';
@@ -218,8 +219,8 @@ function formataContraOrdens() {
 	arrayLargura[4] = '54px';
 	arrayLargura[5] = '56px';
 	arrayLargura[6] = '56px';
-
-
+	
+		
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'right';
 	arrayAlinha[1] = 'right';
@@ -229,32 +230,32 @@ function formataContraOrdens() {
 	arrayAlinha[5] = 'center';
 	arrayAlinha[6] = 'center';
 	arrayAlinha[7] = 'left';
-
+	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
-	ajustarCentralizacao();
+	ajustarCentralizacao();	
 	return false;
 }
 
-// FunÃ§Ã£o que formata a tabela emprestimos
+// Função que formata a tabela emprestimos
 function formataEmprestimos() {
-
-	var divRegistro = $('div.divRegistros','#divTabEmprestimos');
+			
+	var divRegistro = $('div.divRegistros','#divTabEmprestimos');		
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
-
+			
 	divRegistro.css({'height':'235px', 'width':'580px'});
-
+	
 	var ordemInicial = new Array();
-
-
+	
+			
 	var arrayLargura = new Array();
 	arrayLargura[0] = '56px';
 	arrayLargura[1] = '70px';
 	arrayLargura[2] = '85px';
 	arrayLargura[3] = '85px';
 	arrayLargura[4] = '85px';
-
-
+	
+		
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
 	arrayAlinha[1] = 'right';
@@ -262,14 +263,14 @@ function formataEmprestimos() {
 	arrayAlinha[3] = 'right';
 	arrayAlinha[4] = 'right';
 	arrayAlinha[5] = 'center';
-
+	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
-	ajustarCentralizacao();
+	ajustarCentralizacao();	
 
 	return false;
 }
 
-// FunÃ§Ã£o que formata a tabela riscos
+// Função que formata a tabela riscos
 function formataRiscos() {
 	var divRegistro = $('div.divRegistros', '#divTabRiscos');
 	var tabela = $('table', divRegistro);
@@ -279,10 +280,10 @@ function formataRiscos() {
 
 	var ordemInicial = new Array();
 
-	var arrayLargura = ['99px', '67px', '55px', '40px', '40px', '40px', '40px', '40px', '40px', '40px',
+	var arrayLargura = ['140px', '70px', '60px', '40px', '40px', '40px', '40px', '40px', '40px', 
 		'40px', '40px', '40px', '40px'];
 
-	var arrayAlinha = ['center', 'right', 'right', 'center', 'center', 'center', 'center', 'center', 'center',
+	var arrayAlinha = ['center', 'right', 'right', 'center', 'center', 'center', 'center', 'center',
 		'center', 'center', 'center', 'center', 'center'];
 
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
@@ -292,55 +293,55 @@ function formataRiscos() {
 	return false;
 }
 
-// FunÃ§Ã£o que formata a tabela prejuizos
+// Função que formata a tabela prejuizos
 function formataPrejuizos() {
-
-	var divRegistro = $('div.divRegistros','#divTabPrejuizos');
+			
+	var divRegistro = $('div.divRegistros','#divTabPrejuizos');		
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
-
+			
 	divRegistro.css({'height':'235px', 'width':'580px'});
-
+	
 	var ordemInicial = new Array();
-
-
+	
+			
 	var arrayLargura = new Array();
 	arrayLargura[0] = '56px';
 	arrayLargura[1] = '72px';
 	arrayLargura[2] = '110px';
 	arrayLargura[3] = '110px';
-
-
+	
+		
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
 	arrayAlinha[1] = 'right';
 	arrayAlinha[2] = 'right';
 	arrayAlinha[3] = 'right';
 	arrayAlinha[4] = 'right';
-
+	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
-	ajustarCentralizacao();
+	ajustarCentralizacao();	
 	return false;
 }
 
-// FunÃ§Ã£o que formata a tabela SPC
+// Função que formata a tabela SPC
 function formataSPC() {
 
-	var divRegistro = $('div.divRegistros','#divTabSPC');
+	var divRegistro = $('div.divRegistros','#divTabSPC');		
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
-
+			
 	divRegistro.css({'height':'180px', 'width':'580px'});
-
+	
 	var ordemInicial = new Array();
-
+	
 	var arrayLargura = new Array();
 	arrayLargura[0] = '65px';
 	arrayLargura[1] = '65px';
 	arrayLargura[2] = '120px';
 	arrayLargura[3] = '70px';
 	arrayLargura[4] = '70px';
-
+		
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'right';
 	arrayAlinha[1] = 'center';
@@ -348,31 +349,31 @@ function formataSPC() {
 	arrayAlinha[3] = 'center';
 	arrayAlinha[4] = 'center';
 	arrayAlinha[5] = 'right';
-
+	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
 
 	// complemento linha 1
 	var linha1  = $('ul.complemento', '#divSPCLinha1');
-
+	
 	$('li:eq(0)', linha1).addClass('txtNormalBold').css({'width':'10%'});
 	$('li:eq(1)', linha1).addClass('txtNormal').css({'width':'40%'});
 	$('li:eq(2)', linha1).addClass('txtNormalBold').css({'width':'15%'});
 	$('li:eq(3)', linha1).addClass('txtNormal');
 
-	// seleciona o registro que Ã© clicado
+	// seleciona o registro que é clicado
 	$('table > tbody > tr', divRegistro).click( function() {
 		selecionaSPC($(this));
-	});
+	});	
 
-	// seleciona o registro que Ã© focado
+	// seleciona o registro que é focado
 	$('table > tbody > tr', divRegistro).focus( function() {
 		selecionaSPC($(this));
-	});
-	ajustarCentralizacao();
+	});	
+	ajustarCentralizacao();	
 	return false;
 }
 
-// FunÃ§Ã£o de complemento da formataSPC
+// Função de complemento da formataSPC
 function selecionaSPC(tr) {
 
 	$('#contrat2').html($('#contrat1', tr ).val());
@@ -381,17 +382,17 @@ function selecionaSPC(tr) {
 	return false;
 }
 
-// FunÃ§Ã£o que formata a tabela estouros
+// Função que formata a tabela estouros
 function formataEstouros() {
 
-	var divRegistro = $('div.divRegistros','#divTabEstouros');
+	var divRegistro = $('div.divRegistros','#divTabEstouros');		
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
-
+			
 	divRegistro.css({'height':'180px', 'width':'580px'});
-
+	
 	var ordemInicial = new Array();
-
+	
 	var arrayLargura = new Array();
 	arrayLargura[0] = '33px';
 	arrayLargura[1] = '55px';
@@ -399,7 +400,7 @@ function formataEstouros() {
 	arrayLargura[3] = '80px';
 	arrayLargura[4] = '92px';
 	arrayLargura[5] = '70px'; //conta base
-
+		
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'right';
 	arrayAlinha[1] = 'center';
@@ -408,12 +409,12 @@ function formataEstouros() {
 	arrayAlinha[4] = 'right';
 	arrayAlinha[5] = 'right';
 	arrayAlinha[6] = 'right';
-
+	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
 
 	// complemento linha 1
 	var linha1  = $('ul.complemento', '#divEstourosLinha1');
-
+	
 	$('li:eq(0)', linha1).addClass('txtNormalBold').css({'width':'15%'});
 	$('li:eq(1)', linha1).addClass('txtNormal').css({'width':'36%'});
 	$('li:eq(2)', linha1).addClass('txtNormalBold').css({'width':'17%'});
@@ -428,16 +429,16 @@ function formataEstouros() {
 	$('li:eq(3)', linha2).addClass('txtNormal');
 
 
-	// seleciona o registro que Ã© clicado
+	// seleciona o registro que é clicado
 	$('table > tbody > tr', divRegistro).click( function() {
 		selecionaEstouros($(this));
-	});
+	});	
 
-	// seleciona o registro que Ã© focado
+	// seleciona o registro que é focado
 	$('table > tbody > tr', divRegistro).focus( function() {
 		selecionaEstouros($(this));
-	});
-	ajustarCentralizacao();
+	});	
+	ajustarCentralizacao();	
 	return false;
 }
 
@@ -447,27 +448,27 @@ function formataGrupoEconomico(){
 	// label
 	rDsdrisco = $('label[for="dsdrisco"]', '#divGrupoEconomico');
 	rVlendivi = $('label[for="vlendivi"]', '#divGrupoEconomico');
-
+		
 	rDsdrisco.addClass('rotulo').css({'width':'125px'});
 	rVlendivi.addClass('rotulo-linha').css({'width':'220px'});
+	
 
-
-	// campos
-	cDsdrisco = $('#dsdrisco', '#divGrupoEconomico');
-	cVlendivi = $('#vlendivi', '#divGrupoEconomico');
-
+	// campos 
+	cDsdrisco = $('#dsdrisco', '#divGrupoEconomico');	
+	cVlendivi = $('#vlendivi', '#divGrupoEconomico');	
+	
 	cDsdrisco.css({'width':'30px'});
 	cVlendivi.css({'width':'100px'});
-
-
-	var divRegistro = $('div.divRegistros','#divGrupoEconomico');
+	
+	
+	var divRegistro = $('div.divRegistros','#divGrupoEconomico');		
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
-
+			
 	divRegistro.css({'height':'180px', 'width':'580px'});
-
+	
 	var ordemInicial = new Array();
-
+	
 	var arrayLargura = new Array();
 	arrayLargura[0] = '33px';
 	arrayLargura[1] = '70px';
@@ -504,19 +505,19 @@ function formataAcordos() {
     var arrayLargura = new Array();
     arrayLargura[0] = '130px';
     arrayLargura[1] = '150px';
-
+    
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
     arrayAlinha[1] = 'left';
     arrayAlinha[2] = 'center';
-
+    
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
-
+    
     return false;
 
 }
 
-// FunÃ§Ã£o de complemento da formataEstourso
+// Função de complemento da formataEstourso
 function selecionaEstouros(tr) {
 
 	$('#complem1').html($('#complem11', tr ).val());
@@ -526,3 +527,4 @@ function selecionaEstouros(tr) {
 
 	return false;
 }
+

@@ -9,6 +9,8 @@
 
   Alterações: 17/11/2016 - M172 Atualizacao Telefone - Novo campo (Guilherme/SUPERO)
 
+              03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
+
  * ********************************************************************* */
 
     require_once('../../includes/config.php');
@@ -207,6 +209,9 @@
             <option value="0" <?php if (getByTagName($cooperativa->tags,'flgdsirc') == "0") { ?> selected <?php } ?> >Interior</option>
             <option value="1" <?php if (getByTagName($cooperativa->tags,'flgdsirc') == "1") { ?> selected <?php } ?> >Capital</option>
         </select>
+
+        <label for="vllimpag">Limite m&aacute;x. - pgto sem autor.</label>
+        <input type="text" id="vllimpag" name="vllimpag" value="<?php echo getByTagName($cooperativa->tags,'vllimpag');?>" >
 
         <br />
 

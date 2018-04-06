@@ -2,11 +2,11 @@
 <? 
 /*!
  * FONTE        : form_nova_prop.php
- * CRIAÇÃO      : Gabriel Capoia (DB1)
- * DATA CRIAÇÃO : 01/04/2011 
- * OBJETIVO     : Formulário da rotina Empréstimos da tela ATENDA
+ * CRIAÃ‡ÃƒO      : Gabriel Capoia (DB1)
+ * DATA CRIAÃ‡ÃƒO : 01/04/2011 
+ * OBJETIVO     : FormulÃ¡rio da rotina Emprestimos da tela ATENDA
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÃ‡Ã•ES   : 
  * --------------
  * 000: [08/08/2011] Adicionado campo para tipo de emprÃ©stimo - Marcelo L. Pereira (GATI)
  * 001: [20/09/2011] CorreÃ§Ãµes de acentuaÃ§Ã£o - Marcelo L. Pereira (GATI)
@@ -22,7 +22,7 @@
  * 011: [26/06/2015] Criei a funcionalidade de atualizacao da "Data Ãºlt. pagto" a partir do numero de parcelas com base na "Data pagto" (Carlos R.)
  * 012: [26/06/2017] Ajuste para rotina ser chamada atravÃ©s da tela ATENDA > Produtos (P364).
  * 013: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
- * 014: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 014: [31/01/2017] Troca de posicao da Linha de Credito e Finalidade. Criacao dos campos Carencia e Data da primeira Carencia. (Jaison/James - PRJ298)
  */
  ?> 
 
@@ -177,15 +177,19 @@
 		<input name="dslcremp" id="dslcremp" type="text" value="" />
 		<br />
 		
-		<label for="vlpreemp"><? echo utf8ToHtml('Vl. da Prest.:') ?></label>
+		<input name="vlfinanc" id="vlfinanc" type="hidden" value="" />
+		
+        <label for="vlpreemp">Prest. Estim.:</label>
 		<input name="vlpreemp" id="vlpreemp" type="text" value="" />
+		
+		<br />
 		
 		<label for="idquapro"><? echo utf8ToHtml('Qualif. Oper.:') ?></label>
 		<input name="idquapro" id="idquapro" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsquapro" id="dsquapro" type="text" value="" />
 		<br />
-
+		
 		<label for="qtpreemp">Qtd. de Parc.:</label>
 		<input name="qtpreemp" id="qtpreemp" type="text" value="" />
 		
@@ -203,37 +207,52 @@
 		<label for="dtlibera"> <? echo utf8ToHtml("Data LiberaÃ§Ã£o:") ?> </label>
 		<input name="dtlibera" id="dtlibera" type="text" value="">
 		<br />
-
-		<input type="hidden" name="idfiniof" id="idfiniof">
-        <!--<label for="idfiniof">Financiar IOF e Tarifa:</label>
+		
+        <label for="idfiniof">Financiar IOF e Tarifa:</label>
         <select name="idfiniof" id="idfiniof">
             <option value="1" selected="selected">Sim</option>
             <option value="0">N&atilde;o</option>
-        </select>-->
+        </select>
 		<label for="dtdpagto">Data pagto:</label>
 		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
-		
-		        
-		<!--<br />
-        <label for="vliofepr">IOF:</label>
-        <input name="vliofepr" id="vliofepr" type="text" value=""/>-->
-		<input type="hidden" name="vliofepr" id="vliofepr">
-        <label for="dtultpag">Data &uacute;lt. pagto:</label>
-        <input name="dtultpag" id="dtultpag" type="text" disabled="disabled" value="" />
 		<br />
 		
-        <!--<label for="vlrtarif">Tarifa:</label>
-        <input name="vlrtarif" id="vlrtarif" type="text" value=""/>-->
-		<input type="hidden" name="vlrtarif" id="vlrtarif">
+        <input name="vliofepr" id="vliofepr" type="hidden" value=""/>
 
-		<label for="percetop">CET(%a.a.):</label>
-		<input name="percetop" id="percetop" type="text" value="" />
+                <label for="dtultpag">Data &uacute;lt. pagto:</label>
+                <input name="dtultpag" id="dtultpag" type="text" disabled="disabled" value="" />
 		<br />
 		
-		<!--<label for="vlrtotal">Valor Total:</label>
-        <input name="vlrtotal" id="vlrtotal" type="text" value=""/>-->
+		<input name="vlrtarif" id="vlrtarif" type="hidden" value=""/>
+
+		<input name="percetop" id="percetop" type="hidden" value="" />
+		<br />
+		
 		<input name="vlrtotal" id="vlrtotal" type="hidden" value=""/>
-
+		
+		<div id="linCarencia">
+			<label for="idcarenc"><? echo utf8ToHtml("CarÃªncia:") ?></label>
+			<select name="idcarenc" id="idcarenc">
+            <?php
+                $xml  = "<Root>";
+                $xml .= " <Dados>";
+                $xml .= "   <flghabilitado>1</flghabilitado>"; // Habilitado (0-Nao/1-Sim/2-Todos)
+                $xml .= " </Dados>";
+                $xml .= "</Root>";
+                $xmlResult = mensageria($xml, "TELA_PRMPOS", "PRMPOS_BUSCA_CARENCIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+                $xmlObject = getObjectXML($xmlResult);
+                $xmlCarenc = $xmlObject->roottag->tags[0]->tags;
+                foreach ($xmlCarenc as $reg) {
+                    echo '<option value="'.getByTagName($reg->tags,'IDCARENCIA').'">'.getByTagName($reg->tags,'DSCARENCIA').'</option>';
+                }
+            ?>
+			</select>
+		
+			<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1Âª CarÃªncia:") ?> </label>
+			<input name="dtcarenc" id="dtcarenc" type="text" value="" />
+		</div>
+		<br />
+		
 		<label for="flgimppr">Proposta:</label>
 		<select name="flgimppr" id="flgimppr">
 			<option value=""   > - </option>
@@ -269,6 +288,7 @@
 		<a href="#" class="botao" id="btSalvar" onClick="validaDadosAlterarSomenteValorProposta(); return false;">Concluir</a>	
 	<? } else if ( $operacao == 'A_FINALIZA' || $operacao == 'I_CONTRATO' || $operacao == 'I_FINALIZA'  ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
+		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('DEMONSTRATIVO_EMPRESTIMO'); return false;">Continuar</a>
 	<? } else if ( $operacao == 'A_NUMERO' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
 	<? } else if ($operacao == 'TC' || $operacao == 'CF') { ?>
@@ -291,6 +311,5 @@
 	    <?}?>
 		
 		<a href="#" class="botao" id="btSalvar" onClick="buscaLiquidacoes('I_DADOS_AVAL'); return false;">Continuar</a>
-		
 	<? } ?>
 </div>

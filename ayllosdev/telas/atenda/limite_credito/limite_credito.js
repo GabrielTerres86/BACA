@@ -32,12 +32,13 @@
  * 018:[26/01/2016] Heitor     (RKAM)    : Chamado 364592 - Alterada atribuicao ao campo vloutras, nao estava preenchendo corretamente ao retornar valor decimal
  *
  * 018: [17/12/2015] Lunelli   (CECRED)  : Edição de número do contrato de limite (Lucas Lunelli - SD 360072 [M175])
- * 019: [15/07/2016] Andrei      (RKAM)  : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
+ * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
  * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.
  * 021: [01/12/2017] Jonata      (RKAM)  : Não permitir acesso a opção de incluir quando conta demitida.
- * 022: [15/03/2018] Diego Simas (AMcom) : Alterado para exibir tratativas quando o limite de crédito foi
+ * 022: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438.
+ * 023: [15/03/2018] Diego Simas (AMcom) : Alterado para exibir tratativas quando o limite de crédito foi
  *                                         cancelado de forma automática pelo Ayllos.
- * 023: [22/03/2018] Diego Simas (AMcom) : Implementado nova situação para considerar Cancelamento Automático de Limite
+ * 024: [22/03/2018] Diego Simas (AMcom) : Implementado nova situação para considerar Cancelamento Automático de Limite
  *                                         por inadimplência e também novo campo onde contém a data do cancelamento automático.
  */
 

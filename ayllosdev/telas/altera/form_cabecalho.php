@@ -8,10 +8,13 @@
  * ALTERAÇÕES   :
  * --------------
  * [27/03/2012] Rogérius Militão (DB1) : Novo layout padrão, retirado a tag <br style="clear:both" />;
+ * [11/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  */ 
 ?>
 
 <form id="frmCabAltera" name="frmCabAltera" class="formulario cabecalho" >	
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
 	
 	<label for="nrdconta">Conta:</label>
 	<input type="text" id="nrdconta" name="nrdconta" alt="Informe o nro. da conta do cooperado." />

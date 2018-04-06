@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 08/05/2015
  * OBJETIVO     : Biblioteca de funções da tela CUSTCH
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -45,6 +45,11 @@ function estadoInicial() {
 	$('#divTela').css({'width':'1000px','padding-bottom':'2px'});
 
 	cNrdconta.focus();
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
+    }
 }
 
 // controle

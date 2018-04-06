@@ -158,19 +158,21 @@
 	$blqpreap = (isset($_POST['blqpreap'])) ? $_POST['blqpreap'] : '' ;
     $idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : '' ;
     $dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '' ;
+	$vlfinanc = (isset($_POST['vlfinanc'])) ? $_POST['vlfinanc'] : '' ;
 	
 	// Daniel
 	$inpesso1 = (isset($_POST['inpesso1'])) ? $_POST['inpesso1'] : '' ;
 	$dtnasct1 = (isset($_POST['dtnasct1'])) ? $_POST['dtnasct1'] : '' ;
 	$inpesso2 = (isset($_POST['inpesso2'])) ? $_POST['inpesso2'] : '' ;
 	$dtnasct2 = (isset($_POST['dtnasct2'])) ? $_POST['dtnasct2'] : '' ;
+	$dscatbem = (isset($_POST['dscatbem'])) ? $_POST['dscatbem'] : '' ;
 	
 	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1' ;
 	
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
 				   ,"&","¨","~","^","*","#","%","$","!","?",";",">","<","|","+","=","£","¢","¬","§","`","´","¹","²"
-				   ,"³","ª","º","°","\"","'","\\","","?");
+				   ,"³","ª","º","°","\"","'","\\","","→");
 	$array2 = array("a","a","a","a","a","e","e","e","e","i","i","i","i","o","o","o","o","o","u","u","u","u","c","n"
                    ,"A","A","A","A","A","E","E","E","E","I","I","I","I","O","O","O","O","O","U","U","U","U","C","N"
 				   ,"e"," "," "," "," "," "," "," "," "," ",";"," "," ","|"," "," "," "," "," "," "," "," "," "," "
@@ -460,6 +462,7 @@
 	$xml .= '		<vleprori>'.$vlpreant.'</vleprori>';
     $xml .= '		<idcarenc>'.$idcarenc.'</idcarenc>';
     $xml .= '		<dtcarenc>'.$dtcarenc.'</dtcarenc>';
+	$xml .= '		<vlfinanc>'.$vlfinanc.'</vlfinanc>';
 	
 	// Daniel 
 	$xml .= '		<inpesso1>'.$inpesso1.'</inpesso1>';
@@ -472,6 +475,9 @@
 	}
 	$xml .= '		<dtlibera>'.$dtlibera.'</dtlibera>';
 	$xml .= '		<idfiniof>'.$idfiniof.'</idfiniof>';
+    $xml .= '		<dscatbem>'.$dscatbem.'</dscatbem>';	
+	$xml .= '		<cdcoploj>0</cdcoploj>';
+	$xml .= '		<nrcntloj>0</nrcntloj>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
     

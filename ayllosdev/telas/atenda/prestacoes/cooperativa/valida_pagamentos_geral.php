@@ -9,6 +9,7 @@
  *                24/05/2013 - Incluir camada nas includes "../" (Lucas R.).  
  *			      22/04/2014 - Ajuste para verificar se o usuario possui permissao para fazer o pagamento. (James) 		
  *				  09/06/2014 - Ajuste no bloqueio da tela do pagamento da parcela. (James)
+ *				  24/01/2018 - Adicionada solicitacao de senha de coordenador para utilizacao do saldo bloqueado no pagamento (Luis Fernando - GFT)
  */
 ?>
  
@@ -62,7 +63,16 @@
 		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
 	}else if( strtoupper($xmlObj->roottag->tags[0]->tags[0]->name) == 'REGISTRO' ) {
 		$mensagem = $xmlObj->roottag->tags[0]->tags[0]->tags;
-		echo 'showConfirmacao("'.getByTagName($mensagem,'dsmensag').'","Confirma&ccedil;&atilde;o - Ayllos","verificaAbreTelaPagamentoAvalista();","hideMsgAguardo();bloqueiaFundo(divRotina);","sim.gif","nao.gif");';
+		$tipo = getByTagName($mensagem,'inconfir');
+		if($tipo==1){
+			echo 'showConfirmacao("'.getByTagName($mensagem,'dsmensag').'","Confirma&ccedil;&atilde;o - Ayllos","verificaAbreTelaPagamentoAvalista();","hideMsgAguardo();bloqueiaFundo(	divRotina);","sim.gif","nao.gif");';
+		}
+		elseif($tipo==2){
+			echo 'showConfirmacao("'.getByTagName($mensagem,'dsmensag').'","Confirma&ccedil;&atilde;o - Ayllos","pedeSenhaCoordenador(2,\"verificaAbreTelaPagamentoAvalista()\",\"divRotina\")","hideMsgAguardo();bloqueiaFundo(	divRotina);","sim.gif","nao.gif");';
+		}
+		else{
+			echo 'showConfirmacao("'.getByTagName($mensagem,'dsmensag').'","Confirma&ccedil;&atilde;o - Ayllos","pedeSenhaCoordenador(2,\"showConfirmacao(\'Saldo em conta insuficiente para pagamento da parcela. Confirma pagamento?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'verificaAbreTelaPagamentoAvalista()\',\'hideMsgAguardo();bloqueiaFundo(	divRotina);\',\'sim.gif\',\'nao.gif\')\",\"divRotina\")","hideMsgAguardo();bloqueiaFundo(	divRotina);","sim.gif","nao.gif");';
+		}
 	}else{	
 		echo 'confirmaPagamento();'; 
 	}	

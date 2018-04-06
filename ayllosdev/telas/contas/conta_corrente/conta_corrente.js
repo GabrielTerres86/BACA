@@ -60,6 +60,7 @@ var flgContinuar = false;
 var CriticasExcTitulares = new Array();
 var idConfirmouSenha = 0;
 var opCoordenador = '';
+var tiposConta = [];
 
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 
@@ -273,6 +274,7 @@ function manterRotina(operacao) {
     cdagepac = $('#cdagepac', '#' + nomeForm).val();
     cdsitdct = $('#cdsitdct', '#' + nomeForm).val();
     cdtipcta = $('#cdtipcta', '#' + nomeForm).val();
+    cdcatego = $('#cdcatego', '#' + nomeForm).val();
     cdbcochq = $('#cdbcochq', '#' + nomeForm).val();
     nrdctitg = normalizaNumero($('#nrdctitg', '#' + nomeForm).val());
     cdagedbb = $('#cdagedbb', '#' + nomeForm).val();
@@ -295,6 +297,7 @@ function manterRotina(operacao) {
     flgrestr = $('input[name="flgrestr"]:checked', '#' + nomeForm).val();
     indserma = $('input[name="indserma"]:checked', '#' + nomeForm).val();
 	idastcjt = $('input[name="idastcjt"]:checked', '#' + nomeForm).val();
+    flblqtal = $('input[name="flblqtal"]:checked', '#' + nomeForm).val();
 
 	flgdevolu_autom_alt = $('input[name="flgdevolu_autom"]:checked', '#' + nomeForm).val();
 	opCoordenador = $('#operauto', '#frmSenha').val();
@@ -310,12 +313,13 @@ function manterRotina(operacao) {
             cdbcoitg: cdbcoitg, cdsecext: cdsecext, dtcnsscr: dtcnsscr,
             dtcnsspc: dtcnsspc, dtdsdspc: dtdsdspc, dtabtcoo: dtabtcoo,
             dtelimin: dtelimin, dtabtcct: dtabtcct, dtdemiss: dtdemiss,
-            flgiddep: flgiddep, tpavsdeb: tpavsdeb,
+            flgiddep: flgiddep, tpavsdeb: tpavsdeb, cdcatego: cdcatego,
             tpextcta: tpextcta, flgrestr: flgrestr, inadimpl: inadimpl,
             inlbacen: inlbacen, flgexclu: flgexclu, flgcreca: flgcreca,
             operacao: operacao, flgcadas: flgcadas, indserma: indserma,
 				cdconsul: cdconsul, idastcjt: idastcjt,	cdageant: cdageant,
 			flgdevolu_autom: flgdevolu_autom_alt, cdopecor: opCoordenador,
+			inpessoa: inpessoa, flblqtal: flblqtal,
 				redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -361,7 +365,8 @@ function controlaLayout(operacao) {
     var rLinha = $('label[for="cdsitdct"],label[for="cdbcochq"],label[for="cdbcoitg"],label[for="cdagedbb"]', '#' + nomeForm);
     var cTodos = $('input, select', '#' + nomeForm);
     var cCodigo = $('#cdagepac,#cdsecext', '#' + nomeForm);
-    var cRadio = $('input[type="radio"]', '#' + nomeForm);
+    var cRadio = $('input[name="flgiddep"],input[name="tpextcta"],input[name="tpavsdeb"],input[name="flgrestr"],' +
+				   'input[name="indserma"],input[name="flgdevolu_autom"],input[name="idastcjt"],input[name="inlbacen"]', '#' + nomeForm);
     var cSelect = $('select', '#' + nomeForm);
     var cDatas = $('#dtabtcoo,#dtabtcct,#dtelimin,#dtdemiss,#dtcnsscr', '#' + nomeForm);
 
@@ -374,12 +379,13 @@ function controlaLayout(operacao) {
 
 
     // FIELDSET PRINCIPAL		
-    var rPrincipal = $('label[for="cdagepac"],label[for="cdtipcta"],label[for="nrdctitg"],label[for="nrctacns"]', '#' + nomeForm);
+    var rPrincipal = $('label[for="cdagepac"],label[for="cdtipcta"],label[for="cdcatego"],label[for="nrdctitg"],label[for="nrctacns"]', '#' + nomeForm);
     var cSituacao = $('#cdsitdct', '#' + nomeForm);
     var cContaITG = $('#nrdctitg', '#' + nomeForm);
     var cBcoCheque = $('#cdbcochq', '#' + nomeForm);
     var cSitCtaITG = $('#dssititg', '#' + nomeForm);
     var cTipoConta = $('#cdtipcta', '#' + nomeForm);
+    var cCdcatego = $('#cdcatego', '#' + nomeForm);
     var cDescPrinc = $('#dsagepac', '#' + nomeForm);
     var cAgeBcoITG = $('#cdagedbb,#cdbcoitg', '#' + nomeForm);
     var cNrctacns = $('#nrctacns', '#' + nomeForm);
@@ -392,6 +398,7 @@ function controlaLayout(operacao) {
     cDescPrinc.addClass('descricao').css('width', '203px');
     cSituacao.css('width', '147px');
     cTipoConta.css('width', '259px');
+    cCdcatego.css('width', '159px');
     cContaITG.css('width', '100px').addClass('contaitg');
     cNrctacns.css('width', '100px').addClass('conta');
     cDscadpos.css('width', '100px');
@@ -405,7 +412,7 @@ function controlaLayout(operacao) {
     var rGeral_2 = $('label[for="tpextcta"],label[for="cdsecext"]', '#' + nomeForm);
     var rGeral_3 = $('label[for="flgrestr"],label[for="flgrestr"]', '#' + nomeForm);
     var rGeral_4 = $('label[for="cdconsultor"]', '#' + nomeForm);
-    var rGeral_5 = $('label[for="indserma"],label[for="indserma"]', '#' + nomeForm);
+    var rGeral_5 = $('label[for="indserma"],label[for="flblqtal"]', '#' + nomeForm);
 	var rGeral_6 = $('label[for="idastcjt"],label[for="idastcjt"]', '#' + nomeForm);
 	var rGeral_7 = $('label[for="flgdevolu_autom"],label[for="flgdevolu_autom"]', '#' + nomeForm);
 
@@ -444,7 +451,7 @@ function controlaLayout(operacao) {
 	var flgdevolu_autom_alt = $('input[name="flgdevolu_autom"]', '#' + nomeForm);		
 
     if (operacao == "CA") {
-        var grupo1 = $('#cdagepac,#cdtipcta,#cdsitdct,#cdbcochq,#cdsecext,#dtcnsscr,#cdconsultor', '#' + nomeForm);
+        var grupo1 = $('#cdagepac,#cdtipcta,#cdsitdct,#cdcatego,#cdbcochq,#cdsecext,#dtcnsscr,#cdconsultor', '#' + nomeForm);
         grupo1.removeClass('campoTelaSemBorda').addClass('campo').removeProp('disabled');
         cSelect.removeProp('disabled');
         cRadio.removeProp('disabled');
@@ -458,12 +465,23 @@ function controlaLayout(operacao) {
                 cBcoCheque.val(cdbcoctl);
             }
 
+			var cbTiposConta = '';
+			
+			if (tiposConta[$(this).val()].idindividual == 1) { cbTiposConta += '<option value="1">Individual</option>'; }
+			if (tiposConta[$(this).val()].idconjunta_solidaria == 1) { cbTiposConta += '<option value="2">Conjunta</option>'; }
+			//if (tiposConta[$(this).val()].idconjunta_solidaria == 1) { cbTiposConta += '<option value="2">Conjunta solid&aacute;ria</option>'; }
+			//if (tiposConta[$(this).val()].idconjunta_nao_solidaria == 1) { cbTiposConta += '<option value="3">Conjunta n&atilde;o solid&aacute;ria</option>'; }
+			
+			cCdcatego.html(cbTiposConta);
+			
             // Utiliza flag para evitar a chamada da função quando o método trigger for acionado
             if (flgfirst) {
                 flgfirst = false;
             } else {
                 manterRotina('VE');
+			cCdcatego.prop("selectedIndex", -1);
             }
+			
         });
 		
 		cConsultaDatas.unbind("keydown").bind("keydown",function(e) {
@@ -475,7 +493,7 @@ function controlaLayout(operacao) {
 		
     }
 
-    montaSelect('b1wgen0059.p', 'Busca_Tipo_Conta', 'cdtipcta', 'cdtipcta', 'cdtipcta;dstipcta', cdtipcta);
+    //montaSelect('b1wgen0059.p', 'Busca_Tipo_Conta', 'cdtipcta', 'cdtipcta', 'cdtipcta;dstipcta', cdtipcta);
 
 	// Se alterar o campo de devolucao automatica, valida senha de coordenador
 	flgdevolu_autom_alt.unbind('change').bind('change', function() {

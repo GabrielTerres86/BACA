@@ -49,7 +49,7 @@
 		<input name="cdfinemp" id="cdfinemp" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsfinemp" id="dsfinemp" type="text" value="" />
-		<br />		
+		<br />
 		
 		<label for="vlemprst"><? echo utf8ToHtml('Vl. do Empr.:') ?></label>
 		<input name="vlemprst" id="vlemprst" type="text" value="" />

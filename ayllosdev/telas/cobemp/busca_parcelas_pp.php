@@ -75,9 +75,10 @@ $calculado = $xmlObjeto->roottag->tags[1]->tags;
                     <th><label for="vlparepr" class="txtNormalBold">Vl. Parc.</label></th>
                     <th><label for="vlpagpar" class="txtNormalBold">Vl. Pago</label></th>
                     <th><label for="vlmtapar" class="txtNormalBold">Multa</label></th>
-                    <th><label for="vljinpar" class="txtNormalBold">Jr. Normais</label></th>
+                    <th><label for="vljinpar" class="txtNormalBold">Jr. Norm.</label></th>
                     <th><label for="vlmrapar" class="txtNormalBold">Jr. Mora</label></th>
                     <th><label for="vldespar" class="txtNormalBold">Desc.</label></th>
+                    <th><label for="vliofcpl" class="txtNormalBold">Vl. IOF Atr</label></th>
                     <th><label for="vlatupar" class="txtNormalBold">Vl. Atual</label></th>
                     <th style="width:96px;"><label for="vlpagpar" class="txtNormalBold" >Vl. a Pagar</label></th>
 
@@ -120,6 +121,7 @@ $calculado = $xmlObjeto->roottag->tags[1]->tags;
                         <td><?php echo number_format(str_replace(",", ".", getByTagName($registro->tags, 'vljinpar')), 2, ",", "."); ?></td>
                         <td><?php echo number_format(str_replace(",", ".", getByTagName($registro->tags, 'vlmrapar')), 2, ",", "."); ?></td>
                         <td id="vldespar_<?php echo $nrparepr; ?>" ><?php echo "0,00"; /* number_format(str_replace(",",".",getByTagName($registro->tags,'vldespar')),2,",","."); */ ?></td>
+                        <td><?php echo number_format(str_replace(",", ".", getByTagName($registro->tags, 'vliofcpl')), 2, ",", "."); ?></td>
                         <td><?php echo $vlatupar; ?></td>			
                         <td style="width:70px;"><input type="text" id="vlpagpar_<?php echo $nrparepr; ?>" name="vlpagpar[]" size="10" onblur="verificaDesconto( $(this) , '<?php echo $flgantec; ?>' , <?php echo $nrparepr; ?>); return false;" value = "<?php echo number_format(0); ?>" >
 									
@@ -136,6 +138,7 @@ $calculado = $xmlObjeto->roottag->tags[1]->tags;
                 <input type="hidden" id="nrparepr_<?php echo $nrparepr; ?>" name="nrparepr[]" value="<?php echo $nrparepr; ?>">
                 <input type="hidden" id="parcela_<?php echo $parcela ?>" name="parcela[]" value="<?php echo $nrparepr; ?>">	
                 <input type="hidden" id="dtvencto_<?php echo $nrparepr ?>" name="dtvencto[]" value="<?php echo getByTagName($registro->tags, 'dtvencto'); ?>">						
+                <input type="hidden" id="vliofcpl_<?php echo $nrparepr ?>" name="vliofcpl[]" value="<?php echo getByTagName($registro->tags, 'vliofcpl'); ?>">
                 <input type="hidden" id="vlpagan_<?php echo $nrparepr ?>" name="vlpagan[]" value = "<?php echo number_format(0); ?>">
 
                 <input type="hidden" id="vlatraso_<?php echo $nrparepr; ?>" name="vlatraso[]" value="<?php echo $vlatraso; ?>">

@@ -30,7 +30,7 @@
  */
  
 	isPostMethod();	
-
+	
 ?>
 
 <div id="tabPrestacao">
@@ -76,7 +76,7 @@
                         <input type="hidden" id="cdorigem" name="cdorigem" value="<?php echo getByTagName($banco->tags,'cdorigem') ?>" />
 						<input type="hidden" id="liquidia" name="liquidia" value="<?php echo getByTagName($banco->tags,'liquidia') ?>" />
 						<input type="hidden" id="vlemprst" name="vlemprst" value="<?php echo number_format(floatval(str_replace(",",".",getByTagName($banco->tags,'vlemprst'))),2,",",".");?>" />
-						<input type="hidden" id="portabil" name="portabil" value="<?php echo getByTagName($banco->tags,'portabil') ?>" />						
+						<input type="hidden" id="portabil" name="portabil" value="<?php echo getByTagName($banco->tags,'portabil') ?>" />
 						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<?php echo getByTagName($banco->tags,'cdlcremp') ?>" />
 						<input type="hidden" id="qttolatr" name="qttolatr" value="<?php echo getByTagName($banco->tags,'qttolatr') ?>" />
 					</td>

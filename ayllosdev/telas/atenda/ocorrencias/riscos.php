@@ -1,40 +1,39 @@
-<?php
+<?php 
 	/************************************************************************
 	      Fonte: riscos.php
 	      Autor: Reginaldo Silva (AMcom)
-	      Data : Janeiro/2018               Última Alteração:
+	      Data : Janeiro/2018               Última Alteração:  
 
 	      Objetivo  : Mostrar aba "Riscos" da rotina de OCORRÊNCIAS
                       da tela ATENDA
 
-	      Alterações:
+	      Alterações:		
 
 		  09/02/2018 - Inclusão das colunas Risco Melhora e Risco Final
-			25/03/2018 - Adicionada coluna de Risco Refinanciamento e carregamento de dados brutos
 
-	************************************************************************/
+	************************************************************************/	
 	session_start();
-
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
+	
+	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
 	require_once('../../../includes/config.php');
-	require_once('../../../includes/funcoes.php');
+	require_once('../../../includes/funcoes.php');		
 	require_once('../../../includes/controla_secao.php');
     // Classe para leitura do xml de retorno
 	require_once('../../../class/xmlfile.php');
 
 	// Verifica se tela foi chamada pelo método POST
-	isPostMethod();
-
+	isPostMethod();	
+		
     $msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], '@');
 
 	if (!empty($msgError)) {
-		exibeErro($msgError);
-	}
-
+		exibeErro($msgError);		
+	}	
+	
 	// Verifica se o número do CPF/CNPJ foi informado
 	if (empty($_POST['nrcpfcnpj'])) {
 		exibeErro('Par&acirc;metros incorretos.');
-	}
+	}	
 
 	$nrdconta = $_POST['nrdconta'];
 	$nrcpfcnpj = $_POST['nrcpfcnpj'];
@@ -45,39 +44,33 @@
 	if (!validaInteiro($nrdconta)) {
 		exibeErro('CPF/CNPJ inv&aacute;lido.');
 	}
+	
+	// Monta o xml de requisição
+	$xml = "<Root>";
+    $xml .= " <Dados>";
+	$xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
+    $xml .= "   <cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
 
-		// Monta o xml de requisição
-	$xml = '<Root>';
-  $xml .= ' <Dados>';
-	$xml .= '   <nrdconta>' . $nrdconta . '</nrdconta>';
-  $xml .= '   <cdcooper>' . $glbvars['cdcooper'] . '</cdcooper>';
-  $xml .= ' </Dados>';
-  $xml .= '</Root>';
-
-	$nmdeacao = 'BUSCA_DADOS_RISCO';
-
-	if ( $glbvars['cdcooper'] == 6) {
-		$nmdeacao = 'BUSCA_DADOS_BRUTOS_RISCO';
-	}
-
-  $xmlResultRiscos = mensageria($xml, "TELA_ATENDA_OCORRENCIAS", $nmdeacao,
-	$glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"],
-	$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-
+    $xmlResultRiscos = mensageria($xml, "TELA_ATENDA_OCORRENCIAS", "BUSCA_DADOS_RISCO", 
+		$glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], 
+		$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjRiscos = getObjectXML($xmlResultRiscos);
-
+	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjRiscos->roottag->tags[0]->name) == 'ERRO') {
 		exibeErro($xmlObjRiscos->roottag->tags[0]->tags[0]->tags[4]->cdata);
-	}
-
+	} 
+	
 	$listaRiscos = $xmlObjRiscos->roottag->tags[0]->tags[0]->tags;
 	$dadosCentral = $xmlObjRiscos->roottag->tags[0]->tags[1]->tags;
-	$riscoCentral = getByTagName($dadosCentral, 'risco_ult_central');
-
+	$riscoCentral = getByTagName($dadosCentral, 'risco_ult_central'); 
+		
 	// Função para exibir erros na tela através de javascript
-	function exibeErro($msgErro) {
+	function exibeErro($msgErro) { 
 		echo "<script type='text/javascript'>";
 		echo "hideMsgAguardo();";
 		echo "showError('error','".$msgErro."','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');";
@@ -88,21 +81,21 @@
 
 	function aplicaMascara($str)
 	{
-		$numDigitos = strlen($str) > 11 ? 14 : 11;
+		$numDigitos = strlen($str) > 11 ? 14 : 11;		
 		$str = str_pad($str, $numDigitos, '0', STR_PAD_LEFT);
-
+		
 		if (strlen($str) == 11) {
 			$str = substr($str, 0, 3) . '.' . substr($str, 3, 3) . '.' .
 				substr($str, 6, 3) . '-'. substr($str, 9, 2);
 		}
 		else {
 			$str = substr($str, 0, 2) . '.' . substr($str, 2, 3) . '.' .
-				substr($str, 5, 3) . '/'. substr($str, 8, 4) . '-' .
+				substr($str, 5, 3) . '/'. substr($str, 8, 4) . '-' . 
 				substr($str, 12, 2);
 		}
 
 		return $str;
-	}
+	}	
 
 	function extraiRaizCpfCnpj($cpfCnpj)
 	{
@@ -116,7 +109,7 @@
 	}
 ?>
 <div id='divTabRiscos'>
-	<div class='divRegistros'>
+	<div class='divRegistros'>	
 		<table>
 			<thead>
 				<tr>
@@ -127,37 +120,76 @@
 					<th><span title="Risco Inclusão">R. Incl.</span></th>
 					<th><span title="Rating">Rat.</span></th>
 					<th><span title="Risco Atraso">R. Atr.</span></th>
-					<th><span title="Risco Refinanciamento">R. Ref.</span></th>
 					<th><span title="Risco Agravado">R. Agr.</span></th>
 					<th><span title="Risco Melhora">R. Melh.</span></th>
 					<th><span title="Risco da Operação">R. Oper.</span></th>
 					<th><span title="Risco do CPF">R. CPF</span></th>
-					<th><span title="Risco do Grupo Econômico">R. GE</span></th>
+					<th><span title="Risco do Grupo Econômico">R. GE</span></th>					
 					<th><span title="Risco Final">R. Final</span></th>
 				</tr>
 			</thead>
-			<tbody>
-				<?
+			<tbody>				
+				<? 
+				$riscosOperacao = array(); // riscos das opera??es para c?lculo do risco CPF
+				$dadosRisco     = array(); // dados dos riscos para exibi??o na tabela
 				foreach ($listaRiscos as $risco) {
+					$cpfCnpj = getByTagName($risco->tags, 'cpf_cnpj');
+					$cpfCnpjRaiz = extraiRaizCpfCnpj($cpfCnpj); // para o caso de CNPJ de matriz/filial
+
+					if (!isset($riscosOperacao[$cpfCnpjRaiz])) {
+						$riscosOperacao[$cpfCnpjRaiz] = array();
+						$dadosRisco[$cpfCnpjRaiz] = array();
+					}
+
+					$riscoOperacao = getByTagName($risco->tags, 'risco_operacao');
+
+					// evita arrasto de operações que não atendem ao critério da materialidade
+					if (getByTagName($risco->tags, 'arrasta_operacao') == 'S') {
+						array_push($riscosOperacao[$cpfCnpjRaiz], $riscoOperacao);
+					}
+
+					array_push($dadosRisco[$cpfCnpjRaiz], 
+						array(
+							'cpf_cnpj' => $cpfCnpj,
+							'numero_conta' => getByTagName($risco->tags, 'numero_conta'),
+							'contrato' => getByTagName($risco->tags, 'contrato'),
+							'risco_inclusao' => getByTagName($risco->tags, 'risco_inclusao'),
+							'rating' => getByTagName($risco->tags, 'rating'),
+							'risco_atraso' => getByTagName($risco->tags, 'risco_atraso'),
+							'risco_agravado' => getByTagName($risco->tags, 'risco_agravado'),
+							'risco_melhora' => getByTagName($risco->tags, 'risco_melhora'),
+							'risco_operacao' => $riscoOperacao,
+							'risco_grupo' => getByTagName($risco->tags, 'risco_grupo'),
+							'risco_final' => getByTagName($risco->tags, 'risco_final'),
+							'tipo_registro' => getByTagName($risco->tags, 'tipo_registro')
+						));
+				}
+
+				foreach ($riscosOperacao as $cpfCnpj => $niveisRisco) {
+					// Calcula o risco CPF como o maior risco das operações do mesmo CPF
+					$riscoCpfCnpj = max('A', max($niveisRisco));
+
+					foreach ($dadosRisco[$cpfCnpj] as $risco) {
+						$riscoGrupo = $risco['risco_grupo'];
 				?>
 					<tr>
-						<td><? echo aplicaMascara(getByTagName($risco->tags, 'cpf_cnpj')); ?></td>
-						<td><? echo formataContaDV(getByTagName($risco->tags, 'numero_conta')); ?></td>
-						<td><? echo number_format(getByTagName($risco->tags, 'contrato'), 0, '', '.'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'tipo_registro'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'risco_inclusao'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'rating'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'risco_atraso'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'risco_refin'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'risco_agravado'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'risco_melhora'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'risco_operacao'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'risco_cpf'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'risco_grupo'); ?></td>
-						<td><? echo getByTagName($risco->tags, 'risco_final'); ?></td>
+						<td><? echo aplicaMascara($risco['cpf_cnpj']); ?></td>
+						<td><? echo formataContaDV($risco['numero_conta']); ?></td>
+						<td><? echo number_format($risco['contrato'], 0, '', '.'); ?></td>
+						<td><? echo $risco['tipo_registro']; ?></td>
+						<td><? echo $risco['risco_inclusao']; ?></td>
+						<td><? echo $risco['rating']; ?></td>
+						<td><? echo $risco['risco_atraso']; ?></td>
+						<td><? echo $risco['risco_agravado']; ?></td>
+						<td><? echo $risco['risco_melhora']; ?></td>
+						<td><? echo $risco['risco_operacao']; ?></td>						
+						<td><? echo $riscoCpfCnpj; ?></td>
+						<td><? echo $riscoGrupo ?></td>
+						<td><? echo !empty($risco['risco_final']) ? $risco['risco_final'] : max($riscoCpfCnpj, $riscoGrupo); ?></td>
 					</tr>
 				<?
 					}
+				}
 				?>
 			</tbody>
 		</table>

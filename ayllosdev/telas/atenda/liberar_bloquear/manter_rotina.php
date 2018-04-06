@@ -1,4 +1,4 @@
-<?php
+<?php 
 /*!
  * FONTE        : principal.php
  * CRIAÇÃO      : James Prust Junior
@@ -15,20 +15,20 @@
  *                             dsmotmaj. Chamado 783434 - Mateus Z (Mouts)
  *                15/03/2018 - Campo de selecao de cancelamento automatico de credito (Marcel Kohls / AMCom)
  * --------------
- */
+ */	
 	session_start();
-
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
+	
+	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
 	require_once("../../../includes/config.php");
-	require_once("../../../includes/funcoes.php");
+	require_once("../../../includes/funcoes.php");		
 	require_once("../../../includes/controla_secao.php");
-	require_once("../../../class/xmlfile.php");
-
+	require_once("../../../class/xmlfile.php");	
+	
 	// Verifica se tela foi chamada pelo método POST
-	isPostMethod();
+	isPostMethod();		
 
 	// Recebe a operação que está sendo realizada
-	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
+	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 	$flgrenli = (isset($_POST['flgrenli'])) ? $_POST['flgrenli'] : '0';
 	$flgcrdpa = (isset($_POST['flgcrdpa'])) ? $_POST['flgcrdpa'] : '0';
@@ -44,13 +44,13 @@
 	$flgcrdpa = strtoupper($flgcrdpa) == 'NO' ? 0 : 1;
 	$flmajora = strtoupper($flmajora) == 'NO' ? 0 : 1;
 	$flcnaulc = strtoupper($flcnaulc) == 'NO' ? 0 : 1;
-
+	
 	if ($operacao == 'ALTERARC' && $flmajora == 0 && $dsmotmaj == '')
 	  exibirErro('error',"&Eacute; obrigat&oacute;rio informar o motivo do bloqueio.",'Alerta - Ayllos',"$(\'#motivo_bloqueio_maj\',\'#frmContaCorrente\').focus();hideMsgAguardo();bloqueiaFundo(divRotina);",false);
-
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "")
+	
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "") 
 	   exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-
+	
 	if ($operacao == 'ALTERAR') {
 		// Monta o xml de requisição
 		$xml  = "";
@@ -62,7 +62,7 @@
 		$xml .= "		<flgcrdpa>".$flgcrdpa."</flgcrdpa>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
-
+		
 		// Executa script para envio do XML
 		$xmlResult = mensageria($xml, "ATENDA", "DESOPE_GRAVA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		// Cria objeto para classe de tratamento de XML
@@ -79,13 +79,13 @@
 		$xml .= "		<flcnaulc>".$flcnaulc."</flcnaulc>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
-
+		
 		// Executa script para envio do XML
 		$xmlResult = mensageria($xml, "ATENDA", "DESOPE_GRAVA_CONTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		// Cria objeto para classe de tratamento de XML
 		$xmlObjeto = getObjectXML($xmlResult);
 	}
-
+	
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		if ($msgErro == "") {
@@ -93,9 +93,9 @@
 		}
 		exibeErro($msgErro);
 	}
-
+	
 	echo "showError('inform','Altera&ccedil;&atilde;o salva com sucesso!','Notifica&ccedil;&atilde;o - Ayllos','controlaOperacao(\'\');');";
-
+	
 	function exibeErro($msgErro) {
 		echo 'showError("error"," '.$msgErro.'","Alerta - Atenda","$(\'#flgrenli\',\'#frmContaCorrente\').focus();hideMsgAguardo();bloqueiaFundo(divRotina);");';
 	}

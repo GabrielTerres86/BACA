@@ -105,12 +105,13 @@
  * 091: [05/04/2017] Lombardi         (CECRED) : Criadas as funcoes lpad e rpad.
  * 092: [15/09/2017] Kelvin 		  (CECRED) : Alterações referente a melhoria 339.
  * 093: [06/10/2017] Kelvin 		  (CECRED) : Ajuste para ignorar campos com display none na funcao controlaFocoEnter. (PRJ339 - Kelvin).
+ * 095: [06/02/2018] Lombardi 		  (CECRED) : Colocado tratativa para tirar o background quando o type for 'radio'. (PRJ366)
 */ 	 
 
-var UrlSite = parent.window.location.href.substr(0, parent.window.location.href.lastIndexOf("/") + 1); // Url do site
-var UrlImagens = UrlSite + "imagens/"; // Url para imagens     
-var nmrotina = ''; // Para armazenar o nome da rotina no uso da Ajuda (F2)
-var semaforo = 0;  // Semáforo para não permitir chamar a função controlaOperacao uma atrás da outra
+var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
+var UrlImagens	= UrlSite + "imagens/"; // Url para imagens     
+var nmrotina    = ''; // Para armazenar o nome da rotina no uso da Ajuda (F2)
+var semaforo	= 0;  // Semáforo para não permitir chamar a função controlaOperacao uma atrás da outra
 
 var divRotina; 	// Variável que representa a Rotina com a qual está se trabalhando
 var divError;  	// Variável que representa a div de Erros do sistema, usada para mensagens de Erros e Confirmações
@@ -129,21 +130,21 @@ $(document).ready(function () {
 
 	// 053
 	document.onhelp = new Function("return false"); // Previne a abertura do help no IE
-    window.onhelp = new Function("return false"); // Previne a abertura do help no IE
+	window.onhelp 	= new Function("return false"); // Previne a abertura do help no IE
 
 	$("body").append('<div id="divAguardo"></div><div id="divError"></div><div id="divConfirm"></div><div id="divBloqueio"></div><div id="divF2"></div><div id="divUsoGenerico"></div><iframe src="' + UrlSite + 'blank.php" id="iframeBloqueio"></iframe>');
 	
 	// Inicializo a variável divRotiva e divError com o respectivo seletor jQuery da div
 	// A qualquer momento pode-se alterar o valor da divRotina com a Rotina que está sendo implementada
 	// O valor do divError não tem motivos para ser alterado
-    divRotina = $('#divRotina');
-    divError = $('#divError');
-    divConfirm = $('#divConfirm');
+	divRotina 	= $('#divRotina');
+	divError  	= $('#divError');	
+	divConfirm  = $('#divConfirm');	
 	
 	// Iniciliza tirando os eventos para posteriormente bindá-los corretamente
 	$(this).unbind('keyup').unbind('keydown').unbind('keypress');	
 	
-    $(this).unbind("keydown.backspace").bind("keydown.backspace", function (e) {
+	$(this).unbind("keydown.backspace").bind("keydown.backspace",function(e) {
 		if (getKeyValue(e) == 8) { // Tecla BACKSPACE
 			var targetType = e.target.tagName.toUpperCase();			
 			// Permite a tecla BACKSPACE somente em campos INPUT e TEXTAREA e se estiverem habilitados para digitação			
@@ -153,25 +154,25 @@ $(document).ready(function () {
 		return true;
 	});
 	
-    $.ajaxSetup({ data: { sidlogin: $("#sidlogin", "#frmMenu").val() } });
+	$.ajaxSetup({ data: { sidlogin: $("#sidlogin","#frmMenu").val() } });
 	
 	/*!
 	 * ALTERAÇÃO     : 022
 	 * OBJETIVO      : Prevenir o comportamento padrão do browser em relação as teclas F1 a F12, para posteriormente utilizar estas teclas para fins específicos 
 	 * FUNCIONAMENTO : Captura o evento da tecla pressionada e associa á função previneTeclasEspeciais funcionando para IE, Chrome e FF
 	 */	
-    $(this).keydown(previneTeclasEspeciais);
-    function previneTeclasEspeciais(event) {
+	$(this).keydown( previneTeclasEspeciais );
+	function previneTeclasEspeciais(event){		
 		// Essecial para funcionar no IE 
 		var e = (window.event) ? window.event : event;
 		// Verifica se a tecla pressionada é F1 a F12 retirando a F5
-        if ((e.keyCode >= 112) && (e.keyCode <= 123) && (e.keyCode != 116)) {
-            if ($.browser.msie) {
-                e.returnValue = false; // Previne o comportamento padrão no IE
-                e.cancelBubble = true;  // Previne o comportamento padrão no IE
-                e.keyCode = 0;     // Previne o comportamento padrão no IE
+		if ( ( e.keyCode >= 112 ) && ( e.keyCode <= 123 ) && ( e.keyCode != 116 ) ) { 
+			if ( $.browser.msie ) {
+				e.returnValue	= false; // Previne o comportamento padrão no IE
+				e.cancelBubble 	= true;  // Previne o comportamento padrão no IE
+				e.keyCode       = 0;     // Previne o comportamento padrão no IE
 				document.onhelp = new Function("return false"); // Previne a abertura do help no IE
-                window.onhelp = new Function("return false"); // Previne a abertura do help no IE
+				window.onhelp 	= new Function("return false"); // Previne a abertura do help no IE
 			} else {
 				e.stopPropagation(); // Previne o comportamento padrão nos browsers bons
 				e.preventDefault();  // Previne o comportamento padrão nos browsers bons
@@ -186,12 +187,12 @@ $(document).ready(function () {
 	 *                 correspondente para TRUE. Ao liberar a tecla, o sistema verifica novamente se é shift/control, caso afirmativo
 	 *                 volta os valores das variáveiss globais correspondentes para FALSE.
 	 */		
-    $(this).keydown(function (e) {
-        if (e.which == 16) { shift = true; } // Tecla Shift		
-        if (e.which == 17) { control = true; } // Tecla Control
-    }).keyup(function (e) {
-        if (e.which == 16) { shift = false; } // Tecla Shift		
-        if (e.which == 17) { control = false; } // Tecla Control
+	$(this).keydown( function(e) {
+		if (e.which == 16 ) { shift 	= true; } // Tecla Shift		
+		if (e.which == 17 ) { control 	= true; } // Tecla Control
+	}).keyup( function(e) {
+		if (e.which == 16 ) { shift 	= false; } // Tecla Shift		
+		if (e.which == 17 ) { control 	= false; } // Tecla Control
 	});
 	
 	/*!
@@ -199,29 +200,29 @@ $(document).ready(function () {
 	 * OBJETIVO   : Teclas de atalho para selecinar os registro nas tabelas pelo teclado, utilizando as setas direcionais "para cima" e "para baixo"
 	 * OBSERVAÇÃO : As tabelas devem estar criadas dentro do padrão adotado nas rotinas no módulo de CONTAS
 	 */	
-    $(this).keyup(function (e) {
+	$(this).keyup( function(e) { 			
 		var tecla = e.which;	
-        if ((tecla == 38) || (tecla == 40)) {
+		if ( (tecla == 38) || (tecla == 40) ) {
 			
 			var nrLinhaSelecao;	
 			var divRegistro;	
 			var divRegistros;	
 			
-            if (divError.css('display') == 'block' || divConfirm.css('display') == 'block') {
+			if ( divError.css('display') == 'block' || divConfirm.css('display') == 'block' ){
 				return true;
-            } else if ($('#divUsoGenerico').css('visibility') == 'visible') {
-                divRegistros = $('div.divRegistros', '#divUsoGenerico');
-            } else if ($('#divRotina').css('visibility') == 'visible' && $('div.divRegistros', '#divRotina').length) {
-                divRegistros = $('div.divRegistros', '#divRotina');
-            } else if ($('#divMatric').css('visibility') == 'visible' || $('#divMatric').css('visibility') == 'inherit') {
-                divRegistros = $('div.divRegistros', '#divMatric');
-            } else {
-                if ($('#divRotina').css('visibility') == 'visible') return false;
+			}else if ( $('#divUsoGenerico').css('visibility') == 'visible' ){
+				divRegistros = $('div.divRegistros','#divUsoGenerico');
+			}else if( $('#divRotina').css('visibility') == 'visible' && $('div.divRegistros','#divRotina').length ){
+				divRegistros = $('div.divRegistros','#divRotina');
+			}else if( $('#divMatric').css('visibility') == 'visible' || $('#divMatric').css('visibility') == 'inherit' ){
+				divRegistros = $('div.divRegistros','#divMatric');
+			}else {
+				if ( $('#divRotina').css('visibility') == 'visible') return false;
 				divRegistros = $('div.divRegistros');
 			}		
 				
-            divRegistros.each(function () {
-                if ($(this).css('display') == 'block') {
+			divRegistros.each( function() {
+				if ( $(this).css('display') == 'block' ) {
 					divRegistro = $(this);
 				}				
 			});			
@@ -230,10 +231,10 @@ $(document).ready(function () {
 			
 			var qtdeRegistros = $('table > tbody > tr', divRegistro).length;
 			// Se possui um ou nenhum registro, não fazer nada
-            if (qtdeRegistros > 1) {
+			if ( qtdeRegistros > 1 ) { 
 				// Descobre qual linha está selecionada
-                $('table > tbody > tr', divRegistro).each(function (i) {
-                    if ($(this).hasClass('corSelecao')) {
+				$('table > tbody > tr', divRegistro).each( function(i) {
+					if ( $(this).hasClass( 'corSelecao' ) ) {
 						nrLinhaSelecao = i;
 					}					
 				});	
@@ -1414,21 +1415,21 @@ function layoutPadrao() {
 	$('input.alphanum'		).css({'text-transform':'uppercase'});		
 	$('input.alphanumlower'	).css({'text-transform':'lowercase'});		
 	
-    $('input.alpha').alpha({ ichars: caracAcentuacao + caracEspeciais });
-    $('input.alphanum').alphanumeric({ ichars: caracSuperEspeciais + caracAcentuacao });
-    $('input.alphanumlower').alphanumeric({ ichars: caracSuperEspeciais + caracAcentuacao });
-    $('textarea.alphanum').alphanumeric({ ichars: caracSuperEspeciais + caracAcentuacao });
-    $('input.inteiro').numeric({ ichars: caracAcentuacao + caracEspeciais + '.,\"' });
-    $('input.codigo').numeric({ ichars: caracAcentuacao + caracEspeciais + '.,\"' });
+	$('input.alpha'			).alpha({ichars: caracAcentuacao+caracEspeciais});
+	$('input.alphanum'		).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao});
+	$('input.alphanumlower'	).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao});
+	$('textarea.alphanum'   ).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao});
+	$('input.inteiro'		).numeric({ichars: caracAcentuacao+caracEspeciais+'.,\"'});
+	$('input.codigo'		).numeric({ichars: caracAcentuacao+caracEspeciais+'.,\"'});
 	
-    $('.descricao').desabilitaCampo();
-    $('.campoTelaSemBorda').attr('tabindex', '-1');
-    $('label').addClass("txtNormalBold");
-    $('input.codigo').attr('maxlength', '4');
+	$('.descricao'			).desabilitaCampo();
+	$('.campoTelaSemBorda'	).attr('tabindex','-1');	
+	$('label'				).addClass("txtNormalBold");
+	$('input.codigo'		).attr('maxlength','4');	
 	$('a[class!="botao"]','.formulario').attr('tabindex','-1');	
 
 	// Alinhando os campos para direita
-    $('.inteiro,.porcento,.numerocasa,.caixapostal,.cep,.conta,.contrato,.contrato2,.contrato3,.contaitg,.cnpj,.cpf,.matricula,.cadempresa,.insc_estadual').css('text-align', 'right');
+	$('.inteiro,.porcento,.numerocasa,.caixapostal,.cep,.conta,.contrato,.contrato2,.contrato3,.contaitg,.cnpj,.cpf,.matricula,.cadempresa,.insc_estadual').css('text-align','right');	
 	
 	/*!
 	 * ALTERAÇÃO  : 023
@@ -1451,9 +1452,9 @@ function layoutPadrao() {
 	 * OBJETIVO   : Tecla de atalho F7 igual ao modo CARACTER para abrir a Pesquisa
 	 * OBSERVAÇÃO : Aplicado somente a campos que possuem a classe "pesquisa"
 	 */	
-    $('input.pesquisa').unbind('keydown.zoom').bind('keydown.zoom', function (e) {
-        if (e.keyCode == 118) {
-            if (isHabilitado($(this))) {
+	$('input.pesquisa').unbind('keydown.zoom').bind('keydown.zoom', function(e) {
+		if ( e.keyCode == 118 ) {
+			if ( isHabilitado($(this)) ) {
 				$(this).next().click();
 				return false;
 			}
@@ -1465,17 +1466,17 @@ function layoutPadrao() {
 	 * ALTERAÇÃO  : 027
 	 * OBJETIVO   : Ao entrar no campo cpf ou cnpj, verifica se não existe valor digitado, caso afirmativo limpa o campo para digitação
 	 */		
-    $('input.cnpj').unbind('focusin').bind('focusin', function () {
+	$('input.cnpj').unbind('focusin').bind('focusin', function() {
 		$(this).addClass('campoFocusIn');	/*064*/
-        valorAtual = normalizaNumero($(this).val());
-        valorAtual = (valorAtual == '0') ? '' : valorAtual;
-        $(this).val(valorAtual);
+		valorAtual = normalizaNumero( $(this).val() );
+		valorAtual = ( valorAtual == '0' ) ? '' : valorAtual;
+		$(this).val( valorAtual );
 	});
-    $('input.cpf').unbind('focusin').bind('focusin', function () {
+	$('input.cpf').unbind('focusin').bind('focusin', function() {
 		$(this).addClass('campoFocusIn');	/*064*/
-        valorAtual = normalizaNumero($(this).val());
-        valorAtual = (valorAtual == '0') ? '' : valorAtual;
-        $(this).val(valorAtual);
+		valorAtual = normalizaNumero( $(this).val() );
+		valorAtual = ( valorAtual == '0' ) ? '' : valorAtual;
+		$(this).val( valorAtual );
 	});	
 	
 	return true;
@@ -1486,11 +1487,11 @@ function layoutPadrao() {
  * OBJETIVO   : Função que retorna uma string padrão de aguardo para impressão
  * PARÂMETROS : titulo [String] -> Título que será incluso na mensagem
  */
-function montaHtmlImpressao(titulo) {
+function montaHtmlImpressao( titulo ) {
 	var htmlImpressao = '';
-    htmlImpressao = '<html>';
+	htmlImpressao  = '<html>';
 	htmlImpressao += '	<head>';
-    htmlImpressao += '		<title>Impressão CECRED - ' + titulo + '</title>';
+	htmlImpressao += '		<title>Impressão CECRED - '+titulo+'</title>';
 	htmlImpressao += '		<style type="text/css">';
 	htmlImpressao += '      	body{background-color:#DEE3D6;text-align:center;font-size:12px;color:#333;padding:50px;}';
 	htmlImpressao += '		</style>';
@@ -1498,7 +1499,7 @@ function montaHtmlImpressao(titulo) {
 	htmlImpressao += '  <body>';
 	htmlImpressao += '  	<center>';
 	htmlImpressao += '  		<h1 style="font-size:18px;font-family:Arial,Helvetica,sans-serif;border:10px solid #fff;background-color:#F7F3F7;padding:30px 10px;font-weight:normal;width:500px;">';
-    htmlImpressao += '       		Aguarde, carregando impress&atilde;o do(a)<br />' + titulo + ' ...';
+	htmlImpressao += '       		Aguarde, carregando impress&atilde;o do(a)<br />'+titulo+' ...';
 	htmlImpressao += '          </h1>';
 	htmlImpressao += '  	</center>';
 	htmlImpressao += '  </body>';
@@ -1905,6 +1906,7 @@ $.fn.extend({
 			var type = this.type;
             var tag = this.tagName.toLowerCase();
             if ((in_array(tag, ['input', 'select', 'textarea'])) && (type != 'image')) {
+				if (type == 'radio') $(this).css('background', 'none');
                 $(this).addClass('campo').removeClass('campoTelaSemBorda').prop('readonly', false).prop('disabled', false);
                 if ($(this).hasClass('pesquisa')) $(this).next().ponteiroMouse();
 			}

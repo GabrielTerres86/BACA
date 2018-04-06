@@ -3,38 +3,40 @@
 	/************************************************************************
 	 Fonte: cheques_bordero.php                                       
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                ⁄ltima AlteraÁ„o: 26/06/2017
+	 Data : Novembro/2008                √öltima Altera√ß√£o: 26/06/2017
 	                                                                  
 	 Objetivo  : Mostrar opcao Borderos de descontos de cheques        
 	                                                                  	 
-	 AlteraÁıes: 11/07/2011 - Alterado para layout padr„o (Gabriel Capoia - DB1)
+	 Altera√ß√µes: 11/07/2011 - Alterado para layout padr√£o (Gabriel Capoia - DB1)
 				
 				 18/11/2011 - Ajustes para nao mostrar botao quando nao tiver permissao (Jorge)
 				 
-				 10/08/2012 - SubstituiÁ„o do bot„o ANALISE por PRE-ANALISE (Lucas)
+				 10/08/2012 - Substitui√ß√£o do bot√£o ANALISE por PRE-ANALISE (Lucas)
 				 
 				 02/01/2015 - Ajuste format nrborder. (Chamado 181988) - (Fabricio)
 				 
-				 16/12/2016 - AlteraÁıes Referentes ao projeto 300. (Reinert)
+				 16/12/2016 - Altera√ß√µes Referentes ao projeto 300. (Reinert)
 
-				 23/03/2017 - Inclusao de bot„o Rejeitar.  Projeto 300 (Lombardi)
+				 23/03/2017 - Inclusao de bot√£o Rejeitar.  Projeto 300 (Lombardi)
 
                  31/05/2017 - Ajuste para verificar se possui cheque custodiado
                                no dia de hoje. 
                                PRJ300- Desconto de cheque. (Odirlei-AMcom) 
 							   
-                 26/06/2017 - Ajuste para rotina ser chamada atravÈs da tela ATENDA > Produtos (Jonata - RKAM / P364).
+                 26/06/2017 - Ajuste para rotina ser chamada atrav√©s da tela ATENDA > Produtos (Jonata - RKAM / P364).
 				 							    
+
+				 06/02/2018 - Altera√ß√µes referentes ao projeto 454.1 - Resgate de cheque em custodia. (Mateus Zimmermann - Mouts)
 	************************************************************************/
 	
 	session_start();
 	
-	// Includes para controle da session, vari·veis globais de controle, e biblioteca de funÁıes	
+	// Includes para controle da session, vari√°veis globais de controle, e biblioteca de fun√ß√µes	
 	require_once("../../../../includes/config.php");
 	require_once("../../../../includes/funcoes.php");
 	require_once("../../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo mÈtodo POST
+	// Verifica se tela foi chamada pelo m√©todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
@@ -42,12 +44,12 @@
 	
 	setVarSession("nmrotina","DSC CHQS - BORDERO");
 	
-	// Carrega permissıes do operador
+	// Carrega permiss√µes do operador
 	include("../../../../includes/carrega_permissoes.php");
 	
 	setVarSession("opcoesTela",$opcoesTela);
 	
-	// Verifica se o n˙mero da conta foi informado
+	// Verifica se o n√∫mero da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
@@ -55,12 +57,12 @@
 	$nrdconta = $_POST["nrdconta"];
 	$executandoProdutos = $_POST['executandoProdutos'];
 
-	// Verifica se o n˙mero da conta È um inteiro v·lido
+	// Verifica se o n√∫mero da conta √© um inteiro v√°lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
 	
-	// Monta o xml de requisiÁ„o
+	// Monta o xml de requisi√ß√£o
 	$xmlGetBorderos  = "";
 	$xmlGetBorderos .= "<Root>";
 	$xmlGetBorderos .= "	<Cabecalho>";
@@ -80,7 +82,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjBorderos = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crÌtica
+	// Se ocorrer um erro, mostra cr√≠tica
 	if (strtoupper($xmlObjBorderos->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjBorderos->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
@@ -88,7 +90,47 @@
 	$borderos   = $xmlObjBorderos->roottag->tags[0]->tags;
 	$qtBorderos = count($borderos);
 	
-	// FunÁ„o para exibir erros na tela atravÈs de javascript
+	$xml = "";
+	$xml .= "<Root>";
+	$xml .= "  <Cabecalho>";
+	$xml .= "	    <Bo>b1wgen0018.p</Bo>";
+	$xml .= "        <Proc>busca_informacoes_associado</Proc>";
+	$xml .= "  </Cabecalho>";
+	$xml .= "  <Dados>";
+	$xml .= "       <cdcooper>" . $glbvars['cdcooper'] . "</cdcooper>";
+	$xml .= "		<cdagenci>" . $glbvars['cdagenci'] . "</cdagenci>";
+	$xml .= "		<nrdcaixa>" . $glbvars['nrdcaixa'] . "</nrdcaixa>";
+	$xml .= "		<cdoperad>" . $glbvars['cdoperad'] . "</cdoperad>";
+	$xml .= "		<nmdatela>" . $glbvars['nmdatela'] . "</nmdatela>";
+	$xml .= "		<idorigem>" . $glbvars['idorigem'] . "</idorigem>";
+	$xml .= "		<dtmvtolt>" . $glbvars['dtmvtolt'] . "</dtmvtolt>";
+	$xml .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
+	$xml .= "		<nrcpfcgc>0</nrcpfcgc>";
+	$xml .= xmlFilho($protocolo, 'Cheques', 'Itens');
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	// Executa script para envio do XML
+	$xmlResult = getDataXML($xml);
+
+	// Cria objeto para classe de tratamento de XML
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	//----------------------------------------------------------------------------------------------------------------------------------	
+	// Controle de Erros
+	//----------------------------------------------------------------------------------------------------------------------------------
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+	    $msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	    $nmdcampo = $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
+	    if (!empty($nmdcampo)) {
+	        $retornoAposErro = $retornoAposErro . " focaCampoErro('" . $nmdcampo . "','frmOpcao');";
+	    }
+	    exibirErro('error', $msgErro, 'Alerta - Ayllos', $retornoAposErro, false);
+	}
+
+    $associado = $xmlObjeto->roottag->tags[0]->tags[0]->tags; // dados associado  
+	
+	// Fun√ß√£o para exibir erros na tela atrav√©s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
@@ -188,9 +230,13 @@
 
 <script type="text/javascript">
 
+var nmprimtl = "<?php echo getByTagName($associado, 'nmprimtl') ?>";
+var inpessoa = <?php echo getByTagName($associado, 'inpessoa') ?>;
+var idastcjt = <?php echo getByTagName($associado, 'idastcjt') ?>;
+
 dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
-// Muda o tÌtulo da tela
+// Muda o t√≠tulo da tela
 $("#tdTitRotina").html("DESCONTO DE CHEQUES - BORDER&Ocirc;S");
 
 formataLayout('divBorderos');
@@ -198,10 +244,10 @@ formataLayout('divBorderos');
 // Esconde mensagem de aguardo
 hideMsgAguardo();
 
-// Bloqueia conte˙do que est· ·tras do div da rotina
+// Bloqueia conte√∫do que est√° √°tras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
 	
-	//Se esta tela foi chamada atravÈs da rotina "Produtos" ent„o acessa a opÁ„o conforme definido pelos respons·veis do projeto P364
+	//Se esta tela foi chamada atrav√©s da rotina "Produtos" ent√£o acessa a op√ß√£o conforme definido pelos respons√°veis do projeto P364
 	if (executandoProdutos == true) {
 		
 		$("#btIncluir", "#divBotoesChequesBordero").click();

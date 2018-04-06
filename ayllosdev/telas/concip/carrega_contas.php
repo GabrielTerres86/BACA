@@ -1,5 +1,4 @@
 <?php
-
 /*
  * FONTE        : carrega_contas.php
  * CRIAÇÃO      : Daniel Zimmermann
@@ -9,9 +8,6 @@
  * ALTERAÇÕES   :
  * --------------
  */
-?>
-<?php
-
 session_cache_limiter("private");
 session_start();
 require_once('../../includes/config.php');
@@ -41,6 +37,7 @@ $dtarqfim = (isset($_POST['dtarqfim'])) ? $_POST['dtarqfim'] : '';
 $cdlancto = (isset($_POST['cdlancto'])) ? $_POST['cdlancto'] : '';
 $cdsituac = (isset($_POST['cdsituac'])) ? $_POST['cdsituac'] : '';
 $nmarquiv = (isset($_POST['nmarquiv'])) ? $_POST['nmarquiv'] : '';
+$formtran = (isset($_POST['formtran'])) ? $_POST['formtran'] : '0';
 $insaida = (isset($_POST['insaida'])) ? $_POST['insaida'] : '1';
 // 1 - Consultar 2 - Exportar
 
@@ -59,6 +56,7 @@ $xml .= "   <nmarquiv>" . $nmarquiv . "</nmarquiv>";
 $xml .= "   <insaida>" . $insaida . "</insaida>";
 $xml .= "   <nriniseq>" . $nriniseq . "</nriniseq>";
 $xml .= "   <nrregist>" . $nrregist . "</nrregist>";
+$xml .= "   <formtran>" . $formtran . "</formtran>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
@@ -77,7 +75,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
     $registros = $xmlObj->roottag->tags[0]->tags;
     $qtregist = $xmlObj->roottag->tags[1]->cdata;
     $vltotal = $xmlObj->roottag->tags[2]->cdata;
-
 }
 
 if ($insaida == '1') {

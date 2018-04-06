@@ -38,6 +38,14 @@
 					<input id="tpltmvpq" name="tpltmvpq" type="text"/>
 				</td>
 			</tr>
+			<tr>
+				<td colspan="3">
+					<label for="cdgrupo_historico">Grupo de Hist&oacute;rico:</label>
+					<input name="cdgrupo_historico" id="cdgrupo_historico" type="text"/>
+					<a style="margin-top:0px;" href="#" onClick="controlaPesquisaGrupoHistorico('frmFiltros'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
+					<input name="dsgrupo_historico" id="dsgrupo_historico" type="text"/>
+				</td>
+			</tr>
 		</table>
 	</fieldset>
 </form>

@@ -9,6 +9,7 @@
  *				  25/07/2016 - Corrigi o uso de indice inexistente no array $registros. SD 479874 (Carlos R.)
  *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
  *							   CH, RE, PP E CT. (PRJ339 - Reinert)
+ *                24/10/2017 - Ajustes ao carregar dados do avalista e controle de alteração. PRJ339 CRM (Odirlei-AMcom)                      
  */	
  
 $registros[0]->tags = ( isset($registros[0]->tags) ) ? $registros[0]->tags : array();
@@ -22,13 +23,19 @@ $registros[1]->tags = ( isset($registros[1]->tags) ) ? $registros[1]->tags : arr
 	<input name="nrctaav1" id="nrctaav1" type="text" value="<? echo !empty($registros[0]) ? getByTagName($registros[0]->tags,'nrctaava') : '0' ?>" />
 	<a class="lupa"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>	
 	<a class="pointer"><img src="<? echo $UrlImagens; ?>geral/refresh.png"></a>		
-	
-	<label for="nmdaval1">Nome:</label>
-	<input name="nmdaval1" id="nmdaval1" type="text" value="<? echo getByTagName($registros[0]->tags,'nmdavali') ?>" />
-	<br />
+		
 	
 	<label for="nrcpfav1">CPF/CNPJ:</label>
 	<input name="nrcpfav1" id="nrcpfav1" type="text" value="<? echo getByTagName($registros[0]->tags,'nrcpfcgc') ?>" />
+	<br />    
+
+	<input name="crm_inacesso" id="crm_inacesso" type="hidden" value="<? echo $glbvars["CRM_INACESSO"] ?>" />	
+	
+
+    <label for="nmdaval1">Nome:</label>
+	<input name="nmdaval1" id="nmdaval1" type="text" value="<? echo getByTagName($registros[0]->tags,'nmdavali') ?>" />
+
+
     
 	<label for="tpdocav1">Doc.:</label>
 	<select name="tpdocav1" class="campo" id="tpdocav1">
@@ -117,12 +124,14 @@ $registros[1]->tags = ( isset($registros[1]->tags) ) ? $registros[1]->tags : arr
 	<a class="lupa"><img src="<?php echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 	<a class="pointer"><img src="<?php echo $UrlImagens; ?>geral/refresh.png"></a>
 	
-	<label for="nmdaval2">Nome:</label>
-	<input name="nmdaval2" id="nmdaval2" type="text" value="<?php echo getByTagName($registros[1]->tags,'nmdavali') ?>" />
-	<br />	
-
 	<label for="nrcpfav2">CPF/CNPJ:</label>
 	<input name="nrcpfav2" id="nrcpfav2" type="text" value="<?php echo getByTagName($registros[1]->tags,'nrcpfcgc') ?>" />
+
+	<br />	
+
+	<label for="nmdaval2">Nome:</label>
+	<input name="nmdaval2" id="nmdaval2" type="text" value="<?php echo getByTagName($registros[1]->tags,'nmdavali') ?>" />
+
 	
 	<label for="tpdocav2">Doc.:</label>
 	<select name="tpdocav2" class="campo" id="tpdocav2">	

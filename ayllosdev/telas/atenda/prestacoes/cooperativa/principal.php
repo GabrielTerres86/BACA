@@ -134,7 +134,7 @@
 
             $xml .= "  </Dados>";
             $xml .= "</Root>";
-
+            
             $xmlResult = mensageria($xml, "ATENDA", "OBTDADEMPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
             
         } else {     
@@ -211,7 +211,8 @@
             
             $vlsldliq = str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlsdeved'))) +
                         str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlmtapar'))) +
-                        str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlmrapar')));
+                        str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlmrapar'))) +
+                        str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vliofcpl')));
 		
 			?><script type="text/javascript">
 			var arrayRegistros = new Object();
@@ -387,7 +388,7 @@
                 arrayProposta['dtcarenc'] = '<? echo getByTagName($proposta,'dtcarenc'); ?>';
             }
 
-
+			
 			var arrayRendimento = new Object();
 			
 			var contRend = <? echo count($rendimento[0]->tags)?>;

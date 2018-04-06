@@ -18,6 +18,9 @@
 				  
 				  27/06/2014 - Inclusão do formulario frmAntecipapgto para tratar 
 							   geração do relatorio de antecipação. (Odirlei/AMcom)
+
+				  05/10/2017 - Inclusão da coluna para demonstrar valor do IOF em 
+				  			atraso (Diogo - MoutS - Projeto 410 - RF 30)
  */
  
 ?>
@@ -39,6 +42,7 @@
 					<th><label for="vlmtapar" class="txtNormalBold">Multa</label></th>
 					<th><label for="vljinpar" class="txtNormalBold">Jr. Normais</label></th>
 					<th><label for="vlmrapar" class="txtNormalBold">Jr. Mora</label></th>
+					<th><label for="vliofcpl" class="txtNormalBold">IOF Atraso</label></th>
 					<th><label for="vldespar" class="txtNormalBold">Desc.</label></th>
 					<th><label for="vlatupar" class="txtNormalBold">Vl. Atual</label></th>
 					<th style="width:96px;"><label for="vlpagpar" class="txtNormalBold" >Vl. a Pagar</label></th>
@@ -69,6 +73,7 @@
 						<td><? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vlmtapar')),2,",","."); ?></td>
 						<td><? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vljinpar')),2,",","."); ?></td>
 						<td><? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vlmrapar')),2,",","."); ?></td>
+						<td><? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vliofcpl')),2,",","."); ?></td>
 						<td id="vldespar_<? echo $nrparepr; ?>" ><? echo  "0,00"; /*number_format(str_replace(",",".",getByTagName($registro->tags,'vldespar')),2,",","."); */  ?></td>
 						<td><? echo $vlatupar; ?></td>			
 						<td style="width:70px;"><input type="text" id="vlpagpar_<? echo $nrparepr; ?>" name="vlpagpar[]" size="10" onblur="verificaDesconto( $(this) , '<? echo $flgantec; ?>' , <? echo $nrparepr; ?>); return false;" value = "<? echo number_format(0); ?>" >
@@ -79,6 +84,7 @@
 						
 						<input type="hidden" id="vlmtapar_<? echo $nrparepr; ?>" name="vlmtapar[]" value="<? echo getByTagName($registro->tags,'vlmtapar'); ?>">
 						<input type="hidden" id="vlmrapar_<? echo $nrparepr; ?>" name="vlmrapar[]" value="<? echo getByTagName($registro->tags,'vlmrapar'); ?>">
+						<input type="hidden" id="vliofcpl_<? echo $nrparepr; ?>" name="vliofcpl[]" value="<? echo getByTagName($registro->tags,'vliofcpl'); ?>">
 						<input type="hidden" id="vlatupar_<? echo $nrparepr; ?>" name="vlatupar[]" value="<? echo $vlatupar; ?>">
 						<input type="hidden" id="cdcooper_<? echo $nrparepr; ?>" name="cdcooper[]" value="<? echo getByTagName($registro->tags,'cdcooper'); ?>">
 						<input type="hidden" id="nrdconta_<? echo $nrparepr; ?>" name="nrdconta[]" value="<? echo getByTagName($registro->tags,'nrdconta'); ?>">

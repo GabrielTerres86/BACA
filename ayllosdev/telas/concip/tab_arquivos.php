@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 /*
  * FONTE        : tab_arquivos.php
@@ -6,7 +6,7 @@
  * DATA CRIAÇÃO : 11/09/2015
  * OBJETIVO     : Tabela que apresenta a consulta de arquivos
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   :
  * --------------
  */ ?>
 
@@ -25,14 +25,15 @@ isPostMethod();
         <table width="100%">
             <thead>
                 <tr>
-                    <th><?php echo utf8ToHtml('Arquivo') ?></th>
+                    <th><?php echo utf8ToHtml('Arquivo Recebido') ?></th>
                     <th><?php echo utf8ToHtml('Tipo') ?></th>
                     <th><?php echo utf8ToHtml('Banco Liquidante') ?></th>
+                    <th><?php echo utf8ToHtml('Credenciadora') ?></th>
                     <th><?php echo utf8ToHtml('Data Rec.') ?></th>
                     <th><?php echo utf8ToHtml('Data Liquidação C/C') ?></th>
                     <th><?php echo utf8ToHtml('Arquivo Gerado') ?></th>
                     <th><?php echo utf8ToHtml('Data Geração') ?></th>
-                    <th><?php echo utf8ToHtml('Ret.') ?></th>                    
+                    <th><?php echo utf8ToHtml('Ret.') ?></th>
                 </tr>
             </thead>
 
@@ -40,16 +41,26 @@ isPostMethod();
             foreach ($registros as $r) {
                 ?>
                 <tr>
-                    <td style="max-width: 293px; overflow-x: hidden;"><?php echo getByTagName($r->tags, 'nmarquivo') ?>
-                    <input type="hidden" id="nmarquivo" name="nmarquivo" value="<?php echo getByTagName($r->tags,'nmarquivo') ?>" />
+                    <?php
+                      //formatacao de nomes de arquivos
+                      $arquivo_fullname = getByTagName($r->tags, 'nmarquivo');
+                      $arquivo_abrev = explode('_', $arquivo_fullname);
+                      $arquivo_abrev = $arquivo_abrev[0];
+                      $gerado_fullname = getByTagName($r->tags, 'nmarquivo_gerado');
+                      $gerado_abrev = explode('_', $gerado_fullname);
+                      $gerado_abrev = $gerado_abrev[0];
+                    ?>
+                    <td style="max-width: 126px; overflow-x: hidden;" title="<?php echo $arquivo_fullname;?>"><?php echo $arquivo_abrev; ?>
+                    <input type="hidden" id="nmarquivo" name="nmarquivo" value="<?php echo $arquivo_fullname; ?>" />
                     </td>
                     <td><?php echo getByTagName($r->tags, 'tparquivo') ?></td>
-                    <td><?php echo getByTagName($r->tags, 'nmcredenciador') ?></td>
+                    <td><?php echo getByTagName($r->tags, 'bcoliquidante'); ?></td>
+                    <td><?php echo getByTagName($r->tags, 'nmcredenciador'); ?></td>
                     <td><?php echo getByTagName($r->tags, 'dtinclusao') ?></td>
                     <td><?php echo getByTagName($r->tags, 'dtliquidacao') ?>
                         <input type="hidden" id="dtliquidacao" name="dtliquidacao" value="<?php echo getByTagName($r->tags,'dtliquidacao') ?>" />
                     </td>
-                    <td><?php echo getByTagName($r->tags, 'nmarquivo_gerado') ?></td>
+                    <td title="<?php echo $gerado_fullname; ?>"><?php echo $gerado_abrev; ?></td>
                     <td><?php echo getByTagName($r->tags, 'dtgeracao') ?>
                         <input type="hidden" id="dtgeracao" name="dtgeracao" value="<?php echo getByTagName($r->tags,'dtgeracao') ?>" />
                     </td>
@@ -66,7 +77,6 @@ isPostMethod();
                 <?php
             }
             ?>
-
             </tbody>
         </table>
     </div>
@@ -74,7 +84,7 @@ isPostMethod();
 
 
 <div id="divPesquisaRodape" class="divPesquisaRodape">
-    <table>	
+    <table>
         <tr>
             <td>
                 <?php
@@ -111,13 +121,13 @@ isPostMethod();
                 } else {
                     ?> &nbsp; <?php
                 }
-                ?>			
+                ?>
             </td>
         </tr>
     </table>
 </div>
 
-<div id="divTotaisArquivo" style="margin-bottom: 15px; text-align:center; margin-top: 15px; display: flex;"> 
+<div id="divTotaisArquivo" style="margin-bottom: 15px; text-align:center; margin-top: 15px; display: flex;">
 
     <fieldset style="padding:0px; margin:0px; padding-bottom:10px; width: 25%;">
         <legend style="font-weight: 600"><?php echo utf8ToHtml('Processados:') ?></legend>
@@ -134,7 +144,7 @@ isPostMethod();
         </fieldset>
 
         <fieldset >
-        <legend style="font-weight: 600"><?php echo utf8ToHtml('Total:') ?></legend>
+        <legend style="font-weight: 600"><?php echo utf8ToHtml('Total Processados:') ?></legend>
 
             <label for="totalpro"><?php echo utf8ToHtml('Quantidade:') ?></label>
             <input type="text" id="totalpro" name="totalpro" value="<?php echo $totalpro ?>"/>
@@ -161,7 +171,7 @@ isPostMethod();
         </fieldset>
 
         <fieldset >
-        <legend style="font-weight: 600"><?php echo utf8ToHtml('Total:') ?></legend>
+        <legend style="font-weight: 600"><?php echo utf8ToHtml('Total Integrados:') ?></legend>
 
             <label for="totalint"><?php echo utf8ToHtml('Quantidade:') ?></label>
             <input type="text" id="totalint" name="totalint" value="<?php echo $totalint ?>"/>
@@ -188,7 +198,7 @@ isPostMethod();
         </fieldset>
 
         <fieldset >
-        <legend style="font-weight: 600"><?php echo utf8ToHtml('Total:') ?></legend>
+        <legend style="font-weight: 600"><?php echo utf8ToHtml('Total Agendados:') ?></legend>
 
         <label for="totalage"><?php echo utf8ToHtml('Quantidade:') ?></label>
         <input type="text" id="totalage" name="totalage" value="<?php echo $totalage ?>"/>
@@ -199,7 +209,7 @@ isPostMethod();
         </fieldset>
 
     </fieldset>
-    
+
     <fieldset style="padding:0px; margin:0px; padding-bottom:10px; width: 25%;">
         <legend style="font-weight: 600"><?php echo utf8ToHtml('Erros:') ?></legend>
 
@@ -215,7 +225,7 @@ isPostMethod();
         </fieldset>
 
         <fieldset >
-        <legend style="font-weight: 600"><?php echo utf8ToHtml('Total:') ?></legend>
+        <legend style="font-weight: 600"><?php echo utf8ToHtml('Total Erros:') ?></legend>
 
         <label for="totalerr"><?php echo utf8ToHtml('Quantidade:') ?></label>
         <input type="text" id="totalerr" name="totalerr" value="<?php echo $totalerr ?>"/>

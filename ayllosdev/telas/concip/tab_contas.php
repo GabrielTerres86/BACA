@@ -25,16 +25,18 @@ isPostMethod();
         <table width="100%" >
             <thead>
                 <tr>
-                    <th style="font-size: 11px"><?php echo utf8ToHtml('Coop') ?></th>
-                    <th style="font-size: 11px"><?php echo utf8ToHtml('Reg') ?></th>
-                    <th style="font-size: 11px"><?php echo utf8ToHtml('PA') ?></th>
-                    <th style="font-size: 11px"><?php echo utf8ToHtml('Conta') ?></th>
-                    <th style="font-size: 11px"><?php echo utf8ToHtml('Lct') ?></th>
-                    <th style="font-size: 11px"><?php echo utf8ToHtml('Dt Lct') ?></th>
-                    <th style="font-size: 11px"><?php echo utf8ToHtml('Dt Arq') ?></th>
-                    <th style="font-size: 11px"><?php echo utf8ToHtml('Valor') ?></th>
-                    <th style="font-size: 11px"><?php echo utf8ToHtml('Situacao') ?></th>
-                    <th style="font-size: 11px"><?php echo utf8ToHtml('Erro') ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('Coop'); ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('Reg'); ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('PA'); ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('Conta'); ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('Lct'); ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('Bandeira'); ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('Forma Transf'); ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('Dt Lct'); ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('Dt Arq'); ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('Valor'); ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('Situacao'); ?></th>
+                    <th style="font-size: 11px"><?php echo utf8ToHtml('Erro'); ?></th>
                 </tr>
             </thead>
 
@@ -47,15 +49,19 @@ isPostMethod();
                         <input type="hidden" id="nmprimtl" name="nmprimtl" value="<?php echo getByTagName($r->tags,'nmprimtl') ?>" />
                         <input type="hidden" id="nrcpfcgc" name="nrcpfcgc" value="<?php echo getByTagName($r->tags,'nrcpfcgc') ?>" />
                     </td>
-                    <td><?php echo getByTagName($r->tags, 'cddregio') ?></td> 
-                    <td><?php echo getByTagName($r->tags, 'cdagenci') ?></td>
-                    <td><?php echo getByTagName($r->tags, 'nrdconta') ?></td>
-                    <td><?php echo getByTagName($r->tags, 'tplancto') ?></td>                    
-                    <td><?php echo getByTagName($r->tags, 'dtrefere') ?></td>
-                    <td><?php echo getByTagName($r->tags, 'dtinclus') ?></td>
-                    <td><?php echo getByTagName($r->tags, 'vllancto') ?></td>
-                    <td><?php echo getByTagName($r->tags, 'dssituac') ?></td>
-                    <td><?php echo getByTagName($r->tags, 'dserro')   ?></td>
+                    <td><?php echo getByTagName($r->tags, 'cddregio'); ?></td> 
+                    <td><?php echo getByTagName($r->tags, 'cdagenci'); ?></td>
+                    <td><?php echo getByTagName($r->tags, 'nrdconta'); ?></td>
+                    <td><?php echo trim(getByTagName($r->tags, 'tplancto')); ?></td>
+                    <td><?php echo trim(getByTagName($r->tags, 'nmarranjo')); ?></td>
+                    <td><?php echo getByTagName($r->tags, 'formatransf'); ?></td>
+                    <td><?php echo getByTagName($r->tags, 'dtrefere'); ?></td>
+                    <td><?php echo getByTagName($r->tags, 'dtinclus'); ?></td>
+                    <td><?php echo getByTagName($r->tags, 'vllancto'); ?></td>
+                    <td><?php echo getByTagName($r->tags, 'dssituac'); ?></td>
+                    <td title="<?php echo getByTagName($r->tags, 'dserro');?>">
+                        <?php echo getByTagName($r->tags, 'dserro');?>
+                    </td>
                 </tr>
                 <?php
             }

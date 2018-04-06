@@ -10,6 +10,8 @@
  * 002: [24/06/2016] Lucas Ranghetti  (CECRED): Ajustado para chamar formulario de impressão para Opcao "A" (#448006 )
  * 003: [04/11/2017] Jonata           (RKAM)  : Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (P364)
  * 004: [15/12/2017] Jonata           (RKAM)  : Correção controle de acesso a tela quando vinda da tela CONTAS > IMPEDIMETNOS (P364)
+ * 005: [11/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ * 006: [16/01/2018] Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
  * --------------
  */
 
@@ -20,6 +22,7 @@ var controle		= '';
 
 var cddopcao		= '';
 var tptransa 		= 0 ;
+var nrdconta 		= 0 ; // Armazena o Número da Conta/dv
 var idseqttl		= 1 ;
 
 var aux_cdagechq	= ''; // Armazena o retorno verif-agechq da consulta tipo 2 no manter_rotina.php
@@ -776,6 +779,11 @@ function formataCabecalho() {
 		
 
 	});		
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCRM").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCRM").val());
+    }	
 	
 	if (executandoImpedimentos){
 		
@@ -1322,7 +1330,7 @@ function formataSenha() {
 	cSenha		= $('#codsenha', '#frmSenha');
 	
 	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10').focus();		
-    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
+    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','30');		
 	
 	$('#divConteudoSenha').css({'width':'330px', 'height':'110px'});	
 	

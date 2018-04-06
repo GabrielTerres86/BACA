@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  *				  08/08/2017 - Adicionado novo campo Habilitar Acesso CRM. (Reinert - Projeto 339)
+ *                03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  * --------------
  */	
 ?>
@@ -259,6 +260,9 @@
                         <label for="rotulo_h">h</label>
                         <label for="nrtelfax">FAX:</label>
                         <input type="text" id="nrtelfax" name="nrtelfax" />
+                        <br clear="all" />
+                        <label for="vllimpag">Limite m&aacute;x. - pgto sem autor.</label>
+                        <input type="text" id="vllimpag" name="vllimpag" />
                         <br clear="all" />
                         <br clear="all" />
                         <label for="rotulopr">Parâmetros de Agendamentos:</label>
