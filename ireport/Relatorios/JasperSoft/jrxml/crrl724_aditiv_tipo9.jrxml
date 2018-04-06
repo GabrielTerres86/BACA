@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-04-04T17:16:39 -->
+<!-- 2018-04-05T11:05:15 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl724_aditiv_tipo9" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="0.9558924531310722"/>
 	<property name="ireport.x" value="0"/>
@@ -378,7 +378,7 @@
 				</line>
 			</frame>
 		</band>
-		<band height="140">
+		<band height="154">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<printWhenExpression><![CDATA[$F{modrelat} == "90_1"]]></printWhenExpression>
 			<frame>
@@ -428,10 +428,10 @@
 					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textField isStretchWithOverflow="true">
-					<reportElement positionType="Float" x="6" y="6" width="545" height="22" uuid="6e58de2b-0f04-43da-bad7-be9ad8fc1160">
-						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<reportElement positionType="Float" x="6" y="20" width="545" height="22" uuid="6e58de2b-0f04-43da-bad7-be9ad8fc1160">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Justified" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -440,7 +440,7 @@
 				</textField>
 			</frame>
 		</band>
-		<band height="107">
+		<band height="121">
 			<printWhenExpression><![CDATA[$F{modrelat} == "90_2"]]></printWhenExpression>
 			<frame>
 				<reportElement x="20" y="0" width="556" height="79" uuid="965b36db-c0f9-45c7-b11f-d84f68bb0e94">
@@ -488,10 +488,9 @@
 					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textField isStretchWithOverflow="true">
-					<reportElement positionType="Float" x="6" y="6" width="545" height="22" uuid="4e0b1774-6560-43a6-8926-60b73c4a9aa9">
-						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<reportElement positionType="Float" x="6" y="20" width="545" height="22" uuid="4e0b1774-6560-43a6-8926-60b73c4a9aa9">
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Justified" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -629,9 +628,9 @@
 				</box>
 				<textField isStretchWithOverflow="true">
 					<reportElement positionType="Float" x="6" y="6" width="545" height="22" uuid="2075b329-1bf8-4a3d-89df-d1dc254dc846">
-						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Justified" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>

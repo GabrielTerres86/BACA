@@ -26,5 +26,4 @@ WHERE epr.cdcooper(+) = adt.cdcooper
       AND epr.inprejuz = 0
       AND adt.tpctrato = 90 -- Emprestimo/Financiamento
       ORDER BY adi.cdcooper, adi.nrdconta, adi.nraplica
-;
 

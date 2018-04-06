@@ -410,6 +410,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
 	  -- Variáveis para tratamento de log
 	  vr_nrdrowid ROWID;
 			
+      --Variáveis auxiliares para valores de cobertura
+      vr_vlroriginal NUMBER := 0;
+      vr_vlratualizado NUMBER := 0;
+      vr_nrcpfcnpj_cobertura VARCHAR(20);
+			
 	  -- Buscar dados da cobertura
 	  CURSOR cr_tbgar_cobertura_operacao(pr_idcobertura IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
         SELECT gar.nrdconta
@@ -445,13 +450,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
         RAISE vr_exc_saida;
       END IF;
       
+      -- Consulta o saldo atualizado para desbloqueio da cobertura parcial ou completa
+      BLOQ0001.pc_bloqueio_garantia_atualizad(pr_idcobert => pr_idcobertura
+                                             ,pr_vlroriginal => vr_vlroriginal
+                                             ,pr_vlratualizado => vr_vlratualizado
+                                             ,pr_nrcpfcnpj_cobertura => vr_nrcpfcnpj_cobertura
+                                             ,pr_dscritic => vr_dscritic);
+      
+      -- Se o valor de desbloqueio for maior ou igual ao valor atualizado, efetua o desblqueio total
+      IF pr_vldesblo >= vr_vlratualizado THEN                                
       BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura => pr_idcobertura
+                                              ,pr_inbloq_desbloq => 'D'
+                                              ,pr_cdoperador     => vr_cdoperad
+                                              ,pr_cdcoordenador_desbloq => pr_cdopelib
+                                              ,pr_vldesbloq      => pr_vldesblo
+                                              ,pr_flgerar_log    => 'S'
+                                              ,pr_dscritic       => vr_dscritic);
+         
+      ELSE -- Libera o desbloqueio parcial do saldo
+         BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura => pr_idcobertura
                                            ,pr_inbloq_desbloq => 'L'
                                            ,pr_cdoperador => vr_cdoperad
                                            ,pr_cdcoordenador_desbloq => pr_cdopelib
                                            ,pr_vldesbloq => pr_vldesblo
                                            ,pr_flgerar_log => 'S'
                                            ,pr_dscritic => vr_dscritic);
+      END IF;                                              
       
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
