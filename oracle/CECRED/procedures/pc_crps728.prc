@@ -223,33 +223,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
           --> ler arquivos localizados             
           FOR idx IN vr_tab_arquiv.first..vr_tab_arquiv.last LOOP
             BEGIN
-              /*
-              vr_cdconven := SUBSTR(vr_tab_arquiv(idx),8,10);
-              vr_nrsequen := SUBSTR(vr_tab_arquiv(idx),26,INSTR(vr_tab_arquiv(idx),'.')-26);
-              */
+             
               vr_dtarquiv := to_date(SUBSTR(vr_tab_arquiv(idx),18,8),'RRRRMMDD');
-              /*
-              -- Buscar controle
-              OPEN cr_gncontr( pr_cdcooper => rw_crapcop.cdcooper
-                              ,pr_cdconven => vr_cdconven
-                              ,pr_dtmvtolt => vr_dtarquiv
-                              ,pr_nrsequen => vr_nrsequen); 
               
-              FETCH cr_gncontr INTO rw_gncontr;
-              IF cr_gncontr%NOTFOUND THEN
-                CLOSE cr_gncontr;
-                vr_dscritic := 'Motivo: Sequencial do arquivo não encontrado.';
-                RAISE vr_exc_prox;
-              ELSE
-                CLOSE cr_gncontr;
-              END IF;
-              
-              --> Verificar se ja foi processado
-              IF rw_gncontr.cdsitret > 1 THEN
-                vr_dscritic := 'Motivo: Arquivo de retorno já processado.';
-                RAISE vr_exc_prox;               
-              END IF;
-              */
               vr_tab_linhas.delete;
               --Importar o arquivo
               gene0009.pc_importa_arq_layout( pr_nmlayout   => 'RET_ARRECAD_BANCOOB', 
