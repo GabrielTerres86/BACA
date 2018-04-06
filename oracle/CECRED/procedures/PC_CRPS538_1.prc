@@ -485,10 +485,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
            --Marcar como nao rejeitado
            vr_rejeitad:= FALSE;
 
-           -- Preparar o CLOB para armazenar as infos do arquivo
-           dbms_lob.createtemporary(vr_clobcri, TRUE, dbms_lob.CALL);
-           dbms_lob.open(vr_clobcri, dbms_lob.lob_readwrite);
-
            -- Inicializar o CLOB
            dbms_lob.createtemporary(vr_des_xml, TRUE);
            dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
